@@ -20648,6 +20648,31 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 20250000,
     "undrawn": 29750000,
     "distributed": null,
+    "called": 20250000,
+    "paid": 20250000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-10-03",
+        "label": "Drawdown 1",
+        "amount": 6500000
+      },
+      {
+        "date": "2024-12-05",
+        "label": "Drawdown 2",
+        "amount": 5000000
+      },
+      {
+        "date": "2025-07-22",
+        "label": "Drawdown 3",
+        "amount": 2500000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Drawdown 4",
+        "amount": 6250000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20660,6 +20685,21 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 150000000,
     "undrawn": 0,
     "distributed": null,
+    "called": 150000000,
+    "paid": 150002925.1,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2025-08-31",
+        "label": "Contribution",
+        "amount": 100000000
+      },
+      {
+        "date": "2025-12-31",
+        "label": "Drawdown",
+        "amount": 50000000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20672,6 +20712,51 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 81000000,
     "undrawn": 69000000,
     "distributed": null,
+    "called": 81000000,
+    "paid": 81000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-09-11",
+        "label": "First Contribution",
+        "amount": 15000000
+      },
+      {
+        "date": "2024-10-17",
+        "label": "Second Contribution",
+        "amount": 7500000
+      },
+      {
+        "date": "2024-11-29",
+        "label": "Third Contribution",
+        "amount": 7500000
+      },
+      {
+        "date": "2025-07-14",
+        "label": "Fourth Contribution",
+        "amount": 15000000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Fifth Contribution",
+        "amount": 9000000
+      },
+      {
+        "date": "2025-12-26",
+        "label": "Sixth Contribution",
+        "amount": 6000000
+      },
+      {
+        "date": "2026-02-13",
+        "label": "Seventh Contribution",
+        "amount": 7500000
+      },
+      {
+        "date": "2026-03-23",
+        "label": "Eighth Contribution",
+        "amount": 13500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20684,6 +20769,51 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 27000000,
     "undrawn": 23000000,
     "distributed": null,
+    "called": 27000000,
+    "paid": 27000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-09-11",
+        "label": "First Contribution",
+        "amount": 5000000
+      },
+      {
+        "date": "2024-10-14",
+        "label": "Second Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2024-11-29",
+        "label": "Third Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2025-07-14",
+        "label": "Fourth Contribution",
+        "amount": 5000000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Fifth Contribution",
+        "amount": 3000000
+      },
+      {
+        "date": "2025-12-26",
+        "label": "Sixth Contribution",
+        "amount": 2000000
+      },
+      {
+        "date": "2026-02-13",
+        "label": "Seventh Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2026-03-23",
+        "label": "Eighth Contribution",
+        "amount": 4500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20696,6 +20826,46 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 27000000,
     "undrawn": 23000000,
     "distributed": null,
+    "called": 27000000,
+    "paid": 27000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-10-17",
+        "label": "First Contribution",
+        "amount": 7500000
+      },
+      {
+        "date": "2024-11-29",
+        "label": "Second Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2025-07-14",
+        "label": "Third Contribution",
+        "amount": 5000000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Fourth Contribution",
+        "amount": 3000000
+      },
+      {
+        "date": "2025-12-26",
+        "label": "Fifth Contribution",
+        "amount": 2000000
+      },
+      {
+        "date": "2026-02-13",
+        "label": "Sixth Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2026-03-24",
+        "label": "Seventh Contribution",
+        "amount": 4500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20708,6 +20878,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 100000000,
     "undrawn": 0,
     "distributed": null,
+    "called": null,
+    "paid": 100000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-11-29",
+        "label": "Contribution",
+        "amount": 100000000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20720,6 +20900,26 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 100000000,
     "undrawn": null,
     "distributed": null,
+    "called": 100000000,
+    "paid": 100000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-08-06",
+        "label": "Contribution",
+        "amount": 50000000
+      },
+      {
+        "date": "2024-09-09",
+        "label": "Contribution",
+        "amount": 10000000
+      },
+      {
+        "date": "2024-10-16",
+        "label": "Contribution",
+        "amount": 40000000
+      }
+    ],
     "arithmeticHolds": null
   },
   {
@@ -20732,6 +20932,21 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 200000000,
     "undrawn": null,
     "distributed": null,
+    "called": 200000000,
+    "paid": 200000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2024-08-06",
+        "label": "Contribution",
+        "amount": 100000000
+      },
+      {
+        "date": "2024-10-16",
+        "label": "Contribution",
+        "amount": 100000000
+      }
+    ],
     "arithmeticHolds": null
   },
   {
@@ -20744,6 +20959,41 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 50000000,
     "undrawn": 0,
     "distributed": 4948221,
+    "called": 50000000,
+    "paid": 50000000,
+    "pending": 0,
+    "calls": [
+      {
+        "date": "2023-10-04",
+        "label": "Initial Contribution",
+        "amount": 2500000
+      },
+      {
+        "date": "2023-10-24",
+        "label": "First Drawdown",
+        "amount": 7500000
+      },
+      {
+        "date": "2024-02-26",
+        "label": "Second Drawdown",
+        "amount": 10000000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Third Drawdown",
+        "amount": 7500000
+      },
+      {
+        "date": "2026-02-05",
+        "label": "Fourth Drawdown",
+        "amount": 7500000
+      },
+      {
+        "date": "2026-04-22",
+        "label": "Fifth Drawdown",
+        "amount": 15000000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20756,6 +21006,41 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 17285000,
     "undrawn": 0,
     "distributed": null,
+    "called": 17285000,
+    "paid": 17285000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2025-05-09",
+        "label": "Drawdown",
+        "amount": 5000000
+      },
+      {
+        "date": "2025-05-13",
+        "label": "Drawdown",
+        "amount": 5000000
+      },
+      {
+        "date": "2025-06-04",
+        "label": "Drawdown",
+        "amount": 3000000
+      },
+      {
+        "date": "2025-07-24",
+        "label": "Drawdown",
+        "amount": 4000000
+      },
+      {
+        "date": "2025-09-25",
+        "label": "Drawdown",
+        "amount": 150000
+      },
+      {
+        "date": "2026-04-22",
+        "label": "Drawdown",
+        "amount": 135000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20768,6 +21053,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 15000000,
     "undrawn": 0,
     "distributed": null,
+    "called": 15000000,
+    "paid": 15000000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2026-02-03",
+        "label": "Drawdown",
+        "amount": 15000000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20780,6 +21075,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 7500000,
     "undrawn": 0,
     "distributed": null,
+    "called": 7500000,
+    "paid": 7500000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2026-02-03",
+        "label": "Drawdown",
+        "amount": 7500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20792,6 +21097,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 7500000,
     "undrawn": 0,
     "distributed": null,
+    "called": 7500000,
+    "paid": 7500000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2026-02-03",
+        "label": "Drawdown",
+        "amount": 7500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20804,6 +21119,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 7500000,
     "undrawn": 7500000,
     "distributed": 0,
+    "called": 7500000,
+    "paid": 7500000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2025-10-17",
+        "label": "Purchase",
+        "amount": 7500000
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -20816,6 +21141,16 @@ export const BOOK_COMMITMENTS: Commitment[] = [
     "drawn": 7500000,
     "undrawn": 7500000,
     "distributed": 0,
+    "called": 7500000,
+    "paid": 7500000,
+    "pending": null,
+    "calls": [
+      {
+        "date": "2025-10-17",
+        "label": "Purchase",
+        "amount": 7500000
+      }
+    ],
     "arithmeticHolds": true
   }
 ];

@@ -100,7 +100,42 @@
   "total": 50000000,
   "contributed": 50000000,
   "undrawn": 0,
-  "distributed": 4948221
+  "distributed": 4948221,
+  "called": 50000000,
+  "paid": 50000000,
+  "pending": 0,
+  "calls": [
+   {
+    "date": "2023-10-04",
+    "label": "Initial Contribution",
+    "amount": 2500000
+   },
+   {
+    "date": "2023-10-24",
+    "label": "First Drawdown",
+    "amount": 7500000
+   },
+   {
+    "date": "2024-02-26",
+    "label": "Second Drawdown",
+    "amount": 10000000
+   },
+   {
+    "date": "2025-09-25",
+    "label": "Third Drawdown",
+    "amount": 7500000
+   },
+   {
+    "date": "2026-02-05",
+    "label": "Fourth Drawdown",
+    "amount": 7500000
+   },
+   {
+    "date": "2026-04-22",
+    "label": "Fifth Drawdown",
+    "amount": 15000000
+   }
+  ]
  },
  "capitalAccount": [],
  "postTaxNav": null,

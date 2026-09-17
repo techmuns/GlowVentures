@@ -19,6 +19,7 @@
     "reconcile:review": "node scripts/review-reconcile.mjs",
     "reconcile:register": "node scripts/register-reconcile.mjs",
     "build-book": "node scripts/build-book.mjs",
+    "replay:calls": "node scripts/replay-capital-calls.mjs",
     "build-register": "node scripts/build-register.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:pages": "node scripts/check-pages.mjs",

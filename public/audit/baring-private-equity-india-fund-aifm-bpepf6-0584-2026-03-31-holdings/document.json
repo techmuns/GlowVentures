@@ -96,7 +96,32 @@
   "total": 50000000,
   "contributed": 20250000,
   "undrawn": 29750000,
-  "distributed": null
+  "distributed": null,
+  "called": 20250000,
+  "paid": 20250000,
+  "pending": null,
+  "calls": [
+   {
+    "date": "2024-10-03",
+    "label": "Drawdown 1",
+    "amount": 6500000
+   },
+   {
+    "date": "2024-12-05",
+    "label": "Drawdown 2",
+    "amount": 5000000
+   },
+   {
+    "date": "2025-07-22",
+    "label": "Drawdown 3",
+    "amount": 2500000
+   },
+   {
+    "date": "2025-09-25",
+    "label": "Drawdown 4",
+    "amount": 6250000
+   }
+  ]
  },
  "capitalAccount": [],
  "postTaxNav": null,

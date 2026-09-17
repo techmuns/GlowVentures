@@ -78,6 +78,7 @@ export const PROVIDERS = {
 
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
 const n = (s) => parseNum(s);
+const isNumLocal = (v) => typeof v === "number" && Number.isFinite(v);
 
 /**
  * Every layout this reader claims, each identified by text only its own issuer
@@ -284,6 +285,92 @@ export function threePFlows(text, warn) {
   }));
 }
 
+// ── THE CAPITAL CALL SCHEDULE — WHAT A DRAWDOWN FUND ASKED FOR, AND WHEN ─────
+//
+// *"What is capital committed versus invested? … I would commit 10 crores, but
+//  I may have only invested so far 5 crores, and 5 crores is remaining to be
+//  drawn."* and *"is there something which is due in the next one month, three
+//  months, six months?"* — the family, on the Private Market page.
+//
+// Both questions needed a fact this reader was throwing away. Every drawdown
+// statement in this corpus prints its calls DATED, one row each, with the
+// fund's own total under them — and nothing read past the summary block, so a
+// register of ₹97.73 Cr of commitments carried four numbers and not one date.
+// That is an absence recorded against a premise nobody rechecked, and the
+// second (after 3P's redemption on page 2) where the missing table was on a
+// page this reader had already opened.
+//
+// ── COMMITTED, CALLED AND CONTRIBUTED ARE THREE FIGURES, NOT TWO ────────────
+//
+// The statements supply the vocabulary themselves, and Baring prints the whole
+// identity as labelled algebra on one block:
+//
+//     Capital Commitment    A                  what the family PROMISED
+//     Capital Call          B                  what the fund has DEMANDED
+//     Capital Contribution  C                  what the family has PAID
+//     Pending Contribution  D = B − C          called and not yet paid — DUE NOW
+//     Undrawn Capital       G = A − B + E      not yet called (E recallable)
+//
+// Motilal Oswal prints the same five under its own names (`Called Capital (B)`,
+// `Uncalled Capital (A)-(B)`, `Received Capital (C)`, `Outstanding Capital
+// (B)-(C)`), and Carnelian prints `Capital Called` beside `Amount Contributed`.
+//
+// `commitment.contributed` USED TO CARRY WHICHEVER OF B AND C ITS LAYOUT
+// HAPPENED TO MATCH, and the two are not the same quantity: Carnelian's reader
+// took B (15,00,00,000.00) where India SME's, Baring's and Neo Infra's took C.
+// On this drop the gap is ₹2,925.10 — Carnelian's contributed runs ABOVE its
+// called, being fund income reinvested — so nothing on screen was visibly
+// wrong, which is exactly the condition under which one field quietly means two
+// things for a drop and a half. `called` and `contributed` are separate now,
+// each filled ONLY from the line its own statement labels, and null where a
+// statement prints one and not the other.
+//
+// ── A DATED TABLE IS PUBLISHED ONLY IF THE STATEMENT'S OWN TOTAL AGREES ─────
+//
+// `callsIfTheyTie` is the whole licence for any of this reaching a screen. A
+// dated tape a reader acts on is the one they cannot check by opening the PDF,
+// so the rows are emitted only where they reproduce the figure the statement
+// itself prints for them, to the rupee — the gate `threePFlows` runs four of
+// and `hdfcNsdl.mjs` needs before it may publish anything read off a rendered
+// page. On a mismatch NOTHING is emitted and the reason is warned: a schedule
+// one call short understates what the family has paid and looks on screen
+// exactly like a complete one.
+
+/**
+ * Dated call rows, published only where they reproduce their own printed total.
+ *
+ * @param calls  {date,label,amount}[] read off the statement's dated table
+ * @param total  the figure the SAME statement prints for those rows
+ * @param what   what that printed figure is called, for the warning
+ */
+function callsIfTheyTie(calls, total, what, warn) {
+  const rows = calls.filter((c) => c.date && isNumLocal(c.amount));
+  if (!rows.length) return [];
+  if (total == null) {
+    // Nothing to check against. The rows may be perfect and there is no way to
+    // say so, and this book does not publish a dated figure on that footing.
+    warn?.("capital-calls-unchecked",
+      `${rows.length} dated capital calls were read and this statement prints no ${what} to reconcile them against; they are not carried`);
+    return [];
+  }
+  const sum = Math.round(rows.reduce((t, c) => t + c.amount, 0) * 100) / 100;
+  if (Math.abs(sum - total) > 1) {
+    warn?.("capital-calls-do-not-tie",
+      `${rows.length} dated capital calls sum to ${sum} against a printed ${what} of ${total}; none is carried, because a schedule short a call understates what the family has paid and looks exactly like a complete one`);
+    return [];
+  }
+  return rows.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Every match of `re` over `text`, mapped to a call row by the caller.
+ *
+ * The mapping is the CALLER's because no two of these tables print their
+ * columns in the same order, and a shared positional reader over six layouts is
+ * the "match on the column index" failure `lib/table.mjs` exists to refuse.
+ */
+const callRows = (text, re, map) => [...text.matchAll(re)].map(map);
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -350,6 +437,7 @@ const LAYOUTS = [
     // THE NAV IS POST-TAX AND THE STATEMENT SAYS WHAT THAT MEANS: tax on
     // realised gains only, nothing for unrealised. Recorded rather than
     // adjusted — we do not know the unrealised position or the rate.
+    capitalFrom: moCapitalFrom,
     note: "the NAV on this statement is POST-TAX on REALISED gains only; the fund states that tax on unrealised gains is not in it and appears only in the redemption NAV",
   },
   {
@@ -479,6 +567,30 @@ const LAYOUTS = [
       drawn: n((/Cumulative Contribution\s*\(b\)\s*:\s*INR\s*([\d,]+)/i.exec(text) ?? [])[1]),
       undrawn: n((/Undrawn Amount[^:]*:\s*INR\s*([\d,]+)/i.exec(text) ?? [])[1]),
     }),
+    /**
+     * `Undrawn Amount (c) = a - b` is this fund's OWN algebra, and it leaves no
+     * room between called and contributed: the uncalled balance is struck on
+     * the contribution, so on this statement B and C are the same figure and
+     * both are reported as that one line. Saying so explicitly is what stops
+     * the page printing a `—` for Called against a fund that has told us.
+     *
+     * The dated table is one row per ORDINAL contribution (`First`, `Second`,
+     * …) and the fund prints its own `Total` under it, which is the gate. The
+     * `Deemed Capital Gain` rows in the same table are deliberately not calls:
+     * they carry no contribution amount, and the fund's own Total excludes
+     * them, so a reader that swept every dated row would fail the tie.
+     */
+    capitalFrom: (text, warn) => {
+      const paid = n((/Cumulative Contribution\s*\(b\)\s*:\s*INR\s*([\d,]+)/i.exec(text) ?? [])[1]);
+      return {
+        called: paid,
+        paid,
+        calls: callsIfTheyTie(
+          callRows(text, /(\d{2}\/\d{2}\/\d{4})\s+\d{4}-\d{4}\s+([A-Z][a-z]+)\s+Contribution\s+([\d,]+)/g,
+            (m) => ({ date: toIso(m[1]), label: `${m[2]} Contribution`, amount: n(m[3]) })),
+          paid, "Cumulative Contribution", warn),
+      };
+    },
     note: "this statement carries NO NAV and NO valuation — only the commitment, the capital drawn against it and the units that bought. Market value is null rather than the contributions, which are what was paid and not what it is worth",
   },
   {
@@ -573,6 +685,45 @@ const LAYOUTS = [
         ? 0
         : n((/Uncalled Commitment\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]),
     }),
+    /**
+     * The one statement here that dates BOTH sides. `Drawdown Details` is one
+     * row per call with its own date, under a printed `Total Drawdown`; the
+     * block above it dates each COMMITMENT the family added (an angel fund
+     * takes a fresh commitment per startup), under `Total Capital Contribution
+     * Commitment`. Only the drawdowns are calls — a commitment is a promise,
+     * not a demand — so the sweep is CUT to the drawdown table.
+     *
+     * That cut is load-bearing rather than tidy: both blocks print the same
+     * `₹ <amount> <date>` shape, so a sweep over the whole page would read the
+     * commitment rows as calls. It is a SLICE and not a filter, which has a
+     * consequence worth naming — without the `Drawdown Details` anchor the
+     * reader finds no rows at all rather than the wrong ones. That is the safe
+     * failure and it would be a SILENT one, because `callsIfTheyTie` cannot
+     * tell "no table on this statement" from "the table moved". So the anchor
+     * is checked explicitly against the total: a statement that prints a
+     * `Total Drawdown` and yields no rows has a table this reader can no longer
+     * find, and says so.
+     *
+     * (This comment first claimed the gate would catch a merged sweep. The test
+     * that exists to prove that refuted it — the slice never produces the
+     * merged rows to be caught — which is the point of writing the mutation
+     * rather than reasoning about it.)
+     *
+     * A drawdown this fund has allotted units against has been PAID, which its
+     * own `Uncalled Commitment NIL` line confirms, so called and contributed
+     * are the one printed total.
+     */
+    capitalFrom: (text, warn) => {
+      const paid = n((/Total Drawdown\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]);
+      const block = (/Drawdown Details([\s\S]*?)Total Drawdown/i.exec(text) ?? [])[1] ?? "";
+      const rows = callRows(block, /₹\s*([\d,]+)\s+(\d{1,2}-[A-Za-z]{3}-\d{4})/g,
+        (m) => ({ date: toIso(m[2]), label: "Drawdown", amount: n(m[1]) }));
+      if (!rows.length && paid != null) {
+        warn?.("drawdown-table-not-found",
+          `this statement prints a Total Drawdown of ${paid} and no dated rows under a "Drawdown Details" heading; the table is there on every issue of this layout, so it has moved rather than gone`);
+      }
+      return { called: paid, paid, calls: callsIfTheyTie(rows, paid, "Total Drawdown", warn) };
+    },
     /** Per-series cost must reconstruct the drawdown the statement prints. */
     verify: (text, holdings, warn) => {
       const drawn = n((/Total Drawdown\s+₹?\s*([\d,]+)/i.exec(text) ?? [])[1]);
@@ -652,6 +803,31 @@ const LAYOUTS = [
         distributed: at(NEO_ROWS.pending, 2),
       };
     },
+    /**
+     * `Pending Drawdown ₹ 0 (0%)` IS THE CALLED-BUT-UNPAID LINE — this fund's
+     * own name for Baring's `Pending Contribution D = B - C`, and a MEASURED
+     * zero rather than an absent one: the statement prints the figure and the
+     * percentage of commitment beside it.
+     *
+     * So called = contributed + pending, derived from two figures this
+     * statement prints under their own labels rather than assumed equal. Today
+     * pending is nil and the two coincide; on the day a call goes unpaid they
+     * will not, and that is the whole reason this page separates them.
+     */
+    capitalFrom: (text, warn) => {
+      const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+      const paid = at(NEO_ROWS.contribution, 1);
+      const pending = at(NEO_ROWS.pending, 1);
+      return {
+        called: paid != null && pending != null ? paid + pending : null,
+        paid,
+        pending,
+        calls: callsIfTheyTie(
+          callRows(text, /(\d{2}-[A-Za-z]{3}-\d{2})\s+((?:Initial|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Contribution|Drawdown))\s+[\d,]+\.\d{2}\s+([\d,]+)/g,
+            (m) => ({ date: toIso(m[1]), label: m[2], amount: n(m[3]) })),
+          paid, "Gross Capital Contribution", warn),
+      };
+    },
     verify: (text, holdings, warn) => {
       const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
       const committed = at(NEO_ROWS.capital, 1), drawn = at(NEO_ROWS.contribution, 1), undrawn = at(NEO_ROWS.undrawn, 1);
@@ -711,6 +887,27 @@ const LAYOUTS = [
       committed: n((/Capital Commitment A\s+([\d,]+)/i.exec(text) ?? [])[1]),
       drawn: n((/Capital Contribution C\s+([\d,]+)/i.exec(text) ?? [])[1]),
       undrawn: n((/Undrawn Capital G[^\n]*?\s([\d,]+)\s/i.exec(text) ?? [])[1]),
+    }),
+    /**
+     * THE STATEMENT THAT SUPPLIES THE VOCABULARY. It prints B, C and D = B − C
+     * under their own labels, so this is the one folio where called, paid and
+     * pending are three separately measured figures rather than one figure
+     * reported three ways. Today D is a dash — nothing called is unpaid — and
+     * that dash is read as NULL and not as a measured nil, because the column
+     * carries `-` for "not applicable" in the two rows above it as well.
+     *
+     * `DRAWDOWN n` prints TWO dates: the call and the allotment. The FIRST is
+     * the call date and the one carried; the second is when units were issued
+     * against it, which is not when the money was asked for.
+     */
+    capitalFrom: (text, warn) => ({
+      called: n((/Capital Call B\s+([\d,]+)/i.exec(text) ?? [])[1]),
+      paid: n((/Capital Contribution C\s+([\d,]+)/i.exec(text) ?? [])[1]),
+      pending: n((/Pending Contribution D = B - C\s+([\d,]+)/i.exec(text) ?? [])[1]),
+      calls: callsIfTheyTie(
+        callRows(text, /DRAWDOWN\s+(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+\d{2}\/\d{2}\/\d{4}\s+[\d,]+\s+[\d.,]+\s+([\d,]+)/g,
+          (m) => ({ date: toIso(m[2]), label: `Drawdown ${m[1]}`, amount: n(m[3]) })),
+        n((/Capital Call B\s+([\d,]+)/i.exec(text) ?? [])[1]), "Capital Call B", warn),
     }),
     /** The statement's own algebra: A − B + E = G, with B = C where nothing is pending. */
     verify: (text, holdings, warn) => {
@@ -773,6 +970,31 @@ const LAYOUTS = [
       drawn: n((/Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*[\d,]+\.\d{2}\s+([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
       undrawn: n((/Balance Uncalled Capital \(INR\)[\s\S]{0,120}?\n\s*([\d,]+\.\d{2})/i.exec(text) ?? [])[1]),
     }),
+    /**
+     * THE FOLIO THAT PROVED `contributed` WAS TWO FIELDS. Its header row is
+     * `Capital Commitment | Capital Called | Amount Contributed | Net
+     * Contribution`, and the third of those runs ₹2,925.10 ABOVE the second —
+     * fund income from MF investments reinvested rather than paid out, which
+     * the transaction table shows as its own dated row. `commitmentFrom` above
+     * takes the SECOND figure, so what this book has always carried under
+     * "drawn" for this fund is the CALL and not the cheque.
+     *
+     * Both are read here under their own labels and neither is preferred: the
+     * called figure is what the uncalled balance is struck against, and the
+     * contributed figure is what the family has actually put in.
+     */
+    capitalFrom: (text, warn) => {
+      const summary = /Capital Commitment \(INR\)[\s\S]{0,140}?\n\s*([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})/i.exec(text);
+      const called = n(summary?.[2]);
+      return {
+        called,
+        paid: n(summary?.[3]),
+        calls: callsIfTheyTie(
+          callRows(text, /(\d{1,2}-[A-Za-z]{3}-\d{4})\s+(Contribution Amount|DRAWDOWN Transaction)\s+CLASS\s+\S+\s+-\s+([\d,]+\.\d{2})/gi,
+            (m) => ({ date: toIso(m[1]), label: /DRAWDOWN/i.test(m[2]) ? "Drawdown" : "Contribution", amount: n(m[3]) })),
+          called, "Capital Called", warn),
+      };
+    },
     note: "the family's consolidated review files this fund under Equity / Thematic-Tactical — its EXPOSURE, where `assetClass` records its legal form as a Category III AIF. Its units stay whole either way; it is never spread across the sectors it invests in",
   },
   motilalAccountSummary({
@@ -821,6 +1043,61 @@ const MO_SUMMARY_ROW = new RegExp(
 const moDash = (v) => (v == null || String(v).trim() === "-" ? null : n(v));
 
 /** One `LAYOUTS` entry for a fund on Motilal Oswal's Account Summary layout. */
+/**
+ * The Motilal Oswal ACCOUNT SUMMARY family's `Investment Summary` block and its
+ * `Transaction Details` table — Founders, Delphi and Hedged Equity.
+ *
+ * The block is labelled algebra like Baring's, in this house's own words:
+ *
+ *     Class Details | Commitment Amount (A) | Called Capital (B) |
+ *                     Uncalled Capital (A)-(B) | Received Capital (C) |
+ *                     Outstanding Capital (B)-(C)
+ *
+ * SUMMED ACROSS THE CLASSES THE BLOCK PRINTS, because a folio's commitment is
+ * per class and the family holds several. `moDash` reads a printed `-` as NULL
+ * rather than zero, so a class whose uncalled column is a dash leaves the total
+ * null and does not quietly assert the fund has nothing left to call — the same
+ * reading the Unit and Valuation columns already get one block up.
+ */
+function moCapitalFrom(text, warn) {
+  const rows = [...text.matchAll(
+    /(?:CLASS|Class)\s+([A-Z]\d?)\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-|[\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+(-|[\d,]+\.\d{2})/g)];
+  const tot = (i) => {
+    const v = rows.map((m) => moDash(m[i])).filter((x) => x != null);
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) * 100) / 100 : null;
+  };
+  const called = tot(3);
+  /**
+   * DELPHI PRINTS NO `Investment Summary` BLOCK AT ALL — only the Account
+   * Summary, whose columns are `Commitment | Contribution | Valuation`. So its
+   * `called` is genuinely unknown and stays null, and its PAID figure comes off
+   * the Contribution column instead. Falling back for `called` as well would
+   * assert the fund has called everything it has received, which is true of
+   * this folio and is not a thing its statement says.
+   */
+  const paid = tot(5) ?? (() => {
+    const v = [...text.matchAll(/(?:CLASS|Class)\s+[A-Z]\d?\s+\d{2}-\d{2}-\d{4}\s+[\d,]+\.\d+\s+[\d,]+\.\d+\s+[\d,]+\.\d{2}\s+([\d,]+\.\d{2})/g)]
+      .map((m) => n(m[1])).filter((x) => x != null);
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) * 100) / 100 : null;
+  })();
+  return {
+    called,
+    paid,
+    pending: tot(6),
+    /**
+     * One row per `Contribution` in the per-class transaction table. Stamp duty
+     * and unit-allotment rows share the shape and are NOT calls: the duty is
+     * the fund's charge against the money, not a demand for more of it, and the
+     * allotment is what the call bought. Both are excluded by name, and the tie
+     * against Called Capital is what says the exclusion is right.
+     */
+    calls: callsIfTheyTie(
+      callRows(text, /(\d{2}-\d{2}-\d{4})\s+Contribution(?:\s+Amount)?\s+-\s+-\s+([\d,]+\.\d{2})/g,
+        (m) => ({ date: toIso(m[1]), label: "Contribution", amount: n(m[2]) })),
+      called ?? paid, called != null ? "Called Capital (B)" : "Contribution", warn),
+  };
+}
+
 function motilalAccountSummary({ key, provider, match, security, note }) {
   const rows = (text) => [...text.matchAll(MO_SUMMARY_ROW)];
   // A class with neither units nor a valuation is CLOSED and contributes
@@ -837,6 +1114,7 @@ function motilalAccountSummary({ key, provider, match, security, note }) {
      * `commitmentFrom` computed — which here would drop the undrawn figure this
      * statement actually states.
      */
+    capitalFrom: moCapitalFrom,
     rowsFrom: (text) => liveRows(text)
       .map((m) => ({
         unitClass: m[1].replace(/\s+/g, " ").trim(),
@@ -905,7 +1183,6 @@ function motilalAccountSummary({ key, provider, match, security, note }) {
 }
 
 /** Local numeric guard — `verify` runs before the document layer is involved. */
-const isNumLocal = (v) => typeof v === "number" && Number.isFinite(v);
 
 /**
  * NEO INFRA's summary block is a THREE-COLUMN GRID: a line of three labels, then
@@ -1105,6 +1382,20 @@ export function extract({ grid, meta = {} }) {
   }
   if (rows[0] && layout.read(rows[0]).commitment) {
     commitment = { committed: layout.read(rows[0]).commitment, drawn: layout.read(rows[0]).totalCost, undrawn: null };
+  }
+  /**
+   * THE CALLED/CONTRIBUTED SPLIT AND THE DATED CALLS, merged LAST and
+   * deliberately never overwriting the four figures above.
+   *
+   * This runs after both branches because the second of them REPLACES whatever
+   * `commitmentFrom` produced (see its own note), so a schedule merged earlier
+   * would be dropped on exactly the layouts — Founders and Delphi — that carry
+   * one. Merging rather than replacing is also what keeps this change unable to
+   * move a figure already in the book: `committed`, `drawn`, `undrawn` and
+   * `distributed` come out of this block untouched.
+   */
+  if (commitment && layout.capitalFrom) {
+    commitment = { ...commitment, ...layout.capitalFrom(text, (code, detail) => warn(warnings, code, detail)) };
   }
   if (layout.note) warn(warnings, "statement-basis", layout.note);
   if (layout.valuesNothing) {
