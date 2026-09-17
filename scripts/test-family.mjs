@@ -40,6 +40,7 @@ const SUITES = [
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
   ["negligible floor", "src/lib/__tests__/negligibleFloor.test.ts"],
+  ["scheme labels & transaction order", "src/lib/__tests__/schemeLabel.test.ts"],
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
 ];

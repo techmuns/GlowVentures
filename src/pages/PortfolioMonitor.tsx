@@ -24,6 +24,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
 import { trancheTable, trancheKey, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
+import { TXN_SORTS, sortRows, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
@@ -3565,7 +3566,7 @@ const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
  * merge, and simpler here because the family asked the question in exactly
  * those terms.
  */
-function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSide }) {
+function MyInvestments({ moves, side, sort }: { moves: CapitalMove[]; side: CapitalSide; sort: TxnSort }) {
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const toggle = (k: string) =>
@@ -3581,8 +3582,8 @@ function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSid
   // this table a SECOND filtering of the same set — two definitions of "the
   // movements in view", free to disagree the first time either changed.
   const groups = useMemo(
-    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES, side),
-    [moves, accounts, positions, side],
+    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES, side, sort),
+    [moves, accounts, positions, side, sort],
   );
   const totals = useMemo(() => capitalTotals(groups), [groups]);
 
@@ -3644,8 +3645,13 @@ function MyInvestments({ moves, side }: { moves: CapitalMove[]; side: CapitalSid
               const isOpen = open.has(g.accountId);
               return (
                 <Fragment key={g.accountId}>
+                  {/* THE ROW'S OWN DATED SPAN, so a claim about the ORDER of
+                      this table is struck on ISO dates rather than on the
+                      "3 Oct 2025" the Period cell renders — which is the prose a
+                      redesign is free to reformat. */}
                   <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
                     data-mine-withdrawals={g.withdrawals}
+                    data-mine-first={g.first ?? ""} data-mine-last={g.last ?? ""}
                     className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
                     <td className="px-3 py-2">
                       {/*
@@ -3860,6 +3866,17 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
    */
   const [side, setSide] = useState<CapitalSide>("all");
   /**
+   * HOW THE ROLLUPS ARE ORDERED — recent first, and the reader can change it.
+   *
+   * *"your transaction should always have your recent transactions first… It
+   * should be date wise, basically."* Every view here sorted by SIZE, so the
+   * Period column read 3 Oct 2025, 4 May 2023, 16 Dec 2025 down the page. One
+   * state, read by all five views and by all three levels inside them, so a
+   * group can never open on its oldest row under a card set to newest first —
+   * `src/lib/txnSort.ts` is where the three modes are defined.
+   */
+  const [sort, setSort] = useState<TxnSort>("recent");
+  /**
    * WHAT THE FAMILY DID IS THE DEFAULT — not what their managers did.
    *
    * *"in transactions we need to see the transactions we have done, not what
@@ -3990,10 +4007,17 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   // `manager` here only so the memo has a valid grouping to compute against
   // while that view is showing, exactly as `tape` already does.
   const groups = useMemo(() => rollup(scoped, accountsReg,
-    groupBy === "tape" || groupBy === "mine" ? "manager" : groupBy === "direct" ? "instrument" : groupBy),
-    [scoped, accountsReg, groupBy]);
+    groupBy === "tape" || groupBy === "mine" ? "manager" : groupBy === "direct" ? "instrument" : groupBy, sort),
+    [scoped, accountsReg, groupBy, sort]);
   const totals = useMemo(() => rollupTotals(groups), [groups]);
-  const shown = filtered.slice(0, TXN_CAP);
+  // THE FULL TRADE LIST FOLLOWS THE SAME CONTROL. It arrives newest-first from
+  // `loadTransactions`, which is this card's default and was its only order —
+  // so a reader who picked "longest held" or "largest first" got a rollup that
+  // moved and a tape that did not. It is sliced AFTER sorting, so the cap takes
+  // the first rows of the order the reader asked for rather than of the feed's.
+  const shown = useMemo(
+    () => sortRows(filtered, sort, (t) => t.amount ?? null).slice(0, TXN_CAP),
+    [filtered, sort]);
 
   if (status === "loading") return <Card className="flex min-h-0 flex-1 items-center justify-center"><span className="text-sm text-slate-500">Loading transactions…</span></Card>;
   if (status === "error") {
@@ -4081,6 +4105,33 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
           ))}
         </div>
         {/*
+          ── THE ORDER IS A CONTROL, NOT A DECISION THIS CARD MAKES FOR THEM ──
+
+            *"how is it sorting?… Not recent transactions first. Do that."*  and
+            *"you can give me an option. I can sort recent transactions first,
+             or I can sort as per, say, holding period… you need to have some
+             kind of a filter is all I'm trying to tell."*
+
+          Both halves, in one control: the default moved to recent-first and the
+          size ordering it replaced is still offered. It reads the same state
+          every view and every level inside them reads, so nothing on this card
+          can be ordered one way while something nested in it is ordered another.
+
+          `data-txn-sort` is the handle the sweep reads. A claim about WHICH
+          ORDER a table is in must not be struck on the label of a button a
+          redesign is free to reword.
+        */}
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm"
+          data-txn-sort={sort} data-txn-sort-options={TXN_SORTS.map((o) => o.id).join(",")}
+          title="How the rows below are ordered. Recent first is the default; it applies to every view and to the lists inside each row.">
+          {TXN_SORTS.map((o) => (
+            <button key={o.id} type="button" data-txn-sort-option={o.id} title={o.title} onClick={() => setSort(o.id)}
+              className={`rounded px-3 py-1.5 font-medium transition-colors ${sort === o.id ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {/*
           THE DEFAULT IS THE ROLLUP, AND THE FULL LIST IS ONE CLICK AWAY. Four
           hundred dated rows answer "what happened on Tuesday"; the family asked
           what each manager did this year. The full list is kept because a
@@ -4133,7 +4184,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
       </div>
 
       {groupBy === "mine" ? (
-        <MyInvestments moves={mineMoves} side={side} />
+        <MyInvestments moves={mineMoves} side={side} sort={sort} />
       ) : groupBy !== "tape" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">

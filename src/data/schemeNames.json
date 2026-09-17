@@ -1,0 +1,233 @@
+{
+  "absl-bal-adv-growth": {
+    "name": "Aditya Birla Sun Life Balanced Advantage Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": "Aditya Birla Sun Life Mutual Fund",
+    "isin": "INF084M01AB8",
+    "schemecode": "1713",
+    "amfiName": "Aditya Birla Sun Life Balanced Advantage Fund - Regular Plan - Growth Option",
+    "printed": "ABSL BAL ADV-GROWTH",
+    "joinedBy": "isin"
+  },
+  "absl-liqf-d-growth": {
+    "name": "Aditya Birla Sun Life Liquid Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Aditya Birla Sun Life Mutual Fund",
+    "isin": "INF209K01VA3",
+    "schemecode": "293-D",
+    "amfiName": "Aditya Birla Sun Life Liquid Fund - Growth - Direct Plan",
+    "printed": "ABSL LIQF D-GROWTH",
+    "joinedBy": "isin"
+  },
+  "bndh-l-and-mcf-dp-gr": {
+    "name": "Bandhan Large & Mid Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Bandhan Mutual Fund",
+    "isin": "INF194K01V89",
+    "schemecode": "2858-D",
+    "amfiName": "Bandhan Large & Mid Cap Fund - Direct Plan - Growth",
+    "printed": "BNDH L&MCF DP GR",
+    "joinedBy": "isin"
+  },
+  "dsp-gold-etf": {
+    "name": "DSP Gold ETF",
+    "plan": null,
+    "option": null,
+    "amc": "DSP Mutual Fund",
+    "isin": "INF740KA1SW3",
+    "schemecode": "47938",
+    "amfiName": "DSP Gold ETF",
+    "printed": "DSP GOLD ETF",
+    "joinedBy": "isin"
+  },
+  "dsp-silver-etf": {
+    "name": "DSP Silver ETF",
+    "plan": null,
+    "option": null,
+    "amc": "DSP Mutual Fund",
+    "isin": "INF740KA1RE3",
+    "schemecode": "46354",
+    "amfiName": "DSP Silver ETF",
+    "printed": "DSP SILVER ETF",
+    "joinedBy": "isin"
+  },
+  "hdfc-baf-d-grow": {
+    "name": "HDFC Balanced Advantage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "HDFC Mutual Fund",
+    "isin": "INF179K01WA6",
+    "schemecode": "1273-D",
+    "amfiName": "HDFC Balanced Advantage Fund - Growth Plan - Direct Plan",
+    "printed": "HDFC BAF D-GROW",
+    "joinedBy": "isin"
+  },
+  "hdfc-baf-r-grow": {
+    "name": "HDFC Balanced Advantage Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": "HDFC Mutual Fund",
+    "isin": "INF179K01830",
+    "schemecode": "1273",
+    "amfiName": "HDFC Balanced Advantage Fund - Growth Plan",
+    "printed": "HDFC BAF R-GROW",
+    "joinedBy": "isin"
+  },
+  "hdfc-liquid-fund-direct-plan-growth-option": {
+    "name": "HDFC Liquid Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "HDFC Mutual Fund",
+    "isin": "INF179KB1HP9",
+    "schemecode": "1286-D",
+    "amfiName": "HDFC Liquid Fund - Growth Option - Direct Plan",
+    "printed": "HDFC Liquid Fund-Direct Plan-Growth Option",
+    "joinedBy": "isin"
+  },
+  "hdfc-small-cap-fund-direct-growth-plan": {
+    "name": "HDFC Small Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "HDFC Mutual Fund",
+    "isin": "INF179KA1RW5",
+    "schemecode": "4455-D",
+    "amfiName": "HDFC Small Cap Fund - Growth Option - Direct Plan",
+    "printed": "HDFC Small Cap Fund - Direct Growth Plan",
+    "joinedBy": "isin"
+  },
+  "helios-fcf-d-grow": {
+    "name": "Helios Flexi Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Helios Mutual Fund",
+    "isin": "INF0R8701046",
+    "schemecode": "48299-D",
+    "amfiName": "Helios Flexi Cap Fund - Direct Plan - Growth Option",
+    "printed": "HELIOS FCF D-GROW",
+    "joinedBy": "isin"
+  },
+  "helios-flexi-cap-fund-direct-growth": {
+    "name": "Helios Flexi Cap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Helios Mutual Fund",
+    "isin": "INF0R8701046",
+    "schemecode": "48299-D",
+    "amfiName": "Helios Flexi Cap Fund - Direct Plan - Growth Option",
+    "printed": "Helios Flexi Cap Fund - Direct Growth",
+    "joinedBy": "isin"
+  },
+  "icici-ioppf-d-grw": {
+    "name": "ICICI Prudential India Opportunities Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109KC1RH9",
+    "schemecode": "42140-D",
+    "amfiName": "ICICI Prudential India Opportunities Fund - Direct Plan - Cumulative Option",
+    "printed": "ICICI IOPPF D-GRW",
+    "joinedBy": "isin"
+  },
+  "icici-liqf-d-growth": {
+    "name": "ICICI Prudential Liquid Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109K01Q49",
+    "schemecode": "1659-D",
+    "amfiName": "ICICI Prudential Liquid Fund - Direct Plan - Growth",
+    "printed": "ICICI LIQF D-GROWTH",
+    "joinedBy": "isin"
+  },
+  "icici-nft-nt-50-dp-g": {
+    "name": "ICICI Prudential Nifty Next 50 Index Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109K01Y80",
+    "schemecode": "11889-D",
+    "amfiName": "ICICI Prudential Nifty Next 50 Index Fund - Direct Plan -  Growth",
+    "printed": "ICICI NFT NT 50 DP G",
+    "joinedBy": "isin"
+  },
+  "icici-nft-nx-50-r-gr": {
+    "name": "ICICI Prudential Nifty Next 50 Index Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109K01IF1",
+    "schemecode": "11889",
+    "amfiName": "ICICI Prudential Nifty Next 50 Index Fund - Growth",
+    "printed": "ICICI NFT NX 50 R GR",
+    "joinedBy": "isin"
+  },
+  "icici-nift50ind-dp-g": {
+    "name": "ICICI Prudential Nifty 50 Index Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109K012M7",
+    "schemecode": "1623-D",
+    "amfiName": "ICICI Prudential Nifty 50 Index Fund - Direct Plan Cumulative Option",
+    "printed": "ICICI NIFT50IND DP G",
+    "joinedBy": "isin"
+  },
+  "icici-pru-baf-dp-grw": {
+    "name": "ICICI Prudential Balanced Advantage Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "ICICI Prudential Mutual Fund",
+    "isin": "INF109K012B0",
+    "schemecode": "1470-D",
+    "amfiName": "ICICI Prudential Balanced Advantage Fund - Direct Plan -  Growth",
+    "printed": "ICICI PRU BAF DP GRW",
+    "joinedBy": "isin"
+  },
+  "inves-con-r-growth": {
+    "name": "Invesco India Contra Fund",
+    "plan": "Regular",
+    "option": null,
+    "amc": "Invesco Mutual Fund",
+    "isin": "INF205K01189",
+    "schemecode": "2169",
+    "amfiName": "Invesco India Contra Fund - Regular Plan - Growth",
+    "printed": "INVES CON R GROWTH",
+    "joinedBy": "isin"
+  },
+  "kotak-mtcf-d-grow": {
+    "name": "Kotak Multicap Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Kotak Mahindra Mutual Fund",
+    "isin": "INF174KA1HV3",
+    "schemecode": "45336-D",
+    "amfiName": "Kotak Multicap Fund-Direct Plan-Growth",
+    "printed": "KOTAK MTCF D-GROW",
+    "joinedBy": "isin"
+  },
+  "motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
+    "name": "Motilal Oswal Active Momentum Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "Motilal Oswal Mutual Fund",
+    "isin": "INF247L01EP5",
+    "schemecode": "49517-D",
+    "amfiName": "Motilal Oswal Active Momentum Fund- Direct-Growth",
+    "printed": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
+    "joinedBy": "name+plan"
+  },
+  "woc-maaf-d-grow": {
+    "name": "WhiteOak Capital Multi Asset Allocation Fund",
+    "plan": "Direct",
+    "option": null,
+    "amc": "WhiteOak Capital Mutual Fund",
+    "isin": "INF03VN01761",
+    "schemecode": "47946-D",
+    "amfiName": "WhiteOak Capital Multi Asset Allocation Fund Direct Plan Growth",
+    "printed": "WOC MAAF D-GROW",
+    "joinedBy": "isin"
+  }
+}

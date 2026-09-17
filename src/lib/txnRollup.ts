@@ -40,6 +40,7 @@
 import { mandateLabel, sumOrNull } from "./analytics";
 import type { Txn } from "./ledger";
 import type { Account } from "./types";
+import { sortRows, type TxnSort } from "./txnSort";
 
 /**
  * How many rows on one side of one instrument read as a series worth marking.
@@ -166,7 +167,7 @@ function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; 
   return { key: `acct:${acctKey(t.provider, t.accountNo)}`, label, sublabel: who || t.accountNo };
 }
 
-function instrumentRow(key: string, rows: TrancheRow[]): InstrumentRow {
+function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort): InstrumentRow {
   const buys = rows.filter((r) => r.side === "Buy");
   const sells = rows.filter((r) => r.side === "Sell");
   const dates = rows.map((r) => r.date).filter(Boolean).sort();
@@ -190,8 +191,11 @@ function instrumentRow(key: string, rows: TrancheRow[]): InstrumentRow {
     // Marked per SIDE: eight buys and eight sells of one name is two campaigns,
     // and sixteen rows is not evidence that either was staggered.
     staggered: buys.length >= STAGGERED_MIN || sells.length >= STAGGERED_MIN,
-    // Newest first, like the tape it came from.
-    tranches: [...rows].sort((a, b) => b.date.localeCompare(a.date)),
+    // ORDERED LIKE EVERY LEVEL ABOVE IT. This was newest-first unconditionally,
+    // which was right on its own and wrong once the levels above it could be
+    // ordered any of three ways: a group set to "longest held" opened on its
+    // newest tranche. A tranche has one date, which `sortRows` reads.
+    tranches: sortRows(rows.map((r) => ({ ...r })), sort, (r) => r.amount ?? null),
   };
 }
 
@@ -202,7 +206,7 @@ function instrumentRow(key: string, rows: TrancheRow[]): InstrumentRow {
  * imported — so the arithmetic can be exercised against a fixture instead of
  * against whatever the current drop happens to contain.
  */
-export function rollup(txns: Txn[], accounts: Account[], by: GroupBy): GroupRow[] {
+export function rollup(txns: Txn[], accounts: Account[], by: GroupBy, sort: TxnSort = "recent"): GroupRow[] {
   const acctByKey = new Map(accounts.map((a) => [acctKey(a.provider, a.accountNo), a]));
   const groups = new Map<string, { label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
 
@@ -220,12 +224,14 @@ export function rollup(txns: Txn[], accounts: Account[], by: GroupBy): GroupRow[
 
   const out: GroupRow[] = [];
   for (const [key, g] of groups) {
-    const instruments = [...g.rows.entries()]
-      .map(([k, rows]) => instrumentRow(k, rows))
-      // Biggest committed first — a reader scanning a manager's year wants the
-      // position they built, not the alphabet. Absent amounts sort last rather
-      // than as zero.
-      .sort((a, b) => ((b.bought ?? 0) + (b.sold ?? 0)) - ((a.bought ?? 0) + (a.sold ?? 0)));
+    // ORDERED BY THE MODE, at this level too. "Biggest committed first" is the
+    // `size` mode and is no longer the only one: a reader who asked for recent
+    // first wants the name the manager last touched at the top of the
+    // expansion, not the largest position they built two years ago. An absent
+    // amount still sorts last rather than as zero — `sortRows` uses -Infinity.
+    const instruments = sortRows(
+      [...g.rows.entries()].map(([k, rows]) => instrumentRow(k, rows, sort)).sort((a, b) => a.key.localeCompare(b.key)),
+      sort, (i) => (i.bought == null && i.sold == null ? null : (i.bought ?? 0) + (i.sold ?? 0)));
     const all = instruments.flatMap((i) => i.tranches);
     const dates = all.map((r) => r.date).filter(Boolean).sort();
     out.push({
@@ -252,7 +258,8 @@ export function rollup(txns: Txn[], accounts: Account[], by: GroupBy): GroupRow[
     });
   }
 
-  return out.sort((a, b) => ((b.bought ?? 0) + (b.sold ?? 0)) - ((a.bought ?? 0) + (a.sold ?? 0)));
+  out.sort((a, b) => a.key.localeCompare(b.key));
+  return sortRows(out, sort, (g) => (g.bought == null && g.sold == null ? null : (g.bought ?? 0) + (g.sold ?? 0)));
 }
 
 /** The footer, summed from the group rows on screen — never from the tape again. */
