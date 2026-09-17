@@ -177,7 +177,11 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/types.ts` — the canonical model. Read this first.
 - `src/lib/securityKey.ts` — the join key (see below).
 - `src/lib/accounts.ts` — the account registry: owner vs provider, per-account as-of.
-- `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector / per-custodian rollups); `sumOrNull`.
+- `src/lib/analytics.ts` — shared aggregation math (per-entity / per-sector /
+  per-custodian rollups); `sumOrNull`; `holdingBucket`, the ONE place that decides
+  which section a holding sits in on a holdings table — including
+  `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund or
+  liquid ETF is cash whatever wrapper its statement typed it as. See Stage 10av.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's My investments rollup and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag.
@@ -3870,6 +3874,12 @@ is that the top-level Cash row falls from ₹11.58 Cr to ₹0, so **that row nam
 the cash went** (`₹11.6 Cr more is held inside the PMS mandates above and counted
 there`) and `check:pages` asserts it. The ₹0 is a MEASURED zero and keeps its zero.
 
+*(THAT ROW IS ₹14.07 Cr NOW — see Stage 10av. The reasoning above is unchanged
+and is why: a mandate still takes its whole account, its liquid sleeve included.
+What moved into Cash is the liquid funds and liquid ETFs held OUTSIDE a mandate,
+which were sitting under Mutual Fund and ETF — so the ₹0 this paragraph records
+was real, and was the family being shown a book with no cash in it.)*
+
 **AND A PMS ROLLS UP WHERE AN AIF CANNOT.** A mandate reports every underlying share
 — the family owns them, the manager picks them — so the rollup is data the archive
 actually holds. An AIF folio is ONE purchase of a fund, and the drop carries no
@@ -7496,7 +7506,7 @@ deleting the check with the feature: no closed key may be a row, no row may say
 
 - the closed positions are **NAMED under the table** — how many, which funds, how
   many accounts, that the zero is MEASURED, and that the money is on
-  *Transactions → My investments* under *Taken out*. Dropping a row and saying
+  *Transactions → What I invested* under *Taken out*. Dropping a row and saying
   nothing is the same defect as showing a ₹0 one: a reader who knew they held 3P
   and cannot find it learns the dashboard lost it;
 - and `/holdings` **still renders them and now marks them**. That page lists the
@@ -9024,6 +9034,219 @@ line.
 Three bugs reintroduced, each firing it: the default back to `impact`, the button
 order back to impact-first *with the default left correct* (which a check on the
 active button alone would have passed), and the control removed outright.
+
+### Stage 10av — CASH IS CASH, AND WHEN BESIDE HOW MUCH
+
+Four asks. The first turned out to be a measurable inconsistency rather than a
+matter of taste, and the third had been answered on one surface under a heading
+nobody reads as an answer.
+
+#### 1. *"why should an ETF show here? … Cash is liquid, arbitrage. All of it is cash."*
+
+*"please look at the mapping because as of now, it looks all over the place to
+me."* **IT WAS, AND THE BOOK'S OWN ROWS SAY SO.** One security reached this book
+under two different asset classes, and the family's own example is the one it
+happened to:
+
+```
+NIP ETNF1D RTLIQBEES (Nippon Liquid BeES)  ETF          3 Motilal demats   ₹1.1764 Cr
+                     …the same security    Mutual Fund  LKP broking        ₹0.0017 Cr
+ABSL / ICICI / HDFC Liquid                 Mutual Fund  depository          ₹12.89 Cr
+Axis Liquid                                Cash         inside a PMS        ₹0.0013 Cr
+```
+
+Nothing is misread. `assetClass` is what the ISSUING DOCUMENT called it (§5), and
+four documents called one kind of instrument three different things — a
+depository types every scheme `Mutual Fund`, a PMS statement's own section
+heading types its sweep `Cash`.
+
+**SO THE FIX IS ON THE BUCKET AND NOT ON `assetClass`.** The archive goes on
+describing the statements, `assertNormalized` still rejects a document that says
+otherwise, and `glowData.ts` still regenerates byte-identically — verified as a
+control run. What changed is the CATEGORY AXIS, which is the one that answers
+*how much of this book is cash*. Same seam `MANDATE_BUCKET` already uses, where
+an account's engagement overrides the class of every row in it.
+
+**AND IT WAS NOT COSTING A LABEL.** On the deduped current-holdings set the Cash
+row read **₹0.0000 Cr** — every real rupee either inside a mandate or filed under
+Mutual Fund and ETF. The family were being shown a book with no cash in it while
+holding ₹14.07 Cr of liquid funds and liquid ETFs. After: Mutual Fund ₹99.90 →
+₹87.01 Cr, ETF ₹24.56 → ₹23.38 Cr, Cash ₹0 → **₹14.07 Cr**, and the footer does
+not move by a rupee, which is the check that says this is a regrouping.
+
+**ORDER IS THE WHOLE OF IT: CASH AFTER THE MANDATE.** Both Axis Liquid rows sit
+inside a Green Lantern PMS, and a mandate is worth what its own statement says.
+Lifting its sleeve out would leave that row unable to tie to its document — the
+identical reason the ordinary cash sleeve is not lifted either.
+
+**A COMMITTED LIST, CITED PER ENTRY, AND DELIBERATELY NOT A NAME MATCHER.**
+`CASH_EQUIVALENT_KEYS` in `analytics.ts` names the review row that files each
+under Cash — the same standing `familyTaxonomy.ts` gives its `reviewProduct`,
+and the same three-witness workbook. Axis Liquid is listed although the rule can
+never fire on it, because a set called "the cash equivalents in this book" that
+omitted a liquid fund BECAUSE one document typed it correctly cannot be checked
+against the review at all.
+
+**ARBITRAGE IS IN THE RULE AND NOT IN THE BOOK, WHICH IS TWO FACTS.** The
+family's review carries ₹41.08 Cr of it across four funds, the largest ₹30.99 Cr
+— and **not one is in this book**, searched over every position. So the map has
+no arbitrage entry and the screen shows none; saying "arbitrage now shows in
+cash" would be a claim about a row that does not exist. It is also the ONE place
+this departs from their workbook, which lists all four on its DEBT sheet — and
+that stays true on the family's own asset-class axis. The workbook was already
+half of this way: it codes every one of the four basket `Liquid`.
+
+**AND THE HALF THAT GOES STALE IS THE LINE THAT SPEAKS UP.**
+`cashEquivalentCandidates` reads NAMES — the one place a name rule is allowed
+here, because it decides nothing and moves no money — and `familyTaxonomy.test.ts`
+FAILS on the first drop bringing a liquid or arbitrage fund the map does not
+carry, naming it. Verified by dropping a key: it reports the offender and says to
+commit it with a citation.
+
+#### 2. *"Where will I get to see that there were two contributions?"*
+
+*"amount invested is fine. But if I further want to see — because XIRR will
+change depending on the investment amount and the time, XIRR will change. It is
+not showing that. So need to show transaction wise."*
+
+**THE RECORD EXISTED AND THE MANDATE PAGE DID NOT READ IT.** `BOOK_CAPITAL_MOVES`
+has carried every dated contribution since Stage 10ag and the Transactions card
+has shown them per account — but a reader who opens a mandate from Holdings, from
+Family & Entities or from a company page never passes through that card.
+`CapitalIn` in `MandateHoldings.tsx` renders them, and it calls **`capitalRollup`,
+the same function with the same arguments**, differing only in scope. A second
+implementation would be a second answer to what the family put into this mandate,
+and the tile above and the tab one click away are precisely the pair where that
+disagreement is visible.
+
+**IT IS ON BOTH BRANCHES, AND THE FUND ONE IS THE LARGER HALF.** The DEALING card
+came off the fund branch at Stage 10ai because a folio reports no trading record.
+The CONTRIBUTION record is the opposite case: measured, **EIGHT of this book's
+eleven dated capital records belong to accounts that reach that branch** — the
+five Sanshi folios, both Transition Venture trusts and 3P — against three on the
+mandate branch. Leaving it off would have answered the smaller half of the ask.
+
+**AND THE RETURN BENEATH IT SAYS WHAT KIND OF RETURN IT IS.** A holding-period
+return on what was paid in is NOT annualised and NOT money-weighted, and the card
+says so — because the family's own reason for asking is that a rate depends on
+when each payment landed, and a figure that read as one would answer them wrongly
+in exactly the direction they were worried about.
+
+#### 3. *"you've given me the amount, but you've not given me the date"*
+
+Three surfaces, and the first was already there:
+
+- **`What I invested`'s "Period" column became "Invested on".** The dates were
+  already in that cell. "Period" is not a word a reader scanning for WHEN THEY
+  INVESTED reads as an answer, so the column was on the page and the question it
+  answers was not on the column. The MANAGER rollup's own Period column became
+  **"Traded between"** and deliberately not this: it is the manager's dealing
+  window, and one label over both would put a manager's first trade under a
+  heading a reader takes for the date they subscribed.
+- **The mandate page's Invested tile says when**, from the account's own first
+  dated contribution (11 of 51 accounts) or failing that the statement's printed
+  inception date (12 of 51) — labelled as which, because they are different
+  facts. Neither is attached to the cost figure as though the two were one
+  measurement: that tile is the mandate's COST BASIS and the manager has been
+  trading inside the account since.
+- **A new "Invested on" column on the holdings table, immediately right of
+  Invested**, which is where they asked for it and the one position that shifts
+  every column after it.
+
+**IT IS A SEPARATE FIELD FROM `heldSince` AND THEY MUST NOT BE MERGED.**
+`heldSince` is what LICENSES ANNUALISATION and is emitted only where a lot
+register accounts for every unit held. `investedOn` feeds no return, which is
+what lets it take a second source `heldSince` cannot: the position's own dated
+allotments. That record routinely carries SEVERAL payments — Sanshi 9069671554
+was funded four times — and folding it into `heldSince` would compound all four
+from the first, overstating the rate by everything the later money did not earn.
+
+**10 of 371 POSITIONS CARRY ONE — AND THEY ARE ₹208 Cr of ₹714 Cr**, 29% of the
+money, because the dated ones are the large AIF folios. The footer COUNTS the
+coverage rather than printing an aggregate: a "first invested" over rows most of
+which carry no date would be the first of the dated subset.
+
+**AN ACCOUNT-LEVEL DATE IS DELIBERATELY NOT A THIRD TIER** — that is when the
+family funded the ACCOUNT, not when a manager bought the share a row is about.
+See the bug-reintroduction note below: on this book that rule is unreachable, so
+it is written down beside the code rather than left to be inferred.
+
+#### 4. *"What is tape? … Let's think of something better. Friendly words."*
+
+"Tape" is a trading-desk word for the printed record of every execution —
+precise, and jargon. "My investments" was worse than jargon: it was ambiguous in
+the one way that matters, because the whole point of that tab group is the split
+between WHAT THE FAMILY DID and WHAT THEIR MANAGERS DID, and it could honestly
+mean either.
+
+| was | now |
+| --- | --- |
+| My investments | **What I invested** |
+| Direct Equity | **Direct Equity** — unchanged |
+| By manager | **Manager trades** |
+| By entity | **Trades by member** |
+| Tape | **Full trade list** |
+
+**"DIRECT EQUITY" IS NOT RENAMED, AND THAT IS THE DECISION HERE.** The family
+asked for that exact word on that exact tab — *"Replace by security with direct
+equity, that will contain the transaction of all direct buy and sold equity
+transactions"* — and it is the word this app's holdings tables use for the same
+set. Changing it would be a fourth round of the argument Stage 10L settled,
+running backwards. The cryptic column labels went with them: `How` → **How it
+went in**, `As` → **Type**, `In`/`Out` → **Paid in**/**Taken out**, `Into` →
+**Security bought**.
+
+#### Eleven bugs reintroduced, and three of them were defects in the checks
+
+- **A CHECK THAT COULD NOT FAIL, FOUND BY THE BUG IT EXISTS FOR.** *"a liquid
+  sleeve inside a mandate stays with the mandate"* was written on the monitor.
+  Moving the cash rule ABOVE the mandate check — exactly the ordering error it
+  guards — left the sweep **CLEAN**, because that page partitions mandates on the
+  ACCOUNT's engagement rather than on `holdingBucket`, so those rows never reach
+  the table either way. It is GONE rather than left looking like cover, and the
+  claim is asserted where the decision is made: `familyTaxonomy.test.ts` §10(c)
+  calls `holdingBucket` directly and fails on that reordering by name.
+- **TWO FOOTER CHECKS WERE COUNTING TOKENS.** *"the class subtotals reconstruct
+  the footer total"* and *"by-security total counts each dedupeGroup once"* walked
+  the footer's TEXT — an invested figure, `\S*` for whatever one cell sat between,
+  then the market value. That held only while exactly one token stood there, and
+  "Invested on" broke both against a page that was correct. Widening the skip
+  would have been worse than the bug: a `.*?` between two money columns marches
+  straight past one. They read `ctx.footerCells` by `COL` now, which is
+  accumulated by `colSpan` — `lib/table.mjs`'s own rule arriving in the sweep.
+- **AND ONE WAS SHAPED BY ITS OWN FIXTURE.** The movers card's excluded-bucket
+  check required an "ETF" line BY NAME. The single priced ETF row was Liquid BeES;
+  when it correctly moved to Cash the line correctly disappeared, and a correct
+  page failed. It is anchored on the book now — the entries must account for every
+  priced holding the scope excludes, and for its whole value — which needed the
+  fixture's own `QUOTE_FACTOR`, because the card sums LIVE market value and a sum
+  off `glowData.ts` alone runs exactly 1.10 light (₹126.06 Cr against a correctly
+  rendered ₹138.8 Cr).
+
+**AND ONE BUG IS UNREACHABLE ON THIS BOOK, SO IT IS WRITTEN DOWN.** Adding the
+account's first contribution as a third tier for `investedOn` changed nothing the
+sweep could see: measured, every position in a funded account is already in a PMS
+(125, rolled into a mandate row), already own-dated (7) or closed and not drawn
+(3), and **ZERO would newly borrow one**. The guard that covers it was verified
+against a borrowed CONSTANT instead, and the rule is stated beside
+`investedOnOf` rather than left to be inferred from the absence of a test.
+
+The eight that fired first time: the cash rule removed (2 checks), the Cash
+section's provenance note deleted, the column never dated, an undated holding
+borrowing a date, the tabs back to Tape/My investments, the contribution card off
+the fund branch, its table truncated (2), and the Invested tile's date removed.
+In the arithmetic suite: a key dropped from the map (the detector names it), a key
+matching no holding, and the rule never firing (2, including the load-bearing
+`Cash ₹0.00 Cr → ₹0.00 Cr`). And the checker's column maps left at their old
+indices fire **13 invariants across two routes**, which is what says the insert
+was properly accounted for.
+
+`build` · `tsc` · `test:ingest` 140 + 84 + 35 + 31 · `test:family` ·
+`check:family` **57/0** · `check:pages` **150 combinations clean** — 148 plus the
+new `mandate-funded` route — with the same two pre-existing abstentions.
+`npm run build-book` regenerates the book BYTE-IDENTICALLY, run as a control
+before and after: nothing here touches the ingest, and a presentation-layer
+change that moved a generated figure would not be one.
 
 ### Stage 10k — News & Announcements: REMOVED
 

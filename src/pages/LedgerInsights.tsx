@@ -360,7 +360,7 @@ function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
     // no statement carries: how an account is run is a fact about the ACCOUNT,
     // knowable even where the security's class is not.
     const held = acc && isMandateHeld(acc.engagement) ? MANDATE_BUCKET
-      : l.assetClass ? holdingBucket({ assetClass: l.assetClass }, acc?.engagement)
+      : l.assetClass ? holdingBucket({ assetClass: l.assetClass, securityKey: l.securityKey }, acc?.engagement)
       : null;
     const key = `${held ?? "unbucketed"}::${l.assetClass === null ? "no-class" : "class"}`;
     const e = m.get(key) ?? {
