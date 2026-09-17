@@ -9286,11 +9286,23 @@ card; measured on the committed store:
 
 | | |
 | --- | ---: |
-| Schemes with a published move | **18**, behind 20 names |
-| Covered / in scope | **₹123.28 Cr** of ₹124.46 Cr |
-| The covered set's own move | **−0.118%**, −₹14.55 L |
-| Not priced — LIQUIDBEES, 4 statement rows | ₹1.18 Cr, named |
+| Schemes with a published move | **16**, behind 17 names |
+| Covered / in scope | **₹110.39 Cr** of ₹110.39 Cr — the whole of it |
+| The covered set's own move | **−0.1364%**, −₹15.06 L |
+| Not priced, and named | **none** — see below |
 | NAV dates the rows span | 2026-09-08 and **2026-09-09** |
+
+**AND EVERY ONE OF THOSE FIGURES MOVED ON THE MERGE, WHICH IS THE POINT OF
+RE-MEASURING RATHER THAN CARRYING THEM ACROSS.** This branch measured 18 schemes
+over ₹123.28 Cr of a ₹124.46 Cr scope, with LIQUIDBEES and three sibling rows
+(₹1.18 Cr) named as the part it could not price. Stage 10av landed on main while
+it was open and moved a liquid fund or liquid ETF into **Cash** whatever wrapper
+its statement typed it as — so those rows left this card's scope entirely, and
+**the one name it could not price was exactly a liquid ETF.** The scope is now
+the whole of what it covers and the not-priced list is empty, which is a better
+card than the one this branch wrote and is not a figure anyone chose. The table
+above is the merged measurement; the PR body and the branch commit record the
+pre-merge one, and the two differing is the merge working rather than drifting.
 
 **IT IS A SEPARATE CARD ON ITS OWN DATES, AND THAT IS THE WHOLE RULE.** A live
 quote is intraday TODAY; a published NAV is a scheme's last struck NAV against
@@ -9323,7 +9335,7 @@ reconciliation at all — and the rupee figure is that move applied to what the
 book values the holding at. Every row then ties to its own columns: `move ÷
 value` IS the printed percentage, and the aggregate is value-weighted rather
 than an average of the rows (which would weight a ₹107 residual the same as a
-₹42 Cr position — measured, −0.276% against the true −0.118%).
+₹42 Cr position — measured, −0.3145% against the true −0.1364%).
 
 **THE ROW IS THE SCHEME, NOT THE `securityKey`.** A NAV is published against a
 scheme, and Helios Flexi Cap reaches this book under TWO keys — the AMC folio's
@@ -9515,8 +9527,8 @@ four folios and is one row — which is exactly what *"club कर दो"* aske
 **AND TWO REINTRODUCED BUGS PRODUCED A COMPLETELY CLEAN SWEEP**, which is the
 finding this pass exists for and the most useful thing it turned up:
 
-- **the aggregate struck as the unweighted MEAN of the rows** — −0.276% against
-  the true −0.118%, because it weights a ₹107 residual holding the same as a
+- **the aggregate struck as the unweighted MEAN of the rows** — −0.3145%
+  against the true −0.1364%, because it weights a ₹107 residual the same as a
   ₹42 Cr position;
 - **a model that stopped SUMMING a scheme's holdings**, so every row carried its
   last statement's value alone.
@@ -9590,6 +9602,38 @@ names or none, because it was asserting a SHAPE. A chip is where this book state
 a classification, so it is held to the book's own per-row answer now, compared as
 a multiset so it does not also assert an ordering the sections are free to
 change.
+
+#### Merged with main, and both predicted conflicts arrived on cue
+
+This branch sat open through review and **Stage 10av landed on main while it
+waited**, so the merge hit exactly the two conflicts this file already tells a
+future session to expect — for the **fourth** time each:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10av`. Main's
+  merged first and **keeps the letter**, as it did at 10al, 10as and 10at; this
+  section is `10aw`, and the two Build-section cross-references that named its
+  suites (`navMovers.test.ts`, `aifCategory.test.ts`) moved with it. The two that
+  still read `10av` — the `CASH_EQUIVALENT_KEYS` line in **Layout** and the cash
+  note under Stage 10L — belong to main's section and were left alone, checked
+  rather than assumed.
+- **AND THE `ctx` LITERAL CONFLICTED AGAIN, ON ONE LINE, EXACTLY AS PREDICTED.**
+  `check-pages.mjs` hands its invariants one object literal: this branch adds
+  `aifSections` and `navMovers`, main's adds `buttonLabels`, `capitalMoves`,
+  `capitalTotal` and `capitalHow`. **Resolved as a mechanical union**, never by
+  picking a side — the file's own measurement is that dropping `attrib` turned
+  nine invariants into NOT CHECKED over a sweep still reporting every combination
+  CLEAN, so half of these losses are invisible by construction. Every one of the
+  eight probes was then confirmed to be defined exactly once in the merged file,
+  because a key naming a variable that no longer exists throws inside the check
+  and is reported as a broken matcher rather than as a clean page.
+
+**AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, the discipline
+Stage 10at records — a textual splice of two generated regions can produce
+something the generator would never write. Measured here: **neither side touched
+`src/data/glowData.ts`, `docs/` or `public/lookthrough/`, so the merge had nothing
+to splice**, and `npm run build-book` was run as a control afterwards and
+regenerated byte-identically. Both halves are stated because the first is what
+made this merge safe and only the second would have caught it had it not been.
 
 ### Stage 10k — News & Announcements: REMOVED
 
