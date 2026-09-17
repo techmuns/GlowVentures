@@ -10804,16 +10804,46 @@ state. It is named beside the row rather than left to be discovered.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
 blocked) · `test:family` · `check:family` **61/0** (57 plus this change's four
-register assertions) · `check:pages` **152 combinations clean**, with the same
-two pre-existing evidenced abstentions. `npm run build-book` regenerates
-`glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY (md5 unchanged before
-and after) — nothing here touches the ingest, and three UI removals that moved a
-generated figure would not be three UI removals.
+register assertions) · `check:pages` **160 combinations clean**, with three
+evidenced abstentions. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY (md5 unchanged before and after) —
+nothing here touches the ingest, and three UI removals that moved a generated
+figure would not be three UI removals.
 
-**THE SWEEP COUNT IS UNCHANGED AT 152, AND THAT RECONCILES EXACTLY.** `/register`
-left the walk (two combinations) and `cio-movers-funds` joined it (two). A count
-that had moved would have meant a route appeared or vanished somewhere nobody
-looked.
+**THAT COUNT IS MEASURED ON THE MERGED TREE AND THE ARITHMETIC RECONCILES, WHICH
+IS WHY IT IS RE-RUN RATHER THAN CARRIED ACROSS.** This branch's own pre-merge
+sweep was **152**, and unchanged from its base: `/register` left the walk (two
+combinations) and `cio-movers-funds` joined it (two). Stage 10ba then landed on
+main with four new `stock-*` routes — eight combinations — so the merged tree is
+160, and its third abstention is that stage's own pledge check, not one of this
+one's.
+
+#### Merged with main, and both predicted conflicts arrived on cue
+
+Stage 10ba landed while this branch was open, so the merge hit exactly the two
+things this file already tells a future session to expect — **for the fifth time
+each**:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10ba`. Main's
+  merged first and **keeps it**, as at 10al, 10as, 10at and 10aw; this section is
+  `10bb`, and the six cross-references elsewhere in this file that named it moved
+  with it — checked one at a time, because three others on those same lines
+  belong to main's stage and must NOT move.
+- **AND THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS.**
+  `check-pages.mjs` hands its invariants ONE object literal, and git produced the
+  union without conflicting: this branch's `attrib`, `moverScopes` and `movers`
+  beside main's `qtyTable` and `posTable`. Verified by READING it rather than by
+  trusting that git did not complain — every key was then confirmed defined
+  exactly once, because a key naming a variable that no longer exists throws
+  inside the check and is reported as a broken matcher rather than as a clean
+  page.
+
+**AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED.** `glowData.ts` came
+across as a straight take-theirs (+1,625 lines of `BOOK_SHARE_MOVEMENTS`, which
+this branch never touched) and `docs/BOOK-REPORT.md` with it, so there was
+nothing to splice — and `npm run build-book` was run afterwards as a control
+anyway and regenerated both byte-identically. A generated file that merges
+WITHOUT conflicting is exactly the case this file says to re-derive.
 
 ### Stage 10k — News & Announcements: REMOVED
 
