@@ -100,7 +100,52 @@
   "total": 50000000,
   "contributed": 27000000,
   "undrawn": 23000000,
-  "distributed": null
+  "distributed": null,
+  "called": 27000000,
+  "paid": 27000000,
+  "pending": null,
+  "calls": [
+   {
+    "date": "2024-09-11",
+    "label": "First Contribution",
+    "amount": 5000000
+   },
+   {
+    "date": "2024-10-14",
+    "label": "Second Contribution",
+    "amount": 2500000
+   },
+   {
+    "date": "2024-11-29",
+    "label": "Third Contribution",
+    "amount": 2500000
+   },
+   {
+    "date": "2025-07-14",
+    "label": "Fourth Contribution",
+    "amount": 5000000
+   },
+   {
+    "date": "2025-09-25",
+    "label": "Fifth Contribution",
+    "amount": 3000000
+   },
+   {
+    "date": "2025-12-26",
+    "label": "Sixth Contribution",
+    "amount": 2000000
+   },
+   {
+    "date": "2026-02-13",
+    "label": "Seventh Contribution",
+    "amount": 2500000
+   },
+   {
+    "date": "2026-03-23",
+    "label": "Eighth Contribution",
+    "amount": 4500000
+   }
+  ]
  },
  "capitalAccount": [],
  "postTaxNav": null,

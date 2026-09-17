@@ -131,7 +131,17 @@
   "total": 15000000,
   "contributed": 7500000,
   "undrawn": 7500000,
-  "distributed": 0
+  "distributed": 0,
+  "called": 7500000,
+  "paid": 7500000,
+  "pending": null,
+  "calls": [
+   {
+    "date": "2025-10-17",
+    "label": "Purchase",
+    "amount": 7500000
+   }
+  ]
  },
  "capitalAccount": [
   {

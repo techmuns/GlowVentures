@@ -233,8 +233,11 @@ check("its private market value is a real measured figure, not the removed page'
   /PRIVATE MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
   && !/PRIVATE MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
   /PRIVATE MARKET VALUE\s*\n?\s*(₹[\d,.]+\s*(?:Cr|L))/i.exec(text)?.[1]);
+// THE TILE'S LABEL WAS THE CLIENT'S OWN QUESTION — *"Drawn against no valuation
+// means?"* — so it now says what it is. The CLAIM is unchanged and is what this
+// asserts: that capital is stated on its own and is in no total on the page.
 check("the capital the family paid into funds that publish no NAV is stated on its own",
-  /DRAWN AGAINST NO VALUATION/i.test(text) && /in no total on this page/i.test(text));
+  /PAID IN, BUT NEVER VALUED/i.test(text) && /in no total on this page/i.test(text));
 
 // ── THE THREE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
 //

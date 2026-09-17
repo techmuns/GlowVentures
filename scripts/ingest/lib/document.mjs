@@ -610,6 +610,25 @@ function normalizeCommitment(c) {
     contributed: pick(c.contributed, c.drawn),
     undrawn: pick(c.undrawn),
     distributed: pick(c.distributed),
+    /**
+     * THE THREE FIGURES A DRAWDOWN FUND ACTUALLY PRINTS, kept apart.
+     *
+     * `contributed` above is whichever of the fund's CALLED and PAID lines its
+     * own layout matched, and the two are not the same quantity — Carnelian's
+     * paid figure runs ₹2,925.10 above its called one. These are read from the
+     * line each statement labels and are null where it labels neither, so a
+     * page can say "committed ₹10 Cr, called ₹5 Cr, paid ₹5 Cr, ₹5 Cr still to
+     * come" without any of the four being inferred from another.
+     *
+     * `pending` is called-and-not-yet-paid — the only figure in this book that
+     * answers "what is due now", and a MEASURED zero on the two statements that
+     * print it rather than an assumption that nothing is outstanding.
+     */
+    called: pick(c.called),
+    paid: pick(c.paid),
+    pending: pick(c.pending),
+    /** Dated calls, and only ever a set that reproduced its own printed total. */
+    calls: Array.isArray(c.calls) ? c.calls : [],
   };
 }
 
