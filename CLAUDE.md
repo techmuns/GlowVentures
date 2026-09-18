@@ -7881,10 +7881,10 @@ The same audit Stage 10aa and 10ai ran, on nine items this time:
 | --- | --- | --- |
 | `LIVE · …` + `N accounts behind`, Morning CIO | **NO** | gone — see above |
 | the same pill on `/holdings` | **NO** | gone, same request |
-| the `lead` paragraph | the heading + the four tiles' own captions | deleted, and `Drilldown.lead` with it |
+| the `lead` paragraph | the heading + the four tiles' own captions | deleted, and `Drilldown.lead` with it *(the TILES have since gone too — Stage 10bd — and the two captions that had no second surface are on the headline)* |
 | the active facet's NOTE paragraph | **the chip's own `title`** | the hover, which already had it |
 | `behind Consolidated NAV · …` | the crumb, and each tile's own hover | deleted, and `Drilldown.backs` with it |
-| `consolidated · each holding once` | **the holdings table's own subtitle** | already there, in the same two branches |
+| `consolidated · each holding once` | **the holdings table's own subtitle** | already there, in the same two branches *(that subtitle has since gone at the family's request — Stage 10bd — and the basis moved to the headline, in the same two branches again)* |
 | the accrued income the NAV excludes | **NO** | the NAV tile's hover |
 | the XIRR's window and its refusal to annualise | **NO** | the money-weighted tile's hover |
 | cross-held is not the duplicate policy | **NO** | the Cross-held link's hover |
@@ -11063,6 +11063,170 @@ ingest, and a nav rearrangement that moved a generated figure would not be one.
 AND IT WAS RE-MEASURED RATHER THAN SUBTRACTED.** Every stage above states a
 count against a base that has since moved; this one happens to reconcile, and it
 reconciles only because the sweep was run again.
+
+### Stage 10bd — THE DRILL-DOWN IS THE TABLE, AND THE FOUR TILES WERE THE SECOND SURFACE
+
+*"remove the top 4 KPI tiles from the UI and remove the highlighted text… fix
+the search bar at the top of the table, it is very small."* And: *"same in
+listed and private tabs."*
+
+Three changes to `/holdings`, and the second is the one with an audit in it.
+
+#### 1. The four tiles printed four figures the footer already totals
+
+Market value, Invested, Unrealised P&L and Return on cost sat above a table
+whose footer totals all four — **each under the heading of the column it
+totals**, which is the stronger surface of the two and the one this repo settled
+on when the allocation footer carried a money-weighted figure in a column of
+returns on cost. So the tiles were a second rendering, and the family have asked
+for the table to be the page.
+
+**THE SECOND HALF OF THE ASK NEEDED NO SEPARATE WORK, AND IT IS WORTH SAYING
+WHY.** *"same in listed and private tabs"* — the listed and private halves are
+FACETS of one page rather than pages of their own (Stage 10v), so there was one
+component to change and the check that asserts the tiles are gone is spread into
+**every** `holdings-*` route rather than the two that were named. A build that
+kept them anywhere kept them everywhere.
+
+**TWO OF THE CAPTIONS WERE THE LAST STATEMENT OF A FACT ANYWHERE**, and both are
+on the headline rather than in a hover, because the footer cannot carry either:
+
+- **THE COUNTS** — `358 holdings · 202 names · 32 accounts`, which is what
+  Morning CIO's own Positions and Distinct names reproduce. The footer counts
+  **grouped** rows, so a name held in four folios is one there and four here; it
+  can never state them.
+- **THE DEDUPE BASIS** — whether a holding two members both carry is counted
+  once or twice, which is **₹3.17 Cr** on this book. It was a pill (Stage 10ao),
+  then this page's table subtitle, and it is four words under the figure now, at
+  the weight the pill had.
+
+#### 2. The subtitle paragraph — four claims, and only one had no consequence
+
+The grey block under *The holdings behind it*, audited claim by claim before a
+word went, the Stage 10aa / 10ai / 10ap method:
+
+| The claim | Where it is now |
+| --- | --- |
+| Weight is within this set, not within the book | the footer's Weight cell hover, on the column it is about |
+| the DEDUPE BASIS | four words under the headline figure — see above |
+| N closed positions are not listed | the footer's row-count cell hover |
+| N holdings under ₹1,000 are dropped, ₹X in total | the same hover |
+
+**THE LAST TWO ARE COUNTS OF ROWS THE TABLE DOES NOT DRAW, so they belong on the
+cell that counts what it did** — beside the `N filtered out and not counted here`
+that cell already carried. That is also the treatment the **Portfolio Monitor**
+gives the identical two facts, at the family's own instruction (Stage 10ax), so
+the two screens now say the same thing in the same place rather than one in prose
+and one in a hover.
+
+**A HOVER IS WEAKER THAN A CAPTION AND THAT IS RECORDED RATHER THAN GLOSSED.** A
+reader scanning does not hover. Four facts moved into one — the cost coverage,
+the closed count, the floor and the return's basis — and what it buys is the
+screen the family asked for. The one thing NOT moved into a hover is the pair
+above, because a count and a dedupe basis are what every other figure on the page
+is struck over.
+
+**AND THE COVERAGE IS WORDED ONCE, IN `Foot`, AND READ BY BOTH CELLS THAT NEED
+IT.** `49 of the 358 holdings report a cost and 49 report none, ₹164 Cr of the
+value` was the Invested tile's caption AND the reason the Return cell beside it
+refuses a figure — so a second wording is a second chance for the two to describe
+different sets, which is the failure `costCoversSet` was extracted for one screen
+over.
+
+#### 3. The filter box was squeezed to a third of its width, and that is geometry
+
+*"fix the search bar at the top of the table, it is very small."* Reproduced
+rather than guessed at: `w-56` is a width on a **flex item with nothing stopping
+it shrinking**, and the paragraph beside it was a paragraph — so the box
+collapsed to about a third of its stated width and clipped its own placeholder to
+**"Filter b"**, which is what the family's screenshot shows.
+
+**REMOVING THE PARAGRAPH ALONE WOULD HAVE HIDDEN IT RATHER THAN FIXED IT.** A
+long enough title brings it straight back. `shrink-0` is the fix; `w-72` is the
+request.
+
+**AND IT IS CHECKED ON GEOMETRY, BECAUSE NO AMOUNT OF MATCHING TEXT CAN SEE IT.**
+The page renders the same words at 250px and at the 100-odd it was squeezed to,
+and every text and figure invariant on this page passed the whole time the
+placeholder read "Filter b". The bound is **the placeholder's own rendered width,
+measured in the page in the input's own font**, plus the padding the box spends
+before a character is drawn — so it stays true if the wording, the type scale or
+`--app-zoom` changes. A literal pixel count would be a number nobody could check.
+
+#### Where the sweep had to move, and the one clause that could no longer fail
+
+`drilldownTotal` read the `MARKET VALUE` **tile** and `tileValue` read the other
+three, so ~26 call sites pointed at figures that no longer exist. Every one was
+re-homed rather than dropped:
+
+- **`drilldownTotal` reads the HEADLINE**, anchored on the share-of-book line
+  beneath it — not on a bare `₹… Cr`, which the top bar prints on every route.
+  The two-source claim is unchanged and not weakened: the headline is summed over
+  the set's ROWS and the footer over the GROUPED rows, so *"the footer ties to the
+  headline"* is still two aggregation paths rather than one figure compared with
+  its own copy.
+- **`tileValue` is replaced by `footCell`**, which reads `ctx.footerCells` — a
+  probe that already existed, accumulated by `colSpan`. That is `lib/table.mjs`'s
+  own rule (**match on the column, never on a token position**) arriving in the
+  sweep: the previous text version walked past the label's span and would have
+  read Invested the first time that span moved. Reintroducing exactly that — the
+  footer's label no longer spanning two columns — fires six invariants.
+- **The reasons are read off `ctx.titles`**, because a `title` is not in
+  `innerText`. That is the same fix the cost-cell reasons already needed.
+
+**AND ONE CLAUSE BECAME UNFALSIFIABLE ON THIS CHANGE.** `holdings-unknown`
+asserted the not-found page does not silently fall back to the whole book, and
+one of its three tests was `!/MARKET VALUE/` — a tile label that is now gone from
+every drill-down, so the clause could never fail again and would have been three
+words of cover over a page that had started falling back. It reads the headline's
+own handle (`data-hb-total`) instead.
+
+**TWO NEW CHECKS ASSERT THE RE-HOMING, because a removal and a re-homing are two
+claims and neither implies the other.** A build that dropped the headline caption
+with the tiles satisfies every absence check above and loses the counts and the
+basis in silence. `the headline states its counts and its dedupe basis` is struck
+on the **handle and the text together** — `drilldownCounts` parses the rendered
+line and `ctx.drilldown` reads the attributes, and a page where those disagree
+would make half the drill-down invariants describe a set the other half does not.
+And `...and the footer still totals the columns they printed` requires a figure or
+an honest em dash in each of the four, never a blank: a build that deleted the
+tiles and the table's totals together would satisfy the absence and lose four
+figures.
+
+**AND THE SUBTITLE CHECK DELIBERATELY DOES NOT BAN EVERYTHING THE SUBTITLE
+SAID.** It is struck on the two sentences only that paragraph ever printed — the
+weight denominator and the automatic floor — and NOT on the dedupe basis or the
+closed count, both of which it also carried and both of which survive elsewhere.
+A check that banned those would fail the page for keeping the facts the family
+did not ask to lose.
+
+#### Seven bugs reintroduced, each firing its own check
+
+Each was put back on its own, rebuilt and swept, with the harness restoring **by
+copy on a `trap … EXIT` and rebuilding on the way out** — restoring the source
+alone leaves `dist/` at the bugged build and the next run reports the previous
+bug's failures under the next one's name.
+
+| Bug put back | Fires |
+| --- | --- |
+| the four tiles restored | the tiles-removed check, on all six drill-down routes |
+| the subtitle paragraph restored | the subtitle check, on all six |
+| the headline caption deleted | the new counts/basis check on six, **plus five pre-existing ones** — Positions and Distinct names, the listed half's own count, the per-account basis on `holdings-measured`, its account count, and the costed set's — which is what says the re-homing kept them biting |
+| the footer cells' hovers stripped | the whole-book return's cause, the return's basis, and the three absent totals on the no-cost page |
+| the row-count cell's hover stripped | the closed count and the floor count |
+| `w-56` without `shrink-0` | the filter box fits its own placeholder, on all six |
+| the footer's label stops spanning two columns | the footer totals check on six, and two more that read Invested and Return by column |
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
+**158 combinations clean**, with the same two evidenced abstentions Stage 10bc
+records. The count does not move because this change adds no route — it would
+have meant a route appeared somewhere nobody looked.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and a presentation-layer removal that moved a generated figure would not
+be one.
 
 ### Stage 10k — News & Announcements: REMOVED
 

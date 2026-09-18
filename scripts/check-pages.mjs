@@ -1722,6 +1722,97 @@ const DRILLDOWN_CHROME_GONE = [
     !/\bLIVE\s*·/.test(t) && !/\bSTATEMENT\s*·\s*as of/i.test(t)
     && !/\d+\s+accounts? behind/i.test(t)],
   ["the arithmetic card stays removed", (t, ctx) => ctx?.formula == null],
+  /**
+   * ── AND THE FOUR KPI TILES STAY REMOVED, ON EVERY DRILL-DOWN ──────────────
+   *
+   * *"remove the top 4 KPI tiles from the UI… same in listed and private
+   * tabs."* Spread into every `holdings-*` route rather than written on the two
+   * the family named, because the tiles were one component rendered by one
+   * branch: a build that kept them anywhere kept them everywhere.
+   *
+   * STRUCK ON THE TILES' OWN LABELS, which are safe to match here for the same
+   * reason the pill row's are — none is a phrase the surviving page prints. The
+   * footer's headings are `Invested`, `Value`, `Weight`, `Unreal. P&L` and
+   * `Return`, and `label-xs` upper-cases a tile's label, so `MARKET VALUE` and
+   * `RETURN ON COST` can only come from a tile.
+   *
+   * THE FOOTER MUST STILL CARRY THE FIGURES, which is the other half and does
+   * not follow from the first: a build that deleted the tiles and the table's
+   * totals together would satisfy an absence check and lose four figures.
+   */
+  ["the four KPI tiles stay removed", (t) =>
+    !/^MARKET VALUE$/im.test(t) && !/^RETURN ON COST$/im.test(t)
+    && !/^UNREALISED P&L$/im.test(t)],
+  ["...and the footer still totals the columns they printed", (t, ctx) => {
+    if (!ctx?.footerCells) return notChecked("this page drew no holdings table on this run");
+    // A figure or an honest em dash in each of the four, never an empty cell:
+    // a blank is the one thing that leaves a reader unable to tell a refused
+    // total from a total nobody wired.
+    return ["invested", "value", "pnl", "ret"]
+      .every((k) => /^(—|₹|[+-])/.test(footCell(ctx, k) ?? ""));
+  }],
+  /**
+   * ── ...AND THE TABLE'S SUBTITLE PARAGRAPH STAYS REMOVED ───────────────────
+   *
+   * The grey block under "The holdings behind it". Struck on the two sentences
+   * only it ever printed — the weight denominator and the automatic floor — and
+   * deliberately NOT on the dedupe basis or the closed-position count, both of
+   * which it also carried and both of which SURVIVE somewhere else: the basis is
+   * four words under the headline figure (asserted on `holdings-measured`) and
+   * the closed count is the footer's own hover. A check that banned those would
+   * fail the page for keeping the facts the family did not ask to lose.
+   */
+  ["the holdings table's subtitle paragraph stays removed", (t) =>
+    !/Weight is within this set, not within the book/i.test(t)
+    && !/dropped automatically/i.test(t)],
+  /**
+   * ── ...AND THE TWO FACTS THAT HAD NOWHERE ELSE TO GO ARE STILL PRINTED ────
+   *
+   * A removal and a re-homing are two claims and neither implies the other: a
+   * build that dropped the headline caption with the tiles would satisfy every
+   * absence check above and lose the counts and the dedupe basis in silence.
+   *
+   * THE COUNTS are what Morning CIO's Positions and Distinct names reproduce,
+   * and the footer cannot state them — it counts GROUPED rows, so a name held
+   * in four folios is one there and four here.
+   *
+   * THE BASIS decides whether a holding two members both carry is counted once
+   * or twice, which is a ₹3.17 Cr difference on this book. It was a pill, then
+   * the table's subtitle, and it is four words under the figure now.
+   *
+   * STRUCK ON THE HANDLE AND THE TEXT TOGETHER, because they are the two things
+   * the rest of this sweep reads: `drilldownCounts` parses the rendered line and
+   * `ctx.drilldown` reads the attributes, and a page where those disagree would
+   * make half the drill-down invariants describe a set the other half does not.
+   */
+  /**
+   * ── THE FILTER BOX FITS ITS OWN PLACEHOLDER ───────────────────────────────
+   *
+   * *"fix the search bar at the top of the table, it is very small."* A
+   * geometric complaint, so a geometric check — the page prints the same words
+   * whether the box is 250px or the 100-odd it was squeezed to, and every text
+   * and figure invariant on this page passed while the placeholder read
+   * "Filter b".
+   *
+   * Struck on the page's own measurement of its own placeholder in its own
+   * font, so it stays true if the wording, the type scale or `--app-zoom`
+   * changes. Verified by putting `w-56` back without `shrink-0`.
+   */
+  ["the table's filter box fits its own placeholder", (t, ctx) => {
+    const f = ctx?.drilldown?.filter;
+    if (!f) return notChecked("this page drew no filter box on this run");
+    return f.width >= f.placeholder + f.chrome;
+  }],
+  ["the headline states its counts and its dedupe basis", (t, ctx) => {
+    const d = ctx?.drilldown;
+    if (!d) return notChecked("this page drew no headline figure on this run");
+    const c = drilldownCounts(t);
+    if (!c) return false;
+    return c.holdings === d.holdings && c.names === d.names && c.accounts === d.accounts
+      && (d.deduped
+        ? /each holding counted once/i.test(t)
+        : /each statement's row as printed/i.test(t));
+  }],
 ];
 
 /**
@@ -2705,9 +2796,35 @@ function money2cr(s) {
  * is the one the table's footer also ties to, and comparing the header would
  * leave the table itself unchecked.
  */
-const drilldownTotal = (t) => money2cr(new RegExp(String.raw`^MARKET VALUE$\n^(₹[\d,.]+\s*(?:Cr|L|K)?)$`, "im").exec(t)?.[1]);
-/** One of the drill-down's KPI tiles, by its label, VERBATIM — `—` included. */
-const tileValue = (t, label) => new RegExp(String.raw`^${label}$\n^(—|₹[\d,.\-+]+\s*(?:Cr|L|K)?|[+-][\d.]+%)$`, "im").exec(t)?.[1] ?? null;
+/**
+ * READ OFF THE HEADLINE, BECAUSE THE TILE THAT USED TO CARRY IT IS GONE.
+ *
+ * *"remove the top 4 KPI tiles from the UI."* Market value was one of the four,
+ * and it was the figure this helper read. It is still printed — large, under
+ * the page title — and the FOOTER of the table below still totals the same
+ * column, so the two-source claim these invariants are built on is unchanged:
+ * the headline is summed over `rows` and the footer over the GROUPED rows, which
+ * are two aggregation paths and not one figure compared with its own copy.
+ *
+ * Anchored on the share-of-book line beneath it, which is what makes it the
+ * page's own headline rather than the book's value in the top bar — that chrome
+ * renders on every route and a bare `₹… Cr` would match it first.
+ */
+const drilldownTotal = (t) => money2cr(
+  new RegExp(String.raw`^(₹[\d,.]+\s*(?:Cr|L|K)?)$\n^[\d.]+% of the ₹[\d,.]+\s*(?:Cr|L|K)? book$`, "m").exec(t)?.[1]);
+/**
+ * ...AND THE FOUR FIGURES THEMSELVES COME OFF THE FOOTER NOW.
+ *
+ * `ctx.footerCells` is accumulated by `colSpan`, so index 2 is Invested however
+ * many columns the label spans — the rule `lib/table.mjs` already applies to the
+ * statement PDFs, arriving in the sweep. A positional read of the footer's TEXT
+ * would put Invested under the row count the first time the label's span moved.
+ *
+ * `null` where the page drew no table at all (an absent scope, the unknown
+ * address), which every caller treats as an abstention rather than a pass.
+ */
+const FOOT_COL = { invested: 2, value: 3, weight: 4, pnl: 5, ret: 6 };
+const footCell = (ctx, which) => ctx?.footerCells?.[FOOT_COL[which]] ?? null;
 /**
  * HOW MANY ROWS THE GROUPED TABLE DREW, off its own footer.
  *
@@ -6795,7 +6912,10 @@ const INVARIANTS = {
       const row = key && CIO_ALLOCATION.get(key);
       if (!row) return notChecked(key ? `Morning CIO's "${key}" row did not parse on this run` : "the book has fewer buckets than the sweep has slots");
       const there = money2cr(row.invested);
-      const here = money2cr(tileValue(t, "INVESTED"));
+      // OFF THE FOOTER, since the tile that used to print it is gone. Same
+      // figure, under the heading of the column it totals, which is the
+      // stronger surface of the two — see `footCell`.
+      const here = money2cr(footCell(ctx, "invested"));
       // AN EM DASH ON ONE SIDE AND A FIGURE ON THE OTHER IS THE FAILURE. A row
       // whose statements report no cost must not acquire one by being opened.
       if (!Number.isFinite(there)) return !Number.isFinite(here);
@@ -6816,7 +6936,7 @@ const INVARIANTS = {
       const row = key && CIO_ALLOCATION.get(key);
       if (!row) return notChecked(key ? `Morning CIO's "${key}" row did not parse on this run` : "the book has fewer buckets than the sweep has slots");
       const rowPct = /([+-]\d+\.\d)%/.exec(row.ret ?? "")?.[1];
-      const herePct = /([+-]\d+\.\d)%/.exec(tileValue(t, "RETURN ON COST") ?? "")?.[1];
+      const herePct = /([+-]\d+\.\d)%/.exec(footCell(ctx, "ret") ?? "")?.[1];
       if (rowPct == null) return herePct == null;
       return herePct != null && Math.abs(Number(herePct) - Number(rowPct)) <= 0.15;
     }],
@@ -6843,11 +6963,20 @@ const INVARIANTS = {
       if (ctx?.formula == null) return true;
       return false;
     }],
-    // A REFUSED FIGURE STILL HAS TO SAY WHY. An em dash with no cause is the
-    // "second dash" failure the stock page was fixed for.
-    ["a refused return names its cause", (t) =>
-      tileValue(t, "RETURN ON COST") !== "—"
-      || /(divide one set of holdings by another|nothing to strike a return against|measured figure, not a missing one|no unrealised gain)/i.test(t)],
+    /**
+     * A REFUSED FIGURE STILL HAS TO SAY WHY. An em dash with no cause is the
+     * "second dash" failure the stock page was fixed for.
+     *
+     * READ OFF THE HOVER NOW, because the tile whose caption carried the reason
+     * is gone and the footer cell that prints the dash carries it instead. That
+     * is weaker than a caption — a reader scanning does not hover — and it is
+     * where the Portfolio Monitor already states the same kind of reason, so it
+     * is recorded rather than dressed up as an improvement.
+     */
+    ["a refused return names its cause", (t, ctx) =>
+      footCell(ctx, "ret") !== "—"
+      || (ctx?.titles ?? []).some((x) =>
+        /(divide one set of holdings by another|nothing to strike a return against)/i.test(x))],
   ],
   /**
    * ── THE WHOLE BOOK, WHICH IS THREE CONCENTRATION FIGURES AT ONCE ─────────
@@ -7096,13 +7225,21 @@ const INVARIANTS = {
         && hb.keys.every((k) => !FUND_CLASS_BOOK.closedKeys.has(k))
         && !/\bredeemed\b/i.test(t);
     }],
-    // ...AND WHAT IT LEFT OUT IS COUNTED. A reader arriving from a tile that
-    // counts every position in the book would otherwise find fewer rows here
-    // with nothing on the page to account for the gap.
-    ["...and the closed positions it leaves out are counted", (t) => {
+    /**
+     * ...AND WHAT IT LEFT OUT IS COUNTED. A reader arriving from a tile that
+     * counts every position in the book would otherwise find fewer rows here
+     * with nothing on the page to account for the gap.
+     *
+     * READ OFF THE FOOTER'S OWN HOVER, since the table's subtitle carried this
+     * and the family asked for the subtitle. It sits on the cell that counts
+     * what the table DID draw, beside the "N filtered out" already there — the
+     * treatment the Portfolio Monitor gives the identical fact, at the family's
+     * own instruction. A hover is weaker than a caption; recorded, not glossed.
+     */
+    ["...and the closed positions it leaves out are counted", (t, ctx) => {
       if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
-      const said = Number(/(\d+) closed positions? (?:is|are) not listed/i.exec(t)?.[1] ?? NaN);
-      return said === FUND_CLASS_BOOK.closedCount;
+      const hover = (ctx?.titles ?? []).map((x) => /(\d+) closed positions? (?:is|are) not listed/i.exec(x)).find(Boolean);
+      return Number(hover?.[1] ?? NaN) === FUND_CLASS_BOOK.closedCount;
     }],
     /**
      * ── AND NOTHING UNDER THE ₹1,000 FLOOR IS LISTED EITHER ──────────────────
@@ -7140,10 +7277,13 @@ const INVARIANTS = {
      * below a lakh. A drop that moved the floor's cost by crores still cannot
      * pass this.
      */
-    ["...and the holdings under the floor are counted, with what they were worth", (t) => {
+    ["...and the holdings under the floor are counted, with what they were worth", (t, ctx) => {
       const n = SECURITY_AXIS_BOOK?.smallDroppedCount ?? 0;
       if (!n) return { notChecked: "no holding in this book falls under the floor" };
-      const m = /(\d+) holdings? worth under ₹?[\d,.]+\s*(?:Cr|L)? (?:is|are) dropped automatically, ₹([\d,]+(?:\.\d+)?)/i.exec(t);
+      // Same hover as the closed count above, and the same reason it is one.
+      const m = (ctx?.titles ?? [])
+        .map((x) => /(\d+) holdings? worth under ₹?[\d,.]+\s*(?:Cr|L)? (?:is|are) dropped automatically, ₹([\d,]+(?:\.\d+)?)/i.exec(x))
+        .find(Boolean);
       if (!m) return false;
       const said = Number(m[1]);
       const value = Number(m[2].replace(/,/g, ""));
@@ -7261,8 +7401,9 @@ const INVARIANTS = {
     // Invested, so a percentage across the two columns would divide one set of
     // holdings by another — which is the contradiction the allocation footer
     // was fixed for, arriving one click deeper.
-    ["no whole-book return is struck where the cost side does not cover it", (t) =>
-      tileValue(t, "RETURN ON COST") === "—" && /divide one set of holdings by another/i.test(t)],
+    ["no whole-book return is struck where the cost side does not cover it", (t, ctx) =>
+      footCell(ctx, "ret") === "—"
+      && (ctx?.titles ?? []).some((x) => /divide one set of holdings by another/i.test(x))],
     // Its footer is summed FROM its rows, so the two must agree. A footer
     // computed beside its table rather than from it is the tautology this repo
     // found on the Private Market page, where the rows carried a double count
@@ -7295,11 +7436,19 @@ const INVARIANTS = {
       if (!table || !Number.isFinite(pos)) return notChecked("the footer or Morning CIO's Positions count did not parse on this run");
       return table.unit === "row" && table.n < pos;
     }],
-    ["the table's footer ties to the tile above it", (t) => {
-      const tile = drilldownTotal(t);
-      const foot = money2cr(new RegExp(String.raw`Total · [\d,]+ [a-z]+\s*\t?\s*(?:—|₹[\d,.]+\s*(?:Cr|L|K)?)\s*\t?\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i").exec(t)?.[1]);
+    /**
+     * THE FOOTER TIES TO THE HEADLINE, which is the same two-source claim the
+     * tile version made and not a weaker one: the headline is summed over the
+     * SET's rows and the footer over the GROUPED rows, so they are two
+     * aggregation paths rather than one figure compared with its own copy. The
+     * footer's Value cell is read by its own column index, accumulated by
+     * `colSpan` — the text version walked past the label's span and would have
+     * read Invested the first time that span moved.
+     */
+    ["the table's footer ties to the headline above it", (t, ctx) => {
+      const head = drilldownTotal(t), foot = money2cr(footCell(ctx, "value"));
       if (!Number.isFinite(foot)) return notChecked("the holdings table's footer did not parse on this run");
-      return Number.isFinite(tile) && Math.abs(tile - foot) <= 0.15;
+      return Number.isFinite(head) && Math.abs(head - foot) <= 0.15;
     }],
   ],
   /**
@@ -7632,7 +7781,17 @@ const INVARIANTS = {
      * return with no basis stated reads as an annual rate, which is the failure
      * that once put +99.0% on the strip.
      */
-    ["the return here states its basis", (t) => /cumulative, not annualised/i.test(t)],
+    /**
+     * IT WAS THE RETURN TILE'S CAPTION, AND IT IS THE FOOTER CELL'S HOVER.
+     *
+     * A return with no basis stated reads as an ANNUAL rate, which is the
+     * failure that once put +99.0% on the Morning CIO strip — so this sentence
+     * is not chrome and does not go with the tile that carried it. It is on the
+     * cell that prints the figure now, which is a hover and is weaker; said
+     * rather than glossed.
+     */
+    ["the return here states its basis", (t, ctx) =>
+      (ctx?.titles ?? []).some((x) => /cumulative, not annualised/i.test(x))],
     ["it opens on the holdings that report a cost", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
@@ -7698,10 +7857,21 @@ const INVARIANTS = {
     // page where a ₹0 would be worst: it would report the whole of ₹165.9 Cr as
     // profit at an infinite return, which is the exact failure `costBasis:
     // number | null` exists to prevent.
-    ["invested, P&L and return are all absent with reasons — never ₹0", (t) =>
-      ["INVESTED", "UNREALISED P&L", "RETURN ON COST"].every((l) => tileValue(t, l) === "—")
-      && /absent, not zero/i.test(t)
-      && /nothing to strike a return against/i.test(t)],
+    /**
+     * STRUCK ON THE FOOTER, which is where the three totals are printed now that
+     * the tiles are gone — and on the footer cells' own hovers for the reasons,
+     * which were the tiles' captions. Both halves are required: an em dash with
+     * no cause is the "second dash" failure, and a cause beside a ₹0 would be
+     * worse still, because on THIS page a zero reports the whole of ₹164 Cr as
+     * profit at an infinite return.
+     */
+    ["invested, P&L and return are all absent with reasons — never ₹0", (t, ctx) => {
+      if (!ctx?.footerCells) return notChecked("this page drew no holdings table on this run");
+      const titles = ctx.titles ?? [];
+      return ["invested", "pnl", "ret"].every((k) => footCell(ctx, k) === "—")
+        && titles.some((x) => /absent, not zero/i.test(x))
+        && titles.some((x) => /nothing to strike a return against/i.test(x));
+    }],
     // ...and the rows say WHICH custodian does not report a cost, per holding —
     // the fix the stock page already carries, arriving on the page that lists
     // every one of them.
@@ -7749,7 +7919,11 @@ const INVARIANTS = {
       // NAV. Read off `<main>` because the top bar carries the book's value on
       // every route, so a body-scoped test matches the chrome and fails a page
       // that is behaving correctly.
-      return !/MARKET VALUE/i.test(main)
+      // THE HEADLINE'S OWN HANDLE, not the removed `MARKET VALUE` tile label:
+      // that label is gone from every drill-down now, so a clause reading it
+      // could never fail again and would have been three words of cover over a
+      // page that had started falling back.
+      return ctx?.drilldown == null
         && !/holdings\s*·\s*[\d,]+\s*names/i.test(main)
         && !new RegExp(String.raw`₹\s*${nav.toFixed(1)}\s*Cr`).test(main);
     }],
@@ -12733,6 +12907,63 @@ for (const theme of THEMES) {
           key: b.getAttribute("data-group-axis"),
           selected: b.getAttribute("aria-selected") === "true",
         })));
+      /**
+       * THE DRILL-DOWN'S OWN HEADLINE, off its handles rather than its prose.
+       *
+       * The four KPI tiles are gone at the family's request, so the page's total
+       * and the counts that used to sit under `Market value` are printed once,
+       * under the title. Read structurally because the ONE thing this has to be
+       * able to say is that they are not there at all — a page that silently fell
+       * back to showing the whole book renders a perfectly well-formed headline,
+       * and only its absence distinguishes the two.
+       */
+      const drilldown = FAST ? null : await page.evaluate(() => {
+        const head = document.querySelector("main [data-hb-total]");
+        if (!head) return null;
+        const c = document.querySelector("main [data-hb-holdings]");
+        const n = (el, k) => (el ? Number(el.getAttribute(k)) : NaN);
+        return {
+          total: Number(head.getAttribute("data-hb-total")),
+          holdings: n(c, "data-hb-holdings"),
+          names: n(c, "data-hb-names"),
+          accounts: n(c, "data-hb-accounts"),
+          deduped: c?.getAttribute("data-hb-deduped") === "1",
+          /**
+           * ...AND THE FILTER BOX, MEASURED AGAINST ITS OWN PLACEHOLDER.
+           *
+           * *"fix the search bar at the top of the table, it is very small."*
+           * No text check can see this: the page renders the same words at any
+           * width. `w-56` was a width on a flex item with nothing stopping it
+           * shrinking, so the paragraph beside it squeezed the box to about a
+           * third of that and clipped "Filter by name or ISIN…" to "Filter b".
+           *
+           * The bound is the PLACEHOLDER'S OWN RENDERED WIDTH, measured in the
+           * page with the input's own font, plus the icon and padding the box
+           * spends before any text starts. A literal pixel count would be a
+           * number nobody could check; this is the thing the reader complained
+           * about, reproduced.
+           */
+          filter: (() => {
+            const el = document.querySelector("main input[role=\"combobox\"]");
+            if (!el) return null;
+            const cs = getComputedStyle(el);
+            const span = document.createElement("span");
+            span.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+            span.style.font = cs.font;
+            span.textContent = el.placeholder ?? "";
+            document.body.appendChild(span);
+            const need = span.getBoundingClientRect().width;
+            span.remove();
+            return {
+              width: el.getBoundingClientRect().width,
+              // `pl-9 pr-3` plus the search icon: the room gone before a
+              // character is drawn, read off the element rather than assumed.
+              chrome: parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight),
+              placeholder: need,
+            };
+          })(),
+        };
+      });
       const footerCells = FAST ? null : await page.evaluate(() => {
         const tr = document.querySelector("tfoot tr");
         if (!tr) return null;
@@ -13333,7 +13564,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
