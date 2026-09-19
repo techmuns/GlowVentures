@@ -277,42 +277,43 @@ export function NavVsIndex() {
   return (
     <Card className="flex flex-col"
       title="Portfolio NAV vs Nifty 500"
-      subtitle={<>
-        {model.dates.length} dated points, {cov.from} → {cov.to}, over the{" "}
-        <strong className="text-slate-300">{stats.coveredCount} of {stats.accountsTotal} accounts</strong> that publish more than one
-        dated valuation — {fmtFromBase(model.book[model.book.length - 1].nav, { compact: true })} of the{" "}
-        {fmtFromBase(stats.consolidatedValue, { compact: true })} book.
-        {/* THE NUMERATOR IS THE SERIES' OWN LAST POINT, NOT THE PER-ACCOUNT SUM.
-            Those differ by ₹1.46 Cr here — 360 ONE Special Opportunities under
-            both CRNs — and the denominator beside it is the CONSOLIDATED NAV,
-            which counts that holding once. A per-account numerator over a
-            consolidated denominator is two bases in one fraction, which is the
-            mistake the allocation footer already cost this book once. */}
-        {" "}Each point holds every account at its most recent mark on that date and counts each duplicated holding once,
-        and both lines are rebased to 100 at {cov.from}.
-        {panelLast > panelFirst && completeFrom && (
-          <>
-            {" "}The panel grows from <strong className="text-slate-300">{panelFirst} to {panelLast} accounts</strong>{" "}
-            over the window and is complete from {completeFrom}; each step is measured over the accounts valued at both
-            of its ends, so an account arriving contributes nothing, and the dashed NAV line starts where the panel does.
-          </>
-        )}
-        {/* ── THE PANEL IS PART OF THE MEASUREMENT, SO IT IS ON THE CARD ─────
-            The series used to start where every covered account had published,
-            which threw away 40 of the archive's 74 measured days — the family
-            reported exactly that ("we are only able to see portfolio NAV for a
-            very short period of time"). Chain-linking each step over the
-            accounts common to its two ends recovers them, and the cost is that
-            the early steps cover 4 accounts where the late ones cover 13. That
-            is not a caveat to bury: a reader comparing this line to an index
-            needs to know how much of the book each stretch of it measures. */}
-        {/* THE REBASE IS A BASIS, AND A BASIS BELONGS ON THE CARD'S BASIS LINE.
-            It used to open the paragraph block under the chart, which is gone;
-            the y-axis reads 84 / 91 / 98 and is a ratio rather than an amount,
-            so without this clause those ticks are unitless. Same reasoning as
-            `<BasisPill>` elsewhere in the app — the basis rides with the figure,
-            never in a tooltip. */}
-      </>}
+      /* ── THE SUBTITLE IS A BASIS LINE, NOT A PARAGRAPH ──────────────────────
+           *"remove the highlighted text from the dashboard ui."*
+
+           It ran four sentences, and every claim was checked before a word went.
+           THREE HAD NO SECOND HOME AND A READER ACTS ON ALL THREE, so they are
+           kept — at one line, which is the removal the family asked for:
+
+             · THE WINDOW AND THE POINT COUNT. The range note under the chart
+               names the INDEX’s window, which is a different and much longer
+               one; the book’s own span is stated nowhere else.
+             · THE COVERAGE. A reader comparing this line to an index has to know
+               how much of the book it measures. The <details> below names the 38
+               accounts that CANNOT supply a series, which is the complement and
+               not the figure.
+             · THE REBASE. The y-axis reads 84 / 91 / 98 — a RATIO, not an
+               amount — so without it those ticks are unitless and the chart
+               quietly stops saying what it is measuring. Same rule as
+               <BasisPill> elsewhere: the basis rides with the figure.
+
+           WHAT WENT INTO THE HOVER IS METHODOLOGY — how a point is struck, and
+           how the panel grows. Neither changes what a reader does with the
+           chart, and a hover is weaker than a caption, which is said here
+           rather than glossed. */
+      subtitle={
+        <span title={[
+          "Each point holds every account at its most recent mark on or before that date, and counts a holding two accounts both report once.",
+          panelLast > panelFirst && completeFrom
+            ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts valued at both of its ends, so an account arriving contributes nothing — and the dashed NAV line starts where the panel does.`
+            : "",
+        ].filter(Boolean).join(" ")}>
+          {model.dates.length} dated points, {cov.from} → {cov.to}
+          {" · "}<strong className="text-slate-300">{stats.coveredCount} of {stats.accountsTotal} accounts</strong>
+          {", "}{fmtFromBase(model.book[model.book.length - 1].nav, { compact: true })} of the{" "}
+          {fmtFromBase(stats.consolidatedValue, { compact: true })} book
+          {" · rebased to 100 at "}{cov.from}
+        </span>
+      }
       right={
         /* THE HEADLINE IS THE LIKE-FOR-LIKE PAIR, AND ONLY THAT.
            Both figures are struck over the BOOK'S OWN WINDOW, which is the only

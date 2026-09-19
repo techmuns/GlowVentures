@@ -275,19 +275,7 @@ export function PrivateMarket() {
         <StatTile label="Still to call (uncalled capital)" icon={<Fuel className="h-4 w-4" />}
           value={<span className="text-amber-400">{money(m.ct.undrawn)}</span>}
           sub={`across ${m.ct.count} of this page's ${m.scope.accounts.length} private accounts · the rest send no capital account, so this is a floor`}
-          hint={<><span className="text-slate-400">What it is:</span> money the family has already PROMISED
-            to these funds and the funds have not yet asked for. A drawdown fund takes its commitment in
-            instalments — it calls the cash when it finds something to buy — so this is a bill that can
-            arrive at any time, not an asset. It is in no total on this page.
-            {" "}<span className="text-slate-400">How this number is arrived at:</span> each fund prints its
-            own uncalled figure on its capital-account statement and those are added up, exactly as printed,
-            never worked out as committed − called. Both paths give {money(m.ct.undrawn)} here and the table
-            below prints each row of it.
-            {" "}<span className="text-slate-400">Why it is a floor and not a total:</span> only {m.ct.count} of
-            this page&rsquo;s {m.scope.accounts.length} private accounts send a capital account at all. The
-            others report a holding and no commitment block, so a commitment they carry is invisible to this
-            figure — and {m.ct.count - m.ct.undrawnOf} of the {m.ct.count} that do send one print no uncalled
-            line, which is skipped rather than read as nil.</>} />
+          hint="Money promised to these funds that they have not yet asked for. A bill that can arrive any day — not an asset, and in no total on this page." />
       </div>
 
       {/* ── COMMITTED vs CALLED vs INVESTED — three figures, not two ──────────
@@ -305,40 +293,24 @@ export function PrivateMarket() {
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Committed" icon={<Landmark className="h-4 w-4" />}
           value={money(m.ct.committed)} sub={`${m.ct.committedOf} of ${m.ct.count} capital accounts`}
-          hint="What the family has PROMISED these funds in total — the full amount signed for, whether or not the fund has asked for it yet. It is not money spent and it is in no market value on this page." />
+          hint="The full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value on this page." />
 
         <StatTile label="Called by the funds" icon={<Banknote className="h-4 w-4" />}
           value={m.cc.called == null ? DASH : money(m.cc.called)}
           sub={`${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line`}
-          hint={<>What the funds have actually DEMANDED so far. Committed less called is what is still to
-            come — the uncalled figure above. It covers {m.cc.calledOf} of {m.cc.count} accounts, so it must
-            never be subtracted from the Invested tile beside it: the two cover different sets, and the
-            difference between them is one fund appearing in one total and not the other rather than money
-            paid twice.</>} />
+          hint="What the funds have demanded so far. It covers a different set of accounts from Invested, so the two must never be subtracted." />
 
         <StatTile label="Invested (paid in)" icon={<Wallet className="h-4 w-4" />}
           value={m.cc.paid == null ? DASH : money(m.cc.paid)}
           sub={`${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank`}
-          hint={<>THIS is capital invested, as against capital committed. A fund calls in instalments, so a
-            ₹10 Cr commitment with ₹5 Cr called and paid is ₹5 Cr invested and ₹5 Cr still to find. It is
-            what was PAID and not what the stake is worth — the market value at the top of this page is the
-            second question.
-            {" "}<span className="text-slate-400">Not the same set as Capital invested above:</span> that tile
-            is the cost of EVERY private holding in the book ({money(m.privCost)} across {m.costedCount} folio
-            rows, most of them open-ended funds with no commitment at all), where this one is what has been
-            paid into the {m.cc.count} DRAWDOWN funds that issue a capital account. Neither contains the
-            other and they are not added.</>} />
+          hint="Cash that has actually left the family’s bank. Not the same set as Capital invested above, which is the cost of every private holding." />
 
         <StatTile label="Due now (called, unpaid)" icon={<CalendarClock className="h-4 w-4" />}
           value={m.cc.dueNow == null ? DASH : <span className={m.cc.dueNow > 0 ? "text-amber-400" : undefined}>{money(m.cc.dueNow)}</span>}
           sub={m.cc.dueNowOf === 0
             ? "no statement here prints a called-but-unpaid line"
             : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line · a measured figure, not an assumption`}
-          hint={<>Capital a fund has already called and the family has not yet paid — the one figure in this
-            book that is genuinely DUE rather than merely possible. Two layouts print it under their own
-            names (&ldquo;Pending Contribution&rdquo;, &ldquo;Pending Drawdown&rdquo;) and it is summed only
-            from those; an account whose statement does not print the line is skipped rather than counted as
-            owing nothing.</>} />
+          hint="Called by the fund and not yet paid — the one figure here that is genuinely owed rather than merely possible." />
       </div>
 
       {/* ── What the money is, once it is in ── */}
@@ -356,13 +328,7 @@ export function PrivateMarket() {
         <StatTile label="Paid in, but never valued" icon={<HelpCircle className="h-4 w-4" />}
           value={<span className="text-amber-400">{money(m.unvaluedDrawn)}</span>}
           sub={`${m.unvaluedNoNav.length} funds that publish no NAV at all · not in the private market value above`}
-          hint={<><span className="text-slate-400">What it is:</span> cash the family has already paid into
-            funds that have never published a valuation. The money is real and it is gone from the bank; what
-            no document states is what the stake bought with it is worth today.
-            {" "}<span className="text-slate-400">Why it is on its own:</span> a contribution is what was PAID
-            and a market value is what it is WORTH, and these funds report only the first. Adding it to the
-            value above would pass a payment off as a valuation, so it is stated apart and is in no total on
-            this page. The funds are named in the table below.</>} />
+          hint="Cash paid into funds that have never published a valuation. Real money, and in no total on this page." />
 
         {/* *"what is distributions?"* — same treatment, and the label carries the
             client's own word beside the plain one rather than only the plain one:
@@ -372,15 +338,7 @@ export function PrivateMarket() {
         <StatTile label="Distributions (cash returned)" icon={<Coins className="h-4 w-4" />}
           value={money(m.ct.distributed)}
           sub={`${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`}
-          hint={<><span className="text-slate-400">What it is:</span> cash these funds have already PAID BACK
-            out — a stake sold or a dividend passed through, returned to the family&rsquo;s bank account. It is
-            money out of the fund and in hand, which is the opposite of the uncalled figure above: that is
-            what may still be asked for, this is what has already come back.
-            {" "}<span className="text-slate-400">How this number is arrived at:</span> summed from the
-            distribution line each capital account statement prints, and {m.ct.distributedOf} of the {m.ct.count} accounts
-            print one. It is NOT part of the value above — a fund&rsquo;s current value is what is still
-            inside it — and it does not reduce the commitment either: capital that has been returned can
-            still be called again where the fund&rsquo;s terms allow it.</>} />
+          hint="Cash these funds have already paid back. Not part of the value above, and it does not reduce what a fund can still call." />
       </div>
 
       {/* Two tiles that would be natural here and are absent by measurement. */}

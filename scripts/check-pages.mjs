@@ -5976,14 +5976,26 @@ const INVARIANTS = {
         && counts.includes(NAV_SERIES_BOOK.seriesPoints);
     }],
 
+    /**
+     * MOVED TO THE SUBTITLE'S HOVER WITH THE PARAGRAPH, AND NOT DROPPED.
+     *
+     * The family asked the block under the title to go; this was the one claim
+     * in it that is about the SHAPE of the measurement rather than about a
+     * figure, so it went into the hover on the basis line rather than onto it.
+     * A hover is weaker than a caption and that is recorded rather than
+     * glossed — what is unchanged is that the panel's two ends and the date it
+     * completes are still named, still derived from the book, and still fail by
+     * name if the series reverts to starting where the panel does.
+     */
     ["the NAV card names the panel it grows through", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
       if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
         return notChecked("this book's panel does not grow inside the series");
       }
-      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(head)
-        && head.includes(NAV_SERIES_BOOK.panelCompleteFrom);
+      const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
+      if (!why) return false;
+      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(why)
+        && why.includes(NAV_SERIES_BOOK.panelCompleteFrom);
     }],
 
   /**
@@ -6158,7 +6170,37 @@ const INVARIANTS = {
    * figure that mattered was re-homed rather than dropped and is asserted above
    * at its new address.
    */
-  ["the NAV card's explanatory paragraphs stay removed",
+  /**
+   * ── …AND SO DOES THE SUBTITLE PARAGRAPH THAT REPLACED THEM ────────────────
+   *
+   * *"remove the highlighted text from the dashboard ui"* — pointed at the
+   * four-sentence block under the title, which is what was left after the first
+   * round moved the rebase basis INTO it. Three of its claims had no second
+   * home and a reader acts on all three, so they are the one-line basis the
+   * three invariants above assert; the METHODOLOGY went to the subtitle’s own
+   * hover, which this asserts, because a claim that is merely deleted and a
+   * claim that moved are two different outcomes and only one of them was asked
+   * for.
+   */
+  ["the NAV card’s methodology moved to the hover rather than going", (t, ctx) => {
+    const why = (ctx?.titles ?? []).find((x) => /most recent mark/i.test(x)) ?? "";
+    if (!why) return false;
+    return /counts a holding two accounts both report once/i.test(why);
+  }],
+  ["the NAV subtitle is a basis line rather than a paragraph", (t, ctx) => {
+    const head = navHead(ctx);
+    if (head == null) return notChecked("the NAV card’s header was not on screen on this run");
+    /**
+     * STRUCK ON WHAT THE PARAGRAPH ALONE PRINTED, never on the window, the
+     * coverage or the rebase — all three stayed, at one line, and each is
+     * asserted at its new address above. A check that banned those would fail
+     * the card for keeping the facts nobody asked it to lose.
+     */
+    return !/that publish more than ones+dated valuation/i.test(head)
+      && !/Each point holds every account at its most recent mark/i.test(head)
+      && !/The panel grows from/i.test(head);
+  }],
+    ["the NAV card's explanatory paragraphs stay removed",
     (t) => !/Both lines are rebased to 100 at/.test(t)
       && !/because money added is not money earned/.test(t)
       && !/market history rather than a comparison/.test(t)
@@ -7748,6 +7790,25 @@ const INVARIANTS = {
      * it, so the two are two renderings of one derived figure rather than a
      * sentence and a literal.
      */
+    /**
+     * ── AND THE TABLE COMES FIRST ────────────────────────────────────────────
+     *
+     * *"show the table first and the formula section below it."* A claim about
+     * ORDER that no text or figure check can see: both cards print the same
+     * words either way round, so every other invariant on this page passed the
+     * whole time the derivation sat above the rows. Struck on the two cards’
+     * own geometry, and found structurally at both ends — the derivation by its
+     * handle, the table by its footer.
+     *
+     * A MISSING CARD IS A FAILURE, NOT AN ABSTENTION. This route is the one
+     * page in the app that draws both, so "I could not find them" means one of
+     * them is gone rather than that the claim does not apply here.
+     */
+    ["the holdings table renders above the derivation, not below it", (t, ctx) => {
+      const c = ctx?.drilldown?.cards;
+      if (!c) return false;
+      return c.tableTop < c.derivationTop;
+    }],
     ["...on the same account count its own tile reports", (t) => {
       const card = Number(/in or out of the\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
       const tile = Number(/·\s*([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
@@ -7962,37 +8023,88 @@ const INVARIANTS = {
    */
   "private-market": [
     /**
-     * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN ─────────────────────────
+     * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN, AND THEN ASKED FOR THE
+     *    ANSWER TO BE SHORT ────────────────────────────────────────────────────
      *
      *   "what is uncalled capital? how do we arrive at this uncalled capital
      *    number that the dashboard is showing? what is distributions?"
      *
-     * Both halves of each are asserted, and BOTH ON THE TILE rather than in a
-     * hover: a definition a reader has to point at is a definition they will not
-     * find. WHAT it is, because the figure means nothing without it, and HOW it
-     * is arrived at, because the whole claim of this book is that a figure
-     * traces to a document — including, here, the two folios it cannot cover.
+     * …answered in three paragraphs a tile, and then:
+     *
+     *   "do not show lengthy explanations in the private market terms… just tell
+     *    what is it in short and legible font text."
+     *
+     * The same reader, a round later, and the second instruction narrows the
+     * first rather than reversing it: they still want to know what the term IS.
+     * So WHAT IT IS stays on every tile and the METHODOLOGY moves to the working
+     * line under the capital-account table, which already carried it word for
+     * word — "summed exactly as each fund prints it … and never derived from
+     * committed − called", beside the very rows it is summed over. Both halves
+     * are asserted, at their own addresses, and neither implies the other.
      */
-    ["the uncalled-capital tile says what it is and how it is arrived at", (t) => {
+    ["every tile definition is short and legible", (t, ctx) => {
+      const hints = ctx?.statHints;
+      if (!hints?.length) return false;
+      /**
+       * TWO BOUNDS, AND ONLY ONE OF THEM IS ABOUT WORDS.
+       *
+       * 200 characters is roughly two short sentences; the paragraphs this
+       * replaced ran 600–900 apiece. And 12px is the floor for the size, read
+       * off the COMPUTED style — a class name says nothing about what was
+       * painted, and the previous 11px is what made the definition the least
+       * legible text on a page whose figures render at 22px.
+       */
+      const defs = hints.filter((h) => !h.absent);
+      if (!defs.length) return false;
+      return defs.every((h) => h.text.length <= 200)
+        // …and the SIZE floor covers every hint on the page, absent ones
+        // included: legibility was the other half of the request and a reason
+        // is no easier to read at 11px than a definition is.
+        && hints.every((h) => h.px >= 12);
+    }],
+    ["the uncalled-capital tile says what it is", (t) => {
       const tile = sliceBetween(t, "STILL TO CALL", "COMMITTED") || sliceBetween(t, "Still to call", "Committed");
       if (!tile) return { notChecked: "the uncalled-capital tile was not on screen on this run" };
-      return /What it is:/i.test(tile)
-        && /promised/i.test(tile) && /not yet asked for|not yet called/i.test(tile)
-        && /How this number is arrived at:/i.test(tile)
-        && /never (worked out|derived) as committed/i.test(tile);
+      return /promised/i.test(tile)
+        && /not yet asked for|not yet called/i.test(tile)
+        // …and that it is a LIABILITY rather than an asset, which is the one
+        // thing a reader could otherwise get wrong about a figure sitting in a
+        // row of market values.
+        && /no total on this page/i.test(tile);
     }],
-    ["the distributions tile says what it is and how it is arrived at", (t) => {
+    ["…and how it is arrived at is still on the page, beside the rows it sums", (t) =>
+      /summed exactly as each fund prints it/i.test(t)
+      && /never derived from committed − called/i.test(t)],
+    ["the distributions tile says what it is, and the two things a reader would get wrong", (t) => {
       const tile = sliceBetween(t, "DISTRIBUTIONS", "Realised gain") || sliceBetween(t, "Distributions", "Realised gain");
       if (!tile) return { notChecked: "the distributions tile was not on screen on this run" };
-      return /What it is:/i.test(tile)
-        && /paid back/i.test(tile)
-        && /How this number is arrived at:/i.test(tile)
-        // The two things a reader would otherwise get wrong about a distribution,
-        // and neither is guessable from the number: it is not inside the value
-        // above, and it does not reduce what the fund can still call.
-        && /NOT part of the value above|not part of the value above/i.test(tile)
-        && /still be called again|does not reduce the commitment/i.test(tile);
+      return /paid back/i.test(tile)
+        // Neither is guessable from the number, and neither is stated anywhere
+        // else on this page — so both stayed when the paragraph went.
+        && /not part of the value above/i.test(tile)
+        && /does not reduce what a fund can still call|still be called/i.test(tile);
     }],
+    /**
+     * …AND THE ONE MISREADING THAT WOULD COST THE MOST IS STILL WARNED AGAINST.
+     *
+     * Called and Invested cover different sets of accounts, so the difference
+     * between them is a coverage gap and not money paid twice — and they sit
+     * side by side, which is exactly where a reader subtracts. Asserted on the
+     * PAGE rather than on the tile: it is on both, and a build that kept only
+     * the fuller statement under the table is still correct.
+     */
+    ["the two tiles a reader would subtract say not to", (t) =>
+      /must never be subtracted|must not be subtracted/i.test(t)],
+    /**
+     * ── AND THE PARAGRAPHS THEMSELVES STAY GONE ──────────────────────────────
+     *
+     * Struck on the scaffolding those blocks alone ever printed — the two
+     * headings that introduced each section of them — rather than on any figure
+     * or definition, every one of which was re-homed and is asserted above.
+     */
+    ["the tile explanation paragraphs stay removed", (t) =>
+      !/How this number is arrived at:/i.test(t)
+      && !/Why it is a floor and not a total:/i.test(t)],
     ["the tile carries the client's own word for it", (t) => /Distributions \(cash returned\)/i.test(t)],
 
     /**
@@ -12962,6 +13074,26 @@ for (const theme of THEMES) {
               placeholder: need,
             };
           })(),
+          /**
+           * ...AND WHICH OF THE TWO CARDS COMES FIRST.
+           *
+           * *"show the table first and the formula section below it."* A claim
+           * about ORDER is geometry: both cards render the same words either
+           * way round, so every text and figure invariant on this page passes
+           * whichever is on top. Both ends are found STRUCTURALLY — the
+           * derivation by its own handle, the table by its footer — because
+           * matching either by its title would make a layout claim rest on
+           * prose a redesign is free to reword.
+           */
+          cards: (() => {
+            const der = document.querySelector("main [data-hb-derivation]")?.closest(".card");
+            const tbl = document.querySelector("main [data-hb-foot]")?.closest(".card");
+            if (!der || !tbl) return null;
+            return {
+              derivationTop: der.getBoundingClientRect().top,
+              tableTop: tbl.getBoundingClientRect().top,
+            };
+          })(),
         };
       });
       const footerCells = FAST ? null : await page.evaluate(() => {
@@ -13018,6 +13150,36 @@ for (const theme of THEMES) {
       // on that page can see it.
       const pmFunds = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
+      /**
+       * THE TILE DEFINITIONS — their text, their SIZE, and the tile each sits on.
+       *
+       * *"do not show lengthy explanations in the private market terms… just
+       * tell what is it in short and legible font text."* Both halves of that
+       * are measurable and neither is visible to a text match: LENGTH, because
+       * a wall of prose and a one-line definition read identically to a regex,
+       * and the RENDERED FONT SIZE, because 11px and 12.5px carry the same
+       * words. Read in the page off the computed style rather than off the
+       * class name, which says nothing about what was painted.
+       */
+      const statHints = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main [data-stat-hint]")].map((el) => {
+          const tile = el.closest(".card");
+          const value = tile?.querySelector("[data-stat-value]")?.textContent?.trim() ?? "";
+          return {
+            label: tile?.querySelector(".label-xs")?.textContent?.trim() ?? "",
+            text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+            px: parseFloat(getComputedStyle(el).fontSize),
+            /**
+             * AN ABSENT TILE CARRIES A REASON, NOT A DEFINITION, AND MUST NOT
+             * BE CUT. absentTile(reason, hint) names the document that would
+             * fill the gap, which this book requires to be complete rather than
+             * brief — so the brevity bound applies to the tiles carrying a
+             * FIGURE, and the two are told apart by the value rather than by
+             * their words.
+             */
+            absent: /^[\u2014-]$/.test(value),
+          };
+        }));
       /**
        * THE QUANTITY ACCOUNT, READ OFF THE CELLS RATHER THAN THE PROSE.
        *
@@ -13565,7 +13727,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
