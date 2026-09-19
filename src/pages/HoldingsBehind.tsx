@@ -1,10 +1,9 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronDown, ChevronRight, Layers, Wallet, Coins, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/Card";
-import { Kpi } from "@/components/Kpi";
 import { SearchInput } from "@/components/SearchInput";
-import { AbsentSection, AbsentValue, AbsentCell, DASH } from "@/components/Absent";
+import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
@@ -392,11 +391,17 @@ export function HoldingsBehind() {
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
           {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
               sections from the dashboard UI."* What it said — which set this is
-              and on what basis — is the HEADING plus the four tiles below, whose
-              own captions carry the counts (`369 holdings · 213 names · 34
-              accounts`), the coverage (`60 of 369 report none`) and the reason a
-              refused figure is refused. `Drilldown.lead` went with it rather
-              than being left as a field nothing renders. */}
+              and on what basis — is the HEADING plus the figure beside it.
+
+              IT USED TO SAY "the four tiles below, whose own captions carry the
+              counts, the coverage and the reason a refused figure is refused",
+              and the family have since asked for those tiles too. The counts and
+              the basis are on the headline now and the coverage is on the footer
+              cell it is about; the sentence is corrected here rather than left
+              pointing at four cards that are gone, which is how a comment comes
+              to describe a surface the next session then goes looking for.
+              `Drilldown.lead` went with the paragraph rather than being left as
+              a field nothing renders. */}
           {/* ── THE SETS THIS FIGURE IS MADE OF ─────────────────────────────
               *"just give the toggle option inside the Consolidated NAV link
               page"* — and the same for every other tile. Each of these was its
@@ -450,13 +455,49 @@ export function HoldingsBehind() {
                 note on that header for what §6 says and what it costs. */}
         </div>
 
+        {/* ── THE HEADLINE, AND THE TWO FACTS THE TILES USED TO CARRY ──────
+            *"remove the top 4 KPI tiles from the UI."* The four figures they
+            printed — value, invested, unrealised P&L and return on cost — are
+            every one of them a column of the table below, under its own
+            heading, totalled in its own footer. A total belongs UNDER THE COLUMN
+            IT TOTALS, which is what this repo settled when the allocation footer
+            carried a money-weighted figure in a column of returns on cost, so
+            the footer is the stronger surface and the tiles were the second one.
+
+            TWO OF THE CAPTIONS WERE THE LAST STATEMENT OF A FACT ANYWHERE and
+            neither is in the footer, so both are here rather than gone:
+
+              · THE COUNTS. `358 holdings · 202 names · 32 accounts` is what the
+                Morning CIO tile's own Positions and Distinct names reproduce,
+                and the footer counts GROUPED rows (a name held in four folios is
+                one) so it cannot state them.
+              · THE DEDUPE BASIS, which decides whether a holding two members
+                both carry is counted once or twice. It was a pill, then this
+                page's table subtitle, and the family have now asked for that
+                subtitle; it is four words here, at the same weight the pill had.
+
+            The cost COVERAGE, the closed rows and the negligible floor moved to
+            the footer cells' own hovers — weaker than a caption, said plainly
+            rather than glossed, and the treatment the Portfolio Monitor already
+            gives the same three facts at the family's own instruction. */}
         <div className="text-right">
-          <div className="mono text-2xl font-semibold text-slate-100">{money(mv)}</div>
+          <div className="mono text-2xl font-semibold text-slate-100"
+               data-hb-total={mv}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {shareOfBook == null
               ? "no book value to measure a share against"
               : <>{shareOfBook.toFixed(1)}% of the {money(bookMV)} book</>}
           </div>
+          {!d.absent && (
+            <div className="mt-1 text-[10.5px] text-slate-500"
+                 data-hb-holdings={rows.length} data-hb-names={names.size}
+                 data-hb-accounts={accounts.size} data-hb-deduped={d.deduped ? "1" : "0"}>
+              {fmtNum(rows.length)} {rows.length === 1 ? "holding" : "holdings"} · {fmtNum(names.size)}{" "}
+              {names.size === 1 ? "name" : "names"} · {fmtNum(accounts.size)}{" "}
+              {accounts.size === 1 ? "account" : "accounts"} ·{" "}
+              {d.deduped ? "each holding counted once" : "each statement's row as printed"}
+            </div>
+          )}
         </div>
       </div>
 
@@ -464,47 +505,14 @@ export function HoldingsBehind() {
         <Card><AbsentSection what={d.absent.what} needs={d.absent.needs} /></Card>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi label="Market value" value={money(mv)}
-              sub={`${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} · ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"} · ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}`}
-              icon={<Wallet className="h-4 w-4" />} />
-            <Kpi label="Invested"
-              value={cost === null ? <AbsentValue /> : money(cost)}
-              sub={cost === null
-                ? <span className="text-slate-500">no statement here reports a cost — absent, not zero</span>
-                : noCost.length
-                  ? <span className="text-slate-500">cost in · {noCost.length} of {rows.length} report none, {money(withoutCostMV)} of the value</span>
-                  : "cost in · every holding here reports one"}
-              icon={<Coins className="h-4 w-4" />} />
-            <Kpi label="Unrealised P&amp;L"
-              value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
-              sub={pnl === null
-                ? <span className="text-slate-500">needs a cost these statements do not print</span>
-                : noCost.length
-                  ? <span className="text-slate-500">on the {rows.length - noCost.length} holdings reporting a cost</span>
-                  : "on cost"}
-              icon={<TrendingUp className="h-4 w-4" />} />
-            {/* THE RETURN REFUSES ITSELF ON EXACTLY THE SETS MORNING CIO DOES.
-                Direct Equity, Mutual Fund and ETF each report a cost on a
-                minority of their holdings, so their allocation row prints an em
-                dash — and a drill-down opening from that dash and printing a
-                percentage would be the two screens contradicting each other on
-                the reader's own click. */}
-            <Kpi label="Return on cost"
-              value={ret.pct == null ? <AbsentValue /> : <span className={changeColor(ret.pct)}>{fmtPct(ret.pct, { sign: true, decimals: 1 })}</span>}
-              sub={ret.pct != null
-                ? "total to date · cumulative, not annualised"
-                : <span className="text-slate-500">
-                    {cost === null
-                      ? "no cost is reported here, so there is nothing to strike a return against"
-                      : withoutCostMV > 0
-                        ? <>Invested covers {rows.length - noCost.length} of {rows.length} holdings here and Value covers all of them — the {money(withoutCostMV)} that reports no cost stands in one column and not the other, so a percentage across the two would divide one set of holdings by another</>
-                        : cost <= 0
-                          ? <>the statements report a cost of {money(cost)} here — a measured figure, not a missing one</>
-                          : "no unrealised gain is reported against the cost here"}
-                  </span>}
-              icon={<Layers className="h-4 w-4" />} />
-          </div>
+          {/* ── NO KPI TILES ─────────────────────────────────────────────
+              *"remove the top 4 KPI tiles from the UI."* Market value,
+              Invested, Unrealised P&L and Return on cost were four figures
+              above a table whose footer already totals all four, each under the
+              heading of the column it totals. See the headline block above for
+              what the four CAPTIONS carried and where each fact went; nothing
+              they said is dropped, and the two that had no second surface are
+              on the headline rather than in a hover. */}
 
           {/* ── THE ARITHMETIC, WHERE THE READER LANDED ────────────────────
               *"even the calculation that we're showing that appears when click
@@ -604,26 +612,37 @@ export function HoldingsBehind() {
             </Card>
           )}
 
+          {/* ── NO SUBTITLE PARAGRAPH ────────────────────────────────────
+              *"remove the highlighted text."* It carried four claims and every
+              one was checked before it went:
+
+                · WEIGHT IS WITHIN THIS SET — the footer's Weight cell prints
+                  100% and names this set's own total as the denominator in its
+                  hover, which is the column that claim is about.
+                · THE DEDUPE BASIS — load-bearing, and NOT dropped: it is four
+                  words under the headline figure above, where the counts it
+                  governs are.
+                · THE CLOSED POSITIONS and THE NEGLIGIBLE FLOOR — counts of rows
+                  the table does NOT draw, so they are on the footer's own
+                  row-count cell, beside the "N filtered out" it already
+                  carries. That is the treatment the Portfolio Monitor gives the
+                  identical two facts, at the family's own instruction.
+
+              A hover is weaker than a caption and that is said rather than
+              glossed. What it buys is the screen the family asked for.
+
+              ── AND THE FILTER BOX IS WIDER, AND CANNOT BE SQUEEZED ──────────
+              *"fix the search bar at the top of the table, it is very small."*
+              `w-56` was a width on a flex ITEM with nothing stopping it
+              shrinking, and the subtitle beside it was a paragraph — so the box
+              collapsed to about a third of its stated width and clipped its own
+              placeholder to "Filter b". Removing the paragraph alone would have
+              hidden that rather than fixed it: a long enough title would bring
+              it straight back. `shrink-0` is the fix and the extra width is the
+              request. */}
           <Card className="mt-5" pad={false}
             title="The holdings behind it"
-            subtitle={`Weight is within this set, not within the book — ${money(mv)} is the denominator. Every figure is as the statements report it, ${d.deduped ? "with each holding two members both carry counted once" : "each statement's row as printed"}.${
-              // CURRENT HOLDINGS ONLY, AND THE COUNT SAYS SO. A reader who
-              // arrives from a tile counting every position would otherwise find
-              // fewer rows here with nothing to explain the gap. No figure moves
-              // — these carry ₹0 and report no cost — so only the count is named.
-              d.closedExcluded > 0
-                ? ` ${fmtNum(d.closedExcluded)} closed position${d.closedExcluded === 1 ? " is" : "s are"} not listed: the fund still publishes a NAV, the family no longer holds ${d.closedExcluded === 1 ? "it" : "them"}, and ${d.closedExcluded === 1 ? "it carries" : "they carry"} no value and no cost here.`
-                : ""
-            }${
-              // THE FLOOR IS NAMED SEPARATELY, AND WITH ITS VALUE. A closed row
-              // is ₹0 so its count is the whole story; these moved this page's
-              // own total, and a reader reconciling it against the tile they
-              // came from is owed the figure rather than left to find it.
-              d.negligibleExcluded.count > 0
-                ? ` ${fmtNum(d.negligibleExcluded.count)} holding${d.negligibleExcluded.count === 1 ? "" : "s"} worth under ${money(NEGLIGIBLE_VALUE_FLOOR)} ${d.negligibleExcluded.count === 1 ? "is" : "are"} dropped automatically, ${money(d.negligibleExcluded.value)} in total — at the family's instruction, and not because anything is missing.`
-                : ""
-            }`}
-            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
+            right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-72 shrink-0"
               suggestions={[...new Set(rows.map((r) => r.security))].sort()} />}>
             {shown.length === 0 ? (
               <div className="px-5 pb-5 pt-4">
@@ -830,12 +849,18 @@ export function HoldingsBehind() {
                       );
                     })}
                   </tbody>
+                  {/* THE THREE FACTS THE REMOVED CAPTIONS CARRIED, each handed
+                      to the cell it is about. `holdings` and `noCost` are the
+                      SET's, not the grouped rows' — the coverage is a fact about
+                      statements and a row can club four of them. */}
                   <Foot cols={2} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
                     hidden={hidden} money={money}
                     mv={sum(groups.map((g) => g.mv))}
                     cost={sumOrNull(groups.map((g) => g.cost))}
                     pnl={sumOrNull(groups.map((g) => g.pnl))}
-                    withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))} />
+                    withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))}
+                    holdings={rows.length} noCost={noCost.length}
+                    closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
                 </table>
               </div>
             )}
@@ -950,29 +975,76 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ cols, label, hidden, mv, cost, pnl, withoutCostMV, money }: {
+function Foot({ cols, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible }: {
   cols: number; label: string; hidden: number;
   mv: number; cost: number | null; pnl: number | null; withoutCostMV: number;
   money: (n: number | null | undefined, sign?: boolean) => string;
+  /** The SET's own counts, for the coverage the Invested tile used to state. */
+  holdings: number; noCost: number;
+  /** ...and the rows this table does not draw at all. */
+  closedExcluded: number; negligible: { count: number; value: number };
 }) {
   const r = coveredReturn(mv, cost, pnl, withoutCostMV);
+  /**
+   * WHAT THE COST SIDE COVERS, WORDED ONCE AND USED BY BOTH CELLS THAT NEED IT.
+   *
+   * It was the Invested tile's caption, and it is the reason the Return cell
+   * beside it refuses a figure — so a second wording is a second chance for the
+   * two to describe different sets, which is the failure `costCoversSet` was
+   * extracted for one screen over.
+   */
+  const coverage = noCost > 0
+    ? `${fmtNum(holdings - noCost)} of the ${fmtNum(holdings)} holdings in this set report a cost and ${fmtNum(noCost)} report none, ${money(withoutCostMV)} of the value.`
+    : "";
+  /**
+   * ...AND WHAT THE TABLE LEAVES OUT, on the cell that counts what it drew.
+   *
+   * A closed row is a measured ₹0 and moves no total, so its COUNT is the whole
+   * story; the negligible floor moved this page's own total, so that one carries
+   * its value too. Both are the Portfolio Monitor's own treatment of the same
+   * two facts, arriving on the page that opens from the tile.
+   */
+  const leftOut = [
+    hidden > 0 ? `${fmtNum(hidden)} more match no filter and are not counted here.` : "",
+    closedExcluded > 0
+      ? `${fmtNum(closedExcluded)} closed position${closedExcluded === 1 ? " is" : "s are"} not listed: the fund still publishes a NAV, the family no longer holds ${closedExcluded === 1 ? "it" : "them"}, and ${closedExcluded === 1 ? "it carries" : "they carry"} no value and no cost here.`
+      : "",
+    negligible.count > 0
+      ? `${fmtNum(negligible.count)} holding${negligible.count === 1 ? "" : "s"} worth under ${money(NEGLIGIBLE_VALUE_FLOOR)} ${negligible.count === 1 ? "is" : "are"} dropped automatically, ${money(negligible.value)} in total — at the family's instruction, and not because anything is missing.`
+      : "",
+  ].filter(Boolean).join(" ");
   return (
-    <tfoot>
+    <tfoot data-hb-foot={mv}>
       <tr className="border-t-2 border-ink-600 font-semibold">
-        <td className="px-4 py-2.5 text-left text-slate-200" colSpan={cols}>
+        <td className="px-4 py-2.5 text-left text-slate-200" colSpan={cols}
+            title={leftOut || undefined} data-hb-foot-rows>
           Total · {label}
           {hidden > 0 && <span className="ml-2 text-[11px] font-normal text-slate-500">{hidden} filtered out and not counted here</span>}
         </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-300">{cost == null ? DASH : money(cost)}</td>
-        <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
-        <td className="px-4 py-2.5 text-right mono text-slate-300">{mv > 0 ? "100%" : DASH}</td>
-        <td className={`px-4 py-2.5 text-right mono ${pnl == null ? "text-slate-400" : changeColor(pnl)}`}>{pnl == null ? DASH : money(pnl, true)}</td>
-        <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "text-slate-500" : changeColor(r.pct)}`}>
-          {r.pct == null
-            ? <span title={cost == null
-                ? "No statement in this set reports a cost, so there is no return to strike."
-                : "Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. The coverage is stated on the Invested tile above."}>{DASH}</span>
-            : fmtPct(r.pct, { sign: true, decimals: 1 })}
+        <td className="px-4 py-2.5 text-right mono text-slate-300" data-hb-foot-cost
+            title={cost == null
+              ? "No statement in this set reports a cost — absent, not zero. A depository reports what is held, never what it was paid for, and a ₹0 here would report the whole market value as profit."
+              : coverage || "Every holding in this set reports a cost."}>
+          {cost == null ? DASH : money(cost)}
+        </td>
+        <td className="px-4 py-2.5 text-right mono text-slate-100" data-hb-foot-mv>{money(mv)}</td>
+        <td className="px-4 py-2.5 text-right mono text-slate-300" data-hb-foot-weight
+            title={`Weight is a share of this set, not of the book — ${money(mv)} is the denominator, so the column adds to 100%.`}>
+          {mv > 0 ? "100%" : DASH}
+        </td>
+        <td className={`px-4 py-2.5 text-right mono ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
+            title={pnl == null
+              ? "Needs a cost these statements do not report — absent, not zero."
+              : coverage ? `On the ${fmtNum(holdings - noCost)} holdings reporting a cost. ${coverage}` : "On cost."}>
+          {pnl == null ? DASH : money(pnl, true)}
+        </td>
+        <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "text-slate-500" : changeColor(r.pct)}`} data-hb-foot-return
+            title={r.pct == null
+              ? cost == null
+                ? "No statement in this set reports a cost, so there is nothing to strike a return against."
+                : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
+              : `Total to date · cumulative, not annualised. ${coverage || "Every holding in this set reports a cost."}`}>
+          {r.pct == null ? DASH : fmtPct(r.pct, { sign: true, decimals: 1 })}
         </td>
       </tr>
     </tfoot>
