@@ -560,57 +560,6 @@ export function HoldingsBehind() {
               on the tile that opens this page and on `/performance`, which names
               each account with the document it is missing. */}
 
-          {/* ── HOW THIS FIGURE IS WORKED OUT ────────────────────────────────
-              *"in money weighted return drill down page add a small
-              derivation/formula section that tells how it is being calculated.
-              It should be explain in short and direct language and clear legible
-              font size."*
-
-              SCOPED TO THIS ONE FIGURE. Every other set on this page is a sum
-              over the rows below it and needs no derivation; a money-weighted
-              rate is the one figure here a reader cannot get to by adding a
-              column up. Set at `text-sm` rather than the 11–12px this page uses
-              for captions, because legibility was half the request.
-
-              EVERY CLAIM IS THE ARITHMETIC `pooledXirr` ACTUALLY RUNS — the
-              per-account terminal date, the sub-year refusal (Stage 10g(ii)'s
-              guard, which this figure once broke by reading +99.0%), and trades
-              not being flows. The account count is DERIVED from the rows, never
-              typed. */}
-          {d.id === "measured" && (
-            <Card className="mt-5" title="How this is worked out">
-              <div className="space-y-3 text-sm leading-relaxed text-slate-300">
-                <p>
-                  Every dated capital movement in or out of the{" "}
-                  <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
-                  account{coveredAccounts === 1 ? "" : "s"} whose statements publish an opening
-                  portfolio value, with that opening value as the first flow and each
-                  account&rsquo;s own closing market value as the last. The rate is the one that
-                  makes them balance.
-                </p>
-                <p className="mono rounded-md border border-ink-700 px-3 py-2 text-[13px] text-slate-200">
-                  find r where &nbsp;Σ&nbsp; flow ÷ (1 + r)<sup>days ÷ 365</sup> &nbsp;=&nbsp; 0
-                </p>
-                <ul className="space-y-1.5 pl-4">
-                  <li className="list-disc">
-                    Each account closes on <span className="text-slate-100">its own report date</span>,
-                    not one shared date — closing them all on the newest would credit the
-                    earlier ones with standing still.
-                  </li>
-                  <li className="list-disc">
-                    Over a window shorter than a year this is the return{" "}
-                    <span className="text-slate-100">earned over that window</span>, never
-                    compounded up to a yearly rate.
-                  </li>
-                  <li className="list-disc">
-                    A buy or a sell is <span className="text-slate-100">not a flow</span>: it moves
-                    cash inside the account, and its proceeds are already in the closing value.
-                    Only money the family put in or took out counts.
-                  </li>
-                </ul>
-              </div>
-            </Card>
-          )}
 
           {/* ── NO SUBTITLE PARAGRAPH ────────────────────────────────────
               *"remove the highlighted text."* It carried four claims and every
@@ -906,6 +855,73 @@ export function HoldingsBehind() {
               <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries every account in full.
             </p>
           </Card>
+
+          {/* ── HOW THIS FIGURE IS WORKED OUT ────────────────────────────────
+              *"in money weighted return drill down page add a small
+              derivation/formula section that tells how it is being calculated.
+              It should be explain in short and direct language and clear legible
+              font size."*
+
+              SCOPED TO THIS ONE FIGURE. Every other set on this page is a sum
+              over the rows below it and needs no derivation; a money-weighted
+              rate is the one figure here a reader cannot get to by adding a
+              column up. Set at `text-sm` rather than the 11–12px this page uses
+              for captions, because legibility was half the request.
+
+              ── AND IT SITS BELOW THE TABLE ──────────────────────────────────
+              *"show the table first and the formula section below it."* It
+              opened above the rows, which put a derivation between the reader
+              and the holdings they clicked in to see. The table is what this
+              page is; the derivation explains the figure in the header, so it
+              reads as a footnote to the page rather than as a preamble to it,
+              and the rows start one card higher. Nothing about what it says
+              changed — the claim is about ORDER, so it is asserted on the two
+              cards’ own geometry rather than on any word either of them prints.
+
+              EVERY CLAIM IS THE ARITHMETIC `pooledXirr` ACTUALLY RUNS — the
+              per-account terminal date, the sub-year refusal (Stage 10g(ii)'s
+              guard, which this figure once broke by reading +99.0%), and trades
+              not being flows. The account count is DERIVED from the rows, never
+              typed. */}
+          {d.id === "measured" && (
+            <Card className="mt-5" title="How this is worked out">
+              {/* A HANDLE, so the ORDER claim above is struck on the two cards’
+                  own geometry. The table is found by its footer, which is
+                  structural at that end too — matching either card by its title
+                  would make a layout claim depend on prose a redesign is free to
+                  reword, which is the failure this sweep keeps finding. */}
+              <div data-hb-derivation className="space-y-3 text-sm leading-relaxed text-slate-300">
+                <p>
+                  Every dated capital movement in or out of the{" "}
+                  <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
+                  account{coveredAccounts === 1 ? "" : "s"} whose statements publish an opening
+                  portfolio value, with that opening value as the first flow and each
+                  account&rsquo;s own closing market value as the last. The rate is the one that
+                  makes them balance.
+                </p>
+                <p className="mono rounded-md border border-ink-700 px-3 py-2 text-[13px] text-slate-200">
+                  find r where &nbsp;Σ&nbsp; flow ÷ (1 + r)<sup>days ÷ 365</sup> &nbsp;=&nbsp; 0
+                </p>
+                <ul className="space-y-1.5 pl-4">
+                  <li className="list-disc">
+                    Each account closes on <span className="text-slate-100">its own report date</span>,
+                    not one shared date — closing them all on the newest would credit the
+                    earlier ones with standing still.
+                  </li>
+                  <li className="list-disc">
+                    Over a window shorter than a year this is the return{" "}
+                    <span className="text-slate-100">earned over that window</span>, never
+                    compounded up to a yearly rate.
+                  </li>
+                  <li className="list-disc">
+                    A buy or a sell is <span className="text-slate-100">not a flow</span>: it moves
+                    cash inside the account, and its proceeds are already in the closing value.
+                    Only money the family put in or took out counts.
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          )}
 
           {/* THE COMPANION TABLE IS GONE — its rows are a FACET now.
               It rendered the second set as a whole extra table below the first,

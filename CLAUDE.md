@@ -8247,7 +8247,13 @@ The client, on two Private Market tiles. Both halves of each are answered **on t
 tile** — `StatTile`'s `hint` renders on screen — because a definition a reader has
 to point at is a definition they will not find. WHAT it is first, because the
 figure means nothing without it; HOW it is arrived at second, including the two
-folios the uncalled figure cannot cover. The second tile is renamed
+folios the uncalled figure cannot cover. *(**THE "HOW" HALF HAS SINCE GONE** —
+the same client, a round later: "do not show lengthy explanations in the private
+market terms… just tell what is it in short and legible font text." The
+definitions are one line each now and the methodology is on the working line
+under the capital-account table, which already carried it word for word. See
+Stage 10be. What is unchanged is the half this paragraph is actually about: a
+definition belongs ON THE TILE and never in a hover.)* The second tile is renamed
 **Distributions (cash returned)**: its sub-line had always said "distribution
 figure", so a reader asking what a distribution is was reading a word the tile
 used and never defined.
@@ -11227,6 +11233,142 @@ have meant a route appeared somewhere nobody looked.
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a presentation-layer removal that moved a generated figure would not
 be one.
+
+### Stage 10be — THE TABLE READS FIRST, AND A DEFINITION IS ONE LINE
+
+*"show the table first and the formula section below it."* · *"do not show
+lengthy explanations in the private market terms… just tell what is it in short
+and legible font text."* · *"remove the highlighted text from the dashboard ui."*
+
+Three asks on three screens. The first is layout; the other two are the same
+instruction arriving at two different walls of prose, and each needed the audit
+this file has run five times now — check every claim for a second home, move what
+has none onto the figure it describes, delete the rest, assert both.
+
+#### 1. The derivation was standing between the reader and the rows
+
+`/holdings?of=measured` drew **How this is worked out** above **The holdings
+behind it**, so a reader who clicked a figure to see the holdings behind it met a
+formula first. The card moves below the table: the table is what the page IS, and
+the derivation explains the figure in the HEADER, so it reads as a footnote to
+the page rather than a preamble to it.
+
+**NOT ONE WORD OF IT CHANGED, WHICH IS WHY NO EXISTING CHECK COULD SEE THE
+MOVE.** Both cards print the same text either way round, so every text and figure
+invariant on this route passed the whole time. **A claim about ORDER is
+geometry**, and it is struck on the two cards' own bounding boxes — the same rule
+the headline's inline layout, Export Excel's row and the KPI overlay anchor
+already follow. Both ends are found STRUCTURALLY: the derivation by a
+`data-hb-derivation` handle, the table by its own `data-hb-foot`. Matching either
+card by its TITLE would make a layout claim rest on prose a redesign is free to
+reword, which is how a check in this sweep retires itself in silence.
+
+**A MISSING CARD IS A FAILURE, NOT AN ABSTENTION.** This route is the one page in
+the app that draws both, so "I could not find them" means one of them is gone.
+
+#### 2. Six definitions that ran to three paragraphs each
+
+Private Market's tiles grew their definitions when the client asked what two of
+them meant (Stage 10aq) — and the answer ran 600–900 characters a tile, in
+**11px `slate-500`**, under figures rendered at 22px. So the text explaining the
+hardest word on the page was the least readable thing on it.
+
+**THE SECOND INSTRUCTION NARROWS THE FIRST RATHER THAN REVERSING IT.** They still
+want to know what the term IS — *"just tell what is it"* — so WHAT IT IS stays on
+every tile, at one or two short sentences, and the METHODOLOGY goes. Measured:
+**101–140 characters a tile, at 12.5px.**
+
+**AND THE METHODOLOGY WAS ALREADY ON THE PAGE, WORD FOR WORD.** That is what made
+the cut safe rather than merely shorter — checked before anything was deleted:
+
+| What the paragraph carried | Where it already was |
+| --- | --- |
+| "summed exactly as printed, never worked out as committed − called" | the working line under the capital-account table, beside the rows it sums |
+| "Called and Invested cover different sets and must not be subtracted" | the same working line, at greater length |
+| "why it is a floor" — the account coverage | the tile's own **sub-line**, and the card below it |
+| how the distributions figure is arrived at | the tile's own sub-line — *"N of M capital accounts publish a distribution figure"* IS the method |
+
+**FOUR CLAIMS HAD NO SECOND HOME AND EVERY ONE STAYED**, because each is
+something a reader acts on and none of them is guessable from the figure:
+
+- **uncalled is in no total on this page** — a LIABILITY sitting in a row of
+  market values, which is the one thing a reader could otherwise get wrong;
+- **Called must never be subtracted from Invested** — they sit side by side,
+  which is exactly where a reader subtracts;
+- **Invested (paid in) is not the same set as Capital invested above** — two
+  tiles on one page with almost the same name;
+- **distributions are not part of the value above and do not reduce what a fund
+  can still call** — both of them, on the tile, at nineteen words.
+
+**THE SIZE MOVED IN `StatTile`, NOT PER CALLER.** Every hint in this app is the
+same thing in the same place — a definition of the figure above it — and a size
+chosen per page is a size that drifts. Four other pages get the same legibility
+with no change to their words.
+
+**AND AN ABSENT TILE'S HINT IS NOT A DEFINITION AND MUST NOT BE CUT.**
+`absentTile(reason, hint)` names the document that would fill the gap, which this
+book requires to be COMPLETE rather than brief — Realised gain runs 206
+characters and the TVPI/DPI refusal 442, both correctly. **The first draft of the
+brevity check failed on exactly those two**, which is how the distinction was
+found rather than reasoned: the bound now applies to tiles carrying a FIGURE, and
+the two are told apart by `data-stat-value` rather than by their words. The SIZE
+floor still covers both — a reason is no easier to read at 11px than a definition.
+
+#### 3. The NAV card's subtitle, cut to a basis line
+
+Stage 10al removed four paragraphs from this card and moved the rebase clause
+INTO the subtitle; the family are now pointing at the subtitle. It ran four
+sentences, and the audit found **three claims with no second home that a reader
+acts on all three of**:
+
+- **the window and the point count** — the range note under the chart names the
+  INDEX's window, which is a different and much longer one;
+- **the coverage** — a reader comparing this line to an index has to know how much
+  of the book it measures, and the `<details>` below names the 38 accounts that
+  CANNOT supply a series, which is the complement rather than the figure;
+- **the rebase** — the y-axis reads 84 / 91 / 98, a RATIO and not an amount, so
+  without it those ticks are unitless and the chart quietly stops saying what it
+  is measuring. This file already records it as the one sentence of the earlier
+  block that had to land somewhere rather than go.
+
+So the subtitle is **one line** carrying those three, which is the removal the
+family asked for; the METHODOLOGY — how a point is struck, how the panel grows —
+went to that line's own hover. **A hover is weaker than a caption and that is
+recorded rather than glossed.**
+
+**AND THE PANEL INVARIANT WAS RE-HOMED, NOT DELETED.** Its own comment says the
+panel is the one thing no figure on the card discloses, so the check follows the
+fact to the hover and still derives both ends and the completion date from
+`NAV_SERIES_BOOK` — it fails by name if the series ever reverts to starting where
+the panel completes, which is the regression it exists for.
+
+#### Eight bugs reintroduced, each firing its own check
+
+Restored by COPY on a `trap … EXIT` and **rebuilt on the way out**, because
+restoring the source alone leaves `dist/` at the bugged build for the next run to
+report under the wrong name.
+
+| Bug put back | Fires |
+| --- | --- |
+| the derivation card above the table | the order check, struck on geometry |
+| the uncalled tile's three paragraphs | the brevity/legibility check **and** the paragraphs-removed check |
+| the hint back to 11px `slate-500` | the brevity/legibility check |
+| the distributions tile cut to its bare definition | the distributions check — SHORT, and no longer honest |
+| the uncalled tile stripped of "in no total on this page" | the uncalled check |
+| the NAV subtitle paragraph restored | the basis-line check |
+| the NAV hover deleted with it | the methodology check **and** the panel check |
+| the rebase clause dropped from the subtitle | the rebase-basis check |
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
+**158 combinations clean**, with the same two evidenced abstentions. The sweep
+count does not move because this change adds no route.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and three presentation changes that moved a generated figure would not be
+three presentation changes.
+
 
 ### Stage 10k — News & Announcements: REMOVED
 
