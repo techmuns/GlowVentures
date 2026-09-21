@@ -37,7 +37,7 @@
 // and both carry a COVERAGE COUNT, because a realised total over three of a
 // manager's nine sells is a different fact from one over all nine, and on screen
 // they are the same number.
-import { mandateLabel, sumOrNull } from "./analytics";
+import { isMandateHeld, mandateLabel, sumOrNull } from "./analytics";
 import type { Txn } from "./ledger";
 import type { Account } from "./types";
 import { sortRows, type TxnSort } from "./txnSort";
@@ -52,22 +52,31 @@ import { sortRows, type TxnSort } from "./txnSort";
  */
 export const STAGGERED_MIN = 4;
 
-export type GroupBy = "manager" | "entity" | "instrument";
-
 /**
- * What the Transactions card is showing.
+ * ── HOW A TRADE IS ROLLED UP, AND WHY "auto" IS THE ONLY ONE LEFT ───────────
  *
- * `direct` is NOT a fourth grouping — it is the `instrument` rollup over a
- * FILTERED tape (the accounts the family runs itself), which is why it lives
- * here as a view rather than as a `GroupBy`. `tape` is the raw dated rows.
+ * `manager`, `entity` and `instrument` were the three groupings the Transactions
+ * card offered as TABS, beside two more views that were not groupings at all.
+ * The family asked for that strip to go and for this card to section the way the
+ * Holdings table does — Category / Asset class / Basket — so the SECTION is now
+ * the axis and the grouping is no longer something a reader picks.
  *
- * `mine` reads a DIFFERENT SOURCE entirely and touches no `Txn`: the family's
- * own dated capital into each mandate and fund (`BOOK_CAPITAL_MOVES`, via
- * `capitalRollup`). It is the default, because the question this card is asked
- * first is what the FAMILY did — a share a discretionary manager picked is that
- * manager's decision, and it belongs one level down, inside the mandate.
+ * `auto` is what the Holdings table already does inside each section, and it is
+ * a per-trade choice between the two behaviours that were already here:
+ *
+ *   • a trade inside a PMS MANDATE rolls up to the mandate, because that is one
+ *     row on the Holdings table too — Stage 10L lifted the mandates out of it
+ *     into one row each, and a share a discretionary manager chose sits inside
+ *     that row rather than beside the family's own;
+ *   • every other trade rolls up to its SECURITY, which is what a Holdings row
+ *     is everywhere else.
+ *
+ * So the two tables draw the same row for the same thing, which is the whole of
+ * what "standardise them" means here. `manager`, `entity` and `instrument` stay
+ * because `rollup` is exercised against fixtures on each of them and because
+ * `auto` is defined in terms of two of them — not as views anybody can select.
  */
-export type TxnView = GroupBy | "mine" | "direct" | "tape";
+export type GroupBy = "manager" | "entity" | "instrument" | "auto";
 
 /** A dated row, plus the group it was filed under. */
 export type TrancheRow = Txn;
@@ -99,6 +108,12 @@ export type InstrumentRow = {
 
 export type GroupRow = {
   key: string;
+  /**
+   * The section this row is drawn under — `groupKeyFor`'s answer, supplied by
+   * the caller. It is part of the group KEY as well, so a group can never span
+   * two sections and be summed into both.
+   */
+  section: string;
   label: string;
   /** The second line: whose money, or how the account is run. */
   sublabel: string | null;
@@ -139,6 +154,10 @@ const money = (xs: (number | null)[]) => sumOrNull(xs);
 export const acctKey = (provider: string, accountNo: string) => `${provider}|${accountNo}`;
 
 function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; label: string; sublabel: string | null } {
+  // AUTO IS NOT A FOURTH RULE — it picks between the two below, per trade, on
+  // the one fact that decides it on the Holdings table as well: whether a
+  // discretionary manager chose the position or the family did.
+  if (by === "auto") return groupOf(t, acc, isMandateHeld(acc?.engagement ?? null) ? "manager" : "instrument");
   if (by === "entity") {
     const label = acc?.owner ?? t.account;
     return { key: `owner:${label}`, label, sublabel: null };
@@ -206,20 +225,46 @@ function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort): Instrume
  * imported — so the arithmetic can be exercised against a fixture instead of
  * against whatever the current drop happens to contain.
  */
-export function rollup(txns: Txn[], accounts: Account[], by: GroupBy, sort: TxnSort = "recent"): GroupRow[] {
+export function rollup(
+  txns: Txn[],
+  accounts: Account[],
+  by: GroupBy,
+  sort: TxnSort = "recent",
+  /**
+   * WHICH SECTION EACH TRADE IS DRAWN UNDER — `groupKeyFor`'s answer, handed in
+   * by the caller through `sectionsFor` (`txnAxis.ts`) rather than decided here.
+   * Two definitions of "which section is this in" is the failure `holdingBucket`
+   * and `groupAxis` were each extracted to stop, and this is the same question
+   * arriving at a dated record.
+   *
+   * Optional, and every row falls in ONE section when it is not supplied, so a
+   * caller that does not section (the fixtures, and `ManagerTrades` inside a
+   * mandate page, where every row is that mandate's by construction) is
+   * unchanged.
+   */
+  sectionOf: (t: Txn) => string = () => "",
+): GroupRow[] {
   const acctByKey = new Map(accounts.map((a) => [acctKey(a.provider, a.accountNo), a]));
-  const groups = new Map<string, { label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
+  const groups = new Map<string, { section: string; label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
 
   for (const t of txns) {
     const acc = acctByKey.get(acctKey(t.provider, t.accountNo));
     const g = groupOf(t, acc, by);
-    const entry = groups.get(g.key) ?? { label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
+    const section = sectionOf(t);
+    // THE SECTION IS PART OF THE KEY, so a group can never span two of them.
+    // A mandate group cannot anyway — one account, one section — but a SECURITY
+    // group can: the same name traded in two accounts whose engagements differ
+    // is two sections on the category axis, and one group summed into both
+    // would double-count it in whichever footer read the sections.
+    const key = `${section}\u0000${g.key}`;
+    const entry = groups.get(key)
+      ?? { section, label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
     // Grouped by instrument, the second level would be one row per group — so
     // it splits by SIDE instead, which is the useful cut there: "everything I
     // bought of this name" beside "everything I sold".
-    const inner = by === "instrument" ? `${t.securityKey}|${t.side}` : t.securityKey;
+    const inner = g.key.startsWith("sec:") ? `${t.securityKey}|${t.side}` : t.securityKey;
     (entry.rows.get(inner) ?? entry.rows.set(inner, []).get(inner)!).push(t);
-    groups.set(g.key, entry);
+    groups.set(key, entry);
   }
 
   const out: GroupRow[] = [];
@@ -236,6 +281,7 @@ export function rollup(txns: Txn[], accounts: Account[], by: GroupBy, sort: TxnS
     const dates = all.map((r) => r.date).filter(Boolean).sort();
     out.push({
       key,
+      section: g.section,
       label: g.label,
       sublabel: g.sublabel,
       trades: all.length,
@@ -275,4 +321,33 @@ export function rollupTotals(groups: GroupRow[]) {
     realizedOf: groups.reduce((s, g) => s + g.realizedOf, 0),
     securities: new Set(groups.flatMap((g) => g.instruments.map((i) => i.securityKey))).size,
   };
+}
+
+/**
+ * ── THE SECTIONS, AND WHY EACH SUBTOTAL IS SUMMED FROM ITS OWN ROWS ─────────
+ *
+ * The Holdings table draws a heading per section with that section's own totals
+ * under its own columns, and the Transactions table now does the same. The
+ * subtotal is summed FROM the group rows the section renders — never recomputed
+ * off the tape — because a subtotal derived independently of the rows above it
+ * can be right on its own terms while every row is wrong, which is the Private
+ * Market page's PM-1 defect and the reason `rollupTotals` already works this
+ * way one level up.
+ *
+ * `order` is the axis's own reading order (`orderSections` in `txnAxis.ts`), so
+ * the two tables cannot draw the same sections in a different order.
+ */
+export type SectionRows = {
+  key: string;
+  rows: GroupRow[];
+  totals: ReturnType<typeof rollupTotals>;
+};
+
+export function sectionRollup(groups: GroupRow[], order: (keys: string[]) => string[]): SectionRows[] {
+  const by = new Map<string, GroupRow[]>();
+  for (const g of groups) (by.get(g.section) ?? by.set(g.section, []).get(g.section)!).push(g);
+  return order([...by.keys()]).map((key) => {
+    const rows = by.get(key) ?? [];
+    return { key, rows, totals: rollupTotals(rows) };
+  });
 }

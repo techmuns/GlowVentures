@@ -22,15 +22,28 @@ export type DisplayCurrency = "INR" | "USD" | "EUR" | "GBP";
  * ordinary listed equity and are classified as such. How an account is run is
  * `Account.engagement`; what it holds is this.
  */
-export type AssetClass =
-  | "Equity"
-  | "ETF"
-  | "Mutual Fund"
-  | "AIF"
-  | "Bond"
-  | "Structured Product"
-  | "Unlisted"
-  | "Cash";
+export const ASSET_CLASSES = [
+  "Equity",
+  "ETF",
+  "Mutual Fund",
+  "AIF",
+  "Bond",
+  "Structured Product",
+  "Unlisted",
+  "Cash",
+] as const;
+
+export type AssetClass = (typeof ASSET_CLASSES)[number];
+
+/**
+ * IS THIS ONE OF THEM? A `Txn.assetClass` is what the STATEMENT called the
+ * instrument — a free string, and null where it said nothing — so a dated
+ * record being filed under the same section as a holding has to be able to ask.
+ * A class this model does not carry is not silently coerced into one: the
+ * caller names it absent, exactly as it does for a null.
+ */
+export const isAssetClass = (v: string | null | undefined): v is AssetClass =>
+  v != null && (ASSET_CLASSES as readonly string[]).includes(v);
 
 /**
  * How the family engages the provider — a relationship, not an asset.

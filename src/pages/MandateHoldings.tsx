@@ -410,7 +410,7 @@ export function MandateHoldings() {
 
           MEASURED BEFORE REMOVING IT: Buoyant is not a row on that card at all
           (it publishes no dated capital record), so this card was never the way
-          into its dealing; the Manager trades tab is, and it covers all ten accounts
+          into its dealing; the Transactions card's Trades table is, and it covers every account
           whose statements the tape reads. The other six fund folios reaching
           this branch report no dealing whatsoever, so the card was an empty box
           for every one of them — which is what the family pointed at.
@@ -965,7 +965,8 @@ function CapitalIn({ account }: { account: Account }) {
  * and open the drill down page of one AIF/PMS then inside that we should see
  * what all transactions the portfolio manager of that fund has made."*
  *
- * The Transactions card now opens on the family's own capital (What I invested);
+ * The Transactions card draws the family's own capital and their managers'
+ * trading as two tables under one set of controls (Stage 10bg);
  * this is where the manager's own dealing went. Grouped per SECURITY rather
  * than left as a tape, because that is the decision — Green Lantern bought The
  * Anup Engineering on fifty separate days, and fifty rows hide what one row
@@ -1095,7 +1096,7 @@ function ManagerTrades({ account }: { account: Account }) {
             {instruments.length} {instruments.length === 1 ? "line" : "lines"} over the period this account&rsquo;s
             statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it. These are
             the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own capital into it
-            is on the Transactions card, under What I invested.
+            is on the Transactions card, in its Capital in and out table.
           </p>
         </>
       )}

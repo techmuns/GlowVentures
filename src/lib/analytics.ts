@@ -592,7 +592,18 @@ export function cashEquivalentCandidates<T extends { securityKey: string; securi
  * off the position is what would let two rows of one mandate land in two
  * buckets.
  */
-export function holdingBucket(p: { assetClass: string; securityKey?: string }, engagement: string | null | undefined): string {
+/**
+ * WHERE A RECORD GOES WHEN ITS OWN DOCUMENT NEVER SAID WHAT THE INSTRUMENT IS.
+ *
+ * Unreachable from a HOLDING — `Position.assetClass` is required and the ingest
+ * refuses a document that does not state one. It exists because a DATED TRADE
+ * is filed on this same axis and its class is what the STATEMENT printed, which
+ * is sometimes nothing (`txnAxis.ts` measures it). Its own section with its own
+ * reason on screen, never folded into a real one.
+ */
+export const UNSTATED_BUCKET = "Not classified by the statement";
+
+export function holdingBucket(p: { assetClass: string | null; securityKey?: string }, engagement: string | null | undefined): string {
   const route = holdingRoute(engagement);
   // A mandate takes its whole account — the shares AND the cash sleeve beside
   // them — because that is what the manager runs and what the statement totals.
@@ -619,7 +630,10 @@ export function holdingBucket(p: { assetClass: string; securityKey?: string }, e
    * the wrong bucket.
    */
   if (p.assetClass === "Equity") return route === "own" ? DIRECT_EQUITY_BUCKET : UNROUTED_EQUITY_BUCKET;
-  return p.assetClass;
+  // A CLASS NOBODY STATED IS NOT A BUCKET. Only reachable for a dated record —
+  // see `UNSTATED_BUCKET` — and it is named rather than guessed at, because the
+  // alternative here is a section heading spelled `null`.
+  return p.assetClass ?? UNSTATED_BUCKET;
 }
 
 /**

@@ -195,8 +195,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund or
   liquid ETF is cash whatever wrapper its statement typed it as. See Stage 10av.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
-  by both surfaces: the Transactions card's My investments rollup and the
-  per-contribution breakdown a holdings row opens into. See Stage 10ag.
+  by both surfaces: the Transactions card's Capital in and out table and the
+  per-contribution breakdown a holdings row opens into. See Stage 10ag, and
+  Stage 10bg for `capitalSectionRollup`, which files each account's record under
+  the same section its holdings sit in.
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
@@ -246,8 +248,16 @@ cash holding's genuinely-zero return both match, and both are correct.
   excludes the encumbrance count — a pledge moves units between an account's free
   and encumbered balances and nothing enters or leaves. See Stage 10ba.
 - `src/lib/txnSort.ts` — HOW THE TRANSACTION ROLLUPS ARE ORDERED, defined once
-  and applied at all three levels: recent first by default, longest held, or
-  largest. An absent amount sorts last rather than as zero. See Stage 10az.
+  and applied at all three levels: recent first by default, or largest. An
+  absent amount sorts last rather than as zero. "Longest held" was the third
+  and was DELETED from the union rather than hidden, at the family's request —
+  see Stage 10az for the modes and Stage 10bg for the removal.
+- `src/lib/txnAxis.ts` — WHICH SECTION A DATED RECORD LANDS IN: the same three
+  axes the Holdings table sections on, joined to a trade's own fields (provider
+  + account number, `securityKey`, the class its STATEMENT printed). It defines
+  no fourth taxonomy — `groupKeyFor` still answers — and it takes a `GroupAxis`
+  rather than a `MonitorAxis`, so a transactions table sectioned by SECURITY
+  does not compile. See Stage 10bg.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -3296,6 +3306,15 @@ dated rows.**
 tranche — and `TransactionsView` renders them expandable, with **By manager**
 (the default), **By entity**, **By security** and **Tape**. Tape stays because a
 reconciliation against a PDF needs the printed rows in printed order.
+
+*(**THE TAB GROUP IS GONE SINCE Stage 10bg** — the family asked for the
+transactions card to section the way the holdings table does, so the GROUPING is
+the shared axis now and `rollup`'s `by` is `auto`: a mandate rolls up to its
+manager, everything else to its security, which is what the Holdings table
+already did per section. The three levels are unchanged. Tape's own reason
+survives on the surface that actually serves it: `/audit` prints each statement's
+extracted rows in printed order, document by document, which is what a
+reconciliation against a PDF needs and what a rollup never was.)*
 
 **THE STAGGERED ASK NEEDS NO DETECTOR, AND THAT IS THE POINT.** Grouping by
 instrument collapses a series whether it was a monthly SIP, a broker working an
@@ -9289,6 +9308,16 @@ mean either.
 | By entity | **Trades by member** |
 | Tape | **Full trade list** |
 
+***THE WHOLE STRIP HAS SINCE BEEN REMOVED — see Stage 10bg.*** Renaming it was
+the right answer to the question asked here (*"when you have a label, what does
+it stand for?"*) and it did not survive the next one: the family read the strip
+beside the Holdings table's own Category / Asset class / Basket control and asked
+why the two screens categorise differently. Better words on five tabs could not
+fix that, because the five were never five of anything — two SOURCES, three
+GROUPINGS and a raw list. The entry stays because the LESSON is about labels
+rather than about that control, and because "Direct Equity is not renamed" is
+still live: it is a section heading on that table now, spelled exactly the same.
+
 **"DIRECT EQUITY" IS NOT RENAMED, AND THAT IS THE DECISION HERE.** The family
 asked for that exact word on that exact tab — *"Replace by security with direct
 equity, that will contain the transaction of all direct buy and sold equity
@@ -11528,6 +11557,276 @@ blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
 regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a
 control before and after: nothing here touches the ingest, and a layout change
 that moved a generated figure would not be a layout change.
+
+### Stage 10bg — ONE CATEGORISATION FOR BOTH TABLES, AND THE TRANSACTIONS CARD STOPS HAVING ITS OWN
+
+*"the format of the transactions page and the holdings page is very different,
+when the user switches from holdings default page to the transactions there's a
+lot of difference in the format and different categorization names and methods.
+Make sure that the transactions page matched the … categorization as in the
+holdings page, and by default the transactions show from newest to oldest. Paid
+in/Taken Out filters should be renamed as buys and sells, remove the
+categorization 'What I invested / Direct Equity / Manager trades / Trades by
+member / Full trade list' replace it with what is in the holdings — 'Category /
+Asset class / Basket', don't put security categorization filter in transactions.
+And the toggle switch of recent first/largest first… remove longest first filter.
+UI of both the pages should be standardized so it is not confusing and easy to
+use for the user."*
+
+**THE FIVE TABS WERE NOT FIVE OF ANYTHING.** That is the whole diagnosis, and it
+is why this is a regroup rather than a rename: they mixed two SOURCES with three
+GROUPINGS and a raw list, in a vocabulary no other screen used.
+
+| The tab | What it actually was | What it is now |
+| --- | --- | --- |
+| What I invested | a different SOURCE — `BOOK_CAPITAL_MOVES`, the family's own dated capital | the **Capital in and out** card, sectioned on the shared axis |
+| Manager trades | the tape grouped by MANDATE | a PMS mandate is one row of the **Trades** card, in the PMS mandates section |
+| Direct Equity | the tape FILTERED to the family's own accounts | the Direct Equity SECTION, reached through the Holdings table's own section filter |
+| Trades by member | the tape grouped by OWNER | the **All entities** filter, which was already on the row above |
+| Full trade list | the raw dated rows | a row's own expansion, and `/audit`, which prints each statement's rows as printed |
+
+**SO NOTHING A READER PICKS DECIDES WHICH RECORD THEY ARE LOOKING AT ANY MORE**,
+which is what made the strip confusing: "What I invested" and "Manager trades"
+are not two views of one thing, they are two different measurements, and the
+tabs presented them as alternatives. Both are on screen together now, each in its
+own card, under ONE set of controls.
+
+**AND THE GROUPING IS THE HOLDINGS TABLE'S OWN.** `?group=` is shared: a reader
+who has sliced the holdings by basket crosses to the transactions already sliced
+the same way. The axis control moved out of the Holdings-only branch onto the row
+both views share, so the first four controls on Transactions are now character
+for character the first four on Holdings — the pick-list, All entities, the axis,
+the section filter.
+
+**THE SECURITY AXIS IS ABSENT BY TYPE, NOT BY AN OMITTED BUTTON.** Everything in
+`src/lib/txnAxis.ts` takes a `GroupAxis` — the three ALLOCATION axes — rather than
+the Monitor's four-key `MonitorAxis`, so a transactions table sectioned by
+security would not compile. It files every holding in ONE section by design
+(`SECURITY_SECTION`), so a table built on it would draw a single heading over
+everything and mean nothing. A reader arriving on `?group=security` lands on
+Category and the control SAYS so: `activeAxis` is what lights a button, and
+comparing against the raw param lit nothing at all.
+
+#### Two cards, because one account publishes both records
+
+**THE TWO SOURCES MUST NEVER SHARE A FOOTER, AND THAT IS MEASURED RATHER THAN
+FEARED.** A contribution moves money INTO an account; a trade moves it about
+INSIDE one. Measured over the committed archive: **11 accounts publish a dated
+capital record, 10 issue a transaction statement, and
+`green-lantern-capital-llp-510861` publishes BOTH** — so a combined total
+double-counts it by construction. Two cards, two footers, one set of controls
+and one set of sections.
+
+**AND THE CAPITAL RECORD WAS NOT REMOVED WITH THE TAB IT SAT ON.** It is the only
+surface in this app that carries the family's own dated capital across every
+funded account, and **eight of its eleven rows are FUND FOLIOS** — the five Sanshi
+accounts, both Transition Venture trusts and 3P — whose own `/mandate/:accountId`
+page nothing links to (Stage 10ai measured that and removed the link on purpose).
+Dropping it would also have re-broken the thing Stage 10am fixed: the family went
+looking for the 3P redemption *"anywhere in the transactions page under sell
+side"*, and the Holdings page's closed-position note was removed on the explicit
+grounds that the fact now lives here.
+
+#### `src/lib/txnAxis.ts` — the join, and the type that made it honest
+
+`groupKeyFor` still answers which section a record lands in. This is the JOIN
+that lets a dated record reach it: a trade names its account by the two fields
+its statement prints (provider + number) where `groupKeyFor` wants an
+`accountId`, and carries the class the STATEMENT printed rather than the book's.
+
+**`Classifiable` NAMES THE THREE FIELDS THE TAXONOMY ACTUALLY READS** —
+`{ assetClass, securityKey, accountId }` — and every signature that took a
+`Position` now takes that. A `Position` satisfies it, so no holdings caller
+changed. The alternative was to build a `Position`-shaped object around the three
+real fields with zeros in the money columns, which is a fabricated figure one
+refactor away from being rendered.
+
+**AN UNSTATED CLASS IS PASSED THROUGH, NOT SHORT-CIRCUITED — and the first cut
+got that wrong, which is what reading the rendered page found.** `Txn.assetClass`
+is null where the statement said nothing: **22 of this book's 691 tape rows**.
+Returning `TXN_UNSECTIONED` on a null looked obviously right and drew **Carnelian
+Bespoke Portfolio TWICE** — once under PMS mandates and once under a heading
+saying nothing knew what it was — because **20 of those 22 rows are inside a PMS
+mandate, where the class decides nothing**: `holdingBucket` answers on the
+engagement alone and both family axes key a mandate on its ACCOUNT. `groupKeyFor`
+already answers correctly for a null; letting it is the fix, and it needed
+`holdingBucket` to name the absence (`UNSTATED_BUCKET`) instead of returning it.
+
+The remaining two rows are in an AIF folio, and for those the class is taken from
+the BOOK's own position for that (account, security) — joined on identifiers,
+never on a name. One row survives even that: a Buoyant Class A1 subscription in a
+class the family no longer holds, so nothing in this book says what it is. It
+gets its own section with its own reason, which is what an absence gets
+everywhere else here.
+
+#### A row is what the Holdings table's row is, per section
+
+`rollup(..., "auto", ...)` rolls a trade up to its MANDATE where a discretionary
+manager chose it and to its SECURITY everywhere else. That is not a new rule —
+it is the two behaviours the `Manager trades` and `Direct Equity` tabs already
+had, applied per row instead of offered as a choice, and it is exactly how the
+Holdings table builds its rows (Stage 10L lifted the mandates out into one row
+each and left everything else per security). So Carnelian Bespoke Portfolio is
+one row on both tables and Fractal Analytics is one row on both.
+
+**THE SECTION IS PART OF THE GROUP KEY**, so a group can never span two sections
+and be summed into both. A mandate group cannot anyway — one account, one section
+— but a SECURITY group can: the same name traded in two accounts whose
+engagements differ is two sections on the category axis.
+
+#### The two renames, and the mode that was deleted rather than hidden
+
+**`Paid in` / `Taken out` → `Buys` / `Sells`.** The control carried two
+vocabularies, which was defensible on its own terms (a family movement has no buy
+and no sell) and was half of the "different categorization names" being pointed
+at. One pair of words now, on both tables — and the capital table's columns follow
+it to `Bought` / `Sold`, because a column headed "Paid in" narrowing when a reader
+clicks "Buys" is the same mixed vocabulary one row down. What a movement IS stays
+exact where exactness belongs: the Type column inside an expanded row prints the
+statement's own word (`Subscription`, `Drawdown`, `Full Units Redemption`).
+
+**`Longest held` IS DELETED FROM THE UNION, NOT HIDDEN.** Left in `TXN_SORTS` and
+merely not rendered, `sortRows`'s `held` branch would be a mode nothing can
+select — dead code wearing a confident explanation. Removing the id makes
+reintroducing it a type error, the treatment the fabricated Economy `Row` fields
+got. `Sortable.first` came out with it: a field a type declares and nothing reads
+is the same dead weight one layer up.
+
+**Recent first was already the default** (Stage 10az) and is asserted rather than
+assumed — a default is the change that moves silently.
+
+#### The layout, and why it is two scrolling cards rather than one page scroll
+
+`position: sticky` resolves against the nearest SCROLLING ancestor, so two
+sticky headers in one page-level scroller pin at once and overlap. The capital
+record is bounded (`max-h`, in **rem** and never `vh` — a viewport unit is not
+rescaled by `--app-zoom`, Stage 10n) and the trades table takes the rest with
+`min-h-0 flex-1`, which is exactly what the Holdings card beside it does.
+
+**A FIGURE IN A SECTION HEADING CARRIES ITS OWN NOUN.** `₹34 Cr` beside
+`3 accounts` reads as the section's VALUE and is what was paid IN; the trades
+heading's figure is what was BOUGHT. Both say which — the
+caption-does-not-describe-its-figure failure this page has already paid for
+twice, arriving in a heading.
+
+#### What this change deliberately did not keep, said plainly
+
+**THE RAW TAPE IS GONE**, and its own reason — *"a reconciliation against a PDF
+needs the printed rows in printed order, which no rollup can stand in for"* —
+was checked before it went. It survives on the surface that actually serves it:
+`/audit` prints each transaction statement's extracted rows document by
+document, in the order the statement printed them, which is what a reader
+checking a figure against a PDF opens. A row's own expansion carries the same
+dated rows per security, in the reader's chosen order.
+
+**AND THE THREE GROUPINGS ARE NOT REACHABLE BY URL EITHER.** `manager`,
+`entity` and `instrument` stay in `txnRollup.ts` because `auto` is defined in
+terms of two of them and because the fixtures exercise all three — but nothing
+selects one, which is the opposite of the `?movers=` call at Stage 10al and for
+the same reason it was made there: a param nobody can reach from the page is
+dead code, and these are not params at all.
+
+#### One expression of "the axis the visible table sections on"
+
+`activeAxis` — the raw `?group=` on Holdings, the resolved one on Transactions —
+is what the axis CONTROL lights and what its option list and labels are built
+from, because a control has to describe whichever table is visible. Each TABLE
+sections on its own axis: Holdings on `groupAxis`, Transactions on `txnAxis`.
+
+Those are two different jobs and conflating them is a real defect, measured —
+see the crossing below. What keeps the control and the table from offering a key
+the other cannot match is `setView`, which clears the section when the resolved
+axis moves, exactly as `setGroupAxis` already does when the axis itself does.
+
+#### Fifteen bugs reintroduced, and FOUR of them produced a clean sweep
+
+The harness restores **by copy on a `trap … EXIT` and rebuilds on the way out**
+— two of the files it patches are new and untracked, where `git checkout --`
+silently does nothing, and restoring the source alone leaves `dist/` at the
+bugged build for the next run to report under the wrong name. A patch that does
+not apply, or a build that fails, is reported as NOT A RESULT rather than as a
+clean run; two were, and were rewritten and re-run.
+
+Eight fired their own check immediately: the five-tab strip restored, the trades
+table not sectioned, the capital record not sectioned, the side labels back to
+two vocabularies, the default order back to largest-first, the section filter
+not applied to the tape, the same filter not applied to the capital record, and
+the axis control lighting the raw param (which leaves no button selected at all
+on `?group=security`).
+
+**THE THREE THAT DID NOT ARE THE POINT OF DOING IT**, and each closed a gap:
+
+- **A HIDDEN CONTROL READS EXACTLY LIKE A VISIBLE ONE.** `document.querySelector`
+  finds a `hidden` element, so every claim about the axis control stayed green
+  over a card that no longer offered it. `axisControl` measures its own box now
+  — the geometry rule this sweep already applies to the headline, to Export
+  Excel's row and to the KPI overlay anchor.
+- **A FOOTER THAT ALSO COUNTED THE CAPITAL RECORD.** The check compared the two
+  footers against each other, and 462 + 121 is still not 26. The claim that
+  catches it is the one `rollupTotals` is built on: the footer is summed FROM
+  the rows it draws. Asserted on the default route now, not only one level down.
+- **AND THE DEFECT THIS CHANGE ACTUALLY HAD.** The unstated-class short-circuit
+  drew Carnelian Bespoke Portfolio in two sections at once and nothing saw it —
+  it was found by READING THE RENDERED PAGE. *"No mandate is drawn in more than
+  one section"* is the claim, scoped to mandates because a SECURITY may
+  legitimately split: the same name traded in two accounts whose engagements
+  differ is two rows by design, where a mandate is one account and therefore one
+  section on every axis.
+
+**AND A FOURTH:** reintroducing plain per-security grouping
+in place of `auto` was also clean, because every figure on the card is identical
+either way — the same trades, the same totals — and only the ROW UNIT changes.
+That is the whole of what "matched the categorization as in the holdings page"
+means for a row, so it is asserted on the BOOK: the PMS section can never draw
+more rows than this book has PMS accounts, and every row in it must be a
+mandate. A per-security build draws two hundred-odd.
+
+#### And one latent defect the change itself introduced, found by reading it
+
+Sharing the section filter between two views made a state reachable that had not
+existed: the two resolve `?group=security` differently — Holdings sections on it,
+Transactions falls back to Category — so on that ONE axis, crossing between them
+changes which key the filter is testing. A key carried across matches no row, on
+a page that renders perfectly, with the select HIDDEN on the Holdings side so
+the reader cannot clear it.
+
+`setView` clears the section ONLY where the resolved axis really moves (dropping
+it on every flip would undo the sharing this change is for), which is
+`setGroupAxis`'s own rule arriving through the other control.
+`monitor-axis-crossback` walks it, because every state it passes through is
+individually correct and only the CROSSING is the defect.
+
+**AND THE CHECK FOR IT TOOK THREE GOES, EACH CORRECTED BY MEASUREMENT RATHER THAN
+BY REASONING.** "The table is not empty" was the obvious claim and it is FALSE of
+the defect: the section filter runs BEFORE the derived-only rows are added, so
+590 companies that only a fund holds survive it and the table looks populated
+while its MEASURED value reads **₹0**. It is struck on the footer's Market value
+now — through `COL_STOCK`, because this route lands on the security axis, which
+draws two more columns and would have put the assertion on `Via funds`.
+
+**AND IT EXPOSED A SECOND ONE, IN THE SAME LINE.** The holdings row filter had
+been moved to the RESOLVED axis along with the control, so the row memo's answer
+depended on a value its dependency list does not carry — measured, it served a
+stale Direct-Equity subset of the book under a hidden filter. The row build
+sections on `groupAxis` whatever the other view is doing; only the CONTROL reads
+`activeAxis`, and `setView` is what keeps the two from disagreeing.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
+**168 combinations clean**, with two EVIDENCED abstentions — every KPI tile on
+this book carries a figure, so the absent-tile claim has no subject, and no row
+on the one page that checks it carries a pledge. **MEASURED ON THE MERGED
+TREE**: this branch's own pre-merge run was 164, which is 158 plus the three
+routes it adds (`monitor-txn-basket`, `monitor-txn-secaxis`,
+`monitor-axis-crossback`), and Stage 10bf landed on main while it was open with
+two more. 164 + 4 reconciles here, and it reconciles ONLY because the sweep was
+re-run — every other stage in this file states a count against a base that has
+since moved.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and a regroup of two tables that moved a generated figure would not be a
+regroup.
 
 ### Stage 10k — News & Announcements: REMOVED
 

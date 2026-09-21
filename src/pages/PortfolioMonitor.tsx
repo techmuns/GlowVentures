@@ -22,9 +22,12 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
-import { rollup, rollupTotals, acctKey, type TxnView } from "@/lib/txnRollup";
-import { trancheTable, trancheKey, capitalRollup, capitalTotals, type TrancheTable, type CapitalSide } from "@/lib/tranches";
-import { TXN_SORTS, sortRows, type TxnSort } from "@/lib/txnSort";
+import { rollup, rollupTotals, sectionRollup } from "@/lib/txnRollup";
+import {
+  trancheTable, trancheKey, capitalRollup, capitalTotals, capitalSectionRollup,
+  type TrancheTable, type CapitalSide,
+} from "@/lib/tranches";
+import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
@@ -33,10 +36,15 @@ import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
 // definition on either screen — and for why the FOURTH one, SECURITY, is this
 // page's alone and is deliberately not in `GROUP_VIEWS`.
 import {
-  MONITOR_GROUP_VIEWS, type MonitorAxis, SECURITY_AXIS, SECURITY_SECTION,
+  MONITOR_GROUP_VIEWS, GROUP_VIEWS, type MonitorAxis, type GroupAxis,
+  SECURITY_AXIS, SECURITY_SECTION,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
-  ALL_LABEL, bucketFor, heldUnderMandate,
+  ALL_LABEL, GROUP_COLUMN_HEAD, bucketFor, heldUnderMandate,
 } from "@/lib/groupAxis";
+// WHICH SECTION A DATED RECORD LANDS IN — the same three axes, joined to a
+// trade's own fields. See its header for why the security axis is unreachable
+// from there by type rather than by an omitted button.
+import { sectionsFor, orderSections, TXN_UNSECTIONED, TXN_UNSECTIONED_WHY, type TxnSections } from "@/lib/txnAxis";
 import { Auditable } from "@/components/Auditable";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
@@ -518,7 +526,7 @@ function ReturnMeasureSelect({ measures, onChange }: { measures: ReturnMeasure[]
 
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
-  const [view, setView] = useState<"holdings" | "transactions">("holdings");
+  const [view, setViewState] = useState<"holdings" | "transactions">("holdings");
   /**
    * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
    * family's request, who read the consolidated table as the one they want.
@@ -544,6 +552,21 @@ export function PortfolioMonitor() {
    * to be a link rather than an instruction.
    */
   const [groupAxis, setGroupAxisParam] = useViewParam(MONITOR_GROUP_VIEWS, {}, "group");
+  /**
+   * THE ALLOCATION AXIS — what the Transactions table sections on, and what the
+   * shared section filter offers.
+   *
+   * `?group=security` is the Holdings table's own fourth axis and is not an
+   * allocation axis at all: it files every holding in ONE section so a table
+   * built on it would draw a single heading over everything. A reader who has
+   * sliced the holdings that way and crosses to Transactions therefore lands on
+   * CATEGORY, the default on both screens, rather than on a table with no
+   * sections — and the axis control up there offers three, so the fallback is
+   * visible rather than silent.
+   */
+  const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS ? "category" : groupAxis;
+  /** What the axis control lights up: the raw param on Holdings, the resolved one on Transactions. */
+  const activeAxis: MonitorAxis = view === "holdings" ? groupAxis : txnAxis;
   // These three filters are global — they drive both the Holdings table and the
   // Transactions tape at once. `selected` is a set of security names (empty = all).
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -581,6 +604,29 @@ export function PortfolioMonitor() {
    * goes through this, so no caller can reintroduce it.
    */
   const setGroupAxis = useCallback((k: MonitorAxis) => { setBucket("All"); setGroupAxisParam(k); }, [setGroupAxisParam]);
+  /**
+   * ...AND SO DOES CROSSING BETWEEN THE VIEWS, WHERE THE AXIS CAN CHANGE
+   * UNDER A FILTER NOBODY TOUCHED.
+   *
+   * The section filter is shared now, which is the point — a reader who has
+   * narrowed the holdings to AIF sees the AIF transactions. But the two views
+   * resolve `?group=security` DIFFERENTLY: Holdings sections on it, Transactions
+   * falls back to Category (see `txnAxis`). So on that one axis, switching view
+   * changes which key the filter is testing, and a key carried across matches no
+   * row and empties the table with no message — on a page that renders
+   * perfectly, with the select HIDDEN on the Holdings side so the reader cannot
+   * clear it. That is the same silent-empty-table failure `setGroupAxis` above
+   * exists to stop, arriving through the view switch instead of the axis one.
+   *
+   * ONLY WHEN THE AXIS REALLY MOVES. Dropping a reader's section every time they
+   * flip Holdings ↔ Transactions would undo the sharing this change is for.
+   */
+  const setView = useCallback((v: "holdings" | "transactions") => {
+    const from = view === "holdings" ? groupAxis : txnAxis;
+    const to = v === "holdings" ? groupAxis : txnAxis;
+    if (from !== to) setBucket("All");
+    setViewState(v);
+  }, [view, groupAxis, txnAxis]);
   /**
    * ── THE SECURITY AXIS CHANGES THE ROW BUILD, NOT JUST A SECTION KEY ────────
    *
@@ -680,9 +726,9 @@ export function PortfolioMonitor() {
    * survive the switch.
    */
   const buckets = useMemo(
-    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(groupAxis, accIdx, p))))
-      .sort((a, b) => groupOrdFor(groupAxis)(a) - groupOrdFor(groupAxis)(b))],
-    [positions, accIdx, groupAxis],
+    () => ["All", ...Array.from(new Set(positions.map((p) => groupKeyFor(activeAxis, accIdx, p))))
+      .sort((a, b) => groupOrdFor(activeAxis)(a) - groupOrdFor(activeAxis)(b))],
+    [positions, accIdx, activeAxis],
   );
   /**
    * Each mandate account's OWN totals, struck over every position it holds
@@ -792,6 +838,20 @@ export function PortfolioMonitor() {
      * compare a basket name to a category and match nothing — an empty table on
      * a page that renders perfectly. The filter and its option list must read
      * the SAME key or one of them is lying about what it offers.
+     *
+     * `groupAxis`, WHICH IS WHAT THIS TABLE SECTIONS ON — and deliberately NOT
+     * `activeAxis`, the resolved axis the shared CONTROL lights.
+     *
+     * The two are the same thing here and are not on the table beside this one:
+     * Transactions resolves `?group=security` to CATEGORY, because the security
+     * axis files every holding in one section and is therefore not an allocation
+     * axis at all. The CONTROL has to describe whichever table is visible, so it
+     * reads `activeAxis`; this row build sections on `groupAxis` whatever the
+     * other view is doing, and reading the resolved one here would make the
+     * memo's answer depend on a value its dependency list does not carry —
+     * measured, it served a stale Direct-Equity subset of the book under a
+     * hidden filter. What keeps the two from ever disagreeing is `setView`,
+     * which clears the section when the resolved axis moves.
      */
     if (bucket !== "All") base = base.filter((p) => groupKeyFor(groupAxis, accIdx, p) === bucket);
     /**
@@ -896,7 +956,7 @@ export function PortfolioMonitor() {
         // window to annualise it over, so CAGR renders absent on these rows —
         // and for the same reason the capital behind the mandate bought no units
         // in any one share, so it carries no per-contribution breakdown either.
-        // That money is on the Transactions card, under What I invested.
+        // That money is on the Transactions card, in Capital in and out.
         heldSince: null,
         // NOR AN INVESTED-ON DATE, AND FOR THE SAME REASON ONE LEVEL UP. A
         // mandate is an ACCOUNT; the family funded it on dates the statements do
@@ -1775,25 +1835,58 @@ export function PortfolioMonitor() {
           row does. `setGroupAxis` (not the raw param setter) clears the section
           filter — see its note.
         */}
-        {view === "holdings" && (
-          <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5" role="tablist"
-            aria-label="Group holdings by">
-            {MONITOR_GROUP_VIEWS.map((g) => (
-              <button key={g.key} type="button" role="tab" aria-selected={groupAxis === g.key} title={g.title}
-                data-group-axis={g.key}
-                onClick={() => setGroupAxis(g.key)}
-                className={`rounded px-2 py-1 text-xs font-medium transition-colors ${groupAxis === g.key ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-                {g.label}
-              </button>
-            ))}
-          </div>
-        )}
+        {/*
+          ── ONE AXIS CONTROL, ON BOTH VIEWS ───────────────────────────────
+
+            *"the format of the transactions page and the holdings page is very
+             different… different categorization names and methods… replace it
+             with what is in the holdings — Category / Asset class / Basket.
+             Don't put security categorization filter in transactions."*
+
+          This used to render on Holdings alone, and the Transactions card
+          carried five tabs of its own in a vocabulary no other screen used. It
+          is the same control on both now, reading the same `?group=` param, so
+          a reader who has sliced the holdings by basket crosses to the
+          transactions already sliced the same way.
+
+          TRANSACTIONS OFFERS THREE, AND THE OMISSION IS ENFORCED BY THE TYPE
+          rather than by this list: everything in `txnAxis.ts` takes a
+          `GroupAxis`, so a transactions table sectioned by SECURITY would not
+          compile. The security axis files every holding in ONE section by
+          design (`SECURITY_SECTION`), so it is not an allocation axis at all.
+        */}
+        <div className="inline-flex w-fit items-center gap-0.5 rounded-md border border-ink-700 bg-ink-800/60 p-0.5" role="tablist"
+          aria-label={view === "holdings" ? "Group holdings by" : "Group transactions by"}
+          data-axis-control={view} data-axis-active={activeAxis}>
+          {/* THE ACTIVE BUTTON IS THE AXIS THE TABLE IS REALLY ON, not the raw
+              param. A reader who left Holdings on `?group=security` and crossed
+              to Transactions lands on CATEGORY, and comparing against the param
+              lit nothing at all — a control with no selected option, over a
+              table that plainly has sections. */}
+          {(view === "holdings" ? MONITOR_GROUP_VIEWS : GROUP_VIEWS).map((g) => (
+            <button key={g.key} type="button" role="tab" aria-selected={activeAxis === g.key} title={g.title}
+              data-group-axis={g.key}
+              onClick={() => setGroupAxis(g.key)}
+              className={`rounded px-2 py-1 text-xs font-medium transition-colors ${activeAxis === g.key ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+              {g.label}
+            </button>
+          ))}
+        </div>
         {/* THE SECTION FILTER IS HIDDEN ON THE SECURITY AXIS, which files every
             holding in one section by design — the control would offer a single
-            option and change nothing, which is worse than no control. */}
-        {!bySecurity && (
-          <select value={bucket} onChange={(e) => setBucket(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-            {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[groupAxis] : groupLabelFor(groupAxis)(s)}</option>)}
+            option and change nothing, which is worse than no control. On
+            Transactions the axis is never `security` (`txnAxis` is the one that
+            resolves it), so the control is always offered there.
+
+            ITS OPTIONS COME FROM THE BOOK on both views — the same sections in
+            the same order, because a filter that offered one list beside the
+            holdings and another beside the transactions is the inconsistency
+            being fixed. A section with no dated record says so in the table
+            rather than being missing from the control. */}
+        {!(view === "holdings" && bySecurity) && (
+          <select value={bucket} onChange={(e) => setBucket(e.target.value)} data-section-filter={bucket}
+            className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
+            {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[activeAxis] : groupLabelFor(activeAxis)(s)}</option>)}
           </select>
         )}
         {/*
@@ -3195,8 +3288,8 @@ export function PortfolioMonitor() {
                 list. It rides in the same hover so a future drop still says it.
               • the closed-position note went with ask 2 below: a redeemed
                 holding is no longer on any allocation page at all, and where the
-                money went is Transactions → What I invested, which is the dated
-                record a redemption belongs on.
+                money went is the Transactions card's Capital in and out table,
+                which is the dated record a redemption belongs on.
               • the weight caption is the Weight footer's own hover, on the
                 column it describes.
 
@@ -3292,8 +3385,8 @@ export function PortfolioMonitor() {
             would learn the dashboard lost it. The family have since asked for a
             redeemed holding to leave every allocation page AND for this note to
             go with it, so the fact now lives where a redemption belongs — on
-            Transactions → What I invested as a dated movement under Taken out,
-            which `monitor-txn-out` asserts. A note here would be an allocation
+            the Transactions card's Capital in and out table as a dated movement
+            under Sells, which `monitor-txn-out` asserts. A note here would be an allocation
             page explaining a transaction. `check:pages` INVERTS rather than
             being deleted with it.
           */}
@@ -3363,7 +3456,8 @@ export function PortfolioMonitor() {
           )}
         </Card>
       ) : (
-        <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey} />
+        <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey}
+          axis={txnAxis} section={bucket} />
       )}
     </div>
   );
@@ -3544,9 +3638,53 @@ const HOLDINGS_VIEWS: readonly ViewDef<"security" | "entity">[] = [
   { key: "entity", label: "By entity" },
 ];
 
-const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
 /**
- * MY INVESTMENTS — the capital the FAMILY committed, mandate by mandate.
+ * ── THE SECTION HEADING, DRAWN THE WAY THE HOLDINGS TABLE DRAWS IT ──────────
+ *
+ * Both tables below use it, so the two dated records cannot label one axis two
+ * ways — and it carries the same structural handles the Holdings heading does
+ * (`data-section`, `data-axis`, `data-subtotal`), because a claim about which
+ * section a row sits in must not be struck on prose a redesign may reword.
+ *
+ * `count` is a COUNT AND ITS NOUN, supplied by the caller, because the two
+ * tables count different things: a payment is not a trade, and a heading that
+ * said "trades" over a column of subscriptions would be the caption failure
+ * this page has already paid for twice.
+ */
+function TxnSectionHead({ axis, sectionKey, count, value, valueNoun, colSpan, money }: {
+  axis: GroupAxis; sectionKey: string; count: string; value: number | null; valueNoun: string;
+  colSpan: number; money: (v: number) => string;
+}) {
+  return (
+    <tr className="bg-ink-900/50" data-section={sectionKey} data-axis={axis} data-subtotal={value ?? ""}>
+      <td colSpan={colSpan} className="px-3 py-1.5">
+        <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
+          {sectionKey === TXN_UNSECTIONED ? sectionKey : groupLabelFor(axis)(sectionKey)}
+          <span className="font-normal normal-case tracking-normal text-slate-500">
+            {/* A FIGURE IN A HEADING CARRIES ITS OWN NOUN. `₹34 Cr` beside
+                `3 accounts` reads as the section's VALUE, and it is what was
+                paid in — the caption-does-not-describe-its-figure failure this
+                page has already paid for twice, arriving in a section heading. */}
+            · {count}{value === null ? "" : ` · ${money(value)} ${valueNoun}`}
+          </span>
+          {sectionKey === UNCLASSIFIED && (
+            <span className="font-normal normal-case tracking-normal text-amber-400/80" title={UNCLASSIFIED_WHY}>
+              · the family&rsquo;s review does not list these, so no {axis === "basket" ? "basket" : "asset class"} is stated
+            </span>
+          )}
+          {sectionKey === TXN_UNSECTIONED && (
+            <span className="font-normal normal-case tracking-normal text-amber-400/80" title={TXN_UNSECTIONED_WHY}>
+              · nothing in this book says what {axis === "category" ? "kind of thing" : "class"} these are
+            </span>
+          )}
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * CAPITAL IN AND OUT — the money the FAMILY moved, account by account.
  *
  * *"these are five six transactions I executed… how have I executed lumpsum or
  * through a staggered investment… I want to see it like that."* And: *"in
@@ -3556,7 +3694,26 @@ const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
  * This reads `BOOK_CAPITAL_MOVES` and touches no `Txn`. The two sources answer
  * different questions and must not be mixed on one table: a manager's trade
  * moves money INSIDE an account, and a contribution moves money INTO it.
- * Summing them would count the same rupee twice under one heading.
+ * Summing them would count the same rupee twice under one heading — and it is
+ * not hypothetical, because ONE account in this book (Green Lantern 510861)
+ * publishes both records, so a shared footer would double-count it by
+ * construction. That is why the two are separate CARDS rather than two
+ * groupings of one table, and why each carries its own footer.
+ *
+ * ── IT USED TO BE A TAB AND IS NOT ANY MORE ────────────────────────────────
+ *
+ *   *"remove the categorization 'What I invested / Direct Equity / Manager
+ *    trades / Trades by member / Full trade list' replace it with what is in
+ *    the holdings — Category / Asset class / Basket."*
+ *
+ * Those five mixed two SOURCES with three GROUPINGS and a raw list, which is
+ * the inconsistency the family were pointing at. The GROUPING is the shared
+ * axis now, and the two SOURCES are the two cards — so nothing a reader can
+ * pick decides which record they are looking at, which is what made the strip
+ * confusing. The record itself was not removed with the tab: this table is the
+ * only surface in the app that carries the family's own dated capital across
+ * every funded account, and eight of its eleven rows are fund folios whose own
+ * `/mandate/:accountId` page nothing links to.
  *
  * ── LUMPSUM OR STAGGERED IS A COUNT, NOT A DETECTOR ─────────────────────────
  *
@@ -3566,7 +3723,10 @@ const TXN_CAP = 500; // rows rendered at once; filters narrow beyond this
  * merge, and simpler here because the family asked the question in exactly
  * those terms.
  */
-function MyInvestments({ moves, side, sort }: { moves: CapitalMove[]; side: CapitalSide; sort: TxnSort }) {
+function CapitalInOut({ moves, side, sort, axis, section, sections }: {
+  moves: CapitalMove[]; side: CapitalSide; sort: TxnSort;
+  axis: GroupAxis; section: string; sections: TxnSections;
+}) {
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [open, setOpen] = useState<Set<string>>(() => new Set());
   const toggle = (k: string) =>
@@ -3581,34 +3741,62 @@ function MyInvestments({ moves, side, sort }: { moves: CapitalMove[]; side: Capi
   // already narrowed. They used to be applied here, which made the counter above
   // this table a SECOND filtering of the same set — two definitions of "the
   // movements in view", free to disagree the first time either changed.
-  const groups = useMemo(
+  const all = useMemo(
     () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES, side, sort),
     [moves, accounts, positions, side, sort],
   );
+  // THE SECTION FILTER NARROWS THE ROWS, not the sectioning: a reader who picks
+  // "AIF" is asking this table for its AIF rows, exactly as they would be asking
+  // the Holdings table beside it.
+  const groups = useMemo(
+    () => (section === "All" ? all : all.filter((g) => sections.forAccount(axis, g.accountId) === section)),
+    [all, section, sections, axis]);
+  const secs = useMemo(
+    () => capitalSectionRollup(groups, (id) => sections.forAccount(axis, id), (keys) => orderSections(axis, keys)),
+    [groups, sections, axis]);
   const totals = useMemo(() => capitalTotals(groups), [groups]);
 
   if (!groups.length) {
     return (
-      <Card className="flex min-h-0 flex-1 items-center justify-center">
+      <Card title="Capital in and out" subtitle="What the family paid into each mandate and fund, and what came back.">
         <AbsentSection what={side === "out" ? "No money came back out of any account under these filters"
           : side === "in" ? "No dated contribution matches these filters"
           : "No dated movement matches these filters"}
-          needs="This view reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund, and what came back. Widen the dates, clear the entity filter or switch the side back to All; and note that 40 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
+          needs="This table reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund, and what came back. Widen the dates, clear the entity or section filter or switch the side back to All; and note that 40 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
       </Card>
     );
   }
 
+  const COLS = 10;
   return (
-    <Card pad={false} className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-auto">
+    <Card pad={false} title="Capital in and out"
+      subtitle="What the family paid into each mandate and fund, and what came back — one row per account, sectioned the same way the holdings are. The shares a manager bought inside these accounts are the table below and are never added to these figures."
+      className="flex shrink-0 flex-col">
+      <div className="max-h-[19rem] overflow-auto">
         <table className="min-w-full text-sm" data-mine-table>
           <thead className="sticky top-0 z-10 bg-ink-800">
             <tr className="border-b border-ink-700">
               <th className="label-xs px-3 py-2.5 text-left font-medium">Mandate / fund</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium"
                 title="Whether the money went in as one payment or several. It is a COUNT of dated contributions, not a judgement about them: one is a lumpsum, more than one is staggered.">How it went in</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">Paid in</th>
-              <th className="label-xs px-3 py-2.5 text-right font-medium">Taken out</th>
+              {/*
+                BOUGHT AND SOLD, IN THE VOCABULARY THE FILTER NOW USES.
+
+                  *"Paid in/Taken Out filters should be renamed as buys and
+                   sells."*
+
+                The side filter above says Buys and Sells, and a column headed
+                "Paid in" narrowing when a reader clicks "Buys" is the mixed
+                vocabulary this whole change exists to remove — the table below
+                has always called these two columns Bought and Sold. What a fund
+                subscription IS stays exact where exactness belongs: the Type
+                column inside a row prints the statement's own word for the
+                movement (Subscription, Drawdown, Full Units Redemption).
+              */}
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="Money the family put in — a subscription, a drawdown or a top-up, as the statement types it. Units bought, not shares.">Bought</th>
+              <th className="label-xs px-3 py-2.5 text-right font-medium"
+                title="Money that came back — a redemption or a payout, as the statement types it.">Sold</th>
               <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
               {/* WHAT A COLUMN MEANS BELONGS ON THE COLUMN. Both of these were
                   sentences in the footer the family asked to have removed, and
@@ -3641,168 +3829,182 @@ function MyInvestments({ moves, side, sort }: { moves: CapitalMove[]; side: Capi
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-700/70">
-            {groups.map((g) => {
-              const isOpen = open.has(g.accountId);
-              return (
-                <Fragment key={g.accountId}>
-                  {/* THE ROW'S OWN DATED SPAN, so a claim about the ORDER of
-                      this table is struck on ISO dates rather than on the
-                      "3 Oct 2025" the Period cell renders — which is the prose a
-                      redesign is free to reformat. */}
-                  <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
-                    data-mine-withdrawals={g.withdrawals}
-                    data-mine-first={g.first ?? ""} data-mine-last={g.last ?? ""}
-                    className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
-                    <td className="px-3 py-2">
-                      {/*
-                        ONE AFFORDANCE, AND THE ROW IS IT.
+            {secs.map((sec) => (
+              <Fragment key={sec.key}>
+                {/* ONE HEADING PER SECTION, and only where there is more than
+                    one to tell apart — a single heading over a table that is
+                    already one section is chrome, which is what the Holdings
+                    table does too (`showBucketSections` needs two). */}
+                {secs.length > 1 && (
+                  <TxnSectionHead axis={axis} sectionKey={sec.key} colSpan={COLS} money={money}
+                    count={`${sec.rows.length} ${sec.rows.length === 1 ? "account" : "accounts"}`}
+                    value={sec.totals.contributions === 0 ? null : sec.totals.paidIn} valueNoun="in" />
+                )}
+                {sec.rows.map((g) => {
+                  const isOpen = open.has(g.accountId);
+                  return (
+                    <Fragment key={g.accountId}>
+                      {/* THE ROW'S OWN DATED SPAN, so a claim about the ORDER of
+                          this table is struck on ISO dates rather than on the
+                          "3 Oct 2025" the Invested-on cell renders — which is the
+                          prose a redesign is free to reformat. */}
+                      <tr data-mine-row={g.accountId} data-mine-contributions={g.contributions}
+                        data-mine-withdrawals={g.withdrawals} data-mine-section={sec.key}
+                        data-mine-first={g.first ?? ""} data-mine-last={g.last ?? ""}
+                        className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(g.accountId)}>
+                        <td className="px-3 py-2">
+                          {/*
+                            ONE AFFORDANCE, AND THE ROW IS IT.
 
-                        *"remove the drill down pages for transactions page in
-                        portfolio monitor, we just need to show in drop down
-                        details regarding staggered/lumpsum investments that is
-                        already there, so just remove the full drill down pages
-                        since they're empty."*
+                            *"remove the drill down pages for transactions page in
+                            portfolio monitor, we just need to show in drop down
+                            details regarding staggered/lumpsum investments that is
+                            already there, so just remove the full drill down pages
+                            since they're empty."*
 
-                        The name used to link to `/mandate/:accountId`, and
-                        MEASURED, SEVEN OF THESE TEN ROWS ARE FUND FOLIOS — the
-                        five Sanshi accounts and both Transition Venture trusts —
-                        for which that page can only say it is not a mandate and
-                        draw an empty dealing card beneath. A link a reader is
-                        invited to follow into nothing is worse than no link.
+                            The name used to link to `/mandate/:accountId`, and
+                            MEASURED, EIGHT OF THESE ELEVEN ROWS ARE FUND FOLIOS —
+                            the five Sanshi accounts, both Transition Venture trusts
+                            and 3P — for which that page can only say it is not a
+                            mandate and draw an empty dealing card beneath. A link a
+                            reader is invited to follow into nothing is worse than no
+                            link.
 
-                        The three PMS rows keep their page; it is simply not
-                        reached from HERE. Holdings, Family &amp; Entities, a
-                        company page and every holdings drill-down all link a
-                        mandate, and each of those guards on the account really
-                        being one — so nothing that has something to show became
-                        unreachable, and nothing that had nothing is offered.
-                      */}
-                      <div className="flex items-center gap-1.5">
-                        <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                        <span data-mine-name={g.accountId}
-                          title={`${g.provider} · account ${g.accountNo}`}
-                          className="font-medium text-slate-100">
-                          {g.label}
-                        </span>
-                      </div>
-                    </td>
-                    {/* THE ASK, ANSWERED IN ONE CELL. A count of dated
-                        contributions is the whole of "lumpsum or staggered". */}
-                    <td className="px-3 py-2 text-right whitespace-nowrap">
-                      {side === "out"
-                        // "Lumpsum or staggered" is a fact about how the money
-                        // went IN. Under a redemptions filter there is no
-                        // contribution in view to describe, so the cell counts
-                        // what IS in view rather than printing "lumpsum" over a
-                        // row showing no purchase at all.
-                        ? <span className="pill" data-mine-how="withdrawals">
-                          {g.withdrawals === 1 ? "1 withdrawal" : `${g.withdrawals} withdrawals`}
-                        </span>
-                        : <span className="pill" data-mine-how={g.staggered ? "staggered" : "lumpsum"}>
-                          {g.staggered ? `staggered · ${g.contributions} payments` : "lumpsum"}
-                        </span>}
-                    </td>
-                    {/* A SIDE WITH NOTHING IN VIEW IS ABSENT, NEVER ₹0. Under a
-                        Taken-out filter this row has no contribution in view, and
-                        a ₹0 there reads as an account that was never funded —
-                        which is the measured-zero rule failing in the direction
-                        that invents a fact rather than hides one. */}
-                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
-                      {g.contributions === 0
-                        ? <AbsentCell reason="no contribution is in view — the movements are filtered to what came back out, and this account's paid-in figure is not struck over that" />
-                        : money(g.paidIn)}
-                    </td>
-                    <td className="px-3 py-2 text-right mono text-slate-400 whitespace-nowrap">
-                      {g.withdrawals === 0
-                        ? <AbsentCell reason={g.sideFiltered
-                          ? "no withdrawal is in view — the movements are filtered to what was paid in"
-                          : "no statement for this account reports money coming back out"} />
-                        : money(g.tookOut)}
-                    </td>
-                    <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
-                      {g.net === null
-                        ? <AbsentCell reason="the movements are filtered to one side, and a net over one side of a two-sided record is not a net — clear the side filter to strike it" />
-                        : money(g.net)}
-                    </td>
-                    {/* A CLOSED ACCOUNT IS WORTH ₹0 AND THE ZERO IS MEASURED.
-                        It keeps its zero — the fund reports nil units at a NAV
-                        it still publishes — and says so, because a ₹0 beside a
-                        ₹31.1 Cr redemption is exactly where a reader needs to
-                        know whether the figure is the arithmetic or a gap. */}
-                    <td className="px-3 py-2 text-right mono text-slate-100 whitespace-nowrap"
-                      title={g.value === 0
-                        ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
-                        : undefined}>
-                      {money(g.value)}
-                    </td>
-                    <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.gain === null ? "" : changeColor(g.gain)}`}>
-                      {g.gain === null
-                        ? <AbsentCell reason={g.sideFiltered
-                          ? "the movements are filtered to one side; a gain is struck against the account's whole capital record, so it is not published over part of it"
-                          : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
-                        : money(g.gain)}
-                    </td>
-                    <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.returnPct === null ? "" : changeColor(g.returnPct)}`}>
-                      {g.returnPct === null
-                        ? <AbsentCell reason={g.sideFiltered
-                          ? "the movements are filtered to one side; a return is struck against the account's whole capital record, so it is not published over part of it"
-                          : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
-                        : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(g.returnPct)}</>}
-                    </td>
-                    <td className="px-3 py-2 text-[12px] text-slate-400 whitespace-nowrap">{ownerDisplayName(accIdx.get(g.accountId)?.ownerId ?? null) || g.owner}</td>
-                    <td className="px-3 py-2 text-[12px] mono text-slate-500 whitespace-nowrap">
-                      {g.first === g.last ? fmtDate(g.first) : `${fmtDate(g.first)} → ${fmtDate(g.last)}`}
-                    </td>
-                  </tr>
-                  {isOpen && (
-                    <tr className="bg-ink-900/50" data-mine-panel={g.accountId}>
-                      <td colSpan={10} className="px-3 pb-3 pt-1">
-                        <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                          Every dated movement {g.provider} reports on account {g.accountNo}, as its statement types
-                          them. The shares the manager bought and sold inside it are a different record and are not
-                          here — see <span className="font-medium text-slate-400">Manager trades</span>.
-                        </p>
-                        <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
-                          <table className="min-w-full text-[12px]">
-                            <thead>
-                              <tr className="border-b border-ink-700/70">
-                                <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
-                                <th className="label-xs px-3 py-1.5 text-left font-medium"
-                                    title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
-                                <th className="label-xs px-3 py-1.5 text-right font-medium">Paid in</th>
-                                <th className="label-xs px-3 py-1.5 text-right font-medium">Taken out</th>
-                                <th className="label-xs px-3 py-1.5 text-right font-medium">Units</th>
-                                <th className="label-xs px-3 py-1.5 text-left font-medium">Security bought</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-ink-700/50">
-                              {g.moves.map((m, i) => (
-                                <tr key={`${m.date}-${i}`} data-mine-move={g.accountId}>
-                                  <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(m.date)}</td>
-                                  <td className="px-3 py-1.5 text-slate-400">{m.label}</td>
-                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-emerald-400/90">
-                                    {m.direction === "in" ? (m.amount === null
-                                      ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
-                                      : money(m.amount)) : ""}
-                                  </td>
-                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-rose-400/90">
-                                    {m.direction === "out" ? money(m.amount ?? 0) : ""}
-                                  </td>
-                                  <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-slate-400">
-                                    {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
-                                  </td>
-                                  <td className="px-3 py-1.5 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
+                            The three PMS rows keep their page; it is simply not
+                            reached from HERE. Holdings, Family &amp; Entities, a
+                            company page and every holdings drill-down all link a
+                            mandate, and each of those guards on the account really
+                            being one — so nothing that has something to show became
+                            unreachable, and nothing that had nothing is offered.
+                          */}
+                          <div className="flex items-center gap-1.5">
+                            <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                            <span data-mine-name={g.accountId}
+                              title={`${g.provider} · account ${g.accountNo}`}
+                              className="font-medium text-slate-100">
+                              {g.label}
+                            </span>
+                          </div>
+                        </td>
+                        {/* THE ASK, ANSWERED IN ONE CELL. A count of dated
+                            contributions is the whole of "lumpsum or staggered". */}
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                          {side === "out"
+                            // "Lumpsum or staggered" is a fact about how the money
+                            // went IN. Under a sells filter there is no contribution
+                            // in view to describe, so the cell counts what IS in view
+                            // rather than printing "lumpsum" over a row showing no
+                            // purchase at all.
+                            ? <span className="pill" data-mine-how="withdrawals">
+                              {g.withdrawals === 1 ? "1 withdrawal" : `${g.withdrawals} withdrawals`}
+                            </span>
+                            : <span className="pill" data-mine-how={g.staggered ? "staggered" : "lumpsum"}>
+                              {g.staggered ? `staggered · ${g.contributions} payments` : "lumpsum"}
+                            </span>}
+                        </td>
+                        {/* A SIDE WITH NOTHING IN VIEW IS ABSENT, NEVER ₹0. Under a
+                            Sells filter this row has no contribution in view, and a
+                            ₹0 there reads as an account that was never funded —
+                            which is the measured-zero rule failing in the direction
+                            that invents a fact rather than hides one. */}
+                        <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
+                          {g.contributions === 0
+                            ? <AbsentCell reason="no contribution is in view — the movements are filtered to what came back out, and this account's paid-in figure is not struck over that" />
+                            : money(g.paidIn)}
+                        </td>
+                        <td className="px-3 py-2 text-right mono text-slate-400 whitespace-nowrap">
+                          {g.withdrawals === 0
+                            ? <AbsentCell reason={g.sideFiltered
+                              ? "no withdrawal is in view — the movements are filtered to what was paid in"
+                              : "no statement for this account reports money coming back out"} />
+                            : money(g.tookOut)}
+                        </td>
+                        <td className="px-3 py-2 text-right mono text-slate-200 whitespace-nowrap">
+                          {g.net === null
+                            ? <AbsentCell reason="the movements are filtered to one side, and a net over one side of a two-sided record is not a net — clear the side filter to strike it" />
+                            : money(g.net)}
+                        </td>
+                        {/* A CLOSED ACCOUNT IS WORTH ₹0 AND THE ZERO IS MEASURED.
+                            It keeps its zero — the fund reports nil units at a NAV
+                            it still publishes — and says so, because a ₹0 beside a
+                            ₹31.1 Cr redemption is exactly where a reader needs to
+                            know whether the figure is the arithmetic or a gap. */}
+                        <td className="px-3 py-2 text-right mono text-slate-100 whitespace-nowrap"
+                          title={g.value === 0
+                            ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                            : undefined}>
+                          {money(g.value)}
+                        </td>
+                        <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.gain === null ? "" : changeColor(g.gain)}`}>
+                          {g.gain === null
+                            ? <AbsentCell reason={g.sideFiltered
+                              ? "the movements are filtered to one side; a gain is struck against the account's whole capital record, so it is not published over part of it"
+                              : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                            : money(g.gain)}
+                        </td>
+                        <td className={`px-3 py-2 text-right mono whitespace-nowrap ${g.returnPct === null ? "" : changeColor(g.returnPct)}`}>
+                          {g.returnPct === null
+                            ? <AbsentCell reason={g.sideFiltered
+                              ? "the movements are filtered to one side; a return is struck against the account's whole capital record, so it is not published over part of it"
+                              : g.incompleteReason ?? "no return can be struck against this account's reported capital"} />
+                            : <><span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(g.returnPct)}</>}
+                        </td>
+                        <td className="px-3 py-2 text-[12px] text-slate-400 whitespace-nowrap">{ownerDisplayName(accIdx.get(g.accountId)?.ownerId ?? null) || g.owner}</td>
+                        <td className="px-3 py-2 text-[12px] mono text-slate-500 whitespace-nowrap">
+                          {g.first === g.last ? fmtDate(g.first) : `${fmtDate(g.first)} → ${fmtDate(g.last)}`}
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="bg-ink-900/50" data-mine-panel={g.accountId}>
+                          <td colSpan={COLS} className="px-3 pb-3 pt-1">
+                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                              Every dated movement {g.provider} reports on account {g.accountNo}, as its statement types
+                              them. The shares the manager bought and sold inside it are a different record and are in
+                              the <span className="font-medium text-slate-400">Trades</span> table below.
+                            </p>
+                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                              <table className="min-w-full text-[12px]">
+                                <thead>
+                                  <tr className="border-b border-ink-700/70">
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium"
+                                        title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Bought</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Sold</th>
+                                    <th className="label-xs px-3 py-1.5 text-right font-medium">Units</th>
+                                    <th className="label-xs px-3 py-1.5 text-left font-medium">Security bought</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-ink-700/50">
+                                  {g.moves.map((m, i) => (
+                                    <tr key={`${m.date}-${i}`} data-mine-move={g.accountId}>
+                                      <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(m.date)}</td>
+                                      <td className="px-3 py-1.5 text-slate-400">{m.label}</td>
+                                      <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-emerald-400/90">
+                                        {m.direction === "in" ? (m.amount === null
+                                          ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
+                                          : money(m.amount)) : ""}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-rose-400/90">
+                                        {m.direction === "out" ? money(m.amount ?? 0) : ""}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-slate-400">
+                                        {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </Fragment>
+            ))}
           </tbody>
           {/* SUMMED FROM THE ROWS, never computed beside them. */}
           <tfoot className="sticky bottom-0 border-t border-ink-700 bg-ink-800">
@@ -3845,53 +4047,80 @@ function MyInvestments({ moves, side, sort }: { moves: CapitalMove[]; side: Capi
   );
 }
 
-function TransactionsView({ selected, sector, entity, sectorByKey }: {
+/**
+ * ── THE TRANSACTIONS CARD, SECTIONED THE WAY THE HOLDINGS TABLE IS ──────────
+ *
+ *   *"the format of the transactions page and the holdings page is very
+ *    different… when the user switches from holdings default page to the
+ *    transactions there's a lot of difference in the format and different
+ *    categorization names and methods… UI of both the pages should be
+ *    standardized so it is not confusing and easy to use for the user."*
+ *
+ * WHAT WAS DIFFERENT, ITEM BY ITEM, AND WHAT EACH BECAME:
+ *
+ *   five tabs mixing two sources with three groupings and a raw list
+ *                                    → the SHARED axis control (Category /
+ *                                      Asset class / Basket) on the same filter
+ *                                      row as the Holdings one, reading the same
+ *                                      `?group=` param;
+ *   no section headings at all       → the same headings, the same order, the
+ *                                      same `data-section` handles;
+ *   its own section filter (none)    → the Holdings section filter, shared;
+ *   "Paid in / Taken out"            → "Buys / Sells", the words the family
+ *                                      asked for, and the columns follow;
+ *   three sort modes                 → two, "Longest held" removed by request;
+ *   size-ordered by default          → recent first, which it already was.
+ *
+ * ── WHY THE TWO RECORDS ARE TWO CARDS AND NOT TWO GROUPINGS ────────────────
+ *
+ * The family's own capital (above) and their managers' trading (here) are
+ * different measurements: a contribution moves money INTO an account and a
+ * trade moves it about INSIDE one. Green Lantern 510861 publishes BOTH, so a
+ * shared footer would count the same rupee twice — that is measured on this
+ * book rather than feared. Two cards, two footers, one set of controls and one
+ * set of sections, which is what "standardised" can honestly mean here.
+ *
+ * ── A ROW IS WHAT THE HOLDINGS TABLE'S ROW IS, PER SECTION ─────────────────
+ *
+ * `rollup(..., "auto", ...)` rolls a trade up to its MANDATE where a
+ * discretionary manager chose it and to its SECURITY everywhere else — which is
+ * exactly how the Holdings table builds its rows (Stage 10L lifted the mandates
+ * out into one row each and left everything else per security). So "Carnelian
+ * Bespoke Portfolio" is one row on both tables, and Fractal Analytics is one row
+ * on both. The old `Manager trades` and `Direct Equity` tabs were those two
+ * behaviours offered as a choice; they are the same behaviour applied per row
+ * now, and nobody has to pick.
+ */
+function TransactionsView({ selected, sector, entity, sectorByKey, axis, section }: {
   selected: Set<string>; sector: string; entity: string; sectorByKey: Map<string, string>;
+  axis: GroupAxis; section: string;
 }) {
-  // `statementPortfolio`, for the ACCOUNT REGISTRY only — the rollup joins a
-  // trade to its mandate on provider + account number. No figure on this tape
-  // comes from the portfolio, and none may: a dated trade is a statement fact
-  // and a live price is not evidence about it.
+  // `statementPortfolio`, for the ACCOUNT REGISTRY and the section join only —
+  // the rollup joins a trade to its mandate on provider + account number. No
+  // figure on this tape comes from the portfolio, and none may: a dated trade is
+  // a statement fact and a live price is not evidence about it.
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[] | null>(null);
-  const [meta, setMeta] = useState({ buys: 0, sells: 0 });
   /**
-   * WHICH SIDE OF THE RECORD IS IN VIEW — one state, read by every view.
+   * WHICH SIDE OF THE RECORD IS IN VIEW — one state, read by both tables.
    *
-   * It is kept in the DIRECTION vocabulary (`in`/`out`) rather than the tape's
-   * (`Buy`/`Sell`) because the tape is one of five views and the other four are
-   * not trades. The tape maps it at the point it filters; the labels are chosen
-   * where they are rendered.
+   * It is kept in the DIRECTION vocabulary (`in`/`out`) because the capital
+   * table's movements are genuinely a direction and not a trade side; the
+   * LABELS are Buys and Sells, which the family asked for, and the tape maps
+   * the direction to `Buy`/`Sell` at the point it filters.
    */
   const [side, setSide] = useState<CapitalSide>("all");
   /**
    * HOW THE ROLLUPS ARE ORDERED — recent first, and the reader can change it.
    *
-   * *"your transaction should always have your recent transactions first… It
-   * should be date wise, basically."* Every view here sorted by SIZE, so the
-   * Period column read 3 Oct 2025, 4 May 2023, 16 Dec 2025 down the page. One
-   * state, read by all five views and by all three levels inside them, so a
-   * group can never open on its oldest row under a card set to newest first —
-   * `src/lib/txnSort.ts` is where the three modes are defined.
+   * *"by default the transactions show from newest to oldest."* One state, read
+   * by both tables and by every level inside them, so a group can never open on
+   * its oldest row under a card set to newest first —
+   * `src/lib/txnSort.ts` is where the modes are defined, and "Longest held"
+   * came out of it at the family's request in the same breath.
    */
   const [sort, setSort] = useState<TxnSort>("recent");
-  /**
-   * WHAT THE FAMILY DID IS THE DEFAULT — not what their managers did.
-   *
-   * *"in transactions we need to see the transactions we have done, not what
-   * the transactions the portfolio manager has done… and then if we click and
-   * open the drill down page of one AIF/PMS then inside that we should see what
-   * all transactions the portfolio manager of that fund has made."*
-   *
-   * This card opened on the manager rollup, which answered the EARLIER ask
-   * ("I will only see five items … then I can drill down") with the wrong five
-   * items: Carnelian buying Bandhan Bank is Carnelian's decision. The family's
-   * own decision is the capital they put into Carnelian. `mine` is that, and
-   * the manager's trades keep their tab AND now sit inside the mandate
-   * drill-down, which is where the ask puts them.
-   */
-  const [groupBy, setGroupBy] = useState<TxnView>("mine");
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
@@ -3905,17 +4134,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
     loadTransactions().then((d) => {
       if (!alive) return;
       if (!d) { setStatus("error"); return; }
-      setTxns(d.txns); setMeta({ buys: d.buys, sells: d.sells }); setStatus("ready");
+      setTxns(d.txns); setStatus("ready");
     });
     return () => { alive = false; };
   }, []);
 
-  // Fiscal years spanned by the tape, newest first — drives the quarter/FY presets.
+  // Fiscal years spanned by the two records, newest first — drives the
+  // quarter/FY presets. Both, because the presets narrow BOTH tables and a range
+  // offered over the tape alone would silently cut the capital record's older
+  // contributions out of every preset.
   const fyYears = useMemo(() => {
-    if (!txns || !txns.length) return [] as number[];
+    const dates = [...(txns ?? []).map((t) => t.date), ...BOOK_CAPITAL_MOVES.map((m) => m.date)].filter(Boolean);
     let mn = Infinity, mx = -Infinity;
-    for (const t of txns) { if (!t.date) continue; const y = fyStartOf(t.date); if (y < mn) mn = y; if (y > mx) mx = y; }
-    if (!isFinite(mn)) return [];
+    for (const d of dates) { const y = fyStartOf(d); if (y < mn) mn = y; if (y > mx) mx = y; }
+    if (!isFinite(mn)) return [] as number[];
     const out: number[] = [];
     for (let y = mx; y >= mn; y--) out.push(y);
     return out;
@@ -3934,12 +4166,22 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
   };
 
   /**
+   * THE SECTION JOIN, BUILT ONCE. `groupKeyFor` still answers which section a
+   * record lands in; this is the join that lets a trade reach it — see
+   * `txnAxis.ts`. Both tables read the SAME instance, so the capital record and
+   * the trades cannot file the same account under two different headings.
+   */
+  const accountsReg = portfolio?.accounts ?? [];
+  const positionsReg = portfolio?.positions ?? [];
+  const sections = useMemo(() => sectionsFor(accountsReg, positionsReg), [accountsReg, positionsReg]);
+
+  /**
    * THE FAMILY'S OWN MOVEMENTS IN VIEW — filtered ONCE, here, and read by both
    * the counter above the table and the table itself. The side is NOT applied:
    * the counter states both sides so a reader can see what the filter would do
    * before they click it.
    */
-  const mineIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio?.accounts]);
+  const mineIdx = useMemo(() => accountIndex(accountsReg), [accountsReg]);
   const mineMoves = useMemo(() => BOOK_CAPITAL_MOVES.filter((m) => {
     if (from && m.date < from) return false;
     if (to && m.date > to) return false;
@@ -3966,58 +4208,26 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
       (entity === "All" || ownerDisplayName(t.ownerId) === entity) &&
       (sector === "All" || sectorByKey.get(t.securityKey) === sector) &&
       (selected.size === 0 || selected.has(t.security)) &&
+      // THE SHARED SECTION FILTER, applied to the tape on the shared axis —
+      // the same control the Holdings table narrows on, so "show me the AIF"
+      // means the same thing on both.
+      (section === "All" || sections.forTxn(axis, t) === section) &&
       (!from || t.date >= from) &&
       (!to || t.date <= to));
-  }, [txns, side, entity, sector, sectorByKey, selected, from, to]);
+  }, [txns, side, entity, sector, sectorByKey, selected, section, sections, axis, from, to]);
   /**
    * ABOVE THE EARLY RETURNS, AND THAT IS NOT STYLE. These sat below the
    * `status === "loading"` guard at first, so the first render ran fewer hooks
    * than the second and React tore the page down with error #310 — a blank
    * "Something went wrong" over a tape that had loaded perfectly. A hook after
    * a conditional return is a hook that sometimes does not run.
-   *
-   * No registry, no mandate names — the rollup still groups, each account
-   * falling back to the provider and number its own statement prints.
    */
-  const accountsReg = portfolio?.accounts ?? [];
-  /**
-   * DIRECT EQUITY IS A SET, NOT A GROUPING — and it is the app's OWN set.
-   *
-   * `holdingRoute` is the axis Stage 10L settled after the family reported the
-   * same complaint three times: a share a discretionary manager picked and a
-   * share the family bought itself are the same ASSET and a different DECISION.
-   * "Direct Equity" means the second, everywhere else in this app, so this tab
-   * filters the tape to the accounts the family runs itself (`Direct` /
-   * `Execution`) and then rolls those up per security. Re-using the word for
-   * "grouped by security" would be a fourth round of the same argument.
-   *
-   * Rows the statement classes as something other than equity are excluded, so
-   * the tab's name stays true if an own-account fund purchase ever lands on the
-   * tape. Today every own-account row is classed `Equity` by its own statement,
-   * including the liquid ETF sweep — which is the statement's classification and
-   * is not second-guessed here.
-   */
-  const ownAccounts = useMemo(() => new Set(
-    accountsReg.filter((a) => holdingRoute(a.engagement) === "own").map((a) => acctKey(a.provider, a.accountNo)),
-  ), [accountsReg]);
-  const scoped = useMemo(() => (groupBy !== "direct" ? filtered : filtered.filter((t) =>
-    ownAccounts.has(acctKey(t.provider, t.accountNo)) && (t.assetClass == null || t.assetClass === "Equity"))),
-    [filtered, groupBy, ownAccounts]);
-  // `mine` reads a different source and never reaches this rollup; it maps to
-  // `manager` here only so the memo has a valid grouping to compute against
-  // while that view is showing, exactly as `tape` already does.
-  const groups = useMemo(() => rollup(scoped, accountsReg,
-    groupBy === "tape" || groupBy === "mine" ? "manager" : groupBy === "direct" ? "instrument" : groupBy, sort),
-    [scoped, accountsReg, groupBy, sort]);
+  const groups = useMemo(
+    () => rollup(filtered, accountsReg, "auto", sort, (t) => sections.forTxn(axis, t)),
+    [filtered, accountsReg, sort, sections, axis]);
+  const secs = useMemo(
+    () => sectionRollup(groups, (keys) => orderSections(axis, keys)), [groups, axis]);
   const totals = useMemo(() => rollupTotals(groups), [groups]);
-  // THE FULL TRADE LIST FOLLOWS THE SAME CONTROL. It arrives newest-first from
-  // `loadTransactions`, which is this card's default and was its only order —
-  // so a reader who picked "longest held" or "largest first" got a rollup that
-  // moved and a tape that did not. It is sliced AFTER sorting, so the cap takes
-  // the first rows of the order the reader asked for rather than of the feed's.
-  const shown = useMemo(
-    () => sortRows(filtered, sort, (t) => t.amount ?? null).slice(0, TXN_CAP),
-    [filtered, sort]);
 
   if (status === "loading") return <Card className="flex min-h-0 flex-1 items-center justify-center"><span className="text-sm text-slate-500">Loading transactions…</span></Card>;
   if (status === "error") {
@@ -4052,16 +4262,29 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
     return b == null || s == null ? null : b - s;
   };
   const period = (a: string, b: string) => (a && b ? (a === b ? fmtDate(a) : `${fmtDate(a)} → ${fmtDate(b)}`) : "");
+  const money = (v: number) => fmtFromBase(v, { compact: true });
+  const COLS = 8;
 
   return (
-    <>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+    /*
+      TWO CARDS, EACH SCROLLING ITSELF — the Holdings view's own layout, twice.
+
+      A single page-level scroller was the obvious alternative and it breaks the
+      thing these tables need most: `position: sticky` resolves against the
+      nearest SCROLLING ancestor, so two sticky headers in one scroller pin at
+      once and overlap. The capital record is bounded (`max-h`, in rem and never
+      `vh` — a viewport unit is not rescaled by `--app-zoom`, Stage 10n) and the
+      trades table takes the rest, which is what `min-h-0 flex-1` does on the
+      Holdings card beside it.
+    */
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-1.5">
         <div className="flex items-center gap-1.5">
           <input type="date" value={from} max={to || undefined} onChange={(e) => onDate("from", e.target.value)} title="From date"
-            className="rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-sm text-slate-200 ring-focus" />
+            className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus" />
           <span className="text-slate-500">→</span>
           <input type="date" value={to} min={from || undefined} onChange={(e) => onDate("to", e.target.value)} title="To date"
-            className="rounded-md border border-ink-700 bg-ink-800 px-2.5 py-1.5 text-sm text-slate-200 ring-focus" />
+            className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus" />
         </div>
         <select value={preset} onChange={(e) => applyPreset(e.target.value)} title="Jump to a quarter or fiscal year"
           className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
@@ -4078,320 +4301,262 @@ function TransactionsView({ selected, sector, entity, sectorByKey }: {
           ))}
         </select>
         {/*
-          ONE FILTER, TWO VOCABULARIES, AND THE CONTROL TAKES THE CALLER'S.
+          ONE FILTER, ONE VOCABULARY — AND IT IS THE FAMILY'S.
 
-          *"When I'm clicking on sell/buy filter, nothing is changing on the
-          page."* It was true, and on the DEFAULT view: `side` was never passed
-          to `MyInvestments`, so clicking moved the counter beside it — which
-          reads the manager's tape — while the table under it did not move.
+            *"Paid in/Taken Out filters should be renamed as buys and sells."*
 
-          A family movement has no buy and no sell. It has money in (a
-          subscription) and money out (a redemption, which is what the family
-          went looking for 3P under). Those are the same two sides under the
-          words the columns already use, so the labels follow the view rather
-          than asserting the tape's vocabulary over a table headed Paid in /
-          Taken out — `MultiSelectFilter`'s own `unit` lesson, one control over.
+          It used to say one thing over the capital record and another over the
+          tape, which was defensible on its own terms (a family movement has no
+          buy and no sell; it has money in and money out) and was half of the
+          "different categorization names" the family were pointing at. One pair
+          of words now, on both tables, and the columns beneath them say the same
+          — the statement's own word for a movement survives where exactness
+          belongs, in the Type column inside a capital row.
         */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm"
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-xs"
           data-side-filter={side}
-          title={groupBy === "mine"
-            ? "Paid in is money the family put into an account; Taken out is money that came back — a redemption or a payout, as the statement types it."
-            : "Buys and sells as the transaction statements print them."}>
+          title="Buys are money going in — a share bought, a fund subscribed. Sells are money coming back — a share sold, units redeemed. Both tables narrow together.">
           {(["all", "in", "out"] as const).map((v) => (
             <button key={v} type="button" data-side-option={v} onClick={() => setSide(v)}
-              className={`rounded px-3 py-1.5 font-medium transition-colors ${side === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
-              {v === "all" ? "All" : groupBy === "mine" ? (v === "in" ? "Paid in" : "Taken out") : (v === "in" ? "Buys" : "Sells")}
+              className={`rounded px-2.5 py-1 font-medium transition-colors ${side === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
+              {v === "all" ? "All" : v === "in" ? "Buys" : "Sells"}
             </button>
           ))}
         </div>
         {/*
           ── THE ORDER IS A CONTROL, NOT A DECISION THIS CARD MAKES FOR THEM ──
 
-            *"how is it sorting?… Not recent transactions first. Do that."*  and
-            *"you can give me an option. I can sort recent transactions first,
-             or I can sort as per, say, holding period… you need to have some
-             kind of a filter is all I'm trying to tell."*
+            *"by default the transactions show from newest to oldest… And the
+             toggle switch of recent first/largest first… remove longest first
+             filter."*
 
-          Both halves, in one control: the default moved to recent-first and the
-          size ordering it replaced is still offered. It reads the same state
-          every view and every level inside them reads, so nothing on this card
-          can be ordered one way while something nested in it is ordered another.
+          Recent first is the default and the size ordering is the one
+          alternative. It reads the same state both tables and every level inside
+          them read, so nothing on this page can be ordered one way while
+          something nested in it is ordered another.
 
           `data-txn-sort` is the handle the sweep reads. A claim about WHICH
           ORDER a table is in must not be struck on the label of a button a
           redesign is free to reword.
         */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm"
+        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-xs"
           data-txn-sort={sort} data-txn-sort-options={TXN_SORTS.map((o) => o.id).join(",")}
-          title="How the rows below are ordered. Recent first is the default; it applies to every view and to the lists inside each row.">
+          title="How the rows below are ordered. Recent first is the default; it applies to both tables and to the lists inside each row.">
           {TXN_SORTS.map((o) => (
             <button key={o.id} type="button" data-txn-sort-option={o.id} title={o.title} onClick={() => setSort(o.id)}
-              className={`rounded px-3 py-1.5 font-medium transition-colors ${sort === o.id ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
+              className={`rounded px-2.5 py-1 font-medium transition-colors ${sort === o.id ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
               {o.label}
             </button>
           ))}
         </div>
         {/*
-          THE DEFAULT IS THE ROLLUP, AND THE FULL LIST IS ONE CLICK AWAY. Four
-          hundred dated rows answer "what happened on Tuesday"; the family asked
-          what each manager did this year. The full list is kept because a
-          reconciliation against a PDF needs the printed rows in printed order,
-          which no rollup can stand in for.
-
-          ── AND EVERY ONE OF THESE LABELS NOW SAYS WHAT IT STANDS FOR ─────────
-
-            "What is tape? So what is tape and what is my investments?… Let's
-             think of something better. Friendly words… Because it's confusing
-             right now."  …  "when you have a label, what does it stand for?
-             Otherwise, why have it?"
-
-          "Tape" is a trading-desk word for the printed record of every
-          execution. It is precise and it is jargon, and nothing on screen
-          unpacked it. "My investments" was worse than jargon — it was ambiguous
-          in the one way that matters here, because the whole point of this tab
-          group is the split between WHAT THE FAMILY DID and WHAT THEIR MANAGERS
-          DID, and "my investments" could honestly mean either. The five labels
-          now carry that split themselves instead of leaving it to a tooltip.
-
-          "Direct Equity" is deliberately NOT renamed. The family asked for that
-          exact word on that exact tab — *"Replace by security with direct
-          equity, that will contain the transaction of all direct buy and sold
-          equity transactions"* — and it is the same word this app's holdings
-          tables use for the same set. Changing it now would be a fourth round of
-          the argument Stage 10L settled, running backwards.
-        */}
-        <div className="inline-flex rounded-md border border-ink-700 bg-ink-800 p-0.5 text-sm" title="The first two are what the FAMILY did: What I invested is the capital they committed, mandate by mandate and fund by fund; Direct Equity is the shares they bought and sold in their own broking account. The last three are what their MANAGERS did with it — the same trades grouped by manager, grouped by family member, or listed one dated row at a time.">
-          {([["mine", "What I invested"], ["direct", "Direct Equity"], ["manager", "Manager trades"], ["entity", "Trades by member"], ["tape", "Full trade list"]] as const).map(([v, label]) => (
-            <button key={v} type="button" onClick={() => setGroupBy(v)}
-              className={`rounded px-3 py-1.5 font-medium transition-colors ${groupBy === v ? "bg-ink-700 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-        {/*
-          A COUNTER MUST COUNT WHAT IS ON SCREEN. This read the manager's TAPE
-          on every view, so the default view — the family's own capital, ten
-          rows — sat under "284 buys · 178 sells", a count of a set it does not
-          draw. It is the caption-does-not-describe-its-figure failure arriving
-          in a counter, and it is also why the dead side filter looked alive:
-          clicking moved this number and nothing else.
+          A COUNTER MUST COUNT WHAT IS ON SCREEN. This read the manager's TAPE on
+          every view, so the default view — the family's own capital, ten rows —
+          sat under "284 buys · 178 sells", a count of a set it does not draw.
+          Both records are on screen together now, so it counts both and names
+          which is which rather than one standing for the other.
         */}
         <span className="ml-auto text-xs text-slate-500" data-txn-counter>
-          {groupBy === "mine"
-            ? `${mineCount.in.toLocaleString("en-IN")} paid in · ${mineCount.out.toLocaleString("en-IN")} taken out`
-            : `${filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · ${filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells`}
+          Capital {mineCount.in.toLocaleString("en-IN")} in · {mineCount.out.toLocaleString("en-IN")} out
+          {"  ·  "}
+          Trades {filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys
+          {" · "}
+          {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells
         </span>
       </div>
 
-      {groupBy === "mine" ? (
-        <MyInvestments moves={mineMoves} side={side} sort={sort} />
-      ) : groupBy !== "tape" ? (
-        <Card pad={false} className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-auto">
-            <table className="min-w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-ink-800">
-                <tr className="border-b border-ink-700">
-                  <th className="label-xs px-3 py-2.5 text-left font-medium">{groupBy === "manager" ? "Manager / account" : groupBy === "entity" ? "Family member" : "Security"}</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">Trades</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">{groupBy === "direct" ? "Sides" : "Securities"}</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">Bought</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">Sold</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
-                  <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&L</th>
-                  {/* A PERIOD, AND DELIBERATELY NOT "INVESTED ON". This is the
-                      span of the MANAGER's dated trades; the family's own money
-                      going in is the other tab, and giving both columns one
-                      label would put a manager's first trade under a heading a
-                      reader takes for the date they subscribed. */}
-                  <th className="label-xs px-3 py-2.5 text-left font-medium"
-                    title="First to last dated trade the statements report for this row. The manager's dealing window — not when the family put money in, which is on What I invested.">Traded between</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/70">
-                {groups.map((g) => {
-                  const open = openGroups.has(g.key);
-                  const net = netOf(g);
-                  return (
-                    <Fragment key={g.key}>
-                      {/* `data-row` is a HANDLE FOR THE CHECK, not styling. The
-                          sweep has to expand a group and then a staggered
-                          security inside it, and picking those out of rendered
-                          prose means matching a caption — which renders whatever
-                          the data does and cannot fail. */}
-                      <tr data-row="group" data-trades={g.trades} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenGroups, g.key)}>
-                        <td className="px-3 py-2.5">
-                          <div className="flex items-center gap-1.5">
-                            <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""}`} />
-                            <div>
-                              <div className="font-medium text-slate-100">{g.label}</div>
-                              {g.sublabel && <div className="text-[10.5px] text-slate-500">{g.sublabel}</div>}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtNum(g.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{g.buys}B/{g.sells}S</span></td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(groupBy === "direct" ? g.instruments.length : g.securities)}</td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-300">{g.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" /> : fmtFromBase(g.bought, { compact: true })}</td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-300">{g.sells === 0 ? <AbsentCell reason="nothing was sold in this group over the window" /> : g.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" /> : fmtFromBase(g.sold, { compact: true })}</td>
-                        <td className="px-3 py-2.5 text-right mono text-slate-200">{net == null ? <AbsentCell reason="one side of this group reports no settled amount, so a net cannot be struck" /> : fmtFromBase(net, { compact: true, sign: true })}</td>
-                        <td className={`px-3 py-2.5 text-right mono ${g.realized == null ? "text-slate-600" : changeColor(g.realized)}`}>
-                          {g.realized == null
-                            ? <AbsentCell reason={g.sells === 0 ? "nothing was sold in this group over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
-                            : <>{fmtFromBase(g.realized, { compact: true, sign: true })}{g.realizedOf < g.sells && <span className="ml-1 text-[10.5px] text-slate-500">{g.realizedOf}/{g.sells}</span>}</>}
-                        </td>
-                        <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">{period(g.first, g.last)}</td>
-                      </tr>
+      <CapitalInOut moves={mineMoves} side={side} sort={sort} axis={axis} section={section} sections={sections} />
 
-                      {open && g.instruments.map((ins) => {
-                        const iKey = `${g.key}::${ins.key}`;
-                        const iOpen = openRows.has(iKey);
-                        const iNet = netOf(ins);
-                        return (
-                          <Fragment key={iKey}>
-                            <tr data-row="instrument" data-staggered={ins.staggered ? "1" : undefined} data-days={ins.days} className="cursor-pointer bg-ink-800/40 hover:bg-ink-700/40" onClick={() => toggle(setOpenRows, iKey)}>
-                              <td className="py-2 pl-9 pr-3">
-                                <div className="flex items-center gap-1.5">
-                                  <ChevronRight className={`h-3 w-3 shrink-0 text-slate-600 transition-transform ${iOpen ? "rotate-90" : ""}`} />
-                                  <div>
-                                    <span className="text-slate-200">{ins.security}</span>
-                                  {/* A LABEL ON A ROW THAT IS ALREADY COLLAPSED, never a
-                                      decision about what to merge — see txnRollup.ts. */}
-                                    {ins.staggered && <span className="ml-1.5"><Pill tone="info"><span title={`Built up over ${ins.days} trading days rather than in one go — expand for every tranche and its date.`}>staggered · {ins.days} days</span></Pill></span>}
-                                    {/* NET UNITS BELONG UNDER THE NAME, NOT IN THE
-                                        "Securities" COLUMN. That column counts
-                                        securities on a group row, and a unit count
-                                        printed under it is a figure standing beneath a
-                                        heading that describes something else — the same
-                                        failure as a caption that narrows a figure it
-                                        does not narrow. */}
-                                    <div className="mono text-[10.5px] text-slate-500">{fmtNum(Math.round(ins.qtyBought - ins.qtySold))} units net</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 text-right mono text-slate-400">{fmtNum(ins.buys + ins.sells)}<span className="ml-1 text-[10.5px] text-slate-500">{ins.buys}B/{ins.sells}S</span></td>
-                              <td className="px-3 py-2" />
-                              <td className="px-3 py-2 text-right mono text-slate-400">{ins.bought == null ? <AbsentCell reason="no buy row for this security reports a settled amount" /> : fmtFromBase(ins.bought, { compact: true })}</td>
-                              <td className="px-3 py-2 text-right mono text-slate-400">{ins.sells === 0 ? <AbsentCell reason="this security was not sold over the window" /> : ins.sold == null ? <AbsentCell reason="no sell row for this security reports a settled amount" /> : fmtFromBase(ins.sold, { compact: true })}</td>
-                              <td className="px-3 py-2 text-right mono text-slate-300">{iNet == null ? <AbsentCell reason="one side reports no settled amount, so a net cannot be struck" /> : fmtFromBase(iNet, { compact: true, sign: true })}</td>
-                              <td className={`px-3 py-2 text-right mono ${ins.realized == null ? "text-slate-600" : changeColor(ins.realized)}`}>
-                                {ins.realized == null
-                                  ? <AbsentCell reason={ins.sells === 0 ? "this security was not sold over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
-                                  : fmtFromBase(ins.realized, { compact: true, sign: true })}
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap mono text-[11px] text-slate-500">{period(ins.first, ins.last)}</td>
-                            </tr>
-
-                            {iOpen && ins.tranches.map((t, i) => (
-                              /* EVERY FIGURE UNDER A HEADING THAT DESCRIBES IT. A
-                                 tranche's settled amount goes in Bought or Sold
-                                 by its own SIDE, so the column it lands in is
-                                 true of it; quantity and unit price ride with
-                                 the date, because no header on this table means
-                                 either. Drawn across the columns by position
-                                 instead, a buy's per-share price printed under
-                                 "Bought" and its amount under "Sold". */
-                              <tr data-row="tranche" key={`${iKey}::${i}`} className="bg-ink-900/50 text-[12px]">
-                                <td className="py-1.5 pl-16 pr-3 whitespace-nowrap">
-                                  <span className="mono text-slate-400">{fmtDate(t.date)}</span>
-                                  <span className="ml-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></span>
-                                  <span className="ml-2 mono text-slate-500">
-                                    {fmtNum(Math.round(t.qty))} @ {t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-1.5" />
-                                <td className="px-3 py-1.5" />
-                                <td className="px-3 py-1.5 text-right mono text-slate-400">
-                                  {t.side !== "Buy" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}
-                                </td>
-                                <td className="px-3 py-1.5 text-right mono text-slate-400">
-                                  {t.side !== "Sell" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}
-                                </td>
-                                <td className="px-3 py-1.5" />
-                                <td className={`px-3 py-1.5 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
-                                <td className="px-3 py-1.5 whitespace-nowrap text-slate-500">{t.account}</td>
-                              </tr>
-                            ))}
-                          </Fragment>
-                        );
-                      })}
-                    </Fragment>
-                  );
-                })}
-                {groups.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
-              </tbody>
-              {groups.length > 0 && (
-                /* SUMMED FROM THE ROWS ABOVE, never recomputed off the tape —
-                   see `rollupTotals`. A footer derived independently of its own
-                   column can be right on its own terms while every row above it
-                   is wrong, which is exactly what shipped on the Private Market
-                   page once. */
-                <tfoot className="sticky bottom-0 border-t-2 border-ink-600 bg-ink-800 font-semibold">
-                  <tr>
-                    <td className="px-3 py-2.5 text-slate-200">Total · {fmtNum(totals.groups)} {groupBy === "manager" ? "accounts" : groupBy === "entity" ? "members" : "securities"}</td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-200">{fmtNum(totals.trades)}</td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(totals.securities)}</td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.bought == null ? <AbsentValue /> : fmtFromBase(totals.bought, { compact: true })}</td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.sold == null ? <AbsentValue /> : fmtFromBase(totals.sold, { compact: true })}</td>
-                    <td className="px-3 py-2.5 text-right mono text-slate-100">{netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold }) == null ? <AbsentValue /> : fmtFromBase(netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold })!, { compact: true, sign: true })}</td>
-                    <td className={`px-3 py-2.5 text-right mono ${totals.realized == null ? "text-slate-600" : changeColor(totals.realized)}`}>{totals.realized == null ? <AbsentValue /> : <>{fmtFromBase(totals.realized, { compact: true, sign: true })}{totals.realizedOf < totals.sells && <span className="ml-1 text-[10.5px] font-normal text-slate-500">{totals.realizedOf}/{totals.sells}</span>}</>}</td>
-                    <td className="px-3 py-2.5" />
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
-          {/*
-            THE EXPLANATORY FOOTER IS GONE, BY REQUEST — it repeated on every
-            view and said nothing a reader of the table needed. What survives is
-            ONE line, and only on Direct Equity, because that is the view where
-            the absence IS the finding: this tab is narrow because the family's
-            other own-account trading sits in demat statements whose movements
-            carry no price, no counterparty and no consideration, and are
-            therefore not trades (`precedence.mjs`). Without it the tab reads as
-            "the family barely trades its own book", which is not what the
-            corpus says.
-          */}
-          {groupBy === "direct" && (
-            <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] text-slate-500">
-              The shares the family bought and sold in its own broking accounts. Manager-run trading is under By manager;
-              demat movements carry no price or counterparty on their statements, so they are not trades and are not here.
-            </div>
-          )}
-        </Card>
-      ) : (
-      <Card pad={false} className="flex min-h-0 flex-1 flex-col">
+      <Card pad={false} title="Trades"
+        subtitle="What was dealt inside each account — a mandate rolls up to the manager, everything else to the security, exactly as the holdings table draws them. These are never added to the capital above: a trade moves money about inside an account, a contribution moves it in."
+        className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm" data-trades-table>
             <thead className="sticky top-0 z-10 bg-ink-800">
               <tr className="border-b border-ink-700">
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Date</th>
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Type</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Qty</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Price</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Amount</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Realized P&L</th>
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Entity</th>
+                <th className="label-xs px-3 py-2.5 text-left font-medium">{GROUP_COLUMN_HEAD[axis]}</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Trades</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Securities</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Bought</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Sold</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Net invested</th>
+                <th className="label-xs px-3 py-2.5 text-right font-medium">Realized P&amp;L</th>
+                {/* A PERIOD, AND DELIBERATELY NOT "INVESTED ON". This is the
+                    span of the MANAGER's dated trades; the family's own money
+                    going in is the table above, and giving both columns one
+                    label would put a manager's first trade under a heading a
+                    reader takes for the date they subscribed. */}
+                <th className="label-xs px-3 py-2.5 text-left font-medium"
+                  title="First to last dated trade the statements report for this row. The dealing window — not when the family put money in, which is Capital in and out above.">Traded between</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
-              {shown.map((t, i) => (
-                <tr key={i} className="hover:bg-ink-700/40">
-                  <td className="whitespace-nowrap px-3 py-1.5 mono text-slate-400">{fmtDate(t.date)}</td>
-                  <td className="px-3 py-1.5 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
-                  <td className="px-3 py-1.5"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></td>
-                  <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(Math.round(t.qty))}</td>
-                  <td className="px-3 py-1.5 text-right mono text-slate-400">{t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}</td>
-                  <td className="px-3 py-1.5 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
-                  <td className={`px-3 py-1.5 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
-                  <td className="px-3 py-1.5 text-slate-400">{t.account}</td>
-                </tr>
+              {secs.map((sec) => (
+                <Fragment key={sec.key}>
+                  {secs.length > 1 && (
+                    <TxnSectionHead axis={axis} sectionKey={sec.key} colSpan={COLS} money={money}
+                      count={`${sec.totals.trades} ${sec.totals.trades === 1 ? "trade" : "trades"}`}
+                      value={sec.totals.bought} valueNoun="bought" />
+                  )}
+                  {sec.rows.map((g) => {
+                    const open = openGroups.has(g.key);
+                    const net = netOf(g);
+                    return (
+                      <Fragment key={g.key}>
+                        {/* `data-row` is a HANDLE FOR THE CHECK, not styling. The
+                            sweep has to expand a group and then a staggered
+                            security inside it, and picking those out of rendered
+                            prose means matching a caption — which renders whatever
+                            the data does and cannot fail. */}
+                        {/* `data-group-kind` — MANDATE or SECURITY, which is
+                            what `rollup`'s `auto` decided for this row. It is a
+                            handle rather than styling: "a PMS mandate is ONE
+                            row, as it is on the Holdings table" is the claim
+                            this whole regroup rests on, and it is invisible in
+                            every figure the row prints — a per-security build of
+                            the same tape totals identically. */}
+                        <tr data-row="group" data-trades={g.trades} data-group-section={sec.key}
+                          data-group-kind={g.key.includes("acct:") ? "mandate" : "security"}
+                          data-group-label={g.label}
+                          className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(setOpenGroups, g.key)}>
+                          <td className="px-3 py-2.5">
+                            <div className="flex items-center gap-1.5">
+                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-90" : ""}`} />
+                              <div>
+                                <div className="font-medium text-slate-100">{g.label}</div>
+                                {g.sublabel && <div className="text-[10.5px] text-slate-500">{g.sublabel}</div>}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2.5 text-right mono text-slate-300">{fmtNum(g.trades)}<span className="ml-1 text-[10.5px] text-slate-500">{g.buys}B/{g.sells}S</span></td>
+                          <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(g.securities)}</td>
+                          <td className="px-3 py-2.5 text-right mono text-slate-300">{g.bought == null ? <AbsentCell reason="no buy row in this group reports a settled amount on its statement" /> : money(g.bought)}</td>
+                          <td className="px-3 py-2.5 text-right mono text-slate-300">{g.sells === 0 ? <AbsentCell reason="nothing was sold in this group over the window" /> : g.sold == null ? <AbsentCell reason="no sell row in this group reports a settled amount on its statement" /> : money(g.sold)}</td>
+                          <td className="px-3 py-2.5 text-right mono text-slate-200">{net == null ? <AbsentCell reason="one side of this group reports no settled amount, so a net cannot be struck" /> : fmtFromBase(net, { compact: true, sign: true })}</td>
+                          <td className={`px-3 py-2.5 text-right mono ${g.realized == null ? "text-slate-600" : changeColor(g.realized)}`}>
+                            {g.realized == null
+                              ? <AbsentCell reason={g.sells === 0 ? "nothing was sold in this group over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
+                              : <>{fmtFromBase(g.realized, { compact: true, sign: true })}{g.realizedOf < g.sells && <span className="ml-1 text-[10.5px] text-slate-500">{g.realizedOf}/{g.sells}</span>}</>}
+                          </td>
+                          <td className="px-3 py-2.5 whitespace-nowrap mono text-[11px] text-slate-400">{period(g.first, g.last)}</td>
+                        </tr>
+
+                        {open && g.instruments.map((ins) => {
+                          const iKey = `${g.key}::${ins.key}`;
+                          const iOpen = openRows.has(iKey);
+                          const iNet = netOf(ins);
+                          return (
+                            <Fragment key={iKey}>
+                              <tr data-row="instrument" data-staggered={ins.staggered ? "1" : undefined} data-days={ins.days} className="cursor-pointer bg-ink-800/40 hover:bg-ink-700/40" onClick={() => toggle(setOpenRows, iKey)}>
+                                <td className="py-2 pl-9 pr-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <ChevronRight className={`h-3 w-3 shrink-0 text-slate-600 transition-transform ${iOpen ? "rotate-90" : ""}`} />
+                                    <div>
+                                      <span className="text-slate-200">{ins.security}</span>
+                                    {/* A LABEL ON A ROW THAT IS ALREADY COLLAPSED, never a
+                                        decision about what to merge — see txnRollup.ts. */}
+                                      {ins.staggered && <span className="ml-1.5"><Pill tone="info"><span title={`Built up over ${ins.days} trading days rather than in one go — expand for every tranche and its date.`}>staggered · {ins.days} days</span></Pill></span>}
+                                      {/* NET UNITS BELONG UNDER THE NAME, NOT IN THE
+                                          "Securities" COLUMN. That column counts
+                                          securities on a group row, and a unit count
+                                          printed under it is a figure standing beneath a
+                                          heading that describes something else — the same
+                                          failure as a caption that narrows a figure it
+                                          does not narrow. */}
+                                      <div className="mono text-[10.5px] text-slate-500">{fmtNum(Math.round(ins.qtyBought - ins.qtySold))} units net</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 text-right mono text-slate-400">{fmtNum(ins.buys + ins.sells)}<span className="ml-1 text-[10.5px] text-slate-500">{ins.buys}B/{ins.sells}S</span></td>
+                                <td className="px-3 py-2" />
+                                <td className="px-3 py-2 text-right mono text-slate-400">{ins.bought == null ? <AbsentCell reason="no buy row for this security reports a settled amount" /> : money(ins.bought)}</td>
+                                <td className="px-3 py-2 text-right mono text-slate-400">{ins.sells === 0 ? <AbsentCell reason="this security was not sold over the window" /> : ins.sold == null ? <AbsentCell reason="no sell row for this security reports a settled amount" /> : money(ins.sold)}</td>
+                                <td className="px-3 py-2 text-right mono text-slate-300">{iNet == null ? <AbsentCell reason="one side reports no settled amount, so a net cannot be struck" /> : fmtFromBase(iNet, { compact: true, sign: true })}</td>
+                                <td className={`px-3 py-2 text-right mono ${ins.realized == null ? "text-slate-600" : changeColor(ins.realized)}`}>
+                                  {ins.realized == null
+                                    ? <AbsentCell reason={ins.sells === 0 ? "this security was not sold over the window" : "no capital gain statement covers this account, so what these sales realised was never reported"} />
+                                    : fmtFromBase(ins.realized, { compact: true, sign: true })}
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap mono text-[11px] text-slate-500">{period(ins.first, ins.last)}</td>
+                              </tr>
+
+                              {iOpen && ins.tranches.map((t, i) => (
+                                /* EVERY FIGURE UNDER A HEADING THAT DESCRIBES IT. A
+                                   tranche's settled amount goes in Bought or Sold
+                                   by its own SIDE, so the column it lands in is
+                                   true of it; quantity and unit price ride with
+                                   the date, because no header on this table means
+                                   either. Drawn across the columns by position
+                                   instead, a buy's per-share price printed under
+                                   "Bought" and its amount under "Sold". */
+                                <tr data-row="tranche" key={`${iKey}::${i}`} className="bg-ink-900/50 text-[12px]">
+                                  <td className="py-1.5 pl-16 pr-3 whitespace-nowrap">
+                                    <span className="mono text-slate-400">{fmtDate(t.date)}</span>
+                                    <span className="ml-2"><Pill tone={t.side === "Buy" ? "info" : "warn"}>{t.side}</Pill></span>
+                                    <span className="ml-2 mono text-slate-500">
+                                      {fmtNum(Math.round(t.qty))} @ {t.price == null ? <AbsentCell reason="this trade row reports no unit price on its statement" /> : fmtFromBase(t.price)}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-1.5" />
+                                  <td className="px-3 py-1.5" />
+                                  <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                    {t.side !== "Buy" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : money(t.amount)}
+                                  </td>
+                                  <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                    {t.side !== "Sell" ? "" : t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : money(t.amount)}
+                                  </td>
+                                  <td className="px-3 py-1.5" />
+                                  <td className={`px-3 py-1.5 text-right mono ${t.realized == null ? "text-slate-600" : changeColor(t.realized)}`}>{t.realized == null ? <AbsentCell reason={t.realizedNote ?? "no capital gain statement covers this account, so what this sale realised was never reported"} /> : fmtFromBase(t.realized, { compact: true, sign: true })}</td>
+                                  <td className="px-3 py-1.5 whitespace-nowrap text-slate-500">{t.account}</td>
+                                </tr>
+                              ))}
+                            </Fragment>
+                          );
+                        })}
+                      </Fragment>
+                    );
+                  })}
+                </Fragment>
               ))}
-              {shown.length === 0 && <tr><td colSpan={8} className="py-12 text-center text-sm text-slate-500">No transactions match your filters.</td></tr>}
+              {groups.length === 0 && <tr><td colSpan={COLS} className="py-12 text-center text-sm text-slate-500">No trades match your filters.</td></tr>}
             </tbody>
+            {groups.length > 0 && (
+              /* SUMMED FROM THE ROWS ABOVE, never recomputed off the tape —
+                 see `rollupTotals`. A footer derived independently of its own
+                 column can be right on its own terms while every row above it
+                 is wrong, which is exactly what shipped on the Private Market
+                 page once. */
+              <tfoot className="sticky bottom-0 border-t-2 border-ink-600 bg-ink-800 font-semibold">
+                <tr data-trades-total>
+                  <td className="px-3 py-2.5 text-slate-200">Total · {fmtNum(totals.groups)} {totals.groups === 1 ? "row" : "rows"}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-200">{fmtNum(totals.trades)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-400">{fmtNum(totals.securities)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.bought == null ? <AbsentValue /> : money(totals.bought)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-200">{totals.sold == null ? <AbsentValue /> : money(totals.sold)}</td>
+                  <td className="px-3 py-2.5 text-right mono text-slate-100">{netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold }) == null ? <AbsentValue /> : fmtFromBase(netOf({ buys: totals.buys, sells: totals.sells, bought: totals.bought, sold: totals.sold })!, { compact: true, sign: true })}</td>
+                  <td className={`px-3 py-2.5 text-right mono ${totals.realized == null ? "text-slate-600" : changeColor(totals.realized)}`}>{totals.realized == null ? <AbsentValue /> : <>{fmtFromBase(totals.realized, { compact: true, sign: true })}{totals.realizedOf < totals.sells && <span className="ml-1 text-[10.5px] font-normal text-slate-500">{totals.realizedOf}/{totals.sells}</span>}</>}</td>
+                  <td className="px-3 py-2.5" />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
+        {/*
+          ONE LINE, AND ONLY BECAUSE THE ABSENCE IS THE FINDING.
+
+          The family's own-account dealing is narrow here because their other
+          direct trading sits in DEMAT statements, whose movements carry no
+          price, no counterparty and no consideration and are therefore not
+          trades (`precedence.mjs`). Without saying so, a Direct Equity section
+          of a dozen names reads as a MEASUREMENT of how little this family
+          trades its own book, which is not what the corpus says.
+        */}
+        <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] text-slate-500">
+          Trades come from each manager&rsquo;s transaction statement. Demat movements carry no price or counterparty on
+          their statements, so they are not trades and are not here — which is why the family&rsquo;s own-account dealing
+          reads narrower than it is.
+        </div>
       </Card>
-      )}
-    </>
+    </div>
   );
 }
