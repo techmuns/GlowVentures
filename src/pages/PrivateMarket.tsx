@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
+import { useViewParam } from "@/components/ViewToggle";
 import { StockLink } from "@/components/StockLink";
 import { Auditable } from "@/components/Auditable";
 import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
@@ -65,9 +66,48 @@ import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 // no quote would ever touch these rows even on the live portfolio, and
 // `check:pages` asserts that premise instead of trusting it.
 
+/**
+ * THE THREE VIEWS OF THE PRIVATE BOOK, and each carries its OWN card title and
+ * subtitle rather than sharing one.
+ *
+ * They are the same holdings on two different BASES — `funds` counts each
+ * `dedupeGroup` once, `folios` and `owners` print every statement as issued —
+ * so a single caption over all three would describe two of them wrongly. That
+ * is the failure this page has already paid for once, and the ₹3.17 Cr between
+ * the two bases is exactly what it would hide.
+ */
+const HOLDING_VIEWS = [
+  {
+    key: "funds", label: "By fund",
+    title: "One row per fund, each holding counted once however many members report it.",
+    cardTitle: "Funds this family holds",
+    cardSub: "One row per fund, each holding counted once however many family members' statements report it. Marks are each fund's own, on its own date.",
+  },
+  {
+    key: "folios", label: "By folio",
+    title: "Every private row exactly as its own statement prints it — two holdings appear twice.",
+    cardTitle: "Folio by folio, as each statement prints it",
+    cardSub: "Every private row exactly as its own statement reports it. Two holdings are reported under two members each; both rows are here, and the consolidated total above counts each once.",
+  },
+  {
+    key: "owners", label: "By owner",
+    title: "Each member's own statements, so these add to the printed total and not the consolidated one.",
+    cardTitle: "By owner, as each member's own statements print it",
+    cardSub: "Each member's private folios summed on their own statements. A per-owner figure does not dedupe, so these add to the printed total rather than to the consolidated one above.",
+  },
+] as const;
+
 export function PrivateMarket() {
   const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
   const [q, setQ] = useState("");
+  /**
+   * WHICH GROUPING THE ONE HOLDINGS CARD DRAWS. In the URL like every other
+   * view in this app, so a basis is a link a reader can send and the sweep can
+   * hold each of the three to the light rather than guessing at a click.
+   * `useViewParam` keeps the default param-free, so `/private-market` and
+   * `/private-market?view=funds` do not become two addresses for one screen.
+   */
+  const [view, setView] = useViewParam(HOLDING_VIEWS, {}, "view");
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
 
@@ -362,179 +402,279 @@ export function PrivateMarket() {
             `A multiple divides what has come back plus what is still inside by what went in. The last of those three is now measurable per folio — ${m.cc.callCount} dated calls, each reconciled against its own statement — and the first is not: ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all. Reading those as nil would report a fund that has returned nothing when its statement simply does not say, and a DPI built on that understates every folio it touches.`)} />
       </div>
 
-      {/* ── Card A — one row per FUND, consolidated ── */}
-      <Card className="mt-5" pad={false} title="Funds this family holds"
-        subtitle="One row per fund, each holding counted once however many family members' statements report it. Marks are each fund's own, on its own date."
-        right={<SearchInput value={q} onChange={setQ} placeholder="Search funds…" className="w-56"
-          suggestions={m.funds.map((f) => f.security)} />}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                <th className="label-xs px-4 py-2 text-left font-medium"
-                  title="Who REPORTS the holding to this book — a depository or a wealth platform, which is not necessarily the fund's manager. No statement here states a manager for every fund, so none is asserted.">Reported by</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Folios</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/60">
-              {fundsShown.map((f) => (
-                /* The fund's own key, so a claim about WHICH funds this table
-                   draws is struck on structure rather than on a rendered name. */
-                <tr key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2.5 font-medium text-slate-100">
-                    <StockLink securityKey={f.securityKey} name={f.security} />
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-400">{f.providers.join(", ")}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{f.folios}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.units, 3)}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">
-                    {f.cost == null
-                      ? <AbsentCell reason="this statement reports a value and no cost — a depository holds the units, it did not buy them, and a zero cost would report the whole value as profit" />
-                      : money(f.cost)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-200">{money(f.mv)}</td>
-                  <td className="px-4 py-2.5 text-right mono">
-                    {f.returnPct == null
-                      ? <AbsentCell reason={f.cost == null
-                        ? "no cost is reported for this fund, so there is no capital to strike a return against"
-                        : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another"} />
-                      : <span className={changeColor(f.returnPct)}>{fmtPct(f.returnPct, { sign: true, decimals: 1 })}</span>}
-                  </td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">
-                    <Auditable formula={weightFormula(f.mv, m.privMV, m.privMV > 0 ? (f.mv / m.privMV) * 100 : null, money, "the private book")}>
-                      {m.privMV > 0 ? `${((f.mv / m.privMV) * 100).toFixed(1)}%` : DASH}
-                    </Auditable>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
-                    {f.asOf.length === 0 ? <AbsentCell reason="this holding's account states no report date" />
-                      : f.asOf.length === 1 ? fmtDate(f.asOf[0])
-                      : `${fmtDate(f.asOf[0])} → ${fmtDate(f.asOf[f.asOf.length - 1])}`}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-ink-600 font-semibold">
-                <td className="px-4 py-2.5 text-slate-200" colSpan={4}>Total · {m.funds.length} funds</td>
-                <td className="px-4 py-2.5 text-right mono text-slate-300">{money(m.privCost)}</td>
-                <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.privMV)}</td>
-                <td className="px-4 py-2.5 text-right mono">
-                  {m.privCost != null && m.privCost > 0 && m.privPnL != null
-                    ? <span className={changeColor((m.privPnL / m.privCost) * 100)}>{fmtPct((m.privPnL / m.privCost) * 100, { sign: true, decimals: 1 })}</span>
-                    : <AbsentCell reason="no cost is reported across this book's private holdings" />}
-                </td>
-                <td className="px-4 py-2.5 text-right mono text-slate-300">100%</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        {/* The footer's return covers a narrower set than its own Value column,
-            so the row says which — the rule the Morning CIO footer was fixed for. */}
-        {m.costedCount < m.scope.dedupedRows.length && (
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            The return is struck on the {money(m.privCost)} of cost these statements report, covering {money(m.costedMV)}
-            {" "}of the {money(m.privMV)} above. The other {m.scope.dedupedRows.length - m.costedCount} folio
-            {m.scope.dedupedRows.length - m.costedCount === 1 ? " row reports" : " rows report"} a value and no cost.
-          </p>
-        )}
-        {excludedRest.length > 0 && (
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            Not on this page: {excludedRest.map((c) => `${assetClassLabel(c.key)} ${money(c.mv)} (${c.count})`).join(" · ")}.
-          </p>
-        )}
-      </Card>
+      {/* ── THE PRIVATE BOOK — ONE CARD, THREE VIEWS, ONE TOGGLE ─────────────
+          *"in the private markets Page there are three separate sectioned
+           tables, making the pages very lengthy. Add a toggle button in the
+           first table itself to switch the table view between the three rather
+           than scrolling every time."*
 
-      {/* ── Card B — folio by folio, PER-ACCOUNT, not deduped ── */}
-      <Card className="mt-5" pad={false} title="Folio by folio, as each statement prints it"
-        subtitle="Every private row exactly as its own statement reports it. Two holdings are reported under two members each; both rows are here, and the consolidated total above counts each once."
-        right={<Pill tone="info">{m.folios.length} rows</Pill>}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/60">
-              {m.folios.map((f, i) => (
-                <tr key={`${f.accountId}-${f.position.securityKey}-${i}`} className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2.5 text-slate-100">
-                    <StockLink securityKey={f.position.securityKey} name={f.position.security} />
-                    {f.alsoCount > 1 && (
-                      <span className="ml-2 align-middle">
-                        <Pill tone="warn">also reported under {f.alsoReportedUnder.map(ownerDisplayName).join(", ") || "another account"}</Pill>
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-400">{f.owner}</td>
-                  <td className="px-4 py-2.5 text-slate-400">
-                    {f.provider} {f.accountNo}
-                  </td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.position.quantity, 3)}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">
-                    {f.position.costBasis == null
-                      ? <AbsentCell reason="this statement reports a value and no cost" />
-                      : money(f.position.costBasis)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-200">{money(f.position.marketValue)}</td>
-                  <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
-                    {f.asOf ? fmtDate(f.asOf) : <AbsentCell reason="this account states no report date" />}
-                  </td>
-                </tr>
+          The three were a FUND table, a FOLIO table and a per-OWNER rollup
+          stacked one under the other, and they are THREE RENDERINGS OF ONE SET
+          — the same private holdings, grouped three ways. So this is a view
+          switch in the sense the Portfolio Monitor's `?group=` axis already is,
+          and deliberately NOT the shape of `DailyMovers`' toggle, which keeps
+          two whole cards apart because it switches between two different
+          MEASUREMENTS taken on different days.
+
+          ── WHAT MUST NOT BE FLATTENED IS THE BASIS ──────────────────────────
+
+          This is the one screen where the whole of this book's double count
+          lives, and the three views are NOT on one basis:
+
+            By fund    CONSOLIDATED — each `dedupeGroup` counted ONCE.
+            By folio   RAW — every statement exactly as printed, so the two
+                       holdings reported under two members each appear twice.
+            By owner   RAW — a per-owner figure counts each member's own
+                       statement, for the same reason.
+
+          The first adds to the consolidated total and the other two to the
+          printed one, and the difference is this book's ₹3.17 Cr of double
+          count. Each view therefore keeps its OWN title, its own subtitle and
+          its own footnote naming the basis it is on: one title over all three
+          would be the caption-does-not-describe-its-figure failure this page
+          has already paid for once. Collapsing them into one table with a
+          grouping key would be worse — it would make putting all three on one
+          basis a one-line edit, and either direction of that is wrong.
+
+          `check:pages` walks all three addresses and asserts both ends: PM-1 on
+          the folio view (printed less consolidated IS the named double count)
+          and PM-6 on the owner view (the subtotals add to the printed total and
+          not to the consolidated one). A build that deduped everything passes
+          one and fails the other.
+      */}
+      <Card className="mt-5" pad={false}
+        title={HOLDING_VIEWS.find((v) => v.key === view)!.cardTitle}
+        subtitle={HOLDING_VIEWS.find((v) => v.key === view)!.cardSub}
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {/* THE TOGGLE RENDERS IN EVERY VIEW, never only in the default: a
+                control that disappears once a reader has used it strands them
+                on the branch they switched to. `data-pm-view` + `role="tab"` +
+                `aria-selected` is the contract the sweep reads — every one of
+                these labels also appears in this page's own prose, so only the
+                control itself can answer whether the toggle is there. */}
+            <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
+              role="tablist" aria-label="How to group the private book">
+              {HOLDING_VIEWS.map((v) => (
+                <button key={v.key} type="button" role="tab" aria-selected={view === v.key}
+                  data-pm-view={v.key} title={v.title}
+                  onClick={() => setView(v.key)}
+                  className={["whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                    view === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                  {v.label}
+                </button>
               ))}
-            </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-ink-600 font-semibold">
-                <td className="px-4 py-2.5 text-slate-200" colSpan={5}>Total · {m.folios.length} rows</td>
-                <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.rawMV)} as printed</td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-        {/* The rows on screen add to MORE than the consolidated figure, by
-            design. Said here rather than left for a reader to find by adding. */}
-        {m.scope.doubleCounted > 0 && (
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            <span className="text-slate-300">{money(m.scope.doubleCounted)} of the {money(m.rawMV)} above is two holdings reported under two members each.</span>{" "}
-            The consolidated {money(m.privMV)} counts each once. Both statements are shown because both were issued, and
-            the two marks are not identical — each member's fund reports on its own date.
-          </p>
+            </div>
+            {/* The search filters FUNDS, so it is offered on the view whose rows
+                it narrows and nowhere else — a box that filters nothing is the
+                control-that-looks-alive failure this repo keeps naming. */}
+            {view === "funds"
+              ? <SearchInput value={q} onChange={setQ} placeholder="Search funds…" className="w-56"
+                  suggestions={m.funds.map((f) => f.security)} />
+              : view === "folios"
+                ? <Pill tone="info">{m.folios.length} rows</Pill>
+                : <Pill tone="info">{m.owners.length} owners</Pill>}
+          </div>
+        }>
+
+        {/* ── BY FUND — CONSOLIDATED, each holding counted once ── */}
+        {view === "funds" && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm" data-pm-table="funds">
+                <thead className="border-b border-ink-700">
+                  <tr>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium"
+                      title="Who REPORTS the holding to this book — a depository or a wealth platform, which is not necessarily the fund's manager. No statement here states a manager for every fund, so none is asserted.">Reported by</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Folios</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-700/60">
+                  {fundsShown.map((f) => (
+                    /* The fund's own key, so a claim about WHICH funds this table
+                       draws is struck on structure rather than on a rendered name. */
+                    <tr key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5 font-medium text-slate-100">
+                        <StockLink securityKey={f.securityKey} name={f.security} />
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-400">{f.providers.join(", ")}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{f.folios}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.units, 3)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">
+                        {f.cost == null
+                          ? <AbsentCell reason="this statement reports a value and no cost — a depository holds the units, it did not buy them, and a zero cost would report the whole value as profit" />
+                          : money(f.cost)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-200">{money(f.mv)}</td>
+                      <td className="px-4 py-2.5 text-right mono">
+                        {f.returnPct == null
+                          ? <AbsentCell reason={f.cost == null
+                            ? "no cost is reported for this fund, so there is no capital to strike a return against"
+                            : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another"} />
+                          : <span className={changeColor(f.returnPct)}>{fmtPct(f.returnPct, { sign: true, decimals: 1 })}</span>}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">
+                        <Auditable formula={weightFormula(f.mv, m.privMV, m.privMV > 0 ? (f.mv / m.privMV) * 100 : null, money, "the private book")}>
+                          {m.privMV > 0 ? `${((f.mv / m.privMV) * 100).toFixed(1)}%` : DASH}
+                        </Auditable>
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
+                        {f.asOf.length === 0 ? <AbsentCell reason="this holding's account states no report date" />
+                          : f.asOf.length === 1 ? fmtDate(f.asOf[0])
+                          : `${fmtDate(f.asOf[0])} → ${fmtDate(f.asOf[f.asOf.length - 1])}`}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink-600 font-semibold">
+                    <td className="px-4 py-2.5 text-slate-200" colSpan={4}>Total · {m.funds.length} funds</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-300">{money(m.privCost)}</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.privMV)}</td>
+                    <td className="px-4 py-2.5 text-right mono">
+                      {m.privCost != null && m.privCost > 0 && m.privPnL != null
+                        ? <span className={changeColor((m.privPnL / m.privCost) * 100)}>{fmtPct((m.privPnL / m.privCost) * 100, { sign: true, decimals: 1 })}</span>
+                        : <AbsentCell reason="no cost is reported across this book's private holdings" />}
+                    </td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-300">100%</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            {/* The footer's return covers a narrower set than its own Value column,
+                so the row says which — the rule the Morning CIO footer was fixed for. */}
+            {m.costedCount < m.scope.dedupedRows.length && (
+              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                The return is struck on the {money(m.privCost)} of cost these statements report, covering {money(m.costedMV)}
+                {" "}of the {money(m.privMV)} above. The other {m.scope.dedupedRows.length - m.costedCount} folio
+                {m.scope.dedupedRows.length - m.costedCount === 1 ? " row reports" : " rows report"} a value and no cost.
+              </p>
+            )}
+            {excludedRest.length > 0 && (
+              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                Not on this page: {excludedRest.map((c) => `${assetClassLabel(c.key)} ${money(c.mv)} (${c.count})`).join(" · ")}.
+              </p>
+            )}
+          </>
         )}
-        {/* Per-owner, RAW — these add to the printed total, not the consolidated one. */}
-        <div className="border-t border-ink-700/60 px-4 py-3">
-          <div className="label-xs mb-2">By owner · each member's own statements</div>
-          <table className="min-w-full text-[12.5px]">
-            <tbody className="divide-y divide-ink-700/60">
-              {m.owners.map((o) => (
-                <tr key={o.owner}>
-                  <td className="py-1.5 pr-4 text-slate-300">{o.owner}</td>
-                  <td className="py-1.5 pr-4 text-right mono text-slate-500">{o.rows} {o.rows === 1 ? "row" : "rows"}</td>
-                  <td className="py-1.5 pr-4 text-right mono text-slate-400">{o.cost == null ? DASH : money(o.cost)}</td>
-                  <td className="py-1.5 text-right mono text-slate-200">{money(o.mv)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            A per-owner figure counts each member's own statement, so these add to {money(m.rawMV)} and not to the
-            consolidated {money(m.privMV)}.
-          </p>
-        </div>
+
+        {/* ── BY FOLIO — RAW, every statement exactly as printed ── */}
+        {view === "folios" && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm" data-pm-table="folios">
+                <thead className="border-b border-ink-700">
+                  <tr>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
+                    <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-700/60">
+                  {m.folios.map((f, i) => (
+                    <tr key={`${f.accountId}-${f.position.securityKey}-${i}`} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5 text-slate-100">
+                        <StockLink securityKey={f.position.securityKey} name={f.position.security} />
+                        {f.alsoCount > 1 && (
+                          <span className="ml-2 align-middle">
+                            <Pill tone="warn">also reported under {f.alsoReportedUnder.map(ownerDisplayName).join(", ") || "another account"}</Pill>
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-400">{f.owner}</td>
+                      <td className="px-4 py-2.5 text-slate-400">
+                        {f.provider} {f.accountNo}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.position.quantity, 3)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">
+                        {f.position.costBasis == null
+                          ? <AbsentCell reason="this statement reports a value and no cost" />
+                          : money(f.position.costBasis)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-200">{money(f.position.marketValue)}</td>
+                      <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
+                        {f.asOf ? fmtDate(f.asOf) : <AbsentCell reason="this account states no report date" />}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink-600 font-semibold">
+                    <td className="px-4 py-2.5 text-slate-200" colSpan={5}>Total · {m.folios.length} rows</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.rawMV)} as printed</td>
+                    <td />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            {/* The rows on screen add to MORE than the consolidated figure, by
+                design. Said here rather than left for a reader to find by adding. */}
+            {m.scope.doubleCounted > 0 && (
+              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+                <span className="text-slate-300">{money(m.scope.doubleCounted)} of the {money(m.rawMV)} above is two holdings reported under two members each.</span>{" "}
+                The consolidated {money(m.privMV)} counts each once. Both statements are shown because both were issued, and
+                the two marks are not identical — each member's fund reports on its own date.
+              </p>
+            )}
+          </>
+        )}
+
+        {/* ── BY OWNER — RAW, each member's own statements ──────────────────
+            It was a small unlabelled block bolted under the folio table; as a
+            view of its own it gets the header row the other two have, because
+            a column of figures a reader cannot name is not a table. */}
+        {view === "owners" && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm" data-pm-table="owners">
+                <thead className="border-b border-ink-700">
+                  <tr>
+                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Rows</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
+                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-700/60">
+                  {m.owners.map((o) => (
+                    <tr key={o.owner} className="hover:bg-ink-700/40">
+                      <td className="px-4 py-2.5 text-slate-100">{o.owner}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">{o.rows} {o.rows === 1 ? "row" : "rows"}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400">
+                        {o.cost == null
+                          ? <AbsentCell reason="no statement in this member's private folios reports a cost" />
+                          : money(o.cost)}
+                      </td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-200">{money(o.mv)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-ink-600 font-semibold">
+                    <td className="px-4 py-2.5 text-slate-200" colSpan={3}>Total · {m.owners.length} owners</td>
+                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.rawMV)} as printed</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+              A per-owner figure counts each member's own statement, so these add to {money(m.rawMV)} and not to the
+              consolidated {money(m.privMV)}.
+            </p>
+          </>
+        )}
       </Card>
 
       {/* ── Card C — THE CAPITAL-CALL TIMELINE ────────────────────────────────
@@ -886,43 +1026,6 @@ export function PrivateMarket() {
             </p>
           </>
         )}
-      </Card>
-
-      {/* ── Card E — what this book does not carry ── */}
-      <Card className="mt-5" title="What this book does not carry, and what would fill it"
-        subtitle="Named rather than drawn as empty frames or rows of zeros — an empty bucket and a bucket worth nothing are different facts.">
-        <div className="grid gap-3 md:grid-cols-2">
-          {[
-            ["No private-equity, pre-IPO, unlisted-company or debt-fund structure",
-              "No statement in this drop reports a fund-of-funds structure with its own TVPI and DPI. The AIF holdings above are ordinary positions and the undrawn capital is in the register."],
-            ["No startup or direct-company register",
-              "A pre-money valuation, a fully-diluted stake and a round history are a shareholders' agreement and a cap table. No statement issuer holds them and no reader can extract them."],
-            ["No look-through into what a fund holds",
-              "This needs each scheme's own portfolio disclosure joined to the folio the family holds. The drop carries one such disclosure and it joins to no folio here, so a fund's value stays whole inside its own row rather than being spread across sectors it was never reported against."],
-            ["No valuation history for any private holding",
-              "Two dated portfolio values per account is not a series. A monthly or quarterly valuation statement per folio is what a trajectory needs."],
-            ["No realised gain on any private account",
-              "Every AIF-engagement account states that no capital gain statement was issued for it in this drop. Their redemptions are real; what they realised was never reported."],
-            /* THE CAPITAL-CALL TIMELINE ENTRY IS GONE — its premise expired.
-               It read "others print their drawdowns as page text their reader
-               does not yet emit … the fix belongs in the ingest, not here",
-               which was true and is now done: the readers emit them, 52 dated
-               calls are in the book, and the timeline is three cards up. What
-               replaces it is the narrower absence that remains — a FORWARD
-               schedule, which no fund publishes at all. */
-            ["No forward drawdown schedule from any fund",
-              "Checked across every document in this archive: none prints a commitment-period end date, a call notice dated ahead of its own statement, or an expected-drawdown table. The dated calls above are what each fund HAS done; when the next one comes is a fact no statement here carries, and projecting it from the cadence would be a forecast printed beside measurements."],
-            ["No sector for a fund",
-              "A GICS sector is a property of a company; a fund is a wrapper holding many, and no statement here prints a sector for a folio. These holdings are correctly excluded from Sector Composition and the market-cap bands."],
-            ["No money-weighted return on the private book",
-              "An XIRR needs dated flows and an opening portfolio value per account. No private account in this book publishes both, so none is struck — a rate closed against a stake nobody stated would overstate rather than approximate."],
-          ].map(([what, needs]) => (
-            <div key={what} className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2.5">
-              <div className="text-[12px] font-medium text-slate-300">{DASH} {what}</div>
-              <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{needs}</p>
-            </div>
-          ))}
-        </div>
       </Card>
     </div>
   );
