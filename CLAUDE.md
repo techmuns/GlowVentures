@@ -11813,12 +11813,15 @@ sections on `groupAxis` whatever the other view is doing; only the CONTROL reads
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
 blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
-**164 combinations clean**, with two EVIDENCED abstentions — this harness serves
-no `/api/quotes`, so the absent-tile claim has no subject, and no row on the one
-page that checks it carries a pledge. That is 158 plus the three routes this
-change adds (`monitor-txn-basket`, `monitor-txn-secaxis`,
-`monitor-axis-crossback`), six combinations, re-measured on the tree rather than
-added to the number.
+**168 combinations clean**, with two EVIDENCED abstentions — every KPI tile on
+this book carries a figure, so the absent-tile claim has no subject, and no row
+on the one page that checks it carries a pledge. **MEASURED ON THE MERGED
+TREE**: this branch's own pre-merge run was 164, which is 158 plus the three
+routes it adds (`monitor-txn-basket`, `monitor-txn-secaxis`,
+`monitor-axis-crossback`), and Stage 10bf landed on main while it was open with
+two more. 164 + 4 reconciles here, and it reconciles ONLY because the sweep was
+re-run — every other stage in this file states a count against a base that has
+since moved.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
