@@ -966,7 +966,7 @@ function CapitalIn({ account }: { account: Account }) {
  * what all transactions the portfolio manager of that fund has made."*
  *
  * The Transactions card draws the family's own capital and their managers'
- * trading as two tables under one set of controls (Stage 10bf);
+ * trading as two tables under one set of controls (Stage 10bg);
  * this is where the manager's own dealing went. Grouped per SECURITY rather
  * than left as a tape, because that is the decision — Green Lantern bought The
  * Anup Engineering on fifty separate days, and fifty rows hide what one row

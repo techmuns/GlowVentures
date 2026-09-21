@@ -2011,6 +2011,22 @@ const ROUTES = [
   ["cio-alloc-class", "/cio?alloc=assetClass"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
+  /**
+   * ── THE PRIVATE BOOK'S OTHER TWO VIEWS ───────────────────────────────────
+   *
+   * *"there are three separate sectioned tables… add a toggle button in the
+   *  first table itself to switch the table view between the three."*
+   *
+   * They were three stacked cards and are one card with a toggle, so only the
+   * active view is in the DOM — and PM-1 and PM-6, which assert this book's
+   * ₹3.17 Cr double count from its two ends, each read a table that is no
+   * longer on the default route. They move to the view that draws them rather
+   * than being softened into something the funds view can satisfy: a check that
+   * stops running because a table moved behind a toggle is a check that
+   * silently stopped.
+   */
+  ["private-market-folios", "/private-market?view=folios"],
+  ["private-market-owners", "/private-market?view=owners"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   // ...AND THE MANAGER ROLLUP, WHICH IS NO LONGER THE DEFAULT. The family asked
   // for the transactions THEY made to lead, so `monitor-txns` above now lands on
@@ -4639,6 +4655,49 @@ const qtyChecks = (keyOf) => [
    */
   ["the window the two balances bound is named",
     (t, ctx) => !!ctx.qtyTable && /\d{1,2} \w{3} \d{4}\s*→\s*\d{1,2} \w{3} \d{4}/.test(t)],
+];
+
+/**
+ * ── THE PRIVATE BOOK'S VIEW TOGGLE, RUN BY ALL THREE OF ITS ROUTES ──────────
+ *
+ * *"there are three separate sectioned tables, making the pages very lengthy —
+ *  add a toggle button in the first table itself to switch the table view
+ *  between the three rather than scrolling every time."*
+ *
+ * A FACTORY rather than three copies, parameterised on the ONE thing that
+ * differs between the routes: which view the address asks for. Written as three
+ * copies they would be three places for the claim to drift, and written once on
+ * the default route it would not catch a toggle that renders on `/private-market`
+ * and vanishes the moment a reader uses it — which is the failure the control
+ * itself is written to avoid.
+ *
+ * Struck on the CONTROL and on which table it drew, never on the labels: "By
+ * fund", "By folio" and "By owner" are the three bases this page discusses in
+ * prose and in its card titles, so a text match cannot tell a rendered button
+ * from a sentence about one. A MISSING TOGGLE IS A FINDING, not an abstention —
+ * only the probe failing to run abstains, and this card renders on every build
+ * that has a private book at all.
+ */
+const pmViewChecks = (expected) => [
+  [`the private book is one card with three views, and this address opens on ${expected}`, (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    const keys = pv.views.map((v) => v.key);
+    return keys.length === 3
+      && ["funds", "folios", "owners"].every((k) => keys.includes(k))
+      && pv.views.find((v) => v.active)?.key === expected;
+  }],
+  [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    /**
+     * ONE TABLE AT A TIME IS THE WHOLE OF WHAT SHORTENS THE PAGE. A build that
+     * kept all three stacked and merely added a control renders every figure
+     * correctly, reconciles perfectly, and satisfies every other check here —
+     * only a count of the rendered tables can see it.
+     */
+    return pv.tables.length === 1 && pv.tables[0] === expected;
+  }],
 ];
 
 const INVARIANTS = {
@@ -8674,19 +8733,54 @@ const INVARIANTS = {
         : ""}`,
       () => PRIVATE_QUOTABLE != null && PRIVATE_QUOTABLE.length === 0],
 
-    // PM-1. The per-folio table shows every statement as printed; the fund table
-    // counts each holding once. The difference is the double count, and the page
-    // must NAME it rather than leave a reader to find it by adding.
-    ["the folio total less the fund total is exactly the double count the page names", (t) => {
-      // The footer prints Invested THEN Value, so the VALUE is the second money
-      // in the row. Taking the first silently compares a cost against a market
-      // value — which is how this check failed the first time it was run.
-      const consol = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*funds\s*` + CR + String.raw`\s*` + CR, "i").exec(t)?.[2]);
-      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
-      const dup = cr(new RegExp(CR + String.raw`\s*of the\s*` + CR + String.raw`\s*above is two holdings`, "i").exec(t)?.[1]);
-      if (![consol, raw, dup].every(Number.isFinite)) return false;
-      return dup > 0 && Math.abs(raw - consol - dup) <= Math.max(0.6, consol * 0.002);
-    }],
+    /**
+     * ── THE THREE TABLES ARE ONE CARD WITH A TOGGLE ──────────────────────────
+     *
+     * *"there are three separate sectioned tables, making the pages very
+     *  lengthy — add a toggle button in the first table itself to switch the
+     *  table view between the three rather than scrolling every time."*
+     *
+     * Struck on the CONTROL and on which table it drew, never on the labels:
+     * "By fund", "By folio" and "By owner" describe the three bases this page
+     * talks about in prose, and a text match could not tell a rendered button
+     * from a sentence. A MISSING TOGGLE IS A FINDING rather than an abstention
+     * — only the probe failing to run abstains, and this card renders on every
+     * build that has a private book at all.
+     */
+    /**
+     * THE DEFAULT IS A DECISION AND IT IS THE ONE THAT MOVES SILENTLY: the page
+     * renders perfectly on any of the three, and the other two are on a basis
+     * that counts this book's two duplicated holdings twice.
+     */
+    ...pmViewChecks("funds"),
+
+    /**
+     * ── AND THE "WHAT THIS BOOK DOES NOT CARRY" CARD STAYS REMOVED ───────────
+     *
+     * At the family's request. NOT ONE OF ITS EIGHT ENTRIES WAS A FIGURE — they
+     * named absent STRUCTURES (a fund-of-funds TVPI, a cap table, a private
+     * valuation series), which is the shape Stage 10al already removed once as
+     * the roadmap panel. The two that a reader acts on were already on the page
+     * elsewhere and are asserted at their own addresses: the realised-gain
+     * absence is an `absentTile` in the strip above, and the forward-drawdown
+     * one is the capital-call card's own footer, which PM-4d holds to.
+     *
+     * Struck on the heading and on the two entry titles nothing else prints, so
+     * it cannot be satisfied by a rewording of the card.
+     */
+    ["the 'what this book does not carry' card stays removed", (t) =>
+      !/What this book does not carry, and what would fill it/i.test(t)
+      && !/No startup or direct-company register/i.test(t)
+      && !/No money-weighted return on the private book/i.test(t)],
+    /**
+     * …AND THE TWO CLAIMS INSIDE IT THAT A READER ACTS ON DID NOT GO WITH IT.
+     * A build that deleted the card AND its absent tile satisfies the removal
+     * above and loses a measurement, which is the half a removal breaks quietly.
+     */
+    ["the realised-gain and forward-schedule absences survive it", (t) =>
+      /no capital gain statement covers any private account/i.test(t)
+      && /No fund in this book publishes a forward drawdown schedule/i.test(t)],
+
     // PM-2. What the page shows plus what it says it left out must reconstruct
     // the whole book. Narrowing on the wrong axis moves one side and not the other.
     ["private value + the classes named as excluded reconstructs the consolidated NAV", (t) => {
@@ -8852,20 +8946,10 @@ const INVARIANTS = {
         // drawn capital has not been folded into it.
         && Math.abs(priv - consol) <= 0.6;
     }],
-    // PM-6. The other end of PM-1: a per-owner figure counts each member's own
-    // statement and therefore does NOT dedupe. Computing this table off the
-    // deduped set empties two owners' rows and the sum lands short of the footer.
-    ["the per-owner subtotals add to the folio total, not to the consolidated one", (t) => {
-      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
-      const said = new RegExp(String.raw`these add to\s*` + CR + String.raw`\s*and not to the consolidated\s*` + CR, "i").exec(t);
-      const owners = [...t.matchAll(/\n[^\n\t]+\t+\d+ rows?\t+(?:₹[\d,.]+\s*(?:Cr|L|K)?|—)\t+₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)]
-        .map((x) => crU(x[1], x[2]));
-      if (!Number.isFinite(raw) || !said || owners.length < 2) return false;
-      const sum = owners.reduce((a, b) => a + b, 0);
-      // It adds to the RAW total and is DIFFERENT from the consolidated one.
-      return Math.abs(sum - raw) <= Math.max(0.6, owners.length * 0.06)
-        && Math.abs(cr(said[1]) - raw) <= 0.6 && Math.abs(cr(said[1]) - cr(said[2])) > 0.05;
-    }],
+    // PM-6 MOVED TO `private-market-owners` WITH THE TABLE IT READS — see the
+    // block below. It is the other end of PM-1 and neither implies the other,
+    // so both had to follow their own view rather than one being dropped.
+
     // PM-7. The book closes newer than every private mark on this page, so
     // printing `portfolio.asOf` over these rows would date them forward. The
     // expected date is DERIVED from the book, never typed here.
@@ -8885,6 +8969,67 @@ const INVARIANTS = {
       // Every row whose Invested cell is a dash must have a dash in Return too.
       return rows.filter((r) => r[1] === "—").every((r) => r[2] === "—")
         && rows.some((r) => r[1] === "—");     // and the book really does carry one
+    }],
+  ],
+
+  /**
+   * ── THE PRIVATE BOOK, BY FOLIO ────────────────────────────────────────────
+   *
+   * PM-1, at the address that now draws the table it reads. The per-folio view
+   * shows every statement as printed and the fund view counts each holding
+   * once; the difference is this book's whole double count, and the page must
+   * NAME it rather than leave a reader to find it by adding.
+   *
+   * IT IS STRUCK ACROSS TWO INDEPENDENT RENDERINGS, which is what survived the
+   * move: the printed total comes from the table's own FOOTER, summed over the
+   * rows above it, and the consolidated figure and the overlap come from the
+   * SENTENCE under it — which is `privMV` and `scope.doubleCounted`, neither of
+   * them derived from the footer. A third path checks the sentence against the
+   * KPI tile, so a view that quietly deduped its own rows moves the footer and
+   * fails, and one that mis-states the overlap fails on the other side.
+   */
+  "private-market-folios": [
+    ...pmViewChecks("folios"),
+    ["the folio total less the consolidated total is exactly the double count the page names", (t) => {
+      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
+      const said = new RegExp(CR + String.raw`\s*of the\s*` + CR + String.raw`\s*above is two holdings[\s\S]{0,60}?The consolidated\s*` + CR, "i").exec(t);
+      const tile = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      if (!Number.isFinite(raw) || !said || !Number.isFinite(tile)) return false;
+      const [dup, statedRaw, consol] = [cr(said[1]), cr(said[2]), cr(said[3])];
+      return dup > 0
+        && Math.abs(raw - consol - dup) <= Math.max(0.6, consol * 0.002)
+        // The sentence describes the table it sits under, and the consolidated
+        // figure it names is the one the tile prints — a footer and a sentence
+        // about it are exactly the pair this page has already had disagree once.
+        && Math.abs(statedRaw - raw) <= 0.6
+        && Math.abs(consol - tile) <= 0.6;
+    }],
+  ],
+
+  /**
+   * ── THE PRIVATE BOOK, BY OWNER ────────────────────────────────────────────
+   *
+   * PM-6, likewise. A per-owner figure counts each member's own statement and
+   * therefore does NOT dedupe: computing this table off the deduped set empties
+   * two owners' rows and the sum lands short of its own footer. This and the
+   * folio check assert the same ₹3.17 Cr from opposite ends, and a build that
+   * deduped everything passes one and fails the other.
+   */
+  "private-market-owners": [
+    ...pmViewChecks("owners"),
+    ["the per-owner subtotals add to the printed total, not to the consolidated one", (t) => {
+      const foot = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*owners\s*` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
+      const said = new RegExp(String.raw`these add to\s*` + CR + String.raw`\s*and not to the consolidated\s*` + CR, "i").exec(t);
+      const owners = [...t.matchAll(/\n[^\n\t]+\t+\d+ rows?\t+(?:₹[\d,.]+\s*(?:Cr|L|K)?|—)\t+₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)]
+        .map((x) => crU(x[1], x[2]));
+      if (!Number.isFinite(foot) || !said || owners.length < 2) return false;
+      const total = owners.reduce((a, b) => a + b, 0);
+      // The ROWS add to the FOOTER (two paths over one set: the rollup groups
+      // the statements, the footer sums them), the sentence names that same
+      // total, and it is DIFFERENT from the consolidated one it names beside it.
+      return Math.abs(total - foot) <= Math.max(0.6, owners.length * 0.06)
+        && Math.abs(cr(said[1]) - foot) <= 0.6
+        && Math.abs(cr(said[1]) - cr(said[2])) > 0.05;
     }],
   ],
   /**
@@ -13772,6 +13917,22 @@ for (const theme of THEMES) {
       const pmFunds = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
       /**
+       * THE PRIVATE BOOK'S VIEW TOGGLE, AND WHICH TABLE IT DREW.
+       *
+       * Both halves are structural because neither is visible to a text match:
+       * "By fund", "By folio" and "By owner" all appear in this page's own
+       * prose and in its card titles, so a regex cannot tell a rendered CONTROL
+       * from a sentence about one — and a page that drew all three tables at
+       * once looks, in `innerText`, exactly like three views that each draw
+       * their own. `data-pm-table` is what says only one is on screen.
+       */
+      const pmView = FAST ? null : await page.evaluate(() => ({
+        views: [...document.querySelectorAll("main [data-pm-view]")]
+          .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true" })),
+        tables: [...document.querySelectorAll("main table[data-pm-table]")]
+          .map((e) => e.getAttribute("data-pm-table")),
+      }));
+      /**
        * THE TILE DEFINITIONS — their text, their SIZE, and the tile each sits on.
        *
        * *"do not show lengthy explanations in the private market terms… just
@@ -14348,7 +14509,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

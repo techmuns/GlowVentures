@@ -197,7 +197,7 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's Capital in and out table and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag, and
-  Stage 10bf for `capitalSectionRollup`, which files each account's record under
+  Stage 10bg for `capitalSectionRollup`, which files each account's record under
   the same section its holdings sit in.
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
@@ -251,13 +251,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   and applied at all three levels: recent first by default, or largest. An
   absent amount sorts last rather than as zero. "Longest held" was the third
   and was DELETED from the union rather than hidden, at the family's request —
-  see Stage 10az for the modes and Stage 10bf for the removal.
+  see Stage 10az for the modes and Stage 10bg for the removal.
 - `src/lib/txnAxis.ts` — WHICH SECTION A DATED RECORD LANDS IN: the same three
   axes the Holdings table sections on, joined to a trade's own fields (provider
   + account number, `securityKey`, the class its STATEMENT printed). It defines
   no fourth taxonomy — `groupKeyFor` still answers — and it takes a `GroupAxis`
   rather than a `MonitorAxis`, so a transactions table sectioned by SECURITY
-  does not compile. See Stage 10bf.
+  does not compile. See Stage 10bg.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -3193,8 +3193,10 @@ removed page rendered `portfolio.privateMarkets` — `BOOK_PE_FUNDS`,
 ₹0-invested private book and a deployment bar 100% undrawn against nothing
 committed. Every one of those reads as a measurement. `PrivateMarket.tsx`
 imports none of them, and never `src/lib/privateValue.ts`, whose helpers return
-`0` rather than `null` for an empty input. Those absences are the last card on
-the page, each named with what would fill it.
+`0` rather than `null` for an empty input. ~~Those absences are the last card on
+the page, each named with what would fill it.~~ **THAT CARD IS GONE since Stage
+10bf**, at the family's request; the IMPORTS are what the rule was ever about and
+they are unchanged, which is why nothing on the page moved when the card went.
 
 What the page shows instead is what the statements actually carry:
 
@@ -3218,10 +3220,13 @@ position to read a class off — which is why `unvaluedAccounts` is scoped to it
 360 ONE Special Opportunities under two CRNs, Transition Venture Fund I under
 both trusts — are on this page, so ₹3.17 Cr of ₹3.17 Cr. Getting the dedupe
 backwards here is guaranteed to be wrong in one direction or the other, and both
-directions have shipped before. The fund table counts each group once, the folio
-and per-owner tables do not, the page STATES the difference, and two invariants
+directions have shipped before. The fund view counts each group once, the folio
+and per-owner views do not, the page STATES the difference, and two invariants
 assert it from opposite ends: a page that deduped everything passes one and fails
-the other.
+the other. *(Those three were stacked cards until Stage 10bf and are one card
+with a toggle now. NOTHING ABOUT THE BASES CHANGED — which is exactly why each
+view keeps its own title, its own footnote and its own route, and why the two
+invariants moved to the addresses that draw them rather than being softened.)*
 
 **₹18.23 Cr IS THE REASON THE PAGE EARNS ITS PLACE.** India SME's three folios
 and Sky Capital's four report units and the capital drawn against a commitment
@@ -3302,7 +3307,7 @@ tranche — and `TransactionsView` renders them expandable, with **By manager**
 (the default), **By entity**, **By security** and **Tape**. Tape stays because a
 reconciliation against a PDF needs the printed rows in printed order.
 
-*(**THE TAB GROUP IS GONE SINCE Stage 10bf** — the family asked for the
+*(**THE TAB GROUP IS GONE SINCE Stage 10bg** — the family asked for the
 transactions card to section the way the holdings table does, so the GROUPING is
 the shared axis now and `rollup`'s `by` is `auto`: a mandate rolls up to its
 manager, everything else to its security, which is what the Holdings table
@@ -9303,7 +9308,7 @@ mean either.
 | By entity | **Trades by member** |
 | Tape | **Full trade list** |
 
-***THE WHOLE STRIP HAS SINCE BEEN REMOVED — see Stage 10bf.*** Renaming it was
+***THE WHOLE STRIP HAS SINCE BEEN REMOVED — see Stage 10bg.*** Renaming it was
 the right answer to the question asked here (*"when you have a label, what does
 it stand for?"*) and it did not survive the next one: the family read the strip
 beside the Holdings table's own Category / Asset class / Basket control and asked
@@ -11399,7 +11404,161 @@ ingest, and three presentation changes that moved a generated figure would not b
 three presentation changes.
 
 
-### Stage 10bf — ONE CATEGORISATION FOR BOTH TABLES, AND THE TRANSACTIONS CARD STOPS HAVING ITS OWN
+### Stage 10bf — THREE TABLES BECOME ONE CARD WITH A TOGGLE, AND THE ABSENCE CARD GOES
+
+*"open PR and do not merge until i tell you to."* · *"in the private markets Page
+there are three separate sectioned tables, making the pages very lengthy. Add a
+toggle button in the first table itself to switch the table view between the
+three rather than scrolling every time."* · *"remove the highlighted section from
+the dashboard UI"* — the last card, screenshotted.
+
+#### 1. The three tables are three VIEWS of one set, and that is why they collapse
+
+`Funds this family holds`, `Folio by folio` and the per-owner rollup bolted under
+the second were **three renderings of the same private holdings**, stacked one
+under the other, and between them they were most of the page's length. They are
+one card now with a `By fund · By folio · By owner` toggle, at `?view=`, and only
+the active one is in the DOM.
+
+**IT IS A VIEW SWITCH IN THE SENSE THE MONITOR'S `?group=` AXIS IS, AND
+DELIBERATELY NOT THE SHAPE OF `DailyMovers`' TOGGLE.** That one keeps two whole
+cards apart because it switches between two different MEASUREMENTS taken on
+different days, and merging them would make summing them a one-line edit. These
+three are one measurement grouped three ways, so one card is the honest form.
+
+**WHAT MUST NOT BE FLATTENED IS THE BASIS, AND IT IS THE WHOLE REASON THIS IS
+THREE VIEWS RATHER THAN ONE TABLE WITH A GROUPING KEY.** This is the one screen
+where the whole of this book's double count lives — 360 ONE Special
+Opportunities under two CRNs, Transition Venture Fund I under both trusts — and
+the three are not on one basis:
+
+| View | Basis | Adds to |
+| --- | --- | ---: |
+| By fund | CONSOLIDATED — each `dedupeGroup` once | ₹352.35 Cr |
+| By folio | RAW — every statement exactly as printed | ₹355.52 Cr |
+| By owner | RAW — each member's own statements | ₹355.52 Cr |
+
+So each view keeps its OWN card title, its own subtitle and its own footnote
+naming the basis it is on. A single title over all three would be the
+caption-does-not-describe-its-figure failure this page has already paid for once;
+one table with a grouping key would be worse, because it would make putting all
+three on one basis a one-line edit and **either direction of that is wrong** —
+a raw sum once put ₹1.46 Cr into a consolidated NAV twice, and deduping a
+per-owner breakdown once emptied a member's row for an account holding ₹1.46 Cr.
+
+**THE DEFAULT IS BY FUND AND IS ASSERTED TO BE.** It is the param-free one, it is
+the consolidated basis, and it is the table the family's own screenshots were
+taken of. A default is the change that moves silently: the page renders perfectly
+on any of the three and the other two count two holdings twice.
+
+**THE TOGGLE RENDERS IN EVERY VIEW**, never only in the default — a control that
+disappears once a reader has used it strands them on the branch they switched to.
+Same rule `DailyMovers` needed for its loading and absent branches.
+
+**THE SEARCH BOX IS OFFERED ONLY WHERE IT NARROWS SOMETHING.** It filters FUNDS,
+so it is on the fund view and nowhere else; the other two carry their own row
+count instead. A box that filters nothing is the control-that-looks-alive failure
+this file keeps naming, and the top bar's dead `<input>` is its own precedent.
+
+**AND THE PER-OWNER BLOCK GAINED A HEADER ROW.** It was four unlabelled columns
+under a `label-xs` caption; as a view of its own it gets the header and footer
+the other two have, because a column of figures a reader cannot name is not a
+table.
+
+#### 2. The absence card, audited claim by claim before it went
+
+*"remove the highlighted section from the dashboard UI."* `What this book does not
+carry, and what would fill it` — eight dashed entries — is deleted.
+
+**NOT ONE OF ITS EIGHT ENTRIES WAS A FIGURE**, which is the cleanest possible
+removal and is what made this one a paragraph of work rather than a section of
+it. They named absent STRUCTURES — a fund-of-funds TVPI, a cap table, a private
+valuation series, a fund's sector — which is exactly the shape Stage 10al removed
+once already as Morning CIO's roadmap panel: *"a chip named a feature that does
+not exist, so there was nothing on it to move and nothing a reader could act on."*
+
+Audited anyway, one entry at a time, because that is what this file requires:
+
+| The entry | Elsewhere? |
+| --- | --- |
+| No PE / pre-IPO / unlisted / debt-fund structure | no — and it names no figure; the six empty arrays are a fact about the MODEL, recorded in the page's own header comment and in Stage 10m |
+| No startup or direct-company register | no — same shape |
+| No look-through into what a fund holds | no — same shape |
+| No valuation history for any private holding | no — **and its premise had gone stale**: "two dated portfolio values per account is not a series" is the sentence Stage 10p measured and overturned for the book at large |
+| **No realised gain on any private account** | **YES — an `absentTile` in the strip above, with the same reason and a fuller hint** |
+| **No forward drawdown schedule from any fund** | **YES — the capital-call card's own footer, word for word, which PM-4d already holds to** |
+| No sector for a fund | no — and Sector Composition's own `Not a company share` partition card names the class with its value |
+| No money-weighted return on the private book | no — same shape |
+
+**THE TWO THAT A READER ACTS ON ARE THE TWO THAT WERE ALREADY THERE**, and both
+are now asserted as SURVIVING the removal. That is the half a removal like this
+breaks quietly: a build that deleted the card and the absent tile together
+satisfies the absence check and loses a measurement.
+
+#### 3. The checks moved to the views that draw them, and none was softened
+
+PM-1 and PM-6 assert this book's ₹3.17 Cr from opposite ends, and each reads a
+table that is no longer on the default route. **They moved rather than being
+weakened into something the fund view can satisfy** — a check that stops running
+because a table went behind a toggle is a check that silently stopped, which is
+this file's most-repeated finding about its own sweep.
+
+- **`private-market-folios`** carries PM-1, and the move made it STRONGER. It
+  now reads the printed total off the table's own FOOTER, the overlap and the
+  consolidated figure off the SENTENCE under it, and checks that consolidated
+  figure against the KPI TILE — three renderings rather than two, so a view that
+  quietly deduped its own rows fails on one side and one that mis-states the
+  overlap fails on the other.
+- **`private-market-owners`** carries PM-6, likewise: the rows add to their own
+  footer (the rollup groups the statements, the footer sums them — two paths over
+  one set), the sentence names that same total, and it is DIFFERENT from the
+  consolidated one it names beside it.
+- **`pmViewChecks(expected)` is a FACTORY run by all three routes**, parameterised
+  on the one thing that differs — which view the address asks for. Written once
+  on the default route it would not catch a toggle that renders on
+  `/private-market` and vanishes the moment a reader uses it, which is the exact
+  failure the control is written to avoid.
+
+**STRUCK ON THE CONTROL AND ON WHICH TABLE IT DREW, NEVER ON THE LABELS.** "By
+fund", "By folio" and "By owner" are the three bases this page discusses in prose
+and in its own card titles, so a text match cannot tell a rendered button from a
+sentence about one. And **one table at a time is the whole of what shortens the
+page**: a build that kept all three stacked and merely added a control renders
+every figure correctly, reconciles perfectly and satisfies every other check
+here — only a count of the rendered tables can see it. A MISSING TOGGLE IS A
+FINDING, not an abstention; only the probe failing to run abstains.
+
+#### Eight bugs reintroduced, each firing exactly its own check
+
+Restored by COPY on a `trap … EXIT` and **rebuilt on the way out** — restoring the
+source alone leaves `dist/` at the bugged build and the next run reports this
+bug's failures under the next one's name, which this file has measured once.
+
+| Bug put back | Fires |
+| --- | --- |
+| all three tables stacked, the control filtering nothing | the one-table check on **all three routes** |
+| the default view moved to By folio | **6 on `private-market`** — the default check by name, plus the redeemed-fund, PM-2, PM-5 and PM-8 checks that read the fund table |
+| the toggle deleted outright | the view check on all three routes, as a FAILURE rather than three abstentions |
+| the absence card restored | the card-stays-removed check |
+| the realised-gain tile's reason deleted with it | the absences-survive check |
+| the folio footer printing the consolidated total | PM-1, on the folios route |
+| the per-owner rollup computed off the deduped set | PM-6, on the owners route |
+| the double-count sentence deleted from the folio view | PM-1 |
+
+**AND ONE PATCH FAILED TO BUILD AND WAS REPORTED AS NOT A RESULT.** Gating the
+double-count sentence on `{false && …}` makes `m` possibly-null downstream and
+`tsc` refuses it; the harness reports a failed build as a failed PATCH rather
+than as a clean sweep, which is the only reason it was not read as bug 8 passing.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
+**162 combinations clean** — 158 plus this change's two routes across both themes
+— with the same two evidenced abstentions Stage 10bc records. `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a
+control before and after: nothing here touches the ingest, and a layout change
+that moved a generated figure would not be a layout change.
+
+### Stage 10bg — ONE CATEGORISATION FOR BOTH TABLES, AND THE TRANSACTIONS CARD STOPS HAVING ITS OWN
 
 *"the format of the transactions page and the holdings page is very different,
 when the user switches from holdings default page to the transactions there's a
@@ -11665,7 +11824,6 @@ added to the number.
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a regroup of two tables that moved a generated figure would not be a
 regroup.
-
 
 ### Stage 10k — News & Announcements: REMOVED
 
