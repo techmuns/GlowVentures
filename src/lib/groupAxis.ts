@@ -45,15 +45,14 @@
  * allocation axis. See `SECURITY_AXIS` below for what it is and why widening
  * `GroupAxis` to include it would have been the wrong move.
  */
-import type { Position } from "./types";
-import { engagementOf, type AccountIndex } from "./accounts";
+import type { AccountIndex } from "./accounts";
 import {
   holdingBucket, bucketLabel, isMandateHeld,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "./analytics";
 import {
   basketKeyOf, familyClassKeyOf, basketOrd, familyClassOrd,
-  familyBasket, familyAssetClass, type TaxonomySource,
+  familyBasket, familyAssetClass, type TaxonomySource, type Classifiable,
 } from "./familyTaxonomy";
 
 /**
@@ -61,9 +60,23 @@ import {
  * decides; this only supplies the engagement, which is a fact about the ACCOUNT
  * and never about the position — reading it off the position is what would put
  * two rows of one mandate in two sections.
+ *
+ * ── AND WHAT IT IS DECIDED FROM: three fields plus that engagement ──────────
+ *
+ * `Classifiable` (see `familyTaxonomy.ts`) names them, and a `Position`
+ * satisfies it, so every holdings caller is unchanged. It is widened from
+ * `Position` because the Transactions table sections on these same three axes,
+ * and a dated trade is not a holding — the alternative was a `Position`-shaped
+ * object with zeros in the money fields, which is a fabricated figure one
+ * refactor away from being rendered.
+ *
+ * The engagement is read off the REGISTRY here rather than through
+ * `engagementOf`, which takes a `Position`. It is the same lookup on the same
+ * key and it is the only line that had to change.
  */
-export const bucketFor = (idx: AccountIndex, p: Position) => holdingBucket(p, engagementOf(idx, p) || null);
-export const heldUnderMandate = (idx: AccountIndex, p: Position) => isMandateHeld(engagementOf(idx, p) || null);
+export const engagementFor = (idx: AccountIndex, p: Classifiable) => idx.get(p.accountId)?.engagement || "";
+export const bucketFor = (idx: AccountIndex, p: Classifiable) => holdingBucket(p, engagementFor(idx, p) || null);
+export const heldUnderMandate = (idx: AccountIndex, p: Classifiable) => isMandateHeld(engagementFor(idx, p) || null);
 
 /**
  * Category sections in reading order: what the family chose itself, then what
@@ -150,7 +163,7 @@ export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; ti
  * table draws no headings (`showBucketSections` needs two), which is the flat,
  * ranked list the family asked for.
  */
-export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Position): string => {
+export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): string => {
   if (axis === SECURITY_AXIS) return SECURITY_SECTION;
   if (axis === "category") return bucketFor(idx, p);
   const isMandate = heldUnderMandate(idx, p);
@@ -162,7 +175,7 @@ export const groupKeyFor = (axis: MonitorAxis, idx: AccountIndex, p: Position): 
  * category axis is not "unknown": that axis is derived from the book and asks
  * nothing of the family, so the heading has nothing to disclose.
  */
-export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Position): TaxonomySource | null => {
+export const groupSourceFor = (axis: MonitorAxis, idx: AccountIndex, p: Classifiable): TaxonomySource | null => {
   // Both the category and the security axes are derived from the book itself and
   // ask nothing of the family, so neither heading has anything to disclose.
   if (axis === SECURITY_AXIS || axis === "category") return "review";

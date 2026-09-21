@@ -167,7 +167,36 @@ export type TaxonomyEntry = {
  * "Carnelian Bespoke Portfolio" as one row, not its twelve shares — so keying
  * any other way would have nothing to join to.
  */
-export const productKeyOf = (p: Position, isMandate: boolean) =>
+/**
+ * ── THE THREE FIELDS THE TAXONOMY ACTUALLY READS ────────────────────────────
+ *
+ * Every function below reaches for exactly these: the account (a mandate is one
+ * product), the security (everything else is), and our own asset class (the two
+ * derivations). Nothing here reads a quantity, a price or a market value.
+ *
+ * It is stated as a type because a DATED RECORD has to be filed under the same
+ * section as a holding — the Transactions table sections on the same three axes
+ * the Holdings table does — and a trade is not a `Position`. The alternative was
+ * to build a `Position`-shaped object around the three real fields with zeros
+ * for the rest, which is a fabricated figure sitting one refactor away from
+ * being rendered. Naming what is read is the honest version of the same join,
+ * and `Position` is still assignable to it, so every existing caller is
+ * unchanged.
+ */
+export type Classifiable = {
+  /**
+   * NULL IS "THE STATEMENT DID NOT SAY", and only a dated record can carry it —
+   * a `Position` always states one. Both derivations below are already
+   * null-safe by construction (they test for a specific class and answer null
+   * otherwise), which is the honest answer: nothing was said, so nothing is
+   * derived, and the record lands in the section that names the absence.
+   */
+  assetClass: Position["assetClass"] | null;
+  securityKey: Position["securityKey"];
+  accountId: Position["accountId"];
+};
+
+export const productKeyOf = (p: Classifiable, isMandate: boolean) =>
   isMandate ? `mandate:${p.accountId}` : `sec:${p.securityKey}`;
 
 /**
@@ -394,7 +423,7 @@ export const FAMILY_TAXONOMY: Readonly<Record<string, TaxonomyEntry>> = {
  * contradict the more specific thing they said. A rule with a known
  * counterexample is not a rule this book will apply to money.
  */
-const basketByRule = (p: Position): FamilyBasket | null =>
+const basketByRule = (p: Classifiable): FamilyBasket | null =>
   p.assetClass === "Equity" ? "Thematic & Tactical" : null;
 
 /**
@@ -404,7 +433,7 @@ const basketByRule = (p: Position): FamilyBasket | null =>
  * `AIF`, `Mutual Fund` and `ETF` are absent on purpose — each is genuinely
  * ambiguous on this book, and each is measured in this file's header.
  */
-const classByDerivation = (p: Position): FamilyAssetClass | null =>
+const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
   p.assetClass === "Equity" ? "Equity" : p.assetClass === "Cash" ? "Cash" : null;
 
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
@@ -414,7 +443,7 @@ export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: str
  * a section on screen with its reason, never a holding quietly dropped from the
  * table or swept into whichever basket happens to be first.
  */
-export function familyBasket(p: Position, isMandate: boolean): Resolved<FamilyBasket> | null {
+export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (hit) return { value: hit.basket, source: "review", reviewProduct: hit.reviewProduct };
   // A mandate is never rule-filled: see `basketByRule`.
@@ -423,7 +452,7 @@ export function familyBasket(p: Position, isMandate: boolean): Resolved<FamilyBa
 }
 
 /** The family's asset class, same contract. */
-export function familyAssetClass(p: Position, isMandate: boolean): Resolved<FamilyAssetClass> | null {
+export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
   if (hit) return { value: hit.assetClass, source: "review", reviewProduct: hit.reviewProduct };
   const derived = classByDerivation(p);
@@ -431,9 +460,9 @@ export function familyAssetClass(p: Position, isMandate: boolean): Resolved<Fami
 }
 
 /** Section key for a holding on each axis — `UNCLASSIFIED` where nobody has said. */
-export const basketKeyOf = (p: Position, isMandate: boolean) =>
+export const basketKeyOf = (p: Classifiable, isMandate: boolean) =>
   familyBasket(p, isMandate)?.value ?? UNCLASSIFIED;
-export const familyClassKeyOf = (p: Position, isMandate: boolean) =>
+export const familyClassKeyOf = (p: Classifiable, isMandate: boolean) =>
   familyAssetClass(p, isMandate)?.value ?? UNCLASSIFIED;
 
 /** Reading order, with the unclassified section always last on either axis. */

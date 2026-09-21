@@ -107,10 +107,16 @@ for (const [k, v] of inBook) {
      unmapped.every((p) => holdingLabel(p.securityKey, p.security).trim().length > 0));
 }
 
-// ── 7. THE ORDER: THREE MODES, AND EACH DOES WHAT IT SAYS ───────────────────
+// ── 7. THE ORDER: TWO MODES, AND EACH DOES WHAT IT SAYS ─────────────────────
 // The rollups' own rows are exercised by `check:pages`; this is the comparator
 // underneath them, where the traps are the two that never show on a page — an
 // absent amount read as zero, and a mode that silently falls through to another.
+//
+// IT ASSERTS THE REMOVAL AS WELL AS THE TWO THAT ARE LEFT. *"remove longest
+// first filter."* — so the control must offer exactly the modes this comparator
+// implements and no more, and "Longest held" must not come back as an option
+// that orders nothing. Deleting the case with the feature would leave nothing to
+// notice a future edit putting a third button back.
 {
   const rows = [
     { key: "a", first: "2023-05-04", last: "2026-07-31", amount: 10 },
@@ -119,16 +125,21 @@ for (const [k, v] of inBook) {
   ];
   const ids = (m: TxnSort) => sortRows(rows, m, (r) => r.amount).map((r) => r.key).join("");
   ok("recent first puts the newest LAST movement on top", ids("recent") === "cab", ids("recent"));
-  ok("longest held puts the earliest FIRST movement on top", ids("held") === "abc", ids("held"));
   ok("largest first puts the biggest amount on top", ids("size") === "bac", ids("size"));
   // THE ONE THAT IS NOT OBVIOUS: an absent amount must sort LAST, not as zero.
   // Row `c` reports no settled amount; `?? 0` would file it above row `a`.
   ok("an absent amount sorts last rather than as zero", ids("size").endsWith("c"), ids("size"));
-  ok("the three modes really are three orderings",
-     new Set([ids("recent"), ids("held"), ids("size")]).size === 3);
+  ok("the two modes really are two orderings", ids("recent") !== ids("size"));
   ok("every mode the control offers is one this comparator implements",
-     TXN_SORTS.every((o) => ["recent", "held", "size"].includes(o.id)) && TXN_SORTS.length === 3,
+     TXN_SORTS.every((o) => ["recent", "size"].includes(o.id)) && TXN_SORTS.length === 2,
      TXN_SORTS.map((o) => o.id).join(","));
+  // THE REMOVAL, ASSERTED. A `held` id back in the catalogue would fall through
+  // `sortRows`'s else branch and order by SIZE while a button read "Longest
+  // held" — a control that names one ordering and performs another, which is
+  // worse than the control the family asked to have removed.
+  ok("\"Longest held\" is gone rather than hidden",
+     !TXN_SORTS.some((o) => o.id === ("held" as TxnSort) || /longest/i.test(o.label)),
+     TXN_SORTS.map((o) => o.label).join(","));
   ok("recent is offered first, which is the default the family asked for",
      TXN_SORTS[0].id === "recent");
   ok("sorting does not mutate its input", rows[0].key === "a" && rows[2].key === "c");

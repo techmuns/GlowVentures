@@ -2044,6 +2044,48 @@ const ROUTES = [
   // them; the third state (All) is `monitor-txns` above.
   ["monitor-txn-in", "/monitor"],
   ["monitor-txn-out", "/monitor"],
+  /**
+   * ...AND THE SAME CARD ON A SECOND AXIS.
+   *
+   *   *"replace it with what is in the holdings — Category / Asset class /
+   *    Basket."*
+   *
+   * Category is the default, so walking it alone cannot tell an axis control
+   * that really regroups from one that is drawn and ignored — the failure the
+   * per-category totals row already cost this sweep, where keying the partition
+   * on the wrong axis read CLEAN on the basket route because nothing matched
+   * and every totals row simply disappeared. Basket is the axis whose keys share
+   * NOTHING with the category ones, so a table that ignored the control fails
+   * here by name.
+   */
+  ["monitor-txn-basket", "/monitor?group=basket"],
+  /**
+   * ...AND THE ONE AXIS TRANSACTIONS DOES NOT HAVE.
+   *
+   *   *"don't put security categorization filter in transactions."*
+   *
+   * A reader who left Holdings on `?group=security` and crossed over lands
+   * here. The security axis files every holding in ONE section by design, so
+   * there is nothing for a transactions table to section on — it falls back to
+   * Category, and the control has to SAY so. Comparing against the raw param lit
+   * no button at all: a control with no selected option over a table that
+   * plainly has sections.
+   */
+  ["monitor-txn-secaxis", "/monitor?group=security"],
+  /**
+   * ...AND CROSSING BACK FROM IT.
+   *
+   * The section filter is shared between the two views, which is the point. On
+   * `?group=security` ALONE the two resolve the axis differently — Holdings
+   * sections on it, Transactions falls back to Category — so a section picked on
+   * one side is a key the other cannot match, and it would empty the table with
+   * no message, on a page that renders perfectly, with the select HIDDEN on the
+   * Holdings side so the reader cannot clear it.
+   *
+   * It is a walk rather than a URL because the defect only exists in the
+   * CROSSING: every state it passes through is individually correct.
+   */
+  ["monitor-axis-crossback", "/monitor?group=security"],
   // ...and the BY-ENTITY view of the same table, where every statement's row
   // shows as printed. Both of this book's duplicate holdings are AIF, so this is
   // the only view in which the AIF section's heading and the footer beneath it
@@ -2622,6 +2664,63 @@ function headingCount(head) {
  */
 const MANDATE_BUCKET = "PMS mandates";
 const DIRECT_EQUITY_BUCKET = "Direct Equity";
+/**
+ * ── THE SECTIONS A HOLDINGS TABLE WOULD DRAW ON THE CATEGORY AXIS ──────────
+ *
+ * The Transactions table sections on the same axis now, so the check that its
+ * headings are the Holdings table's headings needs the Holdings answer from
+ * somewhere the PAGE cannot move — which is `glowData.ts`.
+ *
+ * `holdingBucket` IS RE-EXPRESSED RATHER THAN IMPORTED, for the reason this
+ * sweep already applies to `isMandateHeld` and the ring-fence: a check that
+ * calls the helper it is checking agrees with it by construction and reports
+ * nothing. `CASH_EQUIVALENT_KEYS` is read as committed DATA and its membership
+ * test re-expressed here — and it IS needed, unlike the NAV-movers derivation
+ * which only ever asks about `Equity` rows: a liquid fund's section is Cash,
+ * and leaving the rule out would claim the book draws a Mutual Fund section it
+ * does not.
+ *
+ * Null on any failure, so the checks FAIL rather than pass: a renamed constant
+ * must not read as a book with no sections in it.
+ */
+/** How many accounts this book runs as a PMS mandate — the ceiling on that section's rows. */
+const PMS_ACCOUNTS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accs = bookArray(src, "BOOK_ACCOUNTS");
+    return Array.isArray(accs) ? accs.filter((a) => a.engagement === "PMS").length : null;
+  } catch { return null; }
+})();
+
+const TXN_SECTIONS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts)) return null;
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const cashEq = (() => {
+      const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+      const i = a.indexOf("export const CASH_EQUIVALENT_KEYS");
+      if (i < 0) return null;
+      const end = a.indexOf("\n};", i);
+      if (end < 0) return null;
+      const keys = [...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]);
+      return keys.length ? new Set(keys) : null;
+    })();
+    if (!cashEq) return null;
+    const bucket = (p) => {
+      const e = engagement.get(p.accountId);
+      if (e === "PMS") return MANDATE_BUCKET;
+      if (cashEq.has(p.securityKey)) return "Cash";
+      if (p.assetClass !== "Equity") return p.assetClass;
+      return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
+    };
+    const category = [...new Set(positions.map(bucket))];
+    return category.length ? { category } : null;
+  } catch { return null; }
+})();
+
 const mandatesIn = (mandates, bucket) =>
   (mandates ?? []).filter((m) => bucket === undefined || m.bucket === bucket);
 /** A check needs its input: no rows captured is NOT CHECKED, never a pass. */
@@ -2655,6 +2754,8 @@ let MANDATE_PATH = null;
 let DRILL = null;
 /** The same, for the Direct Equity view — see `monitor-txn-direct`. */
 let DIRECT = null;
+/** The trades footer BEFORE the section filter narrowed it — see `monitor-txn-direct`. */
+let DIRECT_ALL = null;
 /**
  * The per-account expansion opened on a NON-SECURITY axis — see
  * `monitor-category-drill`. Null on every other route, which its invariants
@@ -4365,13 +4466,14 @@ const FUND_CLASSES = [
    * reader who knew the family held 3P and could not find it would learn the
    * dashboard lost it. The family have since asked for a redeemed holding to
    * leave EVERY allocation page and for this note to go with it — so the fact
-   * now lives where a redemption belongs, on Transactions → What I invested as a
-   * dated movement under Taken out, which the `monitor-txn-out` route asserts.
-   * A note here would be an allocation page explaining a transaction.
+   * now lives where a redemption belongs, on the Transactions card's Capital in
+   * and out table as a dated movement under Sells, which the `monitor-txn-out`
+   * route asserts. A note here would be an allocation page explaining a
+   * transaction.
    *
    * Struck on the HANDLE rather than on prose: the words it used ("closed",
-   * "redeemed", "What I invested") are ones this page prints legitimately
-   * elsewhere, so a text match would fail a correct page.
+   * "redeemed") are ones this page prints legitimately elsewhere, so a text
+   * match would fail a correct page.
    */
   ["...and the note that named them is gone with them", (t, ctx) => {
     if (!FUND_CLASS_BOOK?.closedCount) return { notChecked: "no holding in this book is redeemed to nil" };
@@ -4793,31 +4895,68 @@ const INVARIANTS = {
    */
   "monitor-txns": [
     /**
-     * ── EVERY LABEL SAYS WHAT IT STANDS FOR ──────────────────────────────────
+     * ── THE FIVE-TAB CATEGORISATION IS GONE, AND THE AXIS IS THE SHARED ONE ──
      *
-     *   "What is tape? So what is tape and what is my investments?… Let's think
-     *    of something better. Friendly words."  …  "when you have a label, what
-     *    does it stand for? Otherwise, why have it?"
+     *   *"the format of the transactions page and the holdings page is very
+     *    different… different categorization names and methods… remove the
+     *    categorization 'What I invested / Direct Equity / Manager trades /
+     *    Trades by member / Full trade list' replace it with what is in the
+     *    holdings — Category / Asset class / Basket. Don't put security
+     *    categorization filter in transactions."*
      *
-     * Struck on the BUTTONS, not on the page text: "Direct Equity" is this app's
-     * own word for a holdings bucket and appears all over this page legitimately,
-     * so a text match would fail a correct build. A removal is asserted as well
-     * as the replacement — a tab group that kept "Tape" beside the new names
-     * would satisfy the second half alone.
+     * FOUR CLAIMS, AND NONE IMPLIES ANOTHER. A build that deleted the tabs and
+     * drew no axis control satisfies the first; one that offered all FOUR axes
+     * satisfies the first three; one that offered three but sectioned nothing
+     * satisfies all four of these and fails the partition check below.
+     *
+     * Struck on the BUTTONS and on `data-group-axis`, never on the page text:
+     * "Direct Equity" is this app's own word for a holdings bucket and is a
+     * SECTION HEADING on this very table, so a text match would fail a correct
+     * build — which is exactly why the tab check was written this way before.
      */
-    ["the transaction views are named in plain words, and Tape is gone", (t, ctx) => {
+    ["the five-tab categorisation is gone", (t, ctx) => {
       const labels = ctx?.buttonLabels ?? [];
       if (!labels.length) return { notChecked: "no buttons were captured on this run" };
       const has = (l) => labels.includes(l);
-      return !has("Tape") && !has("My investments") && !has("By manager") && !has("By entity")
-        && has("What I invested") && has("Full trade list")
-        && has("Manager trades") && has("Trades by member")
-        // The family asked for this word on this tab by name; it is the one that
-        // must NOT have been "improved".
-        && has("Direct Equity");
+      return !has("What I invested") && !has("Manager trades") && !has("Trades by member")
+        && !has("Full trade list") && !has("Tape") && !has("My investments")
+        && !has("By manager") && !has("By entity");
     }],
-    ["the Transactions card opens on the family's own capital, not the manager's",
-      (t, ctx) => ctx.mineRows.length > 0 && ctx.managerRows.length === 0],
+    ["…replaced by the Holdings table's own axis control", (t, ctx) => {
+      const a = ctx.axisControl;
+      if (!a) return false;      // the handle is gone — so is the control
+      return a.view === "transactions" && a.visible
+        && a.offered.join(",") === "category,assetClass,basket";
+    }],
+    ["…and the security axis is NOT offered here", (t, ctx) =>
+      !!ctx.axisControl && !ctx.axisControl.offered.includes("security")],
+    ["…and it opens on Category, the default on both screens", (t, ctx) =>
+      !!ctx.axisControl && ctx.axisControl.active === "category"],
+    /**
+     * BOTH RECORDS ARE ON SCREEN, which is what the tabs used to make a reader
+     * choose between. They are two measurements and must never share a footer —
+     * one account in this book (Green Lantern 510861) publishes both, so a
+     * combined total would double-count it — so the claim is that each table is
+     * there with its own rows, not that one of them leads.
+     */
+    ["both dated records are drawn, each in its own table",
+      (t, ctx) => ctx.mineRows.length > 0 && ctx.managerRows.length > 0],
+    /**
+     * AND EVERY SECTION THE TRADES TABLE DRAWS IS ONE THE HOLDINGS TABLE WOULD.
+     *
+     * Re-derived from `glowData.ts` rather than imported from `groupAxis.ts`: a
+     * check that calls the helper it is checking agrees with it by
+     * construction. `UNSTATED_BUCKET` is the one key no holding can produce —
+     * `Position.assetClass` is required — so it is allowed and nothing else is.
+     */
+    ["every section on the transactions table is a section the holdings table draws",
+      (t, ctx) => {
+        if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
+        const drawn = ctx.sectionRows?.map((r) => r.key) ?? [];
+        if (!drawn.length) return { notChecked: "no section headings on this run" };
+        const ok = new Set([...TXN_SECTIONS.category, "Not classified by the statement"]);
+        return drawn.every((k) => ok.has(k));
+      }],
     /**
      * ── RECENT FIRST, AND THE READER CAN CHANGE IT ───────────────────────────
      *
@@ -4841,15 +4980,38 @@ const INVARIANTS = {
     ["the rollup is ordered newest first", (t, ctx) => {
       const rows = (ctx.mineRows ?? []).filter((r) => r.last);
       if (rows.length < 2) return { notChecked: "fewer than two dated rows on this run" };
-      return rows.every((r, i) => i === 0 || rows[i - 1].last >= r.last);
+      /**
+       * WITHIN EACH SECTION. The table is sectioned on the shared axis now, so
+       * the rows are ordered by SECTION first and by date inside it — the
+       * Holdings table's own arrangement, and the dates jump at a heading by
+       * construction. Struck across the whole table this reported a table that
+       * is correctly ordered as chaotic, which is what the family complained
+       * about in the first place and would have been the check inventing it.
+       */
+      const bySection = new Map();
+      for (const r of rows) (bySection.get(r.section) ?? bySection.set(r.section, []).get(r.section)).push(r);
+      return [...bySection.values()].every((rs) => rs.every((r, i) => i === 0 || rs[i - 1].last >= r.last));
     }],
     ["the order is a control, and it opens on recent first", (t, ctx) => {
       const s = ctx.txnSort;
       if (!s) return false;   // the handle is gone — the control is, too
       return s.active === "recent" && s.options[0] === "recent" && s.options.length >= 2;
     }],
+    /**
+     * ...AND "LONGEST HELD" IS GONE, WHICH IS THE OTHER HALF OF THE ASK.
+     *
+     *   *"And the toggle switch of recent first/largest first… remove longest
+     *    first filter."*
+     *
+     * Both halves, because neither implies the other: a build that dropped the
+     * size ordering too satisfies the removal, and one that kept all three
+     * satisfies "size is still offered". The comparator's own catalogue is
+     * asserted in `schemeLabel.test.ts`; this is the claim reaching the screen.
+     */
     ["…and the size ordering it replaced is still offered", (t, ctx) =>
-      !!ctx.txnSort && ctx.txnSort.options.includes("size") && ctx.txnSort.options.includes("held")],
+      !!ctx.txnSort && ctx.txnSort.options.includes("size")],
+    ["…and \"Longest held\" is gone", (t, ctx) =>
+      !!ctx.txnSort && !ctx.txnSort.options.includes("held") && ctx.txnSort.options.length === 2],
 
     /**
      * AND THE ROWS ARE ACCOUNTS THE FAMILY FUNDED, tied to the book's own count
@@ -4914,20 +5076,20 @@ const INVARIANTS = {
      * reading the rows it sits over — which would be right here and wrong the
      * moment a filter narrowed them — still has to agree with the record.
      */
-    ["the counter beside the table counts the family's movements, not the manager's trades",
+    ["the counter beside the table counts both records, and names which is which",
       (t, ctx) => {
         if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
         const c = ctx.txnCounter;
         if (!c) return false;
-        const m = /([\d,]+) paid in · ([\d,]+) taken out/.exec(c);
+        // BOTH RECORDS ARE ON SCREEN, so the counter counts both — and it has to
+        // NAME them, because "26 in · 95 out · 284 buys · 178 sells" is four
+        // numbers describing two different measurements.
+        const m = /Capital ([\d,]+) in · ([\d,]+) out\s+·\s+Trades ([\d,]+) buys · ([\d,]+) sells/.exec(c);
         if (!m) return false;
         const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
         const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
         return Number(m[1].replace(/,/g, "")) === moves.filter((x) => x.direction === "in").length
-          && Number(m[2].replace(/,/g, "")) === moves.filter((x) => x.direction === "out").length
-          // ...and it is NOT the tape's own vocabulary, which is what it printed
-          // here before.
-          && !/buys|sells/i.test(c);
+          && Number(m[2].replace(/,/g, "")) === moves.filter((x) => x.direction === "out").length;
       }],
     /**
      * THE SIDE CONTROL IS PRESENT AND SET TO ALL by default, which is what the
@@ -5009,6 +5171,207 @@ const INVARIANTS = {
       if (!none.length) return { notChecked: "every account in this book has taken money back out" };
       return none.every((r) => r.tookOutCell === "—")
         && ctx.mineRows.filter((r) => r.withdrawals > 0).every((r) => r.tookOutCell !== "—");
+    }],
+
+    /**
+     * ── BOTH TABLES ARE SECTIONED, AND ON THE SAME AXIS ────────────────────
+     *
+     * The whole ask was that this card stop having a categorisation of its own.
+     * A build that sectioned the trades and left the capital record flat would
+     * satisfy every check above and be exactly half the fix, which is why this
+     * is struck on the CAPITAL rows' own `data-mine-section` rather than on the
+     * headings both tables happen to draw.
+     */
+    ["the family's capital record is sectioned too, on the same axis", (t, ctx) => {
+      if (!ctx.mineRows?.length) return { notChecked: "no capital rows on this run" };
+      const keys = new Set(ctx.mineRows.map((r) => r.section).filter(Boolean));
+      if (!keys.size) return false;
+      const offered = new Set(ctx.sectionFilter?.offered ?? []);
+      if (!offered.size) return false;
+      // ...and every one of them is a section the shared filter offers, which
+      // comes off the BOOK's positions rather than off this table.
+      return [...keys].every((k) => offered.has(k) || k === "Not classified by the statement");
+    }],
+
+    /**
+     * ── AND THE TWO RECORDS NEVER SHARE A FOOTER ───────────────────────────
+     *
+     * A contribution moves money INTO an account and a trade moves it about
+     * INSIDE one, so a total over both counts the same rupee twice — and it is
+     * not hypothetical: Green Lantern 510861 publishes both records, measured on
+     * this book. Two tables, two `tfoot`s, and neither is allowed to be the
+     * other's. Struck structurally, because a combined total would render a
+     * perfectly well-formed number that no value check could see.
+     */
+    /**
+     * ── THE TRADES FOOTER IS SUMMED FROM ITS OWN ROWS ──────────────────────
+     *
+     * Added because reintroducing a footer that ALSO counted the capital
+     * record's payments produced a completely clean sweep: the check below
+     * compares the two footers against each other, and 462 + 121 is still not
+     * 26, so it could not see it. `rollupTotals` sums from the rows by
+     * construction — this is what says it still does, and it is the PM-1 rule
+     * the manager route already applies one level down.
+     */
+    ["the trades footer is summed from the rows it draws", (t, ctx) => {
+      const tbl = ctx.tradesTable;
+      if (!tbl?.foot || !tbl.groups.length) return false;
+      const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
+      return tbl.groups.reduce((a, g) => a + (g.trades || 0), 0) === n(tbl.foot[1])
+        && tbl.groups.length === n(tbl.foot[0]);
+    }],
+
+    /**
+     * ── A MANDATE IS ONE ROW, IN ONE SECTION ───────────────────────────────
+     *
+     * Added because the DEFECT this found on the rendered page — an unstated
+     * asset class short-circuiting the section join — drew Carnelian Bespoke
+     * Portfolio TWICE, once under PMS mandates and once under a heading saying
+     * nothing knew what it was, and every check on the card stayed green.
+     *
+     * Scoped to MANDATES rather than to every label, because a SECURITY may
+     * legitimately appear in two sections: the same name traded in two accounts
+     * whose engagements differ is two rows by design. A mandate cannot — it is
+     * one account, and an account has one engagement and therefore one section
+     * on every axis.
+     */
+    ["no mandate is drawn in more than one section", (t, ctx) => {
+      const rows = (ctx.tradesTable?.groups ?? []).filter((g) => g.kind === "mandate");
+      if (!rows.length) return { notChecked: "no mandate traded on this run" };
+      const seen = new Map();
+      for (const r of rows) {
+        const at = seen.get(r.label);
+        if (at !== undefined && at !== r.section) return false;
+        seen.set(r.label, r.section);
+      }
+      return true;
+    }],
+
+    ["each record has its own footer, and neither totals the other", (t, ctx) => {
+      const capital = ctx.mineRows?.length > 0;
+      const trades = ctx.tradesTable?.foot;
+      if (!capital || !trades) return false;
+      const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
+      // The trades footer counts TRADES and the capital footer counts ACCOUNTS
+      // and PAYMENTS — a footer that had started summing both would have to
+      // report the tape's trade count over the capital table's row count.
+      const cap = /Total · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
+      return !!cap && Number(cap[1]) === ctx.mineRows.length
+        && n(trades[1]) !== Number(cap[3]);
+    }],
+  ],
+
+  /**
+   * ── THE SAME CARD, SECTIONED BY BASKET ─────────────────────────────────────
+   *
+   * Category is the default on both screens, so the category route cannot tell
+   * an axis control that regroups from one that is drawn and ignored. The
+   * family's baskets share not one key with the category buckets, so a table
+   * that kept sectioning on `holdingBucket` fails the first check here by name.
+   */
+  "monitor-txn-basket": [
+    // ...AND A READER CAN SEE IT. `document.querySelector` reads a hidden
+    // element exactly as it reads a visible one — measured by reintroducing the
+    // bug, which left every other claim here green over a card that no longer
+    // offered the control at all.
+    ["the axis control is live on Basket", (t, ctx) =>
+      ctx.axisControl?.active === "basket" && ctx.axisControl?.view === "transactions"
+      && ctx.axisControl?.visible === true],
+    ["…and both tables really regrouped — no category key survives", (t, ctx) => {
+      const trades = new Set(ctx.tradesTable?.sections ?? []);
+      const capital = new Set((ctx.mineRows ?? []).map((r) => r.section).filter(Boolean));
+      if (!trades.size || !capital.size) return false;
+      if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
+      const category = new Set(TXN_SECTIONS.category);
+      return [...trades].every((k) => !category.has(k)) && [...capital].every((k) => !category.has(k));
+    }],
+    /**
+     * ...AND EVERY SECTION IS ONE THE SHARED FILTER OFFERS. That list is built
+     * from the BOOK's positions through `groupKeyFor`; these headings are built
+     * from the TAPE and from the capital record through the same helper — two
+     * different inputs, one definition, so a transactions table that invented a
+     * basket no holding can sit in fails here.
+     */
+    ["every section is one the shared filter offers", (t, ctx) => {
+      const offered = new Set(ctx.sectionFilter?.offered ?? []);
+      const drawn = [...new Set([...(ctx.tradesTable?.sections ?? []),
+        ...(ctx.mineRows ?? []).map((r) => r.section).filter(Boolean)])];
+      if (!offered.size || !drawn.length) return false;
+      return drawn.every((k) => offered.has(k));
+    }],
+    /** The side control still says the family's own words on every axis. */
+    ["the side control still reads Buys and Sells", (t, ctx) => {
+      const l = (ctx.sideFilter?.options ?? []).map((o) => o.label.toLowerCase());
+      return l.includes("buys") && l.includes("sells") && !l.includes("paid in");
+    }],
+  ],
+
+  "monitor-axis-crossback": [
+    /**
+     * THE HOLDINGS TABLE IS NOT EMPTY. The whole defect is an equality test on
+     * a key no row carries, so the page renders perfectly and shows nothing —
+     * which is why this is struck on the ROW COUNT and not on any figure.
+     */
+    ["crossing back from the security axis does not silently narrow the holdings table",
+      (t, ctx) => {
+        const rows = ctx.tableRows;
+        const gate = needRows(rows);
+        if (gate) return gate;
+        /**
+         * STRUCK ON THE FOOTER'S MARKET VALUE, not on the row count — measured
+         * by reintroducing the bug, which does NOT empty the table: the section
+         * filter runs before the DERIVED-only rows are added, so 590 companies
+         * that only a fund holds survive it and the table looks populated while
+         * its MEASURED value reads ₹0. A row count cannot tell those apart; the
+         * money can, and a book-wide market value of nothing is the one figure
+         * this table can never legitimately print.
+         *
+         * `COL_STOCK`, because this route lands on the SECURITY axis, which
+         * draws two more columns — read against `COL` the assertion would be
+         * struck on `Via funds`.
+         */
+        const mv = moneyCell(ctx.footerCells?.[COL_STOCK.mv]);
+        return rows.length > 0 && Number.isFinite(mv) && mv > 0;
+      }],
+    /**
+     * ...AND THE FILTER SAYS SO. The section it was left on belongs to the OTHER
+     * view's axis, so it has to have been cleared rather than silently ignored:
+     * a control reading "AIF" over a table showing everything is the same lie
+     * the other way round.
+     */
+    ["…and the section filter was cleared rather than left reading a key it cannot match",
+      (t, ctx) => {
+        // The control is HIDDEN on the security axis, by design — it would offer
+        // one option and change nothing — so the claim is about the STATE, which
+        // is what the table filtered on. A drawn control would have to read All.
+        if (ctx.sectionFilter) return ctx.sectionFilter.active === "All";
+        return !/Total · 0 rows/i.test(t);
+      }],
+  ],
+
+  "monitor-txn-secaxis": [
+    ["the security axis is not offered on Transactions", (t, ctx) =>
+      !!ctx.axisControl && ctx.axisControl.view === "transactions"
+      && ctx.axisControl.visible === true
+      && !ctx.axisControl.offered.includes("security")],
+    ["…and the control says which axis the table really fell back to", (t, ctx) =>
+      ctx.axisControl?.active === "category"],
+    /**
+     * ...AND ONE OPTION IS LIT. Read off the buttons rather than the wrapper, so
+     * the two claims cannot both be satisfied by one attribute: comparing
+     * against the raw `?group=` param leaves every button unselected while
+     * `data-axis-active` could still say "category".
+     */
+    ["…and that button is the selected one", (t, ctx) => {
+      const sel = (ctx.axisButtons ?? []).filter((b) => b.selected);
+      return sel.length === 1 && sel[0].key === "category";
+    }],
+    ["…and the table really is sectioned by category", (t, ctx) => {
+      if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
+      const drawn = ctx.tradesTable?.sections ?? [];
+      if (!drawn.length) return false;
+      const ok = new Set([...TXN_SECTIONS.category, "Not classified by the statement"]);
+      return drawn.every((k) => ok.has(k));
     }],
   ],
 
@@ -5229,15 +5592,26 @@ const INVARIANTS = {
     return ctx.mineRows.every((r) => r.netCell === "—");
   }],
   /**
-   * ...AND THE CONTROL SPEAKS THIS VIEW'S VOCABULARY. A family movement has no
-   * buy and no sell; the columns are headed Paid in / Taken out, and a control
-   * asserting the tape's words over them is `MultiSelectFilter`'s own "No
-   * companies match" over a list of countries, one control further on.
+   * ...AND THE CONTROL SPEAKS ONE VOCABULARY, WHICH IS THE FAMILY'S.
+   *
+   *   *"Paid in/Taken Out filters should be renamed as buys and sells."*
+   *
+   * It said "Paid in / Taken out" over the capital record and "Buys / Sells"
+   * over the tape, which was defensible on its own terms — a family movement
+   * has no buy and no sell — and was half of the "different categorization
+   * names" the family were pointing at. BOTH records are under this one control
+   * now, so it carries one pair of words and the columns beneath it follow. The
+   * statement's own word for a movement survives where exactness belongs, in
+   * the Type column inside an expanded capital row.
+   *
+   * The removal is asserted as well as the replacement: a control that kept the
+   * old words beside the new ones satisfies the second half alone.
    */
-  ["...and the control is labelled for the family's own record", (t, ctx) => {
+  ["...and the control is labelled in the family's own words — Buys and Sells", (t, ctx) => {
     if (!ctx.sideFilter) return false;
     const l = ctx.sideFilter.options.map((o) => o.label.toLowerCase());
-    return l.includes("paid in") && l.includes("taken out") && !l.includes("buys") && !l.includes("sells");
+    return l.includes("buys") && l.includes("sells")
+      && !l.includes("paid in") && !l.includes("taken out");
   }],
   ],
   "monitor-txn-out": [
@@ -5294,15 +5668,26 @@ const INVARIANTS = {
     return ctx.mineRows.every((r) => r.netCell === "—");
   }],
   /**
-   * ...AND THE CONTROL SPEAKS THIS VIEW'S VOCABULARY. A family movement has no
-   * buy and no sell; the columns are headed Paid in / Taken out, and a control
-   * asserting the tape's words over them is `MultiSelectFilter`'s own "No
-   * companies match" over a list of countries, one control further on.
+   * ...AND THE CONTROL SPEAKS ONE VOCABULARY, WHICH IS THE FAMILY'S.
+   *
+   *   *"Paid in/Taken Out filters should be renamed as buys and sells."*
+   *
+   * It said "Paid in / Taken out" over the capital record and "Buys / Sells"
+   * over the tape, which was defensible on its own terms — a family movement
+   * has no buy and no sell — and was half of the "different categorization
+   * names" the family were pointing at. BOTH records are under this one control
+   * now, so it carries one pair of words and the columns beneath it follow. The
+   * statement's own word for a movement survives where exactness belongs, in
+   * the Type column inside an expanded capital row.
+   *
+   * The removal is asserted as well as the replacement: a control that kept the
+   * old words beside the new ones satisfies the second half alone.
    */
-  ["...and the control is labelled for the family's own record", (t, ctx) => {
+  ["...and the control is labelled in the family's own words — Buys and Sells", (t, ctx) => {
     if (!ctx.sideFilter) return false;
     const l = ctx.sideFilter.options.map((o) => o.label.toLowerCase());
-    return l.includes("paid in") && l.includes("taken out") && !l.includes("buys") && !l.includes("sells");
+    return l.includes("buys") && l.includes("sells")
+      && !l.includes("paid in") && !l.includes("taken out");
   }],
   /**
    * ...AND THE REDEMPTION THE FAMILY WENT LOOKING FOR IS ON IT.
@@ -5322,18 +5707,34 @@ const INVARIANTS = {
     return CAPITAL_SIDES.outLabels.some((l) => t.includes(l));
   }],
   ],
+  /**
+   * THE MANAGERS' OWN DEALING, WHICH IS NO LONGER A TAB.
+   *
+   * It was `Manager trades`, one of five. The rollup did not go with the strip:
+   * `rollup(..., "auto", ...)` rolls a trade up to its MANDATE where a
+   * discretionary manager chose it and to its SECURITY everywhere else, which is
+   * exactly how the Holdings table builds its rows. So these invariants moved
+   * to the default view rather than being deleted alongside the tab — the
+   * rollup still has to lose nothing, and a check that stops running because a
+   * tab moved is a check that silently stopped.
+   *
+   * THEY ARE STRUCK ON `[data-trades-table]` NOW, not on the page text. The
+   * family's own capital record sits above this one with a footer of its own,
+   * so `/Total · N …/` over the whole page cannot say which footer it matched.
+   */
   "monitor-txn-manager": [
     /**
-     * THE DEFAULT IS THE ROLLUP. Struck on the arithmetic rather than on the
+     * THE TABLE OPENS ROLLED UP. Struck on the arithmetic rather than on the
      * heading: a tape re-labelled would satisfy any prose match, so this asserts
-     * the footer counts FEWER groups than the trades they cover.
+     * the footer counts FEWER rows than the trades they cover.
      */
     ["the tape opens rolled up — far fewer lines than trades",
-      (t) => {
-        const f = /Total · ([\d,]+) accounts\t([\d,]+)\t/.exec(t);
+      (t, ctx) => {
+        const f = ctx.tradesTable?.foot;
         if (!f) return false;
-        const groups = Number(f[1].replace(/,/g, "")), trades = Number(f[2].replace(/,/g, ""));
-        return groups > 0 && trades > groups * 3;
+        const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
+        const rows = n(f[0]), trades = n(f[1]);
+        return rows > 0 && trades > rows * 3;
       }],
 
     /**
@@ -5344,12 +5745,34 @@ const INVARIANTS = {
      * security or a side fails here and nowhere else on the page.
      */
     ["every trade on the tape reaches the rollup — its footer ties to the tape's own counter",
-      (t) => {
-        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
-        const foot = /Total · [\d,]+ accounts\t([\d,]+)\t/.exec(t);
-        if (!tape || !foot) return false;
-        const n = (x) => Number(x.replace(/,/g, ""));
-        return n(tape[1]) + n(tape[2]) === n(foot[1]);
+      (t, ctx) => {
+        const f = ctx.tradesTable?.foot;
+        const tape = /Trades ([\d,]+) buys · ([\d,]+) sells/.exec(ctx.txnCounter ?? "");
+        if (!f || !tape) return false;
+        const n = (x) => Number(String(x).replace(/,/g, "").replace(/[^\d]/g, ""));
+        return n(tape[1]) + n(tape[2]) === n(f[1]);
+      }],
+
+    /**
+     * ...AND SO DOES EVERY SECTION SEPARATELY. The sections partition the rows,
+     * so their own trade counts have to add to the footer's — a heading summed
+     * beside its rows rather than from them can be right on its own terms while
+     * the rows under it are wrong, which is the Private Market page's PM-1.
+     *
+     * Abstains only where the table drew ONE section, which is the case a single
+     * heading is correctly not drawn in (`secs.length > 1`).
+     */
+    ["each section's rows add to the footer's trade count",
+      (t, ctx) => {
+        const tbl = ctx.tradesTable;
+        if (!tbl?.foot) return false;
+        if (tbl.sections.length < 2) return { notChecked: "the table drew one section on this run" };
+        const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
+        const drawn = tbl.groups.reduce((a, g) => a + (g.trades || 0), 0);
+        const perSection = new Set(tbl.groups.map((g) => g.section));
+        return drawn === n(tbl.foot[1])
+          // every group really is filed under a heading the table drew
+          && [...perSection].every((k) => tbl.sections.includes(k));
       }],
 
     /**
@@ -5360,21 +5783,61 @@ const INVARIANTS = {
      * failing on a total. The count is rendered next to the figure.
      */
     ["the realised total names the fraction of sells it covers",
-      (t) => {
-        const m = /Total · [\d,]+ accounts\t[^\n]*?([\d,]+)\/([\d,]+)/.exec(t);
+      (t, ctx) => {
+        const f = ctx.tradesTable?.foot;
+        if (!f) return false;
+        const m = /([\d,]+)\/([\d,]+)/.exec(f[6] ?? "");
         if (!m) return false;
         const n = (x) => Number(x.replace(/,/g, ""));
         return n(m[1]) > 0 && n(m[1]) < n(m[2]);
       }],
 
     /**
-     * AND A SIDE THAT DID NOT TRADE RENDERS A DASH, NOT ₹0. An account that
-     * bought and never sold reported no proceeds; ₹0 says it sold and got
-     * nothing. The book has such an account, and this asserts one line carries
-     * the dash rather than a zero in its Sold column.
+     * AND A SIDE THAT DID NOT TRADE RENDERS A DASH, NOT ₹0 — struck at the SOLD
+     * COLUMN rather than page-wide.
+     *
+     * An account that bought and never sold reported no proceeds; ₹0 says it
+     * sold and got nothing. Read across the whole page it also bans every
+     * legitimate zero on the card — 3P's account holds nothing today and its
+     * ₹0 is MEASURED — which is the same rule failing in the direction that
+     * hides a real figure.
      */
+    /**
+     * ── A PMS MANDATE ROLLS UP TO ITS MANAGER, AS IT DOES ON THE HOLDINGS
+     *    TABLE ─────────────────────────────────────────────────────────────
+     *
+     * Added because reintroducing the `auto` rule as plain per-security
+     * grouping produced a CLEAN sweep: every figure on the card is identical
+     * either way — the same trades, the same totals — and only the ROW UNIT
+     * changes, which no value check can see. It is also the whole of what
+     * "matched the categorization as in the holdings page" means for a row,
+     * since Stage 10L lifted the mandates out of that table into one row each.
+     *
+     * Anchored on the BOOK: a mandate is an account, so the PMS section can
+     * never draw more rows than this book has PMS accounts. A per-security
+     * build draws 200-odd.
+     */
+    ["every row in the PMS mandates section is a mandate, not a security",
+      (t, ctx) => {
+        const rows = (ctx.tradesTable?.groups ?? []).filter((g) => g.section === MANDATE_BUCKET);
+        if (!rows.length) return { notChecked: "no PMS section on this run" };
+        if (!PMS_ACCOUNTS) return { notChecked: "the book's PMS account count could not be read" };
+        return rows.every((g) => g.kind === "mandate") && rows.length <= PMS_ACCOUNTS;
+      }],
+
     ["a group that sold nothing shows an em dash in Sold, never a zero",
-      (t) => /—/.test(t) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(t)],
+      (t, ctx) => {
+        const tbl = ctx.tradesTable;
+        if (!tbl?.groups?.length) return false;
+        // `label-xs` IS `uppercase`, AND `innerText` RETURNS THE TRANSFORMED
+        // TEXT — so the header reads "SOLD" and an exact match finds nothing,
+        // which is a check that cannot fail rather than one that fails. The
+        // same trap this sweep already records against `/Listed NAV/`.
+        const sold = tbl.head.findIndex((h) => /^sold$/i.test(h));
+        if (sold < 0) return false;
+        const cells = tbl.groups.map((g) => g.cells[sold] ?? "");
+        return cells.some((c) => c === "—") && !cells.some((c) => /^₹\s*0(?:\.00)?$/.test(c));
+      }],
   ],
 
   /**
@@ -5590,12 +6053,16 @@ const INVARIANTS = {
      * view — so a filter that quietly stopped filtering fails here.
      */
     ["...and it is a strict subset of the tape, not the whole of it",
-      (t) => {
+      (t, ctx) => {
         if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
-        const tape = /([\d,]+) buys · ([\d,]+) sells/.exec(t);
-        if (!tape) return false;
-        const n = (x) => Number(x.replace(/,/g, ""));
-        return DIRECT.footTrades < n(tape[1]) + n(tape[2]);
+        // A BEFORE/AFTER ON THE SAME PAGE. The counter this used to compare
+        // against narrows with the section filter as well, so after the tab
+        // became a section the witness would have moved with the thing under
+        // test — a filter that quietly stopped filtering would have kept
+        // agreeing with it. The unfiltered footer, read before the filter was
+        // touched, cannot.
+        if (!DIRECT_ALL) return { notChecked: "the unfiltered trades footer was not read on this pass" };
+        return DIRECT.footTrades > 0 && DIRECT.footTrades < DIRECT_ALL;
       }],
 
     /** The footer is summed from the rows above it, as everywhere else here. */
@@ -5613,7 +6080,33 @@ const INVARIANTS = {
      * trade rather than of what this book can see.
      */
     ["...and says why it is narrow, rather than reading as a family that barely trades",
-      (t) => /own broking accounts/i.test(t) && /not trades/i.test(t)],
+      (t) => /Demat movements carry no price or counterparty/i.test(t) && /not trades/i.test(t)],
+    /**
+     * AND THE SHARED SECTION FILTER IS WHAT NARROWED IT — which is a stronger
+     * claim than the tab it replaced could make: the SAME control the Holdings
+     * table uses, so "show me the Direct Equity" means the same thing on both.
+     */
+    ["the shared section filter is what narrowed it, and the table says so",
+      (t, ctx) => {
+        if (!ctx.sectionFilter) return false;
+        if (ctx.sectionFilter.active !== DIRECT_EQUITY_BUCKET) return false;
+        // ...and with one section in view the table correctly draws no heading,
+        // exactly as the Holdings table does (`secs.length > 1`).
+        return (ctx.tradesTable?.sections?.length ?? 0) === 0;
+      }],
+
+    /**
+     * ...AND IT NARROWS THE CAPITAL RECORD TOO, which is the half a trades-only
+     * check cannot see. No account the family funded is Direct Equity — every
+     * one is a PMS mandate or an AIF folio — so under this filter that table has
+     * nothing to draw and says so. A filter wired to one table would leave all
+     * eleven rows sitting under a section heading they are not in.
+     */
+    ["…and it narrows the family's capital record with it", (t, ctx) => {
+      const rows = ctx.mineRows ?? [];
+      if (!rows.length) return /No dated movement matches these filters/i.test(t);
+      return rows.every((r) => r.section === DIRECT_EQUITY_BUCKET);
+    }],
   ],
 
   /**
@@ -9202,9 +9695,10 @@ const INVARIANTS = {
      * family's request. Struck on the BUTTONS a reader can press, not on the
      * words: the retired switch's own vocabulary still appears in this page's
      * prose, so a text match would fail a page that is correct. (It used to
-     * clash with the Transactions card's "By security" / "By entity" tabs as
-     * well; those are "Direct Equity" and "Trades by member" now — the labels
-     * moved, the reason this is struck structurally did not.)
+     * clash with the Transactions card's own tab strip, which named views in a
+     * vocabulary of its own; that strip is gone — the card sections on the
+     * shared axis now — and the reason this is struck structurally did not
+     * move with it.)
      */
     ["the removed Holdings basis switch and Review deck button stay removed",
       () => {
@@ -11441,9 +11935,10 @@ const INVARIANTS = {
      * Six of the seven fund folios that reached here report no dealing at all,
      * so the card was an empty box under an empty page. The seventh, Buoyant
      * Capital 103473, is the one non-mandate account in this book that issues a
-     * transaction statement — and it is not a My-investments row either, so this
-     * card was never the way into its record. That record is the Manager trades tab,
-     * which covers all ten accounts the tape reads.
+     * transaction statement — and it publishes no dated capital record either,
+     * so this card was never the way into its dealing. That record is the
+     * Transactions card's Trades table, which covers every account the tape
+     * reads.
      *
      * Struck on all three of the card's own strings, because the removal deleted
      * a title, an absence and a footer between them: matching only the title
@@ -11964,27 +12459,59 @@ for (const theme of THEMES) {
         }
         if (best >= 0) { await toggles.nth(best).click(); await page.waitForTimeout(500); }
       }
-      if (name === "monitor-txns" || name === "monitor-txn-manager"
-        || name === "monitor-txn-drill" || name === "monitor-txn-direct"
-        || name === "monitor-txn-in" || name === "monitor-txn-out") {
+      if (name === "monitor-axis-crossback") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
-        // THE VIEW IS A TAB NOW, AND THE DEFAULT MOVED. `monitor-txns` walks
-        // what a reader sees first (My investments); every route that checks the
-        // MANAGER's dealing has to say so, or it would quietly start asserting
-        // the manager rollup's invariants against a table of the family's own
-        // contributions and abstain on every one of them.
-        const tab = name === "monitor-txn-direct" ? /^Direct Equity$/
-          : name === "monitor-txns" || name === "monitor-txn-in" || name === "monitor-txn-out" ? null
-          : /^Manager trades$/;
-        if (tab) {
-          const v = page.getByRole("button", { name: tab }).first();
-          if (await v.count()) { await v.click(); await page.waitForTimeout(900); }
+        // Pick a real section on the Transactions side — whichever the control
+        // offers first after "All", read off the DOM so the walk does not go
+        // stale when the next drop moves the book.
+        const sel = page.locator("[data-section-filter]").first();
+        if (await sel.count()) {
+          const opt = await sel.evaluate((el) => [...el.options].map((o) => o.value).find((v) => v !== "All") ?? null);
+          if (opt) { await sel.selectOption(opt); await page.waitForTimeout(700); }
         }
-        // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL — the label follows
-        // the active view on purpose ("Paid in" here, "Buys" on the tape), so a
-        // walk that clicked the WORD would stop finding the control the moment
-        // the vocabulary was right.
+        const h = page.getByRole("button", { name: /^Holdings$/ }).first();
+        if (await h.count()) { await h.click(); await page.waitForTimeout(1200); }
+      }
+      if (name === "monitor-txns" || name === "monitor-txn-manager"
+        || name === "monitor-txn-drill" || name === "monitor-txn-direct"
+        || name === "monitor-txn-in" || name === "monitor-txn-out"
+        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis") {
+        const t = page.getByRole("button", { name: /transactions/i }).first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+        /**
+         * THERE IS NO TAB TO CLICK ANY MORE, AND THAT IS THE CHANGE.
+         *
+         *   *"remove the categorization 'What I invested / Direct Equity /
+         *    Manager trades / Trades by member / Full trade list' replace it
+         *    with what is in the holdings — Category / Asset class / Basket."*
+         *
+         * Both records are on screen together now and the GROUPING is the
+         * shared axis, so every route below lands on the same page and differs
+         * only by which control it moves. What used to be the "Direct Equity"
+         * tab is a SECTION of the trades table, reached through the same
+         * section filter the Holdings table uses — which is a stronger check
+         * than the tab was, because it also asserts that the shared control
+         * narrows this table at all.
+         */
+        if (name === "monitor-txn-direct") {
+          // THE WHOLE TABLE FIRST, THEN THE NARROWED ONE. The subset claim used
+          // to be struck against the header's buy/sell counter, which narrows
+          // with this filter too — so after the tab became a section the
+          // witness would have moved with the thing under test. A reading taken
+          // BEFORE the filter cannot.
+          DIRECT_ALL = await page.evaluate(() => {
+            const foot = document.querySelector("[data-trades-table] tr[data-trades-total]");
+            const n = (x) => Number((/[\d,]+/.exec(x ?? "") ?? ["0"])[0].replace(/,/g, ""));
+            return foot ? n(foot.cells?.[1]?.innerText) : null;
+          });
+          const sel = page.locator("[data-section-filter]").first();
+          if (await sel.count()) { await sel.selectOption("Direct Equity"); await page.waitForTimeout(900); }
+        }
+        // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL. It carried two
+        // vocabularies until the family settled it on Buys/Sells, and a walk
+        // that clicked the WORD would have stopped finding the control on the
+        // rename — which is exactly the edit this route now has to survive.
         const want = name === "monitor-txn-in" ? "in" : name === "monitor-txn-out" ? "out" : null;
         if (want) {
           const b = page.locator(`[data-side-option="${want}"]`).first();
@@ -12166,11 +12693,16 @@ for (const theme of THEMES) {
         await page.waitForTimeout(200);
       }
       if (name === "monitor-txn-direct") {
-        const t = page.getByRole("button", { name: /^Direct Equity$/ }).first();
-        if (await t.count()) { await t.click(); await page.waitForTimeout(900); }
+        // THE TAB IS GONE AND THE SECTION FILTER GOT THERE FIRST (above), so
+        // there is nothing to click here. Read the trades table as the filter
+        // left it — scoped to `[data-trades-table]`, because the family's own
+        // capital record above it has a `tfoot` of its own and
+        // `document.querySelector("tfoot tr")` would find that one.
         DIRECT = await page.evaluate(() => {
-          const rows = [...document.querySelectorAll('tr[data-row="group"]')];
-          const foot = document.querySelector("tfoot tr");
+          const table = document.querySelector("[data-trades-table]");
+          if (!table) return null;
+          const rows = [...table.querySelectorAll('tr[data-row="group"]')];
+          const foot = table.querySelector("tr[data-trades-total]");
           const cell = (r, i) => (r?.cells?.[i]?.innerText ?? "").trim();
           const n = (x) => Number((/[\d,]+/.exec(x) ?? ["0"])[0].replace(/,/g, ""));
           return {
@@ -12778,6 +13310,11 @@ for (const theme of THEMES) {
           // The row's own dated span, for the ordering claim.
           first: tr.getAttribute("data-mine-first") ?? "",
           last: tr.getAttribute("data-mine-last") ?? "",
+          // ...and the SECTION it was drawn under, because the table is
+          // sectioned now: the ordering claim holds WITHIN a section, exactly as
+          // it does on the Holdings table, and dates jump at a heading by
+          // construction.
+          section: tr.getAttribute("data-mine-section") ?? "",
           how: tr.querySelector("[data-mine-how]")?.getAttribute("data-mine-how") ?? null,
           // The two money cells and the net, as figures or as absences. A side
           // filter must EMPTY the other side rather than print a ₹0 there, and
@@ -12825,6 +13362,24 @@ for (const theme of THEMES) {
       const txnCounter = FAST ? null : await page.evaluate(() =>
         (document.querySelector("[data-txn-counter]")?.textContent ?? "").trim() || null);
       /**
+       * THE SHARED SECTION FILTER — what it is set to, and what it OFFERS.
+       *
+       * The same control the Holdings table narrows on. Its options come from
+       * the BOOK's positions through `groupKeyFor`; a transactions table's
+       * section headings come from the TAPE through the same helper. Comparing
+       * the two is therefore a real cross-check on two different inputs rather
+       * than a figure against its own copy: a transactions table that invented
+       * a section no holding can sit in fails it.
+       */
+      const sectionFilter = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("[data-section-filter]");
+        if (!el) return null;
+        return {
+          active: el.getAttribute("data-section-filter"),
+          offered: [...el.options].map((o) => o.value),
+        };
+      });
+      /**
        * ...AND THE MY-INVESTMENTS COLUMN HEADS, each with its own `title`.
        *
        * A claim about a COLUMN is read at that column, never off a page-wide
@@ -12843,7 +13398,41 @@ for (const theme of THEMES) {
       const managerRows = FAST ? [] : await page.evaluate(() =>
         [...document.querySelectorAll('tr[data-row="group"]')].map((tr) => ({
           trades: Number(tr.getAttribute("data-trades")),
+          section: tr.getAttribute("data-group-section"),
         })));
+      /**
+       * ── THE TRADES TABLE, BY COLUMN AND BY HANDLE ──────────────────────────
+       *
+       * Read off `[data-trades-table]` rather than out of the page text, which
+       * is what the footer checks used to do (`/Total · N accounts\t/`). That
+       * worked while this was the only table on the card; the family's own
+       * capital record now sits above it with a footer of its own, so a text
+       * match cannot say which one it found — and the row unit changed with the
+       * tab strip, so the prose it matched went with it.
+       *
+       * Cells are read positionally INSIDE the footer's own row and the header
+       * is captured beside them, so a claim about a column can be struck at the
+       * column the heading names rather than at a token offset in a blob.
+       */
+      const tradesTable = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("[data-trades-table]");
+        if (!table) return null;
+        const cells = (tr) => [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim());
+        const foot = table.querySelector("tr[data-trades-total]");
+        const groups = [...table.querySelectorAll('tr[data-row="group"]')];
+        return {
+          head: [...table.querySelectorAll("thead th")].map((th) => (th.innerText ?? "").trim()),
+          sections: [...table.querySelectorAll("tr[data-section]")].map((tr) => tr.getAttribute("data-section")),
+          groups: groups.map((tr) => ({
+            trades: Number(tr.getAttribute("data-trades")),
+            section: tr.getAttribute("data-group-section"),
+            kind: tr.getAttribute("data-group-kind"),
+            label: tr.getAttribute("data-group-label"),
+            cells: cells(tr),
+          })),
+          foot: foot ? cells(foot) : null,
+        };
+      });
       /**
        * ── THE CONTRIBUTION HISTORY PANEL, CELL BY CELL ───────────────────────
        *
@@ -13019,6 +13608,38 @@ for (const theme of THEMES) {
           key: b.getAttribute("data-group-axis"),
           selected: b.getAttribute("aria-selected") === "true",
         })));
+      /**
+       * ── THE AXIS CONTROL AS A WHOLE, not as a bag of buttons ───────────────
+       *
+       * `axisButtons` above answers "which keys are on the page"; this answers
+       * "which control is this, what does it offer, and what is live" — and the
+       * Transactions claim needs all three: it offers THREE (the security axis
+       * is a Holdings-only axis and must not appear), it is the transactions
+       * one, and it opens on Category.
+       *
+       * The ACTIVE key is read off the wrapper rather than off `aria-selected`,
+       * because the two answer different questions when a reader arrives from
+       * `?group=security`: the table falls back to Category and the wrapper says
+       * so, where the raw param matches no button at all.
+       */
+      const axisControl = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("[data-axis-control]");
+        if (!el) return null;
+        const box = el.getBoundingClientRect();
+        return {
+          view: el.getAttribute("data-axis-control"),
+          active: el.getAttribute("data-axis-active"),
+          offered: [...el.querySelectorAll("[data-group-axis]")].map((b) => b.getAttribute("data-group-axis")),
+          /**
+           * ...AND WHETHER A READER CAN ACTUALLY SEE IT. Found by reintroducing
+           * the bug: hiding the control left every claim above green, because a
+           * `document.querySelector` reads a hidden element exactly as it reads
+           * a visible one. A control a reader cannot reach is the arrangement
+           * the family asked to be rid of, whichever way it was hidden.
+           */
+          visible: box.width > 0 && box.height > 0 && el.offsetParent !== null,
+        };
+      });
       /**
        * THE DRILL-DOWN'S OWN HEADLINE, off its handles rather than its prose.
        *
@@ -13726,7 +14347,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

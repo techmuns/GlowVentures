@@ -713,8 +713,8 @@ export function HoldingsBehind() {
                                   The fact it carried is not lost: the table's own
                                   subtitle counts what was left out, and the
                                   Portfolio Monitor still lists the closed rows in
-                                  full with the money that came back on
-                                  Transactions → What I invested.
+                                  full with the money that came back, in the
+                                  Transactions card's Capital in and out table.
                                 */}
                               </div>
                             </td>

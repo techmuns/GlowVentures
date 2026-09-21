@@ -370,6 +370,40 @@ export function capitalTotals(groups: CapitalGroup[]) {
 }
 
 /**
+ * ── THE CAPITAL RECORD, SECTIONED THE SAME WAY THE HOLDINGS TABLE IS ────────
+ *
+ * The family's dated capital is per ACCOUNT, so a row is filed under the
+ * section that account's own holdings sit in — `sectionsFor(...).forAccount` in
+ * `txnAxis.ts`, which delegates to `groupKeyFor` rather than answering itself.
+ *
+ * The subtotal is summed FROM the rows the section draws, for the same reason
+ * `rollupTotals` and `capitalTotals` already are: a subtotal computed beside its
+ * own rows can be right on its own terms while they are wrong, and no check
+ * comparing the two can see it.
+ */
+export type CapitalSectionRows = {
+  key: string;
+  rows: CapitalGroup[];
+  totals: ReturnType<typeof capitalTotals>;
+};
+
+export function capitalSectionRollup(
+  groups: CapitalGroup[],
+  sectionOf: (accountId: string) => string,
+  order: (keys: string[]) => string[],
+): CapitalSectionRows[] {
+  const by = new Map<string, CapitalGroup[]>();
+  for (const g of groups) {
+    const k = sectionOf(g.accountId);
+    (by.get(k) ?? by.set(k, []).get(k)!).push(g);
+  }
+  return order([...by.keys()]).map((key) => {
+    const rows = by.get(key) ?? [];
+    return { key, rows, totals: capitalTotals(rows) };
+  });
+}
+
+/**
  * How many of a set's holdings carry a breakdown, for the caption under a
  * table that offers one on some rows and not others.
  *
