@@ -54,7 +54,10 @@ const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium-1194/chrome-linu
 const ONLY = (process.env.ONLY ?? "").split(",").map((x) => x.trim()).filter(Boolean);
 const PUBLISHERS = [
   ["monitor", (n) => n === "mandate" || n === "mandate-fund"],
-  ["cio", (n) => n.startsWith("holdings-")],
+  // THE ALLOCATION PANEL, NOT `cio`: Morning CIO's Concentration card and its
+  // allocation rows are what resolve every holdings drill-down's address, and
+  // both moved behind `?tab=allocation` when the page was split into panels.
+  ["cio-allocation", (n) => n.startsWith("holdings-")],
   // The cost-less set is a FACET of the Capital invested page, so its address is
   // drawn by that page's toggle and by nothing else. `ONLY=holdings-nocost`
   // without it would walk a not-found page and report NOT CHECKED — a filter
@@ -2007,8 +2010,38 @@ const ROUTES = [
    * end to end, and the family asked for the control. See `DailyMovers.tsx`.
    */
   ["cio-movers-funds", "/cio?movers=funds"],
-  ["cio-alloc-basket", "/cio?alloc=basket"],
-  ["cio-alloc-class", "/cio?alloc=assetClass"],
+  /**
+   * ...AND THE OTHER TWO PANELS. *"Divide the Morning CIO into three separate
+   * sections and tabs."*
+   *
+   * REACHED BY URL, NOT BY A CLICK, for the reason `monitor-basket` and
+   * `cio-alloc-basket` already are: the panel lives in `?tab=`, so a slice is a
+   * link — and a walk that had to click would be asserting the control works in
+   * order to check the panel behind it, which is two claims in one. The control
+   * is checked on its own, on all three routes, by `CIO_TAB_CONTROL`.
+   *
+   * `cio-allocation` IS ALSO THE PUBLISHER for every `holdings-*` route. The
+   * Concentration card is where `CIO_FIGURES` is read and the allocation rows
+   * are where `CIO_DRILLDOWNS` comes from, and both moved to this panel with the
+   * cards that draw them — so `PUBLISHERS` names it rather than `cio`.
+   */
+  ["cio-allocation", "/cio?tab=allocation"],
+  ["cio-nav", "/cio?tab=nav"],
+  /**
+   * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
+   * the Nifty 500 line exists at all: `vite preview` runs no Function, so on the
+   * plain walk `/api/prices` 404s and the chart correctly draws the book's own
+   * series alone. Five `cio-live` invariants read that line and moved here WITH
+   * the chart — left on `cio-live` they would have reported NOT CHECKED against
+   * a panel that is correctly not drawn on the movers tab, which is an
+   * abstention rather than a failure and reads as a clean run.
+   */
+  ["cio-nav-live", "/cio?tab=nav"],
+  // ...ON THE ALLOCATION PANEL, because that is where the table is drawn now.
+  // A `?alloc=` with no `?tab=` would land on the movers panel and walk a page
+  // with no allocation table on it at all.
+  ["cio-alloc-basket", "/cio?tab=allocation&alloc=basket"],
+  ["cio-alloc-class", "/cio?tab=allocation&alloc=assetClass"],
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   /**
@@ -2889,10 +2922,12 @@ function cioAllocationRows(text) {
  * lands on a different count and cannot pass.
  */
 function moversGainersAreDirectEquity(text) {
+  // `text` is the MOVERS PANEL's own innerText (`ctx.cioLayout.text`), not the
+  // page's — see the probe for why the old end-marker could no longer bound it.
   if (PRICED_DIRECT_EQUITY_NAMES == null) {
     return { notChecked: "the book could not be read, so the expected count could not be derived" };
   }
-  const card = sliceBetween(text, "Today’s movers", "Allocation by");
+  const card = sliceBetween(text ?? "", "Today’s movers");
   const g = /(\d+)\s+GAINERS?/i.exec(card);
   const l = /(\d+)\s+LOSERS?/i.exec(card);
   if (!g || !l) return false;
@@ -4700,6 +4735,1445 @@ const pmViewChecks = (expected) => [
   }],
 ];
 
+/**
+ * ── MORNING CIO IS THREE PANELS BEHIND ONE CONTROL ───────────────────────────
+ *
+ * *"Divide the Morning CIO into three separate sections and tabs… the KPI tiles
+ * at the top of the page will remain the same for all the three tabs… the single
+ * scroll page should be gone."*
+ *
+ * ONE BLOCK BECAME FOUR, AND NOT ONE CLAIM WAS DROPPED ON THE WAY. Every
+ * invariant below stood in the `cio` block and is assigned to the route that
+ * DRAWS its subject: left where it was, each of the ~40 that read the allocation
+ * table, the Concentration card or the NAV chart would have reported NOT CHECKED
+ * against content that is correctly not on the movers tab — an abstention rather
+ * than a failure, which reads as a clean run. That is the same move the eleven
+ * published-NAV invariants made when the movers card grew its toggle, and it is
+ * the file's own rule: a check follows its subject or it stops checking.
+ *
+ *   CIO_SHARED  — the KPI strip, the page header and the page-wide absences.
+ *                 Spread into ALL THREE routes, because the family asked for the
+ *                 strip on every tab and a build that dropped it from one would
+ *                 otherwise be caught on none.
+ *   CIO_MOVERS  — Today's movers.            `/cio` (the param-free default)
+ *   CIO_ALLOC   — allocation, capital deployment, concentration & risk.
+ *                                            `/cio?tab=allocation`
+ *   CIO_NAV     — the dated NAV series against the Nifty 500.
+ *                                            `/cio?tab=nav`
+ *
+ * THE ALLOCATION PANEL IS ALSO THE PUBLISHER for every `holdings-*` route: the
+ * Concentration card is where `CIO_FIGURES` is read and the allocation rows are
+ * where `CIO_DRILLDOWNS` comes from. `PUBLISHERS` and the collection gates in
+ * the walk moved with it, so `ONLY=holdings-book` still pulls in the page that
+ * resolves its address rather than walking a not-found page and reporting clean.
+ */
+
+/** The tile count the first Morning CIO route saw, so the other two are held to it. */
+let CIO_TILE_COUNT = 0;
+
+const CIO_SHARED = [
+    /**
+     * ── THE REGISTER'S SENTINEL DERIVED, SO ITS ABSENCE CHECK MEANS SOMETHING ─
+     *
+     * The family asked for the Investment Register page to go, and with it went
+     * `src/data/registerData.ts` — which is where `REGISTER_SENTINEL` used to
+     * come from. Rederived from the workbook it guards the STRONGER claim (no
+     * route may name the register's largest not-in-book holding, with no
+     * exception for a page that no longer exists), and the guard in the walk
+     * short-circuits on `REGISTER_SENTINEL &&`.
+     *
+     * So a workbook this run cannot read would make that claim unfalsifiable
+     * WITHOUT FAILING ANYTHING — a check retiring itself in silence, on exactly
+     * the change that makes it matter most. This is the line that speaks up.
+     * Asserted once, on a route every sweep walks.
+     */
+    ["the register sentinel derived, so the absence check on every route can fail",
+      /* A BOOLEAN, DELIBERATELY. The harness reads any truthy return as a PASS
+         (`else if (!r) invariants.push(desc)`), so returning a description of
+         the failure is how a check comes to be unable to fail — measured once
+         in this file already, on five invariants at a time. */
+      () => !!REGISTER_SENTINEL],
+    /**
+     * ── THE TILE IS "CURRENT VALUE OF HOLDINGS" ───────────────────────────────
+     *
+     *   "rename consolidated NAV as Current Value of holdings … wherever it is
+     *    written consolidated NAV replace it with Current value of Holdings"
+     *
+     * Both directions, and the second is the one that would fail quietly: the
+     * sweep READS this tile's figure off its label to feed four other
+     * invariants, so a rename the probe did not follow would not fail anything —
+     * it would make those four report NOT CHECKED, which is an abstention rather
+     * than a failure and is how a check retires itself in silence.
+     */
+    ["the NAV tile is renamed, and the old label is gone", (t) =>
+      /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
+
+  ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
+    && !/Listed vs private, on a like-for-like basis/i.test(t)],
+  /**
+   * ...AND THE SPLIT IT CARRIED IS STILL REACHABLE, one click on rather than in
+   * the tile's own caption. Both halves are the facet toggle on the NAV's own
+   * page (asserted there, with their counts and their partition); what this
+   * page must still do is OFFER that page from the tile the split belongs to.
+   */
+  ["...and the listed/private split it carried is one click from the NAV tile", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
+    const nav = ctx.kpiTiles.find((x) => /current value of holdings/i.test(x.label));
+    return !!nav && /of=book\b/.test(nav.links[0] ?? "");
+  }],
+  ["...and the money-weighted return it carried still has its own tile",
+    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN|XIRR \(ANNUALISED\)/i.test(t)],
+  /**
+   * ── THE TILES CARRY A LABEL AND A FIGURE, AND NOTHING ELSE ────────────────
+   *
+   * *"remove these small subtext from the clickable KPI buttons since these are
+   * also already written inside each KPI pages."* Measured line by line before
+   * removing: every one of them was on the page its tile opens, except two that
+   * were not and have been moved there (the accrued income the NAV excludes, and
+   * the window the money-weighted rate is struck over).
+   *
+   * ONE EXCEPTION, AND IT IS THE RULE THIS FILE EXISTS FOR: a tile whose figure
+   * the book does not carry renders an em dash, and an em dash must name its
+   * cause. Those tiles keep their one line. On this book none are absent, so the
+   * check is struck on the tiles that DO have a figure — and a drop that empties
+   * one gets its reason back rather than an unexplained dash.
+   */
+  ["a KPI tile with a figure carries no caption under it", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const withFigures = ctx.kpiTiles.filter((x) => !x.absent);
+    if (!withFigures.length) return notChecked("no KPI tile on this run carries a figure");
+    return withFigures.every((x) => x.lines <= 2);
+  }],
+  ["...and a tile with no figure still names why", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const absent = ctx.kpiTiles.filter((x) => x.absent);
+    if (!absent.length) return notChecked("every KPI tile on this book carries a figure");
+    // THREE lines, not two: label, the em dash, and the reason. `>= 2` was the
+    // first draft and it could not fail — a tile rendering "UNCALLED CAPITAL / —"
+    // and nothing else has two lines and is exactly the unexplained dash this is
+    // guarding against. Found by reintroducing the bug.
+    return absent.every((x) => x.lines >= 3);
+  }],
+  /**
+   * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
+   * the "coming as live data lands" list; a chip for a feature already on the
+   * reader's screen is the same defect as an absence recorded against a premise
+   * that changed.
+   */
+  /**
+   * ── ONE DESTINATION PER KPI TILE ──────────────────────────────────────────
+   *
+   * *"there are multiple links on these KPI tiles. Make these KPI tiles
+   * clickable and remove all the other links."* The NAV tile carried three
+   * addresses — its label, and the listed and private halves in its caption —
+   * and Capital invested carried two. A reader had to know which of them
+   * answered their question, and the largest target on the tile, the figure
+   * itself, went nowhere.
+   *
+   * Struck on the ANCHORS INSIDE EACH TILE rather than on the page's link list:
+   * a page-wide count cannot tell a tile with two links from two tiles with one
+   * each, which is exactly the distinction being asserted.
+   */
+  ["each KPI tile offers exactly one destination", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.links.length <= 1);
+  }],
+  /**
+   * ...AND THE TILES THAT HAVE A SET STILL OPEN IT. The rule above is satisfied
+   * by a strip with no links at all, which would answer the request by removing
+   * the feature — so the destinations are asserted too, by the figure they
+   * belong to rather than by a count.
+   */
+  ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
+    return /of=book\b/.test(at(/current value of holdings/i))
+      && /of=invested\b/.test(at(/capital invested/i))
+      && /of=measured\b/.test(at(/money-weighted|xirr/i));
+  }],
+  /**
+   * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
+   * `?of=private` and `?of=no-cost` still RESOLVE, deliberately, so a bookmark
+   * keeps working — which is precisely why their absence from the strip has to
+   * be asserted rather than assumed: nothing would break if one came back.
+   */
+  /**
+   * ── NOTHING INSIDE A TILE ADVERTISES ITSELF AS THE THING TO CLICK ─────────
+   *
+   * *"remove the remaining underlines from the texts, and even the calculation
+   * that we're showing that appears when click the underlined no."*
+   *
+   * The whole card is the target, and it used to carry two rival affordances
+   * anyway: a dotted-underlined LABEL and a dashed-underlined FIGURE, the second
+   * of which opened a popover. Both said "click this text" about a card where
+   * the text is not the thing to click, and the popover then had to be dismissed
+   * before the reader could do anything else.
+   *
+   * Struck on COMPUTED STYLE and on the element count, because the words are
+   * identical either way — every figure check on this page passed throughout.
+   */
+  ["no KPI tile underlines its text or hides arithmetic behind it", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    if (ctx.kpiTiles.length < 4) return false;
+    return ctx.kpiTiles.every((tile) => tile.underlined === 0 && tile.buttons === 0);
+  }],
+  /**
+   * ...AND A TILE THAT OPENS SOMETHING LOOKS LIKE A BUTTON, while one that does
+   * not still reads as a panel.
+   *
+   * *"Just make the KPI tiles look like 3-d clickable buttons."* This is the one
+   * claim on this page that NO value or text check can reach, and the first
+   * draft of the CSS proved why it needs its own: `html:not(.dark) .card` sets a
+   * box-shadow of its own further down the stylesheet at equal specificity, so
+   * source order decided it and every tile rendered FLAT while the whole sweep
+   * stayed green. Asserted on the computed shadow.
+   *
+   * BOTH DIRECTIONS. A rule that raised every card would satisfy the first half
+   * and make the affordance meaningless — a tile that presses under the pointer
+   * and then does nothing is a worse lie than a flat one. So the drill-down
+   * page's own four tiles, which open nothing, must stay flat (`holdings-book`).
+   */
+  ["each KPI tile that opens something is raised like a button", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) => (tile.links.length > 0) === tile.raised);
+  }],
+  ["no KPI tile links at a scope that is now a facet", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.every((tile) =>
+      tile.links.every((h) => !/[?&]of=(listed|private|no-cost)\b/.test(h)));
+  }],
+  /**
+   * ...AND SO DOES THE ALLOCATION TABLE, which was the last place on this page
+   * with either. Its rows must STAY clickable — the underline was the
+   * decoration, not the link — so both halves are asserted: no decoration and
+   * no popover trigger, and a link for every row that has a set behind it.
+   */
+  ["the basis pill and the staleness pill are gone from Morning CIO",
+    (t) => !/\bLIVE\s*·/.test(t) && !/\bSTATEMENT\s*·\s*as of/i.test(t)
+      && !/\d+\s+accounts? behind/i.test(t)],
+  /**
+   * ...AND THE TWO DISCLOSURES THAT HAD NO OTHER HOME ARE IN THE TILES' HOVERS.
+   *
+   * Both were on the arithmetic card of the page their tile opens, and both are
+   * the LAST statement of their fact anywhere:
+   *
+   *   · the accrued income the NAV excludes — our total differs from a
+   *     manager's printed one by exactly this, and a reader reconciling the
+   *     two would otherwise find the gap and no explanation;
+   *   · the XIRR's window and its refusal to annualise it — Stage 10g(ii)'s
+   *     guard, which exists because this tile once read +99.0%.
+   *
+   * Read off `ctx.titles`, the same probe the cost-less cells' reasons use. A
+   * hover is a weaker home than a caption and CLAUDE.md says so rather than
+   * pretending otherwise; what these assert is that neither was LOST.
+   */
+  ["the NAV tile's hover names the accrued income the figure excludes", (t, ctx) => {
+    if (!BOOK_HALVES) return notChecked("the book could not be read on this run");
+    if (!BOOK_HALVES.accrued) return notChecked("no holding in this book reports accrued income");
+    const titles = ctx?.titles ?? [];
+    return titles.some((x) => /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(x));
+  }],
+  ["the money-weighted tile's hover states its window, and refuses to annualise a short one", (t, ctx) => {
+    const titles = ctx?.titles ?? [];
+    // CASE-INSENSITIVE, because the sub-year branch SHOUTS its sentence — "THE
+    // WINDOW IS 150 DAYS AND THE RATE IS NOT ANNUALISED" — and the annualised
+    // branch does not. A check pinned to one casing fails a page that is right,
+    // which is the trap `label-xs` already sprang once on this sweep.
+    const m = titles.map((x) => /the window is (\d+) days/i.exec(x)).find(Boolean);
+    if (!m) return false;
+    const days = Number(m[1]);
+    const hover = titles.find((x) => /the window is \d+ days/i.test(x)) ?? "";
+    // A rate is only ever called annual beside a window of at least a year.
+    // Anything else is the extrapolation this guard exists to refuse.
+    return days >= 365 ? /genuine annual rate/i.test(hover) : /NOT ANNUALISED/.test(hover);
+  }],
+  /* AND THE CROSS-HELD FIGURE KEEPS THE DISTINCTION ITS DRILL-DOWN'S LEAD USED
+     TO CARRY. Two members each owning some of a name is not the ₹3.17 Cr
+     duplicate policy, and a reader who conflates them misreads this figure. */
+  ["the roadmap placeholder for not-yet-live data is gone",
+    (t) => !/Coming as live data lands/i.test(t)
+      && !/These activate once the live market-data feed/i.test(t)
+      && !/weekly-drop risk flags/i.test(t)
+      && !/Earnings hub & catalyst tracker/i.test(t)],
+  ["...and it does not come back listing the index strip or NAV-vs-benchmark as pending",
+    (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
+
+
+    /**
+     * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
+     * that are asserted because either alone can pass on the wrong page.
+     *
+     * The family asked three times for this. Rounds one and two changed the WORD
+     * ("Equity" -> "Direct Equity" -> "Company Shares") and neither fixed it,
+     * because what they were reporting was that a share a manager picked and a
+     * share they bought themselves sat in one row. Round three said so plainly.
+     * So the check is that BOTH rows exist and each carries a value — a label
+     * with no holdings behind it is the empty vehicle-split row this line was
+     * originally written against.
+     */
+    ["no triple-digit return in the KPI strip", (t) => {
+      const strip = t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
+      return !/[+-]\s?\d{3,}(\.\d+)?\s*%/.test(strip);
+    }],
+    /**
+     * ── EVERY ALLOCATION ROW OPENS THE HOLDINGS BEHIND IT ────────────────────
+     *
+     * "Every row of the allocation table on Morning CIO must open the holdings
+     * behind it — AIF, PMS mandates, Mutual Fund, Direct Equity and ETF alike."
+     *
+     * Struck on the LINKS THE PAGE DRAWS, read off the DOM. A sentence saying a
+     * drill-down exists is not a route to it, and this file already records a
+     * check that matched static prose and therefore could not fail. It counts
+     * against the table's OWN row count — the `N buckets held` pill, which the
+     * page derives from the book — so a drop that gains a bucket has to gain a
+     * link with it rather than passing on a literal written today.
+     */
+    /**
+     * ── SPLIT IN TWO, BECAUSE ITS TWO HALVES NOW LIVE ON TWO PANELS ──────────
+     *
+     * This was one check reading the KPI strip AND the Concentration card. The
+     * strip is on every tab and the Concentration card is on Allocation & Risk
+     * alone, so one check spanning both would either fail on two routes or be
+     * softened until it asserted neither. Split, each half fails where its own
+     * subject is drawn and names its own part — which is the rule this file
+     * already applies to every multi-claim invariant.
+     */
+    ["every KPI tile opens ITS OWN set", (t, ctx) => {
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+      // PAIRED, label to destination. "The page links to `of=book` somewhere"
+      // is satisfied by any one tile and says nothing about the other five;
+      // this asserts that the figure a reader clicks opens the set that figure
+      // is summed over. Each entry is [what the reader clicks, where it goes].
+      const tiles = [
+        [/^current value of holdings$/i, "/holdings?of=book"],
+        [/^capital invested$/i, "/holdings?of=invested"],
+        [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
+        [/^consolidated return$/i, "/holdings?of=invested"],
+      ];
+      return tiles.every(([label, href]) =>
+        ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href));
+    }],
+    /**
+     * ...AND THE 60 POSITIONS WITH NO COST ARE STILL NAMED ON THE TILE THAT
+     * LEAVES THEM OUT. They used to be a SECOND link inside Capital invested and
+     * are a facet of that tile's own page now — which is the whole request — so
+     * what has to survive here is the SENTENCE, not the anchor. Without it the
+     * reader is never told the set exists, and no toggle three clicks away tells
+     * them: the answer decides whether they chase a custodian for a cost
+     * statement or accept a permanent absence. That the facet itself resolves is
+     * asserted where `holdings-invested` is walked.
+     */
+    // NAMING THE COST-LESS POSITIONS MOVED WITH THE CAPTIONS. It is asserted on
+    // `holdings-invested`, where the facet chip carries their count and the
+    // tile beside it their value — and the tile here is asserted to open that
+    // page, so the route from figure to explanation is checked end to end.
+];
+
+const CIO_MOVERS = [
+  ["with no quote feed, Today's movers states the cause and prints no day change",
+    (t, ctx) => {
+      const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
+      if (!/No direct-equity holding carries a day change/.test(card)) return false;
+      if (!/quote feed did not respond|can never have one/.test(card)) return false;
+      return !/DIRECT EQUITY · TODAY/i.test(card);
+    }],
+  /**
+   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
+   *
+   * *"we will only show direct equity as default."* The scope is asserted on
+   * the HEADING and the TILE rather than on the rows, because a rows-only check
+   * passes on any day the mandate names happen not to move — and that is most
+   * days for a book whose PMS half is 131 names. The COUNT that proves the set
+   * is right lives on `cio-live`, where a feed exists.
+   */
+  ["Today's movers names its scope in the heading and on the tile",
+    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
+      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
+  /**
+   * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
+   *
+   * *"give a toggle button in the direct equity daily movers for 'direct
+   * equity/ETF & Mutual Funds'."*
+   *
+   * THIS CHECK IS INVERTED, NOT NEW. It asserted the four scope tabs of Stage
+   * 10ad were GONE; the family have asked for a control back, so it asserts the
+   * one they asked for is THERE — two branches, Direct Equity first and live by
+   * default. Inverting rather than deleting is what keeps the claim honest in
+   * both directions: a build that restored the old four-tab group would fail
+   * this as surely as one that dropped the toggle.
+   *
+   * Struck on `data-movers-scope` rather than on the labels. "Direct Equity"
+   * and "ETFs & mutual funds" both appear legitimately elsewhere on this page —
+   * in the allocation table, in this card's own sentences — so a text match
+   * would report the toggle present while it was gone.
+   *
+   * ASSERTED WITH NO FEED AS WELL AS WITH ONE, because the toggle is a CONTROL
+   * and renders whether or not a quote has landed: a build that drew it only on
+   * the settled branch would pass a live-only check.
+   *
+   * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — only the probe failing
+   * to run abstains, which is `golden.mjs`'s rule arriving through a control.
+   */
+  ["the movers toggle offers Direct Equity and ETFs & mutual funds, and opens on Direct Equity", (t, ctx) => {
+    const tabs = ctx?.moverScopes;
+    if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
+    return tabs.length === 2
+      && tabs[0].key === "direct" && tabs[1].key === "funds"
+      && tabs[0].active && !tabs[1].active
+      && /ETFs?\s*&\s*mutual funds/i.test(tabs[1].label);
+  }],
+  /**
+   * ── THE MOVERS RANKING OPENS ON THE PERCENTAGE MOVE ───────────────────────
+   *
+   * *"keep % wise as the default view and \u20b9 wise absolute as the second
+   * toggle option."* A default is exactly what moves silently — the page renders
+   * perfectly either way, every count, total and caption on the card is
+   * identical, and only the ORDER of two lists differs. No value check on this
+   * card can see it, which is why it is struck on the control.
+   *
+   * THREE CLAIMS, AND THE SECOND IS THE ONE THE FAMILY ASKED FOR: both measures
+   * are still offered (a "default" that is the only option is not a default),
+   * the live one is the percentage, and the percentage is offered FIRST. Read
+   * off `data-mover-rank`, never the labels.
+   *
+   * A MISSING CONTROL IS A FINDING, NOT AN ABSTENTION. This card's header
+   * renders whether or not a quote has landed, so an empty offer means the
+   * control is gone — and a sweep that abstained there would report CLEAN over
+   * a card with no toggle at all, which is `golden.mjs`'s rule arriving through
+   * a ranking. Only the probe failing to run abstains.
+   */
+  ["Today\u2019s movers offers both rankings and opens on the % move", (t, ctx) => {
+    void t;
+    const m = ctx?.movers;
+    if (!m || m.ranks == null) return { notChecked: "the movers probe did not run on this pass" };
+    const keys = m.ranks.map((r) => r.key);
+    return keys.length === 2
+      && keys[0] === "pct" && keys[1] === "impact"
+      && m.ranks.find((r) => r.active)?.key === "pct";
+  }],
+  /**
+   * ...AND THE ALLOCATION CARD STILL OPENS ON CATEGORY. *"Default view will
+   * remain the current one, category wise."* Two new axes beside an old one is
+   * the change that silently moves a default, and the page would render
+   * perfectly while showing the family a table they asked to keep.
+   */
+];
+
+const CIO_ALLOC = [
+    ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
+    /**
+     * ── POSITIONS COUNTS WHAT THE FAMILY STILL HOLDS ────────────────────────
+     *
+     *   "exclude closed rows from morning cio positions too."
+     *
+     * THE COUNT IS THE ONLY FIGURE THAT MOVES, which is what makes it the only
+     * one worth anchoring. A closed position is a measured ₹0 with no reported
+     * cost, so NAV, Capital invested, every allocation row and every return are
+     * identical whether or not it is in the set — and the count is not: it read
+     * 369 while the page it opens listed 364, a tile disagreeing with the page
+     * it opens, which is the one failure `drilldown.ts` exists to prevent.
+     *
+     * Struck against `glowData.ts` rather than against the drill-down, because
+     * comparing the tile with the page it opens passes when BOTH revert
+     * together, and that is exactly how this regression would arrive.
+     */
+    ["Positions counts current holdings, not what the family was paid out of", (t) => {
+      if (!SECURITY_AXIS_BOOK?.heldPositions) return notChecked("the book could not be read on this run");
+      if (!FUND_CLASS_BOOK?.closedCount) return notChecked("no holding in this book is redeemed to nil");
+      const pos = CIO_FIGURES.get("positions");
+      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
+      return pos === SECURITY_AXIS_BOOK.heldPositions;
+    }],
+
+    /**
+     * ── THE RETURN ATTRIBUTION CARD IS GONE, AND THE CLAIM IS ITS ABSENCE ────
+     *
+     * *"remove return attribution section from the dashboard UI."*
+     *
+     * Nine invariants stood here and every one was arithmetic ABOUT THAT CARD —
+     * that the bridge added to the closing value, that exactly one step was
+     * labelled performance, that the ranking's head and tail matched the book's
+     * own, that a per-account row tied across its own columns, that the
+     * manager-year rows paired both figures from ONE document, and that the
+     * pre-2026 absence named the statement that would fill it. None of them has
+     * a subject any more: the card is not empty, it does not exist.
+     *
+     * WHAT REPLACES THEM IS ONE STRUCTURAL ABSENCE, and it is struck on the
+     * card's own handles rather than on the words "return attribution". That
+     * phrase appears legitimately elsewhere in this app — Return & Drawdown is
+     * built on the same idea — so a text match could report the card gone while
+     * it was on screen, which is the failure the movers-tab removal already
+     * records. `attrib` returns `{ handles }`: `null` means the probe did not
+     * run, `0` means it ran and found nothing, and those must not be the same
+     * value.
+     *
+     * ASSERTED ON `cio` ONLY, because that is the one route the card was ever
+     * mounted on. `NAV_SERIES_BOOK` is NOT removed with it — the NAV chart's own
+     * invariants below read it for the series' span and its chain-linked
+     * return, and it is derived from `glowData.ts` rather than from the card.
+     */
+  ["the allocation card defaults to the category axis", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
+    return a.axis === "category" && (a.axes ?? []).find((x) => x.active)?.key === "category";
+  }],
+  ...ALLOC_AXIS,
+  /**
+   * ── THREE CAPTION BLOCKS THE FAMILY ASKED TO REMOVE ───────────────────────
+   *
+   * The movers footer that explained the ranking, the movers subtitle, and the
+   * allocation table's subtitle. Asserted as ABSENCES so a future edit cannot
+   * quietly restore them, and paired below with the facts they carried that a
+   * reader still acts on — a removal that also removes a load-bearing figure is
+   * not the removal that was asked for.
+   */
+  /**
+   * SPLIT ACROSS TWO ROUTES, because half of this text only exists when the feed
+   * does. With no quotes the movers card renders its absent state and its footer
+   * is never drawn — so a check for that footer's ABSENCE passes here whether the
+   * paragraph was removed or not. Reintroducing it proved exactly that: the
+   * sentence came back and this route stayed green. The movers half is asserted
+   * on `cio-live`, where the card actually renders; the allocation subtitle and
+   * the removed card render with no feed at all and stay here.
+   */
+  ["the removed allocation caption stays removed",
+    (t) => !/Shares chosen under a discretionary mandate roll up/.test(t)
+      && !/The day’s move on the holdings the feed can price/.test(t)],
+  /**
+   * ...AND THE TWO FACTS THAT SUBTITLE CARRIED ARE STILL ON THE PAGE.
+   *
+   * That every return here is CUMULATIVE rather than annualised, and the DATE
+   * the figures close at. Both were already stated outside the card — on the
+   * Consolidated return tile and on the header's basis pill — which is why the
+   * subtitle could go without taking a measurement with it. Asserted so a later
+   * tidy-up of either of those cannot leave the table's basis unstated.
+   */
+  /**
+   * THE AS-OF SURVIVES ON THIS PAGE; THE BASIS MOVED WITH THE CAPTIONS.
+   *
+   * "cumulative, not annualised" was on the Consolidated return TILE, and the
+   * family has since removed every tile caption — *"remove these small subtext
+   * from the clickable KPI buttons since these are also already written inside
+   * each KPI page"*. It is asserted on `holdings-invested` now, which is the
+   * page that tile opens and where the same words already stood. The report
+   * date is in the header's basis pill and stays here.
+   */
+  ["...and the as-of that subtitle carried is still on the page",
+    (t) => /as of \d{4}-\d{2}-\d{2}/i.test(t)],
+  /**
+   * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
+   *
+   * Both halves, because neither implies the other: a page that dropped the card
+   * AND the listed/private split would pass the first check while losing a
+   * measurement, and a page that merely renamed the card would pass the second.
+   * Stage 10f's rule — a removal is verified by asserting it happened.
+   */
+  ["the allocation table underlines nothing and hides no arithmetic", (t, ctx) => {
+    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
+    return ctx.allocTable.underlined === 0 && ctx.allocTable.buttons === 0;
+  }],
+  ["...and its rows are still clickable", (t, ctx) => {
+    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
+    return ctx.allocTable.links >= 2;
+  }],
+  /**
+   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
+   *
+   * *"the bar graphs should also be clickable just like the rows in the table
+   * and should show the same drill down pages as the table ones do."* So the
+   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
+   * its row's href — both null where the row is a non-clickable fund-of-funds
+   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
+   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
+   * a page that still renders every figure correctly. Verified by reintroducing
+   * both bugs — a bar with a wrong href, and a bar that is not a link.
+   */
+  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a) return { notChecked: "the allocation table was not found on this run" };
+    if (!a.bars || !a.bars.length) return false;   // the chart must be there
+    const rowKeys = Object.keys(a.rowHrefs);
+    // one bar per row (keys are unique per section, so equal counts plus every
+    // bar key being a row key means the two sets coincide), and each bar's
+    // destination is its row's — null against null for a non-clickable line.
+    if (a.bars.length !== rowKeys.length) return false;
+    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
+      && b.href === a.rowHrefs[b.key]);
+  }],
+  /**
+   * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
+   *
+   * *"remove the placeholder for not live data from the dashboard ui."* A
+   * dashed panel headed "Coming as live data lands" carried four chips for
+   * features nothing here can build, over a line saying they activate once the
+   * live market-data feed is wired in.
+   *
+   * NOTHING ON IT WAS A MEASUREMENT, so unlike the NAV paragraphs there was
+   * nothing to re-home: a chip named a feature that does not exist. The gaps it
+   * stood for are in CLAUDE.md's Stage 8 table, which is where an unbuildable
+   * feature belongs — four dashed frames on the dashboard read, during an
+   * upstream outage, as four more things that have broken.
+   *
+   * BOTH CLAIMS ARE KEPT AND NEITHER IMPLIES THE OTHER. The panel must be gone;
+   * and the two chips removed earlier, when the index strip and this page's own
+   * NAV chart shipped, must stay gone in particular — a build that restored the
+   * panel with its ORIGINAL chip list would satisfy a check that only looked for
+   * the heading.
+   */
+  /**
+   * ── THE BASIS PILL IS GONE FROM THIS HEADER ────────────────────────────────
+   *
+   * *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part
+   * from the UI."*
+   *
+   * Struck on the page's own text, which is safe here in a way it usually is
+   * not: "LIVE ·" and "N accounts behind" are the pill's exact renderings and
+   * appear nowhere else on this route — the index strip prints "NSE · live"
+   * and the movers card prints its own coverage in different words. Both are
+   * required, because the staleness pill is a SEPARATE element that renders
+   * beside the basis one and a build could lose one and keep the other.
+   */
+  ["the Cross-held figure separates itself from the duplicate policy", (t, ctx) =>
+    (ctx?.titles ?? []).some((x) => /counted once per member/i.test(x) && /already collapsed/i.test(x))],
+    ["allocation has a Direct Equity row AND a PMS mandates row, each with a value",
+      (t) => /Direct Equity[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)
+        && /PMS mandates[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)],
+    ["'Company Shares' is gone from the allocation", (t) => !/Company Shares/.test(t)],
+    /**
+     * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
+     *
+     * After the regroup, Direct Equity reported a cost for 9 of its 38 holdings,
+     * so a return on cost read **−18.9%** in a row printing ₹1.22 Cr invested
+     * and ₹12,446.1 Cr current. (Ring-fencing Polycab has since taken that row to
+     * 9 of 37 and ₹94.9 Cr — the coverage is still nowhere near whole, so the row
+     * still correctly refuses a return. The figures above are the ones the bug
+     * was found on.) Every figure was right on its own terms and the
+     * three together were indefensible. The row uses the footer's own 0.5% test
+     * now, and this asserts it on the RENDERED page rather than on the helper:
+     * for every allocation row, either its three cells reconcile, or its return
+     * is an em dash.
+     */
+    ["every allocation row's return ties to its own Invested and Current, or is absent", (t) => {
+      const rows = [...t.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*([+-]\d+\.\d)%/g)];
+      if (!rows.length) return true;   // layout changed; the other invariants still bind
+      const u = (n, s) => cr(n) * (s === "L" ? 0.01 : s === "K" ? 0.0001 : 1);
+      return rows.every((m) => {
+        const inv = u(m[1], m[2]), cur = u(m[3], m[4]), pct = Number(m[5]);
+        if (!Number.isFinite(inv) || !Number.isFinite(cur) || !inv) return false;
+        return Math.abs(((cur - inv) / inv) * 100 - pct) <= 1.0;
+      });
+    }],
+    // THE AIF WAS DOUBLE-COUNTED INTO NAV, and this is the guard against it
+    // returning. It used to read "ties to ~₹335 Cr … not ₹5xx Cr" — a copy of a
+    // figure the book GENERATES, written when the book was ₹335.43 Cr. The
+    // August drop moved it to ₹461.00 Cr and this line failed against a page
+    // computing correctly, which is the same stale-literal failure the household
+    // net-worth check had. A test carrying its own copy of a generated figure is
+    // a second source for it.
+    //
+    // So the RELATION is what is asserted, and it is the one the bug actually
+    // broke: the NAV tile's own caption splits the book by asset class, and
+    // double-counting the AIF puts value in the headline that is in neither
+    // half. Listed + Private must reconstruct the headline.
+    // THE SPLIT RECONSTRUCTION MOVED TO `holdings-private`, which is where both
+    // halves are now printed — as page totals rather than as a tile caption. The
+    // relation is identical and the anchor is stronger: two independently
+    // rendered pages against the NAV the tile still prints.
+    // THE +99% REGRESSION, GUARDED ON THE RENDERED PAGE.
+    //
+    // This tile shipped reading "+99.0% XIRR" — arithmetically correct (₹78.8 Cr
+    // to ₹99.4 Cr over 132 days is +28.3%, and compounding 0.36 of a year onto a
+    // full one gives 99%) and indefensible, because the managers' own annualised
+    // since-inception returns for these accounts run about 7% to 31%.
+    // `moneyWeightedReturn` refuses to annualise a sub-year window; these assert
+    // that the refusal reaches the SCREEN, which is the only place it matters.
+    // TILE LABELS ARE UPPERCASED BY CSS, so innerText returns "MONEY-WEIGHTED
+    // RETURN". Every pattern here is case-insensitive — a case-sensitive one
+    // fails on a page rendering perfectly, which is worse than no test. The
+    // same lesson is already recorded in check-family-inputs.mjs.
+    // THE WINDOW AND THE COVERAGE MOVED TO `holdings-measured` with the captions,
+    // and are asserted there. What stays here is the belt-and-braces guard
+    // below: whatever a caption says, no triple-digit rate may reach this strip.
+    // A rate is only ever labelled "annualised" alongside a window of at least a
+    // year. Anything else is the extrapolation coming back.
+
+    // And the belt-and-braces version: no triple-digit return anywhere in the
+    // KPI strip. Every honest figure this book can produce today is well under
+    // it, so a hit here is an extrapolation by any route.
+    ["every allocation row links to its own holdings", (t, ctx) => {
+      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
+      if (!Number.isFinite(held) || !ctx?.allocTable) return false;
+      // Off the rows, not page-wide `hrefs`: the bar chart draws a parallel link
+      // per destination (asserted to match it, below), which doubles a raw count.
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length === held;
+    }],
+    // ...AND THE SWEEP HAS AN ADDRESS FOR EVERY ONE OF THEM. `holdings-row-N`
+    // walks the Nth allocation row; a book with more buckets than slots would
+    // leave the extras unwalked and the sweep would go on reporting clean about
+    // rows nothing looked at. A check that quietly stops checking is the
+    // failure this file exists to prevent, so it says so instead.
+    ["every allocation row is walked by this sweep", (t) => {
+      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
+      return Number.isFinite(held) && held <= BUCKET_SLOTS.length;
+    }],
+    // ...AND EACH ONE NAMES A DIFFERENT SET. Six links to one address would
+    // satisfy the count above while opening the same holdings six times.
+    ["each allocation row opens a different set", (t, ctx) => {
+      if (!ctx?.allocTable) return false;
+      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
+      return dests.length > 0 && new Set(dests).size === dests.length;
+    }],
+    /**
+     * THE KPI TILES AND THE CONCENTRATION FIGURES ARE THE SAME FIX, so they are
+     * asserted the same way — by the SETS that must be reachable from this page.
+     *
+     * Named individually rather than counted: a count passes when six links to
+     * the wrong six sets are drawn, and the whole point is that the reader can
+     * reach the holdings behind THIS figure.
+     *
+     * ── IT IS STRUCK IN TWO PLACES BECAUSE THE PAIRING MOVED, NOT BECAUSE THE
+     *    CLAIM DID ─────────────────────────────────────────────────────────
+     *
+     * A KPI tile's target is now the WHOLE CARD — a stretched overlay anchor
+     * with no inner text — so `ctx.links` yields an empty label for all six and
+     * a label-to-href pairing read off the link list can no longer see them. It
+     * would have gone on "passing" only by being unable to fail. The pairing for
+     * those six lives in `ctx.kpiTiles`, which pairs each tile's own label with
+     * the one anchor inside it; the concentration and allocation figures are
+     * still text links and are still paired off the link list.
+     *
+     * AND THE TWO HALVES OF THE BOOK MOVED TO A FACET ADDRESS. `?of=listed` and
+     * `?of=private` still resolve for a bookmark, so asserting the OLD address
+     * here would keep passing against a page that had lost the toggle entirely.
+     */
+    /**
+     * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
+     *
+     * Undrawn capital is not a holding — it has no row in `BOOK_POSITIONS` — so
+     * a holdings drill-down structurally cannot contain it and would open a
+     * table that could only ever be empty. Asserted by PAIRING the tile with its
+     * destination: an earlier draft counted `/private-market` links instead and
+     * passed while the Uncalled capital tile pointed at the holdings page, because
+     * the Capital deployment card's own link kept the count up. Reintroducing that
+     * bug is what found it.
+     */
+    ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
+      if (!/UNCALLED CAPITAL[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
+      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+      const links = ctx?.links ?? [];
+      // Two of the three are KPI TILES, whose target is the whole card and whose
+      // anchor therefore carries no text — see the invariant above. Fund
+      // commitments sits on the Capital deployment card and is still a text
+      // link, so the same claim is struck in the two places the pairing lives.
+      const tiles = [/^uncalled capital$/i, /^distributions$/i]
+        .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"));
+      // AND THE CARD ITSELF, which is the half the family asked for:
+      //
+      //   *"What is the capital deployed for private equity?… I told you —
+      //    details, because it's not very clear."*  /  *"I'll make it clickable.
+      //    And so you'll be redirected to the private page."*
+      //
+      // This used to require a TEXT link reading "Fund commitments", which was
+      // the one figure on the card that was already a link and not the one they
+      // were asking about. The whole list is the anchor now, so the claim is
+      // struck on the handle and on the figure the card must actually carry —
+      // a `data-cio-deploy-link` pointing anywhere else, or one that has stopped
+      // covering the called figure, fails rather than abstains.
+      const card = ctx?.deployLink;
+      return tiles && !!card && card.href === "/private-market"
+        && /fund commitments/i.test(card.text) && /capital deployed/i.test(card.text)
+        && links.every((l) => !/^fund commitments$/i.test(l.text));
+    }],
+    // And the allocation table's own footer must tie to its own two columns —
+    // it carried a money-weighted rate in a column of return-on-cost figures,
+    // so Invested and Current printed one answer and the Total cell another.
+    ["the allocation total ties to its own Invested and Current columns", (t) => {
+      const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
+      if (!row) return true;   // layout changed; the other invariants still bind
+      const [, inv, cur, sign, pct] = row;
+      const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
+      return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
+    }],
+    /**
+     * ...AND EVERY CONCENTRATION FIGURE OPENS ITS OWN SET. The other half of the
+     * check split above, on the panel that draws the card. Paired label to
+     * destination for the same reason: "the page links to `of=book` somewhere"
+     * is satisfied by the Positions row alone and says nothing about the other
+     * seven.
+     */
+    ["every concentration figure opens ITS OWN set", (t, ctx) => {
+      const links = ctx?.links ?? [];
+      if (!links.length) return { notChecked: "no links were captured on this run" };
+      const texts = [
+        [/^positions$/i, "/holdings?of=book"],
+        [/^distinct names$/i, "/holdings?of=book"],
+        [/^cross-held$/i, "/holdings?of=cross-held"],
+        [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
+        [/^listed$/i, "/holdings?of=book&facet=listed"],
+        [/^private$/i, "/holdings?of=book&facet=private"],
+        [/^winners$/i, "/holdings?of=winners"],
+        [/^losers$/i, "/holdings?of=losers"],
+      ];
+      return texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
+    }],
+];
+
+const CIO_NAV = [
+    ["the return attribution card stays removed", (t, ctx) => {
+      if (ctx?.attrib == null) return notChecked("the attribution probe did not run on this pass");
+      return ctx.attrib.handles === 0;
+    }],
+
+    /**
+     * ── THE SERIES ITSELF REACHES BACK PAST THE COMPLETE PANEL ──────────────
+     *
+     * *"fix this portfolio NAV, we are only able to see portfolio NAV for a very
+     * short period of time."* The window went 34 days to 74 because each link is
+     * struck over the accounts valued at both its ends. Asserted on the card's
+     * own subtitle against the book, so a build that reverted to the old start
+     * fails by name rather than merely drawing a shorter line nobody measures.
+     */
+    ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      if (!NAV_SERIES_BOOK.panelCompleteFrom || NAV_SERIES_BOOK.panelCompleteFrom === NAV_SERIES_BOOK.seriesFrom) {
+        return notChecked("this book's panel is complete at the series' first point");
+      }
+      return head.includes(NAV_SERIES_BOOK.seriesFrom)
+        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
+    }],
+
+    /**
+     * AND IT SAYS HOW MUCH OF THE BOOK EACH STRETCH OF THE LINE MEASURES.
+     *
+     * The cost of reaching back is that the early links cover four accounts
+     * where the late ones cover thirteen. A reader comparing this line to an
+     * index needs that, and it is the one thing no figure on the card discloses
+     * on its own.
+     */
+    /**
+     * ── THE BOOK PILL IS THE LINK-CHAINED RETURN, AND NOT THE LEVEL-CHAINED
+     *    ONE ────────────────────────────────────────────────────────────────
+     *
+     * THIS CHECK EXISTS BECAUSE THE SWEEP MISSED THE BUG IT IS FOR. Reverting
+     * `navIndexSeries` to divide each point's whole-panel NAV by the previous
+     * one — which is what it did before the series reached back past the
+     * complete panel — makes the Book pill read +398.76% instead of +5.09%,
+     * because every account that ARRIVED lands in the return. Every existing
+     * invariant on this card stayed green: they check the header's shape, the
+     * chart's geometry and the panel sentence, and not one of them looks at the
+     * MAGNITUDE of the figure. `test:family` catches it; the screen is where a
+     * reader would have believed it.
+     *
+     * Struck against the book, on a path the page does not take, and against
+     * the WRONG chaining too — a pill that matched neither would satisfy an
+     * equality check written only one way round.
+     */
+    ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      const m = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      if (!m) return false;
+      const shown = Number(m[1]);
+      // The pill prints one decimal, so the bound is that precision reproduced.
+      if (Math.abs(shown - NAV_SERIES_BOOK.chainByLink) > 0.05) return false;
+      // …and the two chainings must actually differ on this book, or the check
+      // asserts nothing and must be re-read rather than passing.
+      return Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainByLink) > 1;
+    }],
+
+    /**
+     * ── THE RAW NAV LINE STOPS WHERE THE PANEL DOES ────────────────────────
+     *
+     * ALSO WRITTEN BECAUSE THE SWEEP MISSED THE BUG. Rebasing the dashed line at
+     * the series' FIRST point instead of at the complete panel draws it climbing
+     * ~440% in six weeks, every rupee of it an account arriving — and it blows
+     * the y-axis domain out so far that both real lines flatten to a straight
+     * edge. Every existing check stayed green: the hover's pair is computed
+     * separately and stays right, and nothing looked at how far the curve
+     * extends.
+     *
+     * A chart claim is checked on the chart. The dashed curve must carry exactly
+     * the complete-panel points and the book's curve the whole series, both
+     * counted off the emitted book — so a build that drew either over the wrong
+     * span fails, in whichever direction.
+     */
+    ["the raw NAV curve covers only the complete panel, and the book's covers the whole series", (t, ctx) => {
+      const counts = ctx?.navChart?.vertexCounts;
+      if (!counts || !NAV_SERIES_BOOK) return notChecked("the NAV chart was not found on this pass");
+      if (NAV_SERIES_BOOK.completePanelPoints >= NAV_SERIES_BOOK.seriesPoints) {
+        return notChecked("this book's panel is complete at the series' first point");
+      }
+      // recharts emits one command per plotted vertex on a monotone curve.
+      return counts.includes(NAV_SERIES_BOOK.completePanelPoints)
+        && counts.includes(NAV_SERIES_BOOK.seriesPoints);
+    }],
+
+    /**
+     * MOVED TO THE SUBTITLE'S HOVER WITH THE PARAGRAPH, AND NOT DROPPED.
+     *
+     * The family asked the block under the title to go; this was the one claim
+     * in it that is about the SHAPE of the measurement rather than about a
+     * figure, so it went into the hover on the basis line rather than onto it.
+     * A hover is weaker than a caption and that is recorded rather than
+     * glossed — what is unchanged is that the panel's two ends and the date it
+     * completes are still named, still derived from the book, and still fail by
+     * name if the series reverts to starting where the panel does.
+     */
+    ["the NAV card names the panel it grows through", (t, ctx) => {
+      if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
+      if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
+        return notChecked("this book's panel does not grow inside the series");
+      }
+      const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
+      if (!why) return false;
+      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(why)
+        && why.includes(NAV_SERIES_BOOK.panelCompleteFrom);
+    }],
+
+  /**
+   * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
+   *
+   * These are on `cio` rather than `cio-live` because every one of them is
+   * driven by `BOOK_NAV_HISTORY`, which is baked into the bundle — the series
+   * renders with no feed at all, and only the Nifty 500 comparison line needs
+   * one. Each was verified by reintroducing its bug.
+   */
+  ["the NAV card renders a dated series with its date range and its coverage",
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /Portfolio NAV vs Nifty 500/.test(t)
+        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+        && /\d+ of \d+ accounts/.test(head);
+    }],
+  /**
+   * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
+   *
+   * The covered set's raw NAV runs +9.30% over this window and ₹11.24 Cr of that
+   * is a Fund Deposit into V.E.C 128005 — net of it the book earned +0.54%. A
+   * card that charted the raw NAV would show eight points of outperformance
+   * against an index that moved 1.33%, none of it earned. So: both percentages
+   * must be on screen, and they must DIFFER. A book where they happened to
+   * coincide would pass a check that only looked for one of them, which is why
+   * the gap is asserted rather than the literal — this is `accountXirr.test.ts`'s
+   * "the guard must be load-bearing" rule, on a chart.
+   */
+  ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
+    (t, ctx) => {
+      /**
+       * BOTH FIGURES SURVIVED THE PARAGRAPH THAT CARRIED THEM. They were one
+       * sentence under the chart until the family asked the paragraphs to go;
+       * the adjusted one is the Book pill in the header and the unadjusted one
+       * is on the raw-NAV toggle's hover, beside the control that draws it.
+       * Read from the TWO PLACES rather than from one line, which is the
+       * stronger claim: a build that lost either half now fails.
+       */
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      /**
+       * THE HOVER CARRIES BOTH ENDS AND NAMES ITS OWN WINDOW.
+       *
+       * This used to require the header's Book pill to EQUAL the hover's
+       * adjusted figure, which held while both covered the same 34 days. They no
+       * longer do: the adjusted line is chain-linked back to 74 days and the raw
+       * one is undefined before the panel completes, so the hover's pair is
+       * struck over the segment the raw line has and the pill over the series.
+       * Requiring them to match would fail a card that is right, and — worse —
+       * would have been satisfied by "fixing" the card to compare 74 days with
+       * 34 and call the extra weeks a deposit.
+       *
+       * So the claim is that both figures survived, that they differ (or the
+       * adjustment is doing nothing and this asserts nothing), and that the
+       * hover SAYS which window its pair is over — because two returns a reader
+       * cannot date are two returns a reader will pair with the pill.
+       */
+      const raw = (ctx?.titles ?? [])
+        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
+        .find(Boolean);
+      if (!book || !raw) return false;
+      const named = (ctx?.titles ?? []).some((x) =>
+        /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
+      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
+    }],
+  /**
+   * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
+   *
+   * The one invariant this card never had, and the one defect it shipped with.
+   * Everything else here reads TEXT, and the text was right the whole time the
+   * plot area was an empty box — a `ResponsiveContainer height="100%"` inside a
+   * `flex-1` holder resolving to zero. Struck on geometry, because no rendered
+   * word changes when it regresses.
+   *
+   * The book's own series is baked into the bundle, so this holds with NO FEED
+   * AT ALL: the walk that serves nothing must still draw the book and the raw
+   * NAV. The index line needs `cio-live`, and is asserted there.
+   */
+  ["the NAV chart paints — a sized plot area with the book's own curve in it",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const c = ctx.navChart;
+      return c.svgHeight > 200 && c.svgWidth > 400
+        // A `<path>` with an empty `d` is what a zero-height chart emits, so the
+        // curve is measured rather than counted.
+        && c.pathLen.filter((n) => n > 20).length >= 2
+        && c.yTicks >= 3
+        && c.legend.length >= 2;
+    }],
+  /**
+   * A REAL TIME AXIS, NOT SEVEN EQUALLY-SPACED LABELS.
+   *
+   * The axis was `type="category"` over the book's own dates, so 10 → 11 August
+   * and 10 → 27 July took the same width and every segment's slope was a fact
+   * about row order. Struck on the TICK LABELS: a time-scaled axis over a year
+   * prints months (`2026-04`), a category axis over seven statement dates can
+   * only ever print those seven. Both shapes are accepted — the axis switches
+   * granularity with the span — and a tick that is not a date fails.
+   */
+  ["the NAV chart's x-axis is dated, and its ticks are real dates",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const ticks = ctx.navChart.xTicks;
+      return ticks.length >= 3 && ticks.every((x) => /^\d{4}(-\d{2})?$|^\d{2}-\d{2}$/.test(x));
+    }],
+  /**
+   * THE PERIOD CONTROL IS THE FAMILY'S ASK, SO ITS ABSENCE IS A FINDING.
+   *
+   * *"it should show a proper time graph showing larger period return
+   * comparison."* The book's own dated series is five weeks and cannot be
+   * longer; what CAN be lengthened is the index's context around it. A card that
+   * lost the control would go back to showing five weeks and every text check
+   * would stay green — the same shape as the missing facet toggle, and answered
+   * the same way: measured, never abstained from.
+   */
+  ["the NAV chart offers a period longer than the book's own window",
+    (t, ctx) => {
+      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+      const keys = ctx.navChart.ranges.map((r) => r.key);
+      return keys.includes("book") && ["1Y", "3Y", "5Y", "MAX"].filter((k) => keys.includes(k)).length >= 3
+        && ctx.navChart.activeRange !== null
+        // ...AND IT DOES NOT OPEN ON THE SHORTEST ONE. Defaulting to the book's
+        // own window would satisfy every check above while showing exactly what
+        // was complained about.
+        && ctx.navChart.activeRange !== "book";
+    }],
+  /**
+   * ...AND THE LONGER WINDOW SAYS, IN WORDS, WHICH STRETCH CARRIES A COMPARISON.
+   *
+   * On the default 1Y view most of the axis is index history the book has no
+   * measurement over, and a reader who is not told reads the whole width as a
+   * comparison — a caption widening a figure it does not narrow, arriving
+   * through a time axis. The sentence renders with no feed at all, so it is
+   * asserted here; the SHADED BAND needs a window wider than the book's own and
+   * is therefore asserted on `cio-live`, where one exists.
+   */
+  ["the card names the book's own window, in its own header",
+    // MOVED WITH THE PARAGRAPHS. "The book's own dated series is N statement
+    // dates over A → B" was the third of the four removed paragraphs and said
+    // what the SUBTITLE already said word for word, so only the subtitle is
+    // left to assert. The range's own index return — the one thing in that
+    // paragraph that was nowhere else — is checked on `cio-live`, where a feed
+    // exists to produce it.
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head);
+    }],
+  /**
+   * ...AND THE REBASE BASIS CAME WITH IT.
+   *
+   * The y-axis reads 84 / 91 / 98 and is a RATIO rather than an amount, so
+   * without this clause those ticks are unitless — which is why it is the one
+   * sentence of the removed block that had to land somewhere rather than go.
+   * It is on the card's own basis line now, beside the window and the coverage.
+   */
+  ["the NAV card states what its axis is rebased to",
+    (t, ctx) => {
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      return /rebased to 100 at \d{4}-\d{2}-\d{2}/.test(head);
+    }],
+  /**
+   * ── AND THE FOUR REMOVED PARAGRAPHS STAY REMOVED ──────────────────────────
+   *
+   * *"remove the highlighted text from the dashboard ui."* Struck on phrases
+   * only that block ever printed, so a check cannot be satisfied by wording the
+   * card legitimately still carries — and never on a figure, because every
+   * figure that mattered was re-homed rather than dropped and is asserted above
+   * at its new address.
+   */
+  /**
+   * ── …AND SO DOES THE SUBTITLE PARAGRAPH THAT REPLACED THEM ────────────────
+   *
+   * *"remove the highlighted text from the dashboard ui"* — pointed at the
+   * four-sentence block under the title, which is what was left after the first
+   * round moved the rebase basis INTO it. Three of its claims had no second
+   * home and a reader acts on all three, so they are the one-line basis the
+   * three invariants above assert; the METHODOLOGY went to the subtitle’s own
+   * hover, which this asserts, because a claim that is merely deleted and a
+   * claim that moved are two different outcomes and only one of them was asked
+   * for.
+   */
+  ["the NAV card’s methodology moved to the hover rather than going", (t, ctx) => {
+    const why = (ctx?.titles ?? []).find((x) => /most recent mark/i.test(x)) ?? "";
+    if (!why) return false;
+    return /counts a holding two accounts both report once/i.test(why);
+  }],
+  ["the NAV subtitle is a basis line rather than a paragraph", (t, ctx) => {
+    const head = navHead(ctx);
+    if (head == null) return notChecked("the NAV card’s header was not on screen on this run");
+    /**
+     * STRUCK ON WHAT THE PARAGRAPH ALONE PRINTED, never on the window, the
+     * coverage or the rebase — all three stayed, at one line, and each is
+     * asserted at its new address above. A check that banned those would fail
+     * the card for keeping the facts nobody asked it to lose.
+     */
+    return !/that publish more than ones+dated valuation/i.test(head)
+      && !/Each point holds every account at its most recent mark/i.test(head)
+      && !/The panel grows from/i.test(head);
+  }],
+    ["the NAV card's explanatory paragraphs stay removed",
+    (t) => !/Both lines are rebased to 100 at/.test(t)
+      && !/because money added is not money earned/.test(t)
+      && !/market history rather than a comparison/.test(t)
+      && !/never the nearest in either\s+direction/.test(t)],
+  ["the NAV card names the external capital it nets out, in rupees",
+    // ON THE CONTROL THAT DRAWS THE OTHER LINE, since the paragraph that said
+    // it went. The SIZE is the load-bearing half — a reader deciding whether to
+    // show the unadjusted NAV has to see how much of the move is deposit — so
+    // it is on the button's face and not in its hover.
+    //
+    // MONEY IN ANY SCALE. `Cr` alone would fail a drop whose only flow was a
+    // few lakh, about a page that was correct — the "a check that cannot read
+    // the figure it asserts on" failure this file already names twice.
+    (t) => /NAV incl\.\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+added/.test(t)],
+  /**
+   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
+   *
+   * Four covered accounts publish no dated capital record and hold more than one
+   * security. Silence there would present their whole restatement as a return.
+   */
+  ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
+    (t, ctx) => {
+      /**
+       * A DISCLOSURE, RE-HOMED RATHER THAN DROPPED. It was a paragraph under the
+       * chart; it is an amber pill beside the Book pill it qualifies, with the
+       * accounts in the hover. Both halves are required — a pill with no
+       * accounts behind it is a number a reader cannot act on, and a hover with
+       * no pill is a disclosure nobody will find.
+       */
+      const head = navHead(ctx);
+      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const pill = /₹[\d,.]+\s*(?:Cr|L|K)?\s+not proven/.test(head);
+      const why = (ctx?.titles ?? []).find((x) => /Not proven to be performance:/.test(x)) ?? "";
+      return pill
+        && /publish no dated capital record/.test(why)
+        // …and it NAMES them. A sentence that said "4 accounts" and listed none
+        // would satisfy every word above while telling a reader nothing.
+        && /—\s*\S[^—]*·[^—]*—/.test(why);
+    }],
+  /**
+   * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
+   * asserted as a PARTITION rather than as a count. The three lists must account
+   * for every account the page's own coverage line says exist: a filter that
+   * widened or narrowed one list would keep printing a plausible count and only
+   * the partition catches it.
+   */
+  ["the excluded accounts are listed, and the three lists partition the book",
+    (t, ctx) => {
+      /**
+       * SCOPED TO THE CARD, BECAUSE "N of M accounts" IS NOT UNIQUE ON THIS PAGE.
+       *
+       * The first draft matched the whole page and picked up the Money-weighted
+       * return tile's own coverage line ("7 of 49 accounts") four cards higher,
+       * so it compared the XIRR's coverage against the NAV series' exclusions and
+       * failed a page that was correct. Two figures of the same SHAPE describing
+       * different sets is exactly what a page-wide regex cannot tell apart.
+       */
+      const card = navHead(ctx);
+      if (card == null) return notChecked("the NAV card's header was not on screen on this run");
+      const cov = /(\d+) of (\d+) accounts/.exec(card);
+      const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
+      const parts = /(\d+) publish exactly one dated valuation/.exec(t);
+      const none = /(\d+) publish no valuation at all/.exec(t);
+      if (!cov || !ex || !parts || !none) return false;
+      // The COUNTS have to partition…
+      if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
+      if (Number(cov[1]) + Number(ex[1]) !== Number(cov[2])) return false;
+      // …and the ROWS have to be there. A summary that counted 36 over two
+      // empty lists would satisfy the arithmetic and name nobody, which is the
+      // half of the request the arithmetic cannot check.
+      return ctx.navListRows
+        && ctx.navListRows.single === Number(parts[1])
+        && ctx.navListRows.unvalued === Number(none[1]);
+    }],
+  /**
+   * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
+   *
+   * A day change needs a live price and the previous close behind it. `₹0` or
+   * `0.00%` here would be a measured flat day for a book nobody priced — the
+   * absent-vs-zero rule, on the one figure a reader compares against an index.
+   */
+];
+
+/**
+ * ── THE CONTROL ITSELF, ASSERTED ON ALL THREE ROUTES ─────────────────────────
+ *
+ * Struck on `data-cio-tab-key` and on GEOMETRY, never on the three labels: a tab
+ * is text in `innerText` on every one of this page's routes, so a label match
+ * cannot tell a rendered button from a sentence about one — and the whole of
+ * what the family asked for ("the single scroll page should be gone") is a fact
+ * about where things sit, which no amount of matching text can see.
+ *
+ * A MISSING CONTROL IS A FINDING, NOT AN ABSTENTION. The header renders whether
+ * or not a feed has landed, so an empty offer means the control is gone, and a
+ * sweep that abstained there would report CLEAN over a page with no tabs at all.
+ * Only the probe failing to run abstains.
+ */
+const CIO_TAB_CONTROL = [
+  ["Morning CIO offers exactly the three panels, in the order the family named them", (t, ctx) => {
+    const tabs = ctx?.cioTabs;
+    if (tabs == null) return notChecked("the tab probe did not run on this pass");
+    return tabs.length === 3
+      && tabs.map((x) => x.key).join(",") === "movers,allocation,nav"
+      // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
+      // is the state this split exists to end; none would mean the route landed
+      // somewhere the control does not describe.
+      && tabs.filter((x) => x.active).length === 1;
+  }],
+  /**
+   * ...AND THE ACTIVE ONE IS THE PANEL THIS ROUTE ASKED FOR. Read off the
+   * REQUESTED path rather than a literal per route, so the same check runs on
+   * all three and a `?tab=` the page silently ignored fails by name. This is the
+   * claim that catches a default quietly moving — the page renders perfectly on
+   * any of the three and only the control and the panel say which.
+   */
+  ["...and the active tab is the panel its own address asked for", (t, ctx) => {
+    const tabs = ctx?.cioTabs;
+    const panel = ctx?.cioLayout?.panel;
+    if (tabs == null || panel == null) return notChecked("the tab probe did not run on this pass");
+    const want = /[?&]tab=([a-z]+)/.exec(ctx.path ?? "")?.[1] ?? "movers";
+    return tabs.find((x) => x.active)?.key === want && panel === want;
+  }],
+  /**
+   * ...AND EXACTLY ONE PANEL IS DRAWN, WHICH IS A DIFFERENT CLAIM FROM THE ONE
+   * ABOVE AND WAS FOUND BY REINTRODUCING ITS BUG.
+   *
+   * "Exactly one tab is active" is about the CONTROL. Rendering the NAV panel
+   * on the movers tab as well leaves one tab lit and `data-cio-panel` naming
+   * one panel, so every claim above passes with two panels on screen — and the
+   * scroll checks pass too, because the panel is allowed to scroll. The first
+   * pass of this block reported CLEAN over exactly that, which is why the
+   * panels carry `data-cio-section` and are COUNTED.
+   */
+  ["...and exactly one panel is drawn, and it is the one the control names", (t, ctx) => {
+    const g = ctx?.cioLayout;
+    const tabs = ctx?.cioTabs;
+    if (!g?.sections || tabs == null) return notChecked("the layout probe did not run on this pass");
+    return g.sections.length === 1 && g.sections[0] === g.panel
+      && tabs.find((x) => x.active)?.key === g.sections[0];
+  }],
+  /**
+   * ...AND THE KPI STRIP IS ON EVERY ONE OF THEM. *"the KPI tiles at the top of
+   * the page will remain the same for all the three tabs."* Asserted as a COUNT
+   * against the other two routes rather than as mere presence: a build that
+   * drew the strip on the default tab and a truncated one elsewhere renders a
+   * perfectly well-formed page, and only the tile count can see it.
+   */
+  ["...and the KPI strip is the same six tiles on every panel", (t, ctx) => {
+    if (!ctx?.kpiTiles) return notChecked("the KPI strip was not found on this run");
+    if (!CIO_TILE_COUNT) { CIO_TILE_COUNT = ctx.kpiTiles.length; return ctx.kpiTiles.length > 0; }
+    return ctx.kpiTiles.length === CIO_TILE_COUNT;
+  }],
+  /**
+   * ── AND THE PAGE DOES NOT SCROLL ─────────────────────────────────────────
+   *
+   * *"the single scroll page should be gone, it should be a non-scrollable page
+   * with a tab switch option to see more data rather than scrolling the page."*
+   *
+   * THE CLAIM IS GEOMETRIC, SO IT IS STRUCK ON GEOMETRY. Every figure, caption
+   * and link on this page renders identically whether the reader reaches it by
+   * scrolling or by switching tabs — the split is invisible to every text and
+   * value check in this file, which is exactly why the family's ask needs a
+   * check of its own.
+   *
+   * TWO SCROLLERS ARE ASSERTED, and they are different claims. The DOCUMENT must
+   * not scroll (that is the browser window) and `<main>` must not either (that is
+   * the app's own scroll region, and the one the old page actually used). A build
+   * that let the page grow past the window would fail the second while passing
+   * the first on a tall enough viewport.
+   *
+   * THE PANEL IS ALLOWED TO SCROLL AND IS NOT ASSERTED NOT TO. A window short
+   * enough to clip the NAV chart must still be able to reach it; what was asked
+   * for is that the headline and the tiles stop moving, and the two claims above
+   * are that.
+   */
+  ["neither the page nor the app's scroll region scrolls — the panel does", (t, ctx) => {
+    const g = ctx?.cioLayout;
+    if (!g) return notChecked("the layout probe did not run on this pass");
+    // A pixel of slack, exactly as `OVERFLOW` above allows: sub-pixel rounding
+    // on a zoomed subtree reports a stray 1 on a page that fits.
+    return g.docScroll <= 1 && g.mainScroll <= 1;
+  }],
+  /**
+   * ...AND THE HEADLINE AND THE STRIP STAY PUT WHILE IT DOES. The pair above is
+   * satisfied by a page that fits because it renders nothing; this is the claim
+   * that the fixed chrome is really fixed — the strip's bottom edge is inside
+   * the viewport, and the panel begins below it. Without this a panel rendered
+   * ABOVE the tiles, or a strip scrolled off the top, passes both scroll checks.
+   */
+  /**
+   * ...AND THE CONTROL IS ON THE HEADLINE, AT ITS RIGHT-HAND END. *"add three
+   * small selectable tabs on the top of Morning CIO page on the right most side
+   * of the line."*
+   *
+   * TWO CLAIMS, AND ONLY THE SECOND TELLS `right` FROM `beside`. A control in
+   * `PageHeader`'s `beside` slot also overlaps the title's line and also sits
+   * to its right — it just sits next to it rather than opposite it — so the
+   * overlap alone would pass the arrangement the family did NOT ask for. The
+   * second requires the tabs' right edge to be the header row's own, which only
+   * the `right` slot produces.
+   */
+  ["...and the tab control sits on the headline, at its right-hand end", (t, ctx) => {
+    const h = ctx?.cioLayout?.head;
+    if (!h?.h1 || !h?.tabs || !h?.bar) return notChecked("the layout probe did not run on this pass");
+    const onTheLine = h.tabs.top < h.h1.bottom && h.h1.top < h.tabs.bottom;
+    return onTheLine && h.tabs.left >= h.h1.right && h.bar.right - h.tabs.right <= 4;
+  }],
+  ["...and the KPI strip sits above the panel and inside the viewport", (t, ctx) => {
+    const g = ctx?.cioLayout;
+    if (!g || !g.strip || !g.panelBox) return notChecked("the layout probe did not run on this pass");
+    return g.strip.bottom <= g.viewportH + 1 && g.panelBox.top >= g.strip.bottom - 1;
+  }],
+];
+
+/**
+ * ── THE NAV PANEL WITH A PRICE FEED ──────────────────────────────────────────
+ *
+ * These five stood in `cio-live` and read the Nifty 500 line, which only exists
+ * when `/api/prices` answers. They moved to `/cio?tab=nav` WITH the chart when
+ * Morning CIO was split into panels: left on `cio-live` — which walks the movers
+ * panel — every one of them would have reported NOT CHECKED against a chart that
+ * is correctly not drawn there, and an abstention reads as a clean run. Same move
+ * the eleven published-NAV invariants made when the movers card grew its toggle.
+ */
+const CIO_LIVE_NAV = [
+    /**
+     * ...AND THE INDEX IS ITS OWN DAILY CURVE, NOT SEVEN SAMPLED POINTS.
+     *
+     * The chart used to align the index to the BOOK'S seven statement dates and
+     * draw a line through those — a plausible-looking curve that is not the
+     * index's path, and over a year of context would have been four segments. On
+     * this fixture the feed carries a settled close per weekday back to January,
+     * so the index curve must have far more vertices than the book's line does.
+     * Struck as a RATIO against the book's own curve rather than a literal, so a
+     * fixture with a different number of closes cannot make it stale.
+     */
+    ["the Nifty 500 line is drawn from its own daily closes, not sampled to the book's dates",
+      (t, ctx) => {
+        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+        const c = ctx.navChart;
+        if (c.lines < 3) return false;
+        const lens = [...c.pathLen].sort((a, b) => b - a);
+        // The longest curve is the index's; the book's two lines are seven
+        // points each. An index sampled to the book's dates would be the same
+        // length as they are.
+        return lens[0] > lens[1] * 4 && c.vertices > 40;
+      }],
+    /**
+     * ...AND THE STRETCH THAT CARRIES A COMPARISON IS SHADED.
+     *
+     * With a feed the chart spans months of index history the book has no
+     * measurement over. The band is the book's own first-to-last statement date,
+     * so it says where the two lines are both real — and it is asserted here
+     * rather than on `cio` because with no feed the chart IS the book's window
+     * and there is correctly nothing to mark.
+     */
+    ["the measured window is shaded once the chart is wider than it",
+      (t, ctx) => {
+        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
+        const note = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}) · \d+ index closes/.exec(ctx.navChart.rangeNote ?? "");
+        if (!note) return false;
+        // THE BOOK'S OWN WINDOW, OFF THE SUBTITLE. It was read out of the
+        // paragraph block ("statement dates over A → B") until that block was
+        // removed; the subtitle has always carried the same pair.
+        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navHead(ctx) ?? "");
+        if (!book) return false;
+        // The window really is wider than the book's own — otherwise the band's
+        // absence would be correct and this check would be asserting nothing.
+        return note[1] < book[1] && ctx.navChart.band >= 1;
+      }],
+    /** And with a price history in hand the NAV card draws the comparison. */
+    ["the NAV card draws the Nifty 500 line and states its return",
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+        return new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(head);
+      }],
+    /**
+     * ...AND THE SELECTED PERIOD'S OWN INDEX RETURN SITS WITH THE PERIOD.
+     *
+     * This was the one fact in the removed paragraphs that lived nowhere else:
+     * the index ALONE over a window the book has no measurement across. It is
+     * in the range note now, beside the control that chose the window — and
+     * that placement is the honesty, because set beside the Book pill a reader
+     * would take the two for a pair struck over one period. So it is required
+     * to be in the range note and required NOT to be in the header.
+     */
+    ["the range's own index return is stated with the range, not beside the book's",
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+        const note = ctx.navChart.rangeNote ?? "";
+        if (!/Nifty 500 alone over this period\s*[+-]\d+\.\d+%/.test(note)) return false;
+        return !/alone over this period/.test(head);
+      }],
+    /**
+     * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
+     * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
+     * must read BELOW the index — while the unadjusted NAV (+9.30%) would read
+     * far above it. A card that compared the wrong curve inverts the answer,
+     * which is the whole reason the adjustment exists.
+     */
+    ["the headline compares the flow-adjusted book against the index, not the raw NAV",
+      (t, ctx) => {
+        const head = navHead(ctx);
+        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+        const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        if (!book || !idx) return false;
+        /**
+         * THE RAW NAV IS ON THE TOGGLE'S HOVER, AND IT NAMES BOTH ENDS.
+         *
+         * This used to close with `Number(book[1]) < Number(idx[1])` — on the
+         * fixture the index rises ~1.26% and the adjusted book +0.54%, so the
+         * book had to read BELOW it. That calibration was struck on the 34-day
+         * complete-panel window and stopped holding the day the series was
+         * chain-linked back to 74 days: the book reads +5.09% over the longer
+         * window and the comparison inverts on a card that is correct. It was
+         * the FIXTURE's outcome standing in for the claim.
+         *
+         * The claim is structural and is asserted as such: the headline must
+         * carry the ADJUSTED figure rather than the raw one, and the hover's own
+         * pair must show the raw above the adjusted — which is what says capital
+         * entered this window and the adjustment is doing work. A card that put
+         * the raw curve in the headline fails the first; a book with no flows in
+         * it fails the second and must be re-read rather than passing.
+         */
+        const pair = (ctx?.titles ?? [])
+          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
+          .find(Boolean);
+        if (!pair) return false;
+        const rawPct = Number(pair[1]), adjPct = Number(pair[2]);
+        return Number(book[1]) !== rawPct && rawPct - adjPct > 1 && Number(idx[1]) !== rawPct;
+      }],
+];
+
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -6349,1125 +7823,9 @@ const INVARIANTS = {
   ],
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
-  cio: [
-    /**
-     * ── THE REGISTER'S SENTINEL DERIVED, SO ITS ABSENCE CHECK MEANS SOMETHING ─
-     *
-     * The family asked for the Investment Register page to go, and with it went
-     * `src/data/registerData.ts` — which is where `REGISTER_SENTINEL` used to
-     * come from. Rederived from the workbook it guards the STRONGER claim (no
-     * route may name the register's largest not-in-book holding, with no
-     * exception for a page that no longer exists), and the guard in the walk
-     * short-circuits on `REGISTER_SENTINEL &&`.
-     *
-     * So a workbook this run cannot read would make that claim unfalsifiable
-     * WITHOUT FAILING ANYTHING — a check retiring itself in silence, on exactly
-     * the change that makes it matter most. This is the line that speaks up.
-     * Asserted once, on a route every sweep walks.
-     */
-    ["the register sentinel derived, so the absence check on every route can fail",
-      /* A BOOLEAN, DELIBERATELY. The harness reads any truthy return as a PASS
-         (`else if (!r) invariants.push(desc)`), so returning a description of
-         the failure is how a check comes to be unable to fail — measured once
-         in this file already, on five invariants at a time. */
-      () => !!REGISTER_SENTINEL],
-    /**
-     * ── THE TILE IS "CURRENT VALUE OF HOLDINGS" ───────────────────────────────
-     *
-     *   "rename consolidated NAV as Current Value of holdings … wherever it is
-     *    written consolidated NAV replace it with Current value of Holdings"
-     *
-     * Both directions, and the second is the one that would fail quietly: the
-     * sweep READS this tile's figure off its label to feed four other
-     * invariants, so a rename the probe did not follow would not fail anything —
-     * it would make those four report NOT CHECKED, which is an abstention rather
-     * than a failure and is how a check retires itself in silence.
-     */
-    ["the NAV tile is renamed, and the old label is gone", (t) =>
-      /CURRENT VALUE OF HOLDINGS/i.test(t) && !/CONSOLIDATED NAV/i.test(t)],
-
-    ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
-    /**
-     * ── POSITIONS COUNTS WHAT THE FAMILY STILL HOLDS ────────────────────────
-     *
-     *   "exclude closed rows from morning cio positions too."
-     *
-     * THE COUNT IS THE ONLY FIGURE THAT MOVES, which is what makes it the only
-     * one worth anchoring. A closed position is a measured ₹0 with no reported
-     * cost, so NAV, Capital invested, every allocation row and every return are
-     * identical whether or not it is in the set — and the count is not: it read
-     * 369 while the page it opens listed 364, a tile disagreeing with the page
-     * it opens, which is the one failure `drilldown.ts` exists to prevent.
-     *
-     * Struck against `glowData.ts` rather than against the drill-down, because
-     * comparing the tile with the page it opens passes when BOTH revert
-     * together, and that is exactly how this regression would arrive.
-     */
-    ["Positions counts current holdings, not what the family was paid out of", (t) => {
-      if (!SECURITY_AXIS_BOOK?.heldPositions) return notChecked("the book could not be read on this run");
-      if (!FUND_CLASS_BOOK?.closedCount) return notChecked("no holding in this book is redeemed to nil");
-      const pos = CIO_FIGURES.get("positions");
-      if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
-      return pos === SECURITY_AXIS_BOOK.heldPositions;
-    }],
-
-    /**
-     * ── THE RETURN ATTRIBUTION CARD IS GONE, AND THE CLAIM IS ITS ABSENCE ────
-     *
-     * *"remove return attribution section from the dashboard UI."*
-     *
-     * Nine invariants stood here and every one was arithmetic ABOUT THAT CARD —
-     * that the bridge added to the closing value, that exactly one step was
-     * labelled performance, that the ranking's head and tail matched the book's
-     * own, that a per-account row tied across its own columns, that the
-     * manager-year rows paired both figures from ONE document, and that the
-     * pre-2026 absence named the statement that would fill it. None of them has
-     * a subject any more: the card is not empty, it does not exist.
-     *
-     * WHAT REPLACES THEM IS ONE STRUCTURAL ABSENCE, and it is struck on the
-     * card's own handles rather than on the words "return attribution". That
-     * phrase appears legitimately elsewhere in this app — Return & Drawdown is
-     * built on the same idea — so a text match could report the card gone while
-     * it was on screen, which is the failure the movers-tab removal already
-     * records. `attrib` returns `{ handles }`: `null` means the probe did not
-     * run, `0` means it ran and found nothing, and those must not be the same
-     * value.
-     *
-     * ASSERTED ON `cio` ONLY, because that is the one route the card was ever
-     * mounted on. `NAV_SERIES_BOOK` is NOT removed with it — the NAV chart's own
-     * invariants below read it for the series' span and its chain-linked
-     * return, and it is derived from `glowData.ts` rather than from the card.
-     */
-    ["the return attribution card stays removed", (t, ctx) => {
-      if (ctx?.attrib == null) return notChecked("the attribution probe did not run on this pass");
-      return ctx.attrib.handles === 0;
-    }],
-
-    /**
-     * ── THE SERIES ITSELF REACHES BACK PAST THE COMPLETE PANEL ──────────────
-     *
-     * *"fix this portfolio NAV, we are only able to see portfolio NAV for a very
-     * short period of time."* The window went 34 days to 74 because each link is
-     * struck over the accounts valued at both its ends. Asserted on the card's
-     * own subtitle against the book, so a build that reverted to the old start
-     * fails by name rather than merely drawing a shorter line nobody measures.
-     */
-    ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      if (!NAV_SERIES_BOOK.panelCompleteFrom || NAV_SERIES_BOOK.panelCompleteFrom === NAV_SERIES_BOOK.seriesFrom) {
-        return notChecked("this book's panel is complete at the series' first point");
-      }
-      return head.includes(NAV_SERIES_BOOK.seriesFrom)
-        && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
-    }],
-
-    /**
-     * AND IT SAYS HOW MUCH OF THE BOOK EACH STRETCH OF THE LINE MEASURES.
-     *
-     * The cost of reaching back is that the early links cover four accounts
-     * where the late ones cover thirteen. A reader comparing this line to an
-     * index needs that, and it is the one thing no figure on the card discloses
-     * on its own.
-     */
-    /**
-     * ── THE BOOK PILL IS THE LINK-CHAINED RETURN, AND NOT THE LEVEL-CHAINED
-     *    ONE ────────────────────────────────────────────────────────────────
-     *
-     * THIS CHECK EXISTS BECAUSE THE SWEEP MISSED THE BUG IT IS FOR. Reverting
-     * `navIndexSeries` to divide each point's whole-panel NAV by the previous
-     * one — which is what it did before the series reached back past the
-     * complete panel — makes the Book pill read +398.76% instead of +5.09%,
-     * because every account that ARRIVED lands in the return. Every existing
-     * invariant on this card stayed green: they check the header's shape, the
-     * chart's geometry and the panel sentence, and not one of them looks at the
-     * MAGNITUDE of the figure. `test:family` catches it; the screen is where a
-     * reader would have believed it.
-     *
-     * Struck against the book, on a path the page does not take, and against
-     * the WRONG chaining too — a pill that matched neither would satisfy an
-     * equality check written only one way round.
-     */
-    ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      const m = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
-      if (!m) return false;
-      const shown = Number(m[1]);
-      // The pill prints one decimal, so the bound is that precision reproduced.
-      if (Math.abs(shown - NAV_SERIES_BOOK.chainByLink) > 0.05) return false;
-      // …and the two chainings must actually differ on this book, or the check
-      // asserts nothing and must be re-read rather than passing.
-      return Math.abs(NAV_SERIES_BOOK.chainByLevel - NAV_SERIES_BOOK.chainByLink) > 1;
-    }],
-
-    /**
-     * ── THE RAW NAV LINE STOPS WHERE THE PANEL DOES ────────────────────────
-     *
-     * ALSO WRITTEN BECAUSE THE SWEEP MISSED THE BUG. Rebasing the dashed line at
-     * the series' FIRST point instead of at the complete panel draws it climbing
-     * ~440% in six weeks, every rupee of it an account arriving — and it blows
-     * the y-axis domain out so far that both real lines flatten to a straight
-     * edge. Every existing check stayed green: the hover's pair is computed
-     * separately and stays right, and nothing looked at how far the curve
-     * extends.
-     *
-     * A chart claim is checked on the chart. The dashed curve must carry exactly
-     * the complete-panel points and the book's curve the whole series, both
-     * counted off the emitted book — so a build that drew either over the wrong
-     * span fails, in whichever direction.
-     */
-    ["the raw NAV curve covers only the complete panel, and the book's covers the whole series", (t, ctx) => {
-      const counts = ctx?.navChart?.vertexCounts;
-      if (!counts || !NAV_SERIES_BOOK) return notChecked("the NAV chart was not found on this pass");
-      if (NAV_SERIES_BOOK.completePanelPoints >= NAV_SERIES_BOOK.seriesPoints) {
-        return notChecked("this book's panel is complete at the series' first point");
-      }
-      // recharts emits one command per plotted vertex on a monotone curve.
-      return counts.includes(NAV_SERIES_BOOK.completePanelPoints)
-        && counts.includes(NAV_SERIES_BOOK.seriesPoints);
-    }],
-
-    /**
-     * MOVED TO THE SUBTITLE'S HOVER WITH THE PARAGRAPH, AND NOT DROPPED.
-     *
-     * The family asked the block under the title to go; this was the one claim
-     * in it that is about the SHAPE of the measurement rather than about a
-     * figure, so it went into the hover on the basis line rather than onto it.
-     * A hover is weaker than a caption and that is recorded rather than
-     * glossed — what is unchanged is that the panel's two ends and the date it
-     * completes are still named, still derived from the book, and still fail by
-     * name if the series reverts to starting where the panel does.
-     */
-    ["the NAV card names the panel it grows through", (t, ctx) => {
-      if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
-      if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
-        return notChecked("this book's panel does not grow inside the series");
-      }
-      const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
-      if (!why) return false;
-      return new RegExp(`${NAV_SERIES_BOOK.panelFirst} to ${NAV_SERIES_BOOK.panelLast} accounts`).test(why)
-        && why.includes(NAV_SERIES_BOOK.panelCompleteFrom);
-    }],
-
-  /**
-   * ── THE DATED NAV SERIES, AND WHAT IT REFUSES TO CLAIM ────────────────────
-   *
-   * These are on `cio` rather than `cio-live` because every one of them is
-   * driven by `BOOK_NAV_HISTORY`, which is baked into the bundle — the series
-   * renders with no feed at all, and only the Nifty 500 comparison line needs
-   * one. Each was verified by reintroducing its bug.
-   */
-  ["the NAV card renders a dated series with its date range and its coverage",
-    (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      return /Portfolio NAV vs Nifty 500/.test(t)
-        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
-        && /\d+ of \d+ accounts/.test(head);
-    }],
-  /**
-   * THE ADJUSTMENT IS LOAD-BEARING, AND THE PAGE PRINTS BOTH FIGURES.
-   *
-   * The covered set's raw NAV runs +9.30% over this window and ₹11.24 Cr of that
-   * is a Fund Deposit into V.E.C 128005 — net of it the book earned +0.54%. A
-   * card that charted the raw NAV would show eight points of outperformance
-   * against an index that moved 1.33%, none of it earned. So: both percentages
-   * must be on screen, and they must DIFFER. A book where they happened to
-   * coincide would pass a check that only looked for one of them, which is why
-   * the gap is asserted rather than the literal — this is `accountXirr.test.ts`'s
-   * "the guard must be load-bearing" rule, on a chart.
-   */
-  ["the NAV card prints the flow-adjusted return AND the unadjusted one, and they differ",
-    (t, ctx) => {
-      /**
-       * BOTH FIGURES SURVIVED THE PARAGRAPH THAT CARRIED THEM. They were one
-       * sentence under the chart until the family asked the paragraphs to go;
-       * the adjusted one is the Book pill in the header and the unadjusted one
-       * is on the raw-NAV toggle's hover, beside the control that draws it.
-       * Read from the TWO PLACES rather than from one line, which is the
-       * stronger claim: a build that lost either half now fails.
-       */
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
-      /**
-       * THE HOVER CARRIES BOTH ENDS AND NAMES ITS OWN WINDOW.
-       *
-       * This used to require the header's Book pill to EQUAL the hover's
-       * adjusted figure, which held while both covered the same 34 days. They no
-       * longer do: the adjusted line is chain-linked back to 74 days and the raw
-       * one is undefined before the panel completes, so the hover's pair is
-       * struck over the segment the raw line has and the pill over the series.
-       * Requiring them to match would fail a card that is right, and — worse —
-       * would have been satisfied by "fixing" the card to compare 74 days with
-       * 34 and call the extra weeks a deposit.
-       *
-       * So the claim is that both figures survived, that they differ (or the
-       * adjustment is doing nothing and this asserts nothing), and that the
-       * hover SAYS which window its pair is over — because two returns a reader
-       * cannot date are two returns a reader will pair with the pill.
-       */
-      const raw = (ctx?.titles ?? [])
-        .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
-        .find(Boolean);
-      if (!book || !raw) return false;
-      const named = (ctx?.titles ?? []).some((x) =>
-        /BOTH FIGURES ARE OVER THAT SEGMENT/.test(x) && /Over \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(x));
-      return named && Math.abs(Number(raw[1]) - Number(raw[2])) > 1;
-    }],
-  /**
-   * ── THE CHART ACTUALLY PAINTS ────────────────────────────────────────────
-   *
-   * The one invariant this card never had, and the one defect it shipped with.
-   * Everything else here reads TEXT, and the text was right the whole time the
-   * plot area was an empty box — a `ResponsiveContainer height="100%"` inside a
-   * `flex-1` holder resolving to zero. Struck on geometry, because no rendered
-   * word changes when it regresses.
-   *
-   * The book's own series is baked into the bundle, so this holds with NO FEED
-   * AT ALL: the walk that serves nothing must still draw the book and the raw
-   * NAV. The index line needs `cio-live`, and is asserted there.
-   */
-  ["the NAV chart paints — a sized plot area with the book's own curve in it",
-    (t, ctx) => {
-      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-      const c = ctx.navChart;
-      return c.svgHeight > 200 && c.svgWidth > 400
-        // A `<path>` with an empty `d` is what a zero-height chart emits, so the
-        // curve is measured rather than counted.
-        && c.pathLen.filter((n) => n > 20).length >= 2
-        && c.yTicks >= 3
-        && c.legend.length >= 2;
-    }],
-  /**
-   * A REAL TIME AXIS, NOT SEVEN EQUALLY-SPACED LABELS.
-   *
-   * The axis was `type="category"` over the book's own dates, so 10 → 11 August
-   * and 10 → 27 July took the same width and every segment's slope was a fact
-   * about row order. Struck on the TICK LABELS: a time-scaled axis over a year
-   * prints months (`2026-04`), a category axis over seven statement dates can
-   * only ever print those seven. Both shapes are accepted — the axis switches
-   * granularity with the span — and a tick that is not a date fails.
-   */
-  ["the NAV chart's x-axis is dated, and its ticks are real dates",
-    (t, ctx) => {
-      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-      const ticks = ctx.navChart.xTicks;
-      return ticks.length >= 3 && ticks.every((x) => /^\d{4}(-\d{2})?$|^\d{2}-\d{2}$/.test(x));
-    }],
-  /**
-   * THE PERIOD CONTROL IS THE FAMILY'S ASK, SO ITS ABSENCE IS A FINDING.
-   *
-   * *"it should show a proper time graph showing larger period return
-   * comparison."* The book's own dated series is five weeks and cannot be
-   * longer; what CAN be lengthened is the index's context around it. A card that
-   * lost the control would go back to showing five weeks and every text check
-   * would stay green — the same shape as the missing facet toggle, and answered
-   * the same way: measured, never abstained from.
-   */
-  ["the NAV chart offers a period longer than the book's own window",
-    (t, ctx) => {
-      if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-      const keys = ctx.navChart.ranges.map((r) => r.key);
-      return keys.includes("book") && ["1Y", "3Y", "5Y", "MAX"].filter((k) => keys.includes(k)).length >= 3
-        && ctx.navChart.activeRange !== null
-        // ...AND IT DOES NOT OPEN ON THE SHORTEST ONE. Defaulting to the book's
-        // own window would satisfy every check above while showing exactly what
-        // was complained about.
-        && ctx.navChart.activeRange !== "book";
-    }],
-  /**
-   * ...AND THE LONGER WINDOW SAYS, IN WORDS, WHICH STRETCH CARRIES A COMPARISON.
-   *
-   * On the default 1Y view most of the axis is index history the book has no
-   * measurement over, and a reader who is not told reads the whole width as a
-   * comparison — a caption widening a figure it does not narrow, arriving
-   * through a time axis. The sentence renders with no feed at all, so it is
-   * asserted here; the SHADED BAND needs a window wider than the book's own and
-   * is therefore asserted on `cio-live`, where one exists.
-   */
-  ["the card names the book's own window, in its own header",
-    // MOVED WITH THE PARAGRAPHS. "The book's own dated series is N statement
-    // dates over A → B" was the third of the four removed paragraphs and said
-    // what the SUBTITLE already said word for word, so only the subtitle is
-    // left to assert. The range's own index return — the one thing in that
-    // paragraph that was nowhere else — is checked on `cio-live`, where a feed
-    // exists to produce it.
-    (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      return /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head);
-    }],
-  /**
-   * ...AND THE REBASE BASIS CAME WITH IT.
-   *
-   * The y-axis reads 84 / 91 / 98 and is a RATIO rather than an amount, so
-   * without this clause those ticks are unitless — which is why it is the one
-   * sentence of the removed block that had to land somewhere rather than go.
-   * It is on the card's own basis line now, beside the window and the coverage.
-   */
-  ["the NAV card states what its axis is rebased to",
-    (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      return /rebased to 100 at \d{4}-\d{2}-\d{2}/.test(head);
-    }],
-  /**
-   * ── AND THE FOUR REMOVED PARAGRAPHS STAY REMOVED ──────────────────────────
-   *
-   * *"remove the highlighted text from the dashboard ui."* Struck on phrases
-   * only that block ever printed, so a check cannot be satisfied by wording the
-   * card legitimately still carries — and never on a figure, because every
-   * figure that mattered was re-homed rather than dropped and is asserted above
-   * at its new address.
-   */
-  /**
-   * ── …AND SO DOES THE SUBTITLE PARAGRAPH THAT REPLACED THEM ────────────────
-   *
-   * *"remove the highlighted text from the dashboard ui"* — pointed at the
-   * four-sentence block under the title, which is what was left after the first
-   * round moved the rebase basis INTO it. Three of its claims had no second
-   * home and a reader acts on all three, so they are the one-line basis the
-   * three invariants above assert; the METHODOLOGY went to the subtitle’s own
-   * hover, which this asserts, because a claim that is merely deleted and a
-   * claim that moved are two different outcomes and only one of them was asked
-   * for.
-   */
-  ["the NAV card’s methodology moved to the hover rather than going", (t, ctx) => {
-    const why = (ctx?.titles ?? []).find((x) => /most recent mark/i.test(x)) ?? "";
-    if (!why) return false;
-    return /counts a holding two accounts both report once/i.test(why);
-  }],
-  ["the NAV subtitle is a basis line rather than a paragraph", (t, ctx) => {
-    const head = navHead(ctx);
-    if (head == null) return notChecked("the NAV card’s header was not on screen on this run");
-    /**
-     * STRUCK ON WHAT THE PARAGRAPH ALONE PRINTED, never on the window, the
-     * coverage or the rebase — all three stayed, at one line, and each is
-     * asserted at its new address above. A check that banned those would fail
-     * the card for keeping the facts nobody asked it to lose.
-     */
-    return !/that publish more than ones+dated valuation/i.test(head)
-      && !/Each point holds every account at its most recent mark/i.test(head)
-      && !/The panel grows from/i.test(head);
-  }],
-    ["the NAV card's explanatory paragraphs stay removed",
-    (t) => !/Both lines are rebased to 100 at/.test(t)
-      && !/because money added is not money earned/.test(t)
-      && !/market history rather than a comparison/.test(t)
-      && !/never the nearest in either\s+direction/.test(t)],
-  ["the NAV card names the external capital it nets out, in rupees",
-    // ON THE CONTROL THAT DRAWS THE OTHER LINE, since the paragraph that said
-    // it went. The SIZE is the load-bearing half — a reader deciding whether to
-    // show the unadjusted NAV has to see how much of the move is deposit — so
-    // it is on the button's face and not in its hover.
-    //
-    // MONEY IN ANY SCALE. `Cr` alone would fail a drop whose only flow was a
-    // few lakh, about a page that was correct — the "a check that cannot read
-    // the figure it asserts on" failure this file already names twice.
-    (t) => /NAV incl\.\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+added/.test(t)],
-  /**
-   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
-   *
-   * Four covered accounts publish no dated capital record and hold more than one
-   * security. Silence there would present their whole restatement as a return.
-   */
-  ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
-    (t, ctx) => {
-      /**
-       * A DISCLOSURE, RE-HOMED RATHER THAN DROPPED. It was a paragraph under the
-       * chart; it is an amber pill beside the Book pill it qualifies, with the
-       * accounts in the hover. Both halves are required — a pill with no
-       * accounts behind it is a number a reader cannot act on, and a hover with
-       * no pill is a disclosure nobody will find.
-       */
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      const pill = /₹[\d,.]+\s*(?:Cr|L|K)?\s+not proven/.test(head);
-      const why = (ctx?.titles ?? []).find((x) => /Not proven to be performance:/.test(x)) ?? "";
-      return pill
-        && /publish no dated capital record/.test(why)
-        // …and it NAMES them. A sentence that said "4 accounts" and listed none
-        // would satisfy every word above while telling a reader nothing.
-        && /—\s*\S[^—]*·[^—]*—/.test(why);
-    }],
-  /**
-   * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
-   * asserted as a PARTITION rather than as a count. The three lists must account
-   * for every account the page's own coverage line says exist: a filter that
-   * widened or narrowed one list would keep printing a plausible count and only
-   * the partition catches it.
-   */
-  ["the excluded accounts are listed, and the three lists partition the book",
-    (t, ctx) => {
-      /**
-       * SCOPED TO THE CARD, BECAUSE "N of M accounts" IS NOT UNIQUE ON THIS PAGE.
-       *
-       * The first draft matched the whole page and picked up the Money-weighted
-       * return tile's own coverage line ("7 of 49 accounts") four cards higher,
-       * so it compared the XIRR's coverage against the NAV series' exclusions and
-       * failed a page that was correct. Two figures of the same SHAPE describing
-       * different sets is exactly what a page-wide regex cannot tell apart.
-       */
-      const card = navHead(ctx);
-      if (card == null) return notChecked("the NAV card's header was not on screen on this run");
-      const cov = /(\d+) of (\d+) accounts/.exec(card);
-      const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
-      const parts = /(\d+) publish exactly one dated valuation/.exec(t);
-      const none = /(\d+) publish no valuation at all/.exec(t);
-      if (!cov || !ex || !parts || !none) return false;
-      // The COUNTS have to partition…
-      if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
-      if (Number(cov[1]) + Number(ex[1]) !== Number(cov[2])) return false;
-      // …and the ROWS have to be there. A summary that counted 36 over two
-      // empty lists would satisfy the arithmetic and name nobody, which is the
-      // half of the request the arithmetic cannot check.
-      return ctx.navListRows
-        && ctx.navListRows.single === Number(parts[1])
-        && ctx.navListRows.unvalued === Number(none[1]);
-    }],
-  /**
-   * WITH NO FEED, THE MOVERS CARD SAYS SO AND PRINTS NO DAY CHANGE.
-   *
-   * A day change needs a live price and the previous close behind it. `₹0` or
-   * `0.00%` here would be a measured flat day for a book nobody priced — the
-   * absent-vs-zero rule, on the one figure a reader compares against an index.
-   */
-  ["with no quote feed, Today's movers states the cause and prints no day change",
-    (t) => {
-      const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
-      if (!/No direct-equity holding carries a day change/.test(card)) return false;
-      if (!/quote feed did not respond|can never have one/.test(card)) return false;
-      return !/DIRECT EQUITY · TODAY/i.test(card);
-    }],
-  /**
-   * ── TODAY'S MOVERS IS DIRECT EQUITY, AND THE HEADING SAYS SO ──────────────
-   *
-   * *"we will only show direct equity as default."* The scope is asserted on
-   * the HEADING and the TILE rather than on the rows, because a rows-only check
-   * passes on any day the mandate names happen not to move — and that is most
-   * days for a book whose PMS half is 131 names. The COUNT that proves the set
-   * is right lives on `cio-live`, where a feed exists.
-   */
-  ["Today's movers names its scope in the heading and on the tile",
-    (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
-      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
-  /**
-   * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
-   *
-   * *"give a toggle button in the direct equity daily movers for 'direct
-   * equity/ETF & Mutual Funds'."*
-   *
-   * THIS CHECK IS INVERTED, NOT NEW. It asserted the four scope tabs of Stage
-   * 10ad were GONE; the family have asked for a control back, so it asserts the
-   * one they asked for is THERE — two branches, Direct Equity first and live by
-   * default. Inverting rather than deleting is what keeps the claim honest in
-   * both directions: a build that restored the old four-tab group would fail
-   * this as surely as one that dropped the toggle.
-   *
-   * Struck on `data-movers-scope` rather than on the labels. "Direct Equity"
-   * and "ETFs & mutual funds" both appear legitimately elsewhere on this page —
-   * in the allocation table, in this card's own sentences — so a text match
-   * would report the toggle present while it was gone.
-   *
-   * ASSERTED WITH NO FEED AS WELL AS WITH ONE, because the toggle is a CONTROL
-   * and renders whether or not a quote has landed: a build that drew it only on
-   * the settled branch would pass a live-only check.
-   *
-   * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — only the probe failing
-   * to run abstains, which is `golden.mjs`'s rule arriving through a control.
-   */
-  ["the movers toggle offers Direct Equity and ETFs & mutual funds, and opens on Direct Equity", (t, ctx) => {
-    const tabs = ctx?.moverScopes;
-    if (tabs == null) return { notChecked: "the toggle probe did not run on this pass" };
-    return tabs.length === 2
-      && tabs[0].key === "direct" && tabs[1].key === "funds"
-      && tabs[0].active && !tabs[1].active
-      && /ETFs?\s*&\s*mutual funds/i.test(tabs[1].label);
-  }],
-  /**
-   * ── THE MOVERS RANKING OPENS ON THE PERCENTAGE MOVE ───────────────────────
-   *
-   * *"keep % wise as the default view and \u20b9 wise absolute as the second
-   * toggle option."* A default is exactly what moves silently — the page renders
-   * perfectly either way, every count, total and caption on the card is
-   * identical, and only the ORDER of two lists differs. No value check on this
-   * card can see it, which is why it is struck on the control.
-   *
-   * THREE CLAIMS, AND THE SECOND IS THE ONE THE FAMILY ASKED FOR: both measures
-   * are still offered (a "default" that is the only option is not a default),
-   * the live one is the percentage, and the percentage is offered FIRST. Read
-   * off `data-mover-rank`, never the labels.
-   *
-   * A MISSING CONTROL IS A FINDING, NOT AN ABSTENTION. This card's header
-   * renders whether or not a quote has landed, so an empty offer means the
-   * control is gone — and a sweep that abstained there would report CLEAN over
-   * a card with no toggle at all, which is `golden.mjs`'s rule arriving through
-   * a ranking. Only the probe failing to run abstains.
-   */
-  ["Today\u2019s movers offers both rankings and opens on the % move", (t, ctx) => {
-    void t;
-    const m = ctx?.movers;
-    if (!m || m.ranks == null) return { notChecked: "the movers probe did not run on this pass" };
-    const keys = m.ranks.map((r) => r.key);
-    return keys.length === 2
-      && keys[0] === "pct" && keys[1] === "impact"
-      && m.ranks.find((r) => r.active)?.key === "pct";
-  }],
-  /**
-   * ...AND THE ALLOCATION CARD STILL OPENS ON CATEGORY. *"Default view will
-   * remain the current one, category wise."* Two new axes beside an old one is
-   * the change that silently moves a default, and the page would render
-   * perfectly while showing the family a table they asked to keep.
-   */
-  ["the allocation card defaults to the category axis", (t, ctx) => {
-    const a = ctx?.allocTable;
-    if (!a) return { notChecked: "the allocation table was not on screen on this run" };
-    return a.axis === "category" && (a.axes ?? []).find((x) => x.active)?.key === "category";
-  }],
-  ...ALLOC_AXIS,
-  /**
-   * ── THREE CAPTION BLOCKS THE FAMILY ASKED TO REMOVE ───────────────────────
-   *
-   * The movers footer that explained the ranking, the movers subtitle, and the
-   * allocation table's subtitle. Asserted as ABSENCES so a future edit cannot
-   * quietly restore them, and paired below with the facts they carried that a
-   * reader still acts on — a removal that also removes a load-bearing figure is
-   * not the removal that was asked for.
-   */
-  /**
-   * SPLIT ACROSS TWO ROUTES, because half of this text only exists when the feed
-   * does. With no quotes the movers card renders its absent state and its footer
-   * is never drawn — so a check for that footer's ABSENCE passes here whether the
-   * paragraph was removed or not. Reintroducing it proved exactly that: the
-   * sentence came back and this route stayed green. The movers half is asserted
-   * on `cio-live`, where the card actually renders; the allocation subtitle and
-   * the removed card render with no feed at all and stay here.
-   */
-  ["the removed allocation caption stays removed",
-    (t) => !/Shares chosen under a discretionary mandate roll up/.test(t)
-      && !/The day’s move on the holdings the feed can price/.test(t)],
-  /**
-   * ...AND THE TWO FACTS THAT SUBTITLE CARRIED ARE STILL ON THE PAGE.
-   *
-   * That every return here is CUMULATIVE rather than annualised, and the DATE
-   * the figures close at. Both were already stated outside the card — on the
-   * Consolidated return tile and on the header's basis pill — which is why the
-   * subtitle could go without taking a measurement with it. Asserted so a later
-   * tidy-up of either of those cannot leave the table's basis unstated.
-   */
-  /**
-   * THE AS-OF SURVIVES ON THIS PAGE; THE BASIS MOVED WITH THE CAPTIONS.
-   *
-   * "cumulative, not annualised" was on the Consolidated return TILE, and the
-   * family has since removed every tile caption — *"remove these small subtext
-   * from the clickable KPI buttons since these are also already written inside
-   * each KPI page"*. It is asserted on `holdings-invested` now, which is the
-   * page that tile opens and where the same words already stood. The report
-   * date is in the header's basis pill and stays here.
-   */
-  ["...and the as-of that subtitle carried is still on the page",
-    (t) => /as of \d{4}-\d{2}-\d{2}/i.test(t)],
-  /**
-   * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
-   *
-   * Both halves, because neither implies the other: a page that dropped the card
-   * AND the listed/private split would pass the first check while losing a
-   * measurement, and a page that merely renamed the card would pass the second.
-   * Stage 10f's rule — a removal is verified by asserting it happened.
-   */
-  ["the Book performance card is gone", (t) => !/Book performance/i.test(t)
-    && !/Listed vs private, on a like-for-like basis/i.test(t)],
-  /**
-   * ...AND THE SPLIT IT CARRIED IS STILL REACHABLE, one click on rather than in
-   * the tile's own caption. Both halves are the facet toggle on the NAV's own
-   * page (asserted there, with their counts and their partition); what this
-   * page must still do is OFFER that page from the tile the split belongs to.
-   */
-  ["...and the listed/private split it carried is one click from the NAV tile", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    if (!BOOK_HAS_BOTH_HALVES()) return notChecked("this book reports only one of the two halves");
-    const nav = ctx.kpiTiles.find((x) => /current value of holdings/i.test(x.label));
-    return !!nav && /of=book\b/.test(nav.links[0] ?? "");
-  }],
-  ["...and the money-weighted return it carried still has its own tile",
-    (t) => /MONEY-WEIGHTED\s*\n?\s*RETURN|XIRR \(ANNUALISED\)/i.test(t)],
-  /**
-   * ── THE TILES CARRY A LABEL AND A FIGURE, AND NOTHING ELSE ────────────────
-   *
-   * *"remove these small subtext from the clickable KPI buttons since these are
-   * also already written inside each KPI pages."* Measured line by line before
-   * removing: every one of them was on the page its tile opens, except two that
-   * were not and have been moved there (the accrued income the NAV excludes, and
-   * the window the money-weighted rate is struck over).
-   *
-   * ONE EXCEPTION, AND IT IS THE RULE THIS FILE EXISTS FOR: a tile whose figure
-   * the book does not carry renders an em dash, and an em dash must name its
-   * cause. Those tiles keep their one line. On this book none are absent, so the
-   * check is struck on the tiles that DO have a figure — and a drop that empties
-   * one gets its reason back rather than an unexplained dash.
-   */
-  ["a KPI tile with a figure carries no caption under it", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const withFigures = ctx.kpiTiles.filter((x) => !x.absent);
-    if (!withFigures.length) return notChecked("no KPI tile on this run carries a figure");
-    return withFigures.every((x) => x.lines <= 2);
-  }],
-  ["...and a tile with no figure still names why", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const absent = ctx.kpiTiles.filter((x) => x.absent);
-    if (!absent.length) return notChecked("every KPI tile on this book carries a figure");
-    // THREE lines, not two: label, the em dash, and the reason. `>= 2` was the
-    // first draft and it could not fail — a tile rendering "UNCALLED CAPITAL / —"
-    // and nothing else has two lines and is exactly the unexplained dash this is
-    // guarding against. Found by reintroducing the bug.
-    return absent.every((x) => x.lines >= 3);
-  }],
-  /**
-   * AND THE ROADMAP DOES NOT PROMISE WHAT SHIPPED. Both of these were chips on
-   * the "coming as live data lands" list; a chip for a feature already on the
-   * reader's screen is the same defect as an absence recorded against a premise
-   * that changed.
-   */
-  /**
-   * ── ONE DESTINATION PER KPI TILE ──────────────────────────────────────────
-   *
-   * *"there are multiple links on these KPI tiles. Make these KPI tiles
-   * clickable and remove all the other links."* The NAV tile carried three
-   * addresses — its label, and the listed and private halves in its caption —
-   * and Capital invested carried two. A reader had to know which of them
-   * answered their question, and the largest target on the tile, the figure
-   * itself, went nowhere.
-   *
-   * Struck on the ANCHORS INSIDE EACH TILE rather than on the page's link list:
-   * a page-wide count cannot tell a tile with two links from two tiles with one
-   * each, which is exactly the distinction being asserted.
-   */
-  ["each KPI tile offers exactly one destination", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    if (ctx.kpiTiles.length < 4) return false;
-    return ctx.kpiTiles.every((tile) => tile.links.length <= 1);
-  }],
-  /**
-   * ...AND THE TILES THAT HAVE A SET STILL OPEN IT. The rule above is satisfied
-   * by a strip with no links at all, which would answer the request by removing
-   * the feature — so the destinations are asserted too, by the figure they
-   * belong to rather than by a count.
-   */
-  ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
-    return /of=book\b/.test(at(/current value of holdings/i))
-      && /of=invested\b/.test(at(/capital invested/i))
-      && /of=measured\b/.test(at(/money-weighted|xirr/i));
-  }],
-  /**
-   * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
-   * `?of=private` and `?of=no-cost` still RESOLVE, deliberately, so a bookmark
-   * keeps working — which is precisely why their absence from the strip has to
-   * be asserted rather than assumed: nothing would break if one came back.
-   */
-  /**
-   * ── NOTHING INSIDE A TILE ADVERTISES ITSELF AS THE THING TO CLICK ─────────
-   *
-   * *"remove the remaining underlines from the texts, and even the calculation
-   * that we're showing that appears when click the underlined no."*
-   *
-   * The whole card is the target, and it used to carry two rival affordances
-   * anyway: a dotted-underlined LABEL and a dashed-underlined FIGURE, the second
-   * of which opened a popover. Both said "click this text" about a card where
-   * the text is not the thing to click, and the popover then had to be dismissed
-   * before the reader could do anything else.
-   *
-   * Struck on COMPUTED STYLE and on the element count, because the words are
-   * identical either way — every figure check on this page passed throughout.
-   */
-  ["no KPI tile underlines its text or hides arithmetic behind it", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    if (ctx.kpiTiles.length < 4) return false;
-    return ctx.kpiTiles.every((tile) => tile.underlined === 0 && tile.buttons === 0);
-  }],
-  /**
-   * ...AND A TILE THAT OPENS SOMETHING LOOKS LIKE A BUTTON, while one that does
-   * not still reads as a panel.
-   *
-   * *"Just make the KPI tiles look like 3-d clickable buttons."* This is the one
-   * claim on this page that NO value or text check can reach, and the first
-   * draft of the CSS proved why it needs its own: `html:not(.dark) .card` sets a
-   * box-shadow of its own further down the stylesheet at equal specificity, so
-   * source order decided it and every tile rendered FLAT while the whole sweep
-   * stayed green. Asserted on the computed shadow.
-   *
-   * BOTH DIRECTIONS. A rule that raised every card would satisfy the first half
-   * and make the affordance meaningless — a tile that presses under the pointer
-   * and then does nothing is a worse lie than a flat one. So the drill-down
-   * page's own four tiles, which open nothing, must stay flat (`holdings-book`).
-   */
-  ["each KPI tile that opens something is raised like a button", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    return ctx.kpiTiles.every((tile) => (tile.links.length > 0) === tile.raised);
-  }],
-  ["no KPI tile links at a scope that is now a facet", (t, ctx) => {
-    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-    return ctx.kpiTiles.every((tile) =>
-      tile.links.every((h) => !/[?&]of=(listed|private|no-cost)\b/.test(h)));
-  }],
-  /**
-   * ...AND SO DOES THE ALLOCATION TABLE, which was the last place on this page
-   * with either. Its rows must STAY clickable — the underline was the
-   * decoration, not the link — so both halves are asserted: no decoration and
-   * no popover trigger, and a link for every row that has a set behind it.
-   */
-  ["the allocation table underlines nothing and hides no arithmetic", (t, ctx) => {
-    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
-    return ctx.allocTable.underlined === 0 && ctx.allocTable.buttons === 0;
-  }],
-  ["...and its rows are still clickable", (t, ctx) => {
-    if (!ctx?.allocTable) return { notChecked: "the allocation table was not found on this run" };
-    return ctx.allocTable.links >= 2;
-  }],
-  /**
-   * ── THE BAR CHART OPENS WHAT ITS ROW OPENS ────────────────────────────────
-   *
-   * *"the bar graphs should also be clickable just like the rows in the table
-   * and should show the same drill down pages as the table ones do."* So the
-   * claim is a PAIRING, not a count: one bar per section, and each bar's href is
-   * its row's href — both null where the row is a non-clickable fund-of-funds
-   * line. Struck on `data-alloc-bar` against `data-alloc-row`, so a bar that
-   * quietly pointed elsewhere (or stopped being a link) is a failure rather than
-   * a page that still renders every figure correctly. Verified by reintroducing
-   * both bugs — a bar with a wrong href, and a bar that is not a link.
-   */
-  ["every allocation bar opens the same drill-down as its row", (t, ctx) => {
-    const a = ctx?.allocTable;
-    if (!a) return { notChecked: "the allocation table was not found on this run" };
-    if (!a.bars || !a.bars.length) return false;   // the chart must be there
-    const rowKeys = Object.keys(a.rowHrefs);
-    // one bar per row (keys are unique per section, so equal counts plus every
-    // bar key being a row key means the two sets coincide), and each bar's
-    // destination is its row's — null against null for a non-clickable line.
-    if (a.bars.length !== rowKeys.length) return false;
-    return a.bars.every((b) => Object.prototype.hasOwnProperty.call(a.rowHrefs, b.key)
-      && b.href === a.rowHrefs[b.key]);
-  }],
-  /**
-   * ── THE ROADMAP PLACEHOLDER IS GONE, AND THE OLDER CLAIM STILL HOLDS ───────
-   *
-   * *"remove the placeholder for not live data from the dashboard ui."* A
-   * dashed panel headed "Coming as live data lands" carried four chips for
-   * features nothing here can build, over a line saying they activate once the
-   * live market-data feed is wired in.
-   *
-   * NOTHING ON IT WAS A MEASUREMENT, so unlike the NAV paragraphs there was
-   * nothing to re-home: a chip named a feature that does not exist. The gaps it
-   * stood for are in CLAUDE.md's Stage 8 table, which is where an unbuildable
-   * feature belongs — four dashed frames on the dashboard read, during an
-   * upstream outage, as four more things that have broken.
-   *
-   * BOTH CLAIMS ARE KEPT AND NEITHER IMPLIES THE OTHER. The panel must be gone;
-   * and the two chips removed earlier, when the index strip and this page's own
-   * NAV chart shipped, must stay gone in particular — a build that restored the
-   * panel with its ORIGINAL chip list would satisfy a check that only looked for
-   * the heading.
-   */
-  /**
-   * ── THE BASIS PILL IS GONE FROM THIS HEADER ────────────────────────────────
-   *
-   * *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind' part
-   * from the UI."*
-   *
-   * Struck on the page's own text, which is safe here in a way it usually is
-   * not: "LIVE ·" and "N accounts behind" are the pill's exact renderings and
-   * appear nowhere else on this route — the index strip prints "NSE · live"
-   * and the movers card prints its own coverage in different words. Both are
-   * required, because the staleness pill is a SEPARATE element that renders
-   * beside the basis one and a build could lose one and keep the other.
-   */
-  ["the basis pill and the staleness pill are gone from Morning CIO",
-    (t) => !/\bLIVE\s*·/.test(t) && !/\bSTATEMENT\s*·\s*as of/i.test(t)
-      && !/\d+\s+accounts? behind/i.test(t)],
-  /**
-   * ...AND THE TWO DISCLOSURES THAT HAD NO OTHER HOME ARE IN THE TILES' HOVERS.
-   *
-   * Both were on the arithmetic card of the page their tile opens, and both are
-   * the LAST statement of their fact anywhere:
-   *
-   *   · the accrued income the NAV excludes — our total differs from a
-   *     manager's printed one by exactly this, and a reader reconciling the
-   *     two would otherwise find the gap and no explanation;
-   *   · the XIRR's window and its refusal to annualise it — Stage 10g(ii)'s
-   *     guard, which exists because this tile once read +99.0%.
-   *
-   * Read off `ctx.titles`, the same probe the cost-less cells' reasons use. A
-   * hover is a weaker home than a caption and CLAUDE.md says so rather than
-   * pretending otherwise; what these assert is that neither was LOST.
-   */
-  ["the NAV tile's hover names the accrued income the figure excludes", (t, ctx) => {
-    if (!BOOK_HALVES) return notChecked("the book could not be read on this run");
-    if (!BOOK_HALVES.accrued) return notChecked("no holding in this book reports accrued income");
-    const titles = ctx?.titles ?? [];
-    return titles.some((x) => /NOT IN THIS FIGURE: ₹[\d,.]+\s*(?:Cr|L|K)? of accrued income/i.test(x));
-  }],
-  ["the money-weighted tile's hover states its window, and refuses to annualise a short one", (t, ctx) => {
-    const titles = ctx?.titles ?? [];
-    // CASE-INSENSITIVE, because the sub-year branch SHOUTS its sentence — "THE
-    // WINDOW IS 150 DAYS AND THE RATE IS NOT ANNUALISED" — and the annualised
-    // branch does not. A check pinned to one casing fails a page that is right,
-    // which is the trap `label-xs` already sprang once on this sweep.
-    const m = titles.map((x) => /the window is (\d+) days/i.exec(x)).find(Boolean);
-    if (!m) return false;
-    const days = Number(m[1]);
-    const hover = titles.find((x) => /the window is \d+ days/i.test(x)) ?? "";
-    // A rate is only ever called annual beside a window of at least a year.
-    // Anything else is the extrapolation this guard exists to refuse.
-    return days >= 365 ? /genuine annual rate/i.test(hover) : /NOT ANNUALISED/.test(hover);
-  }],
-  /* AND THE CROSS-HELD FIGURE KEEPS THE DISTINCTION ITS DRILL-DOWN'S LEAD USED
-     TO CARRY. Two members each owning some of a name is not the ₹3.17 Cr
-     duplicate policy, and a reader who conflates them misreads this figure. */
-  ["the Cross-held figure separates itself from the duplicate policy", (t, ctx) =>
-    (ctx?.titles ?? []).some((x) => /counted once per member/i.test(x) && /already collapsed/i.test(x))],
-  ["the roadmap placeholder for not-yet-live data is gone",
-    (t) => !/Coming as live data lands/i.test(t)
-      && !/These activate once the live market-data feed/i.test(t)
-      && !/weekly-drop risk flags/i.test(t)
-      && !/Earnings hub & catalyst tracker/i.test(t)],
-  ["...and it does not come back listing the index strip or NAV-vs-benchmark as pending",
-    (t) => !/Market overview — Nifty/.test(t) && !/NAV vs benchmark/.test(t)],
-
-
-    /**
-     * ALLOCATION IS GROUPED BY HOW THE FAMILY HOLDS THE BOOK, and both halves of
-     * that are asserted because either alone can pass on the wrong page.
-     *
-     * The family asked three times for this. Rounds one and two changed the WORD
-     * ("Equity" -> "Direct Equity" -> "Company Shares") and neither fixed it,
-     * because what they were reporting was that a share a manager picked and a
-     * share they bought themselves sat in one row. Round three said so plainly.
-     * So the check is that BOTH rows exist and each carries a value — a label
-     * with no holdings behind it is the empty vehicle-split row this line was
-     * originally written against.
-     */
-    ["allocation has a Direct Equity row AND a PMS mandates row, each with a value",
-      (t) => /Direct Equity[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)
-        && /PMS mandates[\s\S]{0,400}?₹[\d,.]+\s*(?:Cr|L|K)/.test(t)],
-    ["'Company Shares' is gone from the allocation", (t) => !/Company Shares/.test(t)],
-    /**
-     * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
-     *
-     * After the regroup, Direct Equity reported a cost for 9 of its 38 holdings,
-     * so a return on cost read **−18.9%** in a row printing ₹1.22 Cr invested
-     * and ₹12,446.1 Cr current. (Ring-fencing Polycab has since taken that row to
-     * 9 of 37 and ₹94.9 Cr — the coverage is still nowhere near whole, so the row
-     * still correctly refuses a return. The figures above are the ones the bug
-     * was found on.) Every figure was right on its own terms and the
-     * three together were indefensible. The row uses the footer's own 0.5% test
-     * now, and this asserts it on the RENDERED page rather than on the helper:
-     * for every allocation row, either its three cells reconcile, or its return
-     * is an em dash.
-     */
-    ["every allocation row's return ties to its own Invested and Current, or is absent", (t) => {
-      const rows = [...t.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*([+-]\d+\.\d)%/g)];
-      if (!rows.length) return true;   // layout changed; the other invariants still bind
-      const u = (n, s) => cr(n) * (s === "L" ? 0.01 : s === "K" ? 0.0001 : 1);
-      return rows.every((m) => {
-        const inv = u(m[1], m[2]), cur = u(m[3], m[4]), pct = Number(m[5]);
-        if (!Number.isFinite(inv) || !Number.isFinite(cur) || !inv) return false;
-        return Math.abs(((cur - inv) / inv) * 100 - pct) <= 1.0;
-      });
-    }],
-    // THE AIF WAS DOUBLE-COUNTED INTO NAV, and this is the guard against it
-    // returning. It used to read "ties to ~₹335 Cr … not ₹5xx Cr" — a copy of a
-    // figure the book GENERATES, written when the book was ₹335.43 Cr. The
-    // August drop moved it to ₹461.00 Cr and this line failed against a page
-    // computing correctly, which is the same stale-literal failure the household
-    // net-worth check had. A test carrying its own copy of a generated figure is
-    // a second source for it.
-    //
-    // So the RELATION is what is asserted, and it is the one the bug actually
-    // broke: the NAV tile's own caption splits the book by asset class, and
-    // double-counting the AIF puts value in the headline that is in neither
-    // half. Listed + Private must reconstruct the headline.
-    // THE SPLIT RECONSTRUCTION MOVED TO `holdings-private`, which is where both
-    // halves are now printed — as page totals rather than as a tile caption. The
-    // relation is identical and the anchor is stronger: two independently
-    // rendered pages against the NAV the tile still prints.
-    // THE +99% REGRESSION, GUARDED ON THE RENDERED PAGE.
-    //
-    // This tile shipped reading "+99.0% XIRR" — arithmetically correct (₹78.8 Cr
-    // to ₹99.4 Cr over 132 days is +28.3%, and compounding 0.36 of a year onto a
-    // full one gives 99%) and indefensible, because the managers' own annualised
-    // since-inception returns for these accounts run about 7% to 31%.
-    // `moneyWeightedReturn` refuses to annualise a sub-year window; these assert
-    // that the refusal reaches the SCREEN, which is the only place it matters.
-    // TILE LABELS ARE UPPERCASED BY CSS, so innerText returns "MONEY-WEIGHTED
-    // RETURN". Every pattern here is case-insensitive — a case-sensitive one
-    // fails on a page rendering perfectly, which is worse than no test. The
-    // same lesson is already recorded in check-family-inputs.mjs.
-    // THE WINDOW AND THE COVERAGE MOVED TO `holdings-measured` with the captions,
-    // and are asserted there. What stays here is the belt-and-braces guard
-    // below: whatever a caption says, no triple-digit rate may reach this strip.
-    // A rate is only ever labelled "annualised" alongside a window of at least a
-    // year. Anything else is the extrapolation coming back.
-
-    // And the belt-and-braces version: no triple-digit return anywhere in the
-    // KPI strip. Every honest figure this book can produce today is well under
-    // it, so a hit here is an extrapolation by any route.
-    ["no triple-digit return in the KPI strip", (t) => {
-      const strip = t.slice(0, t.search(/Allocation by asset class/i) + 1 || 2000);
-      return !/[+-]\s?\d{3,}(\.\d+)?\s*%/.test(strip);
-    }],
-    /**
-     * ── EVERY ALLOCATION ROW OPENS THE HOLDINGS BEHIND IT ────────────────────
-     *
-     * "Every row of the allocation table on Morning CIO must open the holdings
-     * behind it — AIF, PMS mandates, Mutual Fund, Direct Equity and ETF alike."
-     *
-     * Struck on the LINKS THE PAGE DRAWS, read off the DOM. A sentence saying a
-     * drill-down exists is not a route to it, and this file already records a
-     * check that matched static prose and therefore could not fail. It counts
-     * against the table's OWN row count — the `N buckets held` pill, which the
-     * page derives from the book — so a drop that gains a bucket has to gain a
-     * link with it rather than passing on a literal written today.
-     */
-    ["every allocation row links to its own holdings", (t, ctx) => {
-      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
-      if (!Number.isFinite(held) || !ctx?.allocTable) return false;
-      // Off the rows, not page-wide `hrefs`: the bar chart draws a parallel link
-      // per destination (asserted to match it, below), which doubles a raw count.
-      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
-      return dests.length === held;
-    }],
-    // ...AND THE SWEEP HAS AN ADDRESS FOR EVERY ONE OF THEM. `holdings-row-N`
-    // walks the Nth allocation row; a book with more buckets than slots would
-    // leave the extras unwalked and the sweep would go on reporting clean about
-    // rows nothing looked at. A check that quietly stops checking is the
-    // failure this file exists to prevent, so it says so instead.
-    ["every allocation row is walked by this sweep", (t) => {
-      const held = Number(/(\d+) buckets? held/i.exec(t)?.[1] ?? NaN);
-      return Number.isFinite(held) && held <= BUCKET_SLOTS.length;
-    }],
-    // ...AND EACH ONE NAMES A DIFFERENT SET. Six links to one address would
-    // satisfy the count above while opening the same holdings six times.
-    ["each allocation row opens a different set", (t, ctx) => {
-      if (!ctx?.allocTable) return false;
-      const dests = Object.values(ctx.allocTable.rowHrefs).filter((h) => h && /^\/holdings\?of=bucket&key=./.test(h));
-      return dests.length > 0 && new Set(dests).size === dests.length;
-    }],
-    /**
-     * THE KPI TILES AND THE CONCENTRATION FIGURES ARE THE SAME FIX, so they are
-     * asserted the same way — by the SETS that must be reachable from this page.
-     *
-     * Named individually rather than counted: a count passes when six links to
-     * the wrong six sets are drawn, and the whole point is that the reader can
-     * reach the holdings behind THIS figure.
-     *
-     * ── IT IS STRUCK IN TWO PLACES BECAUSE THE PAIRING MOVED, NOT BECAUSE THE
-     *    CLAIM DID ─────────────────────────────────────────────────────────
-     *
-     * A KPI tile's target is now the WHOLE CARD — a stretched overlay anchor
-     * with no inner text — so `ctx.links` yields an empty label for all six and
-     * a label-to-href pairing read off the link list can no longer see them. It
-     * would have gone on "passing" only by being unable to fail. The pairing for
-     * those six lives in `ctx.kpiTiles`, which pairs each tile's own label with
-     * the one anchor inside it; the concentration and allocation figures are
-     * still text links and are still paired off the link list.
-     *
-     * AND THE TWO HALVES OF THE BOOK MOVED TO A FACET ADDRESS. `?of=listed` and
-     * `?of=private` still resolve for a bookmark, so asserting the OLD address
-     * here would keep passing against a page that had lost the toggle entirely.
-     */
-    ["every KPI tile and concentration figure opens ITS OWN set", (t, ctx) => {
-      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-      // PAIRED, label to destination. "The page links to `of=book` somewhere"
-      // is satisfied by any one tile and says nothing about the other twelve;
-      // this asserts that the figure a reader clicks opens the set that figure
-      // is summed over. Each entry is [what the reader clicks, where it goes].
-      const tiles = [
-        [/^current value of holdings$/i, "/holdings?of=book"],
-        [/^capital invested$/i, "/holdings?of=invested"],
-        [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
-        [/^consolidated return$/i, "/holdings?of=invested"],
-      ];
-      const texts = [
-        [/^positions$/i, "/holdings?of=book"],
-        [/^distinct names$/i, "/holdings?of=book"],
-        [/^cross-held$/i, "/holdings?of=cross-held"],
-        [/^top-10 conc\.?$/i, "/holdings?of=top-names"],
-        [/^listed$/i, "/holdings?of=book&facet=listed"],
-        [/^private$/i, "/holdings?of=book&facet=private"],
-        [/^winners$/i, "/holdings?of=winners"],
-        [/^losers$/i, "/holdings?of=losers"],
-      ];
-      const links = ctx?.links ?? [];
-      return tiles.every(([label, href]) =>
-        ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href))
-        && texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
-    }],
-    /**
-     * ...AND THE 60 POSITIONS WITH NO COST ARE STILL NAMED ON THE TILE THAT
-     * LEAVES THEM OUT. They used to be a SECOND link inside Capital invested and
-     * are a facet of that tile's own page now — which is the whole request — so
-     * what has to survive here is the SENTENCE, not the anchor. Without it the
-     * reader is never told the set exists, and no toggle three clicks away tells
-     * them: the answer decides whether they chase a custodian for a cost
-     * statement or accept a permanent absence. That the facet itself resolves is
-     * asserted where `holdings-invested` is walked.
-     */
-    // NAMING THE COST-LESS POSITIONS MOVED WITH THE CAPTIONS. It is asserted on
-    // `holdings-invested`, where the facet chip carries their count and the
-    // tile beside it their value — and the tile here is asserted to open that
-    // page, so the route from figure to explanation is checked end to end.
-    /**
-     * THE COMMITMENT TILES REACH THE CAPITAL ACCOUNTS, NOT A HOLDINGS TABLE.
-     *
-     * Undrawn capital is not a holding — it has no row in `BOOK_POSITIONS` — so
-     * a holdings drill-down structurally cannot contain it and would open a
-     * table that could only ever be empty. Asserted by PAIRING the tile with its
-     * destination: an earlier draft counted `/private-market` links instead and
-     * passed while the Uncalled capital tile pointed at the holdings page, because
-     * the Capital deployment card's own link kept the count up. Reintroducing that
-     * bug is what found it.
-     */
-    ["the commitment figures open the capital accounts, not a holdings table", (t, ctx) => {
-      if (!/UNCALLED CAPITAL[\s\S]{0,40}₹/i.test(t)) return notChecked("this book reports no capital commitment, so the tiles are absent and carry no link");
-      if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
-      const links = ctx?.links ?? [];
-      // Two of the three are KPI TILES, whose target is the whole card and whose
-      // anchor therefore carries no text — see the invariant above. Fund
-      // commitments sits on the Capital deployment card and is still a text
-      // link, so the same claim is struck in the two places the pairing lives.
-      const tiles = [/^uncalled capital$/i, /^distributions$/i]
-        .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"));
-      // AND THE CARD ITSELF, which is the half the family asked for:
-      //
-      //   *"What is the capital deployed for private equity?… I told you —
-      //    details, because it's not very clear."*  /  *"I'll make it clickable.
-      //    And so you'll be redirected to the private page."*
-      //
-      // This used to require a TEXT link reading "Fund commitments", which was
-      // the one figure on the card that was already a link and not the one they
-      // were asking about. The whole list is the anchor now, so the claim is
-      // struck on the handle and on the figure the card must actually carry —
-      // a `data-cio-deploy-link` pointing anywhere else, or one that has stopped
-      // covering the called figure, fails rather than abstains.
-      const card = ctx?.deployLink;
-      return tiles && !!card && card.href === "/private-market"
-        && /fund commitments/i.test(card.text) && /capital deployed/i.test(card.text)
-        && links.every((l) => !/^fund commitments$/i.test(l.text));
-    }],
-    // And the allocation table's own footer must tie to its own two columns —
-    // it carried a money-weighted rate in a column of return-on-cost figures,
-    // so Invested and Current printed one answer and the Total cell another.
-    ["the allocation total ties to its own Invested and Current columns", (t) => {
-      const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
-      if (!row) return true;   // layout changed; the other invariants still bind
-      const [, inv, cur, sign, pct] = row;
-      const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
-      return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
-    }],
-  ],
+  cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS],
+  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV],
   /**
    * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
    *
@@ -9501,8 +9859,8 @@ const INVARIANTS = {
      * both land somewhere else too.
      */
     ["the book's day move is +10.00%, struck on the priced subset rather than the whole book",
-      (t) => {
-        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+      (t, ctx) => {
+        const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
         // The tile's label is the SCOPE's, and the scope is Direct Equity —
         // *"we will only show direct equity as default."*
         const m = /DIRECT EQUITY · TODAY\s*\n\s*[+-]?₹[\d,.]+\s*(?:Cr|L|K)?\s*\n\s*([+-]\d+\.\d+)%/i.exec(card);
@@ -9554,7 +9912,7 @@ const INVARIANTS = {
      * from the book on every run (`PRICED_DIRECT_EQUITY_NAMES`), never typed.
      */
     ["the gainers are exactly the priced DIRECT EQUITY names, not the whole book",
-      (t) => moversGainersAreDirectEquity(t)],
+      (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     /**
      * ...AND WHAT THE SCOPE LEAVES OUT IS NAMED, not silently dropped. The PMS
      * mandates are the bulk of the book's priceable value and the ETFs have just
@@ -9606,8 +9964,8 @@ const INVARIANTS = {
         && !/never averaged across positions of different sizes/.test(t)],
     /** The gainers list is populated and ranked, and every row carries both figures. */
     ["gainers are listed with a percentage and a rupee impact each",
-      (t) => {
-        const card = sliceBetween(t, "Today’s movers", "Allocation by asset class");
+      (t, ctx) => {
+        const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
         const rows = [...card.matchAll(/\t\+10\.00%\t\+₹[\d,.]+\s*(?:Cr|L|K)?/g)];
         return /\d+ GAINERS/i.test(card) && rows.length >= 3;
       }],
@@ -9617,120 +9975,12 @@ const INVARIANTS = {
      * exactly as it forbids it on a tile.
      */
     ["an empty losers list shows a dash rather than a summed ₹0",
-      (t) => {
-        const card = sliceBetween(t, "0 LOSERS", "Allocation by asset class");
+      (t, ctx) => {
+        const card = sliceBetween(ctx?.cioLayout?.text ?? "", "0 LOSERS");
         return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
       }],
-    /**
-     * ...AND THE INDEX IS ITS OWN DAILY CURVE, NOT SEVEN SAMPLED POINTS.
-     *
-     * The chart used to align the index to the BOOK'S seven statement dates and
-     * draw a line through those — a plausible-looking curve that is not the
-     * index's path, and over a year of context would have been four segments. On
-     * this fixture the feed carries a settled close per weekday back to January,
-     * so the index curve must have far more vertices than the book's line does.
-     * Struck as a RATIO against the book's own curve rather than a literal, so a
-     * fixture with a different number of closes cannot make it stale.
-     */
-    ["the Nifty 500 line is drawn from its own daily closes, not sampled to the book's dates",
-      (t, ctx) => {
-        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-        const c = ctx.navChart;
-        if (c.lines < 3) return false;
-        const lens = [...c.pathLen].sort((a, b) => b - a);
-        // The longest curve is the index's; the book's two lines are seven
-        // points each. An index sampled to the book's dates would be the same
-        // length as they are.
-        return lens[0] > lens[1] * 4 && c.vertices > 40;
-      }],
-    /**
-     * ...AND THE STRETCH THAT CARRIES A COMPARISON IS SHADED.
-     *
-     * With a feed the chart spans months of index history the book has no
-     * measurement over. The band is the book's own first-to-last statement date,
-     * so it says where the two lines are both real — and it is asserted here
-     * rather than on `cio` because with no feed the chart IS the book's window
-     * and there is correctly nothing to mark.
-     */
-    ["the measured window is shaded once the chart is wider than it",
-      (t, ctx) => {
-        if (!ctx?.navChart) return { notChecked: "the NAV chart was not found on this pass" };
-        const note = /(\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}) · \d+ index closes/.exec(ctx.navChart.rangeNote ?? "");
-        if (!note) return false;
-        // THE BOOK'S OWN WINDOW, OFF THE SUBTITLE. It was read out of the
-        // paragraph block ("statement dates over A → B") until that block was
-        // removed; the subtitle has always carried the same pair.
-        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navHead(ctx) ?? "");
-        if (!book) return false;
-        // The window really is wider than the book's own — otherwise the band's
-        // absence would be correct and this check would be asserting nothing.
-        return note[1] < book[1] && ctx.navChart.band >= 1;
-      }],
-    /** And with a price history in hand the NAV card draws the comparison. */
-    ["the NAV card draws the Nifty 500 line and states its return",
-      (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        return new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(head);
-      }],
-    /**
-     * ...AND THE SELECTED PERIOD'S OWN INDEX RETURN SITS WITH THE PERIOD.
-     *
-     * This was the one fact in the removed paragraphs that lived nowhere else:
-     * the index ALONE over a window the book has no measurement across. It is
-     * in the range note now, beside the control that chose the window — and
-     * that placement is the honesty, because set beside the Book pill a reader
-     * would take the two for a pair struck over one period. So it is required
-     * to be in the range note and required NOT to be in the header.
-     */
-    ["the range's own index return is stated with the range, not beside the book's",
-      (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        const note = ctx.navChart.rangeNote ?? "";
-        if (!/Nifty 500 alone over this period\s*[+-]\d+\.\d+%/.test(note)) return false;
-        return !/alone over this period/.test(head);
-      }],
-    /**
-     * ...AND THE COMPARISON IS AGAINST THE ADJUSTED LINE. On this fixture the
-     * index rises ~1.26% and the book's adjusted return is +0.54%, so the book
-     * must read BELOW the index — while the unadjusted NAV (+9.30%) would read
-     * far above it. A card that compared the wrong curve inverts the answer,
-     * which is the whole reason the adjustment exists.
-     */
-    ["the headline compares the flow-adjusted book against the index, not the raw NAV",
-      (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
-        const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
-        if (!book || !idx) return false;
-        /**
-         * THE RAW NAV IS ON THE TOGGLE'S HOVER, AND IT NAMES BOTH ENDS.
-         *
-         * This used to close with `Number(book[1]) < Number(idx[1])` — on the
-         * fixture the index rises ~1.26% and the adjusted book +0.54%, so the
-         * book had to read BELOW it. That calibration was struck on the 34-day
-         * complete-panel window and stopped holding the day the series was
-         * chain-linked back to 74 days: the book reads +5.09% over the longer
-         * window and the comparison inverts on a card that is correct. It was
-         * the FIXTURE's outcome standing in for the claim.
-         *
-         * The claim is structural and is asserted as such: the headline must
-         * carry the ADJUSTED figure rather than the raw one, and the hover's own
-         * pair must show the raw above the adjusted — which is what says capital
-         * entered this window and the adjustment is doing work. A card that put
-         * the raw curve in the headline fails the first; a book with no flows in
-         * it fails the second and must be re-read rather than passing.
-         */
-        const pair = (ctx?.titles ?? [])
-          .map((x) => /the covered set reads\s*([+-]\d+\.\d+)%\s*with the capital left in against\s*([+-]\d+\.\d+)%/.exec(x))
-          .find(Boolean);
-        if (!pair) return false;
-        const rawPct = Number(pair[1]), adjPct = Number(pair[2]);
-        return Number(book[1]) !== rawPct && rawPct - adjPct > 1 && Number(idx[1]) !== rawPct;
-      }],
   ],
+  "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV],
 
   /**
    * ── THE FOUR CONSTITUENT-TAB BLOCKS ARE STILL GONE ─────────────────────────
@@ -12435,7 +12685,7 @@ for (const theme of THEMES) {
       // scope tabs are only meaningful with a feed behind them: unfulfilled,
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
-      if (name === "cio-live") await installLiveMocks(page);
+      if (name === "cio-live" || name === "cio-nav-live") await installLiveMocks(page);
       if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
@@ -12833,7 +13083,7 @@ for (const theme of THEMES) {
        * Opened here, on these routes only: opening every `<details>` on every
        * route would change the text other invariants read.
        */
-      if (name === "cio" || name === "cio-live") {
+      if (name === "cio-nav" || name === "cio-nav-live") {
         await page.$$eval("main details", (ds) => ds.forEach((d) => { d.open = true; }));
         await page.waitForTimeout(200);
       }
@@ -13206,6 +13456,65 @@ for (const theme of THEMES) {
             key: b.getAttribute("data-mover-rank"),
             active: b.getAttribute("aria-pressed") === "true",
           })),
+        };
+      });
+      /**
+       * ── WHICH PANEL MORNING CIO IS SHOWING, AND WHETHER IT FITS ───────────
+       *
+       * Both struck on structure and geometry rather than on the three labels,
+       * because the family's ask is about WHERE things sit — a page that renders
+       * every figure correctly and still scrolls past its own tiles is exactly
+       * what was reported, and no text or value check in this file can see it.
+       *
+       * `docScroll` and `mainScroll` are separate measurements on purpose: the
+       * first is the browser window, the second is the app's own scroll region
+       * (`<main>`), which is the one the old page actually used.
+       */
+      const cioTabs = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main [data-cio-tab-key][role='tab']")].map((b) => ({
+          key: b.getAttribute("data-cio-tab-key"),
+          label: (b.textContent ?? "").trim(),
+          active: b.getAttribute("aria-selected") === "true",
+        })));
+      const cioLayout = FAST ? null : await page.evaluate(() => {
+        const panel = document.querySelector("main [data-cio-panel]");
+        if (!panel) return null;
+        const de = document.documentElement;
+        const m = document.querySelector("main");
+        const strip = document.querySelector('[data-testid="kpi-strip"]');
+        const box = (el) => { if (!el) return null; const r = el.getBoundingClientRect();
+          return { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) }; };
+        // The headline's own geometry, so "three small selectable tabs … on the
+        // right most side of the line" is a claim about where they sit.
+        // `bar` is the PageHeader root: the h1's parent holds eyebrow + title,
+        // and its parent is the row that pins `right` to the far edge.
+        const h1 = document.querySelector("main h1");
+        return {
+          panel: panel.getAttribute("data-cio-panel"),
+          /* THE PANEL'S OWN TEXT, READ AS AN ELEMENT. Four movers checks used to
+             bound their slice on "Allocation by asset class" — the heading of
+             the card that came next down the old single-scroll page — and that
+             card is on another panel now, so `sliceBetween` would have returned
+             everything after "Today's movers" to the end of the document. That
+             is the exact failure this file already records twice ("a boundary a
+             page is free to print is not a boundary"), so the slice is struck on
+             the panel NODE instead: it cannot run past the panel whatever the
+             page prints inside it. */
+          text: panel.innerText,
+          docScroll: de.scrollHeight - de.clientHeight,
+          mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
+          panelScroll: panel.scrollHeight - panel.clientHeight,
+          strip: box(strip),
+          panelBox: box(panel),
+          /* WHICH PANELS ARE ACTUALLY DRAWN, which is NOT what the control
+             says. Reintroducing "the NAV panel also renders on the movers tab"
+             produced a CLEAN sweep: one tab was still lit and `data-cio-panel`
+             still named one panel, so every claim about the CONTROL passed
+             while two panels were on screen. Only a count of the panels
+             themselves can see it. */
+          sections: [...document.querySelectorAll("main [data-cio-section]")].map((el) => el.getAttribute("data-cio-section")),
+          head: { h1: box(h1), tabs: box(document.querySelector("main [data-cio-tabs]")), bar: box(h1?.parentElement?.parentElement) },
+          viewportH: de.clientHeight,
         };
       });
       const navListRows = FAST ? null : await page.evaluate(() => ({
@@ -14265,7 +14574,7 @@ for (const theme of THEMES) {
         const scope = { basket: "basket", assetClass: "family-class" }[allocTable.axis];
         for (const c of allocTable.cells) ALLOC_CELLS.set(`${scope}:${c.key}`, c);
       }
-      if (name === "cio" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
+      if (name === "cio-allocation" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
         for (const h of hrefs) {
           const m = /^\/holdings\?of=([a-z-]+)/.exec(h);
           // FIRST WINS, so the row captured is the allocation table's largest —
@@ -14290,7 +14599,7 @@ for (const theme of THEMES) {
         const m = /^\/holdings\?of=([a-z-]+)(?:&key=[^&]*)?&facet=([a-z-]+)/.exec(h);
         if (m && !CIO_DRILLDOWNS.has(`${m[1]}#${m[2]}`)) CIO_DRILLDOWNS.set(`${m[1]}#${m[2]}`, h);
       }
-      if (name === "cio" && !FAST) {
+      if (name === "cio-allocation" && !FAST) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
         const grab = (label, re) => { const v = money2cr(re.exec(text)?.[1]); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
         grab("nav", new RegExp(String.raw`CURRENT VALUE OF HOLDINGS\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
@@ -14509,7 +14818,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
