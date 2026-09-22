@@ -92,15 +92,15 @@ export const POLYCAB_LIVE: PolycabLive = {
     "index": "BSE 200"
   },
   "quote": {
-    "ltp": 8411.2,
+    "ltp": 8354,
     "prevClose": 8375,
     "open": 8376.65,
     "high": 8441.25,
-    "low": 8376.65,
-    "change": 36.20000000000073,
-    "changePct": 0.43223880597015796,
-    "printedChange": 36.2,
-    "printedChangePct": 0.43
+    "low": 8343,
+    "change": -21,
+    "changePct": -0.2507462686567164,
+    "printedChange": -21,
+    "printedChangePct": -0.25
   },
   "corporateActions": [
     {
@@ -319,5 +319,5 @@ export const POLYCAB_LIVE: PolycabLive = {
       "detail": "6 quarter(s) carried by both witnesses; all agree within 0.05pp."
     }
   ],
-  "retrievedAt": "2026-09-22T04:09:20.027Z"
+  "retrievedAt": "2026-09-22T15:56:39.171Z"
 };
