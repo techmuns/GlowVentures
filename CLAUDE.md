@@ -13468,6 +13468,61 @@ book-alone baseline (16 against 62), so the inequality above does NOT catch it. 
 `data-status` now and the walk waits for it to settle, so `loading` at read time
 means it never will.
 
+#### Twelve bugs reintroduced, and the one that came back CLEAN
+
+Each was put back on its own, rebuilt and swept, with the harness restoring **by
+copy on a `trap … EXIT` and rebuilding on the way out** — restoring the source
+alone leaves `dist/` at the bugged build and the next run reports this bug's
+failures under the next one's name, which this file has measured once.
+
+| Bug put back | Fires |
+| --- | --- |
+| the sector mix grouped on `Position.sector` again | the top-bar check **and** the cell-agreement check |
+| the holdings table's Sector cell back on `h.sector` | the cell-agreement check |
+| the sector-source strip deleted | the provenance check **and** the tiers check |
+| `useStockExposure` never enabled — the disclosure tier never lands | the tiers check (via `data-status`) |
+| **the Folios column back on the deduped count** | **NOTHING, at first — see below** |
+| the `By folio` toggle button restored | the two-views check on **all three** private routes |
+| every folio panel open on arrival | "no folio panel is open until a row is clicked" |
+| the expansion's overlap note deleted | PM-1 |
+| the folio panel truncated to one line | the per-panel reconciliation |
+| the removed Polycab statement card restored | "the removed statement card stays removed" |
+| the pledge tile's sentence deleted | the pledge check |
+| the per-holder table's structural handle removed | **both** per-holder reconciliations, as FAILURES rather than abstentions |
+
+**THE FIFTH IS THE ONE WORTH THE PASS.** Reverting `FundRow.folios` to the
+deduped count — the defect this change exists to fix, which puts "Folios 1" over
+a panel listing 2 — left the sweep **CLEAN**. The reason is this file's own rule
+arriving in a check written the same hour as the comment warning about it:
+`data-pm-folio-rows` on the chevron is `behind.length`, the SAME expression the
+panel maps, so comparing the two is **a figure against its own copy**. Nothing
+read the Folios CELL, which is the only thing the bug changes and the only thing
+a reader sees.
+
+The row carries `data-pm-folios` now — what the COLUMN prints — reconciled
+against the book's statement count AND against the number of rows the panel
+under it draws, which is the claim a reader can actually watch fail. Re-run
+against the same bug, it fires.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 27 suites · `check:family` **82/0** · `check:pages`
+**186 combinations clean**, with the same **six** evidenced abstentions Stage
+10bl records — four from the one KPI-tile claim spread across Morning CIO's
+panels, the crumb on the not-found route, and the pledge one on `stock-qty`,
+which `stock-pledge` asserts as a hard failure so it never stands alone. **NOT
+ONE of this change's own checks abstains.**
+
+**THE COUNT IS UNCHANGED FROM STAGE 10bl, AND THAT IS THE POINT:** this change
+adds no route. `private-market-folios` moved from `/private-market?view=folios`
+to `/private-market` plus a click, and kept its name so PM-1 stays at the
+address a reader of this file expects it. The number moving would have meant a
+route appeared somewhere nobody looked.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after (md5 unchanged): nothing
+here touches the ingest, and three presentation changes that moved a generated
+figure would not be three presentation changes.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

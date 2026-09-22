@@ -10349,7 +10349,26 @@ const INVARIANTS = {
       // A MISSING CONTROL IS A FINDING. The table renders on every build with a
       // private book at all, so no toggles means the affordance is gone.
       if (pv.toggles.length !== PM_FOLIO_BOOK.funds) return false;
-      return pv.toggles.every((x) => x.rows === PM_FOLIO_BOOK.statements.get(x.key));
+      /**
+       * AND THE FOLIOS COLUMN COUNTS STATEMENTS, NOT DEDUPED ROWS.
+       *
+       * REINTRODUCING THE BUG IS WHAT PUT THIS LINE HERE. `data-pm-folio-rows`
+       * on the chevron is the panel's own `behind.length`, so comparing the two
+       * is a figure against its own copy — this file's own rule, arriving in a
+       * check written the same hour as the comment warning about it. Reverting
+       * `FundRow.folios` to the DEDUPED count left the sweep clean: the cell
+       * went back to reading 1 over a panel listing 2, which is the "Held in 1
+       * entity" defect, and nothing read the cell.
+       *
+       * So the COLUMN's own figure is held to the book's statement count — and,
+       * separately, to the number of rows the panel under it draws, which is
+       * the claim a reader can actually see fail.
+       */
+      if (pv.fundFolios.length !== PM_FOLIO_BOOK.funds) return false;
+      const panelOf = new Map(pv.toggles.map((x) => [x.key, x.rows]));
+      return pv.toggles.every((x) => x.rows === PM_FOLIO_BOOK.statements.get(x.key))
+        && pv.fundFolios.every((x) => x.folios === PM_FOLIO_BOOK.statements.get(x.key)
+          && x.folios === panelOf.get(x.key));
     }],
     ["…and each panel draws exactly the statements the book carries for that fund", (t, ctx) => {
       const pv = ctx?.pmView;
@@ -16014,6 +16033,11 @@ for (const theme of THEMES) {
          * exactly like one that opens onto its statements. `rows` is what the
          * chevron CLAIMS is behind it; `panels` is what actually opened.
          */
+        // What the Folios COLUMN prints, per fund — a different field from the
+        // chevron's count and the one a reader sees beside the money.
+        fundFolios: [...document.querySelectorAll("main tr[data-pm-fund][data-pm-folios]")].map((e) => ({
+          key: e.getAttribute("data-pm-fund"), folios: Number(e.getAttribute("data-pm-folios")),
+        })),
         toggles: [...document.querySelectorAll("main [data-pm-folio-toggle]")].map((e) => ({
           key: e.getAttribute("data-pm-folio-toggle"),
           rows: Number(e.getAttribute("data-pm-folio-rows")),

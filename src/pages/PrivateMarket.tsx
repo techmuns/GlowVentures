@@ -753,7 +753,16 @@ export function PrivateMarket() {
                     <Fragment key={f.securityKey}>
                     {/* The fund's own key, so a claim about WHICH funds this table
                         draws is struck on structure rather than on a rendered name. */}
-                    <Tr view={fundView} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
+                    {/* THE PRINTED FOLIO COUNT, ON THE ROW. `data-pm-folio-rows`
+                        on the chevron below is `behind.length` — the same
+                        expression the panel maps — so it agrees with the panel
+                        BY CONSTRUCTION and says nothing about the Folios CELL.
+                        Reintroducing the deduped count is what found that: the
+                        cell went back to reading 1 over a panel of 2 and the
+                        sweep stayed green, because nothing read the cell. This
+                        is what the column prints, and it is reconciled against
+                        the book AND against the panel it opens. */}
+                    <Tr view={fundView} data-pm-fund={f.securityKey} data-pm-folios={f.folios} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">
                         {/* THE ROW OPENS INTO ITS FOLIOS — the family's own ask.
                             EVERY fund row offers it, including the nine held in
