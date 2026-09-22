@@ -278,6 +278,23 @@ export function datedTotals(rows: DatedRow[]) {
      */
     value: sumOrNull(rows.map((r) => r.value)),
     valueOf: rows.filter((r) => r.value !== null).length,
+    /**
+     * ...AND GAIN IS SUMMED THE SAME WAY, over the rows that PUBLISH one.
+     *
+     * `CapitalGroup.gain` is value less NET INVESTED, published only where the
+     * contribution history provably reaches inception — so it is absent on a
+     * row whose denominator is partial, exactly as `returnPct` beside it is.
+     * Over the rows that carry one it is an ordinary rupee total, which is why
+     * this column gets one where Return cannot: a gain is an AMOUNT and a
+     * return is a RATE on a per-row denominator.
+     *
+     * IT WAS LEFT BLANK IN THE FIRST CUT — a summable figure with no total and
+     * no reason — and the footer check could not see it, because that check
+     * counted the columns which NAME a reason and stopped at four. There were
+     * exactly four.
+     */
+    gain: sumOrNull(rows.map((r) => r.capital?.gain ?? null)),
+    gainOf: rows.filter((r) => r.capital?.gain != null).length,
     trades: t.trades,
     buys: t.buys,
     sells: t.sells,

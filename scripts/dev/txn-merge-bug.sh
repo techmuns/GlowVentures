@@ -221,5 +221,35 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
+# ── 12 ── ...AND THE FIFTH UNTOTALLED COLUMN, which the old check could not see.
+#          It required four footer cells to NAME a reason and there were exactly
+#          four, so `gain` sat BLANK and satisfied it. Blanking it again is what
+#          proves the replacement — which is struck on EVERY cell — really bites.
+run_case "a summable footer column goes blank again" py <<'PY'
+import sys
+p = "src/pages/PortfolioMonitor.tsx"
+s = open(p, encoding="utf-8").read()
+start = s.find('                    gain: <td key="gain"')
+end = s.find('                    investedOn: <td key="investedOn"', start)
+if start < 0 or end < 0: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s[:start] + s[end:])
+PY
+
+# ── 13 ── ...AND THE MONEY TIE, from the ROWS' side rather than the footer's.
+#          Bug 2 moves the FOOTER away from its rows; this moves a ROW away from
+#          the footer, so the reconciliation is shown to bite from both ends
+#          rather than only where the bug it was written for happens to sit.
+run_case "a row's Capital in cell stops rendering its own figure" py <<'PY'
+import sys
+p = "src/pages/PortfolioMonitor.tsx"
+s = open(p, encoding="utf-8").read()
+old = """                                ? <AbsentCell reason="no contribution is in view — the movements are filtered to what came back out, and this account's paid-in figure is not struck over that" />
+                                : money(cap.paidIn)}"""
+new = """                                ? <AbsentCell reason="no contribution is in view — the movements are filtered to what came back out, and this account's paid-in figure is not struck over that" />
+                                : money(cap.paidIn * 0.5)}"""
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
 echo ""
 echo "════════ done"

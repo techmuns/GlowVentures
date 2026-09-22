@@ -3757,6 +3757,14 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * back on any of them, and a removal asserted on the default address alone
  * would not see a control that reappears the moment a filter is touched.
  *
+ * AND IT SAID THAT WHILE REACHING TWO OF THE EIGHT. The bug-reintroduction pass
+ * measured it: putting the toggle back fired on `monitor-txns` and
+ * `monitor-txn-basket` and on NOTHING ELSE, because those were the only two
+ * routes the factory was spread into. Six addresses that draw this card were
+ * asserting nothing about it. `txnMergedCore` below is the four claims that
+ * hold under ANY filter and goes to all eight; the two that COUNT the table's
+ * halves stay here, on the routes that draw the whole table.
+ *
  * SIX CLAIMS, AND NONE IMPLIES ANOTHER:
  *
  *   1. the control is GONE — both in its own shape and in its buttons, because
@@ -3781,7 +3789,7 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * A MISSING TABLE IS A FINDING, NOT AN ABSTENTION — this card renders whether
  * or not the archive answered. Only the probe failing to run abstains.
  */
-const txnMergedChecks = () => [
+const txnMergedCore = () => [
   ["the capital/trades toggle is gone", (t, ctx) => {
     const r = ctx?.txnMerged;
     if (!r) return { notChecked: "the transactions card was not on screen on this run" };
@@ -3806,6 +3814,77 @@ const txnMergedChecks = () => [
     if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
     return /^Transactions\b/i.test(r.title) && !/capital in and out/i.test(r.title);
   }],
+  /**
+   * ── THE TWO MONEY BLOCKS EACH TIE TO THEIR OWN ROWS ─────────────────────
+   *
+   * THIS REPLACES A CHECK THAT COULD NOT FAIL, and the bug-reintroduction pass
+   * is the only reason anyone knows. "Capital in and Bought are two columns,
+   * and neither is their sum" read the RENDERED pair and asserted neither
+   * equalled their total — which is CIRCULAR when the bug has already folded
+   * one into the other: summing Bought into Capital in renders (291.9, 70.4),
+   * the check compares each against 362.3, neither matches, and the strongest
+   * claim on this page reports 10 of 10 combinations CLEAN.
+   *
+   * TWO PATHS TO ONE FIGURE INSTEAD. The footer comes from `datedTotals` —
+   * which calls `capitalTotals` and `rollupTotals` — and the ROWS come from
+   * `capitalRollup` and `rollup` directly, so summing the rendered row cells
+   * and setting them against the rendered footer cell is a reconciliation
+   * rather than a figure compared with its own copy. A footer that started
+   * adding the two blocks moves 70.4 Cr away from its own Capital column.
+   *
+   * THE BOUND IS THE PAGE'S OWN PRINTING PRECISION, reproduced: `fmtFromBase`
+   * renders compact to one decimal, so N cells and the total carry up to
+   * (N+1) x 0.05 Cr of rounding between them. Never a tolerance widened until
+   * the figures fit — the smallest defect this can hide is a row worth ₹5 L
+   * and the one it exists for is worth ₹70 Cr.
+   *
+   * AN ABSENT CELL IS SKIPPED, NEVER READ AS ZERO. Under a side filter a row
+   * legitimately withholds one side, and blending that in as ₹0 would drag the
+   * sum towards a number nobody measured — which is the rule `sumOrNull` was
+   * written for, arriving in a checker.
+   */
+  ["…and the two money blocks each tie to their OWN rows", (t, ctx) => {
+    const tbl = ctx?.datedTable;
+    if (!tbl?.foot || !tbl.rows.length) {
+      return { notChecked: "the transactions table drew no rows on this run" };
+    }
+    // BY DECLARED INDEX, and safe to be: the footer's label cell spans the
+    // LEADING RUN of columns with no total, which is `name` alone, so every
+    // later cell sits at its own column — and `TrFoot` fills an untotalled
+    // column rather than skipping it, so nothing shifts. The sweep opens a
+    // fresh context, so no reader's drag has moved them.
+    const tie = (col) => {
+      const parts = tbl.rows.map((r) => moneyCell(r.cells[col]));
+      if (parts.some((p) => p !== null && !Number.isFinite(p))) return false;
+      const total = moneyCell(tbl.foot[col]);
+      if (total === null) return parts.every((p) => p === null);
+      if (!Number.isFinite(total)) return false;
+      const seen = parts.filter((p) => p !== null);
+      if (!seen.length) return false;
+      const sum = seen.reduce((a, p) => a + p, 0);
+      return Math.abs(sum - total) <= (seen.length + 1) * 0.05;
+    };
+    return tie(2) && tie(7);
+  }],
+];
+
+/**
+ * ...AND THE TWO THAT COUNT THE TABLE'S HALVES, which need the WHOLE table.
+ *
+ * The four above hold on every view of this card, filtered or not — a toggle
+ * that came back, a legacy table that came back, two tables where there should
+ * be one, a title naming one record over both. These two do not: they count
+ * how many rows carry each half, and a Direct Equity section legitimately
+ * carries no capital record while a side filter legitimately narrows one half.
+ *
+ * Spreading all six into a filtered route would fail a correct page; leaving
+ * the four on two routes let the toggle come back on the other six unnoticed —
+ * which is what the bug-reintroduction pass measured: bug 1 fired on
+ * `monitor-txns` and `monitor-txn-basket` and on nothing else, while this
+ * factory's own comment said "every transactions route".
+ */
+const txnMergedChecks = () => [
+  ...txnMergedCore(),
   ["…carrying both halves, neither silently lost", (t, ctx) => {
     const r = ctx?.txnMerged;
     if (!r) return { notChecked: "the transactions card was not on screen on this run" };
@@ -7231,11 +7310,31 @@ const INVARIANTS = {
      * a figure was withheld or never existed, which is this book's founding rule
      * arriving one row below the table.
      */
-    ["the columns with no total name why, rather than sitting blank", (t, ctx) => {
-      const titles = ctx.datedTable?.footTitles;
-      if (!titles) return { notChecked: "the transactions footer was not on screen on this run" };
-      const named = titles.filter((x) => x && /no total|no sum|no denominator/i.test(x));
-      return named.length >= 4;
+    ["every footer cell carries a total or names why it has none", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!tbl?.foot || !tbl.footTitles) return { notChecked: "the transactions footer was not on screen on this run" };
+      /**
+       * COUNTING TO FOUR COULD NOT SEE A FIFTH, and there was one.
+       *
+       * This required four cells to NAME a reason and there were exactly four,
+       * so `gain` — a summable rupee figure with no total and no reason — sat
+       * BLANK and satisfied it. `TrFoot` fills an untotalled column rather than
+       * skipping it, so nothing misaligned and nothing else could see it
+       * either.
+       *
+       * Struck on EVERY cell now: a footer cell carries text — a figure, or an
+       * em dash whose `title` says why — or it is a finding. An `AbsentCell`
+       * renders "—", so a genuinely absent total is TEXT and only a filler is
+       * empty.
+       */
+      const blank = tbl.foot
+        .map((txt, i) => ({ i, txt, why: tbl.footTitles[i] }))
+        .filter(({ txt, why }) => !txt && !why);
+      if (blank.length) return false;
+      // ...AND THE FOUR THAT CAN NEVER CARRY ONE STILL SAY SO, so the claim is
+      // not satisfied by a footer that simply totalled everything — two spans
+      // of dates, a per-row rate and a column of names have no total to give.
+      return tbl.footTitles.filter((x) => x && /no total|no sum|no denominator/i.test(x)).length >= 4;
     }],
     /**
      * AND EVERY SECTION THE TABLE DRAWS IS ONE THE HOLDINGS TABLE WOULD.
@@ -7619,6 +7718,7 @@ const INVARIANTS = {
   ],
 
   "monitor-txn-secaxis": [
+    ...txnMergedChecks(),
     ["the security axis is not offered on Transactions", (t, ctx) =>
       !!ctx.axisControl && ctx.axisControl.view === "transactions"
       && ctx.axisControl.visible === true
@@ -7904,6 +8004,7 @@ const INVARIANTS = {
   ],
 
   "monitor-txn-in": [
+    ...txnMergedCore(),
   /**
    * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
    *
@@ -7980,6 +8081,7 @@ const INVARIANTS = {
   }],
   ],
   "monitor-txn-out": [
+    ...txnMergedCore(),
   /**
    * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
    *
@@ -8088,6 +8190,7 @@ const INVARIANTS = {
    * so `/Total · N …/` over the whole page cannot say which footer it matched.
    */
   "monitor-txn-manager": [
+    ...txnMergedChecks(),
     /**
      * THE TABLE OPENS ROLLED UP. Struck on the arithmetic rather than on the
      * heading: a tape re-labelled would satisfy any prose match, so this asserts
@@ -8409,6 +8512,7 @@ const INVARIANTS = {
    * renders the whole tape under a heading that denies half of it.
    */
   "monitor-txn-direct": [
+    ...txnMergedCore(),
     ["Direct Equity renders rows, so the filter matched something",
       () => {
         if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
@@ -8514,6 +8618,7 @@ const INVARIANTS = {
    * the two are indistinguishable until someone clicks.
    */
   "monitor-txn-drill": [
+    ...txnMergedChecks(),
     /**
      * THE TAPE COLLAPSES TO FAR FEWER LINES THAN IT HAS TRADES — measured on
      * the DOM the walk actually opened, so a page that rendered every trade as

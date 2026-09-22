@@ -4983,6 +4983,20 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                       blank: a reader who scans an empty cell learns nothing
                       about whether a figure was withheld or never existed.
                     */
+                    /* AND GAIN CARRIES ONE, because it is an AMOUNT. Its
+                       neighbour Value today already does and its other
+                       neighbour Return correctly cannot — a rate struck on a
+                       per-row denominator has none — so a summable rupee column
+                       sitting blank between them was the odd one out. The count
+                       rides with it exactly as Value's does: a gain is published
+                       only where the row's contribution history reaches
+                       inception. */
+                    gain: <td key="gain" className={`px-3 py-2.5 text-right mono font-medium whitespace-nowrap ${totals.gain == null ? "text-slate-600" : changeColor(totals.gain)}`}
+                      title={`Summed over the ${totals.gainOf} of ${totals.rows} rows that publish one. A gain is struck against an account's NET INVESTED and is published only where its contribution history provably reaches inception, so a row on a partial denominator contributes none.`}>
+                      {totals.gain === null
+                        ? <AbsentCell reason="no row in view publishes a gain — a gain is struck against an account's net invested, and no row's contribution history in view provably reaches inception" />
+                        : fmtFromBase(totals.gain, { compact: true, sign: true })}
+                    </td>,
                     investedOn: <td key="investedOn" className="px-3 py-2.5 text-left"><AbsentCell reason="a span of dates has no total — each row states its own first and last contribution" /></td>,
                     traded: <td key="traded" className="px-3 py-2.5 text-left"><AbsentCell reason="a span of dates has no total — each row states its own first and last trade" /></td>,
                     return: <td key="return" className="px-3 py-2.5 text-right"><AbsentCell reason="every row's return is struck against its own net invested over its own window, so there is no denominator a whole-table figure could sit on. The money-weighted return across the accounts that can carry one is on Performance." /></td>,

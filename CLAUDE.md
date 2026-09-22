@@ -13349,8 +13349,9 @@ of the rows it covers rather than reading as a figure over all of them.
 #### The checks moved to the table that draws them, and three addresses went
 
 `txnRecordChecks` asserted a toggle that no longer exists. It is
-**`txnMergedChecks`**, run by every transactions route, and it makes six claims
-where the old one made four — because a removal is verified by asserting it
+**`txnMergedChecks`**, run by every transactions route — which it says and, as
+the pass below measured, did not do until the pass found it — and it makes six
+claims where the old one made four — because a removal is verified by asserting it
 happened, and this one can fail in shapes the toggle never could:
 
 - the control is gone, in BOTH the shapes it could come back in (its wrapper and
@@ -13463,9 +13464,83 @@ on the merged table is BOUGHT — a real money figure in place of a percentage.
 It is 13 now, and the column list is written out in the comment beside it rather
 than counted, because it moved again when Gain came back.
 
+#### The pass found three defects, and all three were IN THE CHECKS
+
+Eleven bugs, each applied on its own, rebuilt, swept and restored. Eight fired
+exactly the claim they exist for. **The three that did not are the whole reason
+this is run**, and the first is the most expensive shape of it: a check that
+cannot fail on the single strongest claim the page makes.
+
+**1. SUMMING THE TWO MONEY BLOCKS PRODUCED A CLEAN SWEEP.** `paidIn: c.paidIn +
+(t.bought ?? 0)` — the one thing the merge must never do, and the defect the
+whole column design exists to prevent — reported **10 of 10 combinations
+clean**. The check was CIRCULAR: it read the RENDERED Capital-in cell as
+`paidIn` and the RENDERED Bought cell as `bought`, and asserted that neither
+equals `paidIn + bought`. Once the bug has folded one into the other the
+rendered pair is (₹291.9 Cr, ₹70.4 Cr) and the figure it compares them against
+is ₹362.3 Cr — which neither is, so it passes. **It was comparing a bugged
+figure with a sum of itself**, which is this file's own *"a check that compares a
+figure with its own copy cannot fail"* arriving in the one place it could do the
+most damage.
+
+It is a TWO-PATH RECONCILIATION now: the footer comes from `datedTotals`, which
+calls `capitalTotals` and `rollupTotals`, and the ROWS come from `capitalRollup`
+and `rollup` directly — so summing the rendered row cells and setting them
+against the rendered footer cell is two derivations of one figure rather than
+one derivation read twice. The bound is the page's own printing precision
+reproduced, (N+1) x 0.05 Cr over N cells rendered compact to one decimal, never
+a tolerance widened until the figures fit: the defect it exists for is worth
+₹70.4 Cr against an allowance of ₹0.60 Cr. **An absent cell is skipped and never
+read as zero** — a row legitimately withholds one side under a side filter, and
+blending that in as ₹0 is `sumOrNull`'s own rule failing inside a checker. And
+it is exercised from BOTH ends, by a second case that moves a ROW away from the
+footer rather than the footer away from its rows.
+
+**2. THE MERGED-CARD CLAIMS REACHED TWO OF THE EIGHT TRANSACTIONS ROUTES.** Bug
+1 put the record toggle back and fired on `monitor-txns` and
+`monitor-txn-basket` **and on nothing else** — while `txnMergedChecks`'s own
+doc comment said "run by every transactions route". Six addresses that draw this
+card were asserting nothing whatever about it: the toggle could have come back
+on `monitor-txn-direct`, on either side filter, on the security axis or on
+either drill-down, and the sweep would have reported clean.
+
+**AND THE SIX CLAIMS DO NOT ALL HOLD EVERYWHERE, which is why the repair is a
+SPLIT rather than a wider spread.** Four are true of any view of this card —
+the toggle is gone, the two legacy tables went with it, ONE table is drawn, and
+it is titled for the table rather than for one of the records in it. The other
+two COUNT the table's halves, so they need all of it: `monitor-txn-direct`
+narrows to a section whose rows legitimately carry no capital record, and
+`monitor-txn-in` / `-out` narrow one half of the capital record itself.
+Spreading all six blindly would have FAILED A CORRECT PAGE; leaving it at two
+let the control come back on six addresses unseen. So `txnMergedCore()` is the
+four and goes everywhere, and `txnMergedChecks()` is the six and stays on the
+routes that draw the whole table.
+
+**3. A SUMMABLE COLUMN WAS SITTING BLANK, AND THE CHECK COUNTED TO FOUR.** Gain
+was not in the footer's `cells` map at all. Nothing MISALIGNED — `TrFoot` fills
+an untotalled declared column rather than skipping it, which is what keeps every
+later cell under its own heading — so the only symptom was an empty box between
+Value today and Return. And *"the columns with no total name why"* required four
+cells to NAME a reason; there are exactly four, so a fifth untotalled column
+satisfied it by arithmetic.
+
+**GAIN IS AN AMOUNT AND RETURN IS A RATE, which is the whole of why one gets a
+total and the other cannot.** Value today carries one with a coverage count and
+Return refuses one because its every cell sits on a different denominator; Gain
+is an ordinary rupee figure over the account rows that publish one, so it now
+carries a total and the same coverage count — `CapitalGroup.gain` is published
+only where the contribution history provably reaches inception, so a row on a
+partial denominator contributes none and the cell says how many it covers.
+
+The claim is struck on EVERY footer cell now rather than counted: a cell carries
+text — a figure, or an em dash whose `title` says why — or it is a finding. An
+`AbsentCell` renders a dash, so a genuinely absent total is TEXT and only a
+filler is empty. The four that can never carry one are still required to say so,
+so the claim cannot be satisfied by a footer that simply totalled everything.
+
 #### The verification
 
-`build` · `tsc` · `test:ingest` · `test:family` (a new `txnLedger.test.ts`, 44
+`build` · `tsc` · `test:ingest` · `test:family` (a new `txnLedger.test.ts`, 46
 checks: the merge, the two blocks never added, an absent half never zero, a
 security row with no account to value, the section disagreement, and — anchored
 on the generated book — that `capitalRollup`'s own account value and the merge's

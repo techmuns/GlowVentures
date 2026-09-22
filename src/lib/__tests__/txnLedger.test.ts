@@ -139,6 +139,41 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   ok("...and the Value today total is absent over a table of them", t.value === null && t.valueOf === 0);
 }
 
+// ── GAIN IS AN AMOUNT, SO IT CARRIES A TOTAL — and Return is a RATE, so it
+//    cannot. The footer left this column BLANK in the first cut: a summable
+//    rupee figure with no total and no reason, sitting between Value today
+//    (which has one) and Return (which correctly refuses one). Nothing on the
+//    page could see it, because the check that guards that footer counted the
+//    cells which NAME a reason and stopped at four — and there were four.
+{
+  const a = acct({});
+  const cap = capitalRollup([move({})], [a], [pos({})], {}, "all", "recent");
+  const rows = mergeDatedRecords(cap, [], sectionOf, () => 114_000_000);
+  const t = datedTotals(rows);
+  // Whatever the fixture's own gain works out to, the TOTAL is the sum of the
+  // rows that publish one — asserted as that relation rather than as a literal,
+  // so it survives the fixture moving.
+  const published = rows.map((r) => r.capital?.gain).filter((g): g is number => g != null);
+  ok("the Gain total covers exactly the rows that publish one", t.gainOf === published.length, `${t.gainOf} vs ${published.length}`);
+  if (published.length) {
+    near("...and it is their sum", t.gain ?? NaN, published.reduce((x, y) => x + y, 0));
+  }
+}
+
+// ── ...AND AN UNPUBLISHED GAIN IS SKIPPED, NEVER BLENDED IN AS ZERO ─────────
+//    `CapitalGroup.gain` is absent wherever the contribution history does not
+//    provably reach inception, and averaging one of those in as ₹0 would drag
+//    the total towards a figure nobody measured — `sumOrNull`'s own rule,
+//    arriving in a footer.
+{
+  const trd = rollup([txn({ provider: "LKP", accountNo: "98245", amount: 500_000 })],
+    [acct({ accountId: "lkp", provider: "LKP", accountNo: "98245", engagement: "Execution", strategy: null })],
+    "auto", "recent", () => "Direct Equity");
+  const t = datedTotals(mergeDatedRecords([], trd, sectionOf, valueOf));
+  ok("a table with no capital half at all totals NO gain, rather than ₹0",
+    t.gain === null && t.gainOf === 0, `${t.gain} / ${t.gainOf}`);
+}
+
 // ── a SECTION disagreement draws TWO rows rather than picking one ───────────
 {
   const a = acct({});
