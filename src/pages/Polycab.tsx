@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ChevronLeft, Wallet, Layers, Landmark, Coins, Users, Shield, Lock } from "lucide-react";
+import { ChevronLeft, Wallet, Layers, Landmark, Coins, Users, Shield, Lock, Activity } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -9,6 +9,7 @@ import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity } from "@/lib/for
 
 import { sumOrNull } from "@/lib/analytics";
 import { BOOK_POLYCAB, BOOK_ACCOUNTS, BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
+import { usePolycabLive, POLYCAB_SOURCES } from "@/lib/polycabLive";
 
 /**
  * THE RING-FENCED PROMOTER HOLDING, ON ITS OWN PAGE.
@@ -176,6 +177,22 @@ export function Polycab() {
   const positionDividends = sumOrNull(BOOK_POLYCAB.map((p) => p.dividendReceived ?? null));
   const dividends = positionDividends ?? sumOrNull(cashActions.map((c) => c.amount ?? null));
 
+  /**
+   * ── THE COMPANY-LEVEL RECORD, LIVE ─────────────────────────────────────────
+   *
+   * Everything above this line is what the family's own STATEMENT reports.
+   * Everything below is what POLYCAB THE COMPANY declared and what its promoter
+   * group disclosed — refreshed daily by `npm run build-polycab` and, while a
+   * session is open, by `/api/polycab`.
+   *
+   * THE TWO ARE NEVER MIXED, and that is the single most important thing about
+   * this wiring. A promoter-GROUP encumbrance of 0% is a real measurement about
+   * the group this holding belongs to; it is NOT a statement that this demat's
+   * balance is unencumbered, and nothing below is allowed to fill the dashes in
+   * the statement card above. They are separate cards for that reason.
+   */
+  const live = usePolycabLive(shares, asOf);
+
   if (!BOOK_POLYCAB.length) {
     return (
       <div>
@@ -224,22 +241,68 @@ export function Polycab() {
             */}
             {asOf && (
               <Pill tone="info">
-                <span title="The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column. It is a statement figure as of this date, not a live price: no live quote is applied to this holding anywhere.">
+                {/*
+                  THE TRAILING CLAUSE HAD TO GO, AND SAYING WHY IS THE POINT.
+                  It read "no live quote is applied to this holding anywhere",
+                  which was true until this page grew a market price and is now
+                  false — the stale-caption failure this file records against
+                  FRED, the RBI and the release calendar, arriving in a hover.
+                  What survives is the claim that is still exactly true: THIS
+                  mark, the one the pill dates, is a statement figure and not a
+                  quote. The live price is a separate figure on its own tile with
+                  its own basis, and the two are never the same number.
+                */}
+                <span title="The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column. It is a statement figure as of this date, not a live price; the market price is shown separately and is never substituted for this one.">
                   STATEMENT · as of {fmtDate(asOf)}
                 </span>
               </Pill>
             )}
             {first?.p.isin && <Pill><span className="mono">{first.p.isin}</span></Pill>}
+            {/*
+              THE LIVE BASIS, BESIDE THE STATEMENT ONE RATHER THAN INSTEAD OF IT.
+              Three states, never two: still fetching is not the same claim as
+              the exchange refusing, and neither is a fact about the holding —
+              the defect this repo already paid for on Today's movers.
+            */}
+            {live.state.status === "loading" ? (
+              <Pill><span title="The page is asking the exchange for the current price. The figures on screen are the last settled close until it answers.">LIVE · fetching</span></Pill>
+            ) : live.state.status === "live" ? (
+              <Pill tone="core" icon={<Activity className="h-3 w-3" />}>
+                <span title={`Last traded on BSE, polled every 60s through /api/polycab and checked against the ISIN this book carries. Retrieved ${live.state.retrievedAt}.`}>
+                  LIVE · BSE
+                </span>
+              </Pill>
+            ) : (
+              <Pill>
+                <span title={`The committed daily snapshot is on screen: ${live.state.reason}. It is a real figure with its own date, refreshed each morning by the polycab workflow.`}>
+                  LAST CLOSE · stored
+                </span>
+              </Pill>
+            )}
           </div>
         </div>
         <div className="text-right">
           <div className="mono text-2xl font-semibold text-slate-100">{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">excluded from portfolio totals</div>
+          {/*
+            THE BLOCK AT THE MARKET'S OWN MARK, under the statement's.
+            §6 lets a live price move a market value and nothing else — so this
+            is the only figure on the page the feed is allowed to change, and it
+            says which mark produced it rather than replacing the book's.
+          */}
+          {live.markedValue !== null && live.quote && (
+            <div className="mt-1.5 border-t border-ink-700/60 pt-1.5">
+              <div className="mono text-[13px] font-medium text-slate-300">{money(live.markedValue)}</div>
+              <div className="text-[10.5px] text-slate-500">
+                at {price(live.quote.ltp)} · {live.live ? "live" : "last close"}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* KPI strip */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi
           label="Market value"
           value={money(mv)}
@@ -267,6 +330,28 @@ export function Polycab() {
           value={<AbsentValue />}
           sub="a depository reports no acquisition cost"
           icon={<Coins className="h-4 w-4" />}
+        />
+        {/*
+          THE MARKET'S OWN PRICE — the one tile on this strip the feed may move.
+          `delta` is the day change and is NULL rather than 0 where the exchange
+          published no previous close: a `▲ 0.0%` reads as a measured flat day,
+          which is the fabricated zero this whole page is careful about, one tile
+          along from the cost basis that refuses the same thing.
+        */}
+        <Kpi
+          label="Market price"
+          value={live.quote ? <span className="mono">{price(live.quote.ltp)}</span> : <AbsentValue />}
+          delta={live.quote?.changePct ?? null}
+          sub={
+            live.quote
+              ? live.live
+                ? "live · BSE last traded"
+                : "last settled close · BSE"
+              : live.state.status === "loading"
+                ? "asking the exchange"
+                : "no price published for this scrip"
+          }
+          icon={<Activity className="h-4 w-4" />}
         />
       </div>
 
@@ -516,7 +601,7 @@ export function Polycab() {
                 </td>
                 <td className="px-4 py-2.5 text-[12px] leading-relaxed text-slate-500">
                   {shareActions.length === 0
-                    ? "A corporate-benefits report for this demat. The book already carries bonus issues and spin-offs for the accounts whose providers publish one — this depository is not among them, so an unchanged share count here is unreported rather than confirmed."
+                    ? "A corporate-benefits report for this demat. The book already carries bonus issues and spin-offs for the accounts whose providers publish one — this depository is not among them, so an unchanged share count here is unreported rather than confirmed. What the COMPANY has declared is a separate question and is answered below, from the exchange's own record."
                     : "The book's own corporate-actions record, filtered to this security."}
                 </td>
               </tr>
@@ -556,6 +641,264 @@ export function Polycab() {
           These three are absent because of what the document behind this holding IS, not because a feed failed. A
           depository reports the balance it holds and the value it marks it at; encumbrances, income and corporate
           actions come from other statements, and none of them has been issued for this demat in any delivery so far.
+        </div>
+      </Card>
+
+      {/*
+        ════════ WHAT THE COMPANY DECLARED — live, and a different fact ════════
+
+        Everything above is what the family's own STATEMENT reports. Everything
+        below is what POLYCAB THE COMPANY declared and what its promoter group
+        disclosed to the exchange: public, statutory, dated, and refreshed every
+        morning by `npm run build-polycab`.
+
+        THE TWO MUST NEVER BE READ AS ONE, which is why they are separate cards
+        rather than filled-in rows above. A promoter-GROUP encumbrance of 0% is a
+        real measurement about the group this holding belongs to; it is NOT a
+        statement that THIS demat's balance is unencumbered, and letting the
+        first fill the second's dash would be the most consequential substitution
+        available on this page.
+
+        These cards sit AFTER the statement card deliberately: the sweep slices
+        the per-holder table between `SHARE OF THE BLOCK` and `Pledges,
+        dividends`, and the statement rows between `WHICH DOCUMENT CARRIES IT`
+        and `These three are absent`. Inserting between either pair would break a
+        check by moving its boundary rather than by changing a figure.
+      */}
+      <Card
+        className="mt-5"
+        pad={false}
+        title="What Polycab has declared"
+        subtitle={
+          live.identity
+            ? `The exchange's own corporate-action record for ${live.identity.securityId ?? "this scrip"}, whole since listing.`
+            : "The exchange's own corporate-action record."
+        }
+      >
+        <div className="overflow-x-auto">
+          <table className="min-w-full whitespace-nowrap text-sm" data-polycab-dividends>
+            <thead className="border-b border-ink-700">
+              <tr>
+                <th className="label-xs px-4 py-2 text-left font-medium">Ex-date</th>
+                <th className="label-xs px-4 py-2 text-left font-medium">Action</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Per share</th>
+                <th className="label-xs px-4 py-2 text-left font-medium">Record</th>
+                <th className="label-xs px-4 py-2 text-left font-medium">Paid</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">
+                  <span title="This holding's share count times the declared amount per share. DERIVED — the statement reports a balance on one date and this book cannot say what was held on an ex-date either side of it, so this is an entitlement rather than income and is in no total on this page.">
+                    On this block · derived
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {live.entitlements.map((e, i) => (
+                <tr key={`${e.action.exDate}-${i}`} className="hover:bg-ink-700/40" data-polycab-dividend-row>
+                  <td className="px-4 py-2.5 text-slate-300">
+                    {e.action.exDate ? fmtDate(e.action.exDate) : <AbsentCell reason="the exchange records no ex-date for this action" />}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-200">
+                    <span title={e.action.purpose}>{e.action.purpose.replace(/\s*-\s*Rs\.?\s*-?\s*[\d.,]+\s*$/i, "")}</span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-200">
+                    {e.action.amountPerShare === null
+                      ? <AbsentCell reason="the exchange's purpose line states no amount per share for this action" />
+                      : price(e.action.amountPerShare)}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-400">
+                    {e.action.recordDate ? fmtDate(e.action.recordDate) : <AbsentCell reason="the exchange publishes no record date for this action" />}
+                  </td>
+                  <td className="px-4 py-2.5 text-slate-400">
+                    {e.action.paymentDate ? fmtDate(e.action.paymentDate) : <AbsentCell reason="the exchange's payment-date record covers only its most recent actions" />}
+                  </td>
+                  {/*
+                    THE ENTITLEMENT, AND THE ASSUMPTION IT RESTS ON, ON THE CELL.
+                    A snapshot is not a history: the share count is what one
+                    statement reported on one date, so an ex-date the statement
+                    does not span is marked rather than quietly multiplied.
+                  */}
+                  <td className="px-4 py-2.5 text-right mono text-slate-300">
+                    {e.amount === null
+                      ? <AbsentCell reason="an entitlement needs both a declared amount per share and a share count" />
+                      : (
+                        <span
+                          className={e.exDateWithinStatement ? "" : "text-slate-500"}
+                          title={
+                            e.exDateWithinStatement
+                              ? `${fmtNum(shares ?? 0)} shares × ${price(e.action.amountPerShare)} per share, on the balance the statement reports at ${asOf ? fmtDate(asOf) : "its own date"}. Derived, and never a figure for cash received — what actually arrived, and what TDS came off it, is a bank record no exchange can answer.`
+                              : `This ex-date falls after the statement date (${asOf ? fmtDate(asOf) : "unknown"}), so the balance held on it is NOT reported by any document in this book. The figure is the declared amount applied to the last reported share count, and nothing here says the shares were still held.`
+                          }
+                        >
+                          {money(e.amount)}{e.exDateWithinStatement ? "" : " *"}
+                        </span>
+                      )}
+                  </td>
+                </tr>
+              ))}
+              {live.entitlements.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-3 text-[12px] text-slate-500">
+                    <AbsentCell reason="the exchange's corporate-action record could not be read on the last refresh, so no declared action is listed" />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/*
+          BONUS, SPLIT AND SPIN-OFF — A MEASURED NIL, WHICH IS NOT AN ABSENCE.
+
+          The statement card above says a bonus here is "unreported rather than
+          confirmed", and that stays true of the DEMAT. This says something
+          stronger and about the COMPANY: the exchange's record is complete from
+          listing and carries none. The claim is gated on `actionsComplete`,
+          which the builder sets only on a run that actually reached the
+          exchange — a truncated fetch and a company that never declared one
+          produce the identical empty list, and only the fetch knows which.
+        */}
+        <div className="border-t border-ink-700/60 px-4 py-3" data-polycab-share-actions>
+          {live.shareActions.length > 0 ? (
+            <table className="min-w-full text-sm">
+              <tbody className="divide-y divide-ink-700/60">
+                {live.shareActions.map((a, i) => (
+                  <tr key={`${a.exDate}-${i}`}>
+                    <td className="py-2 pr-4 text-slate-300">{a.exDate ? fmtDate(a.exDate) : <AbsentCell reason="the exchange records no ex-date" />}</td>
+                    <td className="py-2 pr-4 capitalize text-slate-200">{a.kind}</td>
+                    <td className="py-2 pr-4 text-slate-400">{a.ratio ?? <AbsentCell reason="the exchange's purpose line states no ratio" />}</td>
+                    <td className="py-2 text-[12px] text-slate-500">{a.purpose}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : live.measuredNil ? (
+            <div className="flex items-start gap-2 text-[12px] leading-relaxed text-slate-400">
+              <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
+              <span>
+                <span className="font-medium text-slate-300">No bonus, split or spin-off has ever been declared on this scrip.</span>{" "}
+                The exchange's record runs from listing and carries {fmtNum(live.dividends.length)} action{live.dividends.length === 1 ? "" : "s"}, every one a dividend — so this is a
+                measured nil rather than a gap in reporting, and the share count above has never been changed by a corporate action.
+              </span>
+            </div>
+          ) : (
+            <div className="text-[12px] leading-relaxed text-slate-400">
+              <AbsentCell reason="the exchange's corporate-action record could not be fetched whole on the last refresh, so no bonus or split can be reported either way — a truncated record and a company that declared none look identical" />
+            </div>
+          )}
+          {live.unclassified.length > 0 && (
+            <div className="mt-2 text-[11px] leading-relaxed text-slate-500">
+              {fmtNum(live.unclassified.length)} further action(s) the classifier did not place are counted and listed in{" "}
+              <span className="mono">docs/POLYCAB-LIVE.md</span> rather than filed under a kind nothing stated.
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* ── THE PROMOTER GROUP, AS IT DISCLOSES ITSELF ─────────────────────── */}
+      <Card
+        className="mt-5"
+        pad={false}
+        title="Promoter group — holding and encumbrance"
+        subtitle="What the promoter group discloses each quarter. This is the GROUP, not this demat."
+      >
+        <div className="grid gap-4 border-b border-ink-700/60 px-4 py-4 sm:grid-cols-3">
+          <div>
+            <div className="label-xs text-slate-500">Promoter holding</div>
+            <div className="mono mt-1 text-xl font-semibold text-slate-100" data-polycab-holding>
+              {live.promoter?.holdingPct == null
+                ? <AbsentValue />
+                : fmtPct(live.promoter.holdingPct)}
+            </div>
+            <div className="mt-0.5 text-[11px] text-slate-500">
+              {live.promoter?.holdingPct == null
+                ? "the two witnesses disagreed, so neither figure is published"
+                : `as disclosed at ${live.promoter.asOf ? fmtDate(live.promoter.asOf) : "the latest quarter"} · ${live.promoter.witnesses} independent source${live.promoter.witnesses === 1 ? "" : "s"}`}
+            </div>
+          </div>
+          <div>
+            <div className="label-xs text-slate-500">Promoter pledge</div>
+            <div className="mono mt-1 text-xl font-semibold text-slate-100" data-polycab-pledge>
+              {live.promoter?.pledgePct == null
+                ? <AbsentValue />
+                : fmtPct(live.promoter.pledgePct)}
+            </div>
+            <div className="mt-0.5 text-[11px] text-slate-500">
+              {live.promoter?.pledgePct == null
+                ? "no source published an encumbrance figure on the last refresh"
+                : `of the promoter group's own shares · ${live.promoter.pledgeSource ?? "one source"}`}
+            </div>
+          </div>
+          <div>
+            <div className="label-xs text-slate-500">This demat's balance</div>
+            <div className="mono mt-1 text-xl font-semibold text-slate-300"><AbsentValue /></div>
+            {/*
+              THE WHOLE POINT OF THE CARD, STATED WHERE A READER CANNOT MISS IT.
+              A group-level nil is not a statement about this account, and a
+              reader who takes it for one has learnt something false about a
+              ₹12,000 Cr promoter block. It is a third tile rather than a
+              footnote for exactly that reason.
+            */}
+            <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
+              the NSDL statement behind this holding prints no pledge, lock-in or freeze column — a group figure is not a
+              statement about this account
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full whitespace-nowrap text-sm" data-polycab-quarters>
+            <thead className="border-b border-ink-700">
+              <tr>
+                <th className="label-xs px-4 py-2 text-left font-medium">Quarter</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Promoter holding</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Pledged</th>
+                <th className="label-xs px-4 py-2 text-right font-medium">Sources</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-700/60">
+              {live.quarters.map((q) => (
+                <tr key={q.asOf} className="hover:bg-ink-700/40" data-polycab-quarter-row>
+                  <td className="px-4 py-2.5 text-slate-300">{q.quarter ?? fmtDate(q.asOf)}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-200">
+                    {q.holdingPct === null
+                      ? <AbsentCell reason="the two witnesses disagreed on this quarter by more than 0.05pp, so neither figure is published" />
+                      : fmtPct(q.holdingPct)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-200">
+                    {q.pledgePct === null
+                      ? <AbsentCell reason="no source published an encumbrance figure for this quarter" />
+                      : fmtPct(q.pledgePct)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-500">{q.witnesses}</td>
+                </tr>
+              ))}
+              {live.quarters.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-3">
+                    <AbsentCell reason="no promoter disclosure could be read on the last refresh, and none is stored" />
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+          The holding is carried by two independent sources and a quarter where they differ by more than 0.05pp publishes
+          neither — a dash here is a refusal, not a gap. The pledge has one source and says so. Everything on this card and
+          the one above is refreshed daily and is in no total anywhere in this book.
+          {POLYCAB_SOURCES.length > 0 && (
+            <>
+              {" "}Sources:{" "}
+              {POLYCAB_SOURCES.map((s, i) => (
+                <span key={s.url}>
+                  {i > 0 ? ", " : ""}
+                  <a className="text-champagne-400 hover:underline" href={s.url} target="_blank" rel="noreferrer" title={s.carries}>{s.name}</a>
+                </span>
+              ))}
+              . Last refreshed {fmtDate(live.retrievedAt.slice(0, 10))}.
+            </>
+          )}
         </div>
       </Card>
 

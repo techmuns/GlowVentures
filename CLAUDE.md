@@ -242,6 +242,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   `src/data/schemeNames.json` (`npm run build-scheme-names`), with the plan
   phrase cut to one word. Display only, on `stripDepositoryTail`'s terms:
   `securityKeyOf` is not routed through it. See Stage 10az.
+- `shared/polycabSources.mjs` — WHAT THE EXCHANGE SAYS ABOUT THE RING-FENCED
+  HOLDING, read once and imported by BOTH the daily builder
+  (`scripts/build-polycab-live.mjs`) and the live edge function
+  (`functions/api/polycab.js`), so a committed figure and an intraday one cannot
+  disagree. It also holds the IDENTITY GATES — a source that cannot echo back the
+  book's own ISIN yields nothing rather than a figure with a caveat. Its read side
+  is `src/lib/polycabLive.ts`, whose only caller is the Polycab page. See Stage 10bh.
 - `src/lib/shareMovements.ts` — OPENING, PLUS, MINUS, CLOSING: the one definition
   of what the depository statements' quantity columns add to, read by the page
   that PRINTS them and by the suite that CHECKS them. `movementNet` deliberately
@@ -11828,6 +11835,172 @@ BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a regroup of two tables that moved a generated figure would not be a
 regroup.
 
+### Stage 10bh — THE POLYCAB PAGE IS LIVE, AND THE COMPANY IS NOT THE DEMAT
+
+*"Open PR and do not merge until i tell you to. Every single data point in the
+Polycab Page should be live and automatically updated everyday, there must be no
+placeholders. Daily fetch all such information for the Polycab promoter
+activity, dividend/split/bonus/pledge.. etc etc. The data on this page should be
+live, you can even use Github actions or direct web search, whatever is the best
+method according to you after probing. Try to get data from websites like
+screener.in, trendlyne, etc."*
+
+#### The distinction the whole change turns on
+
+**THE PAGE ALREADY ANSWERED A QUESTION COMPLETELY AND CORRECTLY, AND IT IS NOT
+THE QUESTION THIS DATA ANSWERS.** Getting that wrong would have been the most
+damaging thing available here, so it is the first paragraph rather than a
+caveat:
+
+| | |
+| --- | --- |
+| **What this DEMAT reports** | the ICICI NSDL `Statement of Holding` prints ISIN, scrip name, account description, balance and value — and no encumbrance column, no income and no corporate action. **No amount of fetching changes what that document IS.** |
+| **What the COMPANY did** | declared dividends, bonuses, splits, and the promoter group's disclosed holding and encumbrance. Public, statutory, dated, and refreshed every morning. |
+
+A promoter-GROUP pledge of 0.0% is a real measurement about the group this
+holding belongs to. **It is NOT a statement that this demat's balance is
+unencumbered** — and the two are one careless edit apart. So they are separate
+cards, the statement card's three dashes are untouched, and a third tile on the
+new card says in words that a group figure is not a statement about this
+account. `check:pages` asserts that the group pledge never fills the statement
+card's own pledge dash, and reintroducing exactly that bug fires it.
+
+#### What the probe established, and the source that was refused
+
+Measured from this environment rather than assumed, and recorded in
+`docs/POLYCAB-LIVE.md`:
+
+| Source | | |
+| --- | --- | --- |
+| `api.bseindia.com` | **200, JSON, keyless** | identity (ISIN), live quote, the WHOLE corporate-action record since listing |
+| `tickertape.in` | **200, keyless** | promoter holding AND pledge, per quarter, as embedded JSON — and it prints the ISIN |
+| `screener.in` | **200, keyless** | promoter holding, per quarter — the second witness |
+| `trendlyne.com` | **405, `x-amzn-waf-action: captcha`** | REFUSED — see below |
+| `nseindia.com` | 403 Akamai, with and without a cookie bootstrap | recorded, not worked around |
+| `moneycontrol.com` | 200 — **and the WRONG COMPANY** | REFUSED — see below |
+
+**TRENDLYNE WAS TRIED FIRST AND REJECTED, AND THE REASON IS THE WORST POSSIBLE
+PROPERTY FOR A DAILY JOB.** It sits behind an AWS WAF: a single `curl` got
+through and Node's `fetch` did not. A source that passes the day it is wired and
+fails silently in CI ever after is worse than one that never worked, so it is
+named in the shared module and not built on — the same standing the RBI's
+`__VIEWSTATE`-only WSS page already has.
+
+**AND MONEYCONTROL RETURNED A COMPLETE, CORRECT, WELL-FORMED PAGE ABOUT ANOTHER
+COMPANY.** `/india/stockpricequote/cables-telephone/polycabindia/PI47` reported a
+promoter holding of **55.03%** against Polycab's **61.5%**, under a title naming
+no company at all. Nothing on a rendered page would have caught it. That is the
+resolver failure Stage 10e already measured on a different vendor, arriving
+again — and it is why every gate below is mechanical rather than a matter of
+noticing.
+
+#### The identity gate is the licence for publishing any of it
+
+**THE ISIN THE EXCHANGE ECHOES MUST EQUAL THE ISIN THE BOOK CARRIES**, read out
+of `BOOK_POLYCAB` and never typed in the builder. Two tiers, strongest first,
+and a page matching neither yields NOTHING — never a figure with a caveat,
+because a caveat on a figure about the wrong company is still a figure about the
+wrong company:
+
+- **BSE** — `ComHeadernew` returns the ISIN. `INE455K01017` both sides.
+- **tickertape** — must print the ISIN. It does, which is why the PLEDGE, the
+  figure with a single witness, is taken from the source with the STRONGEST
+  identity rather than the most convenient one.
+- **screener** — must print the BSE scrip code and the NSE symbol.
+
+#### Two layers, because the page must never be blank
+
+`IndexStrip`'s own arrangement, applied to one scrip:
+
+- **`src/data/polycabLive.ts`** — committed daily by `.github/workflows/polycab.yml`
+  at **12:00 UTC (17:30 IST), two hours after the Indian close**, so the price it
+  stores is a SETTLED session rather than a snapshot that would move if the job
+  were retried. It renders with **no network at all**, which is what keeps this
+  page free of blank tiles in a preview, in the headless sweep, and on a morning
+  an upstream is down.
+- **`functions/api/polycab.js`** — the intraday quote while a session is open.
+  Keyless, so it needs no `MUNS_TOKEN`: the quote feed behind the rest of this
+  dashboard is keyed on an NSE symbol and a token, and the ring-fence means
+  `PortfolioContext` is never asked for this holding.
+
+**THE PARSING IS NOT WRITTEN TWICE.** `shared/polycabSources.mjs` is imported by
+the Node builder AND the Cloudflare function, so the committed figure and the
+live one cannot disagree about what a day change is — the seam
+`shared/seriesReturns.mjs` already holds between the harvester and `/api/prices`.
+
+**AND THE LIVE LAYER MAY MOVE THE PRICE AND NOTHING ELSE** (§6). A quote is not
+evidence about a dividend, a pledge or a share count.
+
+#### What it retired, and what it did NOT
+
+**ONE ABSENCE TURNED OUT TO BE MEASURABLE.** The page said a bonus or split here
+was *"unreported rather than confirmed"*, which stays true of the DEMAT. The
+exchange's record is complete from listing and carries **EIGHT corporate actions,
+every one a dividend and NOT ONE a bonus, split or spin-off** — a MEASURED nil,
+which is strictly better than an absence.
+
+**IT IS GATED ON `actionsComplete`, AND THAT GATE IS THE WHOLE CLAIM.** A
+truncated fetch and a company that never declared one produce the IDENTICAL empty
+list, so the builder sets that flag only on a run that actually reached the
+exchange and never on a stored record kept through a failure. Reintroducing the
+ungated version fires both the sweep and the suite.
+
+**THE ENTITLEMENT IS DERIVED AND IS NEVER CALLED "RECEIVED".** The exchange
+states an amount per share; the rupee figure is that times a share count taken
+from ONE statement at ONE date. **A snapshot is not a history** — this book can
+say what was held on 31 Mar 2026 and cannot say what was held on an ex-date
+either side of it. So every row carries `exDateWithinStatement`, the 19 Jun 2026
+dividend (three months after the statement) renders with a `*` and a hover
+stating the assumption, and the column is headed **"On this block · derived"**.
+It is in no total on the page, and what actually arrived — and what TDS came off
+it — remains a bank fact no exchange can answer.
+
+#### Two figures the sweep cannot see, and where they are caught instead
+
+The bug pass ran a NO-PATCH CONTROL first and then nine bugs, each applied
+alone, rebuilt, swept and restored **by copy on a `trap … EXIT`** — several of
+these files are untracked, where `git checkout --` silently does nothing.
+Seven fire an invariant in `check:pages`. **Two fire only in the arithmetic
+suite, and that is correct rather than a gap:**
+
+- **the pledge defaulting to `0` instead of staying `null`** renders IDENTICALLY
+  on this book, because the real figure IS 0. Only a synthetic fixture can tell
+  a published zero from a defaulted one, and `polycabLive.test.ts` carries one.
+- **the store's ISIN diverging from the book's** is invisible on screen, because
+  the page prints the BOOK's ISIN and the wrong company's dividends. The suite
+  compares the two directly.
+
+Both are named here rather than left to be rediscovered. `scripts/dev/polycab-bug.sh`
+is the harness, committed so the next session's verification is one command
+rather than nine manual edits.
+
+**AND THE CONTROL EARNED ITS PLACE ON THE FIRST RUN.** Every one of the nine
+cases reported NOT A RESULT because `tsc` was failing on an unrelated missing
+declaration for the new shared `.mjs` — a file the esbuild-based `test:family`
+never typechecks, so the suite had been passing while `npm run build` was
+broken. Without the control that reads as nine bugs firing. `shared/polycabSources.d.mts`
+is the fix, on the same terms as `sectors.d.mts` beside it.
+
+#### The measured zeros on this page are zeros
+
+`check:pages` reports `zeroish=7` on `/polycab`, and every one is the promoter
+pledge genuinely reading 0.00% across seven quarters. `zeros` is deliberately
+NOT part of `hard` in that runner — *"a lead rather than a verdict"* — and an
+ABSENT pledge on this page renders `—` with its reason, so the two are
+distinguishable exactly as §2 requires.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 19 suites · `check:family` **81/0** · `check:pages`
+**168 combinations clean**, with the same two evidenced abstentions Stage 10bg
+records. The count does not move because this change adds no route — everything
+it asserts is struck on `/polycab`, which the sweep already walked.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: **nothing here touches the
+ingest, and nothing here is in any book total.** `src/data/polycabLive.ts` is
+generated beside the book, read by ONE page, and in no NAV, allocation, sector or
+entity figure — the same standing `BOOK_POLYCAB` itself has.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -12816,6 +12989,17 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   ISIN. It needs no AmfiBeas checkout, is idempotent, and `--check` writes
   nothing. Re-run it after `build-lookthrough` or after a drop brings a new
   scheme. Nothing it writes reaches `glowData.ts`.
+- `npm run build-polycab` refreshes `src/data/polycabLive.ts` and
+  `docs/POLYCAB-LIVE.md` — what the EXCHANGE and the statutory disclosures say
+  about the ring-fenced promoter holding: the whole corporate-action record since
+  listing, the promoter group's disclosed holding and pledge, and the last
+  settled close. Every source is KEYLESS, so it needs no secret; it is run daily
+  by `.github/workflows/polycab.yml` at 12:00 UTC (after the Indian close, so the
+  stored price is a SETTLED session). Idempotent — nothing moved upstream means
+  nothing written — and `-- --check` writes nothing. **Everything it publishes is
+  gated on the exchange echoing back the ISIN `BOOK_POLYCAB` carries**, and a
+  source that fails keeps its last good figure rather than emptying one. Nothing
+  it writes reaches `glowData.ts` or any book total. See Stage 10bh.
 - `npm run build-lookthrough` refreshes `public/lookthrough/` and
   `docs/FUND-LOOKTHROUGH.md` — each scheme's NAV, daily NAV change, returns and
   **every disclosed holding, not the equity section alone**: shares, bonds, NCDs,

@@ -1560,6 +1560,47 @@ const FENCED = (() => {
 })();
 
 /**
+ * THE COMPANY-LEVEL RECORD BEHIND THE RING-FENCED HOLDING — derived, not typed.
+ *
+ * `src/data/polycabLive.ts` is rebuilt by a DAILY job, so every expectation
+ * about it has to come out of the file on the run rather than being written
+ * here: a dividend count, a promoter percentage or a price typed into this
+ * sweep would fail the first morning the company declared something.
+ *
+ * RE-EXPRESSED, NEVER IMPORTED. `src/lib/polycabLive.ts` exports
+ * `shareCountActions`, `shareActionsMeasuredNil` and `latestPromoter`, and a
+ * check that called them would agree with the page by construction — the rule
+ * this sweep already follows for `isMandateHeld`, `holdingBucket` and
+ * `NAV_MOVERS_BOOK`. The two expressions agreeing is the measurement.
+ */
+const POLYCAB_LIVE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/polycabLive.ts", import.meta.url), "utf8");
+    const i = src.indexOf("export const POLYCAB_LIVE");
+    if (i < 0) return null;
+    const s = src.indexOf("= {", i), e = src.indexOf("\n};", s);
+    if (s < 0 || e < 0) return null;
+    const d = JSON.parse(src.slice(s + 2, e + 2));
+    const actions = Array.isArray(d.corporateActions) ? d.corporateActions : [];
+    const SHARE = new Set(["bonus", "split", "spinoff"]);
+    const quarters = Array.isArray(d.promoterQuarters) ? d.promoterQuarters : [];
+    const latest = quarters.find((q) => q.holdingPct !== null || q.pledgePct !== null) ?? null;
+    return {
+      isin: String(d.bookIsin ?? ""),
+      dividends: actions.filter((a) => a.kind === "dividend"),
+      shareActions: actions.filter((a) => SHARE.has(a.kind)),
+      // The claim "none has ever been declared" is only available where the
+      // record was fetched WHOLE — a truncated response and a company that
+      // declared none produce the identical empty list.
+      measuredNil: d.actionsComplete === true && actions.filter((a) => SHARE.has(a.kind)).length === 0,
+      quarters,
+      latest,
+      quote: d.quote ?? null,
+    };
+  } catch { return null; }
+})();
+
+/**
  * A COMPANY SHARE THE BOOK CARRIES NO COST FOR — derived, not typed.
  *
  * 60 of this book's 371 positions have `costBasis: null`, and every one is
@@ -2413,7 +2454,16 @@ const ROUTES = [
 // they are Pages Functions, `vite preview` does not run Functions, so they 404
 // locally on every run and would otherwise be reported as an application fault
 // on every sweep. They are exercised against the DEPLOYED site instead.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat)|ERR_CONNECTION_RESET|Failed to load resource/;
+//
+// `polycab` joins on the same terms and NOT on the terms Stage 10x refused:
+// that stage took `/api/econ-calendar` and `/api/macro` OFF this list because
+// their PAGES had been removed, so a request to either had become a stray one
+// worth reporting. `/api/polycab` is the opposite case — a live Function with a
+// live caller — and the 404 here is the harness, not the app. It is also the one
+// entry whose absence the sweep then ASSERTS: the Polycab page must render its
+// whole company-level record from the committed store with this endpoint dead,
+// which is what the `polycab` invariants below are struck against.
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -4933,6 +4983,154 @@ const INVARIANTS = {
       (t) => /Pledged, locked-in or earmarked/i.test(t)
         && /Dividends received/i.test(t)
         && /Bonus, splits and spin-offs/i.test(t)],
+
+    /**
+     * ── THE COMPANY-LEVEL RECORD, LIVE ──────────────────────────────────────
+     *
+     *   *"Every single data point in the Polycab Page should be live and
+     *    automatically updated everyday, there must be no placeholders. Daily
+     *    fetch all such information for the Polycab promoter activity,
+     *    dividend/split/bonus/pledge."*
+     *
+     * The checks below are struck against `POLYCAB_LIVE_BOOK`, re-derived from
+     * the committed store on this run — never against a figure typed here,
+     * because that store is rebuilt DAILY and a literal would fail the first
+     * morning the company declared a dividend.
+     *
+     * AND THEY RUN WITH `/api/polycab` DEAD. `vite preview` serves no Function,
+     * so everything asserted here is coming out of the committed store — which
+     * is the half of the two-layer design that has to keep working when the
+     * exchange is unreachable, and the half a live-only implementation would
+     * have left as a blank card.
+     */
+    ["the declared dividends render, every one the store carries",
+      (t, ctx) => {
+        if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+        if (!ctx?.polycabDom) return { notChecked: "the DOM probe did not run" };
+        const want = POLYCAB_LIVE_BOOK.dividends;
+        if (!want.length) return { notChecked: "the store carries no declared dividend" };
+        // ROW COUNT off the DOM, and then every ex-date the store carries has to
+        // be ON the page: equal counts alone would pass a card that rendered the
+        // right number of the wrong rows.
+        if (ctx.polycabDom.dividendRows !== want.length) return false;
+        const dated = want.filter((d) => d.exDate);
+        return dated.length > 0 && dated.every((d) => {
+          const [y, m, day] = d.exDate.split("-");
+          const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          return t.includes(`${Number(day)} ${MON[Number(m) - 1]} ${y}`);
+        });
+      }],
+
+    /**
+     * THE ENTITLEMENT IS MARKED DERIVED, AND IS IN NO TOTAL.
+     *
+     * A per-share dividend times a share count is arithmetic anyone can do; what
+     * makes it honest is that this book cannot say the shares were still held on
+     * the ex-date, because the statement is a SNAPSHOT and not a history. The
+     * column says so, and the page never calls it received — which is the one
+     * word that would turn a derived figure into an income claim.
+     */
+    ["the entitlement column says it is derived, and never claims the cash arrived",
+      (t, ctx) => {
+        const derived = /On this block\s*·\s*derived/i.test(t);
+        const titled = (ctx?.titles ?? []).some((x) =>
+          /DERIVED/i.test(x) && /entitlement rather than income/i.test(x));
+        // "Dividends received" is the STATEMENT card's own row and is allowed to
+        // stand; what must not appear is the company record claiming receipt.
+        const claims = /declared[^.]{0,40}received|received[^.]{0,30}from the exchange/i.test(t);
+        return derived && titled && !claims;
+      }],
+
+    /**
+     * A MEASURED NIL IS A MEASUREMENT, AND ONLY WHERE THE RECORD IS COMPLETE.
+     *
+     * "No bonus, split or spin-off has ever been declared" is the one claim on
+     * this page stronger than an absence. It is gated on `actionsComplete`, so
+     * the check is an IMPLICATION in both directions: the sentence may appear
+     * only where the store vouches for the record, and where the store does
+     * vouch and carries none, the page must actually say so rather than falling
+     * back to a dash a reader learns nothing from.
+     */
+    ["the bonus/split nil is claimed only where the exchange's record was fetched whole",
+      (t) => {
+        if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+        // Matched on the sentence the page actually prints. The first draft
+        // looked for "never been declared" against a page reading "has EVER
+        // been declared" and failed a correct build — the same prose-drift this
+        // sweep keeps finding, which is why the row count above is struck on the
+        // DOM and only this one claim rests on wording.
+        const claimed = /has ever been declared on this scrip/i.test(t);
+        return claimed === POLYCAB_LIVE_BOOK.measuredNil;
+      }],
+
+    /**
+     * THE PROMOTER GROUP'S FIGURES ARE ON THE PAGE, AND MATCH THE STORE.
+     *
+     * Read off the tiles' own handles rather than out of the prose around them,
+     * and compared at the precision the page prints — the figure is rendered
+     * through `fmtPct`, so the comparison is to two decimals rather than to the
+     * full precision the store carries.
+     */
+    ["the promoter holding and pledge render the figures the store carries",
+      (t) => {
+        if (!POLYCAB_LIVE_BOOK?.latest) return { notChecked: "the store carries no promoter disclosure" };
+        const { holdingPct, pledgePct } = POLYCAB_LIVE_BOOK.latest;
+        const want = (v) => (v === null ? null : v.toFixed(2));
+        const got = (label) => {
+          const m = new RegExp(String.raw`${label}\s*\n\s*(—|[\d.]+)%?`, "i").exec(t);
+          return m ? (m[1] === "—" ? null : Number(m[1]).toFixed(2)) : undefined;
+        };
+        return got("PROMOTER HOLDING") === want(holdingPct) && got("PROMOTER PLEDGE") === want(pledgePct);
+      }],
+
+    /**
+     * ...AND THE GROUP FIGURE NEVER FILLS THE DEMAT'S DASH.
+     *
+     * THE MOST IMPORTANT CHECK IN THIS BLOCK. A promoter-GROUP encumbrance of 0%
+     * is a real measurement about the group this holding belongs to; it is NOT a
+     * statement that this demat's balance is unencumbered, and the two are one
+     * careless edit apart. The statement card's pledge cell must stay absent
+     * whatever the group discloses, and the page must say in words that a group
+     * figure is not a statement about this account — otherwise a reader takes a
+     * 0.0% for a guarantee about ₹12,000 Cr of promoter stock.
+     */
+    ["a promoter-GROUP pledge never fills the statement card's own pledge dash",
+      (t, ctx) => {
+        const section = sliceBetween(t, "WHICH DOCUMENT CARRIES IT", "These three are absent");
+        const reported = [...section.matchAll(/\n\t([^\t\n]*)\t/g)].map((m) => m[1].trim());
+        const pledgeCellAbsent = reported.length === 3 && reported[0] === "—";
+        const saysSo = /a group figure is not a\s*statement about this account/i.test(t.replace(/\s+/g, " "))
+          || /group figure is not a statement about this account/i.test(t.replace(/\s+/g, " "));
+        const reason = (ctx?.titles ?? []).concat(section).some((x) =>
+          /no pledge, lock-in, earmark or freeze column/i.test(x));
+        return pledgeCellAbsent && saysSo && reason;
+      }],
+
+    /**
+     * THE PAGE IS COMPLETE WITH THE LIVE ENDPOINT DEAD.
+     *
+     * `/api/polycab` 404s in this harness, which is exactly the state a reader
+     * is in when the exchange is unreachable. The committed close must still be
+     * on screen with its basis named — a page that showed a price only when the
+     * Function answered would render blank here and pass every check above.
+     */
+    ["the mark renders from the committed store when the live endpoint is dead",
+      (t) => {
+        if (!POLYCAB_LIVE_BOOK?.quote) return { notChecked: "the store carries no quote to fall back to" };
+        return /MARKET PRICE/i.test(t)
+          && /last settled close|live · BSE/i.test(t)
+          && !/MARKET PRICE\s*\n\s*—/i.test(t);
+      }],
+
+    /**
+     * EVERY FIGURE ON THE NEW CARDS NAMES WHERE IT CAME FROM. The company-level
+     * record is the only data on this whole site that is not the family's own
+     * paperwork, so a reader has to be able to see which source carried it and
+     * when it was last refreshed.
+     */
+    ["the company-level record names its sources and its refresh date",
+      (t) => /Sources:/i.test(t) && /Last refreshed/i.test(t)
+        && /refreshed daily and is in no total anywhere in this book/i.test(t.replace(/\s+/g, " "))],
   ],
   /**
    * ── THE YEAR'S TRADING IS FIVE LINES, NOT FOUR HUNDRED ─────────────────────
@@ -14032,6 +14230,27 @@ for (const theme of THEMES) {
           taxToggles: document.querySelectorAll("[data-tax-toggle]").length,
         };
       });
+      /**
+       * THE POLYCAB PAGE'S COMPANY-LEVEL CARDS, READ STRUCTURALLY.
+       *
+       * A count of rendered ROWS is a claim about what the page drew; a count
+       * taken out of `innerText` is a claim about prose that happens to look
+       * like rows. The first draft of these checks matched `data-polycab-…` in
+       * the page TEXT — where an attribute never appears — so it read 0 rows on
+       * a card rendering 8 and failed a page that was right. Read off the DOM,
+       * like `data-mandate`, `data-section` and `data-pm-fund` already are.
+       */
+      const polycabDom = FAST ? null : await page.evaluate(() => {
+        const txt = (sel) => document.querySelector(sel)?.innerText.replace(/\s+/g, " ").trim() ?? null;
+        return {
+          dividendRows: document.querySelectorAll("[data-polycab-dividend-row]").length,
+          quarterRows: document.querySelectorAll("[data-polycab-quarter-row]").length,
+          hasDividendTable: !!document.querySelector("[data-polycab-dividends]"),
+          hasShareActions: !!document.querySelector("[data-polycab-share-actions]"),
+          holding: txt("[data-polycab-holding]"),
+          pledge: txt("[data-polycab-pledge]"),
+        };
+      });
       // THE CAPITAL-CALL TIMELINE, READ STRUCTURALLY.
       //
       // Every claim here is about a BUCKET — which windows exist, which carry a
@@ -14509,7 +14728,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -27,7 +27,8 @@
     "probe:sources": "node scripts/harvest/probe-sources.mjs",
     "build-lookthrough": "node scripts/build-fund-lookthrough.mjs",
     "build-scheme-names": "node scripts/build-scheme-names.mjs",
-    "replay:movements": "node scripts/replay-demat-movements.mjs"
+    "replay:movements": "node scripts/replay-demat-movements.mjs",
+    "build-polycab": "node scripts/build-polycab-live.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
