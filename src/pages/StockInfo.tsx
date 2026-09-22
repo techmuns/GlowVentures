@@ -14,6 +14,7 @@ import {
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
+import { fundNavFor } from "@/lib/fundNavs";
 import type { Position } from "@/lib/types";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -421,6 +422,13 @@ export function StockInfo() {
    * identically are one figure as far as a reader is concerned, and two it
    * prints differently are genuinely two.
    */
+  /**
+   * THE PUBLISHED NAV BEHIND THIS HOLDING, where one priced it. Read for the
+   * CAPTION only — the figure itself already flows through `currentPrice`,
+   * which `applyFundNavs` overlaid at the context. Reading it again to compute
+   * a value would be a second source for one number.
+   */
+  const navMark = rows.some((r) => r.navPriced) ? fundNavFor({ securityKey }) : null;
   const cmpMarks = [...new Set(rows.map((r) => r.currentPrice)
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v))
     .map(price))];
@@ -530,6 +538,10 @@ export function StockInfo() {
                   }. Each is beside its own statement in Position by account below.`
                 : cmp === null
                 ? "no per-unit mark — this holding is reported at a total value, not a price per unit"
+                : navMark
+                ? `NAV · AMFI's published figure for ${navMark.scheme}, ${navMark.date}${
+                    navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on the day`
+                  } — a fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote`
                 : live
                 ? `CMP · live${sym ? ` · ${sym}` : ""}`
                 : (() => {
@@ -722,7 +734,9 @@ export function StockInfo() {
                       <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
                         {r.currentPrice === null
                           ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
-                          : <span title={`Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
+                          : <span title={r.navPriced
+                              ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
+                              : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
                               {price(r.currentPrice)}
                             </span>}
                       </td>

@@ -146,7 +146,52 @@ function bookArray(src, name) {
   if (start < 0) return null;
   const end = src.indexOf("\n];", start);
   if (end < 0) return null;
-  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+  let out;
+  try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER.
+  return name === "BOOK_POSITIONS" ? withPublishedNavs(out) : out;
+}
+
+/**
+ * ── THE PUBLISHED NAV, RE-EXPRESSED ────────────────────────────────────────
+ *
+ * `PortfolioContext` overlays AMFI's daily NAV onto every fund it may value, so
+ * a page renders ₹713.18 Cr where `glowData.ts` says ₹710.39 Cr. Thirty
+ * derivations in this file read `BOOK_POSITIONS` and reconcile their answer
+ * against a RENDERED figure; left on the statement basis, every partition check
+ * in the file compares two different books and eleven of them failed against
+ * pages that were right.
+ *
+ * Applied HERE rather than at each call site, because thirty patches is thirty
+ * chances to miss one — and a missed one fails loudly rather than silently,
+ * which is the only reason that trade is safe.
+ *
+ * RE-EXPRESSED AND NEVER IMPORTED from `src/lib/fundNavs.ts`, on the same terms
+ * as `isMandateHeld` and `NAV_MOVERS_BOOK`: a check that calls the helper it is
+ * checking agrees with it by construction. The two agreeing is the measurement.
+ * Only the fields a price may move are touched — §6, the same rule the overlay
+ * itself is held to, asserted field by field in `fundNavs.test.ts`.
+ */
+function withPublishedNavs(positions) {
+  let by;
+  try {
+    const nsrc = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+    const i = nsrc.indexOf("export const BOOK_FUND_NAVS");
+    const a = nsrc.indexOf("= [", i), b = nsrc.indexOf("\n];", a);
+    by = new Map(JSON.parse(nsrc.slice(a + 2, b + 2))
+      .filter((e) => e.usableForValue).map((e) => [e.securityKey, e]));
+  } catch { return positions; }   // no store committed — the pages render the same
+  return positions.map((p) => {
+    const e = by.get(p.securityKey);
+    if (!e || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
+    const marketValue = Number(p.quantity) * e.nav;
+    const cost = p.costBasis;
+    const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);
+    const unrealizedPnL = costNA ? p.unrealizedPnL : marketValue - cost;
+    return { ...p, currentPrice: e.nav, marketValue, unrealizedPnL,
+      returnPct: costNA || unrealizedPnL === null ? p.returnPct : (unrealizedPnL / cost) * 100,
+      navPriced: true, navDate: e.date };
+  });
 }
 
 /** The same, for a generated OBJECT literal (`BOOK_POSITION_TRANCHES`). */
@@ -1785,32 +1830,46 @@ const CMP_BOOK = (() => {
     split.sort((a, b) => b.mv - a.mv);
     unmarked.sort((a, b) => b.mv - a.mv);
     /**
-     * THE ONE HOLDING THAT PROVES THE MARK IS A PRIMITIVE.
+     * THE LARGEST HOLDING THE PUBLISHED NAV PRICES.
      *
-     * `currentPrice` equals `marketValue / quantity` on 346 of the 347 positions
-     * that carry both — which is exactly why a cell that DERIVED it would render
-     * identically on every route this sweep walks and be invisible. `ICICI NFT NT
-     * 50 DP G` is the one that separates them: its statement prints a rate of
-     * 60.4 against a value column implying 60.4167, so the page shows ₹60.4 and a
-     * derivation would show ₹60.42.
+     * A fund resolves no NSE trading symbol, so the quote feed never reaches
+     * one and a scheme sat at its last statement mark — a month of drift on
+     * this book. `build-fund-navs` commits AMFI's own daily NAV and the context
+     * overlays it, so this route is where that is checked on a rendered page.
      *
-     * It is worth ₹2.90 and the negligible floor drops it from every holdings
-     * table — `/stock/:securityKey` does not apply the floor, which is what makes
-     * it reachable at all. Found by its own PROPERTY rather than by its key, so
-     * the next drop picks whichever holding has it.
+     * DERIVED FROM THE COMMITTED STORE, never typed, so the next drop picks its
+     * own. An address that resolves nothing lands on a page with no table,
+     * which would satisfy every generic check while asserting nothing — so the
+     * route's own premise check FAILS rather than abstaining.
+     *
+     * (This replaced a `derivedKey` route that proved the book's mark is READ
+     * rather than computed as value ÷ quantity. The overlay sets
+     * `marketValue = quantity × NAV`, so on every priced holding the two are
+     * equal BY CONSTRUCTION and the one witness is itself priced — the rendered
+     * page can no longer see the distinction and that route would have passed
+     * trivially. The claim moved to `fundNavs.test.ts`, where it is still true
+     * of the book; the route was retired rather than left unable to fail.)
      */
-    const derived = positions.filter((x) => typeof x.currentPrice === "number"
-      && Number(x.quantity) > 0
-      && Math.abs(x.currentPrice - Number(x.marketValue) / Number(x.quantity)) >= 0.005)
-      .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0));
+    let navKey = null, navRec = null;
+    try {
+      const nsrc = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+      const navs = (bookArray(nsrc, "BOOK_FUND_NAVS") ?? []).filter((e) => e.usableForValue);
+      const byKey = new Map(navs.map((e) => [e.securityKey, e]));
+      const best = positions
+        .filter((p) => byKey.has(p.securityKey) && Number(p.quantity) > 0)
+        .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0))[0];
+      if (best) { navKey = best.securityKey; navRec = byKey.get(best.securityKey); }
+    } catch { /* the store may not exist on a checkout that never ran the builder */ }
     return {
-      derivedKey: derived[0]?.securityKey ?? null,
+      navKey,
+      navNav: navRec?.nav ?? null,
+      navDate: navRec?.date ?? null,
       splitKey: split[0]?.key ?? null,
       splitMarks: split[0]?.marks ?? [],
       splitCount: split.length,
       unmarkedKey: unmarked[0]?.key ?? null,
     };
-  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, derivedKey: null }; }
+  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, navKey: null, navNav: null, navDate: null }; }
 })();
 
 const CIO_BUCKET_HREFS = [];
@@ -2630,18 +2689,9 @@ const ROUTES = [
   // wording: a reader told the statements disagree would go looking for a
   // second figure that was never printed.
   ["stock-cmp-unmarked", () => (CMP_BOOK.unmarkedKey ? `/stock/${encodeURIComponent(CMP_BOOK.unmarkedKey)}` : "/stock/no-unmarked-holding-in-the-book")],
-  // ...and the one holding whose printed rate is NOT market value over
-  // quantity, which is the only evidence in this book that the mark is read
-  // rather than derived. Without it a cell that divided would render the same
-  // figure on every other route and no check could see it.
-  //
-  // IT IS WORTH ₹2.90, so its fund look-through reports each disclosed company
-  // at a rounded ₹0 and this route prints ~50 `zeroish` leads. They are
-  // CORRECT — a share of ₹2.90 is ₹0 at the precision the page prints — and
-  // `zeros` is a lead rather than a verdict in this runner, which is why the
-  // route still reads clean. Do not "fix" them, and do not swap the route for a
-  // larger holding: there is no other, and the property is what it is walked for.
-  ["stock-cmp-derived", () => (CMP_BOOK.derivedKey ? `/stock/${encodeURIComponent(CMP_BOOK.derivedKey)}` : "/stock/no-holding-whose-rate-differs-in-the-book")],
+  // ...and the largest holding AMFI's published NAV prices, which is where the
+  // daily refresh is checked on a rendered page.
+  ["stock-cmp-nav", () => (CMP_BOOK.navKey ? `/stock/${encodeURIComponent(CMP_BOOK.navKey)}` : "/stock/no-nav-priced-holding-in-the-book")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -10132,7 +10182,25 @@ const INVARIANTS = {
     // PM-2. What the page shows plus what it says it left out must reconstruct
     // the whole book. Narrowing on the wrong axis moves one side and not the other.
     ["private value + the classes named as excluded reconstructs the consolidated NAV", (t) => {
-      const nav = cr(new RegExp(CR).exec(t)?.[1]);                 // header chip, first ₹…Cr
+      /**
+       * THE PAGE'S OWN DENOMINATOR, NOT THE FIRST FIGURE IN THE DOCUMENT.
+       *
+       * This read the first `₹…Cr` in the body text, which is the TOP BAR's
+       * current value of holdings — app chrome, not part of this page's
+       * arithmetic. The two coincided for as long as nothing could price a
+       * fund, and stopped the day the published NAV did: the top bar renders
+       * the LIVE book while this page reads `statementPortfolio` by design
+       * (§6 — a reader checks these rows against the PDF, so they must not
+       * drift with a price), so the check was reconciling a statement-basis
+       * partition against a live-basis total and failed by exactly the NAV
+       * overlay.
+       *
+       * The page prints its own denominator in words — "N% of the ₹X Cr book" —
+       * and that is the figure its parts are a partition OF. Struck on it, the
+       * claim is about this page's own consistency, which is what it was
+       * always for.
+       */
+      const nav = cr(new RegExp(String.raw`of the ` + CR + String.raw`\s+book`, "i").exec(t)?.[1]);
       const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const rest = [...(new RegExp(String.raw`Not on this page:([^\n]{0,400})`, "i").exec(t)?.[1] ?? "")
         .matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
@@ -13327,24 +13395,41 @@ const INVARIANTS = {
    * that was never printed.
    */
   /**
-   * ── THE MARK IS READ, NOT DERIVED ──────────────────────────────
+   * ── THE PUBLISHED NAV REACHES THE HOLDING ──────────────────────────────
    *
-   * The shared per-cell check reconciles the rendered figure against
-   * `data-cmp`, and on 346 of 347 positions `currentPrice` IS `marketValue /
-   * quantity` — so a cell that divided would agree with the book everywhere
-   * this sweep walks. This route is the one holding that separates them.
+   * *"Current value of any fund or Mutual Fund that can easily be fetched from
+   * online sources should show present value… Live values of any investment,
+   * we should show it on all the relevant places automatically."*
+   *
+   * Every expectation comes from the committed store on the run, so this
+   * cannot go stale when the daily workflow moves a NAV.
    */
-  "stock-cmp-derived": [
+  "stock-cmp-nav": [
     ...stockLayoutChecks(),
-    ["the cell prints the rate the statement printed, not value over quantity",
+    ["the price shown is the published NAV, not the statement's own mark",
       (t, ctx) => {
-        const c = (ctx.posTable?.cmps ?? []).find((x) => x.book !== "");
-        if (!c) return false;
-        const shown = rupees(c.text);
-        return shown.length === 1 && sameMark(shown[0], Number(c.book));
+        const shown = rupees(ctx.stockMark?.value ?? "");
+        return CMP_BOOK.navNav != null && shown.length === 1 && sameMark(shown[0], CMP_BOOK.navNav);
       }],
-    ["the book carries a holding whose printed rate is not its value over quantity",
-      () => !!CMP_BOOK.derivedKey],
+    // ...AND SAYS SO. A NAV rendered under the statement-mark caption would be
+    // a figure from one source wearing another's label — and the caption is
+    // the only thing on the page that can tell a reader which it is.
+    ["...and the caption names AMFI and the NAV's own publication date",
+      (t, ctx) => {
+        const cap = ctx.stockMark?.caption ?? "";
+        return /AMFI/i.test(cap) && !!CMP_BOOK.navDate && cap.includes(CMP_BOOK.navDate)
+          && !/statement mark/i.test(cap);
+      }],
+    // THE VALUE FOLLOWED THE PRICE. A page that showed the new NAV over a
+    // market value still struck at the old mark is the worst of both.
+    ["every row's value is its own units at that NAV",
+      (t, ctx) => {
+        const cells = (ctx.posTable?.cmps ?? []).filter((c) => c.book !== "");
+        return cells.length > 0 && CMP_BOOK.navNav != null
+          && cells.every((c) => sameMark(Number(c.book), CMP_BOOK.navNav));
+      }],
+    ["the book carries a holding the published NAV prices",
+      () => !!CMP_BOOK.navKey && CMP_BOOK.navNav != null],
   ],
   "stock-cmp-unmarked": [
     ...stockLayoutChecks(),
