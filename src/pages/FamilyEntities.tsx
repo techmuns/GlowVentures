@@ -3,10 +3,8 @@ import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
 } from "recharts";
 import { Link, useSearchParams } from "react-router-dom";
-import { Users, Building2, UserCheck, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
-import { StatTile } from "@/components/StatTile";
 import { SearchInput } from "@/components/SearchInput";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -21,14 +19,14 @@ import {
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
-import { AbsentCell, AbsentSection, absentTile } from "@/components/Absent";
+import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
 /** The entity table's columns, in the order its rows write their cells. */
-const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "toDate", "ytd", "custody"] as const;
+const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "toDate", "ytd"] as const;
 /** ...and the holdings table beneath it. */
 const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
@@ -120,7 +118,6 @@ export function FamilyEntities() {
     return: (e) => e.returnPct,
     toDate: (e) => ownerMeasuredReturn(portfolio, p, e.key).toDatePct,
     ytd: (e) => entityYtdPct(portfolio, e.key, e.mv),
-    custody: (e) => [...(custodiansByOwner.get(e.key) ?? [])].sort().join(", "),
   });
   // See ENTITY_PARAM above. Resolved against the entities THIS BOOK carries, so
   // a name that resolves in the registry but owns nothing here still falls back
@@ -144,8 +141,19 @@ export function FamilyEntities() {
   // Transition), so custodian totals came to ₹338.61 Cr, ₹3.17 Cr over family NAV.
   const consolidatedRows = dedupedPositions(p);
   const cust = byCustodian(consolidatedRows, portfolio.accounts);
-  // Which platforms hold each owner's assets — the honest answer to "custody"
-  // at entity granularity, where a single label would be a guess.
+  /**
+   * Which platforms hold each owner's assets — the honest answer to "custody"
+   * at entity granularity, where a single label would be a guess.
+   *
+   * IT WAS A COLUMN AND IS NOW THE ENTITY CELL'S OWN HOVER, at the family's
+   * request: one member here holds through fourteen platforms, so it was the
+   * widest cell in the table and the reason the table could not sit beside the
+   * pie. A hover is weaker than a column and is said so rather than glossed —
+   * what makes the trade affordable is that the fact is not merely preserved
+   * here but ANSWERED BETTER one click in: clicking the row scopes the page to
+   * that entity, where the holdings table names the platform PER ROW and says
+   * which of them CHOSE it, which a set of names per owner cannot.
+   */
   const custodiansByOwner = new Map<string, Set<string>>();
   for (const x of p) {
     const who = ownerOf(accIdx, x);
@@ -153,6 +161,13 @@ export function FamilyEntities() {
     set.add(custodyLabelOf(accIdx, x));
     custodiansByOwner.set(who, set);
   }
+  const custodyNote = (who: string) => {
+    const list = [...(custodiansByOwner.get(who) ?? [])].sort();
+    if (!list.length) return undefined;
+    return `Held through ${list.length} platform${list.length === 1 ? "" : "s"}: ${list.join(", ")}.`
+      + ` Which of them CHOSE each holding is a different question — click this row for ${who}'s own table,`
+      + ` where the platform and the route are on each holding rather than gathered per owner.`;
+  };
   const routeOf = (x: Position) => holdingRoute(engagementOf(accIdx, x) || null);
   const bucketOf = (x: Position) => holdingBucket(x, engagementOf(accIdx, x) || null);
   /**
@@ -212,8 +227,45 @@ export function FamilyEntities() {
   const ownElsewhereWhere = [...new Set(ownElsewhere.map((x) => custodyLabelOf(accIdx, x)))].sort();
   const externalMV = totalMV - directMV;
   const externalCustodians = cust.filter((c) => c.key !== DIRECT);
-  const largest = entities[0];
-  const entityChart = entities.slice(0, 12).map((e) => ({ name: e.key, value: convertFromBase(e.mv) }));
+  /**
+   * ── THE TWO FIGURES THE REMOVED TILES CARRIED AND NOTHING ELSE STATES ─────
+   *
+   * The pie's legend prints every custodian's VALUE and no share of anything;
+   * the two percentages were the tiles' own, and they are what a reader takes
+   * off this card. Rendered in the subtitle rather than left to be divided:
+   * the legend's own rows do not add to the book on screen, because the book's
+   * total is not on this card.
+   *
+   * The arithmetic rides in one `title` on the line, which is what an
+   * `Auditable` popover would say — the underline itself is what the family
+   * have been removing from figures, and a subtitle is not a figure.
+   */
+  const pctOfBook = (n: number) => `${((n / totalMV) * 100).toFixed(0)}%`;
+  const splitWorking = `In-house = ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${pctOfBook(directMV)}.`
+    + ` External = ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${pctOfBook(externalMV)}.`
+    + ` The denominator is the whole consolidated book — every account and every asset class, each dedupeGroup counted once.`;
+  /**
+   * WHAT THIS FIGURE IS NOT, which is the one claim from the removed tile that
+   * will not fit a caption. Custody answers WHERE an asset sits; the holdings
+   * tables' Direct Equity answers WHO CHOSE IT, and the two sets differ in BOTH
+   * directions on this book — the in-house accounts hold funds and ETFs that are
+   * not shares in a company at all, and the family's own broker-executed shares
+   * are filed under the broker. Every figure in it is derived, so it follows the
+   * book rather than this comment.
+   */
+  const inHouseNote = [
+    `Custody, not choice — every asset class at those accounts`
+      + (inHouseNotShares.length > 0 ? `, of which ${money(inHouseNotSharesMV)} is not a share in a company at all (${classList(inHouseNotShares)})` : "")
+      + `.`,
+    `The holdings tables' Direct Equity is a different set: company shares only, ${money(directEquityMV)}`
+      + (ownElsewhere.length > 0 ? `, and it includes ${money(ownElsewhereMV)} bought through ${ownElsewhereWhere.join(", ")}, which custody files under that name rather than here` : "")
+      + `.`,
+    inHouseAccountsUnreported > 0
+      ? `The other ${inHouseAccountsUnreported} in-house account${inHouseAccountsUnreported === 1 ? "" : "s"} in the registry`
+        + ` ${inHouseAccountsUnreported === 1 ? "carries" : "carry"} no position in this book, so`
+        + ` ${inHouseAccountsUnreported === 1 ? "it is" : "they are"} outside this figure rather than counted at zero.`
+      : "",
+  ].filter(Boolean).join(" ");
   const custPie = cust.map((c) => ({ name: c.key, value: c.mv }));
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   const selected = scope === ALL_ENTITIES ? null : p.filter((x) => ownerOf(accIdx, x) === scope);
@@ -418,28 +470,32 @@ export function FamilyEntities() {
           <BasisPill liveText="Live prices" hint="Entity NAVs are rebuilt from live prices where a quote exists; cost basis comes from the statements." />
           <Pill tone="info">{entities.length} entities</Pill>
         </div>} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Entities" value={entities.length} sub="distinct owners in the book" icon={<Users className="h-4 w-4" />} />
-        <StatTile label="Largest entity" value={largest?.key ?? "—"} sub={largest ? <>{fmtFromBase(largest.mv, { compact: true })}{" · "}<Auditable formula={weightFormula(largest.mv, totalMV, largest.weight * 100, money, WEIGHT_OF)}>{`${(largest.weight * 100).toFixed(0)}%`}</Auditable></> : "—"} icon={<Building2 className="h-4 w-4" />} />
-        {direct
-          ? <StatTile label="In-house custody"
-              value={<Auditable formula={{ title: "In-house custody share", excel: "= In-house market value ÷ Total market value × 100", plain: "The share of the whole book — every asset class — sitting at accounts the family runs itself, with no manager and no distributor between it and the issuer. This is a CUSTODY figure. It is NOT the holdings tables' Direct Equity, which counts company shares only and includes shares bought through a broker.", worked: `= ${money(directMV)} ÷ ${money(totalMV)} × 100 = ${((directMV / totalMV) * 100).toFixed(0)}%`,  }}>{`${((directMV / totalMV) * 100).toFixed(0)}%`}</Auditable>}
-              sub={<>{fmtFromBase(directMV, { compact: true })}{inHouseAccountsUnreported > 0
-                ? ` · ${directAccounts} of ${inHouseAccountsInRegistry} accounts`
-                : ` · ${directAccounts} account${directAccounts === 1 ? "" : "s"}`}</>}
-              hint={<>Custody, not choice — every asset class at those accounts{inHouseNotShares.length > 0 && <>, of which {money(inHouseNotSharesMV)} is not a share in a company at all ({classList(inHouseNotShares)})</>}. The holdings tables&rsquo; <span className="text-slate-400">Direct Equity</span> is a different set: company shares only, {money(directEquityMV)}{ownElsewhere.length > 0 && <>, and it includes {money(ownElsewhereMV)} bought through {ownElsewhereWhere.join(", ")}, which custody files under that name rather than here</>}.{inHouseAccountsUnreported > 0 && <> The other {inHouseAccountsUnreported} in-house account{inHouseAccountsUnreported === 1 ? "" : "s"} in the registry {inHouseAccountsUnreported === 1 ? "carries" : "carry"} no position in this book, so {inHouseAccountsUnreported === 1 ? "it is" : "they are"} outside this figure rather than counted at zero.</>}</>}
-              icon={<Wallet className="h-4 w-4" />} />
-          : <StatTile label="In-house custody"
-              {...absentTile(
-                inHouseAccountsInRegistry > 0
-                  ? `the ${inHouseAccountsInRegistry} in-house account${inHouseAccountsInRegistry === 1 ? "" : "s"} in this book report no holdings`
-                  : "no account in this book is held in the family's own name at the issuer",
-                inHouseAccountsInRegistry > 0
-                  ? "The accounts exist in the registry and no statement in this drop values a holding in one, so there is nothing to measure. A 0% would say they are empty, which is a different claim from not having been reported."
-                  : "Every account here reaches its assets through a manager, a distributor or a broker, so there is no in-house bucket to measure. A 0% would say the family runs an in-house book that holds nothing, which is a different claim.")}
-              icon={<Wallet className="h-4 w-4" />} />}
-        <StatTile label="External custodians" value={<Auditable formula={{ title: "External-custody share", excel: "= External market value ÷ Total market value × 100", plain: "The share of the whole book held through external custodians, managers, distributors and brokers, rather than in the family's own name at the issuer.", worked: `= ${money(externalMV)} ÷ ${money(totalMV)} × 100 = ${((externalMV / totalMV) * 100).toFixed(0)}%`,  }}>{`${((externalMV / totalMV) * 100).toFixed(0)}%`}</Auditable>} sub={<>{externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}{" · "}{fmtFromBase(externalMV, { compact: true })}</>} icon={<UserCheck className="h-4 w-4" />} />
-      </div>
+      {/*
+        ── THE FOUR KPI TILES ARE GONE, AND THE TWO CLAIMS THAT HAD NO SECOND
+           HOME ARE ON THE CARD THAT DRAWS THE SPLIT ──────────────────────────
+
+        *"remove the 4 KPI tiles at the top of Families and Entities Page."*
+        Audited claim by claim before anything went, which is the whole of the
+        work — two of the four were already stated elsewhere on this page and
+        two were not:
+
+          · ENTITIES — the count is in the header pill, on every view. Gone.
+          · LARGEST ENTITY — `bucketBy` sorts by market value descending, so the
+            Entity breakdown's FIRST ROW is that entity, with its NAV and its
+            weight at one more decimal than the tile printed. Gone.
+          · IN-HOUSE CUSTODY — its VALUE is a legend row on the pie beside it,
+            and its PERCENTAGE, its account coverage and the whole
+            custody-is-not-Direct-Equity disclosure were nowhere else. MOVED to
+            that card: the split into the subtitle, the disclosure onto the
+            legend row it is about.
+          · EXTERNAL CUSTODIANS — every custodian and its value is a legend row;
+            the percentage, the count and the total were not. MOVED to the same
+            subtitle.
+
+        A hover is weaker than a caption, and that is recorded rather than
+        glossed: the two SPLIT FIGURES are rendered, and only the long
+        two-sets paragraph is a `title`, on the row it describes.
+      */}
       <div className="mt-5 flex flex-wrap items-center gap-1.5">
         {[ALL_ENTITIES, ...entities.map((e) => e.key)].map((m) => {
           const active = scope === m;
@@ -452,50 +508,36 @@ export function FamilyEntities() {
           );
         })}
       </div>
+      {/*
+        ── ONE ROW: THE TABLE LEFT, THE CUSTODY SPLIT RIGHT ────────────────────
+
+        *"The final view should be the table on the left side and on the right
+        side 'in house vs external' pie chart and section. Without any
+        scrollable page."* The bar chart that held the left two thirds is gone
+        and the Entity breakdown takes its place, so the two cards that survive
+        sit side by side instead of stacked.
+
+        NOTHING THE BAR CHART MEASURED IS LOST WITH IT: it plotted `e.mv` per
+        entity, which is the NAV column of the very table now beside it — the
+        same six figures, to the rupee rather than to a pixel, with the weight,
+        the position count and the returns the chart could not carry. That is
+        why this removal needed no fact moved and the KPI tiles above it did.
+
+        `items-start` keeps each card its own height: stretched, the table would
+        grow a dead band to match the 17-row legend beside it.
+      */}
       {!selected && (
-        <>
-          <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
-            <Card className="lg:col-span-2" title="Market value by entity">
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={entityChart} margin={{ top: 8, right: 8, left: 8, bottom: 40 }}>
-                    <CartesianGrid stroke="#2b2668" strokeDasharray="2 4" vertical={false} />
-                    <XAxis dataKey="name" stroke="#6b6880" fontSize={10} interval={0} angle={-25} textAnchor="end" height={60} />
-                    <YAxis stroke="#6b6880" fontSize={11} tickFormatter={axisFmt} width={84} />
-                    <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                      formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "NAV"]} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
-                    <Bar dataKey="value" radius={[3, 3, 0, 0]}>
-                      {entityChart.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-            <Card title={direct ? "In-house vs external" : "Custody"}
-              subtitle={direct ? "Where the capital sits — the platform, not the decision" : `Who custodies the capital — all of it external, across ${externalCustodians.length} manager${externalCustodians.length === 1 ? "" : "s"}`}>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={custPie} dataKey="value" innerRadius={46} outerRadius={70} paddingAngle={2} stroke="none">
-                      {custPie.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                      formatter={(v: number) => fmtFromBase(v, { compact: true })} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <ul className="mt-3 space-y-1.5">
-                {cust.map((c, i) => (
-                  <li key={c.key} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />{c.key}</span>
-                    <span className="mono text-slate-200">{fmtFromBase(c.mv, { compact: true })}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </div>
-          <Card className="mt-5" title="Entity breakdown" pad={false}>
-            <div className="overflow-x-auto">
+        <div className="mt-5 grid gap-5 lg:grid-cols-3 items-start">
+          <Card className="lg:col-span-2" title="Entity breakdown" pad={false}>
+            {/* A STRUCTURAL HANDLE, because every claim this change has to keep
+                is about STRUCTURE OR GEOMETRY — which columns the table draws,
+                and that it sits BESIDE the custody card rather than above it.
+                Struck on a card title instead, both would rest on prose a
+                redesign is free to reword — and on a page whose right-hand card
+                RENAMES ITSELF to "Custody" when this book has no in-house
+                bucket, so even the title is not a constant. That card is found
+                by the pie inside it, for the same reason. */}
+            <div className="overflow-x-auto" data-family-table>
               <table className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
                   <Tr view={entityView}>
@@ -507,7 +549,21 @@ export function FamilyEntities() {
                     <SortHeader col="return" view={entityView} title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</SortHeader>
                     <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
                     <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
-                    <SortHeader col="custody" view={entityView} align="left">Custody</SortHeader>
+                    {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
+                        table (one entity holds through fourteen platforms) and it
+                        is what made this table too wide to sit beside the pie.
+                        The LIST is not lost: it is the Entity cell's own hover,
+                        which is weaker than a column and is recorded as such. The
+                        per-holding answer — which platform, and which of them
+                        CHOSE the row — is one click in, on this entity's own
+                        table, where it is per row rather than a set per owner.
+
+                        IT LEAVES `ENTITY_COLS` AND THE ACCESSOR MAP WITH IT. A
+                        declared column with no cell puts every later cell under
+                        the wrong header once a reader reorders, and an accessor
+                        for an id nothing declares is the dead-code-that-looks-
+                        alive failure — both are the cost of removing a column
+                        from the MARKUP alone under Stage 10bh's model. */}
                   </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
@@ -522,11 +578,19 @@ export function FamilyEntities() {
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     return (
                       <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
-                        <td className="px-4 py-2.5 font-medium text-slate-100">{e.key}</td>
-                        <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(e.mv, { compact: true })}</td>
+                        {/* The platform list the Custody column used to carry.
+                            A hover is weaker than a column; what makes the trade
+                            affordable is that this row is ALREADY a click target
+                            into the per-holding answer. */}
+                        <td className="px-4 py-2.5 font-medium text-slate-100" title={custodyNote(e.key)}>{e.key}</td>
+                        {/* A money figure is ONE TOKEN however narrow its column
+                            gets: at two thirds of the width `₹349.5 Cr` broke
+                            across two lines. The Entity name legitimately wraps
+                            and absorbs it. */}
+                        <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
@@ -538,9 +602,6 @@ export function FamilyEntities() {
                             ? <AbsentCell reason="needs a per-entity NAV on 1 April; no statement in this book carries one" />
                             : fmtPct(ytdPct, { sign: true })}
                         </td>
-                        <td className="px-4 py-2.5 text-left text-[12px] text-slate-400">
-                          {[...(custodiansByOwner.get(e.key) ?? [])].sort().join(", ") || "—"}
-                        </td>
                       </Tr>
                     );
                   })}
@@ -548,7 +609,68 @@ export function FamilyEntities() {
               </table>
             </div>
           </Card>
-        </>
+          {/*
+            ── AND THE CARD THE IN-HOUSE TILE'S CLAIMS MOVED ONTO ──────────────
+
+            The pie has always drawn the split and its legend has always printed
+            every custodian's value. What it never printed is the SPLIT ITSELF —
+            the two percentages, the account coverage behind the in-house one and
+            the custodian count behind the external one — which is what the two
+            removed tiles carried and nothing else on this page states. All of it
+            is derived here, so it follows the book rather than this comment.
+          */}
+          <Card title={direct ? "In-house vs external" : "Custody"}
+            subtitle={direct
+              ? <>
+                  Where the capital sits — the platform, not the decision
+                  <span className="mt-1.5 block" data-custody-split title={splitWorking}>
+                    In-house <span className="mono text-slate-200">{pctOfBook(directMV)}</span> · {money(directMV)} ·{" "}
+                    {inHouseAccountsUnreported > 0
+                      ? <>{directAccounts} of {inHouseAccountsInRegistry} accounts</>
+                      : <>{directAccounts} account{directAccounts === 1 ? "" : "s"}</>}
+                    <span className="mx-1.5 text-slate-600">|</span>
+                    External <span className="mono text-slate-200">{pctOfBook(externalMV)}</span> · {money(externalMV)} ·{" "}
+                    {externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}
+                  </span>
+                </>
+              : <>
+                  Who custodies the capital — all of it external, across {externalCustodians.length} manager{externalCustodians.length === 1 ? "" : "s"}
+                  {/* WHY THERE IS NO IN-HOUSE SHARE, and the two reasons are not
+                      the same finding: an account nobody runs in-house and an
+                      in-house account reporting nothing are different asks. A 0%
+                      would say the family runs an in-house book that holds
+                      nothing, which is a third claim again. */}
+                  <span className="mt-1.5 block">
+                    {inHouseAccountsInRegistry > 0
+                      ? <>No in-house share to draw: the {inHouseAccountsInRegistry} in-house account{inHouseAccountsInRegistry === 1 ? "" : "s"} in this book report no holdings, so there is nothing to measure rather than a measured nil.</>
+                      : <>No in-house share to draw: every account here reaches its assets through a manager, a distributor or a broker.</>}
+                  </span>
+                </>}>
+            <div className="h-44">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={custPie} dataKey="value" innerRadius={46} outerRadius={70} paddingAngle={2} stroke="none">
+                    {custPie.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
+                    formatter={(v: number) => fmtFromBase(v, { compact: true })} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <ul className="mt-3 space-y-1.5">
+              {cust.map((c, i) => (
+                // THE TWO-SETS DISCLOSURE RIDES ON THE ROW IT IS ABOUT. It is the
+                // one claim the removed tile carried that will not fit a caption:
+                // that this figure is CUSTODY and not the holdings tables' Direct
+                // Equity, and that the two differ in BOTH directions on this book.
+                <li key={c.key} className="flex items-center justify-between text-xs" title={c.key === DIRECT ? inHouseNote : undefined}>
+                  <span className="flex items-center gap-2 text-slate-300"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />{c.key}</span>
+                  <span className="mono text-slate-200">{fmtFromBase(c.mv, { compact: true })}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </div>
       )}
       {selected && (
         <>
