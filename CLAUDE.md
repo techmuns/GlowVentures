@@ -13547,9 +13547,9 @@ checks: the merge, the two blocks never added, an absent half never zero, a
 security row with no account to value, the section disagreement, and — anchored
 on the generated book — that `capitalRollup`'s own account value and the merge's
 `valueOfAccount` agree to the paisa, which is two paths to one number rather
-than a figure compared with its own copy) · `check:family` · `check:pages`
-**180 combinations clean**, with the same **six** EVIDENCED abstentions Stage
-10bl records and not one of them introduced here. That count is 186 less the
+than a figure compared with its own copy) · `check:family` **82/0** ·
+`check:pages` **180 combinations clean**, with the same **six** EVIDENCED
+abstentions Stage 10bl records and not one of them introduced here. That count is 186 less the
 six combinations the three removed addresses walked, and it was RE-MEASURED
 rather than subtracted — every stage in this file states a count against a base
 that has since moved, and this one happens to reconcile only because the sweep
