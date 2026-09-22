@@ -22,6 +22,13 @@ import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The entity table's columns, in the order its rows write their cells. */
+const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "toDate", "ytd"] as const;
+/** ...and the holdings table beneath it. */
+const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
 import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
@@ -81,6 +88,8 @@ export function FamilyEntities() {
   const { portfolio, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
+  const entityView = useTableView("family-entities", ENTITY_COLS);
+  const holdView = useTableView("family-holdings", FE_HOLDING_COLS);
   if (!portfolio) return null;
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
@@ -98,6 +107,18 @@ export function FamilyEntities() {
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.
   const entities = byEntity(p, portfolio.accounts);
+  // The table's own order; the default is `byEntity`'s (largest first).
+  const entityRows = sortRows(entities, entityView.sort, {
+    entity: (e) => e.key,
+    nav: (e) => e.mv,
+    // Weight is this entity's value over the book's, so it orders as NAV does.
+    weight: (e) => e.mv,
+    positions: (e) => e.count,
+    pnl: (e) => e.pnl,
+    return: (e) => e.returnPct,
+    toDate: (e) => ownerMeasuredReturn(portfolio, p, e.key).toDatePct,
+    ytd: (e) => entityYtdPct(portfolio, e.key, e.mv),
+  });
   // See ENTITY_PARAM above. Resolved against the entities THIS BOOK carries, so
   // a name that resolves in the registry but owns nothing here still falls back
   // to All rather than drawing an entity with no rows.
@@ -414,7 +435,7 @@ export function FamilyEntities() {
      */
     const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
     return (
-      <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+      <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
         {/* WHO CHOSE THIS ROW. A section heading answers it for a group and stops
             answering it the moment the search box narrows the table, so the route
@@ -439,7 +460,7 @@ export function FamilyEntities() {
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
         <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
-      </tr>
+      </Tr>
     );
   };
   return (
@@ -519,15 +540,15 @@ export function FamilyEntities() {
             <div className="overflow-x-auto" data-family-table>
               <table className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">NAV</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Positions</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&L</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium" title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium" title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium" title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</th>
+                  <Tr view={entityView}>
+                    <SortHeader col="entity" view={entityView} align="left">Entity</SortHeader>
+                    <SortHeader col="nav" view={entityView}>NAV</SortHeader>
+                    <SortHeader col="weight" view={entityView}>Weight</SortHeader>
+                    <SortHeader col="positions" view={entityView}>Positions</SortHeader>
+                    <SortHeader col="pnl" view={entityView}>Unreal. P&L</SortHeader>
+                    <SortHeader col="return" view={entityView} title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</SortHeader>
+                    <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
+                    <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
                     {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
                         table (one entity holds through fourteen platforms) and it
                         is what made this table too wide to sit beside the pie.
@@ -535,11 +556,18 @@ export function FamilyEntities() {
                         which is weaker than a column and is recorded as such. The
                         per-holding answer — which platform, and which of them
                         CHOSE the row — is one click in, on this entity's own
-                        table, where it is per row rather than a set per owner. */}
-                  </tr>
+                        table, where it is per row rather than a set per owner.
+
+                        IT LEAVES `ENTITY_COLS` AND THE ACCESSOR MAP WITH IT. A
+                        declared column with no cell puts every later cell under
+                        the wrong header once a reader reorders, and an accessor
+                        for an id nothing declares is the dead-code-that-looks-
+                        alive failure — both are the cost of removing a column
+                        from the MARKUP alone under Stage 10bh's model. */}
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
-                  {entities.map((e) => {
+                  {entityRows.map((e) => {
                     // Money-weighted return over this owner's MEASURABLE accounts
                     // only — closing the whole entity MV against partial openings
                     // returned +147%/+353% here for real family members.
@@ -549,8 +577,16 @@ export function FamilyEntities() {
                       : `${fmtPct(mwr.annPct, { sign: true })} p.a. annualised. Covers ${money(mwr.measuredMV)} of ${money(e.mv)}${mwr.excluded.length ? ` — ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     return (
-                      <tr key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
+                      <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
+                        {/* The platform list the Custody column used to carry.
+                            A hover is weaker than a column; what makes the trade
+                            affordable is that this row is ALREADY a click target
+                            into the per-holding answer. */}
                         <td className="px-4 py-2.5 font-medium text-slate-100" title={custodyNote(e.key)}>{e.key}</td>
+                        {/* A money figure is ONE TOKEN however narrow its column
+                            gets: at two thirds of the width `₹349.5 Cr` broke
+                            across two lines. The Entity name legitimately wraps
+                            and absorbs it. */}
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
@@ -566,7 +602,7 @@ export function FamilyEntities() {
                             ? <AbsentCell reason="needs a per-entity NAV on 1 April; no statement in this book carries one" />
                             : fmtPct(ytdPct, { sign: true })}
                         </td>
-                      </tr>
+                      </Tr>
                     );
                   })}
                 </tbody>
@@ -683,16 +719,16 @@ export function FamilyEntities() {
             <div className="max-h-[520px] overflow-auto">
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
+                  <Tr view={holdView}>
+                    <SortHeader col="security" view={holdView} align="left">Security</SortHeader>
                     {/* WHO CHOSE IT. The complaint this page existed to answer and
                         did not: a Carnelian-managed share sat beside a self-bought
                         one with nothing on the row telling them apart. */}
-                    <th className="label-xs px-4 py-2 text-left font-medium">Held via</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Sector</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Market value</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                  </tr>
+                    <SortHeader col="heldVia" view={holdView} align="left">Held via</SortHeader>
+                    <SortHeader col="sector" view={holdView} align="left">Sector</SortHeader>
+                    <SortHeader col="value" view={holdView}>Market value</SortHeader>
+                    <SortHeader col="return" view={holdView}>Return</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
                   {groups.map((grp) => (
@@ -761,8 +797,9 @@ export function FamilyEntities() {
                 </tbody>
                 {holdings.length > 0 && (
                   <tfoot className="border-t border-ink-700 bg-ink-900/40">
-                    <tr>
-                      <td colSpan={3} className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                    <TrFoot view={holdView}
+                      className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300"
+                      label={<>
                         Total
                         <span className="ml-2 font-normal normal-case tracking-normal text-slate-500">
                           {filtered
@@ -773,16 +810,19 @@ export function FamilyEntities() {
                             ? <> · every one of these {visNoCost} {visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying {money(visNoCostMV)} with nothing to measure a return against</>
                             : <> · the return covers {money(visMV - visNoCostMV)} of the {money(visMV)} beside it, struck on {money(visCost)} of cost — the other {visNoCost} {visNoCost === 1 ? "row" : "rows"}, carrying {money(visNoCostMV)}, {visNoCost === 1 ? "reports" : "report"} no cost basis and {visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero</>)}
                         </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-100">{money(visMV)}</td>
-                      <td className={`px-4 py-2.5 text-right mono ${visRet == null ? "text-slate-500" : changeColor(visRet)}`}>
-                        {visRet == null
-                          ? <AbsentCell reason={visCost === null
-                              ? "no row on screen reports a cost basis, so there is nothing to strike a return on — a 0.00% here would read as a book that broke even"
-                              : "the rows on screen that do report a cost basis leave no positive cost to divide by, so no return can be struck — a 0.00% here would read as a book that broke even"} />
-                          : fmtPct(visRet, { sign: true })}
-                      </td>
-                    </tr>
+                      </>}
+                      cells={{
+                        value: <td key="value" className="px-4 py-2.5 text-right mono text-slate-100">{money(visMV)}</td>,
+                        return: (
+                          <td key="return" className={`px-4 py-2.5 text-right mono ${visRet == null ? "text-slate-500" : changeColor(visRet)}`}>
+                            {visRet == null
+                              ? <AbsentCell reason={visCost === null
+                                  ? "no row on screen reports a cost basis, so there is nothing to strike a return on — a 0.00% here would read as a book that broke even"
+                                  : "the rows on screen that do report a cost basis leave no positive cost to divide by, so no return can be struck — a 0.00% here would read as a book that broke even"} />
+                              : fmtPct(visRet, { sign: true })}
+                          </td>
+                        ),
+                      }} />
                   </tfoot>
                 )}
               </table>

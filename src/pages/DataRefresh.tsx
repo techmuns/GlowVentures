@@ -7,12 +7,18 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, dedupedPositions, isCompanyShare, isPrivateClass, excludedClasses, assetClassLabel, unpriced } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The account table's columns, in the order its rows write their cells. */
+const ACCOUNT_COLS = ["provider", "account", "owner", "strategy", "engagement", "asOf"] as const;
 import { DASH, absentTile } from "@/components/Absent";
 
 // Provenance and status of the ingested book. Unlike the analytics pages this
 // one is NOT gated on a non-empty book — when nothing has been ingested yet,
 // "nothing has been ingested yet" is exactly what this page exists to say.
 export function DataRefresh() {
+  const view = useTableView("data-refresh-accounts", ACCOUNT_COLS);
   const { portfolio, bookIsEmpty, fmtFromBase, clearPortfolio } = usePortfolio();
   if (!portfolio) return null;
   const p = portfolio.positions;
@@ -124,6 +130,14 @@ export function DataRefresh() {
   const fundCount = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length + pm.debtFunds.length;
   const hasPrivate = fundCount + pm.closedFunds.length + pm.startups.length > 0;
   const stale = staleAccounts(portfolio);
+  const accountRows = sortRows(portfolio.accounts, view.sort, {
+    provider: (a) => a.provider,
+    account: (a) => a.accountNo,
+    owner: (a) => a.owner,
+    strategy: (a) => a.strategy ?? null,
+    engagement: (a) => a.engagement ?? null,
+    asOf: (a) => a.asOf ?? null,
+  });
   const providers = [...new Set(portfolio.accounts.map((a) => a.provider))].sort();
 
   function exportCSV() {
@@ -214,20 +228,20 @@ export function DataRefresh() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Provider</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Account</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Owner</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Strategy</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Engagement</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">As of</th>
-                </tr>
+                <Tr view={view}>
+                  <SortHeader col="provider" view={view} align="left" pad="px-3 py-2">Provider</SortHeader>
+                  <SortHeader col="account" view={view} align="left" pad="px-3 py-2">Account</SortHeader>
+                  <SortHeader col="owner" view={view} align="left" pad="px-3 py-2">Owner</SortHeader>
+                  <SortHeader col="strategy" view={view} align="left" pad="px-3 py-2">Strategy</SortHeader>
+                  <SortHeader col="engagement" view={view} align="left" pad="px-3 py-2">Engagement</SortHeader>
+                  <SortHeader col="asOf" view={view} pad="px-3 py-2">As of</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {portfolio.accounts.map((a) => {
+                {accountRows.map((a) => {
                   const behind = stale.find((s) => s.account.accountId === a.accountId);
                   return (
-                    <tr key={a.accountId} className="hover:bg-ink-700/40">
+                    <Tr view={view} key={a.accountId} className="hover:bg-ink-700/40">
                       <td className="px-3 py-2 text-slate-100">{a.provider}</td>
                       <td className="px-3 py-2 mono text-[12px] text-slate-400">{a.accountNo}</td>
                       <td className="px-3 py-2 text-slate-300">{a.owner}</td>
@@ -239,7 +253,7 @@ export function DataRefresh() {
                           {a.asOf || "—"}{behind ? ` · −${behind.daysBehind}d` : ""}
                         </span>
                       </td>
-                    </tr>
+                    </Tr>
                   );
                 })}
               </tbody>

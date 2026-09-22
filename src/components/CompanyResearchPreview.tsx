@@ -5,6 +5,8 @@ import { Pill } from "@/components/Pill";
 import { AbsentCell } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtNum, fmtDate } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
 
 // COMPANY RESEARCH — the FOOS spec's deep company page. MIXED, now that the real
@@ -27,6 +29,9 @@ import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
 // an unverifiable figure is absent, not guessed. Book value and the rest are in
 // the live Financials tables above.
 
+/** The columns, in the order the insider table's rows write their cells. */
+const INSIDER_COLS = ["date", "insider", "type", "shares", "value", "post"] as const;
+
 export function CompanyResearchPreview({ name, ticker, price, live, low52, high52 }: {
   name: string;
   ticker: string | null;
@@ -37,6 +42,7 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
 }) {
   const { fmtFromBase } = usePortfolio();
   const [insider, setInsider] = useState<InsiderResponse | undefined>(undefined);
+  const view = useTableView("insider-trades", INSIDER_COLS);
 
   useEffect(() => {
     if (!ticker) { setInsider(null as unknown as InsiderResponse); return; }
@@ -52,7 +58,14 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
     return Math.min(100, Math.max(0, ((price - low52) / (high52 - low52)) * 100));
   }, [price, low52, high52]);
 
-  const items = insider && insider.ok ? (insider.items ?? []) : [];
+  const items = sortRows(insider && insider.ok ? (insider.items ?? []) : [], view.sort, {
+    date: (t) => (t.broadcastDate ? String(t.broadcastDate).slice(0, 10) : null),
+    insider: (t) => t.insider,
+    type: (t) => t.transaction,
+    shares: (t) => t.shares,
+    value: (t) => t.value,
+    post: (t) => (t.postPct ? Number(String(t.postPct).replace(/[^\d.-]/g, "")) : null),
+  });
 
   return (
     <div className="mt-6">
@@ -95,20 +108,20 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
           <div className="max-h-[360px] overflow-auto">
             <table className="min-w-full whitespace-nowrap text-[12.5px]">
               <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Date</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Insider</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Type</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Shares</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Value</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Post-holding</th>
-                </tr>
+                <Tr view={view}>
+                  <SortHeader col="date" view={view} align="left" pad="px-4 py-2">Date</SortHeader>
+                  <SortHeader col="insider" view={view} align="left" pad="px-3 py-2">Insider</SortHeader>
+                  <SortHeader col="type" view={view} align="left" pad="px-3 py-2">Type</SortHeader>
+                  <SortHeader col="shares" view={view} pad="px-3 py-2">Shares</SortHeader>
+                  <SortHeader col="value" view={view} pad="px-3 py-2">Value</SortHeader>
+                  <SortHeader col="post" view={view} pad="px-3 py-2">Post-holding</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
                 {items.slice(0, 40).map((t, i) => {
                   const acq = /acquisition|buy|purchase/i.test(t.transaction);
                   return (
-                    <tr key={t.key ?? i} className="hover:bg-ink-700/30">
+                    <Tr view={view} key={t.key ?? i} className="hover:bg-ink-700/30">
                       <td className="px-4 py-2 mono text-[11.5px] text-slate-400">{t.broadcastDate ? fmtDate(String(t.broadcastDate).slice(0, 10)) : "—"}</td>
                       <td className="px-3 py-2 max-w-[220px] truncate text-slate-300" title={t.insider}>{t.insider}</td>
                       <td className="px-3 py-2">
@@ -119,7 +132,7 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
                       <td className="px-3 py-2 text-right mono text-slate-300">{fmtNum(t.shares)}</td>
                       <td className="px-3 py-2 text-right mono text-slate-400">{t.value ? fmtFromBase(t.value, { compact: true }) : "—"}</td>
                       <td className="px-3 py-2 text-right mono text-slate-500">{t.postPct || "—"}</td>
-                    </tr>
+                    </Tr>
                   );
                 })}
               </tbody>

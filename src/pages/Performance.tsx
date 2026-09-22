@@ -7,6 +7,11 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, consolidatedMarketValue, sumOrNull } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The XIRR table's columns, in the order its rows write their cells. */
+const XIRR_COLS = ["account", "flows", "mv", "terminal", "return"] as const;
 import { xirrWithTerminal, pooledXirr, totalReturnFromXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
@@ -72,6 +77,7 @@ const acctLabel = (a: { owner?: string | null; provider: string; accountNo: stri
 
 export function Performance() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const xirrView = useTableView("performance-xirr", XIRR_COLS);
 
   const p = portfolio?.positions ?? [];
   // Concentration numerator counts each dedupeGroup once — over the raw set,
@@ -136,6 +142,13 @@ export function Performance() {
   //
   // So the consolidated row is over the measurable accounts, its market value is
   // theirs alone, and the excluded account is named on screen.
+  const xirrRows = sortRows(xirrByAccount, xirrView.sort, {
+    account: (x) => acctLabel(x.account),
+    flows: (x) => x.flows,
+    mv: (x) => (x.account.noPositionsReason ? null : x.mv),
+    terminal: (x) => x.account.asOf ?? null,
+    return: (x) => (x.pct == null ? null : totalReturnFromXirr(x.pct, daysTo(x.account.asOf))),
+  });
   const measurable = xirrByAccount.filter((x) => x.pct !== null);
   const unmeasurable = xirrByAccount.filter((x) => x.pct === null);
   const measuredFlows = measurable.flatMap((x) => (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
@@ -280,7 +293,12 @@ export function Performance() {
         subtitle="As each manager publishes it — portfolio against that manager's own benchmark"
         right={<Pill tone="info">{twrr.filter((t) => t.portfolio).length} of {accounts.length} accounts</Pill>}>
         <div className="overflow-x-auto">
-          <table className="w-full text-[12.5px]">
+          {/* Exempt, declared — the same class as `ReturnsTable`: the columns
+              after Account and Series are the manager's own period sequence
+              (1m → 3m → 6m → 1y → since inception), and a row is a portfolio
+              paired with its own benchmark, so the pair must stay adjacent. */}
+          <table className="w-full text-[12.5px]"
+            data-table-static="the columns after the first are a period sequence the manager publishes in order — moving one would break the sequence a reader reads them as">
             <thead className="label-xs border-b border-ink-700">
               <tr>
                 <th className="px-3 py-2 text-left">Account</th>
@@ -353,7 +371,11 @@ export function Performance() {
                   <p className="text-[11.5px] text-slate-500">{DASH} no flow block in this account's statements</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-[12.5px]">
+                    {/* Exempt, declared: TRANSPOSED — its rows are the bridge's
+                        fixed components and its columns are the statements that
+                        publish them. */}
+                    <table className="w-full text-[12.5px]"
+                      data-table-static="transposed — the rows are a fixed component list rather than records, and the columns are the statements that publish them">
                       <thead className="label-xs border-b border-ink-700">
                         <tr>
                           <th className="px-3 py-1.5 text-left">Component</th>
@@ -399,17 +421,17 @@ export function Performance() {
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
-              <tr>
-                <th className="px-3 py-2 text-left">Account</th>
-                <th className="px-3 py-2 text-right">Dated flows</th>
-                <th className="px-3 py-2 text-right">Market value</th>
-                <th className="px-3 py-2 text-right">Terminal date</th>
-                <th className="px-3 py-2 text-right" title="Money-weighted return earned to date — the annualised XIRR de-annualised to the account's window.">Return (to date)</th>
-              </tr>
+              <Tr view={xirrView}>
+                <SortHeader col="account" view={xirrView} align="left" pad="px-3 py-2">Account</SortHeader>
+                <SortHeader col="flows" view={xirrView} pad="px-3 py-2">Dated flows</SortHeader>
+                <SortHeader col="mv" view={xirrView} pad="px-3 py-2">Market value</SortHeader>
+                <SortHeader col="terminal" view={xirrView} pad="px-3 py-2">Terminal date</SortHeader>
+                <SortHeader col="return" view={xirrView} pad="px-3 py-2" title="Money-weighted return earned to date — the annualised XIRR de-annualised to the account's window.">Return (to date)</SortHeader>
+              </Tr>
             </thead>
             <tbody>
-              {xirrByAccount.map((x) => (
-                <tr key={x.account.accountId} className="border-t border-ink-700/60">
+              {xirrRows.map((x) => (
+                <Tr view={xirrView} key={x.account.accountId} className="border-t border-ink-700/60">
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(x.account)}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.flows}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-200">
@@ -425,7 +447,7 @@ export function Performance() {
                       ? <span className="text-[11px] text-slate-500">{DASH} {x.reason}</span>
                       : (() => { const tr = totalReturnFromXirr(x.pct, daysTo(x.account.asOf)); return <span className={(tr ?? 0) >= 0 ? "text-gain" : "text-loss"} title={`${fmtPct(x.pct, { sign: true, decimals: 1 })} p.a. annualised`}>{fmtPct(tr, { sign: true, decimals: 1 })}</span>; })()}
                   </td>
-                </tr>
+                </Tr>
               ))}
               <tr className="border-t-2 border-ink-600 font-semibold">
                 <td className="px-3 py-2.5 text-slate-200">

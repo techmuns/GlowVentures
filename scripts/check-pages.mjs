@@ -2012,6 +2012,23 @@ const ROUTES = [
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   /**
+   * ...AND THE SAME PAGE WITH EVERY METRIC SELECTED.
+   *
+   * The strip opens on four tiles at the family's request, so twelve of the
+   * eighteen metrics are not on screen by default — and every invariant that
+   * reads a tile's own words needs its subject. They moved here rather than
+   * being softened into something the default four satisfy, which is what a
+   * check that stopped running would look like.
+   *
+   * THE ADDRESS IS THE PICKER'S OWN OPTION LIST, captured on the walk above.
+   * Typed here it would be a second source for the catalogue and would go
+   * stale the first time a metric was added — and a stale list still renders a
+   * strip, so nothing would fail.
+   */
+  ["private-market-tiles", () => (PM_TILE_IDS.length
+    ? `/private-market?tiles=${PM_TILE_IDS.join(",")}`
+    : "/private-market?tiles=no-catalogue-captured-from-the-picker")],
+  /**
    * ── THE PRIVATE BOOK'S OTHER TWO VIEWS ───────────────────────────────────
    *
    * *"there are three separate sectioned tables… add a toggle button in the
@@ -2028,6 +2045,20 @@ const ROUTES = [
   ["private-market-folios", "/private-market?view=folios"],
   ["private-market-owners", "/private-market?view=owners"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
+  /**
+   * ...AND THE TRADES BRANCH OF THE SAME CARD.
+   *
+   *   *"why are there two separate tables in the transactions page, it should be
+   *    exactly one single simple table just like in the holdings."*
+   *
+   * The family's own capital and their managers' dealing were two stacked
+   * tables; they are one card with a toggle now, `capital` first. So the
+   * invariants that read the TRADES table moved here rather than being softened
+   * into something the capital branch can satisfy — a check that stops running
+   * because a table moved behind a toggle is a check that silently stopped, and
+   * this is the fourth time this file has had to say so.
+   */
+  ["monitor-txn-trades", "/monitor"],
   // ...AND THE MANAGER ROLLUP, WHICH IS NO LONGER THE DEFAULT. The family asked
   // for the transactions THEY made to lead, so `monitor-txns` above now lands on
   // My investments and the manager's own dealing is a tab. Its invariants moved
@@ -2040,6 +2071,19 @@ const ROUTES = [
   // claim is that those tranches account for the row — which is only testable
   // once one is expanded.
   ["monitor-tranche", "/monitor"],
+  /**
+   * ...AND THE HOLDINGS TABLE AFTER A READER HAS ARRANGED IT.
+   *
+   * The global table check asserts every heading CARRIES the controls; it
+   * cannot see whether either one does anything, and a sort button wired to
+   * nothing renders exactly like one that sorts. So this route clicks a money
+   * heading and then nudges a column, and the invariants read what actually
+   * moved: the row order, `aria-sort`, the `data-col` sequence — and the
+   * FOOTER's own span, which is the half that fails silently, because a footer
+   * left in declared order while the body follows a drag puts every total
+   * under the wrong heading.
+   */
+  ["monitor-arrange", "/monitor"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -2051,6 +2095,10 @@ const ROUTES = [
   // itself. Walked separately because a filter that silently matched nothing
   // renders an empty table that looks like a family which does not trade.
   ["monitor-txn-direct", "/monitor"],
+  // ...AND THE SAME FILTER ON THE CAPITAL BRANCH. See the block — the section
+  // filter is shared state and only this address can see it reach the second
+  // table.
+  ["monitor-txn-direct-capital", "/monitor"],
   // ...AND EACH SIDE OF THE FAMILY'S OWN CAPITAL RECORD, which is the defect the
   // family reported: *"nothing on the page is changing when I'm clicking either
   // of the filters."* The control was there and its value never reached the
@@ -2075,6 +2123,11 @@ const ROUTES = [
    * here by name.
    */
   ["monitor-txn-basket", "/monitor?group=basket"],
+  // ...ON THE TRADES BRANCH TOO. The axis is SHARED STATE, so one branch would
+  // very nearly cover it — but the two tables reach a section through different
+  // helpers (`forAccount` for an account, `forTxn` for a dated trade), and only
+  // this route can see the second regroup.
+  ["monitor-txn-basket-trades", "/monitor?group=basket"],
   /**
    * ...AND THE ONE AXIS TRANSACTIONS DOES NOT HAVE.
    *
@@ -2131,6 +2184,16 @@ const ROUTES = [
   // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
   // column shows both, each on its own labelled line.
   ["monitor-returns-multi", "/monitor?ret=absolute,cagr"],
+  /**
+   * ...AND A RETURN COLUMN SORTED ON ITS OWN FIGURE.
+   *
+   * With one column per measure a sort arrow on the CAGR column that ordered by
+   * the raw return on cost would be a control that LIES — and on this book the
+   * two orders genuinely differ, so it is checkable rather than theoretical.
+   * Walked as its own route because the comparator is only exercised once
+   * something clicks a header.
+   */
+  ["monitor-ret-sort", "/monitor?ret=absolute,cagr"],
   /**
    * ...AND THE FOURTH AXIS, WHICH IS NOT AN ALLOCATION AXIS AT ALL.
    *
@@ -2778,6 +2841,17 @@ let DIRECT_ALL = null;
  * report as NOT CHECKED rather than as a pass.
  */
 let AXIS_DRILL = null;
+/**
+ * WHAT THE HOLDINGS TABLE LOOKED LIKE BEFORE A SORT, AFTER IT, AND AFTER A
+ * COLUMN MOVED — see `monitor-arrange`. Every field is `null` on every other
+ * route, which its invariants report as NOT CHECKED rather than as a pass.
+ *
+ * Three snapshots rather than a before/after pair, because the two controls
+ * fail in different ways and one can mask the other: a `move` that silently
+ * cleared the sort would still reorder the columns, and comparing only the
+ * first and last states would call that a working move.
+ */
+const ARRANGE = { before: null, desc: null, sorted: null, moved: null };
 // THE CLUBBED FUND'S OWN EXPANSION — its class lines, read off the panel the
 // `monitor-fund-drill` walk opens. Null on every other route.
 let FUND_DRILL = null;
@@ -2811,6 +2885,28 @@ let RETURN_DROPDOWN = null;
  * "passing" by rendering the drill-down's own not-found state.
  */
 const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew it
+/**
+ * WHAT A READER CLICKED TO REACH EACH DRILL-DOWN — every label on Morning CIO
+ * that points at a given address, tile labels and link text alike.
+ *
+ * The crumb on `/holdings` is asserted against THIS rather than against a
+ * string typed here, because the tile it names has been renamed once already
+ * ("Consolidated NAV" → "Current Value of Holdings", Stage 10aq) and a literal
+ * would have gone on passing while the crumb named a tile the dashboard no
+ * longer has. One address carries SEVERAL labels — the whole book opens from
+ * the NAV tile, from Positions, from Distinct names and from the allocation
+ * footer — so the claim is that the leaf names one of them, not a particular
+ * one.
+ */
+const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
+/**
+ * EVERY METRIC THE PRIVATE MARKET'S TILE PICKER OFFERS, read out of its own
+ * menu on the first walk. It is both the catalogue the picker is checked
+ * against and the address of the all-tiles route, so neither is typed here.
+ */
+const PM_TILE_IDS = [];
+let TILE_MENU = null;
+let TILE_PICK = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -3556,6 +3652,156 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * the wrong cell, which is the plausible-wrong-answer this sweep exists to
  * catch rather than commit.
  */
+/**
+ * THE TXN ROUTES THAT WALK THE TRADES BRANCH of the one transactions card.
+ *
+ * `capital` is the default and needs no click. A route here reads the TRADES
+ * table — its footer, its sections, its mandate rollup — and only one table is
+ * in the DOM at a time, so the walk has to switch before the probes run.
+ * Written as a set beside the invariant blocks rather than as a chain of `||`
+ * inside the walk: a route added to the list and forgotten here reports its
+ * trades claims against the capital table, which is a confidently wrong failure
+ * rather than a silent one, and this names every one in a single place.
+ */
+/**
+ * ── ONE CARD, ONE TABLE, AND THE TOGGLE THAT REACHES THE OTHER RECORD ─────
+ *
+ *   *"why are there two separate tables in the transactions page, it should be
+ *    exactly one single simple table just like in the holdings."*
+ *
+ * A FACTORY, RUN BY BOTH BRANCHES, parameterised on the one thing that differs —
+ * which record the route asked for. Written on the default branch alone it would
+ * not catch a toggle that renders on arrival and vanishes the moment a reader
+ * uses it, which is the exact failure a control like this has.
+ *
+ * FOUR CLAIMS, AND NONE IMPLIES ANOTHER:
+ *
+ *   1. the toggle offers BOTH records and this address opens on the right one;
+ *   2. exactly ONE table is in the DOM, and it is that record's. This is the
+ *      only reading that can see a build which kept both tables stacked and
+ *      merely added a control — every figure in either table is correct on its
+ *      own, every other check here passes, and the page is exactly what the
+ *      family asked to be rid of;
+ *   3. the card's TITLE follows the branch. A switch that moves the table and
+ *      leaves the heading puts "Capital in and out" over the manager's dealing,
+ *      which is the caption-does-not-describe-its-figure failure at its worst
+ *      — the two records are different measurements;
+ *   4. each button's own row count matches the table that button reaches, and
+ *      the two counts DIFFER. The second half is what stops a build printing
+ *      one figure on both buttons: 11 accounts and 26 trade rollups on this
+ *      book, and a toggle advertising the same number twice has stopped reading
+ *      one of them.
+ *
+ * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — this card's header renders
+ * whether or not the archive answered, so an empty offer means the control is
+ * gone. Only the probe failing to run abstains.
+ */
+const TXN_RECORD_LABEL = { capital: /^Capital in and out$/i, trades: /^Trades$/i };
+const txnRecordChecks = (expected) => [
+  [`the transactions card is one card with two records, and this address opens on ${expected}`, (t, ctx) => {
+    const r = ctx?.txnRecord;
+    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
+    const keys = r.options.map((o) => o.key);
+    return keys.length === 2 && keys.includes("capital") && keys.includes("trades")
+      && r.active === expected
+      && r.options.find((o) => o.selected)?.key === expected;
+  }],
+  [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
+    const r = ctx?.txnRecord;
+    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
+    // NOTHING BELONGING TO THE OTHER RECORD, EVER — the half that catches a
+    // build which kept both tables stacked and merely added a control.
+    if (!r.tables.every((x) => x === expected)) return false;
+    /**
+     * …AND WHETHER A TABLE IS DRAWN AT ALL IS TIED TO THIS BRANCH'S OWN ROW
+     * COUNT, not assumed to be one.
+     *
+     * A branch with no rows under the current filters renders an ABSENT STATE
+     * instead of a table, which is correct and is what `/monitor` shows on the
+     * capital branch once the section filter is set to Direct Equity: no account
+     * the family funded is Direct Equity. Requiring exactly one table there
+     * failed a page that was right — and requiring "at most one" would have
+     * passed a branch that silently drew nothing. So the page's own advertised
+     * count decides which is expected.
+     */
+    const rows = r.options.find((o) => o.key === expected)?.rows;
+    if (!Number.isFinite(rows)) return false;
+    return r.tables.length === (rows > 0 ? 1 : 0);
+  }],
+  [`…and the card is titled for the ${expected} record`, (t, ctx) => {
+    const r = ctx?.txnRecord;
+    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
+    return TXN_RECORD_LABEL[expected].test(r.title);
+  }],
+  ["…and each button counts its own rows, which are not the same count", (t, ctx) => {
+    const r = ctx?.txnRecord;
+    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
+    const mine = r.options.find((o) => o.key === "capital")?.rows;
+    const trades = r.options.find((o) => o.key === "trades")?.rows;
+    if (!Number.isFinite(mine) || !Number.isFinite(trades) || mine === trades) return false;
+    // ...and the ACTIVE one ties to the table on screen. The other cannot be
+    // read here — its table is not in the DOM — which is why both routes run
+    // this factory rather than one of them running it twice.
+    const shown = expected === "capital" ? mine : trades;
+    const rows = expected === "capital" ? ctx.mineRows?.length : ctx.tradesTable?.groups?.length;
+    return Number.isFinite(rows) && rows === shown;
+  }],
+];
+
+/**
+ * THE BASKET-AXIS CLAIMS, PER RECORD — see the route pair below.
+ *
+ * `sectionsOf` is the one line that differs: the capital table carries its
+ * section on each row (`data-mine-section`) and the trades table on its
+ * headings. Everything else is identical, which is why it is one factory rather
+ * than two blocks free to drift.
+ */
+const txnBasketChecks = (record) => {
+  const sectionsOf = (ctx) => record === "capital"
+    ? [...new Set((ctx.mineRows ?? []).map((r) => r.section).filter(Boolean))]
+    : [...new Set(ctx.tradesTable?.sections ?? [])];
+  return [
+    ...txnRecordChecks(record),
+    // ...AND A READER CAN SEE IT. `document.querySelector` reads a hidden
+    // element exactly as it reads a visible one — measured by reintroducing the
+    // bug, which left every other claim here green over a card that no longer
+    // offered the control at all.
+    ["the axis control is live on Basket", (t, ctx) =>
+      ctx.axisControl?.active === "basket" && ctx.axisControl?.view === "transactions"
+      && ctx.axisControl?.visible === true],
+    [`…and the ${record} table really regrouped — no category key survives`, (t, ctx) => {
+      const drawn = sectionsOf(ctx);
+      if (!drawn.length) return false;
+      if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
+      const category = new Set(TXN_SECTIONS.category);
+      return drawn.every((k) => !category.has(k));
+    }],
+    /**
+     * ...AND EVERY SECTION IS ONE THE SHARED FILTER OFFERS. That list is built
+     * from the BOOK's positions through `groupKeyFor`; these headings are built
+     * from the TAPE and from the capital record through the same helper — two
+     * different inputs, one definition, so a transactions table that invented a
+     * basket no holding can sit in fails here.
+     */
+    ["every section is one the shared filter offers", (t, ctx) => {
+      const offered = new Set(ctx.sectionFilter?.offered ?? []);
+      const drawn = sectionsOf(ctx);
+      if (!offered.size || !drawn.length) return false;
+      return drawn.every((k) => offered.has(k));
+    }],
+    /** The side control still says the family's own words on every axis. */
+    ["the side control still reads Buys and Sells", (t, ctx) => {
+      const l = (ctx.sideFilter?.options ?? []).map((o) => o.label.toLowerCase());
+      return l.includes("buys") && l.includes("sells") && !l.includes("paid in");
+    }],
+  ];
+};
+
+const TRADES_BRANCH = new Set([
+  "monitor-txn-trades", "monitor-txn-manager", "monitor-txn-drill",
+  "monitor-txn-direct", "monitor-txn-secaxis", "monitor-txn-basket-trades",
+]);
+
 const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, weight: 8, pnl: 9, realised: 10, ret: 11, sector: 12, entity: 13 };
 /**
  * THE STOCK AXIS DRAWS TWO MORE COLUMNS, so everything after Market value sits
@@ -4700,6 +4946,241 @@ const pmViewChecks = (expected) => [
   }],
 ];
 
+/**
+ * ── THE RETURN COLUMNS, ASSERTED ON EVERY ADDRESS THAT DRAWS ONE ───────────
+ *
+ * These lived in the `monitor` block, which is the DEFAULT route — one `auto`
+ * column, and therefore the one address where "each concrete column carries its
+ * coverage count" has no subject and honestly abstains. Left there they would
+ * have reported NOT CHECKED for ever on exactly the claim asks 2 and 3 turn on,
+ * which is how a check retires itself in silence.
+ *
+ * So they are a named array spread into every return route: the methodology
+ * default, each concrete measure, and the multi-select. Every claim gates on what
+ * the address actually drew, so no route is asked about a column it does not
+ * have — and each such abstention is EVIDENCED by the picker's own active list
+ * rather than by the check finding nothing.
+ */
+const RETURN_COLUMNS = [
+    /**
+     * ── EVERY RETURN CELL STATES WHICH RETURN IT IS ─────────────────────────
+     *
+     * The whole point of the picker is that a bare percentage was ambiguous. So
+     * every cell in the one Return column carries a tag naming its measure — on
+     * the auto view that is the measure the methodology resolved to (HPR or CAGR),
+     * and it is on the absent cells too, so a reader always knows which return is
+     * missing. Read off the cells the page draws (`data-return-cell`).
+     */
+    ["every return is labelled with the measure it shows — on the cell where it varies, on the header where it does not",
+      (t, ctx) => {
+      const cells = ctx?.returnCells, head = ctx?.returnHead;
+      if (!cells?.length || !head?.length) return { notChecked: "no return columns captured on this run" };
+      /**
+       * THE LABEL GOES WHERE THE FACT IS CONSTANT — one rule, both directions.
+       *
+       * On `auto` the measure resolves PER ROW (HPR here, CAGR there), so the
+       * header can only say "Return" and every CELL must carry its own tag. On
+       * a concrete measure it is constant down the column, so the HEADER names
+       * it and a tag repeated in every cell would be the same word seventy-two
+       * times. Asserting only the first would pass a build that dropped the
+       * header label; only the second, one that dropped the per-row tag and
+       * left a reader unable to tell which return a dash is.
+       */
+      const autoCells = cells.filter((c) => c.measure === "auto");
+      if (autoCells.length && !autoCells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c.text))) return false;
+      const concrete = head.filter((h) => !/^Return$/i.test(h.label));
+      if (!concrete.every((h) => /^(HPR|CAGR|XIRR|YTD|CY)$/i.test(h.label))) return false;
+      /**
+       * …AND A CELL WHOSE FIGURE IS NOT ITS COLUMN'S MEASURE SAYS SO. The rule
+       * is `res.tag !== def.tag`, and the CAGR column is where it bites: a
+       * sub-year holding shows its total return on cost, and an untagged one
+       * under a header reading CAGR asserts an annual rate for a year the
+       * holding has not seen. Read off `data-return-tag`, which the cell carries
+       * only when it is off-measure — so this also asserts the ON-measure cells
+       * are NOT tagged, which is the half that keeps the column readable.
+       */
+      return cells.every((c) => (c.tag ? new RegExp(`\\b${c.tag}\\b`).test(c.text) : true));
+    }],
+    /**
+     * ── ONE COLUMN PER PICKED RETURN, ADDED AND REMOVED WITH THE SELECTION ──
+     *
+     *   *"it should add a new return column rather than show all returns in the
+     *    same return column side by side… a new column with that return name
+     *    should be made, and also removed when we select or deselect returns."*
+     *
+     * Struck on the COLUMNS the page drew against the measures the picker says
+     * are ticked — one each, in the same order, and nothing else. The text in
+     * the cells cannot see this: a build that went back to cramming every
+     * measure into one cell renders the same tags and the same figures, and
+     * every value check on this page passes over it.
+     */
+    ["the picked measures each get a column of their own, and no more", (t, ctx) => {
+      const head = ctx?.returnHead, rs = ctx?.returnSelect, cells = ctx?.returnCells;
+      if (!head?.length || !rs || !cells?.length) return { notChecked: "no return columns captured on this run" };
+      const drawn = [...new Set(cells.map((c) => c.measure))];
+      // The picker's own active list, in its own order — which `useReturnMeasures`
+      // keeps canonical, so this is an ordering claim as well as a set one.
+      return head.length === rs.active.length
+        && drawn.length === rs.active.length
+        && rs.active.every((k, i) => drawn[i] === k);
+    }],
+    /**
+     * …AND EVERY ROW HAS EXACTLY ONE CELL IN EACH OF THEM.
+     *
+     * The partition claim: a build that drew the headers and then emitted the
+     * measures inline in one cell would satisfy the header count above and put
+     * every row's figures under the FIRST return column, shifting Sector and
+     * Entities left by one for the rest of the table. Only a cell count can see
+     * that, and it is exactly the kind of silent shift the `COL` maps exist for.
+     */
+    ["…and every row draws one cell in each of them", (t, ctx) => {
+      const cells = ctx?.returnCells, rows = ctx?.tableRows, head = ctx?.returnHead;
+      if (!cells?.length || !rows?.length || !head?.length) return { notChecked: "no return columns captured on this run" };
+      return cells.length === rows.length * head.length;
+    }],
+    /**
+     * ── EVERY FULL-WIDTH ROW SPANS THE COLUMNS THE HEADER DREW ───────────
+     *
+     * `COL_COUNT` follows the number of ticked measures now, and a literal left
+     * behind there goes wrong in the one way this sweep could not otherwise
+     * see: a section heading, an expansion or the empty state stops reaching the
+     * last columns and NO FIGURE MOVES. So the claim is struck on the geometry —
+     * the header's column count against every row that has to span it.
+     */
+    ["every full-width row spans the columns the header drew", (t, ctx) => {
+      const w = ctx?.tableWidth;
+      if (!w?.head) return { notChecked: "no table geometry captured on this run" };
+      const rows = [w.body, w.section, w.category, w.foot].filter((n) => n !== null);
+      if (!rows.length) return { notChecked: "no rows drawn on this run" };
+      return rows.every((n) => n === w.head);
+    }],
+    /**
+     * ── AN AGGREGATE HAS ONE RETURN, AND IT STANDS UNDER ONE COLUMN ───────
+     *
+     * The footer and each category total are CUMULATIVE ON COST and deliberately
+     * do NOT follow the measure picker: a bucket and a whole book have no single
+     * purchase date to annualise over, no per-holding cash-flow history to solve
+     * an XIRR against, and no dated opening value for a year.
+     *
+     * THAT USED TO BE ONE CELL UNDER A HEADER THAT COULD MEAN ANY OF FIVE THINGS.
+     * With a column per measure it has to say which — so the figure stands under
+     * HPR and under `auto`, and every other return column renders a dash carrying
+     * the reason. Printing the same percentage under all five would be the
+     * caption-does-not-describe-its-figure failure, five columns wide, and it is
+     * the failure the allocation footer already cost this book once.
+     *
+     * Read at each return column's OWN index (`headIndex`), which is what makes
+     * this survive any number of ticked measures — `footerCells` accumulates by
+     * `colSpan`, so the header's index and the footer's are the same column.
+     */
+    ["the aggregate return stands under the measure it is on, and is refused under the others",
+      (t, ctx) => {
+      const head = ctx?.returnHead, foot = ctx?.footerCells;
+      if (!head?.length || !foot?.length) return { notChecked: "no return columns or footer captured on this run" };
+      const onCost = (h) => /^(Return|HPR)$/i.test(h.label);
+      for (const h of head) {
+        const cell = String(foot[h.headIndex] ?? "").trim();
+        if (onCost(h)) { if (!/^[+\-−]?[\d.]+%$/.test(cell)) return false; }
+        // A DASH, and never a percentage: a rate under a heading that cannot
+        // strike one is the whole defect this asserts against.
+        else if (cell !== "—") return false;
+      }
+      // ...AND THE SAME PER CATEGORY, where the rows a reader compares sit.
+      const cats = ctx?.categoryTotals?.rows ?? [];
+      for (const r of cats) {
+        for (const h of head) {
+          const cell = String(r.text?.[h.headIndex] ?? "").trim();
+          if (!onCost(h) && cell !== "—") return false;
+        }
+      }
+      return true;
+    }],
+    /**
+     * ── AND THE FIVE CAPTION PARAGRAPHS ARE GONE ────────────────────────
+     *
+     *   *"remove the highlighted text from the dashboard UI."*
+     *
+     * A removal is verified by asserting it happened, and this one is asserted
+     * SEPARATELY from the claim below it — a build that deleted the paragraphs
+     * and the header note together satisfies the absence while losing the one
+     * figure a reader acts on, and a build that kept both satisfies the note
+     * while leaving the wall of grey the family pointed at.
+     *
+     * THIS CLAIM WAS ONCE LOST AND THE SWEEP WENT GREEN OVER IT. Merging two
+     * neighbouring claims by line range swallowed it along with the doc comment
+     * they shared, and the whole suite passed twice against a page whose
+     * paragraphs had been removed with nothing saying so. Reintroducing the
+     * paragraphs is what found it — which is the entire reason that pass is run.
+     * Struck on its own, above the label claim, so the next such merge cannot
+     * take it.
+     */
+    ["the per-measure caption paragraphs are gone", (t, ctx) => {
+      const txt = ctx?.main ?? t;
+      return !/Annualised where a year can be measured/.test(txt)
+        && !/YTD is the holding’?s own return this year/.test(txt)
+        && !/A money-weighted XIRR needs every cash flow/.test(txt)
+        && !/A calendar-year. return needs the holding/.test(txt)
+        && !/Holding Period Return is the total return on cost since purchase/.test(txt);
+    }],
+    /**
+     * ── EACH RETURN COLUMN LABELS ITSELF THE WAY ITS OWN MEASURE REQUIRES ──
+     *
+     *   *"remove the highlighted text from the dashboard UI."*
+     *
+     * One grey paragraph per ticked measure stood under the table — five of them
+     * on the five-measure view, which is what the family screenshotted. Each was
+     * audited claim by claim before it went, and each made exactly two:
+     *
+     *   • the REASON the measure is absent on the rows it cannot answer. Already
+     *     per row, and more precisely: `measuredReturn` returns it and the cell
+     *     renders an `AbsentCell` carrying it, about the row the reader is
+     *     actually looking at.
+     *   • the COUNT of how much of the table it covers. Stated NOWHERE ELSE, and
+     *     the one a reader acts on — a column of dashes with nothing saying why
+     *     reads as a broken feed rather than as a measurement this book cannot
+     *     strike.
+     *
+     * So the count rides in that column's own header note and the reason in its
+     * hover. The home for both only exists because each measure got a COLUMN of
+     * its own in the same change: ask 3 built what ask 2 needed.
+     *
+     * ONE CLAIM, BOTH DIRECTIONS, so it has a subject on every address and never
+     * abstains: a CONCRETE column must carry a count and a sentence, and the
+     * METHODOLOGY column must carry neither — its measure resolves per row, so
+     * there is no column-wide count to state and the per-cell tag is what names
+     * it. Split in two, the half with no subject on a given route reported NOT
+     * CHECKED, and four evidenced abstentions is how a real one gets missed.
+     *
+     * THE GATE IS THE PICKER, not the check finding nothing: a build that ticked
+     * CAGR and drew no column at all would also find nothing, and abstaining
+     * there would report CLEAN over the exact regression this exists for.
+     */
+    ["each return column labels itself the way its measure requires", (t, ctx) => {
+      const head = ctx?.returnHead, rs = ctx?.returnSelect;
+      if (!head?.length || !rs?.active?.length) return { notChecked: "no return columns captured on this run" };
+      const concrete = head.filter((h) => !/^Return$/i.test(h.label));
+      const auto = head.filter((h) => /^Return$/i.test(h.label));
+      // The picker decides which half has a subject here — and every column the
+      // page drew has to fall into one of the two.
+      if (concrete.length + auto.length !== head.length) return false;
+      if (rs.active.some((k) => k !== "auto")) {
+        if (!concrete.length) return false;
+        const ok = concrete.every((h) =>
+          // A COUNT, not a word: "N of M" is the figure the paragraph carried.
+          /\b\d[\d,]* (?:annualised )?of \d[\d,]*\b/.test(h.note ?? "")
+          // ...and the reason behind it, which a `title` carries and `innerText`
+          // cannot see. A note with no sentence is a number with no cause.
+          && (h.noteTitle ?? "").length > 40);
+        if (!ok) return false;
+      }
+      if (rs.active.includes("auto")) {
+        if (!auto.length) return false;
+        if (!auto.every((h) => h.note === null)) return false;
+      }
+      return true;
+    }],
+];
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -4998,8 +5479,7 @@ const INVARIANTS = {
      * combined total would double-count it — so the claim is that each table is
      * there with its own rows, not that one of them leads.
      */
-    ["both dated records are drawn, each in its own table",
-      (t, ctx) => ctx.mineRows.length > 0 && ctx.managerRows.length > 0],
+    ...txnRecordChecks("capital"),
     /**
      * AND EVERY SECTION THE TRADES TABLE DRAWS IS ONE THE HOLDINGS TABLE WOULD.
      *
@@ -5135,15 +5615,25 @@ const INVARIANTS = {
      * reading the rows it sits over — which would be right here and wrong the
      * moment a filter narrowed them — still has to agree with the record.
      */
-    ["the counter beside the table counts both records, and names which is which",
+    ["the counter beside the table counts the record on screen, and names it",
       (t, ctx) => {
         if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
         const c = ctx.txnCounter;
         if (!c) return false;
-        // BOTH RECORDS ARE ON SCREEN, so the counter counts both — and it has to
-        // NAME them, because "26 in · 95 out · 284 buys · 178 sells" is four
-        // numbers describing two different measurements.
-        const m = /Capital ([\d,]+) in · ([\d,]+) out\s+·\s+Trades ([\d,]+) buys · ([\d,]+) sells/.exec(c);
+        /**
+         * ONE RECORD IS ON SCREEN NOW, so the counter counts THAT one — and it
+         * still has to NAME it, because "26 in · 95 out" and "284 buys · 178
+         * sells" are two different measurements and a bare pair of numbers
+         * cannot say which. The other branch's count is on the toggle button
+         * that reaches it (`txnRecordChecks`), which is where a figure about
+         * that branch belongs.
+         *
+         * THE TRADES SHAPE IS REFUSED HERE, EXPLICITLY. That is the original
+         * defect: this counter read the manager's tape on every view, so the
+         * family's own capital sat under a count of a set it does not draw.
+         */
+        if (/buys|sells/i.test(c)) return false;
+        const m = /^Capital ([\d,]+) in · ([\d,]+) out$/.exec(c.trim());
         if (!m) return false;
         const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
         const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
@@ -5272,6 +5762,41 @@ const INVARIANTS = {
      * construction — this is what says it still does, and it is the PM-1 rule
      * the manager route already applies one level down.
      */
+
+
+  ],
+
+  /**
+   * ── THE SAME CARD, SECTIONED BY BASKET ─────────────────────────────────────
+   *
+   * Category is the default on both screens, so the category route cannot tell
+   * an axis control that regroups from one that is drawn and ignored. The
+   * family's baskets share not one key with the category buckets, so a table
+   * that kept sectioning on `holdingBucket` fails the first check here by name.
+   */
+  /**
+   * ── THE TRADES BRANCH OF THE ONE TRANSACTIONS CARD ───────────────────
+   *
+   * Every claim here READ THE TRADES TABLE while both records were stacked on
+   * one page. With them behind a toggle that table is not in the DOM on the
+   * default branch, so these MOVED to the address that draws it rather than
+   * being weakened into something the capital branch can satisfy.
+   *
+   * The two footer claims are the load-bearing pair and they fail from opposite
+   * directions: a footer computed independently of its rows can be right while
+   * every row above it is wrong (the Private Market page's PM-1), and a footer
+   * summed from rows that lost one reconciles perfectly with itself.
+   */
+  "monitor-txn-trades": [
+    ...txnRecordChecks("trades"),
+    ["every section on the transactions table is a section the holdings table draws",
+      (t, ctx) => {
+        if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
+        const drawn = ctx.sectionRows?.map((r) => r.key) ?? [];
+        if (!drawn.length) return { notChecked: "no section headings on this run" };
+        const ok = new Set([...TXN_SECTIONS.category, "Not classified by the statement"]);
+        return drawn.every((k) => ok.has(k));
+      }],
     ["the trades footer is summed from the rows it draws", (t, ctx) => {
       const tbl = ctx.tradesTable;
       if (!tbl?.foot || !tbl.groups.length) return false;
@@ -5279,7 +5804,6 @@ const INVARIANTS = {
       return tbl.groups.reduce((a, g) => a + (g.trades || 0), 0) === n(tbl.foot[1])
         && tbl.groups.length === n(tbl.foot[0]);
     }],
-
     /**
      * ── A MANDATE IS ONE ROW, IN ONE SECTION ───────────────────────────────
      *
@@ -5305,65 +5829,36 @@ const INVARIANTS = {
       }
       return true;
     }],
-
-    ["each record has its own footer, and neither totals the other", (t, ctx) => {
-      const capital = ctx.mineRows?.length > 0;
-      const trades = ctx.tradesTable?.foot;
-      if (!capital || !trades) return false;
-      const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
-      // The trades footer counts TRADES and the capital footer counts ACCOUNTS
-      // and PAYMENTS — a footer that had started summing both would have to
-      // report the tape's trade count over the capital table's row count.
-      const cap = /Total · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
-      return !!cap && Number(cap[1]) === ctx.mineRows.length
-        && n(trades[1]) !== Number(cap[3]);
+    /**
+     * THE TWO RECORDS STILL DO NOT SHARE A FOOTER, struck from this side.
+     *
+     * It used to read BOTH tables in one ctx, which a toggle makes impossible —
+     * and unnecessary: they are separate components now, so a shared total is no
+     * longer one edit away. What IS still worth asserting is that this footer
+     * counts THIS record — trades and rollup rows, never the capital table's
+     * accounts-and-payments shape, which is the line a combined total would have
+     * to print.
+     */
+    ["the trades footer counts trades, not the capital record's accounts", (t, ctx) => {
+      const foot = ctx.tradesTable?.foot;
+      if (!foot) return { notChecked: "the trades footer was not on screen on this run" };
+      const label = String(foot[0] ?? "").trim();
+      return /^Total · [\d,]+ rows?$/.test(label) && !/accounts|payments/i.test(label);
     }],
   ],
 
   /**
-   * ── THE SAME CARD, SECTIONED BY BASKET ─────────────────────────────────────
+   * ── THE SAME CARD, BASKET AXIS — ONE ROUTE PER RECORD ─────────────────
    *
-   * Category is the default on both screens, so the category route cannot tell
-   * an axis control that regroups from one that is drawn and ignored. The
-   * family's baskets share not one key with the category buckets, so a table
-   * that kept sectioning on `holdingBucket` fails the first check here by name.
+   * The regroup claim read BOTH tables in one ctx, and only one is in the DOM
+   * now. So it is a FACTORY parameterised on the record the route walked, and it
+   * is run on both — the axis is shared STATE, but the two tables reach a
+   * section through DIFFERENT helpers (`forAccount` for an account,
+   * `forTxn` for a dated trade), so a regroup that worked for one and not the
+   * other is a real defect only this pair can see.
    */
-  "monitor-txn-basket": [
-    // ...AND A READER CAN SEE IT. `document.querySelector` reads a hidden
-    // element exactly as it reads a visible one — measured by reintroducing the
-    // bug, which left every other claim here green over a card that no longer
-    // offered the control at all.
-    ["the axis control is live on Basket", (t, ctx) =>
-      ctx.axisControl?.active === "basket" && ctx.axisControl?.view === "transactions"
-      && ctx.axisControl?.visible === true],
-    ["…and both tables really regrouped — no category key survives", (t, ctx) => {
-      const trades = new Set(ctx.tradesTable?.sections ?? []);
-      const capital = new Set((ctx.mineRows ?? []).map((r) => r.section).filter(Boolean));
-      if (!trades.size || !capital.size) return false;
-      if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
-      const category = new Set(TXN_SECTIONS.category);
-      return [...trades].every((k) => !category.has(k)) && [...capital].every((k) => !category.has(k));
-    }],
-    /**
-     * ...AND EVERY SECTION IS ONE THE SHARED FILTER OFFERS. That list is built
-     * from the BOOK's positions through `groupKeyFor`; these headings are built
-     * from the TAPE and from the capital record through the same helper — two
-     * different inputs, one definition, so a transactions table that invented a
-     * basket no holding can sit in fails here.
-     */
-    ["every section is one the shared filter offers", (t, ctx) => {
-      const offered = new Set(ctx.sectionFilter?.offered ?? []);
-      const drawn = [...new Set([...(ctx.tradesTable?.sections ?? []),
-        ...(ctx.mineRows ?? []).map((r) => r.section).filter(Boolean)])];
-      if (!offered.size || !drawn.length) return false;
-      return drawn.every((k) => offered.has(k));
-    }],
-    /** The side control still says the family's own words on every axis. */
-    ["the side control still reads Buys and Sells", (t, ctx) => {
-      const l = (ctx.sideFilter?.options ?? []).map((o) => o.label.toLowerCase());
-      return l.includes("buys") && l.includes("sells") && !l.includes("paid in");
-    }],
-  ],
+  "monitor-txn-basket": [...txnBasketChecks("capital")],
+  "monitor-txn-basket-trades": [...txnBasketChecks("trades")],
 
   "monitor-axis-crossback": [
     /**
@@ -5445,6 +5940,102 @@ const INVARIANTS = {
    * because a panel that dropped a tranche from both would reconcile perfectly
    * with itself, which is the Private Market page's PM-1 in miniature.
    */
+  /**
+   * ── THE TWO CONTROLS ACTUALLY DO SOMETHING ──────────────────────────────
+   *
+   * *"Every single table on the dashboard must have clickable column headings
+   * to sort the table data, and also every single column except the first name
+   * one, the user should be able to drag and drop to rearrange columns."*
+   *
+   * The global check every route runs asserts each heading CARRIES a sort
+   * button and a grip. It cannot see whether either one does anything — a
+   * button wired to nothing renders exactly like one that sorts, and a `move`
+   * that permuted the `<thead>` and left the `<tbody>` still would put every
+   * figure under the wrong heading while looking tidier. So this route drives
+   * both and the checks read what moved.
+   *
+   * A SNAPSHOT THAT WAS NOT TAKEN IS `notChecked`, NEVER A PASS: the route
+   * runs on `/monitor` only and every other walk leaves `ctx.arrange` empty.
+   */
+  "monitor-arrange": [
+    ["clicking a money heading reorders the rows", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.desc?.rows?.length || !a.sorted?.rows?.length) {
+        return { notChecked: "the holdings table's rows were not captured" };
+      }
+      // The same rows, in a different order. Both halves matter: a sort that
+      // DROPPED rows would reorder them too, and this table's own totals are
+      // struck over the full set. Struck between the two CLICKS rather than
+      // against the page's arrival state, because this table already arrives
+      // ranked on this very column — see the note beside the walk.
+      const same = a.desc.rows.length === a.sorted.rows.length
+        && new Set(a.desc.rows).size === new Set(a.sorted.rows).size
+        && a.desc.rows.every((k) => a.sorted.rows.includes(k));
+      const moved = a.desc.rows.some((k, i) => a.sorted.rows[i] !== k);
+      return same && moved;
+    }],
+    ["…and the direction it reports steps with the clicks", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.desc || !a.sorted) return { notChecked: "the sorted states were not captured" };
+      // `aria-sort` is what a screen reader and this check both read, and a
+      // second column claiming one would mean two sorts are live at once.
+      return a.desc.aria === "descending" && a.sorted.aria === "ascending"
+        && (a.sorted.others ?? []).every((v) => v === "none" || v === null);
+    }],
+    ["moving a column moves its heading and its cells", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.sorted || !a.moved?.cols?.length || !a.before?.cols?.length) {
+        return { notChecked: "the moved state was not captured" };
+      }
+      const b = a.before.cols, m = a.moved.cols;
+      if (b.length !== m.length || b.some((c) => !c) || m.some((c) => !c)) return false;
+      // `qty` swapped right past `avgCost`, then `invested` walked two places
+      // left — the two moves the walk makes, and nothing else moved.
+      const expect = [b[0], b[3], b[2], b[1], ...b.slice(4)];
+      const permuted = m.every((c, i) => c === expect[i]);
+      // THE BODY FOLLOWED. A `<thead>` permuted alone is the one outcome this
+      // feature must never produce, and it is invisible in any count.
+      const bodyFollowed = (a.moved.firstRow ?? []).length === m.length;
+      return permuted && bodyFollowed;
+    }],
+    ["…and the footer's totals stay under the headings they total", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.moved?.footPerCol?.length || !a.moved?.cols?.length) {
+        return { notChecked: "the footer was not captured per column" };
+      }
+      const cols = a.moved.cols, per = a.moved.footPerCol;
+      // Every column is covered exactly once — the label's span plus the cells
+      // after it. A footer that has lost or gained one is a row that no longer
+      // lines up with its own headings at all.
+      if (per.length !== cols.length) return false;
+      // AND THE SPAN IS THE COMPUTED LEADING RUN, NOT A LITERAL. `invested` has
+      // walked to the second column, so the label can only cover the first one
+      // — a span frozen at what the declared order needed would swallow the
+      // Invested total and shift every figure after it.
+      const at = (c) => per[cols.indexOf(c)] ?? "";
+      return a.moved.footSpan === 1
+        && /\d/.test(at("invested"))      // the cost total, under Invested
+        && /\d/.test(at("mv"))            // the market-value total, under its own
+        && at("sector") === "";            // a descriptor column has nothing to total
+    }],
+    ["…and the sort it was arranged under survives the move", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.sorted?.rows?.length || !a.moved?.rows?.length) {
+        return { notChecked: "the moved state's rows were not captured" };
+      }
+      // Moving a COLUMN is not a statement about the ROWS. A `move` that reset
+      // the sort would still permute the headings, so comparing the first and
+      // last states alone would call that a working move.
+      return a.moved.rows.length === a.sorted.rows.length
+        && a.moved.rows.every((k, i) => a.sorted.rows[i] === k);
+    }],
+    ["the first column is the row's identity and cannot be moved", (t, ctx) => {
+      const tv = (ctx.tableView ?? []).filter((x) => !x.static);
+      if (!tv.length) return { notChecked: "no table declared its columns on this route" };
+      return tv.every((x) => x.firstFixed && x.movable === x.headCells - 1);
+    }],
+  ],
+
   "monitor-tranche": [
     ["a contribution history opens", (t, ctx) => ctx.tranchePanel !== null],
 
@@ -6154,16 +6745,40 @@ const INVARIANTS = {
         return (ctx.tradesTable?.sections?.length ?? 0) === 0;
       }],
 
+  ],
+
+  /**
+   * ── …AND THE SAME FILTER NARROWS THE CAPITAL RECORD ───────────────────
+   *
+   * This claim sat on `monitor-txn-direct` while both records were stacked on one
+   * page. That route walks the TRADES branch now, so the capital table is not in
+   * the DOM there and the check fell through to matching an absent-state sentence
+   * the page correctly does not print — a check that stops running because a
+   * table moved behind a toggle, for the fourth time in this file.
+   *
+   * It is its own address instead, on the branch that draws the table it is
+   * about: the section filter is SHARED STATE read by both tables, and this is
+   * the half a trades-only reading cannot see.
+   */
+  "monitor-txn-direct-capital": [
+    ...txnRecordChecks("capital"),
+    ["the shared section filter is set to Direct Equity", (t, ctx) =>
+      ctx.sectionFilter?.active === DIRECT_EQUITY_BUCKET],
     /**
-     * ...AND IT NARROWS THE CAPITAL RECORD TOO, which is the half a trades-only
-     * check cannot see. No account the family funded is Direct Equity — every
-     * one is a PMS mandate or an AIF folio — so under this filter that table has
-     * nothing to draw and says so. A filter wired to one table would leave all
-     * eleven rows sitting under a section heading they are not in.
+     * …AND THE CAPITAL RECORD HONOURS IT. No account the family funded is Direct
+     * Equity — every one is a PMS mandate or an AIF folio — so under this filter
+     * that table has nothing to draw and must SAY so. A filter wired to one
+     * table would leave all eleven rows sitting under a section they are not in,
+     * and every figure on every one of them would still be correct.
      */
-    ["…and it narrows the family's capital record with it", (t, ctx) => {
+    ["…and the capital record is narrowed with it, or says why it is empty", (t, ctx) => {
       const rows = ctx.mineRows ?? [];
-      if (!rows.length) return /No dated movement matches these filters/i.test(t);
+      if (!rows.length) {
+        // THE ABSENCE NAMES ITS CAUSE, which is this book's founding rule: an
+        // empty table and a table nobody wired look identical without it.
+        return /No dated movement matches these filters/i.test(t)
+          && /publish no dated capital record/i.test(t);
+      }
       return rows.every((r) => r.section === DIRECT_EQUITY_BUCKET);
     }],
   ],
@@ -8614,9 +9229,9 @@ const INVARIANTS = {
         // is no easier to read at 11px than a definition is.
         && hints.every((h) => h.px >= 12);
     }],
-    ["the uncalled-capital tile says what it is", (t) => {
-      const tile = sliceBetween(t, "STILL TO CALL", "COMMITTED") || sliceBetween(t, "Still to call", "Committed");
-      if (!tile) return { notChecked: "the uncalled-capital tile was not on screen on this run" };
+    ["the uncalled-capital tile says what it is", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.uncalled;
+      if (!tile) return false;
       return /promised/i.test(tile)
         && /not yet asked for|not yet called/i.test(tile)
         // …and that it is a LIABILITY rather than an asset, which is the one
@@ -8627,9 +9242,9 @@ const INVARIANTS = {
     ["…and how it is arrived at is still on the page, beside the rows it sums", (t) =>
       /summed exactly as each fund prints it/i.test(t)
       && /never derived from committed − called/i.test(t)],
-    ["the distributions tile says what it is, and the two things a reader would get wrong", (t) => {
-      const tile = sliceBetween(t, "DISTRIBUTIONS", "Realised gain") || sliceBetween(t, "Distributions", "Realised gain");
-      if (!tile) return { notChecked: "the distributions tile was not on screen on this run" };
+    ["the distributions tile says what it is, and the two things a reader would get wrong", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.distributed;
+      if (!tile) return false;
       return /paid back/i.test(tile)
         // Neither is guessable from the number, and neither is stated anywhere
         // else on this page — so both stayed when the paragraph went.
@@ -8683,8 +9298,10 @@ const INVARIANTS = {
      * every private row sits in an account, so accounts ≥ nothing useful — what
      * matters is that a real figure is there and the tile still names its book.
      */
-    ["the private value tile names how many accounts it spans", (t) => {
-      const m = /PRIVATE MARKET VALUE[\s\S]{0,240}?across (\d+) accounts · each holding counted once/i.exec(t);
+    ["the private value tile names how many accounts it spans", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.value;
+      if (!tile) return false;
+      const m = /across (\d+) accounts · each holding counted once/i.exec(tile);
       return !!m && Number(m[1]) > 0;
     }],
 
@@ -9884,10 +10501,29 @@ const INVARIANTS = {
         return HEAD.exportInHeader === true && HEAD.pillsRemoved === true;
       }],
 
-    ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
-      () => {
+    /**
+     * ── THE TITLE AND THE VIEW SWITCH STILL SHARE ONE LINE ───────────────────
+     *
+     * This read "the eyebrow, the title and the view switch share one line,
+     * with the eyebrow smaller", and the EYEBROW has gone: the family asked for
+     * a crumb row on every page, and the eyebrow's whole job was to say where
+     * the reader is, so it moved INTO the crumb rather than being rendered
+     * twice on adjacent lines (see `PageHeader`).
+     *
+     * SO THE CLAIM IS RE-HOMED AND NOT DELETED. What it exists to protect is
+     * that this header is not three rows of chrome — `toggleInline` is the
+     * load-bearing half and is untouched — and the half that had the eyebrow as
+     * its subject now has the crumb: it must be the line ABOVE the title rather
+     * than beside it, and it must read smaller. `eyebrowGone` is the removal
+     * asserted from the other side, so a build that put the eyebrow back beside
+     * the title fails here instead of quietly restoring the duplication.
+     */
+    ["the title and the view switch share one line, with the crumb row above it and no eyebrow beside it",
+      (t, ctx) => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
-        return HEAD.hasEyebrow && HEAD.eyebrowInline && HEAD.toggleInline && HEAD.eyebrowSmaller;
+        const n = ctx?.pageNav;
+        if (!n) return false;
+        return HEAD.eyebrowGone && HEAD.toggleInline && n.aboveTitle && n.smallerThanTitle;
       }],
     /**
      * ── THE THIRD ROUND: A GROUPING, NOT A WORD ──────────────────────────────
@@ -10332,20 +10968,6 @@ const INVARIANTS = {
       return !/\bYTD\b/.test(txt) && (!rs || rs.offers.includes("ytd"));
     }],
     /**
-     * ── EVERY RETURN CELL STATES WHICH RETURN IT IS ─────────────────────────
-     *
-     * The whole point of the picker is that a bare percentage was ambiguous. So
-     * every cell in the one Return column carries a tag naming its measure — on
-     * the auto view that is the measure the methodology resolved to (HPR or CAGR),
-     * and it is on the absent cells too, so a reader always knows which return is
-     * missing. Read off the cells the page draws (`data-return-cell`).
-     */
-    ["every return cell is labelled with the measure it shows", (t, ctx) => {
-      const cells = ctx?.returnCells;
-      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      return cells.every((c) => /\b(AUTO|HPR|CAGR|XIRR|YTD|CY)\b/.test(c));
-    }],
-    /**
      * ── THE METHODOLOGY CAPTION WAS REMOVED FROM THE DEFAULT VIEW ────────────
      *
      * A removal is verified by asserting it happened. The "Return follows the
@@ -10356,6 +10978,7 @@ const INVARIANTS = {
      * is the rendered page content). The per-measure captions a reader ticks are
      * unaffected and are asserted on their own routes (`monitor-cagr`, etc.).
      */
+    ...RETURN_COLUMNS,
     ["the methodology caption is gone from the default view", (t, ctx) => {
       const txt = ctx?.main ?? t;
       return !/Return follows the methodology/.test(txt);
@@ -11137,6 +11760,7 @@ const INVARIANTS = {
    * a page that annualised everything would keep every word of the prose.
    */
   "monitor-cagr": [
+    ...RETURN_COLUMNS,
     // The picker is on CAGR, and the CAGR caption explains what it annualises.
     // The measure is on the URL and the cells, not a "Return p.a." header any more.
     ["the CAGR measure is selected", (t, ctx) => {
@@ -11144,7 +11768,19 @@ const INVARIANTS = {
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       return rs.active.length === 1 && rs.active[0] === "cagr";
     }],
-    ["the column names the basis it is showing", (t) => /Annualised where a year can be measured/.test(t)],
+    /**
+     * THE BASIS IS ON THE COLUMN'S OWN HOVER, not in a paragraph under the
+     * table — that paragraph was one of the five the family asked to have
+     * removed, and its two claims moved onto the column: the count into the
+     * header's note, the sentence into that note's `title`. Read off the probe
+     * because `innerText` cannot see a `title`, which is also why a claim struck
+     * on the page text would have gone quietly unfalsifiable on the move.
+     */
+    ["the CAGR column's hover names the basis it is showing", (t, ctx) => {
+      const h = (ctx?.returnHead ?? []).find((x) => /^CAGR$/i.test(x.label));
+      if (!h) return { notChecked: "the CAGR column was not on screen on this run" };
+      return /Annualised where a year can be measured/.test(h.noteTitle ?? "");
+    }],
     /**
      * NO TRIPLE-DIGIT ANNUAL RATE ANYWHERE IN THE TABLE. This book's longest
      * measured hold is 527 days and its returns are tens of percent; a
@@ -11162,20 +11798,37 @@ const INVARIANTS = {
      * count the header chip prints. A caption that claimed more coverage than
      * the column has is the failure this whole feature exists to avoid.
      */
-    ["the coverage note partitions the rows it describes", (t) => {
-      const m = /Annualised where a year can be measured\s*—\s*(\d+) of (\d+) rows/.exec(t);
+    ["the coverage note partitions the rows it describes", (t, ctx) => {
+      const h = (ctx?.returnHead ?? []).find((x) => /^CAGR$/i.test(x.label));
+      if (!h) return { notChecked: "the CAGR column was not on screen on this run" };
+      const why = h.noteTitle ?? "";
+      const m = /Annualised where a year can be measured\s*—\s*(\d+) of (\d+) rows/.exec(why);
       if (!m) return false;
       const [, cagr, total] = m.map(Number);
-      const guarded = Number(/(\d+) rows? (?:is|are) held under a year/.exec(t)?.[1] ?? 0);
-      const absent = Number(/(\d+) report no purchase date/.exec(t)?.[1] ?? 0);
-      return cagr + guarded + absent === total && total > 0;
+      const guarded = Number(/(\d+) rows? (?:is|are) held under a year/.exec(why)?.[1] ?? 0);
+      const absent = Number(/(\d+) report no purchase date/.exec(why)?.[1] ?? 0);
+      // ...AND THE HEADER'S SHORT NOTE AGREES WITH IT. Both come from ONE
+      // coverage object (`returnColumnMeta`), so a build that let them drift has
+      // started deriving the visible count separately from the sentence a reader
+      // opens to check it.
+      const short = /(\d+) annualised of (\d+)/.exec(h.note ?? "");
+      return cagr + guarded + absent === total && total > 0
+        && !!short && Number(short[1]) === cagr && Number(short[2]) === total;
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
     // silently annualised. Empty is not a pass — this book holds such rows.
     // The marker is the HPR tag now (the cell shows the total return on cost,
     // tagged HPR) and the caption says "held under a year".
     ["a holding held under a year is marked as holding-period rather than annualised",
-      (t) => /held under a year/.test(t) && /\bHPR\b/.test(t)],
+      (t, ctx) => {
+        const h = (ctx?.returnHead ?? []).find((x) => /^CAGR$/i.test(x.label));
+        if (!h) return { notChecked: "the CAGR column was not on screen on this run" };
+        // THE GUARD IS VISIBLY FIRING, and on the CELLS rather than on prose: a
+        // sub-year row in the CAGR column shows its total return on cost tagged
+        // HPR. Empty is not a pass — this book holds such rows.
+        const tagged = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && c.tag === "HPR");
+        return /held under a year/.test(h.noteTitle ?? "") && tagged.length > 0;
+      }],
   ],
   /**
    * ── YTD IS A MEASURE NOW, AND IT NEVER GUESSES ─────────────────────────────
@@ -11192,24 +11845,41 @@ const INVARIANTS = {
    * (the shape a defaulted YTD takes) fail rather than sail through.
    */
   "monitor-ytd": [
+    ...RETURN_COLUMNS,
     ["the YTD measure is selected", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       return rs.active.length === 1 && rs.active[0] === "ytd";
     }],
-    ["the Return column shows YTD, and only where the book can measure it", (t, ctx) => {
+    ["the YTD column shows YTD, and only where the book can measure it", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      // Every cell is the YTD measure — tagged YTD, and either a signed % or a
-      // dash, never a fabricated +0.00%.
-      const shapeOk = cells.every((c) => /\bYTD\b/.test(c) && (/—/.test(c) || /[+-]\d+(\.\d+)?%/.test(c)));
-      const drawn = cells.filter((c) => /[+-]\d+(\.\d+)?%/.test(c)).length;
+      // ONE COLUMN, and it is the YTD one — the measure is on the CELL's own
+      // attribute now rather than parsed out of its text, so a build that
+      // relabelled a tag while drawing another measure's figures fails here.
+      const mine = cells.filter((c) => c.measure === "ytd");
+      if (mine.length !== cells.length) return false;
+      // Each is either a signed % or a dash, never a fabricated +0.00%.
+      const shapeOk = mine.every((c) => /—/.test(c.text) || /[+-]\d+(\.\d+)?%/.test(c.text));
+      const drawn = mine.filter((c) => /[+-]\d+(\.\d+)?%/.test(c.text)).length;
       if (YTD_MEASURABLE === null) return { notChecked: "could not read heldSince out of the generated book" };
       return shapeOk && drawn === YTD_MEASURABLE;
     }],
-    ["the YTD caption states what it can and cannot measure",
-      (t) => /YTD is the holding.s own return this year, not the share.s market move/.test(t)
-        && /1 January/.test(t)],
+    /**
+     * …AND WHAT IT CANNOT MEASURE IS SAID ON THE COLUMN, NOT UNDER THE TABLE.
+     *
+     * The paragraph this replaces was one of the five the family asked to have
+     * removed. Its two claims survive: the COUNT is the header's note (asserted
+     * in `RETURN_COLUMNS`) and the REASON is that note's own hover, read here
+     * because a `title` is not in `innerText` — which is also why a claim struck
+     * on the page text would have gone quietly unfalsifiable on the move.
+     */
+    ["the YTD column's hover states what it can and cannot measure", (t, ctx) => {
+      const h = (ctx?.returnHead ?? []).find((x) => /^YTD$/i.test(x.label));
+      if (!h) return { notChecked: "the YTD column was not on screen on this run" };
+      const why = h.noteTitle ?? "";
+      return /own return this year, not the share.s market move/.test(why) && /1 January/.test(why);
+    }],
   ],
   /**
    * ── XIRR PER HOLDING IS NOT MEASURABLE HERE, AND SAYS SO ───────────────────
@@ -11222,39 +11892,136 @@ const INVARIANTS = {
    * invented to fill the column.
    */
   "monitor-xirr": [
+    ...RETURN_COLUMNS,
     ["the XIRR measure is selected", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       return rs.active.length === 1 && rs.active[0] === "xirr";
     }],
-    ["every per-holding XIRR cell is a dash tagged XIRR, never an invented rate", (t, ctx) => {
+    ["every cell in the XIRR column is a dash, never an invented rate", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      return cells.every((c) => /\bXIRR\b/.test(c) && /—/.test(c) && !/[+-]\d+(\.\d+)?%/.test(c));
+      const mine = cells.filter((c) => c.measure === "xirr");
+      if (mine.length !== cells.length) return false;
+      return mine.every((c) => /—/.test(c.text) && !/[+-]\d+(\.\d+)?%/.test(c.text));
     }],
-    ["the XIRR caption names why it is absent and points to Performance",
-      (t) => /money-weighted XIRR/.test(t) && /Performance/.test(t)],
+    /**
+     * …AND THE REASON IS ON THE COLUMN. This is the one removed caption whose
+     * second claim a reader cannot get anywhere else: the per-ACCOUNT
+     * money-weighted return IS measurable, and it is on Performance. Without
+     * that pointer a column of dashes tells a reader only that the answer does
+     * not exist. Read off the header's hover, because a `title` is not in
+     * `innerText` — the same fix the cost-cell reasons already needed.
+     */
+    ["the XIRR column names why it is absent and points to Performance", (t, ctx) => {
+      const h = (ctx?.returnHead ?? []).find((x) => /^XIRR$/i.test(x.label));
+      if (!h) return { notChecked: "the XIRR column was not on screen on this run" };
+      const why = h.noteTitle ?? "";
+      return /money-weighted XIRR/.test(why) && /Performance/.test(why);
+    }],
   ],
   /**
-   * ── THE MULTI-SELECT: TWO MEASURES IN ONE COLUMN, EACH LABELLED ────────────
+   * ── THE MULTI-SELECT: A COLUMN EACH, NOT TWO FIGURES IN ONE CELL ───────
    *
-   * "give a dropdown multiselector… in that dropdown give all types of return
-   * options… in the one column it will show the type of return that we select."
-   * With Absolute AND CAGR ticked, the one Return column shows both, each on its
-   * own tagged line — which is also the "always have a CAGR column" ask, answered
-   * without a second column.
+   *   *"it should add a new return column rather than show all returns in the
+   *    same return column side by side… a new column with that return name
+   *    should be made, and also removed when we select or deselect returns."*
+   *
+   * THE PREVIOUS CLAIM HERE WAS ITS OPPOSITE — "the one Return column shows both
+   * picked measures" — and it was right about the build it was written for. It is
+   * INVERTED rather than deleted, because a removal is verified by asserting it
+   * happened: a build that went back to cramming both into one cell renders the
+   * same two tags and the same two figures, so only a claim about the COLUMNS can
+   * tell the two apart.
    */
   "monitor-returns-multi": [
+    ...RETURN_COLUMNS,
     ["the picker reflects the two chosen measures", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       return rs.active.length === 2 && rs.active.includes("absolute") && rs.active.includes("cagr");
     }],
-    ["the one Return column shows both picked measures, each labelled", (t, ctx) => {
+    ["…and each gets a column of its own, headed with its own name", (t, ctx) => {
+      const head = ctx?.returnHead;
+      if (!head?.length) return { notChecked: "no return columns captured on this run" };
+      const labels = head.map((h) => h.label.toUpperCase());
+      return head.length === 2 && labels[0] === "HPR" && labels[1] === "CAGR";
+    }],
+    ["…and no cell carries both measures at once", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
-      // A costed row shows an HPR line and a CAGR line in the one cell.
-      return cells.some((c) => /\bHPR\b/.test(c) && /\bCAGR\b/.test(c));
+      // The ONE reading that can see the old behaviour: with a column each, an
+      // HPR cell's text can never also contain a CAGR figure.
+      return !cells.some((c) => /\bHPR\b/.test(c.text) && /\bCAGR\b/.test(c.text));
+    }],
+    /**
+     * …AND THE TWO COLUMNS REALLY CARRY DIFFERENT MEASURES.
+     *
+     * The strongest available claim on this book: exactly ONE holding is old
+     * enough to annualise, so the CAGR column cannot be a copy of the HPR one —
+     * at least one row has to differ. A build that drew two headers over one
+     * measure's values passes every check above and fails this.
+     */
+    ["…and they are not two renderings of one measure", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      const hpr = cells.filter((c) => c.measure === "absolute").map((c) => c.text);
+      const cagr = cells.filter((c) => c.measure === "cagr").map((c) => c.text);
+      if (hpr.length !== cagr.length || !hpr.length) return false;
+      return hpr.some((v, i) => v !== cagr[i]);
+    }],
+  ],
+  /**
+   * ── A RETURN COLUMN SORTS ON THE FIGURE IT PRINTS ─────────────────────
+   *
+   * `SortKey` gained `ret:<measure>` for exactly this: the comparator resolves
+   * the measure through `measuredReturn`, which is the same function the cell
+   * draws, so the column a reader clicks is ordered on what that column shows.
+   * Reusing `returnPct` would have left the CAGR arrow ordering by the raw
+   * return on cost — a control that lies, and one whose lie is visible on this
+   * book because the two orders differ.
+   */
+  "monitor-ret-sort": [
+    ...RETURN_COLUMNS,
+    ["the CAGR column is sorted on its own figures, largest first", (t, ctx) => {
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr");
+      if (cells.length < 3) return { notChecked: "too few CAGR cells to establish an order" };
+      const num = (x) => {
+        const m = /([+\-−]?)(\d+(?:\.\d+)?)%/.exec(x);
+        return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : null;
+      };
+      const vals = cells.map((c) => num(c.text));
+      const shown = vals.filter((v) => v !== null);
+      if (shown.length < 2) return { notChecked: "fewer than two CAGR figures are drawn on this book" };
+      // Descending over the figures that exist…
+      for (let i = 1; i < shown.length; i++) if (shown[i] > shown[i - 1]) return false;
+      /**
+       * …AND EVERY ABSENT ONE AFTER THEM. `?? 0` would file every holding whose
+       * statement reports no cost among the flat performers, in the middle of a
+       * column a reader is scanning for its extremes — the absent-vs-zero rule
+       * arriving through a comparator, where no rendered figure shows it.
+       */
+      const firstAbsent = vals.findIndex((v) => v === null);
+      if (firstAbsent === -1) return true;
+      return vals.slice(firstAbsent).every((v) => v === null);
+    }],
+    /**
+     * …AND IT IS NOT THE HPR COLUMN'S ORDER. The strongest available claim that
+     * the comparator resolved the right measure: sorted by CAGR, the HPR column
+     * beside it must NOT itself be descending, because this book's one
+     * annualised holding is not its best performer on cost. A build that kept
+     * `returnPct` as the key passes the ordering check above and fails this.
+     */
+    ["…and that is a different order from sorting on the return on cost", (t, ctx) => {
+      const hpr = (ctx?.returnCells ?? []).filter((c) => c.measure === "absolute");
+      if (hpr.length < 3) return { notChecked: "too few HPR cells to compare the two orders" };
+      const num = (x) => {
+        const m = /([+\-−]?)(\d+(?:\.\d+)?)%/.exec(x);
+        return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : null;
+      };
+      const vals = hpr.map((c) => num(c.text)).filter((v) => v !== null);
+      if (vals.length < 2) return { notChecked: "fewer than two HPR figures are drawn on this book" };
+      return vals.some((v, i) => i > 0 && v > vals[i - 1]);
     }],
   ],
   // The by-entity view of the holdings table. Every statement's row shows as
@@ -12420,6 +13187,126 @@ const INVARIANTS = {
 };
 
 /**
+ * ── THE PRIVATE MARKET'S TWO ROUTES SHARE ONE BLOCK ─────────────────────────
+ *
+ * *"There are 9 KPI tiles on the private market page, make it 4."* Twelve of
+ * the eighteen metrics are therefore off the strip by default, and six
+ * invariants read a tile's own words. They are not softened into something the
+ * default four satisfy — that is what a check which has stopped running looks
+ * like — and they are not deleted with their subject either. They move to the
+ * route where every tile IS drawn.
+ *
+ * DECLARED AS NAMES RATHER THAN BY MOVING THE CODE, so this list is the whole
+ * statement of which claims need the full strip, and a name that matches
+ * nothing leaves its check on the default route where it fails loudly instead
+ * of being quietly retired.
+ */
+const FULL_STRIP_ONLY = new Set([
+  "the distributions tile says what it is, and the two things a reader would get wrong",
+  "the tile carries the client's own word for it",
+  "the realised-gain and forward-schedule absences survive it",
+  "the due-now figure states the accounts it covers, and is not a window",
+  "committed, called and invested are three separate tiles, each stating its coverage",
+  "the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total",
+]);
+
+/**
+ * THE PICKER ITSELF, ASSERTED ON STRUCTURE. Every one of these claims is about
+ * a CONTROL — the strip renders the identical figures whether a reader can
+ * change them or not — so none of them can be struck on the page's words.
+ */
+const TILE_PICKER_CHECKS = [
+  /**
+   * THE DEFAULT IS THE ROW THIS PAGE ALWAYS SHOWED, and a default is the one
+   * change that moves in silence: the strip renders perfectly on any four
+   * metrics, so nothing else here could tell. Named rather than derived,
+   * because which four a reader sees first is a product decision and not a
+   * figure the book produces.
+   */
+  ["the strip opens on four tiles, and on the four this page always led with", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st) return false;
+    const want = ["value", "cost", "pnl", "uncalled"];
+    return st.ids.length === want.length && want.every((id, i) => st.ids[i] === id);
+  }],
+  /**
+   * ...AND EVERY SLOT OFFERS THE WHOLE CATALOGUE, the two ABSENT metrics
+   * included. A picker that offered only what this book can measure would
+   * quietly drop the two facts a reader of a private book most needs told —
+   * that no capital gain statement covers a private account, and that a TVPI
+   * cannot be struck while most of these funds print no distribution line —
+   * and the family asked for every metric they might want to see.
+   */
+  ["each tile's picker offers every metric, the two absent ones included", (t, ctx) => {
+    const menu = ctx?.tileMenu;
+    const st = ctx?.tileStrip;
+    if (!menu?.length || !st) return false;
+    return menu.length >= 12
+      && ["value", "cost", "pnl", "uncalled", "realised", "multiple"].every((id) => menu.includes(id))
+      // One picker per slot, or a tile a reader cannot change is a tile they
+      // are stuck with.
+      && st.pickers === st.slots && st.slots > 0
+      /**
+       * ...AND EVERY ID THE STRIP CLAIMS IS ACTUALLY DRAWN. A set saved against
+       * an older catalogue can name a metric this build does not have, and a
+       * slot that skipped it would leave the strip claiming four tiles while
+       * rendering three — an unexplained gap rather than the em dash with a
+       * reason this book requires. Unknown ids are dropped from the SET, so
+       * these three counts move together or something was silently swallowed.
+       */
+      && st.slots === st.ids.length && st.cards === st.slots;
+  }],
+  /**
+   * ...AND THE `+` IS ON THE LAST TILE, WHICH IS WHERE THE FAMILY PUT IT.
+   * "Somewhere on the strip" is a different and weaker claim, and every slot
+   * must also be removable — otherwise a metric added by mistake is permanent.
+   */
+  /**
+   * ...AND CHOOSING A METRIC ACTUALLY CHANGES THE TILE, AND THE ADDRESS WITH
+   * IT. Every claim above is satisfied by a picker wired to nothing, which is
+   * the control-that-looks-alive failure this repo keeps naming. The walk picks
+   * the metric slot 0 is not showing and reads the strip back.
+   */
+  ["picking a metric changes that tile and moves the address with it", (t, ctx) => {
+    const pick = ctx?.tilePick;
+    if (!pick) return false;
+    return pick.ids[0] === pick.picked
+      && pick.ids[0] !== pick.before
+      // The chosen set is in the URL, so it is a link somebody can send and a
+      // state the browser's own Back button walks.
+      && new URLSearchParams(pick.search).get("tiles") === pick.ids.join(",");
+  }],
+  ["the + sits on the last tile only, and every tile can be removed", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st) return false;
+    return st.adds === 1 && st.addOnLast && st.removes === st.slots;
+  }],
+];
+
+/**
+ * THE SPLIT, APPLIED. `private-market-tiles` runs every private-market claim
+ * plus the picker's own; the default route runs everything except the six whose
+ * subject it does not draw.
+ */
+{
+  const all = INVARIANTS["private-market"];
+  INVARIANTS["private-market"] = [...all.filter(([d]) => !FULL_STRIP_ONLY.has(d)), ...TILE_PICKER_CHECKS];
+  INVARIANTS["private-market-tiles"] = [...all, ...TILE_PICKER_CHECKS.slice(1, 3),
+    /**
+     * ...AND ON THIS ROUTE THE WHOLE CATALOGUE IS ON SCREEN, which is what
+     * makes the six abstention-free. Without this the route could resolve to a
+     * stale or empty `?tiles=`, draw the default four, and every moved check
+     * would fail for the wrong reason — or pass for one.
+     */
+    ["every metric the picker offers is drawn on this route", (t, ctx) => {
+      const st = ctx?.tileStrip, menu = ctx?.tileMenu;
+      if (!st || !menu?.length) return false;
+      return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
+    }],
+  ];
+}
+
+/**
  * Elements painting a DARK surface or near-invisible text while the page is in
  * light mode. Run in the browser so it reads COMPUTED colour — the only way to
  * catch a utility whose light remap is missing, since the class name itself
@@ -12750,6 +13637,15 @@ for (const theme of THEMES) {
         }
         if (best >= 0) { await toggles.nth(best).click(); await page.waitForTimeout(500); }
       }
+      /**
+       * THE CAGR COLUMN'S OWN SORT. Clicked by the column's LABEL inside the
+       * header row rather than by index: the index moves with every measure a
+       * reader ticks, which is the whole point of the change under test.
+       */
+      if (name === "monitor-ret-sort") {
+        const th = page.locator("thead th").filter({ hasText: /^CAGR/ }).first();
+        if (await th.count()) { await th.locator("button").first().click(); await page.waitForTimeout(800); }
+      }
       if (name === "monitor-axis-crossback") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
@@ -12764,12 +13660,35 @@ for (const theme of THEMES) {
         const h = page.getByRole("button", { name: /^Holdings$/ }).first();
         if (await h.count()) { await h.click(); await page.waitForTimeout(1200); }
       }
+      /* Which txn routes walk the TRADES branch — see the click below. */
       if (name === "monitor-txns" || name === "monitor-txn-manager"
         || name === "monitor-txn-drill" || name === "monitor-txn-direct"
         || name === "monitor-txn-in" || name === "monitor-txn-out"
-        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis") {
+        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis"
+        || name === "monitor-txn-trades" || name === "monitor-txn-basket-trades"
+        || name === "monitor-txn-direct-capital") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+        /**
+         * ── AND THE RECORD THE ROUTE IS ABOUT ────────────────────────────────
+         *
+         *   *"it should be exactly one single simple table just like in the
+         *    holdings."*
+         *
+         * The two dated records are behind one toggle now, so only one table is
+         * in the DOM at a time and every route has to say which one it is
+         * walking. `capital` is the default and is left alone; the routes whose
+         * invariants read the TRADES table click through to it.
+         *
+         * Picked by the record's KEY off `data-txn-record-option`, never by the
+         * button's label: "Trades" is also this card's own column heading and
+         * appears in its prose, so a walk that clicked the WORD could match a
+         * sentence about the branch rather than the control that reaches it.
+         */
+        if (TRADES_BRANCH.has(name)) {
+          const b = page.locator('[data-txn-record-option="trades"]').first();
+          if (await b.count()) { await b.click(); await page.waitForTimeout(1100); }
+        }
         /**
          * THERE IS NO TAB TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
@@ -12785,7 +13704,7 @@ for (const theme of THEMES) {
          * than the tab was, because it also asserts that the shared control
          * narrows this table at all.
          */
-        if (name === "monitor-txn-direct") {
+        if (name === "monitor-txn-direct" || name === "monitor-txn-direct-capital") {
           // THE WHOLE TABLE FIRST, THEN THE NARROWED ONE. The subset claim used
           // to be struck against the header's buy/sell counter, which narrows
           // with this filter too — so after the tab became a section the
@@ -12959,6 +13878,93 @@ for (const theme of THEMES) {
        * guard that stops working without anyone noticing. So this route does
        * what a reader does: pick a section, then change the slice.
        */
+      /**
+       * THE ARRANGEMENT, DRIVEN AS A READER DRIVES IT. Sort first, then move —
+       * in that order deliberately, so the second assertion is struck on a
+       * table that is ALREADY sorted: a `move` that dropped the sort would
+       * otherwise look like a working move.
+       *
+       * The column moved is the one AFTER the fixed first, which is the
+       * strictest case: it is the only move that can land a column against the
+       * boundary `useTableView` refuses to cross.
+       */
+      if (name === "monitor-arrange") {
+        const tb = page.locator("main table").first();
+        ARRANGE.before = await tb.evaluate((t) => ({
+          cols: [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")),
+          rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          footSpan: Number(t.querySelector("tfoot tr > td")?.getAttribute("colspan") || 1),
+        }));
+        /**
+         * TWICE, AND THE SECOND CLICK IS THE ONE THAT PROVES ANYTHING.
+         *
+         * This table's DEFAULT ranking is already market value descending, so
+         * the first click lands on the order the page was in — a button wired
+         * to nothing and a button working perfectly draw the identical table.
+         * Found by asserting on one click and watching a correct page fail.
+         * The second click steps the three-state machine to ascending, which
+         * must reverse it.
+         */
+        const snap = () => tb.evaluate((t) => ({
+          rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          aria: t.querySelector("thead tr:last-child [data-col='mv']")?.getAttribute("aria-sort") ?? null,
+          others: [...t.querySelectorAll("thead tr:last-child [data-col]")]
+            .filter((c) => c.getAttribute("data-col") !== "mv")
+            .map((c) => c.getAttribute("aria-sort")),
+        }));
+        const btn = page.locator("[data-col-button='mv']").first();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(400); }
+        ARRANGE.desc = await snap();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(400); }
+        ARRANGE.sorted = await snap();
+        const grip = page.locator("[data-col-grip='qty']").first();
+        if (await grip.count()) {
+          await grip.focus();
+          await page.keyboard.press("ArrowRight");
+          await page.waitForTimeout(500);
+        }
+        /**
+         * THE FOOTER'S SPAN IS EXPANDED PER COLUMN, and a SECOND move is what
+         * makes it testable at all.
+         *
+         * `TrFoot` computes its label's `colSpan` as the leading run of columns
+         * that carry no total. Nudging `qty` past `avgCost` moves two columns
+         * that are both inside that run, so the span is 3 before and after —
+         * and a literal 3 in place of the computation passes. Found by
+         * reintroducing exactly that and watching a clean sweep.
+         *
+         * Moving `invested` — the FIRST column that has a total — to the front
+         * shortens the run to 1. Read as a per-column array, a stale span then
+         * lands the Invested total under a different heading, which is the
+         * defect a reader would actually be shown.
+         */
+        for (const key of ["ArrowLeft", "ArrowLeft"]) {
+          const g = page.locator("[data-col-grip='invested']").first();
+          if (!(await g.count())) break;
+          await g.focus();
+          await page.keyboard.press(key);
+          await page.waitForTimeout(350);
+        }
+        ARRANGE.moved = await tb.evaluate((t) => {
+          const cols = [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col"));
+          const foot = t.querySelector("tfoot tr");
+          // One entry per COLUMN, a spanning cell repeated across the columns
+          // it covers — so an index into this is an index into the headings.
+          const perCol = [];
+          for (const td of foot ? [...foot.children] : []) {
+            const n = Number(td.getAttribute("colspan") || 1);
+            for (let k = 0; k < n; k++) perCol.push(td.textContent.trim());
+          }
+          return {
+            cols,
+            firstRow: [...(t.querySelectorAll("tbody tr[data-security-key]")[0]?.children ?? [])]
+              .map((c) => c.textContent.trim().slice(0, 24)),
+            footSpan: Number(foot?.querySelector("td")?.getAttribute("colspan") || 1),
+            footPerCol: perCol,
+            rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          };
+        });
+      }
       if (name === "monitor-axis-switch") {
         const sel = page.locator("select").nth(2);        // the section filter
         if (await sel.count()) {
@@ -13276,7 +14282,17 @@ for (const theme of THEMES) {
           underlined: [...t.querySelectorAll("*")].filter((e) =>
             (e.textContent ?? "").trim()
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
-          buttons: t.querySelectorAll("button").length,
+          /**
+           * SCOPED TO THE BODY AND FOOTER, NOT THE WHOLE TABLE.
+           *
+           * The claim is Stage 10ac's: this table opens no formula popover, and
+           * a popover trigger is a `<button>` in a row cell or the footer cell.
+           * Every table in this app now carries sort and column-move controls
+           * in its `<thead>`, which are buttons too — counting those would fail
+           * a table that has exactly the popovers it should (none) for having
+           * the headings the family asked for.
+           */
+          buttons: [...t.querySelectorAll("tbody button, tfoot button")].length,
           links: t.querySelectorAll("a[href]").length,
           // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
           // bar carries `data-alloc-bar` (its section key) and IS the same
@@ -14008,6 +15024,54 @@ for (const theme of THEMES) {
           })(),
         };
       });
+      /**
+       * THE TRANSACTIONS RECORD TOGGLE — which record is on screen, what the
+       * control offers, the row count each button prints, and WHICH TABLE is
+       * actually in the DOM.
+       *
+       * All four, because they fail independently: a toggle that renders and
+       * switches nothing leaves both tables drawn, and one that switches without
+       * relabelling leaves the wrong title over the right table. Counting
+       * `data-mine-table` / `data-trades-table` is the only reading that can see
+       * the first, since every figure in either table is correct on its own.
+       */
+      const txnRecord = FAST ? null : await page.evaluate(() => {
+        const wrap = document.querySelector("main [data-txn-record]");
+        return {
+          active: wrap?.getAttribute("data-txn-record") ?? null,
+          offered: (wrap?.getAttribute("data-txn-record-options") || "").split(",").filter(Boolean),
+          options: [...(wrap?.querySelectorAll("[data-txn-record-option]") ?? [])].map((b) => ({
+            key: b.getAttribute("data-txn-record-option"),
+            rows: Number(b.getAttribute("data-txn-record-rows")),
+            selected: b.getAttribute("aria-selected") === "true",
+          })),
+          tables: [
+            ...[...document.querySelectorAll("main table[data-mine-table]")].map(() => "capital"),
+            ...[...document.querySelectorAll("main table[data-trades-table]")].map(() => "trades"),
+          ],
+          title: (document.querySelector("main .h-section")?.innerText ?? "").replace(/\s+/g, " ").trim(),
+        };
+      });
+      /**
+       * THE TABLE'S WIDTH, PER ROW KIND — the header's columns against every
+       * full-width row that has to span them.
+       *
+       * `COL_COUNT` is one expression in `PortfolioMonitor` and it now follows
+       * the number of ticked return measures. Written as a literal it went wrong
+       * SILENTLY: a section heading, an expansion or the empty state simply
+       * stopped reaching the last columns and no figure moved, so nothing in
+       * this sweep could see it. This is the reading that can.
+       */
+      const tableWidth = FAST ? null : await page.evaluate(() => {
+        const span = (tr) => tr ? [...tr.cells].reduce((n, td) => n + (td.colSpan || 1), 0) : null;
+        return {
+          head: document.querySelectorAll("thead tr th").length || null,
+          body: span(document.querySelector("tbody tr[data-bucket]")),
+          section: span(document.querySelector("tbody tr[data-section]")),
+          category: span(document.querySelector("tbody tr[data-category-total]")),
+          foot: span(document.querySelector("tfoot tr[data-footer-total]")),
+        };
+      });
       const footerCells = FAST ? null : await page.evaluate(() => {
         const tr = document.querySelector("tfoot tr");
         if (!tr) return null;
@@ -14414,9 +15478,46 @@ for (const theme of THEMES) {
           active: (el.getAttribute("data-return-active") || "").split(",").filter(Boolean),
         };
       });
+      /**
+       * ONE CELL PER PICKED RETURN, EACH IN ITS OWN COLUMN, so the probe carries
+       * WHICH measure each cell is for. It used to be a flat list of strings,
+       * which was right while every ticked measure shared one cell — and a build
+       * that went back to that would produce the same strings, so the claim has
+       * to be about the COLUMNS and not about the text in them.
+       */
       const returnCells = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tbody tr[data-bucket] td[data-return-cell]")]
-          .map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()));
+          .map((td) => ({
+            measure: td.getAttribute("data-return-cell"),
+            // Present only where the figure is NOT the column's own measure —
+            // which is the annualisation guard firing, and the one thing a cell
+            // still has to say for itself now that the header names the rest.
+            tag: td.getAttribute("data-return-tag"),
+            text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+          })));
+      /**
+       * ...AND WHAT EACH RETURN COLUMN'S HEADER SAYS. The coverage count the five
+       * removed paragraphs carried lives in the header's own note now, with the
+       * reason in its hover — so the note has to be READ rather than inferred
+       * from the paragraphs being gone. `headIndex` is where the column sits, so
+       * a claim about a cell AFTER it (Sector, Entities) can be struck at the
+       * right index whatever the reader ticked.
+       */
+      const returnHead = FAST ? null : await page.evaluate(() => {
+        const ths = [...document.querySelectorAll("thead tr th")];
+        const out = [];
+        ths.forEach((th, i) => {
+          const label = (th.querySelector("button")?.innerText ?? th.innerText ?? "").replace(/\s+/g, " ").trim();
+          const note = th.querySelector("[data-col-note]");
+          if (!/^(Return|HPR|CAGR|XIRR|YTD|CY)\b/i.test(label)) return;
+          out.push({
+            headIndex: i, label,
+            note: note ? (note.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+            noteTitle: note?.getAttribute("title") ?? null,
+          });
+        });
+        return out;
+      });
       /**
        * …AND WHAT EACH LINK IS LABELLED, because "the page contains a link to
        * X" is a weaker claim than "the figure the reader clicks opens X" — and
@@ -14468,6 +15569,27 @@ for (const theme of THEMES) {
       if (allocTable?.foot && allocTable.axis !== "category") {
         const scope = { basket: "basket", assetClass: "family-class" }[allocTable.axis];
         for (const c of allocTable.cells) ALLOC_CELLS.set(`${scope}:${c.key}`, c);
+      }
+      /**
+       * WHAT A READER CLICKED, COLLECTED FROM EVERY ROUTE RATHER THAN FROM
+       * MORNING CIO ALONE. A facet address — the listed half, the positions
+       * reporting no cost — is linked only from the drill-down's OWN chip row,
+       * so a map built on the cockpit alone would abstain on exactly the pages
+       * where the crumb has the most to get wrong.
+       *
+       * A TILE'S ANCHOR CARRIES NO TEXT: it is the stretched overlay that makes
+       * the whole card the target (Stage 10v), so its label has to come off the
+       * card. Everything else is an ordinary text link.
+       */
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        const publish = (href, label) => {
+          if (!/^\/holdings\?/.test(href) || !label) return;
+          const at = CRUMB_PUBLISHERS.get(href) ?? [];
+          if (!at.includes(label)) at.push(label);
+          CRUMB_PUBLISHERS.set(href, at);
+        };
+        for (const l of links) publish(l.href, l.text);
+        for (const tile of kpiTiles ?? []) if (tile.links.length === 1) publish(tile.links[0], tile.label);
       }
       if (name === "cio" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
         for (const h of hrefs) {
@@ -14559,9 +15681,14 @@ for (const theme of THEMES) {
        *
        * The eyebrow used to sit above the title and the view switch on a
        * toolbar row of its own — three rows to say where you are. The claim
-       * that they now share one is geometric, so it is struck on geometry: the
-       * three boxes must overlap vertically. A CSS regression that stacks them
-       * again fails here; a caption never could.
+       * that the title and the switch now share one is geometric, so it is
+       * struck on geometry: the two boxes must overlap vertically. A CSS
+       * regression that stacks them again fails here; a caption never could.
+       *
+       * THE EYEBROW ITSELF HAS SINCE GONE INTO THE CRUMB (see `PageHeader`), so
+       * what is measured here is its ABSENCE from this line — the crumb row's
+       * own geometry is measured by `pageNav`, on every route rather than on
+       * this one.
        */
       if (!FAST && name === "monitor" && theme === THEMES[0] && width === WIDTHS[0]) {
         HEAD = await page.evaluate(() => {
@@ -14569,17 +15696,17 @@ for (const theme of THEMES) {
           if (!h1) return null;
           const btn = [...document.querySelectorAll("main button")];
           const bar = h1.parentElement;
-          const eyebrow = bar?.firstElementChild;
           const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
           const box = (el) => (el ? el.getBoundingClientRect() : null);
           const overlap = (a, b) => !!a && !!b && a.top < b.bottom && b.top < a.bottom;
-          const r = { h1: box(h1), eyebrow: box(eyebrow), toggle: box(toggle) };
+          const r = { h1: box(h1), toggle: box(toggle) };
           return {
-            hasEyebrow: !!eyebrow && eyebrow !== h1,
-            eyebrowInline: overlap(r.eyebrow, r.h1),
+            // THE EYEBROW IS GONE FROM THIS LINE: the title now opens the
+            // headline row, and where the reader is lives in the crumb above
+            // it. Struck on the DOM position rather than on the word, because
+            // "Daily" is legitimately still on screen — in the crumb.
+            eyebrowGone: bar?.firstElementChild === h1,
             toggleInline: overlap(r.toggle, r.h1),
-            // The eyebrow reads smaller than the title it precedes.
-            eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
             // The two retired controls, counted as BUTTONS. Matching their
             // words would hit the Transactions card's own view controls and
             // this page's prose, and fail a page that is correct.
@@ -14673,6 +15800,274 @@ for (const theme of THEMES) {
         };
         return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
       });
+      /**
+       * ── THE BACK / FORWARD / HOME ROW AND THE CRUMB, ON EVERY ROUTE ────────
+       *
+       * *"add three small back reverse and home buttons on the top of every
+       * page … Follow this format for every single page that we Open."* So it
+       * is measured on every page the sweep walks rather than on the handful
+       * that used to carry a crumb.
+       *
+       * READ OFF `data-*` HANDLES AND GEOMETRY, never off the rendered words.
+       * Two of the three claims are pure layout — the row is the FIRST line and
+       * reads smaller than the heading — and a page renders the identical text
+       * with them stacked, inline or missing. The third is a pairing between
+       * what a reader clicked and what the crumb then says, which needs the
+       * leaf's own text and nothing else on the line.
+       */
+      const pageNav = FAST ? null : await page.evaluate(() => {
+        const row = document.querySelector("main [data-page-nav]");
+        if (!row) return null;
+        const h1 = document.querySelector("main h1");
+        const box = (el) => (el ? el.getBoundingClientRect() : null);
+        const r = box(row), t = box(h1);
+        const fwd = row.querySelector("[data-page-nav-forward]");
+        return {
+          back: !!row.querySelector("[data-page-nav-back]"),
+          forward: !!fwd,
+          forwardDisabled: !!fwd?.disabled,
+          // The app's own front door, so an unfed book still lands on the page
+          // `RootRedirect` picks rather than on a gated one.
+          home: row.querySelector("[data-page-nav-home]")?.getAttribute("href") ?? null,
+          steps: [...row.querySelectorAll("[data-crumb-step]")].map((el) => ({
+            kind: el.getAttribute("data-crumb-step"),
+            // The separator is drawn INSIDE the segment that follows it, so it
+            // has to come off the text before the label can be compared.
+            text: (el.textContent ?? "").replace(/^\s*\u203a\s*/, "").replace(/\s+/g, " ").trim(),
+            link: !!el.querySelector("a[href]"),
+          })),
+          // ITS OWN LINE, ABOVE THE HEADING — which is what "the first line"
+          // means and what a flex container is free to stop doing.
+          aboveTitle: !!r && !!t && r.bottom <= t.top + 1,
+          smallerThanTitle: !!r && !!t && r.height < t.height,
+        };
+      });
+      /**
+       * ── THE THREE CONTROLS AND THE CRUMB, ASSERTED ON EVERY ROUTE ─────────
+       *
+       * Pushed here rather than into a per-route block because the claim is
+       * about EVERY page — a per-route list would have to name all 84 and would
+       * silently stop covering the next one added, which is how a check retires
+       * itself. A MISSING ROW IS A FAILURE and never an abstention: the row
+       * renders from the page's own header with no data behind it, so nothing
+       * on this book can legitimately be without one.
+       */
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        const n = pageNav;
+        if (!n) {
+          invariants.push("every page carries the back / forward / home row with a crumb naming it");
+        } else {
+          if (!n.back || !n.forward || n.home !== "/") {
+            invariants.push(`the page nav offers back, forward and home, and home points at the app's own front door (back=${n.back} forward=${n.forward} home=${n.home})`);
+          }
+          const leaf = n.steps.find((x) => x.kind === "leaf");
+          if (!leaf?.text) invariants.push("the crumb's last segment names this page");
+          // A LEAF THAT IS ALSO A LINK offers a click to the page you are on,
+          // which is the control-that-looks-alive failure in miniature.
+          if (leaf?.link) invariants.push("the crumb's last segment is the page you are on, so it carries no link");
+          if (!n.aboveTitle) invariants.push("the crumb row is the FIRST line, on its own above the heading");
+          /**
+           * ...AND THE ONE-WAY LINK IT REPLACED STAYS GONE.
+           *
+           * *"Remove 'Back to Morning CIO' and replace it with the three small
+           * buttons."* Four pages carried a hardcoded parent link — "Back to
+           * Morning CIO", "Back to holdings" — each of which named a step the
+           * reader may never have taken: a company page is reached from Sector
+           * Composition, a mandate, a drill-down and the movers card, and all
+           * four were offered the Portfolio Monitor. A removal is verified by
+           * asserting it happened, and it is struck on the LINK a reader can
+           * click rather than on the phrase, which survives in these files'
+           * own comments explaining why it went.
+           */
+          const oneWay = links.filter((l) => /^back to\b/i.test(l.text));
+          if (oneWay.length) invariants.push(`the one-way "Back to …" link is gone, replaced by the three controls — this page still offers ${oneWay.map((l) => `"${l.text}"`).join(", ")}`);
+          if (!n.smallerThanTitle) invariants.push("the crumb row reads smaller than the heading beneath it");
+          /**
+           * ...AND ON A DRILL-DOWN IT NAMES THE FIGURE, NOT THE ROUTE.
+           *
+           * *"The first line 'Morning CIO › What is Behind this Figure' should
+           * rather label the page/KPI tile that we have opened."* This route
+           * serves eleven sets and printed one sentence for all of them, so the
+           * claim is a PAIRING: the leaf must name something on Morning CIO
+           * that points at this very address. Nothing there says "what is
+           * behind the figure", so the retired phrase cannot pass — and neither
+           * can a build that pins every leaf to one figure's name.
+           *
+           * Matched case- and punctuation-insensitively, in EITHER direction of
+           * containment: a tile label and a link's text for one figure differ in
+           * length by design ("Top-10 conc." beside the Concentration card's
+           * own figure, where the crumb has room to spell it out).
+           */
+          if (/^holdings-/.test(name) && leaf?.text) {
+            const want = CRUMB_PUBLISHERS.get(path);
+            const norm = (x) => String(x).toLowerCase().replace(/[.·]/g, "").replace(/\s+/g, " ").trim();
+            const L = norm(leaf.text);
+            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${path}`);
+            else if (!want.some((w) => { const W = norm(w); return W && (L.includes(W) || W.includes(L)); })) {
+              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${path} are ${want.map((w) => `"${w}"`).join(", ")}`);
+            }
+          }
+        }
+      }
+      /**
+       * ── THE SELECTABLE TILE STRIP ─────────────────────────────────────────
+       *
+       * *"make it 4 and give the user a dropdown list to select what they want
+       * to see in each of those 4 KPI tiles … Also add a small + button on the
+       * last 4th KPI tile."* Every one of those claims is STRUCTURE — which
+       * slots exist, which carry a picker, which carries the `+` — and a strip
+       * renders the identical figures whether the controls are there or not.
+       * So they are read off `data-*` handles rather than off the page's words.
+       */
+      const tileStrip = FAST ? null : await page.evaluate(() => {
+        const strip = document.querySelector("main [data-tile-strip]");
+        if (!strip) return null;
+        const adds = [...strip.querySelectorAll("[data-tile-add]")];
+        const cards = [...strip.querySelectorAll(".card")];
+        return {
+          ids: (strip.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+          // EACH TILE'S OWN TEXT, so a claim about one tile is struck on that
+          // tile. Slicing the page between two tile LABELS only works while
+          // both are drawn, and with four of eighteen on screen by default the
+          // end marker is routinely missing — at which point `sliceBetween`
+          // returns the rest of the page and the check silently widens.
+          texts: Object.fromEntries([...strip.querySelectorAll("[data-tile-slot]")].map((sl) =>
+            [sl.getAttribute("data-tile-slot") ?? "", (sl.querySelector(".card")?.innerText ?? "").replace(/\s+/g, " ").trim()])),
+          slots: strip.querySelectorAll("[data-tile-slot]").length,
+          cards: cards.length,
+          pickers: strip.querySelectorAll("[data-tile-select]").length,
+          removes: strip.querySelectorAll("[data-tile-remove]").length,
+          adds: adds.length,
+          // THE `+` IS ON THE LAST TILE, which is where the family put it — and
+          // "somewhere on the strip" is a different and weaker claim.
+          addOnLast: adds.length === 1 && cards.length > 0 && cards[cards.length - 1].contains(adds[0]),
+        };
+      });
+      /**
+       * ...AND WHAT THE PICKER OFFERS, which needs the menu open: it renders no
+       * options while closed, deliberately, because Chromium's `innerText` on a
+       * `<select>` returns every option and eighteen metrics between a tile's
+       * label and its figure broke twelve invariants on a strip that rendered
+       * perfectly. Opened once on the primary pass, read, and closed again.
+       *
+       * The ids it yields are also the ADDRESS of the all-tiles route below, so
+       * that route's set comes off the page rather than being typed here — a
+       * typed list would be a second source for the catalogue and would go
+       * stale silently the first time a metric was added.
+       */
+      if (!FAST && /^private-market/.test(name) && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.pickers) {
+        try {
+          await page.click('[data-tile-select="0"]');
+          const opts = await page.$$eval("[data-tile-option]", (els) => els.map((e) => e.getAttribute("data-tile-option") ?? ""));
+          if (opts.length) {
+            TILE_MENU = opts;
+            if (!PM_TILE_IDS.length) PM_TILE_IDS.push(...opts);
+          }
+          /**
+           * ...AND PICKING ONE ACTUALLY CHANGES THE TILE.
+           *
+           * Every other claim here is about a control EXISTING, and a picker
+           * wired to nothing satisfies all of them — the strip renders, the
+           * menu opens, the `+` is in the right corner, and choosing does
+           * nothing. So the interaction is performed: pick the metric this slot
+           * is NOT showing, and read back both what the strip now holds and
+           * whether the address moved with it. The address is the half a reader
+           * could not otherwise see, and it is what makes a chosen set a link
+           * rather than a preference locked to one browser.
+           *
+           * A FRESH CONTEXT PER ROUTE means this cannot leak: the choice is
+           * written to `localStorage`, and the next route's page has none.
+           */
+          const before = tileStrip?.ids?.[0] ?? null;
+          const pick = opts.find((id) => id !== before);
+          if (pick) {
+            await page.click(`[data-tile-option="${pick}"]`);
+            TILE_PICK = await page.evaluate(() => ({
+              ids: (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+              search: location.search,
+            }));
+            TILE_PICK.before = before;
+            TILE_PICK.picked = pick;
+            // Back to the state this route was walked in, so the screenshot and
+            // anything read after here see the page as addressed.
+            await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
+            await page.goto(BASE + path, { waitUntil: "networkidle" });
+          } else {
+            await page.keyboard.press("Escape");
+          }
+        } catch { /* a strip with no picker is a finding below, not a crash here */ }
+      }
+      /**
+       * ── EVERY TABLE IS SORTABLE AND EVERY COLUMN BUT THE FIRST MOVES ───────
+       *
+       * *"Every single table on the dashboard must have clickable column
+       * headings to sort the table data, and also every single column except
+       * the first name one, the user should be able to drag and drop to
+       * rearrange columns, make this standardized for every table anywhere on
+       * the dashboard."*
+       *
+       * "Every table anywhere" is a claim about all of them, so it is measured
+       * on every route rather than on a list of tables somebody remembered to
+       * write down — a list would silently stop covering the next table added.
+       *
+       * READ OFF `data-*` HANDLES, because a table renders the identical
+       * figures whether its headings are clickable or not: nothing in the text
+       * of a page can tell a sortable column from a static one.
+       *
+       * A TABLE THAT REFUSES BOTH MUST SAY WHY, in `data-table-static`. The
+       * upstream financial tables are the case: their rows are a balance sheet
+       * whose order is the statement's own and whose columns are periods in
+       * chronological order, so sorting the rows or moving a year would
+       * scramble a document rather than rearrange a view. An exemption keyed on
+       * the table's own declared reason cannot drift the way a list of names
+       * here would, and a table that simply forgot the handles has no reason to
+       * declare.
+       */
+      const tableView = FAST ? null : await page.evaluate(() => {
+        const out = [];
+        for (const tb of document.querySelectorAll("main table")) {
+          const bodyRow = tb.querySelector("tbody tr");
+          // A table with no data row is a frame, not a table: an absent state
+          // draws one, and there is nothing in it to sort.
+          if (!bodyRow || !bodyRow.querySelector("td")) continue;
+          const rows = [...tb.querySelectorAll("thead tr")];
+          // A TABLE WITH NO `<thead>` AT ALL IS A LAYOUT, NOT A TABLE. A chart's
+          // legend and a two-column breakdown use `<table>` for alignment and
+          // have no headings to make clickable; there is nothing there to sort
+          // and nothing to name a column by. Skipped on that STRUCTURAL
+          // condition rather than by a declared reason, so a real table that
+          // loses its head is still a finding — its cells would then carry no
+          // `data-col` and the check below fires on the count.
+          if (!rows.length) continue;
+          const head = rows[rows.length - 1];
+          const cells = head ? [...head.children] : [];
+          out.push({
+            static: tb.getAttribute("data-table-static"),
+            id: tb.getAttribute("data-pm-table") ?? tb.getAttribute("data-table") ?? (tb.className || "").slice(0, 40),
+            headRows: rows.length,
+            headCells: cells.length,
+            withCol: cells.filter((c) => c.hasAttribute("data-col")).length,
+            sortable: cells.filter((c) => c.querySelector("[data-col-button]")).length,
+            movable: cells.filter((c) => c.hasAttribute("data-col-movable")).length,
+            // THE FIRST COLUMN IS THE ROW'S IDENTITY AND STAYS PUT, which the
+            // family asked for in as many words — so it must be the ONE cell
+            // with no grip.
+            firstFixed: cells.length > 0 && !cells[0].hasAttribute("data-col-movable"),
+          });
+        }
+        return out;
+      });
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        for (const tv of tableView ?? []) {
+          if (tv.static) continue;
+          const bad = tv.headCells === 0 || tv.withCol !== tv.headCells
+            || tv.sortable === 0 || !tv.firstFixed
+            || tv.movable !== tv.headCells - 1;
+          if (bad) {
+            invariants.push(`every table sorts on its headings and moves every column but the first — "${tv.id}" has ${tv.headCells} heading cells, ${tv.withCol} declared, ${tv.sortable} sortable, ${tv.movable} movable, firstFixed=${tv.firstFixed}`);
+          }
+        }
+      }
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
@@ -14712,7 +16107,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnRecord, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
