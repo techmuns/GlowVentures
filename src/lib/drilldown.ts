@@ -26,7 +26,8 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { currentHoldings, droppedHoldings, isPrivateClass, sum } from "./analytics";
+import { currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
+import { MARKET_SIDE_UNPLACED } from "./aifCategory";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -526,24 +527,28 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
     case "book":
     default: {
       /**
-       * THE LISTED AND PRIVATE HALVES ARE FACETS OF THE NAV, NOT PAGES OF THEIR
-       * OWN — the change the family asked for by name. The NAV tile's caption
-       * states both halves, so they are the sets this figure is described in
-       * terms of; giving each its own address is what put three links inside
-       * one tile.
+       * THE SIDES OF THE BOOK ARE FACETS OF THE NAV, NOT PAGES OF THEIR OWN —
+       * the change the family asked for by name. The NAV tile's caption states
+       * them, so they are the sets this figure is described in terms of; giving
+       * each its own address is what put three links inside one tile.
        *
-       * The split is on ASSET CLASS — what a holding IS — and not on how its
-       * account is run: an AIF folio is marked by its manager rather than by an
-       * exchange whether the family reached it through a wealth platform or
-       * bought it directly. That is the same rule `BOOK_SUMMARY` splits on.
+       * ── AND THERE ARE THREE OF THEM, NOT TWO ────────────────────────────
        *
-       * Offered ONLY where the book has both halves. A toggle with an empty side
-       * invites a reader to click into a table that can only be empty, and the
-       * absence belongs on the tile that states the split rather than here.
+       * This was `!isPrivateClass` against `isPrivateClass`, which is a
+       * PARTITION IN TWO and therefore silently swept every holding no
+       * statement places onto the listed side. The split is on `marketSide`
+       * now — read from the SEBI category the statements print — and the third
+       * value is `null`, so the facets have to offer it or ₹16.69 Cr would be
+       * in a facet whose note claims something about it that no document says.
+       *
+       * Each facet is offered ONLY where the book has rows for it. A toggle
+       * with an empty side invites a reader to click into a table that can only
+       * be empty, and an absence belongs on the tile that states the split.
        */
-      const listed = consolidated.filter((p) => !isPrivateClass(p));
-      const priv = consolidated.filter((p) => isPrivateClass(p));
-      const split = listed.length > 0 && priv.length > 0;
+      const listed = consolidated.filter((p) => p.marketSide === "listed");
+      const priv = consolidated.filter(isPrivateClass);
+      const unplaced = consolidated.filter(isUnplacedSide);
+      const split = [listed, priv, unplaced].filter((r) => r.length > 0).length > 1;
       return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
@@ -557,16 +562,24 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         },
       }, split ? [
         { key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated },
-        {
+        ...(listed.length ? [{
           key: "listed", label: "Listed",
-          note: "Everything the private classes do not name — marked by an exchange rather than by a manager.",
+          note: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the"
+            + " Category III AIFs whose own statements say they trade listed securities.",
           rows: listed,
-        },
-        {
+        }] : []),
+        ...(priv.length ? [{
           key: "private", label: "Private",
-          note: "AIF, Unlisted and Structured Product: the classes a manager marks rather than an exchange.",
+          note: "Private capital: unlisted holdings, structured products, and the AIFs whose statements"
+            + " print Category I or II or name their own discipline as private equity or venture.",
           rows: priv,
-        },
+        }] : []),
+        ...(unplaced.length ? [{
+          key: "unplaced", label: "Not placed",
+          note: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; a fund's`
+            + " own SEBI registration or its contribution agreement would settle each one.",
+          rows: unplaced,
+        }] : []),
       ] : [{ key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated }]);
     }
   }

@@ -27,7 +27,7 @@ import {
 } from "@/data/glowData";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
-  isPrivateClass, topByValue, sum,
+  topByValue, sum,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
@@ -103,6 +103,15 @@ export function buildDashboardContext(): ContextBlock[] {
       consolidatedNavCr: cr(BOOK_SUMMARY.totalValue),
       listedCr: cr(split.listed),
       privateCr: cr(split.private),
+      /**
+       * THE THIRD SIDE, and it travels with the other two or the model is
+       * handed a NAV its own two components fall short of — which is exactly
+       * the arithmetic a family office asks a chat about. `listed + private +
+       * unplaced === consolidatedNavCr`, asserted in `chatContext.test.ts`.
+       */
+      notPlacedCr: cr(split.unplaced),
+      notPlacedNote: "Funds whose statements print no SEBI category, so this book places them on"
+        + " neither the listed nor the private side. They ARE inside the consolidated NAV above.",
       positions: BOOK_POSITIONS.length,
       distinctSecurities: new Set(BOOK_POSITIONS.map((p) => p.securityKey)).size,
       accounts: BOOK_ACCOUNTS.length,
@@ -180,7 +189,19 @@ export function buildDashboardContext(): ContextBlock[] {
       doubleCount: {
         amountCr: cr(doubleCountedValue(BOOK_POSITIONS)),
         note: "Two holdings are reported under two members each. Both rows are carried; the consolidated total "
-          + "counts each once. A per-account figure shows both.",
+          + "counts each once. A per-account figure shows both. NOTHING ELSE IN THIS BOOK IS COUNTED TWICE: a "
+          + "fund appearing on several screens is one holding seen from several angles, never two holdings.",
+      },
+      /**
+       * THE SIDE THE STATEMENTS DO NOT NAME. A model told a NAV and a
+       * listed/private split will reconstruct the second half by subtraction,
+       * and on this book that subtraction is ₹16.69 Cr wrong.
+       */
+      marketSideUnplaced: {
+        valueCr: cr(split.unplaced),
+        funds: [...new Set(deduped.filter((p) => (p.marketSide ?? null) === null).map((p) => p.security))].sort(),
+        note: "No statement for these prints a SEBI category, so the book places them on neither side. "
+          + "Listed + private + this === the consolidated NAV; do not derive either side from the other two.",
       },
       ringFenced: {
         security: BOOK_POLYCAB[0]?.security ?? null,
@@ -206,10 +227,18 @@ export function buildDashboardContext(): ContextBlock[] {
  * resolved NSE symbol reaches it — a fund unit has none, by nature rather than
  * by omission. Capped, because a list of 139 symbols on every question is noise
  * rather than context.
+ *
+ * THE SYMBOL IS THE WHOLE FILTER. This also carried `!isPrivateClass`, which
+ * was redundant when it was written and became misleading when that predicate
+ * started meaning "private capital" rather than "not an exchange-marked class"
+ * — a Category III AIF now passes it and still has no symbol. Measured over
+ * this book: **290 positions carry a symbol and NOT ONE of them is private or
+ * unplaced**, so dropping the term changes no output and makes the code say
+ * what the paragraph above already says.
  */
 export function contextTickers(limit = 15): string[] {
   const deduped = dedupedPositions(BOOK_POSITIONS);
-  return topByValue(deduped.filter((p) => !isPrivateClass(p) && p.symbol), limit)
+  return topByValue(deduped.filter((p) => p.symbol), limit)
     .map((p) => p.symbol as string);
 }
 

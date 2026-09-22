@@ -15,6 +15,22 @@
 //   npm run build && npx vite preview --port 4173 &
 //   node scripts/dev/check-family-inputs.mjs
 import { chromium } from "playwright-core";
+import { readFileSync } from "node:fs";
+
+/**
+ * One generated array out of `glowData.ts`, without importing the module — a
+ * copy of `check-pages.mjs`'s own reader, for the same reason it has one: this
+ * is a plain `.mjs` script and the book is TypeScript.
+ */
+function bookArray(src, name) {
+  const i = src.indexOf(`export const ${name}`);
+  if (i < 0) return null;
+  const start = src.indexOf("= [", i);
+  if (start < 0) return null;
+  const end = src.indexOf("\n];", start);
+  if (end < 0) return null;
+  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+}
 
 const BASE = process.env.BASE ?? "http://localhost:4173";
 // Same pinned Chromium `check:pages` uses — playwright-core ships no browser.
@@ -679,6 +695,62 @@ if (await watched.count()) {
     /target price/i.test(text) && /fair value/i.test(text) && /valuation method/i.test(text));
 } else {
   check("a company page still carries the Investment tools panel", false, "no /stock/ link on Portfolio Monitor");
+}
+
+// ── AN ENTITY'S HOLDINGS THIS BOOK CANNOT VALUE ARE NAMED, NOT DROPPED ─────
+//
+//   "Bharat Jaisinghani Trust looks empty on holdings, so check that as well
+//    since the client has provided half of the statements already."
+//
+// The trusts hold three accounts each and ONE yields a valued position, so the
+// page listed one row and said nothing about the other two — a Sky Capital
+// angel folio whose fund publishes no NAV, and an HDFC Bank NSDL custody
+// account holding 347 unlisted preference shares recorded at FACE VALUE. Both
+// statements are IN HAND. Drawing nothing for them is right; saying nothing
+// about them tells a reader the trust holds one thing.
+//
+// ── THE ENTITY IS DERIVED, NEVER TYPED ─────────────────────────────────────
+//
+// The suite reads the book's own account registry for the owner with the most
+// accounts yielding no position, so the next drop picks its own worst case and
+// a book where every account is valued abstains rather than failing on a name
+// that stopped existing.
+{
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const held = new Set(positions.map((p) => p.accountId));
+  const byOwner = new Map();
+  for (const a of accounts) {
+    if (held.has(a.accountId) || !a.owner) continue;
+    byOwner.set(a.owner, [...(byOwner.get(a.owner) ?? []), a]);
+  }
+  // The entity with the MOST unvalued accounts is the worst case by
+  // construction, and it must also HOLD something — an owner with no valued
+  // position at all renders no holdings card for this one to sit under.
+  const valued = new Set(positions.map((p) => accounts.find((a) => a.accountId === p.accountId)?.owner));
+  const worst = [...byOwner.entries()].filter(([o]) => valued.has(o)).sort((a, b) => b[1].length - a[1].length)[0];
+  if (!worst) {
+    check("an entity's unvalued accounts are named", true, "(every account in this book yields a position)");
+  } else {
+    const [owner, unvalued] = worst;
+    const id = accounts.find((a) => a.owner === owner)?.ownerId ?? "";
+    await page.goto(`${BASE}/family?entity=${encodeURIComponent(id)}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    text = await page.locator("body").innerText();
+    const rendered = await page.locator("[data-unvalued-account]").count();
+    check(`${owner}'s ${unvalued.length} unvalued account(s) are named on the entity page`,
+      rendered === unvalued.length, `rendered ${rendered}`);
+    // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
+    // account numbers with no reason reads as a broken feed rather than as a
+    // measured absence, which is this book's founding distinction.
+    check("...each with its own reason",
+      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))));
+    // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
+    // the stake is worth, and this card sits directly under one that sums.
+    check("...and the card says none of it is in the value above",
+      /None of these figures is in the/i.test(text));
+  }
 }
 
 await browser.close();

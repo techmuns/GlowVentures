@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, dedupedPositions, isCompanyShare, isPrivateClass, excludedClasses, assetClassLabel, unpriced } from "@/lib/analytics";
+import { sum, dedupedPositions, isCompanyShare, isPrivateClass, marketSides, excludedClasses, assetClassLabel, unpriced } from "@/lib/analytics";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
 import { fmtDate } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
@@ -124,8 +124,13 @@ export function DataRefresh() {
   // The money comes off the positions. `null` here means the private COLLECTION
   // is empty — no holding in a private class at all — which is the one case that
   // must not render as a zero.
-  const privateRows = deduped.filter(isPrivateClass);
-  const privateMV = privateRows.length ? portfolio.privateValue : null;
+  /**
+   * EVERY SIDE THE BOOK HAS, in order, each with its own reason — see
+   * `marketSides`. A side with no rows is not in the list, so a `₹0 private`
+   * can never claim a private book worth nothing, which is what the two
+   * hard-coded rows this replaced had to guard against one at a time.
+   */
+  const sides = marketSides(deduped);
   const pm = portfolio.privateMarkets;
   const fundCount = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length + pm.debtFunds.length;
   const hasPrivate = fundCount + pm.closedFunds.length + pm.startups.length > 0;
@@ -186,9 +191,16 @@ export function DataRefresh() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* EVERY SIDE THE BOOK HAS, from `marketSides` — never a fixed
+            `Listed X · Private Y`. That caption stopped adding to the total
+            printed above it the moment a third side existed, and a reader who
+            adds two figures and gets less than the one they are under has found
+            a contradiction no hover repairs. */}
         <StatTile label="Current Value of Holdings" value={bookIsEmpty ? "—" : fmtFromBase(portfolio.totalValue, { compact: true })}
           sub={bookIsEmpty ? "no statements ingested"
-            : `Listed ${fmtFromBase(portfolio.listedValue, { compact: true })} · Private ${privateMV === null ? DASH : fmtFromBase(privateMV, { compact: true })}`}
+            : sides.length
+              ? sides.map((x) => `${x.label} ${fmtFromBase(x.value, { compact: true })}`).join(" · ")
+              : "no holding in this book carries a value"}
           icon={<Database className="h-4 w-4" />} />
         <StatTile label="Positions" value={p.length}
           sub={`${new Set(p.map((x) => x.securityKey)).size} names · ${new Set(p.map((x) => ownerOf(accIdx, x))).size} entities`}
@@ -265,16 +277,15 @@ export function DataRefresh() {
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card title="Coverage & quality">
           <ul className="space-y-2 text-sm">
-            <Row label="Listed book" value={bookIsEmpty ? DASH : fmtFromBase(portfolio.listedValue, { compact: true })} />
-            {/* THE MEASURED PRIVATE VALUE, NOT THE INSTRUMENT REGISTER. A
-                private book of zero claims private holdings worth nothing; an
-                em dash over a book full of AIF folios claims there are none.
-                The second is what this row actually did, and it is the same
-                failure in the other direction. The dash is now reserved for the
-                one case that earns it: no holding here is in a private class. */}
-            <Row label="Private book"
-              value={bookIsEmpty ? DASH : privateMV === null ? "no holding here is in a private class" : fmtFromBase(privateMV, { compact: true })}
-              muted={privateMV === null} />
+            {/* ONE ROW PER SIDE THE BOOK ACTUALLY HAS. The two hard-coded
+                rows below it were a two-way partition; `marketSides` is the
+                one list, and each row carries its side's own reason. */}
+            {bookIsEmpty
+              ? <Row label="Listed book" value={DASH} />
+              : sides.map((x) => (
+                  <Row key={x.key} label={`${x.label} book`} title={x.why}
+                    value={fmtFromBase(x.value, { compact: true })} />
+                ))}
             <Row label="Sector classification" value={coverage === null ? "no company shares to classify yet" : `${coverage.toFixed(1)}% of company-share value`} />
             <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length} />
             {/* Stated in MONEY as well as in a count. One promoter row is most
@@ -348,11 +359,15 @@ export function DataRefresh() {
   );
 }
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function Row({ label, value, muted, title }: { label: string; value: string; muted?: boolean; title?: string }) {
   return (
     <li className="flex items-center justify-between">
       <span className="text-slate-400">{label}</span>
-      <span className={`mono ${muted ? "text-slate-500" : "text-slate-200"}`}>{value}</span>
+      {/* `value` stays a STRING. A row that could take a node is a row any
+          caller can put a second line inside, and `innerText` breaks a line at
+          a flex item — the trap Stage 10ah records on the Entities pill. The
+          reason rides in a `title`, which is where this book puts a cause. */}
+      <span className={`mono ${muted ? "text-slate-500" : "text-slate-200"}`} title={title}>{value}</span>
     </li>
   );
 }

@@ -5,6 +5,7 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtPct } from "@/lib/format";
+import { dedupedPositions, marketSides } from "@/lib/analytics";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -37,9 +38,19 @@ export function UploadHistory() {
   const cov = BOOK_NAV_COVERAGE;
   const covered = cov.covered.length;
   const accounts = covered + cov.single.length + cov.unvalued.length;
-  const pm = portfolio.privateMarkets;
-  const hasPrivate = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length
-    + pm.debtFunds.length + pm.closedFunds.length + pm.startups.length > 0;
+  /**
+   * EVERY SIDE THE BOOK HAS, for the snapshot line below.
+   *
+   * AND IT REPLACES A GATE THAT WAS READING THE WRONG MODEL. The line used to
+   * print the private half only when `portfolio.privateMarkets` held something
+   * — six arrays that are EMPTY in this book (Stage 10m) — so it rendered
+   * `Private —` with the hover "No private-market holding in this book" over a
+   * book with a ₹352 Cr private half. That is the exact failure
+   * `publicPrivateSplit`'s own note records on the Family Dashboard, alive on a
+   * second page: a card gated on the fund-of-funds model rather than on the
+   * holdings, and wrong in the direction that DENIES a figure.
+   */
+  const sides = marketSides(dedupedPositions(portfolio.positions));
   const rows = nav.map((n, i) => {
     const prev = i > 0 ? nav[i - 1].nav : null;
     const growth = prev ? (n.nav / prev - 1) * 100 : null;
@@ -157,13 +168,20 @@ export function UploadHistory() {
           <div className="grid h-10 w-10 place-items-center rounded-md border border-champagne-500/30 bg-champagne-500/10 text-champagne-400"><History className="h-5 w-5" /></div>
           <div>
             <div className="text-sm text-slate-200">{portfolio.fileName}</div>
-            {/* Private renders as absent, not ₹0, when the book holds no private
-                instrument — "₹0 private" claims a private book worth nothing. */}
+            {/* EVERY SIDE THE BOOK HAS, from `marketSides`, so these terms
+                and the Total beside them always add up. It read a fixed
+                `Listed X · Private Y`, which stopped tying to its own Total the
+                moment a third side existed — and a side with no rows is left
+                out of the list rather than printed as ₹0, which is the same
+                guard the old `hasPrivate` branch was doing by hand. */}
             <div className="text-xs text-slate-500">
-              Listed {fmtFromBase(portfolio.listedValue, { compact: true })} ·{" "}
-              Private {hasPrivate
-                ? fmtFromBase(portfolio.privateValue, { compact: true })
-                : <span title="No private-market holding in this book — absent, not zero.">{DASH}</span>} ·{" "}
+              {sides.length === 0
+                ? <span title="No holding in this book carries a value.">{DASH}</span>
+                : sides.map((x) => (
+                    <span key={x.key} title={x.why}>
+                      {x.label} {fmtFromBase(x.value, { compact: true })} ·{" "}
+                    </span>
+                  ))}
               Total {fmtFromBase(portfolio.totalValue, { compact: true })} · as of {fmtDate(portfolio.asOf)}
             </div>
           </div>
