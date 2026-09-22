@@ -214,7 +214,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   fund two ways. Category III trades LISTED securities; Categories I and II are
   private capital; a fund whose own name says private equity or venture is
   private whichever it prints; and a fund printing none is on NEITHER side and is
-  named. See Stage 10bo.
+  named. See Stage 10bp.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -454,7 +454,7 @@ ring-fence** section.
 
 **Consolidated ₹710.39 Cr**: listed ₹655.82 Cr, private ₹37.88 Cr, and
 ₹16.69 Cr no statement places on either side. The split reads the SEBI category
-the statements print — see `shared/aifCategory.mjs` and Stage 10bo.
+the statements print — see `shared/aifCategory.mjs` and Stage 10bp.
 
 **IT HAS BEEN WRONG TWICE, THE SAME WAY.** It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
@@ -1232,7 +1232,7 @@ trustees, so a reader must resolve each account on the `DP Account No:` the page
 prints (67786547 / 67786137) and attribute it to a trust through the register.
 That is a join to establish, not a document to request.
 
-***AND IT HAS BEEN ESTABLISHED — see Stage 10bo.*** It was named here and not
+***AND IT HAS BEEN ESTABLISHED — see Stage 10bp.*** It was named here and not
 made, so for three deliveries both accounts sat under `Ajay Jaisinghani` and the
 trusts' entity page listed one holding, which is what the family eventually
 reported. `BENEFICIAL_OWNER_BY_DP_ACCOUNT` in `providers/hdfcNsdl.mjs` is the
@@ -3278,9 +3278,9 @@ or `Direct` (the ICICI NSDL row), and both Buoyant accounts carry engagement
 engagement DOES answer is the opposite one — an account holding nothing has no
 position to read a class off — which is why `unvaluedAccounts` is scoped to it.
 
-***AND `isPrivateClass` IS NOT THE ASSET CLASS ANY MORE — see Stage 10bo.*** It
+***AND `isPrivateClass` IS NOT THE ASSET CLASS ANY MORE — see Stage 10bp.*** It
 reads the SEBI category the statements print, so the **figures in the table above
-are the pre-10bo ones**: the Category III folios (Sanshi, Buoyant, Carnelian
+are the pre-10bp ones**: the Category III folios (Sanshi, Buoyant, Carnelian
 Bharat Amritkaal) are listed exposure and are not on this page. The page is
 5 deduped rows / 7 raw and ₹37.88 Cr now, the ₹3.17 Cr double count below is
 still all of it, and the funds that left are NAMED on the page with their value
@@ -5546,7 +5546,7 @@ Concentration & risk, each linking to the holdings behind it. `marketSides`
 still feeds that row.
 
 ***`listedBook` AND `privateBook` WERE NAMED HERE TOO AND FED NOTHING — they are
-gone (Stage 10bo).*** This card was their only reader and they outlived it, so
+gone (Stage 10bp).*** This card was their only reader and they outlived it, so
 the sentence above was a comment asserting an enforcement that never happens.
 They were also the pair whose MEANING changed silently when the split stopped
 being a class list, which is what made them worth removing rather than leaving. **A layout removal, not a
@@ -14055,7 +14055,7 @@ knowing:
   first time round (the claims reaching two of eight) was one the harness was
   blind to by construction. It walks all eight now.
 
-### Stage 10bo — A CATEGORY III AIF IS LISTED EXPOSURE, AND A TRUSTEE IS NOT THE TRUST
+### Stage 10bp — A CATEGORY III AIF IS LISTED EXPOSURE, AND A TRUSTEE IS NOT THE TRUST
 
 *"open PR and do not merge until i tell you to."* · *"Sanshi, Buoyant and
 Carnelian. These are not private market investments. They should come under
@@ -14435,7 +14435,7 @@ an address the book deliberately does not define) **plus one this change
 created**: *no fund row prints a return where its cost is absent*, on both
 Private Market fund routes. That one earns its abstention off the book —
 narrowing the page to the private side left **4 fund rows over 5 deduped
-positions and not one of them lacks a cost**, where the pre-10bo page drew 19
+positions and not one of them lacks a cost**, where the pre-10bp page drew 19
 rows of which 4 reported none. It is the shape this file requires: the claim has
 no subject because the BOOK says so, not because the check could not find its
 figure.
@@ -14452,7 +14452,7 @@ tenth time each**:
 
 - **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bl`. Main's
   merged first and **keeps it**, as at 10al, 10as, 10at, 10aw, 10bb, 10bi, 10bj
-  and 10bk; this section is **10bo**. **Eleven `10bl` lines were read one at a
+  and 10bk; this section is **10bp**. **Eleven `10bl` lines were read one at a
   time before any moved**: three are main's own merge note (*"this section is
   **10bl**"*) and one its heading, and the other eight are this branch's — every
   one about the SEBI category split, the trustee join or `replay:owners`, and
@@ -14475,7 +14475,7 @@ file rather than across this merge, it finds **TEN duplicated stage letters —
 `10g`, `10j`, `10n`, `10o`, `10p`, `10r`, `10s`, `10y`, `10aa`, `10ak`** — every
 one of them already on `main`, none introduced here (measured: 10 duplicates on
 `origin/main`, 10 on the merged tree, and the sorted letter lists differ by
-`10bo` alone). So a `See Stage 10p` in this file already points at whichever of
+`10bp` alone). So a `See Stage 10p` in this file already points at whichever of
 two sections comes first, and has for some time. They are NAMED rather than
 renumbered, because repointing ten sections would rewrite every cross-reference
 in the file for no measurement — and a guard's first run finding ten historical
@@ -14536,7 +14536,7 @@ the one the scheduled check-in exists for. It fired four times and found nothing
 the change landed in the 88 minutes after the fourth.
 
 **THE LETTER COLLIDED FOR THE ELEVENTH TIME, AND `main` TOOK TWO.** #64 wrote
-`10bm` AND `10bn`, so this section is **`10bo`**. Seventeen lines named one of
+`10bm` AND `10bn`, so this section is **`10bp`**. Seventeen lines named one of
 the three afterwards and **each was read before any moved**: eleven are this
 branch's (the heading, three inside the section, and seven cross-references
 elsewhere in the file), four are `main`'s own — two `10bm` inside its section and
@@ -14576,7 +14576,7 @@ from this branch, and nothing from `main` that a replacement does not carry.**
 **`main`'s STAGE-LETTER GUARD RAN AGAIN AND FOUND NO NEW DUPLICATE.** The same
 ten historical letters as before (`10g`, `10j`, `10n`, `10o`, `10p`, `10r`,
 `10s`, `10y`, `10aa`, `10ak`), identical on `origin/main` and on the merged tree,
-and the sorted letter lists differ by **`10bo` alone**.
+and the sorted letter lists differ by **`10bp` alone**.
 
 **THE FOUR FILES THAT AUTO-MERGED WERE READ, NOT TRUSTED.** `package.json`,
 `test-family.mjs`, `types.ts` and `PortfolioContext.tsx` each kept both sides,
@@ -14590,6 +14590,31 @@ Stage 10at records: neither side touched `src/data/glowData.ts` or
 `docs/BOOK-REPORT.md`, so the merge had nothing to splice — and `build-book` was
 run as a control anyway and regenerated both **byte-identically, to the same md5
 as before the merge**. `replay:owners --check` is still a no-op.
+
+#### …AND THE TWELFTH COLLISION LANDED ON `main`, BECAUSE THE MERGE WAS CLEAN
+
+This section was `10bo` when its PR was merged, and so was **#67**, which landed
+on `main` in the eighty minutes between the last fetch and the merge button. The
+two sections sit in different parts of this file, so **git produced no conflict,
+GitHub reported the PR mergeable, and both went in under one letter.** `main` was
+left with two `### Stage 10bo` headings and twenty-two lines pointing at
+whichever came first.
+
+**THAT IS THE EXACT FAILURE `main`'s OWN STAGE-LETTER GUARD WAS ADDED FOR, AND
+THIS IS ITS FIRST LIVE CATCH** — recorded here rather than quietly fixed, because
+the guard had run three times before and only ever found the ten historical
+duplicates, which reads as a guard with nothing to do. It has something to do.
+
+Fixed in a follow-up: **#67 merged first and keeps `10bo`; this section is
+`10bp`**, and the thirteen lines that are this section's were repointed while
+#67's nine were left alone — each read one at a time, because seven of the
+twenty-two sit far from either section and only the wording says whose they are.
+
+**AND THE LESSON IS THE ONE THIS FILE ALREADY STATES AND HAD NOT YET PAID FOR:
+A CLEAN MERGE IS NOT A CORRECT ONE.** The letter check has to run **against the
+tip of `main` at the moment of merging**, not against the base the branch was
+last fetched at — a PR that has sat open through another merge is exactly the one
+whose letter is stale, and the diff will not say so.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 22 + 140 (2 not
 checked, 0 blocked) · `test:family` · `check:family` **85/0** · `check:pages`
@@ -15513,7 +15538,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   on the DP account number the page prints and cited to the family's own
   investment register. The FIFTH faithful partial replay after `rekey:archive`,
   `build-lookthrough --reindex`, `replay:calls` and `replay:movements`, on the
-  same three rules (see Stage 10bo): it touches the owner, its id and one
+  same three rules (see Stage 10bp): it touches the owner, its id and one
   warning and nothing else; its gate is struck on the ARCHIVE — the owner on
   disk must be either the holder the committed text prints or the one the join
   produces, and a third value means somebody else wrote it; and `--check` writes
