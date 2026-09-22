@@ -32,6 +32,8 @@ import { Pill } from "@/components/Pill";
 import { AbsentCell } from "@/components/Absent";
 import { fmtNum, fmtDate, DASH } from "@/lib/format";
 import { movementIdentityHolds } from "@/lib/shareMovements";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 import { ownerDisplayName } from "@/lib/owners";
 import type { Account, ShareMovement } from "@/lib/types";
 
@@ -58,11 +60,27 @@ const Z_PLEDGE = "A measured zero: this statement prints the encumbrance rows �
 const T_CA = "The security itself changing — a bonus, a split, a merger, a scheme redeeming its units. Not a decision anybody made, which is why it is its own column rather than a purchase or a sale.";
 const T_PLEDGE = "A pledge, an unpledge or an early pay-in earmark moves units between this account's free and encumbered balances. Nothing enters or leaves the account, so these are COUNTED and are in no column to the left — folding them in would report the holding at twice its size.";
 
+/** The columns, in the order this table's rows write their cells. */
+const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] as const;
+
 export function QuantityMovement(
-  { movements, unmoved, accounts }: { movements: ShareMovement[]; unmoved: string[]; accounts: Account[] },
+  { movements: raw, unmoved, accounts }: { movements: ShareMovement[]; unmoved: string[]; accounts: Account[] },
 ) {
-  if (!movements.length && !unmoved.length) return null;
+  const view = useTableView("quantity-movement", QTY_COLS);
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
+  const movements = sortRows(raw, view.sort, {
+    account: (m) => {
+      const a = accIdx.get(m.accountId);
+      return a ? (a.ownerId ? ownerDisplayName(a.ownerId) : a.owner) : m.accountId;
+    },
+    opening: (m) => m.opening,
+    in: (m) => m.unitsIn,
+    out: (m) => m.unitsOut,
+    ca: (m) => m.corporateAction,
+    closing: (m) => m.closing,
+    pledge: (m) => m.encumbranceMoves,
+  });
+  if (!movements.length && !unmoved.length) return null;
   const acctLabel = (id: string) => {
     const a = accIdx.get(id);
     return a ? `${a.ownerId ? ownerDisplayName(a.ownerId) : a.owner} · ${a.provider} ${a.accountNo}` : id;
@@ -95,15 +113,15 @@ export function QuantityMovement(
       <div className="overflow-x-auto">
         <table className="min-w-full whitespace-nowrap text-sm" data-qty-movement>
           <thead className="border-b border-ink-700">
-            <tr>
-              <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Opening</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Units in</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Units out</th>
-              <th className="label-xs px-4 py-2 text-right font-medium" title={T_CA}>Corporate action</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Closing</th>
-              <th className="label-xs px-4 py-2 text-right font-medium" title={T_PLEDGE}>Pledge &amp; lock-in</th>
-            </tr>
+            <Tr view={view}>
+              <SortHeader col="account" view={view} align="left">Account</SortHeader>
+              <SortHeader col="opening" view={view}>Opening</SortHeader>
+              <SortHeader col="in" view={view}>Units in</SortHeader>
+              <SortHeader col="out" view={view}>Units out</SortHeader>
+              <SortHeader col="ca" view={view} title={T_CA}>Corporate action</SortHeader>
+              <SortHeader col="closing" view={view}>Closing</SortHeader>
+              <SortHeader col="pledge" view={view} title={T_PLEDGE}>Pledge &amp; lock-in</SortHeader>
+            </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700/60">
             {movements.map((m) => {
@@ -113,7 +131,7 @@ export function QuantityMovement(
                  must not render as though they do. */
               const ties = movementIdentityHolds(m);
               return (
-                <tr key={`${m.accountId}|${m.securityKey}`} data-qty-row data-qty-account={m.accountId}
+                <Tr view={view} key={`${m.accountId}|${m.securityKey}`} data-qty-row data-qty-account={m.accountId}
                     data-qty-ties={ties ? "1" : "0"}
                     /* THE STATEMENT'S OWN NAME AND ITS ISIN — the evidence for
                        the join, and routinely a different spelling from this
@@ -138,7 +156,7 @@ export function QuantityMovement(
                       ? <span className="text-slate-500" title={Z_PLEDGE}>0</span>
                       : <span className="mono text-amber-300/90" title={T_PLEDGE}>{m.encumbranceMoves}</span>}
                   </td>
-                </tr>
+                </Tr>
               );
             })}
           </tbody>

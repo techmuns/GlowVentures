@@ -2,20 +2,32 @@ import { ReactNode } from "react";
 
 function changeColor(n: number) { return n > 0 ? "text-gain" : n < 0 ? "text-loss" : "text-slate-400"; }
 
-export function StatTile({ label, value, sub, delta, icon, hint }: {
-  label: string; value: ReactNode; sub?: ReactNode;
+export function StatTile({ label, value, sub, delta, icon, hint, action, className = "" }: {
+  /**
+   * NORMALLY A STRING, and a node where the tile's own label is a CONTROL —
+   * `SelectableTiles` renders a `<select>` here, because the label is where a
+   * reader already looks to see which metric they are reading and a picker
+   * tucked into a corner is invisible on a touch screen.
+   */
+  label: ReactNode; value: ReactNode; sub?: ReactNode;
   /**
    * The percentage arrow. NULL is accepted and renders NOTHING — a tile whose
    * figure the book does not carry must not show a "■ 0.00%" that reads as a
    * measured flat move.
    */
   delta?: number | null; icon?: ReactNode; hint?: ReactNode;
+  /** Controls that act on the TILE rather than on its figure — remove, add. */
+  action?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="card p-5">
-      <div className="flex items-start justify-between">
-        <div className="label-xs">{label}</div>
-        {icon && <div className="text-slate-500">{icon}</div>}
+    <div className={`card p-5 ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="label-xs min-w-0">{label}</div>
+        <div className="flex shrink-0 items-start gap-1.5">
+          {action}
+          {icon && <div className="text-slate-500">{icon}</div>}
+        </div>
       </div>
       {/* `data-stat-value` tells a tile carrying a FIGURE from one carrying an
           em dash, which are two different things wearing one layout: the first

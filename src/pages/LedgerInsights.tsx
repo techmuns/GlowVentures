@@ -16,6 +16,8 @@ import {
   loadTransactions, loadRealisedLots, loadIncome, loadSales,
   type TxnData, type LotData, type Lot, type IncomeData, type SalesData,
 } from "@/lib/ledger";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 
 // Ledger Insights — the DATED record behind the book, straight from the archive.
 //
@@ -129,7 +131,42 @@ export function LedgerInsights() {
 }
 
 // ── Transactions ─────────────────────────────────────────────────────────────
+/**
+ * Each table's columns in DECLARED order — the order their cells are written
+ * in below, which is what `<Tr>` permutes from. The first is the row's SUBJECT
+ * and never moves (see `src/lib/tableView.ts`).
+ */
+const TXN_COLS = ["date", "security", "account", "side", "qty", "price", "amount", "realised"] as const;
+const SALE_COLS = ["security", "sold", "proceeds", "realised", "held", "status"] as const;
+const LOT_BUCKET_COLS = ["bucket", "lots", "short", "long", "total"] as const;
+const LOT_COLS = ["security", "account", "bought", "sold", "days", "qty", "proceeds", "term", "gain"] as const;
+const CASH_COLS = ["security", "account", "date", "qty", "rate", "tds", "net"] as const;
+const CORP_COLS = ["security", "account", "action", "date", "held", "entitlement"] as const;
+
 function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | null }) {
+  const txnView = useTableView("ledger-txns", TXN_COLS);
+  const saleView = useTableView("ledger-sales", SALE_COLS);
+  // THE DEFAULT ORDER IS THE LEDGER'S OWN and stays untouched until a reader
+  // ranks a column: `ledger.ts` returns these dated rows newest-first, which is
+  // a fact about the record rather than a ranking this page chose.
+  const txnRows = sortRows(data.txns, txnView.sort, {
+    date: (t) => t.date,
+    security: (t) => t.security,
+    account: (t) => t.account,
+    side: (t) => t.side,
+    qty: (t) => t.qty,
+    price: (t) => t.price,
+    amount: (t) => t.amount,
+    realised: (t) => t.realized,
+  });
+  const saleRows = sortRows(sales?.rows ?? [], saleView.sort, {
+    security: (r) => r.security,
+    sold: (r) => r.soldQty,
+    proceeds: (r) => r.proceeds,
+    realised: (r) => r.realized,
+    held: (r) => (r.heldQty > 0 ? r.heldQty : null),
+    status: (r) => (r.exited ? "Exited" : "Trimmed"),
+  });
   const { fmtFromBase } = usePortfolio();
   const win = window(data.periodFrom, data.periodTo);
   /**
@@ -214,20 +251,20 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
         <div className="max-h-[560px] overflow-auto">
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
-              <tr>
-                <th className="label-xs px-4 py-2 font-medium">Date</th>
-                <th className="label-xs px-4 py-2 font-medium">Security</th>
-                <th className="label-xs px-4 py-2 font-medium">Account</th>
-                <th className="label-xs px-4 py-2 text-center font-medium">Side</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Quantity</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Price</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Net amount</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Realised</th>
-              </tr>
+              <Tr view={txnView}>
+                <SortHeader col="date" view={txnView} align="left">Date</SortHeader>
+                <SortHeader col="security" view={txnView} align="left">Security</SortHeader>
+                <SortHeader col="account" view={txnView} align="left">Account</SortHeader>
+                <SortHeader col="side" view={txnView} align="center">Side</SortHeader>
+                <SortHeader col="qty" view={txnView}>Quantity</SortHeader>
+                <SortHeader col="price" view={txnView}>Price</SortHeader>
+                <SortHeader col="amount" view={txnView}>Net amount</SortHeader>
+                <SortHeader col="realised" view={txnView}>Realised</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
-              {data.txns.map((t, i) => (
-                <tr key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
+              {txnRows.map((t, i) => (
+                <Tr view={txnView} key={`${t.date}-${t.securityKey}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 mono text-slate-400 whitespace-nowrap">{fmtDate(t.date)}</td>
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={t.securityKey} name={t.security} /></td>
                   <td className="px-4 py-2 text-[12px] text-slate-400">{t.account}</td>
@@ -240,7 +277,7 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                       ? <AbsentCell reason={t.realizedNote ?? (t.side === "Buy" ? "a purchase realises nothing" : "no capital gain statement covers this account")} />
                       : <span className={changeColor(t.realized)}>{fmtFromBase(t.realized, { compact: true, sign: true })}</span>}
                   </td>
-                </tr>
+                </Tr>
               ))}
             </tbody>
           </table>
@@ -253,18 +290,18 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
-                <tr>
-                  <th className="label-xs px-4 py-2 font-medium">Security</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Shares sold</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Proceeds</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Realised</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Still held</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Status</th>
-                </tr>
+                <Tr view={saleView}>
+                  <SortHeader col="security" view={saleView} align="left">Security</SortHeader>
+                  <SortHeader col="sold" view={saleView}>Shares sold</SortHeader>
+                  <SortHeader col="proceeds" view={saleView}>Proceeds</SortHeader>
+                  <SortHeader col="realised" view={saleView}>Realised</SortHeader>
+                  <SortHeader col="held" view={saleView}>Still held</SortHeader>
+                  <SortHeader col="status" view={saleView} align="left">Status</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {sales.rows.map((r) => (
-                  <tr key={r.securityKey} className="hover:bg-ink-700/40">
+                {saleRows.map((r) => (
+                  <Tr view={saleView} key={r.securityKey} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(Math.round(r.soldQty))}</td>
                     <td className="px-4 py-2 text-right mono text-slate-200">{fmtFromBase(r.proceeds, { compact: true })}</td>
@@ -279,7 +316,7 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
                     <td className="px-4 py-2">
                       <Pill tone={r.exited ? "warn" : "info"}>{r.exited ? <><LogOut className="mr-1 inline h-3 w-3" />Exited</> : <><Scissors className="mr-1 inline h-3 w-3" />Trimmed</>}</Pill>
                     </td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </table>
@@ -389,6 +426,8 @@ function splitLotsByBucket(lots: Lot[], accounts: Account[]): LotSplit[] {
 }
 
 function GainsView({ data }: { data: LotData | null }) {
+  const bucketView = useTableView("ledger-lot-bucket", LOT_BUCKET_COLS);
+  const lotView = useTableView("ledger-lots", LOT_COLS);
   // STATEMENT BASIS, like the rest of this page: the account registry is read
   // only to resolve how each account is RUN, and reading the live-overlaid book
   // for it on a page pinned to statement records is the trap the BasisPill names.
@@ -401,6 +440,24 @@ function GainsView({ data }: { data: LotData | null }) {
     );
   }
   const byBucket = splitLotsByBucket(data.lots, statementPortfolio?.accounts ?? []);
+  const bucketRows = sortRows(byBucket, bucketView.sort, {
+    bucket: (c) => (c.unclassified ? null : c.label),
+    lots: (c) => c.lots,
+    short: (c) => c.short,
+    long: (c) => c.long,
+    total: (c) => c.total,
+  });
+  const lotRows = sortRows(data.lots, lotView.sort, {
+    security: (l) => l.security,
+    account: (l) => l.account,
+    bought: (l) => l.purchaseDate,
+    sold: (l) => l.saleDate,
+    days: (l) => l.daysHeld,
+    qty: (l) => l.quantity,
+    proceeds: (l) => l.saleAmount,
+    term: (l) => l.term,
+    gain: (l) => l.gain,
+  });
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -427,17 +484,17 @@ function GainsView({ data }: { data: LotData | null }) {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
-                <tr>
-                  <th className="label-xs px-4 py-2 font-medium">Held as</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Short-term</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Long-term</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Total</th>
-                </tr>
+                <Tr view={bucketView}>
+                  <SortHeader col="bucket" view={bucketView} align="left">Held as</SortHeader>
+                  <SortHeader col="lots" view={bucketView}>Lots</SortHeader>
+                  <SortHeader col="short" view={bucketView}>Short-term</SortHeader>
+                  <SortHeader col="long" view={bucketView}>Long-term</SortHeader>
+                  <SortHeader col="total" view={bucketView}>Total</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {byBucket.map((c) => (
-                  <tr key={c.key} className="hover:bg-ink-700/40">
+                {bucketRows.map((c) => (
+                  <Tr view={bucketView} key={c.key} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
                       {!c.unclassified ? (
                         <>
@@ -470,17 +527,18 @@ function GainsView({ data }: { data: LotData | null }) {
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(c.short)}`}>{fmtFromBase(c.short, { compact: true, sign: true })}</td>
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(c.long)}`}>{fmtFromBase(c.long, { compact: true, sign: true })}</td>
                     <td className={`px-4 py-2.5 text-right mono font-semibold ${changeColor(c.total)}`}>{fmtFromBase(c.total, { compact: true, sign: true })}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
               <tfoot className="border-t-2 border-ink-600 font-semibold">
-                <tr>
-                  <td className="px-4 py-2.5 text-slate-200">Total — the canonical figure</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(data.lots.length)}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(data.totalShort ?? 0)}`}>{data.totalShort == null ? <AbsentCell /> : fmtFromBase(data.totalShort, { compact: true, sign: true })}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(data.totalLong ?? 0)}`}>{data.totalLong == null ? <AbsentCell /> : fmtFromBase(data.totalLong, { compact: true, sign: true })}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor((data.totalShort ?? 0) + (data.totalLong ?? 0))}`}>{fmtFromBase((data.totalShort ?? 0) + (data.totalLong ?? 0), { compact: true, sign: true })}</td>
-                </tr>
+                <TrFoot view={bucketView} className="px-4 py-2.5 text-slate-200"
+                  label={<>Total — the canonical figure</>}
+                  cells={{
+                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(data.lots.length)}</td>,
+                    short: <td key="short" className={`px-4 py-2.5 text-right mono ${changeColor(data.totalShort ?? 0)}`}>{data.totalShort == null ? <AbsentCell /> : fmtFromBase(data.totalShort, { compact: true, sign: true })}</td>,
+                    long: <td key="long" className={`px-4 py-2.5 text-right mono ${changeColor(data.totalLong ?? 0)}`}>{data.totalLong == null ? <AbsentCell /> : fmtFromBase(data.totalLong, { compact: true, sign: true })}</td>,
+                    total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor((data.totalShort ?? 0) + (data.totalLong ?? 0))}`}>{fmtFromBase((data.totalShort ?? 0) + (data.totalLong ?? 0), { compact: true, sign: true })}</td>,
+                  }} />
               </tfoot>
             </table>
           </div>
@@ -500,21 +558,21 @@ function GainsView({ data }: { data: LotData | null }) {
         <div className="max-h-[560px] overflow-auto">
           <table className="min-w-full text-sm">
             <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
-              <tr>
-                <th className="label-xs px-4 py-2 font-medium">Security</th>
-                <th className="label-xs px-4 py-2 font-medium">Account</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Bought</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Sold</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Held (days)</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Quantity</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Proceeds</th>
-                <th className="label-xs px-4 py-2 text-center font-medium">Term</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Gain</th>
-              </tr>
+              <Tr view={lotView}>
+                <SortHeader col="security" view={lotView} align="left">Security</SortHeader>
+                <SortHeader col="account" view={lotView} align="left">Account</SortHeader>
+                <SortHeader col="bought" view={lotView}>Bought</SortHeader>
+                <SortHeader col="sold" view={lotView}>Sold</SortHeader>
+                <SortHeader col="days" view={lotView}>Held (days)</SortHeader>
+                <SortHeader col="qty" view={lotView}>Quantity</SortHeader>
+                <SortHeader col="proceeds" view={lotView}>Proceeds</SortHeader>
+                <SortHeader col="term" view={lotView} align="center">Term</SortHeader>
+                <SortHeader col="gain" view={lotView}>Gain</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
-              {data.lots.map((l, i) => (
-                <tr key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
+              {lotRows.map((l, i) => (
+                <Tr view={lotView} key={`${l.securityKey}-${l.saleDate}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2 text-slate-100"><StockLink securityKey={l.securityKey} name={l.security} /></td>
                   <td className="px-4 py-2 text-[12px] text-slate-400">{l.account}</td>
                   <td className="px-4 py-2 text-right mono text-slate-400 whitespace-nowrap">{l.purchaseDate ? fmtDate(l.purchaseDate) : <AbsentCell reason="the statement does not print a purchase date for this lot" />}</td>
@@ -526,7 +584,7 @@ function GainsView({ data }: { data: LotData | null }) {
                   <td className={`px-4 py-2 text-right mono ${changeColor(l.gain)}`}>
                     {fmtFromBase(l.gain, { compact: true, sign: true })}
                   </td>
-                </tr>
+                </Tr>
               ))}
             </tbody>
           </table>
@@ -538,6 +596,8 @@ function GainsView({ data }: { data: LotData | null }) {
 
 // ── Income & corporate actions ───────────────────────────────────────────────
 function IncomeView({ data }: { data: IncomeData | null }) {
+  const cashView = useTableView("ledger-cash", CASH_COLS);
+  const corpView = useTableView("ledger-corp", CORP_COLS);
   const { fmtFromBase } = usePortfolio();
   if (!data) return <div className="grid h-40 place-items-center text-sm text-slate-500">Reading the dividend statements…</div>;
   if (!data.cash.length && !data.corporate.length) {
@@ -546,6 +606,23 @@ function IncomeView({ data }: { data: IncomeData | null }) {
         needs="Cash dividends come from each manager's dividend statement and non-cash actions from its corporate benefits report. No account in this drop issued either." />
     );
   }
+  const cashRows = sortRows(data.cash, cashView.sort, {
+    security: (r) => r.security,
+    account: (r) => r.account,
+    date: (r) => r.date,
+    qty: (r) => r.quantity,
+    rate: (r) => r.ratePerUnit,
+    tds: (r) => r.tds,
+    net: (r) => r.net,
+  });
+  const corpRows = sortRows(data.corporate, corpView.sort, {
+    security: (r) => r.security,
+    account: (r) => r.account,
+    action: (r) => r.kind,
+    date: (r) => r.date,
+    held: (r) => r.quantity,
+    entitlement: (r) => r.entitlement,
+  });
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -580,19 +657,19 @@ function IncomeView({ data }: { data: IncomeData | null }) {
           <div className="max-h-[420px] overflow-auto">
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 border-b border-ink-700 bg-ink-800 text-left">
-                <tr>
-                  <th className="label-xs px-4 py-2 font-medium">Security</th>
-                  <th className="label-xs px-4 py-2 font-medium">Account</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Ex-date</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Quantity</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Per unit</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">TDS</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Net</th>
-                </tr>
+                <Tr view={cashView}>
+                  <SortHeader col="security" view={cashView} align="left">Security</SortHeader>
+                  <SortHeader col="account" view={cashView} align="left">Account</SortHeader>
+                  <SortHeader col="date" view={cashView}>Ex-date</SortHeader>
+                  <SortHeader col="qty" view={cashView}>Quantity</SortHeader>
+                  <SortHeader col="rate" view={cashView}>Per unit</SortHeader>
+                  <SortHeader col="tds" view={cashView}>TDS</SortHeader>
+                  <SortHeader col="net" view={cashView}>Net</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {data.cash.map((r, i) => (
-                  <tr key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
+                {cashRows.map((r, i) => (
+                  <Tr view={cashView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-[12px] text-slate-400">{r.account}</td>
                     <td className="px-4 py-2 text-right mono text-slate-400 whitespace-nowrap">{r.date ? fmtDate(r.date) : <AbsentCell />}</td>
@@ -604,7 +681,7 @@ function IncomeView({ data }: { data: IncomeData | null }) {
                         fmtFromBase(r.net, { compact: true })
                       )}
                     </td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </table>
@@ -617,25 +694,25 @@ function IncomeView({ data }: { data: IncomeData | null }) {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700 text-left">
-                <tr>
-                  <th className="label-xs px-4 py-2 font-medium">Security</th>
-                  <th className="label-xs px-4 py-2 font-medium">Account</th>
-                  <th className="label-xs px-4 py-2 font-medium">Action</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Ex-date</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Held</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Entitlement</th>
-                </tr>
+                <Tr view={corpView}>
+                  <SortHeader col="security" view={corpView} align="left">Security</SortHeader>
+                  <SortHeader col="account" view={corpView} align="left">Account</SortHeader>
+                  <SortHeader col="action" view={corpView} align="left">Action</SortHeader>
+                  <SortHeader col="date" view={corpView}>Ex-date</SortHeader>
+                  <SortHeader col="held" view={corpView}>Held</SortHeader>
+                  <SortHeader col="entitlement" view={corpView} align="left">Entitlement</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {data.corporate.map((r, i) => (
-                  <tr key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
+                {corpRows.map((r, i) => (
+                  <Tr view={corpView} key={`${r.securityKey}-${r.date}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 text-slate-100"><StockLink securityKey={r.securityKey} name={r.security} /></td>
                     <td className="px-4 py-2 text-[12px] text-slate-400">{r.account}</td>
                     <td className="px-4 py-2"><Pill tone="info">{r.kind}</Pill></td>
                     <td className="px-4 py-2 text-right mono text-slate-400 whitespace-nowrap">{r.date ? fmtDate(r.date) : <AbsentCell />}</td>
                     <td className="px-4 py-2 text-right mono text-slate-400">{r.quantity == null ? <AbsentCell /> : fmtNum(Math.round(r.quantity))}</td>
                     <td className="px-4 py-2 text-[12px] text-slate-300">{r.entitlement ?? <AbsentCell reason="the report prints no ratio for this action" />}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </table>

@@ -10,6 +10,8 @@ import { currentHoldings } from "@/lib/analytics";
 import { loadFundNavs, type SchemeMatch } from "@/lib/lookthrough";
 import { navMoverModel, isDrastic, DRASTIC_PCT, type NavMover } from "@/lib/navMovers";
 import { fmtPct, changeColor, DASH } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 
 // ── DAILY-NAV MOVERS ────────────────────────────────────────────────────────
 //
@@ -59,6 +61,9 @@ type Rank = "pct" | "impact";
  * strands a reader on a card that cannot fill, with no way back to the one that
  * works. The prop is optional so this component still stands alone.
  */
+/** The columns, in the order this table's rows write their cells. */
+const NAV_MOVER_COLS = ["scheme", "nav", "move", "impact", "held"] as const;
+
 export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
   /**
@@ -68,6 +73,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
    * *"if there is a drastic moment in the line item … can we capture that"*.
    */
   const [rank, setRank] = useState<Rank>("pct");
+  const view = useTableView("nav-movers", NAV_MOVER_COLS);
   /** `undefined` = still loading · `null` = the store did not answer. */
   const [schemes, setSchemes] = useState<Map<string, SchemeMatch> | null | undefined>(undefined);
 
@@ -124,9 +130,26 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
     );
   }
 
-  const rows = [...model.rows].sort(rank === "impact"
-    ? (a, b) => Math.abs(b.move) - Math.abs(a.move)
-    : (a, b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  /**
+   * THE CARD'S OWN RANKING IS THE DEFAULT AND A COLUMN SORT OVERRIDES IT. The
+   * two answer different questions — the ranking is by the SIZE of a move
+   * whichever way it went, a column sort is signed — so neither replaces the
+   * other, and clicking a heading a third time clears the sort and hands the
+   * ranking back.
+   */
+  const rows = sortRows(
+    [...model.rows].sort(rank === "impact"
+      ? (a, b) => Math.abs(b.move) - Math.abs(a.move)
+      : (a, b) => Math.abs(b.changePct) - Math.abs(a.changePct)),
+    view.sort,
+    {
+      scheme: (r) => r.scheme,
+      nav: (r) => Number(String(r.nav).replace(/[^\d.-]/g, "")),
+      move: (r) => r.changePct,
+      impact: (r) => r.move,
+      held: (r) => r.value,
+    },
+  );
   const skippedValue = model.skipped.reduce((a, s) => a + s.value, 0);
   /**
    * THE HOLDINGS THE STORE CANNOT PRICE, GROUPED BY THE REASON THEY CANNOT BE.
@@ -226,17 +249,17 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-[12px]">
           <thead>
-            <tr className="border-b border-ink-700 text-left text-[10.5px] uppercase tracking-wide text-slate-500">
-              <th className="py-1.5 pr-2 font-medium">Scheme</th>
-              <th className="py-1.5 pr-3 text-right font-medium">NAV</th>
-              <th className="py-1.5 pr-3 text-right font-medium">Move</th>
-              <th className="py-1.5 pr-3 text-right font-medium" title="The scheme's move applied to what this book values the holding at. Derived — the two sides are dated differently.">&#8377; on holding</th>
-              <th className="py-1.5 text-right font-medium" title="What this book values these holdings at, on the statement that reports them.">Held</th>
-            </tr>
+            <Tr view={view} className="border-b border-ink-700">
+              <SortHeader col="scheme" view={view} align="left" pad="py-1.5 pr-2">Scheme</SortHeader>
+              <SortHeader col="nav" view={view} pad="py-1.5 pr-3">NAV</SortHeader>
+              <SortHeader col="move" view={view} pad="py-1.5 pr-3">Move</SortHeader>
+              <SortHeader col="impact" view={view} pad="py-1.5 pr-3" title="The scheme's move applied to what this book values the holding at. Derived — the two sides are dated differently.">&#8377; on holding</SortHeader>
+              <SortHeader col="held" view={view} pad="py-1.5" title="What this book values these holdings at, on the statement that reports them.">Held</SortHeader>
+            </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700">
             {rows.map((r) => (
-              <tr key={r.schemecode} className="hover:bg-ink-700/40" data-navmover-row={r.schemecode}
+              <Tr view={view} key={r.schemecode} className="hover:bg-ink-700/40" data-navmover-row={r.schemecode}
                   data-navmover-pct={r.changePct} data-navmover-keys={r.keys} data-navmover-date={r.navDate}>
                 <td className="py-1.5 pr-2">
                   <Link to={`/stock/${encodeURIComponent(r.securityKey)}`}
@@ -263,7 +286,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
                       : "What this book values the holding at, on the statement that reports it."}>
                   {fmtFromBase(r.value, { compact: true })}
                 </td>
-              </tr>
+              </Tr>
             ))}
           </tbody>
         </table>
