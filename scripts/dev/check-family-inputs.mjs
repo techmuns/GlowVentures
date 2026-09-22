@@ -381,11 +381,32 @@ check("its private market value is a real measured figure, not the removed page'
   /PRIVATE MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
   && !/PRIVATE MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
   /PRIVATE MARKET VALUE\s*\n?\s*(₹[\d,.]+\s*(?:Cr|L))/i.exec(text)?.[1]);
-// THE TILE'S LABEL WAS THE CLIENT'S OWN QUESTION — *"Drawn against no valuation
-// means?"* — so it now says what it is. The CLAIM is unchanged and is what this
-// asserts: that capital is stated on its own and is in no total on the page.
+/**
+ * THE TILE'S LABEL WAS THE CLIENT'S OWN QUESTION — *"Drawn against no valuation
+ * means?"* — so it says what it is. The CLAIM is unchanged and is what this
+ * asserts: that capital is stated on its own and is in no total on the page.
+ *
+ * IT IS STRUCK ON THE CARD, NOT ON THE TILE, AND THE TILE IS WHY. The strip is
+ * four tiles a reader picks from eighteen now, so a metric outside the default
+ * four is one the page legitimately does not draw — and a check reading its
+ * label would fail a correct page. The card under the table carries the same
+ * claim with MORE behind it (the accounts, and why each is unvalued), so the
+ * claim is asserted there and the METRIC's continued existence is asserted by
+ * opening the strip on it. Neither implies the other: a build that deleted the
+ * metric passes the first, and one that dropped the card passes the second.
+ */
 check("the capital the family paid into funds that publish no NAV is stated on its own",
-  /PAID IN, BUT NEVER VALUED/i.test(text) && /in no total on this page/i.test(text));
+  /of drawn capital across \d+ of these accounts is real, paid, and in no total on this page/i.test(text)
+  && /must not be added to it/i.test(text));
+
+await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
+await page.waitForTimeout(700);
+const unvaluedTile = await page.locator("body").innerText();
+check("...and it is still one of the metrics a reader can put on a tile",
+  /PAID IN, BUT NEVER VALUED/i.test(unvaluedTile));
+await page.goto(`${BASE}/private-market`, { waitUntil: "networkidle" });
+await page.waitForTimeout(700);
+text = await page.locator("body").innerText();
 
 // ── THE REMOVED PAGES LEFT NO PAGE BEHIND ───────────────────────────
 //

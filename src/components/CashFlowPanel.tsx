@@ -115,7 +115,10 @@ export function CashFlowPanel({
             <Pill tone="info">{rows.length} of {CASH_FLOW_LINES.length} lines reported</Pill>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full whitespace-nowrap text-[12.5px]">
+            {/* Exempt, declared — see `ReturnsTable`: the columns are the
+                  statement's own periods and the rows its own lines. */}
+              <table className="min-w-full whitespace-nowrap text-[12.5px]"
+                data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
               <thead className="border-b border-ink-700">
                 <tr>
                   <th className="label-xs px-3 py-2 text-left font-medium">Line</th>

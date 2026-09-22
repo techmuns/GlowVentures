@@ -62,6 +62,11 @@ import type { StockExposureState } from "@/lib/lookthrough";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtPct } from "@/lib/format";
 import { AbsentCell } from "@/components/Absent";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The columns, in the order this table's rows write their cells. */
+const FUND_EXPOSURE_COLS = ["fund", "instruments", "held", "weight", "share", "disclosed"] as const;
 
 export function FundExposure({ exposure, securityKey, money }: {
   /** The page's own index — never re-fetched here. */
@@ -70,6 +75,7 @@ export function FundExposure({ exposure, securityKey, money }: {
   money: (n: number) => string;
 }) {
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const view = useTableView("fund-exposure", FUND_EXPOSURE_COLS);
   // NOTHING, NEVER THE NONE-BRANCH. See the note above: the words went at the
   // family's request; falling through to the card below would print a claim
   // about the holding before a single disclosure had been read.
@@ -83,7 +89,14 @@ export function FundExposure({ exposure, securityKey, money }: {
 
   const { covered, considered, skipped } = exposure;
   const hit = exposure.byKey.get(securityKey);
-  const rows = hit?.rows ?? [];
+  const rows = sortRows(hit?.rows ?? [], view.sort, {
+    fund: (r) => r.fundName,
+    instruments: (r) => r.instruments.length,
+    held: (r) => r.holdingValue,
+    weight: (r) => r.pctAum,
+    share: (r) => r.value,
+    disclosed: (r) => r.holdingsAsOf ?? null,
+  });
   const total = hit?.total ?? 0;
   // AN AIF IS A DIFFERENT ABSENCE FROM AN UNREADABLE SCHEME, so it is counted
   // apart: no drop of the current statements can ever fill the first.
@@ -124,14 +137,14 @@ export function FundExposure({ exposure, securityKey, money }: {
         <div className="mt-1.5 overflow-x-auto rounded border border-ink-700 bg-ink-800">
           <table className="min-w-full text-[12px]">
             <thead>
-              <tr className="border-b border-ink-700/70">
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Through this fund</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Instruments</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">You hold of the fund</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Fund&rsquo;s weight in it</th>
-                <th className="label-xs px-3 py-1.5 text-right font-medium">Your derived share</th>
-                <th className="label-xs px-3 py-1.5 text-left font-medium">Disclosed</th>
-              </tr>
+              <Tr view={view} className="border-b border-ink-700/70">
+                <SortHeader col="fund" view={view} align="left" pad="px-3 py-1.5">Through this fund</SortHeader>
+                <SortHeader col="instruments" view={view} pad="px-3 py-1.5">Instruments</SortHeader>
+                <SortHeader col="held" view={view} pad="px-3 py-1.5">You hold of the fund</SortHeader>
+                <SortHeader col="weight" view={view} pad="px-3 py-1.5">Fund&rsquo;s weight in it</SortHeader>
+                <SortHeader col="share" view={view} pad="px-3 py-1.5">Your derived share</SortHeader>
+                <SortHeader col="disclosed" view={view} align="left" pad="px-3 py-1.5">Disclosed</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/50">
               {rows.map((r) => {
@@ -142,7 +155,7 @@ export function FundExposure({ exposure, securityKey, money }: {
                 const isOpen = open.has(r.fundKey);
                 return (
                 <Fragment key={r.fundKey}>
-                <tr data-fund-exposure-row={r.via} data-fund-instruments={r.instruments.length}>
+                <Tr view={view} data-fund-exposure-row={r.via} data-fund-instruments={r.instruments.length}>
                   <td className="px-3 py-1.5 text-slate-200">
                     <Link to={stockHref(r.fundKey)}
                       className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
@@ -174,12 +187,15 @@ export function FundExposure({ exposure, securityKey, money }: {
                     {r.sourceKind === "amc" ? " · the AMC's own filing" : r.sourceKind ? " · via an aggregator" : ""}
                     {r.via === "name" ? " · matched on name" : ""}
                   </td>
-                </tr>
+                </Tr>
                 {many && isOpen && r.instruments.map((i) => (
+                  /* THE BREAKOUT FOLLOWS THE SAME ORDER, or a reader who moved
+                     a column would find an instrument's weight under the
+                     heading of something else. */
                   /* ONE LINE PER INSTRUMENT AS THE AMC FILED IT — its own name,
                      its own weight, its own share. The fund row above is their
                      sum, so this table ties to it by construction. */
-                  <tr key={`${r.fundKey}|${i.isin ?? i.name}`} data-fund-instrument={r.fundKey}
+                  <Tr view={view} key={`${r.fundKey}|${i.isin ?? i.name}`} data-fund-instrument={r.fundKey}
                     className="bg-ink-900/40 text-[11px]">
                     <td className="py-1 pl-7 pr-3 text-slate-400">{i.name}</td>
                     <td className="px-3 py-1 text-right text-slate-500 whitespace-nowrap">
@@ -195,7 +211,7 @@ export function FundExposure({ exposure, securityKey, money }: {
                     <td className="px-3 py-1 text-right mono text-slate-500">{fmtPct(i.pctAum)}</td>
                     <td className="px-3 py-1 text-right mono text-slate-300 whitespace-nowrap">{money(i.value)}</td>
                     <td className="px-3 py-1" />
-                  </tr>
+                  </Tr>
                 ))}
                 </Fragment>
                 );

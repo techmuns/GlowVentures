@@ -1,9 +1,12 @@
 import { Fragment, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ChevronLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/Card";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
+import { PageNav } from "@/components/PageNav";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
@@ -161,12 +164,17 @@ function groupRows(
     .sort((a, b) => b.mv - a.mv);
 }
 
+/** The holdings table's columns, in the order its rows write their cells. */
+const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "pnl", "return"] as const;
+
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
   const [params] = useSearchParams();
   const [q, setQ] = useState("");
   /** Which grouped rows are expanded to their statement lines. */
   const [open, setOpen] = useState<Set<string>>(() => new Set());
+  // A HOOK, so it sits above this page's early returns.
+  const view = useTableView("holdings-behind", HB_COLS);
 
   const scope = useMemo(() => parseDrilldown(params), [params]);
   /* CURRENT HOLDINGS ONLY, AND THE FILTER IS INSIDE `resolveDrilldown` — see the
@@ -194,7 +202,7 @@ export function HoldingsBehind() {
   if (!scope || !resolved) {
     return (
       <div>
-        <Crumb />
+        <PageNav className="mb-2" trail={[{ label: "Morning CIO", to: "/cio" }, { label: "Nothing named to open" }]} />
         <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Nothing named to open</h1>
         <Card>
           <AbsentSection
@@ -301,7 +309,20 @@ export function HoldingsBehind() {
    * the mandate rows the moment somebody searched. The set the page is FOR is
    * `rows`; the filter narrows what is drawn, not what a row means.
    */
-  const groups = groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions);
+  const groups = sortRows(
+    groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions),
+    view.sort,
+    {
+      unit: (g) => g.label,
+      heldIn: (g) => [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))].join(", "),
+      invested: (g) => g.cost,
+      value: (g) => g.mv,
+      // Weight is this row's value over the set's, so it orders as Value does.
+      weight: (g) => g.mv,
+      pnl: (g) => g.pnl,
+      return: (g) => coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV).pct,
+    },
+  );
   /**
    * ── THE AIF DRILL-DOWN IS CLUBBED BY SEBI CATEGORY ─────────────────────────
    *
@@ -379,15 +400,39 @@ export function HoldingsBehind() {
   const unitWord = allMandate ? "mandate" : anyMandate ? "row" : "name";
   const unitHeading = allMandate ? "Mandate" : anyMandate ? "Security / mandate" : "Security";
 
+  /**
+   * ── THE CRUMB, AND WHY A FACET EARNS A SEGMENT OF ITS OWN ─────────────────
+   *
+   * *"The first line should rather label the page/KPI tile that we have
+   * opened."* `d.crumb` is that tile. A FACET is a sub-selection of it, and a
+   * reader who clicked "Listed" on the Concentration card opened the listed
+   * half rather than the whole book — so where a facet other than the headline
+   * one is active it takes the last segment and the figure keeps the one
+   * before it. Struck against `facets[0]`, which IS the headline set by
+   * construction, rather than against a named key: a scope that gains a facet
+   * gets this for free and one that renames its halves cannot go stale.
+   */
+  const facet = d.facets.length > 1 && d.activeFacet !== d.facets[0]?.key
+    ? d.facets.find((f) => f.key === d.activeFacet)
+    : null;
+  const crumbTrail = [
+    { label: "Morning CIO", to: "/cio" },
+    facet ? { label: d.crumb, to: drilldownHref(d.id, d.key || undefined) } : { label: d.crumb },
+    ...(facet ? [{ label: facet.label }] : []),
+  ];
+
 
   return (
     <div>
-      <Crumb />
+      {/* THE CRUMB NAMES THE FIGURE, AND THE THREE BUTTONS REPLACE A ONE-WAY
+          LINK. "Back to Morning CIO" was a hardcoded parent, so a reader who
+          reached this page from the allocation table's own row link was
+          offered a step they may not have taken; the browser's history knows
+          where they came from and these buttons walk it. Morning CIO still
+          shows — as the crumb's parent, which is where this page SITS. */}
+      <PageNav className="mb-2" trail={crumbTrail} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/cio" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
-            <ChevronLeft className="h-3.5 w-3.5" /> Back to Morning CIO
-          </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
           {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
               sections from the dashboard UI."* What it said — which set this is
@@ -602,15 +647,15 @@ export function HoldingsBehind() {
               <div className="overflow-x-auto">
                 <table className="min-w-full whitespace-nowrap text-sm">
                   <thead className="border-b border-ink-700">
-                    <tr>
-                      <th className="label-xs px-4 py-2 text-left font-medium">{unitHeading}</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Held in</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&amp;L</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                    </tr>
+                    <Tr view={view}>
+                      <SortHeader col="unit" view={view} align="left">{unitHeading}</SortHeader>
+                      <SortHeader col="heldIn" view={view} align="left">Held in</SortHeader>
+                      <SortHeader col="invested" view={view}>Invested</SortHeader>
+                      <SortHeader col="value" view={view}>Value</SortHeader>
+                      <SortHeader col="weight" view={view}>Weight</SortHeader>
+                      <SortHeader col="pnl" view={view}>Unreal. P&amp;L</SortHeader>
+                      <SortHeader col="return" view={view}>Return</SortHeader>
+                    </Tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
                     {items.map((item) => {
@@ -618,21 +663,33 @@ export function HoldingsBehind() {
                          separate tables, so the columns stay aligned and the
                          footer below still totals every row above it. */
                       if (item.kind === "head") return (
-                        <tr key={`sec:${item.key}`} data-aif-section={item.key} data-aif-section-mv={item.mv}
-                            data-aif-section-funds={item.n} className="bg-ink-800/50">
-                          <td colSpan={3} className="px-4 py-1.5">
-                            <span className="label-xs text-slate-300">{item.key}</span>
-                            <span className="ml-2 text-[11px] normal-case text-slate-500">
-                              {item.n} {item.n === 1 ? "fund" : "funds"}
-                              {item.key === PRIVATE_EQUITY_SECTION && " \u00b7 the fund\u2019s own paperwork calls it private equity or venture capital"}
-                              {item.key === AIF_UNSTATED_SECTION && " \u00b7 no statement prints a SEBI category"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-1.5 text-right mono text-[12px] text-slate-300">{money(item.mv)}</td>
-                          <td className="px-4 py-1.5 text-right mono text-[12px] text-slate-400">{weight(item.mv) ?? DASH}</td>
-                          <td className="px-4 py-1.5" />
-                          <td className="px-4 py-1.5" />
-                        </tr>
+                        /* A SECTION HEADING IS A SUBTOTAL ROW, so it follows the
+                           reader's column order through `TrFoot` — the same
+                           mechanism the footer uses, and for the same reason: its
+                           label spans the leading columns that carry no figure,
+                           and that span is a function of the order rather than a
+                           literal. With nothing dragged it is `colSpan={3}`,
+                           which is what it always was. */
+                        <TrFoot key={`sec:${item.key}`} view={view}
+                          data-aif-section={item.key} data-aif-section-mv={item.mv}
+                          data-aif-section-funds={item.n}
+                          className="bg-ink-800/50 px-4 py-1.5"
+                          label={
+                            <>
+                              <span className="label-xs text-slate-300">{item.key}</span>
+                              <span className="ml-2 text-[11px] normal-case text-slate-500">
+                                {item.n} {item.n === 1 ? "fund" : "funds"}
+                                {item.key === PRIVATE_EQUITY_SECTION && " \u00b7 the fund\u2019s own paperwork calls it private equity or venture capital"}
+                                {item.key === AIF_UNSTATED_SECTION && " \u00b7 no statement prints a SEBI category"}
+                              </span>
+                            </>
+                          }
+                          cells={{
+                            value: <td key="value" className="bg-ink-800/50 px-4 py-1.5 text-right mono text-[12px] text-slate-300">{money(item.mv)}</td>,
+                            weight: <td key="weight" className="bg-ink-800/50 px-4 py-1.5 text-right mono text-[12px] text-slate-400">{weight(item.mv) ?? DASH}</td>,
+                            pnl: <td key="pnl" className="bg-ink-800/50 px-4 py-1.5" />,
+                            return: <td key="return" className="bg-ink-800/50 px-4 py-1.5" />,
+                          }} />
                       );
                       const g = item.group;
                       const r = coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV);
@@ -648,7 +705,7 @@ export function HoldingsBehind() {
                               not on a rendered name. `g.key` carries an `S:`/`M:`
                               prefix saying how the row was grouped rather than
                               what it is, which is why this is the security's. */}
-                          <tr className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
+                          <Tr view={view} className="hover:bg-ink-700/40" data-hb-key={g.rows[0].securityKey}>
                             <td className="px-4 py-2.5">
                               <div className="flex items-center gap-1.5">
                                 {/* THE ROW OPENS THE THING IT NAMES. A mandate
@@ -762,14 +819,14 @@ export function HoldingsBehind() {
                                     : `A cost is reported on ${g.rows.length - g.withoutCost} of the ${g.rows.length} statements behind this row, so Invested and Value describe different sets and a percentage across them would divide one by the other.`} />
                                 : fmtPct(r.pct, { sign: true, decimals: 1 })}
                             </td>
-                          </tr>
+                          </Tr>
                           {/* THE STATEMENT LINES, WHERE A READER ASKS FOR THEM.
                               The Positions count on Morning CIO counts these, and
                               this is where they live now that the page has no
                               global mode — per row, opened on demand, rather than
                               a switch that reshapes the whole table. */}
                           {isOpen && g.rows.map((x) => (
-                            <tr key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
+                            <Tr view={view} key={`${g.key}-${x.accountId}-${x.assetClass}`} className="bg-ink-900/40 text-[12px]">
                               <td className="py-1.5 pl-10 pr-4 text-slate-400">
                                 {g.kind === "mandate"
                                   ? <Link to={stockHref(x.securityKey)} className="hover:text-champagne-400">{x.security}</Link>
@@ -792,7 +849,7 @@ export function HoldingsBehind() {
                               <td className={`px-4 py-1.5 text-right mono ${x.returnPct == null ? "" : changeColor(x.returnPct)}`}>
                                 {x.returnPct == null ? <AbsentCell reason="Needs a cost this statement does not report." /> : fmtPct(x.returnPct, { sign: true, decimals: 1 })}
                               </td>
-                            </tr>
+                            </Tr>
                           ))}
                         </Fragment>
                       );
@@ -802,7 +859,7 @@ export function HoldingsBehind() {
                       to the cell it is about. `holdings` and `noCost` are the
                       SET's, not the grouped rows' — the coverage is a fact about
                       statements and a row can club four of them. */}
-                  <Foot cols={2} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
+                  <Foot view={view} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
                     hidden={hidden} money={money}
                     mv={sum(groups.map((g) => g.mv))}
                     cost={sumOrNull(groups.map((g) => g.cost))}
@@ -991,8 +1048,11 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ cols, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible }: {
-  cols: number; label: string; hidden: number;
+function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible }: {
+  /** THE LABEL'S SPAN IS A FUNCTION OF THE ORDER, not the literal `cols={2}`
+      this took: with a column dragged, a fixed span would put every total one
+      cell out and a reader would find the value under the weight's heading. */
+  view: TableView; label: string; hidden: number;
   mv: number; cost: number | null; pnl: number | null; withoutCostMV: number;
   money: (n: number | null | undefined, sign?: boolean) => string;
   /** The SET's own counts, for the coverage the Invested tile used to state. */
@@ -1031,47 +1091,41 @@ function Foot({ cols, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
   ].filter(Boolean).join(" ");
   return (
     <tfoot data-hb-foot={mv}>
-      <tr className="border-t-2 border-ink-600 font-semibold">
-        <td className="px-4 py-2.5 text-left text-slate-200" colSpan={cols}
-            title={leftOut || undefined} data-hb-foot-rows>
-          Total · {label}
-          {hidden > 0 && <span className="ml-2 text-[11px] font-normal text-slate-500">{hidden} filtered out and not counted here</span>}
-        </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-300" data-hb-foot-cost
+      <TrFoot view={view} className="border-t-2 border-ink-600 px-4 py-2.5 text-left font-semibold text-slate-200"
+        label={
+          <span title={leftOut || undefined} data-hb-foot-rows>
+            Total · {label}
+            {hidden > 0 && <span className="ml-2 text-[11px] font-normal text-slate-500">{hidden} filtered out and not counted here</span>}
+          </span>
+        }
+        cells={{
+        invested: <td key="invested" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-cost
             title={cost == null
               ? "No statement in this set reports a cost — absent, not zero. A depository reports what is held, never what it was paid for, and a ₹0 here would report the whole market value as profit."
               : coverage || "Every holding in this set reports a cost."}>
           {cost == null ? DASH : money(cost)}
-        </td>
-        <td className="px-4 py-2.5 text-right mono text-slate-100" data-hb-foot-mv>{money(mv)}</td>
-        <td className="px-4 py-2.5 text-right mono text-slate-300" data-hb-foot-weight
+        </td>,
+        value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100" data-hb-foot-mv>{money(mv)}</td>,
+        weight: <td key="weight" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-weight
             title={`Weight is a share of this set, not of the book — ${money(mv)} is the denominator, so the column adds to 100%.`}>
           {mv > 0 ? "100%" : DASH}
-        </td>
-        <td className={`px-4 py-2.5 text-right mono ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
+        </td>,
+        pnl: <td key="pnl" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
             title={pnl == null
               ? "Needs a cost these statements do not report — absent, not zero."
               : coverage ? `On the ${fmtNum(holdings - noCost)} holdings reporting a cost. ${coverage}` : "On cost."}>
           {pnl == null ? DASH : money(pnl, true)}
-        </td>
-        <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "text-slate-500" : changeColor(r.pct)}`} data-hb-foot-return
+        </td>,
+        return: <td key="return" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${r.pct == null ? "text-slate-500" : changeColor(r.pct)}`} data-hb-foot-return
             title={r.pct == null
               ? cost == null
                 ? "No statement in this set reports a cost, so there is nothing to strike a return against."
                 : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
               : `Total to date · cumulative, not annualised. ${coverage || "Every holding in this set reports a cost."}`}>
           {r.pct == null ? DASH : fmtPct(r.pct, { sign: true, decimals: 1 })}
-        </td>
-      </tr>
+        </td>,
+        }} />
     </tfoot>
   );
 }
 
-function Crumb() {
-  return (
-    <div className="mb-2 text-[12px] text-slate-500">
-      <Link to="/cio" className="text-champagne-400 hover:underline">Morning CIO</Link>
-      <span className="mx-1.5">›</span>What is behind the figure
-    </div>
-  );
-}

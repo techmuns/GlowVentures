@@ -6,6 +6,11 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtDate, fmtNum, fmtPct, changeColor } from "@/lib/format";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The disclosed-holdings table's columns, in the order its rows write them. */
+const FL_COLS = ["holding", "class", "sector", "pctAum", "lookthrough", "shares"] as const;
 import {
   loadLookthrough, familyValue, disclosedWeight,
   type LookthroughState, type FundPortfolio,
@@ -57,15 +62,30 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
 
   const money = (n: number) => fmtFromBase(n, { compact: true });
   const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
+  const view = useTableView("fund-lookthrough", FL_COLS);
 
   const rows = useMemo(() => pf?.holdings ?? [], [pf]);
   const term = q.trim().toLowerCase();
   // A DEBT ROW IS FOUND BY ITS RATING AND ITS CLASS, not only by a sector it
   // does not have — the two columns a bond actually fills.
-  const shown = term
-    ? rows.filter((r) => [r.name, r.sector, r.rating, r.assetClass, r.isin]
-        .some((v) => (v ?? "").toLowerCase().includes(term)))
-    : rows;
+  const shown = sortRows(
+    term
+      ? rows.filter((r) => [r.name, r.sector, r.rating, r.assetClass, r.isin]
+          .some((v) => (v ?? "").toLowerCase().includes(term)))
+      : rows,
+    view.sort,
+    {
+      holding: (h) => h.name,
+      class: (h) => h.assetClass ?? null,
+      sector: (h) => h.sector ?? h.rating ?? null,
+      pctAum: (h) => h.pctAum,
+      // The look-through is this family's value times the weight beside it, so
+      // it orders exactly as the weight does — sorted on the weight rather than
+      // re-derived, which would be a second expression of one figure.
+      lookthrough: (h) => h.pctAum,
+      shares: (h) => h.shares,
+    },
+  );
 
   if (state.status === "loading") {
     return (
@@ -168,7 +188,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
             </span>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full whitespace-nowrap text-sm">
+            {/* Exempt, declared — the same class as `ReturnsTable`: one row,
+                so there is nothing to sort, and the columns are the source's
+                own period sequence, so moving one would break it. */}
+            <table className="min-w-full whitespace-nowrap text-sm"
+              data-table-static="one row of a source's own period sequence — there is nothing to sort and moving a period would break its order">
               <thead className="border-b border-ink-700">
                 <tr>
                   {periods.map(([k]) => <th key={k} className="label-xs px-3 py-2 text-right font-medium">{k}</th>)}
@@ -240,28 +264,23 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-3 py-2 text-left font-medium">Holding</th>
-                <th className="label-xs px-3 py-2 text-left font-medium">
-                  <span title="What the AMC filed the instrument as — Equity, Debt, Gold, Silver, Cash. The store used to carry the equity section alone, so a liquid fund had no rows and a hybrid's bonds were absent.">Class</span>
-                </th>
-                <th className="label-xs px-3 py-2 text-left font-medium">
-                  <span title="The AMC files one column for both, and they are different facts: a SECTOR on a share (Finance, Banks) and a CREDIT RATING on a bond (CRISIL - AAA). Each is shown under its own name and never under the other's.">Sector / rating</span>
-                </th>
-                <th className="label-xs px-3 py-2 text-right font-medium">
-                  <span title="The scheme's own disclosed weight — a share of the FUND, across every investor in it.">% of fund</span>
-                </th>
-                <th className="label-xs px-3 py-2 text-right font-medium">
-                  <span title="DERIVED, not disclosed: this family's holding value times the weight beside it. Nobody published a figure about this family here, and it is in no total on this site.">Your look-through</span>
-                </th>
-                <th className="label-xs px-3 py-2 text-right font-medium">
-                  <span title="Shares the FUND holds across every investor in it — not this family's.">Shares (fund)</span>
-                </th>
-              </tr>
+              <Tr view={view}>
+                <SortHeader col="holding" view={view} align="left" pad="px-3 py-2">Holding</SortHeader>
+                <SortHeader col="class" view={view} align="left" pad="px-3 py-2"
+                  title="What the AMC filed the instrument as — Equity, Debt, Gold, Silver, Cash. The store used to carry the equity section alone, so a liquid fund had no rows and a hybrid's bonds were absent.">Class</SortHeader>
+                <SortHeader col="sector" view={view} align="left" pad="px-3 py-2"
+                  title="The AMC files one column for both, and they are different facts: a SECTOR on a share (Finance, Banks) and a CREDIT RATING on a bond (CRISIL - AAA). Each is shown under its own name and never under the other's.">Sector / rating</SortHeader>
+                <SortHeader col="pctAum" view={view} pad="px-3 py-2"
+                  title="The scheme's own disclosed weight — a share of the FUND, across every investor in it.">% of fund</SortHeader>
+                <SortHeader col="lookthrough" view={view} pad="px-3 py-2"
+                  title="DERIVED, not disclosed: this family's holding value times the weight beside it. Nobody published a figure about this family here, and it is in no total on this site.">Your look-through</SortHeader>
+                <SortHeader col="shares" view={view} pad="px-3 py-2"
+                  title="Shares the FUND holds across every investor in it — not this family's.">Shares (fund)</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {shown.map((h, i) => (
-                <tr key={`${h.name}-${i}`} className="hover:bg-ink-700/40">
+                <Tr view={view} key={`${h.name}-${i}`} className="hover:bg-ink-700/40">
                   <td className="px-3 py-2 text-slate-200">
                     {h.name}
                     {h.isin && <span className="mono ml-2 text-[10px] text-slate-600"> {h.isin}</span>}
@@ -279,18 +298,17 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
                       ? <AbsentCell reason="The disclosure reports no share count for this row." />
                       : fmtNum(h.shares)}
                   </td>
-                </tr>
+                </Tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-ink-600 font-semibold">
-                <td className="px-3 py-2 text-slate-200" colSpan={3}>
-                  {fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown
-                </td>
-                <td className="px-3 py-2 text-right mono text-slate-300">{shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%</td>
-                <td className="px-3 py-2 text-right mono text-slate-300">{money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>
-                <td />
-              </tr>
+              <TrFoot view={view} className="border-t-2 border-ink-600 px-3 py-2 font-semibold text-slate-200"
+                label={<>{fmtNum(shown.length)} of {fmtNum(rows.length)} disclosed holdings shown</>}
+                cells={{
+                  pctAum: <td key="pctAum" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-300">{shown.reduce((a, h) => a + h.pctAum, 0).toFixed(2)}%</td>,
+                  lookthrough: <td key="lookthrough" className="border-t-2 border-ink-600 px-3 py-2 text-right mono font-semibold text-slate-300">{money(shown.reduce((a, h) => a + familyValue(holdingValue, h.pctAum), 0))}</td>,
+                  shares: <td key="shares" className="border-t-2 border-ink-600 px-3 py-2" />,
+                }} />
             </tfoot>
           </table>
         </div>

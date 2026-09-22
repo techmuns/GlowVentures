@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import {
-  Sunrise, LineChart, Users, PieChart, Receipt,
-  Activity, History, Lock, Table2, Calculator, Gauge,
-  Cable, ChevronDown, Handshake,
-} from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { EXTRAS_GROUP, EXTRAS_PATHS, NAV } from "@/lib/nav";
 
 // Setup and admin routes carry no book dependency, so they stay reachable even
 // before statements are ingested. Knowledge & Memory, Macro Research and Economy
@@ -42,52 +39,13 @@ const clampWidth = (w: number) => Math.max(NAV_MIN, Math.min(NAV_MAX, Math.round
  * whose last entry leaves stops rendering on its own. That is the same
  * mechanism that retired MONITOR at Stage 10y, KNOWLEDGE at 10x and RESEARCH
  * at 10ap, and it is why there is nothing to remove here beyond the rows.
+ *
+ * `NAV` itself now lives in `src/lib/nav.ts`, because the page crumb reads the
+ * same table: two declarations of where a page sits are two chances for the
+ * crumb and the nav to name different places on one screen.
  */
-const EXTRAS = "Extras";
+const EXTRAS = EXTRAS_GROUP;
 const EXTRAS_OPEN_KEY = "glow:navExtras:v1";
-
-const NAV = [
-  // ── DAILY, IN THE ORDER THE FAMILY ASKED FOR ────────────────────────────
-  // *"change the hierarchy of these pages, Morning CIO then Portfolio Monitor
-  // and then Private Market and then Polycab"*. Polycab led this group until
-  // now, on an earlier request; it closes it instead. Nothing about the
-  // ring-fence moves with it — the promoter holding is still kept out of every
-  // other route's figures by `RINGFENCED_SECURITY_KEYS` in build-book.mjs, and
-  // a nav position was never what enforced that.
-  { to: "/cio", label: "Morning CIO", icon: Sunrise, group: "Daily" },
-  { to: "/monitor", label: "Portfolio Monitor", icon: LineChart, group: "Daily" },
-  { to: "/private-market", label: "Private Market", icon: Handshake, group: "Daily" },
-  { to: "/polycab", label: "Polycab", icon: Cable, group: "Daily" },
-  // EXPOSURE & IPS was REMOVED at the family's request. Its ALLOCATION group
-  // survives with the other two entries, so — unlike MONITOR, KNOWLEDGE and
-  // RESEARCH — there is no heading to go with it. See App.tsx for where the
-  // address forwards and what became a no-caller.
-  { to: "/family", label: "Family & Entities", icon: Users, group: "Allocation" },
-  { to: "/sectors", label: "Sector Composition", icon: PieChart, group: "Allocation" },
-  { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: EXTRAS },
-  { to: "/performance", label: "NAV & Performance", icon: Activity, group: EXTRAS },
-  { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: EXTRAS },
-  { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: EXTRAS },
-  // ── ADMIN CLOSES THE NAV, AND DATA AUDIT IS NOW IN IT ───────────────────
-  // *"move data audit page at the bottom of the left navigation bar just above
-  // upload page selection button rather than at the top"*. It was the only
-  // entry in SETUP, so that heading goes with it by the same derivation as the
-  // two above — a group label standing over nothing is the defect this repo
-  // already records twice.
-  { to: "/audit", label: "Data Audit", icon: Table2, group: "Admin" },
-  { to: "/history", label: "Upload History", icon: History, group: "Admin" },
-] as const;
-
-/**
- * DERIVED, NEVER TYPED. The dropdown opens itself when the reader navigates to
- * a route inside it — otherwise someone landing on /performance from a link or
- * a bookmark sees no active entry anywhere in the nav, which reads as the page
- * having left the app. Reading the set off `NAV` means a fifth entry added to
- * Extras keeps that working with no second list to remember.
- */
-// Widened to `string` deliberately: `NAV` is `as const`, so the inferred set
-// would be a union of the four literals and `.has(pathname)` a type error.
-const EXTRAS_PATHS: ReadonlySet<string> = new Set(NAV.filter((i) => i.group === EXTRAS).map((i) => i.to));
 
 export function Sidebar() {
   const { portfolio, bookIsEmpty } = usePortfolio();

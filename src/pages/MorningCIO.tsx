@@ -26,6 +26,11 @@ import {
 } from "@/lib/familyTaxonomy";
 import { useViewParam } from "@/components/ViewToggle";
 import { drilldownHref, AXIS_SCOPE, TOP_NAMES } from "@/lib/drilldown";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+
+/** The allocation table's columns, in the order its rows write their cells. */
+const ALLOC_COLS = ["section", "invested", "current", "return", "weight"] as const;
+import { useTableView, sortRows } from "@/lib/tableView";
 import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
@@ -145,6 +150,10 @@ export function MorningCIO() {
    * stays param-free and stays CATEGORY, which is the table they already read.
    */
   const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  // A HOOK, so it is declared here rather than beside the rows it arranges:
+  // this component returns early on an unloaded book, and a hook after that is
+  // a different bug from the one being fixed.
+  const allocView = useTableView("cio-allocation", ALLOC_COLS);
   // One "today" for every XIRR on the page, so every figure closes on the same
   // date against the same valuation.
   const today = useMemo(() => new Date(), []);
@@ -787,8 +796,19 @@ export function MorningCIO() {
    * same holdings — only the grouping moves — which is why the footer, the
    * weight base and the cost-coverage refusal below need no branch of their own.
    */
-  const sections = m.bucketsByAxis[allocAxis] ?? m.buckets;
   const sectionLabel = (key: string) => (allocAxis === "category" ? bucketLabel(key) : key);
+  /**
+   * The allocation table's own arrangement. Its default order is the axis's own
+   * (largest first), which a third click on any heading hands back.
+   */
+  const sections = sortRows(m.bucketsByAxis[allocAxis] ?? m.buckets, allocView.sort, {
+    section: (b) => sectionLabel(b.key),
+    invested: (b) => b.invested,
+    current: (b) => b.current,
+    return: (b) => b.retPct,
+    // Weight is `current ÷ the book`, so it orders exactly as Current does.
+    weight: (b) => b.current,
+  });
   // The bar chart above the table scales each bar against the LARGEST bucket's
   // current value, so the biggest fills the track and the rest read proportional
   // to it. The actual figure and weight print beside every bar, so the bar is a
@@ -1211,17 +1231,18 @@ export function MorningCIO() {
                   already carry on the Portfolio Monitor. */}
               <table className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
                 <thead>
-                  <tr className="border-b border-ink-700">
-                    <th className="label-xs px-2 py-2 text-left font-medium">{GROUP_COLUMN_HEAD[allocAxis]}</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium">Invested</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium">Current</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium whitespace-nowrap" title={`Total return to date on the capital in each ${GROUP_NOUN[allocAxis].one} — cumulative, not annualised.`}>Return (total)</th>
-                    <th className="label-xs px-2 py-2 text-right font-medium">Weight</th>
-                  </tr>
+                  <Tr view={allocView} className="border-b border-ink-700">
+                    <SortHeader col="section" view={allocView} align="left" pad="px-2 py-2">{GROUP_COLUMN_HEAD[allocAxis]}</SortHeader>
+                    <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
+                    <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
+                    <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
+                      title={`Total return to date on the capital in each ${GROUP_NOUN[allocAxis].one} — cumulative, not annualised.`}>Return (total)</SortHeader>
+                    <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
                   {sections.map((b) => (
-                    <tr key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
+                    <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
                       <td className="px-2 py-2.5">
                         {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
                             axis the table is grouped by. AIF, PMS mandates,
@@ -1271,18 +1292,19 @@ export function MorningCIO() {
                       <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
                       <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                       <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-2 py-2.5 text-left text-slate-200">
+                  <TrFoot view={allocView} className="border-t-2 border-ink-600 px-2 py-2.5 text-left font-semibold text-slate-200"
+                    label={
                       <Link to={drilldownHref("book")} title="Open every holding in the book — the set this footer's Invested and Current columns are summed over"
                         className="transition-colors hover:text-champagne-400">Total</Link>
-                    </td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>
-                    {/* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
+                    }
+                    cells={{
+                    invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>,
+                    current: <td key="current" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>,
+                    /* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
                         This cell used to carry the MONEY-WEIGHTED whole-book
                         return, which is a different measurement from every row
                         in its own column and covers only the accounts that
@@ -1294,8 +1316,9 @@ export function MorningCIO() {
                         to explain it away is gone. It now ties to its own two
                         columns; the money-weighted figure keeps its place in
                         the popover and on the Book performance card, each
-                        stating the fraction of the book it covers. */}
-                    <td className={`px-2 py-2.5 text-right whitespace-nowrap mono ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
+                        stating the fraction of the book it covers. */
+                    return: (
+                    <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
                       {/* AND NO POPOVER HERE EITHER. Its own arithmetic —
                           (Current − Invested) ÷ Invested over the whole book,
                           cumulative rather than annualised — is on `?of=invested`,
@@ -1312,8 +1335,9 @@ export function MorningCIO() {
                           against a seven-account one. */}
                       {m.footerPct == null ? DASH : fmtPct(m.footerPct, { sign: true, decimals: 1 })}
                     </td>
-                    <td className="px-2 py-2.5 text-right mono text-slate-300">100%</td>
-                  </tr>
+                    ),
+                    weight: <td key="weight" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300">100%</td>,
+                  }} />
                 </tfoot>
               </table>
               {/*

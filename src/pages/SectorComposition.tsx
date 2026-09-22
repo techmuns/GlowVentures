@@ -16,6 +16,14 @@ import { companyExposure, type CompanyExposure } from "@/lib/lookthrough";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { ViewToggle, useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { fmtPct, fmtCurrency, changeColor } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The sector table's columns, in the order its rows write their cells. */
+const SECTOR_COLS = ["sector", "value", "weight", "count", "return", "top"] as const;
+/** ...and the two breakouts a sector row opens into. */
+const SECTOR_COMPANY_COLS = ["company", "measured", "derived", "total", "share"] as const;
+const SECTOR_HOLDING_COLS = ["security", "entity", "heldVia", "value", "share", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { BasisPill } from "@/components/BasisPill";
 import { Auditable } from "@/components/Auditable";
@@ -80,6 +88,9 @@ const SECTOR_VIEWS: readonly ViewDef<SectorView>[] = [
 export function SectorComposition() {
   const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const sectorView = useTableView("sectors", SECTOR_COLS);
+  const companyView = useTableView("sector-companies", SECTOR_COMPANY_COLS);
+  const holdingView = useTableView("sector-holdings", SECTOR_HOLDING_COLS);
   // The spec's "compare multiple sectors on a single screen". Empty until the
   // reader picks; there is no default selection to argue about.
   const [compare, setCompare] = useState<string[]>([]);
@@ -406,6 +417,21 @@ export function SectorComposition() {
     }
     return m;
   }, [consolidatedView, sectors, holdingsBySector, companiesBySector]);
+
+  /**
+   * THE TABLE'S OWN ORDER. `sectors` keeps the chart's ordering — the donut and
+   * the legend read it, and the swatch colour is keyed on a sector's place in
+   * it — so the table sorts a copy and never that array.
+   */
+  const sectorRows = sortRows(sectors, sectorView.sort, {
+    sector: (x) => x.key,
+    value: (x) => x.mv,
+    // Weight is this sector's value over the page's, so it orders as Value does.
+    weight: (x) => x.mv,
+    count: (x) => x.count,
+    return: (x) => (consolidatedView ? null : x.returnPct),
+    top: (x) => topHolding[x.key] ?? null,
+  });
   const toggleCompare = (key: string) =>
     setCompare((prev) => (prev.includes(key)
       ? prev.filter((k) => k !== key)
@@ -650,7 +676,12 @@ export function SectorComposition() {
 
         {comparedSectors.length > 0 && (
           <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full whitespace-nowrap text-[12.5px]">
+            {/* Exempt, declared: this table is TRANSPOSED. Its rows are a
+                fixed list of metrics rather than records, so there is nothing
+                to sort, and its columns are the sectors a reader picked — which
+                the picker above already orders. */}
+            <table className="min-w-full whitespace-nowrap text-[12.5px]"
+              data-table-static="transposed — its rows are a fixed metric list rather than records, and its columns are the sectors the picker above selected">
               <thead>
                 <tr className="border-b border-ink-700">
                   <th className="label-xs px-3 py-2 text-left font-medium">Metric</th>
@@ -747,23 +778,45 @@ export function SectorComposition() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Sector</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">{consolidatedView ? "Companies" : "Positions"}</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Top holding</th>
-                </tr>
+                <Tr view={sectorView}>
+                  <SortHeader col="sector" view={sectorView} align="left">Sector</SortHeader>
+                  <SortHeader col="value" view={sectorView}>Value</SortHeader>
+                  <SortHeader col="weight" view={sectorView}>Weight</SortHeader>
+                  <SortHeader col="count" view={sectorView}>{consolidatedView ? "Companies" : "Positions"}</SortHeader>
+                  <SortHeader col="return" view={sectorView}>Return</SortHeader>
+                  <SortHeader col="top" view={sectorView} align="left">Top holding</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {sectors.map((s, i) => {
+                {sectorRows.map((s) => {
+                  /* THE SWATCH COLOUR FOLLOWS THE SECTOR, NOT THE ROW POSITION.
+                     `CHART_COLORS[i % n]` keyed on the rendered index would
+                     repaint every swatch the moment a reader sorted the table,
+                     and the donut beside it would stop matching — which is this
+                     file's own index-cycled-attribution failure arriving
+                     through a sort. The index is the sector's place in the
+                     chart's own order. */
+                  const i = sectors.indexOf(s);
                   const isOpen = expanded.has(s.key);
-                  const rows = holdingsBySector[s.key] ?? [];
-                  const companies = companiesBySector[s.key] ?? [];
+                  const rows = sortRows(holdingsBySector[s.key] ?? [], holdingView.sort, {
+                    security: (h) => h.security,
+                    entity: (h) => ownerOf(accIdx, h),
+                    heldVia: (h) => ROUTE_LABEL[routeOf(h)],
+                    value: (h) => h.marketValue,
+                    // A share of the sector's own value, so it orders as Value does.
+                    share: (h) => h.marketValue,
+                    return: (h) => (h.costUnavailable ? null : h.returnPct),
+                  });
+                  const companies = sortRows(companiesBySector[s.key] ?? [], companyView.sort, {
+                    company: (e) => e.name,
+                    measured: (e) => (e.positions.length ? e.measured : null),
+                    derived: (e) => (e.derived > 0 ? e.derived : null),
+                    total: (e) => e.total,
+                    share: (e) => e.total,
+                  });
                   return (
                     <Fragment key={s.key}>
-                      <tr className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
+                      <Tr view={sectorView} className="cursor-pointer hover:bg-ink-700/40" onClick={() => toggle(s.key)} aria-expanded={isOpen}>
                         <td className="px-4 py-2.5">
                           {/* An absence names its cause where the absence is —
                               `Absent.tsx`'s rule, applied to a sector nobody
@@ -812,7 +865,7 @@ export function SectorComposition() {
                             : <Auditable formula={{ title: "Sector return", excel: "= Σ P&L ÷ Σ Cost × 100", plain: "The value-weighted average return of every holding in this sector — combined gain or loss against combined cost.", worked: `= ${money(s.pnl)} ÷ ${money(s.cost)} × 100 = ${fmtPct(s.returnPct, { sign: true })}`,  }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
                         </td>
                         <td className="px-4 py-2.5 text-left text-[12px] text-slate-400"><span className="block max-w-[170px] truncate" title={topHolding[s.key]}>{topHolding[s.key]}</span></td>
-                      </tr>
+                      </Tr>
                       {isOpen && (
                         <tr className="bg-ink-900/50">
                           <td colSpan={6} className="px-4 pb-3 pt-1">
@@ -827,21 +880,18 @@ export function SectorComposition() {
                                      a row is ABSENT WITH ITS REASON rather than ₹0. */
                                   <table className="min-w-full text-[12px]" data-sector-companies>
                                     <thead className="sticky top-0 bg-ink-800">
-                                      <tr className="border-b border-ink-700/70">
-                                        <th className="label-xs px-3 py-1.5 text-left font-medium">Company</th>
-                                        <th className="label-xs px-3 py-1.5 text-right font-medium">Direct + PMS</th>
-                                        <th className="label-xs px-3 py-1.5 text-right font-medium">
-                                          Via funds
-                                          <div className="mt-0.5 text-[9px] font-normal normal-case tracking-normal text-champagne-400/70"
-                                            title="DERIVED, not a position: the AMC disclosed what the fund holds and this is the family's units' share of it. It is no part of the book's NAV — the fund's own value already stands for it there.">derived</div>
-                                        </th>
-                                        <th className="label-xs px-3 py-1.5 text-right font-medium">Total exposure</th>
-                                        <th className="label-xs px-3 py-1.5 text-right font-medium">% of sector</th>
-                                      </tr>
+                                      <Tr view={companyView} className="border-b border-ink-700/70">
+                                        <SortHeader col="company" view={companyView} align="left" pad="px-3 py-1.5">Company</SortHeader>
+                                        <SortHeader col="measured" view={companyView} pad="px-3 py-1.5">Direct + PMS</SortHeader>
+                                        <SortHeader col="derived" view={companyView} pad="px-3 py-1.5"
+                                          title="DERIVED, not a position: the AMC disclosed what the fund holds and this is the family's units' share of it. It is no part of the book's NAV — the fund's own value already stands for it there.">Via funds · derived</SortHeader>
+                                        <SortHeader col="total" view={companyView} pad="px-3 py-1.5">Total exposure</SortHeader>
+                                        <SortHeader col="share" view={companyView} pad="px-3 py-1.5">% of sector</SortHeader>
+                                      </Tr>
                                     </thead>
                                     <tbody className="divide-y divide-ink-700/50">
                                       {companies.map((e) => (
-                                        <tr key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}>
+                                        <Tr view={companyView} key={e.key} className="hover:bg-ink-700/30" data-sector-company={e.key}>
                                           <td className="px-3 py-1.5 text-slate-200">
                                             {e.positions.length > 0
                                               ? <StockLink securityKey={e.key} name={e.name} />
@@ -861,30 +911,30 @@ export function SectorComposition() {
                                           <td className="px-3 py-1.5 text-right mono text-slate-400">
                                             {s.mv > 0 ? ((e.total / s.mv) * 100).toFixed(1) : "0.0"}%
                                           </td>
-                                        </tr>
+                                        </Tr>
                                       ))}
                                     </tbody>
                                   </table>
                                 ) : (
                                 <table className="min-w-full text-[12px]">
                                   <thead className="sticky top-0 bg-ink-800">
-                                    <tr className="border-b border-ink-700/70">
-                                      <th className="label-xs px-3 py-1.5 text-left font-medium">Security</th>
-                                      <th className="label-xs px-3 py-1.5 text-left font-medium">Entity</th>
+                                    <Tr view={holdingView} className="border-b border-ink-700/70">
+                                      <SortHeader col="security" view={holdingView} align="left" pad="px-3 py-1.5">Security</SortHeader>
+                                      <SortHeader col="entity" view={holdingView} align="left" pad="px-3 py-1.5">Entity</SortHeader>
                                       {/* WHICH SIDE OF THE HOLDINGS-TABLE SPLIT THIS ROW IS ON.
                                           Every row is own-account in this view by construction,
                                           and the column stays: a reader switching from the
                                           Consolidated view needs to see that, per row, rather
                                           than take a caption's word for it. */}
-                                      <th className="label-xs px-3 py-1.5 text-left font-medium">Held via</th>
-                                      <th className="label-xs px-3 py-1.5 text-right font-medium">Market value</th>
-                                      <th className="label-xs px-3 py-1.5 text-right font-medium">% of sector</th>
-                                      <th className="label-xs px-3 py-1.5 text-right font-medium">Return</th>
-                                    </tr>
+                                      <SortHeader col="heldVia" view={holdingView} align="left" pad="px-3 py-1.5">Held via</SortHeader>
+                                      <SortHeader col="value" view={holdingView} pad="px-3 py-1.5">Market value</SortHeader>
+                                      <SortHeader col="share" view={holdingView} pad="px-3 py-1.5">% of sector</SortHeader>
+                                      <SortHeader col="return" view={holdingView} pad="px-3 py-1.5">Return</SortHeader>
+                                    </Tr>
                                   </thead>
                                   <tbody className="divide-y divide-ink-700/50">
                                     {rows.map((h) => (
-                                      <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/30">
+                                      <Tr view={holdingView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/30">
                                         <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                                         <td className="px-3 py-1.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                                         <td className="px-3 py-1.5 text-[11.5px] text-slate-500" title={ROUTE_NOTE[routeOf(h)]}>{ROUTE_LABEL[routeOf(h)]}</td>
@@ -900,7 +950,7 @@ export function SectorComposition() {
                                             : h.live ? fmtPct(h.returnPct, { sign: true })
                                             : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                         </td>
-                                      </tr>
+                                      </Tr>
                                     ))}
                                   </tbody>
                                 </table>

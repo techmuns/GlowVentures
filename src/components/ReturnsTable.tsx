@@ -123,7 +123,16 @@ export function ReturnsTable({ ticker, name }: {
         : <div className="grid h-[260px] place-items-center text-[12px] text-slate-500">Not enough closes in this window to draw a chart.</div>}
 
       <div className="mt-4 overflow-x-auto">
-        <table className="min-w-full whitespace-nowrap text-[12.5px]">
+        {/* ── ONE ROW, AND THE COLUMNS ARE A SEQUENCE ──────────────────────
+              *"Every single table on the dashboard must have clickable column
+               headings to sort the table data."* This one is exempt and says
+              so in the markup rather than by omission: it has a SINGLE row, so
+              there is nothing to sort, and its columns are 1D → 1W → 1M → … in
+              order, so dragging one would break the sequence a reader reads it
+              as. The exemption is declared on the table, which is what
+              `check:pages` requires of any table that refuses both. */}
+          <table className="min-w-full whitespace-nowrap text-[12.5px]"
+            data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
           <thead>
             <tr className="border-b border-ink-700">
               {HORIZON_COLS.map((c) => (

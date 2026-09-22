@@ -332,7 +332,16 @@ export function DataAudit() {
               <div className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Select a workbook and sheet.</div>
             </div>
           ) : (
-            <table className="border-separate border-spacing-0 text-[12px]">
+            /* ── A WORKBOOK REPRODUCED AS THE STATEMENT PUBLISHED IT ──────
+               Exempt, and it says so in the markup. This is not a table this
+               app composed: it is a spreadsheet viewer, with the source's own
+               column letters across the top, its own row numbers down the side
+               and its rows pinned in workbook order — which is the whole point
+               of a provenance page. Sorting its rows or moving a column would
+               make the grid stop matching the document a reader is checking
+               against, which is the one thing it exists to do. */
+            <table className="border-separate border-spacing-0 text-[12px]"
+              data-table-static="a spreadsheet reproduced in the source's own row and column order — this page exists to be checked against the document, so neither may be rearranged">
               <thead className="sticky top-0 z-20">
                 <tr>
                   <th className="sticky left-0 z-30 border-b border-r border-ink-700 bg-ink-900 px-2 py-1.5 text-slate-600" />
