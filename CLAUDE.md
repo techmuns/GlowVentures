@@ -13850,17 +13850,24 @@ against the same bug, it fires.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
 blocked) · `test:family` 27 suites · `check:family` **82/0** · `check:pages`
-**186 combinations clean**, with the same **six** evidenced abstentions Stage
+**192 combinations clean**, with the same **six** evidenced abstentions Stage
 10bl records — four from the one KPI-tile claim spread across Morning CIO's
 panels, the crumb on the not-found route, and the pledge one on `stock-qty`,
 which `stock-pledge` asserts as a hard failure so it never stands alone. **NOT
-ONE of this change's own checks abstains.**
+ONE of this change's own checks abstains**, verified from the report rather
+than from the total: the six are listed by name and every one of them is
+pre-existing.
 
-**THE COUNT IS UNCHANGED FROM STAGE 10bl, AND THAT IS THE POINT:** this change
-adds no route. `private-market-folios` moved from `/private-market?view=folios`
-to `/private-market` plus a click, and kept its name so PM-1 stays at the
-address a reader of this file expects it. The number moving would have meant a
-route appeared somewhere nobody looked.
+**THIS CHANGE ADDS NO ROUTE, AND THE SIX ARE MAIN'S.** `private-market-folios`
+moved from `/private-market?view=folios` to `/private-market` plus a click, and
+kept its name so PM-1 stays at the address a reader of this file expects it.
+The whole of the movement from Stage 10bl's 186 is main's three `stock-cmp-*`
+routes across both themes — **MEASURED ON THE MERGED TREE**, which is the only
+base any of these counts is a fact about. This branch's own pre-merge sweep was
+186 and main's was 192; the arithmetic happens to reconcile here, and it
+reconciles ONLY because the sweep was re-run rather than the number adjusted.
+The number moving on this branch's own account would have meant a route
+appeared somewhere nobody looked.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control before and after (md5 unchanged): nothing
