@@ -12,6 +12,7 @@ import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCK
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, type QuoteFeed } from "@/lib/quotes";
+import { applyFundNavs } from "@/lib/fundNavs";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
 import { holdingLabel } from "@/lib/schemeLabel";
@@ -327,8 +328,20 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // available rather than having to un-mix them.
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;
-    if (!quotes) return basePortfolio;
-    const positions = applyQuotes(basePortfolio.positions, quotes);
+    /**
+     * THE PUBLISHED NAV IS APPLIED WHETHER OR NOT THE QUOTE FEED ANSWERED.
+     *
+     * It is a COMMITTED figure, not a fetch — `src/data/fundNavs.ts`, refreshed
+     * daily by its own workflow — so it is available on the first paint, with
+     * no token and no network. Returning `basePortfolio` early when the quote
+     * feed is null would have left every fund at its statement mark on exactly
+     * the runs where nothing else could price it either, which is the case the
+     * family reported.
+     */
+    // `applyQuotes` with a null feed marks every row not-live and changes
+    // nothing else, so ONE path serves both cases and the no-feed run is no
+    // longer an early return that skipped the NAVs.
+    const positions = applyFundNavs(applyQuotes(basePortfolio.positions, quotes));
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
