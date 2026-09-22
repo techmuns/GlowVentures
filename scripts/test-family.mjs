@@ -40,6 +40,7 @@ const SUITES = [
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
+  ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
   ["negligible floor", "src/lib/__tests__/negligibleFloor.test.ts"],
   ["scheme labels & transaction order", "src/lib/__tests__/schemeLabel.test.ts"],

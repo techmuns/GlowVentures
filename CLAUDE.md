@@ -263,7 +263,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   own capital and their managers' dealing, merged on the key both rollups
   already build, so a mandate that publishes both is ONE row. The MONEY stays in
   two column blocks that are never added — measured, summing them reports
-  ₹291.9 Cr where the family paid in ₹221.5 Cr. See Stage 10bm.
+  ₹291.9 Cr where the family paid in ₹221.5 Cr. See Stage 10bo.
 - `src/lib/txnAxis.ts` — WHICH SECTION A DATED RECORD LANDS IN: the same three
   axes the Holdings table sections on, joined to a trade's own fields (provider
   + account number, `securityKey`, the class its STATEMENT printed). It defines
@@ -285,6 +285,12 @@ cash holding's genuinely-zero return both match, and both are correct.
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
   that crumb on every route. See Stage 10bh.
+- `src/lib/fundNavs.ts` — THE PUBLISHED NAV'S READ SIDE. `applyFundNavs` is
+  applied at ONE seam (`PortfolioContext`, beside `applyQuotes`), which is what
+  makes a current fund value reach every page rather than needing a per-page
+  edit. It moves only what a price may move (§6) and deliberately never sets
+  `live`: a quote is intraday and a NAV is struck once after the close, and the
+  two must never be added. See Stage 10bn.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -11623,14 +11629,14 @@ tabs presented them as alternatives. Both are on screen together now, each in it
 own card, under ONE set of controls.
 
 ***THEY WERE ONE CARD WITH A TOGGLE AT Stage 10bi AND ARE ONE TABLE SINCE
-Stage 10bm***, at the family's request both times — *"it should be exactly one
+Stage 10bo***, at the family's request both times — *"it should be exactly one
 single simple table just like in the holdings"*, then *"just remove the toggle
 button and show everything within the same table."* The sentence above still
 holds and is why neither is the five-tab strip returning: the strip mixed two
 SOURCES with three GROUPINGS and a raw list, and what is on screen now names the
 two sources as two COLUMN BLOCKS and nothing else. Every reason below for keeping
 the two APART is unchanged and is why the COLUMNS are two blocks rather than one
-— the money must never be added, and Stage 10bm measures what adding it would
+— the money must never be added, and Stage 10bo measures what adding it would
 cost.
 
 **AND THE GROUPING IS THE HOLDINGS TABLE'S OWN.** `?group=` is shared: a reader
@@ -11658,9 +11664,9 @@ capital record, 10 issue a transaction statement, and
 `green-lantern-capital-llp-510861` publishes BOTH** — so a combined total
 double-counts it by construction. Two cards, two footers, one set of controls
 and one set of sections. *(ONE card since Stage 10bi and ONE TABLE since
-Stage 10bm, where the two footers became two COLUMN BLOCKS in one footer, each
+Stage 10bo, where the two footers became two COLUMN BLOCKS in one footer, each
 summed down its own column. The measurement was re-taken for both changes — and
-at 10bm on the RENDERED PAGE, which found THREE overlapping accounts rather than
+at 10bo on the RENDERED PAGE, which found THREE overlapping accounts rather than
 the one this paragraph names: `loadTransactions` applies `AUTHORITATIVE`, which
 names SVAN's investor report for transactions too, and a count taken over
 `transaction-statement` documents alone cannot see them.)*
@@ -11752,7 +11758,7 @@ rescaled by `--app-zoom`, Stage 10n) and the trades table took the rest with
 `min-h-0 flex-1`, which is exactly what the Holdings card beside it does.
 
 ***THE HAZARD WENT WITH THE SECOND CARD AT Stage 10bi*** and has not come back
-at 10bm: one table means one sticky header, and it simply takes the card
+at 10bo: one table means one sticky header, and it simply takes the card
 (`min-h-0 flex-1`), so the bound came off. The `vh` rule is unchanged and still
 governs every bounded box in this app.
 
@@ -13223,7 +13229,343 @@ generated file, so the merge had nothing to splice** — and the control was run
 anyway, because the first is what made this merge safe and only the second would
 have caught it had it not been.
 
-### Stage 10bm — ONE TABLE OVER BOTH DATED RECORDS, AND THE TWO COLUMN BLOCKS THAT KEEP IT HONEST
+### Stage 10bm — THE MARK IS A COLUMN, AND THE PAGE STOPS CHOOSING WHICH STATEMENT IT BELONGS TO
+
+*"Open PR and do not merge until i tell you to."* · *"In some funds, avg cost
+column has price but current NAV is not there… for eg. in Motilal Active
+Momentum and same for Helios as well. We need a column of current NAV. Find the
+root cause of this and fix, why current NAV is missing when avg. cost is already
+given."*
+
+#### The report was right about the screen and backwards about the book
+
+**THE MODEL CARRIES THE NAV AND NOT THE AVG COST — the exact reverse.** Measured
+before anything was written, which is the whole reason the answer is a column
+rather than an ingest fix:
+
+| | |
+| --- | ---: |
+| positions carrying `currentPrice`, a per-unit mark | **355 of 371** |
+| carrying `Position.avgCost` | 285 |
+| **Motilal Oswal Active Momentum** | `avgCost: null`, `currentPrice: 14.0491` |
+| **Helios Flexi Cap — Direct Growth** | `avgCost: null`, `currentPrice: 16.21` |
+
+So nothing was missing from the archive and nothing needed re-extracting. **The
+page DERIVED the figure it showed and never read the one it had**: `StockInfo`'s
+Avg cost tile is `costBasis ÷ quantity` (₹14.05 on Active Momentum, from two
+primitives the statement prints), and the mark sat in `Position.currentPrice`
+with no column to render it in. Had the tile simply read `Position.avgCost` the
+family would have seen the reverse complaint — a NAV and no cost. **The
+asymmetry was the defect, not the absence.**
+
+**AND IT WAS ONE PAGE OUT OF SIX.** Checked rather than assumed: the Portfolio
+Monitor draws `AVG COST` and `CMP` (₹14.05 / ₹14.05 on that very holding, with
+the not-live `◦`), `MandateHoldings` draws both, `exportPortfolioExcel` writes
+both, and `/holdings` and Private Market draw NEITHER per-unit column — they are
+money tables, deliberately and symmetrically. `/stock/:securityKey` was the
+single outlier, and it is the page a reader opens when they want one holding.
+
+**THE HEADER DID CARRY A MARK, WHICH IS WHY THIS WAS EASY TO MISS FROM THE
+SOURCE.** Top-right, 2xl, captioned with its statement date. What the table had
+was Avg cost, then `Invested`, then **`Current` — which is the market VALUE**, so
+a reader scanning the row for a price finds a column called Current and it is
+money. The ask names the right fix: a column, beside the cost.
+
+#### …and reading the header's own figure found a quieter fabrication
+
+`const cmp = rows[0]?.currentPrice ?? null` — the FIRST ARRAY ELEMENT's mark,
+printed as the holding's price. A holding several statements report has several
+marks, and **10 of this book's 213 securities carry marks that render
+DIFFERENTLY**:
+
+| | | |
+| --- | ---: | ---: |
+| Gland Pharma | ₹2,667.30 · Carnelian, 10 Aug | ₹2,502.90 · SVAN, 31 Jul |
+| DSP Gold ETF | ₹151.10 on ₹3.1 Cr | ₹141.24 on **₹16.9 Cr** |
+| HELIOS FCF D-GROW | ₹14.18 | ₹15.74 |
+
+**TWO DIFFERENT CAUSES, AND THE PAGE MUST NOT ASSERT EITHER.** Gland Pharma's
+pair is §3 working exactly as documented — two statements drawn ten days apart.
+The other two are NOT: same provider, same ISIN, **same 31 July as-of**, two
+rates. That is the extractor join `docs/BOOK-REPORT.md` already names among its
+eight, REFINED by this measurement — the account as-ofs agree, so the date
+explanation this file offers for the Helios spread does not cover that pair.
+
+And `rows` is unsorted while the table sorts by value, so on DSP Gold the page
+printed **the mark belonging to 15% of the position**, above a table it never
+showed. Nothing on screen could catch it: it is a real price, correctly
+formatted, from a real statement.
+
+#### The design: show it per statement, refuse to blend it
+
+- **THE COLUMN IS PER ROW**, reading `Position.currentPrice`, with the statement
+  and its date in the cell's own hover. That is where the answer is unambiguous
+  — one row, one statement, one mark — and it is strictly more informative than
+  any holding-level figure could be, because it is the only surface in this app
+  that can show the ten splits at all.
+- **NEVER `marketValue / quantity`.** The price is a PRIMITIVE here (§4b), and
+  the two are not the same number: `ICICI NFT NT 50 DP G` prints a rate of 60.4
+  against a value column implying 60.4167. Deriving it would publish a figure the
+  document does not.
+- **THE HEADLINE AND THE FOOTER SHOW ONE FIGURE OR NONE.** Where every statement
+  renders to one mark it is shown; where they do not, both render an absence
+  NAMING the marks and sending the reader to the table. A quantity-weighted mean
+  of ₹2,667.30 and ₹2,502.90 is a price no document struck, sitting in the Total
+  row of a column whose every other cell is a figure some statement printed —
+  "a total must tie to its own columns", one column over. The avg-cost footer
+  beside it legitimately DOES blend, and the distinction is the whole of it:
+  cost and quantity both ADD across statements, and prices do not.
+- **THE TEST IS WHAT THE RENDERER CAN DISTINGUISH**, not an invented tolerance.
+  Two marks the page would print identically are one figure to a reader; two it
+  prints differently are genuinely two. So the agreement test runs the marks
+  through `price()` — the page's own printing precision reproduced, which is the
+  bound this file already requires of every delta it explains.
+- **AN ABSENT MARK NAMES ITS OWN CAUSE, and the two causes are worded apart.**
+  13 securities are reported at a total value and no price; told the statements
+  disagree, a reader would go looking for a second figure that was never
+  printed. `price()` returns a BARE dash, which §2 forbids, so both cells guard
+  before calling it.
+
+**A LATENT BUG WENT WITH IT.** The header's caption dated the shown price by
+`rows[0]`, which may be a row carrying NO mark — so on a holding whose first
+statement is unmarked it dated the figure to the wrong document. It reads the
+statement that actually supplied the mark.
+
+**AND ONE ASYMMETRY IS LEFT STANDING RATHER THAN QUIETLY CHANGED.** The Avg cost
+TILE derives `cost ÷ quantity` and the Avg cost COLUMN prints `Position.avgCost`,
+so on these two funds the tile reads ₹14.05 and the column reads `—`. Both are
+defensible — the tile aggregates and derives (§4b), the row prints what its
+statement printed — and making the column derive too is a change to what that
+column MEANS on all 371 rows, which is a decision about the document rather than
+a missing figure. Named here for the family rather than made on their behalf.
+
+#### The checks, and the harness defect that cost this branch its work
+
+Two routes, both DERIVED from `glowData.ts` on the run so the next drop picks
+its own worst case: `stock-cmp-split` (the split holding, largest by value) and
+`stock-cmp-unmarked` (the largest with no per-unit mark). `CMP_BOOK` is
+RE-EXPRESSED in `check-pages.mjs` rather than imported from `StockInfo` — a
+check that calls the helper it is checking agrees with it by construction, and
+the two agreeing is the measurement.
+
+**A MISSING SUBJECT IS A FAILURE, NOT AN ABSTENTION.** An unresolved address
+lands on a page with no table, which has no console error, no overflow and no
+stray zero — it would satisfy every generic check while asserting nothing. Each
+route states its own premise so the pair can never pass over nothing.
+
+**AND THE REFUSAL IS ASSERTED FROM BOTH ENDS, which is the half that could have
+swallowed the book.** A build whose agreement test never agrees satisfies every
+absence check on the split route and prints a dash over the 190 securities whose
+statements agree. `stock` therefore asserts the figure is SHOWN where there is
+one, reconciled against the table's own `data-cmp` — the book's figure — rather
+than against another rendering of itself.
+
+**THE CELLS ARE READ STRUCTURALLY AND COMPARED NUMERICALLY.** `data-cmp` carries
+what the BOOK holds and the cell text what a reader sees, so a cell that stopped
+rendering its own attribute's value fails on the pair. The first draft compared
+DIGIT STRINGS and failed three invariants against a page that was right: `Intl`
+renders ₹151.10 where the page's `price()` renders ₹151.1, and `"151.10" !==
+"151.1"` while the two are one mark.
+
+**AND THE REASON IS CAPTURED PER CELL, because `innerText` cannot see it.**
+`AbsentCell` puts its cause in a `title`, so a cell that fell back to `price()`'s
+bare dash renders identically to one that names why — the check could not have
+told them apart, which is the trap this file already records for the cost cells.
+
+**THE HARNESS ITSELF WAS THE FIRST DEFECT, AND IT DESTROYED A DAY'S WORK.**
+`restore()` deleted the snapshot it restored from, so the first explicit restore
+removed the only copy and every later one silently did nothing: bugs 2–8 ran on a
+tree nobody had cleaned, reported each other's failures under the wrong names,
+and **the run still exited 0**. That is this file's own *"a restore that cannot
+restore looks exactly like one that did"*, arriving for the third time. Worse,
+clearing up after it with `git checkout --` on an UNCOMMITTED tree threw the
+whole change away and it had to be rebuilt from the session record.
+
+Two rules follow, and the second is the one that actually cost something:
+
+- the snapshot is removed by the TRAP and never by `restore`, and `restore`
+  VERIFIES with `cmp -s` rather than assuming the copy took;
+- **the work is COMMITTED before a destructive harness runs at all.** A pass
+  that rewrites the files under test is not something to run against
+  unversioned work, however careful the trap is.
+
+Nine bugs reintroduced, each firing its own check.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` · `check:pages`.
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and a column that moved a generated figure would not be a column.
+
+### Stage 10bn — THE PUBLISHED NAV IS THE CURRENT VALUE, FETCHED DAILY
+
+*"Current value of any fund or Mutual Fund that can easily be fetched from
+online sources should show present value… These NAV must be automatically
+fetched everyday and refreshed. Daily and regularly."* · *"Live values of any
+investment, we should show it on all the relevant places automatically on the
+dashboard."*
+
+**A MUTUAL FUND RESOLVES NO NSE TRADING SYMBOL, AND EVERY LIVE ENDPOINT THIS
+DASHBOARD CALLS IS KEYED ON ONE.** That is the whole root cause, and it is why
+the quote feed had never priced a scheme: a fund's value sat at whatever mark
+its last statement struck, however old. Measured on the two the family named,
+that is a month of drift — Motilal Oswal Active Momentum marked ₹14.0491 on 6
+August against a published ₹14.5522, Helios ₹16.21 on 7 August against ₹16.16.
+
+**HALF THE PIPELINE WAS ALREADY HERE AND NOTHING REFRESHED IT.**
+`public/lookthrough/` has carried each scheme's NAV since Stage 10s and the
+daily-NAV movers card has rendered it since Stage 10aw. What was missing is that
+**no workflow ever ran `build-lookthrough`** — the committed NAV was twelve days
+old — and that the figure reached no holding's value. So this is not a new
+source so much as the missing half of one.
+
+#### `npm run build-fund-navs` — AMFI's own file, joined on the ISIN
+
+```
+portal.amfiindia.com/spages/NAVAll.txt   keyless, 14,379 scheme rows
+   |  npm run build-fund-navs            fetch → join → gate → merge
+   v
+src/data/fundNavs.ts                     20 schemes, each with its own as-of
+docs/FUND-NAVS.md                        priced / resolved-not-usable / unresolved
+```
+
+**IT IS THE INDUSTRY BODY'S OWN RECORD**, not a proxy and not somebody's reading
+of one. `www.amfiindia.com` 302s to the portal host; the builder FOLLOWS the
+redirect rather than pinning either, and **checks the response BY CONTENT** — a
+portal answering 200 with an error page is the failure `build-symbols` already
+records against NSE.
+
+**TWO IDENTIFIER TIERS, STRONGEST FIRST, AND NO FUZZY ONE.** A wrong join here
+is the worst fabrication available: a complete, correct, well-formed NAV
+belonging to somebody else's fund, which nothing on screen could catch. The
+family's own statement first, then the look-through's resolved ISIN — **which is
+what reaches Motilal Oswal Active Momentum, whose statement prints no ISIN at
+all**. Where both answer they must AGREE, and a disagreement yields nothing.
+
+**AND WHAT IT WRITES IS NOT THE BOOK.** `src/data/fundNavs.ts` sits beside
+`polycabLive.ts` on identical terms — generated, committed daily by a workflow,
+read at DISPLAY time. `glowData.ts` regenerates byte-identically from `source/`
+(§7), so a fetched price may never enter it, for the same reason a live quote
+may not.
+
+#### The basis gate, which is what stops a ten-fold error
+
+A published NAV values a holding as `quantity × NAV`, and that is true only
+while the book's units and the AMC's NAV unit are the same unit. **On this book
+they are not, twice:**
+
+| | book's mark | published NAV | ratio |
+| --- | ---: | ---: | ---: |
+| DSP Gold ETF | ₹151.10 | ₹14.7633 | **0.098** |
+| DSP Silver ETF | ₹276.82 | ₹22.4561 | **0.081** |
+
+A SHARE-COUNT BREAK — the book's units pre-split, the NAV post-split. Valued
+naively the family's **₹16.9 Cr of gold reports as ₹1.76 Cr**. This is Stage 10e's
+`shareCountBreaks` finding arriving through a different source, and the rule is
+the same: **reported, never corrected.** Adjusting would invent a factor nobody
+published.
+
+**THE BOUND IS A FACTOR OF TWO, AND IT IS A CLAIM ABOUT MARKETS RATHER THAN A
+TOLERANCE FITTED TO THE DATA** — no scheme halves or doubles between two
+statement dates absent a corporate action. It separates the real cases by an
+order of magnitude: the schemes that pass span 0.92–1.14 and the two that fail
+sit at 0.08 and 0.10. **The failure mode is deliberately asymmetric**: refusing a
+good scheme costs a refresh and keeps the statement mark, while accepting a
+broken one prints a figure wrong by 10x. A refused scheme still CARRIES its NAV,
+marked `usableForValue: false` with the reason — the family asked to SEE it.
+
+**BOTH DSP ISINs TURN OUT NOT TO BE IN AMFI'S FILE AT ALL**, which Stage 10ak
+already predicted (*"NSE has moved the DSP Gold and Silver ETFs to new ISINs"*),
+so the dangerous case ALSO self-excludes. The gate stays because the next drop
+could bring one that resolves — and `fundNavs.test.ts` reports it **NOT CHECKED
+rather than passing over an empty set**, because `[].every(...)` is true and the
+obvious assertion would report a working gate on a run where it never ran.
+
+**THE DAY CHANGE ACCUMULATES.** NAVAll is one day's snapshot, so the previous NAV
+is whatever the committed file already held — merge-never-truncate, the rule
+`rbi.mjs` and `iex.mjs` are built on. A first run has no day change and says so.
+
+#### `applyFundNavs` — one seam, which is what "all the relevant places" means
+
+Applied in `PortfolioContext` beside `applyQuotes`, so **every page that reads
+`portfolio` gets the current value with no per-page edit**. Measured:
+
+| | |
+| --- | ---: |
+| schemes overlaid · position rows | 18 · 25 |
+| those rows, statement basis → published NAV | ₹101.08 Cr → **₹103.87 Cr** |
+| the book | ₹710.39 Cr → **₹713.18 Cr** |
+| Motilal Oswal Active Momentum | ₹21.4 Cr → **₹22.2 Cr** |
+
+**AND IT RESOLVED A SPLIT THIS BRANCH HAD JUST FOUND.** Stage 10bm records the
+two Helios depository rows marked ₹14.18 and ₹15.74 — same provider, same ISIN,
+same 31 July as-of. Both now take the one published NAV, because a scheme has
+one NAV whatever a depository printed.
+
+**THE BASIS RULE IS `applyQuotes`'s, VERBATIM**, and `fundNavs.test.ts` asserts
+§6 FIELD BY FIELD: quantity, cost, realised, dividends, accrued, the dated
+fields and the intraday fields are frozen. An overlay that quietly moved a cost
+renders a page full of plausible figures and no structural check would see it.
+
+**AND `live` STAYS FALSE, WHICH IS THE ONE THING NOT COPIED.** A quote is
+intraday; a NAV is struck once after the close, and Stage 10aw is explicit that
+the two must never be added. `live` gates Today's movers and the day-change
+column, so setting it would fold a NAV dated yesterday into a card headed
+"today". A NAV-priced row carries `navPriced` and its own `navDate` instead, and
+the intraday fields are left untouched.
+
+**THE DISPLAY STOPS CALLING IT A STATEMENT MARK.** The Monitor's not-live `◦`
+marker and the stock page's headline caption and per-row hovers name AMFI and
+the publication date. A figure from one source wearing another's label is the
+only thing here that could mislead, and the caption is the only thing on the
+page that can tell a reader which it is.
+
+#### Two checks changed, and one failure was real
+
+**THE CHECKER'S MODEL OF THE BOOK IS NOW THE ONE THE PAGES RENDER.** Thirty
+derivations read `BOOK_POSITIONS` and reconcile against a RENDERED figure; left
+on the statement basis they compared two different books and **eleven partition
+checks failed against pages that were right**. `withPublishedNavs` is applied
+inside `bookArray` — one place rather than thirty, because thirty patches is
+thirty chances to miss one — and is RE-EXPRESSED rather than imported, on the
+same terms as `isMandateHeld`.
+
+**`stock-cmp-derived` IS RETIRED RATHER THAN LEFT UNABLE TO FAIL.** Stage 10bm
+added it to prove the book's mark is READ rather than computed as value ÷
+quantity. The overlay sets `marketValue = quantity × NAV`, so **on every priced
+holding the two are equal BY CONSTRUCTION and the one witness is itself priced**
+— the rendered page can no longer see the distinction at all. The claim moved to
+`fundNavs.test.ts`, where it is still true of the book; `stock-cmp-nav` takes the
+route's place and checks the overlay on a rendered page.
+
+**AND PM-2 WAS READING THE TOP BAR.** It took the first `₹…Cr` in the body text
+as the book's NAV — which is the TOP BAR's current value of holdings, app chrome
+rather than part of Private Market's arithmetic. The two coincided for as long
+as nothing could price a fund and parted the day one could: **the top bar is
+LIVE and that page reads `statementPortfolio` by design** (§6 — a reader checks
+those rows against the PDF, so they must not drift with a price). It is struck on
+the page's own printed denominator now (*"N% of the ₹X Cr book"*), which is the
+figure its parts are a partition OF.
+
+**THAT WAS ESTABLISHED AGAINST A WORKTREE AT THE PRIOR COMMIT, NOT REASONED
+OUT.** The page text is byte-identical before and after the overlay, and the
+check computes the same 358.10 on both — so the failure is where the two bases
+genuinely part rather than a regression. Three rounds of guessing preceded that
+measurement and every one of them was wrong; the worktree settled it in a minute.
+
+**WHAT THIS LEAVES ON SCREEN, STATED RATHER THAN GLOSSED:** the top bar now
+reads ₹713.18 Cr while Private Market reads ₹710.4 Cr. Both are correct on their
+own basis and both are labelled, and a reader can see them a screen apart. It is
+also PRE-EXISTING in production — a live equity quote already moved the first and
+not the second — and only became visible without a quote feed. Moving Private
+Market to live basis would reconcile them at the cost of the guarantee that page
+was built on, which is the family's call and not this file's.
+
+`build` · `tsc` · `test:ingest` · `test:family` (a new `fundNavs.test.ts`: 18
+assertions, 1 honest NOT CHECKED) · `check:family` 82/0 · `check:pages`
+**192 combinations clean**, with the same six evidenced pre-existing abstentions
+and none of this stage's own. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY — a fetched price never enters the book.
+### Stage 10bo — ONE TABLE OVER BOTH DATED RECORDS, AND THE TWO COLUMN BLOCKS THAT KEEP IT HONEST
 
 *"Open PR and do not merge until i tell you to."* · *"in the Transactions page
 why are there 'capital in and out/trades' toggle switch provided when… There is
@@ -14554,7 +14896,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   **index strip's day move** (`indicesFunction.test.ts` — the level and the
   previous close must never be the same session; a live probe cannot check it,
   because outside a 3h45m window plus every weekend the function is correct),
-  the **dated record merge** (`txnLedger.test.ts`, Stage 10bm — the family's own
+  the **dated record merge** (`txnLedger.test.ts`, Stage 10bo — the family's own
   capital and their managers' dealing become one row set, and the two money
   blocks must never be added: summing them reports ₹291.9 Cr where the family
   paid in ₹221.5 Cr),
@@ -14593,6 +14935,16 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   value the script decides. Run `build-symbols` first, since it is keyed on that
   output. `ONLY=<symbols>` limits it; `SCREENER_DELAY_MS` paces the fetch.
   A company with no NSE symbol is NAMED in the report and never name-matched.
+- `npm run build-fund-navs` refreshes `src/data/fundNavs.ts` and
+  `docs/FUND-NAVS.md` — every mutual-fund scheme's NAV from **AMFI's own daily
+  published file**, keyless, joined to this book ON THE ISIN and never on a
+  name. It is what makes a fund carry a CURRENT value at all: a scheme resolves
+  no NSE trading symbol, so the quote feed has never priced one. Run daily by
+  `.github/workflows/fund-navs.yml` at 03:30 UTC (09:00 IST, after AMFI
+  publishes the previous business day), committing only when a NAV moved.
+  Idempotent; `-- --check` writes nothing. A scheme whose units are not on the
+  same basis as its NAV carries the NAV and does NOT value the holding — see
+  Stage 10bn. Nothing it writes reaches `glowData.ts`.
 - `npm run build-scheme-names` emits `src/data/schemeNames.json` and
   `docs/SCHEME-NAMES.md` from the COMMITTED `public/lookthrough/` files — the
   full scheme name and plan behind every clipped depository label, joined by

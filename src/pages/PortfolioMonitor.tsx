@@ -207,6 +207,8 @@ type Row = {
   // not a security, and its constituents are what carry quantities. A 0 would
   // read as a mandate holding nothing.
   entities: string[]; quantity: number | null; avgCost: number | null; currentPrice: number | null;
+  /** The price above is AMFI's published NAV, not the statement's mark. */
+  navPriced?: boolean; navDate?: string;
   /**
    * THE UNIT CLASSES THIS ROW CLUBS, on a row that clubs more than one.
    *
@@ -1275,6 +1277,7 @@ export function PortfolioMonitor() {
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: perUnit ? qty : null,
           avgCost: perUnit && !costNA && qty > 0 ? (cost as number) / qty : null,
           currentPrice: perUnit ? ps[0].currentPrice : null,
+          navPriced: perUnit && !!ps[0].navPriced, navDate: ps[0].navDate,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
           weight: weightBase > 0 ? mv / weightBase : 0,
@@ -1333,6 +1336,7 @@ export function PortfolioMonitor() {
         groupSource: groupSourceFor(groupAxis, accIdx, p),
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
+        navPriced: !!p.navPriced, navDate: p.navDate,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         costNA: !!p.costUnavailable || p.costBasis === null,
@@ -2526,7 +2530,9 @@ export function PortfolioMonitor() {
                             ? fmtFromBase(r.currentPrice)
                             : <>{fmtFromBase(r.currentPrice)}
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
-                                  title={`No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
+                                  title={r.navPriced
+                                    ? `AMFI's published NAV for this scheme, as of ${r.navDate}. A fund resolves no NSE trading symbol so it can never carry an intraday quote; this is the industry's own daily figure, refreshed every day, and it is NEWER than the statement mark it replaced.`
+                                    : `No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null

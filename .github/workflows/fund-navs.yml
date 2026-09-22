@@ -1,0 +1,83 @@
+name: Fund NAVs
+
+# Daily refresh of every mutual-fund scheme's published NAV
+# (`scripts/build-fund-navs.mjs` → `src/data/fundNavs.ts`), from AMFI's own
+# NAVAll file, joined to this book ON THE ISIN.
+#
+# *"These NAV must be automatically fetched everyday and refreshed. Daily and
+# regularly."* A mutual fund resolves no NSE trading symbol and every live
+# endpoint this dashboard calls is keyed on one, so the quote feed has never
+# priced a scheme: without this run a fund's value sits at whatever mark its
+# last statement struck, which on this book was a month of drift.
+#
+# 03:30 UTC IS 09:00 IST. AMFI publishes the previous business day's NAVs late
+# in the evening IST, so a morning run picks up a COMPLETE, SETTLED file rather
+# than catching the publication half-written. A NAV is struck after the close by
+# construction — there is no intraday figure to race — which is why this runs at
+# a different hour from the Polycab job and for a different reason: that one
+# waits for a market to close, this one waits for a file to be published.
+#
+# THE DAY CHANGE IS BUILT HERE, ONE RUN AT A TIME. NAVAll is a snapshot of one
+# day, so the previous NAV is whatever the committed file already held — the
+# merge-never-truncate rule the series harvester is built on. Skipping days does
+# not break it (the carried `prevDate` says which day the change is measured
+# against), but it does mean the change spans the gap, which is why this runs
+# every day rather than weekly.
+#
+# EVERY SOURCE IS KEYLESS. There is no secret to pass. AMFI publishes NAVAll
+# unauthenticated, which is the whole reason a fund can be priced here at all.
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fund-navs
+  cancel-in-progress: false
+
+jobs:
+  fund-navs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Refresh the published NAVs
+        run: npm run build-fund-navs
+
+      # THE COMMIT ONLY HAPPENS WHEN A NAV MOVED. The builder is idempotent, so
+      # a weekend or a market holiday — when AMFI republishes the same file —
+      # produces no commit at all rather than churning the history daily.
+      - name: Commit if anything moved
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          if git diff --quiet -- src/data/fundNavs.ts docs/FUND-NAVS.md; then
+            echo "No NAV moved — nothing to commit."
+            exit 0
+          fi
+          git add src/data/fundNavs.ts docs/FUND-NAVS.md
+          git commit -m "Fund NAVs: refresh from AMFI's published file
+
+          Automated daily run of \`npm run build-fund-navs\`. Every scheme is
+          joined on its ISIN and carries AMFI's own publication date;
+          docs/FUND-NAVS.md records what resolved, what resolved but may not
+          value a holding, and what did not resolve at all."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done
+
+      # A refresh that leaves the app unable to build is worse than a stale NAV,
+      # because the store is what the pages render. Same gate the Polycab and
+      # series jobs run, for the same reason.
+      - name: Verify the app still builds against the new NAVs
+        run: npm run build

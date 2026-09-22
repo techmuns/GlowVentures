@@ -14,6 +14,7 @@ import {
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
+import { fundNavFor } from "@/lib/fundNavs";
 import type { Position } from "@/lib/types";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -86,7 +87,18 @@ function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
  * in below, which is what `<Tr>` permutes from. The first is the row's SUBJECT
  * and never moves (see `src/lib/tableView.ts`).
  */
-const POS_COLS = ["entity", "managedBy", "qty", "avgCost", "invested", "current", "pnl", "return", "basis"] as const;
+/**
+ * CMP SITS NEXT TO AVG COST, because that is the comparison a reader opens this
+ * table to make — *"avg cost column has price but current NAV is not there… we
+ * need a column of current NAV"*. The page had carried a holding-level mark in
+ * its header since it was written and none per statement, so a holding reported
+ * by several accounts showed one price above a table of several, and the ten
+ * securities whose statements mark them DIFFERENTLY had no surface that could
+ * say so at all. `Current` two columns along is the market VALUE, which is part
+ * of why the gap was easy to miss: a reader scanning for the mark finds a
+ * column called Current and it is money.
+ */
+const POS_COLS = ["entity", "managedBy", "qty", "avgCost", "cmp", "invested", "current", "pnl", "return", "basis"] as const;
 const STOCK_TXN_COLS = ["date", "type", "entity", "qty", "rate", "amount"] as const;
 
 export function StockInfo() {
@@ -276,16 +288,9 @@ export function StockInfo() {
   const sector = rows[0]?.sector;
   const providerSector = rows[0]?.providerSector;
   const isin = rows[0]?.isin;
-  /**
-   * NULL, NOT ZERO. This read `?? 0` and printed a 2xl "₹0" as the CMP headline
-   * of every holding its statement marks at a TOTAL VALUE rather than a per-unit
-   * price — 360 ONE's AIF units among them, whose page therefore led with a zero
-   * price above a ₹1.47 Cr holding value. `price()` renders null as an em dash,
-   * so the default was the whole of the bug: a figure produced by a default is
-   * the exact failure this book exists to prevent, and the caption underneath
-   * already says which mark the number came from.
-   */
-  const cmp = rows[0]?.currentPrice ?? null;
+  /* The holding-level mark is resolved below, once `price` exists — whether
+     one can be shown at all is a question about what the RENDERER can
+     distinguish, so it cannot be answered before the renderer is defined. */
   const qty = sum(drows.map((r) => r.quantity));
   const cost = sumOrNull(drows.map((r) => r.costBasis));
   const mv = sum(drows.map((r) => r.marketValue));
@@ -301,6 +306,12 @@ export function StockInfo() {
     managedBy: (r) => providerOf(accIdx, r),
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
+    // The statement's own mark, never `marketValue / quantity`: measured over
+    // this book the two differ on ICICI NFT NT 50 DP G, whose statement prints
+    // a rate of 60.4 against a value column implying 60.4167. The price is a
+    // PRIMITIVE here (§4b) and deriving it would publish a figure the document
+    // does not. An absent mark sorts LAST either way rather than as a zero.
+    cmp: (r) => r.currentPrice,
     invested: (r) => r.costBasis,
     current: (r) => r.marketValue,
     pnl: (r) => r.unrealizedPnL,
@@ -375,6 +386,57 @@ export function StockInfo() {
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+
+  /**
+   * THE MARK, AND WHY IT IS NOT `rows[0]`.
+   *
+   * NULL, NOT ZERO, first: this read `?? 0` and printed a 2xl "₹0" as the CMP
+   * headline of every holding its statement marks at a TOTAL VALUE rather than
+   * a per-unit price — 360 ONE's AIF units among them, whose page therefore led
+   * with a zero price above a ₹1.47 Cr holding value. A figure produced by a
+   * default is the exact failure this book exists to prevent.
+   *
+   * IT THEN READ `rows[0]?.currentPrice`, WHICH IS A DIFFERENT FABRICATION AND A
+   * QUIETER ONE. A holding reported by several statements has several marks, and
+   * they are not always the same figure — measured over this book, 10 of its 213
+   * securities carry marks that render DIFFERENTLY, and the spread is not small:
+   *
+   *     Gland Pharma      ₹2,667.30 (Carnelian, 10 Aug)  ₹2,502.90 (SVAN, 31 Jul)
+   *     DSP Gold ETF      ₹151.10 on ₹3.1 Cr            ₹141.24 on ₹16.9 Cr
+   *     HELIOS FCF D-GROW ₹14.18                        ₹15.74
+   *
+   * Printing the first ARRAY ELEMENT as the holding's price is a real number
+   * belonging to one statement, standing over a page whose every other figure
+   * covers all of them — and `rows` is unsorted, so on DSP Gold it printed the
+   * mark of the row holding 15% of the position. The first pair is ordinary and
+   * is §3 working as designed: two statements drawn ten days apart. The other
+   * two are NOT — same provider, same ISIN, same 31 July as-of, two rates —
+   * which is the extractor join `docs/BOOK-REPORT.md` already names, refined by
+   * this measurement: the dates agree, so the date does not explain them.
+   *
+   * So the page does not choose. Where every statement's mark renders as ONE
+   * figure it is shown; where they do not, the holding-level cell states that
+   * and sends the reader to the per-account table, which prints each mark
+   * beside the statement it came from. **The test is what the RENDERER can
+   * distinguish**, not an invented tolerance: two marks the page would print
+   * identically are one figure as far as a reader is concerned, and two it
+   * prints differently are genuinely two.
+   */
+  /**
+   * THE PUBLISHED NAV BEHIND THIS HOLDING, where one priced it. Read for the
+   * CAPTION only — the figure itself already flows through `currentPrice`,
+   * which `applyFundNavs` overlaid at the context. Reading it again to compute
+   * a value would be a second source for one number.
+   */
+  const navMark = rows.some((r) => r.navPriced) ? fundNavFor({ securityKey }) : null;
+  const cmpMarks = [...new Set(rows.map((r) => r.currentPrice)
+    .filter((v): v is number => typeof v === "number" && Number.isFinite(v))
+    .map(price))];
+  const cmpSplit = cmpMarks.length > 1;
+  const cmp = cmpMarks.length === 1 ? cmpMarks[0] : null;
+  /** The distinct statement dates behind a split mark, for the reason line. */
+  const cmpDates = [...new Set(rows.filter((r) => r.currentPrice != null)
+    .map((r) => accIdx.get(r.accountId)?.asOf).filter(Boolean) as string[])].sort();
   const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
   const firstBought = buys.length ? buys[buys.length - 1].date : null;
   const lastAdded = buys.length ? buys[0].date : null;
@@ -445,7 +507,12 @@ export function StockInfo() {
         </div>
         {!exited && (
           <div className="text-right">
-            <div className="mono text-2xl font-semibold text-slate-100">{price(cmp)}</div>
+            {/* ONE FIGURE OR NONE — never one statement's mark standing for
+                the rest. See `cmpMarks` for what the split is and why the
+                cell refuses it rather than picking. */}
+            <div className="mono text-2xl font-semibold text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
+              {cmp ?? <AbsentValue />}
+            </div>
             {/* WHY THIS IS THREE STATES AND NOT TWO.
                 It read `live ? "live" : "no live quote for this security"`, so
                 every not-live case asserted the same thing — including the one
@@ -460,12 +527,30 @@ export function StockInfo() {
                 already separates them: a name with no NSE symbol can NEVER go
                 live and no token would change it, while a symbol whose quote did
                 not arrive is a feed shortfall that may resolve on a refresh. */}
-            <div className="mt-0.5 text-[10.5px] text-slate-500">
-              {live
-                ? `CMP \u00b7 live${sym ? ` \u00b7 ${sym}` : ""}`
+            <div className="mt-0.5 text-[10.5px] text-slate-500" data-stock-mark-note>
+              {/* A SPLIT MARK IS ITS OWN STATE, AND IT COMES FIRST. The three
+                  live/not-live states below all presuppose there IS one mark to
+                  describe; over a holding whose statements disagree, every one
+                  of them would caption a figure the cell is not showing. */}
+              {cmpSplit
+                ? `CMP · the statements reporting this holding do not agree on a mark — ${cmpMarks.join(" and ")}, ${
+                    cmpDates.length > 1 ? `drawn ${cmpDates[0]} to ${cmpDates[cmpDates.length - 1]}` : `all drawn ${cmpDates[0] ?? portfolio.asOf}`
+                  }. Each is beside its own statement in Position by account below.`
+                : cmp === null
+                ? "no per-unit mark — this holding is reported at a total value, not a price per unit"
+                : navMark
+                ? `NAV · AMFI's published figure for ${navMark.scheme}, ${navMark.date}${
+                    navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on the day`
+                  } — a fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote`
+                : live
+                ? `CMP · live${sym ? ` · ${sym}` : ""}`
                 : (() => {
-                    const mark = `CMP \u00b7 statement mark${rows[0] ? `, ${accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf}` : ""}`;
-                    if (quotesStatus === "loading") return `${mark} — fetching the live price\u2026`;
+                    // THE STATEMENT THAT SUPPLIED THE FIGURE, not the first array
+                    // element: `rows[0]` may be a row carrying no mark at all, in
+                    // which case this dated the shown price to the wrong document.
+                    const marked = rows.find((r) => r.currentPrice != null);
+                    const mark = `CMP · statement mark${marked ? `, ${accIdx.get(marked.accountId)?.asOf ?? portfolio.asOf}` : ""}`;
+                    if (quotesStatus === "loading") return `${mark} — fetching the live price…`;
                     if (!sym) return `${mark} — no NSE symbol resolves for this name, so it cannot be priced live`;
                     if (quotesStatus === "unavailable") return `${mark} — the price feed did not respond`;
                     return `${mark} — the price feed returned no quote for ${sym}`;
@@ -583,6 +668,8 @@ export function StockInfo() {
                     <SortHeader col="managedBy" view={posView} align="left">Managed by · held via</SortHeader>
                     <SortHeader col="qty" view={posView}>Qty</SortHeader>
                     <SortHeader col="avgCost" view={posView}>Avg cost</SortHeader>
+                    <SortHeader col="cmp" view={posView}
+                      title="The per-unit mark this account's own statement prints, on its own report date — not a live quote and not market value divided by quantity. Where two statements report one holding they need not agree: a later statement carries a later price, and two rows of one scheme on one date that disagree are a discrepancy this book reports rather than averages.">CMP</SortHeader>
                     <SortHeader col="invested" view={posView}>Invested</SortHeader>
                     <SortHeader col="current" view={posView}>Current</SortHeader>
                     <SortHeader col="pnl" view={posView}>Unreal. P&L</SortHeader>
@@ -637,6 +724,22 @@ export function StockInfo() {
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : price(r.avgCost)}</td>
+                      {/* THE MARK, PER STATEMENT, WITH THE DATE IT WAS STRUCK.
+                          The date is the cell's own hover rather than a second
+                          column: it is what makes two rows of one name carrying
+                          two prices readable rather than alarming, and on the
+                          203 holdings whose statements agree it is one more
+                          column of noise. Guarded before `price()`, which
+                          returns a BARE dash — an absence names its cause. */}
+                      <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
+                        {r.currentPrice === null
+                          ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
+                          : <span title={r.navPriced
+                              ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
+                              : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
+                              {price(r.currentPrice)}
+                            </span>}
+                      </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
@@ -669,6 +772,25 @@ export function StockInfo() {
                     cells={{
                       qty: <td key="qty" className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>,
                       avgCost: <td key="avgCost" className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>,
+                      /* A BLENDED AVG COST IS ARITHMETIC; A BLENDED MARK IS AN
+                         INVENTION. The cell above is cost ÷ quantity, and both
+                         of those ADD across statements. Prices do not: a
+                         quantity-weighted mean of ₹2,667.30 and ₹2,502.90 is a
+                         price no document struck, and it would sit in the Total
+                         row of a column whose every other cell is a figure some
+                         statement printed. So the footer shows the mark where
+                         every statement agrees on one and refuses where they do
+                         not — the same resolution the headline uses, from the
+                         same `cmp`, so the two cannot disagree. */
+                      cmp: (
+                        <td key="cmp" className="px-4 py-2.5 text-right mono text-slate-300">
+                          {cmpSplit
+                            ? <AbsentCell reason={`the statements reporting this holding do not agree on a mark — ${cmpMarks.join(" and ")}. No one price covers the rows, and a weighted mean of them is a figure no statement printed`} />
+                            : cmp === null
+                            ? <AbsentCell reason="no statement reports a per-unit price for this holding — it is marked at a total value" />
+                            : cmp}
+                        </td>
+                      ),
                       invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>,
                       current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
                       pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
