@@ -1220,3 +1220,11 @@ export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf
   }
   return { total: rows.length, shown, absent, cagr, absolute };
 }
+
+/**
+ * The shape `returnCoverage` returns, named so a caller can take it as an
+ * argument rather than re-deriving it. The Monitor's column header does exactly
+ * that: the count it prints and the sentence behind it are struck from ONE
+ * coverage object, so they cannot describe different sets.
+ */
+export type ReturnCoverage = ReturnType<typeof returnCoverage>;
