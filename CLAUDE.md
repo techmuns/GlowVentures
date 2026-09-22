@@ -12498,17 +12498,67 @@ exists for the contrast check. So a bug firing on `light/1500` alone is the full
 signal, not half of one — worth writing down, because a harness that dumped both
 rows reads as though only one of two caught it.
 
+#### Merged with main, and the page's conflict was the one worth getting right
+
+This branch was held open at the family's request (*"do not merge until i tell
+you to"*) and **four commits landed on main while it waited**, among them Stage
+10bh and Stage 10bi. The merge hit both of the things this file already tells a
+future session to expect — **for the seventh time each**:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bh`. Main's
+  keeps it and 10bi with it; this section is **10bj**. It is referenced nowhere
+  else in the file, so only its own heading moved — checked rather than assumed,
+  because the eight other `10bh` references all belong to main's section and
+  must NOT move.
+- **AND THE `ctx` LITERAL CONFLICTED ON ONE LINE.** Resolved as a **MECHANICAL
+  UNION** — main's nine new keys (`pageNav`, `tileStrip`, `tileMenu`, `tilePick`,
+  `tableView`, `arrange`, `returnHead`, `tableWidth`, `txnRecord`) beside this
+  branch's `familyLayout`, **73 keys with no duplicates**. Taking either side
+  whole is a clean-looking sweep that has stopped checking, and this file's own
+  measurement is that half of those losses are abstentions rather than failures.
+
+**AND THE PAGE ITSELF IS THE UNION OF INTENT, NOT A SIDE.** Stage 10bh converted
+every table to a declared-column model (`useTableView` + `SortHeader`/`Tr`) and
+gave this one a **sortable Custody column** — the very column this branch
+removes. So main's model stays and the removal lands on top of it. **Reverting
+to plain `<tr>`/`<th>` would have resolved the conflict and failed Stage 10bh's
+own GLOBAL invariant**, which asserts on EVERY route that every table sorts and
+every column but the first moves.
+
+**AND THE COLUMN HAD TO LEAVE THREE PLACES, NOT ONE.** Under that model a column
+removed from the MARKUP alone leaves a declared id with no cell — which puts
+every later cell under the wrong header the moment a reader reorders — and an
+accessor for an id nothing declares is the dead-accessor defect Stage 10bi's own
+record names finding. `ENTITY_COLS` is 8, the header draws 8 and each row writes
+8, asserted together.
+
+**ONE PREMISE OF A CHECK MOVED WITH THAT MODEL AND IS WRITTEN DOWN RATHER THAN
+TESTED FOR.** The ranked-by-value invariant reads NAV at `cells[1]`, which is the
+DECLARED order; `Tr` permutes cells into the READER's. The sweep opens a fresh
+context so the default holds, and `useTableView` keys its store per table, so no
+other route can arrange this one. A reader who reorders this table by hand makes
+that check's own premise false rather than the page wrong.
+
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
-blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
-**168 combinations clean**, with the same two evidenced abstentions Stage 10bg
-records. **The sweep count does not move because this change adds no route** —
-every claim is struck on `/family`, which the sweep already walked, so the number
-moving would have meant a route appeared somewhere nobody looked.
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**180 combinations clean**, with **three** EVIDENCED abstentions — the two Stage
+10bg records, plus Stage 10bh's crumb claim on the not-found route, whose figure
+is correctly not on screen there. **NONE of them is one of this change's
+fourteen**: the `family` and `family-entity` routes report zero failures AND
+zero abstentions on both themes, which is the half that would otherwise read as
+a clean run.
+
+**THE SWEEP COUNT IS MEASURED ON THE MERGED TREE, AND IT RECONCILES ONLY BECAUSE
+IT WAS RE-RUN.** This branch's own pre-merge run was 168 and Stage 10bi's was
+180; this change adds no route, so the merged tree is **180** — every claim here
+is struck on `/family`, which the sweep already walked, and the number moving
+would have meant a route appeared somewhere nobody looked.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
-BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and three
-presentation removals that moved a generated figure would not be three
-presentation removals.
+BYTE-IDENTICALLY, run as a control on the merged tree: **neither side touched a
+generated file, so the merge had nothing to splice** — and the control was run
+anyway, because the first is what made this merge safe and only the second would
+have caught it had it not been.
 
 ### Stage 10k — News & Announcements: REMOVED
 
