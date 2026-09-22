@@ -12349,8 +12349,290 @@ BYTE-IDENTICALLY, run as a control before and after the merge: nothing here
 touches the ingest, and a presentation change that moved a generated figure would
 not be one.
 
+### Stage 10bj — MORNING CIO IS THREE PANELS, AND THE PAGE STOPS SCROLLING
 
-### Stage 10bj — THREE REMOVALS ON FAMILY & ENTITIES, AND THE TWO CLAIMS THAT HAD NOWHERE ELSE TO GO
+*"open PR and do not merge until i tell you to."* · *"Divide the Morning CIO
+into three separate sections and tabs… add three small selectable tabs on the
+top of Morning CIO page on the right most side of the line 'Daily Briefing /
+Good morning — here's where the book stands'. The KPI tiles at the top of the
+page will remain the same for all the three tabs. The first tab will show the
+Daily Movers section, the second tab will show the 'Allocation by asset class &
+mandate', 'Capital deployment' and 'Concentration & risk' in the same layout…
+Third tab will show the 'Portfolio NAV vs Nifty 500' section. Give appropriate
+names to all the three tabs according to the information they'll be showing to
+the user. Also after making the tabs the single scroll page should be gone, it
+should be a non scrollable page with tabs switch option to see more data rather
+than scrolling the page."*
+
+**NOT ONE FIGURE ON THIS PAGE MOVES**, and that is what makes it a layout split
+rather than a re-measurement: `npm run build-book` regenerates `glowData.ts`
+and `docs/BOOK-REPORT.md` byte-identically, every card is the component it was,
+and the three panels were never summed across anyway. What changed is which of
+them is on screen, and that the headline and the tiles stop moving.
+
+| Panel | `?tab=` | What it draws |
+| --- | --- | --- |
+| **Daily Movers** | *(param-free)* | Today's movers, both branches of its own toggle |
+| **Allocation & Risk** | `allocation` | Allocation by asset class & mandate · Capital deployment · Concentration & risk, in the layout they already had |
+| **NAV vs Nifty 500** | `nav` | Portfolio NAV vs Nifty 500 |
+
+**THE TABS SWITCH WHICH QUESTION THE PAGE ANSWERS, which is why this is not the
+`DailyMovers` toggle's shape.** That control keeps two whole CARDS apart
+because it switches between two MEASUREMENTS taken on different days, and
+merging them would make summing them a one-line edit. These three are three
+different measurements over three different windows and nothing here was ever
+added across them, so the split costs no arithmetic at all — the panels are
+conditional renders of the same JSX, at the same nesting, with the same props.
+
+**THE KPI STRIP IS OUTSIDE THE PANEL, DELIBERATELY.** The family asked for it
+on every tab, and it is also the only part of this page that is true of all
+three: a day's move, an allocation and a NAV series are each struck over a
+subset the PANELS state and the strip does not. It is also most of what makes
+the page fit — the strip is what a reader used to scroll past to reach
+anything.
+
+**IN `?tab=` LIKE EVERY OTHER VIEW IN THIS APP**, so a panel is a link rather
+than an instruction, `check:pages` reaches each one by URL rather than by
+clicking a control it is also trying to check, and Back steps between them.
+
+**AND THE THIRD LABEL IS THE ONE THIS PAGE'S OWN CHECKS FORBADE.** A tab's text
+is in `innerText` on every one of this page's routes, so a label repeating a
+card heading would satisfy a check on a panel that heading is not drawn on. One
+is banned outright: the roadmap-absence invariant asserts the words **"NAV vs
+benchmark"** never return, because they once named a promised feature. So the
+third tab is named for the index it actually charts. `check:pages` reads
+`data-cio-tab-key`, never the three labels.
+
+#### The page does not scroll, and that is a geometric claim
+
+Measured in the browser at 1500×1000 on all four Morning CIO routes:
+`document.scrollHeight − clientHeight = 0` and `main.scrollHeight −
+clientHeight = 0`. The shell is `flex h-full flex-col` with the panel at
+`min-h-0 flex-1` — **`h-full`, never a `vh` unit**, because a viewport unit is
+not rescaled by `--app-zoom` and would paint the shell short, which is the
+defect Stage 10n records.
+
+**THE PANEL IS ALLOWED TO SCROLL AND IS NOT ASSERTED NOT TO.** A window short
+enough to clip the NAV chart must still be able to reach it; a page that fits
+by hiding a figure is worse than the scroll the family asked to be rid of. What
+was asked for is that the headline and the tiles stop moving, and the two
+claims above are exactly that. On this book at that viewport the panel's own
+scroll is 0 on all three.
+
+**THE CLAIM IS GEOMETRY, SO IT IS CHECKED ON GEOMETRY** — the rule this sweep
+already applies to the headline's inline layout, to Export Excel's row, to the
+KPI overlay anchor and to the filter box's own placeholder. Every figure,
+caption and link on this page renders identically whether a reader reaches it
+by scrolling or by switching tabs, so the split is invisible to every text and
+value check in the file: without a geometric one the family's actual ask would
+be checked by nothing.
+
+**AND A SECOND CLAIM, BECAUSE THE FIRST IS SATISFIED BY A PAGE THAT RENDERS
+NOTHING**: the strip's bottom edge is inside the viewport and the panel begins
+below it. Without that, a panel drawn ABOVE the tiles — or a strip that
+scrolled off the top — passes both scroll checks.
+
+**AND THE CONTROL'S OWN PLACE IS GEOMETRY TOO.** *"on the right most side of
+the line"* is `PageHeader`'s `right` slot, not its `beside` one — and the
+difference cannot be read off the page's text at all. It needs two claims,
+because only the second tells them apart: a control in `beside` ALSO overlaps
+the title's line and ALSO sits to its right, it just sits next to the title
+rather than opposite it. So the check additionally requires the tabs' right
+edge to be the header row's own, which only `right` produces. Reintroducing
+`beside` fires it on all four routes.
+
+#### One invariant block became four, and not one claim was dropped
+
+This is the half of the change with the work in it. The `cio` block held **59
+invariants** — and **36 of them** read the allocation table, the Concentration
+card or the NAV chart (18 each). Left where they were, every one would have
+reported NOT CHECKED against content that is correctly not on the movers panel
+— **an abstention, which is counted apart from a failure and reads as a clean
+run.** That is the same move the eleven published-NAV invariants made when the
+movers card grew its toggle, and it is this file's own rule: a check follows
+its subject or it stops checking.
+
+| | walks | carries |
+| --- | --- | --- |
+| `cio` | `/cio` | `CIO_SHARED` + `CIO_TAB_CONTROL` + `CIO_MOVERS` |
+| `cio-allocation` | `/cio?tab=allocation` | `CIO_SHARED` + `CIO_TAB_CONTROL` + `CIO_ALLOC` |
+| `cio-nav` | `/cio?tab=nav` | `CIO_SHARED` + `CIO_TAB_CONTROL` + `CIO_NAV` |
+| `cio-nav-live` | `/cio?tab=nav` + `installLiveMocks` | …and `CIO_LIVE_NAV`, the five that read the Nifty 500 line |
+
+**`CIO_SHARED` IS SPREAD INTO ALL THREE**, because the KPI strip, the page
+header and this page's absences are on every panel — and a build that dropped
+the strip from ONE tab would otherwise be caught on none.
+
+**THE MOVE IS VERIFIED BY PROVING NOTHING WAS REWRITTEN ON THE WAY.** Every
+non-blank line of the old `cio` block and of the `cio-live` NAV group is
+checked to still exist in the file verbatim; exactly four do not, and each is a
+deliberate change named below. That check is what caught a `$$eval` silently
+becoming `$eval` — `String.replace` reads `$$` in a REPLACEMENT as a literal
+`$`, so a mechanical move had quietly broken the `<details>` opener.
+
+**AND THE SAME RULE BIT A SECOND TIME, INSERTING THIS VERY ENTRY.** The script
+that splices it into this file used a string replacement, and the paragraph
+above contains a `$` immediately followed by a backtick — which
+`String.replace` reads as "everything BEFORE the match" and which duplicated
+CLAUDE.md, 12,856 lines to 24,912. It uses a replacer FUNCTION now, and it
+refuses to write when the file grows by more than the entry's own length: a
+splice that cannot state how much it added is a splice nobody would check.
+
+**ONE INVARIANT WAS SPLIT IN TWO, AND THAT MAKES IT STRONGER.** *"every KPI
+tile and concentration figure opens ITS OWN set"* read the KPI strip AND the
+Concentration card. The strip is on every panel and the card is on one, so a
+single check spanning both would either fail on two routes or be softened until
+it asserted neither. Split, each half fails where its own subject is drawn and
+names its own part — which is what this file already does everywhere else a
+check carries two claims.
+
+**AND THE ALLOCATION PANEL IS THE PUBLISHER NOW.** `CIO_FIGURES` is read off
+the Concentration card and `CIO_DRILLDOWNS` off the allocation rows, and every
+`holdings-*` route resolves its address from them. `PUBLISHERS` names
+`cio-allocation` rather than `cio`, and the two collection gates in the walk
+moved with the cards — so `ONLY=holdings-book` still pulls in the page that
+resolves its address rather than walking a not-found page and reporting clean.
+
+#### A boundary the page no longer prints is not a boundary
+
+Four movers checks bounded their text slice on **"Allocation by asset class"**
+— the heading of the card that came next down the old single-scroll page. That
+card is on another panel now, and `sliceBetween` returns EVERYTHING after its
+start marker when the end marker is absent, so all four would have gone on
+running against the rest of the document.
+
+**IT IS THE FAILURE THIS FILE ALREADY RECORDS TWICE** (Stage 10al's `navHead`,
+bounded first on removed prose and then on the word "PERIOD", which the page
+was free to print). So the slice is struck on the panel NODE —
+`cioLayout.text`, the `[data-cio-panel]` element's own innerText — which cannot
+run past the panel whatever the page prints inside it.
+
+**AND THAT ONE IS A HARDENING RATHER THAN A BUG FIX, WHICH IS SAID PLAINLY.**
+Restoring the old end marker changes no verdict on this book: the movers card
+is the whole of its panel, so slice-to-end and slice-to-panel are the same
+text. It becomes load-bearing the first time a second card lands on that panel,
+which is exactly when nobody would be looking.
+
+#### The bug-reintroduction pass, and the one that came back CLEAN
+
+Restored by COPY on a `trap … EXIT` and **rebuilt on the way out** — restoring
+the source alone leaves `dist/` at the bugged build for the next run to report
+under the wrong name, which this file has measured once. A patch that does not
+apply, or a build that fails, is reported as NOT A RESULT. A no-patch CONTROL
+ran first and came back clean.
+
+**AND ONE OF THEM PRODUCED A CLEAN SWEEP, WHICH IS THE POINT OF DOING IT.**
+Drawing the NAV panel on the movers tab as well — two panels at once, the exact
+state this split exists to end — failed NOTHING. *"Exactly one tab is active"*
+is a claim about the CONTROL: one tab was still lit, `data-cio-panel` still
+named one panel, and the scroll checks passed because **the panel is allowed to
+scroll**. Every claim in the block was about the control and none about what
+was drawn. The panels carry `data-cio-section` now and are COUNTED, against
+both `data-cio-panel` and the lit tab — and re-run against the same bug it
+fires.
+
+**AND ONE PATCH REPORTED ITSELF AS NOT A RESULT**, which is the harness working
+rather than a defect: its anchor was `        right={` — eight spaces and the
+prop — and a SUBSTRING count is not a line match, so the allocation card's own
+`right={` at fourteen spaces contains it. Two matches, no patch, and the run
+said so instead of sweeping an unchanged tree and reporting the check clean.
+
+**AND THE FIRST FULL SWEEP RACED A REBUILD**, which is the hazard this file
+already records: it died on `ERR_HTTP_RESPONSE_CODE_FAILURE` because `dist/`
+was being written underneath the `vite preview` serving it. Nothing it produced
+was a result, and it was re-run with nothing else touching the output
+directory.
+
+| Bug put back | Fires |
+| --- | --- |
+| the tabs deleted and the page one scroll again | the catalogue, the active-panel and the two scroll checks — **12 findings across all four routes** |
+| the default panel moved to Allocation & Risk | the active-panel check on all four, and all four `CIO_MOVERS` checks on `cio` |
+| **the NAV panel drawn on the movers tab too** | **NOTHING, on the first pass — see above.** The panel count fires it now |
+| a panel dropped from the catalogue | the catalogue check on all four, the active-panel check on the two NAV routes, and three `CIO_NAV` text checks — with 16 NAV invariants correctly ABSTAINING beside them, which is the point: an abstention never stands alone here |
+| the KPI strip moved below the panel | the strip-above-the-panel check, on all four |
+| the tab control moved from `right` to `beside` | the headline-geometry check, on all four |
+| the address collectors left on the movers panel | the `holdings-*` routes that read `CIO_FIGURES` and `CIO_DRILLDOWNS` |
+| the five live NAV checks left on `cio-live` | they ABSTAIN rather than fail — which is exactly why they moved, and what a sweep reporting CLEAN over sixteen NOT CHECKED lines looks like |
+
+**AND THE LAST ONE IS THE DEMONSTRATION RATHER THAN A FAILURE**, which is why
+it is in the table as it is: putting the five live NAV checks back on
+`cio-live` reports **2 of 2 combinations CLEAN** over five NOT CHECKED lines.
+That is what "an abstention reads as a clean run" looks like on a terminal, and
+it is the whole reason 36 invariants moved rather than being left where they
+were.
+
+#### Merged with Stages 10bh and 10bi, and BOTH predicted conflicts arrived — for the sixth time
+
+This branch sat open under the family's own hold (*"open PR and do not merge
+until i tell you to"*), and **two PRs landed on main while it waited**. The
+merge hit exactly the two things this file already tells a future session to
+expect, and a third that is this page's own:
+
+- **THE LETTER COLLIDED AGAIN, TWICE OVER.** Main took `10bh` AND `10bi` while
+  this branch held `10bh`. Main's merged first and **keeps both**, as at 10al,
+  10as, 10at, 10aw and 10bb; this section is **`10bj`**, and the one
+  cross-reference elsewhere in this file that names it — the Build section's
+  publisher note — moved with it. The four references inside main's 10bi that
+  read `10bh` belong to MAIN's stage and were deliberately left alone, checked
+  one at a time rather than swept.
+- **AND THE `ctx` LITERAL CONFLICTED RATHER THAN AUTO-MERGING**, which is the
+  safer of its two failure modes and the rarer one. **Resolved as a mechanical
+  UNION** — this branch's `cioTabs` and `cioLayout` spliced into main's line,
+  which had gained `pageNav`, `tileStrip`, `tileMenu`, `tilePick`, `tableView`,
+  `arrange`, `returnHead`, `tableWidth` and `txnRecord`. Taking either side
+  whole is a sweep that has silently stopped checking: this file's own
+  measurement is that dropping one probe turned nine invariants into NOT
+  CHECKED while every combination still reported CLEAN. All **76** keys were
+  then confirmed to name a declared variable exactly once, because a key naming
+  a variable that no longer exists throws inside the check and is reported as a
+  broken matcher rather than as a clean page.
+- **AND THE ALLOCATION TABLE ITSELF CONFLICTED, which no earlier merge here
+  has.** Stage 10bh rewrote that table's internals for sortable, reorderable
+  columns in the same 375 lines this branch wrapped in `{tab === "allocation"
+  && (…)}`. Resolved by taking **main's file whole** and re-applying this
+  branch's structural change on top — the catalogue, the hook, the flex shell,
+  the tab control, `shrink-0` and the three panel wrappers — rather than by
+  hand-merging a table nobody asked this branch to touch. Verified by diffing
+  the result against main's own version with whitespace ignored: what remains
+  is exactly the six structural edits above and not one line of table.
+
+**AND A THIRD ONE-LINE CHANGE HAD TO RIDE ON MAIN'S NEW BLOCK.** The
+`CIO_DRILLDOWNS` collector gate is `cio-allocation` on this branch, because the
+allocation rows that publish every holdings address moved behind `?tab=`. Main
+added its `CRUMB_PUBLISHERS` block immediately above that same line. Both are
+kept and the gate change rides on main's last line — dropping either would have
+left the drill-down routes resolving nothing, which is a NOT CHECKED and not a
+failure.
+
+**THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, the discipline
+Stage 10at records: neither side touched `src/data/glowData.ts` or `docs/`, so
+the merge had nothing to splice, and `npm run build-book` was run as a control
+afterwards anyway and regenerated both **byte-identically** (md5
+`f7cc7f1491ebea516f8a0e68b5f0c09d` / `d5388195be5bc4f4a3ce9eb5bd11af2e`,
+unchanged before and after).
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**186 combinations clean**, with the **three** evidenced abstentions main's own
+merged sweep records — every KPI tile on this book carries a figure, so the
+absent-tile claim has no subject; nothing on Morning CIO publishes an undefined
+drill-down address; and no row on `stock-qty` carries a pledge, which
+`stock-pledge` asserts as a hard failure so it never stands alone. The first of
+those reports on FOUR Morning CIO routes rather than one, because `CIO_SHARED`
+is spread into all of them — four lines, one evidenced abstention.
+
+**MEASURED ON THE MERGED TREE**: main's own pre-merge run was 180 and this
+branch's was 174, and neither is a fact about this base. 180 plus this change's
+three routes across both themes is 186, and it reconciles ONLY because the
+sweep was re-run rather than the number adjusted — which is the point every
+stage in this file makes about its own count.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and a layout split that moved a generated figure would not be a layout
+split.
+
+### Stage 10bk — THREE REMOVALS ON FAMILY & ENTITIES, AND THE TWO CLAIMS THAT HAD NOWHERE ELSE TO GO
 
 *"open PR and do not merge until i tell you to"* · *"remove the 4 KPI tiles at
 the top of Families and Entities Page"* · *"remove the bar graph from the page
@@ -12506,7 +12788,7 @@ you to"*) and **four commits landed on main while it waited**, among them Stage
 future session to expect — **for the seventh time each**:
 
 - **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bh`. Main's
-  keeps it and 10bi with it; this section is **10bj**. It is referenced nowhere
+  keeps it and 10bi with it; this section is **10bk**. It is referenced nowhere
   else in the file, so only its own heading moved — checked rather than assumed,
   because the eight other `10bh` references all belong to main's section and
   must NOT move.
@@ -12516,6 +12798,25 @@ future session to expect — **for the seventh time each**:
   branch's `familyLayout`, **73 keys with no duplicates**. Taking either side
   whole is a clean-looking sweep that has stopped checking, and this file's own
   measurement is that half of those losses are abstentions rather than failures.
+
+**AND IT HAPPENED AGAIN AN HOUR LATER, WHICH IS WHY THIS IS TWO MERGES AND NOT
+ONE.** Stage 10bj (#60) landed while this branch's sweep was still running — the
+same thing Stage 10bi records happening to the Polycab branch — and brought the
+IDENTICAL pair for the **eighth** time. The `ctx` literal conflicted on the
+SECOND of its two lines this time (`familyLayout` against `cioTabs` and
+`cioLayout`), unioned the same way to **75 keys with no duplicates**.
+
+**AND THE LETTER DID NOT CONFLICT AT ALL, WHICH IS THE DANGEROUS CASE.** Both
+branches had written `### Stage 10bj` in DIFFERENT parts of the file, so git
+merged them cleanly and left **two sections carrying one letter** — no marker,
+no warning, and a `See Stage 10bj` cross-reference that would silently point at
+whichever came first. Main's keeps it; this section is **10bk**. **Each of the
+five `10bj` lines was read before any moved**: two are main's own section and
+its self-reference, one is a `See Stage 10bj` inside Stage 10d that is about the
+Morning CIO panels and therefore main's, and only the remaining two are this
+branch's. Repointing them in bulk would have made a stage about Family &
+Entities cite a page it does not touch — which is exactly what Stage 10bi
+records taking the care to avoid.
 
 **AND THE PAGE ITSELF IS THE UNION OF INTENT, NOT A SIDE.** Stage 10bh converted
 every table to a declared-column model (`useTableView` + `SortHeader`/`Tr`) and
@@ -13574,8 +13875,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   on-screen `₹0` / `0.00%`. Screenshots land in `docs/page-check/`.
   `ONLY=cio,holdings-book` walks a subset — for verifying an invariant by
   reintroducing its bug, which is one edit, one rebuild and one sweep per check.
-  The routes that resolve addresses for others (`cio`, `monitor`) are always
-  kept, so a subset can never silently stop checking.
+  The routes that resolve addresses for others (`cio-allocation`, `monitor`) are
+  always kept, so a subset can never silently stop checking. That first one was
+  `cio` until Morning CIO was split into panels: the Concentration card and the
+  allocation rows that resolve every holdings drill-down's address sit behind
+  `?tab=allocation` now, and `PUBLISHERS` follows the cards. See Stage 10bj.
   **`cio-live` is the same page with the live layer FULFILLED** from fixtures
   built out of the book (`installLiveMocks`): every symbol at its own statement
   mark × 1.10 and every index at ×0.99, so the day's move is exactly +10.00%,
