@@ -13350,7 +13350,7 @@ of the rows it covers rather than reading as a figure over all of them.
 
 `txnRecordChecks` asserted a toggle that no longer exists. It is
 **`txnMergedChecks`**, run by every transactions route — which it says and, as
-the pass below measured, did not do until the pass found it — and it makes six
+the pass below measured, did not do until the pass found it — and it makes SEVEN
 claims where the old one made four — because a removal is verified by asserting it
 happened, and this one can fail in shapes the toggle never could:
 
@@ -13362,6 +13362,8 @@ happened, and this one can fail in shapes the toggle never could:
   asked to be rid of;
 - one table is drawn, and only where there are rows for it;
 - it is titled for the TABLE rather than for one of the records in it;
+- **each money block ties to its OWN rows** — the claim the pass below had to
+  write, because the one it replaced compared a figure with a sum of itself;
 - both halves are on screen, neither silently lost;
 - and **three rows carry both**, derived from the page's own counts
   (`capital + trades − rows`) rather than from a literal. A merge that keyed the
@@ -13504,16 +13506,16 @@ card were asserting nothing whatever about it: the toggle could have come back
 on `monitor-txn-direct`, on either side filter, on the security axis or on
 either drill-down, and the sweep would have reported clean.
 
-**AND THE SIX CLAIMS DO NOT ALL HOLD EVERYWHERE, which is why the repair is a
-SPLIT rather than a wider spread.** Four are true of any view of this card —
-the toggle is gone, the two legacy tables went with it, ONE table is drawn, and
-it is titled for the table rather than for one of the records in it. The other
-two COUNT the table's halves, so they need all of it: `monitor-txn-direct`
+**AND THE CLAIMS DO NOT ALL HOLD EVERYWHERE, which is why the repair is a
+SPLIT rather than a wider spread.** Five are true of any view of this card —
+the toggle is gone, the two legacy tables went with it, ONE table is drawn, it
+is titled for the table rather than for one of the records in it, and each money
+block ties to its own rows. The other two COUNT the table's halves, so they need all of it: `monitor-txn-direct`
 narrows to a section whose rows legitimately carry no capital record, and
 `monitor-txn-in` / `-out` narrow one half of the capital record itself.
 Spreading all six blindly would have FAILED A CORRECT PAGE; leaving it at two
 let the control come back on six addresses unseen. So `txnMergedCore()` is the
-four and goes everywhere, and `txnMergedChecks()` is the six and stays on the
+five and goes everywhere, and `txnMergedChecks()` is the seven and stays on the
 routes that draw the whole table.
 
 **3. A SUMMABLE COLUMN WAS SITTING BLANK, AND THE CHECK COUNTED TO FOUR.** Gain
