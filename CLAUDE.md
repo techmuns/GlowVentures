@@ -259,6 +259,11 @@ cash holding's genuinely-zero return both match, and both are correct.
   absent amount sorts last rather than as zero. "Longest held" was the third
   and was DELETED from the union rather than hidden, at the family's request —
   see Stage 10az for the modes and Stage 10bg for the removal.
+- `src/lib/txnLedger.ts` — THE TWO DATED RECORDS AS ONE ROW SET: the family's
+  own capital and their managers' dealing, merged on the key both rollups
+  already build, so a mandate that publishes both is ONE row. The MONEY stays in
+  two column blocks that are never added — measured, summing them reports
+  ₹291.9 Cr where the family paid in ₹221.5 Cr. See Stage 10bo.
 - `src/lib/txnAxis.ts` — WHICH SECTION A DATED RECORD LANDS IN: the same three
   axes the Holdings table sections on, joined to a trade's own fields (provider
   + account number, `securityKey`, the class its STATEMENT printed). It defines
@@ -11623,14 +11628,16 @@ are not two views of one thing, they are two different measurements, and the
 tabs presented them as alternatives. Both are on screen together now, each in its
 own card, under ONE set of controls.
 
-***THEY ARE ONE CARD WITH A TOGGLE SINCE Stage 10bi***, at the family's request —
-*"it should be exactly one single simple table just like in the holdings."* The
-sentence above still holds and is why: a toggle between two RECORDS is not the
-five-tab strip returning, because the strip mixed two sources with three
-groupings and this names the two sources and nothing else. Every reason below for
-keeping the two APART — the double count, the different columns, the separate
-footers — is why they are still two components behind one control rather than one
-table with a grouping key.
+***THEY WERE ONE CARD WITH A TOGGLE AT Stage 10bi AND ARE ONE TABLE SINCE
+Stage 10bo***, at the family's request both times — *"it should be exactly one
+single simple table just like in the holdings"*, then *"just remove the toggle
+button and show everything within the same table."* The sentence above still
+holds and is why neither is the five-tab strip returning: the strip mixed two
+SOURCES with three GROUPINGS and a raw list, and what is on screen now names the
+two sources as two COLUMN BLOCKS and nothing else. Every reason below for keeping
+the two APART is unchanged and is why the COLUMNS are two blocks rather than one
+— the money must never be added, and Stage 10bo measures what adding it would
+cost.
 
 **AND THE GROUPING IS THE HOLDINGS TABLE'S OWN.** `?group=` is shared: a reader
 who has sliced the holdings by basket crosses to the transactions already sliced
@@ -11656,8 +11663,13 @@ INSIDE one. Measured over the committed archive: **11 accounts publish a dated
 capital record, 10 issue a transaction statement, and
 `green-lantern-capital-llp-510861` publishes BOTH** — so a combined total
 double-counts it by construction. Two cards, two footers, one set of controls
-and one set of sections. *(ONE card since Stage 10bi, still two footers — the
-measurement was re-taken for that change and is unchanged.)*
+and one set of sections. *(ONE card since Stage 10bi and ONE TABLE since
+Stage 10bo, where the two footers became two COLUMN BLOCKS in one footer, each
+summed down its own column. The measurement was re-taken for both changes — and
+at 10bo on the RENDERED PAGE, which found THREE overlapping accounts rather than
+the one this paragraph names: `loadTransactions` applies `AUTHORITATIVE`, which
+names SVAN's investor report for transactions too, and a count taken over
+`transaction-statement` documents alone cannot see them.)*
 
 **AND THE CAPITAL RECORD WAS NOT REMOVED WITH THE TAB IT SAT ON.** It is the only
 surface in this app that carries the family's own dated capital across every
@@ -11745,8 +11757,8 @@ record was bounded (`max-h`, in **rem** and never `vh` — a viewport unit is no
 rescaled by `--app-zoom`, Stage 10n) and the trades table took the rest with
 `min-h-0 flex-1`, which is exactly what the Holdings card beside it does.
 
-***THE HAZARD WENT WITH THE SECOND CARD AT Stage 10bi.*** With one table on
-screen there is one sticky header and the active branch simply takes the card
+***THE HAZARD WENT WITH THE SECOND CARD AT Stage 10bi*** and has not come back
+at 10bo: one table means one sticky header, and it simply takes the card
 (`min-h-0 flex-1`), so the bound came off. The `vh` rule is unchanged and still
 governs every bounded box in this app.
 
@@ -13553,6 +13565,450 @@ assertions, 1 honest NOT CHECKED) · `check:family` 82/0 · `check:pages`
 **192 combinations clean**, with the same six evidenced pre-existing abstentions
 and none of this stage's own. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` BYTE-IDENTICALLY — a fetched price never enters the book.
+### Stage 10bo — ONE TABLE OVER BOTH DATED RECORDS, AND THE TWO COLUMN BLOCKS THAT KEEP IT HONEST
+
+*"Open PR and do not merge until i tell you to."* · *"in the Transactions page
+why are there 'capital in and out/trades' toggle switch provided when… There is
+no need of that. Just show all the transactions of different categories in the
+Category filter page, and then same in the Asset classes, buckets. Show all the
+data in the same table just like as it is in the holding page. Suppose there is
+a transaction in a PMS mandate, then show the name of the PMS mandate and after
+clicking on that row we should be able to see drop down of all the transactions
+within that PMS. Stream should be applicable to all of the categories be it
+direct equity or AIFs. In short, just remove the toggle button and show
+everything within the same table. Based on different categories or asset
+classes. Or. Baskets."*
+
+Stage 10bi put the two dated records behind one control and recorded at length
+why they must not become one table. **The family have now asked for one table,
+and the reasoning that section gives is exactly what makes this safe rather than
+what forbids it: the objection was never to one ROW, it was to one COLUMN.**
+
+#### `src/lib/txnLedger.ts` — the row merges, and the money does not
+
+The two rollups already key the same way, which is why the merge is a join
+rather than a rewrite:
+
+```
+capitalRollup       one group per ACCOUNT
+rollup(…, "auto")   one group per MANDATE (a PMS account) or per SECURITY
+```
+
+A mandate's two halves therefore land on one key by construction, and a security
+row cannot collide with either. Measured on the rendered page: **34 rows, of
+which 11 carry a capital record and 26 a trades group — and THREE carry both.**
+
+**THE COLUMNS ARE WHAT CARRY THE DISTINCTION THE TOGGLE USED TO.** Two blocks,
+adjacent and never summed:
+
+| | |
+| --- | --- |
+| **Capital** | How it went in · Capital in · Capital out · Net invested · Invested on |
+| **Trades** | Trades · Bought · Sold · Realized P&L · Traded between |
+| **The account** | Value today · Gain · Return |
+
+**SUMMING THE TWO BLOCKS REPORTS ₹291.9 Cr WHERE THE FAMILY PAID IN ₹221.5 Cr**
+— ₹221.5 Cr plus the ₹70.4 Cr their managers spent inside those accounts, all
+three of them the page's own printed total. A ₹70.4 Cr overstatement under the
+column a reader scans for, on a figure that looks entirely ordinary beside its
+neighbours. Per row it is Green Lantern 510861 ₹10 Cr + ₹1.75 Cr, SVAN 8710067
+₹14.5 Cr + ₹1.31 Cr and SVAN 8710090 ₹9.5 Cr + ₹85.4 L.
+
+**AND THE FIRST MEASUREMENT OF THAT OVERLAP WAS WRONG TWICE OVER.** It was taken
+by walking the archive's `transaction-statement` documents directly, and it
+found ONE overlapping account carrying ₹3.51 Cr of dealing — which is the figure
+Stage 10bi states, and it is where this change's own first draft started. Both
+halves of it are wrong:
+
+- **`loadTransactions` applies `AUTHORITATIVE`**, which also names SVAN's SEBI
+  INVESTOR REPORT for transactions, so **three** accounts carry both records
+  rather than one;
+- and it **supersedes and dedupes**, so Green Lantern's own dealing is
+  ₹1.75 Cr on the tape the page draws rather than the ₹3.51 Cr a raw sum of
+  every matching document reports.
+
+**THE RENDERED PAGE IS THE ONLY PLACE THAT QUESTION IS SETTLED**, and it was
+settled by reading it rather than by reasoning about which report types the
+archive happens to file a trade under.
+
+**A SECTION DISAGREEMENT DRAWS TWO ROWS RATHER THAN PICKING ONE.** The section is
+part of the key, exactly as it is inside `rollup`. The two halves reach a section
+through different helpers — `forAccount` from the account's own holdings,
+`forTxn` from the trade — and where those disagree the account draws a capital
+row in one section and a trades row in the other. Measured, that is ZERO rows on
+all three axes; "measured today" is not "true by construction", so the honest
+failure is two rows and not a guess, and `txnLedger.test.ts` asserts it on a
+fixture that forces the disagreement.
+
+#### The drill-down, which is the half the family asked for by name
+
+*"after clicking on that row we should be able to see drop down of all the
+transactions within that PMS. Stream should be applicable to all of the
+categories be it direct equity or AIFs."*
+
+A row opens into whichever halves it has, each under its own heading: **what the
+family paid in and took out** (the dated movements, with the statement's own word
+for each) and **what was dealt inside** (one line per security, opening into the
+dated trades). Green Lantern 510861 shows both. `data-row="instrument"` and
+`data-row="tranche"` ride on the second exactly as they did, so every claim about
+a collapsed line still carrying its dated rows is struck on the same handles.
+
+It is a table of its own inside the expanded row rather than indented rows in the
+table above, because the columns it needs are the trades block's and not the
+fifteen the row carries.
+
+#### What the merge cost, and the figure it nearly cost silently
+
+**THE TRADES' OWN NET INVESTED IS GONE.** The trades table had one (bought less
+sold) and there is one Net column now, which is the FAMILY'S. Two nets under one
+heading is a column meaning two things; two net columns is one more for a
+subtraction of two adjacent cells a reader can do by eye. That is the one thing
+dropped, and it is absent with its reason wherever a row carries no capital
+record.
+
+**AND GAIN WAS DROPPED BY ACCIDENT AND CAUGHT BY NAME.** Value today, Gain and
+Return are the three the family asked for together at Stage 10ai; the first cut
+of this kept two. `check:pages` fired on it — its Return check requires the
+publishing CONDITION to be stated on the Gain head as well as the Return one,
+because a reader meeting the first dash has to find it somewhere — so a figure
+lost in a layout change failed rather than passing quietly. That is what that
+clause was written for, arriving two stages later than the bug it was written
+against.
+
+#### Four columns can never carry a total, and each says so
+
+Two are spans of DATES, one is a RETURN struck per row against that row's own net
+invested, and one is a column of NAMES. They render `AbsentCell` WITH A REASON
+rather than sitting blank — the rule the Portfolio Monitor's per-category totals
+row already follows, arriving at a footer one table over. **The first cut left
+all four blank**, found by reading the rendered footer rather than by a check.
+
+**AND `Value today` STATES ITS OWN DENOMINATOR.** It is summed over the ACCOUNT
+rows alone — a security row is an instrument dealt across however many accounts
+carried it and has no account value to contribute — so the total names how many
+of the rows it covers rather than reading as a figure over all of them.
+
+#### The checks moved to the table that draws them, and three addresses went
+
+`txnRecordChecks` asserted a toggle that no longer exists. It is
+**`txnMergedChecks`**, run by every transactions route — which it says and, as
+the pass below measured, did not do until the pass found it — and it makes SEVEN
+claims where the old one made four — because a removal is verified by asserting it
+happened, and this one can fail in shapes the toggle never could:
+
+- the control is gone, in BOTH the shapes it could come back in (its wrapper and
+  its buttons);
+- **and the two tables it used to swap went with it** — the half that catches a
+  build which deleted the control and left both tables stacked, where every
+  figure in either is correct on its own and the page is exactly what the family
+  asked to be rid of;
+- one table is drawn, and only where there are rows for it;
+- it is titled for the TABLE rather than for one of the records in it;
+- **each money block ties to its OWN rows** — the claim the pass below had to
+  write, because the one it replaced compared a figure with a sum of itself;
+- both halves are on screen, neither silently lost;
+- and **three rows carry both**, derived from the page's own counts
+  (`capital + trades − rows`) rather than from a literal. A merge that keyed the
+  halves apart draws 37 rows instead of 34, every figure correct, every total
+  correct, and the account the family opened split across two lines.
+
+**THREE ROUTES WENT, AND EVERY INVARIANT ON THEM CAME HOME.**
+`monitor-txn-trades`, `monitor-txn-direct-capital` and
+`monitor-txn-basket-trades` each existed only to click through to the other
+branch, and each would now walk a page identical to its sibling. Their claims
+moved onto `monitor-txns`, `monitor-txn-direct` and `monitor-txn-basket` — a
+check that stops running because a table moved is a check that silently stopped,
+for the fifth time in this file.
+
+**AND TWO OF THOSE MOVES MADE THE CLAIM STRONGER.** The basket factory's
+`sectionsOf` read a different handle per record and reads the table's own
+HEADINGS now, which a row whose `data-dated-section` disagreed with the heading
+it sits under would pass. And the Direct Equity capital claim had fallen through
+to matching an absent-state sentence the page correctly did not print; with both
+halves in the DOM at one address it comes home, and it gained a second half —
+that the empty Capital columns NAME the document that would fill them.
+
+#### The defect widening one check found, which nothing else could see
+
+**`mergeDatedRecords` RETURNED THE MAP'S INSERTION ORDER** — every capital row,
+then every trades row — so **23 of this book's 34 rows were in no order at
+all**, under a card whose default the family asked for by name (*"by default the
+transactions show from newest to oldest"*). Both rollups sort their own output
+and the merge threw it away.
+
+**THE ORDERING CHECK DID NOT SEE IT, because it read `mineRows`** — the rows
+carrying a capital record, 11 of the 34 now that one table covers both. The
+other 23 could have been in any order and it would have passed, which is the
+family's own complaint (*"something is October, something is December, something
+is 2023. It's all very chaotic"*) surviving inside the check written for it.
+Widened to `data-dated-last`, the row's own span across both halves, it fails —
+and that is how the defect was found, not by reading the code.
+
+**AND "LARGEST FIRST" RANKS ON THE ROW'S BIGGEST SINGLE BLOCK**, never on the two
+added. `Math.max` of what the family paid in and what their managers dealt is
+the largest figure the row actually carries; adding them would be the ₹70.4 Cr
+defect arriving as an ORDER rather than as a figure, **which is worse, because
+no cell on the page would contradict it.**
+
+#### Four helpers lost their last on-screen caller, and only two were dead
+
+With one table over both records, `sectionRollup` (txnRollup), `capitalTotals`
+and `capitalSectionRollup` (tranches) and `rollupTotals` (txnRollup) all stopped
+being called by a page. **They are not the same case, and treating them as one
+would have been wrong in both directions.**
+
+- **`sectionRollup` and `capitalSectionRollup` are SUPERSEDED.** Each grouped one
+  record's rows under the shared headings; a section holds rows of BOTH kinds
+  now, which is a different row type, so `datedSectionRollup` replaces them and
+  neither has a caller left. **Deleted**, the `exportDeck.ts` treatment, rather
+  than left exported and dead for a future session to wire back believing it
+  load-bearing.
+- **`capitalTotals` and `rollupTotals` are NOT.** The first cut of `datedTotals`
+  REIMPLEMENTED both — two definitions of the capital footer and two of the
+  trades one, free to disagree the first time either was edited, which is the
+  failure `holdingBucket` and `costCoversSet` were each extracted to stop. It
+  CALLS them now, so there is one definition per half and their own suites go
+  on checking a live path rather than a function nothing runs.
+
+**AND `datedTotals.net` OVERRIDES ONE OF THEM DELIBERATELY.** `capitalTotals`
+reduces to `0` over no rows, which is right for a table of capital rows and
+wrong here: a table with no capital half at all would print ₹0 net under a
+column that is refusing to state one. `Value today` is this module's own for
+the opposite reason — it is struck over the ACCOUNT ROWS, which includes the
+nine mandates that publish no dated capital record and are worth ₹138.7 Cr
+between them.
+
+#### And a field that carried the right answer into no caller
+
+`DatedRow.movements` — the dated rows behind a row, both halves — was computed,
+emitted as `data-dated-movements` and read by its own test and nothing else. The
+two counts are already columns (How it went in, Trades) and a third summing them
+is a figure under no heading. **Deleted**, and the suite asserts the two counts
+at their own halves instead. Found by reading the change back rather than by a
+check, which is where this repo has found three of these before.
+
+#### A total is the worst place for a parser that produces a plausible number
+
+The Trades cell renders its count and a `284B/178S` split with nothing between
+them, so `innerText` is `462284B/178S`. **Stripping non-digits yields
+462284178; taking the leading run yields 462284.** Both are numbers, both are
+wrong, and this file already records the row-level version of the same trap at
+Stage 10p — where the fix was to read `data-trades`.
+
+Three checks were written against that cell before the trap was noticed, so the
+footer emits its figures as **`data-foot-rows` / `-accounts` / `-contributions` /
+`-withdrawals` / `-trades` / `-sells` / `-realised-of`**, beside the cells that
+render them. The claims that are about what a reader SEES stay on the rendered
+text and are reconciled against the handles — the realised fraction must be on
+screen beside the figure AND be the pair the footer computed, so a cell printing
+some other two numbers cannot satisfy it.
+
+**AND THE ROW'S RETURN CELL MOVED TWICE.** `mineRows` read `tr.cells[7]`, which
+on the merged table is BOUGHT — a real money figure in place of a percentage.
+It is 13 now, and the column list is written out in the comment beside it rather
+than counted, because it moved again when Gain came back.
+
+#### The pass found three defects, and all three were IN THE CHECKS
+
+Eleven bugs, each applied on its own, rebuilt, swept and restored. Eight fired
+exactly the claim they exist for. **The three that did not are the whole reason
+this is run**, and the first is the most expensive shape of it: a check that
+cannot fail on the single strongest claim the page makes.
+
+**1. SUMMING THE TWO MONEY BLOCKS PRODUCED A CLEAN SWEEP.** `paidIn: c.paidIn +
+(t.bought ?? 0)` — the one thing the merge must never do, and the defect the
+whole column design exists to prevent — reported **10 of 10 combinations
+clean**. The check was CIRCULAR: it read the RENDERED Capital-in cell as
+`paidIn` and the RENDERED Bought cell as `bought`, and asserted that neither
+equals `paidIn + bought`. Once the bug has folded one into the other the
+rendered pair is (₹291.9 Cr, ₹70.4 Cr) and the figure it compares them against
+is ₹362.3 Cr — which neither is, so it passes. **It was comparing a bugged
+figure with a sum of itself**, which is this file's own *"a check that compares a
+figure with its own copy cannot fail"* arriving in the one place it could do the
+most damage.
+
+It is a TWO-PATH RECONCILIATION now: the footer comes from `datedTotals`, which
+calls `capitalTotals` and `rollupTotals`, and the ROWS come from `capitalRollup`
+and `rollup` directly — so summing the rendered row cells and setting them
+against the rendered footer cell is two derivations of one figure rather than
+one derivation read twice. The bound is the page's own printing precision
+reproduced, (N+1) x 0.05 Cr over N cells rendered compact to one decimal, never
+a tolerance widened until the figures fit: the defect it exists for is worth
+₹70.4 Cr against an allowance of ₹0.60 Cr. **An absent cell is skipped and never
+read as zero** — a row legitimately withholds one side under a side filter, and
+blending that in as ₹0 is `sumOrNull`'s own rule failing inside a checker. And
+it is exercised from BOTH ends, by a second case that moves a ROW away from the
+footer rather than the footer away from its rows.
+
+**2. THE MERGED-CARD CLAIMS REACHED TWO OF THE EIGHT TRANSACTIONS ROUTES.** Bug
+1 put the record toggle back and fired on `monitor-txns` and
+`monitor-txn-basket` **and on nothing else** — while `txnMergedChecks`'s own
+doc comment said "run by every transactions route". Six addresses that draw this
+card were asserting nothing whatever about it: the toggle could have come back
+on `monitor-txn-direct`, on either side filter, on the security axis or on
+either drill-down, and the sweep would have reported clean.
+
+**AND THE CLAIMS DO NOT ALL HOLD EVERYWHERE, which is why the repair is a
+SPLIT rather than a wider spread.** Five are true of any view of this card —
+the toggle is gone, the two legacy tables went with it, ONE table is drawn, it
+is titled for the table rather than for one of the records in it, and each money
+block ties to its own rows. The other two COUNT the table's halves, so they need all of it: `monitor-txn-direct`
+narrows to a section whose rows legitimately carry no capital record, and
+`monitor-txn-in` / `-out` narrow one half of the capital record itself.
+Spreading all six blindly would have FAILED A CORRECT PAGE; leaving it at two
+let the control come back on six addresses unseen. So `txnMergedCore()` is the
+five and goes everywhere, and `txnMergedChecks()` is the seven and stays on the
+routes that draw the whole table.
+
+**3. A SUMMABLE COLUMN WAS SITTING BLANK, AND THE CHECK COUNTED TO FOUR.** Gain
+was not in the footer's `cells` map at all. Nothing MISALIGNED — `TrFoot` fills
+an untotalled declared column rather than skipping it, which is what keeps every
+later cell under its own heading — so the only symptom was an empty box between
+Value today and Return. And *"the columns with no total name why"* required four
+cells to NAME a reason; there are exactly four, so a fifth untotalled column
+satisfied it by arithmetic.
+
+**GAIN IS AN AMOUNT AND RETURN IS A RATE, which is the whole of why one gets a
+total and the other cannot.** Value today carries one with a coverage count and
+Return refuses one because its every cell sits on a different denominator; Gain
+is an ordinary rupee figure over the account rows that publish one, so it now
+carries a total and the same coverage count — `CapitalGroup.gain` is published
+only where the contribution history provably reaches inception, so a row on a
+partial denominator contributes none and the cell says how many it covers.
+
+The claim is struck on EVERY footer cell now rather than counted: a cell carries
+text — a figure, or an em dash whose `title` says why — or it is a finding. An
+`AbsentCell` renders a dash, so a genuinely absent total is TEXT and only a
+filler is empty. The four that can never carry one are still required to say so,
+so the claim cannot be satisfied by a footer that simply totalled everything.
+
+#### Merged with main TWICE, and the second one brought all three hazards at once
+
+This branch was held open at the family's request (*"Open PR and do not merge
+until i tell you to."*), and main moved twice while it waited. **Both merges are
+recorded, because only the second cost any work and which one would was not
+predictable from the size of the diff** — it is predictable from whether the
+other side's change is a RULE over every route or a change to some of them,
+which is the reading Stage 10bk arrived at and this pair confirms.
+
+**THE FIRST WAS FREE.** `c25c5b8`, the daily Polycab data refresh, is two
+GENERATED files (`src/data/polycabLive.ts`, `docs/POLYCAB-LIVE.md`) and no stage
+heading. **Zero file overlap**, so none of the three hazards had a subject —
+nothing to union, no letter to move, and nothing to splice in a generated file.
+Checked one at a time rather than assumed, then verified (`build-book`
+byte-identical, build green, `ONLY=polycab,monitor-txns` clean) and pushed.
+
+**THE SECOND BROUGHT THE IDENTICAL PAIR FOR THE TENTH AND ELEVENTH TIME, AND A
+THIRD BESIDE THEM.** `585cfbe` (#64) is fifteen files, five commits and two
+stage sections:
+
+- **THE LETTER COLLIDED AGAIN.** Main wrote `### Stage 10bm` **and**
+  `### Stage 10bn`; this branch had written `10bm`. Main's keep both and this
+  section is **10bo**. Nine `10b[mn]` references sat OUTSIDE the conflict hunk,
+  auto-merged from both sides into one file — so `10bm` meant two different
+  sections depending on who wrote the line. **Each was read before any moved**:
+  seven are this branch's (all `10bm`) and two are main's (both `10bn`, the NAV
+  seam in **Layout** and the `build-fund-navs` entry under **Build**), which were
+  left alone. Main's own two internal cross-refs sit inside its hunk and mean
+  ITS `10bm`, so they did not move either. Measured afterwards: **79 stage
+  headings, every letter unique.**
+- **AND THE `ctx` LITERAL CONFLICTED ON ONE LINE.** Resolved as a **MECHANICAL
+  UNION**, and the diff is the whole reason it cannot be done by taking a side:
+  this branch's `txnMerged` and `datedTable` are RENAMES of main's `txnRecord`
+  and `tradesTable`, so main's side carries two keys this change deleted — while
+  `stockMark` is main's genuinely new probe and had to come across. **79 keys, no
+  duplicates, and every one verified to name a variable declared in the merged
+  file**, because a key naming a probe that no longer exists throws inside the
+  check and is reported as a broken matcher rather than as a clean page.
+- **AND TWO MORE FILES OVERLAPPED AND MERGED WITHOUT CONFLICTING**, which this
+  file's own rule says is exactly when to check by hand. `scripts/test-family.mjs`
+  kept both sides' suites. `src/pages/PortfolioMonitor.tsx` is the one that
+  mattered: main added `navPriced` / `navDate` at four sites in a file this branch
+  had largely rewritten, and all four are present in the merge. Neither was taken
+  on trust because git did not complain.
+
+**AND THE GENERATED FILES WERE RE-DERIVED RATHER THAN TRUSTED**, on both merges:
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+byte-identically, with the same md5s as before either merge. Main's own
+`src/data/fundNavs.ts` and `src/data/polycabLive.ts` arrived as straight
+take-theirs — this branch touches neither — and were confirmed byte-identical to
+main's copies rather than assumed to be.
+
+#### The verification
+
+`build` · `tsc` · `test:ingest` · `test:family` (a new `txnLedger.test.ts`, 46
+checks: the merge, the two blocks never added, an absent half never zero, a
+security row with no account to value, the section disagreement, and — anchored
+on the generated book — that `capitalRollup`'s own account value and the merge's
+`valueOfAccount` agree to the paisa, which is two paths to one number rather
+than a figure compared with its own copy) · `check:family` **82/0** ·
+`check:pages` **186 combinations clean**, with the same **six** EVIDENCED
+abstentions Stage 10bl records and not one of them introduced here.
+
+**THAT COUNT WAS RE-MEASURED TWICE AND IS A FACT ABOUT NEITHER BASE IT PASSED
+THROUGH.** This branch's own pre-merge sweep was **180** — 186 less the six
+combinations the three removed addresses walked — and the two merges below then
+moved the base under it. Measured on the route table rather than reasoned about:
+the base carried **87** routes, this branch removed three (84), main's Polycab
+refresh added none, and main's published-NAV work added three
+(`stock-cmp-split`, `stock-cmp-unmarked`, `stock-cmp-nav`), so the merged tree is
+back to **87** and 180 + 6 = **186**. This is the case where the arithmetic DOES
+reconcile — and it reconciles only because the sweep was run again, which is the
+point every stage in this file makes about its own count. A number carried across
+from another branch's paragraph would have been wrong in the one direction
+nothing on screen could show.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and a
+presentation-layer merge that moved a generated figure would not be one.
+
+`scripts/dev/txn-merge-bug.sh` is the bug-reintroduction harness, committed so
+the next session's verification is one command rather than eleven manual edits.
+Two things about running it cost real time here and are worth the next session
+knowing:
+
+- **ITS SNAPSHOT LIST IS LOAD-BEARING AND HAD TO BE WIDENED MID-SESSION.**
+  `tranches.ts` was left out of it, so the restore could not put that file back
+  and an edit made while the harness ran was silently reverted — the
+  untracked-file hazard this file already records twice, arriving through a file
+  that was simply not listed. **Never edit a file the harness snapshots while it
+  is running**: the restore will undo it, and the next sweep reports a tree
+  nobody chose.
+- **AND A WAITER THAT MATCHES ITSELF READS AS FOUR HARNESSES.** `pgrep -f
+  txn-merge-bug.sh` run from a shell whose own command line contains that string
+  matches the waiter, the monitor and the harness, so `ps | wc -l` reported four
+  instances and three of them were killed as duplicates — twice. This file
+  already records the never-exits half of that trap at Stage 10ba; this is the
+  over-counting half. Match the SCRIPT (`awk '$2=="bash" && $3=="scripts/…"'`),
+  and the harness now takes a `flock` so a genuine second copy refuses rather
+  than racing one `dist/` and one snapshot.
+- **AND ITS SUITE VERDICT READ BACKWARDS ON EVERY CASE, which is the defect this
+  harness exists to find, in the harness.** `run_suite_case` piped the suite into
+  grep and took the PIPELINE's status as the verdict, and two things made that
+  always announce a pass: the suite's own output carries **~1,700 NUL bytes**, so
+  grep classifies it as binary, SUPPRESSES its matching lines and prints a
+  warning instead of them; and `set -o pipefail` turns a FAILING suite's non-zero
+  exit into the `||` branch — the one that prints "SUITE clean". Both halves
+  therefore printed it. **Measured after the fix: all three suite-only cases DO
+  fire** (2, 3 and 2 failures) where all three had reported clean, so nothing
+  those cases claimed had ever been checked. The verdict is the suite's own exit
+  status now and the NULs are stripped before grep sees them. A check that can
+  only ever report a pass is worse than no check: this file's own rule, arriving
+  through a pipeline rather than through a page.
+- **AND TWO PATCHES WERE NOT RESULTS RATHER THAN FINDINGS**, each fixed at the
+  cause rather than by loosening the case. One gated the trades half on `trd &&
+  false`, which TS folds to a constant and refuses to build; a comparison against
+  a real string is false at runtime and typechecks. The other targeted
+  `sumOrNull(trd.map(...))` in `datedTotals` — a line that never existed, because
+  that half is DELEGATED to `rollupTotals`, which is the point of the delegation
+  and is where the injection belongs. **The harness reporting both as NOT A
+  RESULT rather than as clean runs is what made them findable**, which is the
+  whole reason that branch exists.
+- **AND A HARNESS WALKING FIVE ROUTES CANNOT CHECK A FACTORY THAT REACHES FIVE.**
+  Its route list was the five addresses the merged card's counting claims run on,
+  while `txnMergedCore()` claims all EIGHT — so the very defect this pass found
+  first time round (the claims reaching two of eight) was one the harness was
+  blind to by construction. It walks all eight now.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -14501,6 +14957,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   **index strip's day move** (`indicesFunction.test.ts` — the level and the
   previous close must never be the same session; a live probe cannot check it,
   because outside a 3h45m window plus every weekend the function is correct),
+  the **dated record merge** (`txnLedger.test.ts`, Stage 10bo — the family's own
+  capital and their managers' dealing become one row set, and the two money
+  blocks must never be added: summing them reports ₹291.9 Cr where the family
+  paid in ₹221.5 Cr),
   the **daily-NAV movers** (`navMovers.test.ts`, Stage 10aw — every row must tie
   to its own columns, and the model must never value a holding at `units × NAV`,
   which is an order of magnitude out on the gold and silver ETFs), the **AIF

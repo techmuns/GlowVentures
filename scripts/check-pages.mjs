@@ -2264,19 +2264,18 @@ const ROUTES = [
   ["private-market-owners", "/private-market?view=owners"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
-   * ...AND THE TRADES BRANCH OF THE SAME CARD.
+   * THE TRADES BRANCH HAD AN ADDRESS OF ITS OWN AND DOES NOT ANY MORE.
    *
-   *   *"why are there two separate tables in the transactions page, it should be
-   *    exactly one single simple table just like in the holdings."*
+   *   *"just remove the toggle button and show everything within the same
+   *    table."*
    *
-   * The family's own capital and their managers' dealing were two stacked
-   * tables; they are one card with a toggle now, `capital` first. So the
-   * invariants that read the TRADES table moved here rather than being softened
-   * into something the capital branch can satisfy — a check that stops running
-   * because a table moved behind a toggle is a check that silently stopped, and
-   * this is the fourth time this file has had to say so.
+   * `monitor-txn-trades` walked this same URL with the record toggle clicked.
+   * One table carries both halves now, so that address would walk an identical
+   * page — and its invariants moved onto `monitor-txns` rather than being
+   * deleted with it, which is the rule this file has had to state four times:
+   * a check that stops running because a table moved is a check that silently
+   * stopped.
    */
-  ["monitor-txn-trades", "/monitor"],
   // ...AND THE MANAGER ROLLUP, WHICH IS NO LONGER THE DEFAULT. The family asked
   // for the transactions THEY made to lead, so `monitor-txns` above now lands on
   // My investments and the manager's own dealing is a tab. Its invariants moved
@@ -2313,10 +2312,10 @@ const ROUTES = [
   // itself. Walked separately because a filter that silently matched nothing
   // renders an empty table that looks like a family which does not trade.
   ["monitor-txn-direct", "/monitor"],
-  // ...AND THE SAME FILTER ON THE CAPITAL BRANCH. See the block — the section
-  // filter is shared state and only this address can see it reach the second
-  // table.
-  ["monitor-txn-direct-capital", "/monitor"],
+  // ...AND THE CAPITAL HALF OF THE SAME FILTER, which had an address of its own
+  // (`monitor-txn-direct-capital`) while a toggle kept the two tables apart.
+  // Both halves are in the DOM at the address above now, so its two claims moved
+  // into that block and the duplicate walk went.
   // ...AND EACH SIDE OF THE FAMILY'S OWN CAPITAL RECORD, which is the defect the
   // family reported: *"nothing on the page is changing when I'm clicking either
   // of the filters."* The control was there and its value never reached the
@@ -2341,11 +2340,10 @@ const ROUTES = [
    * here by name.
    */
   ["monitor-txn-basket", "/monitor?group=basket"],
-  // ...ON THE TRADES BRANCH TOO. The axis is SHARED STATE, so one branch would
-  // very nearly cover it — but the two tables reach a section through different
-  // helpers (`forAccount` for an account, `forTxn` for a dated trade), and only
-  // this route can see the second regroup.
-  ["monitor-txn-basket-trades", "/monitor?group=basket"],
+  // ...AND NOT ON A SECOND ADDRESS. `monitor-txn-basket-trades` existed because
+  // the two tables reached a section through different helpers and only one was
+  // ever in the DOM; one table carries both joins now, so the route above
+  // exercises `forAccount` and `forTxn` together.
   /**
    * ...AND THE ONE AXIS TRANSACTIONS DOES NOT HAVE.
    *
@@ -3908,104 +3906,185 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * rather than a silent one, and this names every one in a single place.
  */
 /**
- * ── ONE CARD, ONE TABLE, AND THE TOGGLE THAT REACHES THE OTHER RECORD ─────
+ * ── ONE TABLE OVER BOTH DATED RECORDS, AND THE TOGGLE THAT IS GONE ─────────
  *
- *   *"why are there two separate tables in the transactions page, it should be
- *    exactly one single simple table just like in the holdings."*
+ *   *"why are there 'capital in and out/trades' toggle switch provided when…
+ *    There is no need of that… In short, just remove the toggle button and show
+ *    everything within the same table."*
  *
- * A FACTORY, RUN BY BOTH BRANCHES, parameterised on the one thing that differs —
- * which record the route asked for. Written on the default branch alone it would
- * not catch a toggle that renders on arrival and vanishes the moment a reader
- * uses it, which is the exact failure a control like this has.
+ * A FACTORY because every transactions route runs it: the toggle could come
+ * back on any of them, and a removal asserted on the default address alone
+ * would not see a control that reappears the moment a filter is touched.
  *
- * FOUR CLAIMS, AND NONE IMPLIES ANOTHER:
+ * AND IT SAID THAT WHILE REACHING TWO OF THE EIGHT. The bug-reintroduction pass
+ * measured it: putting the toggle back fired on `monitor-txns` and
+ * `monitor-txn-basket` and on NOTHING ELSE, because those were the only two
+ * routes the factory was spread into. Six addresses that draw this card were
+ * asserting nothing about it. `txnMergedCore` below is the four claims that
+ * hold under ANY filter and goes to all eight; the two that COUNT the table's
+ * halves stay here, on the routes that draw the whole table.
  *
- *   1. the toggle offers BOTH records and this address opens on the right one;
- *   2. exactly ONE table is in the DOM, and it is that record's. This is the
- *      only reading that can see a build which kept both tables stacked and
- *      merely added a control — every figure in either table is correct on its
- *      own, every other check here passes, and the page is exactly what the
- *      family asked to be rid of;
- *   3. the card's TITLE follows the branch. A switch that moves the table and
- *      leaves the heading puts "Capital in and out" over the manager's dealing,
- *      which is the caption-does-not-describe-its-figure failure at its worst
- *      — the two records are different measurements;
- *   4. each button's own row count matches the table that button reaches, and
- *      the two counts DIFFER. The second half is what stops a build printing
- *      one figure on both buttons: 11 accounts and 26 trade rollups on this
- *      book, and a toggle advertising the same number twice has stopped reading
- *      one of them.
+ * SIX CLAIMS, AND NONE IMPLIES ANOTHER:
  *
- * A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION — this card's header renders
- * whether or not the archive answered, so an empty offer means the control is
- * gone. Only the probe failing to run abstains.
+ *   1. the control is GONE — both in its own shape and in its buttons, because
+ *      a build could keep the buttons and drop the wrapper;
+ *   2. the two tables it used to swap are gone WITH it. This is the half that
+ *      catches a build which deleted the control and left both tables stacked:
+ *      every figure in either is correct on its own, and the page is exactly
+ *      what the family asked to be rid of;
+ *   3. ONE table is drawn, and it is the merged one;
+ *   4. the card is titled for the table rather than for one of the records it
+ *      carries — "Capital in and out" over a table that also holds the
+ *      manager's dealing is the caption-does-not-describe-its-figure failure
+ *      the two records make worst, because they are different measurements;
+ *   5. BOTH halves are on screen. 11 rows carry a capital record and 26 a
+ *      trades group on this book, and a merge that silently lost one half
+ *      would draw a perfectly reconciled table of the other;
+ *   6. and THREE rows carry BOTH, which is the one thing nothing else can see.
+ *      A merge that keyed the halves apart draws 37 rows instead of 34, every
+ *      figure correct, every total correct, and the account the family opened
+ *      split across two lines.
+ *
+ * A MISSING TABLE IS A FINDING, NOT AN ABSTENTION — this card renders whether
+ * or not the archive answered. Only the probe failing to run abstains.
  */
-const TXN_RECORD_LABEL = { capital: /^Capital in and out$/i, trades: /^Trades$/i };
-const txnRecordChecks = (expected) => [
-  [`the transactions card is one card with two records, and this address opens on ${expected}`, (t, ctx) => {
-    const r = ctx?.txnRecord;
-    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
-    const keys = r.options.map((o) => o.key);
-    return keys.length === 2 && keys.includes("capital") && keys.includes("trades")
-      && r.active === expected
-      && r.options.find((o) => o.selected)?.key === expected;
+const txnMergedCore = () => [
+  ["the capital/trades toggle is gone", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    return r.toggle === false && r.toggleOptions === 0;
   }],
-  [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
-    const r = ctx?.txnRecord;
-    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
-    // NOTHING BELONGING TO THE OTHER RECORD, EVER — the half that catches a
-    // build which kept both tables stacked and merely added a control.
-    if (!r.tables.every((x) => x === expected)) return false;
-    /**
-     * …AND WHETHER A TABLE IS DRAWN AT ALL IS TIED TO THIS BRANCH'S OWN ROW
-     * COUNT, not assumed to be one.
-     *
-     * A branch with no rows under the current filters renders an ABSENT STATE
-     * instead of a table, which is correct and is what `/monitor` shows on the
-     * capital branch once the section filter is set to Direct Equity: no account
-     * the family funded is Direct Equity. Requiring exactly one table there
-     * failed a page that was right — and requiring "at most one" would have
-     * passed a branch that silently drew nothing. So the page's own advertised
-     * count decides which is expected.
-     */
-    const rows = r.options.find((o) => o.key === expected)?.rows;
-    if (!Number.isFinite(rows)) return false;
-    return r.tables.length === (rows > 0 ? 1 : 0);
+  ["…and the two tables it used to swap went with it", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    return r.legacyTables === 0;
   }],
-  [`…and the card is titled for the ${expected} record`, (t, ctx) => {
-    const r = ctx?.txnRecord;
-    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
-    return TXN_RECORD_LABEL[expected].test(r.title);
+  ["…replaced by ONE table over both dated records", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    // A TABLE IS DRAWN ONLY WHERE THERE ARE ROWS FOR IT. A filter that matches
+    // nothing renders the empty state, which is correct — so the page's own row
+    // count decides which is expected rather than one being assumed.
+    return r.table === (r.rows > 0);
   }],
-  ["…and each button counts its own rows, which are not the same count", (t, ctx) => {
-    const r = ctx?.txnRecord;
-    if (!r) return { notChecked: "the transactions record toggle was not on screen on this run" };
-    const mine = r.options.find((o) => o.key === "capital")?.rows;
-    const trades = r.options.find((o) => o.key === "trades")?.rows;
-    if (!Number.isFinite(mine) || !Number.isFinite(trades) || mine === trades) return false;
-    // ...and the ACTIVE one ties to the table on screen. The other cannot be
-    // read here — its table is not in the DOM — which is why both routes run
-    // this factory rather than one of them running it twice.
-    const shown = expected === "capital" ? mine : trades;
-    const rows = expected === "capital" ? ctx.mineRows?.length : ctx.tradesTable?.groups?.length;
-    return Number.isFinite(rows) && rows === shown;
+  ["…titled for the table, not for one of the records in it", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
+    return /^Transactions\b/i.test(r.title) && !/capital in and out/i.test(r.title);
+  }],
+  /**
+   * ── THE TWO MONEY BLOCKS EACH TIE TO THEIR OWN ROWS ─────────────────────
+   *
+   * THIS REPLACES A CHECK THAT COULD NOT FAIL, and the bug-reintroduction pass
+   * is the only reason anyone knows. "Capital in and Bought are two columns,
+   * and neither is their sum" read the RENDERED pair and asserted neither
+   * equalled their total — which is CIRCULAR when the bug has already folded
+   * one into the other: summing Bought into Capital in renders (291.9, 70.4),
+   * the check compares each against 362.3, neither matches, and the strongest
+   * claim on this page reports 10 of 10 combinations CLEAN.
+   *
+   * TWO PATHS TO ONE FIGURE INSTEAD. The footer comes from `datedTotals` —
+   * which calls `capitalTotals` and `rollupTotals` — and the ROWS come from
+   * `capitalRollup` and `rollup` directly, so summing the rendered row cells
+   * and setting them against the rendered footer cell is a reconciliation
+   * rather than a figure compared with its own copy. A footer that started
+   * adding the two blocks moves 70.4 Cr away from its own Capital column.
+   *
+   * THE BOUND IS THE PAGE'S OWN PRINTING PRECISION, reproduced: `fmtFromBase`
+   * renders compact to one decimal, so N cells and the total carry up to
+   * (N+1) x 0.05 Cr of rounding between them. Never a tolerance widened until
+   * the figures fit — the smallest defect this can hide is a row worth ₹5 L
+   * and the one it exists for is worth ₹70 Cr.
+   *
+   * AN ABSENT CELL IS SKIPPED, NEVER READ AS ZERO. Under a side filter a row
+   * legitimately withholds one side, and blending that in as ₹0 would drag the
+   * sum towards a number nobody measured — which is the rule `sumOrNull` was
+   * written for, arriving in a checker.
+   */
+  ["…and the two money blocks each tie to their OWN rows", (t, ctx) => {
+    const tbl = ctx?.datedTable;
+    if (!tbl?.foot || !tbl.rows.length) {
+      return { notChecked: "the transactions table drew no rows on this run" };
+    }
+    // BY DECLARED INDEX, and safe to be: the footer's label cell spans the
+    // LEADING RUN of columns with no total, which is `name` alone, so every
+    // later cell sits at its own column — and `TrFoot` fills an untotalled
+    // column rather than skipping it, so nothing shifts. The sweep opens a
+    // fresh context, so no reader's drag has moved them.
+    const tie = (col) => {
+      const parts = tbl.rows.map((r) => moneyCell(r.cells[col]));
+      if (parts.some((p) => p !== null && !Number.isFinite(p))) return false;
+      const total = moneyCell(tbl.foot[col]);
+      if (total === null) return parts.every((p) => p === null);
+      if (!Number.isFinite(total)) return false;
+      const seen = parts.filter((p) => p !== null);
+      if (!seen.length) return false;
+      const sum = seen.reduce((a, p) => a + p, 0);
+      return Math.abs(sum - total) <= (seen.length + 1) * 0.05;
+    };
+    return tie(2) && tie(7);
   }],
 ];
 
 /**
- * THE BASKET-AXIS CLAIMS, PER RECORD — see the route pair below.
+ * ...AND THE TWO THAT COUNT THE TABLE'S HALVES, which need the WHOLE table.
  *
- * `sectionsOf` is the one line that differs: the capital table carries its
- * section on each row (`data-mine-section`) and the trades table on its
- * headings. Everything else is identical, which is why it is one factory rather
- * than two blocks free to drift.
+ * The FIVE above hold on every view of this card, filtered or not — a toggle
+ * that came back, a legacy table that came back, two tables where there should
+ * be one, a title naming one record over both, and each money block tying to
+ * its own rows. These two do not: they count how many rows carry each half,
+ * and a Direct Equity section legitimately carries no capital record while a
+ * side filter legitimately narrows one half.
+ *
+ * Spreading all SEVEN into a filtered route would fail a correct page; leaving
+ * the five on two routes let the toggle come back on the other six unnoticed —
+ * which is what the bug-reintroduction pass measured: bug 1 fired on
+ * `monitor-txns` and `monitor-txn-basket` and on nothing else, while this
+ * factory's own comment said "every transactions route".
  */
-const txnBasketChecks = (record) => {
-  const sectionsOf = (ctx) => record === "capital"
-    ? [...new Set((ctx.mineRows ?? []).map((r) => r.section).filter(Boolean))]
-    : [...new Set(ctx.tradesTable?.sections ?? [])];
+const txnMergedChecks = () => [
+  ...txnMergedCore(),
+  ["…carrying both halves, neither silently lost", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
+    return r.capital > 0 && r.trades > 0 && r.capital + r.trades > r.rows;
+  }],
+  ["…and an account publishing both is ONE row, not two", (t, ctx) => {
+    const r = ctx?.txnMerged;
+    if (!r) return { notChecked: "the transactions card was not on screen on this run" };
+    if (!r.rows) return { notChecked: "no dated record matched the filters on this run" };
+    /**
+     * DERIVED FROM THE PAGE'S OWN COUNTS, never from a literal: rows carrying a
+     * capital record plus rows carrying a trades group, less the rows drawn,
+     * IS the number carrying both. A merge that keyed the two halves apart
+     * makes that zero while every figure on the page stays right.
+     */
+    return r.both > 0 && r.both === r.capital + r.trades - r.rows;
+  }],
+];
+
+/**
+ * THE BASKET-AXIS CLAIMS — see the route below.
+ *
+ * It was a factory parameterised on WHICH RECORD the route walked, because the
+ * two tables reached a section through different helpers and only one was ever
+ * in the DOM. One table carries both now, so there is one set of headings — and
+ * `sectionsOf` reads the HEADINGS rather than the rows, which is the stronger
+ * claim: a row whose `data-dated-section` disagreed with the heading it was
+ * drawn under would pass a row-based reading.
+ *
+ * BOTH JOINS ARE STILL EXERCISED HERE, which is what the pair of routes used to
+ * buy: a merged row's section comes from `forAccount` where it carries a
+ * capital record and from `forTxn` where it carries trades, so a regroup that
+ * worked for one and not the other still shows up as a category key surviving
+ * on the basket axis.
+ */
+const txnBasketChecks = () => {
+  const sectionsOf = (ctx) => [...new Set(ctx.datedTable?.sections ?? [])];
   return [
-    ...txnRecordChecks(record),
+    ...txnMergedChecks(),
     // ...AND A READER CAN SEE IT. `document.querySelector` reads a hidden
     // element exactly as it reads a visible one — measured by reintroducing the
     // bug, which left every other claim here green over a card that no longer
@@ -4013,7 +4092,7 @@ const txnBasketChecks = (record) => {
     ["the axis control is live on Basket", (t, ctx) =>
       ctx.axisControl?.active === "basket" && ctx.axisControl?.view === "transactions"
       && ctx.axisControl?.visible === true],
-    [`…and the ${record} table really regrouped — no category key survives`, (t, ctx) => {
+    ["…and the table really regrouped — no category key survives", (t, ctx) => {
       const drawn = sectionsOf(ctx);
       if (!drawn.length) return false;
       if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
@@ -4040,11 +4119,6 @@ const txnBasketChecks = (record) => {
     }],
   ];
 };
-
-const TRADES_BRANCH = new Set([
-  "monitor-txn-trades", "monitor-txn-manager", "monitor-txn-drill",
-  "monitor-txn-direct", "monitor-txn-secaxis", "monitor-txn-basket-trades",
-]);
 
 const COL = { name: 0, qty: 1, avgCost: 2, invested: 3, investedOn: 4, cmp: 5, day: 6, mv: 7, weight: 8, pnl: 9, realised: 10, ret: 11, sector: 12, entity: 13 };
 /**
@@ -7376,9 +7450,121 @@ const INVARIANTS = {
      * combined total would double-count it — so the claim is that each table is
      * there with its own rows, not that one of them leads.
      */
-    ...txnRecordChecks("capital"),
+    ...txnMergedChecks(),
     /**
-     * AND EVERY SECTION THE TRADES TABLE DRAWS IS ONE THE HOLDINGS TABLE WOULD.
+     * ── THE CLAIMS THAT USED TO NEED A SECOND ADDRESS ───────────────────────
+     *
+     * `monitor-txn-trades` walked this URL with the record toggle clicked. The
+     * toggle is gone and both halves are here, so its invariants come home
+     * rather than being deleted with the address — a check that stops running
+     * because a table moved is a check that silently stopped.
+     */
+    ["the footer is summed from the rows it draws", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!tbl?.foot || !tbl.rows.length) return false;
+      /**
+       * THE FIGURES OFF `data-foot-*`, THE COUNT OFF THE RENDERED LABEL.
+       *
+       * Both, because they fail differently: a footer whose totals stopped
+       * summing its rows moves the handles, and one whose LABEL stopped
+       * describing them moves only the text a reader actually sees.
+       */
+      const d = tbl.footData;
+      if (!d) return false;
+      const rowsClaimed = /Total · ([\d,]+) rows?/.exec(tbl.foot[0] ?? "")?.[1];
+      if (!rowsClaimed) return false;
+      const trades = tbl.groups.reduce((a, g) => a + (g.trades || 0), 0);
+      return Number(rowsClaimed.replace(/,/g, "")) === tbl.rows.length
+        && d.rows === tbl.rows.length && trades === d.trades;
+    }],
+    /**
+     * ── A MANDATE IS ONE ROW, IN ONE SECTION ───────────────────────────────
+     *
+     * Added because the DEFECT this found on the rendered page — an unstated
+     * asset class short-circuiting the section join — drew Carnelian Bespoke
+     * Portfolio TWICE, once under PMS mandates and once under a heading saying
+     * nothing knew what it was, and every check on the card stayed green.
+     *
+     * Scoped to MANDATES rather than to every label, because a SECURITY may
+     * legitimately appear in two sections: the same name traded in two accounts
+     * whose engagements differ is two rows by design. A mandate cannot — it is
+     * one account, and an account has one engagement and therefore one section
+     * on every axis.
+     */
+    ["no mandate is drawn in more than one section", (t, ctx) => {
+      const rows = (ctx.datedTable?.groups ?? []).filter((g) => g.kind === "mandate");
+      if (!rows.length) return { notChecked: "no mandate traded on this run" };
+      const seen = new Map();
+      for (const r of rows) {
+        const at = seen.get(r.label);
+        if (at !== undefined && at !== r.section) return false;
+        seen.set(r.label, r.section);
+      }
+      return true;
+    }],
+    /**
+     * ── THE TWO RECORDS STILL DO NOT SHARE A COLUMN ─────────────────────────
+     *
+     * The strongest claim on this page, and the reason the merge is safe. One
+     * table means a combined total IS one edit away now, so it is struck on the
+     * footer's own printed cells: Capital in and Bought are DIFFERENT figures,
+     * and neither is the sum of the two.
+     *
+     * Measured on this book, adding them reports ₹291.9 Cr where the family
+     * paid in ₹221.5 Cr — a plausible figure under the column a reader scans
+     * for, which is exactly the shape nothing else here could see.
+     */
+    ["Capital in and Bought are two columns, and neither is their sum", (t, ctx) => {
+      const f = ctx.datedTable?.foot;
+      if (!f) return { notChecked: "the transactions footer was not on screen on this run" };
+      // `moneyCell`, never `crU` on the raw cell: these render "₹221.5 Cr" and
+      // "₹70.4 Cr", and reading the number without its SUFFIX is the 100×
+      // error this file already records at the top of that helper.
+      const paidIn = moneyCell(f[2]);
+      const bought = moneyCell(f[7]);
+      if (!Number.isFinite(paidIn) || !Number.isFinite(bought)) return false;
+      // Neither cell may be the total of both, within the page's own printing
+      // precision — every figure here renders to one decimal in crore.
+      const summed = paidIn + bought;
+      return bought > 0 && paidIn > 0
+        && Math.abs(paidIn - summed) > 0.05 && Math.abs(bought - summed) > 0.05;
+    }],
+    /**
+     * ...AND THE FOUR COLUMNS THAT CAN NEVER CARRY A TOTAL EACH SAY SO.
+     *
+     * Two are spans of dates, one is a per-row return on a per-row denominator,
+     * one is a column of names. Left BLANK a reader learns nothing about whether
+     * a figure was withheld or never existed, which is this book's founding rule
+     * arriving one row below the table.
+     */
+    ["every footer cell carries a total or names why it has none", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!tbl?.foot || !tbl.footTitles) return { notChecked: "the transactions footer was not on screen on this run" };
+      /**
+       * COUNTING TO FOUR COULD NOT SEE A FIFTH, and there was one.
+       *
+       * This required four cells to NAME a reason and there were exactly four,
+       * so `gain` — a summable rupee figure with no total and no reason — sat
+       * BLANK and satisfied it. `TrFoot` fills an untotalled column rather than
+       * skipping it, so nothing misaligned and nothing else could see it
+       * either.
+       *
+       * Struck on EVERY cell now: a footer cell carries text — a figure, or an
+       * em dash whose `title` says why — or it is a finding. An `AbsentCell`
+       * renders "—", so a genuinely absent total is TEXT and only a filler is
+       * empty.
+       */
+      const blank = tbl.foot
+        .map((txt, i) => ({ i, txt, why: tbl.footTitles[i] }))
+        .filter(({ txt, why }) => !txt && !why);
+      if (blank.length) return false;
+      // ...AND THE FOUR THAT CAN NEVER CARRY ONE STILL SAY SO, so the claim is
+      // not satisfied by a footer that simply totalled everything — two spans
+      // of dates, a per-row rate and a column of names have no total to give.
+      return tbl.footTitles.filter((x) => x && /no total|no sum|no denominator/i.test(x)).length >= 4;
+    }],
+    /**
+     * AND EVERY SECTION THE TABLE DRAWS IS ONE THE HOLDINGS TABLE WOULD.
      *
      * Re-derived from `glowData.ts` rather than imported from `groupAxis.ts`: a
      * check that calls the helper it is checking agrees with it by
@@ -7414,7 +7600,18 @@ const INVARIANTS = {
      * exactly the arrangement the family asked to be rid of.
      */
     ["the rollup is ordered newest first", (t, ctx) => {
-      const rows = (ctx.mineRows ?? []).filter((r) => r.last);
+      /**
+       * EVERY ROW, NOT THE CAPITAL HALF.
+       *
+       * This read `mineRows`, which is the rows carrying a capital record — 11
+       * of the 34 now that one table covers both. The other 23 could have been
+       * in any order at all and it would have passed, which is the complaint
+       * the family made in the first place (*"something is October, something
+       * is December, something is 2023. It's all very chaotic"*) surviving in
+       * the check written for it. `data-dated-last` is the row's own span
+       * across BOTH halves, which is what the table is ordered on.
+       */
+      const rows = (ctx.datedTable?.rows ?? []).filter((r) => r.last);
       if (rows.length < 2) return { notChecked: "fewer than two dated rows on this run" };
       /**
        * WITHIN EACH SECTION. The table is sectioned on the shared axis now, so
@@ -7477,7 +7674,10 @@ const INVARIANTS = {
      */
     ["the footer's payment count is the sum of the rows'",
       (t, ctx) => {
-        const m = /Total · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
+        // "Total · 34 rows · 11 of 51 accounts" — the row count leads because
+        // the table is over both records now, and the ACCOUNT count follows it
+        // because Capital in is struck over those alone.
+        const m = /Total · [\d,]+ rows? · (\d+) of (\d+) accounts\t(\d+) payments/.exec(t);
         if (!m) return false;
         const rows = ctx.mineRows.reduce((a, r) => a + r.contributions, 0);
         return Number(m[1]) === ctx.mineRows.length && Number(m[3]) === rows;
@@ -7495,7 +7695,7 @@ const INVARIANTS = {
      */
     ["the total names the fraction of the book's accounts it covers",
       (t, ctx) => {
-        const m = /Total · (\d+) of (\d+) accounts/.exec(t);
+        const m = /Total · [\d,]+ rows? · (\d+) of (\d+) accounts/.exec(t);
         return !!m && Number(m[1]) === ctx.mineRows.length && Number(m[2]) === BOOK_ACCOUNT_COUNT;
       }],
 
@@ -7512,30 +7712,36 @@ const INVARIANTS = {
      * reading the rows it sits over — which would be right here and wrong the
      * moment a filter narrowed them — still has to agree with the record.
      */
-    ["the counter beside the table counts the record on screen, and names it",
+    ["the counter beside the table counts both records on screen, and names each",
       (t, ctx) => {
         if (!CAPITAL_SIDES) return { notChecked: "the book's capital moves could not be read" };
         const c = ctx.txnCounter;
         if (!c) return false;
         /**
-         * ONE RECORD IS ON SCREEN NOW, so the counter counts THAT one — and it
-         * still has to NAME it, because "26 in · 95 out" and "284 buys · 178
-         * sells" are two different measurements and a bare pair of numbers
-         * cannot say which. The other branch's count is on the toggle button
-         * that reaches it (`txnRecordChecks`), which is where a figure about
-         * that branch belongs.
+         * BOTH RECORDS ARE ON SCREEN NOW, so the counter counts BOTH — and it
+         * must still NAME each, because "26 in · 95 out" and "284 buys · 178
+         * sells" are two different measurements and four bare numbers cannot say
+         * which is which. A single pair over the two would be the ₹70.4 Cr
+         * defect arriving in a counter: a plausible figure that answers no
+         * question a reader has.
          *
-         * THE TRADES SHAPE IS REFUSED HERE, EXPLICITLY. That is the original
-         * defect: this counter read the manager's tape on every view, so the
-         * family's own capital sat under a count of a set it does not draw.
+         * The capital half is struck against the BOOK's own move counts, so a
+         * counter that started reading the rows it sits over — right here and
+         * wrong the moment a filter narrowed them — still has to agree with the
+         * record.
          */
-        if (/buys|sells/i.test(c)) return false;
-        const m = /^Capital ([\d,]+) in · ([\d,]+) out$/.exec(c.trim());
+        const m = /^Capital ([\d,]+) in · ([\d,]+) out\s*\|\s*Trades ([\d,]+) buys · ([\d,]+) sells$/
+          .exec(c.replace(/\s+/g, " ").trim());
         if (!m) return false;
         const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
         const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
-        return Number(m[1].replace(/,/g, "")) === moves.filter((x) => x.direction === "in").length
-          && Number(m[2].replace(/,/g, "")) === moves.filter((x) => x.direction === "out").length;
+        const n = (i) => Number(m[i].replace(/,/g, ""));
+        // ...AND THE TWO PAIRS ARE DIFFERENT FIGURES. One shape printed twice is
+        // a counter that has stopped reading one of the two records.
+        if (n(1) === n(3) && n(2) === n(4)) return false;
+        return n(1) === moves.filter((x) => x.direction === "in").length
+          && n(2) === moves.filter((x) => x.direction === "out").length
+          && n(3) > 0 && n(4) > 0;
       }],
     /**
      * THE SIDE CONTROL IS PRESENT AND SET TO ALL by default, which is what the
@@ -7684,78 +7890,16 @@ const INVARIANTS = {
    * every row above it is wrong (the Private Market page's PM-1), and a footer
    * summed from rows that lost one reconciles perfectly with itself.
    */
-  "monitor-txn-trades": [
-    ...txnRecordChecks("trades"),
-    ["every section on the transactions table is a section the holdings table draws",
-      (t, ctx) => {
-        if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
-        const drawn = ctx.sectionRows?.map((r) => r.key) ?? [];
-        if (!drawn.length) return { notChecked: "no section headings on this run" };
-        const ok = new Set([...TXN_SECTIONS.category, "Not classified by the statement"]);
-        return drawn.every((k) => ok.has(k));
-      }],
-    ["the trades footer is summed from the rows it draws", (t, ctx) => {
-      const tbl = ctx.tradesTable;
-      if (!tbl?.foot || !tbl.groups.length) return false;
-      const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
-      return tbl.groups.reduce((a, g) => a + (g.trades || 0), 0) === n(tbl.foot[1])
-        && tbl.groups.length === n(tbl.foot[0]);
-    }],
-    /**
-     * ── A MANDATE IS ONE ROW, IN ONE SECTION ───────────────────────────────
-     *
-     * Added because the DEFECT this found on the rendered page — an unstated
-     * asset class short-circuiting the section join — drew Carnelian Bespoke
-     * Portfolio TWICE, once under PMS mandates and once under a heading saying
-     * nothing knew what it was, and every check on the card stayed green.
-     *
-     * Scoped to MANDATES rather than to every label, because a SECURITY may
-     * legitimately appear in two sections: the same name traded in two accounts
-     * whose engagements differ is two rows by design. A mandate cannot — it is
-     * one account, and an account has one engagement and therefore one section
-     * on every axis.
-     */
-    ["no mandate is drawn in more than one section", (t, ctx) => {
-      const rows = (ctx.tradesTable?.groups ?? []).filter((g) => g.kind === "mandate");
-      if (!rows.length) return { notChecked: "no mandate traded on this run" };
-      const seen = new Map();
-      for (const r of rows) {
-        const at = seen.get(r.label);
-        if (at !== undefined && at !== r.section) return false;
-        seen.set(r.label, r.section);
-      }
-      return true;
-    }],
-    /**
-     * THE TWO RECORDS STILL DO NOT SHARE A FOOTER, struck from this side.
-     *
-     * It used to read BOTH tables in one ctx, which a toggle makes impossible —
-     * and unnecessary: they are separate components now, so a shared total is no
-     * longer one edit away. What IS still worth asserting is that this footer
-     * counts THIS record — trades and rollup rows, never the capital table's
-     * accounts-and-payments shape, which is the line a combined total would have
-     * to print.
-     */
-    ["the trades footer counts trades, not the capital record's accounts", (t, ctx) => {
-      const foot = ctx.tradesTable?.foot;
-      if (!foot) return { notChecked: "the trades footer was not on screen on this run" };
-      const label = String(foot[0] ?? "").trim();
-      return /^Total · [\d,]+ rows?$/.test(label) && !/accounts|payments/i.test(label);
-    }],
-  ],
-
   /**
-   * ── THE SAME CARD, BASKET AXIS — ONE ROUTE PER RECORD ─────────────────
+   * ── THE SAME CARD, BASKET AXIS ────────────────────────────────────────
    *
-   * The regroup claim read BOTH tables in one ctx, and only one is in the DOM
-   * now. So it is a FACTORY parameterised on the record the route walked, and it
-   * is run on both — the axis is shared STATE, but the two tables reach a
-   * section through DIFFERENT helpers (`forAccount` for an account,
-   * `forTxn` for a dated trade), so a regroup that worked for one and not the
-   * other is a real defect only this pair can see.
+   * It was a PAIR of addresses, one per record, because only one table was ever
+   * in the DOM and the two reached a section through different helpers. One
+   * table carries both halves now, so both joins — `forAccount` for an account
+   * and `forTxn` for a dated trade — are exercised at this one address, and the
+   * second route would have walked the identical page.
    */
-  "monitor-txn-basket": [...txnBasketChecks("capital")],
-  "monitor-txn-basket-trades": [...txnBasketChecks("trades")],
+  "monitor-txn-basket": [...txnBasketChecks()],
 
   "monitor-axis-crossback": [
     /**
@@ -7801,6 +7945,7 @@ const INVARIANTS = {
   ],
 
   "monitor-txn-secaxis": [
+    ...txnMergedChecks(),
     ["the security axis is not offered on Transactions", (t, ctx) =>
       !!ctx.axisControl && ctx.axisControl.view === "transactions"
       && ctx.axisControl.visible === true
@@ -7819,7 +7964,7 @@ const INVARIANTS = {
     }],
     ["…and the table really is sectioned by category", (t, ctx) => {
       if (!TXN_SECTIONS?.category?.length) return { notChecked: "the book's category sections could not be read" };
-      const drawn = ctx.tradesTable?.sections ?? [];
+      const drawn = ctx.datedTable?.sections ?? [];
       if (!drawn.length) return false;
       const ok = new Set([...TXN_SECTIONS.category, "Not classified by the statement"]);
       return drawn.every((k) => ok.has(k));
@@ -8086,6 +8231,7 @@ const INVARIANTS = {
   ],
 
   "monitor-txn-in": [
+    ...txnMergedCore(),
   /**
    * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
    *
@@ -8162,6 +8308,7 @@ const INVARIANTS = {
   }],
   ],
   "monitor-txn-out": [
+    ...txnMergedCore(),
   /**
    * ── THE SIDE FILTER ACTUALLY FILTERS ────────────────────────────────────
    *
@@ -8270,6 +8417,7 @@ const INVARIANTS = {
    * so `/Total · N …/` over the whole page cannot say which footer it matched.
    */
   "monitor-txn-manager": [
+    ...txnMergedChecks(),
     /**
      * THE TABLE OPENS ROLLED UP. Struck on the arithmetic rather than on the
      * heading: a tape re-labelled would satisfy any prose match, so this asserts
@@ -8277,11 +8425,9 @@ const INVARIANTS = {
      */
     ["the tape opens rolled up — far fewer lines than trades",
       (t, ctx) => {
-        const f = ctx.tradesTable?.foot;
-        if (!f) return false;
-        const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
-        const rows = n(f[0]), trades = n(f[1]);
-        return rows > 0 && trades > rows * 3;
+        const d = ctx.datedTable?.footData;
+        if (!d) return false;
+        return d.rows > 0 && d.trades > d.rows * 3;
       }],
 
     /**
@@ -8293,11 +8439,11 @@ const INVARIANTS = {
      */
     ["every trade on the tape reaches the rollup — its footer ties to the tape's own counter",
       (t, ctx) => {
-        const f = ctx.tradesTable?.foot;
+        const d = ctx.datedTable?.footData;
         const tape = /Trades ([\d,]+) buys · ([\d,]+) sells/.exec(ctx.txnCounter ?? "");
-        if (!f || !tape) return false;
-        const n = (x) => Number(String(x).replace(/,/g, "").replace(/[^\d]/g, ""));
-        return n(tape[1]) + n(tape[2]) === n(f[1]);
+        if (!d || !tape) return false;
+        const n = (x) => Number(String(x).replace(/,/g, ""));
+        return n(tape[1]) + n(tape[2]) === d.trades;
       }],
 
     /**
@@ -8311,13 +8457,12 @@ const INVARIANTS = {
      */
     ["each section's rows add to the footer's trade count",
       (t, ctx) => {
-        const tbl = ctx.tradesTable;
-        if (!tbl?.foot) return false;
+        const tbl = ctx.datedTable;
+        if (!tbl?.footData) return false;
         if (tbl.sections.length < 2) return { notChecked: "the table drew one section on this run" };
-        const n = (x) => Number(String(x).replace(/[^\d]/g, ""));
         const drawn = tbl.groups.reduce((a, g) => a + (g.trades || 0), 0);
         const perSection = new Set(tbl.groups.map((g) => g.section));
-        return drawn === n(tbl.foot[1])
+        return drawn === tbl.footData.trades
           // every group really is filed under a heading the table drew
           && [...perSection].every((k) => tbl.sections.includes(k));
       }],
@@ -8331,12 +8476,18 @@ const INVARIANTS = {
      */
     ["the realised total names the fraction of sells it covers",
       (t, ctx) => {
-        const f = ctx.tradesTable?.foot;
-        if (!f) return false;
-        const m = /([\d,]+)\/([\d,]+)/.exec(f[6] ?? "");
+        const tbl = ctx.datedTable;
+        if (!tbl?.foot || !tbl.footData) return false;
+        // STRUCK ON THE RENDERED CELL, because the claim is that the fraction is
+        // on SCREEN beside the figure — and reconciled against the handles, so a
+        // cell printing some other pair of numbers cannot satisfy it. Column 9
+        // on the merged table: name how in out net investedOn trades bought sold
+        // REALISED.
+        const m = /([\d,]+)\/([\d,]+)/.exec(tbl.foot[9] ?? "");
         if (!m) return false;
         const n = (x) => Number(x.replace(/,/g, ""));
-        return n(m[1]) > 0 && n(m[1]) < n(m[2]);
+        return n(m[1]) > 0 && n(m[1]) < n(m[2])
+          && n(m[1]) === tbl.footData.realisedOf && n(m[2]) === tbl.footData.sells;
       }],
 
     /**
@@ -8366,7 +8517,7 @@ const INVARIANTS = {
      */
     ["every row in the PMS mandates section is a mandate, not a security",
       (t, ctx) => {
-        const rows = (ctx.tradesTable?.groups ?? []).filter((g) => g.section === MANDATE_BUCKET);
+        const rows = (ctx.datedTable?.groups ?? []).filter((g) => g.section === MANDATE_BUCKET);
         if (!rows.length) return { notChecked: "no PMS section on this run" };
         if (!PMS_ACCOUNTS) return { notChecked: "the book's PMS account count could not be read" };
         return rows.every((g) => g.kind === "mandate") && rows.length <= PMS_ACCOUNTS;
@@ -8374,7 +8525,7 @@ const INVARIANTS = {
 
     ["a group that sold nothing shows an em dash in Sold, never a zero",
       (t, ctx) => {
-        const tbl = ctx.tradesTable;
+        const tbl = ctx.datedTable;
         if (!tbl?.groups?.length) return false;
         // `label-xs` IS `uppercase`, AND `innerText` RETURNS THE TRANSFORMED
         // TEXT — so the header reads "SOLD" and an exact match finds nothing,
@@ -8588,6 +8739,7 @@ const INVARIANTS = {
    * renders the whole tape under a heading that denies half of it.
    */
   "monitor-txn-direct": [
+    ...txnMergedCore(),
     ["Direct Equity renders rows, so the filter matched something",
       () => {
         if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
@@ -8612,11 +8764,18 @@ const INVARIANTS = {
         return DIRECT.footTrades > 0 && DIRECT.footTrades < DIRECT_ALL;
       }],
 
-    /** The footer is summed from the rows above it, as everywhere else here. */
+    /**
+     * The footer is summed from the rows above it, as everywhere else here.
+     *
+     * The row count comes off the footer's own LABEL rather than a Securities
+     * cell: the merged table has no such column — a row is a mandate or a
+     * security, so counting securities across both would be a figure with two
+     * meanings — and the label is the count a reader can check by scrolling.
+     */
     ["its footer ties to the rows it renders",
       () => {
         if (!DIRECT) return { notChecked: "the Direct Equity view was not opened on this pass" };
-        return DIRECT.rowTrades === DIRECT.footTrades && DIRECT.rows === DIRECT.footSecurities;
+        return DIRECT.rowTrades === DIRECT.footTrades && DIRECT.rows === DIRECT.footRows;
       }],
 
     /**
@@ -8639,45 +8798,42 @@ const INVARIANTS = {
         if (ctx.sectionFilter.active !== DIRECT_EQUITY_BUCKET) return false;
         // ...and with one section in view the table correctly draws no heading,
         // exactly as the Holdings table does (`secs.length > 1`).
-        return (ctx.tradesTable?.sections?.length ?? 0) === 0;
+        return (ctx.datedTable?.sections?.length ?? 0) === 0;
       }],
 
-  ],
-
-  /**
-   * ── …AND THE SAME FILTER NARROWS THE CAPITAL RECORD ───────────────────
-   *
-   * This claim sat on `monitor-txn-direct` while both records were stacked on one
-   * page. That route walks the TRADES branch now, so the capital table is not in
-   * the DOM there and the check fell through to matching an absent-state sentence
-   * the page correctly does not print — a check that stops running because a
-   * table moved behind a toggle, for the fourth time in this file.
-   *
-   * It is its own address instead, on the branch that draws the table it is
-   * about: the section filter is SHARED STATE read by both tables, and this is
-   * the half a trades-only reading cannot see.
-   */
-  "monitor-txn-direct-capital": [
-    ...txnRecordChecks("capital"),
-    ["the shared section filter is set to Direct Equity", (t, ctx) =>
-      ctx.sectionFilter?.active === DIRECT_EQUITY_BUCKET],
     /**
-     * …AND THE CAPITAL RECORD HONOURS IT. No account the family funded is Direct
-     * Equity — every one is a PMS mandate or an AIF folio — so under this filter
-     * that table has nothing to draw and must SAY so. A filter wired to one
-     * table would leave all eleven rows sitting under a section they are not in,
-     * and every figure on every one of them would still be correct.
+     * ── …AND THE SAME FILTER NARROWS THE CAPITAL HALF ─────────────────────
+     *
+     * This was an address of its own while the two records sat behind a toggle:
+     * the trades branch was on screen here, so a capital claim fell through to
+     * matching an absent-state sentence the page correctly did not print. With
+     * ONE table both halves are in the DOM at this address, so the claim comes
+     * home — and it is the half a trades-only reading cannot see, because the
+     * section filter is shared STATE read by both.
+     *
+     * No account the family funded is Direct Equity — every one is a PMS mandate
+     * or an AIF folio — so under this filter no row carries a capital record. A
+     * filter wired to the trades half alone would leave all eleven sitting under
+     * a section they are not in, with every figure on every one of them correct.
      */
-    ["…and the capital record is narrowed with it, or says why it is empty", (t, ctx) => {
+    ["…and the capital half is narrowed with it", (t, ctx) => {
       const rows = ctx.mineRows ?? [];
-      if (!rows.length) {
-        // THE ABSENCE NAMES ITS CAUSE, which is this book's founding rule: an
-        // empty table and a table nobody wired look identical without it.
-        return /No dated movement matches these filters/i.test(t)
-          && /publish no dated capital record/i.test(t);
-      }
+      if (!rows.length) return true;
       return rows.every((r) => r.section === DIRECT_EQUITY_BUCKET);
     }],
+    /**
+     * ...AND THE TABLE STILL SAYS WHAT IT DROPPED. With no capital record in
+     * view the Capital columns are a wall of dashes, and a dash that names no
+     * cause reads as a broken feed rather than as a document this book does not
+     * have — which is this page's founding rule, arriving at a filtered column.
+     */
+    ["…and the empty Capital columns name the document that would fill them",
+      (t, ctx) => {
+        const rows = ctx.mineRows ?? [];
+        if (rows.length) return { notChecked: "an account the family funded is Direct Equity on this run" };
+        const titles = ctx.titles ?? [];
+        return titles.some((x) => /reports the family's own dated capital/i.test(x));
+      }],
   ],
 
   /**
@@ -8689,6 +8845,7 @@ const INVARIANTS = {
    * the two are indistinguishable until someone clicks.
    */
   "monitor-txn-drill": [
+    ...txnMergedChecks(),
     /**
      * THE TAPE COLLAPSES TO FAR FEWER LINES THAN IT HAS TRADES — measured on
      * the DOM the walk actually opened, so a page that rendered every trade as
@@ -14485,31 +14642,21 @@ for (const theme of THEMES) {
       if (name === "monitor-txns" || name === "monitor-txn-manager"
         || name === "monitor-txn-drill" || name === "monitor-txn-direct"
         || name === "monitor-txn-in" || name === "monitor-txn-out"
-        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis"
-        || name === "monitor-txn-trades" || name === "monitor-txn-basket-trades"
-        || name === "monitor-txn-direct-capital") {
+        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
         /**
-         * ── AND THE RECORD THE ROUTE IS ABOUT ────────────────────────────────
+         * THERE IS NO RECORD TOGGLE TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
-         *   *"it should be exactly one single simple table just like in the
-         *    holdings."*
+         *   *"just remove the toggle button and show everything within the same
+         *    table."*
          *
-         * The two dated records are behind one toggle now, so only one table is
-         * in the DOM at a time and every route has to say which one it is
-         * walking. `capital` is the default and is left alone; the routes whose
-         * invariants read the TRADES table click through to it.
-         *
-         * Picked by the record's KEY off `data-txn-record-option`, never by the
-         * button's label: "Trades" is also this card's own column heading and
-         * appears in its prose, so a walk that clicked the WORD could match a
-         * sentence about the branch rather than the control that reaches it.
+         * The two dated records were behind one control and are ONE row set now
+         * (`txnLedger.ts`), so every route below lands on the same table and the
+         * three addresses that existed only to click through to the other branch
+         * went with it. `txnMergedChecks` asserts the control really is gone,
+         * on every one of these routes rather than on the one that removed it.
          */
-        if (TRADES_BRANCH.has(name)) {
-          const b = page.locator('[data-txn-record-option="trades"]').first();
-          if (await b.count()) { await b.click(); await page.waitForTimeout(1100); }
-        }
         /**
          * THERE IS NO TAB TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
@@ -14525,16 +14672,18 @@ for (const theme of THEMES) {
          * than the tab was, because it also asserts that the shared control
          * narrows this table at all.
          */
-        if (name === "monitor-txn-direct" || name === "monitor-txn-direct-capital") {
+        if (name === "monitor-txn-direct") {
           // THE WHOLE TABLE FIRST, THEN THE NARROWED ONE. The subset claim used
           // to be struck against the header's buy/sell counter, which narrows
           // with this filter too — so after the tab became a section the
           // witness would have moved with the thing under test. A reading taken
           // BEFORE the filter cannot.
           DIRECT_ALL = await page.evaluate(() => {
-            const foot = document.querySelector("[data-trades-table] tr[data-trades-total]");
-            const n = (x) => Number((/[\d,]+/.exec(x ?? "") ?? ["0"])[0].replace(/,/g, ""));
-            return foot ? n(foot.cells?.[1]?.innerText) : null;
+            const foot = document.querySelector("[data-dated-table] tr[data-dated-total]");
+            // OFF THE HANDLE — the Trades cell renders its count and a
+            // "284B/178S" split with nothing between them, so reading the text
+            // yields a plausible wrong number either way it is parsed.
+            return foot ? Number(foot.getAttribute("data-foot-trades")) : null;
           });
           const sel = page.locator("[data-section-filter]").first();
           if (await sel.count()) { await sel.selectOption("Direct Equity"); await page.waitForTimeout(900); }
@@ -14812,27 +14961,46 @@ for (const theme of THEMES) {
       }
       if (name === "monitor-txn-direct") {
         // THE TAB IS GONE AND THE SECTION FILTER GOT THERE FIRST (above), so
-        // there is nothing to click here. Read the trades table as the filter
-        // left it — scoped to `[data-trades-table]`, because the family's own
-        // capital record above it has a `tfoot` of its own and
-        // `document.querySelector("tfoot tr")` would find that one.
+        // there is nothing to click here. Read the one table as the filter left
+        // it.
         DIRECT = await page.evaluate(() => {
-          const table = document.querySelector("[data-trades-table]");
+          const table = document.querySelector("[data-dated-table]");
           if (!table) return null;
           const rows = [...table.querySelectorAll('tr[data-row="group"]')];
-          const foot = table.querySelector("tr[data-trades-total]");
-          const cell = (r, i) => (r?.cells?.[i]?.innerText ?? "").trim();
-          const n = (x) => Number((/[\d,]+/.exec(x) ?? ["0"])[0].replace(/,/g, ""));
+          const foot = table.querySelector("tr[data-dated-total]");
+          /**
+           * THE FOOTER'S CELLS BY COLUMN, ACCUMULATING `colSpan`.
+           *
+           * `tr.cells[i]` is the i-th ELEMENT, and the footer's label spans the
+           * leading run of columns with no total — a run that changes whenever
+           * a column is added or moved. Read positionally, a Trades assertion
+           * silently becomes one about whatever now sits there, which is the
+           * `lib/table.mjs` rule (match on the column, never on an offset)
+           * arriving in the sweep.
+           */
+          const byCol = (tr) => {
+            const flat = [];
+            for (const td of tr?.cells ?? []) {
+              flat.push((td.innerText ?? "").trim());
+              for (let i = 1; i < (td.colSpan || 1); i++) flat.push("");
+            }
+            return flat;
+          };
+          const n = (x) => Number((/[\d,]+/.exec(x ?? "") ?? ["0"])[0].replace(/,/g, ""));
+          const f = byCol(foot);
           return {
             rows: rows.length,
-            // READ OFF `data-trades`, NOT OFF THE CELL. That cell renders the
-            // count and a "11B/1S" split beside it, so `innerText` is "211B/1S"
-            // and the first number in it is 21 — a parser that happens to
-            // produce a number, which is exactly the class of wrong answer this
-            // sweep exists to catch rather than commit.
+            // READ OFF `data-trades`, NOT OFF THE CELL, on both sides. That cell
+            // renders the count and a "284B/178S" split with no space between
+            // them, so every positional parser of it produces a plausible wrong
+            // number — which is exactly the class of answer this sweep exists to
+            // catch rather than commit.
             rowTrades: rows.reduce((s, r) => s + Number(r.dataset.trades || 0), 0),
-            footTrades: n(cell(foot, 1)),
-            footSecurities: n(cell(foot, 2)),
+            footTrades: Number(foot?.getAttribute("data-foot-trades")),
+            // The row count the footer's own label prints — the merged table has
+            // no Securities column, so this is what the footer ties to its rows
+            // with, and it is the count a reader can check by scrolling.
+            footRows: n(/Total · ([\d,]+) rows?/.exec(f[0] ?? "")?.[1] ?? "0"),
           };
         });
       }
@@ -15522,10 +15690,18 @@ for (const theme of THEMES) {
           // A return renders as a figure; withheld, it renders an AbsentCell
           // whose reason is in a `title`. Read the CELL rather than the text, so
           // "does this row state a return" is answered structurally.
-          hasReturn: /%/.test((tr.cells[7]?.innerText ?? "")),
+          //
+          // THE INDEX MOVED WITH THE MERGE and is stated rather than counted:
+          // one table over both records declares
+          // `name how in out net investedOn trades bought sold realised traded
+          //  value gain return entity`, so Return is 13 where it was 7. Left at
+          // 7 it would have read BOUGHT — a real money figure in place of a
+          // percentage, which is the plausible-wrong-answer this sweep exists to
+          // catch rather than commit.
+          hasReturn: /%/.test((tr.cells[13]?.innerText ?? "")),
           // ...and where it is withheld, the cell must NAME why — the reason is
           // an `AbsentCell` `title`, which no `innerText` sweep can reach.
-          returnReason: tr.cells[7]?.querySelector("[title]")?.getAttribute("title") ?? null,
+          returnReason: tr.cells[13]?.querySelector("[title]")?.getAttribute("title") ?? null,
         })));
       /**
        * THE SIDE CONTROL AND THE COUNTER BESIDE IT.
@@ -15576,7 +15752,7 @@ for (const theme of THEMES) {
        * regression it exists for.
        */
       const mineHead = FAST ? [] : await page.evaluate(() => {
-        const table = document.querySelector("[data-mine-table]");
+        const table = document.querySelector("[data-dated-table]");
         return table ? [...table.querySelectorAll("thead th")].map((th) => ({
           text: (th.innerText ?? "").trim(),
           title: th.getAttribute("title") ?? "",
@@ -15601,11 +15777,11 @@ for (const theme of THEMES) {
        * is captured beside them, so a claim about a column can be struck at the
        * column the heading names rather than at a token offset in a blob.
        */
-      const tradesTable = FAST ? null : await page.evaluate(() => {
-        const table = document.querySelector("[data-trades-table]");
+      const datedTable = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("[data-dated-table]");
         if (!table) return null;
         const cells = (tr) => [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim());
-        const foot = table.querySelector("tr[data-trades-total]");
+        const foot = table.querySelector("tr[data-dated-total]");
         const groups = [...table.querySelectorAll('tr[data-row="group"]')];
         return {
           head: [...table.querySelectorAll("thead th")].map((th) => (th.innerText ?? "").trim()),
@@ -15617,7 +15793,42 @@ for (const theme of THEMES) {
             label: tr.getAttribute("data-group-label"),
             cells: cells(tr),
           })),
+          /** Every merged row, whichever halves it carries. */
+          rows: [...table.querySelectorAll("tr[data-dated-row]")].map((tr) => ({
+            key: tr.getAttribute("data-dated-row"),
+            kind: tr.getAttribute("data-dated-kind"),
+            section: tr.getAttribute("data-dated-section"),
+            label: tr.getAttribute("data-dated-label"),
+            // THE ROW'S OWN DATED SPAN, ACROSS BOTH HALVES — so a claim about
+            // the ORDER of this table is struck on ISO dates rather than on the
+            // "3 Oct 2025" two different cells render, which is the prose a
+            // redesign is free to reformat.
+            first: tr.getAttribute("data-dated-first") ?? "",
+            last: tr.getAttribute("data-dated-last") ?? "",
+            capital: tr.hasAttribute("data-mine-row"),
+            trades: tr.hasAttribute("data-trades"),
+            cells: cells(tr),
+          })),
           foot: foot ? cells(foot) : null,
+          /** The footer cells whose column can carry no total, by their reason. */
+          footTitles: foot ? [...foot.cells].map((td) => td.querySelector("[title]")?.getAttribute("title") ?? "") : null,
+          /**
+           * ...AND ITS FIGURES OFF THEIR OWN HANDLES.
+           *
+           * The Trades cell renders "462" and a "284B/178S" split with no space
+           * between them, so every positional parser of that cell produces a
+           * plausible wrong number — 462284178 stripping non-digits, 462284
+           * taking the leading run. A total is the worst place for that,
+           * because nothing else on the page contradicts it.
+           */
+          footData: foot ? {
+            rows: Number(foot.getAttribute("data-foot-rows")),
+            accounts: Number(foot.getAttribute("data-foot-accounts")),
+            contributions: Number(foot.getAttribute("data-foot-contributions")),
+            trades: Number(foot.getAttribute("data-foot-trades")),
+            sells: Number(foot.getAttribute("data-foot-sells")),
+            realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
+          } : null,
         };
       });
       /**
@@ -15905,30 +16116,41 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * THE TRANSACTIONS RECORD TOGGLE — which record is on screen, what the
-       * control offers, the row count each button prints, and WHICH TABLE is
-       * actually in the DOM.
+       * ── THE ONE TRANSACTIONS TABLE, AND THE TOGGLE THAT IS GONE ────────────
        *
-       * All four, because they fail independently: a toggle that renders and
-       * switches nothing leaves both tables drawn, and one that switches without
-       * relabelling leaves the wrong title over the right table. Counting
-       * `data-mine-table` / `data-trades-table` is the only reading that can see
-       * the first, since every figure in either table is correct on its own.
+       *   *"why are there 'capital in and out/trades' toggle switch provided
+       *    when… There is no need of that… In short, just remove the toggle
+       *    button and show everything within the same table."*
+       *
+       * The card carried a control that swapped one table for another; the two
+       * dated records are ONE row set now (`txnLedger.ts`). So this reads both
+       * halves of that change, because they fail independently: a build that
+       * deleted the toggle and left the capital record behind draws one table
+       * and loses a record, and one that kept the toggle draws the right rows
+       * under a control the family asked to be rid of.
+       *
+       * `rows` is counted per HALF off the row handles rather than off a button,
+       * because there is no button to print them any more and the claim is about
+       * what is DRAWN. `both` is the count that matters most: three rows in this
+       * book carry a capital record AND a trades group, and a merge that lost
+       * either half would draw all 34 rows and reconcile with itself perfectly.
        */
-      const txnRecord = FAST ? null : await page.evaluate(() => {
-        const wrap = document.querySelector("main [data-txn-record]");
+      const txnMerged = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("main table[data-dated-table]");
+        const rows = [...document.querySelectorAll("main tr[data-dated-row]")];
         return {
-          active: wrap?.getAttribute("data-txn-record") ?? null,
-          offered: (wrap?.getAttribute("data-txn-record-options") || "").split(",").filter(Boolean),
-          options: [...(wrap?.querySelectorAll("[data-txn-record-option]") ?? [])].map((b) => ({
-            key: b.getAttribute("data-txn-record-option"),
-            rows: Number(b.getAttribute("data-txn-record-rows")),
-            selected: b.getAttribute("aria-selected") === "true",
-          })),
-          tables: [
-            ...[...document.querySelectorAll("main table[data-mine-table]")].map(() => "capital"),
-            ...[...document.querySelectorAll("main table[data-trades-table]")].map(() => "trades"),
-          ],
+          table: !!table,
+          // THE REMOVED CONTROL, in both the shapes it could come back in.
+          toggle: !!document.querySelector("main [data-txn-record]"),
+          toggleOptions: document.querySelectorAll("main [data-txn-record-option]").length,
+          // ...AND THE TWO TABLES IT USED TO SWAP. Either handle surviving means
+          // a build that kept them stacked and merely dropped the control.
+          legacyTables: document.querySelectorAll("main table[data-mine-table], main table[data-trades-table]").length,
+          rows: rows.length,
+          capital: rows.filter((r) => r.hasAttribute("data-mine-row")).length,
+          trades: rows.filter((r) => r.hasAttribute("data-trades")).length,
+          both: rows.filter((r) => r.hasAttribute("data-mine-row") && r.hasAttribute("data-trades")).length,
+          kinds: rows.map((r) => r.getAttribute("data-dated-kind")),
           title: (document.querySelector("main .h-section")?.innerText ?? "").replace(/\s+/g, " ").trim(),
         };
       });
@@ -17059,7 +17281,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnRecord, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

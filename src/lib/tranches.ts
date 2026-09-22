@@ -370,38 +370,19 @@ export function capitalTotals(groups: CapitalGroup[]) {
 }
 
 /**
- * ── THE CAPITAL RECORD, SECTIONED THE SAME WAY THE HOLDINGS TABLE IS ────────
+ * ── THE SECTIONS ARE `datedSectionRollup`'S NOW ─────────────────────────────
  *
- * The family's dated capital is per ACCOUNT, so a row is filed under the
- * section that account's own holdings sit in — `sectionsFor(...).forAccount` in
- * `txnAxis.ts`, which delegates to `groupKeyFor` rather than answering itself.
+ * `CapitalSectionRows` and `capitalSectionRollup` grouped these rows under the
+ * headings the Holdings table draws, and were the capital table's half of that.
+ * One table carries both dated records since Stage 10bm, so a section holds
+ * rows of BOTH kinds and `datedSectionRollup` in `txnLedger.ts` groups them —
+ * this pair had no caller left, which is the dead-code-that-looks-alive failure
+ * this repo keeps naming.
  *
- * The subtotal is summed FROM the rows the section draws, for the same reason
- * `rollupTotals` and `capitalTotals` already are: a subtotal computed beside its
- * own rows can be right on its own terms while they are wrong, and no check
- * comparing the two can see it.
+ * `capitalTotals` above did NOT go with it: `datedTotals` calls it for the
+ * capital half of every section and of the footer, so there is still ONE
+ * definition of what a set of capital rows adds to.
  */
-export type CapitalSectionRows = {
-  key: string;
-  rows: CapitalGroup[];
-  totals: ReturnType<typeof capitalTotals>;
-};
-
-export function capitalSectionRollup(
-  groups: CapitalGroup[],
-  sectionOf: (accountId: string) => string,
-  order: (keys: string[]) => string[],
-): CapitalSectionRows[] {
-  const by = new Map<string, CapitalGroup[]>();
-  for (const g of groups) {
-    const k = sectionOf(g.accountId);
-    (by.get(k) ?? by.set(k, []).get(k)!).push(g);
-  }
-  return order([...by.keys()]).map((key) => {
-    const rows = by.get(key) ?? [];
-    return { key, rows, totals: capitalTotals(rows) };
-  });
-}
 
 /**
  * How many of a set's holdings carry a breakdown, for the caption under a
