@@ -129,6 +129,18 @@ export type FundRow = {
   security: string;
   /** Who REPORTS it — a depository or a distributor, not necessarily its manager. */
   providers: string[];
+  /**
+   * HOW MANY FOLIOS REPORT THIS FUND — a PER-ACCOUNT count, struck over the RAW
+   * rows and never over the deduped ones.
+   *
+   * §"a consolidated figure counts each `dedupeGroup` ONCE; a per-account or
+   * per-owner figure does not". Counted off the deduped set this reads 1 for
+   * the two holdings two members' statements both report, over a breakdown that
+   * lists both — which is exactly the defect that once put "Held in 1 entity"
+   * above a table of two CRNs, arriving one page over. The row's MONEY stays
+   * consolidated; only this count is raw, and the two differing is what the
+   * expansion names in rupees.
+   */
   folios: number;
   /** Distinct statement dates behind the row, ascending. A group can span two. */
   asOf: string[];
@@ -143,14 +155,23 @@ export type FundRow = {
   returnPct: number | null;
 };
 
-/** One row per FUND, each holding counted once however many members report it. */
-export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex): FundRow[] {
+/**
+ * One row per FUND, each holding counted once however many members report it.
+ *
+ * `rawRows` is REQUIRED and feeds exactly one field — `folios`, which is a count
+ * of statements and therefore must not dedupe. Required rather than optional so
+ * no caller can quietly get the deduped count back: an optional parameter that
+ * changes a figure is the trap this book has paid for before.
+ */
+export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRows: Position[]): FundRow[] {
   const groups = new Map<string, Position[]>();
   for (const p of dedupedRows) {
     const g = groups.get(p.securityKey) ?? [];
     g.push(p);
     groups.set(p.securityKey, g);
   }
+  const statements = new Map<string, number>();
+  for (const p of rawRows) statements.set(p.securityKey, (statements.get(p.securityKey) ?? 0) + 1);
   return [...groups.values()]
     .map((g) => {
       const cost = sumOrNull(g.map((p) => p.costBasis));
@@ -161,7 +182,7 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex): FundR
         securityKey: g[0].securityKey,
         security: g[0].security,
         providers: [...new Set(g.map((p) => providerOf(accIdx, p)))],
-        folios: g.length,
+        folios: statements.get(g[0].securityKey) ?? g.length,
         asOf: [...new Set(g.map((p) => accIdx.get(p.accountId)?.asOf).filter(Boolean) as string[])].sort(),
         units: sum(g.map((p) => p.quantity)),
         cost,

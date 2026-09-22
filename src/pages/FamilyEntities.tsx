@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie,
 } from "recharts";
@@ -11,12 +11,15 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import type { Position } from "@/lib/types";
 import {
-  byEntity, byCustodian, bySector, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
+  byEntity, byCustodian, bucketBy, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
   isCompanyShare, isFundVehicle, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
+import { companySectorIndex } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
+import { UNCLASSIFIED } from "@/lib/sectors";
 import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -85,11 +88,74 @@ const ALL_ENTITIES = "All";
 const WEIGHT_OF = "the whole consolidated book — every account and every asset class, each dedupeGroup counted once";
 
 export function FamilyEntities() {
-  const { portfolio, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
   const entityView = useTableView("family-entities", ENTITY_COLS);
   const holdView = useTableView("family-holdings", FE_HOLDING_COLS);
+  /**
+   * ── THE SECTORS ARE SECTOR COMPOSITION'S, NOT THIS PAGE'S OWN ─────────────
+   *
+   *   *"we have already classified every stock in the sector composition page,
+   *    use the same classification in the families and entities classifications,
+   *    unclassified should not be the top classification."*
+   *
+   * This page read `Position.sector` — the family's own statement and nothing
+   * else — while Sector Composition resolves a company through THREE tiers, and
+   * a depository statement prints an ISIN, a quantity and a rate and NO industry
+   * at all. So the two screens answered the same question differently, and on
+   * this one "Unclassified" was the LARGEST BAR for every member who holds
+   * through a demat. Measured on this book, before and after:
+   *
+   *   Ajay     54.4% Unclassified, 11 sectors  →   8.6%, 12 sectors
+   *   Bharat  100.0% Unclassified,  1 sector   →   4.5%, 10 sectors
+   *   Ankita   40.8% Unclassified, 11 sectors  →   0.0%, 12 sectors
+   *   Aarti   100.0% Unclassified,  1 sector   →   0.0%,  1 sector
+   *
+   * and Unclassified is the top bar for none of the four, which is the ask.
+   *
+   * ONE DEFINITION, SHARED — `companySectorIndex` is a projection of
+   * `companyExposure`, the function Sector Composition and the Monitor's stock
+   * axis are both built on. Nothing about the tiers is re-derived here, and the
+   * lower two can only ever FILL an empty sector: a holding whose own statement
+   * printed one keeps it, on this page exactly as on that one.
+   *
+   * NO VALUE CROSSES OVER. Only `sector` is read; `derived` and `total` are not
+   * touched, so every figure on this page is still the entity's own measured
+   * market value and the card's total is unchanged to the rupee. This is a
+   * re-CLASSIFICATION, not a re-measurement, and that is what makes it safe.
+   *
+   * ENABLED ONLY WHERE A SECTOR IS DRAWN. Everything keyed on this renders for a
+   * SELECTED entity, so the All-entities default pays for no fetch at all. It is
+   * read off the raw param rather than off the resolved `scope`, which is not
+   * available this early and which every hook here has to run before: a param
+   * naming an entity this book does not carry falls back to All and fetches once
+   * for nothing, which is the cheaper of the two mistakes.
+   */
+  const sectorsWanted = (searchParams.get(ENTITY_PARAM) ?? "") !== "";
+  const exposure = useStockExposure(consolidated, sectorsWanted);
+  /**
+   * OVER EVERY COMPANY SHARE, AND DELIBERATELY NOT `currentHoldings(...)`.
+   *
+   * `currentHoldings` keeps a closed position and a sub-₹1,000 speck out of an
+   * ALLOCATION FIGURE, which is right for a total and wrong for a lookup table:
+   * a company's sector does not depend on how much of it the family holds. This
+   * page's own chart DRAWS those rows — Ankita's book carries two, a ₹60
+   * preference line and a ₹580 demat row — so narrowing the index would have
+   * sent exactly those two to Unclassified while placing everything around
+   * them, which is this change running backwards on the rows least able to
+   * defend themselves.
+   *
+   * It costs nothing: the index is a classification, it enters no total, and
+   * `useStockExposure` still narrows the DENOMINATOR it is right to narrow —
+   * which fund holdings the family currently has.
+   */
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
+  /** This page's one answer to "what sector is this row in", for chart and table alike. */
+  const sectorOf = (x: Position) => companySectors.get(x.securityKey)?.sector || UNCLASSIFIED;
   if (!portfolio) return null;
   const p = portfolio.positions;
   const accIdx = accountIndex(portfolio.accounts);
@@ -309,7 +375,33 @@ export function FamilyEntities() {
    */
   const selShares = selRows.filter(isCompanyShare);
   const selSharesMV = sum(selShares.map((x) => x.marketValue));
-  const selSectors = bySector(selShares);
+  // Grouped on `sectorOf` — the shared three-tier answer — rather than on
+  // `Position.sector`, so this chart and Sector Composition place a company the
+  // same way. `bucketBy` is the same roll-up `bySector` is, with the key chosen
+  // by the caller; the VALUES are untouched, so the bars still add to
+  // `selSharesMV` exactly as they did.
+  const selSectors = bucketBy(selShares, sectorOf);
+  /**
+   * WHICH OF THE THREE PLACED EACH COMPANY, counted — so a reader is never left
+   * to assume, and so the two lower tiers are visible as the borrowed evidence
+   * they are. Counted over COMPANIES rather than positions, which is the unit a
+   * sector is a property of; `selShares` holds one row per statement and a name
+   * in three accounts would otherwise be counted three times.
+   */
+  const selPlaced = (() => {
+    const seen = new Map<string, string | null>();
+    for (const x of selShares) if (!seen.has(x.securityKey)) seen.set(x.securityKey, companySectors.get(x.securityKey)?.from ?? null);
+    let book = 0, disclosure = 0, vendor = 0;
+    const unplaced: string[] = [];
+    for (const [k, f] of seen) {
+      if (f === "book") book += 1;
+      else if (f === "disclosure") disclosure += 1;
+      else if (f === "vendor") vendor += 1;
+      else unplaced.push(selShares.find((x) => x.securityKey === k)?.security ?? k);
+    }
+    return { book, disclosure, vendor, unplaced, companies: seen.size };
+  })();
+  const selUnclassifiedMV = selSectors.find((sc) => sc.key === UNCLASSIFIED)?.mv ?? 0;
   const selExcluded = excludedClasses(selRows, isCompanyShare);
   const selExcludedMV = sum(selExcluded.map((c) => c.mv));
   const selMandateShares = selShares.filter((x) => isMandateHeld(engagementOf(accIdx, x) || null));
@@ -463,11 +555,24 @@ export function FamilyEntities() {
         </td>
         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG WAY TO SAY SO:
             it reads as a sector the pipeline failed to map, which is the cell a
-            directly-held share gets when its statement printed none. */}
-        <td className="px-4 py-2.5 text-slate-400">
+            directly-held share gets when no tier could place it.
+
+            A COMPANY SHARE READS `sectorOf`, THE SAME ANSWER THE CHART ABOVE
+            USES. Left on `h.sector` this column would have gone on printing
+            "Unclassified" against a row the chart two cards up had just placed —
+            one screen contradicting itself on the reader's own click, which is
+            the one thing a shared classification is for. */}
+        {/* THE HANDLE IS SCOPED TO A COMPANY SHARE, and the RENDER is not.
+            The chart above is company shares only, so a claim that this column
+            reads the same answer can only be struck on the rows the chart
+            covers — a cash sleeve or a TDS line has no sector under any
+            taxonomy and has never had one here, and letting it into the
+            comparison would fail a correct page on an entity whose company
+            shares happen to be fully placed. */}
+        <td className="px-4 py-2.5 text-slate-400" data-fe-sector-cell={isCompanyShare(h) ? sectorOf(h) : ""}>
           {isFundVehicle(h)
             ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
-            : h.sector}
+            : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
         <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
@@ -708,6 +813,59 @@ export function FamilyEntities() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>}
+            {/* ── WHERE THIS CHART'S SECTORS CAME FROM ──────────────────────
+                The same three tiers Sector Composition reports, counted over
+                the companies THIS entity holds. A reader cannot infer any of
+                them from the bars, and the two lower tiers are borrowed
+                evidence rather than the family's own statement — so they are
+                named, with their counts, on the card that uses them.
+
+                IT NAMES WHAT IS STILL UNPLACED. A residual a reader cannot see
+                is a residual they assume is zero, and it is the bar this whole
+                change is about. */}
+            {/* `data-status` CARRIES THE FETCH'S OWN STATE, so a settled walk
+                can tell a tier that is still landing from one that was never
+                asked for. Disabled, `useStockExposure` stays `loading` for ever
+                and the disclosure tier simply never arrives — a defect that
+                moves no caption and leaves every count well formed. */}
+            {selShares.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-700/70 pt-2.5 text-xs text-slate-400"
+                data-fe-sector-source
+                data-status={exposure.status}
+                data-from-book={selPlaced.book}
+                data-from-disclosure={selPlaced.disclosure}
+                data-from-vendor={selPlaced.vendor}
+                data-unplaced={selPlaced.unplaced.length}
+                data-companies={selPlaced.companies}>
+                <span className="text-slate-500">Sector source</span>
+                {/* "FROM A STATEMENT IN THIS BOOK", not "from their statements".
+                    The index is built over the whole book, so a company this
+                    entity holds through a demat that prints no industry can be
+                    placed by ANOTHER member's statement for the same company —
+                    which is correct, because a sector is a property of the
+                    company. Bharat's four come from exactly that, and "their"
+                    would have claimed his own statements printed them. */}
+                <span><span className="mono text-slate-200">{selPlaced.book}</span> from a statement in this book</span>
+                {selPlaced.disclosure > 0 && <span><span className="mono text-slate-200">{selPlaced.disclosure}</span> from a fund&rsquo;s filing</span>}
+                {selPlaced.vendor > 0 && <span><span className="mono text-slate-200">{selPlaced.vendor}</span> from screener.in</span>}
+                {selPlaced.unplaced.length > 0 && (
+                  <span className="text-slate-500"
+                    title={`No tier places these — a statement that printed no industry, no fund filing naming the ISIN and no NSE symbol to look one up on. ${selPlaced.unplaced.length} companies: ${selPlaced.unplaced.join(", ")}`}>
+                    <span className="mono">{selPlaced.unplaced.length}</span> unplaced ·{" "}
+                    <span className="mono">{money(selUnclassifiedMV)}</span>
+                  </span>
+                )}
+                {/* STILL READING. The disclosure tier is a fetch, so until it
+                    lands the chart is placed by the book and screener.in alone
+                    and a bar may still move. Said rather than left to be seen. */}
+                {exposure.status === "loading" && <span className="text-slate-500">still reading the funds&rsquo; filings</span>}
+                {exposure.status === "unreachable" && (
+                  <span className="text-amber-400/80" title="The look-through store did not answer, so no company is placed by a fund's own filing on this paint. Nothing is misplaced by it — that tier only ever fills an empty sector.">
+                    a fund&rsquo;s filings could not be read
+                  </span>
+                )}
+              </div>
+            )}
             {/* When there are no company shares at all the AbsentSection above has
                 already named every class, so this would only say it twice. */}
             {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">

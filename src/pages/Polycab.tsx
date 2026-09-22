@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Wallet, Layers, Landmark, Coins, Users, Shield, Lock, Activity } from "lucide-react";
+import { Wallet, Layers, Landmark, Coins, Users, Shield, Activity } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -11,7 +11,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity } from "@/lib/format";
 
 import { sumOrNull } from "@/lib/analytics";
-import { BOOK_POLYCAB, BOOK_ACCOUNTS, BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
+import { BOOK_POLYCAB, BOOK_ACCOUNTS } from "@/data/glowData";
 import { usePolycabLive, POLYCAB_SOURCES } from "@/lib/polycabLive";
 
 /**
@@ -27,7 +27,7 @@ import { usePolycabLive, POLYCAB_SOURCES } from "@/lib/polycabLive";
  * nothing here can leak back into a portfolio figure.
  *
  * Every number on the page is derived from `BOOK_POLYCAB`, `BOOK_ACCOUNTS` and
- * `BOOK_CORPORATE_ACTIONS` — none is typed in.
+ * the daily live record — none is typed in.
  *
  * ── WHAT THE FAMILY ASKED THIS PAGE TO SHOW, AND WHAT THE SOURCE CARRIES ────
  *
@@ -61,22 +61,30 @@ import { usePolycabLive, POLYCAB_SOURCES } from "@/lib/polycabLive";
  *   dividends  — the only report type this account has ever issued is
  *                `holdings`. No dividend statement and no corporate-benefits
  *                report covers it, so `dividendReceived` is null on the row.
- *   splits     — `BOOK_CORPORATE_ACTIONS` is real and populated (bonus, spin
- *                off and distribution rows), and it covers the four accounts
- *                whose providers issue a corporate benefits report. This demat
- *                is not one of them, and no row in it names this security.
+ *   splits     — `BOOK_CORPORATE_ACTIONS` covers the four accounts whose
+ *                providers issue a corporate benefits report. This demat is not
+ *                one of them, and no row in it names this security.
  *
- * The last three are therefore read FROM THE BOOK rather than declared in prose:
- * `corporateActions` below filters the real record by this holding's own
- * securityKey, and the card renders whatever it finds. A future drop that brings
- * a Polycab bonus or dividend into the archive fills these rows without a code
- * change; until one does, each says what is missing and which document would
- * carry it.
+ * ── THE CARD THAT STATED THOSE LAST THREE ABSENCES HAS BEEN REMOVED ─────────
+ *
+ * At the family's request. It was a three-row table saying, for pledges,
+ * dividends and corporate actions, that this demat's statement reports none of
+ * them and naming the document that would. The AUDIT of its four claims — which
+ * survive, where, and which genuinely went — is in the comment above the
+ * company-level cards below, with the PLEDGE one called out: it is the only
+ * claim on this page a reader can be harmed by losing, and it is now carried by
+ * the promoter card's third tile, beside the group figure it exists to be told
+ * apart from.
+ *
+ * `BOOK_CORPORATE_ACTIONS` is therefore no longer read here. The record still
+ * carries bonus issues and spin-offs for the accounts whose providers publish
+ * one, still names none of this security, and is still what a future drop would
+ * fill — it simply has no surface on this page any more, which is a fact about
+ * the layout rather than about the book.
  */
 /** Each table's columns, in the order its rows write their cells. */
 const DEMAT_COLS = ["security", "holder", "account", "asOf", "shares", "mark", "value"] as const;
 const HOLDER_COLS = ["holder", "accounts", "shares", "value", "share"] as const;
-const ACTION_COLS = ["exDate", "action", "entitlement", "shares"] as const;
 /**
  * The company-level tables added with the live record arrange like every other
  * table on the site. Neither is a document whose order is its own — the
@@ -91,7 +99,6 @@ export function Polycab() {
   const { fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   const dematView = useTableView("polycab-demat", DEMAT_COLS);
   const holderView = useTableView("polycab-holders", HOLDER_COLS);
-  const actionView = useTableView("polycab-actions", ACTION_COLS);
   const dividendView = useTableView("polycab-dividends", DIVIDEND_COLS);
   const quarterView = useTableView("polycab-quarters", QUARTER_COLS);
   const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
@@ -155,51 +162,6 @@ export function Polycab() {
   })();
 
   /**
-   * DIVIDENDS AND CORPORATE ACTIONS, READ FROM THE BOOK'S OWN RECORDS.
-   *
-   * `BOOK_CORPORATE_ACTIONS` carries bonus issues, spin-offs and distributions
-   * for the accounts whose providers publish a corporate benefits report. It is
-   * filtered on this holding's own securityKey rather than by name, because
-   * `securityKey` is the book's identity for a security (§1) and a name match
-   * would catch the family's `@polycab.com` email domain the same way the
-   * classifier once did.
-   *
-   * The split below is the model's own: a cash dividend is `dividendReceived` on
-   * the position and a `distribution` row here; a bonus, split or spin-off
-   * changes the SHARE COUNT and never carries an amount, which is why
-   * `BOOK_CORPORATE_ACTIONS` exists apart from income and is never summed into
-   * it.
-   */
-  const fencedKeys = new Set(BOOK_POLYCAB.map((p) => p.securityKey));
-  const corporateActions = BOOK_CORPORATE_ACTIONS.filter((c) => fencedKeys.has(c.securityKey));
-  const cashActions = corporateActions.filter((c) => /dividend|distribution|interest/i.test(c.kind ?? ""));
-  /**
-   * Everything that is not cash, INCLUDING an event whose kind the report did
-   * not name. The negation is deliberate: a row dropped for having an
-   * unrecognised kind is a corporate action this page silently hides, and the
-   * table below prints each row's own `kind` — rendering `AbsentCell` where the
-   * report named none — so nothing here asserts that an unnamed event was a
-   * bonus.
-   */
-  const shareActions = corporateActions.filter((c) => !/dividend|distribution|interest/i.test(c.kind ?? ""));
-  /**
-   * THE TWO CASH RECORDS ARE NOT ADDED TOGETHER.
-   *
-   * `dividendReceived` on a position and a cash row in `BOOK_CORPORATE_ACTIONS`
-   * can describe the SAME event: the dividend statement and the corporate
-   * benefits report both carry cash dividends, which is why the ingest matches
-   * them on `(date, security, amount)` and lets the dividend statement win. A
-   * page that summed both would re-create the double count the ingest exists to
-   * remove — Can Fin Homes read ₹1,12,000 against its own 7,000 × ₹8 exactly
-   * once before. So the same precedence is applied here: the position's own
-   * figure where it has one, and the corporate-actions total only where it does
-   * not. Both are null on this holding today, which is precisely when a
-   * double-count is cheapest to prevent and impossible to notice.
-   */
-  const positionDividends = sumOrNull(BOOK_POLYCAB.map((p) => p.dividendReceived ?? null));
-  const dividends = positionDividends ?? sumOrNull(cashActions.map((c) => c.amount ?? null));
-
-  /**
    * ── THE COMPANY-LEVEL RECORD, LIVE ─────────────────────────────────────────
    *
    * Everything above this line is what the family's own STATEMENT reports.
@@ -232,12 +194,6 @@ export function Polycab() {
     // The share of the block is this holder's value over the whole, so it
     // orders exactly as Market value does.
     share: (h) => h.mv,
-  });
-  const actionRows = sortRows(shareActions, actionView.sort, {
-    exDate: (c) => c.exDate ?? null,
-    action: (c) => c.kind ?? null,
-    entitlement: (c) => c.entitlement ?? null,
-    shares: (c) => (typeof c.quantity === "number" ? c.quantity : null),
   });
   /**
    * THE DIVIDEND ROWS SORT ON THE FIGURE, NEVER ON WHAT IS DRAWN. `Action`
@@ -543,7 +499,16 @@ export function Polycab() {
         subtitle="The same shares grouped by the family member the statement names, across however many demat accounts each holds them in."
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-sm">
+          {/* A STRUCTURAL HANDLE, because two of this page's reconciliations are
+              struck on this table's own rows. They used to slice the page text
+              between `SHARE OF THE BLOCK` and the heading of the card that came
+              next — and that card has been removed, which is exactly the "a
+              boundary the page no longer prints is not a boundary" failure this
+              repo has already recorded twice. `sliceBetween` returns everything
+              AFTER its start marker when the end marker is missing, so both
+              claims would have gone on running against the rest of the document
+              rather than failing. */}
+          <table className="min-w-full whitespace-nowrap text-sm" data-polycab-holders>
             <thead className="border-b border-ink-700">
               <Tr view={holderView}>
                 <SortHeader col="holder" view={holderView} align="left">Holder</SortHeader>
@@ -591,145 +556,6 @@ export function Polycab() {
         </div>
       </Card>
 
-      {/* Encumbrances, income and corporate actions */}
-      <Card
-        className="mt-5"
-        pad={false}
-        title="Pledges, dividends and corporate actions"
-        subtitle="What the statements behind this holding report about it beyond the balance itself — and, where they report nothing, which document would."
-      >
-        <div className="overflow-x-auto">
-          {/* Exempt, declared: three FIXED facts about this holding — what a
-              depository statement does and does not carry — rather than
-              records. There is nothing to sort and the three columns are a
-              sentence read left to right. */}
-          <table className="min-w-full text-sm"
-            data-table-static="three fixed facts about this holding rather than records — nothing to sort, and the three columns read as one sentence">
-            <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">What</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Reported</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Which document carries it</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-ink-700/60">
-              {/*
-                PLEDGED / LOCKED-IN SHARES — absent, and NEVER a nil.
-
-                An NSDL `Statement of Holding` prints ISIN Code, Scrip Name,
-                Account Description, Balance and Value, and no encumbrance column
-                of any kind. The CDSL statements elsewhere in this book DO print
-                one, so a nil pledge is a figure this book can carry and report —
-                which is exactly what makes writing one here from a statement
-                that has no such column a fabricated zero rather than a harmless
-                default. On a promoter block it is also the single most
-                consequential zero available to invent.
-              */}
-              <tr className="hover:bg-ink-700/40">
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5 font-medium text-slate-100">
-                    <Lock className="h-3.5 w-3.5 text-slate-500" /> Pledged, locked-in or earmarked
-                  </div>
-                </td>
-                <td className="px-4 py-2.5 text-right mono text-slate-400">
-                  <AbsentCell reason="the NSDL holding statement behind this row prints no pledge, lock-in, earmark or freeze column, so neither an encumbrance nor its absence is reported" />
-                </td>
-                <td className="px-4 py-2.5 text-[12px] leading-relaxed text-slate-500">
-                  A depository holding statement carrying the balance-type breakdown — free, pledged, pledgee, lock-in
-                  and freeze — which the CDSL statements in this book print and this NSDL one does not. Not reported is
-                  not the same as nil, and this row will not print one.
-                </td>
-              </tr>
-
-              {/*
-                DIVIDENDS — read from the position and from the book's own
-                income record, so a future drop fills this row without a code
-                change. Null today because the only report type this account has
-                ever issued is `holdings`.
-              */}
-              <tr className="hover:bg-ink-700/40">
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5 font-medium text-slate-100">
-                    <Coins className="h-3.5 w-3.5 text-slate-500" /> Dividends received
-                  </div>
-                </td>
-                <td className="px-4 py-2.5 text-right mono text-slate-200">
-                  {dividends === null
-                    ? <AbsentCell reason="no dividend statement and no corporate-benefits report covers this demat — its only report type in the archive is the holding statement" />
-                    : money(dividends)}
-                </td>
-                <td className="px-4 py-2.5 text-[12px] leading-relaxed text-slate-500">
-                  {dividends === null
-                    ? "A dividend statement or corporate-benefits report for this demat. The book carries cash dividends for the accounts whose providers issue one; this depository issues a holding statement and nothing else."
-                    : positionDividends !== null
-                      ? "The dividend statement's own figure for this holding, which the ingest prefers over the corporate benefits report where both carry the same event."
-                      : `${fmtNum(cashActions.length)} cash event(s) in the book's corporate-actions record for this security.`}
-                </td>
-              </tr>
-
-              {/*
-                BONUS, SPLITS AND SPIN-OFFS — the same read, against the record
-                that already carries them for four other accounts (a 1:1 bonus, a
-                1:5 bonus and a five-way spin-off). None names this security, so
-                the row is absent rather than reporting "no action" about a
-                document that was never issued.
-              */}
-              <tr className="hover:bg-ink-700/40">
-                <td className="px-4 py-2.5">
-                  <div className="flex items-center gap-1.5 font-medium text-slate-100">
-                    <Users className="h-3.5 w-3.5 text-slate-500" /> Bonus, splits and spin-offs
-                  </div>
-                </td>
-                <td className="px-4 py-2.5 text-right mono text-slate-200">
-                  {shareActions.length === 0
-                    ? <AbsentCell reason="no corporate-benefits report covers this demat, so no bonus, split or spin-off is reported for this holding either way" />
-                    : fmtNum(shareActions.length)}
-                </td>
-                <td className="px-4 py-2.5 text-[12px] leading-relaxed text-slate-500">
-                  {shareActions.length === 0
-                    ? "A corporate-benefits report for this demat. The book already carries bonus issues and spin-offs for the accounts whose providers publish one — this depository is not among them, so an unchanged share count here is unreported rather than confirmed. What the COMPANY has declared is a separate question and is answered below, from the exchange's own record."
-                    : "The book's own corporate-actions record, filtered to this security."}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* The real rows, wherever the record has any. Absent today, and this
-            renders itself the moment a drop supplies one — which is why the
-            record is read rather than the absence being declared in prose. */}
-        {shareActions.length > 0 && (
-          <div className="overflow-x-auto border-t border-ink-700/60">
-            <table className="min-w-full whitespace-nowrap text-sm">
-              <thead className="border-b border-ink-700">
-                <Tr view={actionView}>
-                  <SortHeader col="exDate" view={actionView} align="left">Ex-date</SortHeader>
-                  <SortHeader col="action" view={actionView} align="left">Action</SortHeader>
-                  <SortHeader col="entitlement" view={actionView} align="left">Entitlement</SortHeader>
-                  <SortHeader col="shares" view={actionView}>Shares</SortHeader>
-                </Tr>
-              </thead>
-              <tbody className="divide-y divide-ink-700/60">
-                {actionRows.map((c, i) => (
-                  <Tr view={actionView} key={`${c.securityKey}-${c.exDate}-${i}`} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5 text-slate-400">{c.exDate ? fmtDate(c.exDate) : <AbsentCell reason="the report carries no ex-date for this event" />}</td>
-                    <td className="px-4 py-2.5 text-slate-200">{c.kind ?? <AbsentCell reason="the report does not name the action type" />}</td>
-                    <td className="px-4 py-2.5 text-slate-400">{c.entitlement ?? <AbsentCell reason="the report states no entitlement ratio" />}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{typeof c.quantity === "number" ? fmtNum(c.quantity) : <AbsentCell reason="the report states no share count for this event" />}</td>
-                  </Tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <div className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-          These three are absent because of what the document behind this holding IS, not because a feed failed. A
-          depository reports the balance it holds and the value it marks it at; encumbrances, income and corporate
-          actions come from other statements, and none of them has been issued for this demat in any delivery so far.
-        </div>
-      </Card>
-
       {/*
         ════════ WHAT THE COMPANY DECLARED — live, and a different fact ════════
 
@@ -738,18 +564,48 @@ export function Polycab() {
         disclosed to the exchange: public, statutory, dated, and refreshed every
         morning by `npm run build-polycab`.
 
-        THE TWO MUST NEVER BE READ AS ONE, which is why they are separate cards
-        rather than filled-in rows above. A promoter-GROUP encumbrance of 0% is a
-        real measurement about the group this holding belongs to; it is NOT a
-        statement that THIS demat's balance is unencumbered, and letting the
-        first fill the second's dash would be the most consequential substitution
-        available on this page.
+        THE TWO MUST NEVER BE READ AS ONE, and that is now the whole of what
+        keeps this page honest, because the card that used to say it in a table
+        is gone. A promoter-GROUP encumbrance of 0% is a real measurement about
+        the group this holding belongs to; it is NOT a statement that THIS
+        demat's balance is unencumbered, and letting the first fill the second's
+        dash would be the most consequential substitution available here.
 
-        These cards sit AFTER the statement card deliberately: the sweep slices
-        the per-holder table between `SHARE OF THE BLOCK` and `Pledges,
-        dividends`, and the statement rows between `WHICH DOCUMENT CARRIES IT`
-        and `These three are absent`. Inserting between either pair would break a
-        check by moving its boundary rather than by changing a figure.
+        ── THE STATEMENT CARD THAT SAT HERE WAS REMOVED AT THE FAMILY'S REQUEST ─
+
+        It was a three-row table — pledged/locked-in, dividends received, bonus
+        and splits — each reported ABSENT with the document that would carry it,
+        plus a closing line saying the three are absent because of what a
+        depository statement IS rather than because a feed failed. Every claim
+        was audited against the rest of the page before it went:
+
+          • the PLEDGE claim survives, in the same words and on a better surface:
+            the third tile of the promoter card below reads "This demat's
+            balance — [dash] — the NSDL statement behind this holding prints no
+            pledge, lock-in or freeze column; a group figure is not a statement
+            about this account", and it sits BESIDE the group figure it exists to
+            be told apart from rather than two cards away from it. That is the
+            one claim on this page a reader can be actively harmed by losing, so
+            `check:pages` asserts it survives as a claim of its own;
+
+          • the DIVIDEND distinction survives on the column it is about: the
+            declared table's `On this block · derived` heading and each of its
+            cells carry it — an entitlement rather than income, in no total, and
+            "what actually arrived, and what TDS came off it, is a bank record no
+            exchange can answer";
+
+          • the BONUS half survives and says something STRONGER about the
+            company: the measured nil below is the exchange's own complete record
+            rather than the demat's silence.
+
+        What genuinely went is the statement's own silence stated as a table. The
+        family asked for it and that is their call; it is recorded rather than
+        glossed, which is why this comment is longer than the card's removal.
+
+        The sweep no longer slices this page's text on that card's headings —
+        those boundaries went with it. The per-holder claims read the table's own
+        node through `data-polycab-holders`, which cannot run past the table
+        whatever the page prints after it.
       */}
       <Card
         className="mt-5"

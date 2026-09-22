@@ -1687,6 +1687,133 @@ const RINGFENCED_KEY = (() => {
  * and rendered-against-the-book catches a page that drops rows consistently
  * everywhere and reconciles perfectly with itself.
  */
+/**
+ * ── THE PRIVATE FUNDS, AND THE FOLIOS BEHIND EACH ONE ───────────────────────
+ *
+ *   *"why are there two different toggle switch for fund and folio… make the
+ *    row clickable so that it would reveal a drop down list of folios."*
+ *
+ * The folio table became a ROW EXPANSION, so PM-1 — printed less consolidated
+ * IS this book's double count — moved with it. That claim is the page's central
+ * arithmetic and the only surface it is now visible on, so its expectation is
+ * derived from the book on every run rather than typed.
+ *
+ * RE-EXPRESSED, NEVER IMPORTED: `isPrivateClass`, `currentHoldings`, the ₹1,000
+ * floor and the dedupe are all restated here, on the same terms as `AIF_BOOK`
+ * and `NAV_MOVERS_BOOK` above. A check that calls the helper it is checking
+ * agrees with it by construction, and the two expressions agreeing is the
+ * measurement.
+ *
+ *   `statements`  securityKey → how many STATEMENTS report that fund (raw).
+ *   `consolidated` securityKey → its value with each dedupeGroup counted once.
+ *   `dup`         the funds where the two differ, largest overlap first — the
+ *                 rows the expansion has something to reconcile.
+ */
+/**
+ * ── WHAT FAMILY & ENTITIES' SECTOR MIX HAS TO BEAT ──────────────────────────
+ *
+ *   *"we have already classified every stock in the sector composition page,
+ *    use the same classification in the families and entities classifications,
+ *    unclassified should not be the top classification."*
+ *
+ * That page read `Position.sector` — the family's own statement and nothing
+ * else — and a depository statement prints an ISIN, a quantity and a rate and NO
+ * industry, so "Unclassified" was the largest bar for every member who holds
+ * through a demat. It reads the three-tier answer now, the same one Sector
+ * Composition is built on.
+ *
+ * The expectations below are the BASELINE the change has to improve on, derived
+ * from the book on every run rather than typed:
+ *
+ *   `companies`   distinct company-share keys this entity holds — the unit a
+ *                 sector is a property of, and what the provenance strip counts.
+ *   `bookUnplaced` how many of them tier 1 alone cannot place: NO consolidated
+ *                 row of that key carries a sector. Re-expressed here exactly as
+ *                 `companyExposure`'s first pass does it, over the CONSOLIDATED
+ *                 set, because a sector is a fact about the company rather than
+ *                 about which member's statement happens to print it.
+ *   `rowsNoSector` how many of this entity's ROWS the old rendering would have
+ *                 left saying "Unclassified" in the table's Sector cell.
+ *
+ * RE-EXPRESSED, NEVER IMPORTED — a check that calls the helper it is checking
+ * agrees with it by construction. The lower two tiers are deliberately NOT
+ * re-derived here: they need the look-through store and the vendor map, and
+ * restating them would make this a second implementation of the thing under
+ * test. What is asserted instead is a RELATION — strictly fewer unplaced than
+ * the book alone leaves — which is what the family actually asked for and which
+ * no amount of drift in either store can make vacuous.
+ */
+const FE_SECTOR_BOOK = (() => {
+  try {
+    if (!FAMILY_ENTITY) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const has = (p) => !!p.sector && p.sector !== "Unclassified";
+    // Tier 1 over the whole book, keyed on the security: the page's index is
+    // built over every company share, not over one entity's slice.
+    const placed = new Set(positions.filter((p) => p.assetClass === "Equity" && has(p)).map((p) => p.securityKey));
+    const mine = positions.filter((p) => p.assetClass === "Equity" && acc.get(p.accountId)?.ownerId === FAMILY_ENTITY);
+    if (!mine.length) return null;
+    const keys = new Set(mine.map((p) => p.securityKey));
+    return {
+      companies: keys.size,
+      bookUnplaced: [...keys].filter((k) => !placed.has(k)).length,
+      rowsNoSector: mine.filter((p) => !has(p)).length,
+    };
+  } catch { return null; }
+})();
+
+const PM_FOLIO_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    /**
+     * WHICH SIDE OF THE BOOK A HOLDING IS ON, re-expressed rather than imported
+     * — and the re-expression has to FOLLOW when the rule moves.
+     *
+     * THE MERGE IS WHERE THAT COMES DUE, and it did: this read
+     * `assetClass ∈ {AIF, Unlisted, Structured Product}` for as long as that
+     * WAS the rule, and Stage 10bp made it `marketSide === "private"` — a
+     * Category III AIF trades listed securities, so it is listed exposure. The
+     * page followed the new definition and this did not, and both folio checks
+     * failed against a page that was right.
+     *
+     * It stays a re-expression rather than an import of `isPrivateClass`,
+     * because a check that calls the helper it is checking agrees with it by
+     * construction. The field is read off the generated book, which is where
+     * `build-book` writes the answer.
+     */
+    const small = smallKeysOf(positions);
+    // CURRENT HOLDINGS: a fund redeemed to nil still publishes a NAV, and the
+    // page's own comment is why — `currentHoldings` drops it from the table.
+    const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
+      && Number(p.quantity) === 0 && p.currentPrice != null));
+    const raw = current.filter((p) => p.marketSide === "private" && !small.has(p.securityKey));
+    const seen = new Set();
+    const ded = raw.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const statements = new Map(), printed = new Map(), consolidated = new Map();
+    for (const p of raw) {
+      statements.set(p.securityKey, (statements.get(p.securityKey) ?? 0) + 1);
+      printed.set(p.securityKey, (printed.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
+    }
+    for (const p of ded) consolidated.set(p.securityKey, (consolidated.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
+    const dup = [...statements.keys()]
+      .map((k) => ({ key: k, statements: statements.get(k), printed: printed.get(k) ?? 0, consolidated: consolidated.get(k) ?? 0 }))
+      .map((r) => ({ ...r, gap: r.printed - r.consolidated }))
+      .filter((r) => r.gap > 1)
+      .sort((a, b) => b.gap - a.gap);
+    return { statements, printed, consolidated, dup, funds: statements.size, rows: raw.length };
+  } catch { return null; }
+})();
+
 const FENCED = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -2360,7 +2487,13 @@ const ROUTES = [
    * stops running because a table moved behind a toggle is a check that
    * silently stopped.
    */
-  ["private-market-folios", "/private-market?view=folios"],
+  /**
+   * THE FOLIOS ARE A ROW EXPANSION NOW, so this route opens the DEFAULT view and
+   * the walk clicks the fund with the biggest overlap to reach them. Its name is
+   * unchanged, so PM-1 keeps the address a reader of this file expects to find
+   * it at — what moved is where the table is, not what it claims.
+   */
+  ["private-market-folios", "/private-market"],
   ["private-market-owners", "/private-market?view=owners"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
@@ -5401,25 +5534,28 @@ const qtyChecks = (keyOf) => [
 ];
 
 /**
- * ── THE PRIVATE BOOK'S VIEW TOGGLE, RUN BY ALL THREE OF ITS ROUTES ──────────
+ * ── THE PRIVATE BOOK'S VIEW TOGGLE, RUN BY EVERY ONE OF ITS ROUTES ──────────
  *
  * *"there are three separate sectioned tables, making the pages very lengthy —
  *  add a toggle button in the first table itself to switch the table view
- *  between the three rather than scrolling every time."*
+ *  between the three rather than scrolling every time."* and, a round later,
+ * *"why are there two different toggle switch for fund and folio… keep default
+ *  view as fund only… And remove folio as the toggle button."*
  *
- * A FACTORY rather than three copies, parameterised on the ONE thing that
- * differs between the routes: which view the address asks for. Written as three
- * copies they would be three places for the claim to drift, and written once on
- * the default route it would not catch a toggle that renders on `/private-market`
+ * A FACTORY rather than a copy per route, parameterised on the ONE thing that
+ * differs between them: which view the address asks for. Written as copies they
+ * would be several places for the claim to drift, and written once on the
+ * default route it would not catch a toggle that renders on `/private-market`
  * and vanishes the moment a reader uses it — which is the failure the control
  * itself is written to avoid.
  *
  * Struck on the CONTROL and on which table it drew, never on the labels: "By
- * fund", "By folio" and "By owner" are the three bases this page discusses in
- * prose and in its card titles, so a text match cannot tell a rendered button
- * from a sentence about one. A MISSING TOGGLE IS A FINDING, not an abstention —
- * only the probe failing to run abstains, and this card renders on every build
- * that has a private book at all.
+ * fund", "By folio" and "By owner" are all phrases this page still uses in
+ * prose, in its card titles and in its expansion, so a text match cannot tell a
+ * rendered button from a sentence about one — which is also why the absence of
+ * the folio BUTTON has to be asserted structurally. A MISSING TOGGLE IS A
+ * FINDING, not an abstention — only the probe failing to run abstains, and this
+ * card renders on every build that has a private book at all.
  */
 /**
  * ── THE THREE FUNDS THE FAMILY NAMED ARE OFF THE PRIVATE-MARKET PAGE ────────
@@ -5491,12 +5627,25 @@ const PRIVATE_SCOPE_CHECKS = [
 ];
 
 const pmViewChecks = (expected) => [
-  [`the private book is one card with three views, and this address opens on ${expected}`, (t, ctx) => {
+  /**
+   * TWO VIEWS, NOT THREE — AND `folios` IS ASSERTED GONE FROM THE CONTROL.
+   *
+   *   *"keep default view as fund only… And remove folio as the toggle button."*
+   *
+   * The absence is half the claim and it INVERTS rather than being deleted with
+   * the view: a build that put the third button back renders every figure on
+   * this page correctly and satisfies every reconciliation below it. Struck on
+   * the control, never on the labels — "By folio" is still a phrase this page's
+   * own prose and its expansion use, so a text match cannot tell a rendered
+   * button from a sentence about one.
+   */
+  [`the private book is one card with two views, and this address opens on ${expected}`, (t, ctx) => {
     const pv = ctx?.pmView;
     if (!pv) return { notChecked: "the private-view probe did not run" };
     const keys = pv.views.map((v) => v.key);
-    return keys.length === 3
-      && ["funds", "folios", "owners"].every((k) => keys.includes(k))
+    return keys.length === 2
+      && ["funds", "owners"].every((k) => keys.includes(k))
+      && !keys.includes("folios")
       && pv.views.find((v) => v.active)?.key === expected;
   }],
   [`…and it draws the ${expected} table and only that one`, (t, ctx) => {
@@ -7359,9 +7508,15 @@ const INVARIANTS = {
      * holds promoter stock in two places.
      */
     ["the per-holder rollup regroups the same shares, over the book's own count of demats",
-      (t) => {
+      (t, ctx) => {
         if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
-        const section = sliceBetween(t, "SHARE OF THE BLOCK", "Pledges, dividends");
+        if (!ctx?.polycabDom) return { notChecked: "the DOM probe did not run" };
+        // A MISSING HANDLE IS A FINDING, NOT AN ABSTENTION. `polycabDom` being
+        // null means the probe never ran; `holderText` being null means the
+        // table it reads lost its handle, which is the defect this reconciliation
+        // exists to catch rather than a reason to stand down.
+        const section = ctx.polycabDom.holderText;
+        if (section == null) return false;
         const rows = [...section.matchAll(/\n([^\t\n]+)\t([\d,]+)\t([\d,]+|—)\t([^\t\n]+)\t(?:[\d.]+%|—)/g)];
         if (!rows.length) return false;
         const shares = rows.reduce((s, m) => s + (m[3] === "—" ? 0 : Number(m[3].replace(/,/g, ""))), 0);
@@ -7381,8 +7536,10 @@ const INVARIANTS = {
      * a zero, which would make a broken column sum correctly by shrinking.
      */
     ["the share-of-block column is a share OF THE BLOCK — its rendered weights sum to 100%",
-      (t) => {
-        const section = sliceBetween(t, "SHARE OF THE BLOCK", "Pledges, dividends");
+      (t, ctx) => {
+        if (!ctx?.polycabDom) return { notChecked: "the DOM probe did not run" };
+        const section = ctx.polycabDom.holderText;   // null ⇒ the handle is gone: a finding
+        if (section == null) return false;
         const weights = [...section.matchAll(/\t([\d.]+)%(?:\n|$)/g)].map((m) => Number(m[1]));
         return weights.length > 0 && Math.abs(weights.reduce((a, b) => a + b, 0) - 100) < 0.1;
       }],
@@ -7404,45 +7561,38 @@ const INVARIANTS = {
       }],
 
     /**
-     * PLEDGES, DIVIDENDS AND CORPORATE ACTIONS ARE ABSENT — AND NEVER A ZERO.
+     * ── THE STATEMENT CARD IS GONE, AND THE ONE CLAIM THAT MATTERED IS NOT ──
      *
-     * This is the assertion the whole card exists for. An NSDL holding
-     * statement prints no pledge, lock-in, earmark or freeze column, and no
-     * dividend statement or corporate-benefits report has ever been issued for
-     * this demat — so all three are UNREPORTED. The CDSL statements elsewhere
-     * in this book do print an encumbrance breakdown, with a measured `0.000`
-     * in each column, which is precisely what makes a nil here dangerous: it is
-     * a figure this book knows how to report honestly, so an invented one would
-     * be indistinguishable from a measured one. On a promoter block "nil
-     * pledged" is also the single most consequential zero available to invent.
+     *   *"remove the highlighted section from the dashboard UI."*
      *
-     * Struck on the REPORTED column's own cells rather than on the card's
-     * prose, which renders whatever the data does. Each cell must be an em dash
-     * or a real figure; a zero in any of them fails. The check does not require
-     * the dash — a drop that finally supplies a dividend fills the cell and
-     * still passes — because the claim is "never a fabricated zero", not "always
-     * empty".
+     * It was a three-row table — pledged/locked-in, dividends received, bonus
+     * and splits — each REPORTED as absent with the document that would carry
+     * it. Two checks stood on it: that no cell ever acquires a fabricated zero,
+     * and that all three rows are actually asked. Both INVERT rather than being
+     * deleted alongside the feature, which is the treatment every removal in
+     * this file gets.
+     *
+     * AND THE PLEDGE CLAIM IS ASSERTED TO SURVIVE, as a claim of its own. It is
+     * the only thing on this page a reader can be actively harmed by losing: an
+     * NSDL holding statement prints no pledge, lock-in, earmark or freeze column,
+     * while the promoter card below prints a GROUP encumbrance — 0.00% on this
+     * book — and a reader who takes the second for a statement about this demat
+     * has learnt something false about a ₹12,000 Cr promoter block. The three
+     * claims are separate and none implies another: a build that removed the
+     * card AND the tile satisfies the two absences and loses the distinction in
+     * silence, which is exactly how this would go wrong.
      */
-    ["pledges, dividends and corporate actions each render absent or a real figure, never a fabricated zero",
-      (t) => {
-        const section = sliceBetween(t, "WHICH DOCUMENT CARRIES IT", "These three are absent");
-        const reported = [...section.matchAll(/\n\t([^\t\n]*)\t/g)].map((m) => m[1].trim());
-        if (reported.length !== 3) return false;
-        return reported.every((c) => c !== "" && !/^(?:₹|Rs\.?\s?)?0(?:[.,]0+)?$/.test(c));
-      }],
-
-    /**
-     * ...and all three are actually ASKED. The labels are prose and prose
-     * cannot fail on its own — which is why this sits beside the cell check
-     * above rather than instead of it. What it adds is that the three rows the
-     * family named are the three rows rendered: a card that quietly dropped
-     * "pledges" would satisfy every figure check on this page by having one
-     * fewer figure to get wrong.
-     */
-    ["the three unreported facts are each named rather than silently omitted",
-      (t) => /Pledged, locked-in or earmarked/i.test(t)
-        && /Dividends received/i.test(t)
-        && /Bonus, splits and spin-offs/i.test(t)],
+    ["the removed statement card stays removed",
+      (t) => !/Pledged, locked-in or earmarked/i.test(t)
+        && !/Dividends received/i.test(t)
+        && !/Bonus, splits and spin-offs/i.test(t)
+        && !/WHICH DOCUMENT CARRIES IT/i.test(t)
+        && !/These three are absent/i.test(t)],
+    /* ...and the claim that card carried is asserted to survive by
+       "a promoter-GROUP pledge never fills this demat's own pledge dash" below,
+       which moved onto the promoter card's third tile with it. Kept as ONE
+       check rather than two: it is the same claim, and a second copy is a
+       second place for it to drift. */
 
     /**
      * ── THE COMPANY-LEVEL RECORD, LIVE ──────────────────────────────────────
@@ -7549,21 +7699,38 @@ const INVARIANTS = {
      * THE MOST IMPORTANT CHECK IN THIS BLOCK. A promoter-GROUP encumbrance of 0%
      * is a real measurement about the group this holding belongs to; it is NOT a
      * statement that this demat's balance is unencumbered, and the two are one
-     * careless edit apart. The statement card's pledge cell must stay absent
-     * whatever the group discloses, and the page must say in words that a group
-     * figure is not a statement about this account — otherwise a reader takes a
-     * 0.0% for a guarantee about ₹12,000 Cr of promoter stock.
+     * careless edit apart. This demat's own pledge must stay absent whatever the
+     * group discloses, and the page must say in words that a group figure is not
+     * a statement about this account — otherwise a reader takes a 0.0% for a
+     * guarantee about ₹12,000 Cr of promoter stock.
+     *
+     * ── IT MOVED WITH THE CLAIM, TO A BETTER SURFACE ────────────────────────
+     *
+     * It used to slice the statement card's three-row table and read its first
+     * REPORTED cell. That card was removed at the family's request, and
+     * `sliceBetween` returns everything AFTER its start marker when the end
+     * marker is gone — so left alone this would have gone on running against the
+     * rest of the document rather than failing, which is the one outcome a claim
+     * of this weight must never have. It is struck on the promoter card's third
+     * tile now: the same dash and the same reason, BESIDE the group figure they
+     * exist to be told apart from, which is where the distinction is actually
+     * made rather than two cards away from it.
      */
-    ["a promoter-GROUP pledge never fills the statement card's own pledge dash",
+    ["a promoter-GROUP pledge never fills this demat's own pledge dash",
       (t, ctx) => {
-        const section = sliceBetween(t, "WHICH DOCUMENT CARRIES IT", "These three are absent");
-        const reported = [...section.matchAll(/\n\t([^\t\n]*)\t/g)].map((m) => m[1].trim());
-        const pledgeCellAbsent = reported.length === 3 && reported[0] === "—";
-        const saysSo = /a group figure is not a\s*statement about this account/i.test(t.replace(/\s+/g, " "))
-          || /group figure is not a statement about this account/i.test(t.replace(/\s+/g, " "));
-        const reason = (ctx?.titles ?? []).concat(section).some((x) =>
-          /no pledge, lock-in, earmark or freeze column/i.test(x));
-        return pledgeCellAbsent && saysSo && reason;
+        // The tile's VALUE line, not merely a dash somewhere in the tile: the
+        // sentence under it contains an em dash of its own, so matching the
+        // block would pass a tile whose figure had been filled from the group.
+        const value = /THIS DEMAT'S BALANCE\s*\n\s*(—|[\d.,]+\s*%?)/i.exec(t);
+        if (!value || value[1].trim() !== "—") return false;
+        const saysSo = new RegExp(
+          String.raw`THIS DEMAT'S BALANCE[\s\S]{0,300}?no pledge, lock-in or freeze column`
+          + String.raw`[\s\S]{0,160}?group figure is not a\s+statement about this account`, "i").test(t);
+        // ...AND THE GROUP'S OWN FIGURE IS STILL RENDERED. This is a distinction
+        // between two figures; a page that simply stopped printing the group
+        // pledge would satisfy every line above while answering nothing.
+        const group = ctx?.polycabDom?.pledge;
+        return saysSo && group != null;
       }],
 
     /**
@@ -10574,25 +10741,39 @@ const INVARIANTS = {
       () => PRIVATE_QUOTABLE != null && PRIVATE_QUOTABLE.length === 0],
 
     /**
-     * ── THE THREE TABLES ARE ONE CARD WITH A TOGGLE ──────────────────────────
+     * ── THE TABLES ARE ONE CARD WITH A TOGGLE, AND THE THIRD IS A ROW NOW ────
      *
      * *"there are three separate sectioned tables, making the pages very
      *  lengthy — add a toggle button in the first table itself to switch the
-     *  table view between the three rather than scrolling every time."*
+     *  table view between the three rather than scrolling every time."* and,
+     * a round later, *"why are there two different toggle switch for fund and
+     * folio… keep default view as fund only, and make the row clickable so that
+     * it would reveal a drop down list of folios."*
      *
      * Struck on the CONTROL and on which table it drew, never on the labels:
-     * "By fund", "By folio" and "By owner" describe the three bases this page
-     * talks about in prose, and a text match could not tell a rendered button
-     * from a sentence. A MISSING TOGGLE IS A FINDING rather than an abstention
-     * — only the probe failing to run abstains, and this card renders on every
-     * build that has a private book at all.
+     * "By fund", "By folio" and "By owner" describe the bases this page talks
+     * about in prose, and a text match could not tell a rendered button from a
+     * sentence about one. A MISSING TOGGLE IS A FINDING rather than an
+     * abstention — only the probe failing to run abstains, and this card renders
+     * on every build that has a private book at all.
      */
     /**
      * THE DEFAULT IS A DECISION AND IT IS THE ONE THAT MOVES SILENTLY: the page
-     * renders perfectly on any of the three, and the other two are on a basis
-     * that counts this book's two duplicated holdings twice.
+     * renders perfectly on either view, and By owner is on a basis that counts
+     * this book's two duplicated holdings twice.
      */
     ...pmViewChecks("funds"),
+    /**
+     * ...AND NO ROW IS OPEN UNTIL A READER OPENS IT. The default is the fund
+     * table alone, which is what "keep default view as fund only" asks for; a
+     * build that expanded every row on arrival renders every figure correctly
+     * and satisfies every reconciliation on the expanded route.
+     */
+    ["…and no folio panel is open until a row is clicked", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      return pv.toggles.length > 0 && pv.panels.length === 0 && pv.toggles.every((x) => !x.open);
+    }],
     ...PRIVATE_SCOPE_CHECKS,
 
     /**
@@ -10954,21 +11135,100 @@ const INVARIANTS = {
    * fails, and one that mis-states the overlap fails on the other side.
    */
   "private-market-folios": [
-    ...pmViewChecks("folios"),
+    ...pmViewChecks("funds"),
     ...PRIVATE_SCOPE_CHECKS,
-    ["the folio total less the consolidated total is exactly the double count the page names", (t) => {
-      const raw = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*rows[\s\S]{0,120}?` + CR + String.raw`\s*as printed`, "i").exec(t)?.[1]);
-      const said = new RegExp(CR + String.raw`\s*of the\s*` + CR + String.raw`\s*above is two holdings[\s\S]{0,60}?The consolidated\s*` + CR, "i").exec(t);
-      const tile = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
-      if (!Number.isFinite(raw) || !said || !Number.isFinite(tile)) return false;
-      const [dup, statedRaw, consol] = [cr(said[1]), cr(said[2]), cr(said[3])];
-      return dup > 0
-        && Math.abs(raw - consol - dup) <= Math.max(0.6, consol * 0.002)
-        // The sentence describes the table it sits under, and the consolidated
-        // figure it names is the one the tile prints — a footer and a sentence
-        // about it are exactly the pair this page has already had disagree once.
-        && Math.abs(statedRaw - raw) <= 0.6
-        && Math.abs(consol - tile) <= 0.6;
+    /**
+     * EVERY FUND ROW OFFERS ITS FOLIOS, AND EVERY ONE OPENS ONTO WHAT THE BOOK
+     * SAYS IS BEHIND IT.
+     *
+     * *"make the row clickable so that it would reveal a drop down list of
+     * folios."* Two claims, and the second is the one that could pass hollow: a
+     * chevron on every row satisfies the first while opening onto an empty box,
+     * or onto the first line of somebody else's fund. So the panels are
+     * reconciled FUND BY FUND against `PM_FOLIO_BOOK`, which counts statements
+     * off `glowData.ts` by a path this page does not take.
+     *
+     * The walk opens EVERY row, so a build where only the widest works fails
+     * here rather than passing on the one row the check happened to pick.
+     */
+    ["every fund row offers its folios, and the count on each is the book's own", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      if (!PM_FOLIO_BOOK) return { notChecked: "the private book could not be read from glowData.ts" };
+      // A MISSING CONTROL IS A FINDING. The table renders on every build with a
+      // private book at all, so no toggles means the affordance is gone.
+      if (pv.toggles.length !== PM_FOLIO_BOOK.funds) return false;
+      /**
+       * AND THE FOLIOS COLUMN COUNTS STATEMENTS, NOT DEDUPED ROWS.
+       *
+       * REINTRODUCING THE BUG IS WHAT PUT THIS LINE HERE. `data-pm-folio-rows`
+       * on the chevron is the panel's own `behind.length`, so comparing the two
+       * is a figure against its own copy — this file's own rule, arriving in a
+       * check written the same hour as the comment warning about it. Reverting
+       * `FundRow.folios` to the DEDUPED count left the sweep clean: the cell
+       * went back to reading 1 over a panel listing 2, which is the "Held in 1
+       * entity" defect, and nothing read the cell.
+       *
+       * So the COLUMN's own figure is held to the book's statement count — and,
+       * separately, to the number of rows the panel under it draws, which is
+       * the claim a reader can actually see fail.
+       */
+      if (pv.fundFolios.length !== PM_FOLIO_BOOK.funds) return false;
+      const panelOf = new Map(pv.toggles.map((x) => [x.key, x.rows]));
+      return pv.toggles.every((x) => x.rows === PM_FOLIO_BOOK.statements.get(x.key))
+        && pv.fundFolios.every((x) => x.folios === PM_FOLIO_BOOK.statements.get(x.key)
+          && x.folios === panelOf.get(x.key));
+    }],
+    ["…and each panel draws exactly the statements the book carries for that fund", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      if (!PM_FOLIO_BOOK) return { notChecked: "the private book could not be read from glowData.ts" };
+      if (pv.panels.length !== PM_FOLIO_BOOK.funds) return false;
+      return pv.panels.every((x) => x.rows === PM_FOLIO_BOOK.statements.get(x.key))
+        // Σ over the panels is the RAW row count — the figure the deduped table
+        // above deliberately does not add to. A build that quietly deduped the
+        // expansion ties to itself perfectly and fails this.
+        && pv.panels.reduce((a, x) => a + x.rows, 0) === PM_FOLIO_BOOK.rows;
+    }],
+    /**
+     * PM-1, AT ITS NEW ADDRESS: the lines add to MORE than the row they opened
+     * from, by exactly this book's double count, and the panel says so.
+     *
+     * This is the page's central arithmetic — both duplicated holdings in this
+     * book are private — and it is now visible in one place only. The panel's
+     * own sentence is parsed rather than matched: printed, consolidated and the
+     * overlap must be three figures that reconcile, and the consolidated one
+     * must be the value the ROW above it prints. A sentence that merely contains
+     * three rupee figures passes a regex and fails this.
+     *
+     * AND IT IS RENDERED ONLY WHERE THE TWO REALLY DIFFER — a note on a fund
+     * held in one folio would describe a gap that row does not have, so the
+     * count of notes is held to the book's own count of duplicated funds.
+     */
+    ["the folios behind a row add to more than the row, by the double count the panel names", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      if (!PM_FOLIO_BOOK) return { notChecked: "the private book could not be read from glowData.ts" };
+      // A BOOK WITH NO DUPLICATE ABSTAINS; this one has two, so it cannot.
+      if (!PM_FOLIO_BOOK.dup.length) return { notChecked: "no private holding in this book is reported twice" };
+      const noted = pv.panels.filter((x) => x.note);
+      if (noted.length !== PM_FOLIO_BOOK.dup.length) return false;
+      return noted.every((x) => {
+        const want = PM_FOLIO_BOOK.dup.find((d) => d.key === x.key);
+        if (!want) return false;
+        const m = new RegExp(String.raw`add to\s*` + CR + String.raw`[\s\S]{0,120}?counts it once at\s*` + CR
+          + String.raw`\s*\(a\s*` + CR + String.raw`\s*overlap\)`, "i").exec(x.note);
+        if (!m) return false;
+        const [printed, consol, gap] = [cr(m[1]), cr(m[2]), cr(m[3])];
+        if (![printed, consol, gap].every(Number.isFinite)) return false;
+        // The three tie to each other, and each ties to the book. The bound is
+        // the page's own printing precision reproduced — one decimal in Cr —
+        // never a tolerance widened until the figures fit.
+        return Math.abs(printed - consol - gap) <= 0.11
+          && Math.abs(printed - want.printed / 1e7) <= 0.06
+          && Math.abs(consol - want.consolidated / 1e7) <= 0.06
+          && gap > 0;
+      });
     }],
   ],
 
@@ -13662,6 +13922,85 @@ const INVARIANTS = {
     ["the sector mix names what it excluded, with a value",
       (t) => new RegExp(CR + String.raw`[^\n]{0,120}?excluded rather than folded in`, "i").test(t)
         || new RegExp(String.raw`excluded rather than folded in[^\n]{0,200}?` + CR, "i").test(t)],
+
+    /**
+     * ── THE SECTORS ARE SECTOR COMPOSITION'S, AND UNCLASSIFIED IS NOT THE TOP ─
+     *
+     * Four claims, and no two of them imply each other. The first is the
+     * family's own sentence; the second is what makes it true; the third and
+     * fourth are the two ways it could be true on screen and false underneath.
+     *
+     * A MISSING PROBE IS A FAILURE, NOT AN ABSTENTION — only the probe failing
+     * to RUN abstains. This card renders for every selected entity that holds a
+     * company share, and `FAMILY_ENTITY` is chosen to be one that does.
+     */
+    ["Unclassified is not the largest bar on the sector mix", (t, ctx) => {
+      const fe = ctx?.feSectors;
+      if (!fe) return { notChecked: "the sector-mix probe did not run" };
+      // The ticks are the chart's own categories in the chart's own order, and
+      // the data is sorted by value — so `ticks[0]` IS the bar the family
+      // pointed at. No input is never a pass.
+      return fe.ticks.length > 0 && !/^unclassified$/i.test(fe.ticks[0]);
+    }],
+    ["…and the chart says which of the three tiers placed each company", (t, ctx) => {
+      const fe = ctx?.feSectors;
+      if (!fe) return { notChecked: "the sector-mix probe did not run" };
+      if (!FE_SECTOR_BOOK) return { notChecked: "the entity's company shares could not be read from glowData.ts" };
+      const p = fe.source;
+      if (!p) return false;
+      // The four counts PARTITION this entity's own companies — a strip that
+      // double-counted a company, or quietly dropped one, is the only way a
+      // provenance line can lie without any figure moving.
+      return p.companies === FE_SECTOR_BOOK.companies
+        && p.book + p.disclosure + p.vendor + p.unplaced === p.companies;
+    }],
+    /**
+     * THE TIERS ARE LOAD-BEARING. A build that kept the strip and stopped
+     * reading the lower two renders a perfectly well-formed card — the counts
+     * still partition, the bars still add up — and puts the family back where
+     * they started. So it is asserted as an INEQUALITY against what tier 1 alone
+     * leaves, measured on this book at 7 unplaced against 63.
+     */
+    ["…and the two borrowed tiers place companies the statements do not",
+      (t, ctx) => {
+        const fe = ctx?.feSectors;
+        if (!fe) return { notChecked: "the sector-mix probe did not run" };
+        if (!FE_SECTOR_BOOK) return { notChecked: "the entity's company shares could not be read from glowData.ts" };
+        if (!fe.source) return false;
+        if (!FE_SECTOR_BOOK.bookUnplaced) return { notChecked: "this entity's own statements already place every company" };
+        /**
+         * AND THE LOOK-THROUGH REALLY WAS ASKED. Unwiring the fetch leaves the
+         * state `loading` for ever: the strip still partitions, the bars still
+         * add up, and one whole tier silently stops arriving. The walk waits for
+         * this to settle before reading, so `loading` here means it never will.
+         */
+        if (fe.source.status === "loading") return false;
+        return fe.source.disclosure + fe.source.vendor > 0
+          && fe.source.unplaced < FE_SECTOR_BOOK.bookUnplaced;
+      }],
+    /**
+     * ...AND THE TABLE UNDER THE CHART IS ON THE SAME CLASSIFICATION. Left on
+     * `Position.sector` this column would go on printing "Unclassified" against
+     * a row the chart two cards up had just placed — one screen contradicting
+     * itself on the reader's own click, which is the whole point of sharing a
+     * classification. Struck on the CELLS: every sector a cell names must be one
+     * the chart drew, and fewer of them say Unclassified than the old rendering
+     * would have.
+     */
+    ["…and every holding's Sector cell reads the same answer the chart drew",
+      (t, ctx) => {
+        const fe = ctx?.feSectors;
+        if (!fe) return { notChecked: "the sector-mix probe did not run" };
+        if (!FE_SECTOR_BOOK) return { notChecked: "the entity's company shares could not be read from glowData.ts" };
+        // A fund's cell is an em dash and carries "" — the absence has its own
+        // reason and is not a sector. Company rows are what this is about.
+        const named = fe.cells.filter(Boolean);
+        if (!named.length || !fe.ticks.length) return false;
+        const ticks = new Set(fe.ticks);
+        const unclassified = named.filter((x) => /^unclassified$/i.test(x)).length;
+        return named.every((x) => ticks.has(x))
+          && unclassified < FE_SECTOR_BOOK.rowsNoSector;
+      }],
   ],
 
   /**
@@ -15215,6 +15554,27 @@ for (const theme of THEMES) {
           await page.waitForTimeout(200);
         }
       }
+      // THE LOOK-THROUGH TIER, WAITED FOR. It is a fetch of up to 21 scheme
+      // files, and reading the provenance strip mid-flight would report a tier
+      // as missing when it is really a race.
+      if (name === "family-entity") {
+        await page.waitForSelector('[data-fe-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      /**
+       * THE PRIVATE BOOK'S FOLIOS, OPENED — every row, and the DOUBLE-COUNT ROW
+       * FIRST so the one reconciliation on this page always has a subject.
+       *
+       * Opening every fund is what makes "every row offers its folios" a claim
+       * about the table rather than about whichever row sorted first, and the
+       * panel count then has to tie to the book fund by fund. Picking only the
+       * biggest would pass a build where the other ten open onto nothing.
+       */
+      if (name === "private-market-folios") {
+        const toggles = page.locator("[data-pm-folio-toggle]");
+        const n = await toggles.count();
+        for (let i = 0; i < n; i++) await toggles.nth(i).click();
+        await page.waitForTimeout(500);
+      }
       // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
       // contributions rather than the first, so a regression that truncates a
       // breakdown cannot be satisfied by a single-tranche row that has nothing
@@ -16624,6 +16984,38 @@ for (const theme of THEMES) {
       const pmFunds = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("tr[data-pm-fund]")].map((e) => e.getAttribute("data-pm-fund")));
       /**
+       * ── FAMILY & ENTITIES' SECTOR MIX, READ STRUCTURALLY ──────────────────
+       *
+       *   *"we have already classified every stock in the sector composition
+       *    page, use the same classification in the families and entities
+       *    classifications, unclassified should not be the top classification."*
+       *
+       * Both halves need the DOM. The provenance counts are attributes, and the
+       * complaint itself is about the ORDER OF THE BARS — which is a fact about
+       * a chart and carries no text `innerText` can see. Recharts renders each
+       * tick as an SVG `<text>`, in the data's own order, and the data is sorted
+       * by value: `ticks[0]` IS the largest bar, which is the figure the family
+       * pointed at.
+       */
+      const feSectors = FAST ? null : await page.evaluate(() => {
+        const strip = document.querySelector("[data-fe-sector-source]");
+        const n = (a) => Number(strip?.getAttribute(a));
+        return {
+          source: strip ? { book: n("data-from-book"), disclosure: n("data-from-disclosure"),
+            vendor: n("data-from-vendor"), unplaced: n("data-unplaced"), companies: n("data-companies"),
+            status: strip.getAttribute("data-status") } : null,
+          ticks: [...document.querySelectorAll("main .recharts-xAxis .recharts-cartesian-axis-tick-value")]
+            .map((e) => e.textContent?.trim() ?? "").filter(Boolean),
+          // The Sector CELL of every holdings row, so the table beneath the
+          // chart can be held to the same classification the chart drew. Read
+          // off the ATTRIBUTE rather than the text: a fund's cell renders an em
+          // dash with its own reason, and `""` is what says "not a sector"
+          // where `textContent` would hand back the dash as if it were one.
+          cells: [...document.querySelectorAll("main table [data-fe-sector-cell]")]
+            .map((e) => e.getAttribute("data-fe-sector-cell") ?? ""),
+        };
+      });
+      /**
        * THE PRIVATE BOOK'S VIEW TOGGLE, AND WHICH TABLE IT DREW.
        *
        * Both halves are structural because neither is visible to a text match:
@@ -16638,6 +17030,31 @@ for (const theme of THEMES) {
           .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true" })),
         tables: [...document.querySelectorAll("main table[data-pm-table]")]
           .map((e) => e.getAttribute("data-pm-table")),
+        /**
+         * WHICH FUND ROWS OFFER THE FOLIO EXPANSION, AND WHAT EACH ONE HOLDS.
+         *
+         * *"make the row clickable so that it would reveal a drop down list of
+         * folios."* The offer is a control and the panel is a table, and neither
+         * is visible to a text match — a row that opens onto nothing renders
+         * exactly like one that opens onto its statements. `rows` is what the
+         * chevron CLAIMS is behind it; `panels` is what actually opened.
+         */
+        // What the Folios COLUMN prints, per fund — a different field from the
+        // chevron's count and the one a reader sees beside the money.
+        fundFolios: [...document.querySelectorAll("main tr[data-pm-fund][data-pm-folios]")].map((e) => ({
+          key: e.getAttribute("data-pm-fund"), folios: Number(e.getAttribute("data-pm-folios")),
+        })),
+        toggles: [...document.querySelectorAll("main [data-pm-folio-toggle]")].map((e) => ({
+          key: e.getAttribute("data-pm-folio-toggle"),
+          rows: Number(e.getAttribute("data-pm-folio-rows")),
+          gap: Number(e.getAttribute("data-pm-folio-gap")),
+          open: e.getAttribute("aria-expanded") === "true",
+        })),
+        panels: [...document.querySelectorAll("main [data-pm-folio-panel]")].map((e) => ({
+          key: e.getAttribute("data-pm-folio-panel"),
+          rows: e.querySelectorAll("[data-pm-folio-row]").length,
+          note: e.querySelector("[data-pm-folio-gap-note]")?.innerText?.replace(/\s+/g, " ").trim() ?? null,
+        })),
         /**
          * THE ROWS THE ACTIVE TABLE DRAWS, read off the TABLE rather than off
          * the page. The card below it NAMES the funds this page no longer
@@ -16817,6 +17234,19 @@ for (const theme of THEMES) {
           hasShareActions: !!document.querySelector("[data-polycab-share-actions]"),
           holding: txt("[data-polycab-holding]"),
           pledge: txt("[data-polycab-pledge]"),
+          /**
+           * THE PER-HOLDER TABLE'S OWN TEXT, rather than a slice of the page's.
+           *
+           * Two reconciliations are struck on these rows, and both used to bound
+           * a `sliceBetween` on the heading of the card that came NEXT — which
+           * has since been removed at the family's request. `sliceBetween`
+           * returns everything AFTER its start marker when the end marker is
+           * gone, so both would have gone on running against the rest of the
+           * document rather than failing: "a boundary the page no longer prints
+           * is not a boundary", for the third time in this file. A node cannot
+           * run past itself whatever the page prints after it.
+           */
+          holderText: document.querySelector("[data-polycab-holders]")?.innerText ?? null,
         };
       });
       // THE CAPITAL-CALL TIMELINE, READ STRUCTURALLY.
@@ -17685,7 +18115,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
