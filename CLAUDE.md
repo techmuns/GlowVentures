@@ -13365,9 +13365,22 @@ there would have reported the check clean under the bug's name.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + **22** + 140 (2 not
 checked, 0 blocked) · `test:family` · `check:family` **85/0** · `check:pages`
-**188 combinations clean**. `npm run build-book` regenerates `glowData.ts` and
-`docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control before and after the
-pass.
+**188 combinations clean**, with **four** EVIDENCED abstentions — the three
+Stage 10bk records (every KPI tile on this book carries a figure, so the
+absent-tile claim has no subject on any of the four Morning CIO routes; no row
+on `stock-qty` carries a pledge, which `stock-pledge` asserts as a hard failure
+so it never stands alone; and the crumb check on `holdings-unknown`, which walks
+an address the book deliberately does not define) **plus one this change
+created**: *no fund row prints a return where its cost is absent*, on both
+Private Market fund routes. That one earns its abstention off the book —
+narrowing the page to the private side left **4 fund rows over 5 deduped
+positions and not one of them lacks a cost**, where the pre-10bl page drew 19
+rows of which 4 reported none. It is the shape this file requires: the claim has
+no subject because the BOOK says so, not because the check could not find its
+figure.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after the pass.
 
 ### Stage 10k — News & Announcements: REMOVED
 
