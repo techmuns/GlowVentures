@@ -13882,6 +13882,58 @@ text — a figure, or an em dash whose `title` says why — or it is a finding. 
 filler is empty. The four that can never carry one are still required to say so,
 so the claim cannot be satisfied by a footer that simply totalled everything.
 
+#### Merged with main TWICE, and the second one brought all three hazards at once
+
+This branch was held open at the family's request (*"Open PR and do not merge
+until i tell you to."*), and main moved twice while it waited. **Both merges are
+recorded, because only the second cost any work and which one would was not
+predictable from the size of the diff** — it is predictable from whether the
+other side's change is a RULE over every route or a change to some of them,
+which is the reading Stage 10bk arrived at and this pair confirms.
+
+**THE FIRST WAS FREE.** `c25c5b8`, the daily Polycab data refresh, is two
+GENERATED files (`src/data/polycabLive.ts`, `docs/POLYCAB-LIVE.md`) and no stage
+heading. **Zero file overlap**, so none of the three hazards had a subject —
+nothing to union, no letter to move, and nothing to splice in a generated file.
+Checked one at a time rather than assumed, then verified (`build-book`
+byte-identical, build green, `ONLY=polycab,monitor-txns` clean) and pushed.
+
+**THE SECOND BROUGHT THE IDENTICAL PAIR FOR THE TENTH AND ELEVENTH TIME, AND A
+THIRD BESIDE THEM.** `585cfbe` (#64) is fifteen files, five commits and two
+stage sections:
+
+- **THE LETTER COLLIDED AGAIN.** Main wrote `### Stage 10bm` **and**
+  `### Stage 10bn`; this branch had written `10bm`. Main's keep both and this
+  section is **10bo**. Nine `10b[mn]` references sat OUTSIDE the conflict hunk,
+  auto-merged from both sides into one file — so `10bm` meant two different
+  sections depending on who wrote the line. **Each was read before any moved**:
+  seven are this branch's (all `10bm`) and two are main's (both `10bn`, the NAV
+  seam in **Layout** and the `build-fund-navs` entry under **Build**), which were
+  left alone. Main's own two internal cross-refs sit inside its hunk and mean
+  ITS `10bm`, so they did not move either. Measured afterwards: **79 stage
+  headings, every letter unique.**
+- **AND THE `ctx` LITERAL CONFLICTED ON ONE LINE.** Resolved as a **MECHANICAL
+  UNION**, and the diff is the whole reason it cannot be done by taking a side:
+  this branch's `txnMerged` and `datedTable` are RENAMES of main's `txnRecord`
+  and `tradesTable`, so main's side carries two keys this change deleted — while
+  `stockMark` is main's genuinely new probe and had to come across. **79 keys, no
+  duplicates, and every one verified to name a variable declared in the merged
+  file**, because a key naming a probe that no longer exists throws inside the
+  check and is reported as a broken matcher rather than as a clean page.
+- **AND TWO MORE FILES OVERLAPPED AND MERGED WITHOUT CONFLICTING**, which this
+  file's own rule says is exactly when to check by hand. `scripts/test-family.mjs`
+  kept both sides' suites. `src/pages/PortfolioMonitor.tsx` is the one that
+  mattered: main added `navPriced` / `navDate` at four sites in a file this branch
+  had largely rewritten, and all four are present in the merge. Neither was taken
+  on trust because git did not complain.
+
+**AND THE GENERATED FILES WERE RE-DERIVED RATHER THAN TRUSTED**, on both merges:
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+byte-identically, with the same md5s as before either merge. Main's own
+`src/data/fundNavs.ts` and `src/data/polycabLive.ts` arrived as straight
+take-theirs — this branch touches neither — and were confirmed byte-identical to
+main's copies rather than assumed to be.
+
 #### The verification
 
 `build` · `tsc` · `test:ingest` · `test:family` (a new `txnLedger.test.ts`, 46
@@ -13890,12 +13942,21 @@ security row with no account to value, the section disagreement, and — anchore
 on the generated book — that `capitalRollup`'s own account value and the merge's
 `valueOfAccount` agree to the paisa, which is two paths to one number rather
 than a figure compared with its own copy) · `check:family` **82/0** ·
-`check:pages` **180 combinations clean**, with the same **six** EVIDENCED
-abstentions Stage 10bl records and not one of them introduced here. That count is 186 less the
-six combinations the three removed addresses walked, and it was RE-MEASURED
-rather than subtracted — every stage in this file states a count against a base
-that has since moved, and this one happens to reconcile only because the sweep
-was run again.
+`check:pages` **186 combinations clean**, with the same **six** EVIDENCED
+abstentions Stage 10bl records and not one of them introduced here.
+
+**THAT COUNT WAS RE-MEASURED TWICE AND IS A FACT ABOUT NEITHER BASE IT PASSED
+THROUGH.** This branch's own pre-merge sweep was **180** — 186 less the six
+combinations the three removed addresses walked — and the two merges below then
+moved the base under it. Measured on the route table rather than reasoned about:
+the base carried **87** routes, this branch removed three (84), main's Polycab
+refresh added none, and main's published-NAV work added three
+(`stock-cmp-split`, `stock-cmp-unmarked`, `stock-cmp-nav`), so the merged tree is
+back to **87** and 180 + 6 = **186**. This is the case where the arithmetic DOES
+reconcile — and it reconciles only because the sweep was run again, which is the
+point every stage in this file makes about its own count. A number carried across
+from another branch's paragraph would have been wrong in the one direction
+nothing on screen could show.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and a
