@@ -13192,12 +13192,17 @@ which `stock-pledge` asserts as a hard failure so it never stands alone. A count
 carried across from another branch's paragraph would have read as three and hidden
 that; the number is what this tree measures.
 
-**THE SWEEP COUNT IS MEASURED ON THE TWICE-MERGED TREE, AND IT RECONCILES ONLY
+**THE SWEEP COUNT IS MEASURED ON THE THRICE-MERGED TREE, AND IT RECONCILES ONLY
 BECAUSE EACH SWEEP WAS RE-RUN.** This branch's own pre-merge run was 168 and
 adds no route; Stage 10bh and 10bi took it to 180, which the FIRST merge
-measured; Stage 10bj adds six more, so this is **186** — every claim here is
-struck on `/family`, which the sweep already walked, and the number moving on
-this branch's own account would have meant a route appeared somewhere nobody
+measured; Stage 10bj adds six, so the SECOND measured **186**; and Stage 10bk
+adds **none** — its Polycab work reuses routes the sweep already walked — so the
+third measured 186 again, to the combination. **That last one was PREDICTED TO
+MOVE AND DID NOT**, which is the whole argument for re-running rather than
+reasoning: a figure adjusted by arithmetic from another branch's paragraph would
+have been wrong in the one direction nothing on screen could show. Every claim
+here is struck on `/family`, which the sweep already walked, so the number moving
+on this branch's own account would have meant a route appeared somewhere nobody
 looked.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
