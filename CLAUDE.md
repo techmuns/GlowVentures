@@ -13579,6 +13579,33 @@ knowing:
   over-counting half. Match the SCRIPT (`awk '$2=="bash" && $3=="scripts/…"'`),
   and the harness now takes a `flock` so a genuine second copy refuses rather
   than racing one `dist/` and one snapshot.
+- **AND ITS SUITE VERDICT READ BACKWARDS ON EVERY CASE, which is the defect this
+  harness exists to find, in the harness.** `run_suite_case` piped the suite into
+  grep and took the PIPELINE's status as the verdict, and two things made that
+  always announce a pass: the suite's own output carries **~1,700 NUL bytes**, so
+  grep classifies it as binary, SUPPRESSES its matching lines and prints a
+  warning instead of them; and `set -o pipefail` turns a FAILING suite's non-zero
+  exit into the `||` branch — the one that prints "SUITE clean". Both halves
+  therefore printed it. **Measured after the fix: all three suite-only cases DO
+  fire** (2, 3 and 2 failures) where all three had reported clean, so nothing
+  those cases claimed had ever been checked. The verdict is the suite's own exit
+  status now and the NULs are stripped before grep sees them. A check that can
+  only ever report a pass is worse than no check: this file's own rule, arriving
+  through a pipeline rather than through a page.
+- **AND TWO PATCHES WERE NOT RESULTS RATHER THAN FINDINGS**, each fixed at the
+  cause rather than by loosening the case. One gated the trades half on `trd &&
+  false`, which TS folds to a constant and refuses to build; a comparison against
+  a real string is false at runtime and typechecks. The other targeted
+  `sumOrNull(trd.map(...))` in `datedTotals` — a line that never existed, because
+  that half is DELEGATED to `rollupTotals`, which is the point of the delegation
+  and is where the injection belongs. **The harness reporting both as NOT A
+  RESULT rather than as clean runs is what made them findable**, which is the
+  whole reason that branch exists.
+- **AND A HARNESS WALKING FIVE ROUTES CANNOT CHECK A FACTORY THAT REACHES FIVE.**
+  Its route list was the five addresses the merged card's counting claims run on,
+  while `txnMergedCore()` claims all EIGHT — so the very defect this pass found
+  first time round (the claims reaching two of eight) was one the harness was
+  blind to by construction. It walks all eight now.
 
 ### Stage 10k — News & Announcements: REMOVED
 
