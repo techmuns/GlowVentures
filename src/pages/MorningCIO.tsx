@@ -133,6 +133,52 @@ const ALLOC_TITLE: Record<GroupAxis, string> = {
   assetClass: "Allocation by asset class — the family's own",
   basket: "Allocation by basket — the family's own",
 };
+/**
+ * ── ONE PAGE, THREE PANELS, AND NO PAGE SCROLL ───────────────────────────────
+ *
+ * *"Divide the Morning CIO into three separate sections and tabs… the KPI tiles
+ * at the top of the page will remain the same for all the three tabs… after
+ * making the tabs the single scroll page should be gone, it should be a
+ * non-scrollable page with a tab switch option to see more data rather than
+ * scrolling the page."*
+ *
+ * THE TABS SWITCH WHICH QUESTION THE PAGE ANSWERS, not which subset of one
+ * measurement it shows — which is why this is a layout split and not the shape
+ * `DailyMovers`' own toggle has. What moved in one session, how the book is
+ * allocated, and what it has earned against the index are three different
+ * measurements over three different windows; nothing on this page was ever
+ * summed across those boundaries, so not one figure moves with the split.
+ *
+ * THE KPI STRIP IS OUTSIDE THE PANEL, DELIBERATELY. The family asked for it on
+ * every tab, and it is also the only part of this page that is true of all
+ * three: a day's move, an allocation and a NAV series are each struck over a
+ * subset that the panels state and the strip does not. Keeping it fixed is also
+ * most of what makes the page fit without scrolling — the strip is what a
+ * reader used to scroll past to reach anything.
+ *
+ * THE PANEL SCROLLS, THE PAGE DOES NOT. `overflow-y-auto` on the panel rather
+ * than nothing at all: a window short enough to clip the NAV chart would
+ * otherwise hide a figure with no way to reach it, which is worse than the
+ * scroll the family asked to be rid of. What they asked for is that the
+ * headline and the tiles stop moving, and they no longer do.
+ *
+ * IN `?tab=` LIKE EVERY OTHER VIEW IN THIS APP, so a panel is a link rather
+ * than an instruction, `check:pages` reaches each one by URL rather than by
+ * clicking, and Back steps between them. The first is param-free and is the
+ * movers card, which is the panel the family named first.
+ *
+ * THE LABELS ARE DELIBERATELY NOT THE CARD HEADINGS THEY OPEN. A tab's text
+ * sits in `innerText` on every one of this page's routes, so a label repeating
+ * a heading would satisfy a check on a tab that heading is not drawn on. One in
+ * particular is BANNED: this page's own roadmap-absence check asserts the words
+ * "NAV vs benchmark" never return, because they once named a promised feature —
+ * so the third tab is named for the index it actually charts.
+ */
+const CIO_TABS = [
+  { key: "movers", label: "Daily Movers", title: "What moved today — the family's own direct equity, and their funds' published NAVs" },
+  { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
+  { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
+] as const;
 const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
   if (axis === "category") return bucketColor(key, i);
@@ -150,6 +196,9 @@ export function MorningCIO() {
    * stays param-free and stays CATEGORY, which is the table they already read.
    */
   const [allocAxis, setAllocAxis] = useViewParam(GROUP_VIEWS, {}, "alloc");
+  // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
+  // why the choice lives in the URL.
+  const [tab, setTab] = useViewParam(CIO_TABS, {}, "tab");
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -896,7 +945,7 @@ export function MorningCIO() {
   };
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       {/* ── NO BASIS PILL ───────────────────────────────────────────────────
           *"remove — 'LIVE · Consolidated · listed live / 49 accounts behind'
           part from the UI."*
@@ -927,7 +976,33 @@ export function MorningCIO() {
           checked every run (`PRIVATE_QUOTABLE`): no private holding resolves an
           NSE symbol, so no row on that page could drift even on the live
           portfolio. See CLAUDE.md §6 and Stage 10ap. */}
-      <PageHeader eyebrow="Daily Briefing" title="Good morning — here's where the book stands" />
+      <PageHeader eyebrow="Daily Briefing" title="Good morning — here's where the book stands"
+        right={
+          /* `right`, not `beside`. The family asked for these "on the right most
+             side of the line", and `PageHeader` pins `right` hard against the
+             far edge while `beside` keeps a control next to the title — which
+             is the Portfolio Monitor's Holdings/Transactions case, not this one.
+
+             KEYED `data-cio-tab-key`, because a claim about which panels this
+             page offers must not be struck on three labels a redesign is free
+             to reword. Same contract `data-movers-scope` and `data-alloc-axis`
+             already carry on this page. */
+          <div role="tablist" aria-label="Which part of the briefing to show" data-cio-tabs
+            className="inline-flex items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+            {CIO_TABS.map((v) => (
+              <button key={v.key} type="button" role="tab" aria-selected={tab === v.key}
+                title={v.title} data-cio-tab-key={v.key}
+                onClick={() => setTab(v.key)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  tab === v.key
+                    ? "bg-champagne-500 text-ink-950 shadow-glow"
+                    : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+                }`}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+        } />
 
       {/* KPI strip */}
       {/* ONE LINK PER TILE, ASSERTED ON THE DOM. `check:pages` counts the
@@ -935,7 +1010,7 @@ export function MorningCIO() {
           what a reader can click, which no amount of matching innerText can
           make. See the `cio` invariant "each KPI tile offers exactly one
           destination". */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
+      <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
         <Kpi label="Current Value of Holdings"
           href={drilldownHref("book")}
           hrefTitle={`Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page.${
@@ -1078,436 +1153,455 @@ export function MorningCIO() {
             : <span className="text-slate-500">no fund has distributed, because none is held</span>}
           icon={<Coins className="h-4 w-4" />} />
       </div>
+      {/* ── THE PANEL ───────────────────────────────────────────────────────
+          ONE OF THE THREE, NEVER TWO. The inactive panels are UNMOUNTED rather
+          than hidden: `display:none` keeps a node in the DOM but takes it out
+          of `innerText`, so every text-struck check would read exactly what it
+          reads now while the page still paid to render three panels' worth of
+          tables. There is nothing to be gained by keeping them, and a mounted
+          card nobody can see is a card whose feed still fetches.
 
-      {/* DAILY MOVERS — the first thing the family asked for, and the first
-          card under the strip for that reason. It is the only figure on this
-          page that is about ONE SESSION rather than the book to date, which is
-          why it carries its own coverage line rather than borrowing the page's:
-          every other total here spans 369 positions, and a day change spans the
-          ones that can be priced at all.
+          `min-h-0` is what makes `flex-1` shrink rather than grow the column
+          past the window — without it the panel is as tall as its content and
+          the page scrolls again, which is the whole of what was asked. */}
+      <div className="mt-5 min-h-0 flex-1 overflow-y-auto" data-cio-panel={tab}>
 
-          TWO CARDS STOOD HERE AND NOW THERE IS ONE WITH A TOGGLE —
-          *"give a toggle button in the direct equity daily movers for 'direct
-          equity/ETF & Mutual Funds', and remove the separate daily movers for
-          ETF and Mutual Funds."*
+        {/* DAILY MOVERS — the first thing the family asked for, and the first
+            card under the strip for that reason. It is the only figure on this
+            page that is about ONE SESSION rather than the book to date, which is
+            why it carries its own coverage line rather than borrowing the page's:
+            every other total here spans 369 positions, and a day change spans the
+            ones that can be priced at all.
 
-          THE TOGGLE SWITCHES WHICH MEASUREMENT IS SHOWN, and that is the whole
-          of why they are still two components behind one control rather than
-          one model with a scope field. Direct Equity is a live intraday price
-          against the previous session's close; ETFs & mutual funds is a
-          scheme's own published NAV against the one before it, on dates a week
-          behind and not even shared between rows. Each branch keeps its own
-          title, its own as-of and its own coverage line; they are never summed
-          and never dated alike. See `DailyMovers.tsx`. */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <DailyMovers />
-      </div>
+            TWO CARDS STOOD HERE AND NOW THERE IS ONE WITH A TOGGLE —
+            *"give a toggle button in the direct equity daily movers for 'direct
+            equity/ETF & Mutual Funds', and remove the separate daily movers for
+            ETF and Mutual Funds."*
 
-      {/* Allocation hero + right column */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        {/* THE SUBTITLE IS GONE at the family's request, after the long
-            explanatory block beneath this table went the same way.
-
-            Two of the things it said are facts a reader ACTS on rather than
-            chrome: that every return here is CUMULATIVE rather than annualised,
-            and the DATE each figure closes at. The first is still on this page
-            outside this card — the Consolidated return tile states "cumulative,
-            not annualised" on its face.
-
-            THE SECOND HAS SINCE LOST ITS OTHER HOME, and this comment is
-            corrected rather than left standing: it read "the header's
-            `<BasisPill>` states the as-of and how many accounts are behind it",
-            and the family have now asked for that pill. The as-of and the
-            staleness are on the holdings table's own basis note and in the KPI
-            tiles' hovers; this page no longer prints a report date on its face.
-            That is the family's decision, recorded in CLAUDE.md with what it
-            costs, and it is why the sentence above no longer claims otherwise.
-
-            AND THE PILL KEEPS THE WORD "HELD". Two other invariants read the
-            bucket count out of `N buckets held`; rewording it to `N buckets ·
-            cumulative · <date>` — the first draft of this change — made both
-            report a missing figure on a page rendering correctly. A caption is
-            chrome; a count inside it is not. */}
-        {/*
-            ── ONE BOOK, THREE SLICES, AND THE FAMILY PICKS ──────────────────
-
-            *"I have given you my baskets… how is the core doing, how is the
-            satellite portfolio doing, how is the liquidity portfolio doing.
-            This should be the Morning CIO page. Add a selector in the
-            allocation section to select asset class wise / category wise /
-            basket wise allocation and performance overview."*
-
-            The segments regroup THE SAME ROWS. Invested, Current, Return and
-            Weight are the identical arithmetic over the identical holdings on
-            every axis, and all three sum to the same NAV — so the footer, the
-            weight base and the cost-coverage refusal are untouched and stay
-            correct by construction. Only the section key moves, and it moves
-            through `groupKeyFor`, which is also what the Portfolio Monitor
-            sections on: one answer to "which basket is this holding in",
-            shared, rather than one per screen.
-
-            THE TITLE FOLLOWS THE AXIS, because a table of BASKETS headed
-            "Allocation by asset class & mandate" is the caption-does-not-
-            describe-its-figure failure this page has already paid for twice.
-            The category title is left exactly as it was — it predates the
-            regroup and is not a perfect description of that axis, but it is the
-            one the family has learnt and renaming it is not what they asked for.
-
-            AND THE PILL'S NOUN FOLLOWS TOO. Two `check:pages` invariants read
-            this table's row count out of the pill, so the count is not chrome —
-            but "6 buckets held" over a table of baskets would be wrong about
-            what it counted. `groupCount` supplies the noun per axis. */}
-        <Card className="lg:col-span-2 self-start" title={ALLOC_TITLE[allocAxis]}
-          right={
-            <div className="flex flex-wrap items-center gap-2">
-              <div role="tablist" aria-label="Group the allocation by"
-                className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
-                {GROUP_VIEWS.map((v) => (
-                  <button key={v.key} type="button" role="tab" aria-selected={allocAxis === v.key} title={v.title}
-                    data-alloc-axis={v.key}
-                    onClick={() => setAllocAxis(v.key)}
-                    className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${allocAxis === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-              <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
-            </div>
-          }>
-          {/* THE ALLOCATION BAR CHART, above the table. The donut this replaced
-              was removed for restating the Weight column as a wedge; a horizontal
-              bar chart is the same encoding without the wasted centre, and it
-              fills the space the donut's removal left below the table (the card
-              is `self-start`, so its height is its content).
-
-              EACH BAR IS THE SAME LINK ITS ROW IS. A `fromPositions` section is a
-              `<Link>` to `drilldownHref(AXIS_SCOPE[allocAxis], b.key)` — the exact
-              href the row builds — so a bar and its row open the same drill-down;
-              a fund-of-funds row carries no positions and its bar is a plain
-              `<div>`, exactly as the row is not a link. The bar WIDTH is relative
-              to the largest bucket; the value and weight print beside it, so the
-              bar encodes nothing the row does not also state as a figure. Keyed by
-              `data-alloc-bar` so `check:pages` can pair each bar with its row. */}
-          <div className="mb-5 flex flex-col gap-2" data-alloc-bars>
-            {sections.map((b) => {
-              const pct = m.totalValue > 0 ? (b.current / m.totalValue) * 100 : 0;
-              const barW = maxCurrent > 0 ? (b.current / maxCurrent) * 100 : 0;
-              const inner = (
-                <>
-                  <span className="flex min-w-[8.5rem] max-w-[8.5rem] items-center gap-2 text-sm font-medium text-slate-100">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                    <span className="truncate">{sectionLabel(b.key)}</span>
-                  </span>
-                  <span className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(148,163,184,0.16)" }}>
-                    <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: b.color }} />
-                  </span>
-                  <span className="mono w-24 shrink-0 text-right text-sm text-slate-200 whitespace-nowrap">{money(b.current)}</span>
-                  <span className="w-14 shrink-0 text-right text-xs text-slate-400">{m.totalValue > 0 ? `${pct.toFixed(1)}%` : DASH}</span>
-                </>
-              );
-              return b.fromPositions ? (
-                <Link key={b.key} data-alloc-bar={b.key} to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
-                  title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
-                  className="flex items-center gap-3 rounded px-1 py-1 transition-colors hover:bg-ink-700/40 hover:text-champagne-400">
-                  {inner}
-                </Link>
-              ) : (
-                <div key={b.key} data-alloc-bar={b.key} data-alloc-bar-static
-                  className="flex items-center gap-3 rounded px-1 py-1"
-                  title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
-                  {inner}
-                </div>
-              );
-            })}
+            THE TOGGLE SWITCHES WHICH MEASUREMENT IS SHOWN, and that is the whole
+            of why they are still two components behind one control rather than
+            one model with a scope field. Direct Equity is a live intraday price
+            against the previous session's close; ETFs & mutual funds is a
+            scheme's own published NAV against the one before it, on dates a week
+            behind and not even shared between rows. Each branch keeps its own
+            title, its own as-of and its own coverage line; they are never summed
+            and never dated alike. See `DailyMovers.tsx`. */}
+        {tab === "movers" && (
+          <div className="grid gap-5 lg:grid-cols-3" data-cio-section="movers">
+          <DailyMovers />
           </div>
-          <div className="overflow-x-auto">
-              {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
-                  this table is asserted through. `check:pages` used to find it
-                  by matching the words "ASSET CLASS" in its header, which is a
-                  claim about prose the axis selector is free to change — and on
-                  the basket view that finder returns nothing, so every
-                  invariant struck on it would have abstained rather than
-                  failed. Same contract `data-section` and `data-mandate`
-                  already carry on the Portfolio Monitor. */}
-              <table className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
-                <thead>
-                  <Tr view={allocView} className="border-b border-ink-700">
-                    <SortHeader col="section" view={allocView} align="left" pad="px-2 py-2">{GROUP_COLUMN_HEAD[allocAxis]}</SortHeader>
-                    <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
-                    <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
-                    <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
-                      title={`Total return to date on the capital in each ${GROUP_NOUN[allocAxis].one} — cumulative, not annualised.`}>Return (total)</SortHeader>
-                    <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
-                  </Tr>
-                </thead>
-                <tbody className="divide-y divide-ink-700/60">
-                  {sections.map((b) => (
-                    <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
-                      <td className="px-2 py-2.5">
-                        {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
-                            axis the table is grouped by. AIF, PMS mandates,
-                            Mutual Fund, Direct Equity, ETF, and every basket
-                            and family asset class alike: the destination lists
-                            exactly the holdings this row's three figures are
-                            summed over, because `drilldownHref` and the page it
-                            opens both read the section from `groupKeyFor`.
-                            `AXIS_SCOPE` is the one place the axis chooses the
-                            scope, so a link built here and a set resolved there
-                            cannot name different things.
+        )}
 
-                            A row the fund-of-funds model produced carries no
-                            positions and is deliberately NOT a link (see
-                            `fromPositions`): a link to a table that could only
-                            be empty reads as a feed that failed. */}
-                        {b.fromPositions ? (
-                          <Link to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
-                            title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
-                            className="flex items-center gap-2 font-medium text-slate-100 transition-colors hover:text-champagne-400">
-                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                            {sectionLabel(b.key)}
-                          </Link>
-                        ) : (
-                          <span className="flex items-center gap-2 font-medium text-slate-100"
-                            title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
-                            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
-                            {sectionLabel(b.key)}
-                          </span>
-                        )}
-                        {/* AN UNPLACED ROW NAMES ITS CAUSE, and it is the one
-                            row here that is not a fact about the holdings under
-                            it. "Other" would read as a section the family
-                            chose; this says their review does not list these
-                            and what would fill it — the rule every absent
-                            figure on this site follows, applied to a row label.
-                            A fund-of-funds row carries it on a family axis for
-                            the same reason: their review classifies products
-                            and names none of those. */}
-                        {b.unplaced && (
-                          <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-400/80" title={UNCLASSIFIED_WHY}>
-                            the family&rsquo;s review does not place {b.count === 1 ? "this holding" : "these holdings"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
-                      <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
-                      <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
-                      <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
-                    </Tr>
+        {/* Allocation hero + right column */}
+        {tab === "allocation" && (
+          <div className="grid gap-5 lg:grid-cols-3" data-cio-section="allocation">
+          {/* THE SUBTITLE IS GONE at the family's request, after the long
+              explanatory block beneath this table went the same way.
+
+              Two of the things it said are facts a reader ACTS on rather than
+              chrome: that every return here is CUMULATIVE rather than annualised,
+              and the DATE each figure closes at. The first is still on this page
+              outside this card — the Consolidated return tile states "cumulative,
+              not annualised" on its face.
+
+              THE SECOND HAS SINCE LOST ITS OTHER HOME, and this comment is
+              corrected rather than left standing: it read "the header's
+              `<BasisPill>` states the as-of and how many accounts are behind it",
+              and the family have now asked for that pill. The as-of and the
+              staleness are on the holdings table's own basis note and in the KPI
+              tiles' hovers; this page no longer prints a report date on its face.
+              That is the family's decision, recorded in CLAUDE.md with what it
+              costs, and it is why the sentence above no longer claims otherwise.
+
+              AND THE PILL KEEPS THE WORD "HELD". Two other invariants read the
+              bucket count out of `N buckets held`; rewording it to `N buckets ·
+              cumulative · <date>` — the first draft of this change — made both
+              report a missing figure on a page rendering correctly. A caption is
+              chrome; a count inside it is not. */}
+          {/*
+              ── ONE BOOK, THREE SLICES, AND THE FAMILY PICKS ──────────────────
+
+              *"I have given you my baskets… how is the core doing, how is the
+              satellite portfolio doing, how is the liquidity portfolio doing.
+              This should be the Morning CIO page. Add a selector in the
+              allocation section to select asset class wise / category wise /
+              basket wise allocation and performance overview."*
+
+              The segments regroup THE SAME ROWS. Invested, Current, Return and
+              Weight are the identical arithmetic over the identical holdings on
+              every axis, and all three sum to the same NAV — so the footer, the
+              weight base and the cost-coverage refusal are untouched and stay
+              correct by construction. Only the section key moves, and it moves
+              through `groupKeyFor`, which is also what the Portfolio Monitor
+              sections on: one answer to "which basket is this holding in",
+              shared, rather than one per screen.
+
+              THE TITLE FOLLOWS THE AXIS, because a table of BASKETS headed
+              "Allocation by asset class & mandate" is the caption-does-not-
+              describe-its-figure failure this page has already paid for twice.
+              The category title is left exactly as it was — it predates the
+              regroup and is not a perfect description of that axis, but it is the
+              one the family has learnt and renaming it is not what they asked for.
+
+              AND THE PILL'S NOUN FOLLOWS TOO. Two `check:pages` invariants read
+              this table's row count out of the pill, so the count is not chrome —
+              but "6 buckets held" over a table of baskets would be wrong about
+              what it counted. `groupCount` supplies the noun per axis. */}
+          <Card className="lg:col-span-2 self-start" title={ALLOC_TITLE[allocAxis]}
+            right={
+              <div className="flex flex-wrap items-center gap-2">
+                <div role="tablist" aria-label="Group the allocation by"
+                  className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5">
+                  {GROUP_VIEWS.map((v) => (
+                    <button key={v.key} type="button" role="tab" aria-selected={allocAxis === v.key} title={v.title}
+                      data-alloc-axis={v.key}
+                      onClick={() => setAllocAxis(v.key)}
+                      className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${allocAxis === v.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
+                      {v.label}
+                    </button>
                   ))}
-                </tbody>
-                <tfoot>
-                  <TrFoot view={allocView} className="border-t-2 border-ink-600 px-2 py-2.5 text-left font-semibold text-slate-200"
-                    label={
-                      <Link to={drilldownHref("book")} title="Open every holding in the book — the set this footer's Invested and Current columns are summed over"
-                        className="transition-colors hover:text-champagne-400">Total</Link>
-                    }
-                    cells={{
-                    invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>,
-                    current: <td key="current" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>,
-                    /* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
-                        This cell used to carry the MONEY-WEIGHTED whole-book
-                        return, which is a different measurement from every row
-                        in its own column and covers only the accounts that
-                        publish an opening portfolio value — so the footer read
-                        +28.3% beside its own Invested ₹394.1 Cr and Current
-                        ₹461.0 Cr, which is +17.0%. A reader who divides one
-                        printed cell by another and gets a third answer has
-                        found a contradiction, and the long paragraph that used
-                        to explain it away is gone. It now ties to its own two
-                        columns; the money-weighted figure keeps its place in
-                        the popover and on the Book performance card, each
-                        stating the fraction of the book it covers. */
-                    return: (
-                    <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
-                      {/* AND NO POPOVER HERE EITHER. Its own arithmetic —
-                          (Current − Invested) ÷ Invested over the whole book,
-                          cumulative rather than annualised — is on `?of=invested`,
-                          which is the page the Consolidated return tile opens and
-                          where the same division is worked out in full.
+                </div>
+                <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
+              </div>
+            }>
+            {/* THE ALLOCATION BAR CHART, above the table. The donut this replaced
+                was removed for restating the Weight column as a wedge; a horizontal
+                bar chart is the same encoding without the wasted centre, and it
+                fills the space the donut's removal left below the table (the card
+                is `self-start`, so its height is its content).
 
-                          THE ONE THING IT CARRIED THAT NOTHING ELSE DID was the
-                          reconciliation against the MONEY-WEIGHTED return: two
-                          different measurements over two different sets, which a
-                          reader seeing both figures needs to be told apart. That
-                          moved to `?of=measured`, where both bases are on screen
-                          for the SAME accounts — a sharper comparison than the
-                          one this popover made, which set a whole-book figure
-                          against a seven-account one. */}
-                      {m.footerPct == null ? DASH : fmtPct(m.footerPct, { sign: true, decimals: 1 })}
-                    </td>
-                    ),
-                    weight: <td key="weight" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300">100%</td>,
-                  }} />
-                </tfoot>
-              </table>
-              {/*
-                ── WHOSE JUDGEMENT THIS VIEW IS, WHERE IT IS ONE ────────────────
+                EACH BAR IS THE SAME LINK ITS ROW IS. A `fromPositions` section is a
+                `<Link>` to `drilldownHref(AXIS_SCOPE[allocAxis], b.key)` — the exact
+                href the row builds — so a bar and its row open the same drill-down;
+                a fund-of-funds row carries no positions and its bar is a plain
+                `<div>`, exactly as the row is not a link. The bar WIDTH is relative
+                to the largest bucket; the value and weight print beside it, so the
+                bar encodes nothing the row does not also state as a figure. Keyed by
+                `data-alloc-bar` so `check:pages` can pair each bar with its row. */}
+            <div className="mb-5 flex flex-col gap-2" data-alloc-bars>
+              {sections.map((b) => {
+                const pct = m.totalValue > 0 ? (b.current / m.totalValue) * 100 : 0;
+                const barW = maxCurrent > 0 ? (b.current / maxCurrent) * 100 : 0;
+                const inner = (
+                  <>
+                    <span className="flex min-w-[8.5rem] max-w-[8.5rem] items-center gap-2 text-sm font-medium text-slate-100">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                      <span className="truncate">{sectionLabel(b.key)}</span>
+                    </span>
+                    <span className="relative h-3 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: "rgba(148,163,184,0.16)" }}>
+                      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${barW}%`, background: b.color }} />
+                    </span>
+                    <span className="mono w-24 shrink-0 text-right text-sm text-slate-200 whitespace-nowrap">{money(b.current)}</span>
+                    <span className="w-14 shrink-0 text-right text-xs text-slate-400">{m.totalValue > 0 ? `${pct.toFixed(1)}%` : DASH}</span>
+                  </>
+                );
+                return b.fromPositions ? (
+                  <Link key={b.key} data-alloc-bar={b.key} to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
+                    title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
+                    className="flex items-center gap-3 rounded px-1 py-1 transition-colors hover:bg-ink-700/40 hover:text-champagne-400">
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={b.key} data-alloc-bar={b.key} data-alloc-bar-static
+                    className="flex items-center gap-3 rounded px-1 py-1"
+                    title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
+                    {inner}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="overflow-x-auto">
+                {/* `data-alloc-table` / `data-alloc-axis` are the STRUCTURAL handle
+                    this table is asserted through. `check:pages` used to find it
+                    by matching the words "ASSET CLASS" in its header, which is a
+                    claim about prose the axis selector is free to change — and on
+                    the basket view that finder returns nothing, so every
+                    invariant struck on it would have abstained rather than
+                    failed. Same contract `data-section` and `data-mandate`
+                    already carry on the Portfolio Monitor. */}
+                <table className="min-w-full text-sm" data-alloc-table data-alloc-axis={allocAxis}>
+                  <thead>
+                    <Tr view={allocView} className="border-b border-ink-700">
+                      <SortHeader col="section" view={allocView} align="left" pad="px-2 py-2">{GROUP_COLUMN_HEAD[allocAxis]}</SortHeader>
+                      <SortHeader col="invested" view={allocView} pad="px-2 py-2">Invested</SortHeader>
+                      <SortHeader col="current" view={allocView} pad="px-2 py-2">Current</SortHeader>
+                      <SortHeader col="return" view={allocView} pad="px-2 py-2" className="whitespace-nowrap"
+                        title={`Total return to date on the capital in each ${GROUP_NOUN[allocAxis].one} — cumulative, not annualised.`}>Return (total)</SortHeader>
+                      <SortHeader col="weight" view={allocView} pad="px-2 py-2">Weight</SortHeader>
+                    </Tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-700/60">
+                    {sections.map((b) => (
+                      <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
+                        <td className="px-2 py-2.5">
+                          {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
+                              axis the table is grouped by. AIF, PMS mandates,
+                              Mutual Fund, Direct Equity, ETF, and every basket
+                              and family asset class alike: the destination lists
+                              exactly the holdings this row's three figures are
+                              summed over, because `drilldownHref` and the page it
+                              opens both read the section from `groupKeyFor`.
+                              `AXIS_SCOPE` is the one place the axis chooses the
+                              scope, so a link built here and a set resolved there
+                              cannot name different things.
 
-                The two family axes are not derived from any statement: they are
-                the family's own consolidated review, product by product, plus
-                one rule they stated themselves ("all the direct stocks belong
-                to Thematic & Tactical") that fills the gaps their review leaves.
-                On screen both are just rows under one heading, so the
-                difference is printed rather than collapsed — the same
-                disclosure the Portfolio Monitor's section headings carry.
+                              A row the fund-of-funds model produced carries no
+                              positions and is deliberately NOT a link (see
+                              `fromPositions`): a link to a table that could only
+                              be empty reads as a feed that failed. */}
+                          {b.fromPositions ? (
+                            <Link to={drilldownHref(AXIS_SCOPE[allocAxis], b.key)}
+                              title={`Open the ${b.count} ${b.count === 1 ? "holding" : "holdings"} behind ${sectionLabel(b.key)}`}
+                              className="flex items-center gap-2 font-medium text-slate-100 transition-colors hover:text-champagne-400">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                              {sectionLabel(b.key)}
+                            </Link>
+                          ) : (
+                            <span className="flex items-center gap-2 font-medium text-slate-100"
+                              title="This row comes from the fund-of-funds model, which carries fund-level records and no per-holding rows — there is no holdings list to open.">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: b.color }} />
+                              {sectionLabel(b.key)}
+                            </span>
+                          )}
+                          {/* AN UNPLACED ROW NAMES ITS CAUSE, and it is the one
+                              row here that is not a fact about the holdings under
+                              it. "Other" would read as a section the family
+                              chose; this says their review does not list these
+                              and what would fill it — the rule every absent
+                              figure on this site follows, applied to a row label.
+                              A fund-of-funds row carries it on a family axis for
+                              the same reason: their review classifies products
+                              and names none of those. */}
+                          {b.unplaced && (
+                            <span className="mt-0.5 block text-[10.5px] leading-snug text-amber-400/80" title={UNCLASSIFIED_WHY}>
+                              the family&rsquo;s review does not place {b.count === 1 ? "this holding" : "these holdings"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
+                        <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
+                      </Tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <TrFoot view={allocView} className="border-t-2 border-ink-600 px-2 py-2.5 text-left font-semibold text-slate-200"
+                      label={
+                        <Link to={drilldownHref("book")} title="Open every holding in the book — the set this footer's Invested and Current columns are summed over"
+                          className="transition-colors hover:text-champagne-400">Total</Link>
+                      }
+                      cells={{
+                      invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>,
+                      current: <td key="current" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>,
+                      /* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
+                          This cell used to carry the MONEY-WEIGHTED whole-book
+                          return, which is a different measurement from every row
+                          in its own column and covers only the accounts that
+                          publish an opening portfolio value — so the footer read
+                          +28.3% beside its own Invested ₹394.1 Cr and Current
+                          ₹461.0 Cr, which is +17.0%. A reader who divides one
+                          printed cell by another and gets a third answer has
+                          found a contradiction, and the long paragraph that used
+                          to explain it away is gone. It now ties to its own two
+                          columns; the money-weighted figure keeps its place in
+                          the popover and on the Book performance card, each
+                          stating the fraction of the book it covers. */
+                      return: (
+                      <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
+                        {/* AND NO POPOVER HERE EITHER. Its own arithmetic —
+                            (Current − Invested) ÷ Invested over the whole book,
+                            cumulative rather than annualised — is on `?of=invested`,
+                            which is the page the Consolidated return tile opens and
+                            where the same division is worked out in full.
 
-                RENDERED ONLY ON A FAMILY AXIS AND ONLY WHEN THE RULE ACTUALLY
-                PLACED SOMETHING. The category axis asks nothing of the family
-                and has nothing to disclose; a view the review states line by
-                line has nothing either, and a sentence about a rule that placed
-                no holding is chrome.
-              */}
-              {allocAxis !== "category" && (
-                <p className="mt-3 text-[11px] leading-relaxed text-slate-500" data-testid="alloc-taxonomy-source">
-                  Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
-                  product by product. No statement in the archive carries {GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"};
-                  nothing here is inferred from what the instrument is.
-                  {ruleMV > 0 && (
-                    <>
-                      {" "}{money(ruleMV)} of the {money(m.totalValue)} above is placed by their stated rule instead
-                      &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
-                      review does not name those holdings individually.
-                    </>
-                  )}
-                </p>
-              )}
-          </div>
-        </Card>
-
-        <div className="grid gap-5 content-start lg:col-span-1">
-          <Card title="Capital deployment" subtitle="Fund commitments &amp; uncalled capital">
-            {hasCommitments ? (
-              <>
+                            THE ONE THING IT CARRIED THAT NOTHING ELSE DID was the
+                            reconciliation against the MONEY-WEIGHTED return: two
+                            different measurements over two different sets, which a
+                            reader seeing both figures needs to be told apart. That
+                            moved to `?of=measured`, where both bases are on screen
+                            for the SAME accounts — a sharper comparison than the
+                            one this popover made, which set a whole-book figure
+                            against a seven-account one. */}
+                        {m.footerPct == null ? DASH : fmtPct(m.footerPct, { sign: true, decimals: 1 })}
+                      </td>
+                      ),
+                      weight: <td key="weight" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300">100%</td>,
+                    }} />
+                  </tfoot>
+                </table>
                 {/*
-                  ── EVERY FIGURE HERE OPENS THE DETAIL, AND IT IS ONE LINK ────
+                  ── WHOSE JUDGEMENT THIS VIEW IS, WHERE IT IS ONE ────────────────
 
-                    *"What is the capital deployed for private equity?… I told
-                     you — details, because it's not very clear. We discussed
-                     it. Right?"*  /  *"I'll make it clickable. And so you'll be
-                     redirected to the private page, and then we can show the
-                     details there."*
+                  The two family axes are not derived from any statement: they are
+                  the family's own consolidated review, product by product, plus
+                  one rule they stated themselves ("all the direct stocks belong
+                  to Thematic & Tactical") that fills the gaps their review leaves.
+                  On screen both are just rows under one heading, so the
+                  difference is printed rather than collapsed — the same
+                  disclosure the Portfolio Monitor's section headings carry.
 
-                  This card carried ONE link, on the words "Fund commitments",
-                  and the figure the family were actually asking about — what
-                  has been CALLED — was not it. The reasoning for linking once
-                  stands and is why this is not four links: all four figures come
-                  off the same capital accounts, so four anchors to one address
-                  reads as four different destinations.
-
-                  So the LIST is the link. One anchor, one destination, and
-                  every figure on it is a click target — which is the whole of
-                  what was asked for. `/private-market` is where the detail is:
-                  committed, drawn, still to call and distributions, folio by
-                  folio, each with the fraction of the accounts that publish it.
+                  RENDERED ONLY ON A FAMILY AXIS AND ONLY WHEN THE RULE ACTUALLY
+                  PLACED SOMETHING. The category axis asks nothing of the family
+                  and has nothing to disclose; a view the review states line by
+                  line has nothing either, and a sentence about a rule that placed
+                  no holding is chrome.
                 */}
-                <Link to="/private-market" data-cio-deploy-link
-                  title="Open the capital accounts all four of these figures come from — committed, called, still to call and distributed, folio by folio"
-                  className="block rounded-md transition-colors hover:bg-ink-700/30">
-                  <ul className="text-sm">
-                    <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
-                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
-                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
-                    <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
-                  </ul>
-                </Link>
-                <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
-                  <div style={{ width: `${calledPct}%`, background: CHART_COLORS[0] }} />
-                  <div style={{ width: `${100 - (calledPct ?? 0)}%`, background: "rgba(245,158,11,.45)" }} />
-                </div>
-                <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500">
-                  <span>Called {(calledPct ?? 0).toFixed(1)}%</span><span>Undrawn {(100 - (calledPct ?? 0)).toFixed(1)}%</span>
-                </div>
-              </>
-            ) : (
-              <AbsentSection
-                what="No fund commitments"
-                needs="Commitments, capital calls, undrawn capital and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
-            )}
-          </Card>
-
-          {/* EVERY FIGURE ON THIS CARD OPENS THE HOLDINGS BEHIND IT.
-              Each is a count or a share over a subset of the same consolidated
-              book, and each subset is resolved by `src/lib/drilldown.ts` — the
-              same function the destination page lists rows with, so the count
-              here and the rows there cannot describe two different sets.
-
-              Two of them share one destination on purpose: Positions counts the
-              ROWS of the whole book and Distinct names counts its NAMES, so both
-              open the same set and the page carries both counts and a toggle
-              between the two units. A second page would have been a second
-              derivation of one set. */}
-          <Card title="Concentration &amp; risk">
-            <div className="grid grid-cols-2 gap-x-6 text-sm">
-              <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title={`Open every holding in the book, one row per statement line — the unit this count counts.${m.smallDropped.count > 0 ? ` It leaves out ${m.smallDropped.count} holding${m.smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, ${fmtFromBase(m.smallDropped.value)} in total, dropped automatically at the family's instruction.` : ""}`}>Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
-              <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, grouped one row per name and per mandate — the unit this count counts">Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
-              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
-              <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
-              <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
-                {/* TWO SETS, TWO LINKS. The split is on ASSET CLASS — what a
-                    holding IS — so each half opens its own holdings rather than
-                    one link standing for both and leaving the reader to guess
-                    which half they are about to see. */}
-                <span className="text-slate-400">
-                  <ConcLink to={drilldownHref("book", undefined, "listed")} title="Open the listed half — every holding whose class is not an AIF, an unlisted company or a structured product. It opens the book\u2019s own drill-down with that half selected; the private half is one toggle away.">Listed</ConcLink>
-                  {" / "}
-                  <ConcLink to={drilldownHref("book", undefined, "private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks. It opens the book\u2019s own drill-down with that half selected; the listed half is one toggle away.">Private</ConcLink>
-                </span>
-                <span className="mono text-slate-100">
-                  {m.hasPrivateClass
-                    ? `${(m.pp.listed / m.totalValue * 100).toFixed(0)} / ${(m.pp.private / m.totalValue * 100).toFixed(0)}`
-                    : <span title="Every holding in this book is listed. There is no private-market statement in the drop, so the private share is absent rather than 0%.">100% listed · private {DASH}</span>}
-                </span>
-              </div>
-              <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
-                <span className="text-slate-400">Largest name</span>
-                <span className="mono text-slate-100 truncate pl-3" title={m.largestName ?? undefined}>
-                  {m.largestName == null || m.largestPct == null ? DASH
-                    : <><StockLink securityKey={m.largestKey} name={m.largestName} />
-                        {m.largestBucket && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestBucket}</span>}
-                        {" · "}{m.largestPct.toFixed(1)}%</>}
-                </span>
-              </div>
-              <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
-                <span className="text-slate-400">
-                  <ConcLink to={drilldownHref("winners")} title="Open the holdings showing a gain against their own cost">Winners</ConcLink>
-                  {" / "}
-                  <ConcLink to={drilldownHref("losers")} title="Open the holdings showing a loss against their own cost">losers</ConcLink>
-                </span>
-                <span className="mono text-slate-100"><span className="text-gain">{m.winners}</span> / <span className="text-loss">{m.losers}</span></span>
-              </div>
+                {allocAxis !== "category" && (
+                  <p className="mt-3 text-[11px] leading-relaxed text-slate-500" data-testid="alloc-taxonomy-source">
+                    Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
+                    product by product. No statement in the archive carries {GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"};
+                    nothing here is inferred from what the instrument is.
+                    {ruleMV > 0 && (
+                      <>
+                        {" "}{money(ruleMV)} of the {money(m.totalValue)} above is placed by their stated rule instead
+                        &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
+                        review does not name those holdings individually.
+                      </>
+                    )}
+                  </p>
+                )}
             </div>
           </Card>
-        </div>
-      </div>
 
-      {/* THE BOOK PERFORMANCE CARD IS REMOVED, at the family’s request.
+          <div className="grid gap-5 content-start lg:col-span-1">
+            <Card title="Capital deployment" subtitle="Fund commitments &amp; uncalled capital">
+              {hasCommitments ? (
+                <>
+                  {/*
+                    ── EVERY FIGURE HERE OPENS THE DETAIL, AND IT IS ONE LINK ────
 
-          It sat here reading "Listed vs private, on a like-for-like basis" over
-          two tiles: the listed book invested → today with its unrealised gain,
-          return and money-weighted return, and the same for the private (AIF)
-          half. Every one of those figures is still on this page and still
-          derived — invested and current value per bucket in the allocation
-          table, the money-weighted return in its own KPI tile with its own
-          coverage line, and the listed/private split in the Current Value of Holdings
-          tile and on Concentration & risk, which links each half to the
-          holdings behind it. So this is a LAYOUT removal and not a measurement
-          one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
-          `listedTotalReturn` in the model above still feed those surfaces.
+                      *"What is the capital deployed for private equity?… I told
+                       you — details, because it's not very clear. We discussed
+                       it. Right?"*  /  *"I'll make it clickable. And so you'll be
+                       redirected to the private page, and then we can show the
+                       details there."*
 
-          `check:pages` asserts the card STAYS gone AND that the figures it
-          carried are still reachable — a removal is verified by asserting it
-          happened, never by deleting the test alongside the feature. */}
-      <div className="mt-5">
+                    This card carried ONE link, on the words "Fund commitments",
+                    and the figure the family were actually asking about — what
+                    has been CALLED — was not it. The reasoning for linking once
+                    stands and is why this is not four links: all four figures come
+                    off the same capital accounts, so four anchors to one address
+                    reads as four different destinations.
 
-        {/* THE NAV SERIES REPLACES AN ABSENCE THAT HAD STOPPED BEING TRUE.
-            This slot held "No valuation series in this book · each account's
-            statements carry exactly two points, and two points are not a curve".
-            Correct against the nine-account corpus; false since the first drop
-            REISSUED a statement. Thirteen accounts publish two or more dated
-            valuations today, so the series is measured and the accounts that
-            cannot supply one are NAMED — which is the rest of the same request.
-            See `navHistoryFrom` in build-book.mjs and `NavVsIndex`. */}
-        <NavVsIndex />
+                    So the LIST is the link. One anchor, one destination, and
+                    every figure on it is a click target — which is the whole of
+                    what was asked for. `/private-market` is where the detail is:
+                    committed, drawn, still to call and distributions, folio by
+                    folio, each with the fraction of the accounts that publish it.
+                  */}
+                  <Link to="/private-market" data-cio-deploy-link
+                    title="Open the capital accounts all four of these figures come from — committed, called, still to call and distributed, folio by folio"
+                    className="block rounded-md transition-colors hover:bg-ink-700/30">
+                    <ul className="text-sm">
+                      <li className="flex items-center justify-between py-2"><span className="text-slate-400">Fund commitments</span><span className="mono text-slate-100">{money(m.deploy.committed)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Called / drawn &mdash; capital deployed</span><span className="mono text-slate-100">{money(m.deploy.drawn)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Undrawn &mdash; uncalled capital</span><span className="mono text-amber-400">{money(m.deploy.unfunded)}</span></li>
+                      <li className="flex items-center justify-between border-t border-ink-700/60 py-2"><span className="text-slate-400">Distributions received</span><span className="mono text-slate-100">{money(m.deploy.distributed)}</span></li>
+                    </ul>
+                  </Link>
+                  <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
+                    <div style={{ width: `${calledPct}%`, background: CHART_COLORS[0] }} />
+                    <div style={{ width: `${100 - (calledPct ?? 0)}%`, background: "rgba(245,158,11,.45)" }} />
+                  </div>
+                  <div className="mt-1.5 flex justify-between text-[10.5px] text-slate-500">
+                    <span>Called {(calledPct ?? 0).toFixed(1)}%</span><span>Undrawn {(100 - (calledPct ?? 0)).toFixed(1)}%</span>
+                  </div>
+                </>
+              ) : (
+                <AbsentSection
+                  what="No fund commitments"
+                  needs="Commitments, capital calls, undrawn capital and distributions come from a drawdown fund's capital account. No statement in this book reports one, so there is no commitment schedule to draw against — the bar and its four figures are absent, not zero." />
+              )}
+            </Card>
+
+            {/* EVERY FIGURE ON THIS CARD OPENS THE HOLDINGS BEHIND IT.
+                Each is a count or a share over a subset of the same consolidated
+                book, and each subset is resolved by `src/lib/drilldown.ts` — the
+                same function the destination page lists rows with, so the count
+                here and the rows there cannot describe two different sets.
+
+                Two of them share one destination on purpose: Positions counts the
+                ROWS of the whole book and Distinct names counts its NAMES, so both
+                open the same set and the page carries both counts and a toggle
+                between the two units. A second page would have been a second
+                derivation of one set. */}
+            <Card title="Concentration &amp; risk">
+              <div className="grid grid-cols-2 gap-x-6 text-sm">
+                <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title={`Open every holding in the book, one row per statement line — the unit this count counts.${m.smallDropped.count > 0 ? ` It leaves out ${m.smallDropped.count} holding${m.smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, ${fmtFromBase(m.smallDropped.value)} in total, dropped automatically at the family's instruction.` : ""}`}>Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
+                <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title="Open every holding in the book, grouped one row per name and per mandate — the unit this count counts">Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
+                <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
+                <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
+                <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
+                  {/* TWO SETS, TWO LINKS. The split is on ASSET CLASS — what a
+                      holding IS — so each half opens its own holdings rather than
+                      one link standing for both and leaving the reader to guess
+                      which half they are about to see. */}
+                  <span className="text-slate-400">
+                    <ConcLink to={drilldownHref("book", undefined, "listed")} title="Open the listed half — every holding whose class is not an AIF, an unlisted company or a structured product. It opens the book\u2019s own drill-down with that half selected; the private half is one toggle away.">Listed</ConcLink>
+                    {" / "}
+                    <ConcLink to={drilldownHref("book", undefined, "private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks. It opens the book\u2019s own drill-down with that half selected; the listed half is one toggle away.">Private</ConcLink>
+                  </span>
+                  <span className="mono text-slate-100">
+                    {m.hasPrivateClass
+                      ? `${(m.pp.listed / m.totalValue * 100).toFixed(0)} / ${(m.pp.private / m.totalValue * 100).toFixed(0)}`
+                      : <span title="Every holding in this book is listed. There is no private-market statement in the drop, so the private share is absent rather than 0%.">100% listed · private {DASH}</span>}
+                  </span>
+                </div>
+                <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
+                  <span className="text-slate-400">Largest name</span>
+                  <span className="mono text-slate-100 truncate pl-3" title={m.largestName ?? undefined}>
+                    {m.largestName == null || m.largestPct == null ? DASH
+                      : <><StockLink securityKey={m.largestKey} name={m.largestName} />
+                          {m.largestBucket && <span className="ml-1.5 text-[10.5px] text-slate-500">{m.largestBucket}</span>}
+                          {" · "}{m.largestPct.toFixed(1)}%</>}
+                  </span>
+                </div>
+                <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
+                  <span className="text-slate-400">
+                    <ConcLink to={drilldownHref("winners")} title="Open the holdings showing a gain against their own cost">Winners</ConcLink>
+                    {" / "}
+                    <ConcLink to={drilldownHref("losers")} title="Open the holdings showing a loss against their own cost">losers</ConcLink>
+                  </span>
+                  <span className="mono text-slate-100"><span className="text-gain">{m.winners}</span> / <span className="text-loss">{m.losers}</span></span>
+                </div>
+              </div>
+            </Card>
+          </div>
+          </div>
+        )}
+
+        {/* THE BOOK PERFORMANCE CARD IS REMOVED, at the family’s request.
+
+            It sat here reading "Listed vs private, on a like-for-like basis" over
+            two tiles: the listed book invested → today with its unrealised gain,
+            return and money-weighted return, and the same for the private (AIF)
+            half. Every one of those figures is still on this page and still
+            derived — invested and current value per bucket in the allocation
+            table, the money-weighted return in its own KPI tile with its own
+            coverage line, and the listed/private split in the Current Value of Holdings
+            tile and on Concentration & risk, which links each half to the
+            holdings behind it. So this is a LAYOUT removal and not a measurement
+            one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
+            `listedTotalReturn` in the model above still feed those surfaces.
+
+            `check:pages` asserts the card STAYS gone AND that the figures it
+            carried are still reachable — a removal is verified by asserting it
+            happened, never by deleting the test alongside the feature. */}
+        {tab === "nav" && (
+          <div data-cio-section="nav">
+
+          {/* THE NAV SERIES REPLACES AN ABSENCE THAT HAD STOPPED BEING TRUE.
+              This slot held "No valuation series in this book · each account's
+              statements carry exactly two points, and two points are not a curve".
+              Correct against the nine-account corpus; false since the first drop
+              REISSUED a statement. Thirteen accounts publish two or more dated
+              valuations today, so the series is measured and the accounts that
+              cannot supply one are NAMED — which is the rest of the same request.
+              See `navHistoryFrom` in build-book.mjs and `NavVsIndex`. */}
+          <NavVsIndex />
+          </div>
+        )}
       </div>
 
       {/* ── RETURN ATTRIBUTION WAS REMOVED AT THE FAMILY'S REQUEST ──────────
