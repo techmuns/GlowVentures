@@ -214,7 +214,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   fund two ways. Category III trades LISTED securities; Categories I and II are
   private capital; a fund whose own name says private equity or venture is
   private whichever it prints; and a fund printing none is on NEITHER side and is
-  named. See Stage 10bl.
+  named. See Stage 10bm.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -443,7 +443,7 @@ ring-fence** section.
 
 **Consolidated ₹710.39 Cr**: listed ₹655.82 Cr, private ₹37.88 Cr, and
 ₹16.69 Cr no statement places on either side. The split reads the SEBI category
-the statements print — see `shared/aifCategory.mjs` and Stage 10bl.
+the statements print — see `shared/aifCategory.mjs` and Stage 10bm.
 
 **IT HAS BEEN WRONG TWICE, THE SAME WAY.** It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
@@ -1221,7 +1221,7 @@ trustees, so a reader must resolve each account on the `DP Account No:` the page
 prints (67786547 / 67786137) and attribute it to a trust through the register.
 That is a join to establish, not a document to request.
 
-***AND IT HAS BEEN ESTABLISHED — see Stage 10bl.*** It was named here and not
+***AND IT HAS BEEN ESTABLISHED — see Stage 10bm.*** It was named here and not
 made, so for three deliveries both accounts sat under `Ajay Jaisinghani` and the
 trusts' entity page listed one holding, which is what the family eventually
 reported. `BENEFICIAL_OWNER_BY_DP_ACCOUNT` in `providers/hdfcNsdl.mjs` is the
@@ -3267,9 +3267,9 @@ or `Direct` (the ICICI NSDL row), and both Buoyant accounts carry engagement
 engagement DOES answer is the opposite one — an account holding nothing has no
 position to read a class off — which is why `unvaluedAccounts` is scoped to it.
 
-***AND `isPrivateClass` IS NOT THE ASSET CLASS ANY MORE — see Stage 10bl.*** It
+***AND `isPrivateClass` IS NOT THE ASSET CLASS ANY MORE — see Stage 10bm.*** It
 reads the SEBI category the statements print, so the **figures in the table above
-are the pre-10bl ones**: the Category III folios (Sanshi, Buoyant, Carnelian
+are the pre-10bm ones**: the Category III folios (Sanshi, Buoyant, Carnelian
 Bharat Amritkaal) are listed exposure and are not on this page. The page is
 5 deduped rows / 7 raw and ₹37.88 Cr now, the ₹3.17 Cr double count below is
 still all of it, and the funds that left are NAMED on the page with their value
@@ -5535,7 +5535,7 @@ Concentration & risk, each linking to the holdings behind it. `marketSides`
 still feeds that row.
 
 ***`listedBook` AND `privateBook` WERE NAMED HERE TOO AND FED NOTHING — they are
-gone (Stage 10bl).*** This card was their only reader and they outlived it, so
+gone (Stage 10bm).*** This card was their only reader and they outlived it, so
 the sentence above was a comment asserting an enforcement that never happens.
 They were also the pair whose MEANING changed silently when the split stopped
 being a class list, which is what made them worth removing rather than leaving. **A layout removal, not a
@@ -12994,7 +12994,269 @@ ingest, and nothing here is in any book total.** `src/data/polycabLive.ts` is
 generated beside the book, read by ONE page, and in no NAV, allocation, sector or
 entity figure — the same standing `BOOK_POLYCAB` itself has.
 
-### Stage 10bl — A CATEGORY III AIF IS LISTED EXPOSURE, AND A TRUSTEE IS NOT THE TRUST
+### Stage 10bl — THREE REMOVALS ON FAMILY & ENTITIES, AND THE TWO CLAIMS THAT HAD NOWHERE ELSE TO GO
+
+*"open PR and do not merge until i tell you to"* · *"remove the 4 KPI tiles at
+the top of Families and Entities Page"* · *"remove the bar graph from the page
+UI"* · *"in the table remove the custody column"* · *"The final view should be
+the table on the left side and on the right side 'in house vs external' pie
+chart and section. Without any scrollable page, the table will be small after
+removing the custody column so both the table and the pie chart section can fit
+in the same view side by side."*
+
+Four asks, and they are worth recording together because the SAME instruction —
+take this off the screen — cost three different amounts of work, decided
+entirely by whether what was going carried a figure nothing else states. That is
+the audit this file has now run seven times (Stages 10aa, 10ai, 10al, 10ap,
+10aq, 10bd, 10be) and it is the whole of the work here.
+
+#### 1. The bar graph was free, and saying why is the point
+
+It plotted `e.mv` per entity — which is the **NAV column of the very table now
+standing in its place**, the same six figures to the rupee rather than to a
+pixel, beside the weight, the position count and the returns a bar cannot carry.
+So nothing moved, and the removal is one deleted card.
+
+That is the test, and the tiles above it did not pass it.
+
+#### 2. Two of the four tiles were already stated, and two were not
+
+| The tile | Second home? | |
+| --- | --- | --- |
+| **Entities** `6` | the header pill, on every view of this page | gone |
+| **Largest entity** `Ajay Jaisinghani · ₹347.3 Cr · 49%` | `bucketBy` sorts by market value DESCENDING, so the Entity breakdown's FIRST ROW is that entity — with its weight at one more decimal than the tile printed | gone |
+| **In-house custody** `31% · ₹216.8 Cr · 7 of 12 accounts` | the **value** is a legend row on the pie beside it. The PERCENTAGE, the account coverage and the whole custody-is-not-Direct-Equity disclosure were nowhere else | **moved** |
+| **External custodians** `69% · 17 custodians · ₹491.1 Cr` | every custodian and its value is a legend row. The percentage, the count and the total were not | **moved** |
+
+**THE SPLIT IS RENDERED AND ONLY THE LONG PARAGRAPH IS A HOVER**, which is the
+trade stated rather than glossed. The two percentages, the account coverage
+behind one and the custodian count behind the other are a line in the card's own
+subtitle — a reader scanning sees them. The arithmetic rides in that line's
+`title`, which is what an `Auditable` popover would have said; the underline
+itself is what the family have been removing from figures, and a subtitle is not
+a figure.
+
+**AND THE ONE CLAIM THAT WILL NOT FIT A CAPTION RIDES ON THE ROW IT IS ABOUT.**
+Custody answers WHERE an asset sits; the holdings tables' Direct Equity answers
+WHO CHOSE IT, and **the two sets differ in BOTH directions on this book** — the
+in-house accounts hold ₹124.5 Cr of funds and ETFs that are not shares in a
+company at all, and ₹1.28 Cr of the family's own shares are bought through LKP,
+which custody files under the broker. A reader who takes the in-house figure for
+the shares the family picked has the wrong number and nothing else on this page
+tells them apart. It is the `Direct / In-house` legend row's own `title`, on
+that row ALONE: a hover on every custodian would be this sentence claiming
+things about managers it does not describe, which is what the check asserts.
+
+**THE LARGEST-ENTITY TILE NEEDED NOTHING MOVED ONLY BECAUSE THE TABLE IS RANKED
+BY VALUE**, so that premise is now a check rather than a comment: sort the table
+by name and the first row stops being the largest entity, and this becomes the
+one removal that DID lose something. Measured by reintroducing exactly that.
+
+#### 3. The custody column, and a hover that is weaker and is answered better
+
+It listed every platform each entity holds through — one member holds through
+fourteen — so it was the widest cell in the table and precisely what made the
+table too wide to sit beside the pie. **Nothing else on this page carries it**,
+so it is the Entity cell's own hover.
+
+A hover is weaker than a column and that is recorded. What makes the trade
+affordable is not that the fact is preserved but that it is **ANSWERED BETTER
+ONE CLICK IN**: the row is already a click target that scopes the page to that
+entity, where the holdings table names the platform PER ROW and says which of
+them CHOSE it — which a set of names per owner cannot. The column was a
+consolation for a question the drill-down answers properly.
+
+#### 4. The layout, and the width the "no scroll" claim is true at
+
+The bar chart held the left two thirds; the Entity breakdown takes its place, so
+the two surviving cards sit side by side. `items-start` keeps each its own
+height — stretched, the table would grow a dead band to match the 17-row legend
+beside it.
+
+**AND TWO MONEY COLUMNS HAD TO STOP WRAPPING.** At two thirds of the width
+`₹349.5 Cr` broke across two lines. A money figure is one token however narrow
+its column gets; the Entity name legitimately wraps and absorbs it.
+
+**THE NO-SCROLL CLAIM IS SCOPED TO THE WIDTH THE ASK IS ABOUT, AND THE BOUND IS
+MEASURED RATHER THAN CHOSEN.** The right-hand card is as tall as this book has
+custodians — 17 legend rows, ~625px — and it is what decides the page:
+
+| | 1920 | 1600 | 1500 | 1440 | 1366 | 1280 | 1024 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| side by side | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| page scroll | 0 | 0 | **0** | 0 | 99px | 63px | 295px |
+
+So the cards are beside each other at every width from the `lg` breakpoint up,
+and the page fits from 1440. Below that the card narrows, its subtitle wraps and
+the viewport such a screen brings is shorter — **which is a fact about how many
+platforms this family holds through, not about this layout**, so a narrow run
+reports it rather than failing. The sweep's own width is 1500, so the claim
+binds on every ordinary run. Compressing the legend was measured and refused: it
+buys ~48px against a 99px gap at 1366 and makes the card denser everywhere for a
+partial win at a size the family did not ask about.
+
+#### Fourteen invariants, and twelve bugs reintroduced
+
+**NOT ONE OF THESE FOUR CLAIMS CAN BE STRUCK ON PROSE.** The page renders the
+identical words with the tiles present or absent, with the table above the pie
+or beside it, and with the page scrolling or not — so every one reads a COUNT or
+a BOUNDING BOX off a new `familyLayout` probe. The two cards are found
+structurally for the same reason: the left by `data-family-table`, **the right
+BY THE PIE INSIDE IT**, because its own title flips to "Custody" on a book with
+no in-house bucket, so even the title is not a constant. `[data-stat-value]` is
+what a `StatTile` emits and what nothing else does, so the tiles are COUNTED
+rather than named — a fifth tile a redesign adds fails it too.
+
+**AND THE TWO MOVED CLAIMS ARE ASSERTED TO SURVIVE**, which is the half a
+removal like this breaks quietly: a build that dropped the tiles AND the split
+they printed satisfies every absence check here and loses two figures in silence.
+
+Each bug was put back on its own, rebuilt and swept, with the harness restoring
+BY COPY on a `trap … EXIT` and **rebuilding on the way out** — restoring the
+source alone leaves `dist/` at the bugged build for the next run to report under
+the wrong name. A no-patch CONTROL ran first. All twelve fire, and five fire a
+SECOND check from a second direction, which is what says the claims are
+independent rather than one test written twice:
+
+| Bug put back | Fires |
+| --- | --- |
+| a KPI tile | the tiles-are-gone count |
+| the split line deleted | the split check **and** its arithmetic check |
+| the split's working deleted | the arithmetic check |
+| the in-house note on EVERY legend row | the one-row check |
+| the in-house note deleted | the same |
+| the bar chart | the bar check **and** the no-scroll check |
+| the pie deleted | the pie check, the geometry check **and** the in-house note check |
+| the Custody column (head and body) | the column check **and** the no-scroll check |
+| …the header cell alone | the column check **and** the row-width check |
+| the entity cell's hover deleted | the platforms-survive check |
+| the table sorted by name | the ranked-by-value check |
+| the two cards stacked | the geometry check **and** the no-scroll check |
+
+**THE NO-SCROLL CHECK IS LOAD-BEARING RATHER THAN TRIVIALLY TRUE** — three
+separate bugs push the page past the viewport and it catches all three.
+
+**AND THE INVARIANTS RUN ON THE FIRST THEME AND WIDTH ONLY**, by this sweep's
+own design: a claim about structure is theme-independent, and the dark walk
+exists for the contrast check. So a bug firing on `light/1500` alone is the full
+signal, not half of one — worth writing down, because a harness that dumped both
+rows reads as though only one of two caught it.
+
+#### Merged with main, and the page's conflict was the one worth getting right
+
+This branch was held open at the family's request (*"do not merge until i tell
+you to"*) and **four commits landed on main while it waited**, among them Stage
+10bh and Stage 10bi. The merge hit both of the things this file already tells a
+future session to expect — **for the seventh time each**:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bh`. Main's
+  keeps it and 10bi with it; this section is **10bl**. It is referenced nowhere
+  else in the file, so only its own heading moved — checked rather than assumed,
+  because the eight other `10bh` references all belong to main's section and
+  must NOT move.
+- **AND THE `ctx` LITERAL CONFLICTED ON ONE LINE.** Resolved as a **MECHANICAL
+  UNION** — main's nine new keys (`pageNav`, `tileStrip`, `tileMenu`, `tilePick`,
+  `tableView`, `arrange`, `returnHead`, `tableWidth`, `txnRecord`) beside this
+  branch's `familyLayout`, **73 keys with no duplicates**. Taking either side
+  whole is a clean-looking sweep that has stopped checking, and this file's own
+  measurement is that half of those losses are abstentions rather than failures.
+
+**AND IT HAPPENED AGAIN AN HOUR LATER, WHICH IS WHY THIS IS TWO MERGES AND NOT
+ONE.** Stage 10bj (#60) landed while this branch's sweep was still running — the
+same thing Stage 10bi records happening to the Polycab branch — and brought the
+IDENTICAL pair for the **eighth** time. The `ctx` literal conflicted on the
+SECOND of its two lines this time (`familyLayout` against `cioTabs` and
+`cioLayout`), unioned the same way to **75 keys with no duplicates**.
+
+**AND THE LETTER DID NOT CONFLICT AT ALL, WHICH IS THE DANGEROUS CASE.** Both
+branches had written `### Stage 10bj` in DIFFERENT parts of the file, so git
+merged them cleanly and left **two sections carrying one letter** — no marker,
+no warning, and a `See Stage 10bj` cross-reference that would silently point at
+whichever came first. Main's keeps it; this section is **10bl**. **Each of the
+five `10bj` lines was read before any moved**: two are main's own section and
+its self-reference, one is a `See Stage 10bj` inside Stage 10d that is about the
+Morning CIO panels and therefore main's, and only the remaining two are this
+branch's. Repointing them in bulk would have made a stage about Family &
+Entities cite a page it does not touch — which is exactly what Stage 10bi
+records taking the care to avoid.
+
+**AND A THIRD TIME, HALF AN HOUR LATER — THE NINTH OF EACH.** Stage 10bk (#61)
+landed while this branch's second sweep was running. The `ctx` literal conflicted
+again (`familyLayout` against `polycabDom`) and unioned to **76 keys**; the letter
+collided again, because that branch had ALSO moved to `10bk` for the same reason
+this one had. Main's keeps it and this section is **10bl**.
+
+**AND THAT ROUND IS THE ONE WORTH THE WHOLE PARAGRAPH, BECAUSE NOTHING WOULD
+HAVE REPORTED IT.** GitHub read the PR as **`clean`** and a `git merge-tree`
+trial reported **zero conflict markers** — both true, and both blind to the
+defect, which is not a textual overlap at all: two sections under one letter in
+different parts of one file. It was caught by *comparing the stage letters on
+main against the branch's own before merging*, which is now the third thing to do
+on every merge here, beside the ctx literal and the generated files. **A clean
+merge is not the same as a correct one**, and this file's own rule — a generated
+or bookkeeping file that merges WITHOUT conflicting is exactly when to re-derive
+it by hand — extends to the letter.
+
+**AND THE PAGE ITSELF IS THE UNION OF INTENT, NOT A SIDE.** Stage 10bh converted
+every table to a declared-column model (`useTableView` + `SortHeader`/`Tr`) and
+gave this one a **sortable Custody column** — the very column this branch
+removes. So main's model stays and the removal lands on top of it. **Reverting
+to plain `<tr>`/`<th>` would have resolved the conflict and failed Stage 10bh's
+own GLOBAL invariant**, which asserts on EVERY route that every table sorts and
+every column but the first moves.
+
+**AND THE COLUMN HAD TO LEAVE THREE PLACES, NOT ONE.** Under that model a column
+removed from the MARKUP alone leaves a declared id with no cell — which puts
+every later cell under the wrong header the moment a reader reorders — and an
+accessor for an id nothing declares is the dead-accessor defect Stage 10bi's own
+record names finding. `ENTITY_COLS` is 8, the header draws 8 and each row writes
+8, asserted together.
+
+**ONE PREMISE OF A CHECK MOVED WITH THAT MODEL AND IS WRITTEN DOWN RATHER THAN
+TESTED FOR.** The ranked-by-value invariant reads NAV at `cells[1]`, which is the
+DECLARED order; `Tr` permutes cells into the READER's. The sweep opens a fresh
+context so the default holds, and `useTableView` keys its store per table, so no
+other route can arrange this one. A reader who reorders this table by hand makes
+that check's own premise false rather than the page wrong.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**186 combinations clean, zero invariant failures**, with **six** EVIDENCED
+abstentions. **NONE of them is one of this change's fourteen**: `family` and
+`family-entity` report zero failures AND zero abstentions on both themes, which
+is the half that would otherwise read as a clean run.
+
+**AND SIX IS THREE CLAIMS, NOT SIX, WHICH IS WHY IT IS STATED RATHER THAN
+QUOTED.** Stage 10bj's own record says three, and the difference is entirely
+that stage's doing: it split Morning CIO into four routes, and the single
+pre-existing KPI-tile claim (*every tile on this book carries a figure*, so the
+absent-tile branch has no subject) now abstains ONCE PER ROUTE — `cio`,
+`cio-allocation`, `cio-nav`, `cio-nav-live`. The other two are Stage 10bh's
+crumb claim on the not-found route and Stage 10ba's pledge claim on `stock-qty`,
+which `stock-pledge` asserts as a hard failure so it never stands alone. A count
+carried across from another branch's paragraph would have read as three and hidden
+that; the number is what this tree measures.
+
+**THE SWEEP COUNT IS MEASURED ON THE THRICE-MERGED TREE, AND IT RECONCILES ONLY
+BECAUSE EACH SWEEP WAS RE-RUN.** This branch's own pre-merge run was 168 and
+adds no route; Stage 10bh and 10bi took it to 180, which the FIRST merge
+measured; Stage 10bj adds six, so the SECOND measured **186**; and Stage 10bk
+adds **none** — its Polycab work reuses routes the sweep already walked — so the
+third measured 186 again, to the combination. **That last one was PREDICTED TO
+MOVE AND DID NOT**, which is the whole argument for re-running rather than
+reasoning: a figure adjusted by arithmetic from another branch's paragraph would
+have been wrong in the one direction nothing on screen could show. Every claim
+here is struck on `/family`, which the sweep already walked, so the number moving
+on this branch's own account would have meant a route appeared somewhere nobody
+looked.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control on the merged tree: **neither side touched a
+generated file, so the merge had nothing to splice** — and the control was run
+anyway, because the first is what made this merge safe and only the second would
+have caught it had it not been.
+
+### Stage 10bm — A CATEGORY III AIF IS LISTED EXPOSURE, AND A TRUSTEE IS NOT THE TRUST
 
 *"open PR and do not merge until i tell you to."* · *"Sanshi, Buoyant and
 Carnelian. These are not private market investments. They should come under
@@ -13374,13 +13636,96 @@ an address the book deliberately does not define) **plus one this change
 created**: *no fund row prints a return where its cost is absent*, on both
 Private Market fund routes. That one earns its abstention off the book —
 narrowing the page to the private side left **4 fund rows over 5 deduped
-positions and not one of them lacks a cost**, where the pre-10bl page drew 19
+positions and not one of them lacks a cost**, where the pre-10bm page drew 19
 rows of which 4 reported none. It is the shape this file requires: the claim has
 no subject because the BOOK says so, not because the check could not find its
 figure.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control before and after the pass.
+
+#### Merged with main, and the letter guard fired on its first full run
+
+This branch was held open at the family's request (*"open PR and do not merge
+until i tell you to"*) and **Stage 10bl landed on main while it waited** — so the
+merge hit the two things this file tells a future session to expect, **for the
+tenth time each**:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bl`. Main's
+  merged first and **keeps it**, as at 10al, 10as, 10at, 10aw, 10bb, 10bi, 10bj
+  and 10bk; this section is **10bm**. **Eleven `10bl` lines were read one at a
+  time before any moved**: three are main's own merge note (*"this section is
+  **10bl**"*) and one its heading, and the other eight are this branch's — every
+  one about the SEBI category split, the trustee join or `replay:owners`, and
+  not one about main's tile, bar-graph and custody removals. A bulk replace
+  would have made a stage about Family & Entities cite the AIF split.
+- **AND THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS.**
+  Git produced the union without conflicting, so nothing would have reported a
+  key going missing. Verified by READING it rather than by trusting that git did
+  not complain: **78 keys, no duplicates, nothing lost from either side and
+  nothing extra** — main's `familyLayout` beside this branch's own — with every
+  key's identifier confirmed declared in the merged file. Taking either side
+  whole is a sweep that has silently stopped checking, and this file's own
+  measurement is that half of those losses are abstentions rather than failures.
+
+**AND MAIN'S THIRD MERGE CHECK FIRED ON ITS FIRST FULL RUN.** Stage 10bl added
+it in the same PR this branch merged: *compare the stage letters on main against
+the branch's own*, because two sections under one letter in different parts of
+one file **merge cleanly, with no marker and no warning**. Run across the whole
+file rather than across this merge, it finds **TEN duplicated stage letters —
+`10g`, `10j`, `10n`, `10o`, `10p`, `10r`, `10s`, `10y`, `10aa`, `10ak`** — every
+one of them already on `main`, none introduced here (measured: 10 duplicates on
+`origin/main`, 10 on the merged tree, and the sorted letter lists differ by
+`10bm` alone). So a `See Stage 10p` in this file already points at whichever of
+two sections comes first, and has for some time. They are NAMED rather than
+renumbered, because repointing ten sections would rewrite every cross-reference
+in the file for no measurement — and a guard's first run finding ten historical
+cases is the guard working, not a reason to bundle their repair into a merge.
+
+**AND THE PAGE'S OWN CONFLICT WAS ONE IMPORT LINE.** Main removed the four KPI
+tiles that used `absentTile` and `DASH`; this branch's unvalued-holdings card
+uses `DASH`. Measured on the merged tree rather than reasoned about —
+`absentTile` appears on the import line and nowhere else (genuinely dead after
+main's removal), `DASH` on the import line **and** inside the new card — so the
+resolution takes main's removal of the one and keeps the other. Every other
+count in that file matches main exactly (`custodyLabelOf` 4, `BarChart` 3,
+`Custody` 6, `absentTile` 0), which is what says main's three removals survived
+a merge that also kept this branch's card.
+
+**AND THE GENERATED FILES WERE RE-DERIVED RATHER THAN ASSUMED.** Main touched
+three files and none of them generated, so the merge had nothing to splice — and
+`npm run build-book` was run as a control anyway and regenerated `glowData.ts`
+and `docs/BOOK-REPORT.md` **byte-identically, to the same md5 as before the
+merge**. Both halves are stated because the first is what made this merge safe
+and only the second would have caught it had it not been.
+
+**AND THE ONE THING THAT LOOKED LIKE A COLLISION OF INTENT IS NOT ONE, MEASURED
+ON BOTH TREES RATHER THAN REASONED ABOUT.** Stage 10bl asserts *"the page does
+not scroll"* and this branch adds a card to a Family & Entities view, which reads
+as the two asks pulling against each other. **The claim is on `/family`, the
+INDEX** — its invariant block is the unquoted `family:` key — **and this card
+renders only on `/family?entity=…`**, so it never reaches the page the claim is
+about. Measured with the sweep's own browser at its own 1500×1000: the index is
+**0px over on `origin/main` and 0px over on the merged tree**, and main's own
+harness run against THIS build reports `family` clean.
+
+**THE FIRST ATTRIBUTION WAS WRONG AND IS KEPT HERE BECAUSE OF HOW IT WAS
+WRONG.** The invariant was read as `family-entity`'s by taking the nearest
+preceding `^  "route": [` line — and `family:` is an UNQUOTED key, which that
+pattern cannot see, so the search silently walked past the real block and
+stopped at the quoted one before it. Instrumenting the dispatch to print each
+invariant's own result is what settled it: `family-entity` runs **four**
+invariants and not one of them mentions scrolling. **A structural claim about
+someone else's check must be struck on the dispatch's own answer, not on a
+pattern over the source** — the same rule this file already applies to the pages
+themselves, arriving in the harness.
+
+**WHAT IS TRUE, AND IS A MEASUREMENT RATHER THAN A REGRESSION:** the ENTITY view
+scrolls on both trees, **207px over on `origin/main` and 755px with this card**,
+and no invariant on either side claims otherwise. It is recorded rather than
+designed around, because the family asked for the INDEX to fit side by side and
+asked separately for the trust's empty holdings to be explained — and the second
+answer is a card of substance, not chrome.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -14288,7 +14633,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   on the DP account number the page prints and cited to the family's own
   investment register. The FIFTH faithful partial replay after `rekey:archive`,
   `build-lookthrough --reindex`, `replay:calls` and `replay:movements`, on the
-  same three rules (see Stage 10bl): it touches the owner, its id and one
+  same three rules (see Stage 10bm): it touches the owner, its id and one
   warning and nothing else; its gate is struck on the ARCHIVE — the owner on
   disk must be either the holder the committed text prints or the one the join
   produces, and a third value means somebody else wrote it; and `--check` writes
