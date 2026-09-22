@@ -12842,18 +12842,29 @@ that check's own premise false rather than the page wrong.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
 blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
-**180 combinations clean**, with **three** EVIDENCED abstentions — the two Stage
-10bg records, plus Stage 10bh's crumb claim on the not-found route, whose figure
-is correctly not on screen there. **NONE of them is one of this change's
-fourteen**: the `family` and `family-entity` routes report zero failures AND
-zero abstentions on both themes, which is the half that would otherwise read as
-a clean run.
+**186 combinations clean, zero invariant failures**, with **six** EVIDENCED
+abstentions. **NONE of them is one of this change's fourteen**: `family` and
+`family-entity` report zero failures AND zero abstentions on both themes, which
+is the half that would otherwise read as a clean run.
 
-**THE SWEEP COUNT IS MEASURED ON THE MERGED TREE, AND IT RECONCILES ONLY BECAUSE
-IT WAS RE-RUN.** This branch's own pre-merge run was 168 and Stage 10bi's was
-180; this change adds no route, so the merged tree is **180** — every claim here
-is struck on `/family`, which the sweep already walked, and the number moving
-would have meant a route appeared somewhere nobody looked.
+**AND SIX IS THREE CLAIMS, NOT SIX, WHICH IS WHY IT IS STATED RATHER THAN
+QUOTED.** Stage 10bj's own record says three, and the difference is entirely
+that stage's doing: it split Morning CIO into four routes, and the single
+pre-existing KPI-tile claim (*every tile on this book carries a figure*, so the
+absent-tile branch has no subject) now abstains ONCE PER ROUTE — `cio`,
+`cio-allocation`, `cio-nav`, `cio-nav-live`. The other two are Stage 10bh's
+crumb claim on the not-found route and Stage 10ba's pledge claim on `stock-qty`,
+which `stock-pledge` asserts as a hard failure so it never stands alone. A count
+carried across from another branch's paragraph would have read as three and hidden
+that; the number is what this tree measures.
+
+**THE SWEEP COUNT IS MEASURED ON THE TWICE-MERGED TREE, AND IT RECONCILES ONLY
+BECAUSE EACH SWEEP WAS RE-RUN.** This branch's own pre-merge run was 168 and
+adds no route; Stage 10bh and 10bi took it to 180, which the FIRST merge
+measured; Stage 10bj adds six more, so this is **186** — every claim here is
+struck on `/family`, which the sweep already walked, and the number moving on
+this branch's own account would have meant a route appeared somewhere nobody
+looked.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control on the merged tree: **neither side touched a
