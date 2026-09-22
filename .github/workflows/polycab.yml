@@ -1,0 +1,81 @@
+name: Polycab live record
+
+# Daily refresh of the ring-fenced promoter holding's COMPANY-LEVEL record
+# (`scripts/build-polycab-live.mjs` → `src/data/polycabLive.ts`): the exchange's
+# corporate-action record, the promoter group's disclosed holding and pledge, and
+# the last settled close.
+#
+# 12:00 UTC IS 17:30 IST — two hours after the Indian market closes, so the price
+# this run stores is a SETTLED close rather than a mid-session snapshot that would
+# change if the job were retried. That is the harvester's own rule ("only settled
+# sessions are stored") applied to one scrip: a stored figure that moves depending
+# on when the job happened to run is not a figure anyone can check.
+#
+# The page does not depend on this run for its LIVE price. `/api/polycab` serves
+# the intraday quote while a session is open; this job is what makes the page
+# render complete and dated with no network at all.
+#
+# THE COMMIT ONLY HAPPENS WHEN A FIGURE MOVED. The builder is idempotent — it
+# holds `retrievedAt` steady and writes nothing when no fact changed — so a day
+# on which the exchange published nothing new produces no commit at all rather
+# than a daily no-op churning the history. The price moves on trading days, so a
+# trading day normally does commit, which is a real figure moving.
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: polycab
+  cancel-in-progress: false
+
+jobs:
+  polycab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # EVERY SOURCE IS KEYLESS. There is no secret to pass: BSE's endpoints,
+      # screener and tickertape all answer an unauthenticated request, which is
+      # the whole reason this page can be live at all — the quote feed behind the
+      # rest of the dashboard is keyed on MUNS_TOKEN and on an NSE symbol, and
+      # the ring-fence means it is never asked for this holding.
+      - name: Refresh the Polycab record
+        run: npm run build-polycab
+
+      # A run that could not reach a source keeps the stored figures and says so
+      # in its own notes, so an empty diff is a NORMAL outcome and not a failure.
+      - name: Commit if anything moved
+        run: |
+          git config user.name  "glow-harvest[bot]"
+          git config user.email "glow-harvest[bot]@users.noreply.github.com"
+          if git diff --quiet -- src/data/polycabLive.ts docs/POLYCAB-LIVE.md; then
+            echo "Nothing moved — nothing to commit."
+            exit 0
+          fi
+          git add src/data/polycabLive.ts docs/POLYCAB-LIVE.md
+          git commit -m "Polycab: refresh the live company-level record
+
+          Automated daily run of \`npm run build-polycab\`. Every figure carries
+          its own source and as-of date; docs/POLYCAB-LIVE.md records this run's
+          identity gate, the promoter cross-check and any source that could not
+          be refreshed."
+          for i in 1 2 3 4; do
+            git push && break || { echo "push failed, retrying"; sleep $((2**i)); git pull --rebase origin ${{ github.ref_name }}; }
+          done
+
+      # The store is what the page renders, so a refresh that leaves the app
+      # unable to build is worse than a stale figure. Same gate the series
+      # harvest runs for the same reason.
+      - name: Verify the app still builds against the new record
+        run: npm run build

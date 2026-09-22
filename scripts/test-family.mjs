@@ -45,6 +45,8 @@ const SUITES = [
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
   ["share movements", "src/lib/__tests__/shareMovements.test.ts"],
+  ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
+  ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
 ];
 
 let failed = 0;
