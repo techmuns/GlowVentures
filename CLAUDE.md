@@ -5622,6 +5622,7 @@ WHAT FOUND IT.** "The name does not carry the owner" was struck on
 rendered name left the attribute untouched and the invariant green. It reads the
 rendered first cell now. Both new invariants were then verified by reintroducing
 their bug: the owner back in the name, and the sub-line back under it.
+
 ### Stage 10v — ONE TILE, ONE DESTINATION, AND THE HALVES BECOME A TOGGLE
 
 *"there are multiple links on these KPI tiles. Make these KPI tiles clickable and
@@ -13590,6 +13591,7 @@ assertions, 1 honest NOT CHECKED) · `check:family` 82/0 · `check:pages`
 **192 combinations clean**, with the same six evidenced pre-existing abstentions
 and none of this stage's own. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` BYTE-IDENTICALLY — a fetched price never enters the book.
+
 ### Stage 10bo — ONE CLASSIFICATION FOR TWO PAGES, AND A FOLIO IS WHAT A FUND ROW IS MADE OF
 
 *"open PR and do not merge until i tell you to."* · *"we have already classified
@@ -13864,6 +13866,52 @@ route appeared somewhere nobody looked.
 BYTE-IDENTICALLY, run as a control before and after (md5 unchanged): nothing
 here touches the ingest, and three presentation changes that moved a generated
 figure would not be three presentation changes.
+
+#### Merged with main, and both predicted conflicts arrived — for the TENTH time each
+
+This branch was held open under the family's own instruction (*"open PR and do
+not merge until i tell you to"*), and **Stage 10bm and Stage 10bn landed on main
+while it waited**. The merge hit exactly the two things this file already tells a
+future session to expect, and neither was a surprise because they are written
+down:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bm`. Main's
+  merged first and **keeps it**, along with the `10bn` beside it, as at 10al,
+  10as, 10at, 10aw, 10ba, 10bh, 10bi, 10bj and 10bl; this section is **`10bo`**.
+  **Nine cross-references named a colliding letter and only FIVE were this
+  branch's** — the `companySectorIndex` line in **Layout**, the two Polycab
+  sentences under Stage 10i's preview rule, the folio line under Stage 10m and
+  the one under Stage 10bf. The other four are main's own (its two
+  self-references inside 10bn, the `fundNavs` entry under **Build**, and the
+  two-must-never-be-added line in **Layout**). Each was **read and classified
+  against main's own copy of the file before any of them moved**; repointing in
+  bulk would have made a stage about a sector classification cite the fund-NAV
+  work.
+- **AND THE `ctx` LITERAL CONFLICTED ON ONE LINE, AS PREDICTED.** This branch's
+  `feSectors` against main's `stockMark`. **Resolved as a mechanical union and
+  then PROVED to be one** — the keys of both sides were diffed against the keys
+  of the result, and the union was required to drop none and invent none.
+  Measured afterwards at **80 keys, no duplicates**, with every key's source
+  declared exactly once but for four pre-existing shadowed names. Taking either
+  side whole is a sweep that has silently stopped checking: this file's own
+  measurement is that dropping one probe turns its invariants into NOT CHECKED
+  while every combination still reports CLEAN.
+
+**AND THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, which on this
+merge was the cheap half: only main touched one (`src/data/fundNavs.ts`,
+`src/data/polycabLive.ts`, `docs/FUND-NAVS.md`, `docs/POLYCAB-LIVE.md`) and this
+branch touched none, so there was nothing to splice — and `npm run build-book`
+was run as a control anyway and regenerated `glowData.ts` and
+`docs/BOOK-REPORT.md` **byte-identically**, md5 unchanged on both.
+
+**THE ONE SUBSTANTIVE RISK WAS MEASURED RATHER THAN WAITED FOR.** Main's 10bn
+makes the published NAV the current value, which moves market values through
+`PortfolioContext`. Both pages this branch changed were checked against it
+before the sweep ran: **Private Market reads `statementPortfolio`** and cannot
+see it at all, and **Family & Entities reads the live set but every figure this
+branch added is scoped to `isCompanyShare`** — `applyFundNavs` is keyed on fund
+schemes, so not one company share moves. The sweep then confirmed it.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
