@@ -11981,6 +11981,35 @@ never typechecks, so the suite had been passing while `npm run build` was
 broken. Without the control that reads as nine bugs firing. `shared/polycabSources.d.mts`
 is the fix, on the same terms as `sectors.d.mts` beside it.
 
+**IT BIT TWICE, WHICH IS WHY IT IS RECORDED RATHER THAN JUST FIXED.** Adding
+`polycabFunction.test.ts` broke the build the same way a second time, on
+`functions/api/polycab.js` — and `indices.d.ts`'s own header had already written
+the warning down: *"without a declaration `tsc -b` fails the whole build on
+TS7016 — which `test:family` would not catch, because it bundles with esbuild
+and does not typecheck."* **A NEW `.test.ts` THAT IMPORTS PLAIN JS NEEDS ITS
+DECLARATION IN THE SAME COMMIT**, and a green `test:family` is not evidence the
+build is green.
+
+#### …and the edge function is tested, because the deployment cannot be probed
+
+`/api/polycab` was checked against the branch preview and the edge gate answers
+the SIGN-IN PAGE, HTTP 200, `text/html`, for every `/api/*` path — right for a
+browser and, as Stage 10c already records, a trap for a script. Without
+`GLOW_PASSWORD` the deployed function is out of reach from here, which is stated
+rather than worked around.
+
+Every branch AROUND the upstream is reachable, and they are the ones that matter:
+`polycabFunction.test.ts` stubs the exchange and holds the identity gate to
+refusing in three distinguishable ways (no ISIN from the caller, a DIFFERENT ISIN
+back, an unreachable exchange), to returning **no price at all** on a mismatch
+rather than a price with a caveat, to reading a 302 to BSE's error page as a
+failure rather than an empty success, and to the browser being unable to widen
+what the endpoint confirms — a `scripcode` in the request is ignored. The
+treatment `chatFunction`, `indicesFunction` and `quotesFunction` already get, and
+for the same reason. Verified by reintroducing two bugs: the gate no longer
+comparing fires two checks, and a missing previous close defaulting the change to
+0 fires the third.
+
 #### The measured zeros on this page are zeros
 
 `check:pages` reports `zeroish=7` on `/polycab`, and every one is the promoter
@@ -11990,7 +12019,7 @@ ABSENT pledge on this page renders `—` with its reason, so the two are
 distinguishable exactly as §2 requires.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
-blocked) · `test:family` 19 suites · `check:family` **81/0** · `check:pages`
+blocked) · `test:family` 20 suites · `check:family` **81/0** · `check:pages`
 **168 combinations clean**, with the same two evidenced abstentions Stage 10bg
 records. The count does not move because this change adds no route — everything
 it asserts is struck on `/polycab`, which the sweep already walked.
