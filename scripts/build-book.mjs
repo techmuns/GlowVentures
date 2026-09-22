@@ -22,6 +22,7 @@ import { fileURLToPath } from "node:url";
 import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
+import { marketSideOf, readAifCategory, readsAsPrivateEquity } from "../shared/aifCategory.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
@@ -50,12 +51,6 @@ const r2 = (n) => (n === null || n === undefined ? null : Math.round(n * 100) / 
 const r3 = (n) => (n === null || n === undefined ? null : Math.round(n * 1000) / 1000);
 /** Four places, for a PERCENTAGE — two would round a 0.4 bp contribution to zero. */
 const r4 = (n) => (n === null || n === undefined ? null : Math.round(n * 10000) / 10000);
-/**
- * Asset classes with no exchange behind them. What splits `listedValue` from
- * `privateValue` — a property of the HOLDING, never of the mandate it sits in.
- */
-const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
-
 /**
  * RING-FENCED SECURITIES — carried in the archive, kept OUT of every book total.
  *
@@ -1481,6 +1476,15 @@ function build(docs) {
        */
       noPositionsReason: null,
     });
+    /**
+     * The account this group just produced, for the positions built below: the
+     * SEBI category an AIF's holding is placed by is read from the security
+     * name AND from this account's own `providerEngagement`, and only one of
+     * the two is on the holding. Captured rather than re-found, because
+     * `accounts[accounts.length - 1]` at the push site reads correctly and
+     * would go on reading correctly if a second push ever landed between them.
+     */
+    const acctForPositions = accounts[accounts.length - 1];
 
     // ── commitments ──
     // Only where a statement PRINTS a commitment block. A fully-funded mandate
@@ -1797,6 +1801,21 @@ function build(docs) {
         sector: h.assetClass === "Cash" ? "Cash" : sector,
         providerSector,
         assetClass: h.assetClass,
+        /**
+         * LISTED OR PRIVATE — `null` where no statement places it.
+         *
+         * Read from the SEBI category the fund's own name and this account's
+         * `providerEngagement` print (`shared/aifCategory.mjs`). Generated here
+         * rather than derived per page so there is ONE decision and every
+         * total, facet and caption reads the same answer; the browser's
+         * `marketSideOf` is the same function on the same inputs, for a caller
+         * that already holds the account index.
+         *
+         * Emitted on EVERY position, not only the AIFs. A partial field is
+         * where a fallback rule hides, and a fallback rule is a second
+         * definition of the split.
+         */
+        marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security }, acctForPositions),
         quantity: h.quantity,
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
@@ -2238,6 +2257,54 @@ function build(docs) {
     notes.push(`${seenGroups.size} holding(s) reported under more than one member: both rows are carried, `
       + `and ${r2(doubleCounted).toLocaleString("en-IN")} is excluded from the consolidated total so each is counted once`);
   }
+
+  /**
+   * ── WHICH SIDE OF THE BOOK EACH HOLDING IS ON, AND WHAT IS NOT PLACED ─────
+   *
+   * Reported on EVERY run, including when nothing is unplaced, for the reason
+   * this file keeps naming: a guard that only speaks when it fires is
+   * indistinguishable, on a clean run, from one that was deleted.
+   *
+   * The unplaced funds are NAMED rather than counted, because that list IS the
+   * ask — each is one document (a SEBI registration, a contribution agreement)
+   * away from being placed, and a reader cannot chase a number.
+   */
+  {
+    const side = (k) => dedupedForTotal.filter((p) => (p.marketSide ?? null) === k);
+    const val = (rows) => sum(rows.map((p) => p.marketValue ?? 0));
+    const L = side("listed"), P = side("private"), U = side(null);
+    notes.push(`market side: listed ${r2(val(L)).toLocaleString("en-IN")} over ${L.length} holding(s), `
+      + `private ${r2(val(P)).toLocaleString("en-IN")} over ${P.length}, `
+      + `and ${r2(val(U)).toLocaleString("en-IN")} over ${U.length} that no statement places on either side. `
+      + "Read from the SEBI category the statements print: Category III trades LISTED securities, Categories I "
+      + "and II are private capital, and a fund naming its own discipline as private equity or venture is "
+      + "private whichever category it prints. The three are summed from the positions and none is the "
+      + "remainder of the other two.");
+    if (U.length) {
+      const funds = [...new Set(U.map((p) => p.security))].sort();
+      notes.push(`market side: ${funds.length} fund(s) print NO SEBI category, so they are on neither side `
+        + `and are counted apart rather than defaulted to one: ${funds.join("; ")}. `
+        + "Putting them private would claim they are private capital and putting them listed would claim the "
+        + "opposite, and both are claims no document in this archive makes. A fund's own SEBI registration or "
+        + "its contribution agreement settles each one.");
+    }
+    /**
+     * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
+     * venture is private whatever category it prints, and Transition Venture's
+     * `Category I/II` — the issuer declining to commit — would otherwise be
+     * unplaced despite naming its own discipline. Silent, that reads as the
+     * category having placed it.
+     */
+    const pe = dedupedForTotal.filter((p) => p.assetClass === "AIF"
+      && readsAsPrivateEquity(p.security, accounts.find((a) => a.accountId === p.accountId))
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category I"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category II");
+    if (pe.length) {
+      notes.push(`market side: ${pe.length} holding(s) are private because the paperwork names their own `
+        + `discipline, not because of a category — ${[...new Set(pe.map((p) => p.security))].sort().join("; ")}. `
+        + "Their statements print no single SEBI category, so without that read they would be unplaced.");
+    }
+  }
   const asOf = accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) ?? "";
 
   /**
@@ -2315,22 +2382,32 @@ function build(docs) {
     summary: {
       asOf,
       /**
-       * LISTED vs PRIVATE, SPLIT BY WHAT THE HOLDINGS ARE.
+       * LISTED vs PRIVATE, SPLIT BY WHAT THE STATEMENTS SAY — AND A THIRD SIDE.
        *
-       * These were `listedValue: totalValue, privateValue: 0` — true when every
+       * This was `listedValue: totalValue, privateValue: 0` — true when every
        * account in the book was a listed-equity mandate, and false the moment
-       * the AIF statements got a reader. ₹204 Cr of Sanshi Fund and ₹3.4 Cr of
-       * Transition Venture were being reported as listed equity, which is 62% of
-       * the book under a label that does not describe it.
+       * the AIF statements got a reader.
        *
-       * The split is on `assetClass`, which is what a holding IS — the same
-       * field §5 of CLAUDE.md keeps separate from how an account is RUN. Cash
-       * counts as listed because it is liquid and sits inside listed mandates;
-       * an unlisted holding or a structured product is private for the same
-       * reason an AIF unit is: there is no exchange to sell it on.
+       * IT WAS THEN `assetClass`, WITH EVERY AIF PRIVATE, and that was the same
+       * mistake one drop later: true of the AIFs the book held when it was
+       * written — 360 ONE Special Opportunities and Transition Venture, both
+       * drawdown vehicles — and false from the drop that brought the Category
+       * III folios. **₹297.78 Cr, 84% of the private half, was Sanshi, Buoyant
+       * and Carnelian Bharat Amritkaal**: open-ended funds trading LISTED
+       * securities, reported as private capital.
+       *
+       * It is read from the SEBI category the statements print
+       * (`shared/aifCategory.mjs`, and `Position.marketSide` above). A holding
+       * no statement places is on NEITHER side and is counted apart: filing it
+       * private would claim it is private capital and filing it listed would
+       * claim the opposite, and both are claims no document makes.
+       *
+       * ALL THREE ARE SUMMED FROM THE POSITIONS and none is `total − the other
+       * two`: a residual absorbs whatever a rule stops naming, silently.
        */
-      listedValue: r2(sum(dedupedForTotal.filter((p) => !PRIVATE_CLASSES.has(p.assetClass)).map((p) => p.marketValue ?? 0))),
-      privateValue: r2(sum(dedupedForTotal.filter((p) => PRIVATE_CLASSES.has(p.assetClass)).map((p) => p.marketValue ?? 0))),
+      listedValue: r2(sum(dedupedForTotal.filter((p) => p.marketSide === "listed").map((p) => p.marketValue ?? 0))),
+      privateValue: r2(sum(dedupedForTotal.filter((p) => p.marketSide === "private").map((p) => p.marketValue ?? 0))),
+      unplacedValue: r2(sum(dedupedForTotal.filter((p) => p.marketSide === null).map((p) => p.marketValue ?? 0))),
       totalValue,
       positionsCount: positions.length,
       entitiesCount: owners.length,

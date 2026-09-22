@@ -36,6 +36,7 @@ function defaultPortfolio(): Portfolio {
     totalValue: BOOK_SUMMARY.totalValue,
     listedValue: BOOK_SUMMARY.listedValue,
     privateValue: BOOK_SUMMARY.privateValue,
+    unplacedValue: BOOK_SUMMARY.unplacedValue,
     accounts: BOOK_ACCOUNTS,
     // Standardise the mixed-case provider spellings once, at the source, so every
     // page (tables, dropdowns, the news/announcement holding tags) shows them the
@@ -332,16 +333,25 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
-    // is ₹1.46 Cr reported under two members), then splits by assetClass exactly
-    // as `BOOK_SUMMARY` does. That matters on LIVE basis: an earlier fix set
-    // `listedValue = consolidatedMarketValue(positions)` — the WHOLE deduped book,
-    // AIF units included — and then added `privateValue` on top, counting the
-    // ₹207.65 Cr AIF book twice and inflating live NAV to ~₹544 Cr against a real
-    // ₹335 Cr. Live prices move only listed marks; the AIF has no live quote and
-    // its share stays at its statement value, which is why re-splitting the
-    // live-overlaid positions leaves `private` unchanged and `total` correct.
-    const { listed: listedValue, private: privateValue } = publicPrivateSplit(positions);
-    return { ...basePortfolio, positions, listedValue, privateValue, totalValue: listedValue + privateValue };
+    // is ₹1.46 Cr reported under two members), then splits on `marketSide`
+    // exactly as `BOOK_SUMMARY` does. That matters on LIVE basis: an earlier fix
+    // set `listedValue = consolidatedMarketValue(positions)` — the WHOLE deduped
+    // book, AIF units included — and then added `privateValue` on top, counting
+    // the ₹207.65 Cr AIF book twice and inflating live NAV to ~₹544 Cr against a
+    // real ₹335 Cr. Live prices move only listed marks; a fund unit has no live
+    // quote and its share stays at its statement value, which is why re-splitting
+    // the live-overlaid positions leaves the other two sides unchanged.
+    //
+    // ALL THREE SIDES ARE SUMMED AND THE TOTAL IS THEIR SUM. `unplaced` is the
+    // ₹16.69 Cr no statement places on either side (see `publicPrivateSplit`);
+    // reconstructing the total from `listed + private` alone would silently drop
+    // it from live NAV while the statement basis kept it.
+    const { listed: listedValue, private: privateValue, unplaced: unplacedValue } =
+      publicPrivateSplit(positions);
+    return {
+      ...basePortfolio, positions, listedValue, privateValue, unplacedValue,
+      totalValue: listedValue + privateValue + unplacedValue,
+    };
   }, [basePortfolio, quotes]);
 
   const consolidated = useMemo(

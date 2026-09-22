@@ -42,12 +42,24 @@ ok("the context is a non-empty set of named blocks",
 // ── the totals tie to the generated book ────────────────────────────────────
 {
   const s = block<{ consolidatedNavCr: number; listedCr: number; privateCr: number;
-    positions: number; accounts: number; asOf: string; distinctSecurities: number }>("book_summary");
+    notPlacedCr: number; positions: number; accounts: number; asOf: string; distinctSecurities: number }>("book_summary");
   near("consolidated NAV ties to BOOK_SUMMARY.totalValue", s.consolidatedNavCr, BOOK_SUMMARY.totalValue / CR);
   const split = publicPrivateSplit(dedupedPositions(BOOK_POSITIONS));
   near("...and its listed half ties to publicPrivateSplit", s.listedCr, split.listed / CR);
   near("...and its private half too", s.privateCr, split.private / CR);
-  near("...and the two halves reconstruct the whole", s.listedCr + s.privateCr, s.consolidatedNavCr, 0.03);
+  near("...and the side no statement places", s.notPlacedCr, split.unplaced / CR);
+  /**
+   * ── ALL THREE SIDES RECONSTRUCT THE NAV, AND THE THIRD IS WHY ─────────────
+   *
+   * This was a TWO-term identity and it was exactly right while the split was
+   * `isPrivateClass` against its own negation. The split reads the SEBI
+   * category the statements print now, three funds print none, and a model
+   * handed a NAV and two of three components will reconstruct the third by
+   * subtraction — on this book that subtraction is ₹16.69 Cr wrong, and it is
+   * precisely the arithmetic a family office asks a chat about.
+   */
+  near("...and the three sides reconstruct the whole",
+    s.listedCr + s.privateCr + s.notPlacedCr, s.consolidatedNavCr, 0.03);
   ok("the position and account counts are the book's own",
     s.positions === BOOK_POSITIONS.length && s.accounts === BOOK_ACCOUNTS.length,
     `${s.positions} positions, ${s.accounts} accounts`);

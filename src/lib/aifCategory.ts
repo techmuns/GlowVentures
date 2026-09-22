@@ -1,143 +1,57 @@
-// ── WHICH SEBI CATEGORY AN AIF IS, TAKEN FROM WHAT THE STATEMENT PRINTS ─────
+// ── WHICH SEBI CATEGORY AN AIF IS — THE BROWSER'S DOOR TO THE SHARED READ ───
 //
-//   "when you're drilling down in the AIF ना नवल, make it cat one, cat two, cat
-//    three … क्योंकि there are only three categories. तो आप वहीं पर drill down
-//    करने पर फिर उसको club कर दो कि these are cat two AIFs, these are cat three
-//    AIFs, this is cat one AIF."
+// The read itself lives in `shared/aifCategory.mjs` so `build-book` and this
+// app answer the question with the SAME code: the listed/private split is
+// GENERATED and the AIF drill-down's sections are rendered, and a second copy
+// of the rule on either side would be a second taxonomy. That is the standing
+// `shared/sectors.mjs` already has, one map over.
 //
-// SEBI has three categories, and the family are right that every AIF is in one
-// of them. **THIS BOOK DOES NOT KNOW WHICH FOR EVERY FUND**, and those are
-// different facts: the first is about the regulation, the second is about the
-// paperwork in `source/`. Filing a fund under a category no document states
-// would be a fabricated classification — `VAL_METHODS[i % 5]` assigning "DCF"
-// by row order, arriving through a section heading, and a heading looks exactly
-// as authoritative whichever rows sit under it.
-//
-// ── SO IT IS READ, NEVER INFERRED, AND THERE ARE TWO PLACES IT IS PRINTED ───
-//
-// Both are the statement's own words, with the standing `providerSector` and
-// `providerEngagement` already have in this model:
-//
-//   • THE SECURITY NAME, which names the FUND —
-//       `Sanshi Fund-I (Open Ended AIF CAT-III) — Class E`
-//       `BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4`
-//       `360 ONE SPECIAL OPPORTUNITIES FUND … (AIF CATEGORY II)`
-//   • `Account.providerEngagement`, which describes the ACCOUNT —
-//       `Category II AIF - drawdown, with a commitment and called capital`
-//       `Category I Alternative Investment Fund – Angel Fund`
-//
-// Neither is preferred over the other. WHERE BOTH SPEAK THEY MUST AGREE, and a
-// disagreement leaves the holding UNSTATED rather than letting either side win
-// silently — the rule `build-symbols` already applies to its ISIN tier, where
-// adding a second identifier makes the match stricter rather than looser.
-// Measured over this book that check fires ZERO times, and it is reported at
-// zero for the reason this repo keeps naming: a guard that only speaks when it
-// fires is indistinguishable, on a clean run, from one that was deleted.
-//
-// ── A PHRASE NAMING TWO CATEGORIES RESOLVES TO NEITHER ──────────────────────
-//
-// Transition Venture Capital's account reads **`Category I/II AIF — drawdown`**.
-// That is the issuer declining to commit, and picking one of the two would be
-// this book inventing the answer the document withheld. It yields both, the
-// caller sees a set of size two, and the holding is filed as not stated — with
-// its own wording, because "the statement names two categories" and "the
-// statement names none" send a reader to different documents.
+// Nothing here infers a category. What this file adds is the shapes this app
+// holds — a `Position` plus the `AccountIndex` every page already carries — and
+// the sectioning the AIF drill-down draws.
 import type { Position } from "./types";
 import type { Account } from "./types";
 import { engagementOf, type AccountIndex } from "./accounts";
 import { isMandateHeld } from "./analytics";
+import {
+  CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
+  categoriesNamedIn, readAifCategory as readAifCategoryText,
+  readsAsPrivateEquity as readsAsPrivateEquityText,
+  marketSideOf as marketSideOfText,
+  MARKET_SIDE_UNPLACED,
+  type AifCategory, type AifCategoryRead, type MarketSide,
+} from "../../shared/aifCategory.mjs";
 
-export const CATEGORY_I = "Category I";
-export const CATEGORY_II = "Category II";
-export const CATEGORY_III = "Category III";
-
-/** Reading order: the SEBI categories in order, then what is not stated. */
-export const AIF_CATEGORIES = [CATEGORY_I, CATEGORY_II, CATEGORY_III] as const;
-export type AifCategory = (typeof AIF_CATEGORIES)[number];
-
-/**
- * EVERY CATEGORY A PIECE OF TEXT NAMES, not the first one.
- *
- * `Category I/II` has to come back as BOTH or the ambiguity is lost at the
- * first step and can never be recovered. The pattern is anchored on the word so
- * a `Class A2` or a `Series II` cannot be read as a category: `\bcat` requires
- * the word, and the numeral must follow it.
- *
- * ── TWO THINGS STOP `III` BEING READ AS `I`, AND ONLY ONE IS LOAD-BEARING ──
- *
- * Reading `CAT-III` as Category I would file ₹297.78 Cr — 84% of this book's
- * AIF row — under the wrong heading, silently. Two things prevent it and the
- * first draft of this comment credited the wrong one, which is the
- * comment-asserting-an-enforcement-that-never-happens failure this repo names:
- *
- *   • THE TRAILING `\b` — the real guard. Matching `I` out of `III` leaves
- *     `II` after it, and a word boundary between two word characters fails, so
- *     the engine backtracks to `III`. **Measured: with it, BOTH alternation
- *     orders read `CAT-III` correctly; without it, `I|II|III` reads it as `I`.**
- *   • the alternation ordered longest-first, which is the backup and is what
- *     would carry it if the boundary were ever loosened.
- *
- * Either alone is sufficient here, so the suite asserts BOTH variants rather
- * than only the one this file happens to use.
- */
-export function categoriesNamedIn(text: string | null | undefined): AifCategory[] {
-  if (!text) return [];
-  const out = new Set<AifCategory>();
-  // `cat`/`category`, any dash or space, then one or more numerals separated by
-  // slashes — `Category I/II`, `CAT-III`, `Category 2`.
-  for (const m of text.matchAll(/\b(?:categor(?:y|ies)|cat)[\s‐-―-]*((?:III|II|I|[123])(?:\s*\/\s*(?:III|II|I|[123]))*)\b/gi)) {
-    for (const part of m[1].split("/")) {
-      const t = part.trim().toUpperCase();
-      const c = t === "I" || t === "1" ? CATEGORY_I
-        : t === "II" || t === "2" ? CATEGORY_II
-        : t === "III" || t === "3" ? CATEGORY_III : null;
-      if (c) out.add(c);
-    }
-  }
-  return AIF_CATEGORIES.filter((c) => out.has(c));
-}
-
-/** What the two printed fields say, and whether they agree. */
-export type AifCategoryRead = {
-  /** The category, where exactly one is named and the two sources agree. */
-  category: AifCategory | null;
-  /** Everything the security name named. */
-  fromSecurity: AifCategory[];
-  /** Everything the account's own engagement wording named. */
-  fromEngagement: AifCategory[];
-  /**
-   * Why there is no category. `null` where there is one.
-   *   `ambiguous`  — the statement names more than one and commits to neither.
-   *   `conflict`   — the two printed fields name DIFFERENT single categories.
-   *   `unstated`   — neither field names one at all.
-   */
-  why: "ambiguous" | "conflict" | "unstated" | null;
+export {
+  CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
+  categoriesNamedIn, MARKET_SIDE_UNPLACED,
 };
+export type { AifCategory, AifCategoryRead, MarketSide };
 
 /**
- * THE CATEGORY OF ONE HOLDING, from the security name and the account's own
- * engagement wording. Takes the `Account` rather than an index so it can be
- * called with either; `aifCategoryOf` below is the one that takes the index.
+ * THE CATEGORY OF ONE HOLDING, given the shapes this app holds.
+ *
+ * Takes the `Account` rather than an index so it can be called with either;
+ * `aifCategoryOf` below is the one that takes the index.
  */
-export function readAifCategory(p: Pick<Position, "security">, account: Account | undefined): AifCategoryRead {
-  const fromSecurity = categoriesNamedIn(p.security);
-  const fromEngagement = categoriesNamedIn(account?.providerEngagement);
-  const union = AIF_CATEGORIES.filter((c) => fromSecurity.includes(c) || fromEngagement.includes(c));
-
-  if (union.length === 0) return { category: null, fromSecurity, fromEngagement, why: "unstated" };
-  if (union.length > 1) {
-    // TWO SOURCES NAMING DIFFERENT SINGLE CATEGORIES IS NOT THE SAME FAULT as
-    // one source naming two. The first says the paperwork disagrees with itself
-    // and someone must decide; the second says the issuer never committed.
-    const conflict = fromSecurity.length === 1 && fromEngagement.length === 1 && fromSecurity[0] !== fromEngagement[0];
-    return { category: null, fromSecurity, fromEngagement, why: conflict ? "conflict" : "ambiguous" };
-  }
-  return { category: union[0], fromSecurity, fromEngagement, why: null };
-}
+export const readAifCategory = (p: Pick<Position, "security">, account: Account | undefined): AifCategoryRead =>
+  readAifCategoryText(p.security, account);
 
 /** The same read, given the account index every page already holds. */
 export const aifCategoryOf = (idx: AccountIndex, p: Position): AifCategoryRead =>
-  readAifCategory(p, idx.get(p.accountId));
+  readAifCategoryText(p.security, idx.get(p.accountId));
+
+/**
+ * WHICH SIDE OF THE BOOK A HOLDING SITS ON, derived live.
+ *
+ * `Position.marketSide` is the GENERATED answer and is what every total reads —
+ * this is the same function on the same inputs, for a caller that has the index
+ * to hand and wants it without a round trip through the book. The two cannot
+ * disagree, because they are one function; `marketSide.test.ts` asserts it on
+ * every row rather than trusting that sentence.
+ */
+export const marketSideOf = (idx: AccountIndex, p: Position): MarketSide | null =>
+  marketSideOfText(p, idx.get(p.accountId));
 
 // ── PRIVATE EQUITY, WHICH IS A SECTION AND NOT A CATEGORY ───────────────────
 //
@@ -171,30 +85,9 @@ export const aifCategoryOf = (idx: AccountIndex, p: Position): AifCategoryRead =
 // and a listed-equity growth fund under a discipline neither claims.
 export const PRIVATE_EQUITY_SECTION = "Private Equity";
 
-/**
- * The phrases that make a fund a private-equity or venture vehicle, matched
- * against the FUND'S OWN NAME and its account's engagement wording.
- *
- * DELIBERATELY NARROW, and every entry is a phrase an issuer prints about
- * ITSELF. `\bventure capital\b` and not `venture`, because "Venture" appears in
- * ordinary company names; `private equity` as the whole phrase. There is no
- * fuzzy tier here for the reason `shared/nameMatch.mjs` records at length — a
- * token-overlap rule on this corpus matched `KIRANAKART TECHNOLOGIES` to `TATA
- * TECHNOLOGIES` — and a near miss is listed for a human rather than committed.
- */
-const PE_PHRASES = [
-  /\bprivate equity\b/i,
-  /\bventure capital\b/i,
-  /\bgrowth equity\b/i,
-  /\bbuyout\b/i,
-];
-
 /** Whether the paperwork calls this fund a private-equity or venture vehicle. */
-export function readsAsPrivateEquity(p: Pick<Position, "security">, account: Account | undefined): boolean {
-  const hay = [p.security, account?.providerEngagement, account?.strategy, account?.provider]
-    .filter(Boolean).join(" · ");
-  return PE_PHRASES.some((re) => re.test(hay));
-}
+export const readsAsPrivateEquity = (p: Pick<Position, "security">, account: Account | undefined): boolean =>
+  readsAsPrivateEquityText(p.security, account);
 
 /**
  * ── THE SECTION ONE AIF HOLDING SITS IN, inside the AIF drill-down ──────────

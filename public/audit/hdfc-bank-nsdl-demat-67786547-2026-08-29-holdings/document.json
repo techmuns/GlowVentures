@@ -5,8 +5,8 @@
  "ownerSource": "printed",
  "accountNoSource": "printed",
  "clientCode": null,
- "owner": "AJAY T JAISINGHANI",
- "ownerId": "ajay-jaisinghani",
+ "owner": "Bharat Jaisinghani Family Trust 2",
+ "ownerId": "bharat-jaisinghani-family-trust-2",
  "familyGroup": null,
  "strategy": null,
  "engagement": "Direct",
@@ -19,6 +19,10 @@
  "pages": 1,
  "status": "ok",
  "warnings": [
+  {
+   "code": "owner-from-register",
+   "detail": "DP account 67786547 is attributed to Bharat Jaisinghani Family Trust 2, not to the \"AJAY T JAISINGHANI\" the holder line prints: the family's own investment register (`NEW INVESTMENT SHEET.xlsx`, sheet `TRUST INVESTMENT`, row 1) records 347 Swapeco Pre-Series-A CCPS of ₹100 face under this trust — the exact instrument and quantity this statement prints, whose 347 × ₹100 is the ₹34,700 total it prints. The holder line names the TRUSTEES; no Swapeco holding appears under them anywhere in the register."
+  },
   {
    "code": "text-recovered-by-rendering",
    "detail": "this statement carries no text layer — its glyphs are vector outlines — so the words were recovered by rendering the page at 600 dpi and reading it (lib/ocr.mjs). The 1 row(s) read reproduce the statement's own printed Total Valuation of 34700.00 to the paisa, which is the check that licenses publishing them. Ask HDFC for a re-export with fonts embedded to remove the need for it."

@@ -148,6 +148,22 @@ export type Position = {
   sector: string;           // normalized sector (our taxonomy)
   providerSector?: string | null;  // sector exactly as the provider printed it
   assetClass: AssetClass;
+  /**
+   * WHICH SIDE OF THE BOOK THIS HOLDING SITS ON — `"listed"`, `"private"`, or
+   * `null` where no statement places it.
+   *
+   * GENERATED (`shared/aifCategory.mjs`, applied in `build-book`), because the
+   * answer needs the ACCOUNT's own engagement wording as well as the security
+   * name and only one of those is on a position. `null` is a third answer and
+   * never a default to either side: three funds in this book print no SEBI
+   * category, and putting them on either side would be a claim no document
+   * makes. See `publicPrivateSplit`, which returns all three.
+   *
+   * Optional on the type so a hand-built fixture need not carry it — the
+   * generated book carries it on every row, and `marketSide.test.ts` asserts
+   * that rather than trusting it.
+   */
+  marketSide?: MarketSide | null;
   // Quantity and market value are on every position in this book: every
   // holdings statement in the drop prints both for every row including cash.
   quantity: number;
@@ -739,10 +755,19 @@ export type StartupInvestment = {
   moic: number | null;
 };
 
+/** Which side of the listed/private split a holding sits on. */
+export type MarketSide = "listed" | "private";
+
 export type BookSummary = {
   asOf: string;             // newest report date across all accounts
   listedValue: number;
   privateValue: number;
+  /**
+   * What no statement places on either side. A THIRD FIGURE rather than a
+   * residual: `listed + private + unplaced === totalValue` is an identity the
+   * suite checks, and a two-field split would absorb this silently.
+   */
+  unplacedValue: number;
   totalValue: number;
   positionsCount: number;
   entitiesCount: number;
@@ -760,9 +785,11 @@ export type Portfolio = {
    * consolidated total surfaces through <BasisPill>.
    */
   asOf: string;
-  totalValue: number;       // consolidated INR (listed + private)
+  totalValue: number;       // consolidated INR (listed + private + unplaced)
   listedValue: number;
   privateValue: number;
+  /** What no statement places on either side — see `BookSummary.unplacedValue`. */
+  unplacedValue: number;
   /** Registry of every account in the book. Positions reference it by accountId. */
   accounts: Account[];
   positions: Position[];

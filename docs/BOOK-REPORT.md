@@ -31,8 +31,8 @@ Generated — **do not edit by hand**.
 | 100023 | Goldstandard Wealth Private Limited | Ajay Jaisinghani | Aristos Equity Portfolio | 2026-08-11 | 32 | 18,79,95,881.19 |
 | 510854 | Green Lantern Capital LLP | Ankita Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 5,79,66,679.22 |
 | 510861 | Green Lantern Capital LLP | Ajay Jaisinghani | GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND | 2026-07-27 | 34 | 11,44,84,083.55 |
-| 67786137 | HDFC Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-08-29 | 0 | 0 |
-| 67786547 | HDFC Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-08-29 | 0 | 0 |
+| 67786137 | HDFC Bank (NSDL demat) | Bharat Jaisinghani Family Trust 3 | — | 2026-08-29 | 0 | 0 |
+| 67786547 | HDFC Bank (NSDL demat) | Bharat Jaisinghani Family Trust 2 | — | 2026-08-29 | 0 | 0 |
 | 16180583 | HDFC Mutual Fund | Bharat Jaisinghani | — | 2026-08-06 | 2 | 0 |
 | 10355977 | Helios Mutual Fund | Ajay Jaisinghani | — | 2026-08-07 | 1 | 30,99,84,500.77 |
 | 49794950 | ICICI Bank (NSDL demat) | Ajay Jaisinghani | — | 2026-03-31 | 11 | 63,78,01,111.15 |
@@ -73,12 +73,12 @@ Generated — **do not edit by hand**.
 
 | Owner | Accounts | Positions | Market value |
 | --- | ---: | ---: | ---: |
-| Ajay Jaisinghani | 24 | 177 | 3,49,53,95,274.55 |
+| Ajay Jaisinghani | 22 | 177 | 3,49,53,95,274.55 |
 | Ankita Jaisinghani | 11 | 112 | 1,66,41,40,924.34 |
 | Bharat Jaisinghani | 10 | 73 | 65,54,25,614.31 |
 | Aarti Jaisinghani | 2 | 7 | 1,28,63,51,868.22 |
-| Bharat Jaisinghani Family Trust 2 | 2 | 1 | 1,71,45,962.25 |
-| Bharat Jaisinghani Family Trust 3 | 2 | 1 | 1,71,45,962.25 |
+| Bharat Jaisinghani Family Trust 2 | 3 | 1 | 1,71,45,962.25 |
+| Bharat Jaisinghani Family Trust 3 | 3 | 1 | 1,71,45,962.25 |
 
 ## Read, and deliberately NOT in the book
 
@@ -418,6 +418,9 @@ never guessed into the nearest plausible bucket.
 - 2 depository row(s) for Sanshi Fund are NOT carried: the unit count matches that fund's own statement exactly, so they are the same holding seen from custody, and the fund is the authority on what its own units are worth.
 - 1 ring-fenced holding(s) — POLYCAB INDIA LIMITED - EQ, 1,23,51,24,19,665 — are carried in the archive and in BOOK_POLYCAB, and OUT of every consolidated total, listed/private split, allocation, sector, entity and holdings table. This is the family's PROMOTER stock, shown only on the Polycab page. Remove the key from RINGFENCED_SECURITY_KEYS in build-book.mjs to fold it back into the book.
 - 2 holding(s) reported under more than one member: both rows are carried, and 3,17,26,374.76 is excluded from the consolidated total so each is counted once
+- market side: listed 6,55,81,87,115.41 over 361 holding(s), private 37,88,07,535.15 over 5, and 16,68,84,580.6 over 3 that no statement places on either side. Read from the SEBI category the statements print: Category III trades LISTED securities, Categories I and II are private capital, and a fund naming its own discipline as private equity or venture is private whichever category it prints. The three are summed from the positions and none is the remainder of the other two.
+- market side: 3 fund(s) print NO SEBI category, so they are on neither side and are counted apart rather than defaulted to one: BLUE ASHVA VARENYA FUND - BAVF-SER20-C6 - Restricted Transferability; Motilal Oswal Wealth Delphi Equity Fund; Neo Infra Income Opportunities Fund I — Class A5. Putting them private would claim they are private capital and putting them listed would claim the opposite, and both are claims no document in this archive makes. A fund's own SEBI registration or its contribution agreement settles each one.
+- market side: 1 holding(s) are private because the paperwork names their own discipline, not because of a category — Transition Venture Capital Fund I — Class A1. Their statements print no single SEBI category, so without that read they would be unplaced.
 - navHistory: 12 dated point(s) from 2026-05-31 to 2026-08-13 (74 days), over the 13 account(s) that publish MORE THAN ONE dated valuation (₹140.17 Cr at the last point, each dedupeGroup counted once). 23 account(s) publish exactly one dated valuation and 15 publish none — both are named in the coverage block rather than carried into the series as a flat line, which would drag its return towards a figure nothing measured. The panel is complete from 2026-07-10; before that each link is struck over the accounts valued at BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book NAV from the date the panel completes, and is flagged per point.
 - navHistory: 4 covered account(s) publish no dated capital record and hold more than one security, so a subscription or redemption inside them would read as performance: hdfc-mutual-fund-16180583, molecule-ventures-llp-7810404, svan-investment-managers-llp-8710067, svan-investment-managers-llp-8710090. Named on screen with their share of the covered value.
 - attribution: 13 account(s) publish a valued holdings statement at two or more dates, so 268 holding(s) are priced at both ends of a window. Over 2026-05-31 → 2026-08-13 the covered set runs ₹126.28 Cr → ₹140.17 Cr, of which price ₹2.54 Cr, trading ₹8.37 Cr, bought in ₹10.72 Cr, sold out ₹8.23 Cr. Largest detractor Jammu Kashmir Bank Ltd ₹-106.04 L. It covers ₹140.17 Cr of the book's ₹710.39 Cr; every other account publishes one statement, and one statement is a level rather than a change.

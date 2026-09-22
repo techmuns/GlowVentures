@@ -22,9 +22,19 @@
 // a page that started summing the raw rows fails immediately.
 //
 // The literal figures below are asserted alongside it because a coverage COUNT
-// (15 of 19, 13 of 15) is exactly what a `?? 0` silently changes without moving
-// any total — see the traps in `src/lib/privateMarket.ts`. Where a literal would
-// go stale on the next drop it is written as a RELATION instead.
+// is exactly what a `?? 0` silently changes without moving any total — see the
+// traps in `src/lib/privateMarket.ts`. Where a literal would go stale on the next
+// drop it is written as a RELATION instead.
+//
+// ── AND SEVERAL LITERALS DID GO STALE, WHICH IS WORTH RECORDING ─────────────
+//
+// `21 / 19 / 29 rows`, `14 funds`, `15 of 19 costed`: every one of those was a
+// fact about WHICH HOLDINGS ARE PRIVATE, and Stage 10bl changed that — the
+// split reads the SEBI category the statements print, so the Category III
+// folios are listed exposure and are not on this page. The figures are
+// re-measured below and the ones that are really facts about the SET are
+// derived from `scope` rather than typed, so the next drop moves them with it.
+// What stays literal is what a `?? 0` would move without moving a total.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import { sum, sumOrNull } from "@/lib/analytics";
@@ -55,17 +65,24 @@ const accIdx = accountIndex(BOOK_ACCOUNTS);
 const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
 
 console.log("\n── the private set ──");
-eq("raw private rows", scope.rows.length, 21);
-eq("deduped private rows", scope.dedupedRows.length, 19);
-eq("accounts in scope", scope.accounts.length, 29);
-ok("every private row is AIF, Unlisted or Structured Product",
-  scope.rows.every((p) => ["AIF", "Unlisted", "Structured Product"].includes(p.assetClass)));
+eq("raw private rows", scope.rows.length, 7);
+eq("deduped private rows", scope.dedupedRows.length, 5);
+eq("accounts in scope", scope.accounts.length, 17);
+// EVERY ROW IS ON THE PRIVATE SIDE, which is now what `isPrivateClass` means —
+// read from the SEBI category rather than from the asset class. The class test
+// this replaced would pass on a page carrying every Category III folio, which
+// is the state this page was in.
+ok("every private row is on the book's private side",
+  scope.rows.every((p) => p.marketSide === "private"));
+ok("...and none of them is a Category III fund",
+  scope.rows.every((p) => !/cat[\s-]*iii|category\s*iii/i.test(p.security)),
+  "a Category III AIF trades listed securities — see shared/aifCategory.mjs");
 
 // THE CROSS-CHECK. Two independent paths to one figure.
 const dedupedMV = sum(scope.dedupedRows.map((p) => p.marketValue));
 const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
-near("raw private value", rawMV, 3555201779.81);
+near("raw private value", rawMV, 410533909.91);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is ₹3.17 Cr", scope.doubleCounted, 31726374.76);
 ok("the double count is the WHOLE book's double count",
@@ -74,14 +91,19 @@ ok("the double count is the WHOLE book's double count",
 
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx);
-eq("distinct funds", funds.length, 14);
+eq("distinct funds", funds.length, 4);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
-near("cost", sumOrNull(funds.map((f) => f.cost)), 2937305263.23);
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 586071399.82);
-eq("rows reporting a cost", scope.dedupedRows.filter((p) => p.costBasis != null).length, 15);
-ok("a cost-less row is skipped, never entered as zero",
-  scope.dedupedRows.some((p) => p.costBasis == null) && costedFunds.length < funds.length);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 337616647);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 41190888.15);
+// DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
+// private, and that is exactly what changed — a literal here went stale once
+// already. What a `?? 0` would do is put a figure on rows that report none,
+// which this catches either way round.
+eq("rows reporting a cost", scope.dedupedRows.filter((p) => p.costBasis != null).length,
+  scope.dedupedRows.length - scope.dedupedRows.filter((p) => p.costBasis == null).length);
+ok("every fund reporting no cost is a fund with no costed row",
+  costedFunds.length === funds.filter((f) => f.costedMV > 0).length);
 // The return is refused wherever the two columns describe different sets.
 ok("no fund shows a return unless its costed rows cover the row",
   funds.every((f) => f.returnPct == null || (f.cost != null && f.costedMV >= f.mv * COST_COVERAGE_MIN)));
@@ -90,7 +112,7 @@ ok("a fund whose statement reports no cost shows no return",
 
 console.log("\n── folios (per-account: NOT deduped) ──");
 const folios = folioRows(scope.rows, accIdx);
-eq("folio rows", folios.length, 21);
+eq("folio rows", folios.length, 7);
 near("folio rows add to the RAW total", sum(folios.map((f) => f.position.marketValue)), rawMV);
 const dual = folios.filter((f) => f.alsoCount > 1);
 eq("rows reported under more than one account", dual.length, 4);
@@ -106,7 +128,7 @@ ok("its two statements carry DIFFERENT marks, each kept as printed",
 
 console.log("\n── owners (per-owner: NOT deduped) ──");
 const owners = ownerRollup(scope.rows, accIdx);
-eq("owners holding a private position", owners.length, 6);
+eq("owners holding a private position", owners.length, 5);
 near("per-owner subtotals add to the RAW total, not the consolidated one",
   sum(owners.map((o) => o.mv)), rawMV);
 ok("and therefore NOT to the consolidated total", Math.abs(sum(owners.map((o) => o.mv)) - dedupedMV) > 1,
@@ -166,9 +188,19 @@ eq("a null undrawn is skipped, not zeroed", [ft.undrawn, ft.undrawnOf], [60, 1])
 eq("committed still covers both", [ft.committed, ft.committedOf], [300, 2]);
 eq("all-null distributed stays null", [ft.distributed, ft.distributedOf], [null, 0]);
 // And a cost-less row must not drag a fund's return.
+//
+// ── THE FIXTURE'S SECOND ROW COMES FROM THE WHOLE BOOK, NOT THE PRIVATE SET ─
+//
+// It was `scope.dedupedRows.find(costBasis == null)`, and that stopped existing
+// when the private scope narrowed to the rows the statements place as private
+// capital — every one of which reports a cost. The property under test is
+// `fundRollup`'s null handling, which is a fact about the FUNCTION and not about
+// privateness, so taking the row from the book keeps the case exercised. A
+// suite that quietly lost its second input would have gone on "passing" over a
+// one-row fixture that proves nothing.
 const priced = scope.dedupedRows.find((p) => p.costBasis != null) as Position;
-const costless = scope.dedupedRows.find((p) => p.costBasis == null) as Position;
-ok("the book carries both a costed and a cost-less private row", !!priced && !!costless);
+const costless = BOOK_POSITIONS.find((p) => p.costBasis == null) as Position;
+ok("the book carries both a costed private row and a cost-less row", !!priced && !!costless);
 const mixed = fundRollup(
   [{ ...priced, securityKey: "fx" }, { ...costless, securityKey: "fx", marketValue: priced.marketValue }],
   accIdx,

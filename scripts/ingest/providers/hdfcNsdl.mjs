@@ -33,9 +33,58 @@
 // print `AJAY T JAISINGHANI` and `AARTI AJAY JAISINGHANI` as joint holders at
 // Ajay's own address. The account is therefore resolved on the `DP Account No:`
 // the page prints — 67786547 and 67786137 — which is `motilalDemat.mjs`'s rule
-// arriving through a third issuer. The register in the same delivery records 347
-// Swapeco preference shares under EACH trust, so the trust attribution is a JOIN
-// through that document rather than anything this statement says.
+// arriving through a third issuer.
+//
+// ── AND THE HOLDER LINE PRINTS THE TRUSTEES, NOT THE TRUST ──────────────────
+//
+//   "Bharat Jaisinghani Trust looks empty on holdings, so check that as well
+//    since the client has provided half of the statements already."
+//
+// CLAUDE.md named this join and never made it: *"a reader must resolve each
+// account on the `DP Account No:` the page prints and attribute it to a trust
+// through the register. That is a join to establish, not a document to
+// request."* Until it was made, the trusts' only holding in this book was a
+// Transition Venture commitment and these two statements sat under Ajay.
+//
+// `BENEFICIAL_OWNER_BY_DP_ACCOUNT` below is that join, committed and cited.
+// What licenses it is the family's OWN investment register, whose
+// `TRUST INVESTMENT` sheet is the only place in the corpus that records who
+// holds this instrument:
+//
+//   row 1  SWAPECO SOLUTIONS PRIVATE LIMITED   BHARAT JAISINGHANI FAMILY TRUST 2
+//          "2807 PRE SERIRES A CCPS OF FACE VALUE RS. 100 EACH
+//           (NO OF PREFERENCE SHARE 347)"                      ₹1,35,00,875
+//   row 2  …the same line, under FAMILY TRUST 3                ₹1,35,00,875
+//
+// Four things have to hold before a statement is re-attributed against the
+// holder it prints, and all four do:
+//
+//   1. THE QUANTITY TIES. 347 preference shares per trust; 347 × ₹100 face =
+//      ₹34,700, which is the Total Valuation BOTH statements print to the paisa.
+//   2. THE INSTRUMENT TIES. A Pre-Series-A CCPS of ₹100 face, not the equity.
+//   3. NOBODY ELSE HOLDS IT. Searched across all eight sheets of the register:
+//      Swapeco appears exactly three times — 347 CCPS under each trust, and 244
+//      EQUITY shares (a DIFFERENT instrument and quantity) under Bharat
+//      personally. Neither Ajay nor Aarti holds Swapeco anywhere in it.
+//   4. THE COUNTS MATCH. Two such statements exist and there are two trusts.
+//
+// A TRUSTEE IS NOT A BENEFICIAL OWNER, which is the whole point: Ajay and Aarti
+// hold these accounts FOR the trusts, and filing them under Ajay puts a trust's
+// assets into a person's net worth — "wrong as tax, wrong as estate planning
+// and wrong on screen", in `shared/owners.mjs`'s own words about these same two
+// trusts.
+//
+// ── WHICH TRUST IS WHICH IS THE FILENAME, AND IT COSTS NOTHING TO GET WRONG ─
+//
+// The register records the two trusts as holding the IDENTICAL line — same
+// instrument, same 347 units, same ₹1,35,00,875 — so it cannot say which DP
+// account belongs to which, and the statements name neither. The filenames do,
+// and this file has just finished explaining why a filename is the weakest
+// evidence here. It is used for this ONE field and no other, and what makes
+// that safe is measurable rather than hoped for: **the two trusts hold exactly
+// the same thing, so swapping the mapping moves no figure on any screen.** What
+// the join establishes is that these are the TRUSTS' accounts and not Ajay's,
+// and that does not depend on the filename at all.
 import { makeHolding } from "../lib/document.mjs";
 import { parseNum } from "../lib/parseNum.mjs";
 import { faceValueBasis, assetClassOf } from "./nsdlDemat.mjs";
@@ -51,6 +100,36 @@ export const PROVIDER = "HDFC Bank (NSDL demat)";
  */
 export const LETTERHEAD = /DP\s*ID\s*IN301549/i;
 export const matches = (text) => LETTERHEAD.test(text ?? "") && /HDFC\s+Bank\s+Limited/i.test(text ?? "");
+
+/**
+ * DP ACCOUNT NUMBER → THE OWNER THE REGISTER RECORDS, where the holder line the
+ * statement prints is the TRUSTEE rather than the beneficial owner.
+ *
+ * Keyed on the account number the PAGE prints — never the filename, never the
+ * holder line. See the long note at the top of this file for the four things
+ * that had to hold before a statement was re-attributed against the name on it.
+ *
+ * `via` is the evidence, in words, and it rides into the archive as a warning
+ * on every document this fires for: a re-attribution nobody can trace is worse
+ * than none, and this is the one field in this reader that does not come from
+ * the page in front of it.
+ */
+export const BENEFICIAL_OWNER_BY_DP_ACCOUNT = {
+  67786547: {
+    owner: "Bharat Jaisinghani Family Trust 2",
+    via: "the family's own investment register (`NEW INVESTMENT SHEET.xlsx`, sheet `TRUST INVESTMENT`, "
+      + "row 1) records 347 Swapeco Pre-Series-A CCPS of ₹100 face under this trust — the exact instrument "
+      + "and quantity this statement prints, whose 347 × ₹100 is the ₹34,700 total it prints. The holder "
+      + "line names the TRUSTEES; no Swapeco holding appears under them anywhere in the register.",
+  },
+  67786137: {
+    owner: "Bharat Jaisinghani Family Trust 3",
+    via: "the family's own investment register (`NEW INVESTMENT SHEET.xlsx`, sheet `TRUST INVESTMENT`, "
+      + "row 2) records 347 Swapeco Pre-Series-A CCPS of ₹100 face under this trust — the exact instrument "
+      + "and quantity this statement prints, whose 347 × ₹100 is the ₹34,700 total it prints. The holder "
+      + "line names the TRUSTEES; no Swapeco holding appears under them anywhere in the register.",
+  },
+};
 
 const n = (v) => parseNum(v);
 const warn = (warnings, code, detail) => warnings.push({ code, detail });
@@ -77,7 +156,22 @@ export function extract({ grid, meta = {} }) {
    * Taken verbatim: `shared/owners.mjs` resolves it, and a reader that trims a
    * name is how two trusts became the man they are named after.
    */
-  const owner = (/DP\s*Account\s*No\s*:?\s*\d{6,}\s*\n\s*([A-Z][A-Z .]+)/i.exec(text) ?? [])[1]?.trim() ?? null;
+  const printedHolder = (/DP\s*Account\s*No\s*:?\s*\d{6,}\s*\n\s*([A-Z][A-Z .]+)/i.exec(text) ?? [])[1]?.trim() ?? null;
+
+  /**
+   * THE BENEFICIAL OWNER, where the register names one for this DP account.
+   *
+   * Applied AFTER the account number is read and only on an exact numeric
+   * match, so a statement this map does not name keeps the holder it prints —
+   * which is every other document any reader in this pipeline handles.
+   */
+  const beneficial = accountNo ? BENEFICIAL_OWNER_BY_DP_ACCOUNT[Number(accountNo)] ?? null : null;
+  const owner = beneficial?.owner ?? printedHolder;
+  if (beneficial) {
+    warn(warnings, "owner-from-register",
+      `DP account ${accountNo} is attributed to ${beneficial.owner}, not to the "${printedHolder}" the `
+      + `holder line prints: ${beneficial.via}`);
+  }
 
   if (!accountNo) {
     warn(warnings, "no-account-number",
