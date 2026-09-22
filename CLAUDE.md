@@ -13211,6 +13211,173 @@ generated file, so the merge had nothing to splice** — and the control was run
 anyway, because the first is what made this merge safe and only the second would
 have caught it had it not been.
 
+### Stage 10bm — THE MARK IS A COLUMN, AND THE PAGE STOPS CHOOSING WHICH STATEMENT IT BELONGS TO
+
+*"Open PR and do not merge until i tell you to."* · *"In some funds, avg cost
+column has price but current NAV is not there… for eg. in Motilal Active
+Momentum and same for Helios as well. We need a column of current NAV. Find the
+root cause of this and fix, why current NAV is missing when avg. cost is already
+given."*
+
+#### The report was right about the screen and backwards about the book
+
+**THE MODEL CARRIES THE NAV AND NOT THE AVG COST — the exact reverse.** Measured
+before anything was written, which is the whole reason the answer is a column
+rather than an ingest fix:
+
+| | |
+| --- | ---: |
+| positions carrying `currentPrice`, a per-unit mark | **355 of 371** |
+| carrying `Position.avgCost` | 285 |
+| **Motilal Oswal Active Momentum** | `avgCost: null`, `currentPrice: 14.0491` |
+| **Helios Flexi Cap — Direct Growth** | `avgCost: null`, `currentPrice: 16.21` |
+
+So nothing was missing from the archive and nothing needed re-extracting. **The
+page DERIVED the figure it showed and never read the one it had**: `StockInfo`'s
+Avg cost tile is `costBasis ÷ quantity` (₹14.05 on Active Momentum, from two
+primitives the statement prints), and the mark sat in `Position.currentPrice`
+with no column to render it in. Had the tile simply read `Position.avgCost` the
+family would have seen the reverse complaint — a NAV and no cost. **The
+asymmetry was the defect, not the absence.**
+
+**AND IT WAS ONE PAGE OUT OF SIX.** Checked rather than assumed: the Portfolio
+Monitor draws `AVG COST` and `CMP` (₹14.05 / ₹14.05 on that very holding, with
+the not-live `◦`), `MandateHoldings` draws both, `exportPortfolioExcel` writes
+both, and `/holdings` and Private Market draw NEITHER per-unit column — they are
+money tables, deliberately and symmetrically. `/stock/:securityKey` was the
+single outlier, and it is the page a reader opens when they want one holding.
+
+**THE HEADER DID CARRY A MARK, WHICH IS WHY THIS WAS EASY TO MISS FROM THE
+SOURCE.** Top-right, 2xl, captioned with its statement date. What the table had
+was Avg cost, then `Invested`, then **`Current` — which is the market VALUE**, so
+a reader scanning the row for a price finds a column called Current and it is
+money. The ask names the right fix: a column, beside the cost.
+
+#### …and reading the header's own figure found a quieter fabrication
+
+`const cmp = rows[0]?.currentPrice ?? null` — the FIRST ARRAY ELEMENT's mark,
+printed as the holding's price. A holding several statements report has several
+marks, and **10 of this book's 213 securities carry marks that render
+DIFFERENTLY**:
+
+| | | |
+| --- | ---: | ---: |
+| Gland Pharma | ₹2,667.30 · Carnelian, 10 Aug | ₹2,502.90 · SVAN, 31 Jul |
+| DSP Gold ETF | ₹151.10 on ₹3.1 Cr | ₹141.24 on **₹16.9 Cr** |
+| HELIOS FCF D-GROW | ₹14.18 | ₹15.74 |
+
+**TWO DIFFERENT CAUSES, AND THE PAGE MUST NOT ASSERT EITHER.** Gland Pharma's
+pair is §3 working exactly as documented — two statements drawn ten days apart.
+The other two are NOT: same provider, same ISIN, **same 31 July as-of**, two
+rates. That is the extractor join `docs/BOOK-REPORT.md` already names among its
+eight, REFINED by this measurement — the account as-ofs agree, so the date
+explanation this file offers for the Helios spread does not cover that pair.
+
+And `rows` is unsorted while the table sorts by value, so on DSP Gold the page
+printed **the mark belonging to 15% of the position**, above a table it never
+showed. Nothing on screen could catch it: it is a real price, correctly
+formatted, from a real statement.
+
+#### The design: show it per statement, refuse to blend it
+
+- **THE COLUMN IS PER ROW**, reading `Position.currentPrice`, with the statement
+  and its date in the cell's own hover. That is where the answer is unambiguous
+  — one row, one statement, one mark — and it is strictly more informative than
+  any holding-level figure could be, because it is the only surface in this app
+  that can show the ten splits at all.
+- **NEVER `marketValue / quantity`.** The price is a PRIMITIVE here (§4b), and
+  the two are not the same number: `ICICI NFT NT 50 DP G` prints a rate of 60.4
+  against a value column implying 60.4167. Deriving it would publish a figure the
+  document does not.
+- **THE HEADLINE AND THE FOOTER SHOW ONE FIGURE OR NONE.** Where every statement
+  renders to one mark it is shown; where they do not, both render an absence
+  NAMING the marks and sending the reader to the table. A quantity-weighted mean
+  of ₹2,667.30 and ₹2,502.90 is a price no document struck, sitting in the Total
+  row of a column whose every other cell is a figure some statement printed —
+  "a total must tie to its own columns", one column over. The avg-cost footer
+  beside it legitimately DOES blend, and the distinction is the whole of it:
+  cost and quantity both ADD across statements, and prices do not.
+- **THE TEST IS WHAT THE RENDERER CAN DISTINGUISH**, not an invented tolerance.
+  Two marks the page would print identically are one figure to a reader; two it
+  prints differently are genuinely two. So the agreement test runs the marks
+  through `price()` — the page's own printing precision reproduced, which is the
+  bound this file already requires of every delta it explains.
+- **AN ABSENT MARK NAMES ITS OWN CAUSE, and the two causes are worded apart.**
+  13 securities are reported at a total value and no price; told the statements
+  disagree, a reader would go looking for a second figure that was never
+  printed. `price()` returns a BARE dash, which §2 forbids, so both cells guard
+  before calling it.
+
+**A LATENT BUG WENT WITH IT.** The header's caption dated the shown price by
+`rows[0]`, which may be a row carrying NO mark — so on a holding whose first
+statement is unmarked it dated the figure to the wrong document. It reads the
+statement that actually supplied the mark.
+
+**AND ONE ASYMMETRY IS LEFT STANDING RATHER THAN QUIETLY CHANGED.** The Avg cost
+TILE derives `cost ÷ quantity` and the Avg cost COLUMN prints `Position.avgCost`,
+so on these two funds the tile reads ₹14.05 and the column reads `—`. Both are
+defensible — the tile aggregates and derives (§4b), the row prints what its
+statement printed — and making the column derive too is a change to what that
+column MEANS on all 371 rows, which is a decision about the document rather than
+a missing figure. Named here for the family rather than made on their behalf.
+
+#### The checks, and the harness defect that cost this branch its work
+
+Two routes, both DERIVED from `glowData.ts` on the run so the next drop picks
+its own worst case: `stock-cmp-split` (the split holding, largest by value) and
+`stock-cmp-unmarked` (the largest with no per-unit mark). `CMP_BOOK` is
+RE-EXPRESSED in `check-pages.mjs` rather than imported from `StockInfo` — a
+check that calls the helper it is checking agrees with it by construction, and
+the two agreeing is the measurement.
+
+**A MISSING SUBJECT IS A FAILURE, NOT AN ABSTENTION.** An unresolved address
+lands on a page with no table, which has no console error, no overflow and no
+stray zero — it would satisfy every generic check while asserting nothing. Each
+route states its own premise so the pair can never pass over nothing.
+
+**AND THE REFUSAL IS ASSERTED FROM BOTH ENDS, which is the half that could have
+swallowed the book.** A build whose agreement test never agrees satisfies every
+absence check on the split route and prints a dash over the 190 securities whose
+statements agree. `stock` therefore asserts the figure is SHOWN where there is
+one, reconciled against the table's own `data-cmp` — the book's figure — rather
+than against another rendering of itself.
+
+**THE CELLS ARE READ STRUCTURALLY AND COMPARED NUMERICALLY.** `data-cmp` carries
+what the BOOK holds and the cell text what a reader sees, so a cell that stopped
+rendering its own attribute's value fails on the pair. The first draft compared
+DIGIT STRINGS and failed three invariants against a page that was right: `Intl`
+renders ₹151.10 where the page's `price()` renders ₹151.1, and `"151.10" !==
+"151.1"` while the two are one mark.
+
+**AND THE REASON IS CAPTURED PER CELL, because `innerText` cannot see it.**
+`AbsentCell` puts its cause in a `title`, so a cell that fell back to `price()`'s
+bare dash renders identically to one that names why — the check could not have
+told them apart, which is the trap this file already records for the cost cells.
+
+**THE HARNESS ITSELF WAS THE FIRST DEFECT, AND IT DESTROYED A DAY'S WORK.**
+`restore()` deleted the snapshot it restored from, so the first explicit restore
+removed the only copy and every later one silently did nothing: bugs 2–8 ran on a
+tree nobody had cleaned, reported each other's failures under the wrong names,
+and **the run still exited 0**. That is this file's own *"a restore that cannot
+restore looks exactly like one that did"*, arriving for the third time. Worse,
+clearing up after it with `git checkout --` on an UNCOMMITTED tree threw the
+whole change away and it had to be rebuilt from the session record.
+
+Two rules follow, and the second is the one that actually cost something:
+
+- the snapshot is removed by the TRAP and never by `restore`, and `restore`
+  VERIFIES with `cmp -s` rather than assuming the copy took;
+- **the work is COMMITTED before a destructive harness runs at all.** A pass
+  that rewrites the files under test is not something to run against
+  unversioned work, however careful the trap is.
+
+Nine bugs reintroduced, each firing its own check.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` · `check:pages`.
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
+ingest, and a column that moved a generated figure would not be a column.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

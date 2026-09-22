@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+#
+# Reintroduce one defect at a time and prove the right check fires.
+#
+# THE SNAPSHOT IS DELETED BY THE TRAP AND NEVER BY `restore`. The first draft
+# had `restore()` remove it, so the first explicit restore destroyed the only
+# copy and every later one silently did nothing: bugs 2-8 ran on a tree that was
+# never cleaned between them and reported each other's failures under the wrong
+# name, while the run still exited 0. That is this file's own "a restore that
+# cannot restore looks exactly like one that did", and it is why `restore`
+# VERIFIES rather than assuming.
+#
+# It also REBUILDS on the way out — restoring the source alone leaves `dist/` at
+# the bugged build for the next sweep to read. A patch that does not apply, or a
+# build that fails, is reported as NOT A RESULT rather than as a clean sweep.
+set -uo pipefail
+cd "$(dirname "$0")/../.."
+FILES=("src/pages/StockInfo.tsx" "scripts/check-pages.mjs")
+SNAP=$(mktemp -d)
+for f in "${FILES[@]}"; do mkdir -p "$SNAP/$(dirname "$f")"; cp "$f" "$SNAP/$f"; done
+restore() {
+  for f in "${FILES[@]}"; do
+    cp "$SNAP/$f" "$f" || { echo "!!! RESTORE FAILED for $f — every result after this is garbage"; exit 1; }
+    cmp -s "$SNAP/$f" "$f" || { echo "!!! RESTORE DID NOT TAKE for $f"; exit 1; }
+  done
+  npm run build >/dev/null 2>&1 || echo "!!! REBUILD AFTER RESTORE FAILED"
+}
+trap 'restore; rm -rf "$SNAP"' EXIT
+
+ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-fund"
+run() {
+  if ! npm run build >/dev/null 2>&1; then echo "    NOT A RESULT (build failed)"; return; fi
+  ONLY=$ROUTES npm run check:pages 2>&1 \
+    | grep -E "INVARIANT FAILED|combinations (clean|have)" | sed 's/^ */    /'
+}
+# patch <file> <old> <new> — refuses unless `old` appears EXACTLY once.
+patch() {
+  python3 - "$@" <<'PY'
+import io,sys
+p,old,new=sys.argv[1],sys.argv[2],sys.argv[3]
+s=io.open(p,encoding="utf8").read()
+if s.count(old)!=1: sys.exit("    NOT A RESULT (anchor matched %d times)"%s.count(old))
+io.open(p,"w",encoding="utf8").write(s.replace(old,new,1))
+PY
+}
+bug() { echo; echo "### $1"; }
+
+echo "=== CONTROL — no patch. Anything here is pre-existing."
+run
+
+bug "1. the headline picks the first statement's mark (the original defect)"
+patch src/pages/StockInfo.tsx \
+  'const cmpSplit = cmpMarks.length > 1;' 'const cmpSplit = false;' \
+&& patch src/pages/StockInfo.tsx \
+  'const cmp = cmpMarks.length === 1 ? cmpMarks[0] : null;' 'const cmp = cmpMarks[0] ?? null;' \
+&& run
+restore
+
+bug "2. the CMP column removed from POS_COLS — the family's ask, undone"
+patch src/pages/StockInfo.tsx \
+  '"qty", "avgCost", "cmp", "invested"' '"qty", "avgCost", "invested"' && run
+restore
+
+bug "3. the cell derives mv/qty instead of reading the printed mark"
+patch src/pages/StockInfo.tsx \
+  'data-cmp={r.currentPrice ?? ""}' 'data-cmp={r.currentPrice ?? ""} data-derived' \
+&& patch src/pages/StockInfo.tsx \
+  '{price(r.currentPrice)}
+                            </span>}' \
+  '{price(r.quantity > 0 ? r.marketValue / r.quantity : null)}
+                            </span>}' && run
+restore
+
+bug "4. every row prints the holding-level figure, not its own statement's"
+patch src/pages/StockInfo.tsx \
+  '{price(r.currentPrice)}
+                            </span>}' \
+  '{cmpMarks[0] ?? price(r.currentPrice)}
+                            </span>}' && run
+restore
+
+bug "5. the refusal swallows the book — a dash on every holding"
+patch src/pages/StockInfo.tsx \
+  'const cmp = cmpMarks.length === 1 ? cmpMarks[0] : null;' 'const cmp = null;' && run
+restore
+
+bug "6. the Total row prints a quantity-weighted blend of the marks"
+patch src/pages/StockInfo.tsx \
+  '                            : cmp}
+                        </td>' \
+  '                            : (cmp ?? price(qty > 0 ? mv / qty : null))}
+                        </td>' \
+&& patch src/pages/StockInfo.tsx \
+  '{cmpSplit
+                            ? <AbsentCell reason={`the statements reporting this holding do not agree' \
+  '{false
+                            ? <AbsentCell reason={`the statements reporting this holding do not agree' && run
+restore
+
+bug "7. the unmarked absence borrows the disagreement wording"
+patch src/pages/StockInfo.tsx \
+  ': "no per-unit mark — this holding is reported at a total value, not a price per unit"' \
+  ': "CMP · the statements reporting this holding do not agree on a mark"' && run
+restore
+
+bug "8. the absent mark is price()'s bare dash, with no cause"
+patch src/pages/StockInfo.tsx \
+  '{r.currentPrice === null
+                          ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />' \
+  '{r.currentPrice === null
+                          ? price(null)' && run
+restore
+
+bug "9. the headline caption dates the mark to rows[0] rather than the statement that supplied it"
+patch src/pages/StockInfo.tsx \
+  'const marked = rows.find((r) => r.currentPrice != null);' \
+  'const marked = rows[0];' && run
+restore
+echo
+echo "=== done"
