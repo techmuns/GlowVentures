@@ -5,9 +5,15 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { AbsentSection, DASH } from "@/components/Absent";
 import { fmtDate, fmtPct } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** The columns, in the order this table's rows write their cells. */
+const HISTORY_COLS = ["asOf", "nav", "change", "flowIn", "marked"] as const;
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 
 export function UploadHistory() {
+  const view = useTableView("upload-history", HISTORY_COLS);
   const { portfolio, fmtFromBase } = usePortfolio();
   if (!portfolio) return null;
   /**
@@ -39,6 +45,15 @@ export function UploadHistory() {
     const growth = prev ? (n.nav / prev - 1) * 100 : null;
     return { ...n, growth, flowIn: n.flowIn ?? 0, latest: i === nav.length - 1 };
   }).reverse();
+  // Newest first is this page's own order and stays the default; a third click
+  // on any heading hands it back.
+  const shown = sortRows(rows, view.sort, {
+    asOf: (r) => r.date,
+    nav: (r) => r.nav,
+    change: (r) => r.growth,
+    flowIn: (r) => r.flowIn,
+    marked: (r) => r.accountsOnDate ?? null,
+  });
   return (
     <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow="Admin" title="Snapshot History"
@@ -62,32 +77,32 @@ export function UploadHistory() {
       <Card pad={false}>
         <table className="min-w-full text-sm">
           <thead className="border-b border-ink-700">
-            <tr>
-              <th className="label-xs px-5 py-3 text-left font-medium">As of</th>
+            <Tr view={view}>
+              <SortHeader col="asOf" view={view} align="left" pad="px-5 py-3">As of</SortHeader>
               {/* NOT "LISTED NAV". This series runs over every asset class the
                   covered accounts hold — AIF folios, mutual funds and cash
                   sleeves included — and the old heading narrowed a figure it
                   does not narrow, which is the same failure as one that widens
                   it (see Morning CIO's Capital invested tile). */}
-              <th className="label-xs px-5 py-3 text-right font-medium">Covered NAV</th>
-              <th className="label-xs px-5 py-3 text-right font-medium">Change</th>
+              <SortHeader col="nav" view={view} pad="px-5 py-3">Covered NAV</SortHeader>
+              <SortHeader col="change" view={view} pad="px-5 py-3">Change</SortHeader>
               {/* AND A STEP IS NOT ALL PERFORMANCE. `flowIn` is the external
                   capital the covered accounts took in since the previous point;
                   a +8% step with ₹11.2 Cr of deposits behind it is money added,
                   not money earned, and the column says so beside the change. */}
-              <th className="label-xs px-5 py-3 text-right font-medium">Capital in</th>
+              <SortHeader col="flowIn" view={view} pad="px-5 py-3">Capital in</SortHeader>
               {/* NOT "STATUS · Archived / Active". Nothing here is archived —
                   these are statement dates, and every one of them still stands.
                   The composition is the fact worth carrying: how many of the
                   covered accounts are marked ON this date and how many are held
                   at an earlier one, which is the "N accounts behind" the
                   headline NAV already states. */}
-              <th className="label-xs px-5 py-3 text-left font-medium">Marked on this date</th>
-            </tr>
+              <SortHeader col="marked" view={view} align="left" pad="px-5 py-3">Marked on this date</SortHeader>
+            </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700/70">
-            {rows.map((r) => (
-              <tr key={r.period} className="hover:bg-ink-700/40">
+            {shown.map((r) => (
+              <Tr view={view} key={r.period} className="hover:bg-ink-700/40">
                 <td className="px-5 py-3.5 font-medium text-slate-100">{fmtDate(r.date)}</td>
                 <td className="px-5 py-3.5 text-right mono text-slate-200">{fmtFromBase(r.nav, { compact: true })}</td>
                 <td className="px-5 py-3.5 text-right">
@@ -119,7 +134,7 @@ export function UploadHistory() {
                       </span>
                     : <span className="text-slate-600" title="this point carries no composition breakdown">{DASH}</span>}
                 </td>
-              </tr>
+              </Tr>
             ))}
           </tbody>
         </table>

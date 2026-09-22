@@ -258,8 +258,23 @@ cash holding's genuinely-zero return both match, and both are correct.
   no fourth taxonomy — `groupKeyFor` still answers — and it takes a `GroupAxis`
   rather than a `MonitorAxis`, so a transactions table sectioned by SECURITY
   does not compile. See Stage 10bg.
+- `src/lib/tableView.ts` + `src/components/SortHeader.tsx` — HOW EVERY TABLE IS
+  ARRANGED, defined once: the column order a reader has dragged it to, the sort
+  they picked, and the header cell that offers both. A table declares its
+  columns and `<Tr>` / `<TrFoot>` permute its cells from the DECLARED order into
+  the reader's, so no table's cell JSX changes and an undragged table renders
+  byte-for-byte what it did. The first column is the row's identity and never
+  moves; an absent value sorts LAST in both directions, never as zero.
+  `SortableTable` is the seam for a panel drawn inside a row, where a hook
+  cannot sit. A table that must NOT be rearranged declares
+  `data-table-static="<reason>"` — an upstream financial document, a transposed
+  metric grid, a fixed list of facts. See Stage 10bh.
+- `src/lib/nav.ts` — THE ONE NAV TABLE, read by the sidebar AND by every page's
+  breadcrumb, so the two cannot file a page under different groups.
+  `src/components/PageNav.tsx` renders the back / forward / home controls and
+  that crumb on every route. See Stage 10bh.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
-- `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
+- `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
 - `scripts/ingest/*` — the statement intake pipeline. `lib/bundle.mjs` splits a
   multi-report PDF; `lib/sheet.mjs` reads the spreadsheets (an `.xls` in this drop
@@ -4751,9 +4766,13 @@ other view on this page, so the CAGR view is a shareable link and `check:pages`
 reaches each measure by URL rather than a click. `auto` is the param-free default
 and is mutually exclusive with the concrete measures (picking one means "show me
 that", not "that plus the rule"); the concrete ones MULTI-SELECT, so Absolute and
-CAGR can sit side by side — the *"always have a CAGR column"* ask, answered
+CAGR can sit side by side — the *"always have a CAGR column"* ask, ~~answered
 without a second column. The one Return column shows the ticked measure(s), each
-on its own labelled line.
+on its own labelled line.~~ ***ANSWERED WITH A SECOND COLUMN SINCE Stage 10bi***,
+at the family's request: the picker is the COLUMN LIST now, one column per ticked
+measure headed with its own name. Everything else here is unchanged —
+`measuredReturn` is still the one place the methodology lives, `positionIrrPct` is
+still unread, and the guard still refuses to compound a sub-year window.
 
 **THE SEPARATE YTD COLUMN IS GONE — 14 COLUMNS TO 13.** YTD is a measure now, not
 a column; the footer's and each category-total's YTD cell went with it. The
@@ -11591,6 +11610,15 @@ are not two views of one thing, they are two different measurements, and the
 tabs presented them as alternatives. Both are on screen together now, each in its
 own card, under ONE set of controls.
 
+***THEY ARE ONE CARD WITH A TOGGLE SINCE Stage 10bi***, at the family's request —
+*"it should be exactly one single simple table just like in the holdings."* The
+sentence above still holds and is why: a toggle between two RECORDS is not the
+five-tab strip returning, because the strip mixed two sources with three
+groupings and this names the two sources and nothing else. Every reason below for
+keeping the two APART — the double count, the different columns, the separate
+footers — is why they are still two components behind one control rather than one
+table with a grouping key.
+
 **AND THE GROUPING IS THE HOLDINGS TABLE'S OWN.** `?group=` is shared: a reader
 who has sliced the holdings by basket crosses to the transactions already sliced
 the same way. The axis control moved out of the Holdings-only branch onto the row
@@ -11615,7 +11643,8 @@ INSIDE one. Measured over the committed archive: **11 accounts publish a dated
 capital record, 10 issue a transaction statement, and
 `green-lantern-capital-llp-510861` publishes BOTH** — so a combined total
 double-counts it by construction. Two cards, two footers, one set of controls
-and one set of sections.
+and one set of sections. *(ONE card since Stage 10bi, still two footers — the
+measurement was re-taken for that change and is unchanged.)*
 
 **AND THE CAPITAL RECORD WAS NOT REMOVED WITH THE TAB IT SAT ON.** It is the only
 surface in this app that carries the family's own dated capital across every
@@ -11695,13 +11724,18 @@ is the same dead weight one layer up.
 **Recent first was already the default** (Stage 10az) and is asserted rather than
 assumed — a default is the change that moves silently.
 
-#### The layout, and why it is two scrolling cards rather than one page scroll
+#### The layout, and why it was two scrolling cards rather than one page scroll
 
 `position: sticky` resolves against the nearest SCROLLING ancestor, so two
 sticky headers in one page-level scroller pin at once and overlap. The capital
-record is bounded (`max-h`, in **rem** and never `vh` — a viewport unit is not
-rescaled by `--app-zoom`, Stage 10n) and the trades table takes the rest with
+record was bounded (`max-h`, in **rem** and never `vh` — a viewport unit is not
+rescaled by `--app-zoom`, Stage 10n) and the trades table took the rest with
 `min-h-0 flex-1`, which is exactly what the Holdings card beside it does.
+
+***THE HAZARD WENT WITH THE SECOND CARD AT Stage 10bi.*** With one table on
+screen there is one sticky header and the active branch simply takes the card
+(`min-h-0 flex-1`), so the bound came off. The `vh` rule is unchanged and still
+governs every bounded box in this app.
 
 **A FIGURE IN A SECTION HEADING CARRIES ITS OWN NOUN.** `₹34 Cr` beside
 `3 accounts` reads as the section's VALUE and is what was paid IN; the trades
@@ -11828,8 +11862,494 @@ BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a regroup of two tables that moved a generated figure would not be a
 regroup.
 
+### Stage 10bh — THREE BUTTONS, FOUR TILES A READER PICKS, AND EVERY TABLE ARRANGES
 
-### Stage 10bh — MORNING CIO IS THREE PANELS, AND THE PAGE STOPS SCROLLING
+*"open PR and do not merge until i tell you to."* Three asks, and the third is a
+change to fifty-odd tables at once, so each one below records what it replaced
+rather than only what it added.
+
+#### 1. The crumb names the FIGURE, and the back link becomes three buttons
+
+*"add three small back reverse and home buttons on the top of every page. The
+first line 'Morning CIO > What is Behind this Figure' should rather label the
+page/KPI tile that we have opened 'Morning CIO > Current Value of Holding'.
+Remove 'Back to Morning CIO' and replace it with the three small buttons. Follow
+this format for every single page that we Open."*
+
+**"WHAT IS BEHIND THE FIGURE" IS A DESCRIPTION OF THE ROUTE, NOT OF THE PAGE.**
+`/holdings` serves ELEVEN different sets — the value of the holdings, the capital
+invested, one allocation row, the accounts carrying an opening value, the
+winners — and it read that one sentence for every one of them. A reader who
+clicked a tile and wanted to know which tile they were inside learnt nothing.
+`Drilldown.crumb` names the figure, so the crumb says which of the eleven this
+is: `Morning CIO › Current Value of Holdings`.
+
+**AND THE FACET IS A THIRD SEGMENT, which the new pairing check is what found.**
+`?of=book&facet=listed` read "Current Value of Holdings" where the reader had
+clicked **Listed** — the crumb naming the scope and not the slice, which is the
+caption-that-widens failure arriving in a breadcrumb.
+
+**"BACK TO MORNING CIO" WAS A HARDCODED PARENT ON FOUR PAGES, and on three of
+them it was routinely wrong.** A company page is reached from Sector
+Composition, from Family & Entities, from a holdings drill-down and from the
+Monitor — and it offered a link to the Monitor whatever the reader had come
+from. The browser's own history knows, and these three buttons ARE that history:
+BACK and FORWARD walk it, HOME goes to the front door. The parent still shows,
+as the crumb's first segment, which is a statement about where the page SITS
+rather than about where the reader was.
+
+**FORWARD IS DISABLED ONLY WHERE THAT IS MEASURED.** React Router keeps its
+position in `window.history.state.idx`; where that is readable the button greys
+once nothing lies ahead, and where it is not, both stay live rather than being
+greyed on a guess — a control that looks live and does nothing is the failure
+this file keeps naming, and so is one that looks dead and works.
+
+**HOME POINTS AT `/`, NOT `/cio`.** `RootRedirect` is the one place that knows
+whether the book is empty; hardcoding the cockpit would land an unfed book on a
+gated page.
+
+**THE CRUMB IS BUILT FROM `src/lib/nav.ts`, WHICH IS THE SIDEBAR'S OWN TABLE.**
+`NAV` moved out of `Sidebar.tsx` so both read it: two tables would be two chances
+for the crumb to file a page under a different group than the nav does. It
+immediately retired four stale `eyebrow` strings that had drifted from the nav
+they were written to echo — and the INLINE EYEBROW is gone with them, because a
+page that renders "where am I" twice on adjacent lines is answering the question
+twice. `eyebrow` survives only as a fallback crumb parent for a route `NAV` does
+not list (`/upload`).
+
+#### 2. Four tiles, and the reader says which four
+
+*"There are 9 KPI tiles on the private market page, make it 4 and give the user a
+dropdown list to select what they want to see in each of those 4 KPI tiles, Give
+option for every single metric the user might want to see and they will select
+the one's that they want to see. Also add a small + button on the last 4th KPI
+tile so the user can also increase the no. of KPI tile and add a new one on the
+page as per their requirement."*
+
+`src/components/SelectableTiles.tsx`. Private Market's twelve fixed tiles become
+**four slots out of an eighteen-metric catalogue** — value, cost, P&L, uncalled,
+committed, called, paid, due now, unvalued, distributions, realised, multiple,
+funds, folios, owners, accounts, calls, raw — each carrying the VALUE, SUB-LINE
+AND HINT the fixed tile had, verbatim. Nothing was rewritten to fit a picker.
+
+**`?tiles=` WINS OVER THE STORE, AND THE STORE IS `localStorage`.** It is a
+preference about a screen, like the nav's width and the Extras group's open
+state, so it never reaches `glowData.ts` — and every read and write is wrapped,
+because the accessor throws in a private window and a blocked store must leave
+the strip rendering its default four rather than rendering nothing.
+
+**THE PICKER IS A MENU BUTTON AND DELIBERATELY NOT A `<select>`.** Chromium's
+`innerText` returns EVERY option's text of a native select, so eighteen metric
+labels landed in the page text of a card showing four — and **twelve
+private-market invariants failed at once** on a page rendering perfectly. The
+menu renders its options only while open.
+
+**AND A REMOVED CHECK WOULD HAVE GONE QUIET, so it was re-homed rather than
+deleted.** `check:family` asserted the unvalued capital's claim by matching that
+TILE's label; behind a picker, a metric outside the default four is one the page
+legitimately does not draw, and the check would have failed a correct page. The
+claim is on the CARD under the table — with more behind it, the accounts and why
+each is unvalued — so it is struck there, and the METRIC's continued existence
+is asserted separately by opening the strip on it. Neither implies the other.
+
+#### 3. Every table sorts, and every column but the first moves
+
+*"Every single table on the dashboard must have clickable column headings to sort
+the table data, and also every single column except the first name one, the user
+should be able to drag and drop to rearrange columns, make this standardized for
+every table anywhere on the dashboard."*
+
+**`src/lib/tableView.ts` AND `src/components/SortHeader.tsx` — ONE DEFINITION FOR
+ALL OF THEM.** Fifty-odd tables, so a per-table implementation would be fifty
+chances for one screen to sort nulls one way and another the other; this repo has
+paid for that shape of drift with `holdingBucket`, `costCoversSet` and
+`companyExposure`. A table gets both halves by DECLARING its columns.
+
+**THE DECLARED ORDER IS THE ONE THE CELLS ARRIVE IN, AND IT IS NEVER REWRITTEN.**
+`<Tr view>` takes a row's `<td>`s exactly as the table has always written them
+and permutes them into the reader's order; `<TrFoot>` does the same for a footer
+and computes its label's span from the order rather than from a literal. So no
+table's cell JSX changes, and with nothing dragged the permutation is the
+IDENTITY — the rendered markup is what it was, which is what keeps every
+column-index assertion in `check:pages` reading the column it was written
+against. Measured: **the whole sweep was clean at every step of the rollout**,
+which is the design goal rather than a happy result.
+
+**THE FIRST COLUMN IS FIXED, BECAUSE THE FAMILY SAID SO** — *"every single column
+except the first name one."* It is the row's identity, and `move`/`nudge` refuse
+it as a SUBJECT and as a DESTINATION.
+
+**AND AN ABSENT VALUE SORTS LAST IN BOTH DIRECTIONS.** Not as zero, and not as
+negative infinity: a statement that reports no cost has not reported a small one.
+`txnSort` already sorts an unreported amount last rather than among the smallest,
+and sorting them to the TOP on ascending would put every holding whose custodian
+sends no cost at the head of a table about cost. A NaN sorts with the absent, and
+the sort is stable on the original index — so a third click, which CLEARS it,
+returns the table to the order its own page chose (largest first, newest first,
+the statement's own), which is routinely meaningful rather than arbitrary.
+
+**`SortableTable` IS THE SEAM FOR A PANEL INSIDE A ROW.** `useTableView` is a
+hook, so a table drawn once per opened row cannot call it where its JSX sits. The
+hook lives in a component at a stable call site and the arrangement arrives as an
+argument — the panel's markup stays where it is rather than being lifted out.
+Every open panel of one kind shares a storage key, which is the right behaviour:
+a reader who moves a column on one tranche panel means it for the next one.
+
+**THE PORTFOLIO MONITOR'S OWN SORT WAS REPLACED, NOT LEFT BESIDE THIS ONE.** That
+table carried a `sortKey`/`asc` pair driving SIX clickable headers out of
+fourteen. Two mechanisms on one table is two answers to "how is this ordered", so
+`SortKey`, `sortBtn`, `effSort` and the local `Th` component are gone — the
+`exportDeck.ts` treatment. The memo keeps its DEFAULT ranking (largest first, or
+largest total exposure on the security axis), which is exactly what a cleared
+sort returns to, and `COL_COUNT` is `holdView.order.length` now rather than a
+literal `16 : 14` that had to be kept in step by hand.
+
+**AND ROWS ARE RANKED WITHIN THEIR SECTION, NEVER ACROSS.** Sorting across would
+break the sectioning the holdings and transactions tables exist to share. A
+section is a partition of one list, so a ranking inside each is the same ordering
+the old mechanism produced.
+
+**`data-table-static` IS AN EXEMPTION A TABLE DECLARES, WITH ITS REASON.** Nine
+carry it and each is one of three kinds: an upstream financial document rendered
+as the source published it (screener's tables, the ratio grid, the cash-flow
+statement, a fund's own returns row, the audit spreadsheet viewer), a TRANSPOSED
+table whose columns are metrics rather than fields, and a fixed list of facts.
+Sorting a balance sheet's year columns would scramble a document rather than
+rearrange a view. An exemption keyed on the table's own declared reason cannot
+drift the way a list of names in the checker would, and a table that simply
+FORGOT the handles has no reason to declare — it fails on the count.
+
+#### The three defects the mechanism had, each found by driving it rather than reading it
+
+- **THE `<thead>` WAS NOT PERMUTED.** A keyboard move reordered the body and left
+  the headings still — every figure under the wrong heading, which is the one
+  outcome this feature must never produce. `<Tr>` serves the header row too now.
+- **`innerText` BLOCKIFIES THE CHILDREN OF A FLEX CONTAINER**, so an
+  `inline-flex` heading put its icon and its label on separate lines — and this
+  sweep reads a header row as one tab-joined line in around a hundred places.
+  Measured: `/as of.*capital in.*marked on this date/` matched nothing on a
+  header rendering perfectly. There is not one flex box in that cell now, and the
+  icon takes its side from DOM ORDER.
+- **THE HTML RENDERING SPEC GIVES FORM CONTROLS `text-transform: none`**, so a
+  `<button>` inside a `label-xs` heading rendered its label in the source's own
+  case while the cell around it was uppercase — and four Polycab invariants slice
+  the page on uppercase header text. Measured in the browser
+  (`th` `uppercase`, `button` `none`) rather than reasoned about; the sort button
+  repeats `uppercase`.
+
+#### Six bugs reintroduced, and the sixth produced a clean sweep
+
+`monitor-arrange` is a route that CLICKS and MOVES, because the global check
+asserts every heading CARRIES the controls and cannot see whether either does
+anything: a sort button wired to nothing renders exactly like one that sorts.
+
+| Bug put back | Fires |
+| --- | --- |
+| the sort button wired to nothing | the reorder check, and the direction check |
+| the keyboard move does nothing | the permutation check, and the footer check |
+| the `<thead>` left unpermuted | the permutation check |
+| a move clears the sort as a side effect | "the sort survives the move" |
+| the fixed first column made movable | the global table check, by name, and the fixed-column check |
+| **the footer's label span frozen at a literal** | **nothing, at first — see below** |
+
+**TWO OF THEM EXPOSED CHECKS THAT COULD NOT FAIL, which is the whole reason for
+the pass.**
+
+- **THE SORT CHECK WAS STRUCK ON ONE CLICK, AND THIS TABLE ARRIVES ALREADY
+  RANKED ON THAT COLUMN.** The first click lands on the order the page was in, so
+  a working button and a dead one draw the identical table. It clicks TWICE now
+  and the assertion is struck between the two — the second click steps the
+  three-state machine to ascending, which must reverse it.
+- **AND THE FOOTER-SPAN CHECK ASSERTED A RANGE RATHER THAN THE CLAIM.** `span >=
+  1 && span <= columns` is true of a literal 3. Worse, the move the walk made
+  could not have distinguished it: `qty` and `avgCost` both sit INSIDE the
+  leading run of columns with no total, so the span is 3 before and after. The
+  walk now also moves `invested` — the FIRST column that HAS a total — to the
+  front, which shortens the run to 1, and the check expands the footer PER COLUMN
+  and requires the cost total to sit under Invested and a descriptor column to
+  carry nothing. Re-run, the literal fires.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**172 combinations clean** — 170 plus this change's own route across both themes
+— with three EVIDENCED abstentions: every KPI tile on this book carries a figure
+so the absent-tile claim has no subject, nothing on Morning CIO publishes an
+undefined drill-down address, and no row on the one page that checks it carries a
+pledge. `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and three
+presentation changes that moved a generated figure would not be presentation
+changes.
+
+### Stage 10bi — ONE TABLE BEHIND A TOGGLE, AND A COLUMN PER RETURN
+
+*"open PR and do not merge to main until i tell you to."* · *"why are there two
+separate tables in the transactions page, it should be exactly one single simple
+table just like in the holdings."* · *"remove the highlighted text from the
+dashboard UI"* — the five return-methodology paragraphs, screenshotted. ·
+*"Whenever we select multiple return profiles to see on the dashboard it should
+add a new return column rather than show all returns in the same return column
+side by side… a new column with that return name should be made, and also
+removed when we select or deselect returns."*
+
+Three asks, and the last two turned out to solve each other: **ask 3 built the
+home for what ask 2 removed.**
+
+#### 1. Two stacked tables become one card with a toggle
+
+Stage 10bg put both dated records on screen together, each in its own card — the
+right answer to *"stop having a categorisation of its own"* and, the family now
+say, one card too many. So it is ONE CARD, ONE TABLE, A TOGGLE: the Holdings
+card's own shape, and the shape `/private-market` (Stage 10bf) and Today's movers
+(Stage 10bb) already use.
+
+**WHAT IT MUST NEVER BECOME IS ONE TABLE OVER BOTH RECORDS, and that is measured
+on this book rather than feared.** Re-measured for this change rather than taken
+from the prose above it:
+
+| | |
+| --- | ---: |
+| accounts publishing a dated capital record | **11** |
+| accounts issuing a transaction statement with dated trades | **10** |
+| **publishing BOTH** | **`green-lantern-capital-llp-510861`** |
+
+So a shared footer counts that account's money twice **by construction**. And
+they are different MEASUREMENTS — a contribution moves money INTO an account, a
+trade moves it about INSIDE one — with columns that do not line up: Capital
+carries How it went in, Value today, Gain, Return and Invested on; Trades carries
+Trades, Securities, Realized P&L and Traded between. **Four of ten are shared.**
+
+Each branch therefore keeps its OWN card title, subtitle, columns and footer, and
+`?record=` makes a branch a link. `capital` is the default and stays param-free:
+it is the family's own money, and it is where the Holdings page's closed-position
+note already points a reader looking for where a redemption went (Stage 10am).
+
+**EACH BUTTON PRINTS ITS OWN ROW COUNT** — the `/holdings` facet-chip pattern, so
+a reader sees what the other branch holds before switching. 11 accounts against
+26 trade rollups here, and the two being DIFFERENT is asserted, because a toggle
+advertising one number twice has stopped reading one of them.
+
+**AND THE ROLLUP MOVED UP A LEVEL FOR EXACTLY THAT REASON.** `capitalRollup` and
+the section filter now run once in `TransactionsView` and the table is handed the
+groups. A count struck inside the table while the toggle struck its own would be
+two definitions of "the rows in view", free to disagree the first time either
+changed — which is the same reason the date and entity filters moved up before it.
+
+**THE COUNTER COUNTS THE RECORD ON SCREEN, AND NAMES IT.** It read the manager's
+tape on every view once (Stage 10am), then both records at once (10bg); with one
+table in the DOM it counts that one and the other branch's figure is on the button
+that reaches it. The check now REFUSES the trades shape on the capital branch by
+name, which is the original defect stated as an invariant.
+
+#### 2. and 3. Five captions out, a column each in
+
+**THE PICKER IS THE COLUMN LIST NOW.** One `<th>` and one `<td>` per ticked
+measure, headed with that measure's own name.
+
+**AND IT IS EXPRESSED IN STAGE 10bh's DECLARED-COLUMN MODEL RATHER THAN BESIDE
+IT** — which is what this change looked like after the merge, and is strictly
+better than what it was written as. `return` in `MONITOR_COLS` is a PLACEHOLDER
+rather than a column: `withReturnCols` expands it to one id per ticked measure,
+and every mechanism in `useTableView` then does the right thing for free. A
+column list that GROWS AND SHRINKS is exactly the case that hook already
+reconciles — unknown ids dropped, new ones appended in declared order — so
+ticking a measure adds a column a reader can sort and drag like any other, and
+unticking it removes that column and leaves the rest where they were dragged to.
+That is the family's *"and also removed when we select or deselect returns"*
+answered by the storage reconciliation rather than by a second mechanism.
+
+`COL_COUNT` is `holdView.order.length`, so every full-width row spans them with
+nothing to keep in step; written as arithmetic on `returnMeasures.length` it
+goes wrong SILENTLY, which is how the first cut of this had it.
+
+| ticked | columns drawn | header |
+| --- | ---: | --- |
+| `auto` (default) | 1 | `Return` |
+| Absolute + CAGR | 2 | `HPR` · `CAGR` |
+| all five | 5 | `HPR` · `CAGR` · `XIRR` · `YTD` · `CY` |
+
+Measured on the rendered page: header, body row, section heading, category total
+and footer all span 14 / 16 / 18 columns together, and **no page-level horizontal
+scroll at any of them** — the table scrolls inside its own container, as this
+file's own rule requires.
+
+**THE LABEL GOES WHERE THE FACT IS CONSTANT — one rule, `res.tag !== def.tag`,
+and it covers three cases without naming any of them.** `auto` tags every row,
+because the methodology resolves per row and the header can only say "Return".
+The CAGR column tags the rows **where the annualisation guard fired** — a sub-year
+holding shows its total return on cost, and leaving that untagged under a header
+reading CAGR asserts an annual rate for a year the holding has not seen, which is
+the +99.0% failure of Stage 10g(ii) arriving through a column heading. Every other
+column tags nothing, because the header names it.
+
+**A FIRST CUT KEYED THAT ON `measure === "auto"` AND THE SWEEP CAUGHT IT TWICE,
+in both directions.** Once because the CAGR column's guarded rows went out
+indistinguishable from the annualised one; and once because **42 of this book's
+72 rows resolve to `AUTO` itself** (no cost reported, so no return at all), which
+a rule written as `res.tag !== def.tag` alone leaves silently untagged on the
+default view. Neither was reasoned out in advance.
+
+**AND THE FIVE PARAGRAPHS' TWO CLAIMS WERE AUDITED SEPARATELY**, the pattern this
+file has followed since Stage 10aa — each caption made exactly two:
+
+- the **REASON** the measure is absent on the rows it cannot answer. Already per
+  row, and more precisely: `measuredReturn` returns it and the cell renders an
+  `AbsentCell` carrying it, about the row the reader is looking at.
+- the **COUNT** of how much of the table it covers. **Stated nowhere else**, and
+  the one a reader acts on — a column of dashes with nothing saying why reads as
+  a broken feed rather than as a measurement this book cannot strike.
+
+So the count is that column's own header note and the reason is the note's hover
+(`returnColumnMeta`, which returns BOTH from ONE coverage object so the short
+figure and the sentence behind it cannot describe different sets). The CAGR
+column's note says `1 annualised of 72` rather than `3 of 72`, because `shown`
+includes the two rows that fall back to HPR and reporting those as annualised is
+the very claim the guard refuses.
+
+**`auto` GETS NEITHER, AND THAT IS NOT AN OVERSIGHT.** Its measure resolves per
+row, so there is no column-wide count to state; the family asked for that caption
+gone at Stage 10af and it stays gone. Both halves are ONE invariant so it has a
+subject on every address — split in two, the half with no subject reported NOT
+CHECKED, and four evidenced abstentions is how a real one gets missed.
+
+#### AN AGGREGATE HAS ONE RETURN, AND NOW IT HAS TO SAY WHICH
+
+The footer and each category total are CUMULATIVE ON COST and deliberately do NOT
+follow the picker: a bucket and a whole book have no single purchase date to
+annualise over, no per-holding cash-flow history for an XIRR, and no dated opening
+value for a year. **That used to be one cell under a header that could mean any of
+five things.** With a column per measure the figure stands under HPR and under
+`auto`, and every other return column renders an `AbsentCell` carrying the reason
+(`AGG_NO_MEASURE`). Printing the same percentage under all five would be the
+caption-does-not-describe-its-figure failure five columns wide — the one the
+allocation footer already cost this book once. **This fell out of the change
+rather than being asked for, and it is strictly more honest than what it replaced.**
+
+#### A SORT ARROW ON A RETURN COLUMN ORDERS ON THAT COLUMN'S OWN FIGURE
+
+`returnAccessors` gives each return column an accessor of its own, resolving
+through `measuredReturn` — the same function the cell draws, so the column a
+reader clicks and the order they get cannot disagree about what a row's CAGR is.
+Reusing `returnPct` for all of them would leave the CAGR arrow ordering by the
+raw return on cost, and this book is where that lie is visible: one holding
+annualises and the rest fall back to their absolute figure, so the two orders
+genuinely differ.
+
+**AND AN ABSENT RETURN SORTS LAST, NEVER AS ZERO** — which this change no longer
+has to state for itself, because `sortRows` does it for every null. That is the
+merge paying for itself: the bespoke comparator this was first written as, the
+`SortKey` union it extended, and the local `Th` that gave a heading its note are
+all GONE rather than left beside their replacements, and `SortHeader` renders the
+same `data-col-note` markup while also making a return column sort and drag like
+every other. Two kinds of header on one table is the second-mechanism failure
+this file keeps naming.
+
+#### The checks moved to the tables they read, and one was lost on the way
+
+`TRADES_BRANCH` names the txn routes that walk the trades table, and the walk
+switches before the probes run — **a check that stops running because a table
+moved behind a toggle is a check that silently stopped, for the fourth time in
+this file.** Three claims moved to a new `monitor-txn-trades`; `monitor-txn-basket`
+became a per-record FACTORY run by two routes (the axis is shared STATE, but the
+two tables reach a section through different helpers — `forAccount` for an
+account, `forTxn` for a dated trade); and the capital-record half of
+`monitor-txn-direct` became `monitor-txn-direct-capital`, because that route walks
+the trades branch now and the claim fell through to matching an absent-state
+sentence the page correctly does not print.
+
+**`RETURN_COLUMNS` IS A SHARED ARRAY SPREAD INTO EVERY RETURN ROUTE**, and that is
+not tidiness: written in the `monitor` block it sat on the DEFAULT address — one
+`auto` column, the one place "each concrete column carries its coverage count" has
+no subject — and would have reported NOT CHECKED for ever on exactly the claim
+asks 2 and 3 turn on. **Every abstention in it is evidenced by the PICKER's own
+active list rather than by the check finding nothing**, because a build that ticked
+CAGR and drew no column would also find nothing.
+
+**AND ONE INVARIANT WAS LOST WHILE THIS WAS BEING WRITTEN, WITH THE SWEEP GREEN
+OVER IT TWICE.** Merging two neighbouring claims by LINE RANGE swallowed
+*"the per-measure caption paragraphs are gone"* along with the doc comment they
+shared — so the whole suite passed against a page whose five paragraphs had been
+removed with **nothing asserting the removal**. Reintroducing the paragraphs is
+what found it, which is the entire reason that pass is run. It is restored as its
+own claim, above the label claim, so the next such merge cannot take it.
+
+#### Fifteen bugs reintroduced, and the fourteenth is the one worth the pass
+
+| Bug put back | Fires |
+| --- | --- |
+| both tables stacked, the toggle filtering nothing | `draws the X table and only that one`, on both branches |
+| the toggle deleted outright | **7 claims across 3 routes, as FAILURES** rather than abstentions |
+| the default record moved to trades | 11 on `monitor-txns`, the whole capital branch |
+| both buttons printing one count | the row-count claim, both branches |
+| the card title pinned to the capital record | the title claim, on the trades branch |
+| the counter counting both records | the counter claim |
+| every measure back in one cell | 11 across 3 routes |
+| the cell partition lost while the headers stay | the partition and the column-span claims |
+| the coverage note deleted | 9 across 4 routes |
+| the methodology column given a note | the label claim |
+| the off-measure tag dropped | the guarded-row claim on `monitor-cagr` |
+| **the five paragraphs restored** | **NOTHING — see above** |
+| the cumulative figure under every return column | the aggregate claim |
+| a return column sorted on the return on cost | the sort claim |
+| `COL_COUNT` back to arithmetic on the measure count | the column-span claim |
+
+The harness restores **by copy on a `trap … EXIT` and rebuilds on the way out** —
+restoring the source alone leaves `dist/` at the bugged build for the next run to
+report under the wrong name, and a patch that does not build is reported as NOT A
+RESULT rather than as a clean sweep. One of these fifteen hit that (a `{false &&}`
+gate that narrowed a possibly-null local) and was rewritten rather than read as a
+pass. A no-patch CONTROL ran afterwards and came back clean.
+
+#### Merged with Stage 10bh, and the two predicted conflicts arrived on cue
+
+This branch was held open at the family's request (*"do not merge to main until i
+tell you to"*), and **Stage 10bh landed while it waited** — so the merge hit both
+of the things this file tells a future session to expect, for the SIXTH time each:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bh`. Main's
+  merged first and **keeps it**, as at 10al, 10as, 10at, 10aw and 10ba; this is
+  `10bi`, and the FOUR cross-references elsewhere in this file that name it moved
+  with it — checked one at a time, because the two on the Layout list belong to
+  main's stage and must NOT move.
+- **AND THE `ctx` LITERAL CONFLICTED, ON ONE LINE, EXACTLY AS PREDICTED.**
+  Resolved as a **mechanical union** — 47 keys, none dropped, each then confirmed
+  to name a variable defined exactly once in the merged file. Never by taking a
+  side: this file's own measurement is that dropping one side's key turns its
+  invariants into NOT CHECKED over a sweep still reporting every combination
+  CLEAN, so half of those losses are invisible by construction.
+
+**AND THE MERGE MADE THIS CHANGE SMALLER, WHICH IS THE PART WORTH RECORDING.**
+Stage 10bh replaced this table's bespoke `sortKey`/`asc` pair with a declared
+column list and accessors, so three things written here were SUPERSEDED rather
+than merged: the `SortKey` union and its `` `ret:<measure>` `` member, the
+hand-written comparator, and the local `Th` that existed only to give a heading a
+note. `sortRows` already sorts an absent figure last in BOTH directions — the
+rule the comparator had to state for itself — and `SortHeader` renders the same
+`data-col-note` markup while also making a return column sort and drag like every
+other. All three are DELETED rather than left beside their replacements.
+
+**AND THE SWEEP CAUGHT WHAT THE BUILD COULD NOT.** `sortRows` was still being
+handed `MONITOR_ACCESSORS`, so a return column would have ranked nothing while
+looking exactly like the column that ranks — and `MONITOR_ACCESSORS` kept a
+`return` accessor for a column id `withReturnCols` no longer produces. The first
+is wired to `holdAccessors`; the second is gone, with a note at its place saying
+why an accessor for the placeholder must never come back.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**180 combinations clean**, with **three** EVIDENCED abstentions — every KPI tile
+on this book carries a figure, nothing on Morning CIO publishes an undefined
+drill-down address, and no row on `stock-qty` carries a pledge, which
+`stock-pledge` asserts as a hard failure so it never stands alone. **MEASURED ON
+THE MERGED TREE**: this branch's own pre-merge run was 176 and Stage 10bh's was
+178, and neither is a fact about this base — which is exactly why the sweep is
+re-run rather than the number adjusted.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after the merge: nothing here
+touches the ingest, and a presentation change that moved a generated figure would
+not be one.
+
+### Stage 10bj — MORNING CIO IS THREE PANELS, AND THE PAGE STOPS SCROLLING
 
 *"open PR and do not merge until i tell you to."* · *"Divide the Morning CIO
 into three separate sections and tabs… add three small selectable tabs on the
@@ -12041,18 +12561,71 @@ That is what "an abstention reads as a clean run" looks like on a terminal, and
 it is the whole reason 36 invariants moved rather than being left where they
 were.
 
-`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
-blocked) · `test:family` 18 suites · `check:family` **81/0** · `check:pages`
-**174 combinations clean**, with the same two evidenced abstentions
-Stage 10bc records — every KPI tile on this book carries a figure, so the
-absent-tile claim has no subject, and no row on the one page that checks it
-carries a pledge. The first of those now reports on four Morning CIO routes
-rather than one, because `CIO_SHARED` is spread into all of them.
+#### Merged with Stages 10bh and 10bi, and BOTH predicted conflicts arrived — for the sixth time
 
-**THE COUNT IS 168 PLUS THIS CHANGE'S THREE ROUTES ACROSS BOTH THEMES**, and it
-was re-measured rather than added to — every stage in this file states a count
-against a base that has since moved, and this one happens to reconcile only
-because the sweep was run again.
+This branch sat open under the family's own hold (*"open PR and do not merge
+until i tell you to"*), and **two PRs landed on main while it waited**. The
+merge hit exactly the two things this file already tells a future session to
+expect, and a third that is this page's own:
+
+- **THE LETTER COLLIDED AGAIN, TWICE OVER.** Main took `10bh` AND `10bi` while
+  this branch held `10bh`. Main's merged first and **keeps both**, as at 10al,
+  10as, 10at, 10aw and 10bb; this section is **`10bj`**, and the one
+  cross-reference elsewhere in this file that names it — the Build section's
+  publisher note — moved with it. The four references inside main's 10bi that
+  read `10bh` belong to MAIN's stage and were deliberately left alone, checked
+  one at a time rather than swept.
+- **AND THE `ctx` LITERAL CONFLICTED RATHER THAN AUTO-MERGING**, which is the
+  safer of its two failure modes and the rarer one. **Resolved as a mechanical
+  UNION** — this branch's `cioTabs` and `cioLayout` spliced into main's line,
+  which had gained `pageNav`, `tileStrip`, `tileMenu`, `tilePick`, `tableView`,
+  `arrange`, `returnHead`, `tableWidth` and `txnRecord`. Taking either side
+  whole is a sweep that has silently stopped checking: this file's own
+  measurement is that dropping one probe turned nine invariants into NOT
+  CHECKED while every combination still reported CLEAN. All **76** keys were
+  then confirmed to name a declared variable exactly once, because a key naming
+  a variable that no longer exists throws inside the check and is reported as a
+  broken matcher rather than as a clean page.
+- **AND THE ALLOCATION TABLE ITSELF CONFLICTED, which no earlier merge here
+  has.** Stage 10bh rewrote that table's internals for sortable, reorderable
+  columns in the same 375 lines this branch wrapped in `{tab === "allocation"
+  && (…)}`. Resolved by taking **main's file whole** and re-applying this
+  branch's structural change on top — the catalogue, the hook, the flex shell,
+  the tab control, `shrink-0` and the three panel wrappers — rather than by
+  hand-merging a table nobody asked this branch to touch. Verified by diffing
+  the result against main's own version with whitespace ignored: what remains
+  is exactly the six structural edits above and not one line of table.
+
+**AND A THIRD ONE-LINE CHANGE HAD TO RIDE ON MAIN'S NEW BLOCK.** The
+`CIO_DRILLDOWNS` collector gate is `cio-allocation` on this branch, because the
+allocation rows that publish every holdings address moved behind `?tab=`. Main
+added its `CRUMB_PUBLISHERS` block immediately above that same line. Both are
+kept and the gate change rides on main's last line — dropping either would have
+left the drill-down routes resolving nothing, which is a NOT CHECKED and not a
+failure.
+
+**THE GENERATED FILES WERE CHECKED RATHER THAN ASSUMED**, the discipline
+Stage 10at records: neither side touched `src/data/glowData.ts` or `docs/`, so
+the merge had nothing to splice, and `npm run build-book` was run as a control
+afterwards anyway and regenerated both **byte-identically** (md5
+`f7cc7f1491ebea516f8a0e68b5f0c09d` / `d5388195be5bc4f4a3ce9eb5bd11af2e`,
+unchanged before and after).
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**186 combinations clean**, with the **three** evidenced abstentions main's own
+merged sweep records — every KPI tile on this book carries a figure, so the
+absent-tile claim has no subject; nothing on Morning CIO publishes an undefined
+drill-down address; and no row on `stock-qty` carries a pledge, which
+`stock-pledge` asserts as a hard failure so it never stands alone. The first of
+those reports on FOUR Morning CIO routes rather than one, because `CIO_SHARED`
+is spread into all of them — four lines, one evidenced abstention.
+
+**MEASURED ON THE MERGED TREE**: main's own pre-merge run was 180 and this
+branch's was 174, and neither is a fact about this base. 180 plus this change's
+three routes across both themes is 186, and it reconciles ONLY because the
+sweep was re-run rather than the number adjusted — which is the point every
+stage in this file makes about its own count.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
@@ -13077,7 +13650,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   always kept, so a subset can never silently stop checking. That first one was
   `cio` until Morning CIO was split into panels: the Concentration card and the
   allocation rows that resolve every holdings drill-down's address sit behind
-  `?tab=allocation` now, and `PUBLISHERS` follows the cards. See Stage 10bh.
+  `?tab=allocation` now, and `PUBLISHERS` follows the cards. See Stage 10bj.
   **`cio-live` is the same page with the live layer FULFILLED** from fixtures
   built out of the book (`installLiveMocks`): every symbol at its own statement
   mark × 1.10 and every index at ×0.99, so the day's move is exactly +10.00%,

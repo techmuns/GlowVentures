@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock } from "lucide-react";
+import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
-import { StatTile } from "@/components/StatTile";
+import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
@@ -19,6 +21,26 @@ import {
 import { schemeCalls, callTotals, callHistory, callWindows } from "@/lib/capitalCalls";
 import { weightFormula } from "@/lib/auditFormulas";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
+
+/**
+ * WHICH FOUR TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
+ *
+ * The default is the row that was already first on this page, which is the
+ * smallest surprise available: what the top of the page always showed stays
+ * where it was and the other twelve metrics are one dropdown away. Versioned,
+ * so a set saved against an older catalogue can be retired by bumping it
+ * rather than by rendering ids this build does not have.
+ */
+const PM_TILES_KEY = "glow:pmTiles:v1";
+
+/** The funds table's columns, in the order its rows write their cells. */
+const FUND_COLS = ["fund", "reportedBy", "folios", "units", "invested", "value", "return", "weight", "asOf"] as const;
+const FOLIO_COLS = ["fund", "owner", "account", "units", "invested", "value", "asOf"] as const;
+const OWNER_COLS = ["owner", "rows", "invested", "value"] as const;
+const SCHEME_COLS = ["fund", "owner", "committed", "called", "paid", "uncalled", "calls", "asOf", "check"] as const;
+const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
+const UNVALUED_COLS = ["account", "owner", "invested", "uncalled", "value", "why"] as const;
+const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
 
 // PRIVATE MARKET — the private book this drop actually carries.
 //
@@ -214,7 +236,280 @@ export function PrivateMarket() {
     );
   }
 
-  const fundsShown = m.funds.filter((f) => !q.trim() || f.security.toLowerCase().includes(q.trim().toLowerCase()));
+  /**
+   * ── THIS TABLE'S OWN ARRANGEMENT ──────────────────────────────────────────
+   *
+   * The ids are the order the row's `<td>`s are written in below, and `<Tr>`
+   * permutes them to whatever the reader has dragged — so the cell JSX never
+   * moves and, with nothing dragged, the rendered markup is what it always was.
+   *
+   * WEIGHT SORTS ON THE VALUE IT IS A SHARE OF, deliberately: every row's
+   * weight is `mv ÷ the private book`, so the two orderings are identical and
+   * re-deriving the percentage per row to sort by it would be a second
+   * expression of one figure.
+   */
+  const fundView = useTableView("pm-funds", FUND_COLS);
+  const folioView = useTableView("pm-folios", FOLIO_COLS);
+  const ownerView = useTableView("pm-owners", OWNER_COLS);
+  const schemeView = useTableView("pm-schemes", SCHEME_COLS);
+  const historyView = useTableView("pm-call-history", CALL_COLS);
+  const unvaluedView = useTableView("pm-unvalued", UNVALUED_COLS);
+  const folioRowsShown = sortRows(m.folios, folioView.sort, {
+    fund: (f) => f.position.security,
+    owner: (f) => f.owner,
+    account: (f) => `${f.provider} ${f.accountNo}`,
+    units: (f) => f.position.quantity,
+    invested: (f) => f.position.costBasis,
+    value: (f) => f.position.marketValue,
+    asOf: (f) => f.asOf ?? null,
+  });
+  const ownerRowsShown = sortRows(m.owners, ownerView.sort, {
+    owner: (o) => o.owner,
+    rows: (o) => o.rows,
+    invested: (o) => o.cost,
+    value: (o) => o.mv,
+  });
+  const schemeRowsShown = sortRows(m.schemes, schemeView.sort, {
+    fund: (r) => r.fund,
+    owner: (r) => r.owner ?? null,
+    committed: (r) => r.committed,
+    called: (r) => r.called,
+    paid: (r) => r.paid,
+    uncalled: (r) => r.uncalled,
+    calls: (r) => r.calls.length,
+    asOf: (r) => r.asOf ?? null,
+    // The check is a three-valued verdict rather than a figure; its heading
+    // moves like any other and refuses the click (`sortable={false}`).
+    check: () => null,
+  });
+  const historyShown = sortRows(m.history, historyView.sort, {
+    date: (c) => c.date,
+    fund: (c) => c.fund,
+    owner: (c) => c.owner ?? null,
+    label: (c) => c.label ?? null,
+    amount: (c) => c.amount,
+  });
+  const unvaluedShown = sortRows(m.unvalued, unvaluedView.sort, {
+    account: (u) => `${u.account.provider} ${u.account.accountNo}`,
+    owner: (u) => u.account.owner,
+    invested: (u) => u.drawn,
+    uncalled: (u) => u.undrawn ?? null,
+    // Nothing values these, so the column is an absence on every row.
+    value: () => null,
+    why: () => null,
+  });
+  const fundsShown = sortRows(
+    m.funds.filter((f) => !q.trim() || f.security.toLowerCase().includes(q.trim().toLowerCase())),
+    fundView.sort,
+    {
+      fund: (f) => f.security,
+      reportedBy: (f) => f.providers.join(", "),
+      folios: (f) => f.folios,
+      units: (f) => f.units,
+      invested: (f) => f.cost,
+      value: (f) => f.mv,
+      return: (f) => f.returnPct,
+      weight: (f) => f.mv,
+      asOf: (f) => f.asOf[f.asOf.length - 1] ?? null,
+    },
+  );
+  /**
+   * ── THE METRIC CATALOGUE ────────────────────────────────────────────────────
+   *
+   * Every figure this page can measure, as data rather than as markup, so the
+   * picker's option list and the tiles are ONE declaration: a second list of
+   * labels beside the tiles would be a second chance for a dropdown to offer a
+   * metric the strip cannot draw.
+   *
+   * Each entry's `value`, `sub` and `hint` are the ones the fixed tiles carried,
+   * moved verbatim — the coverage lines, the four "must not be subtracted"
+   * warnings and the two absences with their own reasons. Nothing here is
+   * derived that was not derived before.
+   */
+  const tileMetrics: TileMetric[] = [
+    {
+      id: "value", label: "Private market value", icon: <Handshake className="h-4 w-4" />,
+      value: <Auditable formula={weightFormula(m.privMV, m.bookMV, m.bookMV > 0 ? (m.privMV / m.bookMV) * 100 : null, money, "the consolidated book")}>{money(m.privMV)}</Auditable>,
+      sub: `${m.bookMV > 0 ? fmtPct((m.privMV / m.bookMV) * 100, { decimals: 2 }) : DASH} of the ${money(m.bookMV)} book · across ${m.scope.accounts.length} accounts · each holding counted once`,
+    },
+    {
+      id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
+      value: money(m.privCost),
+      sub: `cost in · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one`,
+    },
+    {
+      id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
+      value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
+      sub: m.privCost != null && m.privCost > 0
+        ? `on the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} above`
+        : "no statement here reports a cost to measure a gain against",
+    },
+    /*
+        *"How are you calculating this uncalled capital of 16 crores? …
+         Something seems amiss here. According to me, the number is not 16
+         crores."* — the client, on this tile, a round after it first grew a
+        definition.
+
+        THE ARITHMETIC WAS RIGHT AND THE TILE WAS STILL WRONG, and both halves
+        of that are worth stating because only the second is fixable:
+
+          · the ₹15.98 Cr ties. Summed as printed over the 13 accounts that
+            print an uncalled line it is ₹15,97,50,000, and committed less
+            CALLED over all 15 comes to the same figure to the rupee. Two
+            paths, one answer, and the per-scheme table below shows every row.
+          · IT IS A FLOOR AND THE TILE NEVER SAID SO. It covers the capital
+            accounts this book HAS A STATEMENT FOR, and those are a minority of
+            the family's private accounts. A fund whose capital account nobody
+            sent contributes nothing to this figure and can still call money
+            tomorrow, so a reader who knows about such a commitment is right
+            that the number is too small — and the tile gave them no way to see
+            that.
+
+        So the tile states the coverage as its own sub-line rather than burying
+        it, and the card below names which accounts are outside it.
+    */
+    {
+      id: "uncalled", label: "Still to call (uncalled capital)", icon: <Fuel className="h-4 w-4" />,
+      value: <span className="text-amber-400">{money(m.ct.undrawn)}</span>,
+      sub: `across ${m.ct.count} of this page's ${m.scope.accounts.length} private accounts · the rest send no capital account, so this is a floor`,
+      hint: "Money promised to these funds that they have not yet asked for. A bill that can arrive any day — not an asset, and in no total on this page.",
+    },
+    /* ── COMMITTED vs CALLED vs INVESTED — three figures, not two ────────────
+        *"Capital committed, or is it capital invested? What is capital
+         committed versus invested? … Because committed can be one thing. I
+         would commit 10 crores, but I may have only invested so far 5 crores,
+         and 5 crores is remaining to be drawn."*
+
+        The client is describing the model exactly, and the page was printing
+        two of its three figures under one word. `Drawn` was whichever of
+        CALLED and PAID each fund's own layout happened to match — the same
+        field meaning two things across fifteen rows. They are separate now,
+        each read off the line its own statement labels, and each tile says
+        which of the four quantities it is in the client's own words. */
+    {
+      id: "committed", label: "Committed", icon: <Landmark className="h-4 w-4" />,
+      value: money(m.ct.committed), sub: `${m.ct.committedOf} of ${m.ct.count} capital accounts`,
+      hint: "The full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value on this page.",
+    },
+    {
+      id: "called", label: "Called by the funds", icon: <Banknote className="h-4 w-4" />,
+      value: m.cc.called == null ? DASH : money(m.cc.called),
+      sub: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line`,
+      hint: "What the funds have demanded so far. It covers a different set of accounts from Invested, so the two must never be subtracted.",
+    },
+    {
+      id: "paid", label: "Invested (paid in)", icon: <Wallet className="h-4 w-4" />,
+      value: m.cc.paid == null ? DASH : money(m.cc.paid),
+      sub: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank`,
+      hint: "Cash that has actually left the family’s bank. Not the same set as Capital invested above, which is the cost of every private holding.",
+    },
+    {
+      id: "due", label: "Due now (called, unpaid)", icon: <CalendarClock className="h-4 w-4" />,
+      value: m.cc.dueNow == null ? DASH : <span className={m.cc.dueNow > 0 ? "text-amber-400" : undefined}>{money(m.cc.dueNow)}</span>,
+      sub: m.cc.dueNowOf === 0
+        ? "no statement here prints a called-but-unpaid line"
+        : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line · a measured figure, not an assumption`,
+      hint: "Called by the fund and not yet paid — the one figure here that is genuinely owed rather than merely possible.",
+    },
+    /* THE FIGURE THIS PAGE EXISTS FOR. Real money, paid, and in NO total above
+        it: adding drawn capital to a market value reports what was paid as
+        what the stake is worth.
+
+        THE LABEL WAS THE CLIENT'S THIRD QUESTION — *"Drawn against no
+        valuation means?"* — and it was jargon twice over: "drawn" is the
+        fund's word for having taken the money, and "against no valuation" is a
+        property of the STATEMENT rather than of the money. */
+    {
+      id: "unvalued", label: "Paid in, but never valued", icon: <HelpCircle className="h-4 w-4" />,
+      value: <span className="text-amber-400">{money(m.unvaluedDrawn)}</span>,
+      sub: `${m.unvaluedNoNav.length} funds that publish no NAV at all · not in the private market value above`,
+      hint: "Cash paid into funds that have never published a valuation. Real money, and in no total on this page.",
+    },
+    /* *"what is distributions?"* — same treatment, and the label carries the
+        client's own word beside the plain one rather than only the plain one:
+        the sub-line under this tile has always said "distribution figure", so a
+        reader who asks what a distribution is was reading a word the tile used
+        and never defined. */
+    {
+      id: "distributed", label: "Distributions (cash returned)", icon: <Coins className="h-4 w-4" />,
+      value: money(m.ct.distributed),
+      sub: `${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`,
+      hint: "Cash these funds have already paid back. Not part of the value above, and it does not reduce what a fund can still call.",
+    },
+    /* ── THE TWO THAT ARE ABSENT BY MEASUREMENT ──────────────────────────────
+        They are OFFERED like every other metric, because the family asked for
+        every metric they might want to see and the answer to both is a fact
+        about this corpus rather than a gap in the picker. A catalogue that
+        silently omitted them would take with it the two things a reader of a
+        private book most needs told. */
+    {
+      id: "realised", label: "Realised gain", icon: <Coins className="h-4 w-4" />,
+      ...absentTile(
+        "no capital gain statement covers any private account in this drop",
+        "Every AIF-engagement account carries that absence verbatim in the book's capital-gain record. Their redemptions are real; what they realised was never reported to this book, so it is absent rather than nil."),
+    },
+    /* ITS REASON WAS HALF FALSE THE MOMENT THE CALLS WERE READ, and this repo
+        has recorded that failure — an absence standing on a premise nobody
+        rechecked — often enough to catch it in its own change. It read "none
+        publishes its calls as dated data", which was true when written and is
+        now false of every one of these fifteen accounts. What is still missing
+        is the OTHER half, and only that half: a distribution figure on 12 of
+        the 15. */
+    {
+      id: "multiple", label: "Net multiple (TVPI / DPI)", icon: <Handshake className="h-4 w-4" />,
+      ...absentTile(
+        `only ${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`,
+        `A multiple divides what has come back plus what is still inside by what went in. The last of those three is now measurable per folio — ${m.cc.callCount} dated calls, each reconciled against its own statement — and the first is not: ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all. Reading those as nil would report a fund that has returned nothing when its statement simply does not say, and a DPI built on that understates every folio it touches.`),
+    },
+    /* ── AND THE FIGURES THE REMOVED SUBTITLE USED TO CARRY ──────────────────
+        *"Give option for every single metric the user might want to see."* The
+        subtitle counted this page's funds, accounts and owners and went at the
+        family's request because the tables state two of the three; as OPTIONAL
+        tiles they cost nothing and a reader who wants the count can have it
+        back. Each is a count of a set this page already draws, so none is a new
+        measurement. */
+    {
+      id: "funds", label: "Funds held", icon: <Handshake className="h-4 w-4" />,
+      value: fmtNum(m.funds.length),
+      sub: `distinct funds · each counted once however many members hold it`,
+    },
+    {
+      id: "folios", label: "Folio rows", icon: <Layers className="h-4 w-4" />,
+      value: fmtNum(m.folios.length),
+      sub: `one per statement line · ${m.folios.length - m.funds.length} more than the fund count above`,
+      hint: "Every statement as printed. Two holdings here are reported under two members each, which is why this is the larger number.",
+    },
+    {
+      id: "owners", label: "Owners", icon: <Users className="h-4 w-4" />,
+      value: fmtNum(m.owners.length),
+      sub: "family members and trusts holding something private",
+    },
+    {
+      id: "accounts", label: "Capital accounts", icon: <Landmark className="h-4 w-4" />,
+      value: fmtNum(m.ct.count),
+      sub: `of this page's ${m.scope.accounts.length} private accounts send one`,
+      hint: "A capital account is the statement that prints a commitment and what has been called against it. The rest report a holding and no commitment.",
+    },
+    {
+      id: "calls", label: "Dated capital calls", icon: <CalendarClock className="h-4 w-4" />,
+      value: fmtNum(m.cc.callCount),
+      sub: `across ${m.ct.count} capital accounts · every one reconciled against its own statement's printed total`,
+      hint: "Each call the funds have made, with its own date. A statement whose rows did not reproduce its own printed total publishes none of them here.",
+    },
+    /* THE RAW TOTAL, OFFERED WITH ITS OWN DOUBLE COUNT NAMED. The folio view's
+        footer already prints it, and a reader who wants it on the strip is
+        entitled to it — but a private total that is ₹3.17 Cr above the
+        consolidated one must never appear without saying why, which is the
+        whole reason this is a tile with a sub-line rather than a second
+        unlabelled figure. */
+    {
+      id: "raw", label: "Private value, as printed", icon: <Layers className="h-4 w-4" />,
+      value: money(m.rawMV),
+      sub: `every statement as printed · ${money(m.scope.doubleCounted)} of it is two holdings reported under two members each`,
+      hint: "Not the consolidated figure. Use it to tie this page to the statements one by one; the Private market value tile counts each holding once.",
+    },
+  ];
+
   const excludedRest = excludedClasses(
     // The remainder is named against the same deduped set the private total is
     // struck on, so the two reconstruct the consolidated NAV exactly.
@@ -271,136 +566,37 @@ export function PrivateMarket() {
         </p>
       )}
 
-      {/* ── The valued private book ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Private market value" icon={<Handshake className="h-4 w-4" />}
-          value={<Auditable formula={weightFormula(m.privMV, m.bookMV, m.bookMV > 0 ? (m.privMV / m.bookMV) * 100 : null, money, "the consolidated book")}>{money(m.privMV)}</Auditable>}
-          sub={`${m.bookMV > 0 ? fmtPct((m.privMV / m.bookMV) * 100, { decimals: 2 }) : DASH} of the ${money(m.bookMV)} book · across ${m.scope.accounts.length} accounts · each holding counted once`} />
+      {/* ── FOUR SLOTS, AND THE READER PICKS WHAT IS IN THEM ─────────────────
+          *"There are 9 KPI tiles on the private market page, make it 4 and give
+           the user a dropdown list to select what they want to see in each of
+           those 4 KPI tiles. Give option for every single metric the user might
+           want to see … Also add a small + button on the last 4th KPI tile so
+           the user can also increase the no. of KPI tile."*
 
-        <StatTile label="Capital invested" icon={<Wallet className="h-4 w-4" />}
-          value={money(m.privCost)}
-          sub={`cost in · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one`} />
+          EVERY METRIC THIS PAGE CAN MEASURE IS IN THE CATALOGUE, and none of
+          them is new: each is the tile that stood here before, moved verbatim
+          with its own value, coverage line and definition, plus the counts the
+          removed subtitle used to carry (funds, folios, owners, capital
+          accounts, dated calls) and the RAW private total the folio view's own
+          footer prints. Nothing is computed for the picker — a metric that
+          needed arithmetic nobody had asked for would be a figure invented to
+          fill a dropdown.
 
-        <StatTile label="Unrealised P&L" icon={<TrendingUp className="h-4 w-4" />}
-          value={<span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>}
-          sub={m.privCost != null && m.privCost > 0
-            ? `on the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} above`
-            : "no statement here reports a cost to measure a gain against"} />
+          THE DEFAULT FOUR ARE THE ROW THAT WAS ALREADY FIRST, which is the
+          smallest surprise available: a reader who opens this page after the
+          change sees what the top of it always showed, and the eight tiles that
+          were below are one dropdown away rather than gone. `check:pages`
+          asserts that default, because a default is the one change that moves
+          silently — the page renders perfectly on any set.
 
-        {/*
-            *"How are you calculating this uncalled capital of 16 crores? …
-             Something seems amiss here. According to me, the number is not 16
-             crores."* — the client, on this tile, a round after it first grew a
-            definition.
-
-            THE ARITHMETIC WAS RIGHT AND THE TILE WAS STILL WRONG, and both
-            halves of that are worth stating because only the second is fixable:
-
-              · the ₹15.98 Cr ties. Summed as printed over the 13 accounts that
-                print an uncalled line it is ₹15,97,50,000, and committed less
-                CALLED over all 15 comes to the same figure to the rupee. Two
-                paths, one answer, and the per-scheme table below shows every
-                row of it.
-              · IT IS A FLOOR AND THE TILE NEVER SAID SO. It covers the capital
-                accounts this book HAS A STATEMENT FOR, and those are a minority
-                of the family's private accounts. A fund whose capital account
-                nobody sent contributes nothing to this figure and can still
-                call money tomorrow, so a reader who knows about such a
-                commitment is right that the number is too small — and the tile
-                gave them no way to see that.
-
-            So the tile states the coverage as its own sub-line rather than
-            burying it, and the card below names which accounts are outside it.
-        */}
-        <StatTile label="Still to call (uncalled capital)" icon={<Fuel className="h-4 w-4" />}
-          value={<span className="text-amber-400">{money(m.ct.undrawn)}</span>}
-          sub={`across ${m.ct.count} of this page's ${m.scope.accounts.length} private accounts · the rest send no capital account, so this is a floor`}
-          hint="Money promised to these funds that they have not yet asked for. A bill that can arrive any day — not an asset, and in no total on this page." />
-      </div>
-
-      {/* ── COMMITTED vs CALLED vs INVESTED — three figures, not two ──────────
-          *"Capital committed, or is it capital invested? What is capital
-           committed versus invested? … Because committed can be one thing. I
-           would commit 10 crores, but I may have only invested so far 5 crores,
-           and 5 crores is remaining to be drawn."*
-
-          The client is describing the model exactly, and the page was printing
-          two of its three figures under one word. `Drawn` was whichever of
-          CALLED and PAID each fund's own layout happened to match — the same
-          field meaning two things across fifteen rows. They are separate now,
-          each read off the line its own statement labels, and each tile says
-          which of the four quantities it is in the client's own words. */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Committed" icon={<Landmark className="h-4 w-4" />}
-          value={money(m.ct.committed)} sub={`${m.ct.committedOf} of ${m.ct.count} capital accounts`}
-          hint="The full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value on this page." />
-
-        <StatTile label="Called by the funds" icon={<Banknote className="h-4 w-4" />}
-          value={m.cc.called == null ? DASH : money(m.cc.called)}
-          sub={`${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line`}
-          hint="What the funds have demanded so far. It covers a different set of accounts from Invested, so the two must never be subtracted." />
-
-        <StatTile label="Invested (paid in)" icon={<Wallet className="h-4 w-4" />}
-          value={m.cc.paid == null ? DASH : money(m.cc.paid)}
-          sub={`${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank`}
-          hint="Cash that has actually left the family’s bank. Not the same set as Capital invested above, which is the cost of every private holding." />
-
-        <StatTile label="Due now (called, unpaid)" icon={<CalendarClock className="h-4 w-4" />}
-          value={m.cc.dueNow == null ? DASH : <span className={m.cc.dueNow > 0 ? "text-amber-400" : undefined}>{money(m.cc.dueNow)}</span>}
-          sub={m.cc.dueNowOf === 0
-            ? "no statement here prints a called-but-unpaid line"
-            : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line · a measured figure, not an assumption`}
-          hint="Called by the fund and not yet paid — the one figure here that is genuinely owed rather than merely possible." />
-      </div>
-
-      {/* ── What the money is, once it is in ── */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* THE FIGURE THIS PAGE EXISTS FOR. Real money, paid, and in NO total
-            above it: adding drawn capital to a market value reports what was
-            paid as what the stake is worth.
-
-            THE LABEL WAS THE CLIENT'S THIRD QUESTION — *"Drawn against no
-            valuation means?"* — and it was jargon twice over: "drawn" is the
-            fund's word for having taken the money, and "against no valuation"
-            is a property of the STATEMENT rather than of the money. It says
-            what it is now, and the definition is on the tile rather than in a
-            hover, like the three above it. */}
-        <StatTile label="Paid in, but never valued" icon={<HelpCircle className="h-4 w-4" />}
-          value={<span className="text-amber-400">{money(m.unvaluedDrawn)}</span>}
-          sub={`${m.unvaluedNoNav.length} funds that publish no NAV at all · not in the private market value above`}
-          hint="Cash paid into funds that have never published a valuation. Real money, and in no total on this page." />
-
-        {/* *"what is distributions?"* — same treatment, and the label carries the
-            client's own word beside the plain one rather than only the plain one:
-            the sub-line under this tile has always said "distribution figure",
-            so a reader who asks what a distribution is was reading a word the
-            tile used and never defined. */}
-        <StatTile label="Distributions (cash returned)" icon={<Coins className="h-4 w-4" />}
-          value={money(m.ct.distributed)}
-          sub={`${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`}
-          hint="Cash these funds have already paid back. Not part of the value above, and it does not reduce what a fund can still call." />
-      </div>
-
-      {/* Two tiles that would be natural here and are absent by measurement. */}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <StatTile label="Realised gain" icon={<Coins className="h-4 w-4" />}
-          {...absentTile(
-            "no capital gain statement covers any private account in this drop",
-            "Every AIF-engagement account carries that absence verbatim in the book's capital-gain record. Their redemptions are real; what they realised was never reported to this book, so it is absent rather than nil.")} />
-        {/* ITS REASON WAS HALF FALSE THE MOMENT THE CALLS WERE READ, and this
-            file has recorded that failure — an absence standing on a premise
-            nobody rechecked — often enough to catch it in its own change. It
-            read "none publishes its calls as dated data", which was true when
-            written and is now false of every one of these fifteen accounts.
-            What is still missing is the OTHER half, and only that half: a
-            distribution figure on 12 of the 15. So the reason names the real
-            gap and counts it, rather than claiming a shortfall this book just
-            closed. */}
-        <StatTile label="Net multiple (TVPI / DPI)" icon={<Handshake className="h-4 w-4" />}
-          {...absentTile(
-            `only ${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`,
-            `A multiple divides what has come back plus what is still inside by what went in. The last of those three is now measurable per folio — ${m.cc.callCount} dated calls, each reconciled against its own statement — and the first is not: ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all. Reading those as nil would report a fund that has returned nothing when its statement simply does not say, and a DPI built on that understates every folio it touches.`)} />
-      </div>
+          AND THE TWO ABSENT TILES ARE IN IT TOO, with their reasons intact. A
+          catalogue that offered only the metrics this book can measure would
+          quietly drop the two facts a reader most needs — that no capital gain
+          statement covers a private account, and that a TVPI cannot be struck
+          while 12 of 15 accounts print no distribution line — and the family
+          asked for every metric they might want to see, which includes the ones
+          whose answer is an em dash and a reason. */}
+      <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
 
       {/* ── THE PRIVATE BOOK — ONE CARD, THREE VIEWS, ONE TOGGLE ─────────────
           *"in the private markets Page there are three separate sectioned
@@ -483,24 +679,24 @@ export function PrivateMarket() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm" data-pm-table="funds">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium"
-                      title="Who REPORTS the holding to this book — a depository or a wealth platform, which is not necessarily the fund's manager. No statement here states a manager for every fund, so none is asserted.">Reported by</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Folios</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-                  </tr>
+                  <Tr view={fundView}>
+                    <SortHeader col="fund" view={fundView} align="left">Fund</SortHeader>
+                    <SortHeader col="reportedBy" view={fundView} align="left"
+                      title="Who REPORTS the holding to this book — a depository or a wealth platform, which is not necessarily the fund's manager. No statement here states a manager for every fund, so none is asserted.">Reported by</SortHeader>
+                    <SortHeader col="folios" view={fundView}>Folios</SortHeader>
+                    <SortHeader col="units" view={fundView}>Units</SortHeader>
+                    <SortHeader col="invested" view={fundView}>Invested</SortHeader>
+                    <SortHeader col="value" view={fundView}>Value</SortHeader>
+                    <SortHeader col="return" view={fundView}>Return</SortHeader>
+                    <SortHeader col="weight" view={fundView}>Weight</SortHeader>
+                    <SortHeader col="asOf" view={fundView} align="left">As of</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
                   {fundsShown.map((f) => (
                     /* The fund's own key, so a claim about WHICH funds this table
                        draws is struck on structure rather than on a rendered name. */
-                    <tr key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
+                    <Tr view={fundView} key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">
                         <StockLink securityKey={f.securityKey} name={f.security} />
                       </td>
@@ -530,22 +726,23 @@ export function PrivateMarket() {
                           : f.asOf.length === 1 ? fmtDate(f.asOf[0])
                           : `${fmtDate(f.asOf[0])} → ${fmtDate(f.asOf[f.asOf.length - 1])}`}
                       </td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-4 py-2.5 text-slate-200" colSpan={4}>Total · {m.funds.length} funds</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{money(m.privCost)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.privMV)}</td>
-                    <td className="px-4 py-2.5 text-right mono">
-                      {m.privCost != null && m.privCost > 0 && m.privPnL != null
-                        ? <span className={changeColor((m.privPnL / m.privCost) * 100)}>{fmtPct((m.privPnL / m.privCost) * 100, { sign: true, decimals: 1 })}</span>
-                        : <AbsentCell reason="no cost is reported across this book's private holdings" />}
-                    </td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">100%</td>
-                    <td />
-                  </tr>
+                  <TrFoot view={fundView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
+                    label={<>Total · {m.funds.length} funds</>}
+                    cells={{
+                      invested: <td key="invested" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300">{money(m.privCost)}</td>,
+                      value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.privMV)}</td>,
+                      return: <td key="return" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold">
+                        {m.privCost != null && m.privCost > 0 && m.privPnL != null
+                          ? <span className={changeColor((m.privPnL / m.privCost) * 100)}>{fmtPct((m.privPnL / m.privCost) * 100, { sign: true, decimals: 1 })}</span>
+                          : <AbsentCell reason="no cost is reported across this book's private holdings" />}
+                      </td>,
+                      weight: <td key="weight" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300">100%</td>,
+                      asOf: <td key="asOf" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                    }} />
                 </tfoot>
               </table>
             </div>
@@ -572,19 +769,19 @@ export function PrivateMarket() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm" data-pm-table="folios">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-                  </tr>
+                  <Tr view={folioView}>
+                    <SortHeader col="fund" view={folioView} align="left">Fund</SortHeader>
+                    <SortHeader col="owner" view={folioView} align="left">Owner</SortHeader>
+                    <SortHeader col="account" view={folioView} align="left">Account</SortHeader>
+                    <SortHeader col="units" view={folioView}>Units</SortHeader>
+                    <SortHeader col="invested" view={folioView}>Invested</SortHeader>
+                    <SortHeader col="value" view={folioView}>Value</SortHeader>
+                    <SortHeader col="asOf" view={folioView} align="left">As of</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {m.folios.map((f, i) => (
-                    <tr key={`${f.accountId}-${f.position.securityKey}-${i}`} className="hover:bg-ink-700/40">
+                  {folioRowsShown.map((f, i) => (
+                    <Tr view={folioView} key={`${f.accountId}-${f.position.securityKey}-${i}`} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100">
                         <StockLink securityKey={f.position.securityKey} name={f.position.security} />
                         {f.alsoCount > 1 && (
@@ -607,15 +804,16 @@ export function PrivateMarket() {
                       <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
                         {f.asOf ? fmtDate(f.asOf) : <AbsentCell reason="this account states no report date" />}
                       </td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-4 py-2.5 text-slate-200" colSpan={5}>Total · {m.folios.length} rows</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.rawMV)} as printed</td>
-                    <td />
-                  </tr>
+                  <TrFoot view={folioView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
+                    label={<>Total · {m.folios.length} rows</>}
+                    cells={{
+                      value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.rawMV)} as printed</td>,
+                      asOf: <td key="asOf" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                    }} />
                 </tfoot>
               </table>
             </div>
@@ -640,16 +838,16 @@ export function PrivateMarket() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm" data-pm-table="owners">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Rows</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                  </tr>
+                  <Tr view={ownerView}>
+                    <SortHeader col="owner" view={ownerView} align="left">Owner</SortHeader>
+                    <SortHeader col="rows" view={ownerView}>Rows</SortHeader>
+                    <SortHeader col="invested" view={ownerView}>Invested</SortHeader>
+                    <SortHeader col="value" view={ownerView}>Value</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {m.owners.map((o) => (
-                    <tr key={o.owner} className="hover:bg-ink-700/40">
+                  {ownerRowsShown.map((o) => (
+                    <Tr view={ownerView} key={o.owner} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100">{o.owner}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{o.rows} {o.rows === 1 ? "row" : "rows"}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">
@@ -658,14 +856,15 @@ export function PrivateMarket() {
                           : money(o.cost)}
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(o.mv)}</td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-4 py-2.5 text-slate-200" colSpan={3}>Total · {m.owners.length} owners</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.rawMV)} as printed</td>
-                  </tr>
+                  <TrFoot view={ownerView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
+                    label={<>Total · {m.owners.length} owners</>}
+                    cells={{
+                      value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.rawMV)} as printed</td>,
+                    }} />
                 </tfoot>
               </table>
             </div>
@@ -777,29 +976,29 @@ export function PrivateMarket() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="What the family promised this fund in total.">Committed</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="What the fund has demanded so far, off the line its own statement labels.">Called</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="What the family has actually paid in — capital invested.">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="Uncalled capital, exactly as the fund prints it — never worked out as committed − called.">Still to call</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="Dated calls this fund has made, each reconciled against the total its own statement prints.">Calls</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium"
-                      title="Does the fund's printed uncalled figure equal its own committed − called? This is the working behind the total.">Check</th>
-                  </tr>
+                  <Tr view={schemeView}>
+                    <SortHeader col="fund" view={schemeView} align="left">Fund</SortHeader>
+                    <SortHeader col="owner" view={schemeView} align="left">Owner</SortHeader>
+                    <SortHeader col="committed" view={schemeView}
+                      title="What the family promised this fund in total.">Committed</SortHeader>
+                    <SortHeader col="called" view={schemeView}
+                      title="What the fund has demanded so far, off the line its own statement labels.">Called</SortHeader>
+                    <SortHeader col="paid" view={schemeView}
+                      title="What the family has actually paid in — capital invested.">Invested</SortHeader>
+                    <SortHeader col="uncalled" view={schemeView}
+                      title="Uncalled capital, exactly as the fund prints it — never worked out as committed − called.">Still to call</SortHeader>
+                    <SortHeader col="calls" view={schemeView}
+                      title="Dated calls this fund has made, each reconciled against the total its own statement prints.">Calls</SortHeader>
+                    <SortHeader col="asOf" view={schemeView} align="left">As of</SortHeader>
+                    <SortHeader col="check" view={schemeView} align="left" sortable={false}
+                      title="Does the fund's printed uncalled figure equal its own committed − called? This is the working behind the total.">Check</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
                   {m.schemes.map((r) => {
                     const valued = m.owned.has(r.accountId);
                     return (
-                      <tr key={r.accountId} className="hover:bg-ink-700/40" data-scheme={r.accountId}>
+                      <Tr view={schemeView} key={r.accountId} className="hover:bg-ink-700/40" data-scheme={r.accountId}>
                         <td className="px-4 py-2.5 text-slate-100">
                           {r.fund}
                           {/* The separator is a real character, not a margin: the
@@ -850,29 +1049,37 @@ export function PrivateMarket() {
                             : r.uncalledTies === false ? <Pill tone="warn">the statement disagrees with itself</Pill>
                               : <AbsentCell reason="committed − called = uncalled cannot be struck here: this statement prints one of the three figures short" />}
                         </td>
-                      </tr>
+                      </Tr>
                     );
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-ink-600 font-semibold">
-                    <td className="px-4 py-2.5 text-slate-200" colSpan={2}>Total · {m.cc.count} accounts</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(m.cc.committed)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">
-                      {m.cc.called == null ? DASH : money(m.cc.called)}
-                      <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.calledOf} of {m.cc.count}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">
-                      {m.cc.paid == null ? DASH : money(m.cc.paid)}
-                      <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.paidOf} of {m.cc.count}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right mono text-amber-400">
-                      {money(m.cc.uncalled)}
-                      <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.uncalledOf} of {m.cc.count}</span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{m.cc.callCount}</td>
-                    <td colSpan={2} />
-                  </tr>
+                  <TrFoot view={schemeView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
+                    cells={{
+                      committed: <td key="committed" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.cc.committed)}</td>,
+                      called: (
+                        <td key="called" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">
+                          {m.cc.called == null ? DASH : money(m.cc.called)}
+                          <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.calledOf} of {m.cc.count}</span>
+                        </td>
+                      ),
+                      paid: (
+                        <td key="paid" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">
+                          {m.cc.paid == null ? DASH : money(m.cc.paid)}
+                          <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.paidOf} of {m.cc.count}</span>
+                        </td>
+                      ),
+                      uncalled: (
+                        <td key="uncalled" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-amber-400">
+                          {money(m.cc.uncalled)}
+                          <span className="text-[10.5px] font-normal text-slate-500"> · {m.cc.uncalledOf} of {m.cc.count}</span>
+                        </td>
+                      ),
+                      calls: <td key="calls" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300">{m.cc.callCount}</td>,
+                      asOf: <td key="asOf" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                      check: <td key="check" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                    }}
+                    label={<>Total · {m.cc.count} accounts</>} />
                 </tfoot>
               </table>
             </div>
@@ -927,30 +1134,31 @@ export function PrivateMarket() {
           <div className="max-h-[26rem] overflow-y-auto overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="sticky top-0 border-b border-ink-700 bg-ink-800">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Date</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Fund</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">The fund&rsquo;s own wording</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Amount</th>
-                </tr>
+                <Tr view={historyView}>
+                  <SortHeader col="date" view={historyView} align="left">Date</SortHeader>
+                  <SortHeader col="fund" view={historyView} align="left">Fund</SortHeader>
+                  <SortHeader col="owner" view={historyView} align="left">Owner</SortHeader>
+                  <SortHeader col="label" view={historyView} align="left">The fund&rsquo;s own wording</SortHeader>
+                  <SortHeader col="amount" view={historyView}>Amount</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {m.history.map((c, i) => (
-                  <tr key={`${c.accountId}-${c.date}-${i}`} className="hover:bg-ink-700/40" data-call-row={c.date}>
+                {historyShown.map((c, i) => (
+                  <Tr view={historyView} key={`${c.accountId}-${c.date}-${i}`} className="hover:bg-ink-700/40" data-call-row={c.date}>
                     <td className="px-4 py-2 text-slate-300 whitespace-nowrap">{fmtDate(c.date)}</td>
                     <td className="px-4 py-2 text-slate-200">{c.fund}</td>
                     <td className="px-4 py-2 text-slate-400">{c.owner ?? DASH}</td>
                     <td className="px-4 py-2 text-slate-500">{c.label ?? DASH}</td>
                     <td className="px-4 py-2 text-right mono text-slate-200">{money(c.amount)}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-ink-600 font-semibold">
-                  <td className="px-4 py-2.5 text-slate-200" colSpan={4}>Total · {m.history.length} calls</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-100">{money(sum(m.history.map((c) => c.amount)))}</td>
-                </tr>
+                <TrFoot view={historyView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
+                  label={<>Total · {m.history.length} calls</>}
+                  cells={{
+                    amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(sum(m.history.map((c) => c.amount)))}</td>,
+                  }} />
               </tfoot>
             </table>
           </div>
@@ -976,19 +1184,19 @@ export function PrivateMarket() {
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Owner</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="What the family has actually paid into this folio — capital invested, the same quantity the Invested tile above counts.">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Still to call</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Value</th>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Why</th>
-                  </tr>
+                  <Tr view={unvaluedView}>
+                    <SortHeader col="account" view={unvaluedView} align="left">Account</SortHeader>
+                    <SortHeader col="owner" view={unvaluedView} align="left">Owner</SortHeader>
+                    <SortHeader col="invested" view={unvaluedView}
+                      title="What the family has actually paid into this folio — capital invested, the same quantity the Invested tile above counts.">Invested</SortHeader>
+                    <SortHeader col="uncalled" view={unvaluedView}>Still to call</SortHeader>
+                    <SortHeader col="value" view={unvaluedView}>Value</SortHeader>
+                    <SortHeader col="why" view={unvaluedView} align="left" sortable={false}>Why</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {m.unvalued.map((u) => (
-                    <tr key={u.account.accountId} className="hover:bg-ink-700/40">
+                  {unvaluedShown.map((u) => (
+                    <Tr view={unvaluedView} key={u.account.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100">
                         {u.account.provider} {u.account.accountNo}
                       </td>
@@ -1014,7 +1222,7 @@ export function PrivateMarket() {
                             : u.kind === "redeemed" ? "redeemed to nil — every holding on its statement has been paid back, which is a measurement and not a gap"
                               : (u.reason ?? "")}
                       </td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
               </table>

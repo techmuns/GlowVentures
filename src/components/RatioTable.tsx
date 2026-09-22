@@ -155,7 +155,12 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full whitespace-nowrap text-[12.5px]">
+          {/* Exempt, declared: the columns are the source's own seven year-ends
+                and the rows are its line items with its own section headings, so
+                sorting would scramble a document and moving a year would break
+                its chronology. */}
+            <table className="min-w-full whitespace-nowrap text-[12.5px]"
+              data-table-static="the columns are the periods of an upstream financial document and the rows are its own line items, in its own order — sorting the rows would scramble a statement and moving a period would break its chronology">
             <thead className="border-b border-ink-700">
               <tr>
                 <th className="label-xs px-3 py-2 text-left font-medium">Indicator</th>

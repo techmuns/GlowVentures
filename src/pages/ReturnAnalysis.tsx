@@ -9,6 +9,13 @@ import { Pill } from "@/components/Pill";
 import { StatTile } from "@/components/StatTile";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtPct, changeColor } from "@/lib/format";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
+
+/** Each table's columns, in the order its rows write their cells. */
+const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
+const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
+const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
 import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } from "@/lib/analytics";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -63,6 +70,8 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
 
 export function ReturnAnalysis() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
+  const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
 
   const model = useMemo(() => {
     if (!portfolio) return null;
@@ -210,6 +219,22 @@ export function ReturnAnalysis() {
   if (!portfolio || !model) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const m = model;
+  const sectorRows = m ? sortRows(m.sectors, sectorView.sort, {
+    sector: (x) => x.label,
+    pnl: (x) => x.pnl,
+    return: (x) => x.returnPct,
+    contrib: (x) => x.contribPct,
+  }) : [];
+  const accountRows = m ? sortRows(m.byAccount, accountView.sort, {
+    account: (a) => acctLabel(a.account),
+    names: (a) => (a.cost === null ? null : a.names),
+    cost: (a) => a.cost,
+    pnl: (a) => a.pnl,
+    return: (a) => a.returnPct,
+    best: (a) => a.best?.returnPct ?? null,
+    worst: (a) => a.worst?.returnPct ?? null,
+  }) : [];
+
 
   if (!m.priced.length) {
     return (
@@ -314,16 +339,16 @@ export function ReturnAnalysis() {
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
-                <tr>
-                  <th className="px-2 py-2 text-left">Sector / class</th>
-                  <th className="px-2 py-2 text-right">P&amp;L</th>
-                  <th className="px-2 py-2 text-right">Return</th>
-                  <th className="px-2 py-2 text-right">Contrib.</th>
-                </tr>
+                <Tr view={sectorView}>
+                  <SortHeader col="sector" view={sectorView} align="left" pad="px-2 py-2">Sector / class</SortHeader>
+                  <SortHeader col="pnl" view={sectorView} pad="px-2 py-2">P&amp;L</SortHeader>
+                  <SortHeader col="return" view={sectorView} pad="px-2 py-2">Return</SortHeader>
+                  <SortHeader col="contrib" view={sectorView} pad="px-2 py-2">Contrib.</SortHeader>
+                </Tr>
               </thead>
               <tbody>
-                {m.sectors.map((s) => (
-                  <tr key={s.sector} className="border-t border-ink-700/60">
+                {sectorRows.map((s) => (
+                  <Tr view={sectorView} key={s.sector} className="border-t border-ink-700/60">
                     <td className="px-2 py-2 text-slate-200">{s.label}</td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
                     <td className="px-2 py-2 text-right mono">
@@ -332,16 +357,16 @@ export function ReturnAnalysis() {
                         : <span className={changeColor(s.returnPct)}>{fmtPct(s.returnPct, { sign: true, decimals: 1 })}</span>}
                     </td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.contribPct)}`}>{fmtPct(s.contribPct, { sign: true, decimals: 2 })}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
               <tfoot className="border-t-2 border-ink-600 font-semibold">
-                <tr>
-                  <td className="px-2 py-2 text-slate-200">Total</td>
-                  <td className={`px-2 py-2 text-right mono ${changeColor(m.pnl)}`}>{money(m.pnl, true)}</td>
-                  <td className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>
-                  <td className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>
-                </tr>
+                <TrFoot view={sectorView} className="px-2 py-2 text-slate-200" label={<>Total</>}
+                  cells={{
+                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl)}`}>{money(m.pnl, true)}</td>,
+                    return: <td key="return" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>,
+                    contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>,
+                  }} />
               </tfoot>
             </table>
           </div>
@@ -364,19 +389,19 @@ export function ReturnAnalysis() {
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
-              <tr>
-                <th className="px-3 py-2 text-left">Account</th>
-                <th className="px-3 py-2 text-right">Names</th>
-                <th className="px-3 py-2 text-right">Cost</th>
-                <th className="px-3 py-2 text-right">Unrealised P&amp;L</th>
-                <th className="px-3 py-2 text-right">Return</th>
-                <th className="px-3 py-2 text-left">Best</th>
-                <th className="px-3 py-2 text-left">Worst</th>
-              </tr>
+              <Tr view={accountView}>
+                <SortHeader col="account" view={accountView} align="left" pad="px-3 py-2">Account</SortHeader>
+                <SortHeader col="names" view={accountView} pad="px-3 py-2">Names</SortHeader>
+                <SortHeader col="cost" view={accountView} pad="px-3 py-2">Cost</SortHeader>
+                <SortHeader col="pnl" view={accountView} pad="px-3 py-2">Unrealised P&amp;L</SortHeader>
+                <SortHeader col="return" view={accountView} pad="px-3 py-2">Return</SortHeader>
+                <SortHeader col="best" view={accountView} align="left" pad="px-3 py-2">Best</SortHeader>
+                <SortHeader col="worst" view={accountView} align="left" pad="px-3 py-2">Worst</SortHeader>
+              </Tr>
             </thead>
             <tbody>
-              {m.byAccount.map((a) => (
-                <tr key={a.account.accountId} className="border-t border-ink-700/60">
+              {accountRows.map((a) => (
+                <Tr view={accountView} key={a.account.accountId} className="border-t border-ink-700/60">
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(a.account)}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">
                     {a.cost === null ? <AbsentCell reason={a.absentReason} /> : a.names}
@@ -406,7 +431,7 @@ export function ReturnAnalysis() {
                         </a>
                       : <span className="text-slate-500">{DASH}</span>}
                   </td>
-                </tr>
+                </Tr>
               ))}
             </tbody>
           </table>
@@ -415,10 +440,10 @@ export function ReturnAnalysis() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
         <Card title="Largest contributors" subtitle="By unrealised P&amp;L">
-          <ContribTable rows={m.contrib.slice(0, 10)} money={money} />
+          <ContribTable rows={m.contrib.slice(0, 10)} money={money} storageKey="returns-contributors" />
         </Card>
         <Card title="Largest detractors" subtitle="By unrealised P&amp;L">
-          <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} />
+          <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} storageKey="returns-detractors" />
         </Card>
       </div>
 
@@ -435,10 +460,19 @@ export function ReturnAnalysis() {
   );
 }
 
-function ContribTable({ rows, money }: {
+function ContribTable({ rows, money, storageKey }: {
   rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number }[];
   money: (n: number, sign?: boolean) => string;
+  /** Contributors and detractors are two tables, so each keeps its own order. */
+  storageKey: string;
 }) {
+  const view = useTableView(storageKey, RA_CONTRIB_COLS);
+  const shown = sortRows(rows, view.sort, {
+    security: (r) => r.security,
+    pnl: (r) => r.pnl,
+    return: (r) => r.returnPct,
+    contrib: (r) => r.contribPct,
+  });
   if (!rows.length) {
     return <p className="py-6 text-center text-[11.5px] text-slate-500">{DASH} no priced positions in the book</p>;
   }
@@ -446,23 +480,23 @@ function ContribTable({ rows, money }: {
     <div className="overflow-x-auto">
       <table className="w-full text-[12.5px]">
         <thead className="label-xs border-b border-ink-700">
-          <tr>
-            <th className="px-2 py-2 text-left">Security</th>
-            <th className="px-2 py-2 text-right">P&amp;L</th>
-            <th className="px-2 py-2 text-right">Return</th>
-            <th className="px-2 py-2 text-right">Contrib.</th>
-          </tr>
+          <Tr view={view}>
+            <SortHeader col="security" view={view} align="left" pad="px-2 py-2">Security</SortHeader>
+            <SortHeader col="pnl" view={view} pad="px-2 py-2">P&amp;L</SortHeader>
+            <SortHeader col="return" view={view} pad="px-2 py-2">Return</SortHeader>
+            <SortHeader col="contrib" view={view} pad="px-2 py-2">Contrib.</SortHeader>
+          </Tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={`${r.key}-${r.pnl}`} className="border-t border-ink-700/60">
+          {shown.map((r) => (
+            <Tr view={view} key={`${r.key}-${r.pnl}`} className="border-t border-ink-700/60">
               <td className="px-2 py-2">
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
               </td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.pnl)}`}>{money(r.pnl, true)}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.contribPct)}`}>{fmtPct(r.contribPct, { sign: true, decimals: 2 })}</td>
-            </tr>
+            </Tr>
           ))}
         </tbody>
       </table>
