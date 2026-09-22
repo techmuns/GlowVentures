@@ -14135,6 +14135,22 @@ Stage 10at records: neither side touched `src/data/glowData.ts` or
 run as a control anyway and regenerated both **byte-identically, to the same md5
 as before the merge**. `replay:owners --check` is still a no-op.
 
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 22 + 140 (2 not
+checked, 0 blocked) · `test:family` · `check:family` **85/0** · `check:pages`
+**194 combinations clean**, with the **same eight** evidenced abstentions across
+the same four claims as before the merge — every KPI tile on this book carries a
+figure (four Morning CIO routes), no row on `stock-qty` carries a pledge, every
+private holding reports a cost, and nothing on Morning CIO points at an
+undefined drill-down address.
+
+**MEASURED ON THE MERGED TREE, AND THE ARITHMETIC RECONCILES ONLY BECAUSE THE
+SWEEP WAS RE-RUN.** This branch's own pre-merge run was **188** and it adds no
+route; #64 adds three (`stock-cmp-nav`, `stock-cmp-split`, `stock-cmp-unmarked`),
+which is six combinations across both themes. 188 + 6 = 194 — and a figure
+adjusted by arithmetic from another branch's paragraph would have been wrong in
+the one direction nothing on screen could show, which is the point every stage
+in this file makes about its own count.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
