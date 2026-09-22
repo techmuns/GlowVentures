@@ -1771,13 +1771,28 @@ const PM_FOLIO_BOOK = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS");
     if (!Array.isArray(positions)) return null;
-    const PRIVATE = new Set(["AIF", "Unlisted", "Structured Product"]);
+    /**
+     * WHICH SIDE OF THE BOOK A HOLDING IS ON, re-expressed rather than imported
+     * — and the re-expression has to FOLLOW when the rule moves.
+     *
+     * THE MERGE IS WHERE THAT COMES DUE, and it did: this read
+     * `assetClass ∈ {AIF, Unlisted, Structured Product}` for as long as that
+     * WAS the rule, and Stage 10bp made it `marketSide === "private"` — a
+     * Category III AIF trades listed securities, so it is listed exposure. The
+     * page followed the new definition and this did not, and both folio checks
+     * failed against a page that was right.
+     *
+     * It stays a re-expression rather than an import of `isPrivateClass`,
+     * because a check that calls the helper it is checking agrees with it by
+     * construction. The field is read off the generated book, which is where
+     * `build-book` writes the answer.
+     */
     const small = smallKeysOf(positions);
     // CURRENT HOLDINGS: a fund redeemed to nil still publishes a NAV, and the
     // page's own comment is why — `currentHoldings` drops it from the table.
     const current = positions.filter((p) => !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)
       && Number(p.quantity) === 0 && p.currentPrice != null));
-    const raw = current.filter((p) => PRIVATE.has(p.assetClass) && !small.has(p.securityKey));
+    const raw = current.filter((p) => p.marketSide === "private" && !small.has(p.securityKey));
     const seen = new Set();
     const ded = raw.filter((p) => {
       if (!p.dedupeGroup) return true;

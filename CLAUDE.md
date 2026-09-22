@@ -15048,6 +15048,30 @@ comment body as bare code and the file stopped parsing — caught by
 `node --check` rather than by reading. A union of two halves of one construct
 needs the construct rebuilt, not the halves stacked.
 
+**AND THE SWEEP FOUND THE ONE THING A MERGE LIKE THIS ACTUALLY BREAKS.** The
+full walk came back **1 of 188 with a finding**, both failures this branch's own
+folio checks on a page that was rendering correctly. The cause is this file's
+own rule arriving on schedule: **a rule expressed twice has to be MOVED twice,
+and the merge is where that comes due.** `PM_FOLIO_BOOK` re-expresses "which
+holdings are private" off `glowData.ts` — deliberately, because a check that
+imports the helper it is checking agrees with it by construction — and it read
+`assetClass ∈ {AIF, Unlisted, Structured Product}` for as long as that WAS the
+rule. Stage 10bp made it `marketSide === "private"`: a Category III AIF trades
+listed securities, so it is listed exposure, and the private book went from 14
+funds to **4**. The page followed the new definition and the checker did not.
+
+Keyed on `marketSide`, all three private routes walk clean and the constant's
+own arithmetic agrees with main's re-measured suite (4 funds, 7 statements).
+**The targeted re-run is complete coverage rather than a shortcut**, and that
+was measured rather than assumed: `PM_FOLIO_BOOK` is read inside the
+`private-market-folios` block and nowhere else in the file, so every consumer of
+the changed constant was re-walked.
+
+**THE FAILURE IS THE ARGUMENT FOR THE RE-EXPRESSION, NOT AGAINST IT.** Written
+as an import this merge would have changed what the checks cover — silently,
+into agreement — and reported clean. Written twice, it failed by name on the
+one route where the two definitions had come apart.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
