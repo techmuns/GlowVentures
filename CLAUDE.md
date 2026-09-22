@@ -4766,9 +4766,13 @@ other view on this page, so the CAGR view is a shareable link and `check:pages`
 reaches each measure by URL rather than a click. `auto` is the param-free default
 and is mutually exclusive with the concrete measures (picking one means "show me
 that", not "that plus the rule"); the concrete ones MULTI-SELECT, so Absolute and
-CAGR can sit side by side — the *"always have a CAGR column"* ask, answered
+CAGR can sit side by side — the *"always have a CAGR column"* ask, ~~answered
 without a second column. The one Return column shows the ticked measure(s), each
-on its own labelled line.
+on its own labelled line.~~ ***ANSWERED WITH A SECOND COLUMN SINCE Stage 10bi***,
+at the family's request: the picker is the COLUMN LIST now, one column per ticked
+measure headed with its own name. Everything else here is unchanged —
+`measuredReturn` is still the one place the methodology lives, `positionIrrPct` is
+still unread, and the guard still refuses to compound a sub-year window.
 
 **THE SEPARATE YTD COLUMN IS GONE — 14 COLUMNS TO 13.** YTD is a measure now, not
 a column; the footer's and each category-total's YTD cell went with it. The
@@ -11606,6 +11610,15 @@ are not two views of one thing, they are two different measurements, and the
 tabs presented them as alternatives. Both are on screen together now, each in its
 own card, under ONE set of controls.
 
+***THEY ARE ONE CARD WITH A TOGGLE SINCE Stage 10bi***, at the family's request —
+*"it should be exactly one single simple table just like in the holdings."* The
+sentence above still holds and is why: a toggle between two RECORDS is not the
+five-tab strip returning, because the strip mixed two sources with three
+groupings and this names the two sources and nothing else. Every reason below for
+keeping the two APART — the double count, the different columns, the separate
+footers — is why they are still two components behind one control rather than one
+table with a grouping key.
+
 **AND THE GROUPING IS THE HOLDINGS TABLE'S OWN.** `?group=` is shared: a reader
 who has sliced the holdings by basket crosses to the transactions already sliced
 the same way. The axis control moved out of the Holdings-only branch onto the row
@@ -11630,7 +11643,8 @@ INSIDE one. Measured over the committed archive: **11 accounts publish a dated
 capital record, 10 issue a transaction statement, and
 `green-lantern-capital-llp-510861` publishes BOTH** — so a combined total
 double-counts it by construction. Two cards, two footers, one set of controls
-and one set of sections.
+and one set of sections. *(ONE card since Stage 10bi, still two footers — the
+measurement was re-taken for that change and is unchanged.)*
 
 **AND THE CAPITAL RECORD WAS NOT REMOVED WITH THE TAB IT SAT ON.** It is the only
 surface in this app that carries the family's own dated capital across every
@@ -11710,13 +11724,18 @@ is the same dead weight one layer up.
 **Recent first was already the default** (Stage 10az) and is asserted rather than
 assumed — a default is the change that moves silently.
 
-#### The layout, and why it is two scrolling cards rather than one page scroll
+#### The layout, and why it was two scrolling cards rather than one page scroll
 
 `position: sticky` resolves against the nearest SCROLLING ancestor, so two
 sticky headers in one page-level scroller pin at once and overlap. The capital
-record is bounded (`max-h`, in **rem** and never `vh` — a viewport unit is not
-rescaled by `--app-zoom`, Stage 10n) and the trades table takes the rest with
+record was bounded (`max-h`, in **rem** and never `vh` — a viewport unit is not
+rescaled by `--app-zoom`, Stage 10n) and the trades table took the rest with
 `min-h-0 flex-1`, which is exactly what the Holdings card beside it does.
+
+***THE HAZARD WENT WITH THE SECOND CARD AT Stage 10bi.*** With one table on
+screen there is one sticky header and the active branch simply takes the card
+(`min-h-0 flex-1`), so the bound came off. The `vh` rule is unchanged and still
+governs every bounded box in this app.
 
 **A FIGURE IN A SECTION HEADING CARRIES ITS OWN NOUN.** `₹34 Cr` beside
 `3 accounts` reads as the section's VALUE and is what was paid IN; the trades
@@ -12060,6 +12079,276 @@ pledge. `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and three
 presentation changes that moved a generated figure would not be presentation
 changes.
+
+### Stage 10bi — ONE TABLE BEHIND A TOGGLE, AND A COLUMN PER RETURN
+
+*"open PR and do not merge to main until i tell you to."* · *"why are there two
+separate tables in the transactions page, it should be exactly one single simple
+table just like in the holdings."* · *"remove the highlighted text from the
+dashboard UI"* — the five return-methodology paragraphs, screenshotted. ·
+*"Whenever we select multiple return profiles to see on the dashboard it should
+add a new return column rather than show all returns in the same return column
+side by side… a new column with that return name should be made, and also
+removed when we select or deselect returns."*
+
+Three asks, and the last two turned out to solve each other: **ask 3 built the
+home for what ask 2 removed.**
+
+#### 1. Two stacked tables become one card with a toggle
+
+Stage 10bg put both dated records on screen together, each in its own card — the
+right answer to *"stop having a categorisation of its own"* and, the family now
+say, one card too many. So it is ONE CARD, ONE TABLE, A TOGGLE: the Holdings
+card's own shape, and the shape `/private-market` (Stage 10bf) and Today's movers
+(Stage 10bb) already use.
+
+**WHAT IT MUST NEVER BECOME IS ONE TABLE OVER BOTH RECORDS, and that is measured
+on this book rather than feared.** Re-measured for this change rather than taken
+from the prose above it:
+
+| | |
+| --- | ---: |
+| accounts publishing a dated capital record | **11** |
+| accounts issuing a transaction statement with dated trades | **10** |
+| **publishing BOTH** | **`green-lantern-capital-llp-510861`** |
+
+So a shared footer counts that account's money twice **by construction**. And
+they are different MEASUREMENTS — a contribution moves money INTO an account, a
+trade moves it about INSIDE one — with columns that do not line up: Capital
+carries How it went in, Value today, Gain, Return and Invested on; Trades carries
+Trades, Securities, Realized P&L and Traded between. **Four of ten are shared.**
+
+Each branch therefore keeps its OWN card title, subtitle, columns and footer, and
+`?record=` makes a branch a link. `capital` is the default and stays param-free:
+it is the family's own money, and it is where the Holdings page's closed-position
+note already points a reader looking for where a redemption went (Stage 10am).
+
+**EACH BUTTON PRINTS ITS OWN ROW COUNT** — the `/holdings` facet-chip pattern, so
+a reader sees what the other branch holds before switching. 11 accounts against
+26 trade rollups here, and the two being DIFFERENT is asserted, because a toggle
+advertising one number twice has stopped reading one of them.
+
+**AND THE ROLLUP MOVED UP A LEVEL FOR EXACTLY THAT REASON.** `capitalRollup` and
+the section filter now run once in `TransactionsView` and the table is handed the
+groups. A count struck inside the table while the toggle struck its own would be
+two definitions of "the rows in view", free to disagree the first time either
+changed — which is the same reason the date and entity filters moved up before it.
+
+**THE COUNTER COUNTS THE RECORD ON SCREEN, AND NAMES IT.** It read the manager's
+tape on every view once (Stage 10am), then both records at once (10bg); with one
+table in the DOM it counts that one and the other branch's figure is on the button
+that reaches it. The check now REFUSES the trades shape on the capital branch by
+name, which is the original defect stated as an invariant.
+
+#### 2. and 3. Five captions out, a column each in
+
+**THE PICKER IS THE COLUMN LIST NOW.** One `<th>` and one `<td>` per ticked
+measure, headed with that measure's own name.
+
+**AND IT IS EXPRESSED IN STAGE 10bh's DECLARED-COLUMN MODEL RATHER THAN BESIDE
+IT** — which is what this change looked like after the merge, and is strictly
+better than what it was written as. `return` in `MONITOR_COLS` is a PLACEHOLDER
+rather than a column: `withReturnCols` expands it to one id per ticked measure,
+and every mechanism in `useTableView` then does the right thing for free. A
+column list that GROWS AND SHRINKS is exactly the case that hook already
+reconciles — unknown ids dropped, new ones appended in declared order — so
+ticking a measure adds a column a reader can sort and drag like any other, and
+unticking it removes that column and leaves the rest where they were dragged to.
+That is the family's *"and also removed when we select or deselect returns"*
+answered by the storage reconciliation rather than by a second mechanism.
+
+`COL_COUNT` is `holdView.order.length`, so every full-width row spans them with
+nothing to keep in step; written as arithmetic on `returnMeasures.length` it
+goes wrong SILENTLY, which is how the first cut of this had it.
+
+| ticked | columns drawn | header |
+| --- | ---: | --- |
+| `auto` (default) | 1 | `Return` |
+| Absolute + CAGR | 2 | `HPR` · `CAGR` |
+| all five | 5 | `HPR` · `CAGR` · `XIRR` · `YTD` · `CY` |
+
+Measured on the rendered page: header, body row, section heading, category total
+and footer all span 14 / 16 / 18 columns together, and **no page-level horizontal
+scroll at any of them** — the table scrolls inside its own container, as this
+file's own rule requires.
+
+**THE LABEL GOES WHERE THE FACT IS CONSTANT — one rule, `res.tag !== def.tag`,
+and it covers three cases without naming any of them.** `auto` tags every row,
+because the methodology resolves per row and the header can only say "Return".
+The CAGR column tags the rows **where the annualisation guard fired** — a sub-year
+holding shows its total return on cost, and leaving that untagged under a header
+reading CAGR asserts an annual rate for a year the holding has not seen, which is
+the +99.0% failure of Stage 10g(ii) arriving through a column heading. Every other
+column tags nothing, because the header names it.
+
+**A FIRST CUT KEYED THAT ON `measure === "auto"` AND THE SWEEP CAUGHT IT TWICE,
+in both directions.** Once because the CAGR column's guarded rows went out
+indistinguishable from the annualised one; and once because **42 of this book's
+72 rows resolve to `AUTO` itself** (no cost reported, so no return at all), which
+a rule written as `res.tag !== def.tag` alone leaves silently untagged on the
+default view. Neither was reasoned out in advance.
+
+**AND THE FIVE PARAGRAPHS' TWO CLAIMS WERE AUDITED SEPARATELY**, the pattern this
+file has followed since Stage 10aa — each caption made exactly two:
+
+- the **REASON** the measure is absent on the rows it cannot answer. Already per
+  row, and more precisely: `measuredReturn` returns it and the cell renders an
+  `AbsentCell` carrying it, about the row the reader is looking at.
+- the **COUNT** of how much of the table it covers. **Stated nowhere else**, and
+  the one a reader acts on — a column of dashes with nothing saying why reads as
+  a broken feed rather than as a measurement this book cannot strike.
+
+So the count is that column's own header note and the reason is the note's hover
+(`returnColumnMeta`, which returns BOTH from ONE coverage object so the short
+figure and the sentence behind it cannot describe different sets). The CAGR
+column's note says `1 annualised of 72` rather than `3 of 72`, because `shown`
+includes the two rows that fall back to HPR and reporting those as annualised is
+the very claim the guard refuses.
+
+**`auto` GETS NEITHER, AND THAT IS NOT AN OVERSIGHT.** Its measure resolves per
+row, so there is no column-wide count to state; the family asked for that caption
+gone at Stage 10af and it stays gone. Both halves are ONE invariant so it has a
+subject on every address — split in two, the half with no subject reported NOT
+CHECKED, and four evidenced abstentions is how a real one gets missed.
+
+#### AN AGGREGATE HAS ONE RETURN, AND NOW IT HAS TO SAY WHICH
+
+The footer and each category total are CUMULATIVE ON COST and deliberately do NOT
+follow the picker: a bucket and a whole book have no single purchase date to
+annualise over, no per-holding cash-flow history for an XIRR, and no dated opening
+value for a year. **That used to be one cell under a header that could mean any of
+five things.** With a column per measure the figure stands under HPR and under
+`auto`, and every other return column renders an `AbsentCell` carrying the reason
+(`AGG_NO_MEASURE`). Printing the same percentage under all five would be the
+caption-does-not-describe-its-figure failure five columns wide — the one the
+allocation footer already cost this book once. **This fell out of the change
+rather than being asked for, and it is strictly more honest than what it replaced.**
+
+#### A SORT ARROW ON A RETURN COLUMN ORDERS ON THAT COLUMN'S OWN FIGURE
+
+`returnAccessors` gives each return column an accessor of its own, resolving
+through `measuredReturn` — the same function the cell draws, so the column a
+reader clicks and the order they get cannot disagree about what a row's CAGR is.
+Reusing `returnPct` for all of them would leave the CAGR arrow ordering by the
+raw return on cost, and this book is where that lie is visible: one holding
+annualises and the rest fall back to their absolute figure, so the two orders
+genuinely differ.
+
+**AND AN ABSENT RETURN SORTS LAST, NEVER AS ZERO** — which this change no longer
+has to state for itself, because `sortRows` does it for every null. That is the
+merge paying for itself: the bespoke comparator this was first written as, the
+`SortKey` union it extended, and the local `Th` that gave a heading its note are
+all GONE rather than left beside their replacements, and `SortHeader` renders the
+same `data-col-note` markup while also making a return column sort and drag like
+every other. Two kinds of header on one table is the second-mechanism failure
+this file keeps naming.
+
+#### The checks moved to the tables they read, and one was lost on the way
+
+`TRADES_BRANCH` names the txn routes that walk the trades table, and the walk
+switches before the probes run — **a check that stops running because a table
+moved behind a toggle is a check that silently stopped, for the fourth time in
+this file.** Three claims moved to a new `monitor-txn-trades`; `monitor-txn-basket`
+became a per-record FACTORY run by two routes (the axis is shared STATE, but the
+two tables reach a section through different helpers — `forAccount` for an
+account, `forTxn` for a dated trade); and the capital-record half of
+`monitor-txn-direct` became `monitor-txn-direct-capital`, because that route walks
+the trades branch now and the claim fell through to matching an absent-state
+sentence the page correctly does not print.
+
+**`RETURN_COLUMNS` IS A SHARED ARRAY SPREAD INTO EVERY RETURN ROUTE**, and that is
+not tidiness: written in the `monitor` block it sat on the DEFAULT address — one
+`auto` column, the one place "each concrete column carries its coverage count" has
+no subject — and would have reported NOT CHECKED for ever on exactly the claim
+asks 2 and 3 turn on. **Every abstention in it is evidenced by the PICKER's own
+active list rather than by the check finding nothing**, because a build that ticked
+CAGR and drew no column would also find nothing.
+
+**AND ONE INVARIANT WAS LOST WHILE THIS WAS BEING WRITTEN, WITH THE SWEEP GREEN
+OVER IT TWICE.** Merging two neighbouring claims by LINE RANGE swallowed
+*"the per-measure caption paragraphs are gone"* along with the doc comment they
+shared — so the whole suite passed against a page whose five paragraphs had been
+removed with **nothing asserting the removal**. Reintroducing the paragraphs is
+what found it, which is the entire reason that pass is run. It is restored as its
+own claim, above the label claim, so the next such merge cannot take it.
+
+#### Fifteen bugs reintroduced, and the fourteenth is the one worth the pass
+
+| Bug put back | Fires |
+| --- | --- |
+| both tables stacked, the toggle filtering nothing | `draws the X table and only that one`, on both branches |
+| the toggle deleted outright | **7 claims across 3 routes, as FAILURES** rather than abstentions |
+| the default record moved to trades | 11 on `monitor-txns`, the whole capital branch |
+| both buttons printing one count | the row-count claim, both branches |
+| the card title pinned to the capital record | the title claim, on the trades branch |
+| the counter counting both records | the counter claim |
+| every measure back in one cell | 11 across 3 routes |
+| the cell partition lost while the headers stay | the partition and the column-span claims |
+| the coverage note deleted | 9 across 4 routes |
+| the methodology column given a note | the label claim |
+| the off-measure tag dropped | the guarded-row claim on `monitor-cagr` |
+| **the five paragraphs restored** | **NOTHING — see above** |
+| the cumulative figure under every return column | the aggregate claim |
+| a return column sorted on the return on cost | the sort claim |
+| `COL_COUNT` back to arithmetic on the measure count | the column-span claim |
+
+The harness restores **by copy on a `trap … EXIT` and rebuilds on the way out** —
+restoring the source alone leaves `dist/` at the bugged build for the next run to
+report under the wrong name, and a patch that does not build is reported as NOT A
+RESULT rather than as a clean sweep. One of these fifteen hit that (a `{false &&}`
+gate that narrowed a possibly-null local) and was rewritten rather than read as a
+pass. A no-patch CONTROL ran afterwards and came back clean.
+
+#### Merged with Stage 10bh, and the two predicted conflicts arrived on cue
+
+This branch was held open at the family's request (*"do not merge to main until i
+tell you to"*), and **Stage 10bh landed while it waited** — so the merge hit both
+of the things this file tells a future session to expect, for the SIXTH time each:
+
+- **THE LETTER COLLIDED AGAIN.** Both branches wrote `### Stage 10bh`. Main's
+  merged first and **keeps it**, as at 10al, 10as, 10at, 10aw and 10ba; this is
+  `10bi`, and the FOUR cross-references elsewhere in this file that name it moved
+  with it — checked one at a time, because the two on the Layout list belong to
+  main's stage and must NOT move.
+- **AND THE `ctx` LITERAL CONFLICTED, ON ONE LINE, EXACTLY AS PREDICTED.**
+  Resolved as a **mechanical union** — 47 keys, none dropped, each then confirmed
+  to name a variable defined exactly once in the merged file. Never by taking a
+  side: this file's own measurement is that dropping one side's key turns its
+  invariants into NOT CHECKED over a sweep still reporting every combination
+  CLEAN, so half of those losses are invisible by construction.
+
+**AND THE MERGE MADE THIS CHANGE SMALLER, WHICH IS THE PART WORTH RECORDING.**
+Stage 10bh replaced this table's bespoke `sortKey`/`asc` pair with a declared
+column list and accessors, so three things written here were SUPERSEDED rather
+than merged: the `SortKey` union and its `` `ret:<measure>` `` member, the
+hand-written comparator, and the local `Th` that existed only to give a heading a
+note. `sortRows` already sorts an absent figure last in BOTH directions — the
+rule the comparator had to state for itself — and `SortHeader` renders the same
+`data-col-note` markup while also making a return column sort and drag like every
+other. All three are DELETED rather than left beside their replacements.
+
+**AND THE SWEEP CAUGHT WHAT THE BUILD COULD NOT.** `sortRows` was still being
+handed `MONITOR_ACCESSORS`, so a return column would have ranked nothing while
+looking exactly like the column that ranks — and `MONITOR_ACCESSORS` kept a
+`return` accessor for a column id `withReturnCols` no longer produces. The first
+is wired to `holdAccessors`; the second is gone, with a note at its place saying
+why an accessor for the placeholder must never come back.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**180 combinations clean**, with **three** EVIDENCED abstentions — every KPI tile
+on this book carries a figure, nothing on Morning CIO publishes an undefined
+drill-down address, and no row on `stock-qty` carries a pledge, which
+`stock-pledge` asserts as a hard failure so it never stands alone. **MEASURED ON
+THE MERGED TREE**: this branch's own pre-merge run was 176 and Stage 10bh's was
+178, and neither is a fact about this base — which is exactly why the sweep is
+re-run rather than the number adjusted.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control before and after the merge: nothing here
+touches the ingest, and a presentation change that moved a generated figure would
+not be one.
+
 
 ### Stage 10k — News & Announcements: REMOVED
 

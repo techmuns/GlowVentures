@@ -14,7 +14,8 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure,
+  measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure,
+  type ReturnMeasure, type ReturnCoverage,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
@@ -25,7 +26,7 @@ import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, rollupTotals, sectionRollup } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalTotals, capitalSectionRollup,
-  type TrancheTable, type CapitalSide,
+  type TrancheTable, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
@@ -59,7 +60,7 @@ import { Auditable } from "@/components/Auditable";
 // for that, and a future session that gives `weightFormula` a way to express a
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
-import type { CapitalMove, Position } from "@/lib/types";
+import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
@@ -418,9 +419,56 @@ const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | und
   totalExposure: (r) => r.totalExposure,
   weight: (r) => r.weight,
   pnl: (r) => r.unrealizedPnL,
-  return: (r) => r.returnPct,
+  // NO `return` ACCESSOR, and its absence is deliberate. `return` is a
+  // PLACEHOLDER in the column list rather than a column — `withReturnCols`
+  // expands it to one id per ticked measure — so no view ever declares it and
+  // an accessor for it would rank nothing while looking like the one that
+  // ranks the return columns. `returnAccessors` supplies the real ones, each
+  // reading the measure its own column prints.
   entity: (r) => r.entities[0] ?? null,
 };
+
+/**
+ * ── ONE RETURN COLUMN PER PICKED MEASURE ────────────────────────────────────
+ *
+ *   *"Whenever we select multiple return profiles to see on the dashboard it
+ *   should add a new return column rather than show all returns in the same
+ *   return column side by side — a new column with that return name should be
+ *   made, and also removed when we select or deselect returns."*
+ *
+ * So `return` above is a PLACEHOLDER, not a column: the declared list expands it
+ * to one id per ticked measure, which is what makes every mechanism in
+ * `useTableView` do the right thing for free. A column list that grows and
+ * shrinks is exactly the case that hook already reconciles — unknown ids
+ * dropped, new ones appended in declared order — so ticking a measure adds a
+ * column a reader can sort and drag like any other, and unticking it removes
+ * the column and leaves the rest where they were dragged to.
+ *
+ * `TrFoot`'s span and `COL_COUNT` are struck on the view's own column count, so
+ * neither has to be told. Written as a literal the count goes wrong SILENTLY:
+ * an expansion simply stops reaching the last column and nothing fails.
+ */
+const withReturnCols = (cols: readonly string[], measures: readonly ReturnMeasure[]) =>
+  cols.flatMap((c) => (c === "return" ? measures.map((m) => `ret:${m}`) : [c]));
+
+/**
+ * AND SORTING A RETURN COLUMN ORDERS ON THE FIGURE THAT COLUMN PRINTS, resolved
+ * through `measuredReturn` — the same function the cell draws, so the column a
+ * reader clicks and the order they get cannot disagree about what a row's CAGR
+ * is. Reusing `returnPct` for all of them would leave the CAGR arrow ordering by
+ * the raw return on cost, and this book is where that lie is visible: one
+ * holding annualises and the rest fall back to their absolute figure, so the two
+ * orders genuinely differ.
+ *
+ * An absent return then sorts LAST in both directions, because `sortRows` does
+ * that for every null — which is the rule this column needs and did not have to
+ * restate.
+ */
+const returnAccessors = (measures: readonly ReturnMeasure[], asOf: string) =>
+  Object.fromEntries(measures.map((m) => [`ret:${m}`, (r: Row) => {
+    const res = measuredReturn(r, m, asOf);
+    return res.shown ? res.pct : null;
+  }])) as Record<string, (r: Row) => number | null>;
 
 /**
  * One category's aggregate of every money metric, struck over the POSITIONS the
@@ -700,12 +748,22 @@ export function PortfolioMonitor() {
    */
   const bySecurity = groupAxis === SECURITY_AXIS;
   /**
-   * THE TABLE'S WIDTH, IN ONE PLACE. The stock axis draws two columns the other
-   * three do not, and every full-width row under the table — a section heading,
-   * an expansion, the empty state — has to span exactly as many. Written as a
-   * literal in seven places it goes wrong silently: the expansion simply stops
-   * reaching the last column and nothing fails.
+   * WHICH RETURNS THE TABLE SHOWS — ONE COLUMN EACH, the picker that replaced
+   * the Absolute/CAGR toggle.
+   *
+   *   *"Whenever we select multiple return profiles to see on the dashboard it
+   *    should add a new return column rather than show all returns in the same
+   *    return column side by side — a new column with that return name should be
+   *    made, and also removed when we select or deselect returns."*
+   *
+   * So this array is the COLUMN LIST. Default is `auto`, the methodology (equity
+   * under a year absolute, a year or more CAGR, fixed income XIRR) as one
+   * column; the reader can pin one or more concrete measures instead and each
+   * gets a column headed with its own name. Held in the URL (`?ret=`), so the
+   * guard-firing CAGR view is a shareable link and the sweep reaches it without
+   * a click. See `useReturnMeasures` / `measuredReturn`.
    */
+  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
   /**
    * THE FUND LOOK-THROUGH — assembled by `useStockExposure`, which both this
    * page and Sector Composition's Consolidated view call.
@@ -721,15 +779,6 @@ export function PortfolioMonitor() {
    */
   const exposure = useStockExposure(consolidated, bySecurity);
   /**
-   * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — the picker that replaced the
-   * Absolute/CAGR toggle. Default is `auto`, the methodology (equity under a year
-   * absolute, a year or more CAGR, fixed income XIRR); the reader can pin one or
-   * more concrete measures instead, each labelled in the column. Held in the URL
-   * (`?ret=`), so the guard-firing CAGR view is a shareable link and the sweep
-   * reaches it without a click. See `useReturnMeasures` / `measuredReturn`.
-   */
-  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
-  /**
    * THE READER'S OWN RANKING, AND IT REPLACED A SECOND MECHANISM RATHER THAN
    * SITTING BESIDE ONE. This table used to carry its own `sortKey`/`asc` pair
    * driving six clickable headers out of fourteen; the family asked for every
@@ -739,8 +788,27 @@ export function PortfolioMonitor() {
    * first, or largest total exposure on the security axis — which is what a
    * cleared sort returns to.
    */
-  const holdView = useTableView(bySecurity ? "monitor-stock" : "monitor",
-    bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS);
+  /**
+   * THE COLUMN LIST IS A FUNCTION OF THE PICKED MEASURES, which is the whole of
+   * how "a new column per return" is expressed in this model — see
+   * `withReturnCols`. Memoised on the measures rather than rebuilt per render,
+   * because `useTableView` reconciles its stored order against this list and a
+   * fresh array every render would re-run that on every keystroke.
+   */
+  const holdCols = useMemo(
+    () => withReturnCols(bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS, returnMeasures),
+    [bySecurity, returnMeasures]);
+  const holdView = useTableView(bySecurity ? "monitor-stock" : "monitor", holdCols);
+  /**
+   * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
+   * figure it prints rather than on `returnPct` for all of them.
+   */
+  const holdAccessors = useMemo(
+    // `portfolio` is not narrowed until the guard below and a hook cannot sit
+    // after one; these accessors are only ever called from `sortRows` under it,
+    // so the fallback is unreachable rather than a default date standing in.
+    () => ({ ...MONITOR_ACCESSORS, ...returnAccessors(returnMeasures, portfolio?.asOf ?? "") }),
+    [returnMeasures, portfolio?.asOf]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
   // literal it replaced had to be kept in step by hand.
@@ -2012,13 +2080,58 @@ export function PortfolioMonitor() {
                   <SortHeader col="pnl" view={holdView} pad="px-2 py-1.5">Unreal. P&L</SortHeader>
                   <SortHeader col="realised" view={holdView} pad="px-2 py-1.5">Realised P&L</SortHeader>
                   {/*
-                    ONE RETURN COLUMN, headed just "Return" — the measure it shows
-                    is chosen in the picker on the filter row and named on every
-                    cell (HPR / CAGR / XIRR / YTD), so the header does not carry
-                    it. The separate YTD column is gone: YTD is one of the measures
-                    now, shown in this column when it is ticked.
+                    ── ONE COLUMN PER PICKED RETURN, HEADED WITH ITS OWN NAME ─────
+                
+                      *"a new column with that return name should be made, and
+                       also removed when we select or deselect returns."*
+
+                    It was ONE column carrying every ticked measure side by side
+                    inside each cell — five tags and five figures in one cell on
+                    the five-measure view, which is what the family were pointing
+                    at. The picker is the column list now.
+
+                    THE LABEL GOES WHERE THE FACT IS CONSTANT. On `auto` the
+                    measure resolves PER ROW (HPR here, CAGR there), so the header
+                    can only say "Return" and the tag has to stay on every cell.
+                    On a concrete measure it is constant down the column, so the
+                    HEADER names it and the cells drop the tag — one rule, not two
+                    behaviours.
+
+                    AND THE COVERAGE COUNT IS ON THE COLUMN IT DESCRIBES. Each
+                    measure used to explain itself in a paragraph under the table;
+                    the family asked for those removed, and a count of how much of
+                    the table a measure can answer is not chrome — a column of
+                    XIRR dashes with nothing saying why reads as a broken feed. So
+                    it rides in the header's own note, with the reason in its
+                    hover, which is where this book puts a claim about a column.
                   */}
-                  <SortHeader col="return" view={holdView} pad="px-2 py-1.5">Return</SortHeader>
+                  {/* ONE HEADING PER PICKED MEASURE, each a `SortHeader` like
+                      every other column — so a return column sorts, drags and
+                      carries its note exactly as its neighbours do, and the
+                      local `Th` this used to need is gone rather than left as a
+                      second kind of header on one table.
+
+                      THE NOTE IS THE COUNT THE REMOVED CAPTIONS CARRIED, and
+                      its hover is the reason they carried beside it — both from
+                      ONE coverage object, so the short figure and the sentence
+                      behind it cannot describe different sets.
+
+                      `auto` gets neither: its measure resolves PER ROW, so there
+                      is no column-wide count to state and the header can only
+                      say "Return". */}
+                  {returnMeasures.map((measure) => {
+                    const def = returnMeasureDef(measure);
+                    const auto = measure === "auto";
+                    const meta = auto ? null
+                      : returnColumnMeta(measure, returnCoverage(rows, measure, portfolio.asOf), portfolio.asOf);
+                    return (
+                      <SortHeader key={measure} col={`ret:${measure}`} view={holdView} pad="px-2 py-1.5"
+                        title={auto ? undefined : def.hint}
+                        note={meta?.note} noteTitle={meta?.title}>
+                        {auto ? "Return" : def.tag}
+                      </SortHeader>
+                    );
+                  })}
                   {/* SECTOR AND ENTITY CLOSE THE TABLE — the family asked for
                       the money to read first, and these two are the only
                       columns on the row that are not money. They describe the
@@ -2126,7 +2239,7 @@ export function PortfolioMonitor() {
                         </td>
                       </tr>
                     )}
-                    {sortRows(grp.rows, holdView.sort, MONITOR_ACCESSORS).map((r) => {
+                    {sortRows(grp.rows, holdView.sort, holdAccessors).map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
@@ -2489,44 +2602,84 @@ export function PortfolioMonitor() {
                           : <span className={changeColor(realized.get(r.securityKey)!)}>{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</span>
                         }</td>
                         {/*
-                          THE ONE RETURN COLUMN — the ticked measure(s), each
-                          labelled with its tag. `measuredReturn` decides; this
-                          cell only draws. `auto` resolves per row to the
-                          methodology's measure and tags it (HPR / CAGR); the
+                          ── ONE CELL PER PICKED RETURN, IN ITS OWN COLUMN ────────
+
+                            *"it should add a new return column rather than show
+                             all returns in the same return column side by side."*
+
+                          `measuredReturn` decides; these cells only draw. `auto`
+                          resolves per row to the methodology's measure; the
                           concrete measures show that measure or a dash naming why
                           this book cannot strike it (XIRR per holding, YTD outside
                           a within-year purchase, calendar year). The guard is
-                          inside `measuredReturn`, so no line can annualise a
+                          inside `measuredReturn`, so no column can annualise a
                           sub-year window. The plain return on cost keeps its audit
                           popover on rows still on their workbook mark; the derived
                           figures carry a tooltip instead.
 
-                          RENDERED INLINE, NEVER STACKED IN A FLEX COLUMN. A
-                          block-stacked cell puts a newline INSIDE it, and the
-                          sweep reads whole rows by splitting the page text on
-                          newlines — an internal one shatters the row. So measures
-                          sit inline (wrapping is visual and adds no newline), and
-                          each is `whitespace-nowrap` so a tag never splits from
-                          its figure.
+                          THE TAG RIDES ON THE CELL WHERE THE FIGURE IS NOT THE
+                          MEASURE THE HEADER PROMISES, and nowhere else — one rule,
+                          `res.tag !== def.tag`, which covers three cases without
+                          naming any of them:
+
+                            • `auto` tags EVERY row, because the methodology
+                              resolves per row and the header can only say
+                              "Return";
+                            • the CAGR column tags the rows where the ANNUALISATION
+                              GUARD FIRED — a sub-year holding shows its total
+                              return on cost, and leaving that untagged under a
+                              header reading CAGR would assert an annual rate for
+                              a year the holding has not seen, which is the exact
+                              figure the guard exists to refuse;
+                            • every other column tags nothing, because the header
+                              names it and the same word repeated seventy-two times
+                              is noise.
+
+                          A FIRST CUT KEYED THIS ON `measure === "auto"` and the
+                          sweep caught it: on the CAGR column the measure is NOT
+                          constant down the column, so the guarded rows went out
+                          indistinguishable from the annualised one.
+
+                          NO NEWLINE INSIDE A CELL, still. The sweep reads whole
+                          rows by splitting the page text on newlines, so nothing
+                          here is stacked in a flex column; with one measure per
+                          cell there is nothing left to stack anyway.
                         */}
-                        <td data-return-cell="" className="px-2 py-1.5 text-right mono" title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                          {returnMeasures.map((measure) => {
-                            const res = measuredReturn(r, measure, portfolio.asOf);
-                            // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
-                            // so its audit popover ties to the workbook; CAGR/other are derived.
-                            const value = !res.shown
-                              ? <AbsentCell reason={res.reason} />
-                              : res.tag === "HPR" && !r.live
-                                ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
-                                : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
-                            return (
-                              <span key={measure} className="ml-1 whitespace-nowrap first:ml-0">
-                                <span className="ret-tag mr-0.5">{res.tag}</span>
-                                {value}
-                              </span>
-                            );
-                          })}
-                        </td>
+                        {returnMeasures.map((measure) => {
+                          const res = measuredReturn(r, measure, portfolio.asOf);
+                          // Tag "HPR" is always the raw return on cost (res.pct === returnPct),
+                          // so its audit popover ties to the workbook; CAGR/other are derived.
+                          const value = !res.shown
+                            ? <AbsentCell reason={res.reason} />
+                            : res.tag === "HPR" && !r.live
+                              ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
+                              : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
+                          /**
+                           * TAG UNLESS THE HEADER ALREADY NAMES IT.
+                           *
+                           * `auto` always tags: its header can only say "Return"
+                           * because the methodology resolves per row — and 42 of
+                           * this book's 72 rows resolve to `AUTO` itself (no cost
+                           * reported, so no return at all), which a rule written
+                           * as `res.tag !== def.tag` leaves silently untagged.
+                           * The sweep caught exactly that.
+                           *
+                           * A concrete column tags only the rows whose figure is
+                           * NOT the measure it promises — which is the CAGR
+                           * column's guarded sub-year rows, and leaving those
+                           * untagged under a header reading CAGR would assert an
+                           * annual rate for a year the holding has not seen.
+                           */
+                          const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
+                          return (
+                            <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              className="px-2 py-1.5 text-right mono whitespace-nowrap"
+                              title={r.live && !r.costNA ? mixedBasisNote : undefined}>
+                              {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
+                              {value}
+                            </td>
+                          );
+                        })}
                         {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG
                             WAY TO SAY SO. It reads as a sector the pipeline
                             failed to map — the same cell a directly-held share
@@ -3164,20 +3317,44 @@ export function PortfolioMonitor() {
                                 {fmtFromBase(realised.total, { compact: true, sign: true })}
                               </span>
                           }</td>
-                          {/* The category return is CUMULATIVE ON COST, on the
-                              footer's basis, and does NOT follow the per-holding
-                              measure picker: a bucket has no single purchase date
-                              to annualise over, so annualising it would be the very
-                              extrapolation the guard forbids. It is refused where
-                              the cost side does not cover the market value beside
-                              it (`costCoversSet`), the same as Morning CIO. */}
-                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${ret === null ? "text-slate-500" : changeColor(ret)}`}>
-                            {ret === null
-                              ? <AbsentCell reason={retWhy} />
-                              : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
-                                  {fmtPct(ret, { sign: true })}
-                                </span>}
-                          </td>
+                          {/*
+                              ── ONE CELL PER RETURN COLUMN, AND ONLY ONE OF THEM
+                                 HAS A FIGURE TO PUT IN IT ──────────────────────
+
+                              The category return is CUMULATIVE ON COST and does
+                              NOT follow the per-holding measure picker: a bucket
+                              has no single purchase date to annualise over, so
+                              annualising it would be the very extrapolation the
+                              guard forbids. It is refused where the cost side does
+                              not cover the market value beside it
+                              (`costCoversSet`), the same as Morning CIO.
+
+                              THAT USED TO BE ONE CELL UNDER A HEADER THAT COULD
+                              MEAN ANY OF FIVE THINGS. With a column per measure it
+                              has to say which: the cumulative figure stands under
+                              HPR and under `auto` — which resolves to the total
+                              return on cost for an aggregate — and under CAGR,
+                              XIRR, YTD or CY it renders an `AbsentCell` with the
+                              reason, because a category genuinely has none of
+                              those. Printing the same percentage under all five
+                              would be the caption-does-not-describe-its-figure
+                              failure, five columns wide.
+                          */}
+                          {returnMeasures.map((measure) => {
+                            const onCost = measure === "auto" || measure === "absolute";
+                            const why = !onCost
+                              ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
+                              : retWhy;
+                            return (
+                              <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
+                                {!onCost || ret === null
+                                  ? <AbsentCell reason={why} />
+                                  : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
+                                      {fmtPct(ret, { sign: true })}
+                                    </span>}
+                              </td>
+                            );
+                          })}
                           {/* Sector and Entity describe a holding; a category has
                               no sum of words. Empty, exactly as in the footer. */}
                           <td className="px-2 py-1.5"></td>
@@ -3368,13 +3545,30 @@ export function PortfolioMonitor() {
                     /* THE FOOTER RETURN IS THE WHOLE BOOK ON COST — cumulative, on
                         the footer's own basis, and like the category returns it does
                         NOT follow the per-holding measure picker: the book has no one
-                        purchase date to annualise over. */
-                    return: (
-                    <td key="return" className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
-                      {feedLive ? fmtPct(totalRet, { sign: true })
-                                : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
-                    </td>
-                    ),
+                        purchase date to annualise over.
+
+                        SO IT STANDS UNDER HPR AND UNDER `auto`, and every other
+                        return column renders a dash carrying the reason
+                        (`AGG_NO_MEASURE`). One figure repeated under five
+                        different headings is the failure the allocation footer
+                        already cost this book once — a total must tie to its own
+                        column, and four of those five columns are not this
+                        total's. This fell out of the per-measure columns rather
+                        than being asked for, and it is strictly more honest than
+                        the one cell under a header that could mean any of five
+                        things. */
+                    ...Object.fromEntries(returnMeasures.map((measure) => {
+                      const onCost = measure === "auto" || measure === "absolute";
+                      return [`ret:${measure}`, (
+                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totPnL) : "text-slate-500"}`}
+                          title={onCost && feedLive ? LIVE_CELL : undefined}>
+                          {!onCost
+                            ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`} />
+                            : feedLive ? fmtPct(totalRet, { sign: true })
+                            : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                        </td>
+                      )];
+                    })),
                     /* Sector and Entity — descriptors, so the footer has nothing
                         to total under them. Empty rather than absent: a column
                         of words has no sum to be missing. */
@@ -3540,48 +3734,32 @@ export function PortfolioMonitor() {
               `weightGap` therefore keeps its caller (the footer title above) and
               is not left computed into nothing. */}
           {/*
-            ONE CAPTION PER DELIBERATELY-PICKED MEASURE, so the reader is told
-            WHICH return each note is about and how much of the table it can answer
-            — counted rather than claimed. The DEFAULT (auto) methodology view
-            carries no caption: the family asked for it removed, and the fact it
-            stated survives per row, in each cell's own tag (HPR / CAGR / …). A
-            concrete measure a reader ticks still explains itself, because a column
-            of XIRR dashes or a part-year that could not annualise is a genuine
-            absence the reader is owed a reason for. A drop that brings a purchase
-            date or a within-year buy through the lot gate moves these lines on
-            their own, and a column that quietly started guessing would move them
-            the wrong way. Each note is tagged with the measure it describes, the
-            same tag the column uses.
+            ── THE FIVE RETURN CAPTIONS ARE GONE, AND WHAT THEY SAID IS ON THE
+               COLUMNS ────────────────────────────────────────────────
+
+              *"remove the highlighted text from the dashboard UI."*
+
+            One grey paragraph per ticked measure stood here — five of them on the
+            five-measure view, which is what the family screenshotted. Each was
+            audited claim by claim before it went, the pattern this file has
+            followed since Stage 10aa, and each made exactly two:
+
+              • the REASON the measure is absent on the rows it cannot answer.
+                Already per row, and more precisely: `measuredReturn` returns the
+                reason and the cell renders an `AbsentCell` carrying it, about the
+                row the reader is actually looking at.
+              • the COUNT of how much of the table it covers. Stated NOWHERE
+                ELSE, and the one a reader acts on — a column of dashes with
+                nothing saying why reads as a broken feed. It is in that column's
+                own header note now, with the sentence in its hover
+                (`returnColumnMeta`), which is where this book puts a claim about
+                a column.
+
+            The home for both only exists because each measure got a COLUMN of its
+            own in the same change: ask 3 built what ask 2 needed. `check:pages`
+            asserts the paragraphs are gone AND that the header carries the count,
+            because neither implies the other.
           */}
-          {returnMeasures.map((measure) => {
-            const def = returnMeasureDef(measure);
-            const cov = returnCoverage(rows, measure, portfolio.asOf);
-            const year = portfolio.asOf.slice(0, 4);
-            let body: React.ReactNode = null;
-            if (measure === "cagr") {
-              body = <><span className="font-medium text-slate-400">Annualised where a year can be measured — {cov.cagr} of {cov.total} rows.</span>{" "}
-                {cov.absolute > 0 && <>{cov.absolute} {cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost, marked <span className="text-amber-400/80">HPR</span>, because annualising a part-year would state a rate for a year the holding has not seen. </>}
-                {cov.absent > 0 && <>{cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.</>}</>;
-            } else if (measure === "ytd") {
-              body = <><span className="font-medium text-slate-400">YTD is the holding&rsquo;s own return this year, not the share&rsquo;s market move.</span>{" "}
-                {cov.shown > 0
-                  ? <>It is measurable on {cov.shown} of {cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. </>
-                  : <>No row can be measured on this drop. </>}
-                The other {cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.</>;
-            } else if (measure === "xirr") {
-              body = <><span className="font-medium text-slate-400">A money-weighted XIRR needs every cash flow for a holding</span> — each tranche&rsquo;s date and amount — and the statements here cover the current period only, so it is absent on all {cov.total} rows. The per-account money-weighted return is on <span className="font-medium text-slate-400">Performance</span>.</>;
-            } else if (measure === "calendar") {
-              body = <>A <span className="font-medium text-slate-400">calendar-year</span> return needs the holding&rsquo;s value at the start and end of that year, and the book&rsquo;s earliest statement is dated in {year}, after the current year began — so it is absent on all {cov.total} rows.</>;
-            } else if (measure === "absolute" && cov.absent > 0) {
-              body = <><span className="font-medium text-slate-400">Holding Period Return is the total return on cost since purchase, not annualised.</span> It is shown on {cov.shown} of {cov.total} rows; the other {cov.absent} report no cost, so there is nothing to strike a return against.</>;
-            }
-            if (!body) return null;
-            return (
-              <p key={measure} className="border-t border-dashed border-ink-700 px-2 py-1.5 text-[11px] leading-relaxed text-slate-500">
-                <span className="ret-tag mr-1">{def.tag}</span>{body}
-              </p>
-            );
-          })}
           {dupGap > 0 && (
             <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
               The rows above show each member's statement as printed. Two holdings are reported under two members,
@@ -3716,6 +3894,107 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
   return built;
 }
 
+/**
+ * WHY AN AGGREGATE HAS NO SUCH RETURN — one sentence per measure, read by the
+ * category totals row and by the footer.
+ *
+ * Both print a CUMULATIVE ON COST figure and neither follows the measure picker:
+ * a category and a whole book have no single purchase date to annualise over, no
+ * per-holding cash-flow history to solve an XIRR against, and no dated opening
+ * value for a year. With a column per measure that has to be SAID rather than
+ * left as one figure under a header that could mean any of five things — so the
+ * cumulative figure stands under HPR and under `auto`, and every other column
+ * renders a dash carrying the reason from here.
+ *
+ * `auto` and `absolute` are absent from this table on purpose: those two ARE the
+ * basis the aggregate is struck on, so asking it for a reason would be asking
+ * why a figure it does have is missing.
+ */
+const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
+  cagr: "annualising needs one purchase date and this holds many, bought over years, so a CAGR here would compound a window nothing was held over.",
+  xirr: "a money-weighted return needs every dated cash flow of the thing it measures, and no statement reports those per category.",
+  ytd: "a year-to-date figure needs this category's value on 1 January, and the earliest statement in this book is dated after the year began.",
+  calendar: "a calendar-year return needs its value at both ends of that year, and this book is not dated early enough to carry either.",
+};
+
+/**
+ * ── WHAT A RETURN COLUMN COVERS, AND WHY IT COVERS NO MORE ────────────────
+ *
+ *   *"remove the highlighted text from the dashboard UI."*
+ *
+ * The five paragraphs this replaces sat under the table, one per ticked measure,
+ * and each was audited before it went. Every one made TWO claims: a COUNT of how
+ * much of the table its measure can answer, and the REASON the rest is absent.
+ *
+ *   • the REASON already survives per row — `measuredReturn` returns it and the
+ *     cell renders an `AbsentCell` carrying it, which is the stronger statement
+ *     because it is about the row the reader is looking at;
+ *   • the COUNT was stated NOWHERE ELSE, and it is the one a reader acts on: a
+ *     column of dashes with nothing saying why reads as a broken feed rather
+ *     than as a measurement this book cannot strike.
+ *
+ * So the count rides in the column header's own note and the reason in its
+ * hover — which is where this book puts a claim about a column, and which only
+ * became possible when each measure got a column of its own (ask 3 built the
+ * home for what ask 2 removed). Returned as ONE object so the short note and
+ * the sentence behind it cannot describe different sets.
+ *
+ * `auto` gets neither: its measure resolves per row, so there is no column-wide
+ * count to state and the tag on every cell is what names it. The family asked
+ * for that caption gone at Stage 10af and it stays gone.
+ */
+function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string):
+  { note: string; title: string } {
+  const year = asOf.slice(0, 4);
+  switch (measure) {
+    case "cagr":
+      return {
+        // THE ANNUALISED COUNT, not `shown`: a sub-year holding is SHOWN in this
+        // column and shown as its holding-period return, tagged HPR. Reporting
+        // it as annualised would be the very claim the guard exists to refuse.
+        note: `${cov.cagr} annualised of ${cov.total}`,
+        title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
+          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
+          + (cov.absent > 0 ? ` ${cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
+      };
+    case "ytd":
+      return {
+        note: `${cov.shown} of ${cov.total}`,
+        title: "YTD is the holding's own return this year, not the share's market move. "
+          + (cov.shown > 0
+              ? `It is measurable on ${cov.shown} of ${cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. `
+              : "No row can be measured on this drop. ")
+          + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
+      };
+    case "xirr":
+      return {
+        note: `${cov.shown} of ${cov.total}`,
+        title: `A money-weighted XIRR needs every cash flow for a holding — each tranche's date and amount — and the statements here cover the current period only, so it is absent on all ${cov.total} rows. The per-account money-weighted return is on Performance.`,
+      };
+    case "calendar":
+      return {
+        note: `${cov.shown} of ${cov.total}`,
+        title: `A calendar-year return needs the holding's value at the start and end of that year, and the book's earliest statement is dated in ${year}, after the current year began — so it is absent on all ${cov.total} rows.`,
+      };
+    default:
+      return {
+        note: `${cov.shown} of ${cov.total}`,
+        title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
+          + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
+      };
+  }
+}
+
+/*
+ * The local `Th` that stood here is GONE rather than kept beside its
+ * replacement. It existed to give a heading a `note` — the coverage count a
+ * return column carries — and `SortHeader` now renders that note with the same
+ * `data-col-note` markup and the same `noteTitle` hover, while also making the
+ * heading sort and drag like every other column's. Two kinds of header on one
+ * table is the second-mechanism failure this file keeps naming; the sweep's
+ * `returnHead` probe reads `data-col-note` either way.
+ */
+
 
 // Indian fiscal year (Apr 1 – Mar 31) helpers for the transaction date presets.
 function fyStartOf(iso: string): number {
@@ -3831,9 +4110,18 @@ function TxnSectionHead({ axis, sectionKey, count, value, valueNoun, colSpan, mo
  * merge, and simpler here because the family asked the question in exactly
  * those terms.
  */
-function CapitalInOut({ moves, side, sort, axis, section, sections }: {
-  moves: CapitalMove[]; side: CapitalSide; sort: TxnSort;
-  axis: GroupAxis; section: string; sections: TxnSections;
+function CapitalInOut({ groups, side, axis, sections }: {
+  /**
+   * ALREADY ROLLED UP AND ALREADY NARROWED, by the caller. The date, entity and
+   * section filters and `capitalRollup` itself all run once in
+   * `TransactionsView`, because the record TOGGLE beside this table prints its
+   * own row count — and a count struck here while the toggle struck its own
+   * would be two definitions of "the movements in view", free to disagree the
+   * first time either changed. That is the same reason the date and entity
+   * filters moved up a level before this one did.
+   */
+  groups: CapitalGroup[]; side: CapitalSide;
+  axis: GroupAxis; sections: TxnSections;
 }) {
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const [open, setOpen] = useState<Set<string>>(() => new Set());
@@ -3842,23 +4130,8 @@ function CapitalInOut({ moves, side, sort, axis, section, sections }: {
   const money = (v: number) => fmtFromBase(v, { compact: true });
 
   const accounts = portfolio?.accounts ?? [];
-  const positions = portfolio?.positions ?? [];
   const accIdx = useMemo(() => accountIndex(accounts), [accounts]);
 
-  // THE DATE AND ENTITY FILTERS ARE APPLIED BY THE CALLER, and the moves arrive
-  // already narrowed. They used to be applied here, which made the counter above
-  // this table a SECOND filtering of the same set — two definitions of "the
-  // movements in view", free to disagree the first time either changed.
-  const all = useMemo(
-    () => capitalRollup(moves, accounts, positions, BOOK_POSITION_TRANCHES, side, sort),
-    [moves, accounts, positions, side, sort],
-  );
-  // THE SECTION FILTER NARROWS THE ROWS, not the sectioning: a reader who picks
-  // "AIF" is asking this table for its AIF rows, exactly as they would be asking
-  // the Holdings table beside it.
-  const groups = useMemo(
-    () => (section === "All" ? all : all.filter((g) => sections.forAccount(axis, g.accountId) === section)),
-    [all, section, sections, axis]);
   const secs = useMemo(
     () => capitalSectionRollup(groups, (id) => sections.forAccount(axis, id), (keys) => orderSections(axis, keys)),
     [groups, sections, axis]);
@@ -3866,20 +4139,25 @@ function CapitalInOut({ moves, side, sort, axis, section, sections }: {
 
   if (!groups.length) {
     return (
-      <Card title="Capital in and out" subtitle="What the family paid into each mandate and fund, and what came back.">
+      <div className="flex min-h-0 flex-1 items-center justify-center p-4">
         <AbsentSection what={side === "out" ? "No money came back out of any account under these filters"
           : side === "in" ? "No dated contribution matches these filters"
           : "No dated movement matches these filters"}
           needs="This table reads the movements the statements themselves type as a contribution or a withdrawal — the capital the family put into each mandate and fund, and what came back. Widen the dates, clear the entity or section filter or switch the side back to All; and note that 40 of this book's 51 accounts publish no dated capital record at all, so their subscription happened and no statement in this drop says when." />
-      </Card>
+      </div>
     );
   }
 
+  /*
+    NO CARD, NO TITLE AND NO `max-h` HERE ANY MORE. This is one branch of a
+    toggle now, so the card, its title and its subtitle belong to the host that
+    owns the choice (`TXN_RECORDS`) — and with ONE table on screen there is one
+    sticky header, so the bound this used to need is gone along with the second
+    scroller it existed for. `min-h-0 flex-1` is what the Holdings card beside
+    it does.
+  */
   return (
-    <Card pad={false} title="Capital in and out"
-      subtitle="What the family paid into each mandate and fund, and what came back — one row per account, sectioned the same way the holdings are. The shares a manager bought inside these accounts are the table below and are never added to these figures."
-      className="flex shrink-0 flex-col">
-      <div className="max-h-[19rem] overflow-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <SortableTable className="min-w-full text-sm" data-mine-table
           storageKey="monitor-mine" columns={MINE_COLS}>
           {(mineView) => { const COLS = mineView.order.length; return (<>
@@ -4186,9 +4464,49 @@ function CapitalInOut({ moves, side, sort, axis, section, sections }: {
           </>); }}
         </SortableTable>
       </div>
-    </Card>
   );
 }
+
+/**
+ * ── THE TWO DATED RECORDS, BEHIND ONE CONTROL ───────────────────────────────
+ *
+ *   *"why are there two separate tables in the transactions page, it should be
+ *    exactly one single simple table just like in the holdings."*
+ *
+ * ONE CARD, ONE TABLE ON SCREEN, A TOGGLE TO SWITCH — the Holdings card's own
+ * shape, and the shape `/private-market` and Today's movers already use. What it
+ * must never become is ONE TABLE over both records, and that is MEASURED on this
+ * book rather than feared:
+ *
+ *   • 11 accounts publish a dated capital record and 10 issue a transaction
+ *     statement, and `green-lantern-capital-llp-510861` publishes BOTH — so a
+ *     shared footer counts that account's money twice by construction.
+ *   • They are different MEASUREMENTS. A contribution moves money INTO an
+ *     account; a trade moves it about INSIDE one. Adding them answers no
+ *     question a reader has.
+ *   • Their columns do not line up. Capital carries How it went in, Value
+ *     today, Gain, Return and Invested on; Trades carries Trades, Securities,
+ *     Realized P&L and Traded between. Four of ten are shared.
+ *
+ * So each branch keeps its OWN card title, its own subtitle, its own columns and
+ * its own footer — exactly as the three private-book views do. The distinction a
+ * single title over both would erase is the whole reason this is a toggle and
+ * not a grouping key.
+ *
+ * Each button prints its own row count, which is the `/holdings` facet-chip
+ * pattern: a reader sees what the other branch holds before switching, and every
+ * figure sits under a heading that describes it.
+ */
+const TXN_RECORDS = [
+  { key: "capital", label: "Capital in and out",
+    title: "What the family paid into each mandate and fund, and what came back — one row per account.",
+    cardTitle: "Capital in and out",
+    cardSub: "What the family paid into each mandate and fund, and what came back — one row per account, sectioned the same way the holdings are. The shares a manager bought inside these accounts are the Trades table, and are never added to these figures." },
+  { key: "trades", label: "Trades",
+    title: "What each manager dealt inside the accounts — a mandate rolls up to the manager, everything else to the security.",
+    cardTitle: "Trades",
+    cardSub: "What was dealt inside each account — a mandate rolls up to the manager, everything else to the security, exactly as the holdings table draws them. These are never added to the capital record: a trade moves money about inside an account, a contribution moves it in." },
+] as const;
 
 /**
  * ── THE TRANSACTIONS CARD, SECTIONED THE WAY THE HOLDINGS TABLE IS ──────────
@@ -4264,6 +4582,15 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * came out of it at the family's request in the same breath.
    */
   const [sort, setSort] = useState<TxnSort>("recent");
+  /**
+   * WHICH RECORD IS ON SCREEN — `?record=`, so a branch is a link.
+   *
+   * `?view=` is the Holdings consolidate flag and `?group=` the shared axis, so
+   * this needs a name of its own. `capital` is the default and stays param-free:
+   * it is the family's OWN money, and it is the record the Holdings page's
+   * closed-position note now points at for where a redemption went.
+   */
+  const [record, setRecord] = useViewParam(TXN_RECORDS, {}, "record");
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   const toggle = (set: (f: (s: Set<string>) => Set<string>) => void, key: string) =>
@@ -4338,6 +4665,22 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
     in: mineMoves.filter((m) => m.direction === "in").length,
     out: mineMoves.filter((m) => m.direction === "out").length,
   }), [mineMoves]);
+  /**
+   * THE CAPITAL RECORD, ROLLED UP AND SECTION-FILTERED HERE rather than inside
+   * the table that draws it — because the record TOGGLE prints its own row
+   * count, and a count struck in the table while the toggle struck its own would
+   * be two definitions of "the rows in view". One rollup, read by both.
+   *
+   * THE SECTION FILTER NARROWS THE ROWS, not the sectioning: a reader who picks
+   * "AIF" is asking this table for its AIF rows, exactly as they would be asking
+   * the Holdings table.
+   */
+  const mineAll = useMemo(
+    () => capitalRollup(mineMoves, accountsReg, positionsReg, BOOK_POSITION_TRANCHES, side, sort),
+    [mineMoves, accountsReg, positionsReg, side, sort]);
+  const mineGroups = useMemo(
+    () => (section === "All" ? mineAll : mineAll.filter((g) => sections.forAccount(axis, g.accountId) === section)),
+    [mineAll, section, sections, axis]);
 
   const filtered = useMemo(() => {
     if (!txns) return [];
@@ -4406,7 +4749,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   };
   const period = (a: string, b: string) => (a && b ? (a === b ? fmtDate(a) : `${fmtDate(a)} → ${fmtDate(b)}`) : "");
   const money = (v: number) => fmtFromBase(v, { compact: true });
-
+  const recordDef = TXN_RECORDS.find((r) => r.key === record) ?? TXN_RECORDS[0];
 
   return (
     /*
@@ -4493,26 +4836,58 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           ))}
         </div>
         {/*
-          A COUNTER MUST COUNT WHAT IS ON SCREEN. This read the manager's TAPE on
-          every view, so the default view — the family's own capital, ten rows —
-          sat under "284 buys · 178 sells", a count of a set it does not draw.
-          Both records are on screen together now, so it counts both and names
-          which is which rather than one standing for the other.
+          A COUNTER MUST COUNT WHAT IS ON SCREEN, and with the two records behind
+          a toggle only one of them is. It used to read the manager's TAPE on
+          every view, so the family's own capital sat under "284 buys · 178
+          sells" — a count of a set it does not draw; then both records were on
+          screen at once and it counted both. Now it counts the ACTIVE one and
+          NAMES it, and the other branch's row count is on the toggle button that
+          reaches it, which is where a figure about that branch belongs.
+
+          The noun follows the record for the same reason: a contribution is not
+          a buy, and the side filter's own labels are the family's word for both.
         */}
-        <span className="ml-auto text-xs text-slate-500" data-txn-counter>
-          Capital {mineCount.in.toLocaleString("en-IN")} in · {mineCount.out.toLocaleString("en-IN")} out
-          {"  ·  "}
-          Trades {filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys
-          {" · "}
-          {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells
+        <span className="ml-auto text-xs text-slate-500" data-txn-counter data-txn-counter-record={record}>
+          {record === "capital"
+            ? <>Capital {mineCount.in.toLocaleString("en-IN")} in · {mineCount.out.toLocaleString("en-IN")} out</>
+            : <>Trades {filtered.filter((t) => t.side === "Buy").length.toLocaleString("en-IN")} buys · {filtered.filter((t) => t.side === "Sell").length.toLocaleString("en-IN")} sells</>}
         </span>
       </div>
 
-      <CapitalInOut moves={mineMoves} side={side} sort={sort} axis={axis} section={section} sections={sections} />
-
-      <Card pad={false} title="Trades"
-        subtitle="What was dealt inside each account — a mandate rolls up to the manager, everything else to the security, exactly as the holdings table draws them. These are never added to the capital above: a trade moves money about inside an account, a contribution moves it in."
-        className="flex min-h-0 flex-1 flex-col">
+      {/*
+        ONE CARD, ONE TABLE, AND THE RECORD TOGGLE IN THE CARD'S OWN HEADER —
+        see `TXN_RECORDS`. The title and the subtitle follow the active branch,
+        because the two records are different measurements and one heading over
+        both would describe whichever is on screen wrongly half the time.
+      */}
+      <Card pad={false} title={recordDef.cardTitle} subtitle={recordDef.cardSub}
+        className="flex min-h-0 flex-1 flex-col"
+        right={
+          <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
+            role="tablist" aria-label="Which dated record to show"
+            data-txn-record={record} data-txn-record-options={TXN_RECORDS.map((r) => r.key).join(",")}>
+            {TXN_RECORDS.map((r) => {
+              /* EACH BUTTON PRINTS ITS OWN ROW COUNT, the `/holdings` facet-chip
+                 pattern — so a reader sees what the other branch holds before
+                 switching, and neither count stands under the other's heading.
+                 Both come from the SAME rollups the tables draw. */
+              const n = r.key === "capital" ? mineGroups.length : totals.groups;
+              return (
+                <button key={r.key} type="button" role="tab" aria-selected={record === r.key}
+                  data-txn-record-option={r.key} data-txn-record-rows={n}
+                  title={r.title} onClick={() => setRecord(r.key)}
+                  className={["whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+                    record === r.key ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                  {r.label}
+                  <span className={`ml-1 font-normal ${record === r.key ? "text-ink-950/70" : "text-slate-500"}`}>{fmtNum(n)}</span>
+                </button>
+              );
+            })}
+          </div>
+        }>
+        {record === "capital"
+          ? <CapitalInOut groups={mineGroups} side={side} axis={axis} sections={sections} />
+          : <>
         <div className="min-h-0 flex-1 overflow-auto">
           <SortableTable className="min-w-full text-sm" data-trades-table
             storageKey="monitor-trades" columns={TRADE_COLS}>
@@ -4715,6 +5090,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           their statements, so they are not trades and are not here — which is why the family&rsquo;s own-account dealing
           reads narrower than it is.
         </div>
+            </>}
       </Card>
     </div>
   );
