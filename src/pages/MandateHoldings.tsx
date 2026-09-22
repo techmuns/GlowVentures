@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
+import { ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
+import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
@@ -18,6 +19,8 @@ import { capitalRollup } from "@/lib/tranches";
 import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 
 /**
  * ONE DISCRETIONARY MANDATE, AND EVERY SHARE THE MANAGER HOLDS INSIDE IT.
@@ -182,6 +185,15 @@ function bucketsOf(rows: Position[], engagement: string | null | undefined) {
   return [...m.values()].sort((a, b) => b.mv - a.mv);
 }
 
+/**
+ * Each table's columns in DECLARED order — the order their cells are written
+ * in below, which is what `<Tr>` permutes from. The first is the row's SUBJECT
+ * and never moves (see `src/lib/tableView.ts`).
+ */
+const MANDATE_COLS = ["security", "sector", "qty", "avgCost", "invested", "cmp", "mv", "weight", "pnl"] as const;
+const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const;
+const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"] as const;
+
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
   const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
@@ -203,6 +215,10 @@ export function MandateHoldings() {
     [portfolio, accountId],
   );
   const source = useHoldingsSource(account);
+  // ABOVE THE EARLY RETURNS — this page has three (no account, not a mandate,
+  // no rows), and a hook that runs on some of them and not others is a
+  // hooks-order error rather than a conditional table.
+  const holdingsView = useTableView("mandate-holdings", MANDATE_COLS);
 
   const mv = sum(rows.map((r) => r.marketValue));
   // sumOrNull, not sum: a mandate whose statement reports no cost on some row
@@ -250,7 +266,7 @@ export function MandateHoldings() {
     const mandates = portfolio.accounts.filter((a) => holdingRoute(a.engagement) === "mandate");
     return (
       <div>
-        <Crumb />
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: "Mandate not found" }]} />
         <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Mandate not found</h1>
         <Card>
           <AbsentSection
@@ -274,6 +290,10 @@ export function MandateHoldings() {
 
   const route = holdingRoute(account.engagement);
   const ownerName = account.ownerId ? ownerDisplayName(account.ownerId) : account.owner;
+  // WHAT THIS ACCOUNT IS CALLED, once: the heading and the crumb both print it,
+  // and two copies of the fallback would be two chances for one screen to name
+  // the same account two ways.
+  const mandateName = account.strategy || `${account.provider} ${account.accountNo}`;
   /**
    * The account's own rows grouped exactly as a holdings table groups them, for
    * the non-mandate branches below. Plain arithmetic rather than `useMemo`,
@@ -287,10 +307,8 @@ export function MandateHoldings() {
   if (route !== "mandate") {
     return (
       <div>
-        <Crumb />
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">
-          {account.strategy || `${account.provider} ${account.accountNo}`}
-        </h1>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[12.5px] text-slate-400">
           <span>{account.provider} · {account.accountNo}</span>
           <span className="text-slate-600">·</span>
@@ -533,23 +551,35 @@ export function MandateHoldings() {
   const shown = term
     ? rows.filter((r) => r.security.toLowerCase().includes(term) || (r.isin ?? "").toLowerCase().includes(term))
     : rows;
-  const sorted = [...shown].sort((a, b) => b.marketValue - a.marketValue);
+  // THE DEFAULT IS LARGEST FIRST, and a reader's own ranking replaces it. An
+  // absent cost or price sorts LAST either way rather than as a zero, which
+  // would rank a holding whose statement prints no cost among the cheapest.
+  const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
+    security: (r) => r.security,
+    sector: (r) => (r.assetClass === "Cash" ? null : r.sector),
+    qty: (r) => r.quantity,
+    avgCost: (r) => r.avgCost,
+    invested: (r) => r.costBasis,
+    cmp: (r) => r.currentPrice,
+    mv: (r) => r.marketValue,
+    weight: (r) => (mv > 0 ? r.marketValue : null),
+    pnl: (r) => r.unrealizedPnL,
+  });
   const hidden = rows.length - shown.length;
 
   return (
     <div>
-      <Crumb />
+      {/* THE CRUMB NAMES THE MANDATE, and the three buttons replace "Back to
+          holdings" — a hardcoded parent that sent every reader to the Portfolio
+          Monitor whether or not that is where they came from. Holdings
+          drill-downs, Family & Entities and a company page all link here. */}
+      <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/monitor" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
-            <ChevronLeft className="h-3.5 w-3.5" /> Back to holdings
-          </Link>
           {/* The mandate's own name, as the manager prints it. Null on a
               provider that names no strategy — the account then identifies
               itself by manager and number rather than by an invented label. */}
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">
-            {account.strategy || `${account.provider} ${account.accountNo}`}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
           <div className="mt-1 text-[13px] text-slate-400">
             Run by <span className="font-medium text-slate-300">{account.provider}</span> for{" "}
             <span className="font-medium text-slate-300">{ownerName}</span> · account {account.accountNo}
@@ -617,23 +647,23 @@ export function MandateHoldings() {
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Sector</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Avg cost</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">CMP</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Market value</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Weight</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&L</th>
-              </tr>
+              <Tr view={holdingsView}>
+                <SortHeader col="security" view={holdingsView} align="left">Security</SortHeader>
+                <SortHeader col="sector" view={holdingsView} align="left">Sector</SortHeader>
+                <SortHeader col="qty" view={holdingsView}>Qty</SortHeader>
+                <SortHeader col="avgCost" view={holdingsView}>Avg cost</SortHeader>
+                <SortHeader col="invested" view={holdingsView}>Invested</SortHeader>
+                <SortHeader col="cmp" view={holdingsView}>CMP</SortHeader>
+                <SortHeader col="mv" view={holdingsView}>Market value</SortHeader>
+                <SortHeader col="weight" view={holdingsView}>Weight</SortHeader>
+                <SortHeader col="pnl" view={holdingsView}>Unreal. P&L</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {sorted.map((r) => {
                 const isCash = r.assetClass === "Cash";
                 return (
-                  <tr key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
+                  <Tr view={holdingsView} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
                       <Link to={stockHref(r.securityKey)} className="font-medium text-slate-100 hover:text-champagne-400">
                         {r.security}
@@ -670,7 +700,7 @@ export function MandateHoldings() {
                     <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>
                       {r.unrealizedPnL === null ? <AbsentCell reason="needs a cost this statement does not print" /> : money(r.unrealizedPnL, true)}
                     </td>
-                  </tr>
+                  </Tr>
                 );
               })}
             </tbody>
@@ -680,17 +710,14 @@ export function MandateHoldings() {
                 check against the document. The line under the table says how
                 many rows the filter is hiding. */}
             <tfoot className="border-t-2 border-ink-600 font-semibold">
-              <tr>
-                <td className="px-4 py-2.5 text-left text-slate-200">Total{hidden ? " (whole mandate)" : ""}</td>
-                <td />
-                <td />
-                <td />
-                <td className="px-4 py-2.5 text-right mono text-slate-300">{cost === null ? <AbsentValue /> : money(cost)}</td>
-                <td />
-                <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
-                <td className="px-4 py-2.5 text-right mono text-slate-300">{mv > 0 ? fmtPct(100, { decimals: 1 }) : <AbsentValue />}</td>
-                <td className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{pnl === null ? <AbsentValue /> : money(pnl, true)}</td>
-              </tr>
+              <TrFoot view={holdingsView} className="px-4 py-2.5 text-left text-slate-200"
+                label={<>Total{hidden ? " (whole mandate)" : ""}</>}
+                cells={{
+                  invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{cost === null ? <AbsentValue /> : money(cost)}</td>,
+                  mv: <td key="mv" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
+                  weight: <td key="weight" className="px-4 py-2.5 text-right mono text-slate-300">{mv > 0 ? fmtPct(100, { decimals: 1 }) : <AbsentValue />}</td>,
+                  pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{pnl === null ? <AbsentValue /> : money(pnl, true)}</td>,
+                }} />
             </tfoot>
           </table>
         </div>
@@ -836,6 +863,7 @@ export function MandateHoldings() {
  * so it states which of the two it is and what would fill it.
  */
 function CapitalIn({ account }: { account: Account }) {
+  const capitalView = useTableView("mandate-capital", CAPITAL_COLS);
   const { fmtFromBase, statementPortfolio: portfolio } = usePortfolio();
   const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
 
@@ -846,6 +874,18 @@ function CapitalIn({ account }: { account: Account }) {
   }, [account, portfolio?.positions]);
 
   const title = "What the family put in";
+  // NEWEST FIRST IS THE DEFAULT AND A READER'S RANKING REPLACES IT — the order
+  // `capitalRollup` returns, which is the record's own rather than a ranking
+  // this card chose. A movement whose statement prints only a running balance
+  // has no amount, so it sorts LAST rather than as a zero payment.
+  const capitalRows = sortRows(group?.moves ?? [], capitalView.sort, {
+    date: (m) => m.date,
+    type: (m) => m.label,
+    in: (m) => (m.direction === "in" ? (m.invested ?? m.amount) : null),
+    out: (m) => (m.direction === "out" ? m.amount : null),
+    units: (m) => m.units,
+    security: (m) => m.security,
+  });
 
   if (!group) {
     return (
@@ -872,19 +912,19 @@ function CapitalIn({ account }: { account: Account }) {
       <div className="overflow-x-auto">
         <table className="min-w-full whitespace-nowrap text-sm" data-capital-table={account.accountId}>
           <thead className="border-b border-ink-700">
-            <tr>
-              <th className="label-xs px-4 py-2 text-left font-medium">Invested on</th>
-              <th className="label-xs px-4 py-2 text-left font-medium"
-                title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Paid in</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Taken out</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Units</th>
-              <th className="label-xs px-4 py-2 text-left font-medium">Security bought</th>
-            </tr>
+            <Tr view={capitalView}>
+              <SortHeader col="date" view={capitalView} align="left">Invested on</SortHeader>
+              <SortHeader col="type" view={capitalView} align="left"
+                title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</SortHeader>
+              <SortHeader col="in" view={capitalView}>Paid in</SortHeader>
+              <SortHeader col="out" view={capitalView}>Taken out</SortHeader>
+              <SortHeader col="units" view={capitalView}>Units</SortHeader>
+              <SortHeader col="security" view={capitalView} align="left">Security bought</SortHeader>
+            </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700/70">
-            {group.moves.map((m, i) => (
-              <tr key={`${m.date}-${i}`} data-capital-move={account.accountId} className="hover:bg-ink-700/40">
+            {capitalRows.map((m, i) => (
+              <Tr view={capitalView} key={`${m.date}-${i}`} data-capital-move={account.accountId} className="hover:bg-ink-700/40">
                 <td className="px-4 py-2 mono text-slate-200">{fmtDate(m.date)}</td>
                 <td className="px-4 py-2 text-slate-400">{m.label}</td>
                 <td className="px-4 py-2 text-right mono text-emerald-400/90">
@@ -901,7 +941,7 @@ function CapitalIn({ account }: { account: Account }) {
                   {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
                 </td>
                 <td className="px-4 py-2 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
-              </tr>
+              </Tr>
             ))}
           </tbody>
           {/*
@@ -911,18 +951,19 @@ function CapitalIn({ account }: { account: Account }) {
             see that one of the rows had been dropped.
           */}
           <tfoot className="border-t border-ink-700 bg-ink-800/60">
-            <tr data-capital-total={account.accountId}>
-              <td className="px-4 py-2 font-medium text-slate-200" colSpan={2}>
-                Total · {group.contributions} in{group.withdrawals ? ` · ${group.withdrawals} out` : ""}
-              </td>
-              <td className="px-4 py-2 text-right mono font-medium text-slate-100">{money(group.paidIn)}</td>
-              <td className="px-4 py-2 text-right mono font-medium text-slate-300">
-                {group.withdrawals === 0
-                  ? <AbsentCell reason="no statement for this account reports money coming back out" />
-                  : money(group.tookOut)}
-              </td>
-              <td className="px-4 py-2" colSpan={2} />
-            </tr>
+            <TrFoot view={capitalView} data-capital-total={account.accountId}
+              className="px-4 py-2 font-medium text-slate-200"
+              label={<>Total · {group.contributions} in{group.withdrawals ? ` · ${group.withdrawals} out` : ""}</>}
+              cells={{
+                in: <td key="in" className="px-4 py-2 text-right mono font-medium text-slate-100">{money(group.paidIn)}</td>,
+                out: (
+                  <td key="out" className="px-4 py-2 text-right mono font-medium text-slate-300">
+                    {group.withdrawals === 0
+                      ? <AbsentCell reason="no statement for this account reports money coming back out" />
+                      : money(group.tookOut)}
+                  </td>
+                ),
+              }} />
           </tfoot>
         </table>
       </div>
@@ -984,6 +1025,7 @@ function CapitalIn({ account }: { account: Account }) {
  * rather than left standing here as code nothing runs.
  */
 function ManagerTrades({ account }: { account: Account }) {
+  const tradeView = useTableView("mandate-trades", TRADE_COLS);
   const { fmtFromBase } = usePortfolio();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [txns, setTxns] = useState<Txn[]>([]);
@@ -1008,6 +1050,16 @@ function ManagerTrades({ account }: { account: Account }) {
   );
   const groups = useMemo(() => rollup(mine, [account], "manager"), [mine, account]);
   const instruments = groups[0]?.instruments ?? [];
+  // A side with no rows has nothing to rank, so it sorts LAST rather than as a
+  // zero — an instrument the manager never sold is not one it sold nothing of.
+  const tradeRows = sortRows(instruments, tradeView.sort, {
+    security: (ins) => ins.security,
+    trades: (ins) => ins.buys + ins.sells,
+    bought: (ins) => (ins.buys === 0 ? null : ins.bought),
+    sold: (ins) => (ins.sells === 0 ? null : ins.sold),
+    realized: (ins) => ins.realized,
+    period: (ins) => ins.first,
+  });
 
   return (
     <Card title="What the manager traded"
@@ -1025,21 +1077,21 @@ function ManagerTrades({ account }: { account: Account }) {
           <div className="overflow-x-auto rounded-lg border border-ink-700">
             <table className="min-w-full text-[13px]" data-manager-trades>
               <thead className="bg-ink-800">
-                <tr className="border-b border-ink-700">
-                  <th className="label-xs px-3 py-2 text-left font-medium">Security</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Trades</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Bought</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Sold</th>
-                  <th className="label-xs px-3 py-2 text-right font-medium">Realized P&L</th>
-                  <th className="label-xs px-3 py-2 text-left font-medium">Period</th>
-                </tr>
+                <Tr view={tradeView} className="border-b border-ink-700">
+                  <SortHeader col="security" view={tradeView} align="left" pad="px-3 py-2">Security</SortHeader>
+                  <SortHeader col="trades" view={tradeView} pad="px-3 py-2">Trades</SortHeader>
+                  <SortHeader col="bought" view={tradeView} pad="px-3 py-2">Bought</SortHeader>
+                  <SortHeader col="sold" view={tradeView} pad="px-3 py-2">Sold</SortHeader>
+                  <SortHeader col="realized" view={tradeView} pad="px-3 py-2">Realized P&L</SortHeader>
+                  <SortHeader col="period" view={tradeView} align="left" pad="px-3 py-2">Period</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {instruments.map((ins) => {
+                {tradeRows.map((ins) => {
                   const isOpen = open.has(ins.key);
                   return (
                     <Fragment key={ins.key}>
-                      <tr data-manager-row={ins.key} className="cursor-pointer hover:bg-ink-700/30"
+                      <Tr view={tradeView} data-manager-row={ins.key} className="cursor-pointer hover:bg-ink-700/30"
                         onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(ins.key)) n.delete(ins.key); else n.add(ins.key); return n; })}>
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1.5">
@@ -1067,9 +1119,9 @@ function ManagerTrades({ account }: { account: Account }) {
                         <td className="px-3 py-1.5 text-[12px] mono text-slate-500 whitespace-nowrap">
                           {ins.first === ins.last ? fmtDate(ins.first) : `${fmtDate(ins.first)} → ${fmtDate(ins.last)}`}
                         </td>
-                      </tr>
+                      </Tr>
                       {isOpen && ins.tranches.map((t, i) => (
-                        <tr key={`${ins.key}::${i}`} data-manager-tranche={ins.key} className="bg-ink-900/40 text-[12px]">
+                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} className="bg-ink-900/40 text-[12px]">
                           <td className="px-3 py-1 pl-8 text-slate-400">
                             {fmtDate(t.date)}
                             <span className={`ml-2 rounded px-1 py-0.5 text-[10px] ${t.side === "Buy" ? "bg-sky-500/15 text-sky-300" : "bg-amber-500/15 text-amber-300"}`}>{t.side}</span>
@@ -1084,7 +1136,7 @@ function ManagerTrades({ account }: { account: Account }) {
                               : <span className={changeColor(t.realized)}>{money(t.realized)}</span>}
                           </td>
                           <td />
-                        </tr>
+                        </Tr>
                       ))}
                     </Fragment>
                   );
@@ -1104,11 +1156,3 @@ function ManagerTrades({ account }: { account: Account }) {
   );
 }
 
-function Crumb() {
-  return (
-    <div className="mb-2 text-[12px] text-slate-500">
-      <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link>
-      <span className="mx-1.5">›</span>Mandate
-    </div>
-  );
-}

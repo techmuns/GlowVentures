@@ -3,6 +3,8 @@ import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { fmtPct, changeColor } from "@/lib/format";
+import { SortHeader, Tr } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 import {
   parseFinancials, tableNamed, rowAny, seriesOf, cagrPct, growthPct,
   type FinancialDoc, type FinancialRow, type FinancialTable,
@@ -81,7 +83,11 @@ function compute(pl: FinancialTable | null, m: (typeof METRICS)[number]): Comput
   };
 }
 
+/** The columns, in the order this table's rows write their cells. */
+const FIN_SUMMARY_COLS = ["metric", "latest", "yoy", "cagr5", "cagrAll"] as const;
+
 export function FinancialSummary({ markdown, ticker }: { markdown: string; ticker: string }) {
+  const view = useTableView("financial-summary", FIN_SUMMARY_COLS);
   const doc: FinancialDoc = useMemo(() => parseFinancials(markdown), [markdown]);
   const pl = useMemo(() => tableNamed(doc, "Profit & Loss"), [doc]);
   const rows = useMemo(() => METRICS.map((m) => compute(pl, m)), [pl]);
@@ -97,7 +103,13 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
     );
   }
 
-  const shown = rows.filter((r) => r.row);
+  const shown = sortRows(rows.filter((r) => r.row), view.sort, {
+    metric: (r) => r.label,
+    latest: (r) => r.latest,
+    yoy: (r) => r.yoy,
+    cagr5: (r) => r.cagr5,
+    cagrAll: (r) => r.cagrAll,
+  });
   const missing = rows.filter((r) => !r.row);
   const money = (v: number | null, unit: Computed["unit"]) =>
     v === null ? null : unit === "ratio" ? v.toFixed(2) : v.toLocaleString("en-IN");
@@ -111,17 +123,17 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
       <div className="overflow-x-auto">
         <table className="min-w-full whitespace-nowrap text-[12.5px]">
           <thead className="border-b border-ink-700">
-            <tr>
-              <th className="label-xs px-4 py-2 text-left font-medium">Metric</th>
-              <th className="label-xs px-3 py-2 text-right font-medium">Latest</th>
-              <th className="label-xs px-3 py-2 text-right font-medium">YoY</th>
-              <th className="label-xs px-3 py-2 text-right font-medium">5-yr CAGR</th>
-              <th className="label-xs px-4 py-2 text-right font-medium">Full-span CAGR</th>
-            </tr>
+            <Tr view={view}>
+              <SortHeader col="metric" view={view} align="left" pad="px-4 py-2">Metric</SortHeader>
+              <SortHeader col="latest" view={view} pad="px-3 py-2">Latest</SortHeader>
+              <SortHeader col="yoy" view={view} pad="px-3 py-2">YoY</SortHeader>
+              <SortHeader col="cagr5" view={view} pad="px-3 py-2">5-yr CAGR</SortHeader>
+              <SortHeader col="cagrAll" view={view} pad="px-4 py-2">Full-span CAGR</SortHeader>
+            </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700/60">
             {shown.map((r) => (
-              <tr key={r.label} className="hover:bg-ink-700/30">
+              <Tr view={view} key={r.label} className="hover:bg-ink-700/30">
                 {/* The source's own label is shown only when it DIFFERS from
                     ours — "Operating profit / Financing Profit" tells a reader
                     this is a lender's P&L and is worth the space, while
@@ -156,7 +168,7 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
                         {fmtPct(r.cagrAll, { sign: true, decimals: 1 })}
                       </span>}
                 </td>
-              </tr>
+              </Tr>
             ))}
             {shown.length === 0 && (
               <tr><td colSpan={5} className="px-4 py-6 text-center text-[12px] text-slate-500">

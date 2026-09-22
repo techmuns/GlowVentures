@@ -258,8 +258,23 @@ cash holding's genuinely-zero return both match, and both are correct.
   no fourth taxonomy — `groupKeyFor` still answers — and it takes a `GroupAxis`
   rather than a `MonitorAxis`, so a transactions table sectioned by SECURITY
   does not compile. See Stage 10bg.
+- `src/lib/tableView.ts` + `src/components/SortHeader.tsx` — HOW EVERY TABLE IS
+  ARRANGED, defined once: the column order a reader has dragged it to, the sort
+  they picked, and the header cell that offers both. A table declares its
+  columns and `<Tr>` / `<TrFoot>` permute its cells from the DECLARED order into
+  the reader's, so no table's cell JSX changes and an undragged table renders
+  byte-for-byte what it did. The first column is the row's identity and never
+  moves; an absent value sorts LAST in both directions, never as zero.
+  `SortableTable` is the seam for a panel drawn inside a row, where a hook
+  cannot sit. A table that must NOT be rearranged declares
+  `data-table-static="<reason>"` — an upstream financial document, a transposed
+  metric grid, a fixed list of facts. See Stage 10bh.
+- `src/lib/nav.ts` — THE ONE NAV TABLE, read by the sidebar AND by every page's
+  breadcrumb, so the two cannot file a page under different groups.
+  `src/components/PageNav.tsx` renders the back / forward / home controls and
+  that crumb on every route. See Stage 10bh.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
-- `src/components/*` — shared UI (`Card`, `StatTile`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
+- `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
 - `scripts/ingest/*` — the statement intake pipeline. `lib/bundle.mjs` splits a
   multi-report PDF; `lib/sheet.mjs` reads the spreadsheets (an `.xls` in this drop
@@ -11827,6 +11842,224 @@ since moved.
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a regroup of two tables that moved a generated figure would not be a
 regroup.
+
+### Stage 10bh — THREE BUTTONS, FOUR TILES A READER PICKS, AND EVERY TABLE ARRANGES
+
+*"open PR and do not merge until i tell you to."* Three asks, and the third is a
+change to fifty-odd tables at once, so each one below records what it replaced
+rather than only what it added.
+
+#### 1. The crumb names the FIGURE, and the back link becomes three buttons
+
+*"add three small back reverse and home buttons on the top of every page. The
+first line 'Morning CIO > What is Behind this Figure' should rather label the
+page/KPI tile that we have opened 'Morning CIO > Current Value of Holding'.
+Remove 'Back to Morning CIO' and replace it with the three small buttons. Follow
+this format for every single page that we Open."*
+
+**"WHAT IS BEHIND THE FIGURE" IS A DESCRIPTION OF THE ROUTE, NOT OF THE PAGE.**
+`/holdings` serves ELEVEN different sets — the value of the holdings, the capital
+invested, one allocation row, the accounts carrying an opening value, the
+winners — and it read that one sentence for every one of them. A reader who
+clicked a tile and wanted to know which tile they were inside learnt nothing.
+`Drilldown.crumb` names the figure, so the crumb says which of the eleven this
+is: `Morning CIO › Current Value of Holdings`.
+
+**AND THE FACET IS A THIRD SEGMENT, which the new pairing check is what found.**
+`?of=book&facet=listed` read "Current Value of Holdings" where the reader had
+clicked **Listed** — the crumb naming the scope and not the slice, which is the
+caption-that-widens failure arriving in a breadcrumb.
+
+**"BACK TO MORNING CIO" WAS A HARDCODED PARENT ON FOUR PAGES, and on three of
+them it was routinely wrong.** A company page is reached from Sector
+Composition, from Family & Entities, from a holdings drill-down and from the
+Monitor — and it offered a link to the Monitor whatever the reader had come
+from. The browser's own history knows, and these three buttons ARE that history:
+BACK and FORWARD walk it, HOME goes to the front door. The parent still shows,
+as the crumb's first segment, which is a statement about where the page SITS
+rather than about where the reader was.
+
+**FORWARD IS DISABLED ONLY WHERE THAT IS MEASURED.** React Router keeps its
+position in `window.history.state.idx`; where that is readable the button greys
+once nothing lies ahead, and where it is not, both stay live rather than being
+greyed on a guess — a control that looks live and does nothing is the failure
+this file keeps naming, and so is one that looks dead and works.
+
+**HOME POINTS AT `/`, NOT `/cio`.** `RootRedirect` is the one place that knows
+whether the book is empty; hardcoding the cockpit would land an unfed book on a
+gated page.
+
+**THE CRUMB IS BUILT FROM `src/lib/nav.ts`, WHICH IS THE SIDEBAR'S OWN TABLE.**
+`NAV` moved out of `Sidebar.tsx` so both read it: two tables would be two chances
+for the crumb to file a page under a different group than the nav does. It
+immediately retired four stale `eyebrow` strings that had drifted from the nav
+they were written to echo — and the INLINE EYEBROW is gone with them, because a
+page that renders "where am I" twice on adjacent lines is answering the question
+twice. `eyebrow` survives only as a fallback crumb parent for a route `NAV` does
+not list (`/upload`).
+
+#### 2. Four tiles, and the reader says which four
+
+*"There are 9 KPI tiles on the private market page, make it 4 and give the user a
+dropdown list to select what they want to see in each of those 4 KPI tiles, Give
+option for every single metric the user might want to see and they will select
+the one's that they want to see. Also add a small + button on the last 4th KPI
+tile so the user can also increase the no. of KPI tile and add a new one on the
+page as per their requirement."*
+
+`src/components/SelectableTiles.tsx`. Private Market's twelve fixed tiles become
+**four slots out of an eighteen-metric catalogue** — value, cost, P&L, uncalled,
+committed, called, paid, due now, unvalued, distributions, realised, multiple,
+funds, folios, owners, accounts, calls, raw — each carrying the VALUE, SUB-LINE
+AND HINT the fixed tile had, verbatim. Nothing was rewritten to fit a picker.
+
+**`?tiles=` WINS OVER THE STORE, AND THE STORE IS `localStorage`.** It is a
+preference about a screen, like the nav's width and the Extras group's open
+state, so it never reaches `glowData.ts` — and every read and write is wrapped,
+because the accessor throws in a private window and a blocked store must leave
+the strip rendering its default four rather than rendering nothing.
+
+**THE PICKER IS A MENU BUTTON AND DELIBERATELY NOT A `<select>`.** Chromium's
+`innerText` returns EVERY option's text of a native select, so eighteen metric
+labels landed in the page text of a card showing four — and **twelve
+private-market invariants failed at once** on a page rendering perfectly. The
+menu renders its options only while open.
+
+**AND A REMOVED CHECK WOULD HAVE GONE QUIET, so it was re-homed rather than
+deleted.** `check:family` asserted the unvalued capital's claim by matching that
+TILE's label; behind a picker, a metric outside the default four is one the page
+legitimately does not draw, and the check would have failed a correct page. The
+claim is on the CARD under the table — with more behind it, the accounts and why
+each is unvalued — so it is struck there, and the METRIC's continued existence
+is asserted separately by opening the strip on it. Neither implies the other.
+
+#### 3. Every table sorts, and every column but the first moves
+
+*"Every single table on the dashboard must have clickable column headings to sort
+the table data, and also every single column except the first name one, the user
+should be able to drag and drop to rearrange columns, make this standardized for
+every table anywhere on the dashboard."*
+
+**`src/lib/tableView.ts` AND `src/components/SortHeader.tsx` — ONE DEFINITION FOR
+ALL OF THEM.** Fifty-odd tables, so a per-table implementation would be fifty
+chances for one screen to sort nulls one way and another the other; this repo has
+paid for that shape of drift with `holdingBucket`, `costCoversSet` and
+`companyExposure`. A table gets both halves by DECLARING its columns.
+
+**THE DECLARED ORDER IS THE ONE THE CELLS ARRIVE IN, AND IT IS NEVER REWRITTEN.**
+`<Tr view>` takes a row's `<td>`s exactly as the table has always written them
+and permutes them into the reader's order; `<TrFoot>` does the same for a footer
+and computes its label's span from the order rather than from a literal. So no
+table's cell JSX changes, and with nothing dragged the permutation is the
+IDENTITY — the rendered markup is what it was, which is what keeps every
+column-index assertion in `check:pages` reading the column it was written
+against. Measured: **the whole sweep was clean at every step of the rollout**,
+which is the design goal rather than a happy result.
+
+**THE FIRST COLUMN IS FIXED, BECAUSE THE FAMILY SAID SO** — *"every single column
+except the first name one."* It is the row's identity, and `move`/`nudge` refuse
+it as a SUBJECT and as a DESTINATION.
+
+**AND AN ABSENT VALUE SORTS LAST IN BOTH DIRECTIONS.** Not as zero, and not as
+negative infinity: a statement that reports no cost has not reported a small one.
+`txnSort` already sorts an unreported amount last rather than among the smallest,
+and sorting them to the TOP on ascending would put every holding whose custodian
+sends no cost at the head of a table about cost. A NaN sorts with the absent, and
+the sort is stable on the original index — so a third click, which CLEARS it,
+returns the table to the order its own page chose (largest first, newest first,
+the statement's own), which is routinely meaningful rather than arbitrary.
+
+**`SortableTable` IS THE SEAM FOR A PANEL INSIDE A ROW.** `useTableView` is a
+hook, so a table drawn once per opened row cannot call it where its JSX sits. The
+hook lives in a component at a stable call site and the arrangement arrives as an
+argument — the panel's markup stays where it is rather than being lifted out.
+Every open panel of one kind shares a storage key, which is the right behaviour:
+a reader who moves a column on one tranche panel means it for the next one.
+
+**THE PORTFOLIO MONITOR'S OWN SORT WAS REPLACED, NOT LEFT BESIDE THIS ONE.** That
+table carried a `sortKey`/`asc` pair driving SIX clickable headers out of
+fourteen. Two mechanisms on one table is two answers to "how is this ordered", so
+`SortKey`, `sortBtn`, `effSort` and the local `Th` component are gone — the
+`exportDeck.ts` treatment. The memo keeps its DEFAULT ranking (largest first, or
+largest total exposure on the security axis), which is exactly what a cleared
+sort returns to, and `COL_COUNT` is `holdView.order.length` now rather than a
+literal `16 : 14` that had to be kept in step by hand.
+
+**AND ROWS ARE RANKED WITHIN THEIR SECTION, NEVER ACROSS.** Sorting across would
+break the sectioning the holdings and transactions tables exist to share. A
+section is a partition of one list, so a ranking inside each is the same ordering
+the old mechanism produced.
+
+**`data-table-static` IS AN EXEMPTION A TABLE DECLARES, WITH ITS REASON.** Nine
+carry it and each is one of three kinds: an upstream financial document rendered
+as the source published it (screener's tables, the ratio grid, the cash-flow
+statement, a fund's own returns row, the audit spreadsheet viewer), a TRANSPOSED
+table whose columns are metrics rather than fields, and a fixed list of facts.
+Sorting a balance sheet's year columns would scramble a document rather than
+rearrange a view. An exemption keyed on the table's own declared reason cannot
+drift the way a list of names in the checker would, and a table that simply
+FORGOT the handles has no reason to declare — it fails on the count.
+
+#### The three defects the mechanism had, each found by driving it rather than reading it
+
+- **THE `<thead>` WAS NOT PERMUTED.** A keyboard move reordered the body and left
+  the headings still — every figure under the wrong heading, which is the one
+  outcome this feature must never produce. `<Tr>` serves the header row too now.
+- **`innerText` BLOCKIFIES THE CHILDREN OF A FLEX CONTAINER**, so an
+  `inline-flex` heading put its icon and its label on separate lines — and this
+  sweep reads a header row as one tab-joined line in around a hundred places.
+  Measured: `/as of.*capital in.*marked on this date/` matched nothing on a
+  header rendering perfectly. There is not one flex box in that cell now, and the
+  icon takes its side from DOM ORDER.
+- **THE HTML RENDERING SPEC GIVES FORM CONTROLS `text-transform: none`**, so a
+  `<button>` inside a `label-xs` heading rendered its label in the source's own
+  case while the cell around it was uppercase — and four Polycab invariants slice
+  the page on uppercase header text. Measured in the browser
+  (`th` `uppercase`, `button` `none`) rather than reasoned about; the sort button
+  repeats `uppercase`.
+
+#### Six bugs reintroduced, and the sixth produced a clean sweep
+
+`monitor-arrange` is a route that CLICKS and MOVES, because the global check
+asserts every heading CARRIES the controls and cannot see whether either does
+anything: a sort button wired to nothing renders exactly like one that sorts.
+
+| Bug put back | Fires |
+| --- | --- |
+| the sort button wired to nothing | the reorder check, and the direction check |
+| the keyboard move does nothing | the permutation check, and the footer check |
+| the `<thead>` left unpermuted | the permutation check |
+| a move clears the sort as a side effect | "the sort survives the move" |
+| the fixed first column made movable | the global table check, by name, and the fixed-column check |
+| **the footer's label span frozen at a literal** | **nothing, at first — see below** |
+
+**TWO OF THEM EXPOSED CHECKS THAT COULD NOT FAIL, which is the whole reason for
+the pass.**
+
+- **THE SORT CHECK WAS STRUCK ON ONE CLICK, AND THIS TABLE ARRIVES ALREADY
+  RANKED ON THAT COLUMN.** The first click lands on the order the page was in, so
+  a working button and a dead one draw the identical table. It clicks TWICE now
+  and the assertion is struck between the two — the second click steps the
+  three-state machine to ascending, which must reverse it.
+- **AND THE FOOTER-SPAN CHECK ASSERTED A RANGE RATHER THAN THE CLAIM.** `span >=
+  1 && span <= columns` is true of a literal 3. Worse, the move the walk made
+  could not have distinguished it: `qty` and `avgCost` both sit INSIDE the
+  leading run of columns with no total, so the span is 3 before and after. The
+  walk now also moves `invested` — the FIRST column that HAS a total — to the
+  front, which shortens the run to 1, and the check expands the footer PER COLUMN
+  and requires the cost total to sit under Invested and a descriptor column to
+  carry nothing. Re-run, the literal fires.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 140 (2 not checked, 0
+blocked) · `test:family` 18 suites · `check:family` **82/0** · `check:pages`
+**172 combinations clean** — 170 plus this change's own route across both themes
+— with three EVIDENCED abstentions: every KPI tile on this book carries a figure
+so the absent-tile claim has no subject, nothing on Morning CIO publishes an
+undefined drill-down address, and no row on the one page that checks it carries a
+pledge. `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, run as a control: nothing here touches the ingest, and three
+presentation changes that moved a generated figure would not be presentation
+changes.
 
 ### Stage 10k — News & Announcements: REMOVED
 

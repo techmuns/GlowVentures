@@ -168,6 +168,23 @@ export type Drilldown = {
   key: string;
   /** The page's heading. */
   title: string;
+  /**
+   * THE FIGURE THIS PAGE OPENED FROM, AS THE TILE LABELS IT.
+   *
+   * *"The first line 'Morning CIO › What is Behind this Figure' should rather
+   * label the page/KPI tile that we have opened — 'Morning CIO › Current Value
+   * of Holding'."* This route serves eleven different sets and the crumb read
+   * the same sentence for every one of them, which is a description of the
+   * ROUTE: a reader who clicked a tile and wants to know which tile they are
+   * inside learnt nothing from it.
+   *
+   * IT IS THE TILE'S OWN LABEL AND NOT THE HEADING BESIDE IT. Those differ on
+   * purpose — the heading names the SET ("Every holding in the book") and this
+   * names the FIGURE ("Current Value of Holdings") — and where a figure and
+   * its set share a name, as an allocation row does, the two agree by
+   * construction rather than by coincidence.
+   */
+  crumb: string;
   /** The rows, on the same basis the figure was struck on. */
   rows: Position[];
   /**
@@ -276,7 +293,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
   // Struck on the DEDUPED set, like the counts it sits beside: the per-account
   // scope below overrides `closedExcluded` with its own for exactly that reason.
   const dropped = droppedHoldings(ctx.consolidated);
-  const base: Omit<Drilldown, "id" | "key" | "title" | "backs" | "lead" | "rows"> = {
+  // `backs` and `lead` were removed from this type at Stage 10ao with the header
+  // pill row and the lead paragraph; `crumb` replaced neither — it names the
+  // FIGURE where `backs` named the tiles that link here.
+  const base: Omit<Drilldown, "id" | "key" | "title" | "crumb" | "rows"> = {
     deduped: true,
     facets: [],
     activeFacet: "",
@@ -332,6 +352,9 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: scope.key,
         title: label,
+        // The row a reader clicked is labelled with the section's own name, so
+        // the crumb and the heading agree here by construction.
+        crumb: label,
         rows,
         absent: rows.length ? null : {
           what: `Nothing is filed under ${label}`,
@@ -351,6 +374,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: scope.id, key: "",
         title: "Capital invested",
+        crumb: "Capital invested",
         absent: costed.length ? null : {
           what: "No holding in this book reports a cost",
           needs: "Every statement in the drop prints a holding without a basis. Capital invested and the Consolidated return are absent rather than zero until one carries a cost column.",
@@ -407,6 +431,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
           return { count: n.length, value: sum(n.map((p) => p.marketValue)) };
         })(),
         title: "Money-weighted return",
+        crumb: "Money-weighted return",
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
           needs: "A money-weighted return needs the window's opening valuation as its first flow. No statement in the drop publishes one, so the rate is absent rather than struck on a stake nobody stated.",
@@ -436,6 +461,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: "",
         title: `The ${top.size} largest names`,
+        crumb: `Top-${top.size} concentration`,
         rows,
         absent: rows.length ? null : {
           what: "No holding to rank",
@@ -456,6 +482,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return {
         ...base, id: scope.id, key: "",
         title: `Names held by two or more entities`,
+        crumb: "Cross-held names",
         rows,
         absent: rows.length ? null : {
           what: "No name is held by more than one entity",
@@ -481,6 +508,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: scope.id, key: "",
         title: wantWin ? "Holdings showing a gain" : "Holdings showing a loss",
+        crumb: wantWin ? "Winners" : "Losers",
         absent: rows.length ? null : {
           what: wantWin ? "No holding is showing a gain" : "No holding is showing a loss",
           needs: "This is a measured zero rather than a missing figure: every priced holding in the book falls on the other side or exactly at cost.",
@@ -519,6 +547,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
+        // THE TILE'S OWN LABEL, which the family renamed from "Consolidated
+        // NAV" at Stage 10aq — and the crumb has to follow it, or the line a
+        // reader lands on names a tile the dashboard no longer has.
+        crumb: "Current Value of Holdings",
         absent: consolidated.length ? null : {
           what: "The book carries no holding",
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",

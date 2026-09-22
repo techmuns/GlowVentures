@@ -20,7 +20,15 @@ function Table({ b }: { b: Extract<Block, { kind: "table" }> }) {
   const hasHead = b.head.some((h) => h !== "");
   return (
     <div className="my-3 overflow-x-auto rounded-lg border border-ink-700">
-      <table className="min-w-full text-[12px]">
+      {/* ── AN UPSTREAM DOCUMENT'S OWN TABLE ─────────────────────────────
+          Exempt, declared. These are screener.in's rendered financial tables:
+          the columns are year-ends in chronological order and the rows are a
+          balance sheet or a P&L in the order the statement prints them.
+          Sorting the rows would scramble a document this app did not compose,
+          and moving a period would break its sequence. Every table this app
+          BUILDS is sortable and reorderable; this one is passed through. */}
+      <table className="min-w-full text-[12px]"
+        data-table-static="an upstream financial document rendered as it was published — its rows are a statement's own line order and its columns are periods in sequence">
         {hasHead && (
           <thead className="bg-ink-800">
             <tr>
