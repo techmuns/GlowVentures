@@ -1,6 +1,6 @@
 import { Children, ReactNode, isValidElement, useState } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
-import type { TableView } from "@/lib/tableView";
+import { useTableView, type TableView } from "@/lib/tableView";
 
 /**
  * ── ONE HEADER CELL FOR EVERY TABLE IN THE APP ──────────────────────────────
@@ -21,7 +21,7 @@ import type { TableView } from "@/lib/tableView";
  * one place on ← and →. That is not a nicety on a dashboard of fifty tables: a
  * feature only a mouse can reach is a feature half the readers do not have.
  */
-export function SortHeader({ col, view, children, align = "right", title, pad = "px-4 py-2", sortable = true, className = "", colSpan }: {
+export function SortHeader({ col, view, children, align = "right", title, pad = "px-4 py-2", sortable = true, className = "", colSpan, note, noteTitle }: {
   /** The column's id, as declared in `useTableView`. */
   col: string;
   view: TableView;
@@ -32,6 +32,18 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
   sortable?: boolean;
   className?: string;
   colSpan?: number;
+  /**
+   * A word about WHAT THE COLUMN IS, rendered under its label and never in a
+   * hover — the derived fence on the Portfolio Monitor's stock axis: "it says
+   * DERIVED, not a position, in words rather than in a tooltip" is a rule of
+   * this book, and the sentence a reader may want beyond the word rides in
+   * `noteTitle`.
+   *
+   * Lower-case on purpose — `label-xs` uppercases the label, and a second
+   * SHOUTED line would read as a second column rather than a note on this one.
+   */
+  note?: string;
+  noteTitle?: string;
 }) {
   const [over, setOver] = useState(false);
   const active = view.sort?.col === col;
@@ -108,6 +120,11 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
           </button>
         )}
       </span>
+      {note && (
+        <div data-col-note className="mt-0.5 text-[9px] font-normal normal-case tracking-normal text-champagne-400/70" title={noteTitle}>
+          {note}
+        </div>
+      )}
     </th>
   );
 }
@@ -167,10 +184,17 @@ export function Tr({ view, children, ...rest }: { view: TableView; children: Rea
  * The caller supplies whole `<td>` elements, because a footer cell's alignment,
  * colour and popover belong to the table that knows what the figure is.
  */
-export function TrFoot({ view, label, cells, className = "", ...rest }: {
+export function TrFoot({ view, label, labelTitle, cells, className = "", ...rest }: {
   view: TableView;
   /** The label cell's CONTENT — `TrFoot` computes its `colSpan`. */
   label: ReactNode;
+  /**
+   * A hover on the LABEL CELL, never on the row. A claim about what a total
+   * leaves out belongs on the figure it qualifies, and a `title` spread onto
+   * the `<tr>` would hover anywhere along it including over other columns'
+   * own totals.
+   */
+  labelTitle?: string;
   /** One `<td>` per column that carries a total, keyed by column id. */
   cells: Record<string, ReactNode>;
   className?: string;
@@ -182,11 +206,33 @@ export function TrFoot({ view, label, cells, className = "", ...rest }: {
   const span = Math.max(lead, 1);
   return (
     <tr {...rest}>
-      <td colSpan={span} className={className}>{label}</td>
+      <td colSpan={span} className={className} title={labelTitle}>{label}</td>
       {/* A COLUMN WITH NO TOTAL STILL NEEDS ITS CELL, and it takes the row's
           own class: the footer carries a top rule, and an unstyled filler
           breaks that line across the table. */}
       {view.order.slice(span).map((c) => cells[c] ?? <td key={c} className={className} />)}
     </tr>
   );
+}
+
+/**
+ * ── A TABLE THAT OWNS ITS OWN ARRANGEMENT, FOR A PANEL INSIDE A ROW ─────────
+ *
+ * `useTableView` is a hook, so a table rendered inside a `.map` over rows — a
+ * row's expansion panel, drawn once per opened row — cannot call it where its
+ * JSX sits. This is the seam: the hook lives in a component at a stable call
+ * site and the arrangement arrives as an argument, so the panel's markup stays
+ * exactly where it is rather than being lifted into a component of its own.
+ *
+ * Every open panel of one kind shares a `storageKey`, which is the right
+ * behaviour rather than a compromise: a reader who moves a column on one
+ * tranche panel means it for the next one they open, not for that row alone.
+ */
+export function SortableTable({ storageKey, columns, children, ...rest }: {
+  storageKey: string;
+  columns: readonly string[];
+  children: (view: TableView) => ReactNode;
+} & Omit<React.TableHTMLAttributes<HTMLTableElement>, "children">) {
+  const view = useTableView(storageKey, columns);
+  return <table {...rest}>{children(view)}</table>;
 }

@@ -29,6 +29,8 @@ import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
 import { QuantityMovement } from "@/components/QuantityMovement";
 import { PageNav } from "@/components/PageNav";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 
 /**
  * THE RETURN, AND WHICH RETURN IT IS.
@@ -79,6 +81,14 @@ function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
 // Per-stock drill-down: how one security is held across the family's entities, its
 // tax basis, every dated buy/sell from the ledger, and — from the muns research
 // endpoints — street estimates, screener financial tables and concall documents.
+/**
+ * Each table's columns in DECLARED order — the order their cells are written
+ * in below, which is what `<Tr>` permutes from. The first is the row's SUBJECT
+ * and never moves (see `src/lib/tableView.ts`).
+ */
+const POS_COLS = ["entity", "managedBy", "qty", "avgCost", "invested", "current", "pnl", "return", "basis"] as const;
+const STOCK_TXN_COLS = ["date", "type", "entity", "qty", "rate", "amount"] as const;
+
 export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
   // else, so an ISIN route would leave most holdings unreachable.
@@ -111,6 +121,10 @@ export function StockInfo() {
   // block for it — the statement saying it did not move, which a reader shown
   // nothing at all cannot tell from a gap.
   const unmoved = useMemo(() => unmovedAccountsFor(rows), [rows]);
+  // ABOVE THE EARLY RETURN — a hook that runs on some renders and not others
+  // is a hooks-order error rather than a conditional table.
+  const posView = useTableView("stock-positions", POS_COLS);
+  const txnView = useTableView("stock-txns", STOCK_TXN_COLS);
   if (!portfolio) return null;
 
   const name = rows[0]?.security ?? led?.name ?? securityKey;
@@ -279,6 +293,20 @@ export function StockInfo() {
   // Both stay NULL when no statement reported a cost for this name, so the
   // tiles render `—`. A zero average cost reads as shares acquired for nothing
   // and a zero return as break-even; neither was measured.
+  // LARGEST FIRST IS THE DEFAULT and a reader's own ranking replaces it. An
+  // absent cost or price sorts LAST either way rather than as a zero, which
+  // would rank a depository row that reports no cost among the cheapest.
+  const posRows = sortRows([...rows].sort((a, b) => b.marketValue - a.marketValue), posView.sort, {
+    entity: (r) => ownerOf(accIdx, r),
+    managedBy: (r) => providerOf(accIdx, r),
+    qty: (r) => r.quantity,
+    avgCost: (r) => r.avgCost,
+    invested: (r) => r.costBasis,
+    current: (r) => r.marketValue,
+    pnl: (r) => r.unrealizedPnL,
+    return: (r) => r.returnPct,
+    basis: (r) => (r.stCostBasis === null && r.ltCostBasis === null ? null : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"),
+  });
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   /**
@@ -538,8 +566,8 @@ export function StockInfo() {
             <div className="overflow-x-auto">
               <table className="min-w-full whitespace-nowrap text-sm">
                 <thead className="border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
+                  <Tr view={posView}>
+                    <SortHeader col="entity" view={posView} align="left">Entity</SortHeader>
                     {/* HELD VIA MERGED IN HERE, AND THE COLUMN IS GONE.
                         *"This 'held via' can actually hide… use that space for
                         showing this column in entirety."* Measured before it was
@@ -552,19 +580,19 @@ export function StockInfo() {
                         10L exist for, and the mandate link is still the only
                         door into the manager's own book from this page. Both
                         ride in this cell now. */}
-                    <th className="label-xs px-4 py-2 text-left font-medium">Managed by · held via</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Avg cost</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Invested</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Current</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Unreal. P&L</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium"
-                      title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. A money-weighted XIRR is not shown per holding at all: it needs every cash flow for this name and these statements cover the current period only — the per-account XIRR is on the Performance page.">Return</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Basis</th>
-                  </tr>
+                    <SortHeader col="managedBy" view={posView} align="left">Managed by · held via</SortHeader>
+                    <SortHeader col="qty" view={posView}>Qty</SortHeader>
+                    <SortHeader col="avgCost" view={posView}>Avg cost</SortHeader>
+                    <SortHeader col="invested" view={posView}>Invested</SortHeader>
+                    <SortHeader col="current" view={posView}>Current</SortHeader>
+                    <SortHeader col="pnl" view={posView}>Unreal. P&L</SortHeader>
+                    <SortHeader col="return" view={posView}
+                      title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. A money-weighted XIRR is not shown per holding at all: it needs every cash flow for this name and these statements cover the current period only — the per-account XIRR is on the Performance page.">Return</SortHeader>
+                    <SortHeader col="basis" view={posView}>Basis</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {[...rows].sort((a, b) => b.marketValue - a.marketValue).map((r) => {
+                  {posRows.map((r) => {
                   const eng = engagementOf(accIdx, r) || null;
                   const route = holdingRoute(eng);
                   return (
@@ -576,7 +604,7 @@ export function StockInfo() {
                        therefore passed on a dually-reported holding whose
                        accounts name no strategy and failed on one that does,
                        which is a fact about the fixture rather than the page. */
-                    <tr key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
+                    <Tr view={posView} key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
                       <td className="px-4 py-2.5 text-[12px] text-slate-400">
                         <div>{providerOf(accIdx, r)}</div>
@@ -631,25 +659,26 @@ export function StockInfo() {
                       <td className="px-4 py-2.5 text-right">
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>
                       </td>
-                    </tr>
+                    </Tr>
                   );
                   })}
                 </tbody>
                 <tfoot className="border-t-2 border-ink-600 font-semibold">
-                  <tr>
-                    <td className="px-4 py-2.5 text-left text-slate-200">Total</td>
-                    <td />
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>
-                    <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>
-                    <td className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
-                      title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
-                      <span className="ret-tag mr-0.5">HPR</span>{fmtPct(ret, { sign: true, decimals: 1 })}
-                    </td>
-                    <td />
-                  </tr>
+                  <TrFoot view={posView} className="px-4 py-2.5 text-left text-slate-200"
+                    label={<>Total</>}
+                    cells={{
+                      qty: <td key="qty" className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>,
+                      avgCost: <td key="avgCost" className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>,
+                      invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>,
+                      current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
+                      pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
+                      return: (
+                        <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
+                          title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
+                          <span className="ret-tag mr-0.5">HPR</span>{fmtPct(ret, { sign: true, decimals: 1 })}
+                        </td>
+                      ),
+                    }} />
                 </tfoot>
               </table>
             </div>
@@ -737,18 +766,25 @@ export function StockInfo() {
           ) : (
             <table className="min-w-full whitespace-nowrap text-sm">
               <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Date</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Type</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Qty</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Rate</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Amount</th>
-                </tr>
+                <Tr view={txnView}>
+                  <SortHeader col="date" view={txnView} align="left">Date</SortHeader>
+                  <SortHeader col="type" view={txnView} align="left">Type</SortHeader>
+                  <SortHeader col="entity" view={txnView} align="left">Entity</SortHeader>
+                  <SortHeader col="qty" view={txnView}>Qty</SortHeader>
+                  <SortHeader col="rate" view={txnView}>Rate</SortHeader>
+                  <SortHeader col="amount" view={txnView}>Amount</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {led.txns.map((t, i) => (
-                  <tr key={i} className="hover:bg-ink-700/40">
+                {sortRows(led.txns, txnView.sort, {
+                  date: (t) => t.date,
+                  type: (t) => t.side,
+                  entity: (t) => t.account,
+                  qty: (t) => t.qty,
+                  rate: (t) => t.rate,
+                  amount: (t) => t.amount,
+                }).map((t, i) => (
+                  <Tr view={txnView} key={i} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2 mono text-[12px] text-slate-400">{fmtDate(t.date)}</td>
                     <td className="px-4 py-2">
                       <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${t.side === "Buy" ? "bg-indigo-500/10 text-indigo-300" : "bg-red-500/15 text-loss"}`}>{t.side === "Buy" ? "BUY" : "SELL"}</span>
@@ -757,7 +793,7 @@ export function StockInfo() {
                     <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(t.qty)}</td>
                     <td className="px-4 py-2 text-right mono text-slate-400">{price(t.rate)}</td>
                     <td className="px-4 py-2 text-right mono text-slate-200">{fmtFromBase(t.amount, { compact: true })}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </table>

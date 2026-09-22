@@ -14,6 +14,8 @@ import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 
 // Capital Gains & Tax — honest about two holes.
 //
@@ -51,6 +53,16 @@ function addDays(iso: string, days: number): string {
 const DAY_MS = 864e5;
 const daysBetween = (fromIso: string, toIso: string) =>
   Math.round((Date.parse(toIso) - Date.parse(fromIso)) / DAY_MS);
+
+/**
+ * The four tables' columns in DECLARED order — the order their cells are
+ * written in below, which is what `<Tr>` permutes from. The first of each is
+ * the row's SUBJECT and never moves (see `src/lib/tableView.ts`).
+ */
+const BUCKET_COLS = ["bucket", "lots", "st", "lt", "total"] as const;
+const CG_ACCT_COLS = ["account", "window", "lots", "realST", "realLT", "unrealST", "unrealLT"] as const;
+const HOLD_COLS = ["security", "gain", "turns", "saved"] as const;
+const HARVEST_COLS = ["security", "entity", "loss", "return", "term"] as const;
 
 export function CapitalGains() {
   // STATEMENT BASIS, ALWAYS. This page has to tie to the capital gain statements
@@ -128,6 +140,13 @@ export function CapitalGains() {
       .sort();
   }, [datedLots, portfolio]);
 
+  // ABOVE THE EARLY RETURN, because a hook that runs on some renders and not
+  // others is a hooks-order error rather than a conditional table.
+  const bucketView = useTableView("cg-bucket", BUCKET_COLS);
+  const acctView = useTableView("cg-accounts", CG_ACCT_COLS);
+  const holdView = useTableView("cg-hold", HOLD_COLS);
+  const harvestView = useTableView("cg-harvest", HARVEST_COLS);
+
   if (!portfolio) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const accIdx = accountIndex(portfolio.accounts);
@@ -152,6 +171,22 @@ export function CapitalGains() {
   const harvestRows = harvestQ.trim()
     ? harvest.filter((h) => h.security.toLowerCase().includes(harvestQ.trim().toLowerCase()))
     : harvest;
+  // THE CAP IS APPLIED AFTER THE SORT, so a reader who ranks by a column sees
+  // the top 30 OF THAT RANKING rather than the first 30 of the default one
+  // re-ordered among themselves — the rule the transactions tape already
+  // follows for its own cap.
+  const holdShown = sortRows(holdCandidates, holdView.sort, {
+    security: (h) => h.security,
+    gain: (h) => h.unrealizedPnL,
+    turns: (h) => h.daysLeft,
+    saved: (h) => h.saving,
+  }).slice(0, 30);
+  const harvestShown = sortRows(harvestRows, harvestView.sort, {
+    security: (h) => h.security,
+    entity: (h) => ownerOf(accIdx, h),
+    loss: (h) => h.unrealizedPnL,
+    return: (h) => h.returnPct,
+  }).slice(0, 30);
   const harvestTotal = sumOrNull(harvest.map((x) => x.unrealizedPnL));
   /**
    * REALISED GAINS, SPLIT BY HOW THE HOLDING WAS RUN — not by what it WAS.
@@ -242,6 +277,25 @@ export function CapitalGains() {
   const byEnt = [...cg].sort((a, b) =>
     ((b.realisedST ?? -Infinity) + (b.realisedLT ?? 0)) - ((a.realisedST ?? -Infinity) + (a.realisedLT ?? 0)));
 
+  const bucketRows = sortRows(byBucket, bucketView.sort, {
+    bucket: (c) => (c.unclassified ? null : c.label),
+    lots: (c) => c.lots,
+    st: (c) => c.st,
+    lt: (c) => c.lt,
+    total: (c) => (c.st ?? 0) + (c.lt ?? 0),
+  });
+  // AN ACCOUNT THAT REPORTS NOTHING HAS NO FIGURE TO RANK, so every accessor
+  // here returns null for it and it sorts LAST in both directions — never as a
+  // zero, which would rank it among the accounts that genuinely realised
+  // nothing.
+  const acctRowsShown = sortRows(byEnt, acctView.sort, {
+    account: (c) => c.entity,
+    window: (c) => (c.absent ? null : c.periodFrom),
+    lots: (c) => (c.absent ? null : c.lots),
+    realST: (c) => (c.absent ? null : c.realisedST),
+    realLT: (c) => (c.absent ? null : c.realisedLT),
+  });
+
   return (
     <div>
       <PageHeader eyebrow="Tax &amp; Income" title="Capital Gains &amp; Tax"
@@ -327,19 +381,19 @@ export function CapitalGains() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Held as</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Realised ST</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Realised LT</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Total</th>
-                </tr>
+                <Tr view={bucketView}>
+                  <SortHeader col="bucket" view={bucketView} align="left">Held as</SortHeader>
+                  <SortHeader col="lots" view={bucketView}>Lots</SortHeader>
+                  <SortHeader col="st" view={bucketView}>Realised ST</SortHeader>
+                  <SortHeader col="lt" view={bucketView}>Realised LT</SortHeader>
+                  <SortHeader col="total" view={bucketView}>Total</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {byBucket.map((c) => {
+                {bucketRows.map((c) => {
                   const tot = (c.st ?? 0) + (c.lt ?? 0);
                   return (
-                    <tr key={c.key} className="hover:bg-ink-700/40">
+                    <Tr view={bucketView} key={c.key} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5">
                         {!c.unclassified ? (
                           <>
@@ -372,18 +426,19 @@ export function CapitalGains() {
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(c.st ?? 0)}`}>{fmtFromBase(c.st ?? 0, { compact: true, sign: true })}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(c.lt ?? 0)}`}>{fmtFromBase(c.lt ?? 0, { compact: true, sign: true })}</td>
                       <td className={`px-4 py-2.5 text-right mono font-semibold ${changeColor(tot)}`}>{fmtFromBase(tot, { compact: true, sign: true })}</td>
-                    </tr>
+                    </Tr>
                   );
                 })}
               </tbody>
               <tfoot className="border-t-2 border-ink-600 font-semibold">
-                <tr>
-                  <td className="px-4 py-2.5 text-slate-200">Total — the canonical figure</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{byBucket.reduce((s, c) => s + c.lots, 0)}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>
-                  <td className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>
-                </tr>
+                <TrFoot view={bucketView} className="px-4 py-2.5 text-slate-200"
+                  label={<>Total — the canonical figure</>}
+                  cells={{
+                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400">{byBucket.reduce((s, c) => s + c.lots, 0)}</td>,
+                    st: <td key="st" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>,
+                    lt: <td key="lt" className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>,
+                    total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>,
+                  }} />
               </tfoot>
             </table>
           </div>
@@ -396,54 +451,61 @@ export function CapitalGains() {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Account</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Window</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Lots</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Realised ST</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Realised LT</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Unrealised ST</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Unrealised LT</th>
-              </tr>
+              <Tr view={acctView}>
+                <SortHeader col="account" view={acctView} align="left">Account</SortHeader>
+                <SortHeader col="window" view={acctView} align="left">Window</SortHeader>
+                <SortHeader col="lots" view={acctView}>Lots</SortHeader>
+                <SortHeader col="realST" view={acctView}>Realised ST</SortHeader>
+                <SortHeader col="realLT" view={acctView}>Realised LT</SortHeader>
+                <SortHeader col="unrealST" view={acctView} sortable={false}>Unrealised ST</SortHeader>
+                <SortHeader col="unrealLT" view={acctView} sortable={false}>Unrealised LT</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
-              {byEnt.map((c) => (
-                <tr key={c.entity} className="hover:bg-ink-700/40">
+              {/* AN ACCOUNT THAT REPORTS NOTHING IS ONE CELL, NOT SIX, so that
+                  row cannot be permuted like the others — `<Tr>` refuses a cell
+                  count that does not match the columns, deliberately. It stays a
+                  plain row and its span is `order.length - 1`, which is
+                  order-independent because the first column never moves. */}
+              {acctRowsShown.map((c) => (c.absent ? (
+                  <tr key={c.entity} className="hover:bg-ink-700/40">
+                    <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
+                    <td className="px-4 py-2.5 text-[11.5px] text-slate-500" colSpan={acctView.order.length - 1}>{DASH} {c.absent}</td>
+                  </tr>
+                ) : (
+                <Tr view={acctView} key={c.entity} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
-                  {c.absent ? (
-                    <td className="px-4 py-2.5 text-[11.5px] text-slate-500" colSpan={6}>{DASH} {c.absent}</td>
-                  ) : (
-                    <>
-                      <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
-                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
-                        {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
-                      </td>
-                      <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT ?? 0)}`}>
-                        {fmtFromBase(c.realisedLT ?? 0, { compact: true, sign: true })}
-                      </td>
-                      <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
-                      <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
-                    </>
-                  )}
-                </tr>
-              ))}
+                  <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
+                    {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
+                  </td>
+                  <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedLT ?? 0)}`}>
+                    {fmtFromBase(c.realisedLT ?? 0, { compact: true, sign: true })}
+                  </td>
+                  <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+                  <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
+                </Tr>
+              )))}
             </tbody>
             <tfoot className="border-t border-ink-700 font-semibold">
-              <tr>
-                <td className="px-4 py-2.5 text-slate-200">Total</td>
-                <td className="px-4 py-2.5 text-[11px] text-slate-500" colSpan={2}>
-                  {reported.length} of {cg.length} accounts
-                </td>
-                <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>
-                  {totRealST === null ? <AbsentCell /> : fmtFromBase(totRealST, { compact: true, sign: true })}
-                </td>
-                <td className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>
-                  {totRealLT === null ? <AbsentCell /> : fmtFromBase(totRealLT, { compact: true, sign: true })}
-                </td>
-                <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
-                <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
-              </tr>
+              <TrFoot view={acctView} className="px-4 py-2.5 text-slate-200"
+                label={<>Total</>}
+                cells={{
+                  lots: <td key="lots" className="px-4 py-2.5 text-[11px] text-slate-500">{reported.length} of {cg.length} accounts</td>,
+                  realST: (
+                    <td key="realST" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>
+                      {totRealST === null ? <AbsentCell /> : fmtFromBase(totRealST, { compact: true, sign: true })}
+                    </td>
+                  ),
+                  realLT: (
+                    <td key="realLT" className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>
+                      {totRealLT === null ? <AbsentCell /> : fmtFromBase(totRealLT, { compact: true, sign: true })}
+                    </td>
+                  ),
+                  unrealST: <td key="unrealST" className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>,
+                  unrealLT: <td key="unrealLT" className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>,
+                }} />
             </tfoot>
           </table>
         </div>
@@ -476,21 +538,21 @@ export function CapitalGains() {
             <div className="max-h-[440px] overflow-auto">
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                  <tr>
-                    <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Unreal. gain</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Turns LT</th>
-                    <th className="label-xs px-4 py-2 text-right font-medium">Tax saved</th>
-                  </tr>
+                  <Tr view={holdView}>
+                    <SortHeader col="security" view={holdView} align="left">Security</SortHeader>
+                    <SortHeader col="gain" view={holdView}>Unreal. gain</SortHeader>
+                    <SortHeader col="turns" view={holdView}>Turns LT</SortHeader>
+                    <SortHeader col="saved" view={holdView}>Tax saved</SortHeader>
+                  </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/70">
-                  {holdCandidates.slice(0, 30).map((h) => (
-                    <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                  {holdShown.map((h) => (
+                    <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                       <td className="px-4 py-2.5 text-right mono text-gain">{money(h.unrealizedPnL)}</td>
                       <td className="px-4 py-2.5 text-right text-[11px] text-slate-400">{fmtDate(h.ltDate)} · {h.daysLeft}d</td>
                       <td className="px-4 py-2.5 text-right mono text-champagne-400">{money(h.saving)}</td>
-                    </tr>
+                    </Tr>
                   ))}
                 </tbody>
               </table>
@@ -516,17 +578,17 @@ export function CapitalGains() {
               <div className="max-h-[380px] overflow-auto">
                 <table className="min-w-full text-sm">
                   <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
-                    <tr>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                      <th className="label-xs px-4 py-2 text-left font-medium">Entity</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Unreal. loss</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">Return</th>
-                      <th className="label-xs px-4 py-2 text-right font-medium">ST / LT</th>
-                    </tr>
+                    <Tr view={harvestView}>
+                      <SortHeader col="security" view={harvestView} align="left">Security</SortHeader>
+                      <SortHeader col="entity" view={harvestView} align="left">Entity</SortHeader>
+                      <SortHeader col="loss" view={harvestView}>Unreal. loss</SortHeader>
+                      <SortHeader col="return" view={harvestView}>Return</SortHeader>
+                      <SortHeader col="term" view={harvestView} sortable={false}>ST / LT</SortHeader>
+                    </Tr>
                   </thead>
                   <tbody className="divide-y divide-ink-700/70">
-                    {harvestRows.slice(0, 30).map((h) => (
-                      <tr key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+                    {harvestShown.map((h) => (
+                      <Tr view={harvestView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
                         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
                         <td className="px-4 py-2.5 text-slate-400">{ownerOf(accIdx, h)}</td>
                         <td className="px-4 py-2.5 text-right mono text-loss">
@@ -538,7 +600,7 @@ export function CapitalGains() {
                         <td className="px-4 py-2.5 text-right mono">
                           <AbsentCell reason="no lot acquisition date, so the holding period is unknown" />
                         </td>
-                      </tr>
+                      </Tr>
                     ))}
                     {harvestRows.length === 0 && (
                       <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">

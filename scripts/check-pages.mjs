@@ -2057,6 +2057,19 @@ const ROUTES = [
   // claim is that those tranches account for the row — which is only testable
   // once one is expanded.
   ["monitor-tranche", "/monitor"],
+  /**
+   * ...AND THE HOLDINGS TABLE AFTER A READER HAS ARRANGED IT.
+   *
+   * The global table check asserts every heading CARRIES the controls; it
+   * cannot see whether either one does anything, and a sort button wired to
+   * nothing renders exactly like one that sorts. So this route clicks a money
+   * heading and then nudges a column, and the invariants read what actually
+   * moved: the row order, `aria-sort`, the `data-col` sequence — and the
+   * FOOTER's own span, which is the half that fails silently, because a footer
+   * left in declared order while the body follows a drag puts every total
+   * under the wrong heading.
+   */
+  ["monitor-arrange", "/monitor"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -2795,6 +2808,17 @@ let DIRECT_ALL = null;
  * report as NOT CHECKED rather than as a pass.
  */
 let AXIS_DRILL = null;
+/**
+ * WHAT THE HOLDINGS TABLE LOOKED LIKE BEFORE A SORT, AFTER IT, AND AFTER A
+ * COLUMN MOVED — see `monitor-arrange`. Every field is `null` on every other
+ * route, which its invariants report as NOT CHECKED rather than as a pass.
+ *
+ * Three snapshots rather than a before/after pair, because the two controls
+ * fail in different ways and one can mask the other: a `move` that silently
+ * cleared the sort would still reorder the columns, and comparing only the
+ * first and last states would call that a working move.
+ */
+const ARRANGE = { before: null, desc: null, sorted: null, moved: null };
 // THE CLUBBED FUND'S OWN EXPANSION — its class lines, read off the panel the
 // `monitor-fund-drill` walk opens. Null on every other route.
 let FUND_DRILL = null;
@@ -5484,6 +5508,102 @@ const INVARIANTS = {
    * because a panel that dropped a tranche from both would reconcile perfectly
    * with itself, which is the Private Market page's PM-1 in miniature.
    */
+  /**
+   * ── THE TWO CONTROLS ACTUALLY DO SOMETHING ──────────────────────────────
+   *
+   * *"Every single table on the dashboard must have clickable column headings
+   * to sort the table data, and also every single column except the first name
+   * one, the user should be able to drag and drop to rearrange columns."*
+   *
+   * The global check every route runs asserts each heading CARRIES a sort
+   * button and a grip. It cannot see whether either one does anything — a
+   * button wired to nothing renders exactly like one that sorts, and a `move`
+   * that permuted the `<thead>` and left the `<tbody>` still would put every
+   * figure under the wrong heading while looking tidier. So this route drives
+   * both and the checks read what moved.
+   *
+   * A SNAPSHOT THAT WAS NOT TAKEN IS `notChecked`, NEVER A PASS: the route
+   * runs on `/monitor` only and every other walk leaves `ctx.arrange` empty.
+   */
+  "monitor-arrange": [
+    ["clicking a money heading reorders the rows", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.desc?.rows?.length || !a.sorted?.rows?.length) {
+        return { notChecked: "the holdings table's rows were not captured" };
+      }
+      // The same rows, in a different order. Both halves matter: a sort that
+      // DROPPED rows would reorder them too, and this table's own totals are
+      // struck over the full set. Struck between the two CLICKS rather than
+      // against the page's arrival state, because this table already arrives
+      // ranked on this very column — see the note beside the walk.
+      const same = a.desc.rows.length === a.sorted.rows.length
+        && new Set(a.desc.rows).size === new Set(a.sorted.rows).size
+        && a.desc.rows.every((k) => a.sorted.rows.includes(k));
+      const moved = a.desc.rows.some((k, i) => a.sorted.rows[i] !== k);
+      return same && moved;
+    }],
+    ["…and the direction it reports steps with the clicks", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.desc || !a.sorted) return { notChecked: "the sorted states were not captured" };
+      // `aria-sort` is what a screen reader and this check both read, and a
+      // second column claiming one would mean two sorts are live at once.
+      return a.desc.aria === "descending" && a.sorted.aria === "ascending"
+        && (a.sorted.others ?? []).every((v) => v === "none" || v === null);
+    }],
+    ["moving a column moves its heading and its cells", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.sorted || !a.moved?.cols?.length || !a.before?.cols?.length) {
+        return { notChecked: "the moved state was not captured" };
+      }
+      const b = a.before.cols, m = a.moved.cols;
+      if (b.length !== m.length || b.some((c) => !c) || m.some((c) => !c)) return false;
+      // `qty` swapped right past `avgCost`, then `invested` walked two places
+      // left — the two moves the walk makes, and nothing else moved.
+      const expect = [b[0], b[3], b[2], b[1], ...b.slice(4)];
+      const permuted = m.every((c, i) => c === expect[i]);
+      // THE BODY FOLLOWED. A `<thead>` permuted alone is the one outcome this
+      // feature must never produce, and it is invisible in any count.
+      const bodyFollowed = (a.moved.firstRow ?? []).length === m.length;
+      return permuted && bodyFollowed;
+    }],
+    ["…and the footer's totals stay under the headings they total", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.moved?.footPerCol?.length || !a.moved?.cols?.length) {
+        return { notChecked: "the footer was not captured per column" };
+      }
+      const cols = a.moved.cols, per = a.moved.footPerCol;
+      // Every column is covered exactly once — the label's span plus the cells
+      // after it. A footer that has lost or gained one is a row that no longer
+      // lines up with its own headings at all.
+      if (per.length !== cols.length) return false;
+      // AND THE SPAN IS THE COMPUTED LEADING RUN, NOT A LITERAL. `invested` has
+      // walked to the second column, so the label can only cover the first one
+      // — a span frozen at what the declared order needed would swallow the
+      // Invested total and shift every figure after it.
+      const at = (c) => per[cols.indexOf(c)] ?? "";
+      return a.moved.footSpan === 1
+        && /\d/.test(at("invested"))      // the cost total, under Invested
+        && /\d/.test(at("mv"))            // the market-value total, under its own
+        && at("sector") === "";            // a descriptor column has nothing to total
+    }],
+    ["…and the sort it was arranged under survives the move", (t, ctx) => {
+      const a = ctx.arrange ?? {};
+      if (!a.sorted?.rows?.length || !a.moved?.rows?.length) {
+        return { notChecked: "the moved state's rows were not captured" };
+      }
+      // Moving a COLUMN is not a statement about the ROWS. A `move` that reset
+      // the sort would still permute the headings, so comparing the first and
+      // last states alone would call that a working move.
+      return a.moved.rows.length === a.sorted.rows.length
+        && a.moved.rows.every((k, i) => a.sorted.rows[i] === k);
+    }],
+    ["the first column is the row's identity and cannot be moved", (t, ctx) => {
+      const tv = (ctx.tableView ?? []).filter((x) => !x.static);
+      if (!tv.length) return { notChecked: "no table declared its columns on this route" };
+      return tv.every((x) => x.firstFixed && x.movable === x.headCells - 1);
+    }],
+  ],
+
   "monitor-tranche": [
     ["a contribution history opens", (t, ctx) => ctx.tranchePanel !== null],
 
@@ -12993,6 +13113,93 @@ for (const theme of THEMES) {
        * guard that stops working without anyone noticing. So this route does
        * what a reader does: pick a section, then change the slice.
        */
+      /**
+       * THE ARRANGEMENT, DRIVEN AS A READER DRIVES IT. Sort first, then move —
+       * in that order deliberately, so the second assertion is struck on a
+       * table that is ALREADY sorted: a `move` that dropped the sort would
+       * otherwise look like a working move.
+       *
+       * The column moved is the one AFTER the fixed first, which is the
+       * strictest case: it is the only move that can land a column against the
+       * boundary `useTableView` refuses to cross.
+       */
+      if (name === "monitor-arrange") {
+        const tb = page.locator("main table").first();
+        ARRANGE.before = await tb.evaluate((t) => ({
+          cols: [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")),
+          rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          footSpan: Number(t.querySelector("tfoot tr > td")?.getAttribute("colspan") || 1),
+        }));
+        /**
+         * TWICE, AND THE SECOND CLICK IS THE ONE THAT PROVES ANYTHING.
+         *
+         * This table's DEFAULT ranking is already market value descending, so
+         * the first click lands on the order the page was in — a button wired
+         * to nothing and a button working perfectly draw the identical table.
+         * Found by asserting on one click and watching a correct page fail.
+         * The second click steps the three-state machine to ascending, which
+         * must reverse it.
+         */
+        const snap = () => tb.evaluate((t) => ({
+          rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          aria: t.querySelector("thead tr:last-child [data-col='mv']")?.getAttribute("aria-sort") ?? null,
+          others: [...t.querySelectorAll("thead tr:last-child [data-col]")]
+            .filter((c) => c.getAttribute("data-col") !== "mv")
+            .map((c) => c.getAttribute("aria-sort")),
+        }));
+        const btn = page.locator("[data-col-button='mv']").first();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(400); }
+        ARRANGE.desc = await snap();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(400); }
+        ARRANGE.sorted = await snap();
+        const grip = page.locator("[data-col-grip='qty']").first();
+        if (await grip.count()) {
+          await grip.focus();
+          await page.keyboard.press("ArrowRight");
+          await page.waitForTimeout(500);
+        }
+        /**
+         * THE FOOTER'S SPAN IS EXPANDED PER COLUMN, and a SECOND move is what
+         * makes it testable at all.
+         *
+         * `TrFoot` computes its label's `colSpan` as the leading run of columns
+         * that carry no total. Nudging `qty` past `avgCost` moves two columns
+         * that are both inside that run, so the span is 3 before and after —
+         * and a literal 3 in place of the computation passes. Found by
+         * reintroducing exactly that and watching a clean sweep.
+         *
+         * Moving `invested` — the FIRST column that has a total — to the front
+         * shortens the run to 1. Read as a per-column array, a stale span then
+         * lands the Invested total under a different heading, which is the
+         * defect a reader would actually be shown.
+         */
+        for (const key of ["ArrowLeft", "ArrowLeft"]) {
+          const g = page.locator("[data-col-grip='invested']").first();
+          if (!(await g.count())) break;
+          await g.focus();
+          await page.keyboard.press(key);
+          await page.waitForTimeout(350);
+        }
+        ARRANGE.moved = await tb.evaluate((t) => {
+          const cols = [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col"));
+          const foot = t.querySelector("tfoot tr");
+          // One entry per COLUMN, a spanning cell repeated across the columns
+          // it covers — so an index into this is an index into the headings.
+          const perCol = [];
+          for (const td of foot ? [...foot.children] : []) {
+            const n = Number(td.getAttribute("colspan") || 1);
+            for (let k = 0; k < n; k++) perCol.push(td.textContent.trim());
+          }
+          return {
+            cols,
+            firstRow: [...(t.querySelectorAll("tbody tr[data-security-key]")[0]?.children ?? [])]
+              .map((c) => c.textContent.trim().slice(0, 24)),
+            footSpan: Number(foot?.querySelector("td")?.getAttribute("colspan") || 1),
+            footPerCol: perCol,
+            rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+          };
+        });
+      }
       if (name === "monitor-axis-switch") {
         const sel = page.locator("select").nth(2);        // the section filter
         if (await sel.count()) {
@@ -14992,7 +15199,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
