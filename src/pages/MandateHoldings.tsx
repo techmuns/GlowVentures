@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
+import { ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { BasisPill } from "@/components/BasisPill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
+import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
@@ -250,7 +251,7 @@ export function MandateHoldings() {
     const mandates = portfolio.accounts.filter((a) => holdingRoute(a.engagement) === "mandate");
     return (
       <div>
-        <Crumb />
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: "Mandate not found" }]} />
         <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Mandate not found</h1>
         <Card>
           <AbsentSection
@@ -274,6 +275,10 @@ export function MandateHoldings() {
 
   const route = holdingRoute(account.engagement);
   const ownerName = account.ownerId ? ownerDisplayName(account.ownerId) : account.owner;
+  // WHAT THIS ACCOUNT IS CALLED, once: the heading and the crumb both print it,
+  // and two copies of the fallback would be two chances for one screen to name
+  // the same account two ways.
+  const mandateName = account.strategy || `${account.provider} ${account.accountNo}`;
   /**
    * The account's own rows grouped exactly as a holdings table groups them, for
    * the non-mandate branches below. Plain arithmetic rather than `useMemo`,
@@ -287,10 +292,8 @@ export function MandateHoldings() {
   if (route !== "mandate") {
     return (
       <div>
-        <Crumb />
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">
-          {account.strategy || `${account.provider} ${account.accountNo}`}
-        </h1>
+        <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[12.5px] text-slate-400">
           <span>{account.provider} · {account.accountNo}</span>
           <span className="text-slate-600">·</span>
@@ -538,18 +541,17 @@ export function MandateHoldings() {
 
   return (
     <div>
-      <Crumb />
+      {/* THE CRUMB NAMES THE MANDATE, and the three buttons replace "Back to
+          holdings" — a hardcoded parent that sent every reader to the Portfolio
+          Monitor whether or not that is where they came from. Holdings
+          drill-downs, Family & Entities and a company page all link here. */}
+      <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/monitor" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
-            <ChevronLeft className="h-3.5 w-3.5" /> Back to holdings
-          </Link>
           {/* The mandate's own name, as the manager prints it. Null on a
               provider that names no strategy — the account then identifies
               itself by manager and number rather than by an invented label. */}
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">
-            {account.strategy || `${account.provider} ${account.accountNo}`}
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
           <div className="mt-1 text-[13px] text-slate-400">
             Run by <span className="font-medium text-slate-300">{account.provider}</span> for{" "}
             <span className="font-medium text-slate-300">{ownerName}</span> · account {account.accountNo}
@@ -1104,11 +1106,3 @@ function ManagerTrades({ account }: { account: Account }) {
   );
 }
 
-function Crumb() {
-  return (
-    <div className="mb-2 text-[12px] text-slate-500">
-      <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link>
-      <span className="mx-1.5">›</span>Mandate
-    </div>
-  );
-}

@@ -2012,6 +2012,23 @@ const ROUTES = [
   ["monitor", "/monitor"],
   ["private-market", "/private-market"],
   /**
+   * ...AND THE SAME PAGE WITH EVERY METRIC SELECTED.
+   *
+   * The strip opens on four tiles at the family's request, so twelve of the
+   * eighteen metrics are not on screen by default — and every invariant that
+   * reads a tile's own words needs its subject. They moved here rather than
+   * being softened into something the default four satisfy, which is what a
+   * check that stopped running would look like.
+   *
+   * THE ADDRESS IS THE PICKER'S OWN OPTION LIST, captured on the walk above.
+   * Typed here it would be a second source for the catalogue and would go
+   * stale the first time a metric was added — and a stale list still renders a
+   * strip, so nothing would fail.
+   */
+  ["private-market-tiles", () => (PM_TILE_IDS.length
+    ? `/private-market?tiles=${PM_TILE_IDS.join(",")}`
+    : "/private-market?tiles=no-catalogue-captured-from-the-picker")],
+  /**
    * ── THE PRIVATE BOOK'S OTHER TWO VIEWS ───────────────────────────────────
    *
    * *"there are three separate sectioned tables… add a toggle button in the
@@ -2811,6 +2828,28 @@ let RETURN_DROPDOWN = null;
  * "passing" by rendering the drill-down's own not-found state.
  */
 const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew it
+/**
+ * WHAT A READER CLICKED TO REACH EACH DRILL-DOWN — every label on Morning CIO
+ * that points at a given address, tile labels and link text alike.
+ *
+ * The crumb on `/holdings` is asserted against THIS rather than against a
+ * string typed here, because the tile it names has been renamed once already
+ * ("Consolidated NAV" → "Current Value of Holdings", Stage 10aq) and a literal
+ * would have gone on passing while the crumb named a tile the dashboard no
+ * longer has. One address carries SEVERAL labels — the whole book opens from
+ * the NAV tile, from Positions, from Distinct names and from the allocation
+ * footer — so the claim is that the leaf names one of them, not a particular
+ * one.
+ */
+const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
+/**
+ * EVERY METRIC THE PRIVATE MARKET'S TILE PICKER OFFERS, read out of its own
+ * menu on the first walk. It is both the catalogue the picker is checked
+ * against and the address of the all-tiles route, so neither is typed here.
+ */
+const PM_TILE_IDS = [];
+let TILE_MENU = null;
+let TILE_PICK = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -8614,9 +8653,9 @@ const INVARIANTS = {
         // is no easier to read at 11px than a definition is.
         && hints.every((h) => h.px >= 12);
     }],
-    ["the uncalled-capital tile says what it is", (t) => {
-      const tile = sliceBetween(t, "STILL TO CALL", "COMMITTED") || sliceBetween(t, "Still to call", "Committed");
-      if (!tile) return { notChecked: "the uncalled-capital tile was not on screen on this run" };
+    ["the uncalled-capital tile says what it is", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.uncalled;
+      if (!tile) return false;
       return /promised/i.test(tile)
         && /not yet asked for|not yet called/i.test(tile)
         // …and that it is a LIABILITY rather than an asset, which is the one
@@ -8627,9 +8666,9 @@ const INVARIANTS = {
     ["…and how it is arrived at is still on the page, beside the rows it sums", (t) =>
       /summed exactly as each fund prints it/i.test(t)
       && /never derived from committed − called/i.test(t)],
-    ["the distributions tile says what it is, and the two things a reader would get wrong", (t) => {
-      const tile = sliceBetween(t, "DISTRIBUTIONS", "Realised gain") || sliceBetween(t, "Distributions", "Realised gain");
-      if (!tile) return { notChecked: "the distributions tile was not on screen on this run" };
+    ["the distributions tile says what it is, and the two things a reader would get wrong", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.distributed;
+      if (!tile) return false;
       return /paid back/i.test(tile)
         // Neither is guessable from the number, and neither is stated anywhere
         // else on this page — so both stayed when the paragraph went.
@@ -8683,8 +8722,10 @@ const INVARIANTS = {
      * every private row sits in an account, so accounts ≥ nothing useful — what
      * matters is that a real figure is there and the tile still names its book.
      */
-    ["the private value tile names how many accounts it spans", (t) => {
-      const m = /PRIVATE MARKET VALUE[\s\S]{0,240}?across (\d+) accounts · each holding counted once/i.exec(t);
+    ["the private value tile names how many accounts it spans", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.value;
+      if (!tile) return false;
+      const m = /across (\d+) accounts · each holding counted once/i.exec(tile);
       return !!m && Number(m[1]) > 0;
     }],
 
@@ -9884,10 +9925,29 @@ const INVARIANTS = {
         return HEAD.exportInHeader === true && HEAD.pillsRemoved === true;
       }],
 
-    ["the eyebrow, the title and the view switch share one line, with the eyebrow smaller",
-      () => {
+    /**
+     * ── THE TITLE AND THE VIEW SWITCH STILL SHARE ONE LINE ───────────────────
+     *
+     * This read "the eyebrow, the title and the view switch share one line,
+     * with the eyebrow smaller", and the EYEBROW has gone: the family asked for
+     * a crumb row on every page, and the eyebrow's whole job was to say where
+     * the reader is, so it moved INTO the crumb rather than being rendered
+     * twice on adjacent lines (see `PageHeader`).
+     *
+     * SO THE CLAIM IS RE-HOMED AND NOT DELETED. What it exists to protect is
+     * that this header is not three rows of chrome — `toggleInline` is the
+     * load-bearing half and is untouched — and the half that had the eyebrow as
+     * its subject now has the crumb: it must be the line ABOVE the title rather
+     * than beside it, and it must read smaller. `eyebrowGone` is the removal
+     * asserted from the other side, so a build that put the eyebrow back beside
+     * the title fails here instead of quietly restoring the duplication.
+     */
+    ["the title and the view switch share one line, with the crumb row above it and no eyebrow beside it",
+      (t, ctx) => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
-        return HEAD.hasEyebrow && HEAD.eyebrowInline && HEAD.toggleInline && HEAD.eyebrowSmaller;
+        const n = ctx?.pageNav;
+        if (!n) return false;
+        return HEAD.eyebrowGone && HEAD.toggleInline && n.aboveTitle && n.smallerThanTitle;
       }],
     /**
      * ── THE THIRD ROUND: A GROUPING, NOT A WORD ──────────────────────────────
@@ -12274,6 +12334,126 @@ const INVARIANTS = {
 };
 
 /**
+ * ── THE PRIVATE MARKET'S TWO ROUTES SHARE ONE BLOCK ─────────────────────────
+ *
+ * *"There are 9 KPI tiles on the private market page, make it 4."* Twelve of
+ * the eighteen metrics are therefore off the strip by default, and six
+ * invariants read a tile's own words. They are not softened into something the
+ * default four satisfy — that is what a check which has stopped running looks
+ * like — and they are not deleted with their subject either. They move to the
+ * route where every tile IS drawn.
+ *
+ * DECLARED AS NAMES RATHER THAN BY MOVING THE CODE, so this list is the whole
+ * statement of which claims need the full strip, and a name that matches
+ * nothing leaves its check on the default route where it fails loudly instead
+ * of being quietly retired.
+ */
+const FULL_STRIP_ONLY = new Set([
+  "the distributions tile says what it is, and the two things a reader would get wrong",
+  "the tile carries the client's own word for it",
+  "the realised-gain and forward-schedule absences survive it",
+  "the due-now figure states the accounts it covers, and is not a window",
+  "committed, called and invested are three separate tiles, each stating its coverage",
+  "the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total",
+]);
+
+/**
+ * THE PICKER ITSELF, ASSERTED ON STRUCTURE. Every one of these claims is about
+ * a CONTROL — the strip renders the identical figures whether a reader can
+ * change them or not — so none of them can be struck on the page's words.
+ */
+const TILE_PICKER_CHECKS = [
+  /**
+   * THE DEFAULT IS THE ROW THIS PAGE ALWAYS SHOWED, and a default is the one
+   * change that moves in silence: the strip renders perfectly on any four
+   * metrics, so nothing else here could tell. Named rather than derived,
+   * because which four a reader sees first is a product decision and not a
+   * figure the book produces.
+   */
+  ["the strip opens on four tiles, and on the four this page always led with", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st) return false;
+    const want = ["value", "cost", "pnl", "uncalled"];
+    return st.ids.length === want.length && want.every((id, i) => st.ids[i] === id);
+  }],
+  /**
+   * ...AND EVERY SLOT OFFERS THE WHOLE CATALOGUE, the two ABSENT metrics
+   * included. A picker that offered only what this book can measure would
+   * quietly drop the two facts a reader of a private book most needs told —
+   * that no capital gain statement covers a private account, and that a TVPI
+   * cannot be struck while most of these funds print no distribution line —
+   * and the family asked for every metric they might want to see.
+   */
+  ["each tile's picker offers every metric, the two absent ones included", (t, ctx) => {
+    const menu = ctx?.tileMenu;
+    const st = ctx?.tileStrip;
+    if (!menu?.length || !st) return false;
+    return menu.length >= 12
+      && ["value", "cost", "pnl", "uncalled", "realised", "multiple"].every((id) => menu.includes(id))
+      // One picker per slot, or a tile a reader cannot change is a tile they
+      // are stuck with.
+      && st.pickers === st.slots && st.slots > 0
+      /**
+       * ...AND EVERY ID THE STRIP CLAIMS IS ACTUALLY DRAWN. A set saved against
+       * an older catalogue can name a metric this build does not have, and a
+       * slot that skipped it would leave the strip claiming four tiles while
+       * rendering three — an unexplained gap rather than the em dash with a
+       * reason this book requires. Unknown ids are dropped from the SET, so
+       * these three counts move together or something was silently swallowed.
+       */
+      && st.slots === st.ids.length && st.cards === st.slots;
+  }],
+  /**
+   * ...AND THE `+` IS ON THE LAST TILE, WHICH IS WHERE THE FAMILY PUT IT.
+   * "Somewhere on the strip" is a different and weaker claim, and every slot
+   * must also be removable — otherwise a metric added by mistake is permanent.
+   */
+  /**
+   * ...AND CHOOSING A METRIC ACTUALLY CHANGES THE TILE, AND THE ADDRESS WITH
+   * IT. Every claim above is satisfied by a picker wired to nothing, which is
+   * the control-that-looks-alive failure this repo keeps naming. The walk picks
+   * the metric slot 0 is not showing and reads the strip back.
+   */
+  ["picking a metric changes that tile and moves the address with it", (t, ctx) => {
+    const pick = ctx?.tilePick;
+    if (!pick) return false;
+    return pick.ids[0] === pick.picked
+      && pick.ids[0] !== pick.before
+      // The chosen set is in the URL, so it is a link somebody can send and a
+      // state the browser's own Back button walks.
+      && new URLSearchParams(pick.search).get("tiles") === pick.ids.join(",");
+  }],
+  ["the + sits on the last tile only, and every tile can be removed", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st) return false;
+    return st.adds === 1 && st.addOnLast && st.removes === st.slots;
+  }],
+];
+
+/**
+ * THE SPLIT, APPLIED. `private-market-tiles` runs every private-market claim
+ * plus the picker's own; the default route runs everything except the six whose
+ * subject it does not draw.
+ */
+{
+  const all = INVARIANTS["private-market"];
+  INVARIANTS["private-market"] = [...all.filter(([d]) => !FULL_STRIP_ONLY.has(d)), ...TILE_PICKER_CHECKS];
+  INVARIANTS["private-market-tiles"] = [...all, ...TILE_PICKER_CHECKS.slice(1, 3),
+    /**
+     * ...AND ON THIS ROUTE THE WHOLE CATALOGUE IS ON SCREEN, which is what
+     * makes the six abstention-free. Without this the route could resolve to a
+     * stale or empty `?tiles=`, draw the default four, and every moved check
+     * would fail for the wrong reason — or pass for one.
+     */
+    ["every metric the picker offers is drawn on this route", (t, ctx) => {
+      const st = ctx?.tileStrip, menu = ctx?.tileMenu;
+      if (!st || !menu?.length) return false;
+      return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
+    }],
+  ];
+}
+
+/**
  * Elements painting a DARK surface or near-invisible text while the page is in
  * light mode. Run in the browser so it reads COMPUTED colour — the only way to
  * catch a utility whose light remap is missing, since the class name itself
@@ -13130,7 +13310,17 @@ for (const theme of THEMES) {
           underlined: [...t.querySelectorAll("*")].filter((e) =>
             (e.textContent ?? "").trim()
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
-          buttons: t.querySelectorAll("button").length,
+          /**
+           * SCOPED TO THE BODY AND FOOTER, NOT THE WHOLE TABLE.
+           *
+           * The claim is Stage 10ac's: this table opens no formula popover, and
+           * a popover trigger is a `<button>` in a row cell or the footer cell.
+           * Every table in this app now carries sort and column-move controls
+           * in its `<thead>`, which are buttons too — counting those would fail
+           * a table that has exactly the popovers it should (none) for having
+           * the headings the family asked for.
+           */
+          buttons: [...t.querySelectorAll("tbody button, tfoot button")].length,
           links: t.querySelectorAll("a[href]").length,
           // THE BAR CHART ABOVE THE TABLE, paired with the rows below it. Each
           // bar carries `data-alloc-bar` (its section key) and IS the same
@@ -14265,6 +14455,27 @@ for (const theme of THEMES) {
         const scope = { basket: "basket", assetClass: "family-class" }[allocTable.axis];
         for (const c of allocTable.cells) ALLOC_CELLS.set(`${scope}:${c.key}`, c);
       }
+      /**
+       * WHAT A READER CLICKED, COLLECTED FROM EVERY ROUTE RATHER THAN FROM
+       * MORNING CIO ALONE. A facet address — the listed half, the positions
+       * reporting no cost — is linked only from the drill-down's OWN chip row,
+       * so a map built on the cockpit alone would abstain on exactly the pages
+       * where the crumb has the most to get wrong.
+       *
+       * A TILE'S ANCHOR CARRIES NO TEXT: it is the stretched overlay that makes
+       * the whole card the target (Stage 10v), so its label has to come off the
+       * card. Everything else is an ordinary text link.
+       */
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        const publish = (href, label) => {
+          if (!/^\/holdings\?/.test(href) || !label) return;
+          const at = CRUMB_PUBLISHERS.get(href) ?? [];
+          if (!at.includes(label)) at.push(label);
+          CRUMB_PUBLISHERS.set(href, at);
+        };
+        for (const l of links) publish(l.href, l.text);
+        for (const tile of kpiTiles ?? []) if (tile.links.length === 1) publish(tile.links[0], tile.label);
+      }
       if (name === "cio" || name === "cio-alloc-basket" || name === "cio-alloc-class") {
         for (const h of hrefs) {
           const m = /^\/holdings\?of=([a-z-]+)/.exec(h);
@@ -14355,9 +14566,14 @@ for (const theme of THEMES) {
        *
        * The eyebrow used to sit above the title and the view switch on a
        * toolbar row of its own — three rows to say where you are. The claim
-       * that they now share one is geometric, so it is struck on geometry: the
-       * three boxes must overlap vertically. A CSS regression that stacks them
-       * again fails here; a caption never could.
+       * that the title and the switch now share one is geometric, so it is
+       * struck on geometry: the two boxes must overlap vertically. A CSS
+       * regression that stacks them again fails here; a caption never could.
+       *
+       * THE EYEBROW ITSELF HAS SINCE GONE INTO THE CRUMB (see `PageHeader`), so
+       * what is measured here is its ABSENCE from this line — the crumb row's
+       * own geometry is measured by `pageNav`, on every route rather than on
+       * this one.
        */
       if (!FAST && name === "monitor" && theme === THEMES[0] && width === WIDTHS[0]) {
         HEAD = await page.evaluate(() => {
@@ -14365,17 +14581,17 @@ for (const theme of THEMES) {
           if (!h1) return null;
           const btn = [...document.querySelectorAll("main button")];
           const bar = h1.parentElement;
-          const eyebrow = bar?.firstElementChild;
           const toggle = [...(bar?.children ?? [])].find((el) => /Holdings/.test(el.textContent ?? "") && el !== h1);
           const box = (el) => (el ? el.getBoundingClientRect() : null);
           const overlap = (a, b) => !!a && !!b && a.top < b.bottom && b.top < a.bottom;
-          const r = { h1: box(h1), eyebrow: box(eyebrow), toggle: box(toggle) };
+          const r = { h1: box(h1), toggle: box(toggle) };
           return {
-            hasEyebrow: !!eyebrow && eyebrow !== h1,
-            eyebrowInline: overlap(r.eyebrow, r.h1),
+            // THE EYEBROW IS GONE FROM THIS LINE: the title now opens the
+            // headline row, and where the reader is lives in the crumb above
+            // it. Struck on the DOM position rather than on the word, because
+            // "Daily" is legitimately still on screen — in the crumb.
+            eyebrowGone: bar?.firstElementChild === h1,
             toggleInline: overlap(r.toggle, r.h1),
-            // The eyebrow reads smaller than the title it precedes.
-            eyebrowSmaller: !!r.eyebrow && !!r.h1 && (r.eyebrow.height < r.h1.height),
             // The two retired controls, counted as BUTTONS. Matching their
             // words would hit the Transactions card's own view controls and
             // this page's prose, and fail a page that is correct.
@@ -14469,6 +14685,274 @@ for (const theme of THEMES) {
         };
         return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
       });
+      /**
+       * ── THE BACK / FORWARD / HOME ROW AND THE CRUMB, ON EVERY ROUTE ────────
+       *
+       * *"add three small back reverse and home buttons on the top of every
+       * page … Follow this format for every single page that we Open."* So it
+       * is measured on every page the sweep walks rather than on the handful
+       * that used to carry a crumb.
+       *
+       * READ OFF `data-*` HANDLES AND GEOMETRY, never off the rendered words.
+       * Two of the three claims are pure layout — the row is the FIRST line and
+       * reads smaller than the heading — and a page renders the identical text
+       * with them stacked, inline or missing. The third is a pairing between
+       * what a reader clicked and what the crumb then says, which needs the
+       * leaf's own text and nothing else on the line.
+       */
+      const pageNav = FAST ? null : await page.evaluate(() => {
+        const row = document.querySelector("main [data-page-nav]");
+        if (!row) return null;
+        const h1 = document.querySelector("main h1");
+        const box = (el) => (el ? el.getBoundingClientRect() : null);
+        const r = box(row), t = box(h1);
+        const fwd = row.querySelector("[data-page-nav-forward]");
+        return {
+          back: !!row.querySelector("[data-page-nav-back]"),
+          forward: !!fwd,
+          forwardDisabled: !!fwd?.disabled,
+          // The app's own front door, so an unfed book still lands on the page
+          // `RootRedirect` picks rather than on a gated one.
+          home: row.querySelector("[data-page-nav-home]")?.getAttribute("href") ?? null,
+          steps: [...row.querySelectorAll("[data-crumb-step]")].map((el) => ({
+            kind: el.getAttribute("data-crumb-step"),
+            // The separator is drawn INSIDE the segment that follows it, so it
+            // has to come off the text before the label can be compared.
+            text: (el.textContent ?? "").replace(/^\s*\u203a\s*/, "").replace(/\s+/g, " ").trim(),
+            link: !!el.querySelector("a[href]"),
+          })),
+          // ITS OWN LINE, ABOVE THE HEADING — which is what "the first line"
+          // means and what a flex container is free to stop doing.
+          aboveTitle: !!r && !!t && r.bottom <= t.top + 1,
+          smallerThanTitle: !!r && !!t && r.height < t.height,
+        };
+      });
+      /**
+       * ── THE THREE CONTROLS AND THE CRUMB, ASSERTED ON EVERY ROUTE ─────────
+       *
+       * Pushed here rather than into a per-route block because the claim is
+       * about EVERY page — a per-route list would have to name all 84 and would
+       * silently stop covering the next one added, which is how a check retires
+       * itself. A MISSING ROW IS A FAILURE and never an abstention: the row
+       * renders from the page's own header with no data behind it, so nothing
+       * on this book can legitimately be without one.
+       */
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        const n = pageNav;
+        if (!n) {
+          invariants.push("every page carries the back / forward / home row with a crumb naming it");
+        } else {
+          if (!n.back || !n.forward || n.home !== "/") {
+            invariants.push(`the page nav offers back, forward and home, and home points at the app's own front door (back=${n.back} forward=${n.forward} home=${n.home})`);
+          }
+          const leaf = n.steps.find((x) => x.kind === "leaf");
+          if (!leaf?.text) invariants.push("the crumb's last segment names this page");
+          // A LEAF THAT IS ALSO A LINK offers a click to the page you are on,
+          // which is the control-that-looks-alive failure in miniature.
+          if (leaf?.link) invariants.push("the crumb's last segment is the page you are on, so it carries no link");
+          if (!n.aboveTitle) invariants.push("the crumb row is the FIRST line, on its own above the heading");
+          /**
+           * ...AND THE ONE-WAY LINK IT REPLACED STAYS GONE.
+           *
+           * *"Remove 'Back to Morning CIO' and replace it with the three small
+           * buttons."* Four pages carried a hardcoded parent link — "Back to
+           * Morning CIO", "Back to holdings" — each of which named a step the
+           * reader may never have taken: a company page is reached from Sector
+           * Composition, a mandate, a drill-down and the movers card, and all
+           * four were offered the Portfolio Monitor. A removal is verified by
+           * asserting it happened, and it is struck on the LINK a reader can
+           * click rather than on the phrase, which survives in these files'
+           * own comments explaining why it went.
+           */
+          const oneWay = links.filter((l) => /^back to\b/i.test(l.text));
+          if (oneWay.length) invariants.push(`the one-way "Back to …" link is gone, replaced by the three controls — this page still offers ${oneWay.map((l) => `"${l.text}"`).join(", ")}`);
+          if (!n.smallerThanTitle) invariants.push("the crumb row reads smaller than the heading beneath it");
+          /**
+           * ...AND ON A DRILL-DOWN IT NAMES THE FIGURE, NOT THE ROUTE.
+           *
+           * *"The first line 'Morning CIO › What is Behind this Figure' should
+           * rather label the page/KPI tile that we have opened."* This route
+           * serves eleven sets and printed one sentence for all of them, so the
+           * claim is a PAIRING: the leaf must name something on Morning CIO
+           * that points at this very address. Nothing there says "what is
+           * behind the figure", so the retired phrase cannot pass — and neither
+           * can a build that pins every leaf to one figure's name.
+           *
+           * Matched case- and punctuation-insensitively, in EITHER direction of
+           * containment: a tile label and a link's text for one figure differ in
+           * length by design ("Top-10 conc." beside the Concentration card's
+           * own figure, where the crumb has room to spell it out).
+           */
+          if (/^holdings-/.test(name) && leaf?.text) {
+            const want = CRUMB_PUBLISHERS.get(path);
+            const norm = (x) => String(x).toLowerCase().replace(/[.·]/g, "").replace(/\s+/g, " ").trim();
+            const L = norm(leaf.text);
+            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${path}`);
+            else if (!want.some((w) => { const W = norm(w); return W && (L.includes(W) || W.includes(L)); })) {
+              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${path} are ${want.map((w) => `"${w}"`).join(", ")}`);
+            }
+          }
+        }
+      }
+      /**
+       * ── THE SELECTABLE TILE STRIP ─────────────────────────────────────────
+       *
+       * *"make it 4 and give the user a dropdown list to select what they want
+       * to see in each of those 4 KPI tiles … Also add a small + button on the
+       * last 4th KPI tile."* Every one of those claims is STRUCTURE — which
+       * slots exist, which carry a picker, which carries the `+` — and a strip
+       * renders the identical figures whether the controls are there or not.
+       * So they are read off `data-*` handles rather than off the page's words.
+       */
+      const tileStrip = FAST ? null : await page.evaluate(() => {
+        const strip = document.querySelector("main [data-tile-strip]");
+        if (!strip) return null;
+        const adds = [...strip.querySelectorAll("[data-tile-add]")];
+        const cards = [...strip.querySelectorAll(".card")];
+        return {
+          ids: (strip.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+          // EACH TILE'S OWN TEXT, so a claim about one tile is struck on that
+          // tile. Slicing the page between two tile LABELS only works while
+          // both are drawn, and with four of eighteen on screen by default the
+          // end marker is routinely missing — at which point `sliceBetween`
+          // returns the rest of the page and the check silently widens.
+          texts: Object.fromEntries([...strip.querySelectorAll("[data-tile-slot]")].map((sl) =>
+            [sl.getAttribute("data-tile-slot") ?? "", (sl.querySelector(".card")?.innerText ?? "").replace(/\s+/g, " ").trim()])),
+          slots: strip.querySelectorAll("[data-tile-slot]").length,
+          cards: cards.length,
+          pickers: strip.querySelectorAll("[data-tile-select]").length,
+          removes: strip.querySelectorAll("[data-tile-remove]").length,
+          adds: adds.length,
+          // THE `+` IS ON THE LAST TILE, which is where the family put it — and
+          // "somewhere on the strip" is a different and weaker claim.
+          addOnLast: adds.length === 1 && cards.length > 0 && cards[cards.length - 1].contains(adds[0]),
+        };
+      });
+      /**
+       * ...AND WHAT THE PICKER OFFERS, which needs the menu open: it renders no
+       * options while closed, deliberately, because Chromium's `innerText` on a
+       * `<select>` returns every option and eighteen metrics between a tile's
+       * label and its figure broke twelve invariants on a strip that rendered
+       * perfectly. Opened once on the primary pass, read, and closed again.
+       *
+       * The ids it yields are also the ADDRESS of the all-tiles route below, so
+       * that route's set comes off the page rather than being typed here — a
+       * typed list would be a second source for the catalogue and would go
+       * stale silently the first time a metric was added.
+       */
+      if (!FAST && /^private-market/.test(name) && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.pickers) {
+        try {
+          await page.click('[data-tile-select="0"]');
+          const opts = await page.$$eval("[data-tile-option]", (els) => els.map((e) => e.getAttribute("data-tile-option") ?? ""));
+          if (opts.length) {
+            TILE_MENU = opts;
+            if (!PM_TILE_IDS.length) PM_TILE_IDS.push(...opts);
+          }
+          /**
+           * ...AND PICKING ONE ACTUALLY CHANGES THE TILE.
+           *
+           * Every other claim here is about a control EXISTING, and a picker
+           * wired to nothing satisfies all of them — the strip renders, the
+           * menu opens, the `+` is in the right corner, and choosing does
+           * nothing. So the interaction is performed: pick the metric this slot
+           * is NOT showing, and read back both what the strip now holds and
+           * whether the address moved with it. The address is the half a reader
+           * could not otherwise see, and it is what makes a chosen set a link
+           * rather than a preference locked to one browser.
+           *
+           * A FRESH CONTEXT PER ROUTE means this cannot leak: the choice is
+           * written to `localStorage`, and the next route's page has none.
+           */
+          const before = tileStrip?.ids?.[0] ?? null;
+          const pick = opts.find((id) => id !== before);
+          if (pick) {
+            await page.click(`[data-tile-option="${pick}"]`);
+            TILE_PICK = await page.evaluate(() => ({
+              ids: (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+              search: location.search,
+            }));
+            TILE_PICK.before = before;
+            TILE_PICK.picked = pick;
+            // Back to the state this route was walked in, so the screenshot and
+            // anything read after here see the page as addressed.
+            await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
+            await page.goto(BASE + path, { waitUntil: "networkidle" });
+          } else {
+            await page.keyboard.press("Escape");
+          }
+        } catch { /* a strip with no picker is a finding below, not a crash here */ }
+      }
+      /**
+       * ── EVERY TABLE IS SORTABLE AND EVERY COLUMN BUT THE FIRST MOVES ───────
+       *
+       * *"Every single table on the dashboard must have clickable column
+       * headings to sort the table data, and also every single column except
+       * the first name one, the user should be able to drag and drop to
+       * rearrange columns, make this standardized for every table anywhere on
+       * the dashboard."*
+       *
+       * "Every table anywhere" is a claim about all of them, so it is measured
+       * on every route rather than on a list of tables somebody remembered to
+       * write down — a list would silently stop covering the next table added.
+       *
+       * READ OFF `data-*` HANDLES, because a table renders the identical
+       * figures whether its headings are clickable or not: nothing in the text
+       * of a page can tell a sortable column from a static one.
+       *
+       * A TABLE THAT REFUSES BOTH MUST SAY WHY, in `data-table-static`. The
+       * upstream financial tables are the case: their rows are a balance sheet
+       * whose order is the statement's own and whose columns are periods in
+       * chronological order, so sorting the rows or moving a year would
+       * scramble a document rather than rearrange a view. An exemption keyed on
+       * the table's own declared reason cannot drift the way a list of names
+       * here would, and a table that simply forgot the handles has no reason to
+       * declare.
+       */
+      const tableView = FAST ? null : await page.evaluate(() => {
+        const out = [];
+        for (const tb of document.querySelectorAll("main table")) {
+          const bodyRow = tb.querySelector("tbody tr");
+          // A table with no data row is a frame, not a table: an absent state
+          // draws one, and there is nothing in it to sort.
+          if (!bodyRow || !bodyRow.querySelector("td")) continue;
+          const rows = [...tb.querySelectorAll("thead tr")];
+          // A TABLE WITH NO `<thead>` AT ALL IS A LAYOUT, NOT A TABLE. A chart's
+          // legend and a two-column breakdown use `<table>` for alignment and
+          // have no headings to make clickable; there is nothing there to sort
+          // and nothing to name a column by. Skipped on that STRUCTURAL
+          // condition rather than by a declared reason, so a real table that
+          // loses its head is still a finding — its cells would then carry no
+          // `data-col` and the check below fires on the count.
+          if (!rows.length) continue;
+          const head = rows[rows.length - 1];
+          const cells = head ? [...head.children] : [];
+          out.push({
+            static: tb.getAttribute("data-table-static"),
+            id: tb.getAttribute("data-pm-table") ?? tb.getAttribute("data-table") ?? (tb.className || "").slice(0, 40),
+            headRows: rows.length,
+            headCells: cells.length,
+            withCol: cells.filter((c) => c.hasAttribute("data-col")).length,
+            sortable: cells.filter((c) => c.querySelector("[data-col-button]")).length,
+            movable: cells.filter((c) => c.hasAttribute("data-col-movable")).length,
+            // THE FIRST COLUMN IS THE ROW'S IDENTITY AND STAYS PUT, which the
+            // family asked for in as many words — so it must be the ONE cell
+            // with no grip.
+            firstFixed: cells.length > 0 && !cells[0].hasAttribute("data-col-movable"),
+          });
+        }
+        return out;
+      });
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        for (const tv of tableView ?? []) {
+          if (tv.static) continue;
+          const bad = tv.headCells === 0 || tv.withCol !== tv.headCells
+            || tv.sortable === 0 || !tv.firstFixed
+            || tv.movable !== tv.headCells - 1;
+          if (bad) {
+            invariants.push(`every table sorts on its headings and moves every column but the first — "${tv.id}" has ${tv.headCells} heading cells, ${tv.withCol} declared, ${tv.sortable} sortable, ${tv.movable} movable, firstFixed=${tv.firstFixed}`);
+          }
+        }
+      }
       const isPolycabPage = /\/polycab$/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
@@ -14508,7 +14992,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, callBuckets, callRows, schemeCalls, statHints, kpiTiles, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

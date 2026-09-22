@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Wallet, Layers, TrendingUp, Coins, Activity, Building2 } from "lucide-react";
+import { Wallet, Layers, TrendingUp, Coins, Activity, Building2 } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -27,6 +27,7 @@ import { RatioTable } from "@/components/RatioTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
 import { QuantityMovement } from "@/components/QuantityMovement";
+import { PageNav } from "@/components/PageNav";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
 
 /**
@@ -355,15 +356,14 @@ export function StockInfo() {
 
   return (
     <div>
-      <div className="mb-2 text-[12px] text-slate-500">
-        <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link>
-        <span className="mx-1.5">›</span>Stock Info
-      </div>
+      {/* THE CRUMB NAMES THE HOLDING, NOT THE ROUTE. It read "Stock Info" on
+          every one of 213 names, which is a description of the page; and the
+          three buttons replace "Back to holdings", a hardcoded step to the
+          Portfolio Monitor that was wrong for every reader who arrived from
+          Sector Composition, a mandate, a drill-down or the movers card. */}
+      <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/monitor" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
-            <ChevronLeft className="h-3.5 w-3.5" /> Back to holdings
-          </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* WHERE THIS HOLDING IS FILED, which for everything that is not a

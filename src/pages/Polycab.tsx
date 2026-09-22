@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { ChevronLeft, Wallet, Layers, Landmark, Coins, Users, Shield, Lock } from "lucide-react";
+import { Wallet, Layers, Landmark, Coins, Users, Shield, Lock } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
+import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity } from "@/lib/format";
 
@@ -179,6 +180,7 @@ export function Polycab() {
   if (!BOOK_POLYCAB.length) {
     return (
       <div>
+        <PageNav className="mb-2" trail={[{ label: "Daily" }, { label: "Polycab" }]} />
         <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Polycab</h1>
         <AbsentSection
           what="No ring-fenced Polycab holding in this book"
@@ -190,17 +192,16 @@ export function Polycab() {
 
   return (
     <div>
-      <div className="mb-2 text-[12px] text-slate-500">
-        <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link>
-        <span className="mx-1.5">›</span>Polycab
-      </div>
+      {/* THE CRUMB SAYS WHERE THIS PAGE SITS, which is the left nav's Daily
+          group — this is a nav entry in its own right and not a page anyone
+          opens INTO, so naming the Portfolio Monitor as its parent (as it did)
+          described a step no reader takes. The three buttons replace the "Back
+          to holdings" link for the same reason. */}
+      <PageNav className="mb-2" trail={[{ label: "Daily" }, { label: "Polycab" }]} />
 
       {/* Hero */}
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link to="/monitor" className="mb-1 inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-slate-300">
-            <ChevronLeft className="h-3.5 w-3.5" /> Back to holdings
-          </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-1 text-[13px] text-slate-400">
             The family's promoter stock{holder ? <> · held by <span className="font-medium text-slate-300">{holder}</span></> : null}
