@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
-import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
-import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
@@ -35,7 +35,9 @@ const PM_TILES_KEY = "glow:pmTiles:v1";
 
 /** The funds table's columns, in the order its rows write their cells. */
 const FUND_COLS = ["fund", "reportedBy", "folios", "units", "invested", "value", "return", "weight", "asOf"] as const;
-const FOLIO_COLS = ["fund", "owner", "account", "units", "invested", "value", "asOf"] as const;
+/* The folios BEHIND a fund row. No `fund` column: every line in the panel is
+   the fund the row names, so a column repeating it is chrome. */
+const FOLIO_COLS = ["owner", "account", "units", "invested", "value", "asOf"] as const;
 const OWNER_COLS = ["owner", "rows", "invested", "value"] as const;
 const SCHEME_COLS = ["fund", "owner", "committed", "called", "paid", "uncalled", "calls", "asOf", "check"] as const;
 const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
@@ -89,27 +91,45 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
 // `check:pages` asserts that premise instead of trusting it.
 
 /**
- * THE THREE VIEWS OF THE PRIVATE BOOK, and each carries its OWN card title and
+ * THE TWO VIEWS OF THE PRIVATE BOOK, and each carries its OWN card title and
  * subtitle rather than sharing one.
  *
- * They are the same holdings on two different BASES — `funds` counts each
- * `dedupeGroup` once, `folios` and `owners` print every statement as issued —
- * so a single caption over all three would describe two of them wrongly. That
- * is the failure this page has already paid for once, and the ₹3.17 Cr between
- * the two bases is exactly what it would hide.
+ * ── "BY FOLIO" WAS A THIRD, AND IT IS A ROW EXPANSION NOW ──────────────────
+ *
+ *   *"why are there two different toggle switch for fund and folio… keep
+ *    default view as fund only, and make the row clickable so that it would
+ *    reveal a drop down list of folios. And remove folio as the toggle button."*
+ *
+ * They were right that the pair was redundant AS A TOGGLE: a folio is not
+ * another way of slicing the private book, it is what a fund row is MADE OF.
+ * Every folio belongs to exactly one fund, so the two tables were a whole list
+ * and the same list re-sorted — where By owner really is a different grouping.
+ * So the folios sit under the fund they belong to and a reader reaches them
+ * where they were looking, rather than by leaving the table and coming back.
+ *
+ * ── WHAT MUST NOT BE FLATTENED IS STILL THE BASIS ──────────────────────────
+ *
+ * This is the one screen where the whole of this book's double count lives, and
+ * the expansion changes nothing about it:
+ *
+ *   By fund   CONSOLIDATED — each `dedupeGroup` counted ONCE.
+ *   …expanded RAW — every statement exactly as printed, so the two holdings
+ *             reported under two members each list both lines, and the panel
+ *             NAMES the overlap in rupees on exactly the rows that carry one.
+ *   By owner  RAW — a per-owner figure counts each member's own statement.
+ *
+ * PM-1 MOVED WITH THE TABLE IT READS, to the expansion, and it is a BETTER home
+ * than the view it came from: the consolidated figure, the statements behind it
+ * and the gap between them are now one click apart instead of one tab apart. A
+ * check that stops running because its table moved behind a control is a check
+ * that silently stopped, which this file has recorded four times.
  */
 const HOLDING_VIEWS = [
   {
     key: "funds", label: "By fund",
-    title: "One row per fund, each holding counted once however many members report it.",
+    title: "One row per fund, each holding counted once however many members report it. Open a row for the folios behind it.",
     cardTitle: "Funds this family holds",
-    cardSub: "One row per fund, each holding counted once however many family members' statements report it. Marks are each fund's own, on its own date.",
-  },
-  {
-    key: "folios", label: "By folio",
-    title: "Every private row exactly as its own statement prints it — two holdings appear twice.",
-    cardTitle: "Folio by folio, as each statement prints it",
-    cardSub: "Every private row exactly as its own statement reports it. Two holdings are reported under two members each; both rows are here, and the consolidated total above counts each once.",
+    cardSub: "One row per fund, each holding counted once however many family members' statements report it. Open a row for the folios behind it. Marks are each fund's own, on its own date.",
   },
   {
     key: "owners", label: "By owner",
@@ -123,9 +143,22 @@ export function PrivateMarket() {
   const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
   const [q, setQ] = useState("");
   /**
+   * WHICH FUND ROWS ARE OPEN. Component state rather than the URL: it is a
+   * reader's place in a table, not a view of the book, and every figure a panel
+   * draws is already addressable — the fund's own `/stock/<securityKey>` page.
+   * The sweep reaches it with a click, the way it reaches the Monitor's own
+   * contribution and venue panels.
+   */
+  const [openFolios, setOpenFolios] = useState<Set<string>>(() => new Set());
+  const toggleFolios = (key: string) => setOpenFolios((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    return next;
+  });
+  /**
    * WHICH GROUPING THE ONE HOLDINGS CARD DRAWS. In the URL like every other
    * view in this app, so a basis is a link a reader can send and the sweep can
-   * hold each of the three to the light rather than guessing at a click.
+   * hold each of the two to the light rather than guessing at a click.
    * `useViewParam` keeps the default param-free, so `/private-market` and
    * `/private-market?view=funds` do not become two addresses for one screen.
    */
@@ -156,8 +189,26 @@ export function PrivateMarket() {
     const scope = privateScope(currentHoldings(portfolio.positions), portfolio.accounts);
     const commitments = portfolio.commitments ?? [];
 
-    const funds = fundRollup(scope.dedupedRows, accIdx);
+    const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
     const folios = folioRows(scope.rows, accIdx);
+    /**
+     * THE FOLIOS BEHIND EACH FUND, keyed on the row's own `securityKey`.
+     *
+     * ONE definition, read both by the row that offers the expansion and by the
+     * panel that draws it — so the count on the chevron and the lines under it
+     * cannot describe different sets, which is what a second grouping here would
+     * eventually let them do.
+     *
+     * Struck over `folioRows(scope.rows)`, the RAW set: this panel is "every
+     * statement as printed", which is the whole reason it can differ from the
+     * row above it.
+     */
+    const foliosOf = new Map<string, typeof folios>();
+    for (const f of folios) {
+      const g = foliosOf.get(f.position.securityKey) ?? [];
+      g.push(f);
+      foliosOf.set(f.position.securityKey, g);
+    }
     const owners = ownerRollup(scope.rows, accIdx);
     const ct = commitmentTotals(commitments);
     /**
@@ -211,7 +262,7 @@ export function PrivateMarket() {
     const dates = [...new Set(scope.accounts.map((a) => a.asOf).filter(Boolean))].sort();
 
     return {
-      accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
+      accIdx, scope, funds, folios, foliosOf, owners, ct, unvalued, commitments,
       schemes, cc, history, windows, asOfCalls,
       privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
@@ -249,20 +300,10 @@ export function PrivateMarket() {
    * expression of one figure.
    */
   const fundView = useTableView("pm-funds", FUND_COLS);
-  const folioView = useTableView("pm-folios", FOLIO_COLS);
   const ownerView = useTableView("pm-owners", OWNER_COLS);
   const schemeView = useTableView("pm-schemes", SCHEME_COLS);
   const historyView = useTableView("pm-call-history", CALL_COLS);
   const unvaluedView = useTableView("pm-unvalued", UNVALUED_COLS);
-  const folioRowsShown = sortRows(m.folios, folioView.sort, {
-    fund: (f) => f.position.security,
-    owner: (f) => f.owner,
-    account: (f) => `${f.provider} ${f.accountNo}`,
-    units: (f) => f.position.quantity,
-    invested: (f) => f.position.costBasis,
-    value: (f) => f.position.marketValue,
-    asOf: (f) => f.asOf ?? null,
-  });
   const ownerRowsShown = sortRows(m.owners, ownerView.sort, {
     owner: (o) => o.owner,
     rows: (o) => o.rows,
@@ -598,45 +639,50 @@ export function PrivateMarket() {
           whose answer is an em dash and a reason. */}
       <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
 
-      {/* ── THE PRIVATE BOOK — ONE CARD, THREE VIEWS, ONE TOGGLE ─────────────
+      {/* ── THE PRIVATE BOOK — ONE CARD, TWO VIEWS, AND THE THIRD IS A ROW ───
           *"in the private markets Page there are three separate sectioned
            tables, making the pages very lengthy. Add a toggle button in the
            first table itself to switch the table view between the three rather
-           than scrolling every time."*
+           than scrolling every time."* and, a round later, *"why are there two
+           different toggle switch for fund and folio… keep default view as fund
+           only, and make the row clickable so that it would reveal a drop down
+           list of folios. And remove folio as the toggle button."*
 
           The three were a FUND table, a FOLIO table and a per-OWNER rollup
-          stacked one under the other, and they are THREE RENDERINGS OF ONE SET
-          — the same private holdings, grouped three ways. So this is a view
-          switch in the sense the Portfolio Monitor's `?group=` axis already is,
-          and deliberately NOT the shape of `DailyMovers`' toggle, which keeps
-          two whole cards apart because it switches between two different
-          MEASUREMENTS taken on different days.
+          stacked one under the other. The first round made them one card with a
+          toggle; the second took the folio half OFF the toggle, and the family
+          were right about why — a folio is not another way of slicing the
+          private book, it is what a fund row is MADE OF. Every folio belongs to
+          exactly one fund, so those two were a whole list and the same list
+          re-sorted, where By owner really is a different grouping.
 
-          ── WHAT MUST NOT BE FLATTENED IS THE BASIS ──────────────────────────
+          ── WHAT MUST NOT BE FLATTENED IS THE BASIS, AND NOTHING ABOUT IT MOVED
 
           This is the one screen where the whole of this book's double count
-          lives, and the three views are NOT on one basis:
+          lives:
 
             By fund    CONSOLIDATED — each `dedupeGroup` counted ONCE.
-            By folio   RAW — every statement exactly as printed, so the two
-                       holdings reported under two members each appear twice.
+            …expanded  RAW — every statement exactly as printed, so the two
+                       holdings reported under two members each list both lines,
+                       and the panel NAMES the overlap in rupees on exactly the
+                       rows that carry one.
             By owner   RAW — a per-owner figure counts each member's own
                        statement, for the same reason.
 
           The first adds to the consolidated total and the other two to the
           printed one, and the difference is this book's ₹3.17 Cr of double
-          count. Each view therefore keeps its OWN title, its own subtitle and
-          its own footnote naming the basis it is on: one title over all three
-          would be the caption-does-not-describe-its-figure failure this page
-          has already paid for once. Collapsing them into one table with a
-          grouping key would be worse — it would make putting all three on one
-          basis a one-line edit, and either direction of that is wrong.
+          count. Each view keeps its OWN title, its own subtitle and its own
+          footnote naming the basis it is on: one title over both would be the
+          caption-does-not-describe-its-figure failure this page has already paid
+          for once. Collapsing them into one table with a grouping key would be
+          worse — it would make putting them on one basis a one-line edit, and
+          either direction of that is wrong.
 
-          `check:pages` walks all three addresses and asserts both ends: PM-1 on
-          the folio view (printed less consolidated IS the named double count)
-          and PM-6 on the owner view (the subtotals add to the printed total and
-          not to the consolidated one). A build that deduped everything passes
-          one and fails the other.
+          `check:pages` asserts both ends: PM-1 on the EXPANSION (the lines add
+          to more than the row, by the overlap the panel names) and PM-6 on the
+          owner view (the subtotals add to the printed total and not to the
+          consolidated one). A build that deduped everything passes one and
+          fails the other.
       */}
       <Card className="mt-5" pad={false}
         title={HOLDING_VIEWS.find((v) => v.key === view)!.cardTitle}
@@ -667,9 +713,7 @@ export function PrivateMarket() {
             {view === "funds"
               ? <SearchInput value={q} onChange={setQ} placeholder="Search funds…" className="w-56"
                   suggestions={m.funds.map((f) => f.security)} />
-              : view === "folios"
-                ? <Pill tone="info">{m.folios.length} rows</Pill>
-                : <Pill tone="info">{m.owners.length} owners</Pill>}
+              : <Pill tone="info">{m.owners.length} owners</Pill>}
           </div>
         }>
 
@@ -693,11 +737,40 @@ export function PrivateMarket() {
                   </Tr>
                 </thead>
                 <tbody className="divide-y divide-ink-700/60">
-                  {fundsShown.map((f) => (
-                    /* The fund's own key, so a claim about WHICH funds this table
-                       draws is struck on structure rather than on a rendered name. */
-                    <Tr view={fundView} key={f.securityKey} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
+                  {fundsShown.map((f) => {
+                    const behind = m.foliosOf.get(f.securityKey) ?? [];
+                    const printed = sum(behind.map((x) => x.position.marketValue));
+                    /* THE OVERLAP, IN RUPEES, ON THE ROW THAT CARRIES ONE. The
+                       lines add to MORE than the row above them wherever two
+                       members' statements report one holding — ₹3.17 Cr across
+                       two funds on this book — and a reader who adds the panel
+                       and gets a third answer has found a contradiction no
+                       caption rescues. Struck as printed − consolidated, and
+                       guarded above a rupee so float noise is never a claim. */
+                    const gap = printed - f.mv;
+                    const isOpen = openFolios.has(f.securityKey);
+                    return (
+                    <Fragment key={f.securityKey}>
+                    {/* The fund's own key, so a claim about WHICH funds this table
+                        draws is struck on structure rather than on a rendered name. */}
+                    <Tr view={fundView} data-pm-fund={f.securityKey} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">
+                        {/* THE ROW OPENS INTO ITS FOLIOS — the family's own ask.
+                            EVERY fund row offers it, including the nine held in
+                            one folio: the panel carries the OWNER and the account
+                            number, which this row does not, so it opens onto
+                            something a reader could not otherwise see. The
+                            chevron carries the count and the overlap so the walk
+                            can pick the row with most to lose rather than the
+                            first one it finds. */}
+                        <button type="button" onClick={() => toggleFolios(f.securityKey)} aria-expanded={isOpen}
+                          data-pm-folio-toggle={f.securityKey}
+                          data-pm-folio-rows={behind.length}
+                          data-pm-folio-gap={Math.round(Math.max(gap, 0))}
+                          title={`${behind.length} ${behind.length === 1 ? "folio reports" : "folios report"} this fund — open for the owner, the account and each statement's own figures.`}
+                          className="mr-1.5 inline-flex align-middle text-slate-500 transition-colors hover:text-champagne-400 ring-focus">
+                          <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                        </button>
                         <StockLink securityKey={f.securityKey} name={f.security} />
                       </td>
                       <td className="px-4 py-2.5 text-slate-400">{f.providers.join(", ")}</td>
@@ -727,7 +800,91 @@ export function PrivateMarket() {
                           : `${fmtDate(f.asOf[0])} → ${fmtDate(f.asOf[f.asOf.length - 1])}`}
                       </td>
                     </Tr>
-                  ))}
+                    {/* ── THE FOLIOS BEHIND THE ROW, EXACTLY AS PRINTED ──────
+                        RAW, never deduped: each line is one statement, which is
+                        the whole reason the panel can add to more than the row
+                        it opened from. `SortableTable` is the seam for a table
+                        drawn inside a row — `useTableView` is a hook and cannot
+                        be called where this JSX sits. */}
+                    {isOpen && (
+                      <tr className="bg-ink-900/60" data-pm-folio-panel={f.securityKey}>
+                        <td colSpan={fundView.order.length} className="px-3 pb-3 pt-1">
+                          <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
+                            {behind.length === 1
+                              ? <>The one folio that reports this fund, exactly as its statement prints it.</>
+                              : <>The {behind.length} folios that report this fund, each exactly as its own statement prints it.</>}
+                          </p>
+                          <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
+                            <SortableTable className="min-w-full text-[12px]" storageKey="pm-folios" columns={FOLIO_COLS}>
+                              {(fv) => (<>
+                                <thead>
+                                  <Tr view={fv} className="border-b border-ink-700/70">
+                                    <SortHeader col="owner" view={fv} align="left" pad="px-3 py-1.5">Owner</SortHeader>
+                                    <SortHeader col="account" view={fv} align="left" pad="px-3 py-1.5">Account</SortHeader>
+                                    <SortHeader col="units" view={fv} pad="px-3 py-1.5">Units</SortHeader>
+                                    <SortHeader col="invested" view={fv} pad="px-3 py-1.5">Invested</SortHeader>
+                                    <SortHeader col="value" view={fv} pad="px-3 py-1.5">Value</SortHeader>
+                                    <SortHeader col="asOf" view={fv} align="left" pad="px-3 py-1.5">As of</SortHeader>
+                                  </Tr>
+                                </thead>
+                                <tbody className="divide-y divide-ink-700/50">
+                                  {sortRows(behind, fv.sort, {
+                                    owner: (x) => x.owner,
+                                    account: (x) => `${x.provider} ${x.accountNo}`,
+                                    units: (x) => x.position.quantity,
+                                    invested: (x) => x.position.costBasis,
+                                    value: (x) => x.position.marketValue,
+                                    asOf: (x) => x.asOf ?? null,
+                                  }).map((x, i) => (
+                                    <Tr view={fv} key={`${x.accountId}-${i}`} data-pm-folio-row={f.securityKey} className="hover:bg-ink-700/30">
+                                      <td className="px-3 py-1.5 text-slate-200">
+                                        {x.owner}
+                                        {/* THE PILL MOVED WITH THE ROW IT IS ABOUT. It named
+                                            the other member on the Fund cell, which in a
+                                            panel of one fund is the OWNER cell's business. */}
+                                        {x.alsoCount > 1 && (
+                                          <span className="ml-2 align-middle">
+                                            <Pill tone="warn">also reported under {x.alsoReportedUnder.map(ownerDisplayName).join(", ") || "another account"}</Pill>
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-slate-400 whitespace-nowrap">{x.provider} {x.accountNo}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400">{fmtNum(x.position.quantity, 3)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400">
+                                        {x.position.costBasis == null
+                                          ? <AbsentCell reason="this statement reports a value and no cost" />
+                                          : money(x.position.costBasis)}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-200">{money(x.position.marketValue)}</td>
+                                      <td className="px-3 py-1.5 text-slate-400 whitespace-nowrap">
+                                        {x.asOf ? fmtDate(x.asOf) : <AbsentCell reason="this account states no report date" />}
+                                      </td>
+                                    </Tr>
+                                  ))}
+                                </tbody>
+                              </>)}
+                            </SortableTable>
+                          </div>
+                          {/* PM-1, ON THE ROW THAT CARRIES IT. The lines add to more
+                              than the row above wherever one holding is reported
+                              twice, and this is the only place on the page that
+                              difference is now visible. Rendered ONLY where the two
+                              really differ — on every other fund it would describe a
+                              gap that row does not have. */}
+                          {gap > 1 && (
+                            <p className="mt-1.5 text-[11px] leading-relaxed text-amber-400/80" data-pm-folio-gap-note={f.securityKey}>
+                              These lines add to {money(printed)} because this holding is reported under {behind.length} accounts;
+                              the row above counts it once at {money(f.mv)} (a {money(gap)} overlap). Both statements are shown
+                              because both were issued, and the two marks need not be identical — each member&rsquo;s fund reports
+                              on its own date.
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <TrFoot view={fundView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
@@ -758,72 +915,6 @@ export function PrivateMarket() {
             {excludedRest.length > 0 && (
               <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
                 Not on this page: {excludedRest.map((c) => `${assetClassLabel(c.key)} ${money(c.mv)} (${c.count})`).join(" · ")}.
-              </p>
-            )}
-          </>
-        )}
-
-        {/* ── BY FOLIO — RAW, every statement exactly as printed ── */}
-        {view === "folios" && (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm" data-pm-table="folios">
-                <thead className="border-b border-ink-700">
-                  <Tr view={folioView}>
-                    <SortHeader col="fund" view={folioView} align="left">Fund</SortHeader>
-                    <SortHeader col="owner" view={folioView} align="left">Owner</SortHeader>
-                    <SortHeader col="account" view={folioView} align="left">Account</SortHeader>
-                    <SortHeader col="units" view={folioView}>Units</SortHeader>
-                    <SortHeader col="invested" view={folioView}>Invested</SortHeader>
-                    <SortHeader col="value" view={folioView}>Value</SortHeader>
-                    <SortHeader col="asOf" view={folioView} align="left">As of</SortHeader>
-                  </Tr>
-                </thead>
-                <tbody className="divide-y divide-ink-700/60">
-                  {folioRowsShown.map((f, i) => (
-                    <Tr view={folioView} key={`${f.accountId}-${f.position.securityKey}-${i}`} className="hover:bg-ink-700/40">
-                      <td className="px-4 py-2.5 text-slate-100">
-                        <StockLink securityKey={f.position.securityKey} name={f.position.security} />
-                        {f.alsoCount > 1 && (
-                          <span className="ml-2 align-middle">
-                            <Pill tone="warn">also reported under {f.alsoReportedUnder.map(ownerDisplayName).join(", ") || "another account"}</Pill>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-slate-400">{f.owner}</td>
-                      <td className="px-4 py-2.5 text-slate-400">
-                        {f.provider} {f.accountNo}
-                      </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">{fmtNum(f.position.quantity, 3)}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">
-                        {f.position.costBasis == null
-                          ? <AbsentCell reason="this statement reports a value and no cost" />
-                          : money(f.position.costBasis)}
-                      </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-200">{money(f.position.marketValue)}</td>
-                      <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
-                        {f.asOf ? fmtDate(f.asOf) : <AbsentCell reason="this account states no report date" />}
-                      </td>
-                    </Tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <TrFoot view={folioView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
-                    label={<>Total · {m.folios.length} rows</>}
-                    cells={{
-                      value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.rawMV)} as printed</td>,
-                      asOf: <td key="asOf" className="border-t-2 border-ink-600 px-4 py-2.5" />,
-                    }} />
-                </tfoot>
-              </table>
-            </div>
-            {/* The rows on screen add to MORE than the consolidated figure, by
-                design. Said here rather than left for a reader to find by adding. */}
-            {m.scope.doubleCounted > 0 && (
-              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                <span className="text-slate-300">{money(m.scope.doubleCounted)} of the {money(m.rawMV)} above is two holdings reported under two members each.</span>{" "}
-                The consolidated {money(m.privMV)} counts each once. Both statements are shown because both were issued, and
-                the two marks are not identical — each member's fund reports on its own date.
               </p>
             )}
           </>

@@ -73,7 +73,7 @@ ok("the double count is the WHOLE book's double count",
   "both duplicated holdings in this book are private");
 
 console.log("\n── funds ──");
-const funds = fundRollup(scope.dedupedRows, accIdx);
+const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("distinct funds", funds.length, 14);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
@@ -87,6 +87,29 @@ ok("no fund shows a return unless its costed rows cover the row",
   funds.every((f) => f.returnPct == null || (f.cost != null && f.costedMV >= f.mv * COST_COVERAGE_MIN)));
 ok("a fund whose statement reports no cost shows no return",
   funds.filter((f) => f.cost == null).every((f) => f.returnPct == null));
+/**
+ * THE FOLIO COUNT IS PER-ACCOUNT AND THE VALUE IS CONSOLIDATED — the two
+ * bases on one row, which is what the expansion beneath it renders.
+ *
+ * `folios` counts STATEMENTS, so it adds to the raw row count and NOT to the
+ * deduped one; the money on the same row adds to the deduped total. Struck off
+ * the deduped set instead, `folios` reads 1 for each of this book's two
+ * duplicated holdings over a panel that lists both lines — the "Held in 1
+ * entity" defect, arriving one page over. Asserted as an INEQUALITY on the two
+ * funds that carry a duplicate, so it cannot pass by accident on a drop with
+ * none, and as an equality across the whole table.
+ */
+eq("the folio count adds to the RAW row count, not the deduped one",
+  [sum(funds.map((f) => f.folios)), scope.rows.length, scope.dedupedRows.length],
+  [scope.rows.length, scope.rows.length, scope.dedupedRows.length]);
+{
+  const dupKeys = new Set(scope.rows.filter((p) => p.dedupeGroup).map((p) => p.securityKey));
+  const dupFunds = funds.filter((f) => dupKeys.has(f.securityKey));
+  ok("this book carries a fund reported under more than one account", dupFunds.length > 0);
+  ok("…and each of them counts MORE folios than deduped rows behind it",
+    dupFunds.every((f) => f.folios > scope.dedupedRows.filter((p) => p.securityKey === f.securityKey).length),
+    "the count is a per-account figure; the value beside it is not");
+}
 
 console.log("\n── folios (per-account: NOT deduped) ──");
 const folios = folioRows(scope.rows, accIdx);
@@ -169,10 +192,11 @@ eq("all-null distributed stays null", [ft.distributed, ft.distributedOf], [null,
 const priced = scope.dedupedRows.find((p) => p.costBasis != null) as Position;
 const costless = scope.dedupedRows.find((p) => p.costBasis == null) as Position;
 ok("the book carries both a costed and a cost-less private row", !!priced && !!costless);
-const mixed = fundRollup(
-  [{ ...priced, securityKey: "fx" }, { ...costless, securityKey: "fx", marketValue: priced.marketValue }],
-  accIdx,
-)[0];
+const mixedRows = [
+  { ...priced, securityKey: "fx" },
+  { ...costless, securityKey: "fx", marketValue: priced.marketValue },
+];
+const mixed = fundRollup(mixedRows, accIdx, mixedRows)[0];
 ok("a fund whose cost covers only half its value shows NO return", mixed.returnPct == null,
   "a percentage across two different sets of holdings is the contradiction this refuses");
 near("…and its cost is the costed row alone", mixed.cost, priced.costBasis as number);

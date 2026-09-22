@@ -589,6 +589,43 @@ export function companyExposure(
   return [...byKey.values()].sort((a, b) => b.total - a.total);
 }
 
+/** What placed a company, and where. `null` where none of the three could. */
+export type CompanySector = { sector: string; from: CompanyExposure["sectorFrom"] };
+
+/**
+ * ── THE SECTOR INDEX: `securityKey` → the sector, by whichever tier placed it ─
+ *
+ * A PROJECTION of `companyExposure` and deliberately not a second resolver. The
+ * three tiers and their order live in exactly one function; this hands back the
+ * half of its answer a caller wants when it is classifying rows of its own
+ * rather than ranking companies.
+ *
+ * It exists because Family & Entities asks the SAME question about a company
+ * that Sector Composition does — what sector is this in — over a DIFFERENT set:
+ * one entity's own positions, valued as that entity's statements print them.
+ * Re-deriving the tiers there would have been a second place for a company to
+ * land in a sector this page puts somewhere else, which is the failure
+ * `companyExposure` itself was extracted for. So the classification is shared
+ * and the VALUES are not: nothing derived crosses over, because the caller looks
+ * up `sector` and never `derived` or `total`.
+ *
+ * THE INDEX IS BUILT OVER THE WHOLE BOOK, not over the caller's subset, for one
+ * measurable reason: tier 3 resolves through the NSE symbol a position carries,
+ * and a company held in two accounts can print it on one row and not the other.
+ * Narrowing the input can therefore only ever place FEWER companies — and a
+ * sector is a property of a COMPANY, so which entity happens to be selected must
+ * not be able to change it.
+ */
+export function companySectorIndex(
+  /** Consolidated COMPANY SHARES — the same set `companyExposure` takes. */
+  positions: Position[],
+  exposure: StockExposureState,
+): Map<string, CompanySector> {
+  const m = new Map<string, CompanySector>();
+  for (const e of companyExposure(positions, exposure)) m.set(e.key, { sector: e.sector, from: e.sectorFrom });
+  return m;
+}
+
 /** The scheme portfolios, memoised: the index must not refetch 20 files per render. */
 const portfolioCache = new Map<string, Promise<FundPortfolio | null>>();
 const loadPortfolio = (schemecode: string): Promise<FundPortfolio | null> => {
