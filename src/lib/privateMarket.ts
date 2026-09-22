@@ -11,19 +11,35 @@
 // import of the book — so the test can also feed a fixture and prove the
 // null-handling, which real data alone cannot do.
 //
-// THE AXIS IS THE ASSET CLASS, NEVER THE ACCOUNT'S ENGAGEMENT. `isPrivateClass`
-// is AIF | Unlisted | Structured Product — what a holding IS (§5). Keying on
+// THE AXIS IS THE HOLDING'S OWN MARKET SIDE, NEVER THE ACCOUNT'S ENGAGEMENT.
+// `isPrivateClass` is `marketSide === "private"` — read from the SEBI category
+// the statements print (`shared/aifCategory.mjs`). Keying on
 // `Account.engagement === "AIF"` instead would be wrong in both directions on
 // this book: three private holdings sit in accounts whose engagement is
 // `Distribution` (both 360 ONE CRNs) or `Direct` (the ICICI NSDL demat row), and
 // both Buoyant accounts carry engagement `AIF` with a cash sleeve row that is
 // not a private holding at all.
 //
+// ── AND IT USED TO BE THE ASSET CLASS, WHICH PUT ₹297.78 Cr HERE WRONGLY ────
+//
+//   "Sanshi, Buoyant and Carnelian. These are not private market investments.
+//    They should come under AIFs. In fact they are already in AIF."
+//
+// Every AIF was private, so this page claimed the Category III folios — open-
+// ended funds trading listed securities, 84% of what it showed. They are on
+// the listed side now and this page does not carry them. What it must NOT do is
+// drop them silently: `pageScopeNote` below names them with their value and
+// says where they are shown, because a reader who knows they hold Sanshi and
+// cannot find it here learns that the dashboard lost it.
+//
 // The one place engagement IS the right key is the opposite question — an
 // account that holds NOTHING, so it has no position to read a class off. That is
 // `unvaluedAccounts`, and it is scoped to `AIF` deliberately.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
+import {
+  sum, sumOrNull, dedupedPositions, isPrivateClass, isUnplacedSide, marketSides,
+  type MarketSideRow,
+} from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 
 /**
@@ -62,6 +78,49 @@ export function privateScope(positions: Position[], accounts: Account[]): Privat
     dedupedRows,
     accounts: inScope,
     doubleCounted: sum(rows.map((p) => p.marketValue)) - sum(dedupedRows.map((p) => p.marketValue)),
+  };
+}
+
+/**
+ * ── WHAT THIS PAGE DOES NOT CARRY, AND WHY ─────────────────────────────────
+ *
+ * The private book is one side of a THREE-way split, so a page scoped to it
+ * leaves out two other sides — and both have to be named with their value or
+ * the page reads as the whole of the family's fund holdings.
+ *
+ * The three figures RECONSTRUCT the consolidated book. That is the claim a
+ * reader acts on and no single figure can make it alone, which is why this
+ * returns the parts rather than a sentence.
+ */
+export type PageScopeNote = {
+  /** Every side of the book, in order, with its own reason. */
+  sides: MarketSideRow[];
+  /** The consolidated book these sides partition. */
+  bookMV: number;
+  /**
+   * AIF HOLDINGS ON THE LISTED SIDE — the funds this page used to claim.
+   * Named, because they are the specific thing the family asked about.
+   */
+  listedFunds: { securities: string[]; mv: number; count: number };
+  /** Holdings no statement places on either side. */
+  unplaced: { securities: string[]; mv: number; count: number };
+};
+
+export function pageScopeNote(positions: Position[]): PageScopeNote {
+  const deduped = dedupedPositions(positions);
+  const pick = (rows: Position[]) => ({
+    securities: [...new Set(rows.map((p) => p.security))].sort(),
+    mv: sum(rows.map((p) => p.marketValue)),
+    count: rows.length,
+  });
+  return {
+    sides: marketSides(deduped),
+    bookMV: sum(deduped.map((p) => p.marketValue)),
+    // Scoped to AIF deliberately: a company share on the listed side is not
+    // something a reader would look for on a private-market page, and listing
+    // every listed holding here would bury the three funds that matter.
+    listedFunds: pick(deduped.filter((p) => p.assetClass === "AIF" && p.marketSide === "listed")),
+    unplaced: pick(deduped.filter(isUnplacedSide)),
   };
 }
 

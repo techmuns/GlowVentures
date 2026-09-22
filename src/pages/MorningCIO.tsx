@@ -8,7 +8,7 @@ import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
-  sum, fundTotals, startupTotals, sumOrNull, publicPrivateSplit, isPrivateClass,
+  sum, fundTotals, startupTotals, sumOrNull, marketSides, isPrivateClass,
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
   costCoversSet, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
 } from "@/lib/analytics";
@@ -362,11 +362,14 @@ export function MorningCIO() {
       + (privateCount ? privateCurrent : 0);
     const costCoversBook = totalValue > 0 && Math.abs(costedMV - totalValue) <= totalValue * 0.005;
     const footerPct = costCoversBook ? gainPct : null;
-    // Asset-class listed/private split, the same rule the rest of the app uses:
-    // the AIF book is private even though the fund-of-funds model is empty. Drives
-    // the NAV caption and the concentration line so neither claims "no private".
-    const pp = publicPrivateSplit(p);
-    const hasPrivateClass = pp.private > 0;
+    // ── THE SIDES OF THE BOOK, in order, each with its own reason ──
+    //
+    // `marketSides` is the one list — see its note in `analytics.ts`. It used
+    // to be a two-field `publicPrivateSplit` rendered as `listed / private`,
+    // and those two percentages stopped summing to 100 the moment a third side
+    // existed: a reader who adds the printed cells and gets 98 has found the
+    // contradiction the allocation footer already cost this page once.
+    const sides = marketSides(p);
 
     // The account registry, read for every question below that asks how an
     // account is RUN — the allocation buckets, and the two sides the
@@ -488,13 +491,6 @@ export function MorningCIO() {
     }
     const bucketRows = rowsByAxis.get("category")!;
     const rowsIn = (key: string) => bucketRows.get(key) ?? [];
-    // The "Book performance — Listed vs private" card must split on ASSET CLASS,
-    // not on the fund-of-funds model. That model (privateMarkets.*) is empty here,
-    // so gating the private card on it labelled the ₹207.65 Cr AIF book as
-    // "Listed". listedBook = non-private classes; privateBook = AIF/Unlisted/etc.
-    const listedBook = eqGroup(p.filter((x) => !isPrivateClass(x)));
-    const privateBook = eqGroup(p.filter(isPrivateClass));
-
     // ── Money-weighted returns, from the book's own dated flows ──
     //
     // Each account's external capital movements (capital register, or the bank
@@ -817,11 +813,10 @@ export function MorningCIO() {
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
       footerPct, costedMV, costCoversBook,
-      pp, hasPrivateClass,
+      sides,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      listedBook, privateBook,
       buckets, bucketsByAxis, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
       measuredMV, xirrExcluded, xirrWindowDays,
       xirrAccounts: listedParts.length,
@@ -1533,19 +1528,38 @@ export function MorningCIO() {
                 <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
                 <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
                 <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
-                  {/* TWO SETS, TWO LINKS. The split is on ASSET CLASS — what a
-                      holding IS — so each half opens its own holdings rather than
-                      one link standing for both and leaving the reader to guess
-                      which half they are about to see. */}
+                  {/* ONE LINK PER SIDE, AND THE LABELS IN THE SAME ORDER AS
+                      THE FIGURES. Each opens the book's own drill-down with
+                      that side selected, so a reader never has to guess which
+                      half they are about to see; the others are one toggle
+                      away. The list is `marketSides`, so a side the book does
+                      not have is in neither the labels nor the percentages —
+                      and the percentages therefore always add to 100. */}
                   <span className="text-slate-400">
-                    <ConcLink to={drilldownHref("book", undefined, "listed")} title="Open the listed half — every holding whose class is not an AIF, an unlisted company or a structured product. It opens the book\u2019s own drill-down with that half selected; the private half is one toggle away.">Listed</ConcLink>
-                    {" / "}
-                    <ConcLink to={drilldownHref("book", undefined, "private")} title="Open the private half — the AIF folios and anything else a manager rather than an exchange marks. It opens the book\u2019s own drill-down with that half selected; the listed half is one toggle away.">Private</ConcLink>
+                    {m.sides.map((x, i) => (
+                      <span key={x.key}>
+                        {i > 0 && " / "}
+                        <ConcLink
+                          to={drilldownHref("book", undefined, x.key)}
+                          title={`${x.why} Opens the book\u2019s own drill-down with this side selected; the others are one toggle away.`}
+                        >{x.label}</ConcLink>
+                      </span>
+                    ))}
                   </span>
-                  <span className="mono text-slate-100">
-                    {m.hasPrivateClass
-                      ? `${(m.pp.listed / m.totalValue * 100).toFixed(0)} / ${(m.pp.private / m.totalValue * 100).toFixed(0)}`
-                      : <span title="Every holding in this book is listed. There is no private-market statement in the drop, so the private share is absent rather than 0%.">100% listed · private {DASH}</span>}
+                  {/* ROUNDED TO WHOLE POINTS, so three shares of 92.32 / 5.33
+                      / 2.35 print as 92 / 5 / 2 and add to 99. The hover
+                      carries each side to one decimal AND its rupee figure, so
+                      a reader who adds the printed cells and comes up short can
+                      see why without leaving the row. Nothing is re-based to
+                      force a 100: a percentage this book prints is its own
+                      rounded value, never one adjusted to make a row tidy. */}
+                  <span className="mono text-slate-100"
+                    title={m.sides.length === 0 ? undefined
+                      : `${m.sides.map((x) => `${x.label} ${(x.value / m.totalValue * 100).toFixed(1)}% (${fmtFromBase(x.value, { compact: true })})`).join(" · ")}`
+                        + ". Rounded to whole points above, so they may add to 99 or 101."}>
+                    {m.sides.length === 0
+                      ? <span title="No holding in this book carries a value, so there is no split to strike.">{DASH}</span>
+                      : m.sides.map((x) => (m.totalValue ? (x.value / m.totalValue * 100).toFixed(0) : "0")).join(" / ")}
                   </span>
                 </div>
                 <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
@@ -1579,11 +1593,16 @@ export function MorningCIO() {
             half. Every one of those figures is still on this page and still
             derived — invested and current value per bucket in the allocation
             table, the money-weighted return in its own KPI tile with its own
-            coverage line, and the listed/private split in the Current Value of Holdings
-            tile and on Concentration & risk, which links each half to the
-            holdings behind it. So this is a LAYOUT removal and not a measurement
-            one, and `publicPrivateSplit`, `listedBook`, `privateBook` and
-            `listedTotalReturn` in the model above still feed those surfaces.
+            coverage line, and the sides of the book on Concentration & risk,
+            which links each to the holdings behind it. So this is a LAYOUT
+            removal and not a measurement one, and `marketSides` in the model
+            above still feeds that row.
+
+            `listedBook` and `privateBook` were named here too and fed NOTHING —
+            this card was their only reader and they outlived it. A local that
+            carries the right number into no caller is the failure this repo
+            keeps naming, and they were the pair whose meaning silently changed
+            when the split stopped being a class list, so they are gone.
 
             `check:pages` asserts the card STAYS gone AND that the figures it
             carried are still reachable — a removal is verified by asserting it

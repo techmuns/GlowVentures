@@ -96,3 +96,60 @@ export function stalenessNote(portfolio: Portfolio): string | null {
   const more = stale.length > 4 ? ` and ${stale.length - 4} more` : "";
   return `${stale.length} of ${portfolio.accounts.length} accounts are older than the book's ${portfolio.asOf}: ${names}${more}. The oldest is ${worst.daysBehind} days behind, so any consolidated total below blends report dates.`;
 }
+
+// ── THE ACCOUNTS AN ENTITY HOLDS THAT THIS BOOK CANNOT VALUE ────────────────
+//
+//   "Bharat Jaisinghani Trust looks empty on holdings, so check that as well
+//    since the client has provided half of the statements already."
+//
+// The trusts' entity page listed ONE holding, and the trusts hold three
+// accounts. The other two are a Sky Capital angel-fund folio, whose statement
+// reports units and the capital drawn against a commitment and NO NAV anywhere,
+// and an HDFC Bank NSDL custody account holding 347 unlisted preference shares
+// the depository records at their FACE VALUE, which is not a mark. Neither
+// yields a valued position, so neither stood in any table — and a page reading
+// "1 position · ₹1.71 Cr" over a trust with three funded accounts tells a reader
+// the other two do not exist.
+//
+// THIS IS THE STANDING RULE, NOT A NEW ONE: a figure that exists for SOME
+// accounts is shown for those and THE REST ARE NAMED. It had simply never been
+// applied per entity, because the surface that names them — Private Market's
+// own unvalued card — is scoped to `engagement === "AIF"` and a custody account
+// is `Direct`. Here the axis is the ENTITY, so the scope is every account it
+// owns.
+//
+// ── AND THE MONEY IS DELIBERATELY NOT ADDED TO ANYTHING ─────────────────────
+//
+// `drawn` is what was PAID into a fund, not what the stake is WORTH. Summed
+// into an entity's NAV it would report a valuation nobody struck, which is the
+// fabrication rule applied to a drawdown fund. It is stated per account, under
+// its own heading, and in no total on the page.
+
+export type UnvaluedHolding = {
+  account: Account;
+  /** Why no position stands for it — the account's own generated reason. */
+  reason: string | null;
+  /** Capital called to date, where a statement prints one. NEVER summed into a value. */
+  drawn: number | null;
+};
+
+/**
+ * Every account belonging to `owner` that carries no position in this book.
+ *
+ * Takes the commitments so a folio that has swallowed real money can say how
+ * much; an account with none reports `null` rather than 0, because a fund that
+ * publishes no capital account has not told us it called nothing.
+ */
+export function unvaluedHoldingsOf(
+  owner: string,
+  accounts: readonly Account[],
+  positions: readonly Position[],
+  commitments: readonly { accountId?: string | null; drawn?: number | null }[] = [],
+): UnvaluedHolding[] {
+  const held = new Set(positions.map((p) => p.accountId));
+  const drawnBy = new Map(commitments.map((c) => [c.accountId ?? "", c.drawn ?? null]));
+  return accounts
+    .filter((a) => a.owner === owner && !held.has(a.accountId))
+    .map((a) => ({ account: a, reason: a.noPositionsReason ?? null, drawn: drawnBy.get(a.accountId) ?? null }))
+    .sort((x, y) => (y.drawn ?? 0) - (x.drawn ?? 0) || x.account.provider.localeCompare(y.account.provider));
+}

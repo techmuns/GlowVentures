@@ -63,32 +63,103 @@ export const doubleCountedValue = (positions: Position[]) =>
   sum(positions.map((p) => p.marketValue)) - consolidatedMarketValue(positions);
 
 /**
- * PUBLIC vs PRIVATE, over any subset of positions — the split `BOOK_SUMMARY`
- * carries family-wide, computed the same way for one member's rows.
+ * ── LISTED vs PRIVATE vs NOT PLACED, over any subset of positions ───────────
  *
- * The class list mirrors `PRIVATE_CLASSES` in `scripts/build-book.mjs` exactly.
- * It has to: two sites computing the same split from different rules is how a
- * page ends up disagreeing with the book it renders, and this one did — the
- * Family Dashboard labelled the WHOLE ₹335.43 Cr "Public (listed)" and rendered
- * private as absent with the reason "no private-market holding in this book",
- * while `BOOK_SUMMARY.privateValue` read ₹207.65 Cr. That reason was true of an
- * earlier drop and false from the moment the AIF statements got a reader — the
- * same stale premise CLAUDE.md records being corrected once already, reasserted
- * on a new page.
+ * The split `BOOK_SUMMARY` carries family-wide, computed the same way for one
+ * member's rows. It reads `Position.marketSide`, which `build-book` GENERATES
+ * through `shared/aifCategory.mjs` — so the book, this app and the AIF
+ * drill-down's own sections all answer from one rule.
  *
- * `privateValue` is NOT `total − listed`: a class this list does not name would
- * then silently become private. Both sides are summed from the positions.
+ * ── WHY IT IS NOT A CLASS LIST ANY MORE ─────────────────────────────────────
+ *
+ * It was `PRIVATE_CLASSES = {AIF, Unlisted, Structured Product}`, mirroring
+ * `build-book`'s own set. Two sites computing one split from two copies of a
+ * rule is how a page disagrees with the book it renders, and that mirroring was
+ * the right fix for THAT failure — but the rule itself was wrong, and being
+ * wrong in both places is not an improvement.
+ *
+ * Every AIF was private capital. That was true of the AIFs the book held when
+ * it was written and false from the drop that brought the Category III folios:
+ * **₹297.78 Cr — 84% of the private half — is Sanshi, Buoyant and Carnelian
+ * Bharat Amritkaal**, open-ended funds trading LISTED securities. The family
+ * said so in as many words: *"these are not private market investments."*
+ *
+ * The stated principle did not survive its own book either. The old comment
+ * called the axis "a mark from an exchange vs a mark from a manager" — and a
+ * MUTUAL FUND's NAV comes from its AMC and counted as listed, while a Category
+ * III AIF's came from its manager and counted as private. Same shape, opposite
+ * sides. The axis was never the mark; it was `assetClass === "AIF"` standing in
+ * for private capital.
+ *
+ * ── AND `null` IS A THIRD ANSWER, NEVER A DEFAULT ───────────────────────────
+ *
+ * Three funds here print no SEBI category (₹16.69 Cr). Putting them on either
+ * side is a claim no document makes, so the split returns all three and NONE is
+ * `total − the others` — a residual absorbs whatever a rule stops naming.
  */
-const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
+export const isPrivateClass = (p: Position) => p.marketSide === "private";
 
-export const isPrivateClass = (p: Position) => PRIVATE_CLASSES.has(p.assetClass);
+/**
+ * Holdings no statement places on either side. Named wherever the other two are
+ * printed, with their value — an unnamed third bucket is a page whose own
+ * figures do not add up.
+ */
+export const isUnplacedSide = (p: Position) => (p.marketSide ?? null) === null;
 
-export function publicPrivateSplit(positions: Position[]): { listed: number; private: number } {
+export function publicPrivateSplit(
+  positions: Position[],
+): { listed: number; private: number; unplaced: number } {
   const rows = dedupedPositions(positions);
   return {
-    listed: sum(rows.filter((p) => !isPrivateClass(p)).map((p) => p.marketValue)),
+    listed: sum(rows.filter((p) => p.marketSide === "listed").map((p) => p.marketValue)),
     private: sum(rows.filter(isPrivateClass).map((p) => p.marketValue)),
+    unplaced: sum(rows.filter(isUnplacedSide).map((p) => p.marketValue)),
   };
+}
+
+/**
+ * ── THE SIDES, AS AN ORDERED LIST, so no surface can forget one ─────────────
+ *
+ * Four places print this split — the Data Refresh tile and its coverage rows,
+ * Upload History's snapshot line, and Morning CIO's concentration row — and
+ * each renders it differently (compact money, list rows, percentages). What
+ * they must NOT do differently is decide which sides exist: two of them read
+ * `Listed X · Private Y`, and the moment a third side existed those two
+ * captions stopped adding to the total printed beside them, which is the
+ * contradiction a reader finds by adding.
+ *
+ * So the SET is defined once and each caller renders it. A side with no rows is
+ * left out — a `₹0 private` claims a private book worth nothing, which is the
+ * failure Upload History's own comment already records — and every caller can
+ * therefore print `sides.length` terms without checking for emptiness itself.
+ */
+export type MarketSideRow = {
+  key: "listed" | "private" | "unplaced";
+  label: string;
+  value: number;
+  /** Why this side is what it is, for the hover on the figure. */
+  why: string;
+};
+
+export function marketSides(positions: Position[]): MarketSideRow[] {
+  const s = publicPrivateSplit(positions);
+  return ([
+    {
+      key: "listed", label: "Listed", value: s.listed,
+      why: "Money invested in listed markets — company shares, mutual funds, ETFs, cash, and the"
+        + " Category III AIFs whose own statements say they trade listed securities.",
+    },
+    {
+      key: "private", label: "Private", value: s.private,
+      why: "Private capital — unlisted holdings, structured products, and the AIFs whose statements"
+        + " print Category I or II or name their own discipline as private equity or venture.",
+    },
+    {
+      key: "unplaced", label: "Not placed", value: s.unplaced,
+      why: "No statement for these funds prints a SEBI category, so this book places them on neither"
+        + " side. They are in the total and on neither half of it.",
+    },
+  ] as MarketSideRow[]).filter((r) => r.value !== 0);
 }
 
 /**
@@ -96,10 +167,10 @@ export function publicPrivateSplit(positions: Position[]): { listed: number; pri
  * company. THIS IS THE AXIS `isPrivateClass` DOES NOT ANSWER, and conflating
  * the two is what put fund units into this book's company-level views.
  *
- * `isPrivateClass` splits the book by how a holding is VALUED — a mark from an
- * exchange vs a mark from a manager. That is the right axis for "listed vs
- * private" and the wrong one for "is this a company". A mutual fund is marked
- * daily at a published NAV, so it is not private; it is also not a company, and
+ * `isPrivateClass` splits the book by WHERE THE MONEY IS INVESTED — listed
+ * markets or private capital, read from the SEBI category the statements print.
+ * That is the right axis for "listed vs private" and the wrong one for "is this
+ * a company": a Category III AIF is listed exposure and is still a fund, and
  * it has no GICS sector, no market cap, no NSE symbol, no P&L statement and no
  * concall. Every surface that asks a COMPANY question — a sector table, a
  * market-cap band, a stock page, a news search, a peer comparison — must key on

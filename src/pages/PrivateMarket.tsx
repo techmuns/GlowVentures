@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Handshake, Landmark, Wallet, TrendingUp, Fuel, Coins, Banknote, HelpCircle, CalendarClock, Layers, Users, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -14,11 +15,13 @@ import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
-import { sum, sumOrNull, consolidatedMarketValue, currentHoldings, excludedClasses, isPrivateClass, assetClassLabel } from "@/lib/analytics";
+import { sum, sumOrNull, consolidatedMarketValue, currentHoldings } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
+  pageScopeNote,
 } from "@/lib/privateMarket";
 import { schemeCalls, callTotals, callHistory, callWindows } from "@/lib/capitalCalls";
+import { MARKET_SIDE_UNPLACED } from "@/lib/aifCategory";
 import { weightFormula } from "@/lib/auditFormulas";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 
@@ -55,17 +58,38 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
 // when the truth is there was nothing to measure. Nothing here touches those
 // arrays or `src/lib/privateValue.ts`; their absence is NAMED, in the last card.
 //
-// What it carries instead is what the statements report: 14 funds across 29
-// accounts, the 15 capital accounts behind them, the ₹18.23 Cr of capital the
-// family has PAID into funds that publish no valuation at all, and the AIF income
-// split by tax head. The Monitor's AIF section shows the folios that have a mark;
-// nothing anywhere else in this app shows the money that has none.
+// What it carries instead is what the statements report: the private funds, the
+// capital accounts behind them, the ₹18.23 Cr of capital the family has PAID
+// into funds that publish no valuation at all, and the AIF income split by tax
+// head. The Monitor's AIF section shows the folios that have a mark; nothing
+// anywhere else in this app shows the money that has none.
 //
-// ── THE AXIS IS THE ASSET CLASS ─────────────────────────────────────────────
+// ── THE AXIS IS THE HOLDING'S OWN MARKET SIDE ───────────────────────────────
 //
-// `isPrivateClass`, never `Account.engagement`. See the note at the top of
-// `src/lib/privateMarket.ts`: on this book keying on engagement would drop three
-// real private holdings and pull in two cash sleeves.
+// `isPrivateClass` — which is `marketSide === "private"`, read from the SEBI
+// category the statements print — and never `Account.engagement`. See the note
+// at the top of `src/lib/privateMarket.ts`: on this book keying on engagement
+// would drop three real private holdings and pull in two cash sleeves.
+//
+// ── AND THE CATEGORY III FOLIOS ARE NOT ON IT ───────────────────────────────
+//
+//   "Sanshi, Buoyant and Carnelian. These are not private market investments."
+//
+// They were, because the axis was the asset class and every AIF was private.
+// A Category III AIF is a fund trading LISTED securities, so it is listed
+// exposure held through a fund — which is what the family's own consolidated
+// review calls all three, independently: `Equity`. They are on the listed side
+// now, still AIFs, still in the Monitor's AIF section, and NAMED on this page
+// in "Funds this page does not carry" so nobody has to discover their absence.
+//
+// ── THE CAPITAL-ACCOUNTS CARDS ARE DELIBERATELY NOT SCOPED THIS WAY ─────────
+//
+// They read `portfolio.commitments` whole. A drawdown structure — you commit,
+// the fund calls — is a fact about how an account FUNDS ITSELF, not about where
+// it invests, and one Category III fund here (Carnelian Bharat Amritkaal) has a
+// real capital account with ₹15 Cr called against it. Scoping those cards to
+// the private side would drop a capital account that exists, which is the
+// opposite of what this page is for. The cards say what they cover.
 //
 // ── AND THE WHOLE OF THIS BOOK'S DOUBLE COUNT IS PRIVATE ────────────────────
 //
@@ -268,7 +292,23 @@ export function PrivateMarket() {
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
       dates,
-      excluded: excludedClasses(scope.dedupedRows.length ? portfolio.positions.filter(() => true) : [], isPrivateClass),
+      /**
+       * WHAT THIS PAGE DOES NOT CARRY, on the SIDE axis rather than the class
+       * one. Grouped by `assetClass` this read "Not on this page: AIF ₹314 Cr"
+       * over a page whose every row is an AIF — a contradiction a reader finds
+       * in one glance, because the class is no longer what decides.
+       */
+      scopeNote: pageScopeNote(currentHoldings(portfolio.positions)),
+      /**
+       * CAPITAL ACCOUNTS OUTSIDE THE PRIVATE SCOPE — measured, never assumed.
+       * A drawdown structure is how an account funds itself and not where it
+       * invests, so these cards cover every capital account the statements
+       * publish while the tables above cover the private side. The two sets
+       * overlap and neither contains the other; this is the size of the gap.
+       */
+      capOutside: commitments.filter(
+        (c) => c.accountId && !scope.accounts.some((a) => a.accountId === c.accountId),
+      ).length,
       owned: new Set(portfolio.positions.map((p) => p.accountId)),
     };
   }, [portfolio]);
@@ -412,7 +452,19 @@ export function PrivateMarket() {
     {
       id: "uncalled", label: "Still to call (uncalled capital)", icon: <Fuel className="h-4 w-4" />,
       value: <span className="text-amber-400">{money(m.ct.undrawn)}</span>,
-      sub: `across ${m.ct.count} of this page's ${m.scope.accounts.length} private accounts · the rest send no capital account, so this is a floor`,
+      /**
+       * TWO COUNTS FROM TWO SETS, AND THE CAPTION MUST NOT MAKE ONE A FRACTION
+       * OF THE OTHER. This read `${m.ct.count} of this page's ${...} private
+       * accounts` — which was true while the page carried every AIF and stopped
+       * being true the moment it stopped: three of the capital accounts belong
+       * to funds shown elsewhere (a Category III fund with a real drawdown
+       * structure, and two the statements place on neither side), so 15 is not
+       * a subset of 18 and a reader who reads it as one is reading a fraction
+       * that does not exist.
+       */
+      sub: `across ${m.ct.count} capital accounts`
+        + (m.capOutside > 0 ? `, ${m.capOutside} of them in funds this page does not carry` : "")
+        + ` · a fund whose capital account nobody sent contributes nothing, so this is a floor`,
       hint: "Money promised to these funds that they have not yet asked for. A bill that can arrive any day — not an asset, and in no total on this page.",
     },
     /* ── COMMITTED vs CALLED vs INVESTED — three figures, not two ────────────
@@ -528,7 +580,16 @@ export function PrivateMarket() {
     {
       id: "accounts", label: "Capital accounts", icon: <Landmark className="h-4 w-4" />,
       value: fmtNum(m.ct.count),
-      sub: `of this page's ${m.scope.accounts.length} private accounts send one`,
+      /**
+       * AND THE SAME CROSSED FRACTION THE UNCALLED TILE WAS FIXED FOR, ON THIS
+       * TILE. It read `${m.ct.count} of this page's ${...} private accounts` —
+       * 15 of 18 — while three of those 15 belong to funds this page does not
+       * carry, so 15 is not a subset of 18 and the "other 3" a reader infers
+       * does not exist. The two counts PARTITION the tile's own figure now,
+       * which is the only form in which both can be printed together.
+       */
+      sub: `${m.ct.count - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
+        + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds this page does not carry` : ""),
       hint: "A capital account is the statement that prints a commitment and what has been called against it. The rest report a holding and no commitment.",
     },
     {
@@ -550,13 +611,6 @@ export function PrivateMarket() {
       hint: "Not the consolidated figure. Use it to tie this page to the statements one by one; the Private market value tile counts each holding once.",
     },
   ];
-
-  const excludedRest = excludedClasses(
-    // The remainder is named against the same deduped set the private total is
-    // struck on, so the two reconstruct the consolidated NAV exactly.
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    (portfolio.positions), isPrivateClass,
-  );
 
   return (
     <div>
@@ -921,11 +975,6 @@ export function PrivateMarket() {
                 {m.scope.dedupedRows.length - m.costedCount === 1 ? " row reports" : " rows report"} a value and no cost.
               </p>
             )}
-            {excludedRest.length > 0 && (
-              <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                Not on this page: {excludedRest.map((c) => `${assetClassLabel(c.key)} ${money(c.mv)} (${c.count})`).join(" · ")}.
-              </p>
-            )}
           </>
         )}
 
@@ -974,6 +1023,24 @@ export function PrivateMarket() {
             </p>
           </>
         )}
+        {/* ── WHICH SIDE OF THE BOOK THIS PAGE IS — ON EVERY VIEW ──────────
+            One line per side the book has, so the figures rebuild the
+            consolidated total, and the card below names WHICH funds are on the
+            other two and where they are shown: a reader who knows they hold
+            Sanshi must not have to work out that a page headed "Private Market"
+            is no longer the place to look.
+
+            AND IT SITS OUTSIDE THE THREE VIEWS. It is a claim about the PAGE,
+            not about one of its tables, and drawn inside the `funds` branch it
+            was absent the moment a reader switched to `folios` or `owners` —
+            which is the state `check:pages` walks and the defect it caught. */}
+        {m.scopeNote.sides.length > 1 && (
+          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+            This page is the private side of the book:{" "}
+            {m.scopeNote.sides.map((x) => `${x.label} ${money(x.value)}`).join(" · ")}
+            {" "}· Total {money(m.scopeNote.bookMV)}.
+          </p>
+        )}
       </Card>
 
       {/* ── Card C — THE CAPITAL-CALL TIMELINE ────────────────────────────────
@@ -995,6 +1062,60 @@ export function PrivateMarket() {
           the card instead is what the statements do carry — what is called and
           unpaid TODAY, what is promised and unscheduled, and 52 dated calls
           showing exactly when each fund has asked before. */}
+      {/* ── THE FUNDS THIS PAGE DOES NOT CARRY, AND WHERE THEY ARE SHOWN ──
+          *
+          *   "Sanshi, Buoyant and Carnelian. These are not private market
+          *    investments. They should come under AIFs. In fact they are
+          *    already in AIF."
+          *
+          * They were on this page, and they are not private capital: their own
+          * statements say Category III, which is the SEBI category for funds
+          * trading LISTED securities. They are on the listed side now.
+          *
+          * DROPPING THEM SILENTLY WOULD BE THE WORSE HALF OF THE FIX. A reader
+          * who knows the family hold Sanshi and cannot find it on the page
+          * headed "Private Market" learns that the dashboard lost it — the same
+          * failure as a ₹0 where a figure should be. So they are NAMED here,
+          * with their value and the page that does carry them, and the third
+          * side is named beside them with the reason no side claims it. */}
+      {(m.scopeNote.listedFunds.count > 0 || m.scopeNote.unplaced.count > 0) && (
+        <Card className="mt-5" title="Funds this page does not carry"
+          subtitle="Every one of these is still in the book and still an AIF. What changed is which side of the listed/private split the statements place it on.">
+          <ul className="space-y-3 text-sm">
+            {m.scopeNote.listedFunds.count > 0 && (
+              <li data-pm-elsewhere="listed">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-slate-300">Category III AIFs — listed markets</span>
+                  <span className="mono text-slate-100">{money(m.scopeNote.listedFunds.mv)}</span>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                  {m.scopeNote.listedFunds.securities.join(" · ")}.{" "}
+                  {m.scopeNote.listedFunds.count === 1 ? "This fund's" : "These funds’"} own
+                  {" "}statements print <span className="text-slate-400">Category III</span>, the SEBI category
+                  for funds that trade listed securities — so they are listed exposure held through a fund,
+                  not private capital. They are in the <Link className="underline decoration-dotted underline-offset-2 hover:text-champagne-400" to="/monitor">Portfolio Monitor’s AIF section</Link>
+                  {" "}and in the listed half of the Current Value of Holdings, exactly as they were.
+                </p>
+              </li>
+            )}
+            {m.scopeNote.unplaced.count > 0 && (
+              <li data-pm-elsewhere="unplaced">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-slate-300">Placed on neither side</span>
+                  <span className="mono text-slate-100">{money(m.scopeNote.unplaced.mv)}</span>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                  {m.scopeNote.unplaced.securities.join(" · ")}. {MARKET_SIDE_UNPLACED}. Putting them here
+                  would claim they are private capital and putting them on the listed side would claim the
+                  opposite, and no document in this archive says either. Each fund’s own SEBI registration,
+                  or its contribution agreement, settles one of them.
+                </p>
+              </li>
+            )}
+          </ul>
+        </Card>
+      )}
+
       <Card className="mt-5" title="Capital-call timeline"
         subtitle={m.asOfCalls
           ? `Windows run from ${fmtDate(m.asOfCalls)}, the newest capital-account date here — the date these balances are struck at, not today.`
@@ -1064,7 +1185,7 @@ export function PrivateMarket() {
           answers "how are you calculating this": committed − called against the
           uncalled figure the fund itself prints. */}
       <Card className="mt-5" pad={false} title="Scheme by scheme: committed, called, invested and still to call"
-        subtitle="Every drawdown fund's own capital account. Each figure is read off the line that fund's statement labels, and the check column sets the printed uncalled figure against committed − called."
+        subtitle="EVERY fund in this book that calls capital against a commitment, whether it invests in listed markets or in private capital — a drawdown structure is how an account funds itself, not where it invests, so these cards are not scoped to the private side above. Each figure is read off the line that fund's statement labels, and the check column sets the printed uncalled figure against committed − called."
         right={<Pill tone="info">{m.cc.count} capital accounts</Pill>}>
         {m.commitments.length === 0 ? (
           <div className="p-5">
@@ -1211,9 +1332,13 @@ export function PrivateMarket() {
                 and can still call money tomorrow. */}
             <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11.5px] leading-relaxed text-slate-500">
               <span className="text-slate-300">This is every capital account in the book and not every commitment the family has.</span>{" "}
-              {m.cc.count} of this page&rsquo;s {m.scope.accounts.length} private accounts send a capital-account statement; the
-              other {m.scope.accounts.length - m.cc.count} report a holding, an income split or nothing at all, and a commitment
-              behind one of those is invisible here. The family&rsquo;s own investment register names further
+              {m.cc.count - m.capOutside} of this page&rsquo;s {m.scope.accounts.length} private accounts send a
+              capital-account statement; the other {m.scope.accounts.length - (m.cc.count - m.capOutside)} report a holding,
+              an income split or nothing at all, and a commitment behind one of those is invisible here.
+              {m.capOutside > 0 && (
+                <> The table above also carries {m.capOutside} capital account{m.capOutside === 1 ? "" : "s"} from
+                funds this page does not carry, which is why its row count is higher than that first figure.</>
+              )} The family&rsquo;s own investment register names further
               funds with no statement in this book at all — see Register. So {money(m.cc.uncalled)} is the floor
               of what can still be called, never the ceiling, and a closing statement from each of those funds is
               what would settle it.

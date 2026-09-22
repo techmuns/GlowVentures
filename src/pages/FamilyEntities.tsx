@@ -16,13 +16,13 @@ import {
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
-import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
+import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
-import { AbsentCell, AbsentSection } from "@/components/Absent";
+import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -342,6 +342,17 @@ export function FamilyEntities() {
   // the breakdown table above, which is struck the same way.
   const selRows = selected ?? [];
   const selMV = sum(selRows.map((x) => x.marketValue));
+  /**
+   * THE ACCOUNTS THIS ENTITY HOLDS THAT YIELD NO VALUED POSITION — see the card
+   * at the foot of the page, and `unvaluedHoldingsOf`'s own note.
+   *
+   * Scoped to a SELECTED entity. Across all entities it would be a list of 15
+   * accounts belonging to five different people, which answers nobody's
+   * question; the per-entity list is the one a reader looking at a trust needs.
+   */
+  const unvalued = selected
+    ? unvaluedHoldingsOf(scope, portfolio.accounts, portfolio.positions, portfolio.commitments ?? [])
+    : [];
   /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
@@ -986,6 +997,62 @@ export function FamilyEntities() {
               </table>
             </div>
           </Card>
+
+          {/* ── THE ACCOUNTS THIS ENTITY HOLDS THAT THE BOOK CANNOT VALUE ──
+              *
+              *   "Bharat Jaisinghani Trust looks empty on holdings, so check
+              *    that as well since the client has provided half of the
+              *    statements already."
+              *
+              * The trusts hold three accounts each and ONE of them yields a
+              * valued position, so the table above listed one row and the page
+              * said nothing about the other two — a Sky Capital angel folio
+              * whose fund publishes no NAV, and an HDFC Bank custody account
+              * holding 347 unlisted preference shares the depository records at
+              * FACE VALUE, which is not a mark.
+              *
+              * Both statements are IN HAND. Drawing nothing for them is right;
+              * saying nothing about them is not, and that is the difference
+              * between a measured absence and a missing one. 15 accounts across
+              * 5 entities are in this state, so every entity page gains it.
+              *
+              * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
+              * says so: it is what was PAID, never what the stake is worth. */}
+          {unvalued.length > 0 && (
+            <Card className="mt-5" title={`${scope} — held, and not valued here`}
+              subtitle={<>{unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} {scope} holds
+                {unvalued.length === 1 ? " reports" : " report"} a holding that no statement in this book puts a
+                value on, so {unvalued.length === 1 ? "it stands" : "they stand"} in no table above. What each one
+                holds, and why it carries no figure:</>}>
+              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length}>
+                {unvalued.map((u) => (
+                  <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-300">
+                        {u.account.provider}
+                        <span className="text-slate-500"> · {u.account.accountNo}</span>
+                      </span>
+                      {/* PAID IN, never a value — and absent where no statement
+                          prints one, because a fund that publishes no capital
+                          account has not told us it called nothing. */}
+                      <span className="mono text-slate-400 whitespace-nowrap">
+                        {u.drawn == null
+                          ? <span title="No statement for this account prints a capital account, so what has been paid into it is not reported here.">{DASH}</span>
+                          : <span title="Capital called to date, as this fund's own statement prints it. What was PAID, not what the stake is worth — it is in no total on this page.">{money(u.drawn)} paid in</span>}
+                      </span>
+                    </div>
+                    {u.reason && (
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{u.reason}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 border-t border-dashed border-ink-700 pt-3 text-[11px] leading-relaxed text-slate-500">
+                None of these figures is in the {money(selMV)} above. A contribution is what was paid into a fund,
+                not what the holding is worth, and adding the two would report a valuation nobody struck.
+              </p>
+            </Card>
+          )}
         </>
       )}
     </div>
