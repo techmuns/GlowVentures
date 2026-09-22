@@ -8,7 +8,7 @@ book total, and it is deliberately NOT a statement about what the family's
 own demat reports — that distinction is the whole design and is set out at
 the top of `scripts/build-polycab-live.mjs`.
 
-Retrieved `2026-09-22T04:09:20.027Z`.
+Retrieved `2026-09-22T15:56:39.171Z`.
 
 ## Identity — the gate everything else passed
 
@@ -70,13 +70,13 @@ ONE witness (screener prints no pledge row for this scrip) and is published as s
 
 | | |
 | --- | ---: |
-| Last traded | 8411.2 |
+| Last traded | 8354 |
 | Previous close | 8375 |
-| Day change | 36.20000000000073 (0.43%) |
-| Open / high / low | 8376.65 / 8441.25 / 8376.65 |
+| Day change | -21 (-0.25%) |
+| Open / high / low | 8376.65 / 8441.25 / 8343 |
 
 The day change is DERIVED as last-traded less previous close, and checked against
-the exchange's own printed `36.2`. Both are shown because a level
+the exchange's own printed `-21`. Both are shown because a level
 differenced against its OWN session prints a plausible near-zero, which is a defect
 this repo has already paid for once on the index strip.
 

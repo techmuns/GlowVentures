@@ -146,7 +146,52 @@ function bookArray(src, name) {
   if (start < 0) return null;
   const end = src.indexOf("\n];", start);
   if (end < 0) return null;
-  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+  let out;
+  try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER.
+  return name === "BOOK_POSITIONS" ? withPublishedNavs(out) : out;
+}
+
+/**
+ * ── THE PUBLISHED NAV, RE-EXPRESSED ────────────────────────────────────────
+ *
+ * `PortfolioContext` overlays AMFI's daily NAV onto every fund it may value, so
+ * a page renders ₹713.18 Cr where `glowData.ts` says ₹710.39 Cr. Thirty
+ * derivations in this file read `BOOK_POSITIONS` and reconcile their answer
+ * against a RENDERED figure; left on the statement basis, every partition check
+ * in the file compares two different books and eleven of them failed against
+ * pages that were right.
+ *
+ * Applied HERE rather than at each call site, because thirty patches is thirty
+ * chances to miss one — and a missed one fails loudly rather than silently,
+ * which is the only reason that trade is safe.
+ *
+ * RE-EXPRESSED AND NEVER IMPORTED from `src/lib/fundNavs.ts`, on the same terms
+ * as `isMandateHeld` and `NAV_MOVERS_BOOK`: a check that calls the helper it is
+ * checking agrees with it by construction. The two agreeing is the measurement.
+ * Only the fields a price may move are touched — §6, the same rule the overlay
+ * itself is held to, asserted field by field in `fundNavs.test.ts`.
+ */
+function withPublishedNavs(positions) {
+  let by;
+  try {
+    const nsrc = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+    const i = nsrc.indexOf("export const BOOK_FUND_NAVS");
+    const a = nsrc.indexOf("= [", i), b = nsrc.indexOf("\n];", a);
+    by = new Map(JSON.parse(nsrc.slice(a + 2, b + 2))
+      .filter((e) => e.usableForValue).map((e) => [e.securityKey, e]));
+  } catch { return positions; }   // no store committed — the pages render the same
+  return positions.map((p) => {
+    const e = by.get(p.securityKey);
+    if (!e || !(e.nav > 0) || !(Number(p.quantity) > 0)) return p;
+    const marketValue = Number(p.quantity) * e.nav;
+    const cost = p.costBasis;
+    const costNA = !!p.costUnavailable || !(typeof cost === "number" && cost > 0);
+    const unrealizedPnL = costNA ? p.unrealizedPnL : marketValue - cost;
+    return { ...p, currentPrice: e.nav, marketValue, unrealizedPnL,
+      returnPct: costNA || unrealizedPnL === null ? p.returnPct : (unrealizedPnL / cost) * 100,
+      navPriced: true, navDate: e.date };
+  });
 }
 
 /** The same, for a generated OBJECT literal (`BOOK_POSITION_TRANCHES`). */
@@ -1828,6 +1873,105 @@ const CAGR_KEY = (() => {
   } catch { return null; }
 })();
 
+/**
+ * The rupee figures in a rendered string, as NUMBERS.
+ *
+ * COMPARED NUMERICALLY AND NEVER AS DIGIT STRINGS, which the first draft of
+ * these checks did and which failed three invariants against a page that was
+ * right: `Intl` renders ₹151.10 where the page's own `price()` renders ₹151.1,
+ * so "151.10" !== "151.1" while the two are the same mark. Anchored on the ₹ so
+ * a date in the same sentence cannot be read as a price.
+ */
+const rupees = (s) => [...String(s ?? "").matchAll(/₹\s*(\d[\d,]*(?:\.\d+)?)/g)]
+  .map((m) => Number(m[1].replace(/,/g, ""))).filter(Number.isFinite);
+/** Same mark, at the 2dp the page prints — its own precision, not a widened one. */
+const sameMark = (a, b) => Math.abs(a - b) < 0.005;
+
+/**
+ * THE HOLDING WHOSE STATEMENTS DISAGREE ON THE MARK — derived, never typed.
+ *
+ * `/stock/:securityKey` printed `rows[0].currentPrice` as THE price of a
+ * holding several statements report, and 10 of this book's 213 securities are
+ * marked at figures that render DIFFERENTLY: Gland Pharma at ₹2,667.30 and
+ * ₹2,502.90, DSP Gold at ₹151.10 and ₹141.24, HELIOS FCF at ₹14.18 and ₹15.74.
+ * One of those is §3 working as designed (two statements ten days apart) and
+ * two are the extractor join `docs/BOOK-REPORT.md` already names — the page
+ * must not assert either, and before this it asserted the first row's.
+ *
+ * RE-EXPRESSED HERE rather than imported from `StockInfo`, on the same terms as
+ * `isMandateHeld` and `NAV_MOVERS_BOOK`: a check that calls the helper it is
+ * checking agrees with it by construction. The two agreeing is the measurement.
+ *
+ * The rounding matches what the page can SHOW — two marks it would print
+ * identically are one figure to a reader, and two it prints differently are
+ * genuinely two — so this is the page's own printing precision reproduced and
+ * never a tolerance widened until the figures fit. Largest by value, so the
+ * next drop picks its own worst case.
+ */
+const CMP_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const show = (n) => new Intl.NumberFormat("en-IN",
+      { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
+    const by = new Map();
+    for (const p of positions) {
+      if (!by.has(p.securityKey)) by.set(p.securityKey, []);
+      by.get(p.securityKey).push(p);
+    }
+    const split = [], unmarked = [];
+    for (const [key, ps] of by) {
+      const marks = [...new Set(ps.map((x) => x.currentPrice)
+        .filter((v) => typeof v === "number" && Number.isFinite(v)).map(show))];
+      const mv = ps.reduce((a, x) => a + (Number(x.marketValue) || 0), 0);
+      if (marks.length > 1) split.push({ key, marks, mv });
+      if (marks.length === 0) unmarked.push({ key, mv });
+    }
+    split.sort((a, b) => b.mv - a.mv);
+    unmarked.sort((a, b) => b.mv - a.mv);
+    /**
+     * THE LARGEST HOLDING THE PUBLISHED NAV PRICES.
+     *
+     * A fund resolves no NSE trading symbol, so the quote feed never reaches
+     * one and a scheme sat at its last statement mark — a month of drift on
+     * this book. `build-fund-navs` commits AMFI's own daily NAV and the context
+     * overlays it, so this route is where that is checked on a rendered page.
+     *
+     * DERIVED FROM THE COMMITTED STORE, never typed, so the next drop picks its
+     * own. An address that resolves nothing lands on a page with no table,
+     * which would satisfy every generic check while asserting nothing — so the
+     * route's own premise check FAILS rather than abstaining.
+     *
+     * (This replaced a `derivedKey` route that proved the book's mark is READ
+     * rather than computed as value ÷ quantity. The overlay sets
+     * `marketValue = quantity × NAV`, so on every priced holding the two are
+     * equal BY CONSTRUCTION and the one witness is itself priced — the rendered
+     * page can no longer see the distinction and that route would have passed
+     * trivially. The claim moved to `fundNavs.test.ts`, where it is still true
+     * of the book; the route was retired rather than left unable to fail.)
+     */
+    let navKey = null, navRec = null;
+    try {
+      const nsrc = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+      const navs = (bookArray(nsrc, "BOOK_FUND_NAVS") ?? []).filter((e) => e.usableForValue);
+      const byKey = new Map(navs.map((e) => [e.securityKey, e]));
+      const best = positions
+        .filter((p) => byKey.has(p.securityKey) && Number(p.quantity) > 0)
+        .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0))[0];
+      if (best) { navKey = best.securityKey; navRec = byKey.get(best.securityKey); }
+    } catch { /* the store may not exist on a checkout that never ran the builder */ }
+    return {
+      navKey,
+      navNav: navRec?.nav ?? null,
+      navDate: navRec?.date ?? null,
+      splitKey: split[0]?.key ?? null,
+      splitMarks: split[0]?.marks ?? [],
+      splitCount: split.length,
+      unmarkedKey: unmarked[0]?.key ?? null,
+    };
+  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, navKey: null, navNav: null, navDate: null }; }
+})();
+
 const CIO_BUCKET_HREFS = [];
 /** Each `holdings-*` route's own `N holdings · M names · K accounts` line. */
 /**
@@ -2645,6 +2789,21 @@ const ROUTES = [
    * date exists to compound over.
    */
   ["stock-cagr", () => (CAGR_KEY ? `/stock/${encodeURIComponent(CAGR_KEY)}` : "/stock/no-dated-holding-in-the-book")],
+  // The holding whose statements mark it at figures the page renders
+  // differently — where the headline must refuse rather than print one of
+  // them. Derived (`CMP_BOOK`), so the next drop picks its own worst case; an
+  // address that resolves nothing lands on a page with no table, which would
+  // satisfy every generic check while asserting nothing, so the route's own
+  // invariants FAIL rather than abstain when the book carries no such holding.
+  ["stock-cmp-split", () => (CMP_BOOK.splitKey ? `/stock/${encodeURIComponent(CMP_BOOK.splitKey)}` : "/stock/no-holding-marked-two-ways-in-the-book")],
+  // ...and one marked at a TOTAL VALUE, where there is no per-unit mark to show
+  // at all. A different absence from the one above and it must not borrow its
+  // wording: a reader told the statements disagree would go looking for a
+  // second figure that was never printed.
+  ["stock-cmp-unmarked", () => (CMP_BOOK.unmarkedKey ? `/stock/${encodeURIComponent(CMP_BOOK.unmarkedKey)}` : "/stock/no-unmarked-holding-in-the-book")],
+  // ...and the largest holding AMFI's published NAV prices, which is where the
+  // daily refresh is checked on a rendered page.
+  ["stock-cmp-nav", () => (CMP_BOOK.navKey ? `/stock/${encodeURIComponent(CMP_BOOK.navKey)}` : "/stock/no-nav-priced-holding-in-the-book")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -4991,6 +5150,73 @@ const stockLayoutChecks = () => [
   ["the position table fits its card, so no column is behind a sideways scroll",
     (t, ctx) => !!ctx.posTable && ctx.posTable.overflow <= 1 && ctx.posTable.cut.length === 0,
     ],
+  /**
+   * ── THE MARK IS A COLUMN, AND IT SITS BESIDE THE COST ───────────────
+   *
+   * *"In some funds, avg cost column has price but current NAV is not there…
+   * We need a column of current NAV."* The page had carried a holding-level
+   * mark in its header since it was written and NONE per statement, so on a
+   * holding several accounts report a reader saw one price above a table of
+   * several — and the ten securities whose statements disagree had no surface
+   * that could say so at all.
+   *
+   * BESIDE Avg cost, because that is the comparison the table is opened to
+   * make. `Current` two columns along is the market VALUE, which is part of
+   * why the gap was easy to miss: a reader scanning for the mark finds a
+   * column called Current and it is money.
+   */
+  ["the mark is a column of its own, next to Avg cost",
+    (t, ctx) => {
+      const h = ctx.posTable?.heads ?? [];
+      const a = h.findIndex((x) => /^avg cost$/i.test(x));
+      const c = h.findIndex((x) => /^cmp$/i.test(x));
+      return a >= 0 && c === a + 1;
+    }],
+  /**
+   * AND EVERY CELL PRINTS ITS OWN STATEMENT'S MARK, reconciled against the
+   * BOOK rather than against another rendering of itself. A cell that fell
+   * back to the holding-level figure, or to `marketValue / quantity`, renders
+   * a perfectly ordinary price on every row — and on the ten split holdings it
+   * would print one statement's mark against another's row. Only a comparison
+   * with `glowData.ts` can see it.
+   */
+  /**
+   * AND THE FOOTER HAS AS MANY COLUMNS AS THE HEADER.
+   *
+   * FOUND BY REINTRODUCING A BUG THAT CAME BACK CLEAN. Removing `cmp` from
+   * `POS_COLS` while its `<th>` and `<td>` stay in the markup does NOT drop the
+   * column: `<Tr>` sees a cell count that does not match the declared list and
+   * falls back to rendering its children in declared order, so the header and
+   * every body row keep all ten. `<TrFoot>` builds from `view.order` alone, so
+   * the FOOTER emits nine — and every total after Avg cost sits one column left
+   * of its heading. That is the failure `TrFoot`'s own comment says this repo
+   * has already paid for twice, and both footer checks passed straight through
+   * it by reading the INVESTED total under the CMP heading.
+   *
+   * Struck on the accumulated colSpan against the header's own count, so it
+   * catches any column added to the markup but not to the declared list, or the
+   * other way round, on every table this runs against.
+   */
+  ["the footer spans exactly the columns the header declares",
+    (t, ctx) => {
+      const want = (ctx.posTable?.heads ?? []).length;
+      const got = ctx.posTable?.footSpan ?? null;
+      return want > 0 && got === want;
+    }],
+    ["every mark on the table is the one the book carries for that statement",
+    (t, ctx) => {
+      const cells = ctx.posTable?.cmps ?? [];
+      if (cells.length === 0) return false;
+      return cells.every((c) => {
+        // An absent mark is a DASH THAT NAMES ITS CAUSE, never a bare one and
+        // never a zero: `price()` returns a bare dash, which §2 forbids, so a
+        // cell that stopped guarding before calling it fails here.
+        if (c.book === "") return /—/.test(c.text) && !/₹\s*0(\D|$)/.test(c.text)
+          && !!c.reason && /total value|per unit/i.test(c.reason);
+        const shown = rupees(c.text);
+        return shown.length === 1 && sameMark(shown[0], Number(c.book));
+      });
+    }],
   // THE ROUTE SURVIVED THE COLUMN. "Held via" merged into Managed by and the
   // words did not go with it: WHO CHOSE a position is the distinction Stage 10j
   // and 10L exist for, and dropping it to save width would re-open both.
@@ -10255,9 +10481,22 @@ const INVARIANTS = {
      * the line's Total must be the consolidated NAV in the header. A page whose
      * tile and whose sentence disagree is exactly the pair this page has had
      * disagree before.
+     *
+     * AND THE DENOMINATOR IS THE PAGE'S OWN, NOT THE FIRST FIGURE IN THE
+     * DOCUMENT. That is `main`'s correction, kept rather than overwritten,
+     * because this branch's version would have undone it: the first `₹…Cr`
+     * in the body is the TOP BAR's current value of holdings, app chrome
+     * and no part of this page's arithmetic. The two coincided for as long
+     * as nothing could price a fund and stopped the day the published NAV
+     * did — the top bar renders the LIVE book while this page reads
+     * `statementPortfolio` by design (§6), so the check was reconciling a
+     * statement-basis partition against a live-basis total and failed by
+     * exactly the NAV overlay. Struck on the page's own printed
+     * "N% of the ₹X Cr book", the claim is about this page's own
+     * consistency, which is what it was always for.
      */
     ["the private tile is the book's private side, and the sides total the NAV", (t) => {
-      const nav = cr(new RegExp(CR).exec(t)?.[1]);                 // header chip, first ₹…Cr
+      const nav = cr(new RegExp(String.raw`of the ` + CR + String.raw`\s+book`, "i").exec(t)?.[1]);
       const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const line = /This page is the private side of the book:([^\n]*)/i.exec(t);
       if (![nav, priv].every(Number.isFinite) || !line) return false;
@@ -13490,6 +13729,113 @@ const INVARIANTS = {
    * to compound over, and a CAGR that REPLACED the holding-period figure would
    * answer a different question from the one the family asked first.
    */
+  /**
+   * ── THE PAGE DOES NOT CHOOSE A MARK WHEN ITS STATEMENTS DISAGREE ────────
+   *
+   * Every expectation here comes from `CMP_BOOK`, derived off `glowData.ts` on
+   * the run, so the next drop picks its own worst case and none of it goes
+   * stale when the book moves.
+   *
+   * A MISSING SUBJECT IS A FAILURE AND NOT AN ABSTENTION. If this book ever
+   * carried no split holding these would report NOT CHECKED, which is counted
+   * apart from a failure and reads as a clean run — and the route would be
+   * walking `/stock/no-holding-marked-two-ways-in-the-book`, a page with no
+   * table at all, which has no console error, no overflow and no stray zero.
+   * The last check states the premise so the pair can never pass over nothing.
+   */
+  "stock-cmp-split": [
+    ...stockLayoutChecks(),
+    ["the headline refuses to print one statement's mark as the holding's",
+      (t, ctx) => ctx.stockMark?.state === "split" && /—/.test(ctx.stockMark.value)
+        && rupees(ctx.stockMark.value).length === 0],
+    // ...AND SAYS WHY, naming BOTH marks. A bare dash here would be the page
+    // withholding a figure it has, which is the opposite failure and reads to a
+    // reader as a broken feed.
+    ["...and names the marks the statements actually carry",
+      (t, ctx) => {
+        const cap = ctx.stockMark?.caption ?? "";
+        if (!/do not agree/i.test(cap)) return false;
+        const said = rupees(cap);
+        return CMP_BOOK.splitMarks.every((m) => said.some((v) => sameMark(v, rupees(m)[0])));
+      }],
+    // THE ROWS STILL SHOW THEM, which is the half that makes the refusal
+    // useful rather than merely honest: the reader is sent to the table and the
+    // table must carry every mark the headline declined to choose between.
+    ["the table shows each statement's own mark, so the split is visible",
+      (t, ctx) => {
+        const shown = (ctx.posTable?.cmps ?? [])
+          .filter((c) => c.book !== "").flatMap((c) => rupees(c.text));
+        return CMP_BOOK.splitMarks.length > 1
+          && CMP_BOOK.splitMarks.every((m) => shown.some((v) => sameMark(v, rupees(m)[0])));
+      }],
+    // AND THE FOOTER REFUSES TOO. A quantity-weighted mean of two statements'
+    // marks is a price no document struck, sitting in the Total row of a column
+    // whose every other cell is a figure some statement printed — which is "a
+    // total must tie to its own columns" one column over.
+    ["the Total row prints no blended mark",
+      (t, ctx) => typeof ctx.posTable?.footCmp === "string"
+        && /—/.test(ctx.posTable.footCmp) && rupees(ctx.posTable.footCmp).length === 0],
+    ["the book carries a holding its statements mark two ways",
+      () => !!CMP_BOOK.splitKey && CMP_BOOK.splitMarks.length > 1],
+  ],
+  /**
+   * ── AND A HOLDING WITH NO PER-UNIT MARK IS A DIFFERENT ABSENCE ──────────
+   *
+   * 13 of this book's securities are reported at a TOTAL VALUE and no price —
+   * the AIF units, the cash lines, the unlisted shares. The headline read
+   * `?? 0` once and printed a 2xl "₹0" over a ₹1.47 Cr holding; it must now
+   * print an absence, and that absence must NOT borrow the split one's words —
+   * a reader told the statements disagree would go looking for a second figure
+   * that was never printed.
+   */
+  /**
+   * ── THE PUBLISHED NAV REACHES THE HOLDING ──────────────────────────────
+   *
+   * *"Current value of any fund or Mutual Fund that can easily be fetched from
+   * online sources should show present value… Live values of any investment,
+   * we should show it on all the relevant places automatically."*
+   *
+   * Every expectation comes from the committed store on the run, so this
+   * cannot go stale when the daily workflow moves a NAV.
+   */
+  "stock-cmp-nav": [
+    ...stockLayoutChecks(),
+    ["the price shown is the published NAV, not the statement's own mark",
+      (t, ctx) => {
+        const shown = rupees(ctx.stockMark?.value ?? "");
+        return CMP_BOOK.navNav != null && shown.length === 1 && sameMark(shown[0], CMP_BOOK.navNav);
+      }],
+    // ...AND SAYS SO. A NAV rendered under the statement-mark caption would be
+    // a figure from one source wearing another's label — and the caption is
+    // the only thing on the page that can tell a reader which it is.
+    ["...and the caption names AMFI and the NAV's own publication date",
+      (t, ctx) => {
+        const cap = ctx.stockMark?.caption ?? "";
+        return /AMFI/i.test(cap) && !!CMP_BOOK.navDate && cap.includes(CMP_BOOK.navDate)
+          && !/statement mark/i.test(cap);
+      }],
+    // THE VALUE FOLLOWED THE PRICE. A page that showed the new NAV over a
+    // market value still struck at the old mark is the worst of both.
+    ["every row's value is its own units at that NAV",
+      (t, ctx) => {
+        const cells = (ctx.posTable?.cmps ?? []).filter((c) => c.book !== "");
+        return cells.length > 0 && CMP_BOOK.navNav != null
+          && cells.every((c) => sameMark(Number(c.book), CMP_BOOK.navNav));
+      }],
+    ["the book carries a holding the published NAV prices",
+      () => !!CMP_BOOK.navKey && CMP_BOOK.navNav != null],
+  ],
+  "stock-cmp-unmarked": [
+    ...stockLayoutChecks(),
+    ["the headline prints an absence, never a zero, for a holding with no mark",
+      (t, ctx) => ctx.stockMark?.state === "none" && /—/.test(ctx.stockMark.value)
+        && !/₹\s*0(\D|$)/.test(ctx.stockMark.value)],
+    ["...and names THAT cause rather than the disagreement one",
+      (t, ctx) => /total value, not a price per unit/i.test(ctx.stockMark?.caption ?? "")
+        && !/do not agree/i.test(ctx.stockMark?.caption ?? "")],
+    ["the book carries a holding no statement marks per unit",
+      () => !!CMP_BOOK.unmarkedKey],
+  ],
   "stock-cagr": [
     ...stockLayoutChecks(),
     ["a holding held over a year shows its CAGR beside the holding-period return",
@@ -13528,6 +13874,29 @@ const INVARIANTS = {
     // CHART itself never mounts. `SeriesChart` is held up by the build instead —
     // delete it and `tsc -b` fails on the import — which is why the gate for
     // this change is build AND sweep, not either alone.
+    /**
+     * THE OTHER DIRECTION, AND WITHOUT IT THE REFUSAL COULD SWALLOW THE BOOK.
+     *
+     * `stock-cmp-split` asserts the headline declines to choose between two
+     * marks. A build that declined on EVERY holding — the resolution wired to
+     * nothing, or an agreement test that never agrees — satisfies that check
+     * and every absence beside it, and prints a dash over the 190 securities
+     * whose statements agree on one figure. So this asserts the figure is
+     * SHOWN where there is one to show, and shown as the book's own: struck on
+     * the headline's state and reconciled against the table's own cells, which
+     * carry the book's figure in `data-cmp`.
+     */
+    ["a holding its statements agree on shows the mark, and shows the book's own",
+      (t, ctx) => {
+        if (ctx.stockMark?.state !== "one") return false;
+        const marks = [...new Set((ctx.posTable?.cmps ?? [])
+          .filter((c) => c.book !== "").flatMap((c) => rupees(c.text)))];
+        const head = rupees(ctx.stockMark.value);
+        return marks.length === 1 && head.length === 1 && sameMark(head[0], marks[0]);
+      }],
+    ["...and the Total row carries it too, rather than a dash",
+      (t, ctx) => typeof ctx.posTable?.footCmp === "string"
+        && !/—/.test(ctx.posTable.footCmp) && rupees(ctx.posTable.footCmp).length === 1],
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
     // A COMPANY keeps every panel. This is the other half of `stock-fund` below:
@@ -16152,8 +16521,59 @@ for (const theme of THEMES) {
             .filter((h) => h.getBoundingClientRect().right > right + 0.5)
             .map((h) => h.innerText.trim()),
           returns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => e.innerText.replace(/\s+/g, " ").trim()),
+          // THE MARK COLUMN, READ STRUCTURALLY. `data-cmp` carries the figure
+          // the BOOK holds and the cell text carries what a reader sees, so a
+          // cell that stopped rendering its own attribute's value fails on the
+          // pair rather than agreeing with itself.
+          heads: [...t.querySelectorAll("thead th")].map((h) => h.innerText.replace(/\s+/g, " ").trim()),
+          cmps: [...t.querySelectorAll("td[data-cmp]")].map((e) => ({
+            book: e.getAttribute("data-cmp"), text: e.innerText.replace(/\s+/g, " ").trim(),
+            // THE CAUSE, WHICH `innerText` CANNOT SEE. `AbsentCell` puts its
+            // reason in a `title`, so a cell that fell back to `price()`'s BARE
+            // dash renders identically to one that names why — and §2 forbids
+            // exactly that. Captured per cell rather than from the page-wide
+            // title list, so the reason asserted is the one on THIS column.
+            reason: e.querySelector("[title]")?.getAttribute("title") ?? null })),
+          // The footer's TOTAL width, so a footer that lost a cell is visible
+          // even when the cell it lost still reads as a plausible figure.
+          footSpan: [...(t.querySelector("tfoot tr")?.children ?? [])]
+            .reduce((a, c) => a + Number(c.getAttribute("colspan") || 1), 0),
+          footCmp: (() => {
+            const i = [...t.querySelectorAll("thead th")].findIndex((h) => /^CMP$/i.test(h.innerText.trim()));
+            if (i < 0) return null;
+            const cells = [...(t.querySelector("tfoot tr")?.children ?? [])];
+            // The footer's label spans several columns, so a cell is located by
+            // ACCUMULATED colSpan and never by its index — `lib/table.mjs`'s own
+            // rule, which this footer's label span has already broken once.
+            let col = 0;
+            for (const c of cells) {
+              const span = Number(c.getAttribute("colspan") || 1);
+              if (col <= i && i < col + span) return c.innerText.replace(/\s+/g, " ").trim();
+              col += span;
+            }
+            return null;
+          })(),
           taxOpen: [...document.querySelectorAll("details")].some((d) => d.querySelector("[data-tax-toggle]") && d.open),
           taxToggles: document.querySelectorAll("[data-tax-toggle]").length,
+        };
+      });
+      /**
+       * THE HOLDING-LEVEL MARK AND THE SENTENCE UNDER IT.
+       *
+       * Read as a PAIR, because only the pair can fail. The figure alone cannot
+       * tell "₹2,667.30, the mark every statement agrees on" from "₹2,667.30,
+       * the mark of whichever row happened to sort first" — which is exactly
+       * the defect this branch fixed, and it rendered a perfectly ordinary
+       * price for as long as it shipped. The caption is what states which of
+       * the two it is, so it is captured beside it.
+       */
+      const stockMark = FAST ? null : await page.evaluate(() => {
+        const el = document.querySelector("[data-stock-mark]");
+        if (!el) return null;
+        return {
+          state: el.getAttribute("data-stock-mark"),
+          value: el.innerText.replace(/\s+/g, " ").trim(),
+          caption: document.querySelector("[data-stock-mark-note]")?.innerText.replace(/\s+/g, " ").trim() ?? null,
         };
       });
       /**
@@ -17043,7 +17463,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnRecord, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, tradesTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

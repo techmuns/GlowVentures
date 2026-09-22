@@ -265,6 +265,15 @@ export type Position = {
   high52?: number | null;
   marketCap?: number | null;  // ₹, from the quote feed — for the company market-data block
   quoteAgeS?: number;         // seconds since the quote was pulled upstream
+  // ── Published-NAV overlay (src/lib/fundNavs.ts) ───────────────────────────
+  // A fund resolves no NSE symbol, so the quote feed never prices one and the
+  // fields above stay empty on every scheme. `navPriced` says the price above
+  // is AMFI's published NAV rather than the statement's mark — a different
+  // thing from `live`, which means an INTRADAY quote and which gates the
+  // day-change surfaces. A NAV is struck once after the close, so it must
+  // never set `live` and never fills the intraday fields.
+  navPriced?: boolean;
+  navDate?: string;           // AMFI's own publication date for that NAV
 };
 
 /**
