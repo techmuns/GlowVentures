@@ -114,6 +114,21 @@ export type GroupRow = {
    * two sections and be summed into both.
    */
   section: string;
+  /**
+   * THE ACCOUNT THIS ROW IS ABOUT, where it is about one — a MANDATE row, which
+   * is one account by construction. Null on a SECURITY row, which is an
+   * instrument dealt across however many accounts carried it, so the account is
+   * not a property of it.
+   *
+   * Taken off the registry entry the rollup already resolved rather than parsed
+   * back out of the key: `acct:<provider>|<accountNo>` is a DISPLAY identity the
+   * statements print, and re-deriving an `accountId` from it is the
+   * identity-in-the-presentation-layer trap `ledger.ts` already refuses once for
+   * `securityKey`. `txnLedger.ts` reads it to fill an account's own market
+   * value on a mandate that publishes no dated capital record — nine of this
+   * book's ten.
+   */
+  accountId: string | null;
   label: string;
   /** The second line: whose money, or how the account is run. */
   sublabel: string | null;
@@ -153,17 +168,17 @@ const money = (xs: (number | null)[]) => sumOrNull(xs);
  */
 export const acctKey = (provider: string, accountNo: string) => `${provider}|${accountNo}`;
 
-function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; label: string; sublabel: string | null } {
+function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; label: string; sublabel: string | null; accountId: string | null } {
   // AUTO IS NOT A FOURTH RULE — it picks between the two below, per trade, on
   // the one fact that decides it on the Holdings table as well: whether a
   // discretionary manager chose the position or the family did.
   if (by === "auto") return groupOf(t, acc, isMandateHeld(acc?.engagement ?? null) ? "manager" : "instrument");
   if (by === "entity") {
     const label = acc?.owner ?? t.account;
-    return { key: `owner:${label}`, label, sublabel: null };
+    return { key: `owner:${label}`, label, sublabel: null, accountId: null };
   }
   if (by === "instrument") {
-    return { key: `sec:${t.securityKey}`, label: t.security, sublabel: null };
+    return { key: `sec:${t.securityKey}`, label: t.security, sublabel: null, accountId: null };
   }
   /**
    * MANAGER — through `mandateLabel`, NOT re-derived here.
@@ -183,7 +198,7 @@ function groupOf(t: Txn, acc: Account | undefined, by: GroupBy): { key: string; 
   const label = acc ? mandateLabel(acc) : t.provider;
   const house = acc?.provider ?? t.provider;
   const who = [acc?.owner, label === house ? null : house, t.accountNo].filter(Boolean).join(" · ");
-  return { key: `acct:${acctKey(t.provider, t.accountNo)}`, label, sublabel: who || t.accountNo };
+  return { key: `acct:${acctKey(t.provider, t.accountNo)}`, label, sublabel: who || t.accountNo, accountId: acc?.accountId ?? null };
 }
 
 function instrumentRow(key: string, rows: TrancheRow[], sort: TxnSort): InstrumentRow {
@@ -245,7 +260,7 @@ export function rollup(
   sectionOf: (t: Txn) => string = () => "",
 ): GroupRow[] {
   const acctByKey = new Map(accounts.map((a) => [acctKey(a.provider, a.accountNo), a]));
-  const groups = new Map<string, { section: string; label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
+  const groups = new Map<string, { section: string; accountId: string | null; label: string; sublabel: string | null; rows: Map<string, TrancheRow[]> }>();
 
   for (const t of txns) {
     const acc = acctByKey.get(acctKey(t.provider, t.accountNo));
@@ -258,7 +273,7 @@ export function rollup(
     // would double-count it in whichever footer read the sections.
     const key = `${section}\u0000${g.key}`;
     const entry = groups.get(key)
-      ?? { section, label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
+      ?? { section, accountId: g.accountId, label: g.label, sublabel: g.sublabel, rows: new Map<string, TrancheRow[]>() };
     // Grouped by instrument, the second level would be one row per group — so
     // it splits by SIDE instead, which is the useful cut there: "everything I
     // bought of this name" beside "everything I sold".
@@ -282,6 +297,7 @@ export function rollup(
     out.push({
       key,
       section: g.section,
+      accountId: g.accountId,
       label: g.label,
       sublabel: g.sublabel,
       trades: all.length,
@@ -324,30 +340,17 @@ export function rollupTotals(groups: GroupRow[]) {
 }
 
 /**
- * ── THE SECTIONS, AND WHY EACH SUBTOTAL IS SUMMED FROM ITS OWN ROWS ─────────
+ * ── THE SECTIONS ARE `datedSectionRollup`'S NOW ─────────────────────────────
  *
- * The Holdings table draws a heading per section with that section's own totals
- * under its own columns, and the Transactions table now does the same. The
- * subtotal is summed FROM the group rows the section renders — never recomputed
- * off the tape — because a subtotal derived independently of the rows above it
- * can be right on its own terms while every row is wrong, which is the Private
- * Market page's PM-1 defect and the reason `rollupTotals` already works this
- * way one level up.
+ * `SectionRows` and `sectionRollup` grouped a `GroupRow[]` under its headings
+ * and were the trades table's half of that. One table carries both dated
+ * records since Stage 10bm, so a section holds rows of BOTH kinds and
+ * `datedSectionRollup` in `txnLedger.ts` is what groups them — this pair had no
+ * caller left, which is the dead-code-that-looks-alive failure this repo keeps
+ * naming, so it went the way `exportDeck.ts` did rather than being left
+ * exported and dead.
  *
- * `order` is the axis's own reading order (`orderSections` in `txnAxis.ts`), so
- * the two tables cannot draw the same sections in a different order.
+ * What did NOT go is `rollupTotals` above: `datedTotals` calls it for the
+ * trades half of every section and of the footer, so there is still ONE
+ * definition of what a set of trade rollups adds to.
  */
-export type SectionRows = {
-  key: string;
-  rows: GroupRow[];
-  totals: ReturnType<typeof rollupTotals>;
-};
-
-export function sectionRollup(groups: GroupRow[], order: (keys: string[]) => string[]): SectionRows[] {
-  const by = new Map<string, GroupRow[]>();
-  for (const g of groups) (by.get(g.section) ?? by.set(g.section, []).get(g.section)!).push(g);
-  return order([...by.keys()]).map((key) => {
-    const rows = by.get(key) ?? [];
-    return { key, rows, totals: rollupTotals(rows) };
-  });
-}
