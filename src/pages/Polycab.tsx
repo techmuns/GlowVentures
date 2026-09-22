@@ -5,6 +5,8 @@ import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
+import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { useTableView, sortRows } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { fmtCurrency, fmtNum, fmtDate, fmtPct, displaySecurity } from "@/lib/format";
 
@@ -70,8 +72,16 @@ import { BOOK_POLYCAB, BOOK_ACCOUNTS, BOOK_CORPORATE_ACTIONS } from "@/data/glow
  * change; until one does, each says what is missing and which document would
  * carry it.
  */
+/** Each table's columns, in the order its rows write their cells. */
+const DEMAT_COLS = ["security", "holder", "account", "asOf", "shares", "mark", "value"] as const;
+const HOLDER_COLS = ["holder", "accounts", "shares", "value", "share"] as const;
+const ACTION_COLS = ["exDate", "action", "entitlement", "shares"] as const;
+
 export function Polycab() {
   const { fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const dematView = useTableView("polycab-demat", DEMAT_COLS);
+  const holderView = useTableView("polycab-holders", HOLDER_COLS);
+  const actionView = useTableView("polycab-actions", ACTION_COLS);
   const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
   const price = (n: number | null | undefined) =>
     typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : null;
@@ -176,6 +186,31 @@ export function Polycab() {
    */
   const positionDividends = sumOrNull(BOOK_POLYCAB.map((p) => p.dividendReceived ?? null));
   const dividends = positionDividends ?? sumOrNull(cashActions.map((c) => c.amount ?? null));
+
+  const dematRows = sortRows(rows, dematView.sort, {
+    security: ({ p }) => displaySecurity(p.security),
+    holder: ({ a }) => a?.owner ?? null,
+    account: ({ a }) => (a ? `${a.provider} ${a.accountNo}` : null),
+    asOf: ({ a }) => a?.asOf ?? null,
+    shares: ({ p }) => (typeof p.quantity === "number" ? p.quantity : null),
+    mark: ({ p }) => (typeof p.marketValue === "number" && typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null),
+    value: ({ p }) => p.marketValue,
+  });
+  const holderRows = sortRows(byHolder, holderView.sort, {
+    holder: (h) => h.holder || null,
+    accounts: (h) => h.demats,
+    shares: (h) => h.shares,
+    value: (h) => h.mv,
+    // The share of the block is this holder's value over the whole, so it
+    // orders exactly as Market value does.
+    share: (h) => h.mv,
+  });
+  const actionRows = sortRows(shareActions, actionView.sort, {
+    exDate: (c) => c.exDate ?? null,
+    action: (c) => c.kind ?? null,
+    entitlement: (c) => c.entitlement ?? null,
+    shares: (c) => (typeof c.quantity === "number" ? c.quantity : null),
+  });
 
   if (!BOOK_POLYCAB.length) {
     return (
@@ -303,21 +338,21 @@ export function Polycab() {
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Security</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Holder</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">Depository account</th>
-                <th className="label-xs px-4 py-2 text-left font-medium">As of</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Shares</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Mark / share</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Market value</th>
-              </tr>
+              <Tr view={dematView}>
+                <SortHeader col="security" view={dematView} align="left">Security</SortHeader>
+                <SortHeader col="holder" view={dematView} align="left">Holder</SortHeader>
+                <SortHeader col="account" view={dematView} align="left">Depository account</SortHeader>
+                <SortHeader col="asOf" view={dematView} align="left">As of</SortHeader>
+                <SortHeader col="shares" view={dematView}>Shares</SortHeader>
+                <SortHeader col="mark" view={dematView}>Mark / share</SortHeader>
+                <SortHeader col="value" view={dematView}>Market value</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
-              {rows.map(({ p, a }) => {
+              {dematRows.map(({ p, a }) => {
                 const rowMark = typeof p.marketValue === "number" && typeof p.quantity === "number" && p.quantity > 0 ? p.marketValue / p.quantity : null;
                 return (
-                  <tr key={`${p.securityKey}-${p.accountId}`} className="hover:bg-ink-700/40">
+                  <Tr view={dematView} key={`${p.securityKey}-${p.accountId}`} className="hover:bg-ink-700/40">
                     {/* NOT a link to /stock/<key>. That route is this page — a
                         ring-fenced security redirects back here (see
                         `StockRoute` in App.tsx), because with the holding out of
@@ -353,18 +388,19 @@ export function Polycab() {
                     <td className="px-4 py-2.5 text-right mono text-slate-200">
                       {money(p.marketValue)}
                     </td>
-                  </tr>
+                  </Tr>
                 );
               })}
             </tbody>
             {rows.length > 1 && (
               <tfoot className="border-t-2 border-ink-600 font-semibold">
-                <tr>
-                  <td className="px-4 py-2.5 text-left text-slate-200" colSpan={4}>Total</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-200">{shares === null ? <AbsentValue /> : fmtNum(shares)}</td>
-                  <td className="px-4 py-2.5" />
-                  <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
-                </tr>
+                <TrFoot view={dematView} className="border-t-2 border-ink-600 px-4 py-2.5 text-left font-semibold text-slate-200"
+                  label={<>Total</>}
+                  cells={{
+                    shares: <td key="shares" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-200">{shares === null ? <AbsentValue /> : fmtNum(shares)}</td>,
+                    mark: <td key="mark" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                    value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(mv)}</td>,
+                  }} />
               </tfoot>
             )}
           </table>
@@ -381,17 +417,17 @@ export function Polycab() {
         <div className="overflow-x-auto">
           <table className="min-w-full whitespace-nowrap text-sm">
             <thead className="border-b border-ink-700">
-              <tr>
-                <th className="label-xs px-4 py-2 text-left font-medium">Holder</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Demat accounts</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Shares</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Market value</th>
-                <th className="label-xs px-4 py-2 text-right font-medium">Share of the block</th>
-              </tr>
+              <Tr view={holderView}>
+                <SortHeader col="holder" view={holderView} align="left">Holder</SortHeader>
+                <SortHeader col="accounts" view={holderView}>Demat accounts</SortHeader>
+                <SortHeader col="shares" view={holderView}>Shares</SortHeader>
+                <SortHeader col="value" view={holderView}>Market value</SortHeader>
+                <SortHeader col="share" view={holderView}>Share of the block</SortHeader>
+              </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/60">
-              {byHolder.map((h) => (
-                <tr key={h.holder || "unattributed"} className="hover:bg-ink-700/40">
+              {holderRows.map((h) => (
+                <Tr view={holderView} key={h.holder || "unattributed"} className="hover:bg-ink-700/40">
                   <td className="px-4 py-2.5 font-medium text-slate-100">
                     {h.holder || <AbsentCell reason="the statement for this account names no holder the registry resolves" />}
                   </td>
@@ -408,18 +444,19 @@ export function Polycab() {
                       ? fmtPct((h.mv / mv) * 100)
                       : <AbsentCell reason="a share of the block needs both this holder's value and the block's own total" />}
                   </td>
-                </tr>
+                </Tr>
               ))}
             </tbody>
             {byHolder.length > 1 && (
               <tfoot className="border-t-2 border-ink-600 font-semibold">
-                <tr>
-                  <td className="px-4 py-2.5 text-left text-slate-200">Total</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtNum(rows.length)}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-200">{shares === null ? <AbsentValue /> : fmtNum(shares)}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>
-                  <td className="px-4 py-2.5" />
-                </tr>
+                <TrFoot view={holderView} className="border-t-2 border-ink-600 px-4 py-2.5 text-left font-semibold text-slate-200"
+                  label={<>Total</>}
+                  cells={{
+                    accounts: <td key="accounts" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-200">{fmtNum(rows.length)}</td>,
+                    shares: <td key="shares" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-200">{shares === null ? <AbsentValue /> : fmtNum(shares)}</td>,
+                    value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(mv)}</td>,
+                    share: <td key="share" className="border-t-2 border-ink-600 px-4 py-2.5" />,
+                  }} />
               </tfoot>
             )}
           </table>
@@ -434,7 +471,12 @@ export function Polycab() {
         subtitle="What the statements behind this holding report about it beyond the balance itself — and, where they report nothing, which document would."
       >
         <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
+          {/* Exempt, declared: three FIXED facts about this holding — what a
+              depository statement does and does not carry — rather than
+              records. There is nothing to sort and the three columns are a
+              sentence read left to right. */}
+          <table className="min-w-full text-sm"
+            data-table-static="three fixed facts about this holding rather than records — nothing to sort, and the three columns read as one sentence">
             <thead className="border-b border-ink-700">
               <tr>
                 <th className="label-xs px-4 py-2 text-left font-medium">What</th>
@@ -532,21 +574,21 @@ export function Polycab() {
           <div className="overflow-x-auto border-t border-ink-700/60">
             <table className="min-w-full whitespace-nowrap text-sm">
               <thead className="border-b border-ink-700">
-                <tr>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Ex-date</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Action</th>
-                  <th className="label-xs px-4 py-2 text-left font-medium">Entitlement</th>
-                  <th className="label-xs px-4 py-2 text-right font-medium">Shares</th>
-                </tr>
+                <Tr view={actionView}>
+                  <SortHeader col="exDate" view={actionView} align="left">Ex-date</SortHeader>
+                  <SortHeader col="action" view={actionView} align="left">Action</SortHeader>
+                  <SortHeader col="entitlement" view={actionView} align="left">Entitlement</SortHeader>
+                  <SortHeader col="shares" view={actionView}>Shares</SortHeader>
+                </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {shareActions.map((c, i) => (
-                  <tr key={`${c.securityKey}-${c.exDate}-${i}`} className="hover:bg-ink-700/40">
+                {actionRows.map((c, i) => (
+                  <Tr view={actionView} key={`${c.securityKey}-${c.exDate}-${i}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5 text-slate-400">{c.exDate ? fmtDate(c.exDate) : <AbsentCell reason="the report carries no ex-date for this event" />}</td>
                     <td className="px-4 py-2.5 text-slate-200">{c.kind ?? <AbsentCell reason="the report does not name the action type" />}</td>
                     <td className="px-4 py-2.5 text-slate-400">{c.entitlement ?? <AbsentCell reason="the report states no entitlement ratio" />}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{typeof c.quantity === "number" ? fmtNum(c.quantity) : <AbsentCell reason="the report states no share count for this event" />}</td>
-                  </tr>
+                  </Tr>
                 ))}
               </tbody>
             </table>

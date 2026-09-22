@@ -76,7 +76,15 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
       <span className="whitespace-nowrap">
         {sortable ? (
           <button type="button" data-col-button={col} onClick={() => view.toggleSort(col)}
-            className="rounded align-middle ring-focus transition-colors hover:text-slate-300">
+            /* `uppercase` REPEATED HERE ON PURPOSE. The HTML rendering spec
+               gives form controls `text-transform: none`, so a `<button>`
+               inside a `label-xs` heading renders its label in the source's own
+               case while the cell around it is uppercase — and this repo's
+               sweep slices pages on header text that `innerText` returns
+               TRANSFORMED, which broke four Polycab invariants on a header
+               rendering the right words. The cell's own class is what this
+               mirrors. */
+            className="rounded align-middle uppercase ring-focus transition-colors hover:text-slate-300">
             {align === "right" ? <>{children}<Icon className={`ml-1 inline-block h-3 w-3 align-[-1px] ${active ? "text-champagne-400" : "text-slate-600"}`} /></>
               : <><Icon className={`mr-1 inline-block h-3 w-3 align-[-1px] ${active ? "text-champagne-400" : "text-slate-600"}`} />{children}</>}
           </button>
