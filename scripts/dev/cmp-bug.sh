@@ -27,7 +27,7 @@ restore() {
 }
 trap 'restore; rm -rf "$SNAP"' EXIT
 
-ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-fund"
+ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-cmp-derived,stock-fund"
 run() {
   if ! npm run build >/dev/null 2>&1; then echo "    NOT A RESULT (build failed)"; return; fi
   ONLY=$ROUTES npm run check:pages 2>&1 \
@@ -56,9 +56,20 @@ patch src/pages/StockInfo.tsx \
 && run
 restore
 
-bug "2. the CMP column removed from POS_COLS — the family's ask, undone"
+bug "2a. the column dropped from POS_COLS but left in the markup (footer goes short)"
 patch src/pages/StockInfo.tsx \
   '"qty", "avgCost", "cmp", "invested"' '"qty", "avgCost", "invested"' && run
+restore
+
+bug "2b. the column removed outright — the family's ask, undone"
+patch src/pages/StockInfo.tsx \
+  '"qty", "avgCost", "cmp", "invested"' '"qty", "avgCost", "invested"' \
+&& patch src/pages/StockInfo.tsx \
+  '                    <SortHeader col="cmp" view={posView}' \
+  '                    {false && <SortHeader col="cmp" view={posView}' \
+&& patch src/pages/StockInfo.tsx \
+  'than averages.">CMP</SortHeader>' \
+  'than averages.">CMP</SortHeader>}' && run
 restore
 
 bug "3. the cell derives mv/qty instead of reading the printed mark"
@@ -85,22 +96,21 @@ patch src/pages/StockInfo.tsx \
 restore
 
 bug "6. the Total row prints a quantity-weighted blend of the marks"
-patch src/pages/StockInfo.tsx \
-  '                            : cmp}
-                        </td>' \
-  '                            : (cmp ?? price(qty > 0 ? mv / qty : null))}
-                        </td>' \
-&& patch src/pages/StockInfo.tsx \
-  '{cmpSplit
-                            ? <AbsentCell reason={`the statements reporting this holding do not agree' \
-  '{false
-                            ? <AbsentCell reason={`the statements reporting this holding do not agree' && run
+python3 - <<'EOF' || echo "    NOT A RESULT (anchor)"
+import io,re
+p="src/pages/StockInfo.tsx"
+s=io.open(p,encoding="utf8").read()
+m=re.search(r"\n                          \{cmpSplit\n.*?\n                            : cmp\}", s, re.S)
+assert m and s.count(m.group(0))==1
+io.open(p,"w",encoding="utf8").write(s.replace(m.group(0), "{price(qty > 0 ? mv / qty : null)}", 1))
+EOF
+run
 restore
 
 bug "7. the unmarked absence borrows the disagreement wording"
 patch src/pages/StockInfo.tsx \
-  ': "no per-unit mark — this holding is reported at a total value, not a price per unit"' \
-  ': "CMP · the statements reporting this holding do not agree on a mark"' && run
+  '? "no per-unit mark — this holding is reported at a total value, not a price per unit"' \
+  '? "CMP · the statements reporting this holding do not agree on a mark"' && run
 restore
 
 bug "8. the absent mark is price()'s bare dash, with no cause"

@@ -1784,13 +1784,33 @@ const CMP_BOOK = (() => {
     }
     split.sort((a, b) => b.mv - a.mv);
     unmarked.sort((a, b) => b.mv - a.mv);
+    /**
+     * THE ONE HOLDING THAT PROVES THE MARK IS A PRIMITIVE.
+     *
+     * `currentPrice` equals `marketValue / quantity` on 346 of the 347 positions
+     * that carry both — which is exactly why a cell that DERIVED it would render
+     * identically on every route this sweep walks and be invisible. `ICICI NFT NT
+     * 50 DP G` is the one that separates them: its statement prints a rate of
+     * 60.4 against a value column implying 60.4167, so the page shows ₹60.4 and a
+     * derivation would show ₹60.42.
+     *
+     * It is worth ₹2.90 and the negligible floor drops it from every holdings
+     * table — `/stock/:securityKey` does not apply the floor, which is what makes
+     * it reachable at all. Found by its own PROPERTY rather than by its key, so
+     * the next drop picks whichever holding has it.
+     */
+    const derived = positions.filter((x) => typeof x.currentPrice === "number"
+      && Number(x.quantity) > 0
+      && Math.abs(x.currentPrice - Number(x.marketValue) / Number(x.quantity)) >= 0.005)
+      .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0));
     return {
+      derivedKey: derived[0]?.securityKey ?? null,
       splitKey: split[0]?.key ?? null,
       splitMarks: split[0]?.marks ?? [],
       splitCount: split.length,
       unmarkedKey: unmarked[0]?.key ?? null,
     };
-  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null }; }
+  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, derivedKey: null }; }
 })();
 
 const CIO_BUCKET_HREFS = [];
@@ -2610,6 +2630,18 @@ const ROUTES = [
   // wording: a reader told the statements disagree would go looking for a
   // second figure that was never printed.
   ["stock-cmp-unmarked", () => (CMP_BOOK.unmarkedKey ? `/stock/${encodeURIComponent(CMP_BOOK.unmarkedKey)}` : "/stock/no-unmarked-holding-in-the-book")],
+  // ...and the one holding whose printed rate is NOT market value over
+  // quantity, which is the only evidence in this book that the mark is read
+  // rather than derived. Without it a cell that divided would render the same
+  // figure on every other route and no check could see it.
+  //
+  // IT IS WORTH ₹2.90, so its fund look-through reports each disclosed company
+  // at a rounded ₹0 and this route prints ~50 `zeroish` leads. They are
+  // CORRECT — a share of ₹2.90 is ₹0 at the precision the page prints — and
+  // `zeros` is a lead rather than a verdict in this runner, which is why the
+  // route still reads clean. Do not "fix" them, and do not swap the route for a
+  // larger holding: there is no other, and the property is what it is walked for.
+  ["stock-cmp-derived", () => (CMP_BOOK.derivedKey ? `/stock/${encodeURIComponent(CMP_BOOK.derivedKey)}` : "/stock/no-holding-whose-rate-differs-in-the-book")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -4986,7 +5018,30 @@ const stockLayoutChecks = () => [
    * would print one statement's mark against another's row. Only a comparison
    * with `glowData.ts` can see it.
    */
-  ["every mark on the table is the one the book carries for that statement",
+  /**
+   * AND THE FOOTER HAS AS MANY COLUMNS AS THE HEADER.
+   *
+   * FOUND BY REINTRODUCING A BUG THAT CAME BACK CLEAN. Removing `cmp` from
+   * `POS_COLS` while its `<th>` and `<td>` stay in the markup does NOT drop the
+   * column: `<Tr>` sees a cell count that does not match the declared list and
+   * falls back to rendering its children in declared order, so the header and
+   * every body row keep all ten. `<TrFoot>` builds from `view.order` alone, so
+   * the FOOTER emits nine — and every total after Avg cost sits one column left
+   * of its heading. That is the failure `TrFoot`'s own comment says this repo
+   * has already paid for twice, and both footer checks passed straight through
+   * it by reading the INVESTED total under the CMP heading.
+   *
+   * Struck on the accumulated colSpan against the header's own count, so it
+   * catches any column added to the markup but not to the declared list, or the
+   * other way round, on every table this runs against.
+   */
+  ["the footer spans exactly the columns the header declares",
+    (t, ctx) => {
+      const want = (ctx.posTable?.heads ?? []).length;
+      const got = ctx.posTable?.footSpan ?? null;
+      return want > 0 && got === want;
+    }],
+    ["every mark on the table is the one the book carries for that statement",
     (t, ctx) => {
       const cells = ctx.posTable?.cmps ?? [];
       if (cells.length === 0) return false;
@@ -13271,6 +13326,26 @@ const INVARIANTS = {
    * a reader told the statements disagree would go looking for a second figure
    * that was never printed.
    */
+  /**
+   * ── THE MARK IS READ, NOT DERIVED ──────────────────────────────
+   *
+   * The shared per-cell check reconciles the rendered figure against
+   * `data-cmp`, and on 346 of 347 positions `currentPrice` IS `marketValue /
+   * quantity` — so a cell that divided would agree with the book everywhere
+   * this sweep walks. This route is the one holding that separates them.
+   */
+  "stock-cmp-derived": [
+    ...stockLayoutChecks(),
+    ["the cell prints the rate the statement printed, not value over quantity",
+      (t, ctx) => {
+        const c = (ctx.posTable?.cmps ?? []).find((x) => x.book !== "");
+        if (!c) return false;
+        const shown = rupees(c.text);
+        return shown.length === 1 && sameMark(shown[0], Number(c.book));
+      }],
+    ["the book carries a holding whose printed rate is not its value over quantity",
+      () => !!CMP_BOOK.derivedKey],
+  ],
   "stock-cmp-unmarked": [
     ...stockLayoutChecks(),
     ["the headline prints an absence, never a zero, for a holding with no mark",
@@ -15971,6 +16046,10 @@ for (const theme of THEMES) {
             // exactly that. Captured per cell rather than from the page-wide
             // title list, so the reason asserted is the one on THIS column.
             reason: e.querySelector("[title]")?.getAttribute("title") ?? null })),
+          // The footer's TOTAL width, so a footer that lost a cell is visible
+          // even when the cell it lost still reads as a plausible figure.
+          footSpan: [...(t.querySelector("tfoot tr")?.children ?? [])]
+            .reduce((a, c) => a + Number(c.getAttribute("colspan") || 1), 0),
           footCmp: (() => {
             const i = [...t.querySelectorAll("thead th")].findIndex((h) => /^CMP$/i.test(h.innerText.trim()));
             if (i < 0) return null;
