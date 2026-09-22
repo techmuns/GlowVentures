@@ -44,7 +44,10 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=monitor-txns,monitor-txn-manager,monitor-txn-drill,monitor-txn-direct,monitor-txn-basket
+# ALL EIGHT TRANSACTIONS ROUTES. `txnMergedCore()` claims to run on every one of
+# them, and a harness walking five cannot tell that from a factory that reaches
+# five — which is the defect this pass found in the first place.
+ROUTES=monitor-txns,monitor-txn-manager,monitor-txn-drill,monitor-txn-direct,monitor-txn-basket,monitor-txn-in,monitor-txn-out,monitor-txn-secaxis
 
 run_case() {
   local name="$1"; shift
@@ -65,7 +68,18 @@ run_suite_case() {
   echo ""
   echo "════════ BUG (suite): $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
-  node scripts/test-family.mjs 2>&1 | grep -E '^FAIL|failure\(s\)' | sed 's/^/   SUITE /' || echo "   SUITE clean"
+  # THE VERDICT IS THE SUITE'S OWN EXIT STATUS, never grep's. Piped, this read
+  # BACKWARDS on every case: the suite's output carries ~1,700 NUL bytes, so grep
+  # suppresses its matching lines as binary and prints a warning instead, and
+  # `pipefail` turns a FAILING suite's non-zero exit into the `||` branch. Both
+  # halves printed "SUITE clean" — a check that can only ever report a pass.
+  local out rc
+  out=$(node scripts/test-family.mjs 2>&1); rc=$?
+  if [ $rc -eq 0 ]; then
+    echo "   SUITE CLEAN — THE BUG DID NOT FIRE"
+  else
+    printf '%s\n' "$out" | tr -d '\000' | grep -aE '^FAIL|failure\(s\)' | sed 's/^/   SUITE /'
+  fi
   for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done
 }
 
@@ -156,7 +170,10 @@ import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
 old = "                              {trd && (\n"
-new = "                              {trd && false && (\n"
+# NOT `trd && false`: TS folds that to a constant and refuses the build, so the
+# case reports NOT A RESULT rather than exercising the check. A comparison on a
+# real string is always false at runtime and typechecks.
+new = "                              {trd && r.key === \"__never__\" && (\n"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
@@ -200,10 +217,13 @@ PY
 #          same ₹0 nothing on screen contradicts.
 run_suite_case "an absent trades half is summed as zero" py <<'PY'
 import sys
-p = "src/lib/txnLedger.ts"
+# IN `rollupTotals`, because `datedTotals` DELEGATES the trades half to it
+# rather than reimplementing it — the line this case used to target never
+# existed, so it reported NOT A RESULT.
+p = "src/lib/txnRollup.ts"
 s = open(p, encoding="utf-8").read()
-old = "    bought: sumOrNull(trd.map((t) => t.bought)),"
-new = "    bought: sumOrNull(trd.map((t) => t.bought)) ?? 0,"
+old = "    bought: sumOrNull(groups.map((g) => g.bought)),"
+new = "    bought: sumOrNull(groups.map((g) => g.bought)) ?? 0,"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

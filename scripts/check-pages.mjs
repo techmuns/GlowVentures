@@ -3871,14 +3871,15 @@ const txnMergedCore = () => [
 /**
  * ...AND THE TWO THAT COUNT THE TABLE'S HALVES, which need the WHOLE table.
  *
- * The four above hold on every view of this card, filtered or not — a toggle
+ * The FIVE above hold on every view of this card, filtered or not — a toggle
  * that came back, a legacy table that came back, two tables where there should
- * be one, a title naming one record over both. These two do not: they count
- * how many rows carry each half, and a Direct Equity section legitimately
- * carries no capital record while a side filter legitimately narrows one half.
+ * be one, a title naming one record over both, and each money block tying to
+ * its own rows. These two do not: they count how many rows carry each half,
+ * and a Direct Equity section legitimately carries no capital record while a
+ * side filter legitimately narrows one half.
  *
- * Spreading all six into a filtered route would fail a correct page; leaving
- * the four on two routes let the toggle come back on the other six unnoticed —
+ * Spreading all SEVEN into a filtered route would fail a correct page; leaving
+ * the five on two routes let the toggle come back on the other six unnoticed —
  * which is what the bug-reintroduction pass measured: bug 1 fired on
  * `monitor-txns` and `monitor-txn-basket` and on nothing else, while this
  * factory's own comment said "every transactions route".
