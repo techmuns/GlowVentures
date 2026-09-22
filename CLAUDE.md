@@ -280,6 +280,12 @@ cash holding's genuinely-zero return both match, and both are correct.
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
   that crumb on every route. See Stage 10bh.
+- `src/lib/fundNavs.ts` — THE PUBLISHED NAV'S READ SIDE. `applyFundNavs` is
+  applied at ONE seam (`PortfolioContext`, beside `applyQuotes`), which is what
+  makes a current fund value reach every page rather than needing a per-page
+  edit. It moves only what a price may move (§6) and deliberately never sets
+  `live`: a quote is intraday and a NAV is struck once after the close, and the
+  two must never be added. See Stage 10bn.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -13378,6 +13384,176 @@ Nine bugs reintroduced, each firing its own check.
 BYTE-IDENTICALLY, run as a control before and after: nothing here touches the
 ingest, and a column that moved a generated figure would not be a column.
 
+### Stage 10bn — THE PUBLISHED NAV IS THE CURRENT VALUE, FETCHED DAILY
+
+*"Current value of any fund or Mutual Fund that can easily be fetched from
+online sources should show present value… These NAV must be automatically
+fetched everyday and refreshed. Daily and regularly."* · *"Live values of any
+investment, we should show it on all the relevant places automatically on the
+dashboard."*
+
+**A MUTUAL FUND RESOLVES NO NSE TRADING SYMBOL, AND EVERY LIVE ENDPOINT THIS
+DASHBOARD CALLS IS KEYED ON ONE.** That is the whole root cause, and it is why
+the quote feed had never priced a scheme: a fund's value sat at whatever mark
+its last statement struck, however old. Measured on the two the family named,
+that is a month of drift — Motilal Oswal Active Momentum marked ₹14.0491 on 6
+August against a published ₹14.5522, Helios ₹16.21 on 7 August against ₹16.16.
+
+**HALF THE PIPELINE WAS ALREADY HERE AND NOTHING REFRESHED IT.**
+`public/lookthrough/` has carried each scheme's NAV since Stage 10s and the
+daily-NAV movers card has rendered it since Stage 10aw. What was missing is that
+**no workflow ever ran `build-lookthrough`** — the committed NAV was twelve days
+old — and that the figure reached no holding's value. So this is not a new
+source so much as the missing half of one.
+
+#### `npm run build-fund-navs` — AMFI's own file, joined on the ISIN
+
+```
+portal.amfiindia.com/spages/NAVAll.txt   keyless, 14,379 scheme rows
+   |  npm run build-fund-navs            fetch → join → gate → merge
+   v
+src/data/fundNavs.ts                     20 schemes, each with its own as-of
+docs/FUND-NAVS.md                        priced / resolved-not-usable / unresolved
+```
+
+**IT IS THE INDUSTRY BODY'S OWN RECORD**, not a proxy and not somebody's reading
+of one. `www.amfiindia.com` 302s to the portal host; the builder FOLLOWS the
+redirect rather than pinning either, and **checks the response BY CONTENT** — a
+portal answering 200 with an error page is the failure `build-symbols` already
+records against NSE.
+
+**TWO IDENTIFIER TIERS, STRONGEST FIRST, AND NO FUZZY ONE.** A wrong join here
+is the worst fabrication available: a complete, correct, well-formed NAV
+belonging to somebody else's fund, which nothing on screen could catch. The
+family's own statement first, then the look-through's resolved ISIN — **which is
+what reaches Motilal Oswal Active Momentum, whose statement prints no ISIN at
+all**. Where both answer they must AGREE, and a disagreement yields nothing.
+
+**AND WHAT IT WRITES IS NOT THE BOOK.** `src/data/fundNavs.ts` sits beside
+`polycabLive.ts` on identical terms — generated, committed daily by a workflow,
+read at DISPLAY time. `glowData.ts` regenerates byte-identically from `source/`
+(§7), so a fetched price may never enter it, for the same reason a live quote
+may not.
+
+#### The basis gate, which is what stops a ten-fold error
+
+A published NAV values a holding as `quantity × NAV`, and that is true only
+while the book's units and the AMC's NAV unit are the same unit. **On this book
+they are not, twice:**
+
+| | book's mark | published NAV | ratio |
+| --- | ---: | ---: | ---: |
+| DSP Gold ETF | ₹151.10 | ₹14.7633 | **0.098** |
+| DSP Silver ETF | ₹276.82 | ₹22.4561 | **0.081** |
+
+A SHARE-COUNT BREAK — the book's units pre-split, the NAV post-split. Valued
+naively the family's **₹16.9 Cr of gold reports as ₹1.76 Cr**. This is Stage 10e's
+`shareCountBreaks` finding arriving through a different source, and the rule is
+the same: **reported, never corrected.** Adjusting would invent a factor nobody
+published.
+
+**THE BOUND IS A FACTOR OF TWO, AND IT IS A CLAIM ABOUT MARKETS RATHER THAN A
+TOLERANCE FITTED TO THE DATA** — no scheme halves or doubles between two
+statement dates absent a corporate action. It separates the real cases by an
+order of magnitude: the schemes that pass span 0.92–1.14 and the two that fail
+sit at 0.08 and 0.10. **The failure mode is deliberately asymmetric**: refusing a
+good scheme costs a refresh and keeps the statement mark, while accepting a
+broken one prints a figure wrong by 10x. A refused scheme still CARRIES its NAV,
+marked `usableForValue: false` with the reason — the family asked to SEE it.
+
+**BOTH DSP ISINs TURN OUT NOT TO BE IN AMFI'S FILE AT ALL**, which Stage 10ak
+already predicted (*"NSE has moved the DSP Gold and Silver ETFs to new ISINs"*),
+so the dangerous case ALSO self-excludes. The gate stays because the next drop
+could bring one that resolves — and `fundNavs.test.ts` reports it **NOT CHECKED
+rather than passing over an empty set**, because `[].every(...)` is true and the
+obvious assertion would report a working gate on a run where it never ran.
+
+**THE DAY CHANGE ACCUMULATES.** NAVAll is one day's snapshot, so the previous NAV
+is whatever the committed file already held — merge-never-truncate, the rule
+`rbi.mjs` and `iex.mjs` are built on. A first run has no day change and says so.
+
+#### `applyFundNavs` — one seam, which is what "all the relevant places" means
+
+Applied in `PortfolioContext` beside `applyQuotes`, so **every page that reads
+`portfolio` gets the current value with no per-page edit**. Measured:
+
+| | |
+| --- | ---: |
+| schemes overlaid · position rows | 18 · 25 |
+| those rows, statement basis → published NAV | ₹101.08 Cr → **₹103.87 Cr** |
+| the book | ₹710.39 Cr → **₹713.18 Cr** |
+| Motilal Oswal Active Momentum | ₹21.4 Cr → **₹22.2 Cr** |
+
+**AND IT RESOLVED A SPLIT THIS BRANCH HAD JUST FOUND.** Stage 10bm records the
+two Helios depository rows marked ₹14.18 and ₹15.74 — same provider, same ISIN,
+same 31 July as-of. Both now take the one published NAV, because a scheme has
+one NAV whatever a depository printed.
+
+**THE BASIS RULE IS `applyQuotes`'s, VERBATIM**, and `fundNavs.test.ts` asserts
+§6 FIELD BY FIELD: quantity, cost, realised, dividends, accrued, the dated
+fields and the intraday fields are frozen. An overlay that quietly moved a cost
+renders a page full of plausible figures and no structural check would see it.
+
+**AND `live` STAYS FALSE, WHICH IS THE ONE THING NOT COPIED.** A quote is
+intraday; a NAV is struck once after the close, and Stage 10aw is explicit that
+the two must never be added. `live` gates Today's movers and the day-change
+column, so setting it would fold a NAV dated yesterday into a card headed
+"today". A NAV-priced row carries `navPriced` and its own `navDate` instead, and
+the intraday fields are left untouched.
+
+**THE DISPLAY STOPS CALLING IT A STATEMENT MARK.** The Monitor's not-live `◦`
+marker and the stock page's headline caption and per-row hovers name AMFI and
+the publication date. A figure from one source wearing another's label is the
+only thing here that could mislead, and the caption is the only thing on the
+page that can tell a reader which it is.
+
+#### Two checks changed, and one failure was real
+
+**THE CHECKER'S MODEL OF THE BOOK IS NOW THE ONE THE PAGES RENDER.** Thirty
+derivations read `BOOK_POSITIONS` and reconcile against a RENDERED figure; left
+on the statement basis they compared two different books and **eleven partition
+checks failed against pages that were right**. `withPublishedNavs` is applied
+inside `bookArray` — one place rather than thirty, because thirty patches is
+thirty chances to miss one — and is RE-EXPRESSED rather than imported, on the
+same terms as `isMandateHeld`.
+
+**`stock-cmp-derived` IS RETIRED RATHER THAN LEFT UNABLE TO FAIL.** Stage 10bm
+added it to prove the book's mark is READ rather than computed as value ÷
+quantity. The overlay sets `marketValue = quantity × NAV`, so **on every priced
+holding the two are equal BY CONSTRUCTION and the one witness is itself priced**
+— the rendered page can no longer see the distinction at all. The claim moved to
+`fundNavs.test.ts`, where it is still true of the book; `stock-cmp-nav` takes the
+route's place and checks the overlay on a rendered page.
+
+**AND PM-2 WAS READING THE TOP BAR.** It took the first `₹…Cr` in the body text
+as the book's NAV — which is the TOP BAR's current value of holdings, app chrome
+rather than part of Private Market's arithmetic. The two coincided for as long
+as nothing could price a fund and parted the day one could: **the top bar is
+LIVE and that page reads `statementPortfolio` by design** (§6 — a reader checks
+those rows against the PDF, so they must not drift with a price). It is struck on
+the page's own printed denominator now (*"N% of the ₹X Cr book"*), which is the
+figure its parts are a partition OF.
+
+**THAT WAS ESTABLISHED AGAINST A WORKTREE AT THE PRIOR COMMIT, NOT REASONED
+OUT.** The page text is byte-identical before and after the overlay, and the
+check computes the same 358.10 on both — so the failure is where the two bases
+genuinely part rather than a regression. Three rounds of guessing preceded that
+measurement and every one of them was wrong; the worktree settled it in a minute.
+
+**WHAT THIS LEAVES ON SCREEN, STATED RATHER THAN GLOSSED:** the top bar now
+reads ₹713.18 Cr while Private Market reads ₹710.4 Cr. Both are correct on their
+own basis and both are labelled, and a reader can see them a screen apart. It is
+also PRE-EXISTING in production — a live equity quote already moved the first and
+not the second — and only became visible without a quote feed. Moving Private
+Market to live basis would reconcile them at the cost of the guarantee that page
+was built on, which is the family's call and not this file's.
+
+`build` · `tsc` · `test:ingest` · `test:family` (a new `fundNavs.test.ts`: 18
+assertions, 1 honest NOT CHECKED) · `check:family` 82/0 · `check:pages`
+**192 combinations clean**, with the same six evidenced pre-existing abstentions
+and none of this stage's own. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY — a fetched price never enters the book.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -14360,6 +14536,16 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   value the script decides. Run `build-symbols` first, since it is keyed on that
   output. `ONLY=<symbols>` limits it; `SCREENER_DELAY_MS` paces the fetch.
   A company with no NSE symbol is NAMED in the report and never name-matched.
+- `npm run build-fund-navs` refreshes `src/data/fundNavs.ts` and
+  `docs/FUND-NAVS.md` — every mutual-fund scheme's NAV from **AMFI's own daily
+  published file**, keyless, joined to this book ON THE ISIN and never on a
+  name. It is what makes a fund carry a CURRENT value at all: a scheme resolves
+  no NSE trading symbol, so the quote feed has never priced one. Run daily by
+  `.github/workflows/fund-navs.yml` at 03:30 UTC (09:00 IST, after AMFI
+  publishes the previous business day), committing only when a NAV moved.
+  Idempotent; `-- --check` writes nothing. A scheme whose units are not on the
+  same basis as its NAV carries the NAV and does NOT value the holding — see
+  Stage 10bn. Nothing it writes reaches `glowData.ts`.
 - `npm run build-scheme-names` emits `src/data/schemeNames.json` and
   `docs/SCHEME-NAMES.md` from the COMMITTED `public/lookthrough/` files — the
   full scheme name and plan behind every clipped depository label, joined by
