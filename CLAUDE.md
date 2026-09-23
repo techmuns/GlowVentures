@@ -3291,13 +3291,17 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 - **No explainer lines.** *"Why do i need all this garbage written please remove
-  its obvious from the table what it is."* Every table carries at most one short
-  note (Stage 10ci's guard, on every route), and Private Market carries none: no
-  card subtitle, no footnote, no fold of working under a table. A sentence a
-  reader ACTS ON is the hover on the figure it qualifies (`title`,
-  `TreeNameCell`'s `hint`, `SortHeader`'s `coverage`), and is asserted there.
-  Checked on structure by the `prose` probe in `check:pages` rather than on
-  wording. See Stage 10co.
+  its obvious from the table what it is."* No page carries a card subtitle, a
+  footnote, a line under a figure or a fold of working under a table. A sentence
+  a reader ACTS ON is the hover on the figure it qualifies — `title`, `Card`'s
+  `subtitle` (the title's hover now), `StatTile`'s `hint`, `PageHeader`'s
+  `subtitle`, `AbsentSection`'s `needs`, `TreeNameCell`'s `hint`, `SortHeader`'s
+  `coverage` — and is asserted there. What stays on the face is a figure, a
+  count, a status word, a fence ("DERIVED", "in no total") or a guard ("not
+  annualised"); a line a reader must SEE says why at the element with
+  `data-prose-ok="<reason>"`. Checked on structure by the `prose` probe in
+  `check:pages`, on every route, rather than on wording. See Stages 10co and
+  10cp.
 
 ## Stage 10 — the family-input layer (`src/lib/familyInputs.ts`)
 
