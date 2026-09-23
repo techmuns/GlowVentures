@@ -7,8 +7,9 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, isCompanyShare, marketSides, excludedClasses, assetClassLabel,
-  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
+  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, dedupedPositions,
 } from "@/lib/analytics";
+import { valuationBasis, valuationBasisLine, valuationBasisNote, dateSpan } from "@/lib/valuationBasis";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { accountIndex, ownerOf, staleAccounts } from "@/lib/accounts";
@@ -25,7 +26,7 @@ import { DASH, absentTile } from "@/components/Absent";
 // "nothing has been ingested yet" is exactly what this page exists to say.
 export function DataRefresh() {
   const view = useTableView("data-refresh-accounts", ACCOUNT_COLS);
-  const { portfolio, consolidated, bookIsEmpty, fmtFromBase, clearPortfolio } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, bookIsEmpty, fmtFromBase, clearPortfolio } = usePortfolio();
   /**
    * ── ONE CLASSIFICATION, THE ONE SECTOR COMPOSITION DRAWS ─────────────────
    *
@@ -224,6 +225,26 @@ export function DataRefresh() {
    * hard-coded rows this replaced had to guard against one at a time.
    */
   const sides = marketSides(deduped);
+  /**
+   * ── WHAT THE VALUES ON THIS PAGE ARE STRUCK ON ─────────────────────────────
+   *
+   * The subtitle said "Every figure traces to a statement PDF", the pill "as of
+   * 2026-08-29", and the Current Value tile printed the context's total — which
+   * carries AMFI's published NAV on every mutual fund it can value. So about
+   * ₹104 Cr of the ₹713 Cr on this page is a NAV dated weeks after any
+   * statement, and 29 Aug is the date of the two trusts' NSDL statements,
+   * whose one line is quantity-only and values nothing. `valuationBasis` names
+   * each price the set is carried at with the dates it spans, struck over the
+   * same deduped set the tile sums, and says what the statements marked the
+   * NAV part at — so the page's own total ties back to the PDFs.
+   */
+  const vb = valuationBasis(deduped, portfolio.accounts,
+    statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
+  const vbNote = valuationBasisNote(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate);
+  const basisPill = [
+    vb.statement.rows ? `marks ${dateSpan(vb.statement, fmtDate)}` : null,
+    vb.nav.rows ? `NAV ${dateSpan(vb.nav, fmtDate)}` : null,
+  ].filter(Boolean).join(" · ");
   const pm = portfolio.privateMarkets;
   const fundCount = pm.peFunds.length + pm.preIpoFunds.length + pm.unlistedCompanies.length + pm.debtFunds.length;
   const hasPrivate = fundCount + pm.closedFunds.length + pm.startups.length > 0;
@@ -264,8 +285,23 @@ export function DataRefresh() {
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader eyebrow="Setup" title="Data & Refresh"
-        subtitle="Provenance and status of the ingested book. Every figure traces to a statement PDF under source/ — nothing here is estimated or filled in."
-        right={<Pill tone={bookIsEmpty ? "warn" : "info"}>{bookIsEmpty ? "no statements yet" : `as of ${asOf}`}</Pill>} />
+        subtitle={vb.nav.rows
+          ? "Provenance and status of the ingested book. Quantities, costs and every dated figure trace to a statement PDF under source/; a mutual fund is valued at AMFI's published NAV where one is published. Nothing here is estimated or filled in."
+          : "Provenance and status of the ingested book. Every figure traces to a statement PDF under source/ — nothing here is estimated or filled in."}
+        right={<Pill tone={bookIsEmpty ? "warn" : "info"}>{bookIsEmpty ? "no statements yet" : (
+          <span data-xa="upload-basis" data-total={vb.total} data-stmt-value={vb.statement.value}
+            data-stmt-from={vb.statement.from ?? ""} data-stmt-to={vb.statement.to ?? ""}
+            data-nav-value={vb.nav.value} data-nav-rows={vb.nav.rows} data-nav-schemes={vb.nav.schemes}
+            data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
+            data-nav-printed={vb.nav.statementValue ?? ""} data-nav-marked={vb.nav.markedValue}
+            data-units-value={vb.units.value} data-units-rows={vb.units.rows}
+            data-units-from={vb.units.from ?? ""} data-units-to={vb.units.to ?? ""}
+            title={`${vbNote}.${asOf && vb.accountsTo && asOf > vb.accountsTo
+              ? ` The book's newest statement is dated ${fmtDate(asOf)}, and no holding it reports carries a value — so that date dates none of these figures.`
+              : ""}`}>
+            {basisPill || `as of ${asOf}`}
+          </span>
+        )}</Pill>} />
 
       {bookIsEmpty && (
         <Card className="mb-5" title="No statements ingested yet"
@@ -290,6 +326,7 @@ export function DataRefresh() {
             : sides.length
               ? sides.map((x) => `${x.label} ${fmtFromBase(x.value, { compact: true })}`).join(" · ")
               : "no holding in this book carries a value"}
+          title={bookIsEmpty ? undefined : vbNote}
           icon={<Database className="h-4 w-4" />} />
         {/* THE CURRENT HOLDINGS, the set Morning CIO's Positions counts — not
             every statement row. What the two differ by is the tile's own hover,
@@ -474,7 +511,14 @@ export function DataRefresh() {
         </Card>
       </div>
       {!bookIsEmpty && (
-        <p className="mt-4 text-[11px] text-slate-500">Book as of {fmtDate(asOf)}.</p>
+        // A LINE OF FIGURES, THE SENTENCE ITS HOVER (Stage 10cp). It read "Book
+        // as of" the newest statement — the two trusts' quantity-only NSDL
+        // statements, which value nothing (XA-13) — so the face names that date
+        // for what it is and then each price and its dates; the tie-back to the
+        // PDFs is the hover on the same line.
+        <p className="mt-4 text-[11px] text-slate-500" data-xa="upload-footer" title={`${vbNote}.`}>
+          Newest statement {fmtDate(asOf)} · {valuationBasisLine(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}
+        </p>
       )}
     </div>
   );

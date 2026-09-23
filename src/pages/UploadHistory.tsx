@@ -7,6 +7,7 @@ import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { fmtDate, fmtPct } from "@/lib/format";
 import { dedupedPositions, marketSides } from "@/lib/analytics";
 import { navIndexSeries } from "@/lib/navSeries";
+import { valuationBasis, valuationBasisLine, valuationBasisNote } from "@/lib/valuationBasis";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -16,7 +17,7 @@ import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 
 export function UploadHistory() {
   const view = useTableView("upload-history", HISTORY_COLS);
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase } = usePortfolio();
   if (!portfolio) return null;
   /**
    * WHAT THIS SERIES IS CHANGED UNDER THIS PAGE, AND THE CAPTIONS HAD TO MOVE.
@@ -51,7 +52,15 @@ export function UploadHistory() {
    * second page: a card gated on the fund-of-funds model rather than on the
    * holdings, and wrong in the direction that DENIES a figure.
    */
-  const sides = marketSides(dedupedPositions(portfolio.positions));
+  const book = dedupedPositions(portfolio.positions);
+  const sides = marketSides(book);
+  // THE TOTAL'S OWN BASIS, NOT THE BOOK'S NEWEST DATE. "as of 29 Aug 2026" is
+  // the two trusts' quantity-only NSDL statements; the total beside it is
+  // struck on marks dated 31 Mar → 13 Aug and, for every fund AMFI prices, on
+  // a NAV published weeks later. `valuationBasis` names both, and what the
+  // statements marked the NAV part at, so this line ties back to the PDFs.
+  const vb = valuationBasis(book, portfolio.accounts,
+    statementPortfolio ? dedupedPositions(statementPortfolio.positions) : undefined);
   /**
    * THE CHANGE IS THE LINK, NEVER THE LEVEL.
    *
@@ -86,10 +95,29 @@ export function UploadHistory() {
     // How many accounts the level carries that the link does not: the ones that
     // published for the first time on this date.
     const joined = i > 0 ? Math.max(0, (n.accountsOnDate ?? 0) + (n.accountsCarried ?? 0) - (n.linkAccounts ?? 0)) : 0;
-    return { ...n, growth, why, levelChange, joined, flowIn: n.flowIn ?? 0, latest: i === nav.length - 1 };
+    // Value that restated on this date in accounts that publish NO dated
+    // capital record: capital into them is not measured, so a ₹0 beside it is
+    // a sum over the accounts that do publish one, not a measurement of all.
+    const unreported = n.unreportedFlowValue ?? 0;
+    return { ...n, growth, why, levelChange, joined, unreported, flowIn: n.flowIn ?? 0, latest: i === nav.length - 1, first: i === 0 };
   }).reverse();
   // Newest first is this page's own order and stays the default; a third click
   // on any heading hands it back.
+  /**
+   * ── WHERE A ₹0 UNDER CAPITAL IN IS MEASURED, AND WHERE IT IS NOT (XA-19) ───
+   *
+   * The footnote said every ₹0 in this column is measured. On 30 Jun and 31 Jul
+   * accounts that publish no dated capital record restated — ₹26.4 Cr and
+   * ₹28.3 Cr of value — so capital into them is unknown, and the ₹0 there was a
+   * sum over the other accounts wearing the word "measured". Those cells are a
+   * dash with the reason now, and the footnote names the dates.
+   */
+  const unmeasured = rows.filter((r) => r.growth != null && r.unreported > 0);
+  const unreportedAccounts = cov.covered.filter((c) => c.flowBasis === "unreported").length;
+  // The panel GROWS until every covered account has published once; before
+  // then an account that has not yet published is absent, not carried.
+  const completeFrom = cov.panelCompleteFrom ?? null;
+  const growing = !!completeFrom && nav.length > 0 && nav[0].date < completeFrom;
   const shown = sortRows(rows, view.sort, {
     asOf: (r) => r.date,
     nav: (r) => r.nav,
@@ -101,7 +129,9 @@ export function UploadHistory() {
     <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow="Admin" title="Snapshot History"
         subtitle={nav.length
-          ? `Dated valuations over the ${covered} of ${accounts} accounts that publish more than one. One point per date on which a covered account restated; every other account is held at its latest mark, and Morning CIO names the ones that cannot supply a series at all.`
+          ? `Dated valuations over the ${covered} of ${accounts} accounts that publish more than one. One point per date on which a covered account restated. ${growing
+              ? `Until ${fmtDate(completeFrom!)} a covered account that has not yet published is not in the point at all; from then on every one is, and one that did not restate is held at its latest mark.`
+              : "An account that did not restate on a date is held at its latest mark."} Morning CIO names the ones that cannot supply a series at all.`
           : "Dated portfolio valuations from the accounts that publish more than one."}
         right={<div className="flex items-center gap-2">
           {/* THE COVERAGE IS A FIGURE, SO IT IS ON SCREEN (Stage 10p) — the
@@ -173,17 +203,25 @@ export function UploadHistory() {
                         : ""}.`} />
                     </span>}
                 </td>
-                <td className="px-5 py-3.5 text-right mono">
-                  {/* A ZERO HERE IS MEASURED — no capital moved — and a dash is
-                      the first point, which has no interval behind it. */}
+                <td className="px-5 py-3.5 text-right mono" data-xa="history-capital" data-date={r.date}
+                  data-kind={r.first ? "first" : r.growth == null ? "unlinked" : r.unreported > 0 ? "unmeasured" : "measured"}
+                  data-flow={r.flowIn} data-unreported={r.unreported}>
+                  {/* A ZERO HERE IS MEASURED ONLY WHERE EVERY ACCOUNT THAT
+                      RESTATED PUBLISHES A DATED CAPITAL RECORD. A dash is the
+                      first point, an interval that measured nothing, or one
+                      where part of the restated value has no capital record. */}
                   {r.growth == null
-                    ? <span className="text-slate-600" title="the first point has no interval before it, so no capital can have entered one">{DASH}</span>
-                    : <span className={r.flowIn ? "text-amber-400" : "text-slate-500"}
-                        title={r.flowIn
-                          ? "External capital the covered accounts took in since the previous point. This much of the change beside it is money added rather than value earned."
-                          : "No external capital entered or left the covered accounts in this interval, so the whole change beside it is a change in value."}>
-                        {r.flowIn ? fmtFromBase(r.flowIn, { compact: true, sign: true }) : fmtFromBase(0, { compact: true })}
-                      </span>}
+                    ? <AbsentCell reason={r.first
+                        ? "the first point has no interval before it, so no capital can have entered one"
+                        : `${r.why ?? "no change can be struck over this interval"}, so no capital is attributed to it`} />
+                    : r.unreported > 0 && !r.flowIn
+                      ? <AbsentCell reason={`₹0 on the accounts that publish a dated capital record — but ${fmtFromBase(r.unreported, { compact: true })} of the value that restated on this date is in accounts that publish none, so what capital entered them is not measured, and the change beside it is not proven to be performance`} />
+                      : <span className={r.flowIn ? "text-amber-400" : "text-slate-500"}
+                          title={r.flowIn
+                            ? `External capital the covered accounts took in since the previous point. This much of the change beside it is money added rather than value earned.${r.unreported > 0 ? ` ${fmtFromBase(r.unreported, { compact: true })} of the value that restated sits in accounts that publish no capital record, so the true figure may be larger.` : ""}`
+                            : "No external capital entered or left the covered accounts in this interval, so the whole change beside it is a change in value."}>
+                          {r.flowIn ? fmtFromBase(r.flowIn, { compact: true, sign: true }) : fmtFromBase(0, { compact: true })}{r.flowIn && r.unreported > 0 ? "*" : ""}
+                        </span>}
                 </td>
                 <td className="px-5 py-3.5 text-slate-400">
                   {r.accountsOnDate != null
@@ -205,7 +243,9 @@ export function UploadHistory() {
         // `data-prose-ok`: A MEASURED ZERO'S REASON GOES ON THE FACE, never in a
         // tooltip (Convention 2) — so the no-explainer sweep excuses this line.
         <p className="mt-3 text-[11.5px] text-slate-500" data-prose-ok="measured zero"
-          title="No subscription or withdrawal reached a covered account in that interval, so the whole change beside it is a change in value. Where capital did move, that much of the change is money added rather than earned, and Morning CIO's NAV chart nets it out before comparing the book against the Nifty 500. Four covered accounts publish no dated capital record at all; they are named there too.">
+          title={`No subscription or withdrawal reached a covered account in that interval, so the whole change beside it is a change in value.${unmeasured.length
+            ? ` On ${unmeasured.map((r) => fmtDate(r.date)).join(" and ")} some of the value that restated — ${unmeasured.map((r) => fmtFromBase(r.unreported, { compact: true })).join(" and ")} — sits in accounts that publish no dated capital record, so Capital in there is a dash rather than ₹0 and the change beside it is not proven to be performance.`
+            : ""} Where capital did move, that much of the change is money added rather than earned, and Morning CIO's NAV chart nets it out before comparing the book against the Nifty 500. ${unreportedAccounts} covered account${unreportedAccounts === 1 ? " publishes" : "s publish"} no dated capital record at all; they are named there too.`}>
           <strong className="text-slate-400">₹0 under Capital in is measured</strong> — no money came in or went out in that interval.
         </p>
       )}
@@ -228,7 +268,24 @@ export function UploadHistory() {
                       {x.label} {fmtFromBase(x.value, { compact: true })} ·{" "}
                     </span>
                   ))}
-              Total {fmtFromBase(portfolio.totalValue, { compact: true })} · as of {fmtDate(portfolio.asOf)}
+              Total {fmtFromBase(portfolio.totalValue, { compact: true })}
+            </div>
+            <div className="mt-0.5 text-[11.5px] text-slate-500" data-xa="history-total-basis"
+              data-stmt-from={vb.statement.from ?? ""} data-stmt-to={vb.statement.to ?? ""}
+              data-nav-value={vb.nav.value} data-nav-from={vb.nav.from ?? ""} data-nav-to={vb.nav.to ?? ""}
+              data-nav-printed={vb.nav.statementValue ?? ""} data-nav-marked={vb.nav.markedValue}
+              data-units-value={vb.units.value} data-units-rows={vb.units.rows}
+              data-units-from={vb.units.from ?? ""} data-units-to={vb.units.to ?? ""}
+              // THE FACE IS A LINE OF FIGURES, THE SENTENCE ITS HOVER (Stage 10cp):
+              // which price each part is struck at and when stays on screen, because
+              // a total dated by the wrong statement is the defect (XA-13); the
+              // tie-back to the PDFs and the units no statement marks are the
+              // hover on this same line.
+              title={`${valuationBasisNote(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}.${
+                portfolio.asOf && vb.accountsTo && portfolio.asOf > vb.accountsTo
+                  ? ` The book's newest statement is dated ${fmtDate(portfolio.asOf)}, and no holding it reports carries a value — so that date dates none of this total.`
+                  : ""}`}>
+              {valuationBasisLine(vb, (n) => fmtFromBase(n, { compact: true }), fmtDate)}
             </div>
           </div>
         </div>

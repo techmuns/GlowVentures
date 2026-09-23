@@ -6016,6 +6016,9 @@ const ROUTES = [
   ["returns", "/returns"],
   ["ledger", "/ledger"],
   ["audit", "/audit"],
+  // XA-20: the extracted table with the most rows shorter than their headings,
+  // DERIVED from the archive so the next drop picks its own worst case.
+  ["audit-short-rows", () => (XA_BOOK?.auditShort ? `/audit?file=${encodeURIComponent(XA_BOOK.auditShort.fileKey)}&sheet=${encodeURIComponent(XA_BOOK.auditShort.sheet)}` : "/audit?file=no-short-row-in-the-archive")],
   ["history", "/history"],
   ["upload", "/upload"],
 ];
@@ -6323,7 +6326,186 @@ const XA_BOOK = (() => {
       return deployed > 0 ? (gain / deployed) * 100 : null;
     };
     const fifo = { current: fifoOver(held, held), consolidated: fifoOver(deduped, held) };
-    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo };
+    // ── What the values are struck on (XA-12 / XA-13), off the positions this
+    // file overlays with the published NAV and the SAME positions un-overlaid,
+    // parsed here without the overlay — never through `valuationBasis.ts`,
+    // which is what the pages call. Over the deduped book, which is the set
+    // each page's Current Value total sums.
+    const rawPositions = (() => {
+      const i = src.indexOf("export const BOOK_POSITIONS");
+      const a = src.indexOf("= [", i), b = src.indexOf("\n];", a);
+      return JSON.parse(src.slice(a + 2, b + 2));
+    })();
+    const seenRaw = new Set();
+    const rawDeduped = rawPositions.filter((x) => {
+      if (!x.dedupeGroup) return true;
+      if (seenRaw.has(x.dedupeGroup)) return false;
+      seenRaw.add(x.dedupeGroup); return true;
+    });
+    const asOfAcc = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    const navRows = deduped.filter((x) => x.navPriced);
+    // The depository's cash-equivalent units this file's model carries (the
+    // live book values them at AMFI's NAV off a transaction statement's
+    // closing balance): at the NAV, and marked by no statement at all.
+    const unitRows = navRows.filter((x) => x.depositoryUnits);
+    const markedRows = navRows.filter((x) => !x.depositoryUnits);
+    const navLines = new Set(markedRows.map((x) => `${x.accountId}|${x.securityKey}`));
+    const unitDates = unitRows.map((x) => x.depositoryUnits.asOf).filter(Boolean).sort();
+    const stmtDates = deduped.filter((x) => !x.navPriced && x.marketValue !== 0)
+      .map((x) => asOfAcc.get(x.accountId)).filter(Boolean).sort();
+    const navDates = navRows.map((x) => x.navDate).filter(Boolean).sort();
+    const valuation = {
+      navRows: navRows.length,
+      navSchemes: new Set(navRows.map((x) => x.securityKey)).size,
+      navValue: mvOf(navRows),
+      navFrom: navDates[0] ?? null,
+      navTo: navDates[navDates.length - 1] ?? null,
+      navPrinted: mvOf(rawDeduped.filter((x) => navLines.has(`${x.accountId}|${x.securityKey}`))),
+      navMarked: mvOf(markedRows),
+      unitsRows: unitRows.length,
+      unitsValue: mvOf(unitRows),
+      unitsFrom: unitDates[0] ?? null,
+      unitsTo: unitDates[unitDates.length - 1] ?? null,
+      stmtValue: mvOf(deduped.filter((x) => !x.navPriced)),
+      stmtFrom: stmtDates[0] ?? null,
+      stmtTo: stmtDates[stmtDates.length - 1] ?? null,
+      statementTotal: mvOf(rawDeduped),
+      bookAsOf: accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) ?? null,
+    };
+    // ── The managers' own time-weighted returns (XA-15): every block the book
+    // carries, with the date its report is struck on — read straight off the
+    // generated object, never through the page.
+    const retBlocks = bookObject(src, "BOOK_ACCOUNT_RETURNS") ?? {};
+    const twrr = [];
+    for (const a of accounts) for (const b of retBlocks[a.accountId] ?? []) {
+      if (!(b.series ?? []).length) continue;
+      twrr.push({
+        account: a.accountId, report: b.reportType,
+        date: /-(\d{4}-\d{2}-\d{2})-[a-z-]+$/.exec(b.source ?? "")?.[1] ?? "",
+        series: b.series,
+      });
+    }
+    // ── Capital Gains' harvest list and lot terms (XA-16 / XA-22), on the
+    // STATEMENT book the page reads — every row, un-deduped, as its `p` is —
+    // with the published NAV this file overlays standing in for the page's
+    // live book.
+    const isPricedRaw = (x) => !x.costUnavailable
+      && typeof x.costBasis === "number" && Number.isFinite(x.costBasis) && x.costBasis > 0
+      && typeof x.unrealizedPnL === "number" && Number.isFinite(x.unrealizedPnL)
+      && typeof x.returnPct === "number" && Number.isFinite(x.returnPct);
+    const navLive = new Map(positions.filter((x) => x.navPriced).map((x) => [`${x.accountId}|${x.securityKey}`, x]));
+    const turnedOf = (x) => {
+      const n = navLive.get(`${x.accountId}|${x.securityKey}`);
+      return !!n && typeof n.unrealizedPnL === "number" && n.unrealizedPnL >= 0;
+    };
+    const harvestAll = rawPositions.filter((x) => isPricedRaw(x) && x.unrealizedPnL < 0)
+      .sort((a, b) => a.unrealizedPnL - b.unrealizedPnL);
+    const cgHarvest = {
+      harvest: harvestAll.map((x) => ({
+        key: x.securityKey, account: x.accountId, marked: asOfAcc.get(x.accountId) ?? "",
+        dated: x.stCostBasis != null || x.ltCostBasis != null, st: x.stCostBasis, lt: x.ltCostBasis,
+        turned: turnedOf(x),
+      })),
+      turned: harvestAll.filter(turnedOf).length,
+      dated: rawPositions.filter((x) => x.daysToLT != null).length,
+    };
+    // ── Return & Drawdown's maximum drawdown (XA-17), chained here on each
+    // point's own link — (close − capital in) ÷ open — never through
+    // `navIndexSeries` or `maxDrawdown`, which is what the page calls.
+    const ddIdx = [];
+    { let idx = 100;
+      nav.forEach((n, i) => {
+        if (i > 0) {
+          const open = n.linkOpen ?? nav[i - 1].nav, close = n.linkClose ?? n.nav;
+          if (open > 0) idx *= (close - (n.flowIn ?? 0)) / open;
+        }
+        ddIdx.push({ date: n.date, index: idx });
+      }); }
+    let drawdown = null;
+    if (ddIdx.length >= 2) {
+      let peakP = ddIdx[0], worst = { pct: 0, peak: null, trough: null };
+      for (let i = 1; i < ddIdx.length; i++) {
+        const q = ddIdx[i];
+        // A peak is dated where its level was FIRST reached.
+        if (q.index > peakP.index) { peakP = q; continue; }
+        if (q.index === peakP.index) continue;
+        const d = (q.index / peakP.index - 1) * 100;
+        if (d < worst.pct) worst = { pct: d, peak: peakP, trough: q };
+      }
+      const after = worst.trough ? ddIdx.slice(ddIdx.indexOf(worst.trough) + 1) : [];
+      drawdown = {
+        pct: worst.pct, peak: worst.peak?.date ?? "", trough: worst.trough?.date ?? "",
+        recovered: worst.peak ? after.find((q) => q.index >= worst.peak.index)?.date ?? "" : "",
+        points: ddIdx.length,
+      };
+    }
+    // ── Snapshot History's capital column and captions (XA-19), per point,
+    // off the same link fields the page's change column reads.
+    const covBlock = bookObject(src, "BOOK_NAV_COVERAGE") ?? {};
+    const historyCapital = nav.map((n, i) => {
+      const open = i > 0 ? (n.linkOpen ?? nav[i - 1].nav) : null;
+      const remarked = (n.linkAccounts ?? 0) - (n.accountsCarried ?? 0);
+      const linked = i > 0 && open != null && open > 0 && remarked > 0;
+      const unreported = n.unreportedFlowValue ?? 0;
+      return { date: n.date, flow: n.flowIn ?? 0, unreported,
+        kind: i === 0 ? "first" : !linked ? "unlinked" : unreported > 0 ? "unmeasured" : "measured" };
+    });
+    const historyPanel = {
+      first: nav[0]?.date ?? null,
+      completeFrom: covBlock.panelCompleteFrom ?? null,
+      unreportedAccounts: (covBlock.covered ?? []).filter((c) => c.flowBasis === "unreported").length,
+    };
+    // ── Ledger Insights' tape window (XA-18), off the audit archive itself:
+    // one report type per account, the first of the two the ledger reads.
+    let ledger = null;
+    try {
+      const man = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+      const T = ["transaction-statement", "investor-report"];
+      const by = new Map();
+      for (const d of man) { const k = `${d.provider}\u0000${d.accountNo ?? ""}`; by.set(k, [...(by.get(k) ?? []), d]); }
+      let from = null, to = null;
+      for (const g of by.values()) {
+        const w = T.find((x) => g.some((d) => d.reportType === x));
+        if (!w) continue;
+        for (const d of g.filter((y) => y.reportType === w)) {
+          let doc;
+          try { doc = JSON.parse(readFileSync(new URL(`../public/audit/${d.docKey}/document.json`, import.meta.url), "utf8")); } catch { continue; }
+          if (doc.periodFrom && (!from || doc.periodFrom < from)) from = doc.periodFrom;
+          if (doc.periodTo && (!to || doc.periodTo > to)) to = doc.periodTo;
+        }
+      }
+      ledger = { from, to, newest: man.reduce((a, d) => (d.asOf && d.asOf > a ? d.asOf : a), "") };
+      // ── Data Audit's short rows (XA-20): every extracted table whose rows
+      // print fewer cells than the heading row the page pins — the heading
+      // found by the page's own rule, re-expressed: the label-heaviest of the
+      // first sixteen rows, at least two labels and 60% of its cells.
+      const isLabel = (c) => typeof c === "string" && c.trim() !== ""
+        && !/^\d{4}-\d{2}-\d{2}T/.test(c.trim()) && !/^[-+]?[\d,]*\.?\d+%?$/.test(c.trim());
+      const blank = (c) => c === null || c === undefined || String(c).trim() === "";
+      let best = null;
+      for (const e of man) for (const sh of e.sheets ?? []) {
+        let rows;
+        try { rows = JSON.parse(readFileSync(new URL(`../public/audit/${e.fileKey}/${sh.key}.json`, import.meta.url), "utf8")).rows; } catch { continue; }
+        if (!Array.isArray(rows)) continue;
+        let hi = -1, hl = -1;
+        for (let i = 0; i < Math.min(rows.length, 16); i++) {
+          const cells = (rows[i] ?? []).filter((c) => !blank(c));
+          const labels = cells.filter(isLabel).length;
+          if (labels >= 2 && cells.length && labels / cells.length >= 0.6 && labels > hl) { hl = labels; hi = i; }
+        }
+        if (hi < 0) continue;
+        const width = rows[hi].length;
+        const body = rows.slice(hi + 1);
+        const short = body.filter((r) => r.length < width && r.filter((c) => !blank(c)).length >= 2);
+        if (short.length && (!best || short.length > best.count)) {
+          best = { fileKey: e.fileKey, sheet: sh.key, count: short.length,
+            visible: body.slice(0, 200).filter((r) => r.length < width && r.filter((c) => !blank(c)).length >= 2).length };
+        }
+      }
+      var auditShort = best;
+    } catch { ledger = null; }
+    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo, valuation, twrr,
+      cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort };
   } catch { return null; }
 })();
 /**
@@ -6355,6 +6537,114 @@ const xaSectorSourceChecks = (key, which) => [
     // a page that never read the other two tiers would pass this.
     if (!(b.bookUnplaced > b.unplacedCeiling)) return { notChecked: "tiers 1 and 3 place no more companies than tier 1 alone on this book" };
     return Number(el.attrs.unplaced) <= b.unplacedCeiling;
+  }],
+];
+/**
+ * THE NAV PILL, held to the book: the schemes it names, the date AMFI struck
+ * them, their value and what the statements marked them at. Run by the two
+ * pages whose basis pill reads STATEMENT over a total that carries them.
+ */
+/**
+ * THE UNITS NO STATEMENT MARKS are the NAV part's own sub-part: named, dated by
+ * the closing balance they come from, and outside the tie-back, which is struck
+ * over the lines a statement does mark. Folded in, one unmarked line blanked
+ * the tie-back for every scheme; unnamed, they read as value a statement marked.
+ */
+const xaUnitsOk = (a, v, text) => {
+  const near = (x, y) => Number.isFinite(Number(x)) && Math.abs(Number(x) - y) <= 1;
+  return Number(a["units-rows"]) === v.unitsRows && near(a["units-value"], v.unitsValue)
+    && near(a["nav-marked"], v.navMarked)
+    && (v.unitsRows
+      ? a["units-from"] === v.unitsFrom && a["units-to"] === v.unitsTo
+        && (text == null || /closing units/.test(text))
+      : a["units-from"] === "" && (text == null || !/closing units/.test(text)));
+};
+const xaNavBasisChecks = () => [
+  ["a NAV pill names the schemes the page values at AMFI's published NAV, and their date", (t, ctx) => {
+    const v = XA_BOOK?.valuation;
+    if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
+    const el = xaEl(ctx, "nav-basis");
+    if (!v.navRows) return el === null;
+    if (!el) return false;
+    const a = el.attrs;
+    const near = (x, y) => Number.isFinite(Number(x)) && Math.abs(Number(x) - y) <= 1;
+    return Number(a["nav-rows"]) === v.navRows && Number(a["nav-schemes"]) === v.navSchemes
+      && a["nav-from"] === v.navFrom && a["nav-to"] === v.navTo
+      && near(a["nav-value"], v.navValue) && near(a["nav-printed"], v.navPrinted)
+      && xaUnitsOk(a, v, el.title ?? "")
+      && /\bNAV\b/.test(el.text) && el.text.includes(`${v.navSchemes} scheme`)
+      && /published NAV/i.test(el.title ?? "");
+  }],
+];
+/**
+ * THE TIME-WEIGHTED GRID, held to the book (XA-15). The grid drew one block per
+ * account — the fact sheet, else the first — and dashed every period that
+ * block lacked with "<provider> does not publish a <period> figure", which was
+ * false wherever another report of the same account and date prints it.
+ */
+const TWRR_PERIODS = ["mtd", "qtd", "fytd", "m1", "m3", "m6", "y1", "si"];
+/** The ONE period a report type prints no figure for, though its reader writes one. */
+const TWRR_REFUSED = { "performance-benchmark": ["qtd"] };
+const twrrChecks = () => [
+  ["every report that publishes a time-weighted return is drawn, under its own report and date", (t, ctx) => {
+    const want = XA_BOOK?.twrr;
+    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
+    const got = (ctx?.xa ?? []).filter((x) => x.xa === "twrr-block");
+    const key = (a, r, d) => `${a}|${r}|${d}`;
+    const wantKeys = want.map((b) => key(b.account, b.report, b.date)).sort();
+    const gotKeys = got.map((x) => key(x.attrs.account, x.attrs.report, x.attrs.date)).sort();
+    return wantKeys.length > 0 && JSON.stringify(wantKeys) === JSON.stringify(gotKeys)
+      && want.every((b) => got.some((x) => x.attrs.account === b.account && x.attrs.report === b.report
+        && x.attrs.date === b.date && Number(x.attrs.series) === b.series.length));
+  }],
+  ["every figure is the report's own, and no dash claims a manager publishes nothing", (t, ctx) => {
+    const want = XA_BOOK?.twrr;
+    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
+    const cells = (ctx?.xa ?? []).filter((x) => x.xa === "twrr-cell");
+    // A dash's reason is a HOVER, so it is read off the titles and off each
+    // cell's own `data-reason` — the page's text cannot see either.
+    if (!cells.length || (ctx?.titles ?? []).some((x) => /does not publish a/i.test(x))) return false;
+    const live = new Set(TWRR_PERIODS.filter((k) => want.some((b) => b.series.some((x) => x[k] !== null
+      && !(TWRR_REFUSED[b.report] ?? []).includes(k)))));
+    return want.every((b) => b.series.every((x) => [...live].every((k) => {
+      const c = cells.find((y) => y.attrs.account === b.account && y.attrs.report === b.report
+        && y.attrs.date === b.date && y.attrs.series === x.series && y.attrs.period === k);
+      if (!c) return false;
+      const shown = x[k] !== null && !(TWRR_REFUSED[b.report] ?? []).includes(k);
+      // A dash names the REPORT it is about, never the manager.
+      return shown ? c.attrs.value !== "" && Number(c.attrs.value) === x[k]
+        : c.attrs.value === "" && /^the (fact sheet|performance history|performance vs benchmark|sebi investor report|performance summary|appraisal|[a-z-]+) /.test(c.attrs.reason ?? "")
+          && !/does not publish/i.test(c.attrs.reason ?? "");
+    })));
+  }],
+  ["since inception says whether it is an annual rate or the return over the whole period", (t, ctx) => {
+    const want = XA_BOOK?.twrr;
+    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
+    const si = want.flatMap((b) => b.series.filter((x) => x.si !== null).map((x) => ({ b, x })));
+    // LOAD-BEARING: the book must carry both kinds, or one tag rule passes alone.
+    if (!(si.some(({ x }) => x.siAnnualised === true) && si.some(({ x }) => x.siAnnualised === false)))
+      return { notChecked: "every since-inception figure in this book is of one kind" };
+    const cells = (ctx?.xa ?? []).filter((y) => y.xa === "twrr-cell" && y.attrs.period === "si");
+    return si.every(({ b, x }) => {
+      const c = cells.find((y) => y.attrs.account === b.account && y.attrs.report === b.report
+        && y.attrs.date === b.date && y.attrs.series === x.series);
+      if (!c) return false;
+      return x.siAnnualised === true ? /p\.a\./.test(c.text) && !/\babs\b/.test(c.text)
+        : x.siAnnualised === false ? /\babs\b/.test(c.text) && !/p\.a\./.test(c.text)
+        : !/p\.a\.|\babs\b/.test(c.text);
+    });
+  }],
+  ["the benchmark report's quarter is refused — its reader writes the month into it", (t, ctx) => {
+    const want = XA_BOOK?.twrr;
+    if (!want) return { notChecked: "the managers' return blocks could not be re-derived from glowData.ts" };
+    const bench = want.filter((b) => b.report === "performance-benchmark");
+    if (!bench.length) return { notChecked: "no performance-vs-benchmark report in this book" };
+    // THE PREMISE, re-measured: on every such block the quarter IS the month.
+    // A block where they differ would make the refusal refuse a real figure.
+    if (!bench.every((b) => b.series.every((x) => x.qtd === null || x.qtd === x.mtd))) return false;
+    const cells = (ctx?.xa ?? []).filter((y) => y.xa === "twrr-cell" && y.attrs.report === "performance-benchmark" && y.attrs.period === "qtd");
+    return cells.length > 0 && cells.every((c) => c.attrs.value === "")
+      && (ctx?.titles ?? []).some((x) => /prints no quarter-to-date figure/.test(x));
   }],
 ];
 /** The count a `data-xa` element carries, as a number (NaN when absent). */
@@ -27303,6 +27593,45 @@ const INVARIANTS = {
       if (!rows.length) return false;
       return rows.every((r) => r.attrs.sector !== "Cash" || r.attrs.class === "1");
     }],
+    // XA-12. The subtitle said "on the statements' own marks" over a book that
+    // carries AMFI's NAV on every fund it prices, and the basis pill beside it
+    // reads STATEMENT because a NAV never sets the live flag.
+    ...xaNavBasisChecks(),
+    /**
+     * XA-17. The tile read "this corpus carries two per account" and the card
+     * "No drawdown can be computed" — the premise Stage 10p overturned for the
+     * NAV chart. The book's dated series has a peak-to-trough, and the tile and
+     * the table under it must both be that figure.
+     */
+    ["the maximum drawdown is the dated NAV series' own peak-to-trough, not the stale two-per-account absence", (t, ctx) => {
+      const d = XA_BOOK?.drawdown;
+      if (!d) return { notChecked: "the book's dated NAV series has fewer than two points" };
+      const el = xaEl(ctx, "returns-drawdown");
+      if (!el || /this corpus carries two per account/.test(t) || /No drawdown can be computed for this book/.test(t)) return false;
+      return Math.abs(Number(el.attrs.value) - d.pct) < 1e-6 && el.attrs.peak === d.peak && el.attrs.trough === d.trough
+        && el.attrs.recovered === d.recovered && Number(el.attrs.points) === d.points;
+    }],
+    ["the drawdown table's fall from its peak is the tile's, at the tile's trough", (t, ctx) => {
+      const d = XA_BOOK?.drawdown;
+      if (!d) return { notChecked: "the book's dated NAV series has fewer than two points" };
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "returns-dd-row");
+      if (rows.length !== d.points) return false;
+      const deepest = Math.min(...rows.map((r) => Number(r.attrs["from-peak"])));
+      return Math.abs(deepest - d.pct) < 1e-6
+        && (!d.trough || rows.some((r) => r.attrs.date === d.trough && Math.abs(Number(r.attrs["from-peak"]) - d.pct) < 1e-6));
+    }],
+    // STRUCK ON THE HOVERS AS WELL AS THE FACE. A page's subtitle is its
+    // title's hover since #95 (Stage 10cp), so a check reading the page text
+    // alone could no longer see the sentence either way — the wrong one
+    // coming back, or the right one going.
+    ["the subtitle does not call NAV-valued figures the statements' own marks", (t, ctx) => {
+      const v = XA_BOOK?.valuation;
+      if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
+      if (!v.navRows) return { notChecked: "no holding in this book is valued at a published NAV" };
+      const all = [t, ...(ctx?.titles ?? [])];
+      return !all.some((x) => /Point-in-time, on the statements' own marks\./.test(x))
+        && all.some((x) => /on the statements' own marks, and on AMFI's published NAV of/.test(x));
+    }],
   ],
   /*
    * COMPARE COMPANIES IS REMOVED, at the family's request, and its block goes
@@ -27547,6 +27876,11 @@ const INVARIANTS = {
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
     // to the statement book and the current value step by step, as on `cio-nav`.
     ...NAV_RECON,
+    // XA-12: the basis pill reads STATEMENT over a Current Value tile that
+    // carries AMFI's published NAV on every fund it prices.
+    ...xaNavBasisChecks(),
+    // XA-15: every report's own time-weighted figures, each under its report.
+    ...twrrChecks(),
     /**
      * "NOT ANNUALISED" IS A GUARD, AND IT STAYS ON THE FACE (Stage 10cp). The
      * family asked for every explainer line to go; this is not one. Stage
@@ -27658,6 +27992,51 @@ const INVARIANTS = {
     // the sentence coming back where it now lives.
     ["the claim that the book carries no look-through behind a fund is gone", (t, ctx) =>
       ![t, ...(ctx?.titles ?? [])].some((x) => /carries no look-through behind a fund/i.test(x))],
+    /**
+     * XA-13. The pill read "as of 2026-08-29" — the two trusts' quantity-only
+     * NSDL statements, which value nothing — over a total carrying AMFI's NAV
+     * on every fund it prices. It must name the dates the values are struck on
+     * and the NAV part, and the statement-marked part plus what the statements
+     * marked the NAV part at must be the statement total: the tie-back that
+     * lets a reader open the PDFs and land on the same figure.
+     */
+    ["the basis pill names the dates the values are struck on and the NAV part, never the book's newest statement alone", (t, ctx) => {
+      const v = XA_BOOK?.valuation;
+      if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
+      const el = xaEl(ctx, "upload-basis");
+      if (!el) return false;
+      const a = el.attrs;
+      const near = (x, y) => Number.isFinite(Number(x)) && Math.abs(Number(x) - y) <= 1;
+      const navOk = v.navRows
+        ? Number(a["nav-rows"]) === v.navRows && Number(a["nav-schemes"]) === v.navSchemes
+          && a["nav-from"] === v.navFrom && a["nav-to"] === v.navTo
+          && near(a["nav-value"], v.navValue) && near(a["nav-printed"], v.navPrinted)
+          && xaUnitsOk(a, v, el.title ?? "")
+          && /\bNAV\b/.test(el.text)
+        : Number(a["nav-rows"]) === 0;
+      return navOk && a["stmt-from"] === v.stmtFrom && a["stmt-to"] === v.stmtTo
+        && !new RegExp(`as of ${v.bookAsOf}`).test(el.text)
+        && near(Number(a["stmt-value"]) + (v.navRows ? Number(a["nav-printed"]) : 0), v.statementTotal);
+    }],
+    // STRUCK ON THE HOVERS AS WELL AS THE FACE (Stage 10cp): the subtitle is
+    // the page title's hover, and the footer is a line of figures whose
+    // sentence — the statements' own marks, the tie-back — is ITS hover. So
+    // the negative reads every hover too, and the footer is held on both its
+    // face (each price, its dates, the schemes) and its own hover.
+    ["no caption claims every figure traces to a statement where a fund is valued at a published NAV", (t, ctx) => {
+      const v = XA_BOOK?.valuation;
+      if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
+      if (!v.navRows) return { notChecked: "no holding in this book is valued at a published NAV" };
+      const el = xaEl(ctx, "upload-footer");
+      if (!el) return false;
+      const foot = el.text ?? "";
+      const hover = el.title ?? "";
+      return ![t, ...(ctx?.titles ?? [])].some((x) => /Every figure traces to a statement PDF/i.test(x))
+        && !/^\s*Book as of/i.test(foot)
+        && foot.includes("at AMFI's published NAV of") && foot.includes(`${v.navSchemes} scheme`)
+        && hover.includes("at AMFI's published NAV of") && hover.includes("statements' own marks")
+        && (ctx?.titles ?? []).some((x) => x.includes("at AMFI's published NAV of") && x.includes("statements' own marks"));
+    }],
   ],
 
   history: [
@@ -27727,6 +28106,73 @@ const INVARIANTS = {
           && (!Number.isFinite(shown) || Math.abs(shown - Math.abs(w.level)) > 0.01);
       });
     }],
+    /**
+     * XA-13. "Total ₹713.3 Cr · as of 29 Aug 2026" dated a total struck on marks
+     * of 31 Mar → 13 Aug and, for every fund AMFI prices, on a NAV of 22 Sep by
+     * the one statement in the book that values nothing. The line names both
+     * prices and their dates now, and the statement-marked part plus what the
+     * statements marked the NAV part at is the statement total.
+     */
+    ["the snapshot's total names the prices and dates it is struck on, not the book's newest statement", (t, ctx) => {
+      const v = XA_BOOK?.valuation;
+      if (!v) return { notChecked: "the book's valuation basis could not be re-derived from glowData.ts" };
+      const el = xaEl(ctx, "history-total-basis");
+      if (!el) return false;
+      const a = el.attrs;
+      const near = (x, y) => Number.isFinite(Number(x)) && Math.abs(Number(x) - y) <= 1;
+      // THE FACE IS A LINE OF FIGURES AND THE SENTENCE ITS HOVER (Stage 10cp):
+      // each price and its dates are held on the face, and the statements'
+      // own marks and the units no statement marks on the hover of the same
+      // line — never on the page text, where they no longer stand.
+      const hover = el.title ?? "";
+      return a["stmt-from"] === v.stmtFrom && a["stmt-to"] === v.stmtTo
+        && (v.navRows
+          ? a["nav-to"] === v.navTo && near(a["nav-value"], v.navValue) && near(a["nav-printed"], v.navPrinted)
+            && xaUnitsOk(a, v, hover)
+            && el.text.includes("at AMFI's published NAV of") && hover.includes("at AMFI's published NAV of")
+          : !el.text.includes("NAV"))
+        && el.text.includes("at statement marks") && hover.includes("at the statements' own marks")
+        && !/Total\s+[−-]?₹\s*[\d.,]+\s*(Cr|L|K)?\s*·\s*as of/i.test(t);
+    }],
+    /**
+     * XA-19. The footnote said every ₹0 under Capital in is measured; on
+     * 30 Jun and 31 Jul accounts that publish no dated capital record restated,
+     * so the ₹0 there was a sum over the others. The subtitle said every other
+     * account "is held at its latest mark" — false before the panel completes,
+     * when an account that has not yet published is absent, not carried. And
+     * the footnote's "Four covered accounts" was a count typed into prose.
+     */
+    ["a ₹0 under Capital in stands only where it was measured", (t, ctx) => {
+      const want = XA_BOOK?.historyCapital;
+      if (!want?.length) return { notChecked: "the book's NAV series could not be re-derived from glowData.ts" };
+      if (!want.some((w) => w.kind === "unmeasured" && !w.flow)) return { notChecked: "no interval here restated an account that publishes no capital record" };
+      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-capital");
+      return got.length === want.length && want.every((w) => {
+        const g = got.find((x) => x.attrs.date === w.date);
+        if (!g || g.attrs.kind !== w.kind) return false;
+        const zero = /₹\s*0(?![\d.,])/.test(g.text);
+        return w.kind === "measured" && !w.flow ? zero : w.kind === "measured" ? true : !zero;
+      });
+    }],
+    // Both claims moved into hovers when the family asked for the notes around
+    // the tables to go (Stage 10ci), so they are struck on the page's text AND
+    // its titles: a false sentence in a hover is still a sentence a reader reads.
+    ["the subtitle holds no account at its latest mark before it has published", (t, ctx) => {
+      const g = XA_BOOK?.historyPanel;
+      if (!g?.completeFrom || !g.first) return { notChecked: "the NAV coverage block carries no panel date" };
+      if (!(g.first < g.completeFrom)) return { notChecked: "the panel is complete from the series' first point" };
+      const all = [t, ...(ctx?.titles ?? [])].join("\n");
+      return !/Every other account is held at its latest mark/.test(all)
+        && /has not yet published is not in the point at all/.test(all);
+    }],
+    ["the footnote's count of accounts with no dated capital record is the coverage block's", (t, ctx) => {
+      const g = XA_BOOK?.historyPanel;
+      if (!g) return { notChecked: "the NAV coverage block could not be re-derived from glowData.ts" };
+      const n = g.unreportedAccounts;
+      const all = [t, ...(ctx?.titles ?? [])].join("\n");
+      return !/Four covered accounts/.test(all)
+        && new RegExp(`${n} covered account${n === 1 ? " publishes" : "s publish"} no dated capital record`).test(all);
+    }],
   ],
 
   /**
@@ -27767,6 +28213,110 @@ const INVARIANTS = {
       const el = xaEl(ctx, "cg-tax");
       if (!XA_BOOK?.tax || !el) return false;
       return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
+    }],
+    /**
+     * XA-16. Three captions said the book carries no lot date — "No statement
+     * in this drop carries lot dates", "Without a lot date there is no mark to
+     * count to", and "the other 50 accounts issue a CAPITAL REGISTER" — while
+     * three LKP holdings carry a dated lot register and only eight accounts
+     * issue a capital register at all. The planner is empty because all three
+     * are at a loss, which is what the tile must say.
+     */
+    // STRUCK ON THE HOVERS AS WELL AS THE FACE. #95 moved an absent tile's
+    // hint and an absent section's "what would fill it" into hovers (Stage
+    // 10cp) — which is exactly where these three captions and the count that
+    // replaced them stand now, so a page-text match could fail on neither.
+    ["no tile or card says the book carries no lot dates while a holding carries one", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      if (!b.dated) return { notChecked: "no holding in this book carries a dated lot" };
+      const all = [t, ...(ctx?.titles ?? [])].join("\n");
+      return !/No statement in this drop carries lot dates/.test(all)
+        && !/Without a lot date there is no mark to count to/.test(all)
+        && !/accounts issue a CAPITAL REGISTER/.test(all)
+        && all.includes(`${b.dated} holding${b.dated === 1 ? " carries" : "s carry"} a purchase date`);
+    }],
+    ["a harvest row whose broker dates its lots shows its term, never the no-date absence", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      const drawn = b.harvest.slice(0, 30);
+      const dated = drawn.filter((h) => h.dated);
+      if (!dated.length) return { notChecked: "no holding with a dated lot is among the harvest rows drawn" };
+      const terms = (ctx?.xa ?? []).filter((x) => x.xa === "cg-term");
+      return terms.length === dated.length && dated.every((h) => terms.some((x) => x.attrs.key === h.key
+        && x.attrs.account === h.account && Number(x.attrs.st) === h.st && Number(x.attrs.lt) === h.lt
+        && /\b(ST|LT)\b/.test(x.text)));
+    }],
+    /**
+     * XA-22. The list is on the statements' marks by design — it has to tie
+     * to the PDFs — and those marks are up to five months old. Each row must
+     * name the date its loss is marked at, and a loss the published NAV has
+     * since turned into a gain must be flagged and counted, never offered as a
+     * loss to book.
+     */
+    ["every harvest row names the date its loss is marked at — its own account's report date", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
+      if (!b.harvest.length) return rows.length === 0;
+      return rows.length === Math.min(30, b.harvest.length) && rows.every((r) => {
+        const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
+        return !!w && w.marked !== "" && r.attrs.marked === w.marked;
+      });
+    }],
+    ["a loss the published NAV has turned into a gain is flagged, and the caption counts every one", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      if (!b.turned) return { notChecked: "no harvest candidate is at a gain at the published NAV on this book" };
+      const cap = xaEl(ctx, "cg-harvest-caption");
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
+      return !!cap && Number(cap.attrs["nav-turned"]) === b.turned && Number(cap.attrs.rows) === b.harvest.length
+        && /no longer at a loss at AMFI/.test(cap.text)
+        && rows.every((r) => {
+          const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
+          return !!w && (r.attrs["nav-turned"] === "1") === w.turned;
+        });
+    }],
+  ],
+
+  /**
+   * ── LEDGER INSIGHTS IS DATED BY ITS OWN TAPE (XA-18) ─────────────────────
+   *
+   * Its pill read "as of 29 Aug 2026" — the archive's newest statement of any
+   * kind, the two trusts' NSDL holdings, which carry no trade — over a tape
+   * that runs 1 Apr → 13 Aug, and the Bought and Sold tiles said "over the
+   * window" without ever printing it. The window is re-derived from the
+   * archive's own transaction statements, one report type per account.
+   */
+  ledger: [
+    ["the ledger is dated by the tape's own window, never the archive's newest statement", (t, ctx) => {
+      const l = XA_BOOK?.ledger;
+      if (!l?.from || !l?.to) return { notChecked: "the transaction statements' window could not be read from the archive" };
+      if (!(l.newest > l.to)) return { notChecked: "the archive's newest statement is the tape's own last date" };
+      const el = xaEl(ctx, "ledger-window");
+      return !!el && el.attrs.from === l.from && el.attrs.to === l.to && /\btape\b/.test(el.text) && !/as of/i.test(el.text);
+    }],
+    ["the Bought and Sold tiles name the window they are summed over", (t) =>
+      !/over the window/.test(t) && /settled cost, \d/.test(t) && (/settled proceeds, \d/.test(t) || /no sells over this window/.test(t))],
+  ],
+
+  /**
+   * ── A SHORT ROW IS NOT PLACED BY POSITION (XA-20) ────────────────────────
+   *
+   * The extracted tables keep a row's cells in printed order and drop the
+   * blank ones, so a row printing fewer cells than its headings put its
+   * figures under the wrong ones — Goldstandard's bank-book opening balance
+   * under "expenses". Walked on the table with the most such rows, derived
+   * from the archive.
+   */
+  "audit-short-rows": [
+    ["a row with fewer cells than its headings is shown unaligned, never placed by position", (t, ctx) => {
+      const a = XA_BOOK?.auditShort;
+      if (!a) return { notChecked: "no extracted table in the archive has a row shorter than its headings" };
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "audit-short-row");
+      const note = xaEl(ctx, "audit-short-note");
+      return !!note && Number(note.attrs.count) === a.count && rows.length === a.visible
+        && rows.every((r) => Number(r.attrs.cells) < Number(r.attrs.cols) && /placement not recorded/.test(r.text));
     }],
   ],
 };
