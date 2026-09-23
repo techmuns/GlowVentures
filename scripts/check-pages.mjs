@@ -13367,7 +13367,13 @@ const INVARIANTS = {
           const named = [...String(c.title ?? "").matchAll(/₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L)\b/g)].map((x) => crU(x[1], x[2]));
           return Math.abs(c.paid - row.paid) <= 1 && c.printed !== null && Math.abs(c.printed - row.printed) <= 1
             && Math.abs(shown - row.paid / 1e7) <= 0.05 && Math.abs(shown - row.printed / 1e7) > 0.05
-            && /PAID IN/.test(c.title ?? "") && named.some((v) => Math.abs(v - row.printed / 1e7) <= 0.05);
+            && /PAID IN/.test(c.title ?? "") && named.some((v) => Math.abs(v - row.printed / 1e7) <= 0.05)
+            // ...AND WHERE THE ROW STANDS ON CAPITAL (Stage 10bw), the units'
+            // cost its hover keeps is ALSO what was paid, never the restated
+            // figure: the cell then prints the capital, so a restated cost could
+            // only surface there, in a sentence a reader holding the statement
+            // would take for the fund's own number.
+            && (c.unitCost === null || Math.abs(c.unitCost - row.paid) <= 1);
         }));
       }],
     /**
@@ -18623,6 +18629,10 @@ for (const theme of THEMES) {
           printed: el.hasAttribute("data-cost-printed") ? Number(el.getAttribute("data-cost-printed")) : null,
           text: (el.innerText ?? "").trim(),
           title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+          // The units' cost a row ON CAPITAL keeps for its hover (Stage 10bw) —
+          // absent on a row still on cost, where the cell's own text is the cost.
+          unitCost: el.hasAttribute("data-unit-cost") && el.getAttribute("data-unit-cost") !== ""
+            ? Number(el.getAttribute("data-unit-cost")) : null,
         })),
         tile: (() => {
           const el = document.querySelector("[data-stock-cost-carried]");

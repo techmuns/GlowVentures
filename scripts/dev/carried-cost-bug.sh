@@ -124,9 +124,14 @@ run_page_case "the Invested cell stops saying its cost was carried" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
+# BOTH PLACES THE CELL SAYS IT. Since Stage 10bw the cell carries a hover of its
+# own (the carried cost first, then the capital), and a probe that reads the
+# cell reads that one — so stripping only the button's would leave the claim on
+# screen and this case would report a check that cannot fail.
 old = '${carriedWhy ? ` ${carriedWhy}` : ""}'
-if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+old2 = "title={[carriedWhy || null,"
+if old not in s or s.count(old2) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1).replace(old2, "title={[null,", 1))
 PY
 
 run_page_case "the row shows the statement's restated cost again" py <<'PY'
@@ -193,9 +198,11 @@ run_page_case "the company page's per-account cell forgets its hover" py <<'PY'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '''                          ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>'''
-new = '''                          ? <span>{money(r.costBasis)}</span>'''
-if old not in s: sys.exit(1)
+# The note is the FIRST half of the cell's own hover since Stage 10bw, which
+# composes it with the capital's; dropping that half is the bug.
+old = '''                            ? carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v)) : null,'''
+new = '''                            ? null : null,'''
+if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
