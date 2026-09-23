@@ -247,9 +247,16 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  * `f.returnPct` is the row's value against its cost — the Monitor's HPR for the
  * same fund, struck on the same deduped rows — and is the ONLY figure here not
  * derived from the dated record. Everything dated comes from `d`.
+ *
+ * ONLY THOSE TWO FIELDS ARE READ, so that is all the type asks for: the Private
+ * Market master table resolves a fund row AND each folio under it here, and a
+ * folio is one statement's holding rather than a `FundRow` — its own value
+ * against its own cost, with its own account's dated record.
  */
+export type FundReturnInput = Pick<FundRow, "returnPct" | "cost">;
+
 export function fundMeasuredReturn(
-  f: FundRow,
+  f: FundReturnInput,
   d: FundDated | undefined,
   measure: ReturnMeasure,
   money: Money,
@@ -355,7 +362,7 @@ export function fundMeasuredReturn(
 }
 
 /** The XIRR measure, which `auto` and `ytd` also lean on. */
-function xirrOf(f: FundRow, d: FundDated | undefined, money: Money, date: DateFmt): MeasuredReturn {
+function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date: DateFmt): MeasuredReturn {
   const tag = "XIRR";
   if (!d || d.gap) return { shown: false, tag, reason: `a money-weighted return needs every dated cash flow, and ${d?.gap ?? "no dated contribution for this fund is in the book"}` };
   if (d.payouts === "unknown") {
