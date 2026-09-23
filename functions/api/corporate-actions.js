@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
       if (!response.ok) throw new Error(`Research HTTP ${response.status}`);
       const next = normalizeActionFeed(await readBoundedJson(response));
       if (Date.parse(next.capturedAt) > Date.now() + 5 * 60_000) throw new Error("Future capture");
-      if (feed && (next.capturedAt < feed.capturedAt || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
+      if (feed && (Date.parse(next.capturedAt) < Date.parse(feed.capturedAt) || next.rows.length < feed.rows.length * 0.75)) throw new Error("Regressed capture");
       feed = next;
       context.waitUntil(cache.put(key, new Response(JSON.stringify(feed), { headers: {
         "Content-Type": "application/json", "Cache-Control": "public, max-age=604800", "x-fetched-at": String(Date.now()),

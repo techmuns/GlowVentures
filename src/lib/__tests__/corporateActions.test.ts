@@ -38,6 +38,7 @@ assert.equal(parseAction(raw("bonus", "2026-09-04", "Scheme Of Arrangement - Bon
 assert.equal(parseAction(raw("dividend", "2026-09-04", "Dividend · Final · 250.00%", { source: "Screener", sources: ["Screener"], screener: { companyKey: "TEST" } })).cashPerShare, null);
 assert.equal(parseAction(raw("dividend", "2026-09-04", "Dividend - Rs 10 Per Share and Special Dividend Rs 2 Per Share")).cashPerShare, null);
 assert.equal(parseAction(raw("bonus", "2026-09-04", "Bonus 1:1", { screener: { ratio: "2:1" } })).factor, null);
+assert.equal(parseAction(raw("split", "2026-09-04", "Split From Rs 10 To Rs 5 and Bonus 1:1")).factor, null, "a mixed action is not reduced to one ratio");
 assert.equal(parseAction(raw("split", "2026-09-04", "Face Value Split - From Rs 10 To Rs 5", { screener: { oldFaceValue: "10", newFaceValue: "1" } })).factor, null);
 assert.equal(parseAction(raw("dividend", "2026-09-04", "Dividend - Rs 1 Per Share", { exDate: "2026-02-30" })).cashPerShare, null);
 assert.equal(parseAction(raw("dividend", "2026-09-04", "Dividend - Rs 1 Per Share", { sourceUrl: "javascript:alert(1)" })).sourceUrl, null);

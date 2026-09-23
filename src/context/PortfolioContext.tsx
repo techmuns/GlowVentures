@@ -235,7 +235,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     let timer: number;
     let held: ActionFeed | null = null;
     const accept = (next: ActionFeed) => {
-      if (controller.signal.aborted || held && next.capturedAt < held.capturedAt) return;
+      if (controller.signal.aborted || held && Date.parse(next.capturedAt) < Date.parse(held.capturedAt)) return;
       held = next;
       setCorporateActions(next);
     };

@@ -33,6 +33,7 @@ export function parseAction(row) {
   if (type === "bonus") {
     // Preference-share bonuses, NCRPS and arrangements are NOT extra equity.
     if (/ncrps|preference|debenture|arrangement|warrant/i.test(purpose)) issue = "Non-equity bonus needs statement reconciliation";
+    if (/split|sub.?division|rights|demerger|buy.?back|dividend/i.test(purpose)) issue = "Combined share action needs statement reconciliation";
     const match = purpose.match(/^bonus(?:\s+issue)?\s*[-·:]?\s*(\d+(?:\.\d+)?\s*:\s*\d+(?:\.\d+)?)\s*$/i);
     const a = match ? ratio(match[1]) : null;
     const b = ratio(s?.ratio);
@@ -41,6 +42,7 @@ export function parseAction(row) {
     if (r !== null) factor = 1 + r;
     else issue ||= "Bonus ratio needs verification";
   } else if (type === "split") {
+    if (/bonus|dividend|rights|arrangement|demerger|buy.?back|capital.?reduction|consolidation/i.test(purpose)) issue = "Combined share action needs statement reconciliation";
     const old = number(s?.oldFaceValue), next = number(s?.newFaceValue);
     const m = purpose.match(/(?:from|face\s*value)\s*(?:rs\.?|re\.?|₹)?\s*(\d+(?:\.\d+)?)\s*(?:\/-)?(?:\s*per\s*share)?\s*(?:to|→)\s*(?:rs\.?|re\.?|₹)?\s*(\d+(?:\.\d+)?)/i);
     const a = m && Number(m[1]) > 0 && Number(m[2]) > 0 ? Number(m[1]) / Number(m[2]) : null;
