@@ -362,7 +362,19 @@ ok("the context is a non-empty set of named blocks",
       && (f.statementAsOf === fencedAccts[0]?.asOf),
     `${f.shares} shares, ${JSON.stringify(f.statementAsOf)}`);
   ok("...and its basis, so a statement value is not passed off as today's",
-    /statement/i.test(f.valueBasis) && /today/i.test(f.note));
+    /statement's mark/i.test(f.valueBasis) && /not today's price/.test(f.valueBasis)
+      && (fencedAccts.length !== 1 || f.valueBasis.includes(`as of ${fencedAccts[0].asOf}`)) && /today/i.test(f.note),
+    f.valueBasis);
+  // WHOSE it is (PC-04): the account's owner and custodian, as the registry
+  // names them — never "the family's promoter stock", which one demat is not.
+  ok("...held in the account(s) the registry names, by owner and custodian",
+    f.heldIn.every((h, i) => (h as { owner?: string }).owner === fencedAccts[i].owner
+      && (h as { provider?: string }).provider === fencedAccts[i].provider),
+    JSON.stringify(f.heldIn));
+  ok("...and called one demat's holding, never the family's promoter stock",
+    (fencedAccts.length === 1 ? /^One demat's holding/.test(f.note) : f.note.startsWith(`${fencedAccts.length} demats' holdings`))
+      && !/the family's promoter stock/i.test(f.note) && /not a figure for the family's whole promoter holding/.test(f.note),
+    f.note.slice(0, 120));
   ok("...and told that it is NOT in any total above", /excluded/i.test(f.note) && /not add/i.test(f.note));
   const s = block<{ currentValueOfHoldingsCr: number }>("book_summary");
   ok("...and the total it reports genuinely excludes it", f.valueCr > s.currentValueOfHoldingsCr

@@ -2705,6 +2705,20 @@ const SEARCH_BOOK = (() => {
     }
     const [sector] = [...bySector].sort((a, b) => b[1] - a[1])[0] ?? [];
     const polycab = bookArray(src, "BOOK_POLYCAB");
+    /**
+     * A REDEEMED HOLDING, AND WHETHER ITS REDEMPTION IS ON THE RECORD (SC-C5) —
+     * re-expressed: every consolidated row a fund vehicle at nil units with a
+     * price, and "on the record" meaning the family's dated capital record
+     * carries money coming back for one of its accounts.
+     */
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
+    const outAccounts = new Set(moves.filter((m) => m.direction === "out").map((m) => m.accountId));
+    const byKeyRows = new Map();
+    for (const p of ded) if (!small.has(p.securityKey)) byKeyRows.set(p.securityKey, [...(byKeyRows.get(p.securityKey) ?? []), p]);
+    const closed = [...byKeyRows].filter(([, rows]) => rows.every((p) => FUND_VEHICLE_CLASSES.has(p.assetClass)
+      && Number(p.quantity) === 0 && p.currentPrice != null))
+      .map(([key]) => ({ key, q: key.replace(/-/g, " "),
+        onRecord: positions.some((p) => p.securityKey === key && outAccounts.has(p.accountId)) }));
     return {
       holding: largestKey && word ? { word, href: `/stock/${encodeURIComponent(largestKey)}` } : null,
       isin: isinPick ? { isin: isinPick.isin, href: `/stock/${encodeURIComponent(isinPick.key)}` } : null,
@@ -2712,6 +2726,11 @@ const SEARCH_BOOK = (() => {
       owner: owner ? { name: owner, href: `/family?entity=${encodeURIComponent(owner)}` } : null,
       sector: sector ? { name: sector, href: `/monitor?group=security&sector=${encodeURIComponent(sector)}` } : null,
       fenced: Array.isArray(polycab) && polycab.length > 0,
+      // The ring-fenced company's own name and ISIN (PC-05) — the two things a
+      // reader types that reached nothing.
+      fencedName: polycab?.[0]?.security?.replace(/\s*-\s*EQ\b.*$/i, "").split(/\s+/).slice(0, 2).join(" ") || null,
+      fencedIsin: polycab?.[0]?.isin ?? null,
+      closed,
     };
   } catch { return null; }
 })();
@@ -18747,6 +18766,74 @@ const INVARIANTS = {
         && c.keys.some((k) => c.rows[0]?.id === `holding:${k}`));
     }],
     /**
+     * THE COMPANY'S OWN NAME AND ITS ISIN REACH THE POLYCAB PAGE (PC-05), and
+     * nothing outside it. "Polycab India" and `INE455K01017` answered "Nothing
+     * in this book matches" about a ₹12,351 Cr holding — the BSE defect again —
+     * because the page's entry carried only the nav's one word. Both strings are
+     * derived from `BOOK_POLYCAB`, so a drop that fences another security picks
+     * its own.
+     */
+    ["the fenced company's full name and its ISIN open the Polycab page first, and nothing outside it", () => {
+      if (!SEARCH_BOOK?.fenced) return { notChecked: "this book ring-fences nothing" };
+      if (!SEARCH) return false;
+      return ["fencedName", "fencedIsin"].every((k) => {
+        const real = (SEARCH.results?.[k]?.rows ?? []).filter((x) => x.kind !== "ask");
+        return real.length > 0 && real[0].href === "/polycab" && real[0].kind === "page"
+          && real.every((x) => (x.kind === "page" || x.kind === "view") && (x.href === "/polycab" || x.href.startsWith("/polycab?")));
+      });
+    }],
+    /**
+     * A REDEEMED HOLDING SAYS WHERE ITS REDEMPTION IS ONLY WHERE IT IS (SC-C5).
+     * 3P's is on the family's dated capital record and opens the Transactions
+     * tab; the HDFC folio's two schemes print nil units and no dated movement
+     * anywhere, and "the redemption is on Transactions" sent a reader to a tab
+     * that never mentions them.
+     */
+    ["a redeemed holding says where its redemption is only where it is — on Transactions, or on no dated record", () => {
+      const cases = SEARCH_BOOK?.closed;
+      if (!Array.isArray(cases)) return false;
+      if (!cases.length) return { notChecked: "no holding in this book is redeemed to nil" };
+      const got = SEARCH?.closedRows;
+      if (!got || got.length !== Math.min(cases.length, 8)) return false;
+      // Both branches, or the check proves half of itself.
+      if (!got.some((c) => c.onRecord) || !got.some((c) => !c.onRecord)) return false;
+      return got.every((c) => {
+        const row = c.rows.find((x) => x.id === `holding:${c.key}`);
+        if (!row || !/redeemed/i.test(row.detail)) return false;
+        return c.onRecord
+          ? row.href === "/monitor?show=transactions" && /on Transactions/.test(row.detail)
+          : row.href === `/stock/${encodeURIComponent(c.key)}` && !/Transactions/.test(row.detail);
+      });
+    }],
+    /**
+     * A FIGURE RESULT OPENS A PAGE THAT SHOWS THE FIGURE (SC-C6), struck on the
+     * page it LANDS on: the tile that carries the figure is drawn there.
+     */
+    ["the money-weighted return and Distributions each open a page whose tiles show that figure", () => {
+      const f = SEARCH?.figureLanded;
+      if (!f) return false;
+      const x = f["fig:xirr"], d = f["fig:distributions"];
+      return !!x && x.path?.startsWith("/cio") && x.slots.some((s) => s.id === "mwr" && /\d|—/.test(s.text))
+        && !!d && d.path?.startsWith("/private-market") && d.slots.some((s) => s.id === "distributed" && /₹|—/.test(s.text));
+    }],
+    /**
+     * NO WORD CLAIMS A HOLDING THE BOOK DOES NOT HAVE (SC-C7): "arbitrage" put
+     * the Cash category first over a statement book that holds no arbitrage
+     * fund, and "net worth" answered with a figure that leaves out the
+     * ring-fenced block and everything no statement reports. The word is
+     * EARNED by the section's own holdings now, so the claim is struck on the
+     * book the page searches: the live book values the arbitrage funds a
+     * depository reports (Stage 10ce, `CASH_INSTRUCTION_BOOK.arb`, derived off
+     * the book), and then the Cash row MUST answer it; with none it must not.
+     */
+    ["'arbitrage' reaches the Cash row exactly when the book holds an arbitrage fund, and 'net worth' is not the Current Value of Holdings", () => {
+      const a = SEARCH?.results?.arbitrage, n = SEARCH?.results?.netWorth;
+      if (!a || !n) return false;
+      const holds = (CASH_INSTRUCTION_BOOK?.arb?.length ?? 0) > 0;
+      const cashRow = a.rows.some((x) => x.kind === "category" && /:Cash$/.test(x.id ?? ""));
+      return cashRow === holds && n.rows[0]?.id !== "fig:book";
+    }],
+    /**
      * THE RING-FENCE HOLDS IN THE SEARCH. "polycab" finds the PAGE the nav
      * already carries on every screen first, then only that page's own tabs —
      * and no holding, account or figure, because the index is built from
@@ -29286,6 +29373,8 @@ for (const theme of THEMES) {
             holding: B.holding?.word, isin: B.isin?.isin, mandate: B.mandate?.accountNo, owner: B.owner?.name,
             sector: B.sector?.name, page: "private market", tab: "transactions", tab2: "compare sectors", figure: "uncalled",
             question: "how much of the book is in AIFs?", nothing: "zzqqxx qqzz", fenced: "polycab",
+            fencedName: B.fencedName ?? undefined, fencedIsin: B.fencedIsin ?? undefined,
+            arbitrage: "arbitrage", netWorth: "net worth",
             // A NAME THE FAMILY HOLD AND NO STATEMENT REPORTS, in the review's
             // spelling and in theirs — derived from the generated gap list.
             gap: REVIEW_GAP_BOOK?.name, gapAlias: REVIEW_GAP_BOOK?.alias ?? undefined,
@@ -29415,7 +29504,38 @@ for (const theme of THEMES) {
           // answer "nothing matches" about a fund the family own.
           const heldSchemeGaps = [];
           for (const c of (REVIEW_GAP_BOOK?.heldSchemes ?? []).slice(0, 16)) heldSchemeGaps.push({ ...c, ...(await run(c.q)) });
-          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed, heldSchemeGaps };
+          // …EVERY REDEEMED HOLDING, typed by its own name (SC-C5): where its row
+          // says the redemption is, and where it goes.
+          const closedRows = [];
+          for (const c of (B.closed ?? []).slice(0, 8)) closedRows.push({ ...c, ...(await run(c.q)) });
+          /**
+           * …AND A FIGURE RESULT OPENS A PAGE THAT SHOWS THE FIGURE (SC-C6). The
+           * href alone cannot say so — `/holdings?of=measured` was a valid
+           * address that never states the rate — so the walk CLICKS the row and
+           * reads which tiles the page it lands on draws.
+           */
+          const figureLanded = {};
+          for (const [id, q] of [["fig:xirr", "xirr"], ["fig:distributions", "distributions"]]) {
+            await input.fill("");
+            await input.fill(q);
+            await page.waitForTimeout(250);
+            const row = page.locator(`[data-testid='smart-search-panel'] [data-search-result="${id}"]`);
+            if (!(await row.count())) { figureLanded[id] = null; continue; }
+            const before = page.url();
+            await row.first().click();
+            await page.waitForTimeout(1500);
+            if (page.url() === before) { figureLanded[id] = { path: null, slots: [] }; continue; }
+            const u = new URL(page.url());
+            figureLanded[id] = { path: u.pathname + u.search, ...(await page.evaluate(() => ({
+              slots: [...document.querySelectorAll("[data-tile-slot]")].map((e) => ({
+                id: e.getAttribute("data-tile-slot"), text: (e.innerText ?? "").replace(/\s+/g, " ").trim(),
+              })),
+            }))) };
+            await page.goBack({ waitUntil: "load" }).catch(() => {});
+            await page.waitForTimeout(600);
+          }
+          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed, heldSchemeGaps,
+            closedRows, figureLanded };
           // …and the list that carries the note, which is the one the family's
           // own search opens: measured after the walk, when it is on screen.
           /**

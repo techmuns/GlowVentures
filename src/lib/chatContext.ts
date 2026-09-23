@@ -44,7 +44,7 @@ import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
 import { capitalScope, distributionOf } from "@/lib/privateMarket";
 import { callTotals, schemeCalls } from "@/lib/capitalCalls";
 import { MARKET_SIDE_UNPLACED } from "@/lib/aifCategory";
-import { accountEmptiness } from "@/lib/searchIndex";
+import { accountEmptiness, categoryWordsOf } from "@/lib/searchIndex";
 import type { Account, Commitment, Portfolio, Position } from "@/lib/types";
 
 /** How many holdings to itemise. Enough to answer, small enough to fit. */
@@ -114,17 +114,6 @@ function priceBasisOf(rows: readonly Position[], accts: AccountIndex, quotesAsOf
     liveQuote: live.length ? { holdings: live.length, pulledAt: quotesAsOf ?? null } : null,
     summary: parts.join("; "),
   };
-}
-
-/** The category words a set of rows spans, largest first — never "whichever row sorts first" (SC-C4). */
-function categoriesOf(rows: readonly Position[], accts: AccountIndex): string[] {
-  const by = new Map<string, number>();
-  for (const p of rows) {
-    const k = groupKeyFor("category", accts, p);
-    by.set(k, (by.get(k) ?? 0) + Math.abs(p.marketValue));
-  }
-  const label = groupLabelFor("category");
-  return [...by].sort((a, b) => b[1] - a[1]).map(([k]) => label(k));
 }
 
 /**
@@ -349,7 +338,8 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
           isin: head.isin ?? null,
           symbol: head.symbol ?? null,
           assetClass: head.assetClass,
-          category: categoriesOf(rows, accts).join(" + "),
+          // Every category the rows span, largest first — the search reads the same (SC-C4).
+          category: categoryWordsOf(rows, accts).join(" + "),
           sector: head.sector ?? null,
           quantity: sum(rows.map((p) => p.quantity)),
           valueCr: cr(value),
@@ -513,11 +503,16 @@ export function buildDashboardContext(book: ChatBook): ContextBlock[] {
         shares: BOOK_POLYCAB.length ? sum(BOOK_POLYCAB.map((p) => p.quantity)) : null,
         valueCr: BOOK_POLYCAB.length ? cr(sum(BOOK_POLYCAB.map((p) => p.marketValue))) : null,
         valueBasis: "the depository statement's own value column (an NSDL statement prints no rate, so its mark is value ÷"
-          + " units) — a statement figure, not a market price",
+          + ` units) — the statement's mark${fencedAsOf.length === 1 ? ` as of ${fencedAsOf[0]}` : ""}, not today's price`,
         statementAsOf: fencedAsOf.length === 1 ? fencedAsOf[0] : fencedAsOf.length ? fencedAsOf : null,
         heldIn: fencedAccounts.map((a) => ({ owner: a.owner, provider: a.provider, accountNo: a.accountNo, statementAsOf: a.asOf })),
         scope: "What the statement(s) above report, for those account(s) only.",
-        note: "Promoter stock, excluded by the family's request from every consolidated total, allocation, sector and"
+        // ONE DEMAT'S HOLDING, never "the family's promoter stock" (PC-04): it is
+        // what the account(s) in `heldIn` report, and no statement in this book
+        // is a figure for the family's whole promoter holding.
+        note: `${fencedAccounts.length === 1 ? "One demat's holding" : `${fencedAccounts.length} demats' holdings`} of`
+          + " promoter stock — what the account(s) in heldIn report, not a figure for the family's whole promoter"
+          + " holding — excluded by the family's request from every consolidated total, allocation, sector and"
           + " holdings figure above. It is shown only on the Polycab page, which also shows it at the exchange's last"
           + " close — a different figure. Do not add it to any total, and do not present this statement value as"
           + " today's value.",
