@@ -16888,8 +16888,15 @@ buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, golden
 failed** · `npm run build-book` byte-identical and idempotent ·
 `replay:calls`, `replay:flows`, `replay:owners` and `replay:movements` each a
 no-op with `--check` · `reconcile:review -- --check` a no-op · CI (`build`) and
-Cloudflare Pages green on the pushed merge. MEASURED ON THE MERGED TREE. The
-full page sweep and `check:family` are recorded below once they finish.
+Cloudflare Pages green on the pushed merge · `check:family` **86/0** ·
+`check:pages` **210 combinations clean, 0 invariant failures** — #75's own 206
+plus this change's two routes across both themes, which reconciles only because
+it was measured again — with the same eight evidenced abstentions across the
+same four pre-existing claims, read out of `report.json` by name: four on the
+Morning CIO panels (every KPI tile carries a figure), two on Private Market
+(every private holding reports a cost), one on the not-found drill-down's crumb
+and one on `stock-qty` (no pledge). None is this change's own. MEASURED ON THE
+MERGED TREE.
 
 ### Stage 10k — News & Announcements: REMOVED
 
