@@ -29,6 +29,7 @@ const SUITES = [
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
+  ["transaction sections", "src/lib/__tests__/txnAxis.test.ts"],
   ["chat context", "src/lib/__tests__/chatContext.test.ts"],
   ["chat function", "src/lib/__tests__/chatFunction.test.ts"],
   ["indices function", "src/lib/__tests__/indicesFunction.test.ts"],

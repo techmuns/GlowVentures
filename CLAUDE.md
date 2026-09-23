@@ -200,7 +200,16 @@ cash holding's genuinely-zero return both match, and both are correct.
   by both surfaces: the Transactions card's Capital in and out table and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag, and
   Stage 10bg for `capitalSectionRollup`, which files each account's record under
-  the same section its holdings sit in.
+  the same section its holdings sit in. `carriedCostOf` / `carriedCostNote` are
+  the ONE place a cost carried through a fund's class switch is described on
+  screen, read by the Portfolio Monitor and the company page alike — see Stage
+  10br.
+- `scripts/lib/classSwitch.mjs` — WHAT A FUND'S CLASS SWITCH DOES TO THE FAMILY'S
+  COST. Buoyant moved both folios from Class A1 into A4 and restated the units'
+  cost at the switch-day NAV; this carries each dated contribution through the
+  switch at the fund's own unit ratio and sets the holding's cost to what was
+  PAID, under two gates the statements supply. Used by `build-book` alone. See
+  Stage 10br.
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
@@ -7133,6 +7142,14 @@ row at all** (it publishes no dated capital record), so this card was never the
 way into its dealing; the **By manager** tab is, and that covers all ten accounts
 whose statements the tape reads. For the other six fund folios the card was an
 empty box under an empty page.
+
+***"IT PUBLISHES NO DATED CAPITAL RECORD" WAS FALSE, AND IS CORRECTED AT STAGE
+10br.*** Buoyant's account statement prints every Cash Deposit since inception
+and every allotment per class; the reader took the summary row above them and
+nothing else. Both folios are rows of the capital record now. The decision above
+does not change — the dealing card stays off the fund branch — only its premise
+about the capital record, which is the eighth absence in this file recorded
+against a document already in hand.
 
 `ManagerTrades` then had ONE caller, on the mandate branch, so
 `holdingRoute(...) === "mandate"` was true every time it was asked — a title, an
@@ -15097,6 +15114,152 @@ as an import this merge would have changed what the checks cover — silently,
 into agreement — and reported clean. Written twice, it failed by name on the
 one route where the two definitions had come apart.
 
+### Stage 10br — BUOYANT'S COST WAS THE FUND'S RESTATEMENT, NOT WHAT THE FAMILY PAID
+
+*"The user does not believe this data — can you please audit and check carefully
+if this is correct?"* — a screenshot of the Portfolio Monitor's Buoyant row:
+Invested ₹72.5 Cr, Avg cost ₹135.84, Unrealised +₹4.51 Cr, Return +6.22%,
+Invested on `—`.
+
+**THE READER WAS RIGHT NOT TO BELIEVE IT, AND ONLY HALF THE ROW WAS WRONG.** Every
+figure was checked against the fund's own documents before anything changed:
+
+| | Screen | The documents | |
+| --- | ---: | ---: | --- |
+| Units | 53,35,611 | 53,35,611 | right |
+| NAV, 31 Jul 2026 | ₹144.29 | ₹144.2878 | right |
+| Market value · weight | ₹77 Cr · 10.8% | ₹76.99 Cr | right |
+| **Invested** | **₹72.5 Cr** | **₹70.86 Cr paid** | **₹1.62 Cr too high** |
+| Unrealised · return | +₹4.51 Cr · +6.22% | +₹6.13 Cr · +8.65% | understated |
+| Invested on | `—` | 1 Jun 2024, ten payments | missing |
+
+**ROOT CAUSE: A CLASS SWITCH THE FUND BOOKS AS A SALE.** Buoyant moved Ankita's
+folio from Class A1 into A4 on 1 Feb 2025 and Ajay's on 1 Jun 2026, each on the
+day of a top-up, and printed each move as a `Unit Redemption` of the A1 units
+and a `Units Allotment` of A4 units **at that day's NAV, for the same rupees**.
+So the appraisal's `Cost` column restarts at the switch-day VALUE of the units —
+₹72.48 Cr — and the book took that figure as money paid in. Nothing was misread;
+the statement's cost means "cost since the switch", and the book's column means
+what the family paid.
+
+**FIVE WITNESSES, AND NONE OF THEM IS THE NEW FIGURE'S OWN COPY:**
+
+- the account statement's own `Cash Deposits` — ₹46.0 Cr (Ajay) and ₹24.85 Cr
+  (Ankita), plus one ₹58,861.66 `Gain Distr.` reinvested in an allotment;
+- the fact sheet's since-inception `Contribution` — the same two figures;
+- the performance appraisal's `Realized Gain` — **₹1,52,95,129.24 and
+  ₹9,10,446.38, exactly the gap between the printed cost and the paid one**. The
+  fund itself calls the switch-day restatement a realised gain; no money left;
+- every contribution's entry NAV, as bought, is printed on the account's own
+  pages to four decimals;
+- and the family's own consolidated review carries `Investment at Cost`
+  **₹70.8558861 Cr** — the carried cost, to the rupee — where the printed one is
+  ₹1.62 Cr away. The review is still not a source (§"the consolidated review
+  workbook is not a source — by decision"); it is the cross-check it has always
+  been allowed to be, and `carriedCost.test.ts` reads it.
+
+#### What changed
+
+1. **`buoyantFlows` in `providers/altFundStatements.mjs`** reads the dated tables
+   the reader had been walking past — `Cash Deposits`, `Units Allotment` and
+   `Unit Redemption` per class, `Gain Distr.` — and publishes them only if FIVE
+   checks the statement supplies all tie: units × NAV = amount on every row; the
+   running units per class reach the Account Summary's own balance; every
+   redemption pairs with a same-day allotment of another class for the same
+   rupees (the switch); every deposit pairs with a same-day allotment (plus any
+   reinvested `Gain Distr.`); and Σ deposits = the printed `Capital Invested`. Any
+   failure publishes NOTHING and says which. A switch leg is `kind:
+   "reclassification"`, outside `CAPITAL_KINDS` — 3P's precedent (Stage 10am):
+   the same rupees leave one class and arrive in another, and typed as a
+   withdrawal and a contribution they would put money out and back into the
+   family's record that never moved.
+2. **`npm run replay:flows`** lands it in the committed archive without the PDF
+   passwords — the sixth faithful partial replay. Three documents gained a dated
+   record (0 → 7 rows each, five contributions and two switch legs); nothing else
+   moved; `--check` is a no-op.
+3. **`scripts/lib/classSwitch.mjs`** carries each contribution bought in the old
+   class through the switch, **at the fund's own unit ratio** (units allotted ÷
+   units redeemed), keeping the date and the amount paid; and sets the holding's
+   cost to what its contributions paid, keeping the statement's figure beside it
+   as `printedCostBasis` — a CHECK, never a source (§4). Two gates, both struck on
+   the statements: the printed cost must equal the direct allotments plus the
+   switched-in amount (±₹1), or the restatement is not one this book can undo;
+   and where the account holds nothing else, the gap must equal its own
+   appraisal's since-inception Realized Gain (±₹1). A switch whose old-class lots
+   do not account for every unit it moved, or after any cash redemption from the
+   old class, is NOT carried and is named in `docs/BOOK-REPORT.md` — which lots
+   moved would then be a selection no statement makes.
+4. **The screen says which figure it is.** The Invested cell's hover, the company
+   page's Avg cost tile and each account row name the statement's ₹72.5 Cr and
+   why it differs; a contribution carried through the switch is marked
+   `switched A1 → A4, <date>` in its history, with the units and NAV it was
+   BOUGHT at in its hover. `carriedCostNote` is the one place those words are
+   chosen.
+
+**WHAT IT MOVES, AND WHAT IT DOES NOT.** Only three exports of `glowData.ts`
+change: two Buoyant `BOOK_POSITIONS` (cost, avg cost, unrealised, return, and the
+new `printedCostBasis` / `costBasisSource`), `BOOK_CAPITAL_MOVES` (121 → 131 rows,
+11 → 13 accounts) and `BOOK_POSITION_TRANCHES` (7 → 9 positions).
+**`BOOK_SUMMARY` does not move by a rupee** — market value is untouched, so no NAV,
+split or allocation weight moves. What does move is every COST total the Buoyant
+row is in: Capital invested falls ₹1.62 Cr (₹471.9 Cr → ₹470.3 Cr), and the
+returns struck on it rise.
+
+| | Before | After |
+| --- | ---: | ---: |
+| Ajay (103473) — invested · gain · return | ₹47.54 Cr · +₹1.76 Cr · +3.71% | ₹46.01 Cr · +₹3.29 Cr · +7.16% |
+| Ankita (103472) | ₹24.94 Cr · +₹2.75 Cr · +11.01% | ₹24.85 Cr · +₹2.84 Cr · +11.42% |
+| The row | ₹72.48 Cr · +₹4.51 Cr · +6.22% | ₹70.86 Cr · +₹6.13 Cr · +8.65% |
+
+(Ajay's ₹46.01 Cr is ₹46.0 Cr paid plus the ₹58,861.66 distribution the fund
+reinvested — cost, as the appraisal's own `Income` line says, and exactly what the
+family's review carries.)
+
+**AND WHAT IT DELIBERATELY DOES NOT DO.** Realised P&L stays `—`: no capital gain
+statement covers Buoyant, and the switch paid nothing out, so the fund's "Realized
+Gain" is a gain inside the fund rather than money in the family's hands. The
+per-account XIRR on `/performance` is untouched — its flows come from the
+capital register, which was already right.
+
+#### The checks — and a check that had been true by luck
+
+`buoyantFlows.test.mjs` (42) breaks a synthetic statement once per check;
+`classSwitch.test.mjs` (44) holds the carry and both gates on constructed inputs;
+`carriedCost.test.ts` holds the book to the four documents above and asserts,
+load-bearingly, that the printed and carried costs differ by more than ₹1 Cr —
+or every equality in it would pass on a book where no switch restated anything.
+`check:pages` gains `monitor-tranche-switch`, `monitor-tranche-shared` and
+`stock-carried`, and the default `monitor` walk holds the Invested cell to the
+carried figure AND to naming the printed one.
+
+**TWO EXISTING CHECKS HAD TO MOVE, AND BOTH WERE WRONG FOR A REASON WORTH
+KEEPING.** Buoyant's history is now the book's largest (ten contributions across
+two folios), and it TIES with Sanshi's clubbed row at ten — so the walk that
+opened "the row offering the most" opened Sanshi (first in DOM order) while
+`BIGGEST_TRANCHE`, keyed per class, named Buoyant. Every tranche route now opens
+the row the BOOK names for it. And *"a cheaper entry NAV always shows the higher
+return"* was struck on the DISPLAYED figure, which is a CAGR on rows held a year
+or more: a CAGR shrinks with the years held, so an old cheap tranche can print
+below a young dear one while earning more — Buoyant's ₹117.30 entry prints CAGR
+9.67% beside a ₹122.64 one at 10.89%. **It was true of Sanshi's dates by luck.**
+The claim was always about what the money EARNED, so it is struck on each row's
+holding-period return (`data-tranche-hpr`), and a second check ties that
+attribute back to every row that prints an HPR, so it cannot become a figure the
+page never shows. The "same NAV, same return" claim moved with its subject to
+`monitor-tranche-shared`, which opens the history the book says has such a pair.
+
+`tranches.test.ts`'s entry-NAV check skipped any NAV it could not find with the
+comment "this issuer prints no NAV column" — false of Buoyant, which prints every
+one. Carried tranches are now counted apart by name and must equal the book's
+own count; `carriedCost.test.ts` is where their as-bought NAVs are found, and it
+FAILS rather than skips.
+
+(An older passage above says Ankita's folio "sends the PMS set and no account
+statement". It does send one — `I83_103472_AccountStatement`, in the same bundle
+— and it is the document this reader reads.)
+
+BUG_PASS_PLACEHOLDER
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -16009,6 +16172,16 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   produces, and a third value means somebody else wrote it; and `--check` writes
   nothing and is the control run, which must be a no-op. Follow it with
   `build-book`.
+- `npm run replay:flows` re-runs the FUND-STATEMENT reader over the committed
+  archive and lands the dated record it now reads — Buoyant's Cash Deposits, its
+  per-class allotments and redemptions, and the class switch — from each
+  document's own `pages.json`, through the same `extract()` the extractor calls.
+  The SIXTH faithful partial replay, on the same three rules (see Stage 10br): it
+  only ever ADDS a dated record where none was archived and refuses a document
+  that already carries one; its gate is struck on the ARCHIVE — the replayed
+  holdings must reproduce the stored ones on security, quantity, printed cost and
+  NAV; and `--check` writes nothing and is the control run, which must be a
+  no-op. Follow it with `build-book`.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a
