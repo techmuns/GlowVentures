@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VERIFY THE REPAIRED CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR.
 #
-# Stage 10ci moved the sweep's own re-derivation of Private Market returns onto
+# Stage 10cj moved the sweep's own re-derivation of Private Market returns onto
 # FIFO — the basis the page has struck them on since Stage 10ca — corrected the
 # whole-book HPR's hover, and taught `check:family` the fifth Extras page. A
 # check that was failing on a correct page has only ever been seen to fail, so

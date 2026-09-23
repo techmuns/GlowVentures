@@ -32,7 +32,6 @@ FILES=(
   "src/lib/format.ts"
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/StockInfo.tsx"
-  "src/components/FundExposure.tsx"
   "src/context/PortfolioContext.tsx"
   "shared/securityKey.mjs"
   "scripts/build-book.mjs"
@@ -179,12 +178,12 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, " />", 1))
 PY
 
-run_case "the look-through card counts the AIFs and names none" sweep py <<'PY'
+run_case "the opened row counts the AIFs and names only one" sweep py <<'PY'
 import sys
-p = "src/components/FundExposure.tsx"; s = open(p, encoding="utf-8").read()
-old = '''data-fund-exposure-aifs={aifFunds.length}>{aifFunds.join(" · ")}</span>'''
+p = "src/pages/PortfolioMonitor.tsx"; s = open(p, encoding="utf-8").read()
+old = "      aifOpaque.forEach((f, j) => rows.push(childRow(`${key}>${f.key}`, \"aif-opaque-fund\", 2, {"
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, '''data-fund-exposure-aifs={aifFunds.length}>{aifFunds.slice(0, 1).join(" · ")}</span>''', 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, "      aifOpaque.slice(0, 1).forEach((f, j) => rows.push(childRow(`${key}>${f.key}`, \"aif-opaque-fund\", 2, {", 1))
 PY
 
 run_case "the depository's SBI is not State Bank of India" suite py <<'PY'

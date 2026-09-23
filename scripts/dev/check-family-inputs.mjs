@@ -201,7 +201,7 @@ check("...and the now-empty Setup group heading went with it",
 //  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups,
 // and since #84 a FIFTH: Corporate actions & dividends, which that change filed
 // under Extras beside Return & Drawdown. The family confirmed it stays there
-// (Stage 10ci). This list still said four through the six changes that landed
+// (Stage 10cj). This list still said four through the six changes that landed
 // after #84, and failed two rows on every run — a check that fails on a correct
 // page is read as noise, and the next real failure goes unread beside it. ONE
 // list, used by every row below, so the count cannot drift between them again.
@@ -776,15 +776,24 @@ if (await watched.count()) {
     // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
     // account numbers with no reason reads as a broken feed rather than as a
     // measured absence, which is this book's founding distinction.
+    // The reason is the account line's HOVER since the family asked for the
+    // notes around the tables to go — so it is read off the `title`, where a
+    // reader finds it, and never off the page text it left.
+    //
     // AN ACCOUNT THAT SENT ONLY A TRANSACTION STATEMENT IS PARTLY VALUED on the
     // live basis — its arbitrage and liquid funds at AMFI's NAV, the family's
     // cash — so its generated "values nothing" reason is replaced by a note
     // naming what is valued and what is not. Either sentence is a reason; what
     // must never happen is a listed account with neither.
+    const reasons = await page.$$eval("[data-unvalued-account] [data-unvalued-reason]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...each with its own reason",
-      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))
+      unvalued.every((a) => !a.noPositionsReason || reasons.some((r) => r.includes(a.noPositionsReason.slice(0, 60)))
         || (a.transactionsOnly === true && /partly valued/.test(text)
-          && text.includes("sent a transaction statement and no holding statement"))));
+          && reasons.some((r) => r.includes("sent a transaction statement and no holding statement")))),
+      `${reasons.length} reason(s) in hovers`);
+    check("...in a hover rather than as a paragraph under each line",
+      unvalued.every((a) => !a.noPositionsReason || !text.includes(a.noPositionsReason.slice(0, 60)))
+        && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
     check("...and the card says none of it is in the value above",

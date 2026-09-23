@@ -169,15 +169,16 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52: quote
         )}
       </Card>
 
-      {/* Pointer: everything already live in the Research panel above */}
-      <div className="mt-5 flex items-start gap-3 rounded-xl border border-ink-700 bg-ink-800/60 px-4 py-3">
+      {/* Pointer: everything already live in the Research panel above. ONE LINE,
+          the detail in its hover — it was a 511-character paragraph under the
+          insider-trades table, and the family asked for the notes around the
+          tables to go (Stage 10cg). */}
+      <div className="mt-5 flex items-start gap-3 rounded-xl border border-ink-700 bg-ink-800/60 px-4 py-3"
+        data-research-pointer
+        title="The Research panel serves the quarterly and annual P&L, balance sheet, cash flow, the 10-year ratio history, the shareholding pattern, consensus estimates and the document repository straight from the data service. Market cap, enterprise value, book value and face value are in those tables; they are not repeated here as standalone figures because the price feed does not return them in a unit this book can verify.">
         <FileText className="mt-0.5 h-4 w-4 shrink-0 text-champagne-400" />
         <div className="text-[12.5px] leading-relaxed text-slate-400">
-          <span className="font-semibold text-slate-200">Financials, ratios, shareholding, street estimates, documents & concalls are live above</span> —
-          the Research panel serves the spec's quarterly & annual P&L, balance sheet, cash flow, the 10-year ratio history,
-          the shareholding pattern, consensus estimates and the document repository straight from the data service. Market
-          cap, enterprise value, book value and face value are in those tables; they are not repeated here as standalone
-          figures because the price feed does not return them in a unit this book can verify.
+          <span className="font-semibold text-slate-200">Financials, ratios, shareholding, street estimates, documents & concalls are live above</span>
         </div>
       </div>
 
