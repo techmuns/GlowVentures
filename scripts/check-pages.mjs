@@ -17704,12 +17704,21 @@ for (const theme of THEMES) {
           views: [...document.querySelectorAll("main [data-sector-view]")].map((b) => ({
             key: b.getAttribute("data-sector-view"), label: (b.innerText ?? "").trim(),
             active: b.getAttribute("aria-selected") === "true" })),
-          // THE TABS SIT BESIDE THE TITLE — on its line, to its right — which is
-          // where the family asked for Compare to be: "a subtab next to direct
-          // equity", not a card at the foot of the page.
+          // THE TABS SIT BESIDE THE TITLE — on its line, to its right, and NEXT
+          // to it — which is where the family asked for Compare to be: "a subtab
+          // next to direct equity", not a card at the foot of the page.
+          //
+          // ADJACENT, NOT MERELY ON THE SAME LINE. The first version asked only
+          // "right of the title and overlapping its line", and the bug pass
+          // proved that blind: moved into the header's SUBTITLE slot, the tabs
+          // did not wrap below the title at all — a `w-full max-w-2xl` item fits
+          // beside the pills on a wide header — and landed at the far right of
+          // the row, 900px from the title, satisfying every clause. The gap is
+          // the header's own `gap-x-2.5` plus rounding; 32px is room for that
+          // and for nothing else.
           tabsBesideTitle: !!(h1 && tabs) && (() => {
             const a = h1.getBoundingClientRect(), b = tabs.getBoundingClientRect();
-            return b.left >= a.right - 1 && b.top < a.bottom && b.bottom > a.top;
+            return b.left >= a.right - 1 && b.left - a.right <= 32 && b.top < a.bottom && b.bottom > a.top;
           })(),
           cards: [...root.children].filter((c) => c.classList.contains("card")).map(box),
           // A LIST IN THE LEFT HALF THAT IS NOT THE PICKER is the legend coming

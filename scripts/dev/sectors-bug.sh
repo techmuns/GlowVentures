@@ -34,10 +34,22 @@ trap restore EXIT
 # Compare tab is half of what was asked.
 ROUTES=sectors,sectors-direct,sectors-compare
 
+# `CASES=3,11` RUNS ONLY THOSE CASES (1-based, in file order); the control
+# always runs. For re-checking one case after its check changed, without the
+# whole pass — which costs a build and a sweep per case.
+CASE_N=0
+want_case() {
+  CASE_N=$((CASE_N + 1))
+  [ -z "${CASES:-}" ] && return 0
+  case ",$CASES," in *",$CASE_N,"*) return 0 ;; esac
+  return 1
+}
+
 run_case() {
   local name="$1"; shift
+  want_case || return 0
   echo ""
-  echo "════════ BUG: $name"
+  echo "════════ BUG $CASE_N: $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
   if ! npm run build >/dev/null 2>&1; then
     echo "   NOT A RESULT — the bugged tree does not build"
