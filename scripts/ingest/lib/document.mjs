@@ -642,6 +642,17 @@ function normalizeCommitment(c) {
     pending: pick(c.pending),
     /** Dated calls, and only ever a set that reproduced its own printed total. */
     calls: Array.isArray(c.calls) ? c.calls : [],
+    /**
+     * WHAT THE FUND PAID BACK, dated — income, principal and equalisation, each
+     * gross with its TDS and net beside it — and only ever a set that
+     * reproduced the totals its own statement prints (`payoutsIfTheyTie`).
+     *
+     * NULL IS NOT AN EMPTY LIST. `null` says this book carries no payout record
+     * for the fund; `[]` says the statement prints a measured nil. A money-
+     * weighted return may count the second as "nothing came back" and must not
+     * count the first as anything at all.
+     */
+    payouts: Array.isArray(c.payouts) ? c.payouts : null,
   };
 }
 

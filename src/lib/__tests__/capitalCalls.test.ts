@@ -173,7 +173,7 @@ for (const [name, got, want] of [
   const mk = (over: Partial<Commitment>): Commitment => ({
     accountId: "x", name: "X", provider: "X", ownerId: null, asOf: "2026-01-01",
     committed: 100, drawn: null, undrawn: null, distributed: null,
-    called: null, paid: null, pending: null, calls: [], arithmeticHolds: null, ...over,
+    called: null, paid: null, pending: null, calls: [], payouts: null, arithmeticHolds: null, ...over,
   });
   const empty = callTotals(schemeCalls([], (c) => c.name, () => null));
   ok("an empty register totals NULL, never 0",
