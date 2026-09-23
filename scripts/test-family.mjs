@@ -44,6 +44,7 @@ const SUITES = [
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
+  ["held through", "src/lib/__tests__/heldThrough.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
