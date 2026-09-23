@@ -15946,7 +15946,7 @@ const INVARIANTS = {
      *
      * WHAT IT IS stays on every tile and the METHODOLOGY is the hover on the
      * total it explains — the "How the capital totals are worked out" drop-down
-     * under the table went at Stage 10cn.
+     * under the table went at Stage 10co.
      */
     /**
      * ── A TILE IS A LABEL, A FIGURE AND ONE SHORT LINE ──────────────────────
@@ -23155,7 +23155,7 @@ for (const theme of THEMES) {
        * prose, and a fold that opened itself would be the paragraph back with a
        * chevron on it. Read before the walk opens it. (Private Market's "How the
        * totals are worked out" fold was the other one; it is GONE since Stage
-       * 10cn, its working the hover on the totals it explains, and `pmView`
+       * 10co, its working the hover on the totals it explains, and `pmView`
        * counts its handle as absent.)
        */
       const foldsOnArrival = FAST ? null : await page.evaluate(() =>

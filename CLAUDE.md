@@ -22994,9 +22994,17 @@ option rather than pausing, which cannot make a check pass that should fail: a
 table that never draws still fails them all. All nine transactions routes then
 ran clean.
 
-`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **92/0** ·
-`check:pages` **258 combinations**, the one finding above and nothing else, with
-main's ten evidenced abstentions and none of this change's. `npm run build-book`
+**AND THE FULL SWEEP ON THE MERGED TREE CAME BACK CLEAN.** It walks #91's new
+position-page routes too, so the count is its own rather than the 258 above plus
+arithmetic: **288 combinations clean, 0 invariant failures**, with ten evidenced
+abstentions read out of the report by name — six on the Morning CIO panels (every
+KPI tile on this book carries a figure), two on Private Market (every private
+holding reports a cost), one on the redeemed-account claim (no private account is
+redeemed to nil) and one on the not-found drill-down's crumb. Not one is this
+change's own.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **93/0** ·
+`check:pages` **288 combinations clean** on the merged tree. `npm run build-book`
 regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically: a line
 removed from a page is not part of the book.
 
