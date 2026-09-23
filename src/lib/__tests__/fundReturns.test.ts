@@ -71,7 +71,7 @@ console.log("── the record is built over the row's own folios ──");
     // with both trusts' calls would set twice the money against it.
     //
     // UNDER FIFO THAT CAPITAL IS THE COST HELD PLUS THE COST OF UNITS ALREADY
-    // REDEEMED (Stage 10by) — Neo Infra's ₹5 Cr called is ₹4.86 Cr held and
+    // REDEEMED (Stage 10ca) — Neo Infra's ₹5 Cr called is ₹4.86 Cr held and
     // ₹14.16 L redeemed. Read off the row's own positions, so a fund that has
     // redeemed nothing still ties to its cost to the rupee.
     const calls = d.calls.reduce((t, c) => t + c.amount, 0);
@@ -147,7 +147,7 @@ console.log("── the money-weighted return counts the cash paid back ──")
 
 // ── 4. HPR IS THE MONITOR'S FIGURE: FIFO ─────────────────────────────────────
 //
-// Every return on the dashboard is FIFO (Stage 10by): the gain on the units
+// Every return on the dashboard is FIFO (Stage 10ca): the gain on the units
 // still held plus the gain on units already redeemed, over the cost of both.
 // Struck here from the row's own positions' fields by the formula written out,
 // never through `fifoTotals` — which is the code under test.

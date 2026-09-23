@@ -250,7 +250,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   (`fifoTotals`): summed before it is divided, never an average of
   percentages, and a PMS mandate the set holds whole is struck on its own
   capital since inception. Every return on every page goes through one of the
-  two. See Stage 10by.
+  two. See Stage 10ca.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
 - `src/lib/navSeries.ts` — the DATED NAV series' presentation half: the chained
   flow-adjusted index, the nearest-EARLIER alignment against an index series, and
@@ -385,7 +385,8 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/searchIndex.ts` + `src/components/SmartSearch.tsx` — THE SEARCH BOX
   IN THE TOP BAR. One index over every holding, mandate, account, member, page,
   tab, category, sector and headline figure the app has, each with the address
-  that opens it; a question goes to Muns. Built from the book on every render
+  that opens it. (A question went to Muns until the family paused the chat —
+  Stage 10bz.) Built from the book on every render
   and never from a hand-kept list, and the ring-fenced security is in none of
   it. See Stage 10bw.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
@@ -3758,10 +3759,12 @@ apart).
 from the dashboard and answer the client any queries. It should understand the
 context since the dashboard data will be available to it."*
 
-*(A REAL search box stands in that slot since Stage 10bw, with the chat as a
-compact "Ask Muns" button beside it and one keystroke from any search. The chat
-route's check still counts the DEAD box by its old placeholder, which the new one
-does not share.)*
+*(A REAL search box stands in that slot since Stage 10bw, and **the chat is
+PAUSED since Stage 10bz**: the family asked for "Ask Muns" off the top bar, so
+neither its button nor the search list's Ask row is drawn. Everything below is
+kept because the component is — it is what the chat must do again when it comes
+back. The chat route asserts the chat is ABSENT now, and still counts the DEAD
+box by its old placeholder, which the new one does not share.)*
 
 **WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
 box was an `<input>` with no `value`, no `onChange` and no handler, in the most
@@ -3923,7 +3926,9 @@ payload for a non-finite number, because a `?? 0` in the builder is the
 absent-vs-zero rule failing through a JSON field instead of a table cell.
 `check:pages` walks a `chat` route that opens the panel and asks one question:
 the label, the stated snapshot, the vanished search input, and the named
-failure. All verified by reintroducing their bug.
+failure. All verified by reintroducing their bug. *(Since Stage 10bz that route
+asserts the chat is absent instead; these are the claims it must make again the
+day the chat returns.)*
 
 **AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
@@ -16604,7 +16609,8 @@ the XIRR and not in that total.
 *"any equity, any fund, any position that I have taken, any tab … think as the
 customer: what all they can type."* The top bar's slot held a button that opened
 the Muns chat. It is a search over everything the book and the app carry now,
-and Muns is still one keystroke away.
+and Muns was still one keystroke away — until the family paused the chat, Ask
+row and all (Stage 10bz).
 
 **ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 329
 entries on this book, each with the address that opens it:
@@ -17195,7 +17201,68 @@ every one resolving to a declaration.
 finishes · `npm run build-book` byte-identical — a table's layout is not part of
 the book.
 
-### Stage 10by — EVERY RETURN IS FIFO: UNREALISED PLUS REALISED, OVER EVERY RUPEE DEPLOYED
+### Stage 10bz — ASK MUNS IS OFF THE TOP BAR, AND THE CHAT IS PAUSED RATHER THAN DELETED
+
+*"Remove Ask muns from here, dont want this right now"* — sent with a screenshot
+of the "✦ Ask Muns" button beside the search box.
+
+**TWO DOORS LED TO THE CHAT, AND BOTH ARE GONE.** The button, and an "Ask Muns"
+row the search list appended to EVERY query — first where the query read as a
+question (`looksLikeQuestion`), last for everything else. The family pointed at
+the button; a row offering the same chat on every search is Muns in the top bar
+all the same, so it went with it. That is the one part of this change that goes
+past the screenshot, and it is said in the PR rather than decided silently.
+
+**"RIGHT NOW" IS WHY IT IS PAUSED, NOT DELETED** — the opposite of the
+`exportDeck.ts` call, and the difference is the family's own word for it.
+`MunsChat.tsx` is kept whole and says at its own definition that nothing renders
+it and how it comes back; `munsChat.ts`, `chatContext.ts` and
+`functions/api/chat.js` are untouched and still tested (`chatContext.test.ts`,
+`chatFunction.test.ts`); `looksLikeQuestion` keeps its test and names its missing
+caller. What went is the RENDERING — the button in `TopBar.tsx` and the row's
+code in `SmartSearch.tsx` — deleted rather than hidden behind a constant flag,
+because a branch pinned off is the dead-code-that-looks-alive failure this file
+keeps naming.
+
+**AND THE ROW HAD BEEN CARRYING SOMETHING ELSE.** The list opened only when it
+had rows, and the Ask row gave every query one — so the empty state, and Stage
+10bu's note saying why a name the family holds is on no statement (BSE), rode on
+it. Removing the row alone would have closed the list on exactly those queries
+and dropped both in silence. The list now opens on any query, and its empty line
+no longer offers Muns the question.
+
+**THE CHECKS INVERTED, NOT DELETED.** The `chat` route opened the panel and held
+five claims about it — the answer marked as generated, the snapshot and its
+limits, a scrim covering the viewport rather than the header, a panel sized for
+reading, a failure that names itself. None has a subject while the chat is
+paused; each is listed in Stage 10s for the day it returns. The route asserts the
+REMOVAL instead: the button gone by its handle AND by its words (a button put
+back under another test id still reads "Ask Muns"), no panel anywhere, the dead
+search box the chat first replaced still gone — and a walk that did not run fails
+rather than abstains. The `search` route asserts that no query offers Ask Muns (a
+question, a name, a page and a string nothing matches — by each row's kind and by
+the list's words), and that a query nothing matches still opens the list, says
+so, and offers nothing in its place.
+
+**`scripts/dev/ask-muns-bug.sh` reintroduces six bugs one at a time**, after a
+no-patch control came back clean — and every one fires its own check. The
+button put back fires the button claim; the same button under another test id
+fires it too, by its words. The search's Ask row put back fires the no-Ask claim
+and the nothing-matches claim, and the same row with no handle fires the no-Ask
+claim alone, by the list's words. A list that closes whenever it has no rows
+fires seven — the nothing-matches claim, every claim about Stage 10bu's BSE note
+(which rides on that empty state), and the check that the list paints over the
+page. An empty line that still offers Muns the question fires the
+nothing-matches claim alone.
+
+`build` · `tsc` · `test:family` · `check:family` **86/0** · `check:pages`
+**216 combinations clean** — the same count as before, because this change adds
+no route — with the same nine evidenced abstentions across the same five
+pre-existing claims, none of them this change's. `npm run build-book`
+regenerates the book byte-identically: nothing here touches the ingest.
+
+
+### Stage 10ca — EVERY RETURN IS FIFO: UNREALISED PLUS REALISED, OVER EVERY RUPEE DEPLOYED
 
 *"Everything in the returns part and all the calculations on the dashboard need
 to be accounted for using the methodology of FIFO. So basically we need to
@@ -17475,11 +17542,21 @@ touch.
 #### …and the second time main had built a return methodology of its own
 
 **#72 (Stage 10bw) and #79 (Stage 10bx) landed while this branch waited for the
-family's go-ahead, and took `10bw` and `10bx`.** Main keeps both; this section
-is **`10by`**. Three lines in this file named `10bw` for FIFO and moved — the
-`shared/fifo.mjs` entry in **Layout**, the `fifo.test.ts` entry under **Build**,
-and this section's own heading; every other `10bw` in the file, and every one in
-`src/`, is main's and was left alone, each read before anything moved.
+family's go-ahead, and took `10bw` and `10bx`.** Main keeps both. Three lines
+in this file named `10bw` for FIFO and moved — the `shared/fifo.mjs` entry in
+**Layout**, the `fifo.test.ts` entry under **Build**, and this section's own
+heading; every other `10bw` in the file, and every one in `src/`, is main's and
+was left alone, each read before anything moved.
+
+**AND THEN #83 TOOK `10bz` AND SKIPPED `10by`, SO THIS SECTION IS `10ca`.**
+`10by` has no heading on main, but main's own Stage 10bx text reads *"the
+Portfolio Monitor's stage is `10by`"*, and #83 stepped over it. A letter main
+refers to is claimed whether or not a heading carries it: using it here would
+send a reader of that sentence to a section about FIFO. The next free letter is
+`10ca`, and the section, its two pointers in this file and its three in the
+tests moved to it. This is the fifteenth collision this file records, and the
+first where the letter to avoid was named in prose rather than in a heading —
+which a check of headings alone would have missed.
 
 **THE `ctx` LITERAL CONFLICTED AND WAS RESOLVED AS A UNION** — this branch's
 `hbCapital` beside main's `treeState` and `pmReturn`. `schemeCalls` was on this
@@ -18488,7 +18565,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   one line that decides what to ask for — and **D1**, the ask list grouped by the
   document that would close each line.
 - `npm run test:family` runs the derived-figure suites — among them
-  **`fifo.test.ts`** (Stage 10by: the lot engine on constructed events whose
+  **`fifo.test.ts`** (Stage 10ca: the lot engine on constructed events whose
   LIFO answer differs, the aggregator, and the book against the managers' own
   since-inception bridges, the fund's cash deposits and the redemption the bank
   received) — and the family-input

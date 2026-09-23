@@ -104,7 +104,7 @@ const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("distinct funds", funds.length, 4);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
-// COST IS WHAT THE UNITS STILL HELD COST, under FIFO (Stage 10by): Neo Infra
+// COST IS WHAT THE UNITS STILL HELD COST, under FIFO (Stage 10ca): Neo Infra
 // redeemed 14,162.8 units at their ₹14,16,280 cost, so its ₹5 Cr drawn is
 // ₹4,85,83,720 held — the ₹87,616,647 this read before, less that — and the
 // unrealised gain rises by the same amount. Every rupee drawn is still in the

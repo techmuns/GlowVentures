@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Sparkles, CornerDownLeft, Clock } from "lucide-react";
+import { Search, CornerDownLeft, Clock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { buildSearchIndex, searchEntries, looksLikeQuestion, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
-import { openMunsWith } from "@/components/MunsChat";
+import { buildSearchIndex, searchEntries, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
 import { AbsentFromBook } from "@/components/Absent";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
@@ -13,9 +12,16 @@ import { AbsentFromBook } from "@/components/Absent";
 //
 // The slot held a button that opened the Muns chat — and before that, an
 // `<input>` that searched nothing. It is a real search now, over everything the
-// book carries and every page and tab the app has (`searchIndex.ts`), and Muns
-// is still one keystroke away: the last row asks it the question as typed, and
-// a query that reads as a QUESTION puts that row first.
+// book carries and every page and tab the app has (`searchIndex.ts`).
+//
+// ── AND IT NO LONGER OFFERS MUNS ────────────────────────────────────────────
+//
+// Every query used to end in an "Ask Muns" row — first where the query read as
+// a question — beside a top-bar button that opened the same chat. The family
+// asked for Muns off the top bar (Stage 10bz): *"Remove Ask muns from here, dont
+// want this right now."* A row offering it on every search is Muns in the top
+// bar all the same, so it went with the button. The chat itself is PAUSED, not
+// deleted — see `MunsChat.tsx` for how it comes back.
 //
 // ── WHAT THE KEYBOARD DOES ───────────────────────────────────────────────────
 //
@@ -54,8 +60,7 @@ const SUGGESTED = ["page:/monitor", "view:transactions", "page:/private-market",
 type Row =
   | { type: "hit"; entry: SearchEntry; matched: string }
   | { type: "recent"; recent: Recent }
-  | { type: "suggest"; entry: SearchEntry }
-  | { type: "ask"; question: string };
+  | { type: "suggest"; entry: SearchEntry };
 
 const isTypingIn = (t: EventTarget | null) => {
   const el = t as HTMLElement | null;
@@ -94,9 +99,7 @@ export function SmartSearch() {
         .map((id) => ({ type: "suggest" as const, entry: byId.get(id)! }));
       return [...rec, ...sug];
     }
-    const list: Row[] = hits.map((h) => ({ type: "hit", entry: h.entry, matched: h.matched }));
-    const ask: Row = { type: "ask", question: query };
-    return looksLikeQuestion(query) ? [ask, ...list] : [...list, ask];
+    return hits.map((h) => ({ type: "hit" as const, entry: h.entry, matched: h.matched }));
   }, [query, hits, index, recent]);
 
   useEffect(() => { setActive(0); }, [query]);
@@ -141,7 +144,6 @@ export function SmartSearch() {
 
   const choose = (row: Row | undefined) => {
     if (!row) return;
-    if (row.type === "ask") { openMunsWith(row.question); finish(); return; }
     const target = row.type === "recent" ? row.recent : { id: row.entry.id, label: row.entry.label, href: row.entry.href, chip: row.entry.chip };
     remember(target);
     navigate(target.href);
@@ -172,19 +174,24 @@ export function SmartSearch() {
           onKeyDown={onKeyDown}
           role="combobox" aria-expanded={open} aria-controls="smart-search-list" aria-autocomplete="list"
           aria-activedescendant={open && rows[active] ? `smart-search-opt-${active}` : undefined}
-          aria-label="Search the book, the pages and the tabs, or ask Muns"
+          aria-label="Search the book, the pages and the tabs"
           data-testid="smart-search-input"
-          placeholder="Search a stock, fund, person, account or page — or ask a question"
+          placeholder="Search a stock, fund, person, account or page"
           className="min-w-0 flex-1 bg-transparent py-0.5 text-sm text-slate-200 placeholder-slate-500 outline-none" />
         <kbd className="hidden shrink-0 rounded border border-ink-600 px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline"
           title="Press / or Ctrl+K from anywhere to search">/</kbd>
       </div>
 
-      {open && rows.length > 0 && (
+      {/* A QUERY THAT FINDS NOTHING STILL OPENS THE LIST. The Ask Muns row used
+          to keep `rows` non-empty on every query, so the empty state — and the
+          note saying why a name the family holds is on no statement — rode on
+          it. With that row gone, "nothing to list" and "nothing matched" are
+          different states, and only the first may leave the list closed. */}
+      {open && (rows.length > 0 || query !== "") && (
         /* ABSOLUTE, INSIDE THE BAR — and deliberately not `fixed`. The top bar
            carries `backdrop-blur`, which makes it the containing block for a
-           fixed child (the trap the Muns dialog fell into and is portalled out
-           of). An absolute list below its own box has no such problem, and it
+           fixed child (the trap the Muns dialog fell into — see `MunsChat.tsx`).
+           An absolute list below its own box has no such problem, and it
            is sized in rem, never `vh`: `#root` carries `--app-zoom` and a
            viewport unit is not rescaled by it. */
         <div ref={listRef} id="smart-search-list" role="listbox" data-testid="smart-search-panel"
@@ -192,7 +199,7 @@ export function SmartSearch() {
           {heading && <div className="px-3 pb-1 pt-1.5 text-[10.5px] font-medium uppercase tracking-wide text-slate-500">{heading}</div>}
           {query && hits.length === 0 && (
             <div data-search-empty className="px-3 py-2 text-[12px] text-slate-400">
-              Nothing in this book or on these pages matches &ldquo;{query}&rdquo;. Muns can still take the question.
+              Nothing in this book or on these pages matches &ldquo;{query}&rdquo;.
               {/* …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — the rule Stage 10bu
                   set for every search over holdings, on the one in the top bar.
                   The family searched for BSE: it is theirs on their own
@@ -215,21 +222,6 @@ export function SmartSearch() {
               onMouseEnter: () => setActive(i),
               onMouseDown: (e: React.MouseEvent) => { e.preventDefault(); choose(row); },
             } as const;
-            if (row.type === "ask") {
-              return (
-                <div key="ask" {...common} data-search-result="ask" data-search-kind="ask" data-search-href=""
-                  className={`${cls} border-t border-ink-700/60`}>
-                  <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded border border-champagne-500/40 px-1.5 py-px text-[10px] uppercase tracking-wide text-champagne-400">
-                    <Sparkles className="h-3 w-3" aria-hidden /> Ask Muns
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-slate-100">&ldquo;{row.question}&rdquo;</span>
-                    <span className="block truncate text-[11.5px] text-slate-500">An AI answer from a snapshot of this book — not a statement figure</span>
-                  </span>
-                  {on && <CornerDownLeft className="mt-1 h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden />}
-                </div>
-              );
-            }
             const e = row.type === "recent"
               ? { id: row.recent.id, chip: row.recent.chip, label: row.recent.label, detail: "", href: row.recent.href, kind: "recent" }
               : { ...row.entry };
@@ -253,9 +245,12 @@ export function SmartSearch() {
               </div>
             );
           })}
-          <div className="mt-1 border-t border-ink-700/60 px-3 pb-0.5 pt-1.5 text-[10.5px] text-slate-500">
-            ↑ ↓ to move · Enter to open · Esc to close · <span className="text-slate-400">/</span> or Ctrl+K from anywhere
-          </div>
+          {/* The keys only mean something where there are rows to move through. */}
+          {rows.length > 0 && (
+            <div className="mt-1 border-t border-ink-700/60 px-3 pb-0.5 pt-1.5 text-[10.5px] text-slate-500">
+              ↑ ↓ to move · Enter to open · Esc to close · <span className="text-slate-400">/</span> or Ctrl+K from anywhere
+            </div>
+          )}
         </div>
       )}
     </div>

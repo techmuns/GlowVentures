@@ -6,6 +6,22 @@ import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/ch
 
 // ── ASK THE BOOK — the Muns chat, beside the search box ─────────────────────
 //
+// ***NOTHING RENDERS THIS SINCE Stage 10bz — THE FAMILY PAUSED IT.*** *"Remove
+// Ask muns from here, dont want this right now."* The top bar's button and the
+// search list's Ask Muns row were its only two doors, and both are gone. It is
+// kept whole rather than deleted because "right now" says it comes back — and
+// because what is below records three defects that each shipped once (the
+// scrim trapped in the header, the panel sized in `vh`, the failure that did
+// not name itself), which a rewrite from scratch would ship again.
+//
+// TO BRING IT BACK: render `<MunsChat />` beside `<SmartSearch />` in
+// `TopBar.tsx`, and restore the search list's Ask row from the commit that
+// removed it (its `Row` type, the ordering on `looksLikeQuestion`, and the
+// `openMunsWith` call in `choose`). Then turn `check:pages`' `chat` route and
+// the two Stage 10bz claims on its `search` route back the other way — they
+// assert the chat is ABSENT until then. `functions/api/chat.js`, `munsChat.ts`
+// and `chatContext.ts` are untouched and still tested (`test:family`).
+//
 // This chat first replaced an `<input>` with no state, no handler and no
 // onChange: a search box that looked alive and searched nothing. The slot holds
 // a REAL search now (`SmartSearch`), and the chat sits beside it — opened by its
