@@ -5302,6 +5302,59 @@ const pmClose = (a, b) => Number.isFinite(a) && Number.isFinite(b)
  * construction, which is the rule `FUND_CLASS_BOOK` and `PRIVATE_QUOTABLE`
  * already follow one card over.
  */
+/**
+ * ── THE EXTRAS & ADMIN PAGES' EXPECTATIONS, RE-EXPRESSED FROM THE BOOK ──────
+ *
+ * Capital Gains, Snapshot History, Data & Refresh, Return & Drawdown and NAV &
+ * Performance each print a figure a second path can reach from `glowData.ts`
+ * alone. Written out here rather than imported from the page's helpers, on the
+ * terms `NAV_SERIES_BOOK` and `isMandateHeld` already follow: a check that calls
+ * the helper it is checking agrees with it by construction.
+ */
+const XA_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    // ── Capital Gains: the tax on realised gains, per taxpayer (XA-1). The
+    // statutory rates are the one literal a check may carry.
+    const cg = bookArray(src, "BOOK_CAPITAL_GAINS") ?? [];
+    const reported = cg.filter((c) => c.realisedST !== null || c.realisedLT !== null);
+    const per = new Map();
+    for (const c of reported) {
+      if (!c.ownerId) continue;
+      const e = per.get(c.ownerId) ?? { st: 0, lt: 0 };
+      e.st += c.realisedST ?? 0; e.lt += c.realisedLT ?? 0;
+      per.set(c.ownerId, e);
+    }
+    const taxOn = (st, lt) => Math.max(0, st) * 0.2 + Math.max(0, lt) * 0.125;
+    const perTaxpayer = [...per.values()].reduce((a, e) => a + taxOn(e.st, e.lt), 0);
+    const pooled = taxOn(reported.reduce((a, c) => a + (c.realisedST ?? 0), 0), reported.reduce((a, c) => a + (c.realisedLT ?? 0), 0));
+    // ── Snapshot History: each point's like-for-like change (XA-2), struck
+    // straight off the point's own link fields — (close − capital in) ÷ open —
+    // rather than through `navIndexSeries`, which is what the page calls.
+    const nav = bookArray(src, "BOOK_NAV_HISTORY") ?? [];
+    const history = nav.map((n, i) => {
+      if (i === 0) return { date: n.date, link: null, level: null, joined: 0 };
+      const open = n.linkOpen ?? nav[i - 1].nav;
+      const close = n.linkClose ?? n.nav;
+      // A link whose every account is carried at an earlier mark measured
+      // nothing — the page prints a dash there, never 0.00%.
+      const remarked = (n.linkAccounts ?? 0) - (n.accountsCarried ?? 0);
+      const link = open > 0 && remarked > 0 ? ((close - (n.flowIn ?? 0)) / open - 1) * 100 : null;
+      const level = nav[i - 1].nav > 0 ? (n.nav / nav[i - 1].nav - 1) * 100 : null;
+      const joined = Math.max(0, (n.accountsOnDate ?? 0) + (n.accountsCarried ?? 0) - (n.linkAccounts ?? 0));
+      return { date: n.date, link, level, joined };
+    });
+    return { tax: reported.length ? { perTaxpayer, pooled, taxpayers: per.size } : null, history };
+  } catch { return null; }
+})();
+/** A compact rupee figure as the page prints it (`₹33.1 L`, `−₹4.3 L`, `₹713.3 Cr`), in rupees. NaN when absent. */
+const xaRupees = (s) => {
+  const m = /([−-])?\s*₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(s ?? "");
+  return m ? (m[1] ? -1 : 1) * crU(m[2], m[3]) * 1e7 : NaN;
+};
+/** The one `data-xa` element a claim is about — null when the page drew none. */
+const xaEl = (ctx, key) => (ctx?.xa ?? []).find((x) => x.xa === key) ?? null;
+
 const NAV_SERIES_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -23881,6 +23934,70 @@ const INVARIANTS = {
      * them still stands; the word read as an upload log of superseded files.
      */
     ["no dated point is labelled Archived or Active", (t) => !/\barchived\b/i.test(t)],
+    /**
+     * ── THE CHANGE COLUMN IS THE LIKE-FOR-LIKE LINK, NEVER THE LEVEL (XA-2) ─
+     *
+     * The column read `nav ÷ previous nav − 1` over a panel that grows as
+     * accounts first publish, so three dates on which accounts ARRIVED printed
+     * +68%, +34% and +106% beside ₹0 of capital. Struck on every row's own
+     * handle against the link re-expressed off the book, on the rendered text at
+     * the page's printing precision, and — the load-bearing half — the book must
+     * carry a date on which accounts joined, where the level and the link
+     * genuinely differ, or the equality would pass against the defect too.
+     */
+    ["every dated point's change is the like-for-like link the book's own link fields give", (t, ctx) => {
+      const want = XA_BOOK?.history ?? [];
+      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-change");
+      if (!want.length || got.length !== want.length) return false;
+      return want.every((w) => {
+        const g = got.find((x) => x.attrs.date === w.date);
+        if (!g) return false;
+        if (w.link === null) return g.attrs.link === "" && !/%/.test(g.text);
+        const shown = Number(/([\d.]+)%/.exec(g.text)?.[1]);
+        return Math.abs(Number(g.attrs.link) - w.link) < 1e-6 && Math.abs(shown - Math.abs(w.link)) <= 0.0051;
+      });
+    }],
+    ["and the book carries a date on which accounts joined, where the level ratio would have lied", (t, ctx) => {
+      const want = (XA_BOOK?.history ?? []).filter((w) => w.joined > 0 && w.level !== null
+        && Math.abs(w.level - (w.link ?? 0)) > 1);
+      if (!want.length) return { notChecked: "no dated point in this book has accounts joining the series" };
+      const got = (ctx?.xa ?? []).filter((x) => x.xa === "history-change");
+      return want.every((w) => {
+        const g = got.find((x) => x.attrs.date === w.date);
+        const shown = Number(/([\d.]+)%/.exec(g?.text ?? "")?.[1]);
+        return !!g && Number(g.attrs.joined) === w.joined
+          && (!Number.isFinite(shown) || Math.abs(shown - Math.abs(w.level)) > 0.01);
+      });
+    }],
+  ],
+
+  /**
+   * ── CAPITAL GAINS: THE TAX IS STRUCK PER TAXPAYER (XA-1) ─────────────────
+   *
+   * The tile pooled every member's heads before applying the rates, so Ajay's
+   * −₹70.9 L of short-term losses erased Ankita's and Bharat's short-term gains
+   * and the tile read ₹18.2 L against ₹33.1 L on the page's own rules. Struck on
+   * the tile's own handle (the figure as the helper computed it) AND its
+   * rendered text, each against the per-taxpayer figure re-expressed above — and
+   * the book must be one where the pooled figure differs, or the equality would
+   * pass just as well against the defect.
+   */
+  "capital-gains": [
+    ["the tax estimate is the per-taxpayer sum, never the heads pooled across members", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const v = Number(el.attrs.value);
+      const shown = xaRupees(el.text);
+      const { perTaxpayer, pooled } = XA_BOOK.tax;
+      // One decimal of lakh is the tile's printing precision (±₹5,000).
+      return Math.abs(v - perTaxpayer) <= 1 && Math.abs(shown - v) <= 5100
+        && Math.abs(pooled - perTaxpayer) > 1e5 && Math.abs(shown - pooled) > 5100;
+    }],
+    ["and says so on the tile, naming each taxpayer's own figure", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
+    }],
   ],
 };
 
@@ -29913,6 +30030,24 @@ for (const theme of THEMES) {
           && REGISTER_SENTINEL && new RegExp(REGISTER_SENTINEL, "i").test(mainText)) {
         invariants.push(`the investment register reaches no page in this app, and this one names ${REGISTER_SENTINEL} from it`);
       }
+      /**
+       * ── THE EXTRAS & ADMIN PAGES' OWN HANDLES (`data-xa`) ─────────────────
+       *
+       * Capital Gains, Snapshot History, Data & Refresh, Return & Drawdown, NAV
+       * & Performance, Ledger Insights and Data Audit each put the figures their
+       * invariants reconcile on a `data-xa` element — the value as the BOOK holds
+       * it in attributes, and the text a reader sees. Both, because a page whose
+       * attribute is right and whose rendering is not fails on the pair, and a
+       * figure read out of prose is the plausible-wrong-number this file exists
+       * to catch rather than commit.
+       */
+      const xa = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main [data-xa]")].map((e) => ({
+          xa: e.getAttribute("data-xa") ?? "",
+          attrs: Object.fromEntries([...e.attributes].filter((a) => a.name.startsWith("data-")).map((a) => [a.name.slice(5), a.value])),
+          text: (e instanceof HTMLElement ? e.innerText : e.textContent) ?? "",
+          title: e.getAttribute("title") ?? "",
+        })));
       // `holdings-row-3` shares its invariant list with every other allocation
       // row: the assertions compare each page against ITS OWN row's cells, so
       // one list serves all of them and a per-row copy would be eight places to
@@ -29932,7 +30067,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

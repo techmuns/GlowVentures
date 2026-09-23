@@ -75,6 +75,7 @@ const SUITES = [
   ["review gaps", "src/lib/__tests__/reviewGaps.test.ts"],
   ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
   ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
+  ["extras & admin figures", "src/lib/__tests__/extrasFigures.test.ts"],
   ["price alerts", "src/lib/__tests__/priceAlerts.test.ts"],
   ["price levels sent to Glow Central Research", "src/lib/__tests__/researchLevels.test.ts"],
 ];

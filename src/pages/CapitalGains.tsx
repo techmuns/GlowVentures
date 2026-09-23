@@ -14,6 +14,7 @@ import { Auditable } from "@/components/Auditable";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
+import { estimateRealisedTax, STCG_RATE, LTCG_RATE } from "@/lib/taxEstimate";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
 import { Pill } from "@/components/Pill";
@@ -43,9 +44,9 @@ import { useTableView, sortRows } from "@/lib/tableView";
 // unavailable, rather than quoting a saving it cannot support.
 
 // Illustrative Indian equity rates: STCG u/s 111A = 20%; LTCG u/s 112A = 12.5%
-// (beyond the ₹1.25L annual exemption, which we don't net per-entity here).
-const STCG_RATE = 0.20;
-const LTCG_RATE = 0.125;
+// (beyond the ₹1.25L annual exemption, which is not applied here). ONE
+// definition, in `taxEstimate.ts`, because the tax tile and the hold-to-LTCG
+// planner both apply them and two copies would be two chances to disagree.
 
 function addDays(iso: string, days: number): string {
   const d = new Date(iso);
@@ -169,8 +170,23 @@ export function CapitalGains() {
   const totUnrealLT = sumOrNull(cg.map((c) => c.unrealisedLT));
   const unrealisedTotal = totUnrealST === null && totUnrealLT === null
     ? null : (totUnrealST ?? 0) + (totUnrealLT ?? 0);
-  const estTaxRealised = realisedTotal === null
-    ? null : Math.max(0, totRealST ?? 0) * STCG_RATE + Math.max(0, totRealLT ?? 0) * LTCG_RATE;
+  /**
+   * PER TAXPAYER, NEVER POOLED. Tax is assessed per person, and this pooled
+   * every member's heads first — so one member's short-term loss erased the
+   * others' short-term gains and the tile printed ₹18.2 L where the page's own
+   * rules give ₹33.1 L. See `estimateRealisedTax`.
+   */
+  const taxEst = estimateRealisedTax(cg);
+  const estTaxRealised = realisedTotal === null ? null : taxEst.total;
+  // WHICH WINDOWS REACH INTO AN EARLIER FINANCIAL YEAR. Derived from the
+  // statements' own windows: the financial year is the one the newest window
+  // closes in (1 April to 31 March), and a window that opens before it mixes
+  // two years' sales into one "current" estimate.
+  const newestTo = reported.reduce((a, c) => (c.periodTo && c.periodTo > a ? c.periodTo : a), "");
+  const fyStart = newestTo
+    ? `${Number(newestTo.slice(5, 7)) >= 4 ? newestTo.slice(0, 4) : String(Number(newestTo.slice(0, 4)) - 1)}-04-01`
+    : "";
+  const priorYear = fyStart ? reported.filter((c) => c.periodFrom && c.periodFrom < fyStart).map((c) => c.entity) : [];
 
   const totalSaving = sum(holdCandidates.map((x) => x.saving));
   const harvestRows = harvestQ.trim()
@@ -348,26 +364,38 @@ export function CapitalGains() {
 
         {estTaxRealised === null ? (
           <StatTile label="Est. tax on realised"
-            {...absentTile("no realised gains to tax", "Needs a capital gain statement.")}
+            {...absentTile(realisedTotal === null ? "no realised gains to tax" : "no realised gain carries a canonical owner",
+              realisedTotal === null ? "Needs a capital gain statement."
+                : "Tax is assessed per person, and none of these accounts resolves to one, so no per-taxpayer figure can be struck.")}
             icon={<Percent className="h-4 w-4" />} />
         ) : (
           // A COMPUTED zero, and the reason belongs in the tile rather than on
-          // hover: a reader scanning "₹0" next to a −₹1.97 Cr realised loss must
-          // be able to see it is the arithmetic, not a gap.
+          // hover: a reader scanning "₹0" next to a realised loss must be able
+          // to see it is the arithmetic, not a gap.
           <StatTile label="Est. tax on realised"
-            value={<Auditable formula={{
-              title: "Est. tax on realised",
-              excel: "= max(0, Realised ST) × 20% + max(0, Realised LT) × 12.5%",
-              plain: "Illustrative tax on the gains actually booked. Losses are not netted against other heads here.",
-              worked: `= max(0, ${money(totRealST ?? 0)}) × 20% + max(0, ${money(totRealLT ?? 0)}) × 12.5% = ${money(estTaxRealised)}`,
-              
-            }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>}
-            sub={realisedTotal !== null && realisedTotal < 0
-              ? <span className="text-slate-400">net realised LOSS · nothing to tax</span>
-              : "STCG 20% · LTCG 12.5% · illustrative"}
-            hint={realisedTotal !== null && realisedTotal < 0
-              ? "The book's realised position is a net LOSS, so there is no tax to estimate on it — the figure is zero because the arithmetic gives zero, not because anything is missing. Rates would be STCG 20% and LTCG 12.5% on a gain."
-              : undefined}
+            value={<span data-xa="cg-tax" data-value={estTaxRealised} data-pooled={taxEst.pooled ?? ""}
+                data-taxpayers={taxEst.byTaxpayer.length}>
+              <Auditable formula={{
+                title: "Est. tax on realised",
+                excel: "= Σ over each taxpayer of ( max(0, their Realised ST) × 20% + max(0, their Realised LT) × 12.5% )",
+                plain: "Illustrative tax on the gains actually booked, struck PER TAXPAYER — tax is assessed per person, so one member's loss never reduces another member's tax. Within one person the accounts net inside a head; a short-term loss is not set off against a long-term gain here.",
+                worked: [
+                  ...taxEst.byTaxpayer.map((t) =>
+                    `${t.owner}: max(0, ${money(t.st ?? 0, true)}) × 20% + max(0, ${money(t.lt ?? 0, true)}) × 12.5% = ${money(t.tax)}`),
+                  `Σ = ${money(estTaxRealised)}`,
+                ].join("  ·  "),
+              }}>{fmtFromBase(estTaxRealised, { compact: true })}</Auditable>
+            </span>}
+            sub={estTaxRealised === 0
+              ? <span className="text-slate-400">nothing to tax · every taxpayer's heads are at a net loss</span>
+              : "per taxpayer · STCG 20% · LTCG 12.5% · illustrative"}
+            hint={[
+              taxEst.byTaxpayer.map((t) => `${t.owner} ${money(t.tax)}`).join(" · "),
+              taxEst.unattributed.length
+                ? `${taxEst.unattributed.map((c) => c.entity).join(", ")} ${taxEst.unattributed.length === 1 ? "carries" : "carry"} no canonical owner and ${taxEst.unattributed.length === 1 ? "is" : "are"} not in this figure.`
+                : "",
+            ].filter(Boolean).join(" — ")}
+            title="Each person's realised gains are the sum over their own accounts' capital gain statements. Illustrative only: equity rates, no ₹1.25 L exemption, no set-off of a short-term loss against a long-term gain, no surcharge or cess."
             icon={<Percent className="h-4 w-4" />} />
         )}
 
@@ -629,14 +657,17 @@ export function CapitalGains() {
       </div>
 
       {/* ONE LINE, the detail in its hover — the family asked for the notes
-          around the tables to go. "Illustrative" and "not tax advice" stay on
-          screen, because a tax figure read without them is read as advice. */}
+          around the tables to go. "Illustrative", "per taxpayer" and "not tax
+          advice" stay on screen: a tax figure read without them is read as
+          advice, and a per-person estimate read as a pooled one (XA-1). */}
       {/* `data-prose-ok`: the one caveat kept on screen for the harm its
           absence could do — a tax figure read without it is read as advice
           (Stage 10ci) — and so the one line the no-explainer sweep excuses. */}
       <p className="mt-4 text-[11px] text-slate-500" data-prose-ok="tax caveat"
-        title="Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do not net losses across heads or years, and exclude surcharge and cess. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.">
-        Tax figures are <span className="font-medium text-slate-400">illustrative</span> · statement basis · not tax advice
+        title={`Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A), struck per taxpayer — each person over their own accounts, so one member's loss never reduces another member's tax. They do not apply the ₹1.25L LTCG exemption, do not set a loss off against the other head or carry one across years, and exclude surcharge and cess. The realised figure also includes the managers' liquid-fund redemptions (Ledger Insights' Realised tab names them), which s.50AA taxes at the holder's slab rate rather than these equity rates${priorYear.length > 0
+          ? `, and ${priorYear.join(", ")} ${priorYear.length === 1 ? "reports a window" : "report windows"} reaching back before ${fmtDate(fyStart)}, into an earlier financial year`
+          : ""} — this estimate separates neither. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.`}>
+        Tax figures are <span className="font-medium text-slate-400">illustrative</span> · per taxpayer · statement basis · not tax advice
       </p>
     </div>
   );
