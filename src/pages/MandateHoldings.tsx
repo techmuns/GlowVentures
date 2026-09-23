@@ -288,7 +288,7 @@ export function MandateHoldings() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: "Mandate not found" }]} />
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Mandate not found</h1>
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Mandate not found</h1>
         <Card>
           <AbsentSection
             what={`No account "${accountId}" in this book`}
@@ -329,7 +329,7 @@ export function MandateHoldings() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
+        <h1 className="mb-1 font-display text-2xl font-bold tracking-tight text-slate-100">{mandateName}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[12.5px] text-slate-400">
           <span>{account.provider} · {account.accountNo}</span>
           <span className="text-slate-600">·</span>
@@ -431,7 +431,7 @@ export function MandateHoldings() {
             </p>
           )}
           <p className="mt-4 text-[12px] text-slate-500">
-            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10cg, where a fund is not. */}
+            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10ci, where a fund is not. */}
             <Link to="/monitor?group=category" data-monitor-in-full className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries this
             account in full.
           </p>
@@ -611,7 +611,7 @@ export function MandateHoldings() {
           {/* The mandate's own name, as the manager prints it. Null on a
               provider that names no strategy — the account then identifies
               itself by manager and number rather than by an invented label. */}
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{mandateName}</h1>
           <div className="mt-1 text-[13px] text-slate-400">
             Run by <span className="font-medium text-slate-300">{account.provider}</span> for{" "}
             <span className="font-medium text-slate-300">{ownerName}</span> · account {account.accountNo}
@@ -633,7 +633,7 @@ export function MandateHoldings() {
           </div>
         </div>
         <div className="text-right">
-          <div className="mono text-2xl font-semibold text-slate-100">{money(mv)}</div>
+          <div className="font-display text-2xl font-bold tabular text-slate-100">{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {rows.length} holdings the manager runs — shares and the cash sleeve
           </div>
