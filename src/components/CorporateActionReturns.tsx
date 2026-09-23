@@ -73,7 +73,16 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
               <div className="mt-1 text-[10px] font-sans text-slate-500">Gross · receipt unconfirmed</div></td>,
             total: <td key="total" className="whitespace-nowrap px-4 py-3 mono font-semibold" data-dividend-total-return>{fmtPct(r?.totalReturnPct, { sign: true, decimals: 2 })}</td>,
             evidence: <td key="evidence" className="min-w-[230px] max-w-md px-4 py-3 text-slate-400">
-              {issues.length > 0 ? <p className="text-amber-400/90">{[...new Set(issues)].join(". ")}.</p> : <span>Calculated on carried statement holdings.</span>}
+              {/* The FIRST open question on screen and every one in the hover —
+                  joined, three of them ran to 232 characters in one cell, the
+                  wall of text the family asked to be rid of (Stage 10ci). */}
+              {issues.length > 0
+                ? (() => {
+                    const open = [...new Set(issues)];
+                    return <p className="text-amber-400/90" title={`${open.join(". ")}.`}>
+                      {open[0]}{open.length > 1 ? ` · +${open.length - 1} more` : ""}.</p>;
+                  })()
+                : <span>Calculated on carried statement holdings.</span>}
               {events.length > 0 && <details className="mt-2"><summary className="cursor-pointer text-champagne-400">{events.length} events · show sources</summary>
                 <ul className="mt-2 space-y-3">{events.map((l) => <li key={l.action.id}>
                   <div>{l.action.exDate ? fmtDate(l.action.exDate) : "Undated"} · {l.action.purpose}</div>

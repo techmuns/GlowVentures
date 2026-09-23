@@ -110,6 +110,15 @@ type HoldingsSource = DocTotals & {
 
 const fin = (n: unknown): number | null => (typeof n === "number" && Number.isFinite(n) ? n : null);
 
+/**
+ * The FIRST CLAUSE of a reason — what stays on screen under the capital table,
+ * with the whole sentence as its hover. These reasons are written clause-first
+ * ("the fund's statement prints no distribution line, so what has come back…"),
+ * so cutting at the first "; ", ", so " or " — " keeps the cause and drops the
+ * consequence. Display only: the reason itself is never shortened.
+ */
+const firstClause = (s: string) => s.split(/; |, so | — /)[0];
+
 function useHoldingsSource(account: Account | undefined): HoldingsSource {
   const [rows, setRows] = useState<ManifestRow[] | null | undefined>(undefined);
   useEffect(() => {
@@ -288,7 +297,7 @@ export function MandateHoldings() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: "Mandate not found" }]} />
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Mandate not found</h1>
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Mandate not found</h1>
         <Card>
           <AbsentSection
             what={`No account "${accountId}" in this book`}
@@ -329,7 +338,7 @@ export function MandateHoldings() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: mandateName }]} />
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
+        <h1 className="mb-1 font-display text-2xl font-bold tracking-tight text-slate-100">{mandateName}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-2 text-[12.5px] text-slate-400">
           <span>{account.provider} · {account.accountNo}</span>
           <span className="text-slate-600">·</span>
@@ -608,7 +617,7 @@ export function MandateHoldings() {
           {/* The mandate's own name, as the manager prints it. Null on a
               provider that names no strategy — the account then identifies
               itself by manager and number rather than by an invented label. */}
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{mandateName}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{mandateName}</h1>
           <div className="mt-1 text-[13px] text-slate-400">
             Run by <span className="font-medium text-slate-300">{account.provider}</span> for{" "}
             <span className="font-medium text-slate-300">{ownerName}</span> · account {account.accountNo}
@@ -630,7 +639,7 @@ export function MandateHoldings() {
           </div>
         </div>
         <div className="text-right">
-          <div className="mono text-2xl font-semibold text-slate-100">{money(mv)}</div>
+          <div className="font-display text-2xl font-bold tabular text-slate-100">{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {rows.length} holdings the manager runs — shares and the cash sleeve
           </div>
@@ -1017,27 +1026,38 @@ function CapitalIn({ account }: { account: Account }) {
         record is exactly that. So it states the identity the Transactions table
         states, and both returns, each labelled, from the one `capitalReturn`.
       */}
+      {/* TWO SHORT LINES — the money, then the returns. It was one run-on line
+          of up to 206 characters with every reason spelt out in it, the wall of
+          text the family asked to be rid of (Stage 10ci). A reason keeps its
+          first clause on screen, because an absent figure names its cause, and
+          the whole sentence is that clause's hover. */}
       <div className="border-t border-ink-700 px-4 py-2.5 text-[12px] leading-relaxed text-slate-400" data-capital-summary={account.accountId}>
-        <>Purchase <span className="mono text-slate-200">{money(group.paidIn)}</span>
+        <div>Purchase <span className="mono text-slate-200">{money(group.paidIn)}</span>
           {group.redemption != null && group.redemption > 0 && <>, redemption <span className="mono text-slate-200">{money(group.redemption)}</span></>}
           {group.value != null && <>, worth <span className="mono text-slate-200">{money(group.value)}</span> today</>}
           {group.appreciation != null
             ? <> — appreciation <span className={`mono ${changeColor(group.appreciation)}`}>{fmtFromBase(group.appreciation, { compact: true, sign: true })}</span>
                 {group.realised != null && group.unrealised != null && <>{" "}(<span className="mono">{fmtFromBase(group.realised, { compact: true, sign: true })}</span> realised,{" "}
-                  <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.{" "}
-                {(() => {
-                  const hpr = capitalReturn(group, "absolute");
-                  const xirr = capitalReturn(group, "xirr");
-                  return (<>
-                    {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
-                    {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
-                    {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500"> — the money has been in under a year, so no annual rate is struck</span>}
-                    {!xirr.shown && <span className="text-slate-500"> — no XIRR: {xirr.reason}</span>}.
-                  </>);
-                })()}
-              </>
-            : <span className="text-slate-500"> — no appreciation or return is struck: {group.appreciationReason ?? "this account's reported capital does not support one"}.</span>}
-        </>
+                  <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.</>
+            : <> — no appreciation or return is struck.</>}
+        </div>
+        {group.appreciation != null
+          ? (() => {
+              const hpr = capitalReturn(group, "absolute");
+              const xirr = capitalReturn(group, "xirr");
+              return (
+                <div>
+                  {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
+                  {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
+                  {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500" title={xirr.note}> — in under a year, so no annual rate is struck</span>}
+                  {!xirr.shown && <span className="text-slate-500" title={xirr.reason}> · no XIRR: {firstClause(xirr.reason)}</span>}.
+                </div>
+              );
+            })()
+          : (() => {
+              const why = group.appreciationReason ?? "this account's reported capital does not support one";
+              return <div className="text-slate-500" title={why}>Why: {firstClause(why)}.</div>;
+            })()}
       </div>
     </Card>
   );

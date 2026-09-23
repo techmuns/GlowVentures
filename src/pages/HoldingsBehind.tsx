@@ -233,7 +233,7 @@ export function HoldingsBehind() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Morning CIO", to: "/cio" }, { label: "Nothing named to open" }]} />
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Nothing named to open</h1>
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Nothing named to open</h1>
         <Card>
           <AbsentSection
             what="This address does not name a set of holdings"
@@ -505,7 +505,7 @@ export function HoldingsBehind() {
       <PageNav className="mb-2" trail={crumbTrail} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{heading}</h1>
           {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
               sections from the dashboard UI."* What it said — which set this is
               and on what basis — is the HEADING plus the figure beside it.
@@ -616,7 +616,7 @@ export function HoldingsBehind() {
               entities, that the statements are drawn on their own dates, and the
               same holdings on statement marks alone — is one hover away on the
               figure it is about. Weaker than a caption, and recorded as such. */}
-          <div className="mono text-2xl font-semibold text-slate-100"
+          <div className="font-display text-2xl font-bold tabular text-slate-100"
                data-hb-total={mv}
                title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone — before any live quote — these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}. Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.${depositoryNote ? ` ${depositoryNote}` : ""}` : ""}`}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">

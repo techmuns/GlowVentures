@@ -47,7 +47,7 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
           takes a short definition of the term under it, the second takes the
           REASON it is absent and the document that would fill it — which this
           book requires to be complete rather than brief. */}
-      <div data-stat-value className="mt-3 text-2xl font-semibold text-slate-100 tabular tracking-tight">{value}</div>
+      <div data-stat-value className="mt-3 font-display text-2xl font-bold text-slate-100 tabular tracking-tight">{value}</div>
       <div className="mt-2 flex items-center gap-2 text-xs">
         {typeof delta === "number" && (
           <span className={`mono ${changeColor(delta)}`}>

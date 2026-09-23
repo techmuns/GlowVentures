@@ -2582,7 +2582,7 @@ export function PortfolioMonitor() {
         }
         right={
           <button onClick={handleExport} disabled={exporting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+            className="btn-excel"
             title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
             <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
           </button>
