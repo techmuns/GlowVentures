@@ -21795,7 +21795,7 @@ the COUNTS stay. Two things it had to get right that the long version got wrong:
   defects asserted AS defects, the store's notify/snapshot/deletion rules, and a
   book-anchored half (every NAV-priced fund checkable with the feed DOWN; a
   quotable share `checking` before the feed answers; an AIF never checkable).
-  `researchLevels.test.ts` (115 checks): the rules on constructed inputs
+  `researchLevels.test.ts` (116 checks): the rules on constructed inputs
   (including the note under an old level and every shape of the footer line — the
   count, the short cause per failure, the worst day, the too-high reason), a REAL
   send against a stand-in that follows the receiving
@@ -21866,6 +21866,50 @@ show: `cio-alerts` and `cio-alerts-nofeed` wrote 281 and 450 characters under th
 All alerts table, over the two lines of 150 the guard allows. The two short lines
 above are the fix. The two harness cases whose code moved were re-anchored and
 four new ones added — see the bug pass.
+
+#### Merged a third time: #88 took `10ck`, and its new page showed the card saying two false things
+
+#88 — one company page however the company is held, including a page for a
+company the family holds only inside its funds — landed the hour the family said
+to merge, and took `10ck`, the letter this section held then. Of the lines naming
+`10ck`, 26 code comments and 3 lines here were this change's and moved; #88's 2
+code comments and 4 lines here stayed.
+
+- **The `ctx` literal is the union**: #88's `heldTable` beside `alertsTab` and
+  `researchPosts`, 97 keys, none duplicated, every one declared.
+- **`StockInfo.tsx` merged without a marker**, so it was read by hand.
+  `<InvestmentTools>` renders on every company page, #88's new ones included.
+
+**AND ON #88's NEW PAGE THE ALERT CARD CONTRADICTED THE BADGE ABOVE IT.** That
+page is badged *"Held only inside your funds"*. With no statement row, the card's
+price chip said the company was *"not held in this book"*, and a level saved there
+said the company *"has none"* — no NSE symbol. Both are false of a listed company
+the family reaches through a fund. What is true is narrower:
+
+- no STATEMENT in this book holds it, so this dashboard fetches no price for it;
+- this dashboard has no NSE symbol for it.
+
+The card says exactly that now, and so does the All alerts footer's hover.
+`researchLevels.test.ts` and a check on `stock-funds-only` hold the words. Two
+harness cases put the old words back, one on each side, and both fire.
+
+#### …and a fourth time: #85 took `10cl`
+
+#85 — an ADD TILE card on both KPI strips, and Capital Call cells that say why
+saving is off — landed while the #88 merge was being verified, and took `10cl`.
+Main keeps it; this section is **`10cm`**. Of the lines naming `10cl`, 22 are
+#85's and stay: 6 lines here, 13 comments in the checker, 2 in its own harness
+and 1 in `Kpi.tsx`. This change's 26 code comments and 3 lines here moved.
+
+- **The `ctx` literal conflicted and is the union**: #85's `tileAdd` and
+  `callOff` beside `alertsTab` and `researchPosts`, 99 keys, none duplicated,
+  every one naming a declared identifier.
+- **Nothing else overlapped.** #85 changed the KPI strips, the capital-call store
+  and Private Market. This change touches none of them, #85 did not touch
+  `MorningCIO.tsx`, and neither side touched a generated file.
+- **The ADD TILE card sits on the KPI strip above all four Morning CIO panels,
+  All alerts included**, so the alerts routes were walked again rather than
+  assumed — see below.
 
 @@VERIFY@@
 
