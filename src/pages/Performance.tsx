@@ -271,7 +271,8 @@ export function Performance() {
           <StatTile label="Money-weighted return (to date)"
             value={<span className={(consolidatedTotalReturn ?? 0) >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
             sub={<>to date · {windowNote}</>}
-            hint={`${xirrMissing.length
+            hint={xirrMissing.length ? `Over ${measurable.length} of ${accounts.length} accounts · not annualised` : "Over every account · not annualised"}
+            title={`${xirrMissing.length
               ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
               : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}; the annualised XIRR${consolidatedXirr != null ? ` is ${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a.` : ""}, kept off the tile because a >100% annualised quarter reads as a sustained yearly rate.`}
             icon={<Percent className="h-4 w-4" />} />
@@ -354,10 +355,9 @@ export function Performance() {
               })}
               <tr className="border-t-2 border-ink-600">
                 <td className="px-3 py-2.5 font-semibold text-slate-200">Consolidated</td>
-                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}>
-                  {DASH} time-weighted returns cannot be consolidated across these accounts: the three managers
-                  publish different periods, against different benchmarks, from different inception dates. The
-                  money-weighted return above is the consolidated figure this book does support.
+                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}
+                  title="Time-weighted returns cannot be consolidated across these accounts: the managers publish different periods, against different benchmarks, from different inception dates. The money-weighted return above is the consolidated figure this book does support.">
+                  {DASH} not consolidated — the managers publish different periods and benchmarks
                 </td>
               </tr>
             </tbody>
@@ -427,7 +427,7 @@ export function Performance() {
 
       {/* ── Money-weighted return, per account ── */}
       <Card className="mt-5" title="Money-weighted return to date, per account"
-        subtitle="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised">
+        subtitle={<span title="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised.">From each account&rsquo;s own dated capital movements · to date, not annualised</span>}>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
@@ -449,6 +449,14 @@ export function Performance() {
                         measurement — see Account.noPositionsReason. */}
                     {x.account.noPositionsReason
                       ? <AbsentCell reason={x.account.noPositionsReason} />
+                      : x.account.partialValuation
+                      /* A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST.
+                         The depository's cash-equivalent units are valued on the
+                         live basis; the account's other holdings are not, and a
+                         bare total here would read as the whole account. */
+                      ? <span data-partial-valuation title={x.account.partialValuation}>
+                          {money(x.mv)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80">partial</span>
+                        </span>
                       : money(x.mv)}
                   </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>

@@ -42,6 +42,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
     "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
@@ -57,6 +58,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
     "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
@@ -85,6 +87,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
     "noPositionsReason": null
   },
@@ -113,6 +116,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
     "noPositionsReason": null
   },
@@ -128,6 +132,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-07-31",
     "custodian": "3P Investment Managers",
     "noPositionsReason": null
   },
@@ -143,6 +148,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Baring Private Equity India Fund",
     "noPositionsReason": null
   },
@@ -158,6 +164,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-06-01",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -173,6 +180,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-06-01",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -188,6 +196,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-10",
     "inceptionDate": "2025-01-06",
+    "capitalRecordTo": null,
     "custodian": "Carnelian Asset Management and Advisors Pvt Ltd",
     "noPositionsReason": null,
     "capital": {
@@ -210,6 +219,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Carnelian Bharat Amritkaal Fund",
     "noPositionsReason": null
   },
@@ -225,6 +235,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-11",
     "inceptionDate": "2025-12-26",
+    "capitalRecordTo": null,
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -247,6 +258,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-11",
     "inceptionDate": "2025-12-26",
+    "capitalRecordTo": null,
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -269,6 +281,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-27",
     "inceptionDate": "2025-01-13",
+    "capitalRecordTo": null,
     "custodian": "Green Lantern Capital LLP",
     "noPositionsReason": null,
     "capital": {
@@ -291,6 +304,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-27",
     "inceptionDate": "2025-01-16",
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Green Lantern Capital LLP",
     "noPositionsReason": null,
     "capital": {
@@ -313,6 +327,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-29",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -328,6 +343,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-29",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -343,6 +359,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-06",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Mutual Fund",
     "noPositionsReason": null
   },
@@ -358,6 +375,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-07",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Helios Mutual Fund",
     "noPositionsReason": null
   },
@@ -373,6 +391,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
     "noPositionsReason": null
   },
@@ -388,6 +407,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -403,6 +423,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -418,6 +439,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -433,6 +455,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "LKP Securities",
     "noPositionsReason": null
   },
@@ -448,6 +471,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-10-24",
+    "capitalRecordTo": null,
     "custodian": "Molecule Ventures LLP",
     "noPositionsReason": null,
     "capital": {
@@ -470,6 +494,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-06",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Active Momentum Fund",
     "noPositionsReason": null
   },
@@ -485,6 +510,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Delphi Equity Fund",
     "noPositionsReason": null
   },
@@ -500,8 +526,10 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian"
+    "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian",
+    "transactionsOnly": true
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
@@ -515,6 +543,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -530,6 +559,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -545,6 +575,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -560,6 +591,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-07-31 carries 2 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -575,6 +607,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
   },
@@ -590,6 +623,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -605,6 +639,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -620,6 +655,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Hedged Equity Multi Factor Strategy",
     "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
   },
@@ -635,6 +671,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Neo Infra Income Opportunities Fund",
     "noPositionsReason": null
   },
@@ -650,6 +687,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -665,6 +703,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -680,6 +719,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -695,6 +735,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -710,6 +751,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -725,6 +767,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 2 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -740,6 +783,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -755,6 +799,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -770,6 +815,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -785,6 +831,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-09-03",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
     "capital": {
@@ -807,6 +854,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-12-03",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
     "capital": {
@@ -829,6 +877,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
     "noPositionsReason": null
   },
@@ -844,6 +893,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
     "noPositionsReason": null
   },
@@ -859,6 +909,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-13",
     "inceptionDate": "2025-07-29",
+    "capitalRecordTo": null,
     "custodian": "V.E.C Assago Capital Management LLP",
     "noPositionsReason": null,
     "capital": {
@@ -881,6 +932,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-13",
     "inceptionDate": "2025-07-30",
+    "capitalRecordTo": null,
     "custodian": "V.E.C Assago Capital Management LLP",
     "noPositionsReason": null,
     "capital": {
@@ -1969,6 +2021,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Financials",
@@ -2266,6 +2319,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Financials",
@@ -2834,6 +2888,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Financials",
@@ -3131,6 +3186,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Financials",
@@ -4000,6 +4056,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "green-lantern-capital-llp-510854",
     "memberId": null,
     "sector": "Financials",
@@ -4923,6 +4980,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "green-lantern-capital-llp-510861",
     "memberId": null,
     "sector": "Financials",
@@ -5588,7 +5646,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "crompton-greaves-consumer-elec",
+    "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Elec",
     "symbol": "CROMPTON",
     "isin": "INE299U01018",
@@ -6621,6 +6679,34 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "karur-vysya-bank",
+    "security": "THE KARUR VYS-EQ",
+    "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 16250,
+    "avgCost": null,
+    "currentPrice": 300.15,
+    "costBasis": null,
+    "marketValue": 4877437.5,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY-EQ",
     "symbol": "KAYNES",
@@ -6705,7 +6791,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "sbi",
+    "securityKey": "state-bank-of-india",
     "security": "SBI - EQ",
     "symbol": "SBIN",
     "isin": "INE062A01020",
@@ -6720,34 +6806,6 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": 1044.25,
     "costBasis": null,
     "marketValue": 28977937.5,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null
-  },
-  {
-    "securityKey": "the-karur-vys",
-    "security": "THE KARUR VYS-EQ",
-    "symbol": "KARURVYSYA",
-    "isin": "INE036D01028",
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Equity",
-    "marketSide": "listed",
-    "quantity": 16250,
-    "avgCost": null,
-    "currentPrice": 300.15,
-    "costBasis": null,
-    "marketValue": 4877437.5,
     "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
@@ -10661,6 +10719,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Electrical Ltd",
     "symbol": "CROMPTON",
+    "isin": "INE299U01018",
     "accountId": "v-e-c-assago-capital-management-llp-128005",
     "memberId": null,
     "sector": "Consumer Discretionary",
@@ -19757,6 +19816,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
 ];
 
 /**
+ * The accounts whose capital record provably STARTS AT INCEPTION: every class's
+ * earliest allotment brings the statement's own printed unit balance from zero
+ * to exactly the units it allots. A return on the family's money needs the
+ * whole record, and this is one of the three things that establishes it — see
+ * `capitalRecordFromInception` in build-book and `contributionsAreComplete`.
+ */
+export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
+  "3p-investment-managers-3000048",
+  "buoyant-capital-103473"
+];
+
+/**
  * Per-position contribution history, keyed `<accountId>|<securityKey>`, and
  * ONLY where the allotted units account for every unit held. Everything else
  * is absent by that gate rather than shown partially — see `positionTranchesFrom`.
@@ -20264,9 +20335,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|bndh-l-and-mcf-dp-gr": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",
@@ -20336,9 +20407,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|hdfc-asset-mgmnt-co-ltd-hdfc-mutual-fund-hdfc-liquid-fund-dir-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|hdfc-liquid-fund-direct-plan-growth-option": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "hdfc-asset-mgmnt-co-ltd-hdfc-mutual-fund-hdfc-liquid-fund-dir-pl-growth",
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option",
     "security": "HDFC ASSET MGMNT CO LTD#HDFC MUTUAL FUND-HDFC LIQUID FUND-DIR PL-GROWTH",
     "isin": "INF179KB1HP9",
     "periodFrom": "2026-04-01",
@@ -20354,9 +20425,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-ioppf-d-grw": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth",
+    "securityKey": "icici-ioppf-d-grw",
     "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-DIRECT PLAN-GROWTH",
     "isin": "INF109KC1RH9",
     "periodFrom": "2026-04-01",
@@ -20408,9 +20479,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -20444,9 +20515,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|insolation-energy-limited-new-equity-shares-with-face-value-re-1-after-sub-division": {
+  "motilal-oswal-financial-services-demat-1201090012539150|insolation-energy": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "insolation-energy-limited-new-equity-shares-with-face-value-re-1-after-sub-division",
+    "securityKey": "insolation-energy",
     "security": "INSOLATION ENERGY LIMITED#NEW EQUITY SHARES WITH FACE VALUE RE. 1/- AFTER SUB-DIVISION",
     "isin": "INE0LGX01024",
     "periodFrom": "2026-04-01",
@@ -20462,9 +20533,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology-india-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kaynes-technology-india-limited-equity-shares",
+    "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES",
     "isin": "INE918Z01012",
     "periodFrom": "2026-04-01",
@@ -20498,9 +20569,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mtcf-d-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth",
+    "securityKey": "kotak-mtcf-d-grow",
     "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
     "isin": "INF174KA1HV3",
     "periodFrom": "2026-04-01",
@@ -20642,9 +20713,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|nippon-life-india-am-ltd-nippon-india-mf-nippon-india-etf-nifty-1d-rate-liquid-bees": {
+  "motilal-oswal-financial-services-demat-1201090012539150|nip-etnf1d-rtliqbees": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "nippon-life-india-am-ltd-nippon-india-mf-nippon-india-etf-nifty-1d-rate-liquid-bees",
+    "securityKey": "nip-etnf1d-rtliqbees",
     "security": "NIPPON LIFE INDIA AM LTD#NIPPON INDIA MF-NIPPON INDIA ETF NIFTY 1D RATE LIQUID BEES",
     "isin": "INF732E01037",
     "periodFrom": "2026-04-01",
@@ -20696,9 +20767,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|onesource-specialty-pharma-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|onesource-special": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "onesource-specialty-pharma-limited-equity-shares",
+    "securityKey": "onesource-special",
     "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
     "isin": "INE013P01021",
     "periodFrom": "2026-04-01",
@@ -21200,9 +21271,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838316|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -21326,9 +21397,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|sbi": {
+  "motilal-oswal-financial-services-demat-1201090012838316|state-bank-of-india": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "sbi",
+    "securityKey": "state-bank-of-india",
     "security": "STATE BANK OF INDIA # NEW EQUITY SHARES OF FV RE. 1/- AFTER SUBDIVISION",
     "isin": "INE062A01020",
     "periodFrom": "2026-04-01",
@@ -21362,9 +21433,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|the-karur-vys": {
+  "motilal-oswal-financial-services-demat-1201090012838316|karur-vysya-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "the-karur-vys",
+    "securityKey": "karur-vysya-bank",
     "security": "THE KARUR VYSYA BANK LIMITED # NEW EQ SH WITH FV RE 2/- AFTER SUB DIVISION",
     "isin": "INE036D01028",
     "periodFrom": "2026-04-01",

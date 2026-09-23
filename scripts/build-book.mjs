@@ -896,6 +896,39 @@ function attributionFrom(snapshotsByAccount, positions, notes) {
 // sequence that might not be cumulative is how the ₹22 Cr above gets invented.
 const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
 
+/**
+ * ── DOES THIS ACCOUNT'S CAPITAL RECORD START AT INCEPTION? ──────────────────
+ *
+ *   *"how can net invested be negative?"* — 3P, whose record could not carry a
+ *   return at all, because nothing said its list of purchases was the whole of
+ *   them.
+ *
+ * A fund statement that prints a RUNNING UNIT BALANCE beside each allotment
+ * answers the question itself: where a class's EARLIEST row allots exactly the
+ * units its printed balance then stands at, the balance was ZERO before it — the
+ * record begins where the holding does. 3P prints it on every row of every class
+ * (its reader refuses the table unless the running total reproduces every printed
+ * balance), and so does Sanshi.
+ *
+ * STRUCK PER CLASS AND REQUIRED OF EVERY ONE. A single class that begins
+ * mid-stream would leave some purchase unrecorded, so every contribution row must
+ * carry a security, units and a printed balance, and every class's first row must
+ * start from zero within half the last printed decimal. Anything less is not
+ * evidence and the account is not listed — the caller then falls back to the
+ * other two tests, and failing those, withholds the return with the reason.
+ */
+function capitalRecordFromInception(cashFlows) {
+  const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  const ins = rows.filter((c) => c.kind === "contribution");
+  if (!ins.length) return false;
+  if (!ins.every((c) => c.securityKey && isNum(c.units) && isNum(c.balance))) return false;
+  const first = new Map();
+  for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && isNum(r.balance)).sort((a, b) => a.date.localeCompare(b.date))) {
+    if (!first.has(c.securityKey)) first.set(c.securityKey, c);
+  }
+  return [...first.values()].every((c) => c.kind === "contribution" && Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE);
+}
+
 function capitalMovesFrom(cashFlows, accountId, notes, label) {
   const all = cashFlows ?? [];
   const rows = all.filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
@@ -1068,11 +1101,51 @@ function lotGain(l) {
  * Keyed `accountId|securityKey` because that is what a holdings row is, and
  * joined on the ISIN the statement prints — falling back to the name's own key
  * only where the statement printed no ISIN, which on these six is never.
+ *
+ * ── AND JOINED ON THE ISIN ACROSS THE BOOK, NOT ONLY INSIDE THE ACCOUNT ──────
+ *
+ *   "According to the client, Kaynes Technologies Limited is … also a holding
+ *    of the family entity Ajay's account."
+ *
+ * Ajay's main demat (1201090012539150) prints a Kaynes block: 16,300 shares on
+ * 1 April, sold on 10 April, bought back on 5 May, sold again on 12–13 May,
+ * nil at 31 July. The join above was scoped to the ACCOUNT, and that account
+ * holds no Kaynes position at 31 July — so the block fell through to its own
+ * printed name, `KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES`, whose key
+ * (`kaynes-technology-india-limited-equity-shares`) matches NO row anywhere in
+ * the book. The window was generated, correct, and filed where no page could
+ * ever read it: the Kaynes page showed Ankita's demat alone, and the one record
+ * in this book that answers the client's question was invisible.
+ *
+ * The ISIN IS the security, and the book already carries a key for it. So a
+ * block the account no longer holds takes the key the rest of the book files
+ * that ISIN under — where exactly ONE key carries it. An ISIN the book files
+ * under two keys (Helios Flexi Cap's, the extractor join `docs/BOOK-REPORT.md`
+ * names) is ambiguous and keeps the statement's own name rather than picking
+ * one. Measured: 14 windows were stranded this way, all on securities the book
+ * does carry — Kaynes, Onesource and Insolation among Ajay's shares.
+ *
+ * AN AIF UNIT IS NOT BRIDGED, and that is the book's own rule rather than a new
+ * one. A depository holding a fund's units is printing its copy of what the
+ * FUND's own statement reports — which is why `dropDepositoryDuplicates` drops
+ * those rows from the holdings and why a depository AIF row carries its units
+ * and no price. Filing that window on the fund's page would put the same units
+ * there twice, once as the fund's own figure and once as a demat's; so a window
+ * whose ISIN the book carries as an AIF keeps the statement's own name. Four
+ * of the fourteen are that (3P B3 in two demats, Baring 6 A1, Blue Ashva) — the
+ * other ten are shares and mutual-fund units no second statement reports.
  */
 function shareMovementsFrom(docs, positions, accounts, notes) {
   const out = {};
   const byAcctIsin = new Map();
   for (const p of positions) if (p.isin) byAcctIsin.set(`${p.accountId}|${p.isin}`, p.securityKey);
+  const keysByIsin = new Map();
+  const aifIsins = new Set();
+  for (const p of positions) {
+    if (!p.isin) continue;
+    (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
+    if (p.assetClass === "AIF") aifIsins.add(p.isin);
+  }
   // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. Account 32387399's three
   // identifiers give three answers, so it is excluded with the reason and its
   // ₹8.23 Cr is in no total — and it issues a transaction statement like every
@@ -1080,8 +1153,21 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
   // back into the book through a side door, attributed to a holder this book
   // has said it cannot establish.
   const known = new Set(accounts.map((a) => a.accountId));
+  /**
+   * WHICH ACCOUNTS SENT A HOLDING STATEMENT. A window the book carries no
+   * position for means three different things, and the note below used to
+   * call all of them "securities the account no longer holds" — true of a
+   * zero close and FALSE of the rest. Measured: 19 windows on Ajay's main demat
+   * close with units still held, on an account that sent only this
+   * transaction statement, so the tape's closing balance is the only record of
+   * the holding. Told those were exits, a reader stops looking for them.
+   */
+  const withHoldingsDoc = new Set(docs
+    .filter((d) => d.reportType === "holdings" && d.accountNo && d.provider)
+    .map((d) => accountIdOf(d.provider, d.accountNo)));
 
-  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0;
+  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0, bridged = 0, ambiguous = 0, collided = 0, overwritten = 0, fundCopy = 0;
+  let exited = 0, heldNoHoldings = 0, notCarried = 0, bridgedHeld = 0;
   for (const d of docs) {
     if (d.reportType !== "demat-transactions") continue;
     // The SLUG a position carries, never `acctKey`'s grouping key — those are
@@ -1098,8 +1184,33 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
       // A block whose security this book holds no position in is still emitted
       // — the family sold out of it during the window, which is exactly the
       // row a reader asking "what happened to my quantity" is looking for.
-      const key = byAcctIsin.get(`${accountId}|${row.isin}`) ?? securityKeyOf(row.security ?? "");
-      if (byAcctIsin.has(`${accountId}|${row.isin}`)) joined += 1;
+      const own = securityKeyOf(row.security ?? "");
+      let key = byAcctIsin.get(`${accountId}|${row.isin}`);
+      if (key) joined += 1;
+      else {
+        // WHAT A WINDOW WITH NO POSITION IN ITS OWN ACCOUNT IS — counted apart,
+        // because "the account no longer holds it" is true of a nil close and
+        // false of a balance on an account that sent no holding statement.
+        if (!(row.quantity > 0)) exited += 1;
+        else if (withHoldingsDoc.has(accountId)) notCarried += 1;
+        else heldNoHoldings += 1;
+        const across = row.isin ? keysByIsin.get(row.isin) : undefined;
+        if (row.isin && aifIsins.has(row.isin)) fundCopy += 1;
+        else if (across?.size === 1) {
+          const bookKey = [...across][0];
+          // NEVER OVERWRITE A WINDOW THIS ACCOUNT ALREADY FILED UNDER THAT KEY.
+          // Two ISIN blocks landing on one key in one account would be two
+          // instruments printed as one — the older issue of a split share, say —
+          // so the second keeps its own name rather than replacing the first.
+          if (out[`${accountId}|${bookKey}`]) collided += 1;
+          else { key = bookKey; bridged += 1; if (row.quantity > 0) bridgedHeld += 1; }
+        } else if ((across?.size ?? 0) > 1) ambiguous += 1;
+      }
+      key ??= own;
+      // A key this account already filed a window under would be OVERWRITTEN by
+      // the assignment below, which is a window silently lost — counted, so a
+      // drop that does it says so. None does on this corpus.
+      if (out[`${accountId}|${key}`]) overwritten += 1;
       const m = row.movements;
       if (m?.unclassified) unclassified += m.unclassified;
       out[`${accountId}|${key}`] = {
@@ -1126,7 +1237,10 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
     }
   }
   if (blocks) {
-    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; the rest are securities the account no longer holds. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; ${exited} close at nil, securities the account sold out of during the window; ${heldNoHoldings} close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; ${notCarried} sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+    // PRINTED EVEN AT ZERO: a join that only speaks when it fires is
+    // indistinguishable, on a quiet drop, from one that was deleted.
+    notes.push(`share movements: ${bridged} window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (${bridged - bridgedHeld} close at nil; ${bridgedHeld} close with units still held on an account that sent no holding statement); ${ambiguous} ISIN(s) the book files under two keys keep the statement's own name rather than picking one; ${fundCopy} window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; ${collided} block(s) would have landed on a key their account already filed and keep their own name instead; ${overwritten} window(s) were overwritten by a second block under one key.`);
   }
   return out;
 }
@@ -1395,6 +1509,8 @@ function build(docs) {
   const accountCashFlows = {};
   /** The family's OWN dated investments — see `capitalMovesFrom`. */
   const capitalMoves = [];
+  /** Accounts whose own printed running balance proves the record starts at inception. */
+  const capitalFromInception = new Set();
   /** A fund moving a holding between its own unit classes — see `reclassificationsFrom`. */
   const reclassifications = [];
   const accountReturns = {};
@@ -1449,6 +1565,27 @@ function build(docs) {
     const holdingsDoc = authoritative(group, provider, "holdings");
     const asOf = holdingsDoc?.asOf ?? sample.asOf ?? null;
     const inception = group.map((d) => d.inceptionDate).find(Boolean) ?? null;
+    /**
+     * HOW FAR THE DATED CAPITAL RECORD REACHES — the other end of the question
+     * `contributionsAreComplete` asks about inception.
+     *
+     * A record of the family's payments is complete only if it covers the whole
+     * life of the account: back to inception, AND forward to the date its value
+     * is struck. The first half was checked; nothing checked the second. Green
+     * Lantern 510861's payments come from its QUARTERLY SEBI investor report,
+     * which ends 30 Jun, while its holdings are struck on 27 Jul — so its dated
+     * net stood ₹6,350 above the fact sheet's for that date, every rupee of it a
+     * withdrawal the record had not reached. Small here; a contribution missed
+     * the same way would be any size at all.
+     *
+     * The latest window end of the documents that CARRY a payment row. A
+     * statement listing every payment since inception has no window and is
+     * complete to its own date, so it answers with its as-of.
+     */
+    const capitalRecordTo = allIssues
+      .filter((d) => (d.cashFlows ?? []).some((c) => c.date && CAPITAL_KINDS.has(c.kind)))
+      .map((d) => d.periodTo ?? d.asOf)
+      .filter(Boolean).sort().at(-1) ?? null;
     const ownerId = group.map((d) => d.ownerId).find(Boolean) ?? null;
 
     /**
@@ -1531,6 +1668,7 @@ function build(docs) {
       members: sample.members ?? [],
       asOf,
       inceptionDate: inception,
+      capitalRecordTo,
       custodian: provider,
       /**
        * WHY THIS ACCOUNT HAS NO POSITIONS, when it has none.
@@ -2016,7 +2154,7 @@ function build(docs) {
          * where a fallback rule hides, and a fallback rule is a second
          * definition of the split.
          */
-        marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security }, acctForPositions),
+        marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
         quantity: h.quantity,
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
@@ -2187,6 +2325,16 @@ function build(docs) {
           : allIssues.some((d) => /transaction/i.test(d.reportType ?? ""))
           ? `no HOLDING statement for this account is in the drop — only its ${[...new Set(allIssues.map((d) => d.reportType))].sort().join(", ")} statement(s). The tape's closing balances are in the archive as quantities at ${allIssues.map((d) => d.asOf).filter(Boolean).sort().pop() ?? "its own date"} and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
+        /**
+         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values a
+         * cash-equivalent fund on such an account from the depository's own
+         * closing balance and AMFI's published NAV, and it must find those
+         * accounts structurally — a rule that matched the prose above would stop
+         * matching the first time somebody reworded it. It is set on exactly the
+         * case the sentence describes: no holding statement in the drop, and a
+         * transaction statement that is.
+         */
+        if (!holdingsDoc && allIssues.some((d) => /transaction/i.test(d.reportType ?? ""))) acct.transactionsOnly = true;
       }
     }
 
@@ -2285,6 +2433,7 @@ function build(docs) {
     // contribution or a withdrawal, wherever they appear, and is the only place
     // in this book that answers "what did WE buy, and when".
     capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+    if (capitalRecordFromInception(dated.cashFlows)) capitalFromInception.add(accountId);
     reclassifications.push(...reclassificationsFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
 
     /**
@@ -2409,6 +2558,35 @@ function build(docs) {
   dropDepositoryDuplicates(positions, accounts, notes);
 
   positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
+
+  /**
+   * ── ONE NSE SYMBOL UNDER TWO KEYS IS ONE COMPANY KEYED TWICE ───────────────
+   *
+   * The ISIN guard above cannot see the split the family reported: `SBI - EQ`
+   * printed an ISIN and the four PMS statements spelling it `State Bank of
+   * India` printed none, so there was no second ISIN to compare. What both
+   * sides DID resolve is the same NSE symbol — the depository's through its
+   * ISIN on NSE's own master, the managers' through their name — and a symbol
+   * is issued once per listed company. So two book keys on one symbol are
+   * named here, every run and at zero, because a guard that only speaks when
+   * it fires is indistinguishable from one that was deleted. Closing one is a
+   * hand-checked entry in `KEY_ALIASES` (`shared/securityKey.mjs`), never a
+   * merge made here: this reports identity, it does not decide it.
+   */
+  {
+    const keysBySymbol = new Map();
+    for (const p of positions) {
+      if (!p.symbol) continue;
+      (keysBySymbol.get(p.symbol) ?? keysBySymbol.set(p.symbol, new Set()).get(p.symbol)).add(p.securityKey);
+    }
+    const split = [...keysBySymbol].filter(([, ks]) => ks.size > 1);
+    notes.push(split.length === 0
+      ? "identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice."
+      : `identity: ${split.length} NSE symbol(s) are carried by TWO OR MORE securityKeys among the positions — one listed `
+        + `company keyed twice, so it is two rows and two names on every screen. Close each with a hand-checked `
+        + `\`KEY_ALIASES\` entry in shared/securityKey.mjs: `
+        + split.map(([sym, ks]) => `${sym} (${[...ks].sort().join(" / ")})`).join("; "));
+  }
 
   /**
    * PEEL OFF THE RING-FENCED PROMOTER STOCK (see RINGFENCED_SECURITY_KEYS).
@@ -2588,6 +2766,20 @@ function build(docs) {
         + "SEBI registration, settles each one.");
     }
     /**
+     * THE FAMILY'S DECLARED CATEGORIES, NAMED — on every run, including at
+     * zero. A category no statement printed files a holding under its AIF
+     * drill-down section exactly as firmly as one that did, so the report says
+     * which rest on the family's word (`DECLARED_AIF_CATEGORY`) rather than on
+     * a document. The SIDE of the book is not what this decides: the family's
+     * own placing (`FAMILY_MARKET_SIDE`, above) outranks any category.
+     */
+    const declared = dedupedForTotal.filter((p) => p.assetClass === "AIF"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).source === "family");
+    notes.push(`market side: ${declared.length} holding(s) take a SEBI category the FAMILY declared, because no `
+      + `statement for them prints one${declared.length ? ` — ${[...new Set(declared.map((p) => p.security))].sort().join("; ")}` : ""}. `
+      + "A declaration only ever fills a category the statements leave empty and never overrides one they print; "
+      + "which side of the book each sits on is the family's own placing, noted above.");
+    /**
      * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
      * venture is private whatever category it prints, and Transition Venture's
      * `Category I/II` — the issuer declining to commit — would otherwise be
@@ -2598,9 +2790,9 @@ function build(docs) {
     // have placed themselves is theirs, and crediting its side to the PE read
     // would name the wrong reason for it.
     const pe = dedupedForTotal.filter((p) => p.assetClass === "AIF"
-      && fundMarketSideBasis(p.security, accounts.find((a) => a.accountId === p.accountId)).basis === "private-equity"
-      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category I"
-      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category II");
+      && fundMarketSideBasis(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).basis === "private-equity"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).category !== "Category I"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).category !== "Category II");
     if (pe.length) {
       notes.push(`market side: ${pe.length} holding(s) are private because the paperwork names their own `
         + `discipline, not because of a category — ${[...new Set(pe.map((p) => p.security))].sort().join("; ")}. `
@@ -2699,6 +2891,7 @@ function build(docs) {
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     capitalMoves, positionTranches, shareMovements,
+    capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, attribution,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
@@ -2882,6 +3075,15 @@ function emit(book) {
   L.push(`export const BOOK_CAPITAL_MOVES: CapitalMove[] = ${j(book.capitalMoves)};`);
   L.push("");
   L.push("/**");
+  L.push(" * The accounts whose capital record provably STARTS AT INCEPTION: every class's");
+  L.push(" * earliest allotment brings the statement's own printed unit balance from zero");
+  L.push(" * to exactly the units it allots. A return on the family's money needs the");
+  L.push(" * whole record, and this is one of the three things that establishes it — see");
+  L.push(" * `capitalRecordFromInception` in build-book and `contributionsAreComplete`.");
+  L.push(" */");
+  L.push(`export const BOOK_CAPITAL_FROM_INCEPTION: string[] = ${j(book.capitalFromInception)};`);
+  L.push("");
+  L.push("/**");
   L.push(" * Per-position contribution history, keyed `<accountId>|<securityKey>`, and");
   L.push(" * ONLY where the allotted units account for every unit held. Everything else");
   L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
@@ -3061,6 +3263,10 @@ function report(book) {
   const cinTot = sum(cin.map((m) => m.amount ?? 0));
   const coutTot = sum(cout.map((m) => m.amount ?? 0));
   const cAccts = new Set(book.capitalMoves.map((m) => m.accountId));
+  L.push(`**${book.capitalFromInception.length}** of those account(s) print a running unit balance that starts `
+    + `from zero on every class's first allotment, which proves their record reaches inception: `
+    + `${book.capitalFromInception.join(", ") || "none"}.`);
+  L.push("");
   L.push(`**${cin.length}** dated contribution(s) totalling **${r2(cinTot).toLocaleString("en-IN")}** and `
     + `**${cout.length}** withdrawal(s) totalling **${r2(coutTot).toLocaleString("en-IN")}**, across `
     + `**${cAccts.size} of ${book.accounts.length}** account(s).`);

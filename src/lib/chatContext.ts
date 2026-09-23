@@ -25,6 +25,7 @@
 import {
   BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
 } from "@/data/glowData";
+import { depositoryCashHoldings } from "./fundNavs";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
   topByValue, sum,
@@ -163,6 +164,29 @@ export function buildDashboardContext(): ContextBlock[] {
         fund: c.name, provider: c.provider, ownerId: c.ownerId, asOf: c.asOf,
         committedCr: cr(c.committed), drawnCr: cr(c.drawn), undrawnCr: cr(c.undrawn),
         distributedCr: cr(c.distributed),
+      })),
+    },
+    /**
+     * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS.
+     *
+     * Everything above is on the STATEMENT basis, and the arbitrage funds the
+     * family asked to see inside Cash are on no statement's holdings: they sit
+     * on a demat that sent a transaction statement and no holding statement.
+     * The dashboard values them at the depository's closing units × AMFI's NAV
+     * and files them under Cash. Told only the blocks above, a model asked "how
+     * much cash do I hold" would answer without them and contradict the screen.
+     */
+    {
+      kind: "cash_valued_from_depository_units",
+      note: "Arbitrage and liquid funds count as CASH — the family's own instruction, on every axis, never any "
+        + "other category. These are held on an account that sent a transaction statement and no holding "
+        + "statement, so no statement values them and they are NOT in the statement-basis totals above. The "
+        + "dashboard values them at the depository's closing units × AMFI's published NAV and includes them in "
+        + "its Cash line and in its current value of holdings. Their units date from the statement's close.",
+      totalCr: cr(sum(depositoryCashHoldings().map((p) => p.marketValue))),
+      rows: depositoryCashHoldings().map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
       })),
     },
     /**

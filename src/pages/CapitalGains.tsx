@@ -401,24 +401,15 @@ export function CapitalGains() {
                           </>
                         ) : (
                             <>
-                              <span className="text-slate-400">
+                              {/* ONE LINE, the explanation in its hover — it was a
+                                  paragraph inside this cell, and the family asked
+                                  for the notes inside the tables to go. */}
+                              <span className="text-slate-400"
+                                title={`${c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in this drop carries an asset class for ${c.securities.length === 1 ? "it" : "them"}, so none is asserted; "Mutual Fund" in a printed name is not a classification a statement made. It keeps its own line rather than being added into the bucket above, so the absence is not buried inside a labelled group. This line is not the account's cash sweep: a lot's class is joined from the same security's rows elsewhere in this drop, and the other liquid-fund instruments these mandates sweep into are carried on other reports here — so those lots come back classified and are netted inside the bucket above. What this line separates is the lots nothing classifies, which is a smaller set than the sweep and does not measure it.`}>
                                 {DASH} no asset class on any statement
                                 {c.heldNote ? <> · inside {c.heldNote}</> : null}
+                                {" "}· {c.securities.length} {c.securities.length === 1 ? "security" : "securities"}
                               </span>
-                              <div className="mt-0.5 max-w-2xl text-[11px] leading-snug text-slate-500">
-                                {c.securities.join(", ")} — no appraisal, fact sheet or transaction statement in
-                                this drop carries an asset class for {c.securities.length === 1 ? "it" : "them"},
-                                so none is asserted; "Mutual Fund" in a printed name is not a classification a
-                                statement made. It keeps its own line rather than being added into the bucket
-                                above, so the absence is not buried inside a labelled group.
-                                <br />
-                                <span className="text-slate-400">This line is not the account's cash sweep.</span>{" "}
-                                A lot's class is joined from the same security's rows elsewhere in this drop, and
-                                the other liquid-fund instruments these mandates sweep into ARE carried on other
-                                reports here — so those lots come back classified and are netted inside the bucket
-                                above. What this line separates is the lots nothing classifies, which is a smaller
-                                set than the sweep and does not measure it.
-                              </div>
                             </>
                           )}
                       </td>
@@ -615,13 +606,12 @@ export function CapitalGains() {
         </Card>
       </div>
 
-      <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-        Tax figures are <span className="font-medium text-slate-400">illustrative</span>, using current Indian
-        equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do
-        not net losses across heads or years, and exclude surcharge and cess. Not tax advice. This page is on a
-        <span className="font-medium text-slate-400"> statement basis</span> so every figure ties to the source PDF:
-        realised figures are as each manager's capital gain statement reports them, each over its own window, and
-        unrealised figures are at the statement mark — the live feed does not move them here.
+      {/* ONE LINE, the detail in its hover — the family asked for the notes
+          around the tables to go. "Illustrative" and "not tax advice" stay on
+          screen, because a tax figure read without them is read as advice. */}
+      <p className="mt-4 text-[11px] text-slate-500"
+        title="Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do not net losses across heads or years, and exclude surcharge and cess. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.">
+        Tax figures are <span className="font-medium text-slate-400">illustrative</span> · statement basis · not tax advice
       </p>
     </div>
   );

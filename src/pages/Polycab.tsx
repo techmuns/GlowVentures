@@ -517,8 +517,9 @@ export function Polycab() {
               {live.shareActions.length > 0
                 ? <>{fmtNum(live.shareActions.length)} share-count action{live.shareActions.length === 1 ? "" : "s"} above — a bonus, split or spin-off changes the share count and pays no cash.</>
                 : live.measuredNil
-                  ? <><span className="font-medium text-slate-300">No bonus, split or spin-off has ever been declared on this scrip</span> — the
-                    exchange&rsquo;s record runs from listing and all {fmtNum(live.dividends.length)} of its actions are dividends.</>
+                  ? <span className="font-medium text-slate-300"
+                      title={`The exchange's record runs from listing and all ${fmtNum(live.dividends.length)} of its actions are dividends.`}>
+                      No bonus, split or spin-off has ever been declared on this scrip</span>
                   : <AbsentCell reason="the exchange's corporate-action record could not be fetched whole on the last refresh, so no bonus or split can be reported either way — a truncated record and a company that declared none look identical" />}
               {live.unclassified.length > 0 && (
                 <> {fmtNum(live.unclassified.length)} further action(s) the classifier did not place are listed in <span className="mono">docs/POLYCAB-LIVE.md</span> rather than filed under a kind nothing stated.</>

@@ -236,7 +236,7 @@ export function HoldingsBehind() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Morning CIO", to: "/cio" }, { label: "Nothing named to open" }]} />
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Nothing named to open</h1>
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Nothing named to open</h1>
         <Card>
           <AbsentSection
             what="This address does not name a set of holdings"
@@ -329,6 +329,17 @@ export function HoldingsBehind() {
     (d.facets.find((f) => f.key === "covered")?.rows ?? rows).map((r) => r.accountId),
   ).size;
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
+  /**
+   * THE HOLDINGS NO STATEMENT MARKS — a depository's own closing units on an
+   * account that sent a transaction statement and no holding statement, valued
+   * only at AMFI's published NAV. They are not in the statement-basis figure
+   * the headline's hover states, and a reader holding the PDF has to be told
+   * why the two differ by more than price drift. The sentence is written once
+   * and read by both the hover and the short line under the headline.
+   */
+  const depositoryRows = rows.filter((r) => r.depositoryUnits);
+  const depositoryNote = depositoryRows.length === 0 ? null
+    : `${depositoryRows.length === 1 ? "One holding here carries" : `${depositoryRows.length} holdings here carry`} no statement mark at all — ${depositoryRows.length === 1 ? "it is" : "they are"} a depository's own closing units on an account that sent a transaction statement and no holding statement, valued only at AMFI's published NAV (${full(sum(depositoryRows.map((r) => r.marketValue)))}) — so ${depositoryRows.length === 1 ? "it is" : "they are"} not in that figure.`;
   // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
   // On a bucket drill-down every row would carry the same chip — a repetition of
   // the heading above them, pushing the name out of its column for no
@@ -448,6 +459,19 @@ export function HoldingsBehind() {
     );
     return unvaluedAifFolios(portfolio.accounts, withPositions, drawn);
   }, [aifSectioned, portfolio]);
+  /**
+   * WHAT THE COLLAPSED SUMMARY STATES: the sections the folios sit in, in the
+   * page's own reading order, and what they have drawn between them. The total
+   * is `sumOrNull`'s — a folio whose statement prints no drawn figure is
+   * skipped rather than blended in as zero, and a set where none prints one has
+   * no total at all.
+   */
+  const unvaluedBySection = useMemo(() => {
+    const by = new Map<string, number>();
+    for (const f of unvalued) by.set(f.section, (by.get(f.section) ?? 0) + 1);
+    return [...by.entries()].sort((a, b) => aifSectionOrd(a[0]) - aifSectionOrd(b[0]));
+  }, [unvalued]);
+  const unvaluedDrawn = useMemo(() => sumOrNull(unvalued.map((f) => f.drawn)), [unvalued]);
 
   /** What one row of this table IS, so the header and the footer can say it. */
   const anyMandate = groups.some((g) => g.kind === "mandate");
@@ -488,7 +512,7 @@ export function HoldingsBehind() {
       <PageNav className="mb-2" trail={crumbTrail} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{heading}</h1>
           {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
               sections from the dashboard UI."* What it said — which set this is
               and on what basis — is the HEADING plus the figure beside it.
@@ -592,8 +616,16 @@ export function HoldingsBehind() {
             rather than glossed, and the treatment the Portfolio Monitor already
             gives the same three facts at the family's own instruction. */}
         <div className="text-right">
-          <div className="mono text-2xl font-semibold text-slate-100"
-               data-hb-total={mv}>{money(mv)}</div>
+          {/* THE TWO SENTENCES THAT SAT UNDER THE TABLE AND UNDER THE PAGE ARE THIS
+              FIGURE'S HOVER. *"no one is reading these kind of … notes that you
+              have put in across tables."* The counts they restated are the line
+              beneath it; what they added — the figure to the rupee, how many
+              entities, that the statements are drawn on their own dates, and the
+              same holdings on statement marks alone — is one hover away on the
+              figure it is about. Weaker than a caption, and recorded as such. */}
+          <div className="font-display text-2xl font-bold tabular text-slate-100"
+               data-hb-total={mv}
+               title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone — before any live quote — these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}. Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.${depositoryNote ? ` ${depositoryNote}` : ""}` : ""}`}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {shareOfBook == null
               ? "no book value to measure a share against"
@@ -607,6 +639,17 @@ export function HoldingsBehind() {
               {names.size === 1 ? "name" : "names"} · {fmtNum(accounts.size)}{" "}
               {accounts.size === 1 ? "account" : "accounts"} ·{" "}
               {d.deduped ? "each holding counted once" : "each statement's row as printed"}
+            </div>
+          )}
+          {/* A ROW NO STATEMENT MARKS IS NOT IN THE STATEMENT FIGURE, and a reader
+              holding the PDF has to be told why the two differ by more than price
+              drift. One short line naming how many, the sentence in its hover —
+              beside the headline whose hover carries the statement figure. */}
+          {!d.absent && depositoryRows.length > 0 && (
+            <div className="mt-0.5 text-[10.5px] text-amber-400/80" data-hb-depository={depositoryRows.length}
+                 title={depositoryNote ?? undefined}>
+              {depositoryRows.length === 1 ? "1 holding is" : `${fmtNum(depositoryRows.length)} holdings are`} valued
+              from depository units at AMFI&rsquo;s NAV, not a statement mark
             </div>
           )}
           {/* ── AND THE CAPITAL INVESTED IN IT, BESIDE WHAT IT IS WORTH ────────
@@ -865,8 +908,19 @@ export function HoldingsBehind() {
                                     none send a reader to different documents. */}
                                 {aifSectioned && (() => {
                                   const read = aifCategoryOf(accIdx, g.rows[0]);
+                                  // A CATEGORY THE FAMILY DECLARED SAYS SO. It
+                                  // files the fund exactly as firmly as a printed
+                                  // one, and a section heading looks equally
+                                  // authoritative either way — so the difference
+                                  // is on the row, in words, not in a colour.
                                   return read.category
-                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}> · {read.category}</span>
+                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}
+                                        data-aif-row-cat-source={read.source ?? undefined}
+                                        title={read.source === "family"
+                                          ? "No statement for this fund prints a SEBI category. The family declared it " + read.category + ", and this book files it there on their word."
+                                          : undefined}>
+                                        {" "}· {read.category}{read.source === "family" ? " · declared by the family" : ""}
+                                      </span>
                                     : <span className="text-[10.5px] text-slate-500" data-aif-row-cat="" title={aifCategoryWhy(read)}> · category not stated</span>;
                                 })()}
                                 {/*
@@ -1026,14 +1080,37 @@ export function HoldingsBehind() {
                 folios are listed with the capital they have DRAWN, and the note
                 says plainly that drawn capital is what was paid rather than
                 what the stake is worth and is in no total on this page. */}
+            {/*
+              ── A DROPDOWN, AT THE FAMILY'S REQUEST, AND THE SUMMARY STILL SAYS
+              WHAT IS INSIDE IT ──────────────────────────────────────────────
+
+                *"the 'Held, and valued by no statement' section needs to be
+                 hidden as a drop down list."*
+
+              Collapsed by default, so the table is what the page is. What it
+              must not become is a fold a reader has no reason to open: the
+              summary line carries the COUNT, the categories and the drawn total
+              — the Category I folios above all, because this is the only place
+              on the page a Category I AIF appears — and the list is one click
+              away. A `<details>` rather than state, so it needs no handler and
+              every row stays in the DOM for the structural checks. The
+              paragraph that stood inside it is the summary's hover — the
+              family asked for the notes around the tables to go.
+            */}
             {unvalued.length > 0 && (
-              <div className="border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
-                <div className="label-xs text-slate-300">Held, and valued by no statement</div>
-                <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">
-                  {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} report units and the capital drawn
-                  against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is
-                  in none of its totals. Drawn capital is what was <em>paid</em>, never what the stake is worth.
-                </p>
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
+                <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden"
+                  title={`${fmtNum(unvalued.length)} AIF ${unvalued.length === 1 ? "folio reports" : "folios report"} units and the capital drawn against a commitment and no NAV anywhere, so no position stands for ${unvalued.length === 1 ? "it" : "them"} in the table above and ${unvalued.length === 1 ? "its" : "their"} money is in none of its totals. Drawn capital is what was paid, never what the stake is worth.`}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" />
+                    <span className="label-xs text-slate-300">Held, and valued by no statement</span>
+                  </span>
+                  <span className="ml-2" data-aif-unvalued-summary>
+                    {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} with no NAV
+                    {" · "}{unvaluedBySection.map(([k, n]) => `${k} ×${n}`).join(", ")}
+                    {unvaluedDrawn != null && <> · <span className="mono">{money(unvaluedDrawn)}</span> drawn, in no total</>}
+                  </span>
+                </summary>
                 <ul className="mt-2 space-y-1">
                   {unvalued.map((f) => (
                     <li key={f.accountId} className="text-[11.5px] text-slate-400" data-aif-unvalued={f.section}
@@ -1050,15 +1127,8 @@ export function HoldingsBehind() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </details>
             )}
-            <p className="px-5 pb-5 pt-3 text-[11.5px] leading-relaxed text-slate-500">
-              {full(mv)} across {fmtNum(rows.length)} {rows.length === 1 ? "holding" : "holdings"} and {fmtNum(names.size)}{" "}
-              {names.size === 1 ? "name" : "names"}, held by {fmtNum(owners.size)} {owners.size === 1 ? "entity" : "entities"} in{" "}
-              {fmtNum(accounts.size)} {accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own
-              dates, so this total is a blend rather than one report date — {" "}
-              <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries every account in full.
-            </p>
           </Card>
 
           {/* ── HOW THIS FIGURE IS WORKED OUT ────────────────────────────────
@@ -1137,18 +1207,11 @@ export function HoldingsBehind() {
         </>
       )}
 
-      {/* The statement-basis total, stated once. `statementPortfolio` is the book
-          the live feed never touches; on LIVE basis the figures above have moved
-          and this has not, which is the difference a reader holding the PDF
-          needs in order to reconcile the two. */}
-      {statementPortfolio && !d.absent && (
-        <p className="mt-4 text-[11.5px] leading-relaxed text-slate-500">
-          On statement marks alone — before any live quote — these holdings are worth{" "}
-          <span className="mono text-slate-400">{full(statementValue(statementPortfolio.positions, rows))}</span>.
-          Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a
-          realised gain or a dated cash flow.
-        </p>
-      )}
+      {/* The statement-basis total is in the headline figure's hover —
+          `statementPortfolio` is the book the live feed never touches, and a
+          reader holding the PDF needs it to reconcile the two. So is the
+          sentence naming the holdings no statement marks, whose short form is
+          the line under the headline. */}
     </div>
   );
 }

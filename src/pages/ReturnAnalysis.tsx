@@ -16,7 +16,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel, readerClassOf } from "@/lib/analytics";
 import { fifoTotals } from "@/lib/fifo";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -147,7 +147,9 @@ export function ReturnAnalysis() {
     const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number }>();
     for (const x of priced) {
       const byClass = isFundVehicle(x) || isPrivateClass(x);
-      const secKey = byClass ? x.assetClass : x.sector;
+      // The READER'S class: a liquid or arbitrage fund is Cash here as on every
+      // other page, never the wrapper its statement typed it as.
+      const secKey = byClass ? readerClassOf(x) : x.sector;
       const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0 };
       e.pnl += x.unrealizedPnL + realisedOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
       e.deployed += x.costBasis + soldOf(x);
@@ -163,7 +165,7 @@ export function ReturnAnalysis() {
     // sides, because a caption naming "Mutual Fund" over a row headed something
     // else would satisfy a reader and fail the reader's arithmetic.
     const wrapperClasses = [...new Set(
-      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(x.assetClass)),
+      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(readerClassOf(x))),
     )].sort();
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
@@ -304,7 +306,8 @@ export function ReturnAnalysis() {
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
             : `${acctEnd(m.spreadEnds![0].account)} to ${acctEnd(m.spreadEnds![1].account)}`}
-          hint={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
+          hint={m.unrated.length ? `${m.unrated.length} ${m.unrated.length === 1 ? "account has" : "accounts have"} no cost basis — left out, not counted as zero` : undefined}
+          title={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
           icon={<Scale className="h-4 w-4" />} />
 
         <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
@@ -356,8 +359,8 @@ export function ReturnAnalysis() {
             named under the table — still come from `bucketLabel`, which is
             correct: those ARE classes. */}
         <Card className="lg:col-span-2" title="Contribution by sector"
-          subtitle={<>Every share in a company, by sector — a manager&rsquo;s mandate included — and every
-            fund wrapper under its own class, each as a share of total cost</>}>
+          subtitle={<span title="Every share in a company, by sector — a manager's mandate included — and every fund wrapper under its own class, each as a share of total cost.">
+            Company shares by sector, funds by class · as a share of total cost</span>}>
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
@@ -392,14 +395,12 @@ export function ReturnAnalysis() {
               </tfoot>
             </table>
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            Contributions are each row's P&amp;L over the book's TOTAL cost, so they add to the embedded
-            return exactly. A GICS sector is a property of a COMPANY, so every share in a company is bucketed by
-            one — including the shares a discretionary manager chose under a PMS mandate, which carry a sector
-            like any other share. This is an attribution, not a holdings table: seeing into a mandate is what
-            makes the sector picture real, so those names are not rolled up into their manager here.
-            A fund is a wrapper holding many companies and has no sector of its own, so it appears under its
-            asset class instead. Its gain still counts — it is not a sector.
+          {/* ONE LINE, the reasoning in its hover — the family asked for the
+              notes under the tables to go. Which classes are bucketed by class
+              stays on screen, because that is what makes a row readable. */}
+          <p className="mt-2 text-[11px] text-slate-500"
+            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead; its gain still counts.">
+            Contributions add to the total return exactly.
             {m.wrapperClasses.length > 0 && <> Bucketed by class here:{" "}
               <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span>.</>}
           </p>
@@ -407,7 +408,7 @@ export function ReturnAnalysis() {
       </div>
 
       <Card className="mt-5" title="Per account"
-        subtitle="The same measure on every account the book carries, and each one's best and worst name — a PMS mandate is one account here, and so is the family's own demat">
+        subtitle={<span title="The same measure on every account the book carries, and each one's best and worst name — a PMS mandate is one account here, and so is the family's own demat.">Every account, with its best and worst name</span>}>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">

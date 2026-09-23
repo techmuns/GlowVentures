@@ -368,6 +368,17 @@ export function FamilyEntities() {
     ? unvaluedHoldingsOf(scope, portfolio.accounts, portfolio.positions, portfolio.commitments ?? [])
     : [];
   /**
+   * AND THE ACCOUNTS THAT ARE ONLY PARTLY VALUED. An account that sent a
+   * transaction statement and no holding statement has its cash-equivalent
+   * funds valued at AMFI's NAV on the live basis, so it now carries positions
+   * and `unvaluedHoldingsOf` no longer lists it — while the rest of what it
+   * holds is still valued nowhere. Dropping it from this card would say the
+   * family's whole demat is in the table above; its own note says what is not.
+   */
+  const partlyValued = selected
+    ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
+    : [];
+  /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
    * A GICS sector is a property of a COMPANY. An AIF folio, a mutual-fund scheme
@@ -930,8 +941,8 @@ export function FamilyEntities() {
             )}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
-            subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
-              under a mandate, and the fund vehicles and cash beside them.</>}
+            subtitle={<span title={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}>
+              Grouped by who chose each holding: directly, under a mandate, or through a fund</span>}
             right={<SearchInput value={holdingsQ} onChange={setHoldingsQ} placeholder="Search this entity…" className="w-56" suggestions={Array.from(new Set(selRows.map((x) => x.security))).sort()} />}>
             <div className="max-h-[520px] overflow-auto">
               <table className="min-w-full text-sm">
@@ -1026,14 +1037,21 @@ export function FamilyEntities() {
                       className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300"
                       label={<>
                         Total
-                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500">
+                        {/* THE COUNT ON SCREEN, AND WHAT THE RETURN COVERS IN ITS
+                            HOVER — the sentence that ran across the footer was
+                            the widest note on this page. */}
+                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500"
+                          title={[
+                            showSections ? "The section subtotals above add to this figure." : "",
+                            visNoCost > 0
+                              ? visCost === null
+                                ? `Every one of these ${visNoCost} ${visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying ${money(visNoCostMV)} with nothing to measure a return against.`
+                                : `The return covers ${money(visMV - visNoCostMV)} of the ${money(visMV)} beside it, struck on ${money(visCost)} of cost — the other ${visNoCost} ${visNoCost === 1 ? "row" : "rows"}, carrying ${money(visNoCostMV)}, ${visNoCost === 1 ? "reports" : "report"} no cost basis and ${visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero.`
+                              : "",
+                          ].filter(Boolean).join(" ") || undefined}>
                           {filtered
                             ? <>{holdings.length} of {selRows.length} positions match the search — {scope} holds {money(selMV)} in all</>
                             : <>{holdings.length} {holdings.length === 1 ? "position" : "positions"}</>}
-                          {showSections && <> · the section subtotals above add to this figure</>}
-                          {visNoCost > 0 && (visCost === null
-                            ? <> · every one of these {visNoCost} {visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying {money(visNoCostMV)} with nothing to measure a return against</>
-                            : <> · the return covers {money(visMV - visNoCostMV)} of the {money(visMV)} beside it, struck on {money(visCost)} of cost — the other {visNoCost} {visNoCost === 1 ? "row" : "rows"}, carrying {money(visNoCostMV)}, {visNoCost === 1 ? "reports" : "report"} no cost basis and {visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero</>)}
                         </span>
                       </>}
                       cells={{
@@ -1074,17 +1092,30 @@ export function FamilyEntities() {
               *
               * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
               * says so: it is what was PAID, never what the stake is worth. */}
-          {unvalued.length > 0 && (
+          {(unvalued.length > 0 || partlyValued.length > 0) && (
             <Card className="mt-5" title={`${scope} — held, and not valued here`}
-              subtitle={<>{unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} {scope} holds
-                {unvalued.length === 1 ? " reports" : " report"} a holding that no statement in this book puts a
-                value on, so {unvalued.length === 1 ? "it stands" : "they stand"} in no table above. What each one
-                holds, and why it carries no figure:</>}>
-              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length}>
+              subtitle={<span title={`${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""} Hover an account for why it carries no figure.`}>
+                None of these figures is in the {money(selMV)} above — no statement values these holdings</span>}>
+              <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}>
+                {/* A PARTLY VALUED ACCOUNT says so on its line, and its own note —
+                    what is valued, from what, and what is not — is the hover on
+                    its name, where every other account on this card keeps its
+                    reason. */}
+                {partlyValued.map((a) => (
+                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
+                        {a.provider}
+                        <span className="text-slate-500"> · {a.accountNo}</span>
+                      </span>
+                      <span className="text-[11px] text-amber-400/80 whitespace-nowrap">partly valued — only its cash-equivalent funds</span>
+                    </div>
+                  </li>
+                ))}
                 {unvalued.map((u) => (
                   <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-slate-300">
+                      <span className="text-slate-300" title={u.reason ?? undefined} data-unvalued-reason={u.reason ? "" : undefined}>
                         {u.account.provider}
                         <span className="text-slate-500"> · {u.account.accountNo}</span>
                       </span>
@@ -1097,16 +1128,9 @@ export function FamilyEntities() {
                           : <span title="Capital called to date, as this fund's own statement prints it. What was PAID, not what the stake is worth — it is in no total on this page.">{money(u.drawn)} paid in</span>}
                       </span>
                     </div>
-                    {u.reason && (
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{u.reason}</p>
-                    )}
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 border-t border-dashed border-ink-700 pt-3 text-[11px] leading-relaxed text-slate-500">
-                None of these figures is in the {money(selMV)} above. A contribution is what was paid into a fund,
-                not what the holding is worth, and adding the two would report a valuation nobody struck.
-              </p>
             </Card>
           )}
         </>
