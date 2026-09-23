@@ -285,165 +285,300 @@ export function threePFlows(text, warn) {
   }));
 }
 
-// ── BUOYANT AND NEO INFRA: THE UNIT TABLES A FIFO RETURN NEEDS ───────────────
+// ── BUOYANT'S DATED RECORD — THE DEPOSITS, AND A CLASS SWITCH THAT IS NOT A SALE ─
 //
-// *"match the number of units being sold and purchased, and use the methodology
-// of FIFO to calculate returns."* Two statements in this drop print exactly the
-// dated unit record that takes, and nothing read it — which is why two of the
-// book's returns were wrong in ways no figure on screen could reveal:
+// *"The user does not believe this data."* The Portfolio Monitor put Buoyant at
+// Invested ₹72.5 Cr and a gain of ₹4.51 Cr. Every Buoyant document says the
+// family paid in ₹70.85 Cr and has made ₹6.14 Cr — this statement's own Cash
+// Deposits list, the capital register's closing balance, the performance
+// appraisal's Net Capital In, the fact sheet's Contribution — and so does the
+// family's own consolidated review, which carries Buoyant at ₹70.86 Cr invested.
 //
-//   BUOYANT prints every allotment and redemption per CLASS, and the A1 → A4
-//   switch as a "Unit Redemption" beside a same-day "Units Allotment" for the
-//   same rupees. Its own Cost column restamps the switched units at the switch
-//   NAV, so the book carried Ajay's folio at ₹47.54 Cr of cost against the
-//   ₹46.00 Cr the family actually paid in — and a +3.71% return where the fund's
-//   own fact sheet says +7.17%.
+// THE GAP IS A CLASS SWITCH. Both folios began in Class A1 and were moved into
+// Class A4 on the day of a top-up — Ankita's on 01/02/2025 beside a ₹10 Cr
+// deposit, Ajay's on 01/06/2026 beside a ₹25 Cr one. The fund books a switch as
+// a Unit Redemption of the old class and a Units Allotment of the new one AT
+// THAT DAY'S NAV, so the Cost it prints for the Class A4 units restarts at the
+// switch-day value: ₹22.54 Cr for A1 units the family paid ₹21.01 Cr for, and
+// ₹2.09 Cr for units it paid ₹2.00 Cr for. The appraisal's cost column then
+// carries ₹1.62 Cr of gain as if it were money paid in, and the fund's own
+// performance appraisal files that same ₹1.62 Cr as "Realized Gain" — on a sale
+// that never paid the family a rupee.
 //
-//   NEO INFRA prints a Capital Redemption of 14,162.80 units for ₹14,16,280 on
-//   5 Jan 2026. The book carried the Gross Capital Contribution — ₹5,00,00,000,
-//   the cost of 5,00,000 units — against the 4,85,837 still held. A cost that
-//   includes units the family no longer owns is the failure FIFO exists to stop.
+// THE STATEMENT PRINTS THE WHOLE HISTORY, and this reader took only the summary
+// row above it — the seventh absence in this book recorded against a document
+// already in hand. Three tables, and the book needs all three:
 //
-// Both readers follow `threePFlows`' licence: the dated table is published only
-// if the statement's own arithmetic witnesses it, and a dated row of a type
-// neither declares withholds the WHOLE table rather than publishing it with a
-// row missing.
+//   Cash Deposits                  what left the family's bank, dated
+//   Transactions : <CLASS>         Units Allotment / Unit Redemption — NAV, units, amount
+//   Other Liabilities and Assets   a Gain Distr., reinvested in that day's allotment
+//
+// FIVE CHECKS, AND NOTHING IS PUBLISHED UNLESS ALL FIVE PASS — `threePFlows`'
+// licence, applied to the next fund:
+//
+//   1. units × NAV = the printed amount, within the precision the statement
+//      prints those two to (4 dp each), on every class row.
+//   2. per class, the running units reach the Account Summary's Unit Balance for
+//      each class it prints, and exactly zero for every class it does not.
+//   3. every Unit Redemption pairs with a Units Allotment of ANOTHER class on the
+//      SAME day for the same rupees (±₹1: each leg is struck at its own class
+//      NAV and rounded apart; the observed residual is ₹0.06). That pair is the
+//      switch. A redemption with no such partner is money paid OUT, which this
+//      reader has no declared row for — so it refuses rather than guessing.
+//   4. every Cash Deposit pairs with exactly one remaining allotment on its own
+//      day whose amount is the deposit — or the deposit plus that day's Gain
+//      Distr., reinvested — to the paisa; every allotment is paired with
+//      something; and any distribution the statement prints as PAID OUT refuses.
+//   5. where the statement prints its own "Capital Invested" (page 3 of one of
+//      the two issues), the deposits sum to it.
+//
+// A SWITCH IS A RECLASSIFICATION, NOT A CAPITAL MOVE — the rule `threePFlows`
+// set for 3P's B1/B2 → B3. It is carried as `kind: "reclassification"`, outside
+// `CAPITAL_KINDS`, and `build-book` carries the family's cost and dates THROUGH
+// it rather than letting a switch-day value stand in for what was paid.
+const BY_CASH_HEAD = /^Date Transactions Amount \(INR\)$/i;
+const BY_CLASS_HEAD = /^Transactions\s*:\s*BUOYANT\s+OPPORTUNITIES\s+STRATEGY\s*-\s*CATEGORY\s+III\s*-\s*CLASS\s+([A-Z]\d?)$/i;
+const BY_OTHER_HEAD = /^Transactions\s*:\s*Other\s+Liabilities\s+and\s+Assets$/i;
+const BY_DATED = /^\d{2}\/\d{2}\/\d{4}\s/;
+/** The deposit types this reader declares. Anything else dated in that table refuses. */
+const BY_DEPOSIT = /^(\d{2}\/\d{2}\/\d{4}) (Cash Deposits) ([\d,]+\.\d{2})$/i;
+const BY_UNITS = /^(\d{2}\/\d{2}\/\d{4}) (Units Allotment|Unit Redemption) ([\d,]+\.\d+) ([\d,]+\.\d+) ([\d,]+\.\d+)$/i;
+const BY_GAIN = /^(\d{2}\/\d{2}\/\d{4}) (Gain Distr\.) ([\d,]+\.\d+) ([\d,]+\.\d+) ([\d,]+\.\d+)$/i;
+/** The Account Summary's per-class row — units, cost, NAV, value, absolute %, annualised %. */
+const BY_SUMMARY_ROW = new RegExp(
+  String.raw`(\d{2}\/\d{2}\/\d{4})\s+` +      // 1 NAV date
+  String.raw`([\d,]+\.\d+)\s+` +              // 2 units
+  String.raw`([\d,]+\.\d+)\s+` +              // 3 cost
+  String.raw`([\d,]+\.\d+)\s+` +              // 4 NAV
+  String.raw`([\d,]+\.\d+)\s+` +              // 5 value
+  String.raw`(-?[\d,]+\.\d+)\s+` +            // 6 absolute %
+  String.raw`(-?[\d,]+\.\d+)`,                // 7 annualised %
+);
+/** The one name every Buoyant class is carried under, so a flow and a holding share a key. */
+export const buoyantClassName = (cls) => `Buoyant Opportunities Strategy — Category III — Class ${cls}`;
 
-/** `01/06/2026 Units Allotment 139.1284 17,96,901.6155 25,00,00,000.00` */
-const BY_ROW = /^(\d{2}\/\d{2}\/\d{4})\s+(Cash Deposits|Units Allotment|Unit Redemption|Gain Distr\.)\s+(.*)$/i;
-const BY_DATED = /^\d{2}\/\d{2}\/\d{4}\s+\S/;
-const BY_UNIT_ROW = /^([\d,]+\.\d+)\s+([\d,]+\.\d+)\s+([\d,]+\.\d{2})$/;
-const BY_CASH_ROW = /^([\d,]+\.\d{2})$/;
-/** `Transactions : BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4` */
-const BY_CLASS = /^Transactions\s*:\s*BUOYANT OPPORTUNITIES STRATEGY.*CLASS\s+([A-Z]\d?)\s*$/i;
-const BY_OTHER = /^Transactions\s*:\s*Other Liabilities and Assets\s*$/i;
-const BY_DEPOSITS = /^Date\s+Transactions\s+Amount\s*\(INR\)\s*$/i;
-/** The class the ACCOUNT SUMMARY prints, with its own unit balance. */
-const BY_SUMMARY = /BUOYANT OPPORTUNITIES\s+\d{2}\/\d{2}\/\d{4}\s+([\d,]+\.\d+)\s+[\d,]+\.\d+\s+[\d,]+\.\d+\s+[\d,]+\.\d+[\s\S]{0,120}?CLASS\s+([A-Z]\d?)/i;
-const byClassName = (k) => `Buoyant Opportunities Strategy — Category III — Class ${k}`;
-/** Half of the last decimal a unit count is printed to — the book's own tie. */
-const UNIT_TIE_FLOWS = 0.0005;
-
-/**
- * Buoyant's dated record: the cash the family deposited, every unit allotted
- * and redeemed per class, and any gain the fund distributed.
- *
- * A CLASS SWITCH IS DECLARED AS ONE, never inferred later. A redemption whose
- * proceeds buy a same-day allotment in another class for the same rupees (±₹1,
- * the book's settlement tolerance — Ankita's pair differs by six paise) is
- * emitted as two `reclassification` rows, the kind 3P's merge already uses, so
- * the book's FIFO carries the lots across rather than booking a sale. Check 3
- * below is what licenses that reading: the deposits tie ONLY when the switched
- * rupees are taken out of the allotments.
- *
- * Exported for `__tests__/altFund.test.mjs`.
- */
+/** Exported for `__tests__/buoyantFlows.test.mjs`, which breaks a synthetic
+ *  statement one check at a time to prove each of the five can fail. */
 export function buoyantFlows(text, warn) {
+  const deposits = [];
   const rows = [];
-  let section = null;          // null · "deposits" · "A1" · "A4" · "other"
+  const gains = [];
+  let block = null;
+  let order = 0;
   let unmatched = 0;
   for (const raw of text.split("\n")) {
     const line = raw.trim();
-    if (/^Note:/i.test(line)) break;
-    if (BY_DEPOSITS.test(line)) { section = "deposits"; continue; }
-    const cls = BY_CLASS.exec(line);
-    if (cls) { section = cls[1].toUpperCase(); continue; }
-    if (BY_OTHER.test(line)) { section = "other"; continue; }
-    if (!section || !BY_DATED.test(line)) continue;
-    const m = BY_ROW.exec(line);
-    if (!m) { unmatched += 1; continue; }
-    const type = m[2].replace(/\s+/g, " ").trim();
-    const date = toIso(m[1]);
-    if (/^Cash Deposits$/i.test(type)) {
-      const c = BY_CASH_ROW.exec(m[3].trim());
-      if (!c || section !== "deposits") { unmatched += 1; continue; }
-      rows.push({ date, type, cls: null, amount: n(c[1]) });
-      continue;
+    if (BY_CASH_HEAD.test(line)) { block = "cash"; continue; }
+    const head = BY_CLASS_HEAD.exec(line);
+    if (head) { block = { cls: head[1].toUpperCase() }; continue; }
+    if (BY_OTHER_HEAD.test(line)) { block = "other"; continue; }
+    if (/^Note\s*:/i.test(line)) { block = null; continue; }
+    // A page break reprints the title lines and the column header; they carry no
+    // date, so the class a table is under carries across them — Ajay's Class A1
+    // table runs over pages 1 and 2 on one issue and not on the other.
+    if (!block || !BY_DATED.test(line)) continue;
+    if (block === "cash") {
+      const m = BY_DEPOSIT.exec(line);
+      if (!m) { unmatched += 1; continue; }
+      deposits.push({ date: toIso(m[1]), amount: n(m[3]), order: order++ });
+    } else if (block === "other") {
+      const m = BY_GAIN.exec(line);
+      if (!m) { unmatched += 1; continue; }
+      gains.push({ date: toIso(m[1]), nav: n(m[3]), units: n(m[4]), amount: n(m[5]) });
+    } else {
+      const m = BY_UNITS.exec(line);
+      if (!m) { unmatched += 1; continue; }
+      rows.push({
+        cls: block.cls, date: toIso(m[1]),
+        type: /Redemption/i.test(m[2]) ? "Unit Redemption" : "Units Allotment",
+        nav: n(m[3]), units: n(m[4]), amount: n(m[5]), order: order++,
+      });
     }
-    const u = BY_UNIT_ROW.exec(m[3].trim());
-    if (!u) { unmatched += 1; continue; }
-    const isGain = /^Gain Distr/i.test(type);
-    if (isGain !== (section === "other")) { unmatched += 1; continue; }
-    rows.push({ date, type, cls: isGain ? null : section, nav: n(u[1]), units: n(u[2]), amount: n(u[3]) });
   }
-  if (!rows.length) return [];
+  if (!deposits.length && !rows.length) return [];
+  // A DATED ROW THIS READER DOES NOT DECLARE IS NAMED, NEVER DROPPED — the rule
+  // `threePFlows` sets, and for the same reason: a redemption for cash or a
+  // payout would fail to match instead of being filed under whichever declared
+  // type it happens to resemble, which is only safe if the miss refuses.
   if (unmatched) {
     warn("transaction-type-not-declared",
-      `${unmatched} dated row(s) in the account statement's transaction tables carry a type or a shape this reader `
-      + "does not declare; the dated record is withheld rather than published with rows missing from it");
+      `${unmatched} dated row(s) in the account statement's transaction tables carry a type this reader does not `
+      + "declare; the dated record is withheld rather than published with rows missing from it");
     return [];
   }
 
   const fails = [];
-  const money = (v) => Math.round((v ?? 0) * 100) / 100;
-  const units = rows.filter((r) => r.units != null);
-  // (1) amount = units × NAV, to the precision each is printed to (NAV 4dp, units 4dp).
-  for (const r of units) {
+  const paise = (v) => Math.round((v ?? 0) * 100);
+  // (1) the row's own arithmetic, to the precision the statement prints.
+  for (const r of rows) {
+    if (r.nav === null || r.units === null || r.amount === null) {
+      fails.push(`${r.date} ${r.type} (Class ${r.cls}) does not print a NAV, a unit count and an amount`);
+      continue;
+    }
     const bound = r.units * 5e-5 + r.nav * 5e-5 + 0.01;
     if (Math.abs(r.units * r.nav - r.amount) > bound) {
-      fails.push(`${r.date} ${r.type} (${r.cls ?? "other"}): ${r.units} units at ${r.nav} is not the printed ${r.amount}`);
+      fails.push(`${r.date} ${r.type} (Class ${r.cls}): ${r.units} units at ${r.nav} is not the printed ${r.amount}`);
     }
   }
-  // Switch pairing: a redemption and a same-day allotment in ANOTHER class for
-  // the same rupees. Each allotment pairs at most once.
-  const redemptions = rows.filter((r) => /Redemption/i.test(r.type));
-  const allotments = rows.filter((r) => /Allotment/i.test(r.type));
-  const pairedIn = new Set();
-  const pairs = [];
-  for (const out of redemptions) {
-    const inRow = allotments.find((a) => !pairedIn.has(a) && a.date === out.date && a.cls !== out.cls
-      && Math.abs(a.amount - out.amount) <= 1);
-    if (inRow) { pairedIn.add(inRow); pairs.push([out, inRow]); }
-  }
-  const switchedOut = new Set(pairs.map((p) => p[0]));
-  // (2) every class runs to the balance the Account Summary prints for it, and a
-  //     class the summary does not list runs to zero — the fund lists what is held.
+
+  // (2) the running units against the Account Summary's own Unit Balance.
   const held = new Map();
-  for (const m of text.matchAll(new RegExp(BY_SUMMARY.source, "gi"))) held.set(m[2].toUpperCase(), n(m[1]));
-  if (!held.size) fails.push("the Account Summary prints no class with a unit balance to run the table against");
-  for (const cls of new Set(units.filter((r) => r.cls).map((r) => r.cls))) {
-    const run = units.filter((r) => r.cls === cls)
-      .reduce((t, r) => t + (/Redemption/i.test(r.type) ? -r.units : r.units), 0);
+  const summary = /Account Summary[\s\S]*?\nTotal\s/i.exec(text)?.[0] ?? "";
+  const sumRows = [...summary.matchAll(new RegExp(BY_SUMMARY_ROW.source, "g"))];
+  const sumClasses = [...summary.matchAll(/CLASS\s+([A-Z]\d?)\b/gi)].map((m) => m[1].toUpperCase());
+  if (!sumRows.length || sumRows.length !== sumClasses.length) {
+    fails.push(`the Account Summary prints ${sumRows.length} row(s) against ${sumClasses.length} class name(s), `
+      + "so which class holds which balance cannot be read");
+  } else {
+    sumRows.forEach((m, i) => held.set(sumClasses[i], n(m[2])));
+  }
+  for (const cls of [...new Set([...rows.map((r) => r.cls), ...held.keys()])]) {
+    const run = rows.filter((r) => r.cls === cls)
+      .reduce((t, r) => t + (r.type === "Unit Redemption" ? -1 : 1) * (r.units ?? 0), 0);
     const want = held.get(cls) ?? 0;
-    if (Math.abs(run - want) > UNIT_TIE_FLOWS) fails.push(`Class ${cls} runs to ${money(run * 1e2) / 1e2} units against ${want} printed`);
+    if (Math.abs(run - want) > 0.0005) {
+      fails.push(`Class ${cls}: the allotments and redemptions run to ${Math.round(run * 1e4) / 1e4} units against `
+        + `${held.has(cls) ? `the Account Summary's ${want}` : "zero, because the Account Summary prints no balance for it"}`);
+    }
   }
-  // (3) the family's cash in = what bought units, less what a switch or a
-  //     distribution bought. The tolerance is the ₹1 each switch is paired to.
-  const deposits = money(rows.filter((r) => r.cls === null && /Deposit/i.test(r.type)).reduce((t, r) => t + r.amount, 0));
-  const bought = money(allotments.filter((a) => !pairedIn.has(a)).reduce((t, r) => t + r.amount, 0));
-  const distributed = money(rows.filter((r) => /Gain Distr/i.test(r.type)).reduce((t, r) => t + r.amount, 0));
-  if (Math.abs(bought - distributed - deposits) > pairs.length + 0.01) {
-    fails.push(`the cash deposits sum to ${deposits} but the allotments not funded by a switch or a distribution `
-      + `sum to ${money(bought - distributed)}`);
+
+  // (3) every redemption is one leg of a switch: another class, the same day,
+  //     the same rupees.
+  const allot = rows.filter((r) => r.type === "Units Allotment").map((r) => ({ ...r, used: null }));
+  const switches = [];
+  for (const out of rows.filter((r) => r.type === "Unit Redemption")) {
+    const partner = allot.find((a) => !a.used && a.date === out.date && a.cls !== out.cls
+      && Math.abs(a.amount - out.amount) <= 1);
+    if (!partner) {
+      fails.push(`the ${out.date} Unit Redemption of Class ${out.cls} (${out.amount}) has no allotment of another `
+        + "class on the same day for the same rupees, so it paid money out — and this reader has no declared row for "
+        + "money out");
+      continue;
+    }
+    partner.used = "switch";
+    switches.push({ out, in: partner });
   }
-  // A redemption that is NOT a switch paid money out — which this statement
-  // would print as a withdrawal it does not carry. Not declared, so not read.
-  const unpaired = redemptions.filter((r) => !switchedOut.has(r));
-  if (unpaired.length) fails.push(`${unpaired.length} redemption(s) fund no same-day allotment in another class`);
+
+  // (4) every deposit buys exactly one allotment on its own day, and every
+  //     allotment is bought by something.
+  const gainOn = new Map();
+  for (const g of gains) gainOn.set(g.date, (gainOn.get(g.date) ?? 0) + (g.amount ?? 0));
+  const reinvestedOn = new Set();
+  const contributions = [];
+  for (const d of deposits) {
+    const same = allot.filter((a) => !a.used && a.date === d.date);
+    let hit = same.find((a) => paise(a.amount) === paise(d.amount));
+    let reinvested = 0;
+    if (!hit && gainOn.has(d.date)) {
+      hit = same.find((a) => paise(a.amount) === paise(d.amount) + paise(gainOn.get(d.date)));
+      if (hit) { reinvested = gainOn.get(d.date); reinvestedOn.add(d.date); }
+    }
+    if (!hit) {
+      fails.push(`the ${d.date} Cash Deposit of ${d.amount} buys no allotment on its own day — neither the deposit `
+        + "alone nor the deposit plus that day's Gain Distr.");
+      continue;
+    }
+    hit.used = "deposit";
+    contributions.push({ deposit: d, allot: hit, reinvested });
+  }
+  for (const a of allot.filter((x) => !x.used)) {
+    fails.push(`the ${a.date} Units Allotment of Class ${a.cls} (${a.amount}) is bought by no deposit and is no `
+      + "switch, so what funded it is not on this statement");
+  }
+  for (const dt of gainOn.keys()) {
+    if (!reinvestedOn.has(dt)) {
+      fails.push(`the ${dt} Gain Distr. is reinvested in no allotment that day, so it was paid out — and this reader `
+        + "has no declared row for money out");
+    }
+  }
+  const payout = /Total Distribution\s*\n\s*((?:-?[\d,]+\.\d{2}\s+){6}-?[\d,]+\.\d{2})/i.exec(text);
+  if (payout && payout[1].trim().split(/\s+/).some((v) => (n(v) ?? 0) !== 0)) {
+    fails.push("the Summary of Capital Distribution prints a payout, and this reader has no declared row for money out");
+  }
+
+  // (5) the deposits against the statement's own Capital Invested, where it
+  //     prints one.
+  const invested = /Capital Invested\s+([\d,]+(?:\.\d+)?)/i.exec(text);
+  if (invested) {
+    const total = deposits.reduce((t, d) => t + (d.amount ?? 0), 0);
+    if (Math.abs(total - n(invested[1])) > 1) {
+      fails.push(`the Cash Deposits sum to ${Math.round(total * 100) / 100} against the ${n(invested[1])} this `
+        + "statement prints as Capital Invested");
+    }
+  }
 
   if (fails.length) {
-    warn("dated-table-does-not-tie", "the account statement's transaction tables are not published for this account: "
+    warn("dated-table-does-not-tie", "the account statement's dated record is not published for this account: "
       + fails.join("; "));
     return [];
   }
 
-  return rows.map((r) => {
-    const out = /Redemption/i.test(r.type);
-    const switched = switchedOut.has(r) || pairedIn.has(r);
-    return makeCashFlow({
-      date: r.date,
-      description: r.type,
-      security: r.cls ? byClassName(r.cls) : null,
-      kind: /Deposit/i.test(r.type) ? "contribution"
-        : switched ? "reclassification"
-        : /Gain Distr/i.test(r.type) ? "distribution"
-        : "allotment",
-      amount: out ? -r.amount : r.amount,
-      units: r.units == null ? null : out ? -r.units : r.units,
-      notes: r.nav == null ? null : `allotment/redemption NAV ${r.nav}`,
-    });
+  // THE RUNNING UNITS PER CLASS, in the order the money moved. On a switch day
+  // the redemption leg is taken first — the units leave one class before they
+  // arrive in the other — and within a class the statement's own order stands.
+  const events = [
+    ...switches.flatMap((s) => [{ leg: "out", r: s.out, s }, { leg: "in", r: s.in, s }]),
+    ...contributions.map((c) => ({ leg: "deposit", r: c.allot, c })),
+  ].sort((a, b) => a.r.date.localeCompare(b.r.date)
+    || (a.leg === "out" ? 0 : 1) - (b.leg === "out" ? 0 : 1)
+    || a.r.order - b.r.order);
+  const run = new Map();
+  const unitsAfter = (cls, du) => {
+    const v = Math.round(((run.get(cls) ?? 0) + du) * 1e4) / 1e4;
+    run.set(cls, v);
+    return v;
+  };
+  return events.map((e) => {
+    if (e.leg === "deposit") {
+      const { deposit: d, allot: a, reinvested } = e.c;
+      return makeCashFlow({
+        date: d.date,
+        // The statement's own word for the money, which is what reaches the
+        // family's transactions table.
+        description: "Cash Deposits",
+        security: buoyantClassName(a.cls),
+        kind: "contribution",
+        // What left the family's bank, beside what bought units. They differ only
+        // where a Gain Distr. was reinvested in the same allotment, and a row
+        // carrying its own net cannot be a running balance (`netAmount`).
+        amount: d.amount,
+        netAmount: a.amount,
+        units: a.units,
+        balance: unitsAfter(a.cls, a.units),
+        notes: `Units Allotment at NAV ${a.nav}`
+          + (reinvested ? `; includes the ${reinvested} Gain Distr. of the same day, reinvested` : ""),
+      });
+    }
+    const { out, in: inn } = e.s;
+    return e.leg === "out"
+      ? makeCashFlow({
+        date: out.date, description: out.type, security: buoyantClassName(out.cls),
+        kind: "reclassification", amount: -out.amount, units: -out.units,
+        balance: unitsAfter(out.cls, -out.units),
+        notes: `redemption NAV ${out.nav}; switched into Class ${inn.cls} the same day for the same rupees`,
+      })
+      : makeCashFlow({
+        date: inn.date, description: inn.type, security: buoyantClassName(inn.cls),
+        kind: "reclassification", amount: inn.amount, units: inn.units,
+        balance: unitsAfter(inn.cls, inn.units),
+        notes: `allotment NAV ${inn.nav}; switched from Class ${out.cls} the same day for the same rupees`,
+      });
   });
 }
+
+// ── NEO INFRA: THE UNIT TABLE A FIFO RETURN NEEDS ────────────────────────────
+//
+// *"match the number of units being sold and purchased, and use the methodology
+// of FIFO to calculate returns."* Neo Infra prints a Capital Redemption of
+// 14,162.80 units for ₹14,16,280 on 5 Jan 2026, and nothing read it: the book
+// carried the Gross Capital Contribution — ₹5,00,00,000, the cost of 5,00,000
+// units — against the 4,85,837 still held. A cost that includes units the
+// family no longer owns is the failure FIFO exists to stop.
+//
+// It follows `threePFlows`' licence and `buoyantFlows`' beside it: the dated
+// table is published only if the statement's own arithmetic witnesses it, and a
+// dated capital row the columns do not match withholds the WHOLE table rather
+// than publishing it with a row missing.
 
 /**
  * Neo Infra's capital columns: each drawdown's units and rupees, and the
@@ -624,23 +759,19 @@ const LAYOUTS = [
      *  49,29,81,982.01 3.71 24.80` — the scheme name wraps across three lines
      * around the figures, so the row is matched on the FIGURES and the name is
      * taken from the summary heading rather than reassembled from the wrap.
+     * ONE pattern, shared with `buoyantFlows`' check 2, so the balance that
+     * check reads is the row this layout reads.
      */
-    row: new RegExp(
-      String.raw`(\d{2}\/\d{2}\/\d{4})\s+` +      // 1 NAV date
-      String.raw`([\d,]+\.\d+)\s+` +              // 2 units
-      String.raw`([\d,]+\.\d+)\s+` +              // 3 cost
-      String.raw`([\d,]+\.\d+)\s+` +              // 4 NAV
-      String.raw`([\d,]+\.\d+)\s+` +              // 5 value
-      String.raw`(-?[\d,]+\.\d+)\s+` +            // 6 absolute %
-      String.raw`(-?[\d,]+\.\d+)`,                // 7 annualised %
-    ),
+    row: BY_SUMMARY_ROW,
     read: (m) => ({
       navDate: toIso(m[1]), quantity: n(m[2]), totalCost: n(m[3]),
       marketPrice: n(m[4]), printedValue: n(m[5]),
       absoluteYieldPct: n(m[6]), annualizedYieldPct: n(m[7]),
     }),
+    // Through `buoyantClassName`, the name the dated flows carry too — a holding
+    // and the contributions that bought it must land on one securityKey.
     security: (text) => (/CLASS\s+([A-Z]\d?)/i.exec(text)
-      ? `Buoyant Opportunities Strategy — Category III — Class ${/CLASS\s+([A-Z]\d?)/i.exec(text)[1]}`
+      ? buoyantClassName(/CLASS\s+([A-Z]\d?)/i.exec(text)[1])
       : "Buoyant Opportunities Strategy — Category III"),
     account: (text) => FIELD(text, "Account", String.raw`(\d{4,})`),
     folio: (text) => FIELD(text, "Folio", String.raw`([A-Z0-9]{4,})`),
@@ -648,7 +779,7 @@ const LAYOUTS = [
     // `Account : 103473 AJAY THAKURDAS JAISINGHANI` — the holder is on the
     // title line, after the account number and with no label of its own.
     holder: (text) => (/Account\s*:\s*\d{4,}\s+([A-Z][A-Z\s]{6,44}?)\s*(?:\n|Buoyant)/i.exec(text) ?? [])[1],
-    // The dated unit record, switches declared — see `buoyantFlows`.
+    /** The deposits, the per-class allotments and the switch — see `buoyantFlows`. */
     flowsFrom: buoyantFlows,
   },
   {

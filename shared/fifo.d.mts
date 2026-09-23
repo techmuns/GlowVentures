@@ -46,3 +46,13 @@ export declare function fifoReturnPct(
   realised: number | null | undefined,
   costSold: number | null | undefined,
 ): number | null;
+
+/**
+ * FIFO over a fund's own dated unit record (the archive's cash flows). Null
+ * where nothing was sold or switched; `{ ledger: null, reason }` where the
+ * record could not be run.
+ */
+export declare function fifoFromCashFlows(cashFlows: readonly {
+  date?: string | null; kind?: string | null; securityKey?: string | null; security?: string | null;
+  units?: number | null; amount?: number | null; netAmount?: number | null; description?: string | null;
+}[] | null | undefined): { ledger: FifoLedger | null; reason: string | null } | null;

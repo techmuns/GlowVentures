@@ -197,6 +197,13 @@ export function usePolycabLive(shares: number | null, statementAsOf: string | nu
       shareActions: shareCountActions(),
       unclassified: unclassifiedActions(),
       measuredNil: shareActionsMeasuredNil(),
+      /**
+       * WAS THE EXCHANGE'S RECORD FETCHED WHOLE ON THE LAST REFRESH? The one
+       * fact behind every "whole since listing" on the page — the card's own
+       * subtitle as well as the bonus/split nil — so both read it from here
+       * rather than one of them asserting it unconditionally.
+       */
+      complete: POLYCAB_LIVE.actionsComplete === true,
       promoter: latestPromoter(),
       quarters: POLYCAB_LIVE.promoterQuarters ?? [],
       entitlements: entitlements(shares, statementAsOf),

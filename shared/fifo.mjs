@@ -178,3 +178,84 @@ export function fifoReturnPct(marketValue, costHeld, realised, costSold) {
   return ((marketValue - costHeld + gainSold) / deployed) * 100;
 }
 
+const isNum = (v) => typeof v === "number" && Number.isFinite(v);
+
+/**
+ * ── FIFO OVER A FUND'S OWN UNIT RECORD ───────────────────────────────────────
+ *
+ * *"match the number of units being sold and purchased, and use the methodology
+ * of FIFO."* Three fund statements print every unit that came in and went out,
+ * and for each of them the statement's own Cost column is NOT a FIFO cost:
+ *
+ *   BUOYANT  — the A1 → A4 class switch is printed as a redemption and a fresh
+ *              allotment, and the Cost column restamps the switched units at the
+ *              switch NAV. The family's A1 contributions vanish from the cost.
+ *   NEO      — 14,162.8 units were redeemed and paid back at ₹14.16 L, and the
+ *              printed cost is still the ₹5 Cr ever drawn.
+ *   3P       — the whole folio was switched into one class and then redeemed;
+ *              the gain on it is a REALISED figure no position carried.
+ *
+ * So wherever an account's dated record carries a SALE (a withdrawal with units)
+ * or a SWITCH (a same-day reclassification out of one class and into another,
+ * for the same rupees), the record is run through the one lot engine. Where a
+ * unit LEFT the holding, `build-book` takes the FIFO answer; where only a switch
+ * moved it (Buoyant), `carryCostThroughSwitches` carries the cost and this
+ * answer is the CHECK it must agree with. An account whose record holds only
+ * purchases is left alone: with nothing sold, FIFO's cost IS the sum of the
+ * purchases, and the statement's own cost already ties to that to the paisa
+ * (Sanshi).
+ *
+ * Here rather than in `build-book` so the suite can run the same record through
+ * the same function and hold the book to it.
+ *
+ * WHAT BUYS A LOT is the money that bought the units: a self-contained
+ * contribution's printed NET (what the fund invested after its charges — the
+ * same figure the position's own cost is built from), or an allotment's amount.
+ * A contribution that is a RUNNING BALANCE is refused, because differencing a
+ * cumulative figure is how ₹22 Cr gets invented (see `capitalMovesFrom`). A
+ * distribution is income; where it was reinvested, the allotment it funded is
+ * the purchase.
+ *
+ * Returns `null` when the account needs no FIFO (nothing was sold or switched),
+ * or `{ ledger, reason }` — `reason` non-null when the record could not be run.
+ */
+export function fifoFromCashFlows(cashFlows) {
+  const rows = (cashFlows ?? []).filter((c) => c.date && c.securityKey && isNum(c.units) && c.units !== 0);
+  const sells = rows.filter((c) => c.kind === "withdrawal" && c.units < 0);
+  const switches = rows.filter((c) => c.kind === "reclassification");
+  if (!sells.length && !switches.length) return null;
+
+  const events = [];
+  for (const c of rows) {
+    if (c.kind === "contribution" && c.units > 0) {
+      if (!isNum(c.netAmount)) {
+        return { ledger: null, reason: `the ${c.date} contribution prints a running balance rather than what it bought, so its units carry no cost of their own` };
+      }
+      events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: c.netAmount, label: c.description });
+    } else if (c.kind === "allotment" && c.units > 0) {
+      if (!isNum(c.amount)) return { ledger: null, reason: `the ${c.date} allotment prints no amount` };
+      events.push({ order: 0, date: c.date, kind: "buy", cls: c.securityKey, units: c.units, amount: c.amount, label: c.description });
+    } else if (c.kind === "withdrawal" && c.units < 0) {
+      events.push({ order: 2, date: c.date, kind: "sell", cls: c.securityKey, units: -c.units, amount: Math.abs(c.amount ?? 0) });
+    }
+  }
+  // A SWITCH IS A PAIR: units out of one class and into another on one date for
+  // the same rupees (±₹1, the tolerance every switch in this archive is paired
+  // to). An unpaired reclassification is money this reader cannot follow, and
+  // the account is refused rather than half-run.
+  const outs = switches.filter((c) => c.units < 0);
+  const ins = switches.filter((c) => c.units > 0);
+  const used = new Set();
+  for (const o of outs) {
+    const i = ins.find((x) => !used.has(x) && x.date === o.date && x.securityKey !== o.securityKey
+      && isNum(x.amount) && isNum(o.amount) && Math.abs(Math.abs(x.amount) - Math.abs(o.amount)) <= 1);
+    if (!i) return { ledger: null, reason: `the ${o.date} reclassification out of ${o.security} funds no same-day reclassification in` };
+    used.add(i);
+    events.push({ order: 1, date: o.date, kind: "switch", from: o.securityKey, to: i.securityKey, units: -o.units, unitsIn: i.units });
+  }
+  if (used.size !== ins.length) return { ledger: null, reason: "a reclassification in is funded by no same-day reclassification out" };
+  // Within one date: purchases, then switches, then sales — a same-day switch
+  // must be able to carry a lot bought that morning, and a sale must see it.
+  events.sort((a, b) => a.date.localeCompare(b.date) || a.order - b.order);
+  return { ledger: fifoLedger(events), reason: null };
+}

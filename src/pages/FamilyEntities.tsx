@@ -23,7 +23,7 @@ import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
-import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
 import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -978,7 +978,15 @@ export function FamilyEntities() {
                         : grp.rows.map(holdingRow)}
                     </Fragment>
                   ))}
-                  {holdings.length === 0 && <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">No holdings match “{holdingsQ}”.</td></tr>}
+                  {/* …and where the search names a holding the family's own review
+                      carries that no statement reports, say so rather than leaving
+                      the reader to read an empty table as a lost position. */}
+                  {holdings.length === 0 && (
+                    <tr><td colSpan={5} className="py-10 text-center text-sm text-slate-500">
+                      No holdings match “{holdingsQ}”.
+                      <AbsentFromBook query={holdingsQ} className="mx-auto mt-3 max-w-xl" />
+                    </td></tr>
+                  )}
                 </tbody>
                 {holdings.length > 0 && (
                   <tfoot className="border-t border-ink-700 bg-ink-900/40">

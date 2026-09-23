@@ -13,113 +13,43 @@
   ],
   [
    "2024-06-01",
-   "",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
    "Cash Deposits",
    "contribution",
    35000000,
-   "",
-   "",
-   ""
+   35000000,
+   272225.4587,
+   272225.4587
   ],
   [
    "2025-07-16",
-   "",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
    "Cash Deposits",
    "contribution",
    25000000,
-   "",
-   "",
-   ""
+   25000000,
+   168006.6462,
+   440232.1049
   ],
   [
    "2025-11-01",
-   "",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
    "Cash Deposits",
    "contribution",
    50000000,
-   "",
-   "",
-   ""
+   50000000,
+   331782.2205,
+   772014.3254
   ],
   [
    "2026-04-01",
-   "",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
    "Cash Deposits",
    "contribution",
    100000000,
-   "",
-   "",
-   ""
-  ],
-  [
-   "2026-06-01",
-   "",
-   "Cash Deposits",
-   "contribution",
-   250000000,
-   "",
-   "",
-   ""
-  ],
-  [
-   "2026-06-01",
-   "Buoyant Opportunities Strategy — Category III — Class A4",
-   "Units Allotment",
-   "allotment",
-   250000000,
-   "",
-   1796901.6155,
-   ""
-  ],
-  [
-   "2026-06-01",
-   "Buoyant Opportunities Strategy — Category III — Class A4",
-   "Units Allotment",
-   "reclassification",
-   225353990.9,
-   "",
-   1619755.8012,
-   ""
-  ],
-  [
-   "2024-06-01",
-   "Buoyant Opportunities Strategy — Category III — Class A1",
-   "Units Allotment",
-   "allotment",
-   35000000,
-   "",
-   272225.4587,
-   ""
-  ],
-  [
-   "2025-07-16",
-   "Buoyant Opportunities Strategy — Category III — Class A1",
-   "Units Allotment",
-   "allotment",
-   25000000,
-   "",
-   168006.6462,
-   ""
-  ],
-  [
-   "2025-11-01",
-   "Buoyant Opportunities Strategy — Category III — Class A1",
-   "Units Allotment",
-   "allotment",
-   50000000,
-   "",
-   331782.2205,
-   ""
-  ],
-  [
-   "2026-04-01",
-   "Buoyant Opportunities Strategy — Category III — Class A1",
-   "Units Allotment",
-   "allotment",
    100058861.66,
-   "",
    717459.6778,
-   ""
+   1489474.0032
   ],
   [
    "2026-06-01",
@@ -129,17 +59,27 @@
    -225353990.9,
    "",
    -1489474.0032,
-   ""
+   0
   ],
   [
-   "2026-04-01",
+   "2026-06-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Cash Deposits",
+   "contribution",
+   250000000,
+   250000000,
+   1796901.6155,
+   1796901.6155
+  ],
+  [
+   "2026-06-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "reclassification",
+   225353990.9,
    "",
-   "Gain Distr.",
-   "distribution",
-   58861.66,
-   "",
-   58861.66,
-   ""
+   1619755.8012,
+   3416657.4167
   ]
  ]
 }

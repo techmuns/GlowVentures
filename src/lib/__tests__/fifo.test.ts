@@ -33,7 +33,7 @@ import path from "node:path";
 import {
   BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES,
 } from "@/data/glowData";
-import { fifoLedger, fifoForClass, fifoReturnPct } from "../../../shared/fifo.mjs";
+import { fifoLedger, fifoForClass, fifoReturnPct, fifoFromCashFlows } from "../../../shared/fifo.mjs";
 import { fifoTotals, fifoBasisNote, realisedReason, positionFifoReturn } from "@/lib/fifo";
 import { currentHoldings, dedupedPositions, holdingBucket } from "@/lib/analytics";
 import type { Account, Position } from "@/lib/types";
@@ -236,12 +236,29 @@ const movesIn = (acctId: string) => BOOK_CAPITAL_MOVES.filter((m) => m.accountId
 }
 
 // C2. BUOYANT — THE CLASS SWITCH IS NOT A SALE.
+//
+// Two implementations reach this cost: `carryCostThroughSwitches` carries each
+// contribution through the switch at the fund's own ratio (the book's source,
+// since nothing was sold), and the FIFO engine runs the same unit record on its
+// own. The book is held to BOTH — different code over one record, so agreement
+// is a real check, and a disagreement means one of them has the wrong units in
+// the wrong lot.
+const docOf = (key: string) => JSON.parse(fs.readFileSync(path.join(process.cwd(), "public/audit", key, "document.json"), "utf8"));
 for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   const p = one(id, /class-a4/);
   const ph = bridge(id, "performance-history");
   if (!p || !ph) { skip(`C2 ${id}`, "no A4 position or no performance history in this drop"); continue; }
   const deposits = movesIn(id).reduce((s, m) => s + (m.amount ?? 0), 0);
-  ok(`C2 ${id}: cost is FIFO`, p.costBasisSource === "fifo");
+  ok(`C2 ${id}: cost is carried through the switch, not the statement's restamp`, p.costBasisSource === "carried-through-switch");
+  const record = docOf(`${id}-2026-07-31-holdings`).cashFlows ?? [];
+  const run = fifoFromCashFlows(record);
+  const a4 = run?.ledger ? fifoForClass(run.ledger, p.securityKey) : null;
+  if (!a4) ok(`C2 ${id}: FIFO runs over the fund's own unit record`, false, run?.reason ?? "no switch or sale in the record");
+  else {
+    near(`C2 ${id}: FIFO over the unit record reproduces the carried cost`, a4.costHeld, p.costBasis ?? NaN, 1);
+    near(`C2 ${id}: …holds exactly the units the statement prints`, a4.unitsHeld, p.quantity, 0.0005);
+    ok(`C2 ${id}: …and finds nothing sold`, a4.realised.length === 0 && run!.ledger!.shortfalls.length === 0);
+  }
   // What the family paid in, plus any distribution the fund reinvested into
   // units — which the manager's own bridge reports as INCOME. A second report
   // standing witness for the reinvestment, rather than the book for itself.
@@ -254,9 +271,10 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
     (ph.realized ?? 0) + (ph.unrealized ?? 0), 0.15);
   // And the statement's own restamped cost is off by exactly what the switch
   // "realised" — the reason the old return was wrong.
-  const stmt = JSON.parse(fs.readFileSync(path.join(process.cwd(), "public/audit", `${id}-2026-07-31-holdings`, "document.json"), "utf8"));
+  const stmt = docOf(`${id}-2026-07-31-holdings`);
   const printed = (stmt.holdings ?? []).find((h: { security: string }) => /A4/.test(h.security))?.totalCost;
   if (!isNum(printed)) { skip(`C2 ${id}: restamped cost`, "no printed cost on the holdings statement"); continue; }
+  near(`C2 ${id}: the book keeps the statement's own cost beside it, as a check`, p.printedCostBasis ?? NaN, printed, 0.01);
   near(`C2 ${id}: statement cost − FIFO cost = the switch's booked gain`, printed - (p.costBasis ?? 0), ph.realized ?? 0, 0.1);
   const oldPct = ((p.marketValue - printed) / printed) * 100;
   // The gap between the two returns is the switch's booked gain over the cost —

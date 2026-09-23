@@ -20,7 +20,6 @@
     "reconcile:register": "node scripts/register-reconcile.mjs",
     "build-book": "node scripts/build-book.mjs",
     "replay:calls": "node scripts/replay-capital-calls.mjs",
-    "replay:flows": "node scripts/replay-unit-flows.mjs",
     "replay:owners": "node scripts/replay-owners.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:pages": "node scripts/check-pages.mjs",
@@ -30,6 +29,7 @@
     "build-lookthrough": "node scripts/build-fund-lookthrough.mjs",
     "build-scheme-names": "node scripts/build-scheme-names.mjs",
     "replay:movements": "node scripts/replay-demat-movements.mjs",
+    "replay:flows": "node scripts/replay-fund-flows.mjs",
     "build-polycab": "node scripts/build-polycab-live.mjs",
     "build-fund-navs": "node scripts/build-fund-navs.mjs",
     "build-upstox-instruments": "node scripts/build-upstox-instruments.mjs"

@@ -2336,7 +2336,7 @@
    {
     "key": "transactions",
     "name": "transactions",
-    "rows": 13,
+    "rows": 8,
     "cols": 8
    },
    {
@@ -2521,7 +2521,7 @@
    {
     "key": "transactions",
     "name": "transactions",
-    "rows": 14,
+    "rows": 8,
     "cols": 8
    },
    {
@@ -5436,7 +5436,7 @@
    {
     "key": "transactions",
     "name": "transactions",
-    "rows": 14,
+    "rows": 8,
     "cols": 8
    },
    {

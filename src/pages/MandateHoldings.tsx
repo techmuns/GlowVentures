@@ -483,7 +483,7 @@ export function MandateHoldings() {
    * TWO SOURCES, STRONGEST FIRST, AND NEITHER IS DERIVED FROM THE OTHER:
    *
    *   • the account's own DATED CONTRIBUTION RECORD — the first payment the
-   *     statements put a date against (11 of 51 accounts);
+   *     statements put a date against (13 of 51 accounts);
    *   • failing that, the statement's own printed INCEPTION DATE (12 of 51).
    *
    * They are different facts and the label says which, because they can differ:

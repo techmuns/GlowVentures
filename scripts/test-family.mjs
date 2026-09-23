@@ -30,6 +30,7 @@ const SUITES = [
   ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
+  ["transaction sections", "src/lib/__tests__/txnAxis.test.ts"],
   ["chat context", "src/lib/__tests__/chatContext.test.ts"],
   ["chat function", "src/lib/__tests__/chatFunction.test.ts"],
   ["indices function", "src/lib/__tests__/indicesFunction.test.ts"],
@@ -40,6 +41,7 @@ const SUITES = [
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
+  ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
   ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
@@ -51,6 +53,7 @@ const SUITES = [
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
   ["market side", "src/lib/__tests__/marketSide.test.ts"],
   ["share movements", "src/lib/__tests__/shareMovements.test.ts"],
+  ["review gaps", "src/lib/__tests__/reviewGaps.test.ts"],
   ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
   ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
 ];
