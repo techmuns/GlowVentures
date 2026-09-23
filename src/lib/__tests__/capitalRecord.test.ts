@@ -301,9 +301,11 @@ console.log("\n── filters ──");
 // ── 11. THE ANNUALISATION GUARD, ON CONSTRUCTED ROWS ───────────────────────
 console.log("\n── the guard ──");
 {
+  // `capitalRecordTo` because a capital RECORD must reach the date its value is
+  // struck on before it carries a return (Stage 10cf, `recordShortfall`).
   const acct = (o: Partial<Account> = {}) => ({
     accountId: "x", provider: "Fund", accountNo: "1", owner: "O", strategy: null,
-    inceptionDate: "2025-01-01", asOf: "2026-06-30", engagement: "AIF", ...o,
+    inceptionDate: "2025-01-01", asOf: "2026-06-30", capitalRecordTo: "2026-06-30", engagement: "AIF", ...o,
   });
   const mv = (o: Partial<CapitalMove>): CapitalMove => ({
     accountId: "x", date: "2025-01-01", direction: "in", label: "Subscription",
