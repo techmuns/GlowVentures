@@ -270,9 +270,17 @@ const VIEWS: { id: string; label: string; href: string; words: string[]; detail:
   { id: "view:transactions", label: "Transactions", href: "/monitor?show=transactions",
     words: ["trades", "buys", "sells", "bought", "sold", "what i invested", "capital in", "redemptions", "contributions"],
     detail: "Portfolio Monitor · every dated buy, sell, contribution and redemption, in the same sections as the holdings" },
-  { id: "view:security", label: "Holdings by security", href: "/monitor?group=security",
-    words: ["stock wise", "security wise", "exposure", "company exposure", "look through", "look-through", "clubbed", "through funds"],
+  // ALL SECURITIES IS THE MONITOR'S DEFAULT VIEW, so the page entry above opens
+  // it too; this keeps its own entry, under the button's own name, for a reader
+  // who types what they see. The address names the view rather than leaning on
+  // it being the default. CATEGORY lost its place as the default at the same
+  // request, so it gains an entry of its own — "any tab" includes it now.
+  { id: "view:security", label: "All Securities", href: "/monitor?group=security",
+    words: ["all securities", "stock wise", "security wise", "exposure", "company exposure", "look through", "look-through", "clubbed", "through funds"],
     detail: "Portfolio Monitor · one row per company across every vehicle, with what the funds disclose" },
+  { id: "view:category", label: "Holdings by category", href: "/monitor?group=category",
+    words: ["category wise", "by category", "categories", "mandate wise", "pms wise"],
+    detail: "Portfolio Monitor · sectioned on Direct Equity, PMS mandates, AIF, Mutual Fund, ETF and Cash" },
   { id: "view:basket", label: "Holdings by basket", href: "/monitor?group=basket", words: ["baskets", "basket wise"],
     detail: "Portfolio Monitor · sectioned on the family's four baskets" },
   { id: "view:assetClass", label: "Holdings by asset class", href: "/monitor?group=assetClass", words: ["asset class wise", "asset classes"],

@@ -1953,6 +1953,29 @@ const REGISTER_SENTINEL = (() => {
  * page rather than from here, because `displaySecurity` rewrites a depository's
  * clipped label and the book's own `security` is not what this list offers.
  */
+/**
+ * THE FUND A READER PICKS ON ALL SECURITIES — see `monitor-pick-fund`.
+ *
+ * The largest current holding that is NOT a company share, derived from the
+ * book so the next drop picks its own, and searched by one distinctive word of
+ * its name rather than its whole label: the pick-list offers the DISPLAY name
+ * (`displaySecurity`), which is not always what the book stores. Current means
+ * what every allocation surface draws — a fund at nil units still publishing a
+ * NAV has been redeemed — re-derived here rather than imported.
+ */
+const PICK_FUND_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const top = positions.filter((p) => p.assetClass !== "Equity" && !redeemed(p))
+      .sort((a, b) => b.marketValue - a.marketValue)[0];
+    const word = top ? String(top.security).split(/[^A-Za-z]+/).find((w) => w.length >= 5) ?? null : null;
+    return word ? { name: top.security, word } : null;
+  } catch { return null; }
+})();
+
 const REVIEW_GAP_BOOK = (() => {
   try {
     const gaps = bookArray(readFileSync(new URL("../src/data/reviewGaps.ts", import.meta.url), "utf8"), "REVIEW_GAPS");
@@ -3180,7 +3203,22 @@ const ROUTES = [
   // with no allocation table on it at all.
   ["cio-alloc-basket", "/cio?tab=allocation&alloc=basket"],
   ["cio-alloc-class", "/cio?tab=allocation&alloc=assetClass"],
-  ["monitor", "/monitor"],
+  /**
+   * ── THE CATEGORY VIEW HAS AN ADDRESS OF ITS OWN NOW ──────────────────────
+   *
+   *   *"Make this view as All Securities and make it first in portfolio monitor
+   *    and default open."*
+   *
+   * `/monitor` opens on All Securities, so every route below that was written
+   * against the CATEGORY table — its sections, its mandate rows, its category
+   * totals, its fund and tranche rows — walks `?group=category`, which is the
+   * address that view has now. Left on the bare path they would walk a table
+   * with no sections and no mandate rows, and most of their claims would
+   * ABSTAIN rather than fail: a sweep reporting clean over checks that stopped
+   * running. The DEFAULT is asserted where it now lives, on `monitor-security`,
+   * which walks the bare `/monitor`.
+   */
+  ["monitor", "/monitor?group=category"],
   ["private-market", "/private-market"],
   /**
    * ...AND THE SAME PAGE WITH EVERY METRIC SELECTED.
@@ -3277,13 +3315,13 @@ const ROUTES = [
   // figure opens into the dated contributions behind it, and the panel's whole
   // claim is that those tranches account for the row — which is only testable
   // once one is expanded.
-  ["monitor-tranche", "/monitor"],
+  ["monitor-tranche", "/monitor?group=category"],
   // ...AND THE HISTORY CARRIED THROUGH A FUND'S CLASS SWITCH — Buoyant's, whose
   // earlier contributions were bought as Class A1 and are held as A4 — and the
   // one carrying two payments at one entry NAV. Each opens the row the BOOK
   // names (`CARRIED_BOOK`, `SHARED_NAV_TRANCHE`), never a row chosen by size.
-  ["monitor-tranche-switch", "/monitor"],
-  ["monitor-tranche-shared", "/monitor"],
+  ["monitor-tranche-switch", "/monitor?group=category"],
+  ["monitor-tranche-shared", "/monitor?group=category"],
   /**
    * ...AND THE HOLDINGS TABLE AFTER A READER HAS ARRANGED IT.
    *
@@ -3296,7 +3334,7 @@ const ROUTES = [
    * left in declared order while the body follows a drag puts every total
    * under the wrong heading.
    */
-  ["monitor-arrange", "/monitor"],
+  ["monitor-arrange", "/monitor?group=category"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -3327,6 +3365,13 @@ const ROUTES = [
    * control and reading what comes back.
    */
   ["monitor-absent-name", "/monitor"],
+  /**
+   * ...AND A FUND PICKED ON THE DEFAULT VIEW. All Securities lists companies, so
+   * a fund picked there is not a row — which drew an empty table over a footer
+   * of ₹0 until the table learnt to say why. It is the ORDINARY case since that
+   * view became the default, and nothing but a walk that picks one can see it.
+   */
+  ["monitor-pick-fund", "/monitor"],
   ["monitor-txn-in", "/monitor"],
   ["monitor-txn-out", "/monitor"],
   /**
@@ -3385,25 +3430,25 @@ const ROUTES = [
   // both of this book's duplicate holdings are AIF — and that disagreement was
   // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
   // multi-view route in this app uses.
-  ["monitor-entity", "/monitor?view=entity"],
+  ["monitor-entity", "/monitor?group=category&view=entity"],
   // ...AND EACH RETURN MEASURE THE PICKER OFFERS, reached by URL (`?ret=`)
   // rather than by a click — the picker replaced the Absolute/CAGR toggle, and
   // the measure lives in the URL like every other view on this page, so the
   // sweep navigates straight to it. The one Return column shows the chosen
   // measure, labelled; the guard that keeps CAGR safe is asserted on the figures
   // the annualised view draws.
-  ["monitor-cagr", "/monitor?ret=cagr"],
+  ["monitor-cagr", "/monitor?group=category&ret=cagr"],
   // ...YTD IS NOW A MEASURE, NOT A COLUMN. The separate YTD column is gone; when
   // ticked, YTD renders in the one Return column under the same rule — measurable
   // only where a holding was opened during the year, a dash naming why otherwise.
-  ["monitor-ytd", "/monitor?ret=ytd"],
+  ["monitor-ytd", "/monitor?group=category&ret=ytd"],
   // ...AND XIRR, which per holding this book cannot strike (the statements carry
   // no cash-flow history per security), so every cell is a dash with the reason
   // rather than the banned `positionIrrPct` extrapolation.
-  ["monitor-xirr", "/monitor?ret=xirr"],
+  ["monitor-xirr", "/monitor?group=category&ret=xirr"],
   // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
   // column shows both, each on its own labelled line.
-  ["monitor-returns-multi", "/monitor?ret=absolute,cagr"],
+  ["monitor-returns-multi", "/monitor?group=category&ret=absolute,cagr"],
   /**
    * ...AND A RETURN COLUMN SORTED ON ITS OWN FIGURE.
    *
@@ -3413,7 +3458,7 @@ const ROUTES = [
    * Walked as its own route because the comparator is only exercised once
    * something clicks a header.
    */
-  ["monitor-ret-sort", "/monitor?ret=absolute,cagr"],
+  ["monitor-ret-sort", "/monitor?group=category&ret=absolute,cagr"],
   /**
    * ...AND THE FOURTH AXIS, WHICH IS NOT AN ALLOCATION AXIS AT ALL.
    *
@@ -3426,7 +3471,14 @@ const ROUTES = [
    * chose is clubbed with the same name held directly. Reached by URL like every
    * other view on this page.
    */
-  ["monitor-security", "/monitor?group=security"],
+  /**
+   * …ON THE BARE `/monitor`, because it is the DEFAULT now. Walking the plain
+   * path is what makes every claim below a claim about the page the family
+   * opens — a default that quietly moved back to Category would fail the whole
+   * block rather than one line of it. The routes after this one keep the
+   * explicit `?group=security`, so the old address is walked too.
+   */
+  ["monitor-security", "/monitor"],
   /**
    * ...AND THE SECTOR FILTER, WHOSE DROPDOWN IS GONE BUT WHOSE BRANCHES ARE NOT.
    * Walked on the security axis, where every row is a security and therefore
@@ -3475,9 +3527,9 @@ const ROUTES = [
    *    Default view will remain the current one, category wise."
    *
    * Both are reached by URL for the same reason `monitor-entity` is: the axis
-   * lives in `?group=`, so a slice is a link. The DEFAULT axis is asserted on
-   * the plain `monitor` route above — that it is still category, and that
-   * nothing about it moved.
+   * lives in `?group=`, so a slice is a link. The DEFAULT axis — All Securities
+   * since the family asked for it first and open — is asserted on
+   * `monitor-security`, the route that walks the bare `/monitor`.
    */
   ["monitor-assetclass", "/monitor?group=assetClass"],
   ["monitor-basket", "/monitor?group=basket"],
@@ -3486,12 +3538,13 @@ const ROUTES = [
    * show individual investments return in the drop down for securities you need
    * to implement the same for category/asset class/basket as well."*
    *
-   * The DEFAULT axis, because that is where the family reported it: on Category
-   * the name cell drew no chevron at all, and the per-account expansion was
-   * reachable only on `?group=security`. Walked on the plain route so a
-   * regression cannot hide behind a URL nobody uses.
+   * The CATEGORY axis, because that is where the family reported it: on
+   * Category the name cell drew no chevron at all, and the per-account expansion
+   * was reachable only on `?group=security`. It was the default when this was
+   * written and walked on the plain route for that reason; All Securities is the
+   * default now, so it walks `?group=category`, which is Category's own address.
    */
-  ["monitor-category-drill", "/monitor"],
+  ["monitor-category-drill", "/monitor?group=category"],
   /**
    * ...AND THE CLUBBED FUND OPENED INTO ITS OWN UNIT CLASSES — the second half
    * of *"we should only show 3P funds a single line item and then when we click
@@ -3500,7 +3553,7 @@ const ROUTES = [
    * the classes are where a reader goes to see which of them is which, so the
    * row and its expansion are one claim and are checked as one.
    */
-  ["monitor-fund-drill", "/monitor"],
+  ["monitor-fund-drill", "/monitor?group=category"],
   /**
    * ...AND THE WHOLE TREE OPEN, through the table's own Expand all — every row
    * that can open, every section, so every claim about what a row opens INTO
@@ -3508,13 +3561,13 @@ const ROUTES = [
    * chevron is also a check on the control: wired to nothing, it leaves the
    * rows shut and every claim below fails by name.
    */
-  ["monitor-open-all", "/monitor"],
+  ["monitor-open-all", "/monitor?group=category"],
   // ...AND ONE SECTION FOLDED ON ITS BAND, which is the half of the standard a
   // reader uses to put a category out of the way without losing its totals.
-  ["monitor-section-closed", "/monitor"],
+  ["monitor-section-closed", "/monitor?group=category"],
   // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
   // one way to reach the stale-filter defect. See the walk step of this name.
-  ["monitor-axis-switch", "/monitor"],
+  ["monitor-axis-switch", "/monitor?group=category"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -4188,6 +4241,20 @@ let SEARCH = null;
 let HEAD = null;
 /** The opened return-measure dropdown's alignment/viewport fit — see `monitor`. */
 let RETURN_DROPDOWN = null;
+/**
+ * The opened HOLDINGS pick-list's alignment and fit — see `monitor-security`.
+ * It moved to the right end of the filter row at the family's request, where a
+ * panel anchored to its LEFT edge would open past the page; measured on the
+ * default route, the one the family opens.
+ */
+let HOLDINGS_DROPDOWN = null;
+/**
+ * WHAT ALL SECURITIES SAID WHEN A FUND WAS PICKED, and what one click on its
+ * own button did — see `monitor-pick-fund`. Captured before the click, because
+ * the invariants read the page AFTER it: two states, one walk, the pattern
+ * `DIRECT_ALL` already follows.
+ */
+let PICKED_FUND = null;
 
 /**
  * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
@@ -8856,6 +8923,96 @@ const RETURN_COLUMNS = [
     }],
 ];
 
+/**
+ * ── THE MONITOR'S FILTER ROW: THE AXIS FIRST, THE TWO SELECTORS AT THE END ──
+ *
+ *   *"put the all holding and all entities selectors to the right end of after
+ *    return selector"*
+ *
+ * A factory, spread into a Holdings route on each kind of axis and into a
+ * Transactions route, because the row is ONE row on all three and the claim
+ * must not hold on the page the change was tested on and fail on the others.
+ * `holdings` is the only thing that differs: Transactions draws no return
+ * picker, so its row is the axis and then the selectors.
+ *
+ * NONE OF THESE CAN BE STRUCK ON THE PAGE TEXT — the row prints the same words
+ * whichever end the selectors sit at — so every claim reads the row's own
+ * children by handle and their boxes. A row that lost its handle is a FAILURE:
+ * nothing but a rewrite of the row produces that state.
+ */
+const FILTER_ROW = (holdings) => [
+  [`the filter row reads the axis${holdings ? ", then which return," : ""} and then the two selectors, last`, (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f) return false;
+    const seq = f.order.filter((k) => k !== "other").join(",");
+    return holdings ? /^axis,return(,expand)?,right$/.test(seq) : seq === "axis,right";
+  }],
+  ["…with All holdings and All entities inside that last group, and nowhere else on the row", (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f) return false;
+    return f.holdingsInRow === 1 && f.entitiesInRow === 1 && f.holdingsInGroup && f.entitiesInGroup;
+  }],
+  ["…and the group sits at the row's right end, All holdings then All entities", (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f || f.groupRight === null) return false;
+    return Math.abs(f.groupRight - f.rowRight) <= 2 && f.holdingsBeforeEntities;
+  }],
+];
+
+/**
+ * ── ALL SECURITIES IS FIRST, IS CALLED THAT, AND IS WHAT `/monitor` OPENS ON ──
+ *
+ *   *"Make this view as All Securities and make it first in portfolio monitor
+ *    and default open."*
+ *
+ * Three claims, none implying another: a build that renamed the button and left
+ * it last passes the first alone; one that moved it first and kept Category as
+ * the default passes the first two. The third is struck on the ADDRESS as well
+ * as on the control — the route walks the bare `/monitor`, and a default is
+ * only a default if the page lands on it with no `?group=` asking for it.
+ */
+const DEFAULT_AXIS = [
+  ["the axis control offers All Securities FIRST, under that name", (t, ctx) => {
+    const a = ctx?.axisButtons;
+    if (!a?.length) return false;
+    return a[0].key === "security" && a[0].label === "All Securities"
+      && a.map((b) => b.key).join(",") === "security,category,assetClass,basket";
+  }],
+  ["…and the bare /monitor opens on it — no ?group= in the address, and it is the one lit", (t, ctx) => {
+    const c = ctx?.axisControl, a = ctx?.axisButtons;
+    if (!c || !a?.length || !ctx?.url) return false;
+    const u = new URL(ctx.url);
+    const lit = a.filter((b) => b.selected);
+    return u.pathname === "/monitor" && !u.searchParams.has("group")
+      && c.view === "holdings" && c.active === "security"
+      && lit.length === 1 && lit[0].key === "security";
+  }],
+  /**
+   * …AND WHAT IT OPENS ON IS THE SECURITY TABLE, NOT A CATEGORY TABLE UNDER A
+   * RELABELLED BUTTON. The rest of this block asserts the table itself; this is
+   * the one line saying so outright, off the two things only that table draws.
+   */
+  ["…and the table it opens is the security table: no section headings, and the two derived columns", (t, ctx) => {
+    const secs = ctx?.sectionRows, notes = ctx?.colNotes;
+    if (!notes) return false;
+    return (secs?.length ?? 0) === 0 && notes.filter((n) => /derived/i.test(n.text)).length === 2;
+  }],
+  /**
+   * THE PICK-LIST, OPENED WHERE IT NOW SITS. Its panel is wider than its
+   * trigger, so at the row's right end a panel anchored to the trigger's LEFT
+   * edge opens past the page — the defect the return picker once had as the
+   * row's last control. Measured on this route alone, where the family opens it.
+   */
+  ["the opened holdings pick-list opens leftward and stays on screen", (t, ctx) => {
+    const d = ctx?.holdingsDropdown;
+    // MEASURED ON EXACTLY THE PASS THESE INVARIANTS RUN ON, so a null here
+    // means the trigger was not on the page — the control is gone, which is a
+    // finding and not a reason to abstain.
+    if (!d || !d.opened) return false;
+    return d.anchor === "right" && d.rightAligned === true && d.withinViewport === true;
+  }],
+];
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -9257,8 +9414,13 @@ const INVARIANTS = {
     }],
     ["…and the security axis is NOT offered here", (t, ctx) =>
       !!ctx.axisControl && !ctx.axisControl.offered.includes("security")],
-    ["…and it opens on Category, the default on both screens", (t, ctx) =>
+    // CATEGORY IS TRANSACTIONS' OWN DEFAULT, whatever the Holdings table is on:
+    // this route crosses from the bare `/monitor`, whose Holdings table now
+    // opens on All Securities — an axis Transactions does not have — so this is
+    // the fallback taken on the ordinary path rather than on an edge one.
+    ["…and it opens on Category, its own default, whatever Holdings is on", (t, ctx) =>
       !!ctx.axisControl && ctx.axisControl.active === "category"],
+    ...FILTER_ROW(false),
     /**
      * BOTH RECORDS ARE ON SCREEN, which is what the tabs used to make a reader
      * choose between. They are two measurements and must never share a footer —
@@ -9928,6 +10090,59 @@ const INVARIANTS = {
       }
       return a.note === null;
     }],
+  ],
+
+  /**
+   * ── A FUND PICKED ON ALL SECURITIES IS NAMED, NOT SWALLOWED ────────────────
+   *
+   * All Securities lists companies; a fund is one purchase of somebody else's
+   * portfolio, so it is not a row there. Before this view was the default that
+   * was a corner — reached only by `?group=security` — and picking a fund on it
+   * drew "No positions match your filters." over a footer of ₹0. As the default
+   * it is the ordinary case, and a family who know they hold the fund would read
+   * the table as having lost it.
+   *
+   * Five claims from one walk, and none implies another: the fund alone gets a
+   * sentence naming it; that table prints no ₹0 footer; a company picked beside
+   * it gets its row AND the fund keeps its sentence; and the one click the
+   * sentence offers lands on Category with the pick kept and the fund a row.
+   */
+  "monitor-pick-fund": [
+    ["a fund picked on All Securities is named, with why it is not a row", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!PICK_FUND_BOOK) return { notChecked: "the book holds no current holding that is not a company share" };
+      if (!pf?.fund) return false;       // the word found nothing — the pick-list lost the fund
+      const a = pf.alone;
+      if (!a?.notice) return false;
+      return a.notice.count === 1 && a.notice.text.includes(pf.fund)
+        && /not a company share/i.test(a.notice.text) && /All Securities/.test(a.notice.text)
+        && a.button && !a.genericEmpty;
+    }],
+    // AN EMPTY TABLE PRINTS NO TOTAL. A footer summed over nothing read
+    // "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero (§2).
+    ["…and the empty table under it prints no ₹0 footer", (t, ctx) => {
+      const a = ctx?.pickedFund?.alone;
+      if (!a) return false;
+      return a.rows === 0 && a.footer === false && !/₹0\b/.test(a.footerText);
+    }],
+    ["…and a company picked beside it gets its row, while the fund keeps its sentence", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!pf?.company) return { notChecked: "the table's first row gave no word to search for" };
+      const m = pf.mixed;
+      return !!m && m.rows >= 1 && m.footer === true && m.notice?.count === 1 && m.notice.text.includes(pf.fund);
+    }],
+    ["…and its one click shows the fund on Category, with the pick kept", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!pf?.fund || !ctx?.url) return false;
+      const u = new URL(ctx.url);
+      const word = PICK_FUND_BOOK.word.toLowerCase();
+      const rows = ctx?.tableRows ?? [];
+      return u.searchParams.get("group") === "category"
+        && ctx.axisControl?.active === "category"
+        && rows.some((r) => String(r.cells?.[0] ?? "").toLowerCase().includes(word));
+    }],
+    ["…and on Category the sentence is gone, because the fund is a row there", (t, ctx) =>
+      !!ctx?.pickedFund?.fund && !/not a company share, so (it is|they are) not/i.test(t)],
   ],
   "monitor-arrange": [
     ["clicking a money heading reorders the rows", (t, ctx) => {
@@ -14451,6 +14666,7 @@ const INVARIANTS = {
      * shared axis now — and the reason this is struck structurally did not
      * move with it.)
      */
+    ...FILTER_ROW(true),
     ["the removed Holdings basis switch and Review deck button stay removed",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -14678,25 +14894,25 @@ const INVARIANTS = {
     // book's duplicates are AIF holdings: in the by-entity view the AIF heading
     // summed ₹3.17 Cr that the (deduped) footer beneath it correctly did not.
     /**
-     * THE DEFAULT SLICE IS STILL CATEGORY, AND IS STILL THE ONE IT WAS.
+     * THE CATEGORY SLICE IS THE CATEGORY AXIS, AT ITS OWN ADDRESS.
      *
-     *   "Default view will remain the current one, category wise."
-     *
-     * Two new axes were added beside it, and the whole risk of that change is
-     * that the DEFAULT quietly becomes one of them — the page would render
-     * perfectly, every figure would be right, and the family would be looking
-     * at a different table from the one they asked to keep. So the plain
-     * `/monitor` walk (no `?group=`) asserts the axis it landed on, off the
+     * This read "the default slice is still the category axis", from the
+     * family's *"Default view will remain the current one, category wise."* They
+     * have since asked for All Securities first and open, so the default moved
+     * and is asserted where it now lives (`monitor-security`, the bare
+     * `/monitor`). What stays true HERE is that `?group=category` — the address
+     * this route walks, and the one every "carries this account in full" link
+     * points at — lands on the category table and nothing else, off the
      * heading's own attribute rather than its words.
      */
-    ["the default slice is still the category axis", (t, ctx) => {
+    ["the category address lands on the category axis", (t, ctx) => {
       const secs = ctx?.sectionRows;
       if (!secs?.length) return { notChecked: "no section headings were rendered on this run" };
       return secs.every((x) => x.axis === "category");
     }],
     // ...and the sections are the ones it has always drawn. A category axis that
     // started emitting a basket name would satisfy the check above.
-    ["the default slice draws the category sections and no family basket", (t, ctx) => {
+    ["the category slice draws the category sections and no family basket", (t, ctx) => {
       const secs = ctx?.sectionRows;
       if (!secs?.length) return { notChecked: "no section headings on this run" };
       const BASKETS = ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
@@ -15352,13 +15568,17 @@ const INVARIANTS = {
       return hasDerived === 2 && says;
     }],
 
-    ["the axis is offered as a fourth segment and is the one selected", (t, ctx) => {
+    // It was the FOURTH segment until the family asked for it first and open;
+    // the order, the name and the default are `DEFAULT_AXIS`'s, spread below.
+    ["the axis is offered beside the other three and is the one selected", (t, ctx) => {
       const axes = ctx?.axisButtons;
-      if (!axes?.length) return { notChecked: "the axis segments were not captured on this run" };
+      if (!axes?.length) return false;
       const want = ["category", "assetClass", "basket", "security"];
       return want.every((k) => axes.some((a) => a.key === k))
         && axes.find((a) => a.selected)?.key === "security";
     }],
+    ...DEFAULT_AXIS,
+    ...FILTER_ROW(true),
     /**
      * "AIF ITSELF SHOULDN'T SHOW UP AS A SECURITY." Struck on the fund NAMES the
      * book carries, every one of them, rather than on a count: a table that
@@ -18241,7 +18461,8 @@ for (const theme of THEMES) {
         }
       }
       /**
-       * A HOLDING OPENED ON THE DEFAULT (CATEGORY) AXIS.
+       * A HOLDING OPENED ON THE CATEGORY AXIS (`?group=category` — it was the
+       * default when this walk was written; All Securities is now).
        *
        * Picks the row held through the MOST accounts, chosen off the DOM rather
        * than named here — the same rule as `data-days` and `data-tranche-rows`:
@@ -18604,6 +18825,51 @@ for (const theme of THEMES) {
         await back.fill("");
         await back.type(REVIEW_GAP_BOOK.name, { delay: 5 });
         await page.waitForTimeout(250);
+      }
+      /**
+       * A FUND PICKED ON ALL SECURITIES — the default view since the family
+       * asked for it first — then a company beside it, then the one click the
+       * table offers. Picked by TYPING a word of the book's largest fund and
+       * taking the option that comes back, as a reader does; the company is the
+       * table's own first row, read off the page before anything is picked.
+       */
+      if (name === "monitor-pick-fund" && PICK_FUND_BOOK) {
+        const box = page.locator("[data-multiselect='All holdings']");
+        const pick = async (q) => {
+          await box.locator("[data-multiselect-toggle]").click();
+          const input = box.locator("input").first();
+          await input.fill("");
+          await input.type(q, { delay: 5 });
+          await page.waitForTimeout(250);
+          const opt = box.locator("[data-option]").first();
+          const got = (await opt.count()) ? await opt.getAttribute("data-option") : null;
+          if (got) await opt.dispatchEvent("mousedown");
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(700);
+          return got;
+        };
+        const state = () => page.evaluate(() => {
+          const table = document.querySelector("table[data-monitor-table='holdings']");
+          const n = document.querySelector("[data-picked-not-rows]");
+          return {
+            notice: n ? { count: Number(n.getAttribute("data-picked-not-rows")), text: (n.innerText ?? "").replace(/\s+/g, " ").trim() } : null,
+            rows: table ? table.querySelectorAll("tbody tr[data-security-key]").length : null,
+            footer: !!table?.querySelector("[data-footer-total]"),
+            footerText: (table?.querySelector("tfoot")?.innerText ?? "").replace(/\s+/g, " ").trim(),
+            genericEmpty: /No positions match your filters/i.test(table?.innerText ?? ""),
+            button: !!document.querySelector("[data-show-on-category]"),
+          };
+        });
+        const firstRow = await page.evaluate(() =>
+          document.querySelector("table[data-monitor-table='holdings'] tbody tr[data-security-key] td")?.innerText?.trim() ?? null);
+        const companyWord = (firstRow ?? "").split(/[^A-Za-z]+/).find((w) => w.length >= 6) ?? null;
+        const fund = await pick(PICK_FUND_BOOK.word);
+        const alone = await state();
+        const company = companyWord ? await pick(companyWord) : null;
+        const mixed = company ? await state() : null;
+        const btn = page.locator("[data-show-on-category]").first();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(1200); }
+        PICKED_FUND = { fund, company, alone, mixed };
       }
       if (name === "monitor-arrange") {
         const tb = page.locator("main table").first();
@@ -19884,7 +20150,45 @@ for (const theme of THEMES) {
         [...document.querySelectorAll("[data-group-axis]")].map((b) => ({
           key: b.getAttribute("data-group-axis"),
           selected: b.getAttribute("aria-selected") === "true",
+          // THE WORDS ON THE BUTTON, for the one claim that is about a label:
+          // *"Make this view as All Securities"*. Every other claim reads the key.
+          label: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
         })));
+      /**
+       * ── THE FILTER ROW'S ORDER AND ITS RIGHT END, MEASURED ─────────────────
+       *
+       *   *"put the all holding and all entities selectors to the right end of
+       *    after return selector"*
+       *
+       * Two claims, and NEITHER IS VISIBLE IN THE PAGE TEXT: the row renders the
+       * same words whichever end the selectors sit at. So the order is read off
+       * the row's own children (by handle, never by label) and the right end off
+       * the boxes — the group's right edge must be the row's.
+       */
+      const filterRow = FAST ? null : await page.evaluate(() => {
+        const row = document.querySelector("[data-monitor-filter-row]");
+        if (!row) return null;
+        const kind = (el) => el.matches("[data-axis-control]") ? "axis"
+          : el.matches("[data-return-measures]") ? "return"
+          : el.matches("[data-monitor-filters-right]") ? "right"
+          : el.matches("[data-tree-expand-all]") || el.querySelector("[data-tree-expand-all]") ? "expand" : "other";
+        const box = (el) => (el ? el.getBoundingClientRect() : null);
+        const right = row.querySelector("[data-monitor-filters-right]");
+        const holdings = right?.querySelector("[data-multiselect='All holdings']") ?? null;
+        const entities = right?.querySelector("[data-entity-filter]") ?? null;
+        const r = box(row), g = box(right), h = box(holdings), e = box(entities);
+        return {
+          order: [...row.children].map(kind),
+          // Anywhere in the row, so a selector drawn OUTSIDE the right-hand
+          // group — back at the head of the row — is counted, not missed.
+          holdingsInRow: row.querySelectorAll("[data-multiselect='All holdings']").length,
+          entitiesInRow: row.querySelectorAll("[data-entity-filter]").length,
+          holdingsInGroup: !!holdings, entitiesInGroup: !!entities,
+          rowRight: r.right,
+          groupRight: g ? g.right : null,
+          holdingsBeforeEntities: !!h && !!e && h.right <= e.left + 1 && h.top < e.bottom && e.top < h.bottom,
+        };
+      });
       /**
        * ── THE AXIS CONTROL AS A WHOLE, not as a bag of buttons ───────────────
        *
@@ -21171,6 +21475,35 @@ for (const theme of THEMES) {
         }
       }
       /**
+       * THE HOLDINGS PICK-LIST, OPENED AT THE ROW'S RIGHT END. Same shape as the
+       * return dropdown above and for the same reason: its panel is wider than
+       * its trigger, and at the right end of the row a panel anchored to the
+       * trigger's LEFT edge opens past the page. Measured after `mainText`, and
+       * closed again, so its option list never reaches a text check.
+       */
+      if (!FAST && name === "monitor-security" && theme === THEMES[0] && width === WIDTHS[0]) {
+        const trig = page.locator("[data-multiselect-toggle='All holdings']").first();
+        if (await trig.count()) {
+          await trig.click();
+          await page.waitForTimeout(150);
+          HOLDINGS_DROPDOWN = await page.evaluate(() => {
+            const trigger = document.querySelector("[data-multiselect-toggle='All holdings']");
+            const panel = document.querySelector("[data-multiselect='All holdings'] [data-multiselect-panel]");
+            if (!trigger || !panel) return { opened: false };
+            const t = trigger.getBoundingClientRect();
+            const l = panel.getBoundingClientRect();
+            return {
+              opened: true,
+              anchor: panel.getAttribute("data-multiselect-panel"),
+              rightAligned: Math.abs(l.right - t.right) <= 2,
+              withinViewport: l.left >= -1 && l.right <= window.innerWidth + 1,
+            };
+          });
+          await page.keyboard.press("Escape").catch(() => {});
+          await page.waitForTimeout(60);
+        }
+      }
+      /**
        * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
        *
        * "Right now I cannot even see 2 companies completely, which is very
@@ -21550,7 +21883,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

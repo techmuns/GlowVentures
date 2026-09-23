@@ -425,7 +425,7 @@ export function MandateHoldings() {
             </p>
           )}
           <p className="mt-4 text-[12px] text-slate-500">
-            <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries this
+            <Link to="/monitor?group=category" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries this
             account in full.
           </p>
         </Card>

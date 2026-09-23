@@ -324,7 +324,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
           {p.coveragePct != null && <> — the AMC states its own coverage at <span className="mono">{p.coveragePct.toFixed(1)}%</span></>};
           {" "}the rest is what a monthly filing rounds and the cash it does not itemise.
         </>}
-        {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
+        {" "}<Link to="/monitor?group=category" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
         family&rsquo;s own holding of it.
       </p>
     </Card>

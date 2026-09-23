@@ -949,7 +949,7 @@ export function HoldingsBehind() {
               {names.size === 1 ? "name" : "names"}, held by {fmtNum(owners.size)} {owners.size === 1 ? "entity" : "entities"} in{" "}
               {fmtNum(accounts.size)} {accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own
               dates, so this total is a blend rather than one report date — {" "}
-              <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries every account in full.
+              <Link to="/monitor?group=category" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries every account in full.
             </p>
           </Card>
 

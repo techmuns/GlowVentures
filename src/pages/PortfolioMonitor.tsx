@@ -579,19 +579,28 @@ export function PortfolioMonitor() {
    * view flag beside it, so a slice can be bookmarked and shared — the family
    * asked for three ways to read one table, and "send me the basket view" has
    * to be a link rather than an instruction.
+   *
+   * THE PARAM-FREE DEFAULT IS ALL SECURITIES, because it is first in
+   * `MONITOR_GROUP_VIEWS` — *"make it first in portfolio monitor and default
+   * open"*. The category view this page used to open on is
+   * `/monitor?group=category` now.
    */
   const [groupAxis, setGroupAxisParam] = useViewParam(MONITOR_GROUP_VIEWS, {}, "group");
   /**
    * THE ALLOCATION AXIS — what the Transactions table sections on, and what the
    * shared section filter offers.
    *
-   * `?group=security` is the Holdings table's own fourth axis and is not an
+   * The security axis is the Holdings table's own fourth axis and is not an
    * allocation axis at all: it files every holding in ONE section so a table
-   * built on it would draw a single heading over everything. A reader who has
-   * sliced the holdings that way and crosses to Transactions therefore lands on
-   * CATEGORY, the default on both screens, rather than on a table with no
-   * sections — and the axis control up there offers three, so the fallback is
-   * visible rather than silent.
+   * built on it would draw a single heading over everything. A reader on it
+   * who crosses to Transactions therefore lands on CATEGORY — Morning CIO's
+   * default and this table's — rather than on a table with no sections, and the
+   * axis control up there offers three, so the fallback is visible rather than
+   * silent.
+   *
+   * SINCE ALL SECURITIES BECAME THE HOLDINGS DEFAULT, THIS IS THE ORDINARY
+   * CASE rather than an edge one: a reader who opens `/monitor` and clicks
+   * Transactions without touching the axis takes exactly this path.
    */
   const txnAxis: GroupAxis = groupAxis === SECURITY_AXIS ? "category" : groupAxis;
   /** What the axis control lights up: the raw param on Holdings, the resolved one on Transactions. */
@@ -639,7 +648,8 @@ export function PortfolioMonitor() {
    *
    * The section filter is shared now, which is the point — a reader who has
    * narrowed the holdings to AIF sees the AIF transactions. But the two views
-   * resolve `?group=security` DIFFERENTLY: Holdings sections on it, Transactions
+   * resolve the SECURITY axis DIFFERENTLY — and it is the Holdings default now,
+   * at `/monitor` with no `?group=` at all: Holdings sections on it, Transactions
    * falls back to Category (see `txnAxis`). So on that one axis, switching view
    * changes which key the filter is testing, and a key carried across matches no
    * row and empties the table with no message — on a page that renders
@@ -848,6 +858,27 @@ export function PortfolioMonitor() {
     }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
   }, [positions, bySecurity, exposure]);
+  /**
+   * ── A PICKED HOLDING THIS AXIS DOES NOT DRAW AS A ROW, NAMED ───────────────
+   *
+   * The pick-list offers every holding on every axis — a reader searches the
+   * book, not the view — but on All Securities only a COMPANY SHARE is a row: a
+   * fund is one purchase of somebody else's portfolio, and its money is in the
+   * fold under the table (Stage 10aj). So picking "Sanshi Fund-I" there drew an
+   * empty table over a footer of ₹0 — a family who KNOW they hold it being told
+   * nothing matched, which is the BSE search's defect one control over.
+   *
+   * It became the ordinary case rather than an edge one when All Securities
+   * became the default view, so the table now says which picked holdings are not
+   * rows here and why, and offers the one click that shows them: Category, where
+   * every holding is a row. The selection is kept across that click.
+   */
+  const pickedNotRows = useMemo(() => {
+    if (!bySecurity || selected.size === 0) return [] as string[];
+    const names = new Set<string>();
+    for (const p of positions) if (selected.has(p.security) && !isCompanyShare(p)) names.add(p.security);
+    return [...names];
+  }, [bySecurity, selected, positions]);
   // Lets the sector filter reach the Transactions tape, which carries no sector of its own.
   const sectorByKey = useMemo(() => {
     const m = new Map<string, string>();
@@ -2364,28 +2395,23 @@ export function PortfolioMonitor() {
         empty space more efficiently" actually costs: nothing but the chrome's own
         generosity.
       */}
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        {/* A SEARCH THAT FINDS NOTHING SAYS WHY, WHERE THE BOOK KNOWS. The family
-            searched this control for BSE and were shown "No holdings match" — and
-            BSE Ltd. IS theirs: 40,000 shares on their own consolidated review,
-            reported by no statement in `source/`, so the book is right to carry
-            nothing and the screen was wrong to say nothing. `AbsentFromBook`
-            renders only where a review line answers the search, and never a
-            figure: the review is a cross-check, not a source. */}
-        <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense
-          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full"
-          emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />
-        <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-          {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
-        </select>
+      <div className="mb-2 flex flex-wrap items-center gap-1.5" data-monitor-filter-row>
         {/* Categories, not asset classes: "PMS mandates" is a bucket rather than
             a class (§5 — a mandate is a relationship), and it is the choice a
             reader of this table is actually making. */}
         {/*
-          THE THREE SLICES. "Default view will remain the current one, category
-          wise" — so Category is first, and `useViewParam` makes the first view
-          the param-free default, which is the same mechanism every other view
-          on this page uses rather than a second convention.
+          THE FOUR SLICES, ALL SECURITIES FIRST. *"Make this view as All
+          Securities and make it first in portfolio monitor and default open."*
+          `useViewParam` makes the first view the param-free default, which is
+          the same mechanism every other view on this page uses rather than a
+          second convention — so moving the segment to the front IS making it the
+          default, and `/monitor` opens on one row per security. Category held
+          that place until this request ("Default view will remain the current
+          one, category wise") and is `?group=category` now.
+
+          It is FIRST ON THE ROW as well as first in the control: the two
+          selectors that narrow the table moved to the right end (see below), so
+          the axis is the first thing a reader meets.
 
           It sits on the FILTER row and not beside the title: the Holdings /
           Transactions switch up there names WHAT you are looking at, and this
@@ -2443,12 +2469,47 @@ export function PortfolioMonitor() {
           <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
         )}
         {/* EXPAND ALL — the standard's one control for every row the table can
-            open. At the END of the filter row, because it acts on the table
-            rather than narrowing it; absent on the security axis, where
+            open. Beside the return picker, with the other controls that arrange
+            the table rather than narrow it; absent on the security axis, where
             `expandableKeys` is empty by design (see its note). */}
         {view === "holdings" && expandableKeys.length > 0 && (
           <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />
         )}
+        {/*
+          ── THE TWO SELECTORS THAT NARROW THE TABLE, AT THE RIGHT END ─────────
+
+            *"put the all holding and all entities selectors to the right end of
+             after return selector"*
+
+          The row reads left to right as HOW the table is arranged — the axis,
+          which return, Expand all — and then, at the far end, WHICH ROWS are on
+          it. `ml-auto` sits on the GROUP rather than on each control, so the two
+          travel together: where the row wraps they drop to the next line as a
+          pair and stay right-aligned there, instead of one of them starting a
+          line on its own at the left.
+
+          THE PICK-LIST'S PANEL OPENS LEFTWARD NOW (`align="right"`). As the
+          first control on the row a panel anchored to its left edge opened into
+          the row; at the right end the same panel would open past the page's
+          edge — the defect the return picker already had once as the row's last
+          control, fixed the same way.
+        */}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5" data-monitor-filters-right>
+          {/* A SEARCH THAT FINDS NOTHING SAYS WHY, WHERE THE BOOK KNOWS. The family
+              searched this control for BSE and were shown "No holdings match" — and
+              BSE Ltd. IS theirs: 40,000 shares on their own consolidated review,
+              reported by no statement in `source/`, so the book is right to carry
+              nothing and the screen was wrong to say nothing. `AbsentFromBook`
+              renders only where a review line answers the search, and never a
+              figure: the review is a cross-check, not a source. */}
+          <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense align="right"
+            allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full"
+            emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />
+          <select value={entity} onChange={(e) => setEntity(e.target.value)} data-entity-filter
+            className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
+            {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
+          </select>
+        </div>
       </div>
 
       {/*
@@ -3380,8 +3441,39 @@ export function PortfolioMonitor() {
                   </Fragment>
                   );
                 })}
-                {rows.length === 0 && <tr><td colSpan={COL_COUNT} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
+                {/* A PICKED HOLDING THIS AXIS DOES NOT DRAW — see `pickedNotRows`.
+                    It stands in for the generic empty line where it explains the
+                    whole of an empty table, and sits under the company rows where
+                    the reader picked both kinds, so a fund picked beside a share
+                    is never dropped from the table without a word. */}
+                {pickedNotRows.length > 0 && (
+                  <tr data-picked-not-rows={pickedNotRows.length}>
+                    {/* The cell spans every column of a table wider than the
+                        screen, so its text is pinned to the left of the scroll
+                        area (`sticky`) — centred over the whole table, the
+                        button that fixes it sat past the visible edge. */}
+                    <td colSpan={COL_COUNT} className={`px-3 ${rows.length === 0 ? "py-10" : "py-3"}`}>
+                      <div className="sticky left-3 max-w-[44rem] text-sm leading-relaxed text-slate-400">
+                        <span className="text-slate-200">
+                          {pickedNotRows.length === 1 ? pickedNotRows[0]
+                            : `${pickedNotRows.length} of the holdings you picked`}
+                        </span>
+                        {" "}{pickedNotRows.length === 1 ? "is not a company share, so it is not a row" : "are not company shares, so they are not rows"} on
+                        All Securities, which lists companies whichever vehicle holds them.{" "}
+                        <button type="button" data-show-on-category onClick={() => setGroupAxis("category")}
+                          className="font-medium text-champagne-400 hover:underline ring-focus">
+                          Show {pickedNotRows.length === 1 ? "it" : "them"} on Category
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {rows.length === 0 && pickedNotRows.length === 0 && <tr><td colSpan={COL_COUNT} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
+              {/* NO FOOTER OVER NO ROWS. Summed over an empty table it printed
+                  "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero
+                  (§2) — the line above already says why the table is empty. */}
+              {rows.length > 0 && (
               <tfoot className="sticky bottom-0 bg-ink-800">
                 {/* `data-footer-total` is the handle the sweep adds the category
                     totals up against. Read by COLUMN rather than by cell: this
@@ -3593,6 +3685,7 @@ export function PortfolioMonitor() {
                     ),
                   }} />
               </tfoot>
+              )}
             </table>
           </div>
           {/* The cost-coverage caption that stood here — "Invested and Unrealised

@@ -592,6 +592,42 @@ check("the Transactions tab still renders", /transaction/i.test(text));
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 
+// ── THE MONITOR OPENS ON ALL SECURITIES, AND CATEGORY IS ONE CLICK AWAY ─────
+//
+//   *"Make this view as All Securities and make it first in portfolio monitor
+//    and default open."*
+//
+// Driven, because the claim is about what a click DOES: the default is
+// param-free like every other view in this app, so choosing Category must put
+// `?group=category` in the address and choosing All Securities must take it
+// away again. Read off the buttons' own keys, never their prose.
+{
+  const axes = await page.$$eval("[data-group-axis]", (bs) => bs.map((b) => ({
+    key: b.getAttribute("data-group-axis"), label: (b.textContent || "").trim(), on: b.getAttribute("aria-selected") === "true" })));
+  check("the Portfolio Monitor offers All Securities first, and opens on it",
+    axes[0]?.key === "security" && axes[0]?.label === "All Securities" && axes[0]?.on === true
+      && axes.filter((a) => a.on).length === 1 && !new URL(page.url()).searchParams.has("group"),
+    axes.map((a) => `${a.label}${a.on ? "*" : ""}`).join(" · "));
+  const cat = page.locator("button[data-group-axis='category']").first();
+  if (await cat.count()) { await cat.click(); await page.waitForTimeout(800); }
+  const catUrl = new URL(page.url());
+  check("…clicking Category puts ?group=category in the address and draws the section tabs",
+    catUrl.searchParams.get("group") === "category" && (await page.locator("[data-section-filter]").count()) > 0,
+    catUrl.search || "(no query)");
+  const all = page.locator("button[data-group-axis='security']").first();
+  if (await all.count()) { await all.click(); await page.waitForTimeout(800); }
+  const backUrl = new URL(page.url());
+  check("…and clicking All Securities takes the param away again",
+    backUrl.pathname === "/monitor" && !backUrl.searchParams.has("group"), backUrl.search || "(no query)");
+}
+
+// THE CATEGORY TABLE IS `?group=category` NOW. Everything below was written
+// against it — its section tabs, its mandate rows — and is reached by its own
+// address, so a failure in the clicks above cannot leave it walking a table
+// that has neither.
+await page.goto(`${BASE}/monitor?group=category`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+
 // Read the TABS off the DOM. The categories were a `<select>` until the family
 // asked for them as tabs — "give tabs to me to click and quickly reach instead
 // of a dropdown" — so each is a button carrying its section key, read by its
