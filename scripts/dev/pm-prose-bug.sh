@@ -57,8 +57,11 @@ sweep() {
   THEMES=light SHOTS=0 ONLY="$1" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | grep -Ev "$QUIET" | sed 's/^/   /'
 }
 
+# `CASES="name|name"` re-runs only the cases whose name contains one of them —
+# the control always runs, so a re-run is never read against a stale baseline.
 run_case() {
   local routes="$1" name="$2"; shift 2
+  if [ -n "${CASES:-}" ] && ! printf '%s' "$name" | grep -qiE "$CASES"; then return; fi
   echo ""
   echo "════════ BUG: $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; put_back; return; fi
@@ -92,9 +95,9 @@ run_case "$PM_ROUTES" "a card subtitle comes back" sub $P \
   '<Card className="mt-5" pad={false} title={active.cardTitle} subtitle="One row per fund, each holding counted once. Click a row to see each family member'"'"'s folio in the same columns."'
 
 run_case "private-market,private-market-tiles" "the Marks span line comes back" sub $P \
-  '<SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />' \
+  '<SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />' \
   '<p className="mb-4 text-[11.5px] text-slate-500">Marks span 30 Jun 2026 → 31 Jul 2026. Each fund is valued on its own statement'"'"'s date, shown on every row below.</p>
-      <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />'
+      <SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />'
 
 run_case "private-market,private-market-transactions" "the sides line comes back" sub $P \
   '{/* THE DROP-DOWN "How the capital totals are worked out" AND THE LINE' \
@@ -124,6 +127,10 @@ run_case "private-market-transactions" "the Transactions band's sentence comes b
 
 run_case "private-market-returns" "a return-column count is a visible line again" sub $P \
   'coverage={meta?.note}>' 'note={meta?.note}>'
+
+run_case "private-market-transactions" "the Transactions tab's hover promises the removed windows again" sub $P \
+  'title: "Every capital call the funds have made, newest first.",' \
+  'title: "What can still be called, and every capital call the funds have made.",'
 
 # ── RE-HOMED FACTS GOING MISSING ────────────────────────────────────────────
 run_case "private-market" "the working leaves the Still to call total's hover" sub $P \

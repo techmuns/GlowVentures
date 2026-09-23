@@ -16533,8 +16533,14 @@ const INVARIANTS = {
       if (!Array.isArray(buckets)) return { notChecked: "the call-bucket probe did not run" };
       const tile = pmMoney(ctx?.tileStrip?.texts?.uncalled);
       if (!Number.isFinite(tile) || !CAPITAL_BOOK) return false;
+      // …AND IN A HOVER. The Transactions tab's own `title` went on reading
+      // "What can still be called, and every capital call…" for eleven stages
+      // after the rows it named were removed — a claim `t` cannot see, since a
+      // `title` is not in `innerText`. So the words are struck on the hovers too.
+      const hovers = (ctx?.titles ?? []).join("\n");
       return buckets.length === 0
         && !/What can still be called/i.test(t)
+        && !/What can still be called/i.test(hovers)
         && !/Next (?:1|3|6) months?/i.test(t)
         && !/Promised, no date/i.test(t)
         && !/Nothing scheduled/i.test(t)

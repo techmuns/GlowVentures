@@ -102,7 +102,7 @@ const CALL_COLUMN_TITLE = "Upcoming capital calls, entered by the family and sav
  */
 const callKeyOf = (fundKey: string, securityKey: string | null) =>
   securityKey ?? fundKey.replace(/^account:/, "fund-");
-/** The Transactions tab: what can still be called, then every dated call. */
+/** The Transactions tab: every dated call, newest first. */
 const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 
 // PRIVATE MARKET — the private book this drop actually carries, as ONE table.
@@ -133,7 +133,7 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 //                 into its folios IN THE SAME COLUMNS — the standard in
 //                 `src/components/TreeTable.tsx`.
 //   By owner      the same folios grouped by family member, as printed.
-//   Transactions  what can still be called, and every dated call.
+//   Transactions  every dated call, newest first.
 //
 // and two sections inside the first two: the private funds with a value
 // (open), and the private accounts with NO value (closed, marked "missing
@@ -206,7 +206,7 @@ const BOOK_VIEWS = [
   },
   {
     key: "transactions", label: "Transactions",
-    title: "What can still be called, and every capital call the funds have made.",
+    title: "Every capital call the funds have made, newest first.",
     cardTitle: "Private market — capital calls",
   },
 ] as const;
