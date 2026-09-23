@@ -490,8 +490,8 @@ export function capitalMovesWithCalls(
   const valuedAt = new Map(accounts.map((a) => [a.accountId, a.asOf ?? null]));
   const out = [...moves];
   for (const c of commitments) {
-    if (recorded.has(c.accountId)) continue;
-    for (const call of c.calls ?? []) {
+    const hasRecord = recorded.has(c.accountId);
+    for (const call of hasRecord ? [] : c.calls ?? []) {
       if (!call.date || !(call.amount > 0)) continue;
       out.push({
         accountId: c.accountId, date: call.date, direction: "in",
@@ -527,12 +527,38 @@ export function capitalMovesWithCalls(
     if (!asOf || c.payouts == null) continue;
     for (const r of c.payouts) {
       if (!r.date || r.date > asOf || !(Math.abs(r.gross) > 0)) continue;
+      /**
+       * ── A FUND WITH A CAPITAL RECORD OF ITS OWN KEEPS ITS PAYOUTS TOO ─────
+       *
+       * Since Stage 10ca Neo Infra's own unit record is a capital record here —
+       * its six drawdowns and the ₹14.16 L capital redemption, which is what
+       * FIFO needs to carry the cost of the units still held — so it stopped
+       * being a call-derived row, and "one record per account" then dropped
+       * every payout it had published: its income and equalisation reached no
+       * column, its split was refused, and its XIRR fell out of step with the
+       * Private Market page's. A unit record lists what bought and redeemed
+       * UNITS and nothing else, so it cannot double a distribution. The one
+       * payout it does carry is the principal: that is TYPED on the record's own
+       * row (same date, same amount) rather than added a second time, and a
+       * principal payout the record does not show is left to the record, which
+       * is the authority on units.
+       */
+      if (hasRecord) {
+        const dir = r.gross > 0 ? "out" : "in";
+        const same = out.findIndex((m) => m.accountId === c.accountId && !m.fromCall && m.payoutKind == null
+          && m.direction === dir && m.date === r.date && m.amount != null && Math.abs(m.amount - Math.abs(r.gross)) <= 1);
+        if (same >= 0) { out[same] = { ...out[same], payoutKind: r.kind }; continue; }
+        if (r.kind === "capital") continue;
+      }
       out.push({
         accountId: c.accountId, date: r.date, direction: r.gross > 0 ? "out" : "in",
         label: r.label || (r.kind === "capital" ? "Principal returned" : r.kind === "income" ? "Income distributed" : "Equalisation"),
         amount: Math.abs(r.gross),
         invested: null, units: null, security: null, securityKey: null,
-        fromCall: true, payoutKind: r.kind,
+        // A payout beside a capital RECORD is not a call and is not marked as
+        // one: `fromCall` is what says a row's purchases came from the fund's
+        // call list, and a recorded account's purchases never do.
+        ...(hasRecord ? {} : { fromCall: true as const }), payoutKind: r.kind,
       });
     }
   }

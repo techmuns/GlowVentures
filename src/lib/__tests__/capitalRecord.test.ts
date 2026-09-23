@@ -182,10 +182,16 @@ console.log("\n── dated, typed payouts ──");
 {
   const s = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
   const recs = fundDatedRecords(s.dedupedRows, BOOK_COMMITMENTS, accountIndex(BOOK_ACCOUNTS), String, String);
-  const withPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0
-    && !BOOK_CAPITAL_MOVES.some((m) => m.accountId === c.accountId));
+  const withPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0);
+  const recorded = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId));
   ok("the book carries a fund with dated payouts and no capital record (LOAD-BEARING)",
-    withPayouts.length > 0, withPayouts.map((c) => c.accountId).join(", "));
+    withPayouts.some((c) => !recorded.has(c.accountId)), withPayouts.map((c) => c.accountId).join(", "));
+  // …AND ONE WITH A CAPITAL RECORD OF ITS OWN. Since Stage 10ca Neo Infra's unit
+  // record is in `BOOK_CAPITAL_MOVES` (FIFO needs it), and "one record per
+  // account" then dropped every payout it published. Both kinds are held to the
+  // same checks below, so the record cannot quietly lose the income again.
+  ok("…and one whose own unit record is a capital record, which keeps its payouts (LOAD-BEARING)",
+    withPayouts.some((c) => recorded.has(c.accountId)), withPayouts.map((c) => c.accountId).join(", "));
   for (const c of withPayouts) {
     const g = byId.get(c.accountId);
     const asOf = BOOK_ACCOUNTS.find((x) => x.accountId === c.accountId)?.asOf ?? "";
@@ -214,9 +220,19 @@ console.log("\n── dated, typed payouts ──");
       ours.shown ? (ours as { pct: number }).pct : null, theirs, 0.01);
   }
   const neo = byId.get("neo-infra-income-opportunities-fund-9039920536");
-  ok("Neo Infra returned principal, so its unrealised is NOT the Holdings page's (statement cost = whole call)",
+  ok("Neo Infra returned principal, so its unrealised is struck on the purchase less that principal, not on the whole call",
     !!neo && neo.unrealised != null && Math.abs(neo.unrealised - ((neo.value ?? 0) - 50_000_000)) > 1_000_000,
     neo ? `${cr(neo.unrealised)} vs ${cr((neo.value ?? 0) - 50_000_000)}` : "missing");
+  // …WHICH IS NOW THE HOLDINGS PAGE'S OWN FIGURE. Before Stage 10ca the Holdings
+  // page printed the statement's cost — the whole ₹5 Cr called — so the two
+  // read ₹14.16 L apart. FIFO carries the cost of the units still held, which
+  // is the purchase less the principal redeemed, so the two pages now agree by
+  // a second path: the book's own positions, not this module.
+  const neoHeld = BOOK_POSITIONS.filter((p) => p.accountId === neo?.accountId && !(p.quantity === 0 && p.marketValue === 0));
+  near("…which is the Holdings page's unrealised P&L now that FIFO carries the cost of the units held", neo?.unrealised,
+    neoHeld.reduce((t, p) => t + p.marketValue - (p.costBasis ?? NaN), 0));
+  ok("…and its income and equalisation are realised on the card, as the fund typed them", !!neo && neo.realised != null && neo.realised > 0,
+    neo ? cr(neo.realised) : "missing");
   near("committed is the fund's printed commitment", neo?.committed, 50_000_000);
 }
 
