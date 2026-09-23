@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["corporate actions & dividends", "src/lib/__tests__/corporateActions.test.ts"],
+  ["corporate-action feed", "src/lib/__tests__/corporateActionsFunction.test.ts"],
   ["family arithmetic", "src/lib/__tests__/familyMath.test.ts"],
   ["financial tables", "src/lib/__tests__/financialTables.test.ts"],
   ["cash flow & calendar", "src/lib/__tests__/yfinStatements.test.ts"],
@@ -29,6 +31,7 @@ const SUITES = [
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
   ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
+  ["tile-layout store", "src/lib/__tests__/tileSets.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
   ["transaction sections", "src/lib/__tests__/txnAxis.test.ts"],
@@ -40,11 +43,15 @@ const SUITES = [
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
   ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
+  ["NAV benchmarks", "src/lib/__tests__/benchmarks.test.ts"],
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
+  ["capital record", "src/lib/__tests__/capitalRecord.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
+  ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["held through", "src/lib/__tests__/heldThrough.test.ts"],
+  ["security names", "src/lib/__tests__/securityNames.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],

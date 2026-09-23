@@ -18,6 +18,7 @@ import { UploadHistory } from "@/pages/UploadHistory";
 import { DataAudit } from "@/pages/DataAudit";
 import { LedgerInsights } from "@/pages/LedgerInsights";
 import { StockInfo } from "@/pages/StockInfo";
+import { CorporateActions } from "@/pages/CorporateActions";
 import { MandateHoldings } from "@/pages/MandateHoldings";
 import { HoldingsBehind } from "@/pages/HoldingsBehind";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -102,6 +103,7 @@ export default function App() {
                 no ISIN at all, so a route keyed on one would have no address for
                 most of the holdings. */}
             <Route path="/stock/:securityKey" element={<Gate><StockRoute /></Gate>} />
+            <Route path="/corporate-actions" element={<Gate><CorporateActions /></Gate>} />
             {/* ONE DISCRETIONARY MANDATE AND EVERY SHARE INSIDE IT — the
                 drill-down the family asked for three times. A stock held through
                 a PMS is shown here, under the manager who chose it, which is

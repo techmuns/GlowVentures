@@ -32,10 +32,11 @@ import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   currentHoldings, dedupedPositions, holdingRoute, isCompanyShare, isFundVehicle, sum,
 } from "@/lib/analytics";
+import { fifoTotals } from "@/lib/fifo";
 import {
   fundLinesFor, heldRouteOf, heldThrough, measuredTotals, HELD_ROUTES,
 } from "@/lib/heldThrough";
-import { familyValue, loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { bookIsinBridge, familyValue, heldFundVehicles, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
 
 let fails = 0;
@@ -59,30 +60,18 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 };
 (import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
 
-// ── the look-through's three inputs, exactly as `useStockExposure` builds them ──
+// ── the look-through's inputs, through the SAME helpers `useStockExposure` calls ──
+// `heldFundVehicles` and `bookIsinBridge` are shared with the page precisely so
+// a suite cannot exercise a join the screen does not make (see their own notes).
 const consolidated = dedupedPositions(BOOK_POSITIONS);
-const vehicles = (() => {
-  const m = new Map<string, HeldFund>();
-  for (const p of currentHoldings(consolidated)) {
-    if (!isFundVehicle(p)) continue;
-    const e = m.get(p.securityKey)
-      ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
-    e.marketValue += p.marketValue;
-    m.set(p.securityKey, e);
-  }
-  return [...m.values()];
-})();
-const isinToBookKey = new Map<string, string>();
-for (const p of consolidated) {
-  if (!isCompanyShare(p) || !p.isin) continue;
-  const k = p.isin.trim().toUpperCase();
-  if (k && !isinToBookKey.has(k)) isinToBookKey.set(k, p.securityKey);
-}
+const vehicles = heldFundVehicles(consolidated);
+const isinToBookKey = bookIsinBridge(consolidated).index;
+const bookCompanyKeys = new Set(consolidated.filter(isCompanyShare).map((p) => p.securityKey));
 const fenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
 };
-const state: StockExposureState = await loadStockExposure(vehicles, isinToBookKey, fenced);
+const state: StockExposureState = await loadStockExposure(vehicles, isinToBookKey, fenced, bookCompanyKeys);
 ok("the committed store answers", state.status === "ok", state.status);
 if (state.status !== "ok") process.exit(1);
 const ex = state;
@@ -230,6 +219,18 @@ console.log("\n── the average cost is over the units that HAVE one ──");
     }
   }
   ok("avg cost × the units that report a cost = the cost, on every company", avgFails.length === 0, avgFails.slice(0, 5).join(", "));
+  // THE RETURN IS FIFO OVER THE COSTED ROWS — the figure the page's tiles print,
+  // struck once in the model. Re-struck here through `fifoTotals` directly, over
+  // the costed rows picked out by this suite rather than by the model.
+  const retFails: string[] = [];
+  for (const key of companyKeys) {
+    const rows = dedupedPositions(rowsOf(key));
+    const t = measuredTotals(rowsOf(key));
+    const costed = rows.filter((p) => p.costBasis != null && !p.costUnavailable);
+    const want = t.cost !== null && t.pnl !== null && t.cost > 0 ? fifoTotals(costed).returnPct : null;
+    if (!(want === null ? t.costedReturn === null : near(t.costedReturn, want, 1e-9))) retFails.push(key);
+  }
+  ok("the return is FIFO over the rows that report a cost, on every company", retFails.length === 0, retFails.slice(0, 5).join(", "));
   ok("…and the partly-costed case exists, so the guard is load-bearing", partial.length > 0, partial.join(", "));
   const icici = partial.find((k) => rowsOf(k).some((p) => /icici bank/i.test(p.security)));
   if (icici) {

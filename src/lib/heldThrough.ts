@@ -51,6 +51,7 @@ import {
   dedupedPositions, currentHoldings, costCoversSet, holdingRoute, sum, sumOrNull, type HoldingRoute,
 } from "./analytics";
 import { familyValue, type FundExposureRow, type FundExposureSkip, type StockExposureState } from "./lookthrough";
+import { fifoTotals, type FifoTotals } from "./fifo";
 
 export type HeldRoute = "direct" | "manager" | "fund" | "other";
 
@@ -219,12 +220,13 @@ export function fundLinesFor(
  * what both mandate rows print. Measured over the whole book, ICICI Bank is
  * the one holding where a cost is reported on some statements and not others.
  *
- * AND A RETURN IS STRUCK ONLY WHERE THE COST COVERS THE ROW. `costCoversSet` is
- * the one rule Morning CIO and the Portfolio Monitor already share: where the
- * costed rows are not essentially the whole set, a return on cost sits beside
- * a value it does not describe — ₹94.2 L invested against ₹2.88 Cr current,
- * with −0.5% between them. Each account's own return is on its own row, and a
- * tab whose rows are all costed (the PMS managers, here) still carries one.
+ * AND THE RETURN IS FIFO, OVER THE ROWS THAT REPORT A COST — `fifoTotals`,
+ * the unrealised gain on what is held plus the realised gain on units already
+ * sold, over the capital behind both. It is struck HERE, once, so the tiles
+ * above the table and every footer under it print one figure; the page used
+ * to strike its own beside this. Where the costed rows are not the whole set
+ * (`covers` is false) the return is still theirs — the set Invested and the
+ * average cost are struck on too — and the Total row says so in words.
  */
 export type MeasuredTotals = {
   /** Statement rows in the set, as printed. */
@@ -243,8 +245,10 @@ export type MeasuredTotals = {
   pnl: number | null;
   /** `cost ÷ costedQty`, never `cost ÷ qty`. */
   avgCost: number | null;
-  /** The return on the costed rows — which is also the whole set's only where it `covers`. */
+  /** FIFO over the costed rows: `fifo.returnPct` where a cost and a P&L are reported, else null. */
   costedReturn: number | null;
+  /** The FIFO totals behind `costedReturn`, for the words that explain it (`fifoBasisNote`). */
+  fifo: FifoTotals;
   /** Whether the costed rows are essentially the whole set (`costCoversSet`). */
   covers: boolean;
 };
@@ -252,6 +256,8 @@ export type MeasuredTotals = {
 export function measuredTotals(rows: readonly Position[]): MeasuredTotals {
   const d = dedupedPositions([...rows]);
   const costed = d.filter((p) => p.costBasis != null);
+  // FIFO's own "costed": a cost the statement marks unusable is not one.
+  const fifo = fifoTotals(costed.filter((p) => !p.costUnavailable));
   const cost = sumOrNull(d.map((p) => p.costBasis));
   const pnl = sumOrNull(d.map((p) => p.unrealizedPnL));
   const costedQty = sum(costed.map((p) => p.quantity));
@@ -267,7 +273,8 @@ export function measuredTotals(rows: readonly Position[]): MeasuredTotals {
     uncostedMV,
     pnl,
     avgCost: cost !== null && costedQty > 0 ? cost / costedQty : null,
-    costedReturn: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+    costedReturn: cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null,
+    fifo,
     covers: costCoversSet(mv, uncostedMV),
   };
 }

@@ -39,9 +39,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { BOOK_POSITIONS, BOOK_POLYCAB, BOOK_SUMMARY } from "@/data/glowData";
-import { dedupedPositions, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
-import { loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { NEGLIGIBLE_VALUE_FLOOR, dedupedPositions, droppedHoldings, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
+import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import { securityKeyOf } from "@/lib/securityKey";
+import { securityLabel } from "@/lib/securityLabel";
+import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
+import NSE_SYMBOLS from "@/data/nseSymbols.json";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -78,28 +81,34 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 
 const ded = dedupedPositions(BOOK_POSITIONS);
 const stocks = ded.filter(isCompanyShare);
-const vehicles = (() => {
-  const m = new Map<string, HeldFund>();
-  for (const p of ded) {
-    if (!isFundVehicle(p)) continue;
-    const e = m.get(p.securityKey)
-      ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
-    e.marketValue += p.marketValue;
-    m.set(p.securityKey, e);
-  }
-  return [...m.values()];
-})();
-const isinToBookKey = new Map<string, string>();
-for (const p of stocks) {
-  const i = (p.isin ?? "").trim().toUpperCase();
-  if (i && !isinToBookKey.has(i)) isinToBookKey.set(i, p.securityKey);
-}
+/**
+ * THE SAME FUNDS THE PAGE LOADS — `heldFundVehicles`, shared with
+ * `useStockExposure` for the reason `bookIsinBridge` is below. This used to be
+ * every fund vehicle in the deduped book, redeemed ones included, and that is a
+ * different JOIN rather than a larger set of the same one: a redeemed fund's
+ * filing is still read when the issuer prefixes are decided, and HDFC Small Cap
+ * — redeemed to nil — files City Union's share. So here City Union's
+ * certificates of deposit joined the book's company by that share's ISIN, while
+ * the page, which loads today's funds only, needed the issuer seed. The bug pass
+ * switched the seed off and the page failed while this suite passed.
+ */
+const vehicles = heldFundVehicles(ded);
+/**
+ * THE SAME INDEX THE PAGE BUILDS — `bookIsinBridge` is shared with
+ * `useStockExposure` precisely so this suite cannot exercise a join the screen
+ * does not make. It used to build its own out of the statements' ISINs alone,
+ * which is how the listing tier's absence went unnoticed: every company held
+ * only through a mandate joined to nothing, and this suite agreed.
+ */
+const bridge = bookIsinBridge(ded);
+const isinToBookKey = bridge.index;
+const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
 const ringFenced = {
   keys: new Set(BOOK_POLYCAB.map((p) => p.securityKey)),
   isins: new Set(BOOK_POLYCAB.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean)),
 };
 
-const state: StockExposureState = await loadStockExposure(vehicles, isinToBookKey, ringFenced);
+const state: StockExposureState = await loadStockExposure(vehicles, isinToBookKey, ringFenced, bookCompanyKeys);
 ok("the committed store answers", state.status === "ok", state.status);
 if (state.status !== "ok") process.exit(1);
 const ex = state;
@@ -107,7 +116,17 @@ const ex = state;
 console.log("\n── the partition: every rupee of the book in exactly one bucket ──");
 const measured = sum(stocks.map((p) => p.marketValue));
 const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash;
+/**
+ * THE ₹1,000 FLOOR, AS A TERM OF ITS OWN. The funds are today's holdings
+ * (`heldFundVehicles`), so the fund rows `currentHoldings` leaves out are in no
+ * bucket above: the redeemed ones at a measured ₹0, and the specks under the
+ * floor. Stated rather than absorbed into the tolerance — the treatment
+ * `negligibleFloor.test.ts` gives the same rows — and bounded below, so a floor
+ * that grew into a policy on real money fails instead of reconciling.
+ */
+const floorOut = droppedHoldings(ded.filter(isFundVehicle));
+const floored = sum([...floorOut.closed, ...floorOut.negligible].map((p) => p.marketValue));
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash + floored;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -118,7 +137,11 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ca
  */
 near("the five buckets rebuild the book's own NAV, to the rupee", buckets, BOOK_SUMMARY.totalValue, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+ok("...where the floor's term is specks and redeemed nils, never money",
+  floorOut.closed.every((p) => p.marketValue === 0)
+    && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
+  `₹${floored.toFixed(2)} across ${floorOut.negligible.length} speck row(s) and ${floorOut.closed.length} redeemed`);
 ok("...and the table covers less than the book, which is why the statement is owed",
   measured + ex.total < BOOK_SUMMARY.totalValue * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_SUMMARY.totalValue)}`);
@@ -236,7 +259,7 @@ ok("...nor by the name an AMC files it under",
  * where no scheme discloses it and would go on passing after the guard was
  * deleted, which is `golden.mjs`'s rule about a test with no input.
  */
-const unfenced = await loadStockExposure(vehicles, isinToBookKey);
+const unfenced = await loadStockExposure(vehicles, isinToBookKey, undefined, bookCompanyKeys);
 ok("...and dropping the fence really would put it back",
   unfenced.status === "ok" && [...unfenced.byKey.values()].some((e) => /polycab/i.test(e.name)),
   "so the guard above is exercised, not merely present");
@@ -273,6 +296,158 @@ const bridged = [...ex.byKey.entries()].filter(([k, e]) =>
   && securityKeyOf(e.name) !== k);
 ok("companies joined to a book row ONLY because of their ISIN", bridged.length > 0,
   `${bridged.length}, e.g. ${bridged.slice(0, 3).map(([k]) => k).join(", ")}`);
+
+console.log("\n── the listing supplies the ISIN a mandate's statement does not print ──");
+/**
+ * A PMS statement prints no ISIN, so a company held only through a mandate —
+ * Jammu & Kashmir Bank, LIC, Great Eastern Shipping — joined to no fund's line
+ * and stood twice. The listing's ISIN is read off the two committed maps the
+ * quote feed already prices by. Re-derived here from those maps directly, not
+ * from `bookIsinBridge`'s own output, so the two can disagree.
+ */
+const SYM = NSE_SYMBOLS as Record<string, string>;
+let listed = 0;
+const listingWrong: string[] = [];
+for (const k of bookCompanyKeys) {
+  const inst = SYM[k] ? UPSTOX_INSTRUMENTS[SYM[k]] : undefined;
+  if (!inst || !inst.key.startsWith("NSE_EQ|")) continue;
+  const isin = inst.key.slice(7).toUpperCase();
+  const owner = isinToBookKey.get(isin);
+  if (owner === k) listed++;
+  else listingWrong.push(`${k} → ${isin} is ${owner ?? "unmapped"}`);
+}
+ok("every book company whose symbol has a listing is reachable by that listing's ISIN",
+  listingWrong.length === 0, listingWrong.length ? listingWrong.slice(0, 3).join("; ") : `${listed} companies`);
+ok("...the listing ISIN is where most of them come from — no statement printed it",
+  bridge.fromListing > 0, `${bridge.fromListing} from the listing, ${isinToBookKey.size - bridge.fromListing} from the statements`);
+eq("...and no listing ISIN was refused for belonging to another book key", bridge.refused, []);
+
+console.log("\n── one company, one row, however its paper is named ──");
+/**
+ * THE FAMILY'S OWN COMPLAINT, struck on the whole index: no row a fund reaches
+ * may stand apart from a company the BOOK holds when either identifier or name
+ * says they are one. Two witnesses, neither implying the other: the issuer
+ * prefix of an ISIN the book carries, and the issuer NAME the filings give.
+ */
+const bookPrefixes = new Map<string, Set<string>>();
+for (const [isin, k] of isinToBookKey) {
+  if (!isin.startsWith("INE")) continue;
+  (bookPrefixes.get(issuerOf(isin)) ?? bookPrefixes.set(issuerOf(isin), new Set()).get(issuerOf(isin))!).add(k);
+}
+const apart: string[] = [];
+for (const e of ex.byKey.values()) {
+  if (bookCompanyKeys.has(e.key)) continue;
+  const byName = issuerKeyOf(e.name);
+  if (bookCompanyKeys.has(byName)) apart.push(`${e.name} [${e.key}] is named as book ${byName}`);
+  for (const r of e.rows) for (const i of r.instruments) {
+    const owners = i.isin ? bookPrefixes.get(issuerOf(i.isin)) : undefined;
+    if (owners?.size === 1) apart.push(`${i.name} [${e.key}] is issued by book ${[...owners][0]}`);
+  }
+}
+ok("no fund row stands apart from a company the book holds", apart.length === 0,
+  apart.length ? apart.slice(0, 3).join("; ") : `${[...ex.byKey.keys()].filter((k) => bookCompanyKeys.has(k)).length} book companies carry a fund row`);
+/**
+ * An issuer the family reaches ONLY through its debt, and holds as a share.
+ * Karur Vysya's certificates of deposit are `INE036D16…` and the book's share
+ * `INE036D01028`; no fund here files the share, so those CDs were a row of their
+ * own under a maturity date.
+ *
+ * THIS IS NOT THE ISSUER SEED'S TEST, and it cannot be. Karur Vysya and Punjab
+ * National Bank are reached by the seed AND by their NAME, now that
+ * `issuerNameOf` takes the maturity off and `KEY_ALIASES` gives the book the
+ * full name's key — so with the seed switched off this stays green on them.
+ * The one issuer on this book only the seed can reach is City Union: held under
+ * the depository's clipped `CITY UNION -EQ RE1/`, its CDs filed as `City Union
+ * Bank Ltd.`. Switched off, that is caught by the check above — its CDs are
+ * issued by a book company and stand apart from it — and, independently of this
+ * store, by the constructed case in `securityNames.test.ts`, section 5.
+ */
+const debtOnlyBook = [...ex.byKey.values()].filter((e) => bookCompanyKeys.has(e.key)
+  && e.rows.every((r) => r.instruments.every((i) => !!i.isin && !isinToBookKey.has(i.isin))));
+ok("the book's own issuer carries a company whose funds hold only its paper", debtOnlyBook.length > 0,
+  debtOnlyBook.slice(0, 3).map((e) => `${e.key} (${e.classes.join("/")})`).join(", "));
+/**
+ * A ROW IS NAMED BY ITS ISSUER, NEVER BY ONE OF ITS INSTRUMENTS. A coupon, a
+ * bracketed maturity, a `MAT` code or a filer's footnote mark on a row's name
+ * is the instrument talking — and it is what made one company two options.
+ */
+const instrumenty = [...ex.byKey.values()].filter((e) =>
+  /\d%|\(\d{1,2}\/\d{1,2}\/\d{2,4}\)|\bMAT\s*\d{6}|[*#^$@~]\s*$/i.test(e.name));
+ok("no row is named by an instrument", instrumenty.length === 0,
+  instrumenty.length ? instrumenty.slice(0, 3).map((e) => e.name).join("; ") : `${ex.byKey.size} rows`);
+/**
+ * AND EVERY ROW'S NAME IS WRITTEN AS A NAME. 142 of the store's lines are
+ * printed entirely in capitals and a handful carry a filer's lowercase slip
+ * (`Himachal pradesh`, `SBI funds Management ltd.`); none may reach a row. A
+ * brand that opens small and capitalises inside its first word (`eClerx`) is
+ * the one exception, and it is the filer's spelling rather than a slip.
+ */
+const allNames = [...ex.byKey.values()].map((e) => e.name)
+  .concat(rowsAll.flatMap((r) => r.instruments.map((i) => i.name)));
+// SHOUTING IS TWO WORDS OR MORE IN CAPITALS. A single word in capitals is an
+// acronym BY CONSTRUCTION — `displaySecurity` title-cases any capitalised word
+// it does not list as one — and `NABARD` is what that institution is called.
+const shouting = (n: string) => !/[a-z]/.test(n) && (n.match(/\b[A-Z]{2,}\b/g)?.length ?? 0) >= 2;
+const shoutedNames = allNames.filter(shouting);
+ok("no row or instrument name is printed all in capitals", shoutedNames.length === 0, shoutedNames.slice(0, 3).join("; "));
+const smallNames = allNames.filter((n) => /^[a-z]/.test(n) && !/^[a-z]+[A-Z]/.test(n));
+ok("...none opens in lower case", smallNames.length === 0, smallNames.slice(0, 3).join("; "));
+const LOWER_OK = new Set(["of", "and", "the", "or", "for", "in", "on", "at", "to", "by", "with", "under"]);
+const slips = allNames.filter((n) => n.split(/\s+/).slice(1).some((t) => /^[a-z]+[.,)]*$/.test(t) && !LOWER_OK.has(t.replace(/[^a-z]/g, ""))));
+ok("...and none carries a word the filer forgot to capitalise", slips.length === 0, slips.slice(0, 3).join("; "));
+ok("...while the instruments under a row keep what names them",
+  rowsAll.some((r) => r.instruments.some((i) => /\d%|\d{1,2}\/\d{1,2}\/\d{2,4}|\bMat\b/i.test(i.name))),
+  "a coupon and a maturity ARE the instrument's name");
+ok("...and no instrument carries a footnote mark whose legend this store does not hold",
+  rowsAll.every((r) => r.instruments.every((i) => !/[*#^$@~]\s*$/.test(i.name))));
+/**
+ * GOVERNMENT PAPER IS ONE ISSUER. 177 lines and not one ISIN, so nothing but
+ * the name can group them — `GOI`, `Government of India` and every treasury
+ * bill are the Government of India by definition, and the row says so in the
+ * words another filing printed.
+ */
+const goi = ex.byKey.get("government-of-india");
+ok("the Government of India is one row", !!goi,
+  goi ? `${goi.rows.length} funds, ${goi.rows.reduce((a, r) => a + r.instruments.length, 0)} instruments` : "missing");
+ok("...named as its filings name it", goi?.name === "Government of India", goi?.name ?? "");
+const strayGov = [...ex.byKey.values()].filter((e) => e.key !== "government-of-india"
+  && e.rows.some((r) => r.instruments.some((i) => /\b(?:GOI|T-?\s?BILLS?|TBILLS?|TREASURY\s+BILLS?)\b|^Government of India\b/i.test(i.name))));
+ok("...and no GOI line or treasury bill stands anywhere else", strayGov.length === 0,
+  strayGov.map((e) => e.key).join(", "));
+ok("`Government Securities` stays its own row — it does not say which government",
+  !goi?.rows.some((r) => r.instruments.some((i) => /^Government Securities$/i.test(i.name))));
+/**
+ * A COMPANY WITH TWO ISSUER CODES IS JOINED ONLY WHERE THE FILINGS NAME IT ONE.
+ * Every key spanning more than one prefix must be one the filings' own issuer
+ * names state — `Aditya Birla Capital` for Aditya Birla Finance's legacy NCDs.
+ */
+const multiPrefix = [...ex.byKey.values()].filter((e) =>
+  new Set(e.rows.flatMap((r) => r.instruments.filter((i) => i.isin).map((i) => issuerOf(i.isin!)))).size > 1);
+const unsupported = multiPrefix.filter((e) => !e.rows.every((r) => r.instruments.every((i) =>
+  (i.isin && isinToBookKey.get(i.isin) === e.key) || issuerKeyOf(i.name) === e.key
+  || (i.isin && bookPrefixes.get(issuerOf(i.isin))?.has(e.key)))));
+ok("every key spanning two issuer codes is one company by its filings' own names",
+  unsupported.length === 0,
+  `${multiPrefix.map((e) => e.key).join(", ")}${unsupported.length ? ` — unsupported: ${unsupported.map((e) => e.key).join(", ")}` : ""}`);
+/**
+ * AND THE LISTING TIER IS DOING WORK. Built from the statements' ISINs alone,
+ * the same store must split at least one company the book holds into a book row
+ * and a fund row — or this section passes on a book with nothing to bridge.
+ */
+const statementOnly = new Map<string, string>();
+for (const p of stocks) { const i = (p.isin ?? "").trim().toUpperCase(); if (i && !statementOnly.has(i)) statementOnly.set(i, p.securityKey); }
+const bare = await loadStockExposure(vehicles, statementOnly, ringFenced, bookCompanyKeys);
+const lostWithout = bare.status === "ok"
+  ? [...ex.byKey.keys()].filter((k) => bookCompanyKeys.has(k) && !bare.byKey.has(k)) : [];
+ok("...without the listing's ISIN, companies the book holds lose their fund rows", lostWithout.length > 0,
+  `${lostWithout.length}, e.g. ${lostWithout.slice(0, 4).join(", ")}`);
+/**
+ * THE NAME A READER SEES FOR A BOOK COMPANY IS THE BOOK'S. `securityLabel` is
+ * what every page renders; the index's own name for that key is a fund's.
+ */
+ok("a company held in the book carries one label on every surface",
+  [...bookCompanyKeys].every((k) => securityLabel(k, "x") === securityLabel(k, "y")));
+console.log(`     row names are issuer names: e.g. ${[...ex.byKey.values()].slice(0, 3).map((e) => issuerNameOf(e.name)).join("; ")}`);
 
 console.log("\n── what it cannot see is counted, not claimed ──");
 const aif = ex.skipped.filter((s) => /^an AIF files/.test(s.reason));
