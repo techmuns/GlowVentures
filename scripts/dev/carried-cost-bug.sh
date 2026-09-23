@@ -3,7 +3,7 @@
 #
 # Buoyant moved both family folios from Class A1 into Class A4 and its
 # statements restate the cost at the switch-day NAV; the book carries what was
-# PAID through the switch (Stage 10bu). Each bug below is applied on its own,
+# PAID through the switch (Stage 10bv). Each bug below is applied on its own,
 # rebuilt, run against the check that should catch it, and restored — the
 # discipline `txn-merge-bug.sh` and `polycab-bug.sh` already follow, and for the
 # same reasons, which are not repeated at length here:
