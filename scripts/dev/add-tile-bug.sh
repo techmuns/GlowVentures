@@ -308,6 +308,8 @@ open(p,'w').write(s.replace(old,'return { ok: false, reason: REASONS.notConfigur
 EOF
 
 # ── THE CHECKER'S FIFO EXPECTATION, PROVED TO BITE ───────────────────────────
+# Since #92 the checker is main's own `PM_RETURN_BOOK` (Stage 10cj); these two
+# cases prove it still bites on this change's tree.
 
 # 21 ── a fund row's HPR back to value ÷ cost held (the pre-FIFO figure)
 run_case "a fund's HPR is value against cost held again" "$RETURNS" py <<'EOF'

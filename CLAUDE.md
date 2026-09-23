@@ -21032,13 +21032,17 @@ and was clean.
 | 18 | the header note stops naming the cause | the cell-and-header check, on both switched-off routes |
 | 19 | *(suite)* the steps name a binding the function does not read | `enteredCalls.test.ts`, exit 1 |
 | 20 | *(suite)* a store nobody connected reads as a generic error | `enteredCalls.test.ts`, exit 1 |
-| 21 | the page's fund HPR back to value ÷ cost held | both HPR checks on `private-market-returns` — which the stale checker would have passed |
+| 21 | the page's fund HPR back to value ÷ cost held | three checks on `private-market-returns`: both HPR checks, and the HPR footer |
 | 22 | a fund's dated calls held to the cost of the units still held | four checks across two routes: the methodology, the XIRR column, the payouts, the XIRR footer |
 
-**AND THE PASS WAS RUN THREE TIMES, BECAUSE MAIN MOVED UNDER IT.** All 22 cases
+**AND THE PASS WAS RUN FOUR TIMES, BECAUSE MAIN MOVED UNDER IT.** All 22 cases
 fired on each merged tree in turn — the one with #82 (`46a3716`), the one
-with #78 (`538f4d3`), and the one with #87 and #89 (`d8391fc`) — with a clean
-control first each time. The table is the last run.
+with #78 (`538f4d3`), the one with #87 and #89 (`d8391fc`), and the one with
+#92 (`49db719`), which carries #90 too — with a clean control first each time.
+The table is the last run. On that tree, cases 21 and 22 ran against MAIN's
+checker rather than this change's, which is what section 3 claims of them.
+#92's own `pm-fifo-bug.sh` was re-run there as well: a clean control, then all
+eight cases fired, each on the same checks #92's table records.
 
 **THE ESCAPE CASE FIRST FAILED THE WRONG CHECK, AND THE WALK WAS THE DEFECT.**
 With Escape broken, the click-and-add claim failed as well as the Escape one:
@@ -21058,39 +21062,28 @@ verification runs beside it.
 
 #### The verification
 
+Every result below is from the tree that ships: this change merged with #92
+(main `f55b19b`), and each was run again there rather than carried across.
+
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
 neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (46 suites,
 2,472 checks, 0 failed — `enteredCalls.test.ts` among them) · `check:family`
-**84/2, both of them main's — see below** · `check:pages` **248 combinations
-clean, 0 invariant failures** · `npm run build-book` regenerates `glowData.ts`
-and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY: a tile strip and a column that
-cannot save move no figure in the book. CI and Cloudflare Pages are green on
-the final merge commit, `d8391fc`.
+**89/0** · `check:pages` **248 combinations clean, 0 invariant failures** ·
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY: a tile strip and a column that cannot save move no figure in
+the book. CI (`build`) and Cloudflare Pages are green on the final commit.
 
-**THE SWEEP RECONCILES WITH STAGE 10cf'S OWN, AND THAT IS THE STALE CHECKER
-GOING.** Stage 10cf recorded 246 combinations with three findings, all main's.
-This change adds one route, `private-market-calls-signedout`, in both themes —
-248 — and the three findings are gone, because they were section 3's checker.
-The ten invariants not checked are all pre-existing claims with no subject on
-this book: six KPI-tile lines across the Morning CIO routes (every tile carries
-a figure), two Private Market cost lines (every private holding reports a
-cost), one redeemed-account line on `private-market-folios` and one crumb on
-`holdings-unknown`. None is this change's.
+**THE SWEEP RECONCILES WITH #92's OWN.** Stage 10cj records 246 combinations
+clean on main; this change adds one route, `private-market-calls-signedout`, in
+both themes — 248. The ten invariants not checked are the ten #92's sweep
+carries, read out of the log by route: six KPI-tile lines across the Morning
+CIO routes (every tile carries a figure), two Private Market cost lines (every
+private holding reports a cost), one redeemed-account line on
+`private-market-folios` and one crumb on `holdings-unknown`. All are
+pre-existing claims with no subject on this book, and none is this change's.
 
-**`check:family` FAILS TWO ROWS, AND BOTH ARE MAIN'S.** *"…holding exactly the
-four pages the family named, in the order given"* and *"clicking Extras reveals
-all four page buttons"* were written for the Extras group Stage 10bc built. #84
-added a fifth page to it (`/corporate-actions`, "Corporate actions &
-dividends") and left the check at four. `src/lib/nav.ts`, `Sidebar.tsx` and
-`scripts/dev/check-family-inputs.mjs` are byte-identical to main's, so main
-fails the same two rows — Stage 10cf records them as main's too — and CI does
-not run this suite, which is why nothing stopped them. The fix is to add
-`/corporate-actions` to that script's three Extras lists in nav order — the two
-above and the loop that opens each page behind the dropdown — and it is named
-here rather than folded into a change about tiles and capital calls.
-
-#### Merged with main three times, and the letter moved three times
+#### Merged with main five times, and the letter moved five times
 
 This change was drafted as `10cb` against a main whose tile strip was Private
 Market's alone, with a `+` on the last tile. While its bug harness ran, **six
@@ -21171,6 +21164,34 @@ records the letter it held then. Two conflicts in `check-pages.mjs`, both unions
   duplicated, every one declared.
 
 #90 did not touch the tile strip, the Capital Call cells or their store.
+
+**AND THEN #92 TOOK `10cj`, SO THIS IS `10ck` — AND IT HAD FIXED THE SAME
+CHECKER.** It landed while this PR still waited, and both stages sat at the
+same place, so git marked the conflict. Main's keeps `10cj`; this section
+follows it. Every line naming `10cj` was placed by which side's own copy of its
+file carries it: 20 were this change's and moved with the heading (4 pointers in
+this file, 13 comments in `check-pages.mjs`, 2 in the bug harness, 1 in
+`Kpi.tsx`); main's 13 stayed; and one line of this section's history keeps
+`10cj`, because it records the letter it held then. The branch's fourteenth
+`10cj` comment in `check-pages.mjs` did not move — it went with the helper
+below.
+
+- **Three hunks in `check-pages.mjs`, all inside `PM_RETURN_BOOK`,** were the
+  two fixes of one checker meeting. Each was resolved by taking main's side, so
+  the block is main's byte for byte, and this change's own helper was deleted
+  rather than left beside it (section 3).
+- **The `ctx` literal came through with no marker,** because #92 added no
+  probe. It was read rather than trusted: 96 keys, none duplicated, the exact
+  union of both sides, every one declared.
+- **`PrivateMarket.tsx` merged without a marker too.** It differs from the
+  pre-merge branch only by #92's `aggHprNote`, and from main only by the
+  Capital Call column's heading, which names the cause in a word.
+- **`check:family` reads 89/0 now**, where every earlier run of this change read
+  84/2: #92 taught its Extras rows the fifth page (`/corporate-actions`) — the
+  fix this section used to name as main's to make.
+
+Both bug harnesses were re-run on the merged tree, each after a clean control —
+see the pass paragraph above.
 
 ### Stage 10k — News & Announcements: REMOVED
 
