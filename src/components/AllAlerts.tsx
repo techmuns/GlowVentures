@@ -5,6 +5,7 @@ import { Card } from "@/components/Card";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { AbsentCell } from "@/components/Absent";
 import { AlertStatusText, KIND_TONE, KindPill, distanceText, priceSource } from "@/components/AlertBits";
+import { ResearchSummaryText } from "@/components/ResearchStatus";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { currentHoldings } from "@/lib/analytics";
 import { fmtCurrency, fmtDateTime } from "@/lib/format";
@@ -200,7 +201,7 @@ export function AllAlerts() {
         </div>
       )}
       <p data-alert-feed={quotesStatus} className="border-t border-ink-700/70 px-5 py-3 text-[11px] leading-relaxed text-slate-500">
-        {feedLine} Alerts are saved in this browser only.
+        {feedLine} Alerts are saved in this browser.<ResearchSummaryText />
       </p>
     </Card>
   );

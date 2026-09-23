@@ -3,6 +3,7 @@ import { BOOK_POLYCAB } from "@/data/glowData";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { IndexStrip } from "@/components/IndexStrip";
+import { ResearchLevelSync } from "@/lib/useResearchSync";
 import { EmptyState } from "@/components/EmptyState";
 import { MorningCIO } from "@/pages/MorningCIO";
 import { Polycab } from "@/pages/Polycab";
@@ -84,6 +85,13 @@ export default function App() {
             them one at a time. That is the same scoping the Polycab absence check
             needed for the same reason. */}
         <IndexStrip />
+        {/* THE FAMILY'S PRICE LEVELS GO TO GLOW CENTRAL RESEARCH FROM HERE
+            (Stage 10cg) — mounted once in the shell rather than on a page, so a
+            level saved on any page is sent, a page load sends whatever did not
+            arrive last time, and a failed send is retried on its own. It draws
+            nothing; the alert card and the All alerts table say where each
+            level went. */}
+        <ResearchLevelSync />
         <main className="flex-1 overflow-y-auto px-6 py-6">
           <Routes>
             <Route path="/" element={<RootRedirect />} />

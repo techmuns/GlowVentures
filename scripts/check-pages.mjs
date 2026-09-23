@@ -3965,7 +3965,7 @@ const ROUTES = [
   ["cio-nav-bench", "/cio?tab=nav&bench=sensex"],
   ["cio-nav-bench-wrong", "/cio?tab=nav&bench=nifty-next-50"],
   /**
-   * ...AND THE FOURTH PANEL, THE FAMILY'S OWN PRICE ALERTS (Stage 10bz), walked
+   * ...AND THE FOURTH PANEL, THE FAMILY'S OWN PRICE ALERTS (Stage 10cg), walked
    * FOUR ways because an alert's whole claim depends on the state around it:
    *
    *   `cio-alerts`         seven alerts seeded (`ALERTS_BOOK`) with the live
@@ -5940,7 +5940,7 @@ async function installCallStoreOff(page) {
  *
  * *"Does these alerts actually work … in morning CIO can you make an ALL alerts
  * tab where … whenever the alerts which have been set are triggered they show
- * simply."* (Stage 10bz.)
+ * simply."* (Stage 10cg.)
  *
  * The store is the reader's own browser, so a walk that seeded nothing would
  * only ever see the empty state — and every claim worth making is about what a
@@ -6042,6 +6042,96 @@ async function installAlertStore(page) {
     try { localStorage.setItem(k, v); } catch { /* private mode — the route's own checks fail by name */ }
   }, [ALERT_STORE_KEY, JSON.stringify(ALERTS_BOOK.seed)]);
 }
+
+/**
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR ON EVERY WALK (Stage 10cg) ───────────
+ *
+ * *"when the user puts target price inside the dashboard, it should
+ * automatically also go to the Glow Central Research dashboard."* Every saved
+ * level is sent there, so a walk that seeded levels would POST them to the
+ * family's LIVE list from localhost. It must never: the host is routed to this
+ * stand-in on EVERY walk, whatever the walk is about, so nothing in the sweep can
+ * reach the real one.
+ *
+ * The stand-in follows the receiving side's own rules — set replaces, seed only
+ * where it has never heard of the company, clear is kept — and RECORDS what was
+ * asked, which is the claim a line on a card cannot make about itself: a footer
+ * reading "2 of 2 sent" is satisfied by a sender that sent the wrong ticker.
+ *
+ * `mode: "down"` answers 404, exactly as the live one does until its route is
+ * deployed — the NOT READY state, which must never read as an outage.
+ */
+const RESEARCH_HOST = /glow-central-research\.tech-441\.workers\.dev/;
+let RESEARCH_POSTS = [];
+async function installResearchMock(page, mode = "ok") {
+  const held = new Map();
+  RESEARCH_POSTS = [];
+  await page.route(RESEARCH_HOST, async (route) => {
+    const req = route.request();
+    const origin = req.headers()["origin"] ?? "*";
+    const cors = { "access-control-allow-origin": origin, vary: "origin" };
+    if (req.method() === "OPTIONS") {
+      return route.fulfill({ status: 204, headers: { ...cors, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" } });
+    }
+    let intents = null;
+    if (req.method() === "POST") {
+      try { intents = JSON.parse(req.postData() ?? "{}").intents ?? null; } catch { intents = null; }
+      RESEARCH_POSTS.push({ origin: req.headers()["origin"] ?? null, contentType: req.headers()["content-type"] ?? null, url: req.url(), intents });
+    }
+    if (mode === "down" || !/\/api\/price-levels$/.test(new URL(req.url()).pathname)) {
+      return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ error: "Not implemented" }) });
+    }
+    const names = ["buyAt", "sellAt", "stopLoss", "target", "alertAbove"];
+    const outcomes = (Array.isArray(intents) ? intents : []).map((i) => {
+      const had = held.get(i.ticker);
+      if (i.op === "clear") {
+        if (had?.state !== "set") return { ticker: i.ticker, op: "clear", outcome: "unchanged" };
+        held.set(i.ticker, { ...had, state: "cleared" });
+        return { ticker: i.ticker, op: "clear", outcome: "cleared" };
+      }
+      if (i.op === "seed" && had) return { ticker: i.ticker, op: "seed", outcome: "unchanged" };
+      const same = had?.state === "set" && names.every((n) => had.levels[n] === (i.levels?.[n] ?? null));
+      held.set(i.ticker, { state: "set", levels: { ...i.levels } });
+      return { ticker: i.ticker, op: i.op, outcome: i.op === "seed" ? "seeded" : same ? "unchanged" : "set" };
+    });
+    const companies = [...held.entries()].filter(([, h]) => h.state === "set").map(([ticker, h]) => ({
+      ticker, levels: Object.fromEntries(names.map((n) => [n, h.levels[n] == null ? null : { value: h.levels[n] }])),
+    }));
+    return route.fulfill({
+      status: 200, headers: { ...cors, "content-type": "application/json" },
+      body: JSON.stringify({ ok: true, outcomes, companies, count: companies.length, hits: [] }),
+    });
+  });
+}
+
+/**
+ * WHAT THE SEEDED ALERTS MUST SEND, re-expressed from the book rather than read
+ * off the sender: the two quoted shares go, each under its NSE symbol, with the
+ * ISIN of the instrument that symbol IS (Upstox's own map, then the book's), and
+ * their two levels under the names both apps use; the fund, the AIF and the
+ * name the book no longer holds have no symbol and stay here.
+ */
+const RESEARCH_BOOK = (() => {
+  if (!ALERTS_BOOK) return null;
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const wire = { entry: "buyAt", exit: "sellAt", below: "stopLoss", target: "target", above: "alertAbove" };
+    const send = [];
+    for (const key of ALERTS_BOOK.shares) {
+      const rows = positions.filter((p) => p.securityKey === key);
+      const ticker = rows.map((p) => p.symbol || symbols[p.securityKey] || null).find(Boolean) ?? symbols[key] ?? null;
+      const inst = UPSTOX_INSTRUMENTS[ticker]?.key;
+      const isin = inst?.startsWith("NSE_EQ|") ? inst.slice(7) : rows.map((p) => p.isin).find((i) => /^IN[A-Z0-9]{10}$/.test(i ?? "")) ?? null;
+      const levels = { buyAt: null, sellAt: null, stopLoss: null, target: null, alertAbove: null };
+      for (const a of ALERTS_BOOK.alerts.filter((x) => x.key === key)) levels[wire[a.kind]] = a.level;
+      send.push({ ticker, isin, levels });
+    }
+    const local = [ALERTS_BOOK.fund, ALERTS_BOOK.aif, ALERTS_BOOK.gone].length;
+    return send.every((x) => x.ticker) ? { send, local } : null;
+  } catch { return null; }
+})();
 
 async function installLiveMocks(page, opts = {}) {
   QUOTE_PRIORITY = null;
@@ -9831,7 +9921,7 @@ const CIO_NAV = [
  */
 const CIO_TAB_CONTROL = [
   /**
-   * FOUR SINCE Stage 10bz: *"in morning CIO can you make an ALL alerts tab."* It
+   * FOUR SINCE Stage 10cg: *"in morning CIO can you make an ALL alerts tab."* It
    * goes LAST, so the three the family arranged keep their places and the
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
@@ -10094,13 +10184,13 @@ function alertRowChecks(feedUp) {
       const p = panelOf(ctx);
       return !!p && p.rows.length > 0 && p.rows.every((r) => r.edit === `/stock/${encodeURIComponent(r.key)}#alerts`);
     }],
-    ["the note under the table says where the prices came from, and that alerts are kept in this browser", (t, ctx) => {
+    ["the note under the table says where the prices came from, and that alerts are saved in this browser", (t, ctx) => {
       if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
       const p = panelOf(ctx);
       if (!p) return false;
       return (feedUp ? p.feed === "live" && /live prices/i.test(p.feedText)
         : p.feed === "unavailable" && /not reaching/i.test(p.feedText))
-        && /published NAV/i.test(p.feedText) && /this browser only/i.test(p.feedText);
+        && /published NAV/i.test(p.feedText) && /saved in this browser/i.test(p.feedText);
     }],
   ];
 }
@@ -10127,6 +10217,7 @@ const CIO_ALERTS_NOFEED = [
   }],
 ];
 const CIO_ALERTS_EMPTY = [
+  ["with no alert set, nothing is sent to Glow Central Research", (t, ctx) => (ctx?.researchPosts ?? []).length === 0],
   ["with no alert set, the tab says so, offers the way to set one, and draws no table", (t, ctx) => {
     if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
     const p = ALERT_PROBE(ctx).panel;
@@ -10153,6 +10244,85 @@ const CIO_ALERTS_BADGE = [
     return fired > 0 && a.panel === null && a.badge === fired && a.badgeText === String(fired);
   }],
 ];
+
+/**
+ * ── WHAT WENT TO GLOW CENTRAL RESEARCH (Stage 10cg) ──────────────────────────
+ *
+ * *"when the user puts target price inside the dashboard, it should
+ * automatically also go to the Glow Central Research dashboard."*
+ *
+ * STRUCK ON WHAT WAS SENT, NOT ON WHAT THE FOOTER SAYS. The stand-in records
+ * every request, so the claims are: the two quoted shares went, under their NSE
+ * symbols, with the ISIN of the instrument each symbol is and exactly the
+ * levels the family set, under the names both apps use; they went as SEEDS,
+ * because they were in this browser before it ever sent anything, so they can
+ * never overwrite a level set on another device; nothing without a symbol went;
+ * and the request came from this page, as a cross-site JSON POST. Only then is
+ * the footer's count held to it — "2 of 2 sent" over a send of the wrong ticker
+ * would read perfectly.
+ *
+ * A FACTORY BY STATE. `ok` is the receiving side answering; `down` is it not
+ * deployed yet (404, as the live one answers until its route ships), where the
+ * same send must be ATTEMPTED and the footer must say it did not land and why —
+ * never "sent", and never an outage.
+ */
+function researchChecks(mode) {
+  const sentIntents = (ctx) => (ctx?.researchPosts ?? []).flatMap((p) => (Array.isArray(p.intents) ? p.intents : []));
+  const research = (ctx) => ALERT_PROBE(ctx)?.panel?.research ?? null;
+  return [
+    ["the listed shares' levels were sent to Glow Central Research — each under its symbol and ISIN, as seeds, with exactly the levels set", (t, ctx) => {
+      if (!RESEARCH_BOOK) return false;
+      const got = sentIntents(ctx).filter((i) => i.op !== "clear");
+      if (!got.length) return false;
+      const want = RESEARCH_BOOK.send;
+      const tickers = [...new Set(got.map((i) => i.ticker))].sort();
+      return JSON.stringify(tickers) === JSON.stringify(want.map((w) => w.ticker).sort())
+        && want.every((w) => got.filter((i) => i.ticker === w.ticker).every((i) =>
+          i.op === "seed" && i.isin === w.isin
+          && ["buyAt", "sellAt", "stopLoss", "target", "alertAbove"].every((n) => (i.levels?.[n] ?? null) === w.levels[n])));
+    }],
+    ["...from this page, as a cross-site JSON POST to Glow Central Research's own address", (t, ctx) => {
+      const posts = ctx?.researchPosts ?? [];
+      const here = new URL(BASE).origin;
+      return posts.length > 0 && posts.every((p) => p.origin === here && /^application\/json/.test(p.contentType ?? "")
+        && p.url === "https://glow-central-research.tech-441.workers.dev/api/price-levels");
+    }],
+    ["...and nothing without an NSE symbol was sent — the fund, the AIF and the former holding stay here", (t, ctx) => {
+      if (!RESEARCH_BOOK) return false;
+      const want = new Set(RESEARCH_BOOK.send.map((w) => w.ticker));
+      const got = sentIntents(ctx);
+      return got.length > 0 && got.every((i) => want.has(i.ticker));
+    }],
+    // THE WORDS ARE CHECKED AGAINST THE FOOTER'S OWN ATTRIBUTES. The two claims
+    // below read the attributes; a footer whose sentence said "2 of 2 sent" over
+    // attributes counting none would pass them both, and the sentence is what
+    // the family reads.
+    ["...and the footer's words say the count its own attributes carry — never 'sent' for what did not arrive", (t, ctx) => {
+      const r = research(ctx);
+      if (!r) return false;
+      const m = /(\d+) of (\d+) compan(?:y|ies) sent/.exec(r.text);
+      return !!m && Number(m[1]) === r.sent && Number(m[2]) === r.companies
+        && (r.waiting === 0 || new RegExp(`\\b${r.waiting} (?:sending|not sent yet)`).test(r.text));
+    }],
+    mode === "ok"
+      ? ["the table's footer counts what arrived, and names what stays here", (t, ctx) => {
+        const r = research(ctx);
+        if (!r || !RESEARCH_BOOK) return false;
+        const n = RESEARCH_BOOK.send.length;
+        return r.sent === n && r.companies === n && r.waiting === 0 && r.code === null && r.local === RESEARCH_BOOK.local
+          && new RegExp(`${n} of ${n} companies sent`).test(r.text) && /stay here only/.test(r.text)
+          && /Glow Central Research/.test(r.text);
+      }]
+      : ["with Glow Central Research not taking levels yet, the footer says none arrived, and why — never 'sent', never an outage", (t, ctx) => {
+        const r = research(ctx);
+        if (!r || !RESEARCH_BOOK) return false;
+        const n = RESEARCH_BOOK.send.length;
+        return r.sent === 0 && r.waiting === n && r.code === "not-ready"
+          && /not taking price levels yet/.test(r.text) && /automatically/.test(r.text)
+          && !/did not answer|could not save/.test(r.text);
+      }],
+  ];
+}
 
 /**
  * ── THE BENCHMARK CONTROL ───────────────────────────────────────────────────
@@ -13649,11 +13819,11 @@ const INVARIANTS = {
       return headingsWhole(st);
     }],
   ],
-  // THE ALERTS PANEL (Stage 10bz). `CIO_SHARED` and the tab control ride on all
+  // THE ALERTS PANEL (Stage 10cg). `CIO_SHARED` and the tab control ride on all
   // four, because the strip, the header and the control are on every panel and
   // a seeded store must not move any of them.
-  "cio-alerts": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_SEEDED],
-  "cio-alerts-nofeed": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_NOFEED],
+  "cio-alerts": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_SEEDED, ...researchChecks("ok")],
+  "cio-alerts-nofeed": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_NOFEED, ...researchChecks("down")],
   "cio-alerts-empty": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_EMPTY],
   "cio-alerts-badge": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_BADGE],
   /**
@@ -20721,6 +20891,11 @@ for (const theme of THEMES) {
       // care about (metrics fall back to system-ui) and takes the sweep from
       // minutes to seconds.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+      // GLOW CENTRAL RESEARCH IS STOOD IN FOR ON EVERY WALK, so no walk can post
+      // a level to the family's live list (Stage 10cg). The no-feed alerts walk
+      // gets the not-deployed answer: everything external is down on that walk.
+      const researchDown = name === "cio-alerts-nofeed";
+      await installResearchMock(page, researchDown ? "down" : "ok");
       // THE LIVE LAYER, ON THE ONE ROUTE THAT ASSERTS IT. Installed before the
       // navigation so the first render already has the feed; the plain `cio`
       // walk deliberately does NOT get them, because the absent states are
@@ -20752,7 +20927,12 @@ for (const theme of THEMES) {
       page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
       page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
       page.on("requestfailed", (r) => failed.push(`${r.url()} ${r.failure()?.errorText ?? ""}`));
-      page.on("response", (r) => { if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`); });
+      // The stand-in's 404 on the no-feed walk is the state that walk is ABOUT,
+      // so it is the one failed response not reported as a failure — on that
+      // walk only, and for that host only.
+      page.on("response", (r) => {
+        if (r.status() >= 400 && !(researchDown && RESEARCH_HOST.test(r.url()))) failed.push(`${r.status()} ${r.url()}`);
+      });
 
       /**
        * `networkidle` CANNOT BE REACHED WHILE A REQUEST IS DELIBERATELY HELD.
@@ -20766,6 +20946,19 @@ for (const theme of THEMES) {
       const settle = (name === "cio-loading" || name === "cio-index-loading" || name === "monitor-security-loading")
         ? "load" : (FAST ? "load" : "networkidle");
       await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
+      /**
+       * THE SEND TO GLOW CENTRAL RESEARCH RUNS A MOMENT AFTER THE PAGE SETTLES —
+       * the sender waits for a burst of edits to finish — so `networkidle` can
+       * resolve before it has started. The walks that seeded levels wait for the
+       * footer to say the send finished, one way or the other; a send that
+       * never finishes leaves the footer on "sending" and fails by name.
+       */
+      if (name === "cio-alerts" || name === "cio-alerts-nofeed") {
+        await page.waitForFunction(() => {
+          const s = document.querySelector("[data-research-summary]");
+          return !!s && (s.getAttribute("data-waiting") === "0" || !!s.getAttribute("data-code"));
+        }, null, { timeout: 15000 }).catch(() => {});
+      }
       if (name === "cio-cached") {
         /**
          * THE SECOND OPEN MUST NOT START FROM NOTHING.
@@ -22231,6 +22424,16 @@ for (const theme of THEMES) {
             add: !!sec.querySelector("[data-alert-add-input]"),
             feed: sec.querySelector("[data-alert-feed]")?.getAttribute("data-alert-feed") ?? null,
             feedText: sec.querySelector("[data-alert-feed]")?.textContent ?? "",
+            // WHERE THE LEVELS WENT — the footer's own count of what reached
+            // Glow Central Research, and the one reason any did not (Stage 10cg).
+            research: (() => {
+              const r = sec.querySelector("[data-research-summary]");
+              return r ? {
+                sent: num(r, "data-sent"), companies: num(r, "data-companies"), waiting: num(r, "data-waiting"),
+                declined: num(r, "data-declined"), local: num(r, "data-local"),
+                code: r.getAttribute("data-code") || null, text: (r.textContent ?? "").trim(),
+              } : null;
+            })(),
             summary: s ? {
               reached: num(s, "data-reached"), watching: num(s, "data-watching"), checking: num(s, "data-checking"),
               unchecked: num(s, "data-unchecked"), total: num(s, "data-total"), text: (s.textContent ?? "").trim(),
@@ -24922,7 +25125,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, alertsTab, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, alertsTab, researchPosts: [...RESEARCH_POSTS], path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
@@ -24930,6 +25133,15 @@ for (const theme of THEMES) {
       }
       if (SHOTS && width === WIDTHS[0]) {
         await page.screenshot({ path: `${OUT}/${theme}-${name}.png`, fullPage: true });
+      }
+      /**
+       * NOTHING IS SENT TO GLOW CENTRAL RESEARCH UNLESS A LEVEL WAS SET. Every
+       * other walk opens a browser with an empty store, so a single request from
+       * one of them is a sender that posts something nobody typed — struck on
+       * every route, every theme and every width, because it can happen on any.
+       */
+      if (!["cio-alerts", "cio-alerts-nofeed", "cio-alerts-badge"].includes(name) && RESEARCH_POSTS.length) {
+        failed.push(`${RESEARCH_POSTS.length} request(s) to Glow Central Research from a browser with no level set`);
       }
       report.push({
         theme, width, name, path,

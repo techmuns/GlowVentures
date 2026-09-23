@@ -10,6 +10,7 @@ import {
 import { ALERT_DEF, checkLevel, parseLevel, type AlertField, type AlertKind, type PriceNow } from "@/lib/priceAlerts";
 import { usePriceNow, useWatchlist } from "@/lib/usePriceAlerts";
 import { AlertStatusText, KIND_TONE, distanceText, priceSource } from "@/components/AlertBits";
+import { ResearchStatusLine } from "@/components/ResearchStatus";
 
 // ── PRICE ALERTS FOR ONE HOLDING ─────────────────────────────────────────────
 //
@@ -229,9 +230,10 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
           </div>
         </details>
 
-        <p className="mt-3 text-[11px] text-slate-500">
-          Saved in this browser only{entry.updatedAt ? ` · last changed ${fmtDateTime(entry.updatedAt)}` : ""}.
-        </p>
+        {/* WHERE THESE LEVELS WENT (Stage 10cg): every save is also sent to
+            Glow Central Research, which alerts there too — and this line says
+            whether it arrived, or why not and what happens next. */}
+        <ResearchStatusLine securityKey={securityKey} updatedAt={entry.updatedAt} />
       </Card>
     </div>
   );

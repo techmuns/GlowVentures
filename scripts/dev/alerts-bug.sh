@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VERIFY THE PRICE-ALERT CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR
-# (Stage 10bz).
+# (Stage 10cg).
 #
 # A check nobody has watched fail is a check nobody knows can fail. Each bug
 # below is applied on its own, rebuilt, run through the layer that should
@@ -15,6 +15,10 @@
 #
 # A PATCH THAT DOES NOT APPLY, OR A BUILD THAT FAILS, IS REPORTED AS NOT A
 # RESULT rather than as a clean run.
+#
+# The cases marked SENDER are the ones for the levels this dashboard sends to
+# Glow Central Research. `CASES=<regex>` runs only the cases whose name matches
+# (`CASES=SENDER` for those); the no-patch control always runs.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -30,6 +34,12 @@ FILES=(
   "src/components/InvestmentTools.tsx"
   "src/pages/MorningCIO.tsx"
   "src/lib/__tests__/priceAlerts.test.ts"
+  "src/lib/researchLevels.ts"
+  "src/lib/researchSync.ts"
+  "src/lib/useResearchSync.ts"
+  "src/components/ResearchStatus.tsx"
+  "src/lib/__tests__/researchLevels.test.ts"
+  "src/App.tsx"
   "scripts/check-pages.mjs"
   "scripts/dev/check-family-inputs.mjs"
 )
@@ -53,21 +63,35 @@ family() {
   local out; out=$(npm run check:family 2>&1 | tr -d '\000')
   printf '%s\n' "$out" | grep -aE '^FAIL|passed, [0-9]+ failed' | sed 's/^/   FAMILY /'
 }
-# THE VERDICT IS THE SUITE'S OWN EXIT STATUS, never grep's — see
-# `absent-name-bug.sh` for the run where piping read every case backwards.
+# THE VERDICT IS EACH SUITE'S OWN EXIT STATUS, never grep's — see
+# `absent-name-bug.sh` for the run where piping read every case backwards. The
+# output goes to a file and the status is read straight off `node`, so no pipe
+# stands between the suite and its verdict.
+SUITES=(
+  "src/lib/__tests__/priceAlerts.test.ts"
+  "src/lib/__tests__/researchLevels.test.ts"
+)
 suite() {
-  local d out rc; d=$(mktemp -d -p node_modules)
-  ./node_modules/.bin/esbuild src/lib/__tests__/priceAlerts.test.ts --bundle --platform=node --format=esm \
-    --outfile="$d/pa.mjs" --packages=external --alias:@="$(pwd)/src" --log-level=error || { echo "   SUITE did not bundle"; rm -rf "$d"; return; }
-  out=$(node "$d/pa.mjs" 2>&1 | tr -d '\000'); rc=${PIPESTATUS[0]}
+  local d f rc fired=0; d=$(mktemp -d -p node_modules)
+  for f in "${SUITES[@]}"; do
+    if ! ./node_modules/.bin/esbuild "$f" --bundle --platform=node --format=esm \
+      --outfile="$d/t.mjs" --packages=external --alias:@="$(pwd)/src" --log-level=error; then
+      echo "   SUITE $(basename "$f") did not bundle"; fired=1; continue
+    fi
+    node "$d/t.mjs" > "$d/out.txt" 2>&1; rc=$?
+    if [ $rc -ne 0 ]; then
+      fired=1
+      tr -d '\000' < "$d/out.txt" | grep -aE '^FAIL' | sed "s/^/   SUITE $(basename "$f" .test.ts) /"
+    fi
+  done
   rm -rf "$d"
-  if [ $rc -eq 0 ]; then echo "   SUITE CLEAN — THE BUG DID NOT FIRE"
-  else printf '%s\n' "$out" | grep -aE '^FAIL' | sed 's/^/   SUITE /'; fi
+  if [ $fired -eq 0 ]; then echo "   SUITE CLEAN — THE BUG DID NOT FIRE"; fi
 }
 
 # layers: any of "pages", "family", "suite"
 run_case() {
   local name="$1" layers="$2"; shift 2
+  if [ -n "${CASES:-}" ] && ! [[ "$name" =~ $CASES ]]; then return; fi
   echo ""
   echo "════════ BUG: $name  [$layers]"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; put_back; return; fi
@@ -218,6 +242,91 @@ PY
 
 run_case "the New alert finder offers holdings an alert can never be checked on" "family" \
   patch $AA '      if (!symbolFor(p) && !fundNavFor(p)?.usableForValue) continue;' '      if (p.marketValue <= 0) continue;'
+
+# ── SENDER: THE LEVELS THIS DASHBOARD SENDS TO GLOW CENTRAL RESEARCH ───────
+RL=src/lib/researchLevels.ts
+RS=src/lib/researchSync.ts
+URS=src/lib/useResearchSync.ts
+RST=src/components/ResearchStatus.tsx
+
+run_case "SENDER: every level goes as a SET, overwriting another device's newer one" "pages suite" \
+  patch $RL '    const op = fresh || l.ticker in sent.acked ? "set" : "seed";' \
+            '    const op = fresh || l.ticker in sent.acked || l.ticker.length > 0 ? "set" : "seed";'
+
+run_case "SENDER: a note typed under an old level turns it into a SET" "suite" \
+  patch $RL '    const fresh = sent.since !== null && l.changedAt >= sent.since && sent.seeds[l.ticker] !== fp;' \
+            '    const fresh = sent.since !== null && l.changedAt >= sent.since;'
+
+run_case "SENDER: the first send records no seeds" "suite" \
+  patch $RL '    if (sent.since === null || l.changedAt < since) seeds[l.ticker] = fingerprint(l);' \
+            '    if (l.ticker.length < 0) seeds[l.ticker] = fingerprint(l);'
+
+run_case "SENDER: the ISIN is not sent, so the other side cannot check its price" "pages family suite" \
+  patch $RL '    const row: ResearchLevel = { ticker, isin, name, levels, changedAt: e.updatedAt || "", securityKey: key };' \
+            '    const row: ResearchLevel = { ticker, isin: isin ? null : null, name, levels, changedAt: e.updatedAt || "", securityKey: key };'
+
+run_case "SENDER: the book's ISIN is preferred to the instrument the symbol IS" "suite" \
+  patch $RL '    const isin = [resolve.instrumentIsin(ticker), ...rows.map((r) => r.isin)]' \
+            '    const isin = [...rows.map((r) => r.isin), resolve.instrumentIsin(ticker)]'
+
+run_case "SENDER: a holding with no NSE symbol is sent under its own slug" "pages family suite" \
+  patch $RL '    const ticker = raw ? raw.trim().toUpperCase() : null;' \
+            '    const ticker = (raw ?? key).trim().toUpperCase();'
+
+run_case "SENDER: a level the other side reads as a typo sinks the whole batch" "suite" \
+  patch $RL '    if (LEVEL_NAMES.some((n) => (levels[n] ?? 0) > RESEARCH_LEVEL_MAX)) {' \
+            '    if (LEVEL_NAMES.some((n) => (levels[n] ?? 0) > RESEARCH_LEVEL_MAX * 1e9)) {'
+
+run_case "SENDER: the other side's batch size is ignored" "suite" \
+  patch $RL 'export function batchesOf<T>(items: readonly T[], size = RESEARCH_BATCH): T[][] {' \
+            'export function batchesOf<T>(items: readonly T[], size = RESEARCH_BATCH * 100): T[][] {'
+
+run_case "SENDER: another device's levels answering a seed are read as ours — saved" "suite" \
+  patch $RL '      || (o.outcome === "unchanged" && (intent.op === "set" || holdsExactly(held.get(o.ticker), intent.levels)))) {' \
+            '      || (o.outcome === "unchanged" && (intent.op === "set" || holdsExactly(held.get(o.ticker), intent.levels) || o.ticker.length > 0))) {'
+
+run_case "SENDER: what already arrived is sent again every time" "suite" \
+  patch $RL '    if (sent.acked[l.ticker] === fp) continue;' \
+            '    if (sent.acked[l.ticker] === fp && fp.length < 0) continue;'
+
+run_case "SENDER: removing the last level never clears it there, so it goes on alerting" "family suite" \
+  patch $RL 'if (!wanted.has(t)) out.push({ op: "clear", ticker: t });' \
+            'if (!wanted.has(t) && t.length < 0) out.push({ op: "clear", ticker: t });'
+
+run_case "SENDER: a level still on its way reads SENT" "family suite" \
+  patch $RL '  return { kind: "sending", ticker: l.ticker };' \
+            '  return { kind: "sent", ticker: l.ticker };'
+
+run_case "SENDER: the other side not deployed yet reads as an outage" "pages family suite" \
+  patch $RS '  if (res.status === 404) return { ok: false, code: "not-ready" };' \
+            '  if (res.status === 404) return { ok: false, code: "error" };'
+
+run_case "SENDER: the send carries this dashboard's cookies to another site" "pages suite" \
+  patch $RS '      method: "POST", mode: "cors", credentials: "omit", cache: "no-store",' \
+            '      method: "POST", mode: "cors", credentials: "include", cache: "no-store",'
+
+run_case "SENDER: a refusal is asked again at once instead of in fifteen minutes" "family suite" \
+  patch $RL '    case "not-ready": return 15 * 60_000;' '    case "not-ready": return 1_000;'
+
+run_case "SENDER: a failed send is never tried again on its timer" "family" \
+  patch $URS '    if (!ready || !retryAt) return;' '    if (!ready || !retryAt || retryAt.length > 0) return;'
+
+run_case "SENDER: a browser coming back online does not send what was waiting" "family" \
+  patch $URS '    window.addEventListener("online", again);' '    window.addEventListener("offline", again);'
+
+run_case "SENDER: the footer says every company was sent, whatever arrived" "pages" \
+  patch $RST '    parts.push(`${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`);' \
+             '    parts.push(`${s.companies} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`);'
+
+run_case "SENDER: nothing is ever sent — the sender is not mounted" "pages family" python3 - <<'PY2'
+import sys
+p = "src/App.tsx"
+s = open(p, encoding="utf-8").read()
+a = 'import { ResearchLevelSync } from "@/lib/useResearchSync";\n'
+b = "        <ResearchLevelSync />\n"
+if s.count(a) != 1 or s.count(b) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(a, "", 1).replace(b, "", 1))
+PY2
 
 echo ""
 echo "════════ done"

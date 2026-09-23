@@ -16,6 +16,7 @@
 //   node scripts/dev/check-family-inputs.mjs
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
+import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 
 /**
  * One generated array out of `glowData.ts`, without importing the module — a
@@ -88,6 +89,51 @@ const check = (name, ok, detail = "") => {
 
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
+
+/**
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cg) ──────────────────────
+ *
+ * Every price level saved in this dashboard is also sent to Glow Central
+ * Research. This suite types levels on real holdings, so without this the walk
+ * would post them to the family's LIVE list from localhost. The host is routed
+ * for the whole run, to a stand-in that follows the receiving side's rules (set
+ * replaces, seed only where it has never heard of the company, clear is kept)
+ * and records every request — and `RESEARCH.mode = "down"` answers 404, as the
+ * live one does until its route is deployed.
+ */
+const RESEARCH = { mode: "ok", posts: [], held: new Map() };
+await page.route(/glow-central-research\.tech-441\.workers\.dev/, async (route) => {
+  const req = route.request();
+  const cors = { "access-control-allow-origin": req.headers()["origin"] ?? "*", vary: "origin" };
+  if (req.method() === "OPTIONS") {
+    return route.fulfill({ status: 204, headers: { ...cors, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" } });
+  }
+  let intents = null;
+  if (req.method() === "POST") {
+    try { intents = JSON.parse(req.postData() ?? "{}").intents ?? null; } catch { intents = null; }
+    RESEARCH.posts.push({ origin: req.headers()["origin"] ?? null, intents });
+  }
+  if (RESEARCH.mode === "down") {
+    return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ error: "Not implemented" }) });
+  }
+  const names = ["buyAt", "sellAt", "stopLoss", "target", "alertAbove"];
+  const outcomes = (Array.isArray(intents) ? intents : []).map((i) => {
+    const had = RESEARCH.held.get(i.ticker);
+    if (i.op === "clear") {
+      if (had?.state !== "set") return { ticker: i.ticker, op: "clear", outcome: "unchanged" };
+      RESEARCH.held.set(i.ticker, { ...had, state: "cleared" });
+      return { ticker: i.ticker, op: "clear", outcome: "cleared" };
+    }
+    if (i.op === "seed" && had) return { ticker: i.ticker, op: "seed", outcome: "unchanged" };
+    RESEARCH.held.set(i.ticker, { state: "set", levels: { ...i.levels }, isin: i.isin });
+    return { ticker: i.ticker, op: i.op, outcome: i.op === "seed" ? "seeded" : "set" };
+  });
+  const companies = [...RESEARCH.held.entries()].filter(([, h]) => h.state === "set").map(([ticker, h]) => ({
+    ticker, levels: Object.fromEntries(names.map((n) => [n, h.levels[n] == null ? null : { value: h.levels[n] }])),
+  }));
+  return route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" },
+    body: JSON.stringify({ ok: true, outcomes, companies, count: companies.length, hits: [] }) });
+});
 
 await page.goto(BASE, { waitUntil: "domcontentloaded" });
 // The edge gate, when one is set. Locally there is none and this is a no-op.
@@ -203,8 +249,12 @@ const extras = groupOf("Extras");
 check("Extras is a group, and the only collapsible one",
   !!extras && extras.collapsible && navGroups.filter((g) => g.collapsible).length === 1,
   `${navGroups.filter((g) => g.collapsible).length} collapsible`);
-check("...holding exactly the four pages the family named, in the order given",
-  same(extras?.entries, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+// ...AND CORPORATE ACTIONS, which main's #84 added to Extras beside Performance
+// without updating this list — so the suite failed these two rows on main
+// itself. The four the family named keep their order around it.
+const EXTRAS_PAGES = ["/capital-gains", "/performance", "/returns", "/corporate-actions", "/ledger"];
+check("...holding exactly the four pages the family named, and Corporate actions, in order",
+  same(extras?.entries, EXTRAS_PAGES),
   extras?.entries.join(" · "));
 check("...and the emptied Tax and Analytics headings went with their entries",
   !groupOf("Tax") && !groupOf("Analytics")
@@ -236,8 +286,8 @@ const clickExtras = async () => {
   navGroups = await readNav();
 };
 await clickExtras();
-check("clicking Extras reveals all four page buttons",
-  hasExtrasToggle && same(groupOf("Extras")?.visible, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+check("clicking Extras reveals all its page buttons",
+  hasExtrasToggle && same(groupOf("Extras")?.visible, EXTRAS_PAGES),
   hasExtrasToggle ? groupOf("Extras")?.visible.join(" · ") : "no Extras toggle to click");
 // ...AND IT IS A TOGGLE RATHER THAN A ONE-WAY REVEAL. Without this, a control
 // that ignored its own state and simply rendered open would pass the row above.
@@ -706,9 +756,9 @@ check("...and names the mandates this book does carry",
 // the same reason `announcements.ts` stayed when `/news` went.
 //
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10bz — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10cg — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10bz) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cg) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -804,6 +854,17 @@ check("...and names the mandates this book does carry",
     check("the store holds both levels, with the page's own name beside them",
       store[key]?.targetPrice === target && store[key]?.alertBelow === stop && !!store[key]?.name,
       store[key] ? `target ${store[key].targetPrice} · stop ${store[key].alertBelow} · "${store[key].name}" (page "${pageName}")` : "no entry");
+
+    // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
+    // companies by their ticker — cannot take its levels. They stay here, the
+    // card says so in words, and NOTHING is sent (Stage 10cg).
+    await page.waitForTimeout(1200);
+    const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
+      kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
+    })).catch(() => null);
+    check("a fund's levels stay in this dashboard, and the card says why — no NSE symbol for Glow Central Research to follow",
+      fundLine?.kind === "local" && /NSE symbol/.test(fundLine.text) && RESEARCH.posts.length === 0,
+      fundLine ? `${fundLine.kind} · ${RESEARCH.posts.length} sent · "${fundLine.text}"` : "no line");
 
     // A TYPO IS REFUSED, NEVER SAVED AS A DELETE. The old parser read "abc" as
     // blank and silently erased whatever level was in the box.
@@ -910,6 +971,199 @@ check("...and names the mandates this book does carry",
     await page.waitForTimeout(900);
     const to = await page.evaluate(() => location.pathname + location.hash);
     check("...and picking one opens that holding's alert boxes", !!offered[0] && to === `/stock/${encodeURIComponent(offered[0])}#alerts`, to);
+  }
+}
+
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cg) ───
+//
+// *"when the user puts target price inside the dashboard, it should
+// automatically also go to the Glow Central Research dashboard."*
+//
+// The whole path, on a real listed holding: type a Target → it is SENT, as a
+// `set` under the company's NSE symbol with the ISIN of the instrument that
+// symbol is → the card says it is in Glow Central Research → with the receiving
+// side not deployed yet, the next level is attempted and the card says it has
+// not arrived AND why → a reload with the receiving side back sends it on its own
+// → clearing the last level sends a CLEAR, so the other app stops alerting on it.
+//
+// The share is DERIVED — the largest company share whose symbol Upstox's own
+// instrument map knows — so the next drop picks its own.
+const RESEARCH_SHARE = (() => {
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const symbols = JSON.parse(readFileSync(new URL("../../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+  const isinOf = (sym) => { const k = UPSTOX_INSTRUMENTS[sym]?.key; return k?.startsWith("NSE_EQ|") ? k.slice(7) : null; };
+  const byKey = new Map();
+  for (const p of positions) byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
+  const value = (k) => byKey.get(k).reduce((s2, p) => s2 + (Number(p.marketValue) || 0), 0);
+  const share = [...byKey.keys()]
+    .filter((k) => byKey.get(k).every((p) => p.assetClass === "Equity") && byKey.get(k).some((p) => Number(p.quantity) > 0))
+    .map((k) => ({ key: k, ticker: byKey.get(k).map(symOf).find(Boolean) ?? null }))
+    .filter((x) => x.ticker && isinOf(x.ticker))
+    .sort((a, b) => value(b.key) - value(a.key))[0];
+  if (!share) return null;
+  const mark = byKey.get(share.key).find((p) => Number(p.currentPrice) > 0)?.currentPrice ?? 100;
+  return { ...share, isin: isinOf(share.ticker), mark, name: byKey.get(share.key)[0].security };
+})();
+{
+  const share = RESEARCH_SHARE;
+  if (!share) {
+    check("a level on a listed share goes to Glow Central Research", false, "no company share in this book has an NSE symbol Upstox's map knows");
+  } else {
+    const { key, ticker, isin, mark } = share;
+    const r2 = (x) => Math.round(x * 100) / 100;
+    const target = r2(mark * 1.5), stop = r2(mark * 0.6);
+    const line = () => page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
+      kind: el.getAttribute("data-research-status"), ticker: el.getAttribute("data-research-ticker"), text: (el.textContent ?? "").trim(),
+    })).catch(() => null);
+    const typeLevel = async (field, v) => {
+      await page.fill(`[data-alerts-card] [data-alert-input="${field}"]`, String(v));
+      await page.press(`[data-alerts-card] [data-alert-input="${field}"]`, "Enter");
+    };
+    /** Wait for the sender: it pauses a moment after a save so a burst of edits goes as one request. */
+    const settle = async (want) => {
+      for (let i = 0; i < 40; i++) {
+        const l = await line();
+        if (l && want.includes(l.kind)) return l;
+        await page.waitForTimeout(250);
+      }
+      return line();
+    };
+
+    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}#alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const before = RESEARCH.posts.length;
+    await typeLevel("targetPrice", target);
+    const sent = await settle(["sent", "failed"]);
+    const posted = RESEARCH.posts.slice(before).flatMap((p) => p.intents ?? []);
+    const setOne = posted.find((i) => i.ticker === ticker);
+    check("a Target typed on a listed share is sent to Glow Central Research as a SET, under its NSE symbol and ISIN",
+      !!setOne && setOne.op === "set" && setOne.isin === isin && setOne.levels?.target === target
+        && ["buyAt", "sellAt", "stopLoss", "alertAbove"].every((n) => setOne.levels?.[n] === null),
+      setOne ? JSON.stringify(setOne) : `${posted.length} intents, none for ${ticker}`);
+    check("...from this page's own address", RESEARCH.posts.slice(before).every((p) => p.origin === new URL(BASE).origin));
+    check("...and the card says it is saved there too",
+      sent?.kind === "sent" && sent.ticker === ticker && /Saved here and in Glow Central Research/.test(sent.text),
+      sent ? `${sent.kind} · "${sent.text}"` : "no line");
+
+    RESEARCH.mode = "down";
+    await typeLevel("alertBelow", stop);
+    const failed = await settle(["failed"]);
+    check("with Glow Central Research not taking levels yet, the card says the new level has not arrived, and why",
+      failed?.kind === "failed" && /not taking price levels yet/.test(failed.text) && /automatically/.test(failed.text),
+      failed ? `${failed.kind} · "${failed.text}"` : "no line");
+
+    RESEARCH.mode = "ok";
+    await page.reload({ waitUntil: "networkidle" });
+    const back = await settle(["sent"]);
+    check("...and once it is back, the next page load sends it on its own",
+      back?.kind === "sent" && RESEARCH.held.get(ticker)?.levels?.stopLoss === stop && RESEARCH.held.get(ticker)?.levels?.target === target,
+      `${back?.kind ?? "no line"} · held ${JSON.stringify(RESEARCH.held.get(ticker)?.levels ?? null)}`);
+
+    // AND THE MOMENT THE BROWSER IS BACK ONLINE — no reload, and no edit.
+    RESEARCH.mode = "down";
+    const stop2 = r2(mark * 0.55);
+    await typeLevel("alertBelow", stop2);
+    const failed2 = await settle(["failed"]);
+    RESEARCH.mode = "ok";
+    await page.evaluate(() => window.dispatchEvent(new Event("online")));
+    const online = await settle(["sent"]);
+    check("...and a browser coming back online sends what was waiting, with no reload and no edit",
+      failed2?.kind === "failed" && online?.kind === "sent" && RESEARCH.held.get(ticker)?.levels?.stopLoss === stop2,
+      `${failed2?.kind ?? "no line"} → ${online?.kind ?? "no line"} · held ${JSON.stringify(RESEARCH.held.get(ticker)?.levels ?? null)}`);
+
+    const beforeClear = RESEARCH.posts.length;
+    await page.click('[data-alerts-card] [data-alert-clear="target"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-alerts-card] [data-alert-clear="below"]');
+    await page.waitForTimeout(2000);
+    const cleared = RESEARCH.posts.slice(beforeClear).flatMap((p) => p.intents ?? []);
+    check("clearing the last level sends a CLEAR, so Glow Central Research stops alerting on it",
+      cleared.some((i) => i.op === "clear" && i.ticker === ticker) && RESEARCH.held.get(ticker)?.state === "cleared",
+      cleared.map((i) => `${i.op} ${i.ticker}`).join(", ") || "nothing sent");
+    const after = await line();
+    check("...and the card goes back to saying there is nothing saved", after?.kind === "none", after ? `${after.kind} · "${after.text}"` : "no line");
+  }
+}
+
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cg) ───
+//
+// Until Glow Central Research's route is deployed every send is refused as NOT
+// READY, and the sender asks again every fifteen minutes on its own — a
+// dashboard left open all day must not need a reload for a level to arrive once
+// the other side is up. Fifteen minutes cannot be waited out in a suite, so this
+// page runs on Playwright's clock: the timers are the page's own, and the test
+// moves time forward instead of sleeping. Its OWN browser context, so the fake
+// clock touches nothing else in this run.
+//
+// Three claims, and the middle one is what stops a sender that retries in a
+// tight loop from passing: a failed send is NOT repeated before its wait is up.
+{
+  const share = RESEARCH_SHARE;
+  if (!share) {
+    check("a failed send to Glow Central Research is tried again by itself", false, "no listed share to put a level on");
+  } else {
+    const ctx2 = await browser.newContext({ viewport: { width: 1500, height: 1000 } });
+    const p2 = await ctx2.newPage();
+    let mode = "down";
+    const posts = [];
+    await p2.route(/glow-central-research\.tech-441\.workers\.dev/, async (route) => {
+      const req = route.request();
+      const cors = { "access-control-allow-origin": req.headers()["origin"] ?? "*", vary: "origin" };
+      if (req.method() === "OPTIONS") {
+        return route.fulfill({ status: 204, headers: { ...cors, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" } });
+      }
+      let intents = [];
+      if (req.method() === "POST") {
+        try { intents = JSON.parse(req.postData() ?? "{}").intents ?? []; } catch { intents = []; }
+        posts.push({ mode, intents });
+      }
+      if (mode === "down") {
+        return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ error: "Not implemented" }) });
+      }
+      const outcomes = intents.map((i) => ({ ticker: i.ticker, op: i.op, outcome: i.op === "seed" ? "seeded" : i.op === "clear" ? "unchanged" : "set" }));
+      return route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ ok: true, outcomes, companies: [], count: 0, hits: [] }) });
+    });
+    // A Target typed on this browser before it ever sent anything.
+    const entry = {
+      securityKey: share.key, watching: false, targetPrice: Math.round(share.mark * 150) / 100, fairValue: null,
+      entryPrice: null, exitPrice: null, alertAbove: null, alertBelow: null, targetWeightPct: null,
+      fairValueRefYear: "", valuationMethod: "", note: "", name: share.name, updatedAt: "2026-09-01T00:00:00.000Z",
+    };
+    await p2.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch { /* */ } },
+      ["glow:watchlist/v1", JSON.stringify({ [share.key]: entry })]);
+    await p2.clock.install({ time: Date.parse("2026-09-23T04:00:00.000Z") });
+    await p2.goto(`${BASE}/stock/${encodeURIComponent(share.key)}#alerts`, { waitUntil: "load" });
+    const kind = () => p2.$eval("[data-alerts-card] [data-research-status]", (el) => el.getAttribute("data-research-status")).catch(() => null);
+    /** Poll in REAL time, nudging the page's own clock half a second each turn. */
+    const until = async (want, nudge = 500) => {
+      for (let i = 0; i < 40; i++) {
+        const k = await kind();
+        if (want.includes(k)) return k;
+        if (nudge) await p2.clock.runFor(nudge);
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      return kind();
+    };
+    const first = await until(["failed"]);
+    const refused = posts.length;
+    check("with Glow Central Research not taking levels yet, the first send is attempted and refused",
+      first === "failed" && refused >= 1 && posts.every((p) => p.mode === "down"), `${first} · ${refused} request(s)`);
+
+    await p2.clock.fastForward(10 * 60_000);
+    await new Promise((r) => setTimeout(r, 1500));
+    check("...and it is NOT asked again before its fifteen-minute wait is up — a refusal is never hammered",
+      posts.length === refused && (await kind()) === "failed", `${posts.length - refused} more request(s) inside ten minutes`);
+
+    mode = "ok";
+    await p2.clock.fastForward(6 * 60_000);
+    const later = await until(["sent"], 0);
+    const landed = posts.filter((p) => p.mode === "ok").flatMap((p) => p.intents);
+    check("...then, with Glow Central Research up, it goes by itself on the sender's own timer — no reload, no edit",
+      later === "sent" && landed.some((i) => i.ticker === share.ticker && i.op === "seed" && i.levels?.target === entry.targetPrice),
+      `${later} · ${landed.map((i) => `${i.op} ${i.ticker}`).join(", ") || "nothing sent"}`);
+    await ctx2.close();
   }
 }
 
