@@ -201,7 +201,7 @@ check("...and the now-empty Setup group heading went with it",
 //  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups,
 // and since #84 a FIFTH: Corporate actions & dividends, which that change filed
 // under Extras beside Return & Drawdown. The family confirmed it stays there
-// (Stage 10cj). This list still said four through the six changes that landed
+// (Stage 10cj). This list still said four through the seven changes that landed
 // after #84, and failed two rows on every run — a check that fails on a correct
 // page is read as noise, and the next real failure goes unread beside it. ONE
 // list, used by every row below, so the count cannot drift between them again.

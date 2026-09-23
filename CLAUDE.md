@@ -20618,7 +20618,8 @@ of each fund's return still gates the dated calls against a cost basis that #80
 made FIFO. This branch was walked against pristine main (`c1bfddd`) on
 `private-market` and `private-market-returns`, and the same invariants fail
 there. Stages 10ce and 10cf each recorded it and left it, and so does this one:
-the fix is to the checker, and it belongs in its own change.
+the fix is to the checker, and it belongs in its own change. *(It had one: Stage
+10cj, with the Extras count beside it.)*
 
 #### Verification
 
@@ -20675,10 +20676,11 @@ and #84, and whether Corporate actions & dividends stays in Extras.
 
 #### Seven failures, two causes, and the page was right both times
 
-Five `check:pages` invariants on the three Private Market routes and two
-`check:family` rows had failed on every run since #80 and #84 landed. Five stage
-records named them as `main`'s and left them — 10cc, 10cd, 10ce, 10cf and 10cg —
-because each of those changes was about something else. **Measured on the page
+Five `check:pages` invariants on the three Private Market routes — eight
+failures in all, since two of the five failed on more than one route — and two
+`check:family` rows had failed on every run since #80 and #84 landed. Six stage
+records named them as `main`'s and left them — 10cc, 10cd, 10ce, 10cf, 10cg and
+10ci — because each of those changes was about something else. **Measured on the page
 and on the book before anything moved, the page was right every time:**
 
 | | The page (FIFO) | The sweep's re-derivation, before |
@@ -20713,9 +20715,9 @@ exactly four pages there. The family have confirmed it stays. `EXTRAS_PAGES` is
 now ONE list read by every Extras row, so the count cannot drift between them
 again, and the page is opened by its own address like the other four.
 
-**A CHECK THAT FAILS ON A CORRECT PAGE IS NOT HARMLESS.** Through the nine
+**A CHECK THAT FAILS ON A CORRECT PAGE IS NOT HARMLESS.** Through the ten
 changes that landed after #80 the full sweep read three routes with a finding,
-and through the six after #84 `check:family` read "2 failed" — on correct
+and through the seven after #84 `check:family` read "2 failed" — on correct
 trees. Each change had to prove, by building `main` beside itself, that the
 failures were not its own. A standing red is read as noise, and the next real
 failure would have been read the same way beside it.
@@ -20756,9 +20758,11 @@ not in it. XIRR counts all of it either way.
 
 `scripts/dev/pm-fifo-bug.sh` puts each bug back on its own, rebuilds, runs the
 suite it lives in and restores by copy on a trap — verified with `cmp` and
-rebuilt on the way out. A no-patch control ran first and was clean on both
-suites (the three Private Market routes clean, `check:family` 88 passed). Every
-case fires its own check:
+rebuilt on the way out. It ran twice, on this change's own tree and again on the
+tree merged with #90, and a no-patch control ran first each time and was clean
+on both suites (the three Private Market routes clean; `check:family` 88 passed,
+then 89 once #90 added a row). Every case fires its own check, the same checks
+on both trees:
 
 | # | Bug put back | Fires |
 | --- | --- | --- |
@@ -20786,15 +20790,36 @@ reproduce.** Run on its own, on both themes, on this tree, it is clean. That is
 the shape Stage 10cc recorded for `monitor-txn-out` — a failure under load that a
 lone run does not repeat — and it is named here rather than counted as fixed.
 
+#### Merged with #90, which took `10ci`
+
+#90 landed while this was being checked, and took `10ci`, so this is **`10cj`**.
+Both had written a `### Stage 10ci` above Stage 10k, so git marked the conflict
+— the safer of its two failure modes. Main's section keeps the letter and comes
+first. Every `10ci` line was read before it moved: eleven were this change's
+(six in this file, five code comments) and moved, and seven are #90's (five in
+this file, two code comments) and stayed.
+
+**#90 ALSO NAMED THESE FAILURES AND LEFT THEM**, the sixth record to do so, and
+its paragraph now points here.
+
+**THREE CODE FILES MERGED WITHOUT A MARKER, WHICH IS WHEN TO CHECK BY HAND.**
+`check-pages.mjs`, `check-family-inputs.mjs` and `PrivateMarket.tsx` each differ
+from main by exactly this change, and the sweep's `ctx` literal is main's, byte
+for byte, because this change adds no probe. #90 changed 207 lines of
+`PrivateMarket.tsx`, so an anchor of the harness could have moved; it was re-run
+on the merged tree for that reason, and every case applied and fired.
+
+Every result below is from the tree that ships — this change merged with #90
+(main `1e0ab78`) — and each was run again there rather than carried across.
 `build` · `tsc` · `test:ingest` (every suite passes; golden 140 passed, 2 not
 checked, 0 blocked) · `test:family` (46 suites, 2,466 checks, 0 failed) ·
-`check:family` **88 passed, 0 failed** — 84 and 2 on `main` · `check:pages`
-**246 combinations clean** — 3 with a finding on `main` — with the same ten
-evidenced abstentions across four claims that Stage 10cg records, none of them
-this stage's: every KPI tile on this book carries a figure (six Morning CIO
-routes), every private holding reports a cost, no private account is redeemed to
-nil, and nothing on Morning CIO points at an undefined drill-down. The count does
-not move because this change adds no route. `npm run build-book` regenerates the
+`check:family` **89 passed, 0 failed** — 85 and 2 on `main` · `check:pages`
+**246 combinations clean** — 3 with a finding on `main` — with the same ten evidenced
+abstentions across four claims that Stage 10cg records, none of them this
+stage's: every KPI tile on this book carries a figure (six Morning CIO routes),
+every private holding reports a cost, no private account is redeemed to nil, and
+nothing on Morning CIO points at an undefined drill-down. The count does not
+move because this change adds no route. `npm run build-book` regenerates the
 book byte-identically: a checker and a hover are not part of the book.
 
 ### Stage 10k — News & Announcements: REMOVED
