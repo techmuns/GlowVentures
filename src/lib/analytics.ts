@@ -1169,7 +1169,7 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
-    hint: "Capital return on cost since the holding was bought, not annualised; excludes dividend income. Dividend-inclusive period returns are on Corporate actions & dividends." },
+    hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
     hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",

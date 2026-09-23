@@ -2353,7 +2353,7 @@ export function PortfolioMonitor() {
           </button>
         } />
       <div className="mb-3 text-xs text-slate-500">
-        HPR / CAGR exclude dividend income. <Link to="/corporate-actions" className="text-champagne-400 hover:underline">View dividend-inclusive returns & share adjustments</Link>
+        Individual-share HPR / CAGR exclude separate dividend income. <Link to="/corporate-actions" className="text-champagne-400 hover:underline">View dividend-inclusive returns & share adjustments</Link>
       </div>
       {/*
         ONE CHROME ROW, JUST FILTERS. The filters, the view toggle and the two

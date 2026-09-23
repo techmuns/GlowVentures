@@ -28,7 +28,7 @@ has a dated, committed fallback at `public/data/corporate-actions.json`.
 
 The new screen is **Extras → Corporate actions & dividends**. A company page
 shows the same account-level table and source events. Portfolio Monitor links
-to it and labels its existing HPR/CAGR as excluding dividend income. Historical
+to it and labels individual-share HPR/CAGR as excluding separate dividend income. Historical
 price returns are likewise explicitly labelled as excluding dividends.
 
 ## Refusals are part of the calculation
@@ -36,6 +36,8 @@ price returns are likewise explicitly labelled as excluding dividends.
 An ambiguous ratio, conflicting same-date events, mismatched ISIN, fractional
 share entitlement, rights issue, demerger, non-equity bonus or other unsupported
 share event withholds the live mark until a statement reconciles it. A quote
+is also withheld where the book records sales after the holding statement:
+the unchanged-holdings assumption is already contradicted there. A quote
 without a trade timestamp cannot license a share adjustment or a post-dividend
 total return. Unverified ex-date previous-close bases do not produce a day move.
 

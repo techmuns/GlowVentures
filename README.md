@@ -278,8 +278,8 @@ NSE/Screener feed. Splits and ordinary equity bonuses adjust projected holdings
 after each account's statement date; a separate period return includes gross
 declared dividends. Entitlements are not confirmed receipts. The projection
 assumes no later trades/transfers, flags incomplete evidence, and preserves the
-original statements and account cash/XIRR. Existing HPR/CAGR remain capital
-returns excluding dividends. See [the methodology and safeguards](docs/CORPORATE-ACTIONS.md).
+original statements and account cash/XIRR. Individual-share HPR/CAGR retain
+FIFO gains and exclude separate dividend income. See [the methodology and safeguards](docs/CORPORATE-ACTIONS.md).
 
 ```bash
 npm run test:ingest    # parseNum / layout / pipeline + the golden figures

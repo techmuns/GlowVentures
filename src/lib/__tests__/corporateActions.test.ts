@@ -8,7 +8,8 @@ import type { QuoteFeed } from "../quotes";
 
 const p: Position = { ...BOOK_POSITIONS.find((p) => p.assetClass === "Equity")!, accountId: "test", securityKey: "test",
   security: "Test equity", symbol: "TEST", isin: null, quantity: 100, avgCost: 10, currentPrice: 10,
-  costBasis: 1000, marketValue: 1000, unrealizedPnL: 0, returnPct: 0, dividendReceived: 23 };
+  costBasis: 1000, marketValue: 1000, unrealizedPnL: 0, realizedPnL: 0, costOfUnitsSold: 0, realizedLotsAfter: 0,
+  returnPct: 0, dividendReceived: 23 };
 const accounts: Account[] = [{ ...BOOK_ACCOUNTS[0], accountId: "test", asOf: "2026-08-31" }];
 const raw = (type: string, date: string, purpose: string, fields = {}) => ({
   id: `${type}:${date}`, ticker: "TEST", company: "Test equity", actionType: type, exDate: date,
@@ -77,6 +78,7 @@ assert.equal(noQuote.returns.get(positionActionKey(p))!.totalReturnPct, null);
 assert.equal(projectActions(p, "2020-08-31", "2026-09-23", f).dividendEntitlement, null, "missing historical coverage is not zero income");
 assert.equal(projectActions(p, "2026-08-31", "2026-09-23", { ...f, verifiedThrough: "2026-09-22" }).dividendEntitlement, null, "stale source coverage cannot certify current return");
 assert.equal(applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: "2026-09-22" }).positions[0].live, false, "stale coverage cannot miss a split while marking old units at new prices");
+assert.equal(applyCorporateActionQuotes([{ ...p, realizedLotsAfter: 1 }], accounts, quotes(), f).positions[0].live, false, "a recorded later sale invalidates the unchanged-holdings assumption");
 const undatedQuote = quotes(5); delete undatedQuote.quotes.TEST.tradedAt; undatedQuote.asOf = "2026-09-02T03:00:00Z";
 assert.equal(applyCorporateActionQuotes([p], accounts, undatedQuote, f).positions[0].live, false, "an ex-date pre-open quote is not post-split evidence");
 const exDay = applyCorporateActionQuotes([p], accounts, quotes(5, "2026-09-02T09:00:00Z"), f);

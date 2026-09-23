@@ -45,6 +45,7 @@ export function projectActions(p: Position, statementDate: string, through: stri
     quantityIssues: [], incomeIssues: [], lines: [], capturedAt: feed?.capturedAt ?? null,
   };
   const qi = result.quantityIssues, di = result.incomeIssues;
+  if ((p.realizedLotsAfter ?? 0) > 0) qi.push("Sales are recorded after this statement; a newer holding balance is required");
   if (!feed) { di.push("Corporate-action feed unavailable"); return result; }
   if (!statementDate || !through || through < statementDate) di.push("No comparable dated valuation");
   if (feed.symbols && !feed.symbols.includes(symbolFor(p) || "") && !feed.isins.includes(p.isin || "")) di.push("Security outside the saved feed's coverage");
