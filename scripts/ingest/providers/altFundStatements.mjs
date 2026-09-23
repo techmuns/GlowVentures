@@ -566,6 +566,100 @@ export function buoyantFlows(text, warn) {
   });
 }
 
+// ── NEO INFRA: THE UNIT TABLE A FIFO RETURN NEEDS ────────────────────────────
+//
+// *"match the number of units being sold and purchased, and use the methodology
+// of FIFO to calculate returns."* Neo Infra prints a Capital Redemption of
+// 14,162.80 units for ₹14,16,280 on 5 Jan 2026, and nothing read it: the book
+// carried the Gross Capital Contribution — ₹5,00,00,000, the cost of 5,00,000
+// units — against the 4,85,837 still held. A cost that includes units the
+// family no longer owns is the failure FIFO exists to stop.
+//
+// It follows `threePFlows`' licence and `buoyantFlows`' beside it: the dated
+// table is published only if the statement's own arithmetic witnesses it, and a
+// dated capital row the columns do not match withholds the WHOLE table rather
+// than publishing it with a row missing.
+
+/**
+ * Neo Infra's capital columns: each drawdown's units and rupees, and the
+ * capital redemption. The income columns beside them are distributions of
+ * income and are not read here — this is the UNIT record.
+ *
+ *   `04-Oct-23 Initial Contribution 25,000.00 25,00,000 - - -`
+ *   `05-Jan-26 Capital Redemption -14,162.80 -14,16,280 - - -`
+ */
+const NEO_CAP_ROW = /^(\d{2}-[A-Za-z]{3}-\d{2})\s+(.+?)\s+(-?[\d,]+\.\d{2})\s+(-?[\d,]+(?:\.\d{2})?)\s+-\s+-\s+-\s*$/;
+const NEO_CAP_WORD = /Contribution|Drawdown|Redemption/i;
+const NEO_DATED = /^\d{2}-[A-Za-z]{3}-\d{2}\s+\S/;
+
+export function neoFlows(text, warn) {
+  const security = (() => {
+    const k = (/Class:\s*([A-Z]\d?)/i.exec(text) ?? [])[1];
+    return k ? `Neo Infra Income Opportunities Fund I — Class ${k}` : "Neo Infra Income Opportunities Fund I";
+  })();
+  const rows = [];
+  let unmatched = 0;
+  let inTable = false;
+  for (const raw of text.split("\n")) {
+    const line = raw.trim();
+    if (/^Transaction Details/i.test(line)) { inTable = true; continue; }
+    if (/^Other Transaction Details/i.test(line)) { inTable = false; continue; }
+    if (!inTable || !NEO_DATED.test(line)) continue;
+    const m = NEO_CAP_ROW.exec(line);
+    if (m) {
+      rows.push({ date: toIso(m[1]), type: m[2].replace(/\s+/g, " ").trim(), units: n(m[3]), amount: n(m[4]) });
+      continue;
+    }
+    // An income row prints dashes in the capital columns. A dated row naming
+    // capital that did not parse is a row this reader would otherwise drop.
+    if (NEO_CAP_WORD.test(line)) unmatched += 1;
+  }
+  if (!rows.length) return [];
+  if (unmatched) {
+    warn("transaction-type-not-declared",
+      `${unmatched} dated capital row(s) in Transaction Details did not match the declared columns; `
+      + "the unit record is withheld rather than published with rows missing from it");
+    return [];
+  }
+  const fails = [];
+  const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+  const face = at(NEO_ROWS.undrawn, 3);
+  // (1) every capital row is its units at face value, to the rupee.
+  if (!(face > 0)) fails.push("the statement prints no face value to hold the unit rows to");
+  else for (const r of rows) {
+    if (Math.abs(r.units * face - r.amount) > 1) fails.push(`${r.date} ${r.type}: ${r.units} units at ${face} is not ${r.amount}`);
+  }
+  // (2) the units run to the balance the Investment Summary prints (a whole
+  //     number there, so the tie is half a unit).
+  const printedUnits = at(NEO_ROWS.pending, 3);
+  const run = rows.reduce((t, r) => t + r.units, 0);
+  if (printedUnits == null || Math.abs(run - printedUnits) > 0.5) fails.push(`the unit rows run to ${run} against ${printedUnits} printed`);
+  // (3) contributions tie to Gross Capital Contribution; redemptions to Principal Payout.
+  const gross = at(NEO_ROWS.contribution, 1);
+  const principal = at(NEO_ROWS.capital, 2);
+  const paidIn = rows.filter((r) => r.amount > 0).reduce((t, r) => t + r.amount, 0);
+  const paidOut = -rows.filter((r) => r.amount < 0).reduce((t, r) => t + r.amount, 0);
+  if (gross == null || Math.abs(paidIn - gross) > 1) fails.push(`contributions sum to ${paidIn} against a Gross Capital Contribution of ${gross}`);
+  if (principal == null || Math.abs(paidOut - principal) > 1) fails.push(`redemptions sum to ${paidOut} against a Principal Payout of ${principal}`);
+  if (fails.length) {
+    warn("dated-table-does-not-tie", "the Transaction Details capital columns are not published for this account: " + fails.join("; "));
+    return [];
+  }
+  return rows.map((r) => makeCashFlow({
+    date: r.date,
+    description: r.type,
+    security,
+    kind: r.amount < 0 ? "withdrawal" : "contribution",
+    amount: r.amount,
+    // ONE LINE, ITS OWN NET: the fund paid the stamp duty (its own disclaimer),
+    // so the rupees on the row are what bought the units — a self-contained row
+    // in `capitalMovesFrom`'s sense, never a running balance.
+    netAmount: r.amount > 0 ? r.amount : null,
+    units: r.units,
+    notes: face ? `units at face value ${face}` : null,
+  }));
+}
+
 // ── THE CAPITAL CALL SCHEDULE — WHAT A DRAWDOWN FUND ASKED FOR, AND WHEN ─────
 //
 // *"What is capital committed versus invested? … I would commit 10 crores, but
@@ -1198,6 +1292,9 @@ const LAYOUTS = [
      */
     asOf: (text) => toIso((/NAV\/unit and Valuation is as of\s*(\d{1,2}-[A-Za-z]{3}-\d{4})/i.exec(text) ?? [])[1])
       ?? toIso((/Statement of Account As of:\s*(\d{1,2}\s*[A-Za-z]{3}-\d{2,4})/i.exec(text) ?? [])[1]),
+    // The capital columns of Transaction Details — every drawdown's units and the
+    // capital redemption that took 14,162.80 of them back. See `neoFlows`.
+    flowsFrom: neoFlows,
     commitmentFrom: (text) => {
       const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
       return {
