@@ -15488,10 +15488,12 @@ requires of an abstention.
 `build` · `tsc` · `test:ingest` · `test:family` (a new `enteredCalls.test.ts`,
 the store against an in-memory KV that pages and can be made STALE, and the
 page's reading of the function's OWN responses so the two halves cannot drift) ·
-`check:family` **86/0** · `check:pages` **192 combinations clean**, measured on the tree merged with `7e02664` —
-main's own 188 plus the four combinations this change's two new routes walk — with
-eight evidenced abstentions across four pre-existing claims and none of this
-change's own. `npm run build-book` regenerates
+`check:family` **86/0** · `check:pages` **192 combinations clean, 0 invariant
+failures**, measured TWICE — on the tree merged with `7e02664` and again on the
+tree merged with #69 (`b1fde92`) — main's own 188 plus the four combinations this
+change's two new routes walk, with the same eight evidenced abstentions across
+four pre-existing claims both times and none of this change's own. `npm run
+build-book` regenerates
 `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY: nothing here touches
 the ingest, and the one thing that stores data stores it outside the book.
 
@@ -15522,6 +15524,14 @@ touch `check-pages.mjs`, so the `ctx` literal had nothing to conflict on and the
 route table is unchanged; and neither side touched a generated book file, so
 `npm run build-book` was run as a control and regenerated `glowData.ts` and
 `docs/BOOK-REPORT.md` byte-identically.
+
+**AND THE SWEEP WAS RE-RUN ON THE MERGED TREE RATHER THAN CARRIED ACROSS.** It
+came back **192 combinations clean, 0 invariant failures**, with the same eight
+abstentions read out of `report.json` BY NAME — four on the Morning CIO panels
+(every KPI tile on this book carries a figure), two on Private Market (every
+private holding reports a cost), one on the not-found drill-down and one on
+`stock-qty` (no row there carries a pledge). The count did not move because #69
+adds no route, and it is recorded as the same only because it was measured again.
 
 ### Stage 10k — News & Announcements: REMOVED
 
