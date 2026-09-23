@@ -437,6 +437,22 @@ cash holding's genuinely-zero return both match, and both are correct.
   page paints from and the whole memory where the store is not connected.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
   made here the store never confirmed, then the shared layout. See Stage 10cb.
+- `src/lib/priceAlerts.ts` + `src/lib/usePriceAlerts.ts` — WHETHER A PRICE ALERT
+  HAS FIRED, decided once for a holding's alert boxes and Morning CIO's All
+  alerts tab: which price (a live quote, then a fund's published NAV, NEVER a
+  statement mark), which way each of the five kinds fires, and four states —
+  reached, watching, checking, unchecked — of which only the first two are
+  verdicts. The levels are the family's own, in `watchlist.ts`, per browser. See
+  Stage 10ck.
+- `src/lib/researchLevels.ts` + `src/lib/researchSync.ts` +
+  `src/lib/useResearchSync.ts` — EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW
+  CENTRAL RESEARCH, which checks it against its own live price and raises it in
+  its All Alerts and AI Alerts. The first decides what is sent — NSE symbol, ISIN
+  and the five levels, as a seed, a set or a clear — what an answer means, and
+  how the All alerts footer words the count (`summaryLine`), all PURE; the second
+  sends it and remembers what arrived (`glow:research-levels/v1`, never inside
+  the store); the third is the one mount, in the app shell. A fund or an AIF has
+  no NSE symbol, so its levels stay here and its card says so. See Stage 10ck.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -20821,6 +20837,338 @@ every private holding reports a cost, no private account is redeemed to nil, and
 nothing on Morning CIO points at an undefined drill-down. The count does not
 move because this change adds no route. `npm run build-book` regenerates the
 book byte-identically: a checker and a hover are not part of the book.
+
+### Stage 10ck — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
+
+*"Does these alerts actually work, can you make this much simpler to fill in for
+the customer and also in morning CIO can you make an ALL alerts tab where in a
+beautiful table format whenever the alerts which have been set are triggered they
+show simply and ofcourse should look like an alert for entry exit or whatever
+think like the investor using this dashboard and keep it extremely simple and
+clean ui."* · *"Please note that when the user puts target price inside the
+dashboard, it should automatically also go to the Glow Central Research
+dashboard. When the target price is met, it should show in All Alerts as an
+alert, and automatically come to the AI Alert section in the Glow Central
+Research dashboard."*
+
+(Written as `10bz`. While it waited, main took every letter from `10by` to
+`10cj` — its `10bz` is *"Ask Muns is off the top bar"* and its `10cg` is *"Glow
+Central Research's fonts and colours"* — so this is **`10ck`**, the first free
+one. This work's own references moved with it each time, in code and here, and
+main's were counted against main's copy of each file and left alone. Some of
+main's `10cg` code comments describe Stage 10ci's work rather than the fonts —
+the research pointer in `CompanyResearchPreview.tsx`, the corporate-action card,
+the Portfolio Monitor's route split. Those are main's to repoint.)
+
+#### The honest answer was "half", and each missing half was a real defect
+
+Measured on the old `InvestmentTools` card before a line changed:
+
+1. **AN ALERT WAS SEEN ONLY ON ITS OWN STOCK'S PAGE.** `firedAlerts` ran inside
+   that one card and nowhere else, so an alert "fired" for a reader who happened
+   to open that company and for nobody else. That is a note, not an alert.
+2. **THE BUY LEVEL NEVER FIRED.** `entryPrice` was stored and labelled "the level
+   at which we would add" — and missing from `firedAlerts`. A buy level that
+   reaches its price and says nothing is the alert a buyer cares about most.
+3. **IT FIRED ON A STALE MARK.** With no live quote it compared the level against
+   the STATEMENT's own price, weeks old, and admitted it in a parenthesis. That is
+   exactly what "The alert engine — silence is read as all-clear" forbids: a rule
+   whose inputs are incomplete does not fire, and does not pass either.
+
+#### `src/lib/priceAlerts.ts` — which price, and whether it fired, decided once
+
+The stock page's boxes and Morning CIO's table both call it, so they cannot
+disagree about one alert. PURE — every input is an argument.
+
+- **WHICH PRICE, STRONGEST FIRST:** the intraday QUOTE where the feed priced the
+  holding; the fund's own published NAV where AMFI priced it (a fund has no
+  intraday price, so its NAV IS its price — Stage 10bn); otherwise NOTHING, with a
+  reason worded by what the holding is ("an AIF has no live price — it is valued
+  only on its statement" sends nobody to wait for a feed). **A statement mark is
+  never checked.**
+- **FOUR STATES, AND ONLY TWO ARE VERDICTS.** `reached` and `watching` need a
+  price. `checking` is the feed still answering — saying "no price" then would be
+  Today's movers' Stage 10r defect in a new table. `unchecked` is no price at all,
+  and it is never `watching`: a check never made must not read as one that held.
+- **THE FIVE KINDS ARE THE FIVE LEVELS THE STORE ALREADY HOLDS**, under an
+  investor's words — Buy at (`entryPrice`), Sell at (`exitPrice`), Stop loss
+  (`alertBelow`), Target (`targetPrice`), Alert above (`alertAbove`). Nothing the
+  family typed moves; "Entry price" is "Buy at" and now fires. Fair value is NOT
+  an alert — it is a valuation.
+- **REACHED IS INCLUSIVE** — a level the price touches exactly must fire.
+- **DISTANCE IS SAID THE WAY AN INVESTOR SAYS IT:** "↓ 18.2% to go" while
+  watching (as a share of the price NOW), "4.8% past" once fired (as a share of
+  the LEVEL).
+- **A TYPO IS REFUSED, NEVER SAVED AS A DELETE.** `parseLevel` reads Indian
+  grouping and the ₹ sign and refuses anything that is not a positive number. The
+  old parser read "abc" as blank and silently erased the level in the box.
+
+#### The card: four boxes, and everything else one click down
+
+The card led with ten fields in four rows and a "Plan" block naming columns on a
+Portfolio Monitor view that had been removed. It leads now with the four levels
+an investor acts at — Buy at, Sell at, Stop loss, Target — each saying UNDER
+ITSELF whether the price got there or how far is left. Alert above, fair value,
+target weight, fair value year and valuation method sit under **More**, which
+**opens by itself** when anything in it is set, so nothing the family typed is
+ever hidden. The "Add to watchlist" star is gone: its page was removed at Stage
+10w, and a control whose only effect is invisible is the control-that-looks-alive
+failure. The flag it set is kept on every save.
+
+#### Morning CIO → All alerts
+
+A fourth tab, LAST, so the three the family arranged keep their places and the
+default stays the movers panel. (Main's Stage 10by names the third tab after the
+chosen benchmark; the two changes met on the one line that draws a tab's label
+and both are kept — the benchmark's name, and the alerts count beside it.) One
+row per alert, because two levels on one holding fire separately:
+
+- **WHAT HAS FIRED COMES FIRST AND LOOKS LIKE AN ALERT** — a bell, the alert's own
+  words ("Stop loss hit", "Buy level reached"), its colour and a tinted row with a
+  bar at its edge; then what is still being checked; then what is watched,
+  closest first; then what cannot be checked, with the reason in its hovers.
+- **THE TAB CARRIES A COUNT OF FIRED ALERTS ON EVERY PANEL**, because that is how
+  a reader who never opens the tab learns something fired. A quiet day adds
+  nothing — never a `0` pill.
+- **REMOVING TAKES TWO CLICKS** ("×" then "Remove?"). A level the family set is
+  their own record and there is no undo.
+- **"NEW ALERT" OFFERS ONLY HOLDINGS AN ALERT CAN BE CHECKED ON** — a quote
+  symbol or a published NAV — and opens that holding's boxes rather than taking a
+  price inline, so there is ONE form for a level.
+- The table is a standard table (Stage 10bh): every heading sorts, every column
+  but the first moves, and an absent price sorts last, never as zero.
+
+#### The store tells everyone
+
+`watchlist.ts` keeps ONE cached snapshot, replaced (never edited in place) on a
+save, and tells every subscriber — `useSyncExternalStore` in `usePriceAlerts.ts`
+— so a level typed on a stock page is on the All alerts tab and in the badge with
+no reload; a save in ANOTHER browser tab arrives through the `storage` event. A
+saved NAME rides with each entry so an alert on a holding since sold still says
+what it is about; a name alone never keeps an empty entry alive.
+
+**THE LEVELS ARE STILL PER BROWSER**, which is recorded rather than glossed: the
+store is `localStorage`, exactly as it was, so a level typed on the laptop is not
+on the phone's All alerts tab. Stage 10cb moved the KPI tile layouts into the
+shared `GLOW_STORE` for exactly this complaint; the same move for the levels is
+the next step, and is named rather than taken here because it changes what a
+level IS (the family's shared record instead of one device's) and the family has
+not been asked.
+
+#### …AND EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW CENTRAL RESEARCH
+
+Glow Central Research is a separate app on its own Cloudflare Worker, so a level
+in this browser's `localStorage` can never reach it on its own. The work is in
+TWO repositories and only this half is here:
+
+- **`techmuns/Glow-Central-Research` PR #1283 — open and NOT merged**, because
+  merging it deploys. It adds ONE shared list of the family's price levels
+  (`/api/price-levels`, a Durable Object), checks every level against ITS OWN live
+  price (the Upstox token it already holds) once a minute while the market is
+  open, and turns a reached level into a row in its All Alerts and a card in its
+  AI Alerts. Its own `CLAUDE.md` and `docs/GLOW-TEMPLATE-SYNC.md` carry that half.
+- **This repo SENDS.** `src/lib/researchLevels.ts` decides what is sent and how an
+  answer is read (PURE); `src/lib/researchSync.ts` sends it and remembers what
+  arrived; `src/lib/useResearchSync.ts` holds the hooks and the ONE mount. Nothing
+  here reads Glow Central Research's alerts back — a level reached is shown here
+  by this app's own check, on this app's own price.
+
+**WHAT IS SENT, AND WHAT STAYS HERE.**
+
+- **ONLY A HOLDING WITH AN NSE SYMBOL.** Glow Central Research follows listed
+  companies by their NSE ticker and nothing else. A mutual fund or an AIF has no
+  ticker, so its levels stay here and its card says so — a send that can never
+  arrive must not look like one that is waiting.
+- **THE ISIN RIDES WITH THE TICKER**, because the receiving side keys its quote on
+  it (`NSE_EQ|<ISIN>`) and refuses a quote that does not echo both. Taken first
+  from Upstox's own instrument for that symbol (`shared/upstoxInstruments.mjs` —
+  the instrument the receiving side will ask about), then from the book's own.
+  Never from a name. Measured on the real book with a level on every holding:
+  **161 companies sendable, 160 carrying an ISIN.**
+- **THE FIVE LEVELS UNDER THE NAMES BOTH APPS USE** — `buyAt`, `sellAt`,
+  `stopLoss`, `target`, `alertAbove` — never this app's field names, mapped once
+  off `ALERT_DEF` so the sender cannot drift from the boxes. `null` is not set.
+- **A LEVEL THE OTHER SIDE WOULD REFUSE IS NAMED HERE** — above ₹1 crore a share
+  it reads as a typo — because the receiving side refuses a whole batch of 40
+  for one malformed edit, and one typo must not hold back every other company.
+- **TWO ENTRIES FOR ONE TICKER SEND ONE ROW**: the one saved most recently speaks,
+  and the other card says its levels were not the ones sent.
+
+**SEED, SET AND CLEAR — the receiving side's own shared-watchlist rules.** A
+level typed AFTER this browser started sending is a `set` and replaces what the
+shared list held. A level this browser already held BEFORE it ever sent is a
+`seed`, taken only where the shared list has never heard of the company — so a
+laptop opened after a month cannot overwrite a level set yesterday on a phone.
+Removing the last level on a company this browser had sent is a `clear`, which
+the list keeps as a record so a stale device cannot put it back. Only what this
+browser had sent is ever cleared: a declined seed was never its to clear.
+
+**"BEFORE" IS JUDGED ON THE LEVELS, NOT ON THE SAVE TIME, and the first version
+of this got it wrong.** A seed was any level whose entry was last saved before
+the sender started — and a note, or a tick on Watching, saves the entry. So a
+month-old level with a note typed under it today went as a `set` and overwrote a
+newer level from another device. It is live exactly in the rollout window, when
+every send is refused and the family goes on editing. `seeds` in the sent state
+records the levels this browser held when it started, as first seen; a set now
+needs BOTH a save since then AND levels that differ from those. Either alone is a
+wrong answer — the save time moves on a note, and a recorded seed cannot see a
+level that only became sendable later.
+
+**WHAT AN ANSWER MEANS.** `set`/`seeded` → acknowledged. `full` → refused, not
+retried until something changes. `unchanged` means three things and is decided by
+the list's OWN copy, returned with the answer: on a set it already held exactly
+this; on a clear there was nothing left; on a seed it had heard of the company —
+acknowledged if what it holds is exactly this (another tab of this browser sent
+it a moment ago), otherwise DECLINED, as another device's levels or as removed
+there, and not offered again until the family changes a level here.
+
+**A FAILURE SAYS WHICH FAILURE.** `offline`, `unreachable`, `not-ready` (the route
+answers 404 — the receiving side is not deployed yet, which is not an outage),
+`not-allowed` (an origin it refuses), `rate-limited`, `invalid`, `error` — each
+worded apart, because each sends a reader somewhere different. A refused origin
+carries no CORS header, so the browser sees a bare network error; an opaque
+failure is followed by ONE plain GET, which the list answers to every origin, to
+tell "refused" from "unreachable". The wait is chosen by cause: fifteen minutes
+for not-ready, one for offline or a rate limit, never on a timer for a refusal
+trying again cannot fix, and otherwise 30 s doubling to at most 30 minutes.
+
+**AUTOMATIC, AND ONE SENDER.** `<ResearchLevelSync />` is mounted once in the app
+shell (`App.tsx`), so a level saved on ANY page goes 700 ms later (a burst of
+edits goes as one request), a page load sends what did not arrive last time,
+and a failed send is tried again when its wait is over, the moment the browser
+comes back online, and when the tab is shown again. It is keyed on what would be
+SENT — tickers, ISINs, levels — never on the book object, which changes on every
+quote poll, and never on the save time, which a note moves. The Web Locks API
+makes one sender across tabs, and a call while a send is running is folded into
+one more send with the latest levels.
+
+**WHAT ARRIVED IS KEPT BESIDE THE STORE**, at `glow:research-levels/v1`, never in
+it: the levels are the family's, the acknowledgement is a fact about another app,
+and mixing them would let a failed send look like a changed level.
+
+**AND THE SCREEN NEVER SAYS "SENT" FOR WHAT DID NOT ARRIVE.** The line under a
+holding's alert boxes says exactly one of: saved here and in Glow Central Research
+/ sending / not there yet and why / held back because another device's levels are
+there (or were removed there) / refused because its list is full / the other
+entry's levels were sent / stays here only, and why. The All alerts footer COUNTS
+it — *"Glow Central Research: 2 of 2 companies sent · 3 stay here (no NSE
+symbol)"* — against what the receiving side acknowledged, never against what was
+attempted.
+
+**THE FOOTER IS TWO SHORT LINES, AND THE SENTENCES ARE THEIR HOVERS** — Stage
+10ci's rule for a note under a table, which landed on main while this waited and
+failed the first version at 281 and 450 characters. The first line says where the
+prices came from (*"Live prices from Upstox, updated … · funds on their
+published NAV · saved in this browser"*); its hover says why a statement's own
+price is never used. The second is the count above; its hover says what Glow
+Central Research does with a level and, for each number on the line, why. That
+second line and its hover come from one function, `summaryLine` in
+`researchLevels.ts`, which keeps the line to at most 150 characters on any day:
+where every kind of outcome happens at once, the reasons drop to the hover and
+the COUNTS stay. Two things it had to get right that the long version got wrong:
+
+- **A LEVEL KEPT HERE AS TOO HIGH IS NOT "NO NSE SYMBOL".** The old footer put
+  *"(no NSE symbol)"* after every level that stayed here, and a level above ₹1
+  crore stays for a different reason. The summary counts the two apart
+  (`tooHigh`), and the line names a reason only where one covers them all.
+- **"HELD BACK" IS WORDED FOR BOTH WAYS IT HAPPENS** — the other side already had
+  levels for that company from another device, or they were removed there.
+
+**WHAT IS TRUE TODAY, STATED RATHER THAN IMPLIED:**
+
+- **Until PR #1283 is merged and deployed, the live Worker answers 404 on the
+  route**, so every card reads "Glow Central Research is not taking price levels
+  yet — they will go automatically once it is". Nothing needs doing on this side
+  when it is: the next retry, page load or edit sends everything.
+- **It writes only from the production origin.** The receiving side accepts a
+  write from its own origin and from `PRICE_LEVEL_ORIGINS` (this dashboard's
+  `pages.dev` address); a preview deployment is refused and its cards SAY so,
+  naming the address.
+- **No credential crosses.** The POST is `credentials: "omit"` — no cookie of this
+  dashboard's edge gate goes to another site — and no token was added here.
+- **Anyone who can open Glow Central Research can read the list**, the standing
+  its own shared watchlist already has. A level is a price; it names no account,
+  no holding size and no member.
+
+#### The checks, and what the bug pass proved
+
+- `npm run test:family` — `priceAlerts.test.ts`: every state, both original
+  defects asserted AS defects, the store's notify/snapshot/deletion rules, and a
+  book-anchored half (every NAV-priced fund checkable with the feed DOWN; a
+  quotable share `checking` before the feed answers; an AIF never checkable).
+  `researchLevels.test.ts` (115 checks): the rules on constructed inputs
+  (including the note under an old level and every shape of the footer line — the
+  count, the short cause per failure, the worst day, the too-high reason), a REAL
+  send against a stand-in that follows the receiving
+  side's rules — seeds, a set, a clear, a seed declined because another device
+  holds the company, a note typed while the other side was down, each failure
+  cause and its wait, 45 companies in two batches resuming after the second
+  fails, two calls folded into one more send — and the real book: every ticker
+  passes the receiving side's own symbol rule and the largest batch with a level
+  on every holding is about 7 KB against its 32 KB limit.
+- `npm run check:pages` — a Glow Central Research stand-in on EVERY walk, so no
+  test can ever reach the real one. `cio-alerts` (answering) and
+  `cio-alerts-nofeed` (not deployed) assert what was SENT, read off the requests
+  rather than the screen: the two quoted shares as seeds, each under its symbol
+  and ISIN with exactly its levels, from this page's own origin as JSON; nothing
+  without an NSE symbol; the footer's count; and the footer's WORDS against its
+  own attributes, because a sentence reading "2 of 2 sent" over attributes
+  counting none passes every check that reads only the attributes. The two
+  footer lines' HOVERS are read too, because the sentences moved there and a
+  hover that went missing would take them with it. Every other route must send
+  nothing, and a request from one fails that route by name.
+- `npm run check:family` — the whole path on a real listed share, derived from
+  the book: a typed Target goes as a SET under its symbol and ISIN → the card
+  says it is there → with the receiving side down the next level fails and the
+  card says why → a reload sends it → down again, and the browser coming back
+  ONLINE sends it with no reload → clearing both levels sends a CLEAR → the card
+  says nothing is saved. Then a separate browser context on **Playwright's fake
+  clock**, because fifteen minutes cannot be waited out: the first send is
+  refused, NOT asked again inside ten minutes, and sent BY THE TIMER once the
+  other side is up — the one path a dashboard left open all day depends on.
+- `scripts/dev/alerts-bug.sh` reintroduces the alert bugs and 19 sender bugs
+  (`CASES=SENDER` for those alone), each through the layer that should catch it,
+  restoring by copy on a trap and rebuilding on the way out. @@BUGPASS@@
+
+#### Merged with main, and one check main itself was failing
+
+Main moved from `20a3f15` to `3a5b4d1` while this branch was open — nine PRs
+and a data refresh, eight stage letters — and two files conflicted:
+
+- **`MorningCIO.tsx`**, on the line that draws a tab's label: main names the
+  third tab after the chosen benchmark, this change puts the fired-alerts count
+  beside the fourth. Both kept.
+- **`check-pages.mjs`**: the routes, `installLiveMocks(page, opts)`, the invariant
+  blocks and the `ctx` literal — resolved as a mechanical UNION: main's 92 keys
+  and this change's `alertsTab` and `researchPosts`, 94, none duplicated, every
+  one then confirmed to name a declared probe.
+
+**AND TWO `check:family` ROWS FAILED ON MAIN ITSELF.** #84 added
+`/corporate-actions` to the Extras group without updating the suite's list of
+what Extras holds. This branch fixed it with one list, `EXTRAS_PAGES`, that both
+rows read. Main then fixed the same thing the same way (#92, Stage 10cj), so on
+the second merge main's version is kept whole.
+
+#### Merged with main a second time: four PRs, and a rule that failed the footer
+
+Main moved from `3a5b4d1` to `f55b19b` while the family's go-ahead was awaited:
+#87 (Stage 10cg, fonts and colours), #89 (Stage 10ch, notes), #90 (Stage 10ci,
+the notes around every table cut to one short line) and #92 (Stage 10cj, the
+Private Market FIFO checks and the fifth Extras page). Two files conflicted:
+
+- **`check-pages.mjs`** — the `ctx` literal is the union again: main's 94 keys
+  (which dropped `fundExposure` and added `fundLines`, `tableNotes` and
+  `foldsOnArrival`) and this change's `alertsTab` and `researchPosts`, 96, none
+  duplicated, every one naming a declared probe.
+- **`check-family-inputs.mjs`** — the Extras rows, where main's version is kept.
+
+**AND #90's GUARD FAILED THIS CHANGE'S FOOTER**, which no conflict marker could
+show: `cio-alerts` and `cio-alerts-nofeed` wrote 281 and 450 characters under the
+All alerts table, over the two lines of 150 the guard allows. The two short lines
+above are the fix. The two harness cases whose code moved were re-anchored and
+four new ones added — see the bug pass.
+
+@@VERIFY@@
 
 ### Stage 10k — News & Announcements: REMOVED
 
