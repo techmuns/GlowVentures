@@ -15223,6 +15223,13 @@ Upstox-shaped feed (no range) and a stubbed history: the card reads
 `₹198.25 – ₹263.4 · of daily closes, from the price history`, the pill's hover
 reads `priced live via Upstox`, and the history was fetched once.
 
+`build` · `tsc` · `test:ingest` · `test:family` (a new `upstoxQuotes.test.ts`) ·
+`check:family` **85/0** · `check:pages` **188 combinations clean**, with the same
+eight evidenced abstentions across the same four claims Stage 10bp records — none
+of them this change's. It adds no route, so the count is main's own.
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY: a price source is not part of the book.
+
 **WHAT COULD NOT BE CHECKED FROM HERE, STATED RATHER THAN IMPLIED.** The token is
 in Cloudflare and nowhere else, so no test in this repo has seen a real Upstox
 answer on this deployment. What stands in for that: the stubbed shapes are
