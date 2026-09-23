@@ -17424,7 +17424,35 @@ panel, and a missing tab is a finding — the panel then has no way to be reache
 
 #### The bug pass
 
-`scripts/dev/stock-tabs-bug.sh` puts seventeen bugs back one at a time, restoring by copy on a trap and rebuilding on the way out, after a no-patch control. *(Its result is recorded here when the run finishes.)*
+`scripts/dev/stock-tabs-bug.sh` puts seventeen bugs back one at a time, restoring
+by copy on a trap and rebuilding on the way out, after a no-patch control that
+came back clean. **All seventeen fire, and not one reported SWEEP CLEAN or NOT A
+RESULT:**
+
+| Bug put back | Fires |
+| --- | --- |
+| every tab's content drawn at once — the long page back | "exactly one tab's content is drawn" on **all 22 routes**, with each tab's own absence claims beside it (the tax card, the account table, the one research card, a fund's two halves) |
+| the tabs beside the name rather than at the line's right-hand end | the geometry check, on all 22 |
+| the panel no longer scrolls inside itself, so the page scrolls | "the page itself does not scroll" on the three routes whose tab is taller than the window — see below |
+| the tabs reordered, so the page opens on Research | the order check on all 22, the lit-tab and one-section checks, and every Position-tab claim on the position routes |
+| a tile dropped from the strip | "the six tiles are on every tab" on all 22, and the price tile's reason |
+| the tax card drawn nowhere | the tax-card check on the four Transactions routes |
+| a tax figure's dash loses its reason | the same check — it is struck PER CELL, so a card of the right shape cannot pass for one that says why |
+| the Ratios sub-tab wired to nothing · the ratio panel under every sub-tab | the research walk, each |
+| the Trading range card back beside the returns table | two checks on `stock-market` |
+| every mandate listed under the name | the one-line mandate count on `stock-mandates-many` |
+| a cash line's sector chip back | "a cash line carries no sector chip" |
+| a Total row under a single account's row | the footer check on four routes, and the one-account claim on `stock` |
+| the plan-view sentence back on My targets | `stock-targets` |
+| a fund's holdings on its Price & returns tab too | "this tab draws the scheme's price half, not its holdings" |
+| the price tile refusing a mark every statement agrees on | three checks on three routes |
+| an AIF folio's price tab drawing a returns table | "an AIF folio's price tab says there is no market price, and why" |
+
+**THE SCROLL CHECK FIRES ON THREE ROUTES, NOT TWENTY-TWO, AND THAT IS ITS SUBJECT
+RATHER THAN A GAP.** On the other nineteen the tab's content fits the window, so
+the page does not scroll with or without the inner scroller; the claim can only
+be broken where there is more content than room, and those three are where it
+was.
 
 **AND TWO OLDER HARNESSES PATCH THIS PAGE, SO BOTH WERE RE-CHECKED RATHER THAN
 TRUSTED.** `carried-cost-bug.sh` (Stage 10bv) finds both of its anchors in the
@@ -17433,7 +17461,15 @@ code the rewrite moved, so each would have reported NOT A RESULT — a harness t
 cannot apply its bug proves nothing, however clean its run looks. Its anchors are
 the new page's now, every patch was dry-run against a copy of it, and its route
 list dropped `stock-cmp-derived` (retired at Stage 10bn) and gained
-`stock-cmp-agree` and `stock-cmp-nav`. *(Its run is recorded here when it finishes.)*
+`stock-cmp-agree` and `stock-cmp-nav`. Re-run on the merged tree, **eight of its ten
+cases fire.** Two are clean, and neither is this change's doing: case 3 (a cell
+deriving value ÷ units) has been unable to fire since Stage 10bn retired
+`stock-cmp-derived` — on this book value ÷ units IS the mark on every row the
+page draws, the NAV overlay making it so by construction — and case 9 (the tile
+dating the mark to the first row rather than the marked one) has NO SUBJECT:
+measured, not one of 213 securities has an unmarked first row and a marked later
+one. Both are written down here rather than left to be rediscovered as a clean
+run that looks like a pass.
 
 #### Merged with main twice, and the letter is `10cb`
 
@@ -17443,8 +17479,9 @@ branch's `stockPage` — with main's `schemeCalls` NOT carried, because main
 deleted the probe that declared it. **#83 (Stage 10bz, Ask Muns off the top bar)
 merged without a marker**, which is when this file says to check by hand: the
 literal is exactly main's 85 keys plus `stockPage`, none duplicated, and every
-key resolving to a declaration. Neither PR touched a file this change rewrote
-except `check-family-inputs.mjs` (#79), which kept both sides.
+key resolving to a declaration. Neither PR touched the page's own files; beyond
+`check-pages.mjs`, the one overlap was `check-family-inputs.mjs` (#79), which kept
+both sides.
 
 **THE LETTER SKIPS TWO, ON PURPOSE.** Main's Stage 10bx names `10by` as the
 Portfolio Monitor's stage and #83 took `10bz` past it; of the open PRs, #81
@@ -17455,8 +17492,12 @@ pointers this change adds to older passages — Conventions, and Stages 10ap,
 10ba, 10bm, 10bn, 10br, 10c, 10j (*"the complaint came back"*) and 10k — all
 name `10cb`, so a move of the letter at merge time is one search.
 
-`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **— recorded on the merged tree** ·
-`check:pages` **— recorded on the merged tree when the full sweep finishes**. `npm run build-book` regenerates `glowData.ts` and
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **87/0** ·
+`check:pages` **234 combinations clean** — main's 216 plus this change's nine new
+routes in both themes — with the same nine evidenced abstentions across the same
+five claims main records and not one of this change's own. MEASURED ON THE TREE
+MERGED WITH #83, not carried across. `test:ingest`: golden 140 passed, 2 not
+checked, 0 blocked. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` BYTE-IDENTICALLY: nothing here touches the ingest.
 
 ### Stage 10k — News & Announcements: REMOVED
