@@ -2367,7 +2367,9 @@ export function PortfolioMonitor() {
             <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
           </button>
         } />
-
+      <div className="mb-3 text-xs text-slate-500">
+        HPR / CAGR exclude dividend income. <Link to="/corporate-actions" className="text-champagne-400 hover:underline">View dividend-inclusive returns & share adjustments</Link>
+      </div>
       {/*
         ONE CHROME ROW, JUST FILTERS. The filters, the view toggle and the two
         export buttons each had a line of their own, so ~130px of the first

@@ -3655,6 +3655,7 @@ const ROUTES = [
   // break silently: that Exposure & IPS still reaches the store both pages
   // wrote to.
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
+  ["corporate-actions", "/corporate-actions"],
   // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
   // has no price history, no PE, no filings and no insider trades, so the five
   // company panels are absent BY DECISION there. Walked as its own route so a
