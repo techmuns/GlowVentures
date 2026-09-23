@@ -409,6 +409,32 @@ export type CapitalGroup = {
 export type CapitalSide = "all" | "in" | "out";
 
 /**
+ * DOES THE DATED RECORD REACH THE DATE THE VALUE IS STRUCK ON?
+ *
+ * The other end of the same question `contributionsAreComplete` asks about the
+ * start. A return compares the capital with a value, and the value is struck on
+ * the account's own statement date; a record that stops before that date has
+ * not seen what moved in between, so a return on it divides a value by capital
+ * drawn at a different moment. Green Lantern 510861 is the case: its dated
+ * record is a quarterly investor report ending 30 June, and its holdings are
+ * struck on 27 July — ₹6,350 of withdrawals in between are in no dated row.
+ *
+ * ONE DEFINITION, read by `capitalRollup` for every account whose purchases are
+ * its own capital RECORD — the Transactions card, the mandate page and the
+ * Portfolio Monitor's money-weighted rows (`datedCapital.ts`) all go through it,
+ * so no two can disagree about which accounts' dated records are whole. A
+ * drawdown fund's CALL list is not held to it: its calls and payouts are read
+ * off the statement the value is struck on and reconciled against that
+ * statement's own totals (`callsIfTheyTie`), so they reach its date by
+ * construction. Null where the record reaches; otherwise the reason.
+ */
+export function recordShortfall(a: { asOf?: string | null; capitalRecordTo?: string | null } | undefined): string | null {
+  if (!a?.asOf) return "the account carries no statement date for its value, so there is nothing for the record to reach";
+  if (a.capitalRecordTo && a.capitalRecordTo >= a.asOf) return null;
+  return `this dated record ends ${a.capitalRecordTo ?? "before the account's statement date"}, before the ${a.asOf} statement its value is struck on, so what moved in between is not in it — the return on the capital the manager's own statement prints is on the Holdings table`;
+}
+
+/**
  * IS THE CONTRIBUTION HISTORY THE WHOLE OF WHAT WAS PAID IN?
  *
  * A return needs the denominator to be complete, and "the statement listed some
@@ -576,7 +602,7 @@ export function capitalMovesWithCalls(
  */
 export function capitalRollup(
   moves: CapitalMove[],
-  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null; asOf?: string | null; engagement?: string; noPositionsReason?: string | null }[],
+  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null; asOf?: string | null; capitalRecordTo?: string | null; engagement?: string; noPositionsReason?: string | null }[],
   positions: Position[],
   index: Record<string, PositionTranches>,
   side: CapitalSide = "all",
@@ -636,7 +662,12 @@ export function capitalRollup(
       : held.reduce((s, p) => s + (p.costBasis ?? 0), 0);
 
     const dates = ms.map((m) => m.date).sort();
-    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate, c, fromInception.has(accountId));
+    // BOTH ENDS: the record must reach back to inception AND forward to the date
+    // the value beside it is struck on (`recordShortfall`) — the second asked of
+    // a capital RECORD only, since a fund's call list is read off the very
+    // statement its value comes from.
+    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate, c, fromInception.has(accountId))
+      ?? (source === "record" ? recordShortfall(a) : null);
 
     // ── APPRECIATION, AND WHY IT IS WITHHELD WHERE IT IS ─────────────────────
     const filtered = sideFiltered || windowed;

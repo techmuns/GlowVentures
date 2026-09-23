@@ -1565,6 +1565,27 @@ function build(docs) {
     const holdingsDoc = authoritative(group, provider, "holdings");
     const asOf = holdingsDoc?.asOf ?? sample.asOf ?? null;
     const inception = group.map((d) => d.inceptionDate).find(Boolean) ?? null;
+    /**
+     * HOW FAR THE DATED CAPITAL RECORD REACHES — the other end of the question
+     * `contributionsAreComplete` asks about inception.
+     *
+     * A record of the family's payments is complete only if it covers the whole
+     * life of the account: back to inception, AND forward to the date its value
+     * is struck. The first half was checked; nothing checked the second. Green
+     * Lantern 510861's payments come from its QUARTERLY SEBI investor report,
+     * which ends 30 Jun, while its holdings are struck on 27 Jul — so its dated
+     * net stood ₹6,350 above the fact sheet's for that date, every rupee of it a
+     * withdrawal the record had not reached. Small here; a contribution missed
+     * the same way would be any size at all.
+     *
+     * The latest window end of the documents that CARRY a payment row. A
+     * statement listing every payment since inception has no window and is
+     * complete to its own date, so it answers with its as-of.
+     */
+    const capitalRecordTo = allIssues
+      .filter((d) => (d.cashFlows ?? []).some((c) => c.date && CAPITAL_KINDS.has(c.kind)))
+      .map((d) => d.periodTo ?? d.asOf)
+      .filter(Boolean).sort().at(-1) ?? null;
     const ownerId = group.map((d) => d.ownerId).find(Boolean) ?? null;
 
     /**
@@ -1647,6 +1668,7 @@ function build(docs) {
       members: sample.members ?? [],
       asOf,
       inceptionDate: inception,
+      capitalRecordTo,
       custodian: provider,
       /**
        * WHY THIS ACCOUNT HAS NO POSITIONS, when it has none.

@@ -47,6 +47,7 @@ const SUITES = [
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["capital record", "src/lib/__tests__/capitalRecord.test.ts"],
+  ["dated capital", "src/lib/__tests__/datedCapital.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
   ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
