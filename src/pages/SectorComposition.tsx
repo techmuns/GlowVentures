@@ -3,7 +3,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Check, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
-import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import {
@@ -27,7 +26,6 @@ const SECTOR_COLS = ["sector", "value", "weight", "count", "return", "top"] as c
 const SECTOR_COMPANY_COLS = ["company", "measured", "derived", "total", "share"] as const;
 const SECTOR_HOLDING_COLS = ["security", "entity", "heldVia", "value", "share", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
-import { BasisPill } from "@/components/BasisPill";
 import { Auditable } from "@/components/Auditable";
 import { returnFormula, weightFormula } from "@/lib/auditFormulas";
 import { AbsentCell } from "@/components/Absent";
@@ -317,10 +315,6 @@ export function SectorComposition() {
     const unplacedMV = unplaced.reduce((a, e) => a + e.total, 0);
     return { book, disc, vendor, unplaced, unplacedMV };
   }, [entries]);
-  // Once the quote feed is up every figure here tracks live prices and none
-  // matches a cell in the source extract any more; only a book still on its
-  // statement marks keeps the audit trail back to the ledger.
-  const feedLive = p.some((x) => x.live);
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   /**
    * WHAT A SECTOR OPENS INTO. Direct Equity expands to the POSITIONS behind it,
@@ -570,13 +564,23 @@ export function SectorComposition() {
             ))}
           </div>
         }
-        right={<div className="flex items-center gap-2">
-          <BasisPill liveText={feedLive ? "Live prices" : "Workbook marks"}
-            hint={consolidatedView
-              ? "Two halves, kept apart until the last moment. The MEASURED half is every company share the statements report, mandate-chosen and self-bought alike. The DERIVED half is the family's units' share of what each fund disclosed holding — the AMC's own monthly filing, not a document about this family — and it is no part of the book's NAV, because the fund's own value already stands for it there. Sectors come from one committed map: the book's own where it has one, and the industry label the AMC filed otherwise."
-              : "A GICS sector is a property of a company, and no statement here prints one for a fund. This view narrows to shares the family bought itself — the set the holdings tables call Direct Equity. Values, weights and returns are rebuilt from live prices; cost basis comes from the statements."} />
-          <Pill tone="info">{sectors.length} sectors</Pill>
-        </div>} />
+        /* ── NO PILLS ON THIS HEADER ────────────────────────────────────────
+           *"remove the highlighted texts from the dashboard UI"* — pointed at
+           the basis pill, its "N accounts behind" companion and the "N sectors"
+           count. Audited before they went:
+
+             · "N sectors" — every sector is a row of the table beside the
+               chart, and the donut draws one wedge per sector;
+             · the basis pill's hover — the MEASURED / DERIVED split is on the
+               table's own column notes and the partition figures, and the
+               Direct Equity narrowing is that tab's own hover;
+             · the LIVE label and the as-of skew — NO SECOND HOME ON THIS PAGE.
+               It is the fourth page to lose its <BasisPill> at the family's
+               request (after Morning CIO, /holdings and Private Market), and
+               CLAUDE.md §6 records it as a narrowing rather than glossing it.
+               What did NOT move is the source: this page reads the same
+               context it always has. */
+        />
 
       {/* ── TWO HALVES: THE CHART AND ITS FIGURES LEFT, THE TABLE RIGHT ────────
           *"why not give this whole table of Sector breakdown next to this pie
