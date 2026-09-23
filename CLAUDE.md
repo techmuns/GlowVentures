@@ -20416,7 +20416,11 @@ report a cost"*) — the tile above the table carries the same basis in its capt
 `/stock/` page — 466 of them on this book — and each opened on *"Position closed
 · This name is fully exited"*.** The page read "no statement row" as "sold",
 about companies the family never held directly and still holds today. The
-largest is HDFC Bank, ₹3.18 Cr across its fund lines.
+largest is HDFC Bank, ₹3.18 Cr across its fund lines. Both figures are the
+rendered page's, which reads the LIVE book — each fund at its published NAV, and
+the depository's cash funds Stage 10ce values. `heldThrough.test.ts` reads the
+statements' own marks and counts 461 and ₹3.12 Cr; neither is wrong, and the
+basis is why they differ.
 
 - **THREE STATES, NOT TWO.** Until the look-through answers, a page with no row
   cannot tell a fund-held company from an exited one, so it claims neither.
@@ -20540,11 +20544,39 @@ into `measuredRow`: the same `datedCap?.behind([r], holdingsUniverse)`, the same
 `data-capital` handle, the same `capital` prop to `ReturnCells`. A fund LINE is
 not an account and gets none, which is #78's own rule.
 
-`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
-35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
-neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0, the
-new suite included · `npm run build-book` regenerates `glowData.ts` and
-`docs/BOOK-REPORT.md` BYTE-IDENTICALLY — nothing here touches the book.
+**VERIFIED ON THE TREE MERGED WITH #87 AND #89** (main at `4148c1a`): `build` ·
+`tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant
+42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+140 — 2 not checked, 0 blocked) · `test:family` exit 0, the new suite included ·
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY — nothing here touches the book · `check:family` **84/2** ·
+`check:pages` **254 combinations, 3 with a finding**. That is main's 246 plus
+this change's four routes in both themes, and it reconciles only because the
+sweep was run again rather than the count adjusted.
+
+**EVERY FAILURE IS MAIN'S, AND EACH WAS SHOWN TO BE ON MAIN'S OWN BUILD AT
+`4148c1a` BEFORE THIS MERGED.** The two `check:family` failures are the
+Extras-menu checks, which still count four pages where #84 added a fifth. The
+three `check:pages` findings are the Private Market routes, 8 invariants in all,
+and the identical 8 fail on main's build: #72's fund-return re-expression still
+strikes HPR as value against cost where #80 made it FIFO — Stages 10ce and 10cf
+name it and leave it, and so does this. The 10 invariants not checked are main's
+evidenced abstentions (six KPI-tile lines on the Morning CIO routes, two Private
+Market cost lines, #79's redeemed private account, the not-found drill-down's
+crumb). Every route this change adds is clean, and #87's look checks — Inter,
+Plus Jakarta Sans titles, tabular `.mono` figures, white chrome, a raised card
+only where a link covers it — pass on all four of them.
+
+**AND A FULL SWEEP RUN BESIDE OTHER WORK FAILED TWO ROUTES THAT ARE NOT THIS
+CHANGE'S, THEN PASSED THEM ALONE.** On the tree before #78, with other checks
+running on the same machine, `monitor-txn-drill` failed four invariants and
+`monitor-txn-in` three. What they read was the Transactions view as it opens —
+3P's ₹31.1 Cr redemption under the Buys filter, no manager row expanded — which
+is what a click landing before the view settles would leave. Both pass alone on
+that same build, alone on the final one, and in the final full sweep, which ran
+with nothing else. That is the load sensitivity Stage 10cc records for
+`monitor-txn-out`, on two more of the same walks; it is recorded here rather than
+called a flake, and the counts above come from the sweep that ran alone.
 
 ### Stage 10k — News & Announcements: REMOVED
 
