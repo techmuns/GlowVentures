@@ -6349,6 +6349,11 @@ is untouched and asserted to be** — two new axes beside an old one is exactly
 the change that silently moves the default, and the page would render perfectly
 while showing the family a table they asked to keep.
 
+*(THE MONITOR'S DEFAULT HAS SINCE MOVED, AT THE FAMILY'S REQUEST — see Stage
+10cf. `/monitor` opens on All Securities and this table is
+`/monitor?group=category`; Morning CIO's allocation card still opens on
+Category. The rule above is why the move is asserted rather than assumed.)*
+
 *(THE AXIS MACHINERY HAS SINCE MOVED to `src/lib/groupAxis.ts` — Morning CIO's
 allocation card groups on the same three at the family's request, and two copies
 of "which section does this holding sit in" would be two chances for one screen
@@ -19687,6 +19692,151 @@ value against cost, where #80 made every HPR FIFO. Neither was introduced here
 and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
+
+### Stage 10cf — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
+
+*"Make this view as All Securities and make it first in portfolio monitor and
+default open and put the all holding and all entities selectors to the right
+end of after return selector"*
+
+#### 1. The first segment IS the default — and only the Monitor's list moved
+
+`MONITOR_GROUP_VIEWS` in `groupAxis.ts` puts the security axis FIRST, labelled
+**All Securities**, and `useViewParam` makes a list's first view its
+param-free default — so moving the segment to the front is what makes
+`/monitor` open on one row per security, with no second convention. Category,
+which held that place since Stage 10z (*"Default view will remain the current
+one, category wise"*), is `/monitor?group=category` now. The KEY did not
+change, so `?group=security` still resolves and every bookmark and search
+result that named the axis still lands.
+
+**`GROUP_VIEWS` DID NOT MOVE, DELIBERATELY.** It is the list Morning CIO's
+allocation card and the Monitor's Transactions table read, and neither has a
+security axis — so Morning CIO still opens on Category, and a reader who opens
+`/monitor` and clicks Transactions lands on Category through the fallback
+Stage 10bg built. That fallback is the ORDINARY path now rather than an edge
+one, which is why the `txnAxis` and `setView` notes say so.
+
+#### 2. The row reads HOW the table is arranged, then WHICH rows are on it
+
+Axis → return picker → Expand all → **All holdings · All entities**. The last
+two sit in ONE `ml-auto` group, so where the row wraps they drop to the next
+line as a pair and stay right-aligned, instead of one of them starting a line
+on its own at the left. Measured at 1500px on the merged tree: the axis
+control spans 217–493, the return picker 499–662, and the pair 1072–1479,
+flush with the row's own right edge. Transactions carries the return picker
+too since Stage 10cd, so its row is axis → return → the same pair, which is
+exactly where the ask puts them.
+
+**THE PICK-LIST'S PANEL OPENS LEFTWARD NOW.** `MultiSelectFilter` takes
+`align="right"`. As the row's first control a panel anchored to its trigger's
+left edge opened into the row; at the right end the same 24rem panel would open
+past the page — the defect the return picker had once as the row's last
+control, fixed the same way. It opens 932–1268 at 1500px and stays inside the
+viewport at 1024 and 768.
+
+#### 3. Two defects the new default made common
+
+- **A PICKED FUND DREW AN EMPTY TABLE OVER A ₹0 FOOTER.** The pick-list offers
+  every holding on every axis — a reader searches the book, not the view — and
+  on All Securities only a company share is a row (Stage 10aj). Picking
+  `Sanshi Fund-I` there read *"No positions match your filters"* over
+  `₹0 ₹0 ₹0 0.0%`: a family who know they hold it being told nothing matched,
+  which is the BSE search's defect (Stage 10bu) one control over — and one
+  click from the page's front door once this is the default. The table now
+  names each picked holding that is not a row here, says why, and offers
+  **Show it on Category**, keeping the selection across the click. Picked
+  beside a company it sits under the company's row, so a fund is never dropped
+  from the table without a word.
+
+  **AND IT NAMES ONLY WHAT CATEGORY WOULD DRAW**, which the first draft did
+  not. The pick-list also offers a CLOSED position — 3P, redeemed to nil — and
+  a holding the reader's own entity or sector filter excludes, and Category
+  draws neither, so "Show it on Category" there was a promise of an empty
+  table. `pickedNotRows` runs the row build's own tests (`currentHoldings`,
+  then entity, then sector) and everything else keeps the generic line, which
+  names the reader's filters as the cause. Found by re-reading the memo against
+  the row build after the merge, not by a check — so a check was added.
+- **NO FOOTER IS DRAWN OVER NO ROWS.** A total of nothing is not a measured
+  zero (§2), and the line above it already says why the table is empty.
+
+#### 4. What else said "the Monitor" and meant Category
+
+Three sentences promise the Portfolio Monitor "carries … in full" — a fund's
+look-through card, a non-mandate account's page and a holdings drill-down. True
+of Category, where every holding is a row; false of All Securities, where a fund
+is not. Each link names `?group=category` and carries `data-monitor-in-full`.
+The breadcrumbs and the `/compare`, `/watchlist`, `/news` and `/data-bank`
+redirects still go to `/monitor`: they name the PAGE, not a slice of it.
+
+Search: the security view is labelled **All Securities** and answers "all
+securities"; **Holdings by category** is a view of its own ("category wise",
+"by category", "mandate wise") and one of the six starting points under an
+empty search box — the Category view lost its address-free door, so it gained a
+named one.
+
+#### 5. The checks, and where each claim is struck
+
+- **Sixteen routes that walk the category table name `?group=category`** in
+  their address — `monitor`, the tranche, arrange and return-measure routes,
+  the drill-downs, `monitor-entity` — because each was written against the
+  category table when it was the default. `monitor-security` walks the bare
+  `/monitor` and holds the DEFAULT: All Securities first under that name; the
+  bare address lit on it with no `?group=` asking for it; the table it opens is
+  the security table (no section headings, both derived columns); and the
+  opened pick-list anchored right and on screen. Three claims none of which
+  implies another — a relabelled button left last passes the first alone.
+- **`FILTER_ROW`** holds the row's ORDER by its children's handles and the
+  pair's right edge to the row's (±2px), on a Holdings route per axis kind and
+  on Transactions. None of it can be struck on text: the row prints the same
+  words whichever end the selectors sit at.
+- **`monitor-pick-fund`** first picks a CLOSED fund alone (`PICK_CLOSED_BOOK`,
+  derived from `glowData.ts`) and requires the generic line and no promise;
+  then the book's largest holding that is not a company share, then a company
+  beside it, then clicks through. **"…with the pick kept" is read off the
+  pick-list's own label**: a cleared pick would still draw the fund's row on
+  Category, where every holding is a row, so the row alone cannot tell a kept
+  selection from a lost one.
+- **`MONITOR_IN_FULL`** holds the three links — on `mandate-fund`,
+  `holdings-book` and `stock-mf-lookthrough` — off a `data-monitor-in-full`
+  handle, because the breadcrumb says "Portfolio Monitor" too and rightly opens
+  the page on whatever it opens on. A route drawing none has lost the sentence.
+- **`check:family`** drives the control: All Securities first and open at
+  `/monitor`, Category's click writes `?group=category` and draws the section
+  tabs, and All Securities' click takes the param away again.
+
+#### Merged with main — six PRs, and two things they assumed
+
+Six PRs and a daily data refresh landed while this was open — Stages 10by,
+10cb, 10cc, 10cd and 10ce, and the corporate-actions returns. Two files conflicted
+and both were unions: `PortfolioMonitor.tsx` keeps main's `labelByKey` beside
+this change's `pickedNotRows`, and `check-pages.mjs` keeps both sides' new
+blocks and the union of the `ctx` literal — 95 keys at the merge and 96
+with this change's last probe, none duplicated, each naming a declared variable.
+
+**TWO THINGS MAIN ADDED ASSUMED CATEGORY WAS THE DEFAULT, AND NEITHER
+CONFLICTED.** Stage 10cd put the return picker on Transactions, so that row is
+axis → return → the pair, and `FILTER_ROW` says so. And main's
+`monitor-picklist` read the search list "on the default axis" at the bare
+`/monitor` — which would now read All Securities' list twice and leave the
+category build unchecked — so it names `?group=category`. **A clean merge is
+not a correct one**, and this file says so for the letter; it is equally true
+of a route whose address means something else after the merge.
+
+**THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT MERGE TIME.** Main's headings
+run to `10ce` and no prose names a later one, so this is `10cf`; the merged
+file differs from main's stage letters by `10cf` alone.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0 ·
+`npm run build-book` byte-identical, md5 unchanged — nothing here touches the
+ingest. `check:family` **87/2**, and the two are main's own: the Extras-menu
+checks Stage 10ce records, failing because #84 put a fifth page in a dropdown
+the check still counts as four. `check:pages` over **all 38 Portfolio Monitor
+routes on the merged tree: 38 clean, 0 invariant failures, 0 abstentions**,
+and the seven routes the last fixes touch clean again after them, with the one
+evidenced Morning CIO abstention (every KPI tile on this book carries a figure).
 
 ### Stage 10k — News & Announcements: REMOVED
 

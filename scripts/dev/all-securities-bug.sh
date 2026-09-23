@@ -150,3 +150,7 @@ run_case "'Show it on Category' clears the pick" nofamily \
 # ── 11 ── an "in full" link back at the bare /monitor, which is All Securities now
 run_case "a mandate page's 'carries this account in full' opens All Securities" nofamily \
   sub src/pages/MandateHoldings.tsx '<Link to="/monitor?group=category" data-monitor-in-full' '<Link to="/monitor" data-monitor-in-full'
+
+# ── 12 ── the line promises Category for a CLOSED fund too, which Category does not draw
+run_case "a closed fund picked on All Securities is promised on Category" nofamily \
+  sub src/pages/PortfolioMonitor.tsx 'for (const p of currentHoldings(positions)) {' 'for (const p of positions) {'
