@@ -284,3 +284,15 @@ export function parseLevel(raw: string): { ok: true; value: number | null } | { 
   const n = Number(t.replace(/[,\s₹]/g, ""));
   return Number.isFinite(n) && n > 0 ? { ok: true, value: n } : { ok: false };
 }
+
+/**
+ * WHERE A HOLDING'S ALERT BOXES ARE: the My targets tab of its own page, with
+ * `#alerts` so the card scrolls itself into view. Main's Stage 10cn made the
+ * position page five tabs, so a bare `/stock/<key>#alerts` opens Position — a
+ * page that does not draw the boxes — and the All alerts pencil would have
+ * opened the right holding and not its alerts. ONE definition, read by the
+ * pencil, the row's name link and the New alert finder, so none of them can
+ * open the page on a tab the boxes are not on (Stage 10co).
+ */
+export const alertBoxesHref = (securityKey: string): string =>
+  `/stock/${encodeURIComponent(securityKey)}?tab=targets#alerts`;

@@ -122,7 +122,13 @@ run_case 8 dark "every card carries a hard offset in the dark theme" \
 # ── 9 ── the one cell that may wrap stops wrapping. The semibold headings run
 # wider in the fallback face this sweep draws in, and on the Buoyant page that
 # pushed Basis 14px behind a sideways scroll until the Managed-by sub-line was
-# allowed to give up the width.
-CASE_ROUTES=stock-carried run_case 9 light "the Managed-by cell may no longer wrap, so the position table overflows" \
-  sub src/pages/StockInfo.tsx '<td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">' \
-    '<td className="px-4 py-2.5 text-[12px] text-slate-400">'
+# allowed to give up the width. Since the position page became tabs (Stage
+# 10cn) the Basis column is gone and the cell carries a width cap of its own, so
+# the anchor is that cell as the tabbed page writes it, and the case also walks
+# the holding every mandate carries — its account table prints V.E.C's long
+# strategy name, the case the cell's own comment names.
+CASE_ROUTES=stock-carried,stock-mandates-many run_case 9 light "the Managed-by cell may no longer wrap, so the position table overflows" \
+  sub src/pages/StockInfo.tsx 'up the width. */}
+        <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">' \
+    'up the width. */}
+        <td className="px-4 py-2.5 text-[12px] text-slate-400">'

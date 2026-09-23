@@ -1,7 +1,7 @@
 /**
  * ── THE FAMILY'S LEVELS, SENT TO GLOW CENTRAL RESEARCH ─────────────────────
  *
- * Stage 10cn. Three halves, and each is here because the other two cannot see it:
+ * Stage 10co. Three halves, and each is here because the other two cannot see it:
  *
  *   1. THE RULES (`researchLevels.ts`) — what is sent, seed against set, what
  *      an answer means. Pure, so every rule is struck on constructed inputs.

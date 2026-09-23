@@ -40,13 +40,30 @@ import {
  *   • and nothing here is in any book total, because the fund's own value
  *     already is.
  */
-export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }: {
+/**
+ * ── TWO HALVES, ON TWO TABS OF THE POSITION PAGE ────────────────────────────
+ *
+ * The position page is one template for every holding now — Position,
+ * Transactions, Price & returns, Research, My targets — and a scheme answers two
+ * of those questions: its NAV and returns ARE its price and returns, and what it
+ * holds IS its research. So the card draws one half per tab rather than one card
+ * standing under both. `part` picks which; the loading and absence states are
+ * the same in both, so a reader on either tab learns the store did not answer.
+ */
+const PART_TITLE = {
+  nav: "The scheme — NAV and returns",
+  holdings: "What the scheme holds",
+} as const;
+
+export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part }: {
   securityKey: string;
   name: string;
   /** What the family's units are worth, for the derived exposure column. */
   holdingValue: number;
   /** The account's own report date — not the book's newest. */
   asOfHolding: string;
+  /** Which half of the scheme to draw — see `PART_TITLE`. */
+  part: keyof typeof PART_TITLE;
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
@@ -92,9 +109,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
 
   if (state.status === "loading") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
-        <p className="text-[12.5px] text-slate-500">Reading the scheme's NAV, returns and disclosed portfolio…</p>
-      </Card>
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
+          <p className="text-[12.5px] text-slate-500">Reading the scheme's NAV, returns and disclosed portfolio…</p>
+        </Card>
+      </div>
     );
   }
 
@@ -103,21 +122,32 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   // over an unreachable archive.
   if (state.status === "unreachable") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
-        <AbsentSection
-          what="The fund store did not respond"
-          needs="This scheme's NAV, returns and disclosed portfolio are committed under public/lookthrough/ and read when the page opens. The request did not come back, so nothing is shown rather than a partial answer — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
-      </Card>
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
+          <AbsentSection
+            what="The fund store did not respond"
+            needs="This scheme's NAV, returns and disclosed portfolio are committed under public/lookthrough/ and read when the page opens. The request did not come back, so nothing is shown rather than a partial answer — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
+        </Card>
+      </div>
     );
   }
 
   if (state.status === "none") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
         <AbsentSection
           what={`No scheme resolves for ${name}`}
-          needs={`${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
-      </Card>
+          needs={state.unseen
+            /* A HOLDING THE STORE WAS NEVER GIVEN is not one it failed to match,
+               and saying its report "names every one" would send a reader to a
+               document that does not mention it. The depository's arbitrage
+               units reach the book only at runtime, off an account that sent no
+               holding statement, which is why the store was built without them. */
+            ? "The fund store has no entry for this holding — it is neither matched to a scheme nor named among the ones that could not be — so it was not among the holdings the store was built from. Nothing is shown rather than another fund's NAV or holdings."
+            : `${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
+        </Card>
+      </div>
     );
   }
 
@@ -127,15 +157,18 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   const periods = Object.entries(p.returns);
 
   return (
+    <div data-fund-lookthrough={part}>
     <Card className="mt-5"
-      title="The scheme — NAV, returns and what it holds"
-      // ONE SHORT LINE: the scheme, and that none of this is the family's own
-      // statement — the fence a reader must not miss. Where the figures come
-      // from (AMFI's NAV, the AMC's disclosure) is the hover.
-      subtitle={<span title={`AMFI's daily NAV and ${p.amc ? `${p.amc}'s` : "the AMC's"} own monthly disclosure — published figures about the scheme, not a statement issued to this family.`}>
+      title={PART_TITLE[part]}
+      /* ONE SHORT LINE (main's Stage 10ci): the scheme, and that none of this
+         is the family's own statement — the fence a reader must not miss. Each
+         half's own document — AMFI's daily NAV for the first, the AMC's monthly
+         disclosure for the second — is the hover. */
+      subtitle={<span title={`${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : `${p.amc ? `${p.amc}'s` : "The AMC's"} own monthly disclosure`} — published figures about the scheme, not a statement issued to this family.`}>
         {p.amfiSchemeName ?? p.scheme ?? name} — not a statement issued to this family</span>}
       right={<Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>}>
 
+      {part === "nav" && (<>
       {/* ── NAV, its daily change, and the plan ──────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
@@ -235,12 +268,15 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         </div>
       )}
 
+      </>)}
+
+      {part === "holdings" && (<>
       {/* ── the holdings ─────────────────────────────────────────────────── */}
       {/* THE PILLS DATE AND SOURCE THE HOLDINGS, so a scheme that discloses none
           draws none — "portfolio —" over an absence says nothing the absence
-          box below does not. */}
+          box below does not (main's Stage 10ci). */}
       {rows.length > 0 && (
-      <div className="mt-6 mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
           <span title="A scheme discloses its portfolio monthly; the family's units are valued on their own statement's date. The two rarely coincide, so both are shown rather than one standing for the other.">
             portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · holding {fmtDate(asOfHolding)}
@@ -265,10 +301,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
       {rows.length === 0 ? (
         /* NOT AN EMPTY TABLE, AND NOT A FAILURE. Two of this book's schemes are
            metal ETFs the AMC files no portfolio for at all; the reason names
-           that rather than implying a fund that holds nothing. */
+           that rather than implying a fund that holds nothing. The NAV is on
+           the Price & returns tab, not "above" — this half is its own tab. */
         <AbsentSection
           what={`${p.scheme ?? name} discloses no portfolio this store could read`}
-          needs="No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns above are complete." />
+          needs="No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab." />
       ) : shown.length === 0 ? (
         <AbsentSection what="Nothing matches that filter"
           needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
@@ -326,17 +363,18 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         </div>
       )}
 
-      {/* ONE LINE, the rest in its hover — the family asked for the notes
-          under the tables to go. What must stay on screen is that none of this
-          is in any total: a derived exposure beside a measured one is exactly
-          where this book has been bitten. */}
+      {/* ONE LINE, the rest in its hover (main's Stage 10ci). What must stay
+          on screen is that none of this is in any total: a derived exposure
+          beside a measured one is exactly where this book has been bitten. */}
       {rows.length > 0 && (
       <p className="mt-3 text-[11.5px] text-slate-500"
-        title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell.${rows.length > 0 ? ` The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.` : ""}`}>
+        title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell. The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.`}>
         <span className="font-medium text-slate-400">None of this is in any total on this site</span> — the fund&rsquo;s
         own value already stands for it.
       </p>
       )}
+      </>)}
     </Card>
+    </div>
   );
 }

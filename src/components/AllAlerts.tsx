@@ -10,7 +10,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { currentHoldings } from "@/lib/analytics";
 import { fmtCurrency, fmtDateTime } from "@/lib/format";
 import { fundNavFor } from "@/lib/fundNavs";
-import { ALERT_DEF, distanceOf, type AlertRow, type AlertStatus } from "@/lib/priceAlerts";
+import { ALERT_DEF, alertBoxesHref, distanceOf, type AlertRow, type AlertStatus } from "@/lib/priceAlerts";
 import { symbolFor } from "@/lib/quotes";
 import { sortRows, useTableView, type Accessor } from "@/lib/tableView";
 import { usePriceAlerts } from "@/lib/usePriceAlerts";
@@ -152,7 +152,7 @@ export function AllAlerts() {
                 const price = priceOf(r);
                 const dist = distanceText(r, def.dir);
                 const why = noPriceReason(r);
-                const href = `/stock/${encodeURIComponent(r.securityKey)}#alerts`;
+                const href = alertBoxesHref(r.securityKey);
                 return (
                   <Tr view={view} key={r.id} data-alert-row={r.id} data-alert-kind={r.kind} data-alert-status={r.status}
                     data-alert-key={r.securityKey} data-alert-level={r.level} data-alert-price={price ?? ""}
@@ -255,7 +255,7 @@ function AddAlert() {
   const go = (key: string) => {
     setOpen(false);
     setQ("");
-    navigate(`/stock/${encodeURIComponent(key)}#alerts`);
+    navigate(alertBoxesHref(key));
   };
 
   return (

@@ -91,7 +91,7 @@ const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-san
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cn) ──────────────────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10co) ──────────────────────
  *
  * Every price level saved in this dashboard is also sent to Glow Central
  * Research. This suite types levels on real holdings, so without this the walk
@@ -794,10 +794,17 @@ check("...and names the mandates this book does carry",
 // typed. The same treatment `deals.ts` and `household.ts` got in Stage 10f, and
 // the same reason `announcements.ts` stayed when `/news` went.
 //
+// WHERE A HOLDING'S ALERT BOXES ARE: the My targets tab of its own page (main's
+// Stage 10cn made the position page five tabs), with `#alerts` so the card
+// scrolls itself into view. Re-expressed here rather than imported from
+// `priceAlerts.ts`, so a link built there that drifted from this address fails
+// rather than agreeing with itself (Stage 10co).
+const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alerts`;
+
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10cn — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10co — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cn) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10co) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -840,8 +847,16 @@ check("...and names the mandates this book does carry",
   } else {
     const key = fund.securityKey;
     const card = page.locator("[data-alerts-card]");
-    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}#alerts`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(1200);
+    // THE CARD IS ON ITS OWN TAB. The position page is five tabs (main's Stage
+    // 10cn) and the family's own levels are "My targets", so the page is opened
+    // the way a reader opens it — on its first tab — and My targets is picked by
+    // its KEY rather than its label. A missing tab is a finding: the card then
+    // has no way to be reached at all.
+    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    const targetsTab = page.locator('[data-stock-tab-key="targets"]');
+    check("a holding's page offers the My targets tab", (await targetsTab.count()) === 1);
+    if (await targetsTab.count()) { await targetsTab.click(); await page.waitForTimeout(1200); }
 
     // THE CARD, STRUCTURALLY. The four levels an investor acts at lead, in the
     // order a reader meets them, and EVERY field the store holds is still on the
@@ -896,7 +911,7 @@ check("...and names the mandates this book does carry",
 
     // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
     // companies by their ticker — cannot take its levels. They stay here, the
-    // card says so in words, and NOTHING is sent (Stage 10cn).
+    // card says so in words, and NOTHING is sent (Stage 10co).
     await page.waitForTimeout(1200);
     const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
       kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
@@ -962,11 +977,11 @@ check("...and names the mandates this book does carry",
     const landed = await page.evaluate(() => {
       const c = document.querySelector("[data-alerts-card]");
       const top = c ? c.getBoundingClientRect().top : null;
-      return { path: location.pathname, hash: location.hash, top, h: window.innerHeight };
+      return { at: location.pathname + location.search + location.hash, top, h: window.innerHeight };
     });
-    check("the pencil opens the holding's alert boxes, scrolled into view",
-      landed.path === `/stock/${encodeURIComponent(key)}` && landed.hash === "#alerts" && landed.top !== null && landed.top >= -2 && landed.top < landed.h,
-      `${landed.path}${landed.hash} · card top ${landed.top}`);
+    check("the pencil opens the holding's alert boxes on My targets, scrolled into view",
+      landed.at === ALERT_BOXES_AT(key) && landed.top !== null && landed.top >= -2 && landed.top < landed.h,
+      `${landed.at} · card top ${landed.top}`);
 
     // WHAT IS UNDER MORE OPENS ITSELF once something there is set — nothing the
     // family typed is ever hidden — and a fair value says how far today's price
@@ -1008,12 +1023,12 @@ check("...and names the mandates this book does carry",
       offered.length > 0 && offered.every((k) => checkable.has(k)), `${offered.length} offered · ${offered.filter((k) => !checkable.has(k)).join(", ") || "none unchecked"}`);
     await page.press("[data-alert-add-input]", "Enter");
     await page.waitForTimeout(900);
-    const to = await page.evaluate(() => location.pathname + location.hash);
-    check("...and picking one opens that holding's alert boxes", !!offered[0] && to === `/stock/${encodeURIComponent(offered[0])}#alerts`, to);
+    const to = await page.evaluate(() => location.pathname + location.search + location.hash);
+    check("...and picking one opens that holding's alert boxes, on My targets", !!offered[0] && to === ALERT_BOXES_AT(offered[0]), to);
   }
 }
 
-// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cn) ───
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10co) ───
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."*
@@ -1070,7 +1085,7 @@ const RESEARCH_SHARE = (() => {
       return line();
     };
 
-    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}#alerts`, { waitUntil: "networkidle" });
+    await page.goto(`${BASE}${ALERT_BOXES_AT(key)}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(800);
     const before = RESEARCH.posts.length;
     await typeLevel("targetPrice", target);
@@ -1126,7 +1141,7 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
-// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cn) ───
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10co) ───
 //
 // Until Glow Central Research's route is deployed every send is refused as NOT
 // READY, and the sender asks again every fifteen minutes on its own — a
@@ -1173,7 +1188,7 @@ const RESEARCH_SHARE = (() => {
     await p2.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch { /* */ } },
       ["glow:watchlist/v1", JSON.stringify({ [share.key]: entry })]);
     await p2.clock.install({ time: Date.parse("2026-09-23T04:00:00.000Z") });
-    await p2.goto(`${BASE}/stock/${encodeURIComponent(share.key)}#alerts`, { waitUntil: "load" });
+    await p2.goto(`${BASE}${ALERT_BOXES_AT(share.key)}`, { waitUntil: "load" });
     const kind = () => p2.$eval("[data-alerts-card] [data-research-status]", (el) => el.getAttribute("data-research-status")).catch(() => null);
     /** Poll in REAL time, nudging the page's own clock half a second each turn. */
     const until = async (want, nudge = 500) => {

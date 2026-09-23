@@ -45,12 +45,25 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock-held,stock-held-managers,stock-held-funds,stock-funds-only
+# The position page is five tabs since Stage 10cn, and a funds-only company's
+# tax, price and research claims are struck on the tabs that draw them — so the
+# three routes that walk those tabs are swept too.
+ROUTES=stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research
 N=0
 want() { [ -z "${CASES:-}" ] || [[ " $CASES " == *" $N "* ]]; }
 
+# A SWEEP THAT DID NOT RUN IS NOT A CLEAN ONE. check-pages ends every walk it
+# completes with a tally line; a run that printed none never launched its
+# browser or died on the way, and reading only its failure lines would report
+# every bug as having fired nothing. Measured once on the sibling harness
+# (`stock-tabs-bug.sh`): a TMPDIR too long for Chromium's singleton socket.
 sweep() {
-  ONLY=$ROUTES npm run check:pages 2>&1 | tr -d '\000' | grep -aE 'INVARIANT|NOT CHECKED|^✓|^✗' | sed 's/^/   /'
+  local raw; raw=$(ONLY=$ROUTES npm run check:pages 2>&1 | tr -d '\000')
+  if ! grep -qaE 'route/theme/width combinations (clean|have a finding)' <<<"$raw"; then
+    echo "   NOT A RESULT — the sweep did not run: $(grep -am1 -vE '^[[:space:]]*$|^>|node:internal|triggerUncaught|^[[:space:]]*\^' <<<"$raw" | cut -c1-160)"
+    return
+  fi
+  grep -aE 'INVARIANT|NOT CHECKED|^✓|^✗' <<<"$raw" | sed 's/^/   /'
 }
 suite() {
   local dir out r
@@ -249,8 +262,8 @@ run_case page "the tax card stands over a company held only inside funds" py <<'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = "          {!fundOnly && (\n          <Card className=\"mt-5\" title=\"Tax basis & holding\""
-new = "          {(!fundOnly || rows.length === 0) && (\n          <Card className=\"mt-5\" title=\"Tax basis & holding\""
+old = "            {!exited && !fundOnly && !resolving && (\n              <Card className=\"mt-5\" title=\"Holding period & tax\""
+new = "            {!exited && (!fundOnly || rows.length === 0) && !resolving && (\n              <Card className=\"mt-5\" title=\"Holding period & tax\""
 if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

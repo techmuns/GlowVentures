@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VERIFY THE PRICE-ALERT CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR
-# (Stage 10cn).
+# (Stage 10co).
 #
 # A check nobody has watched fail is a check nobody knows can fail. Each bug
 # below is applied on its own, rebuilt, run through the layer that should
@@ -33,6 +33,7 @@ FILES=(
   "src/components/AlertBits.tsx"
   "src/components/InvestmentTools.tsx"
   "src/pages/MorningCIO.tsx"
+  "src/pages/StockInfo.tsx"
   "src/lib/__tests__/priceAlerts.test.ts"
   "src/lib/researchLevels.ts"
   "src/lib/researchSync.ts"
@@ -179,7 +180,7 @@ run_case "every row is tinted, fired or not" "pages" \
             'data-alert-source={r.now.state} className={tone.tint}>'
 
 run_case "the pencil opens the holding's page but not its alert boxes" "pages family" \
-  patch $AA '                const href = `/stock/${encodeURIComponent(r.securityKey)}#alerts`;' \
+  patch $AA '                const href = alertBoxesHref(r.securityKey);' \
             '                const href = `/stock/${encodeURIComponent(r.securityKey)}`;'
 
 run_case "the note under the table says live prices whatever the feed did" "pages" \
@@ -337,8 +338,9 @@ run_case "SENDER: a level kept here as too high is said to have no NSE symbol" "
 # That page is badged "Held only inside your funds", and the alert card under it
 # said the company was "not held in this book" and "has no NSE symbol" — both
 # false of a listed company the family reaches through a fund. The first case
-# walks that page as well; the second is the same words on the sending side.
-ROUTES=$ROUTES,stock-funds-only run_case "a company held only inside funds is said to be not held in this book" "pages" \
+# walks that page's My targets tab, where the card is since main's Stage 10cn;
+# the second is the same words on the sending side.
+ROUTES=$ROUTES,stock-funds-only-targets run_case "a company held only inside funds is said to be not held in this book" "pages" \
   patch $PA '  if (!rows.length) return { state: "none", reason: "not held on any statement in this book, so no price is fetched for it" };' \
             '  if (!rows.length) return { state: "none", reason: "not held in this book, so no price is fetched for it" };'
 
@@ -359,6 +361,23 @@ b = "        <ResearchLevelSync />\n"
 if s.count(a) != 1 or s.count(b) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(a, "", 1).replace(b, "", 1))
 PY2
+
+# ── THE ALERT BOXES ARE ON A TAB (main's Stage 10cn) ────────────────────────
+# Numbered after the 47 above so the case numbers the notes cite do not move.
+# Main's Stage 10cn made a holding's page five tabs, and the alert boxes are on
+# My targets alone — so an address naming no tab opens Position, a page that
+# draws no boxes. `alertBoxesHref` is the one place the pencil, the row link and
+# the New alert finder get the address from, and this puts back the address as
+# it was before that merge.
+run_case "the alert boxes' address names no tab, so it opens Position" "pages family" \
+  patch $PA '  `/stock/${encodeURIComponent(securityKey)}?tab=targets#alerts`;' \
+            '  `/stock/${encodeURIComponent(securityKey)}#alerts`;'
+
+# …and the other half: the tab is there and the card is not on it.
+ST=src/pages/StockInfo.tsx
+ROUTES=$ROUTES,stock-targets,stock-funds-only-targets run_case "a holding's My targets tab draws no alert card" "pages family" \
+  patch $ST '            <InvestmentTools securityKey={securityKey} name={name} />' \
+            '            {securityKey === "\u0000" && <InvestmentTools securityKey={securityKey} name={name} />}'
 
 echo ""
 echo "════════ done"
