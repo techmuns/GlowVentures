@@ -1649,6 +1649,18 @@ const PM_RETURN_BOOK = (() => {
       .map((c) => [c.accountId, c]));
     const DAY = 864e5;
     const days = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY);
+    /**
+     * FIFO'S OTHER HALF, read off each position — Stage 10ca. The page strikes a
+     * fund's HPR as (unrealised + realised) ÷ (cost of units held + cost of units
+     * redeemed), and holds its dated calls to that same "every rupee deployed".
+     * This re-expression kept value ÷ cost held, so Neo Infra — which redeemed
+     * 14,162.8 units at their cost — read as a gap here while the page correctly
+     * shows its XIRR, and both checks below failed on main for as long as nobody
+     * walked this route after the FIFO change. An absent field adds nothing: a
+     * position that sold nothing carries a measured zero or no record, and
+     * neither moves the arithmetic.
+     */
+    const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     /** ACT/365 IRR by bisection, in percent; null where the flows do not bracket a root. */
     const irr = (flows) => {
       if (!flows.length) return null;
@@ -1669,7 +1681,9 @@ const PM_RETURN_BOOK = (() => {
       const cost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
       const mv = g.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
       const costCoversAll = g.every((p) => p.costBasis != null);
-      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
+      const sold = g.reduce((t, p) => t + num(p.costOfUnitsSold), 0);
+      const realised = g.reduce((t, p) => t + num(p.realizedPnL), 0);
+      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost + realised) / (cost + sold)) * 100 : null;
       let gap = false, unknown = false, withAccount = 0;
       const flows = [];
       const calls = new Set();
@@ -1683,7 +1697,7 @@ const PM_RETURN_BOOK = (() => {
         withAccount++;
         const cs = Array.isArray(c.calls) ? c.calls : [];
         const sumCalls = cs.reduce((t, k) => t + (Number(k.amount) || 0), 0);
-        if (!cs.length || p.costBasis == null || Math.abs(sumCalls - p.costBasis) > 1 || cs.some((k) => k.date > v)) {
+        if (!cs.length || p.costBasis == null || Math.abs(sumCalls - (p.costBasis + num(p.costOfUnitsSold))) > 1 || cs.some((k) => k.date > v)) {
           gap = true; continue;
         }
         for (const k of cs) {
@@ -1734,8 +1748,8 @@ const PM_RETURN_BOOK = (() => {
         pooledIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
       : null;
     const costed = priv.filter((p) => p.costBasis != null);
-    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis), 0);
-    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
+    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis) + num(p.costOfUnitsSold), 0);
+    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis) + num(p.realizedPnL), 0);
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
@@ -3335,6 +3349,13 @@ const ROUTES = [
    */
   ["private-market-calls", "/private-market"],
   ["private-market-calls-off", "/private-market"],
+  /**
+   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cb. The editor shows the
+   * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
+   * a signed-out reader is told to sign in, never handed set-up steps for a
+   * store that works. The two routes are the two sides of that one rule.
+   */
+  ["private-market-calls-signedout", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
    * THE TRADES BRANCH HAD AN ADDRESS OF ITS OWN AND DOES NOT ANY MORE.
@@ -4316,6 +4337,14 @@ const PM_TILE_IDS = [];
 let TILE_MENU = null;
 let TILE_PICK = null;
 /**
+ * WHAT THE ADD TILE CARD DID WHEN IT WAS USED — Stage 10cb. Its menu, the
+ * metric picked (the LAST one offered, so a card that ignores the choice and
+ * appends the first spare metric fails), and the strip read back after.
+ */
+let TILE_ADD = null;
+/** What the Capital Call editor said when opened on a store that cannot save. */
+let CALL_OFF = null;
+/**
  * ── THE CAPITAL-CALL STORE, FAKED FOR THE WALK THAT ASSERTS IT ─────────────
  *
  * `/api/capital-calls` is a Pages Function over Cloudflare KV and `vite preview`
@@ -5034,6 +5063,18 @@ async function installCallStoreOff(page) {
   await page.route("**/api/capital-calls", (route) => route.fulfill({
     status: 503, contentType: "application/json",
     body: JSON.stringify({ ok: false, code: "NOT_CONFIGURED", message: "Saving capital calls is not switched on yet." }),
+  }));
+}
+
+/**
+ * A READER THE EDGE GATE HAS SIGNED OUT. The gate answers every `/api/*` path
+ * with its own login page, HTTP 200 and HTML — which is exactly what the page
+ * must read as "signed out", never as a store to set up.
+ */
+async function installCallStoreSignedOut(page) {
+  await page.route("**/api/capital-calls", (route) => route.fulfill({
+    status: 200, contentType: "text/html; charset=utf-8",
+    body: `<!doctype html><form method="POST" action="/__auth/login?next=%2F"><input type="password" name="password"></form>`,
   }));
 }
 
@@ -13347,6 +13388,21 @@ const INVARIANTS = {
       return pv.callCells.every((c) => c.state === "unavailable" && (c.reason ?? "").length > 20 && !/₹/.test(c.text))
         && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
     }],
+    /**
+     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cb.
+     *
+     * *"We need to keep the ability for the customer to add a date in this
+     *  Capital Call column, which is empty right now."* It was a column of em
+     * dashes with the reason in a hover, and a column of dashes reads as
+     * "nothing entered". So each cell says what it is in a word and can be
+     * clicked — and never says "Add", because nothing here can be saved.
+     */
+    ["…each of them a button naming the cause in a word, never an Add", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.tag === "button" && c.cause === "no-function"
+        && c.text === "Not available" && !/\badd\b/i.test(c.text));
+    }],
     // PM-4e. DUE NOW IS A MEASUREMENT, and its coverage must be said. It is
     // the only genuinely-due figure in this book, it is a MEASURED zero on this
     // drop, and an account whose statement prints no such line is skipped
@@ -13781,6 +13837,52 @@ const INVARIANTS = {
       if (!pv?.callCells?.length) return false;
       return pv.callCells.every((c) => c.state === "unavailable" && /not switched on yet/i.test(c.reason ?? "") && !/₹/.test(c.text))
         && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
+    }],
+    /**
+     * ── STAGE 10cb: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
+     *
+     * The state production is in until the KV binding exists. Every cell is a
+     * button reading "Not set up", the header note says it once, and clicking
+     * one opens the editor — which states the reason, gives the one-time
+     * Cloudflare steps naming the binding the function reads, and keeps Save
+     * off. "Saved for everyone" is not printed, because nothing here is.
+     */
+    ["every cell is a button reading Not set up, and the header says it once", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.tag === "button" && c.cause === "not-configured" && c.text === "Not set up")
+        && pv.callHead?.note === "not set up";
+    }],
+    ["clicking a cell opens the editor: the reason, the one-time steps, and no Save", (t, ctx) => {
+      const o = ctx?.callOff;
+      if (!o || o.error) return false;
+      const steps = (o.steps ?? []).join(" ");
+      return o.editors === 1 && o.cause === "not-configured" && /not switched on yet/i.test(o.reason ?? "")
+        && (o.steps ?? []).length === 3
+        && /Variable name:\s*GLOW_STORE\b/.test(steps) && /Workers KV/.test(steps) && /Settings → Bindings/.test(steps) && /redeploy/i.test(steps)
+        && o.saveDisabled && o.inputs >= 3 && o.inputsDisabled && !o.savedForEveryone;
+    }],
+  ],
+  /**
+   * ── A SIGNED-OUT READER — Stage 10cb ────────────────────────────────────────
+   *
+   * The other side of the set-up steps' rule: they belong to a store nobody has
+   * connected, and a reader whom the edge gate signed out is told to sign in —
+   * never handed Cloudflare steps for a store that works.
+   */
+  "private-market-calls-signedout": [
+    ["every cell is a button reading Signed out, and none offers to save", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.state === "unavailable" && c.tag === "button" && c.cause === "signed-out"
+        && c.text === "Signed out" && /sign in again/i.test(c.reason ?? ""))
+        && pv.callHead?.note === "signed out";
+    }],
+    ["the editor tells a signed-out reader to sign in, and shows no set-up steps", (t, ctx) => {
+      const o = ctx?.callOff;
+      if (!o || o.error) return false;
+      return o.editors === 1 && o.cause === "signed-out" && /sign in again/i.test(o.reason ?? "")
+        && o.steps === null && o.saveDisabled && !o.savedForEveryone;
     }],
   ],
   /**
@@ -17941,10 +18043,63 @@ const TILE_PICKER_CHECKS = [
       // state the browser's own Back button walks.
       && new URLSearchParams(pick.search).get("tiles") === pick.ids.join(",");
   }],
-  ["the + sits on the last tile only, and every tile can be removed", (t, ctx) => {
+  /**
+   * ── THE ADD TILE CARD — Stage 10cb ───────────────────────────────────────
+   *
+   * *"Add another tile. It should be a big empty tile with bold written: ADD
+   * TILE. When I click on the ADD TILE button, I should be able to choose what
+   * I want to see in that tile."* It replaced a 20px `+` in the last tile's
+   * corner. It is ONE control, it is its own grid cell and not part of any
+   * tile, and it sits where the next tile will land — and every tile can still
+   * be removed, or a metric added by mistake is permanent.
+   */
+  ["the ADD TILE card sits where the next tile will land, and every tile can be removed", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st) return false;
-    return st.adds === 1 && st.addOnLast && st.removes === st.slots;
+    const a = st.addTile;
+    return st.adds === 1 && !!a && !a.inCard && a.lastCell && a.nextCell && st.removes === st.slots;
+  }],
+  /**
+   * BIG, EMPTY AND BOLD, EACH MEASURED. Big is the size of a tile — even alone
+   * on a row, which is what `auto-rows-fr` is for; empty is no figure in it and
+   * a dashed edge rather than a card's; bold is the label's computed weight. A
+   * `+` restyled as a larger button passes none of the three.
+   */
+  ["the ADD TILE card is a big empty tile, the size of a tile, reading ADD TILE in bold", (t, ctx) => {
+    const a = ctx?.tileStrip?.addTile;
+    if (!a) return false;
+    return a.text === "ADD TILE" && a.weight >= 700 && a.sameSize && a.figures === 0 && a.border === "dashed";
+  }],
+  /**
+   * CLICKING IT OFFERS EXACTLY WHAT IS NOT ON SCREEN, AND ADDS WHAT WAS PICKED.
+   * The walk picks the LAST metric offered: the `+` this replaced appended the
+   * FIRST spare metric whatever the reader wanted, and a card wired the same way
+   * passes every structural claim above. The new tile must be that metric, in
+   * the last slot, named on its own picker, with the address moved to match.
+   */
+  ["clicking ADD TILE offers the metrics not on screen and adds the one picked", (t, ctx) => {
+    const a = ctx?.tileAdd;
+    const menu = ctx?.tileMenu;
+    const st = ctx?.tileStrip;
+    if (!a || a.error || !menu?.length || !st) return false;
+    const want = menu.filter((id) => !a.before.includes(id));
+    if (want.length < 2) return { notChecked: "fewer than two metrics are off the strip, so a pick cannot tell the first from the last" };
+    const after = a.after;
+    return a.before.join(",") === st.ids.join(",")
+      && a.offered.map((o) => o.id).join(",") === want.join(",")
+      && a.picked === want[want.length - 1]
+      && !!after
+      && after.ids.join(",") === [...a.before, a.picked].join(",")
+      && new URLSearchParams(after.search).get("tiles") === after.ids.join(",")
+      && after.lastSlot === a.picked
+      && after.lastLabel === a.pickedLabel
+      && !after.menuOpen
+      && after.addLast;
+  }],
+  ["the ADD TILE menu opens over the page, and Escape closes it", (t, ctx) => {
+    const a = ctx?.tileAdd;
+    if (!a || a.error) return false;
+    return !!a.paint?.onTop && a.paint.h >= 60 && a.escClosed === true;
   }],
 ];
 
@@ -17967,6 +18122,16 @@ const TILE_PICKER_CHECKS = [
       const st = ctx?.tileStrip, menu = ctx?.tileMenu;
       if (!st || !menu?.length) return false;
       return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
+    }],
+    /**
+     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cb. A
+     * card that opened an empty menu would be the control that looks live and
+     * does nothing, and this is the one route where the whole catalogue is up.
+     */
+    ["with every metric on screen there is no ADD TILE card", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st) return false;
+      return st.slots > 0 && st.adds === 0 && st.addTile === null;
     }],
   ];
 }
@@ -18166,6 +18331,7 @@ for (const theme of THEMES) {
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "private-market-calls") await installCallStore(page);
       if (name === "private-market-calls-off") await installCallStoreOff(page);
+      if (name === "private-market-calls-signedout") await installCallStoreSignedOut(page);
       if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
@@ -18776,6 +18942,43 @@ for (const theme of THEMES) {
             CALL_FIXTURE.a, { timeout: 10000 });
         } catch (e) { CALL_WALK.error = String(e?.message ?? e).slice(0, 200); }
         await page.waitForTimeout(300);
+      }
+      /**
+       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cb ──────────────────────
+       *
+       * *"They should be able to simply click, select the date, and save it."*
+       * The cells were em dashes nothing could click; they name their cause and
+       * open the editor now. So the walk CLICKS one and reads what the editor
+       * says — the reason, the set-up steps where they apply, and whether Save
+       * is really off — and leaves it open, with the steps unfolded, so the
+       * light-mode sweep reads their colours too.
+       */
+      if (name === "private-market-calls-off" || name === "private-market-calls-signedout") {
+        CALL_OFF = { error: null };
+        try {
+          await page.waitForSelector('[data-pm-call-state]:not([data-pm-call-state="loading"])', { timeout: 15000 });
+          await page.locator('[data-pm-call-state="unavailable"]').first().click();
+          await page.waitForSelector("main [data-pm-call-editor]", { timeout: 5000 });
+          await page.$$eval("main [data-pm-call-setup]", (ds) => ds.forEach((d) => { d.open = true; }));
+          await page.waitForTimeout(150);
+          Object.assign(CALL_OFF, await page.evaluate(() => {
+            const ed = document.querySelector("main [data-pm-call-editor]");
+            const said = ed?.querySelector("[data-pm-call-unavailable]");
+            const setup = ed?.querySelector("[data-pm-call-setup]");
+            const save = ed?.querySelector("[data-pm-call-save]");
+            const inputs = [...(ed?.querySelectorAll("[data-pm-call-input]") ?? [])];
+            return {
+              editors: document.querySelectorAll("main [data-pm-call-editor]").length,
+              reason: (said?.textContent ?? "").trim() || null,
+              cause: said?.getAttribute("data-pm-call-unavailable") ?? null,
+              steps: setup ? [...setup.querySelectorAll("li")].map((li) => (li.textContent ?? "").replace(/\s+/g, " ").trim()) : null,
+              saveDisabled: !!save && save.disabled === true,
+              inputs: inputs.length,
+              inputsDisabled: inputs.length > 0 && inputs.every((i) => i.disabled === true),
+              savedForEveryone: /saved for everyone/i.test(ed?.textContent ?? ""),
+            };
+          }));
+        } catch (e) { CALL_OFF.error = String(e?.message ?? e).slice(0, 200); }
       }
       /**
        * …AND THE WORKING LINE UNDER THE TABLE, OPENED. It is a collapsed
@@ -20644,8 +20847,11 @@ for (const theme of THEMES) {
               date: el?.getAttribute("data-call-date") ?? null,
               more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
               text: txt(td),
-              // An `AbsentCell` carries its reason in a title a reader hovers.
+              // A cell that cannot save carries its whole reason in a title, and
+              // names its cause in a word on screen — Stage 10cb.
               reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+              tag: el?.tagName?.toLowerCase() ?? null,
+              cause: el?.getAttribute("data-pm-call-cause") ?? null,
             };
           }),
           callEditors: document.querySelectorAll("main [data-pm-call-editor]").length,
@@ -21700,6 +21906,43 @@ for (const theme of THEMES) {
         if (!strip) return null;
         const adds = [...strip.querySelectorAll("[data-tile-add]")];
         const cards = [...strip.querySelectorAll(".card")];
+        /**
+         * THE ADD TILE CARD — Stage 10cb. *"a big empty tile with bold written:
+         * ADD TILE."* Every word of that is geometry or style — big, empty,
+         * bold, and where it sits — so it is MEASURED: its box against the last
+         * tile's, its label's computed weight, its border, and whether it is
+         * the grid's last cell, which is where the next tile will land.
+         */
+        const addTile = (() => {
+          const el = adds[0];
+          const slot = strip.querySelector("[data-tile-add-slot]");
+          if (!el || !slot) return null;
+          const tiles = [...strip.querySelectorAll("[data-tile-slot] .card")];
+          const lastTile = tiles[tiles.length - 1];
+          const r = slot.getBoundingClientRect();
+          const t = lastTile?.getBoundingClientRect();
+          const sr = strip.getBoundingClientRect();
+          const label = el.querySelector("[data-tile-add-label]");
+          const kids = [...strip.children];
+          const near = (a, b) => Math.abs(a - b) <= 2;
+          return {
+            text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+            weight: label ? Number(getComputedStyle(label).fontWeight) : 0,
+            border: getComputedStyle(el).borderTopStyle,
+            inCard: !!el.closest(".card"),
+            figures: slot.querySelectorAll("[data-stat-value]").length,
+            lastCell: kids[kids.length - 1] === slot,
+            // THE SAME SIZE AS A TILE, even alone on a row of its own.
+            sameSize: !!t && near(r.width, t.width) && near(r.height, t.height),
+            // WHERE THE NEXT TILE LANDS: beside the last tile on its row, or
+            // at the start of the next row when that row is full.
+            nextCell: !!t && ((near(r.top, t.top) && r.left > t.right)
+              || (r.top >= t.bottom - 1 && near(r.left, sr.left))),
+            w: Math.round(r.width), h: Math.round(r.height),
+            tileW: t ? Math.round(t.width) : 0, tileH: t ? Math.round(t.height) : 0,
+            title: el.getAttribute("title") ?? "",
+          };
+        })();
         return {
           ids: (strip.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
           // EACH TILE'S OWN TEXT, so a claim about one tile is struck on that
@@ -21752,9 +21995,7 @@ for (const theme of THEMES) {
           pickers: strip.querySelectorAll("[data-tile-select]").length,
           removes: strip.querySelectorAll("[data-tile-remove]").length,
           adds: adds.length,
-          // THE `+` IS ON THE LAST TILE, which is where the family put it — and
-          // "somewhere on the strip" is a different and weaker claim.
-          addOnLast: adds.length === 1 && cards.length > 0 && cards[cards.length - 1].contains(adds[0]),
+          addTile,
         };
       });
       /**
@@ -21810,6 +22051,87 @@ for (const theme of THEMES) {
             await page.keyboard.press("Escape");
           }
         } catch { /* a strip with no picker is a finding below, not a crash here */ }
+      }
+      /**
+       * ── …AND THE ADD TILE CARD, USED — Stage 10cb ───────────────────────────
+       *
+       * *"When I click on the ADD TILE button, I should be able to choose what
+       * I want to see in that tile."* The walk opens the card's menu, reads what
+       * it offers, checks Escape closes it, opens it again and picks the LAST
+       * metric offered — the one a card that ignored the choice and appended the
+       * first spare metric (what the `+` it replaced did) could never add — then
+       * reads the strip and the address back, and puts the page back as
+       * addressed. The default route only: it is the one with spare metrics.
+       */
+      if (!FAST && name === "private-market" && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.adds) {
+        TILE_ADD = { error: null };
+        const stripIds = () => page.evaluate(() =>
+          (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+        try {
+          const before = await stripIds();
+          await page.click("[data-tile-add]");
+          await page.waitForSelector("[data-tile-add-menu]", { timeout: 5000 });
+          const offered = await page.$$eval("[data-tile-add-option]", (els) =>
+            els.map((e) => ({ id: e.getAttribute("data-tile-add-option") ?? "", label: (e.textContent ?? "").trim() })));
+          /**
+           * THE MENU IS ON TOP OF THE PAGE. It opens over the card, which with
+           * four tiles is on a row of its own just above the fund table — so a
+           * menu painting UNDER that table would show the reader a strip of
+           * options cut through by rows of figures, with every word of it still
+           * in the DOM. Sampled on a grid with hit-testing switched on, as the
+           * search list is, because paint order is what is measured.
+           */
+          const paint = await page.evaluate(() => {
+            const menu = document.querySelector("[data-tile-add-menu]");
+            if (!menu) return null;
+            const r = menu.getBoundingClientRect();
+            const st = document.createElement("style");
+            st.textContent = "* { pointer-events: auto !important; }";
+            document.head.appendChild(st);
+            let covered = 0, total = 0;
+            for (let y = r.top + 6; y < r.bottom - 6; y += 12) {
+              for (let i = 0; i <= 6; i++) {
+                const x = r.left + 6 + (i * (r.width - 12)) / 6;
+                total++;
+                const hit = document.elementFromPoint(x, y);
+                if (hit && !menu.contains(hit)) covered++;
+              }
+            }
+            st.remove();
+            return { onTop: covered === 0 && total > 0, covered, total, w: Math.round(r.width), h: Math.round(r.height) };
+          });
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(150);
+          const escClosed = (await page.locator("[data-tile-add-menu]").count()) === 0;
+          const pick = offered.at(-1) ?? null;
+          let after = null;
+          if (pick) {
+            await page.click("[data-tile-add]");
+            await page.waitForSelector("[data-tile-add-menu]", { timeout: 5000 });
+            await page.click(`[data-tile-add-option="${pick.id}"]`);
+            await page.waitForFunction((n) =>
+              (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean).length === n,
+            before.length + 1, { timeout: 5000 });
+            after = await page.evaluate(() => {
+              const strip = document.querySelector("main [data-tile-strip]");
+              const slots = [...(strip?.querySelectorAll("[data-tile-slot]") ?? [])];
+              const kids = [...(strip?.children ?? [])];
+              return {
+                ids: (strip?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+                search: location.search,
+                lastSlot: slots.at(-1)?.getAttribute("data-tile-slot") ?? null,
+                lastLabel: (slots.at(-1)?.querySelector("[data-tile-select] span")?.textContent ?? "").trim(),
+                menuOpen: !!document.querySelector("[data-tile-add-menu]"),
+                addLast: !!kids.at(-1)?.hasAttribute("data-tile-add-slot"),
+              };
+            });
+          }
+          Object.assign(TILE_ADD, { before, offered, paint, escClosed, picked: pick?.id ?? null, pickedLabel: pick?.label ?? null, after });
+        } catch (e) { TILE_ADD.error = String(e?.message ?? e).slice(0, 200); }
+        try {
+          await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
+          await page.goto(BASE + path, { waitUntil: "networkidle" });
+        } catch { /* the next read reports what the page is */ }
       }
       /**
        * ── EVERY TABLE IS SORTABLE AND EVERY COLUMN BUT THE FIRST MOVES ───────
@@ -21924,7 +22246,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tileAdd: TILE_ADD, callOff: CALL_OFF, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

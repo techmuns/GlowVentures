@@ -5,9 +5,9 @@ function changeColor(n: number) { return n > 0 ? "text-gain" : n < 0 ? "text-los
 export function StatTile({ label, value, sub, delta, icon, hint, action, title, className = "" }: {
   /**
    * NORMALLY A STRING, and a node where the tile's own label is a CONTROL —
-   * `SelectableTiles` renders a `<select>` here, because the label is where a
-   * reader already looks to see which metric they are reading and a picker
-   * tucked into a corner is invisible on a touch screen.
+   * `SelectableTiles` renders its metric menu button here, because the label is
+   * where a reader already looks to see which metric they are reading and a
+   * picker tucked into a corner is invisible on a touch screen.
    */
   label: ReactNode; value: ReactNode; sub?: ReactNode;
   /**
@@ -16,7 +16,7 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
    * measured flat move.
    */
   delta?: number | null; icon?: ReactNode; hint?: ReactNode;
-  /** Controls that act on the TILE rather than on its figure — remove, add. */
+  /** Controls that act on the TILE rather than on its figure — remove it. */
   action?: ReactNode;
   /**
    * THE DETAIL BEHIND THE FIGURE, ON HOVER. A tile is a figure and one short
