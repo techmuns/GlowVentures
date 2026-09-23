@@ -49,7 +49,7 @@ const tvc = await import(path.join(ROOT, "scripts/ingest/providers/transitionVen
 const FROZEN = ["total", "contributed", "undrawn", "distributed"];
 /**
  * The fields it exists to add. `payouts` joined them with the Private Market
- * return methodology (Stage 10bt): a money-weighted return needs what the fund
+ * return methodology (Stage 10bu): a money-weighted return needs what the fund
  * PAID BACK as well as what it called, and both are read off the same page.
  */
 const ADDED = ["called", "paid", "pending", "calls", "payouts"];
