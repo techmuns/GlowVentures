@@ -52,6 +52,50 @@ export const TREE_CELL = {
 } as const;
 
 /**
+ * ── THE SAME STANDARD AT A DENSER RHYTHM ────────────────────────────────────
+ *
+ * The Portfolio Monitor's holdings table is read top to bottom for value, and
+ * its whole first screen was once spent on chrome (Stage 10r) — so it keeps its
+ * own tighter padding and type. What it takes from the standard is everything
+ * that is not a size: children in the SAME columns, one tree guide in the first
+ * cell only, the whole row as the control, sections that close. A child is one
+ * step quieter than its parent in both rhythms, which is the only rule the two
+ * sizes share.
+ */
+export type TreeDensity = "regular" | "dense";
+export const TREE_ROW_DENSE = {
+  section: TREE_ROW.section,
+  parent: TREE_ROW.parent,
+  child: "bg-ink-900/40 text-[11.5px] hover:bg-ink-700/30",
+  adjust: "bg-ink-900/40 text-[11px] italic",
+  total: TREE_ROW.total,
+} as const;
+export const TREE_CELL_DENSE = {
+  parent: "px-2 py-1.5",
+  child: "px-2 py-1",
+  section: "px-2 py-1.5",
+} as const;
+
+/**
+ * Where the first cell's padding and guides sit, per rhythm and depth. The
+ * guide is drawn under the parent's CHEVRON — the chevron is the node a row's
+ * children hang from — so its x is the parent cell's own left padding plus
+ * half a chevron, and a depth-2 guide sits one indent further in.
+ */
+const NAME_GEOMETRY: Record<TreeDensity, { parent: string; child: [string, string]; guide: [string, string] }> = {
+  regular: {
+    parent: TREE_CELL.parent,
+    child: ["py-1.5 pl-[3.25rem] pr-4", "py-1.5 pl-[4.5rem] pr-4"],
+    guide: ["left-[1.6rem]", "left-[2.85rem]"],
+  },
+  dense: {
+    parent: TREE_CELL_DENSE.parent,
+    child: ["py-1 pl-[2.35rem] pr-2", "py-1 pl-[3.5rem] pr-2"],
+    guide: ["left-[1rem]", "left-[2.15rem]"],
+  },
+};
+
+/**
  * WHICH ROWS ARE OPEN — component state rather than the URL: it is a reader's
  * place in a table, not a view of the book.
  */
@@ -88,16 +132,22 @@ export function rowToggle(onToggle: () => void) {
   };
 }
 
-/** The chevron. A real button, so the keyboard reaches every row the mouse can. */
-export function TreeChevron({ open, onToggle, label, ...data }: {
+/**
+ * The chevron. A real button, so the keyboard reaches every row the mouse can.
+ * In the dense rhythm it is one line of 12px type tall, so a row with a chevron
+ * is no taller than a row without one.
+ */
+export function TreeChevron({ open, onToggle, label, density = "regular", ...data }: {
   open: boolean;
   onToggle: () => void;
   label: string;
+  density?: TreeDensity;
 } & Record<`data-${string}`, string | number | undefined>) {
+  const box = density === "dense" ? "h-4 w-4" : "mt-px h-5 w-5";
   return (
     <button type="button" onClick={onToggle} aria-expanded={open} aria-label={label} title={label}
       {...data}
-      className="mt-px inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-champagne-400">
+      className={`inline-flex ${box} shrink-0 items-center justify-center rounded text-slate-500 ring-focus transition-colors hover:bg-ink-700/60 hover:text-champagne-400`}>
       <ChevronRight className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-90" : ""}`} />
     </button>
   );
@@ -110,9 +160,14 @@ export function TreeChevron({ open, onToggle, label, ...data }: {
  * line down the left of the children and a tick into each one, ending at the
  * last. The guide is drawn in the cell's own padding so it is continuous from
  * row to row, and it is the ONLY thing indented: the figures stay in columns.
+ *
+ * DEPTH 2 is a child's own children — a folio's dated contributions under the
+ * fund it belongs to. Its cell carries BOTH guides: its own, and its parent's
+ * continuing past it to the parent's next sibling, which stops where that
+ * parent was the last of its kind (`ancestorLast`), exactly as a └ does.
  */
-export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, toggleData, last, className = "" }: {
-  depth: 0 | 1;
+export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, toggleData, last, ancestorLast, density = "regular", className = "" }: {
+  depth: 0 | 1 | 2;
   title: ReactNode;
   /** A second, quieter line: what the row is, never a figure another column holds. */
   sub?: ReactNode;
@@ -122,13 +177,21 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
   toggleData?: Record<`data-${string}`, string | number | undefined>;
   /** The last child ends the guide at its tick, like a └. */
   last?: boolean;
+  /** On a depth-2 row: its depth-1 parent was the last of ITS siblings. */
+  ancestorLast?: boolean;
+  density?: TreeDensity;
   className?: string;
 }) {
-  if (depth === 1) {
+  const g = NAME_GEOMETRY[density];
+  if (depth >= 1) {
+    const d = depth === 2 ? 1 : 0;
     return (
-      <td className={`relative py-1.5 pl-[3.25rem] pr-4 ${className}`}>
-        <span aria-hidden className={`absolute left-[1.6rem] top-0 border-l border-ink-600 ${last ? "h-1/2" : "bottom-0"}`} />
-        <span aria-hidden className="absolute left-[1.6rem] top-1/2 w-3.5 border-t border-ink-600" />
+      <td className={`relative ${g.child[d]} ${className}`}>
+        {depth === 2 && !ancestorLast && (
+          <span aria-hidden className={`absolute ${g.guide[0]} top-0 bottom-0 border-l border-ink-600`} />
+        )}
+        <span aria-hidden className={`absolute ${g.guide[d]} top-0 border-l border-ink-600 ${last ? "h-1/2" : "bottom-0"}`} />
+        <span aria-hidden className={`absolute ${g.guide[d]} top-1/2 w-3.5 border-t border-ink-600`} />
         <div className="min-w-0">
           <div className="text-slate-200">{title}</div>
           {sub && <div className="mt-px text-[11px] leading-snug text-slate-500">{sub}</div>}
@@ -136,12 +199,14 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
       </td>
     );
   }
+  const gap = density === "dense" ? "gap-1.5" : "gap-2";
+  const hole = density === "dense" ? "h-4 w-4" : "h-5 w-5";
   return (
-    <td className={`${TREE_CELL.parent} ${className}`}>
-      <div className="flex items-start gap-2">
+    <td className={`${g.parent} ${className}`}>
+      <div className={`flex items-start ${gap}`}>
         {onToggle
-          ? <TreeChevron open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />
-          : <span aria-hidden className="inline-block h-5 w-5 shrink-0" />}
+          ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />
+          : <span aria-hidden className={`inline-block ${hole} shrink-0`} />}
         <div className="min-w-0">
           <div className="font-medium text-slate-100">{title}</div>
           {sub && <div className="mt-0.5 text-[11px] leading-snug text-slate-500">{sub}</div>}
@@ -155,7 +220,7 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
  * THE FIRST CELL OF A SECTION BAND: a chevron where the section can close, the
  * heading, a marker chip saying what kind of section it is, and one quiet line.
  */
-export function TreeSectionCell({ title, marker, sub, open, onToggle, toggleData, colSpan }: {
+export function TreeSectionCell({ title, marker, sub, open, onToggle, toggleData, colSpan, density = "regular" }: {
   title: ReactNode;
   marker?: ReactNode;
   sub?: ReactNode;
@@ -168,13 +233,14 @@ export function TreeSectionCell({ title, marker, sub, open, onToggle, toggleData
    * other row, so its totals follow a dragged column.
    */
   colSpan?: number;
+  density?: TreeDensity;
 }) {
   return (
-    <td className={TREE_CELL.section} colSpan={colSpan}>
-      <div className="flex items-start gap-2">
+    <td className={density === "dense" ? TREE_CELL_DENSE.section : TREE_CELL.section} colSpan={colSpan}>
+      <div className={`flex items-start ${density === "dense" ? "gap-1.5" : "gap-2"}`}>
         {onToggle
-          ? <TreeChevron open={!!open} onToggle={onToggle} label={open ? "Hide this section" : "Show this section"} {...(toggleData ?? {})} />
-          : <span aria-hidden className="inline-block h-5 w-5 shrink-0" />}
+          ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={open ? "Hide this section" : "Show this section"} {...(toggleData ?? {})} />
+          : <span aria-hidden className={`inline-block ${density === "dense" ? "h-4 w-4" : "h-5 w-5"} shrink-0`} />}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">{title}</span>
