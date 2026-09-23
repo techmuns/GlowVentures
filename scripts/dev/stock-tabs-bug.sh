@@ -42,7 +42,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo
 WANT="${CASES:-}"
 N=0
 

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
@@ -161,10 +160,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
     <div data-fund-lookthrough={part}>
     <Card className="mt-5"
       title={PART_TITLE[part]}
-      /* Each half names ITS OWN document — AMFI's daily NAV for the first, the
-         AMC's monthly disclosure for the second — and both say, in words, that
-         neither is a statement issued to this family. */
-      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name}${p.amc ? ` · ${p.amc}` : ""} — ${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : "the AMC's own monthly disclosure"}, not a statement issued to this family.`}
+      /* ONE SHORT LINE (main's Stage 10ci): the scheme, and that none of this
+         is the family's own statement — the fence a reader must not miss. Each
+         half's own document — AMFI's daily NAV for the first, the AMC's monthly
+         disclosure for the second — is the hover. */
+      subtitle={<span title={`${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : `${p.amc ? `${p.amc}'s` : "The AMC's"} own monthly disclosure`} — published figures about the scheme, not a statement issued to this family.`}>
+        {p.amfiSchemeName ?? p.scheme ?? name} — not a statement issued to this family</span>}
       right={<Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>}>
 
       {part === "nav" && (<>
@@ -271,6 +272,10 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 
       {part === "holdings" && (<>
       {/* ── the holdings ─────────────────────────────────────────────────── */}
+      {/* THE PILLS DATE AND SOURCE THE HOLDINGS, so a scheme that discloses none
+          draws none — "portfolio —" over an absence says nothing the absence
+          box below does not (main's Stage 10ci). */}
+      {rows.length > 0 && (
       <div className="mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
           <span title="A scheme discloses its portfolio monthly; the family's units are valued on their own statement's date. The two rarely coincide, so both are shown rather than one standing for the other.">
@@ -291,14 +296,16 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
             suggestions={[...new Set(rows.flatMap((r) => [r.name, r.sector, r.rating, r.assetClass].filter(Boolean) as string[]))].sort()} />
         )}
       </div>
+      )}
 
       {rows.length === 0 ? (
         /* NOT AN EMPTY TABLE, AND NOT A FAILURE. Two of this book's schemes are
            metal ETFs the AMC files no portfolio for at all; the reason names
-           that rather than implying a fund that holds nothing. */
+           that rather than implying a fund that holds nothing. The NAV is on
+           the Price & returns tab, not "above" — this half is its own tab. */
         <AbsentSection
           what={`${p.scheme ?? name} discloses no portfolio this store could read`}
-          needs={`No monthly portfolio disclosure for this scheme is in the store. Its NAV, its change and its returns above are complete; what it holds is not carried.`} />
+          needs="No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab." />
       ) : shown.length === 0 ? (
         <AbsentSection what="Nothing matches that filter"
           needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
@@ -356,19 +363,16 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         </div>
       )}
 
-      <p className="mt-4 text-[11.5px] leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-400">None of this is in any total on this site.</span> The fund&rsquo;s
-        own value — {money(holdingValue)} — is what the book carries, and it already stands for everything above;
-        counting both would count the same money twice. The look-through column is this holding&rsquo;s value times the
-        scheme&rsquo;s published weight, so it is an estimate of exposure rather than a position the family can sell.
-        {rows.length > 0 && <>
-          {" "}The disclosed weights add to <span className="mono">{weight.toFixed(1)}%</span> of the scheme
-          {p.coveragePct != null && <> — the AMC states its own coverage at <span className="mono">{p.coveragePct.toFixed(1)}%</span></>};
-          {" "}the rest is what a monthly filing rounds and the cash it does not itemise.
-        </>}
-        {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
-        family&rsquo;s own holding of it.
+      {/* ONE LINE, the rest in its hover (main's Stage 10ci). What must stay
+          on screen is that none of this is in any total: a derived exposure
+          beside a measured one is exactly where this book has been bitten. */}
+      {rows.length > 0 && (
+      <p className="mt-3 text-[11.5px] text-slate-500"
+        title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell. The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.`}>
+        <span className="font-medium text-slate-400">None of this is in any total on this site</span> — the fund&rsquo;s
+        own value already stands for it.
       </p>
+      )}
       </>)}
     </Card>
     </div>

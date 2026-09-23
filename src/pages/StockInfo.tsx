@@ -806,7 +806,18 @@ export function StockInfo() {
         {mandates.length > 0 && (
           <p className="mt-1.5 truncate text-[12px] text-slate-400" data-stock-mandates={mandates.length}
             title={mandates.map((m) => `${m.label}${m.label === m.provider ? "" : ` · ${m.provider}`} · ${m.owner}`).join("\n")}>
-            <span className="font-medium text-slate-300">Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
+            {/* The sentence that explains the route is the hover on these first
+                words (main's Stage 10ci). THE NOUN IS DERIVED, NOT TYPED — see
+                `mandateAllShares` above: a mandate's bucket takes its whole
+                account, so "these shares" would be printed over a cash sleeve
+                and a TDS receivable as well as over a company. */}
+            <span className="font-medium text-slate-300"
+              title={`${mandateAllShares
+                ? "The family owns these shares and the manager decides them."
+                : mandateNoShares && mandateClass
+                  ? `This is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose.`
+                  : "The family owns these holdings and the manager runs the accounts they sit in."} Every other holding in ${mandates.length === 1 ? "that mandate is on its" : "those mandates is on their"} own page.`}>
+              Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
             {" — "}
             {mandates.length > 2
               ? <span className="text-slate-500">each linked from its row on the Position tab</span>
@@ -1045,7 +1056,7 @@ export function StockInfo() {
                           current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
                           pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
                           return: (
-                            <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
+                            <td key="return" data-stock-foot-return className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
                               title={`The holding-period return across every row above, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(fifo, (n) => money(n))}`}>
                               <span className="ret-tag mr-0.5">HPR</span>{ret === null ? <AbsentCell reason={costWhy} /> : fmtPct(ret, { sign: true, decimals: 1 })}
                             </td>
@@ -1059,12 +1070,12 @@ export function StockInfo() {
                     Every row above is a statement as its issuer printed it, so a
                     name reported under two members has two rows; the Total is the
                     consolidated figure, which counts the holding once. */}
+                {/* One line, the reasoning in its hover (main's Stage 10ci). */}
                 {dupCollapsed > 1 && (
-                  <p className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                    The rows above add to {money(sum(rows.map((r) => r.marketValue)))}: this is ONE holding, reported on
-                    each of the {held} statements listed. Both are shown as printed, and the Total counts it once —
-                    {money(mv)}, the same basis as the current value of holdings. Which statement owns it is a question about the
-                    family's affairs, not a parsing rule, so neither row is suppressed.
+                  <p className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500"
+                    title="Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings. Which statement owns it is a question about the family's affairs, not a parsing rule, so neither row is suppressed.">
+                    One holding, reported on each of the {held} statements listed — the rows add to{" "}
+                    {money(sum(rows.map((r) => r.marketValue)))}, the Total counts it once at {money(mv)}.
                   </p>
                 )}
               </Card>
@@ -1137,11 +1148,10 @@ export function StockInfo() {
                   </div>
                 ) : led.txns.length === 0 ? (
                   <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
-                    <span className="max-w-md">
+                    <span className="max-w-md"
+                      title="A holding bought before that window and untraded since carries no row here — the transaction statements are a period record, not a lot history.">
                       No transaction in this name over the window the statements cover
                       {led.periodFrom && led.periodTo ? <> ({fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)})</> : null}.
-                      A holding bought before that window and untraded since carries no row here — the transaction
-                      statements are a period record, not a lot history.
                     </span>
                   </div>
                 ) : (
@@ -1236,30 +1246,42 @@ export function StockInfo() {
                     `data-stock-class` is the class a READER is told, which for a
                     liquid or arbitrage fund is Cash whatever wrapper its statement
                     typed it as — the family's instruction. */}
+                {/* TWO SHORT LINES, the reasoning in their hovers (main's Stage
+                    10ci). What a reader must still SEE is that this is a decided
+                    absence rather than a broken feed, what the holding IS, and why
+                    a fund shows no list of its companies — all three are on
+                    screen. The hover lists what is absent WITHOUT "price history":
+                    on these tabs a mutual fund's NAV history is on Price & returns. */}
                 <Card className="mt-5" title={`Company research — not applicable to ${cashFund ? "a cash-equivalent fund" : notACompanyLabel}`}>
                   <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research-na={fundVehicle ? "fund" : "balance"}
-                    data-stock-class={cashFund ? "Cash" : assetClass ?? ""}>
-                    {fundVehicle
-                      ? <>{cashFund
-                          ? <>This holding is <span className="font-medium text-slate-300">Cash</span> — {arbitrage ? "an arbitrage" : "a liquid"} fund,
-                            which the family counts as cash and nothing else; one line standing for a portfolio its manager
-                            assembles, not a share in a company — so there is no PE, balance sheet, concall or insider filing for it.</>
-                          : <>This is {notACompanyLabel} — one line standing for a portfolio its manager assembles, not a share
-                            in a company — so there is no PE, balance sheet, concall or insider filing for it.</>}{" "}
-                        {arbitrage
-                          ? <>An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately
-                            not drawn here: that portfolio is long shares hedged by short futures, so reading it as the
-                            family&rsquo;s exposure to those companies would print stock they do not carry. Its value is
-                            counted whole, as cash.</>
-                          : lookThroughHoldings
-                          ? <>What the scheme holds is shown above, from the AMC&rsquo;s own monthly disclosure; the
-                            fund&rsquo;s value stays whole in every total.</>
-                          : <>An AIF publishes no monthly portfolio (SEBI requires one from a mutual fund, not from a
-                            Category II or III alternative fund), so no statement names the companies inside it and the
-                            fund&rsquo;s value stays whole.</>}</>
-                      : <>This is a balance, not a share in a company, so there is no PE, balance sheet, concall or insider
-                        filing for it.</>}
+                    data-stock-class={cashFund ? "Cash" : assetClass ?? ""}
+                    title={`So there is no PE, no balance sheet, no concall and no insider filing for it, and the panels that carry those for a company are absent here by decision rather than by a feed being down.${fundVehicle ? " A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : ""}`}>
+                    This holding is <span className="font-medium text-slate-300">{cashFund ? "Cash" : assetClassLabel(assetClass)}</span>
+                    {cashFund
+                      ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund the family counts as cash, not a share in a company</>
+                      : fundVehicle
+                      ? <> — one line standing for a portfolio the manager assembles, not a share in a company</>
+                      : <> — a balance, not a share in a company</>}, so company research does not apply.
                   </p>
+                  {fundVehicle && (
+                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
+                      title={arbitrage
+                        ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately not drawn here: that portfolio is long shares hedged by short futures, so reading it as the family's exposure to those companies would print stock they do not carry."
+                        : lookThroughHoldings
+                        ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. A mutual fund scheme discloses its portfolio monthly; it is the AMC's document, not this family's, so the fund's value still stays whole here and in every total."
+                        : "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. SEBI requires a monthly portfolio from a mutual fund and not from a Category II or III alternative fund, so there is no scheme document to join to this folio, and the fund's value stays whole."}>
+                      {arbitrage
+                        ? <>What it holds is not drawn: long shares hedged by short futures are not the family&rsquo;s stock. Its value counts whole, as cash.</>
+                        : lookThroughHoldings
+                        /* CONDITIONAL, because it is not always true: a scheme
+                           that resolves no disclosure (Liquid BeES) or discloses
+                           no portfolio (the metal ETFs) is shown above as exactly
+                           that, and an unconditional "is shown above" would
+                           contradict the card it points at. */
+                        ? <>Where the AMC&rsquo;s own monthly disclosure resolves, what the scheme holds is shown above.</>
+                        : <>An AIF publishes no such disclosure, so no list of its companies can be shown.</>}
+                    </p>
+                  )}
                 </Card>
               </>
             )}
