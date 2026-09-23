@@ -250,7 +250,9 @@ export function Performance() {
 
         <StatTile label="Embedded return"
           value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money)}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
-          sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
+          sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet}
+          hint="The unrealised gain still inside the holdings, on what they cost. The return on the capital put in is Morning CIO's Consolidated return."
+          icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
           <StatTile label="Money-weighted return (XIRR)"

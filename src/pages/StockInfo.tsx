@@ -807,6 +807,9 @@ export function StockInfo() {
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400"
                         data-capital-source={rowCapital.get(r)?.onCapital.map((x) => x.capital.source).join(" ")}
+                        data-capital-accounts={rowCapital.get(r)?.onCapital.map((x) => x.accountId).join(" ")}
+                        data-invested={onBasis(r).invested ?? ""}
+                        data-unit-cost={r.costBasis ?? ""}
                         title={rowCapital.get(r) ? describeCapital(rowCapital.get(r)!, (n) => money(n), r.costBasis) : undefined}>
                         {money(onBasis(r).invested)}
                       </td>

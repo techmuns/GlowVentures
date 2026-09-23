@@ -20,9 +20,17 @@ import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } f
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
+import { describeCapital } from "@/lib/capital";
+import { onCapitalBasis } from "@/lib/analytics";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
 const GAIN = "#10b981", LOSS = "#ef4444";
+
+/** What an account's units cost, for the hover beside a figure struck on its capital. */
+const sumOrNullCost = (ps: { costBasis?: number | null }[]) => {
+  const xs = ps.map((x) => x.costBasis).filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  return xs.length ? xs.reduce((t, v) => t + v, 0) : null;
+};
 
 // Return & Drawdown — the return half, built from what the book carries.
 //
@@ -69,7 +77,7 @@ const acctEnd = (a: { provider: string; accountNo: string }) =>
   `${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function ReturnAnalysis() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, capital } = usePortfolio();
   const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
 
@@ -185,12 +193,30 @@ export function ReturnAnalysis() {
       const c = sum(rows.map((x) => x.costBasis));
       const pl = sum(rows.map((x) => x.unrealizedPnL));
       const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
+      /**
+       * AN ACCOUNT IS AN INVESTMENT, SO ITS RETURN IS STRUCK ON THE CAPITAL PUT IN.
+       *
+       * This row used to divide the unrealised gain on its holdings by what those
+       * holdings cost — the tax figure, which a class switch, a manager's trading
+       * or a fund's payout resets. V.E.C 128004 read +8.42% against +30.12% on the
+       * money the family put in, and Carnelian +24.98% against +19.93%: the error
+       * runs both ways. Where the account's statements publish its capital, the
+       * row reads it from the one model every surface reads (`capital.ts`), whole
+       * account by definition; everywhere else it stays on the cost of its
+       * holdings and says so. The best and worst NAMES stay on cost — a holding
+       * inside an account has no capital of its own.
+       */
+      const acct = capital.ofAccount(a.accountId);
+      const onCap = onCapitalBasis(acct) ? acct : null;
       return {
-        account: a, names: rows.length, held,
+        account: a, names: rows.length, held, capital: onCap,
         // Null, not zero, when nothing on this account carries a cost to sum.
-        cost: measured ? c : null,
-        pnl: measured ? pl : null,
-        returnPct: measured && c > 0 ? (pl / c) * 100 : null,
+        cost: onCap ? onCap.invested : measured ? c : null,
+        pnl: onCap ? onCap.gain : measured ? pl : null,
+        returnPct: onCap
+          ? (onCap.covers ? onCap.returnPct : null)
+          : measured && c > 0 ? (pl / c) * 100 : null,
+        unitCost: onCap ? sumOrNullCost(portfolio.positions.filter((x) => x.accountId === a.accountId)) : null,
         // Why the row is empty: the book's own reason where it has one, else the
         // fact that the account's holdings report no cost.
         absentReason: a.noPositionsReason
@@ -214,7 +240,7 @@ export function ReturnAnalysis() {
       spreadEnds: rated.length >= 2 ? [rated[0], rated[rated.length - 1]] : null,
       unrated: byAccount.filter((a) => a.returnPct === null).map((a) => a.account.accountNo),
     };
-  }, [portfolio]);
+  }, [portfolio, consolidated, capital]);
 
   if (!portfolio || !model) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -258,7 +284,9 @@ export function ReturnAnalysis() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Embedded return"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>}
-          sub={<>{money(m.pnl, true)} on {money(m.cost)} of cost</>} icon={<Percent className="h-4 w-4" />} />
+          sub={<>{money(m.pnl, true)} on {money(m.cost)} of cost</>}
+          hint="The unrealised gain still inside the holdings, on what they cost. The return on the capital put in is Morning CIO's Consolidated return."
+          icon={<Percent className="h-4 w-4" />} />
 
         <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
           sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
@@ -282,7 +310,7 @@ export function ReturnAnalysis() {
           sub={m.spread === null
             ? "needs two accounts with a cost basis"
             : `${acctEnd(m.spreadEnds![0].account)} to ${acctEnd(m.spreadEnds![1].account)}`}
-          hint={m.unrated.length ? `${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no cost basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : undefined}
+          hint={`Each account on its own basis, as in the table below.${m.unrated.length ? ` ${m.unrated.length === 1 ? "Account" : "Accounts"} ${m.unrated.join(", ")} ${m.unrated.length === 1 ? "has" : "have"} no basis and ${m.unrated.length === 1 ? "is" : "are"} excluded rather than counted as zero.` : ""}`}
           icon={<Scale className="h-4 w-4" />} />
 
         <StatTile label="Maximum drawdown" value={<span className="text-slate-500">{DASH}</span>}
@@ -385,28 +413,34 @@ export function ReturnAnalysis() {
       </div>
 
       <Card className="mt-5" title="Per account"
-        subtitle="The same measure on every account the book carries, and each one's best and worst name — a PMS mandate is one account here, and so is the family's own demat">
+        subtitle="Each account's return — on the capital put in where its statements publish it, on cost otherwise — and its best and worst name, on cost">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={accountView}>
                 <SortHeader col="account" view={accountView} align="left" pad="px-3 py-2">Account</SortHeader>
                 <SortHeader col="names" view={accountView} pad="px-3 py-2">Names</SortHeader>
-                <SortHeader col="cost" view={accountView} pad="px-3 py-2">Cost</SortHeader>
-                <SortHeader col="pnl" view={accountView} pad="px-3 py-2">Unrealised P&amp;L</SortHeader>
-                <SortHeader col="return" view={accountView} pad="px-3 py-2">Return</SortHeader>
+                <SortHeader col="cost" view={accountView} pad="px-3 py-2"
+                  title="The capital the family put in, where the account's statements publish it; the cost of its holdings otherwise.">Invested</SortHeader>
+                <SortHeader col="pnl" view={accountView} pad="px-3 py-2"
+                  title="On the capital put in: value less that capital, realised and unrealised together. On cost: the unrealised gain on what the holdings cost.">P&amp;L</SortHeader>
+                <SortHeader col="return" view={accountView} pad="px-3 py-2"
+                  title="Total to date, not annualised — on the capital put in where it is published, on cost otherwise.">Return</SortHeader>
                 <SortHeader col="best" view={accountView} align="left" pad="px-3 py-2">Best</SortHeader>
                 <SortHeader col="worst" view={accountView} align="left" pad="px-3 py-2">Worst</SortHeader>
               </Tr>
             </thead>
             <tbody>
               {accountRows.map((a) => (
-                <Tr view={accountView} key={a.account.accountId} className="border-t border-ink-700/60">
+                <Tr view={accountView} key={a.account.accountId} className="border-t border-ink-700/60"
+                  data-ra-account={a.account.accountId}
+                  data-ra-basis={a.capital ? "capital" : a.cost === null ? "none" : "cost"}>
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(a.account)}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">
                     {a.cost === null ? <AbsentCell reason={a.absentReason} /> : a.names}
                   </td>
-                  <td className="px-3 py-2.5 text-right mono text-slate-300">
+                  <td className="px-3 py-2.5 text-right mono text-slate-300"
+                    title={a.capital ? describeCapital(a.capital, (n) => money(n), a.unitCost) : a.cost === null ? undefined : "The cost of the holdings this account reports — its statements publish no capital put in."}>
                     {a.cost === null ? <AbsentCell reason={a.absentReason} /> : money(a.cost)}
                   </td>
                   <td className={`px-3 py-2.5 text-right mono ${a.pnl === null ? "" : changeColor(a.pnl)}`}>

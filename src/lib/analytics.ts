@@ -1392,15 +1392,22 @@ function capitalMeasured(p: ReturnInput, c: InvestedBehind, measure: ReturnMeasu
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, cagr = 0, absolute = 0;
+  let shown = 0, absent = 0, annualised = 0, moneyWeighted = 0, absolute = 0, onCapital = 0;
   for (const r of rows) {
     const m = measuredReturn(r, measure, asOf);
     if (!m.shown) { absent++; continue; }
     shown++;
-    if (m.tag === "CAGR") cagr++;
-    else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
+    if (onCapitalBasis(r.capital)) onCapital++;
+    // AN ANNUAL RATE IS A CAGR OR AN XIRR. An investment paid into on several
+    // dates is annualised money-weighted — under the CAGR heading too, because
+    // a CAGR needs one start date — and counting only the CAGR tag would report
+    // it as held under a year, which is the claim the guard exists to refuse.
+    if (m.tag === "CAGR" || m.tag === "XIRR") {
+      annualised++;
+      if (m.tag === "XIRR") moneyWeighted++;
+    } else absolute++;   // HPR (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, cagr, absolute };
+  return { total: rows.length, shown, absent, annualised, moneyWeighted, absolute, onCapital };
 }
 
 /**

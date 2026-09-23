@@ -270,12 +270,13 @@ export function HoldingsBehind() {
 
   // ── The figures this page has to reconstruct ───────────────────────────────
   const mv = sum(rows.map((r) => r.marketValue));
-  const cost = sumOrNull(rows.map((r) => r.costBasis));
-  const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
+  // A SET-LEVEL COST, P&L AND RETURN STRUCK ON THE UNITS' COST USED TO SIT HERE,
+  // feeding nothing since the tiles went (Stage 10bd). Deleted rather than left:
+  // every figure this page prints is summed from its GROUPS now, each on its own
+  // basis — the capital put in where a group is a whole investment — and a
+  // cost-only return computed into no caller is the one a future edit would wire
+  // back believing it load-bearing. The footer is the page's total.
   const noCost = rows.filter((r) => r.costBasis == null);
-  const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
-  const withoutCostMV = sum(noCost.map((r) => r.marketValue));
-  const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**

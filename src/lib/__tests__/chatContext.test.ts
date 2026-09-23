@@ -17,7 +17,7 @@
 // totals and not the limits produces confident nonsense about cost basis,
 // report dates and the ring-fenced holding — and each of those is a question a
 // family office actually asks.
-import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
+import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { dedupedPositions, doubleCountedValue, publicPrivateSplit, sum } from "@/lib/analytics";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
 
@@ -179,6 +179,48 @@ ok("the context is a non-empty set of named blocks",
   const bytes = new TextEncoder().encode(pre).length;
   ok("...and the whole preamble fits well inside the function's body limit",
     bytes < 200_000, `${(bytes / 1024).toFixed(1)} KB`);
+}
+
+// ── AN INVESTMENT'S RETURN IS ON THE CAPITAL PUT IN ─────────────────────────
+//
+// *"According to the client the return on this AIF is a lot higher than what we
+// are showing."* A model briefed with what the units HELD cost divides by it and
+// repeats the old figure fluently. So each account carries the capital put in and
+// the return on it, and the anchor is reached by a DIFFERENT PATH from the
+// builder's: Buoyant's capital as the sum of its own dated moves in the book.
+{
+  type Row = { accountNo: string; provider: string; valueCr: number | null; capitalPutInCr: number | null;
+    returnOnCapitalPct: number | null; xirrPct: number | null; capitalSource: string | null };
+  const a = block<{ rows: Row[]; returnNote: string }>("accounts");
+  const buoyant = BOOK_ACCOUNTS.filter((x) => /buoyant/i.test(x.provider));
+  ok("both Buoyant folios are in the accounts block", buoyant.length === 2
+    && buoyant.every((b) => a.rows.some((r) => r.accountNo === b.accountNo)), `${buoyant.length}`);
+  for (const b of buoyant) {
+    const r = a.rows.find((x) => x.accountNo === b.accountNo);
+    const moves = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === b.accountId && m.date <= b.asOf);
+    const net = moves.reduce((t, m) => t + (m.direction === "in" ? 1 : -1) * (m.amount ?? 0), 0) / CR;
+    near(`Buoyant ${b.accountNo}: the capital put in is its own dated moves, net`, r?.capitalPutInCr, net);
+    ok(`...and its return is struck on that capital`,
+      !!r && r.valueCr !== null && r.capitalPutInCr !== null && r.returnOnCapitalPct !== null
+        && Math.abs(r.returnOnCapitalPct - ((r.valueCr - r.capitalPutInCr) / r.capitalPutInCr) * 100) < 0.1,
+      `${r?.returnOnCapitalPct}%`);
+  }
+  // LOAD-BEARING: on at least one account the capital and the cost of the units
+  // part company, or a context still dividing by cost would pass every line above.
+  const moved = a.rows.filter((r) => {
+    const acc = BOOK_ACCOUNTS.find((x) => x.accountNo === r.accountNo && x.provider === r.provider);
+    const cost = BOOK_POSITIONS.filter((p) => p.accountId === acc?.accountId && p.costBasis != null)
+      .reduce((t, p) => t + (p.costBasis as number), 0) / CR;
+    return r.capitalPutInCr !== null && Math.abs(r.capitalPutInCr - cost) > 0.01;
+  });
+  ok("on some accounts the capital put in is not what the units cost", moved.length > 0,
+    moved.map((r) => `${r.provider.split(" ")[0]} ${r.accountNo}`).join(", "));
+  ok("every return on capital names its source", a.rows.every((r) => r.capitalPutInCr === null || !!r.capitalSource));
+  ok("an XIRR is only ever given beside a capital", a.rows.every((r) => r.xirrPct === null || r.capitalPutInCr !== null));
+  ok("the block says the cost of the units is never the basis", /never on\s+what the units held today cost/i.test(a.returnNote));
+  const top = block<{ costNote: string }>("top_holdings");
+  ok("...and so does the holdings block beside its costBasisCr", /Never compute an investment's return from it/i.test(top.costNote));
+  ok("...and the preamble makes it a rule", /Never\s+divide a gain by costBasisCr/i.test(contextPreamble(blocks).replace(/\n\s*/g, " ")));
 }
 
 // ── tickers are real, resolved symbols ─────────────────────────────────────

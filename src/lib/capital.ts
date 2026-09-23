@@ -191,8 +191,13 @@ export function accountCapital(input: {
 
 // ── A SET OF POSITIONS ────────────────────────────────────────────────────────
 
-/** A position's cost is unusable where the statement reported none. */
-const noCost = (p: Position) =>
+/**
+ * A position's cost is unusable where the statement reported none — or printed
+ * zero beside a positive value, which would book the whole holding as profit.
+ * Exported so a surface that also needs "which of these report a cost" asks the
+ * same question the model does rather than re-deriving it.
+ */
+export const reportsNoCost = (p: Position) =>
   !!p.costUnavailable || p.costBasis === null || p.costBasis === undefined || (p.costBasis === 0 && p.marketValue > 0);
 
 export type InvestedBehind = {
@@ -330,12 +335,22 @@ export function buildCapitalModel(book: {
       const inSet = ps.filter((p) => universe.has(p)).reduce((t, p) => t + p.marketValue, 0);
       // WHOLE, OR NOT AT ALL. Half a rupee is float noise on a sum; anything
       // more is a position of this account the set does not carry.
-      const oneRow = !unitOf || new Set(ps.map(unitOf)).size === 1;
+      //
+      // ONE ROW IS COUNTED OVER THE POSITIONS THAT CARRY SOME OF THE ACCOUNT'S
+      // MONEY. Buoyant's folios each print a ₹0 cash line beside the fund's
+      // units, and the category axis files that line under Cash — so counted
+      // over every position both folios were "split across two rows" and fell
+      // to cost in the footer while standing on capital in their own AIF
+      // section, and the sections stopped adding to the footer. A line at ₹0
+      // value and ₹0 cost moves no total on either basis, so it cannot split
+      // an account; one that carries a cost (a write-off at ₹0) still can.
+      const carries = ps.filter((p) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0);
+      const oneRow = !unitOf || new Set(carries.map(unitOf)).size <= 1;
       if (cap && oneRow && Math.abs(inSet - (accountValue.get(accountId) ?? 0)) <= 0.5) {
         onCapital.push({ accountId, capital: cap, value: ps.reduce((t, p) => t + p.marketValue, 0), count: ps.length });
         continue;
       }
-      for (const p of ps) (noCost(p) ? bare : costed).push(p);
+      for (const p of ps) (reportsNoCost(p) ? bare : costed).push(p);
     }
     const capInvested = onCapital.reduce((t, x) => t + x.capital.net, 0);
     const capValue = onCapital.reduce((t, x) => t + x.value, 0);

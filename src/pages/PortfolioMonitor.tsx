@@ -2004,7 +2004,7 @@ export function PortfolioMonitor() {
         import("@/lib/exportPortfolioExcel"),
         loadTransactions(),
       ]);
-      await exportPortfolioExcel(positions, portfolio.accounts, data?.txns ?? []);
+      await exportPortfolioExcel(positions, portfolio.accounts, data?.txns ?? [], capital);
     } catch (e) {
       console.error("Excel export failed", e);
     } finally {
@@ -2647,6 +2647,10 @@ export function PortfolioMonitor() {
                             a chevron that opens nothing is worse than none. */}
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-capital-source={r.capital ? r.capital.onCapital.map((x) => x.capital.source).join(" ") : undefined}
+                          data-capital-accounts={r.capital ? r.capital.onCapital.map((x) => x.accountId).join(" ") : undefined}
+                          data-capital-mixed={r.capital && (r.capital.onCost.count || r.capital.noBasis.count) ? "1" : undefined}
+                          data-invested={r.costNA ? "" : r.costBasis ?? ""}
+                          data-unit-cost={r.capital ? r.unitCost ?? "" : undefined}
                           title={r.capital ? describeCapital(r.capital, (n) => fmtFromBase(n, { compact: true }), r.unitCost) : undefined}>
                           {r.costNA ? "—" : trancheCount > 0 ? (
                             <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
@@ -4209,10 +4213,13 @@ function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: str
         // THE ANNUALISED COUNT, not `shown`: a sub-year holding is SHOWN in this
         // column and shown as its holding-period return, tagged HPR. Reporting
         // it as annualised would be the very claim the guard exists to refuse.
-        note: `${cov.cagr} annualised of ${cov.total}`,
-        title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
-          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
-          + (cov.absent > 0 ? ` ${cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
+        // An investment paid into on several dates IS annualised here — as an
+        // XIRR, because a CAGR needs one start date — so both tags count.
+        note: `${cov.annualised} annualised of ${cov.total}`,
+        title: `Annualised where a year can be measured — ${cov.annualised} of ${cov.total} rows.`
+          + (cov.moneyWeighted > 0 ? ` ${cov.moneyWeighted} of them ${cov.moneyWeighted === 1 ? "is an investment" : "are investments"} the family paid into on several dates, marked XIRR: money that went in on different dates has no single start to compound from, so the money-weighted rate is the annual rate.` : "")
+          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return instead — on the capital put in where the row stands on it, on the cost of the units otherwise — marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
+          + (cov.absent > 0 ? ` ${cov.absent} carry no dated start the window could close over — a holding inside a mandate has no purchase date of its own, a capital published only as a total since inception dates nothing, and the depository holdings report no cost.` : ""),
       };
     case "ytd":
       return {
@@ -4226,7 +4233,14 @@ function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: str
     case "xirr":
       return {
         note: `${cov.shown} of ${cov.total}`,
-        title: `A money-weighted XIRR needs every cash flow for a holding — each tranche's date and amount — and the statements here cover the current period only, so it is absent on all ${cov.total} rows. The per-account money-weighted return is on Performance.`,
+        /* THIS SENTENCE READ "absent on all N rows" AND STOPPED BEING TRUE the
+           day a row could stand on the capital put in: an investment whose
+           every payment in and out is on its statements — a fund folio, a
+           mandate — has a money-weighted return, and it is in this column. What
+           still has none is named, with why. */
+        title: `A money-weighted XIRR needs every payment behind a row, each at its own date. ${cov.shown} of ${cov.total} rows have them — investments whose every payment in and out is on their own statements`
+          + (cov.moneyWeighted < cov.shown ? `, ${cov.shown - cov.moneyWeighted} of them over payments spanning under a year, so showing their total return on the capital put in, marked HPR` : "")
+          + `. The other ${cov.absent} have none: a holding inside an account has no cash flows of its own, a capital published only as a total since inception dates nothing, and the depository holdings report no cost. Each manager's own published return is on Performance.`,
       };
     case "calendar":
       return {
@@ -4236,7 +4250,7 @@ function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: str
     default:
       return {
         note: `${cov.shown} of ${cov.total}`,
-        title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
+        title: `Holding Period Return is the total return since the money went in, not annualised — on the capital the family put in where a row stands on a whole investment (${cov.onCapital} of ${cov.total} rows), and on the cost of the units otherwise. It is shown on ${cov.shown} of ${cov.total} rows`
           + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
       };
   }

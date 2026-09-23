@@ -220,10 +220,18 @@ export type FolioRow = {
    */
   alsoCount: number;
   alsoReportedUnder: string[];
+  /**
+   * What the family has in this folio: the capital put in where the folio is a
+   * WHOLE account whose capital is published, the statement's cost otherwise —
+   * so a fund reads the same Invested in its row and in the folio lines under
+   * it. `capital` carries the working, for the hover.
+   */
+  invested: number | null;
+  capital: InvestedBehind | null;
 };
 
 /** Every private row as printed, with the duplicate count struck on the raw set. */
-export function folioRows(rows: Position[], accIdx: AccountIndex): FolioRow[] {
+export function folioRows(rows: Position[], accIdx: AccountIndex, capital?: CapitalModel): FolioRow[] {
   const byGroup = new Map<string, number>();
   for (const p of rows) {
     if (!p.dedupeGroup) continue;
@@ -232,7 +240,11 @@ export function folioRows(rows: Position[], accIdx: AccountIndex): FolioRow[] {
   return rows
     .map((p) => {
       const a = accIdx.get(p.accountId);
+      const b = capital ? capital.behind([p]) : null;
+      const onCap = b && b.onCapital.length > 0 ? b : null;
       return {
+        invested: onCap ? onCap.invested : p.costBasis ?? null,
+        capital: onCap,
         position: p,
         accountId: p.accountId,
         owner: ownerOf(accIdx, p),
@@ -246,7 +258,12 @@ export function folioRows(rows: Position[], accIdx: AccountIndex): FolioRow[] {
     .sort((a, b) => b.position.marketValue - a.position.marketValue);
 }
 
-export type OwnerRow = { owner: string; rows: number; mv: number; cost: number | null };
+export type OwnerRow = {
+  owner: string; rows: number; mv: number;
+  /** The capital put into each whole account this member holds here, plus the cost of the rest. */
+  cost: number | null;
+  capital: InvestedBehind | null;
+};
 
 /**
  * Per-owner subtotals — DELIBERATELY NOT DEDUPED.
@@ -256,7 +273,7 @@ export type OwnerRow = { owner: string; rows: number; mv: number; cost: number |
  * printed. Deduping here is the mirror failure that once emptied Bharat's
  * 360 ONE row to ₹0 for an account holding ₹1.46 Cr.
  */
-export function ownerRollup(rows: Position[], accIdx: AccountIndex): OwnerRow[] {
+export function ownerRollup(rows: Position[], accIdx: AccountIndex, capital?: CapitalModel): OwnerRow[] {
   const by = new Map<string, Position[]>();
   for (const p of rows) {
     const who = ownerOf(accIdx, p);
@@ -265,12 +282,19 @@ export function ownerRollup(rows: Position[], accIdx: AccountIndex): OwnerRow[] 
     by.set(who, g);
   }
   return [...by.entries()]
-    .map(([owner, g]) => ({
-      owner,
-      rows: g.length,
-      mv: sum(g.map((p) => p.marketValue)),
-      cost: sumOrNull(g.map((p) => p.costBasis)),
-    }))
+    .map(([owner, g]) => {
+      // Each member's own accounts, whole: RAW like the rest of this view, so a
+      // holding two members both report stands on each member's own capital.
+      const b = capital ? capital.behind(g) : null;
+      const onCap = b && b.onCapital.length > 0 ? b : null;
+      return {
+        owner,
+        rows: g.length,
+        mv: sum(g.map((p) => p.marketValue)),
+        cost: onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis)),
+        capital: onCap,
+      };
+    })
     .sort((a, b) => b.mv - a.mv);
 }
 

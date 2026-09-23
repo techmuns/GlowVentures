@@ -1117,8 +1117,10 @@ export function MorningCIO() {
         {/* CONSOLIDATED RETURN — return on the capital actually invested, over
             the WHOLE book. It sits beside the money-weighted figure because
             they answer different questions and cover different sets: this one
-            spans every account and every asset class, and is cumulative on
-            cost; the one before it is money-weighted, dated, and can only be
+            spans every account and every asset class, and is cumulative — on
+            the capital put into each whole investment and on the cost of the
+            units for the rest (`capital.ts`); the one before it is
+            money-weighted, dated, and can only be
             struck where a statement carries an opening portfolio value. Neither
             is a substitute for the other, which is why both are on the strip
             and each states its own scope. */}

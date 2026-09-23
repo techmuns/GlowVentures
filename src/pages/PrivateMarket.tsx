@@ -21,6 +21,7 @@ import {
   pageScopeNote,
 } from "@/lib/privateMarket";
 import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
+import { describeCapital } from "@/lib/capital";
 import { useEnteredCalls, headlineCall, todayIso } from "@/lib/enteredCalls";
 import { weightFormula } from "@/lib/auditFormulas";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
@@ -242,7 +243,7 @@ export function PrivateMarket() {
     // ON THE STATEMENT BASIS, like everything on this page — `statementCapital`
     // is the capital model over the book the live feed never touches.
     const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows, statementCapital);
-    const folios = folioRows(scope.rows, accIdx);
+    const folios = folioRows(scope.rows, accIdx, statementCapital);
     /**
      * THE FOLIOS BEHIND EACH FUND, keyed on the row's own `securityKey`.
      *
@@ -261,7 +262,7 @@ export function PrivateMarket() {
       g.push(f);
       foliosOf.set(f.position.securityKey, g);
     }
-    const owners = ownerRollup(scope.rows, accIdx);
+    const owners = ownerRollup(scope.rows, accIdx, statementCapital);
     const ct = commitmentTotals(commitments);
     /**
      * THE CAPITAL-CALL VIEW OF THE SAME REGISTER, per scheme.
@@ -453,6 +454,16 @@ export function PrivateMarket() {
    * scheme table, which is where a reader doing that arithmetic already is.
    */
   const retPct = m.privCost != null && m.privCost > 0 && m.privPnL != null ? (m.privPnL / m.privCost) * 100 : null;
+  /**
+   * THE FUNDS STRUCK ON THE CAPITAL PUT IN, counted so the two tiles below say
+   * which basis their figure is on. A fund whose rows carry whole accounts with
+   * published capital reads its Invested off that capital — the money the family
+   * put in — and every other fund off the cost its statement reports.
+   */
+  const capFunds = m.funds.filter((f) => f.capital).length;
+  const basisSentence = capFunds === 0
+    ? "The cost these statements report"
+    : `On ${capFunds} of ${m.funds.length} fund${m.funds.length === 1 ? "" : "s"}, the capital the family put in, as its own statements publish it; on the rest, the cost these statements report`;
   const share = (a: number, b: number, decimals: number) => (b > 0 ? fmtPct((a / b) * 100, { decimals }) : DASH);
   const absentLine = (why: string) => <span className="text-slate-500">{why}</span>;
   const tileMetrics: TileMetric[] = [
@@ -466,15 +477,18 @@ export function PrivateMarket() {
     {
       id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       value: money(m.privCost),
-      sub: "Cost of these holdings",
-      detail: `The cost these statements report · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
+      sub: capFunds ? "What was put into these holdings" : "Cost of these holdings",
+      detail: `${basisSentence} · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
     },
     {
-      id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
+      // "P&L", NOT "UNREALISED P&L": on a fund struck on its capital the gain is
+      // value less the money put in, which carries whatever the fund has paid
+      // back or a switch has realised — see `src/lib/capital.ts`.
+      id: "pnl", label: "P&L", icon: <TrendingUp className="h-4 w-4" />,
       value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
-      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} on cost`,
+      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} on what was invested`,
       detail: m.privCost != null && m.privCost > 0
-        ? `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
+        ? `On the ${money(m.privCost)} invested — ${basisSentence.charAt(0).toLowerCase() + basisSentence.slice(1)} — covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
         : "No statement here reports a cost to measure a gain against.",
     },
     /* *"How are you calculating this uncalled capital of 16 crores? …
@@ -520,7 +534,7 @@ export function PrivateMarket() {
       id: "paid", label: "Paid in", icon: <Wallet className="h-4 w-4" />,
       value: m.cc.paid == null ? <AbsentValue /> : money(m.cc.paid),
       sub: m.cc.paid == null ? absentLine("No statement prints it") : "Cash sent to funds",
-      detail: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank. Not the same set as Capital invested, which is the cost of the holdings in the table below.`,
+      detail: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank. Not the same set as Capital invested, which is what is invested in the holdings in the table below.`,
     },
     {
       id: "due", label: "Due now", icon: <CalendarClock className="h-4 w-4" />,
@@ -907,7 +921,7 @@ export function PrivateMarket() {
                                     owner: (x) => x.owner,
                                     account: (x) => `${x.provider} ${x.accountNo}`,
                                     units: (x) => x.position.quantity,
-                                    invested: (x) => x.position.costBasis,
+                                    invested: (x) => x.invested,
                                     value: (x) => x.position.marketValue,
                                     asOf: (x) => x.asOf ?? null,
                                   }).map((x, i) => (
@@ -925,10 +939,12 @@ export function PrivateMarket() {
                                       </td>
                                       <td className="px-3 py-1.5 text-slate-400 whitespace-nowrap">{x.provider} {x.accountNo}</td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-400">{fmtNum(x.position.quantity, 3)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400">
-                                        {x.position.costBasis == null
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400"
+                                        data-pm-folio-basis={x.capital ? "capital" : "cost"}
+                                        title={x.capital ? describeCapital(x.capital, (n) => money(n), x.position.costBasis) : undefined}>
+                                        {x.invested == null
                                           ? <AbsentCell reason="this statement reports a value and no cost" />
-                                          : money(x.position.costBasis)}
+                                          : money(x.invested)}
                                       </td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-200">{money(x.position.marketValue)}</td>
                                       <td className="px-3 py-1.5 text-slate-400 whitespace-nowrap">
@@ -991,7 +1007,7 @@ export function PrivateMarket() {
                 so the row says which — the rule the Morning CIO footer was fixed for. */}
             {m.costedCount < m.scope.dedupedRows.length && (
               <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                The return is struck on the {money(m.privCost)} of cost these statements report, covering {money(m.costedMV)}
+                The return is struck on the {money(m.privCost)} invested, covering {money(m.costedMV)}
                 {" "}of the {money(m.privMV)} above. The other {m.scope.dedupedRows.length - m.costedCount} folio
                 {m.scope.dedupedRows.length - m.costedCount === 1 ? " row reports" : " rows report"} a value and no cost.
               </p>
@@ -1020,7 +1036,8 @@ export function PrivateMarket() {
                     <Tr view={ownerView} key={o.owner} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 text-slate-100">{o.owner}</td>
                       <td className="px-4 py-2.5 text-right mono text-slate-400">{o.rows} {o.rows === 1 ? "row" : "rows"}</td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">
+                      <td className="px-4 py-2.5 text-right mono text-slate-400"
+                        title={o.capital ? describeCapital(o.capital, (n) => money(n)) : undefined}>
                         {o.cost == null
                           ? <AbsentCell reason="no statement in this member's private folios reports a cost" />
                           : money(o.cost)}

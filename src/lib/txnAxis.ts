@@ -155,11 +155,21 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   };
 
   const forAccount = (axis: GroupAxis, accountId: string): string => {
-    const keys = new Set((byAccount.get(accountId) ?? []).map((p) => groupKeyFor(axis, idx, p)));
-    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No account in
-    // this book is mixed on any axis — measured, all eleven funded ones resolve
-    // to one — and an account that holds nothing at all cannot be filed either:
-    // its capital record is real and its section is simply not established.
+    const held = byAccount.get(accountId) ?? [];
+    // THE SECTION IS READ OFF THE POSITIONS THAT CARRY THE ACCOUNT'S MONEY.
+    // Buoyant's folios print a ₹0 cash line beside the fund's units, and the
+    // category axis files that line under Cash — so read over every position
+    // each folio was "mixed", and the first funded account in this book with a
+    // dated record AND such a line went to the unstated section. A line at ₹0
+    // value and ₹0 cost is no part of what the account IS. Where nothing
+    // carries money every position is read, so an empty account is not filed
+    // on a guess.
+    const carrying = held.filter((p) => p.marketValue !== 0 || (p.costBasis ?? 0) !== 0);
+    const keys = new Set((carrying.length ? carrying : held).map((p) => groupKeyFor(axis, idx, p)));
+    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY — measured, every
+    // funded account in this book resolves to one — and an account that holds
+    // nothing at all cannot be filed either: its capital record is real and its
+    // section is simply not established.
     return keys.size === 1 ? [...keys][0] : TXN_UNSECTIONED;
   };
 

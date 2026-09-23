@@ -32,8 +32,13 @@
 // fail — this repo's own recurring lesson, and the reason `check:pages` strikes
 // its invariants on rendered figures rather than on a caption's prose.
 import ExcelJS from "exceljs";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
+import {
+  BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY,
+  BOOK_CAPITAL_MOVES, BOOK_ACCOUNT_BRIDGES, BOOK_COMMITMENTS, BOOK_POSITION_TRANCHES,
+} from "@/data/glowData";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
+import { buildCapitalModel } from "@/lib/capital";
+import { currentHoldings } from "@/lib/analytics";
 import { DASH } from "@/lib/format";
 import type { Txn } from "@/lib/ledger";
 
@@ -60,7 +65,14 @@ const TXNS: Txn[] = [
     ownerId: "ajay" } as unknown as Txn,
 ];
 
-const wb = buildPortfolioWorkbook(BOOK_POSITIONS, BOOK_ACCOUNTS, TXNS);
+// THE SAME MODEL THE CONTEXT BUILDS — on the current holdings, which is the
+// universe the Monitor draws from and hands to the export.
+const capital = buildCapitalModel({
+  accounts: BOOK_ACCOUNTS, capitalMoves: BOOK_CAPITAL_MOVES, bridges: BOOK_ACCOUNT_BRIDGES,
+  commitments: BOOK_COMMITMENTS, tranches: BOOK_POSITION_TRANCHES,
+  positions: currentHoldings(BOOK_POSITIONS),
+});
+const wb = buildPortfolioWorkbook(BOOK_POSITIONS, BOOK_ACCOUNTS, TXNS, capital);
 const holdings = wb.getWorksheet("Holdings")!;
 const txnSheet = wb.getWorksheet("Transactions")!;
 
@@ -90,9 +102,9 @@ const columnUnder = (ws: ExcelJS.Worksheet, header: string, lastRow: number): un
 // screen does not carry (Class, Held via, Mandate) are descriptors too and
 // close the sheet with them.
 eq("Holdings columns: money first, descriptors last", headersOf(holdings), [
-  "Security", "Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)",
-  "Weight of book", "Unreal. P&L (₹)", "Return", "YTD",
-  "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
+  "Security", "Qty", "Avg Cost (₹)", "Invested (₹)", "CMP (₹)", "Market Value (₹)",
+  "Weight of book", "P&L (₹)", "Return", "XIRR", "YTD",
+  "Return basis", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities",
 ]);
 eq("Transactions columns: Entity closes the row", headersOf(txnSheet), [
   "Date", "Security", "Type", "Qty", "Price (₹)", "Amount (₹)", "Realized P&L (₹)", "Entity",
@@ -129,9 +141,9 @@ const mvCells = columnUnder(holdings, "Market Value (₹)", dataLast);
 ok("the Market Value column sums to its own footer",
    Math.abs(mvCells.reduce((s: number, v) => s + Number(v), 0) - Number(footerAt("Market Value (₹)"))) < 0.5,
    `${mvCells.length} rows`);
-ok("the footer's Unreal. P&L is a signed number under its own header",
-   typeof footerAt("Unreal. P&L (₹)") === "number",
-   String(footerAt("Unreal. P&L (₹)")));
+ok("the footer's P&L is a signed number under its own header",
+   typeof footerAt("P&L (₹)") === "number",
+   String(footerAt("P&L (₹)")));
 
 // ── 3. EVERY VALUE UNDER ITS OWN HEADER ─────────────────────────────────────
 // The failure a header row alone cannot catch: the labels stay put and the
@@ -139,13 +151,13 @@ ok("the footer's Unreal. P&L is a signed number under its own header",
 // legitimately contain — a money column is a number or an em dash, a descriptor
 // column is a non-numeric string and never either.
 const numericOrDash = (v: unknown) => typeof v === "number" || v === DASH;
-for (const h of ["Qty", "Avg Cost (₹)", "CMP (₹)", "Market Value (₹)", "Weight of book", "Unreal. P&L (₹)", "Return", "YTD"]) {
+for (const h of ["Qty", "Avg Cost (₹)", "Invested (₹)", "CMP (₹)", "Market Value (₹)", "Weight of book", "P&L (₹)", "Return", "XIRR", "YTD"]) {
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a figure or an em dash`,
      cells.length > 0 && cells.every(numericOrDash),
      `${cells.length} rows`);
 }
-for (const h of ["Security", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities"]) {
+for (const h of ["Security", "Return basis", "Class", "Held via", "Mandate", "Asset Class (family)", "Basket (family)", "Sector", "Entities"]) {
   const cells = columnUnder(holdings, h, dataLast);
   ok(`every cell under "${h}" is a descriptor, never a figure`,
      cells.length > 0 && cells.every((v) => typeof v === "string" && !/^-?[\d.]+$/.test(v)),
@@ -198,6 +210,84 @@ eq("a trade with no realised figure is an em dash, not a zero",
   // constant — the way a defaulted field looks — cannot pass.
   ok("the sheet distinguishes more than one basket", new Set(bCells.map(String)).size > 1);
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);
+}
+
+// ── 6. THE RETURN IS STRUCK ON THE CAPITAL PUT IN, WHERE A ROW IS AN INVESTMENT ─
+// *"According to the client the return on this AIF is a lot higher than what we
+// are showing"* — the sheet printed every return on the cost of the units held,
+// which a class switch, a manager's trading or a fund's payout resets. A row that
+// carries a WHOLE investment (a fund folio) now reads its P&L and Return off the
+// capital the family put in; a holding inside an account keeps its cost.
+{
+  const col = (h: string) => columnUnder(holdings, h, dataLast);
+  const [sec, qty, avg, inv, mv, pnl, ret, xirr, basis, mandate] =
+    ["Security", "Qty", "Avg Cost (₹)", "Invested (₹)", "Market Value (₹)", "P&L (₹)", "Return", "XIRR",
+     "Return basis", "Mandate"].map(col);
+  const rows = sec.map((_, i) => ({
+    sec: String(sec[i]), qty: qty[i], avg: avg[i], inv: inv[i], mv: Number(mv[i]), pnl: pnl[i], ret: ret[i],
+    xirr: xirr[i], basis: String(basis[i]), mandate: mandate[i],
+  }));
+  const num = (v: unknown): v is number => typeof v === "number";
+  const onCap = rows.filter((r) => r.basis.startsWith("Capital put in"));
+
+  // THE P&L TIES TO ITS OWN ROW. Market value less Invested, on every row that
+  // carries both — a figure struck on one basis and printed beside another is
+  // the contradiction a reader finds by subtracting two cells.
+  const tie = rows.filter((r) => num(r.inv) && num(r.pnl));
+  ok("on every row, P&L = Market Value − Invested",
+     tie.length > 0 && tie.every((r) => Math.abs((r.pnl as number) - (r.mv - (r.inv as number))) < 0.5),
+     `${tie.length} rows`);
+  ok("...and Return = P&L ÷ Invested wherever a return is printed",
+     rows.filter((r) => num(r.ret)).every((r) => Math.abs((r.ret as number) - ((r.pnl as number) / (r.inv as number)) * 100) < 1e-6));
+
+  // THE FOOTER IS SUMMED FROM THE ROWS, so it ties to its columns by construction.
+  const sumOf = (xs: unknown[]) => xs.filter(num).reduce((t, v) => t + v, 0);
+  ok("the footer's Invested is the column's own sum",
+     Math.abs(Number(footerAt("Invested (₹)")) - sumOf(inv)) < 0.5, `${footerAt("Invested (₹)")}`);
+  ok("the footer's P&L is the column's own sum",
+     Math.abs(Number(footerAt("P&L (₹)")) - sumOf(pnl)) < 0.5, `${footerAt("P&L (₹)")}`);
+
+  // A HOLDING INSIDE A MANDATE HAS NO CAPITAL OF ITS OWN. The sheet lists a
+  // mandate's shares one per row, so none of them carries the mandate whole.
+  const inMandate = rows.filter((r) => r.mandate !== DASH);
+  ok("every row inside a mandate stays on the cost of its units",
+     inMandate.length > 0 && inMandate.every((r) => !r.basis.startsWith("Capital put in")),
+     `${inMandate.length} rows`);
+
+  // THE CAPITAL IS THE MODEL'S, NOT A SECOND DERIVATION. The Buoyant row is the
+  // one the client pointed at: both folios are on it, each whole, so its Invested
+  // must be the two accounts' published capital — read off the model by account,
+  // a path that never touches the sheet's grouping.
+  const buoyant = onCap.find((r) => /BUOYANT/i.test(r.sec));
+  const buoyAccounts = BOOK_ACCOUNTS.filter((a) => /buoyant/i.test(a.accountId))
+    .map((a) => capital.of(a.accountId)).filter((c) => c !== null);
+  const buoyCapital = buoyAccounts.reduce((t, c) => t + c!.net, 0);
+  ok("the Buoyant row is measured on the capital the family put in",
+     !!buoyant && num(buoyant.inv) && buoyAccounts.length === 2 && Math.abs((buoyant.inv as number) - buoyCapital) < 0.5,
+     buoyant ? `${buoyant.inv} vs ${buoyCapital} over ${buoyAccounts.length} accounts` : "no Buoyant row on capital");
+  ok("...and names its basis as dated payments", !!buoyant && /dated payments/.test(buoyant.basis),
+     buoyant?.basis ?? "");
+  ok("...and carries a money-weighted rate, because its payments are dated and span a year",
+     !!buoyant && num(buoyant.xirr), String(buoyant?.xirr));
+
+  // LOAD-BEARING: the capital basis must MOVE a figure, or a sheet still on cost
+  // would pass every check above. Somewhere the capital put in and the cost of
+  // the units held part company by more than a lakh — a class switch does that.
+  const moved = onCap.filter((r) => num(r.avg) && num(r.qty) && num(r.inv)
+    && Math.abs((r.avg as number) * (r.qty as number) - (r.inv as number)) > 1e5);
+  ok("at least one row's capital differs from the cost of its units",
+     moved.length > 0, moved.map((r) => r.sec.slice(0, 30)).join("; "));
+
+  // AN XIRR ONLY WHERE EVERY RUPEE IS A DATED PAYMENT — never on a holding.
+  ok("an XIRR is printed only on a row measured on dated payments",
+     rows.filter((r) => num(r.xirr)).every((r) => /dated payments/.test(r.basis)));
+
+  // THE NOTE UNDER THE TOTAL SAYS WHICH ROWS ARE ON WHICH BASIS, AND WHY THE
+  // SHEET'S TOTAL DIFFERS FROM THE TAB'S.
+  const note = String(holdings.getRow(footerRow + 1).getCell(1).value ?? "");
+  ok("the note counts the rows measured on capital",
+     note.includes(`${onCap.length} row${onCap.length === 1 ? "" : "s"} — each a whole investment`), note.slice(0, 120));
+  ok("...and says why the total differs from the tab's", /differs from the tab's by construction/.test(note));
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

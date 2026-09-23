@@ -288,7 +288,12 @@ ok("the book still carries a report date for the window to close against", !!BOO
     ok("...and covers exactly the rows absolute does", auto.shown === abs.shown, `${auto.shown} vs ${abs.shown}`);
     // The methodology's CAGR branch fires on the same rows the CAGR measure annualises.
     const cagr = returnCoverage(BOOK_POSITIONS, "cagr", ASOF);
-    ok("auto annualises exactly the rows CAGR does", auto.cagr === cagr.cagr, `${auto.cagr} vs ${cagr.cagr}`);
+    ok("auto annualises exactly the rows CAGR does", auto.annualised === cagr.annualised, `${auto.annualised} vs ${cagr.annualised}`);
+    // A POSITION CARRIES NO CAPITAL OF ITS OWN, so nothing here is on capital or
+    // money-weighted — the capital basis belongs to a row that holds a whole
+    // account, and `capitalBasis.test.ts` is where that is asserted.
+    ok("no bare position is on capital or money-weighted", cagr.onCapital === 0 && cagr.moneyWeighted === 0,
+       `${cagr.onCapital} on capital, ${cagr.moneyWeighted} XIRR`);
   }
   // XIRR and CALENDAR are absent on EVERY row — this book cannot strike either.
   ok("XIRR is absent on every position", returnCoverage(BOOK_POSITIONS, "xirr", ASOF).shown === 0);

@@ -350,6 +350,35 @@ const ANKITA = "buoyant-capital-103472";
   const split = model.behind(mandate, (p) => (p.assetClass === "Cash" ? "cash-row" : "share-rows"));
   ok("the same positions split across two rows: on cost, as each row is", split.onCapital.length === 0,
     JSON.stringify(split.onCapital.map((x) => x.accountId)));
+
+  // A ₹0 LINE CANNOT SPLIT AN ACCOUNT. Buoyant prints a ₹0 cash line beside the
+  // fund's units and the category axis files it under Cash — measured, that
+  // put both folios on cost in the Holdings footer while their own AIF section
+  // stood them on capital, and the sections stopped adding to the footer.
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  const buoyant = own(AJAY);
+  ok("Buoyant carries a ₹0 cash line beside its units (the case this rule is for)",
+    buoyant.some((p) => p.marketValue === 0 && (p.costBasis ?? 0) === 0) && buoyant.some((p) => p.marketValue > 0),
+    JSON.stringify(buoyant.map((p) => [p.assetClass, p.marketValue])));
+  const byCategory = (p: Position) => groupKeyFor("category", idx, p);
+  ok("…those two lines sit in two category sections",
+    new Set(buoyant.map(byCategory)).size === 2, [...new Set(buoyant.map(byCategory))].join(" | "));
+  const footer = model.behind(buoyant, byCategory);
+  ok("…and the footer still stands the folio on its capital", footer.onCapital.length === 1,
+    JSON.stringify({ onCap: footer.onCapital.length, cost: footer.onCost.count }));
+  const section = model.behind(buoyant.filter((p) => p.marketValue > 0), byCategory);
+  ok("…exactly as its own AIF section does, so the two add up",
+    onCapitalBasis(section) && section.invested === footer.invested,
+    `${cr(section.invested)} vs ${cr(footer.invested)}`);
+  // …and the rule is about MONEY, not about zero value: a line carrying a cost
+  // at ₹0 value (a write-off) is part of the account and still splits it.
+  const writeOff = buoyant.map((p) => (p.marketValue === 0 ? { ...p, costBasis: 1e7 } : p));
+  const wModel = buildCapitalModel({ ...book, positions: [...universe.filter((p) => p.accountId !== AJAY), ...writeOff] });
+  // …and it must still HAVE capital, or the case passes for the wrong reason.
+  ok("a ₹0 line that carries a cost still splits the account across two rows",
+    wModel.of(AJAY) !== null && wModel.behind(writeOff).onCapital.length === 1
+      && wModel.behind(writeOff, byCategory).onCapital.length === 0,
+    JSON.stringify({ cap: !!wModel.of(AJAY) }));
 }
 
 // ── 10. No capital account splits across the sections of any axis ──────────
