@@ -21368,21 +21368,21 @@ verification runs beside it.
 
 #### The verification
 
-Every result below is from the tree that ships: this change merged with #92
-(main `f55b19b`), and each was run again there rather than carried across.
+Every result below is from the tree that ships: this change merged with #88
+(main `37c93ba`), and each was run again there rather than carried across.
 
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
-neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (46 suites,
-2,472 checks, 0 failed — `enteredCalls.test.ts` among them) · `check:family`
-**89/0** · `check:pages` **248 combinations clean, 0 invariant failures** ·
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (47 suites,
+2,500 checks, 0 failed — `enteredCalls.test.ts` among them) · `check:family`
+**89/0** · `check:pages` **256 combinations clean, 0 invariant failures** ·
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY: a tile strip and a column that cannot save move no figure in
 the book. CI (`build`) and Cloudflare Pages are green on the final commit.
 
-**THE SWEEP RECONCILES WITH #92's OWN.** Stage 10cj records 246 combinations
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10ck records 254 combinations
 clean on main; this change adds one route, `private-market-calls-signedout`, in
-both themes — 248. The ten invariants not checked are the ten #92's sweep
+both themes — 256. The ten invariants not checked are the ten main's sweep
 carries, read out of the log by route: six KPI-tile lines across the Morning
 CIO routes (every tile carries a figure), two Private Market cost lines (every
 private holding reports a cost), one redeemed-account line on
@@ -21512,10 +21512,10 @@ then.
 - **The `ctx` literal conflicted and was resolved as a union**: #88's
   `heldTable` beside this change's `tileAdd` and `callOff`. 97 keys, none
   duplicated, every one declared.
-- **#88 changed the company page and its checks, and nothing this change
-  touches.** It patches none of the files either bug harness patches and none of
-  the checks they fire, so neither harness was re-run; the full sweep is their
-  control on this tree.
+- **#88 changed the company page and its own checks, and none of this
+  change's code.** It touches none of the files either bug harness patches and
+  none of the checks they fire, so neither harness was re-run; the full sweep is
+  their control on this tree.
 - **Neither side touched a generated file**, and `build-book` still regenerates
   the book byte-identically.
 
