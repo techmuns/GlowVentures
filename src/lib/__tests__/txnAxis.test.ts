@@ -28,16 +28,16 @@ const ok = (name: string, pass: boolean, detail = "") => {
 // Only what the category axis reads: the account's engagement, and the
 // holding's class, key and value. A fund folio's account, not a mandate —
 // a mandate is one section whatever it holds.
-const acct = (id: string): Account => ({
+const acct = (id: string, engagement = "AIF"): Account => ({
   accountId: id, owner: "Test Owner", provider: "Test Fund", accountNo: id, strategy: null,
-  engagement: "AIF", providerEngagement: "Category III AIF", asOf: "2026-07-31", members: [],
+  engagement, providerEngagement: engagement === "AIF" ? "Category III AIF" : null, asOf: "2026-07-31", members: [],
 } as unknown as Account);
 const pos = (accountId: string, securityKey: string, assetClass: string, marketValue: number): Position => ({
   accountId, securityKey, security: securityKey, assetClass, marketValue, quantity: marketValue ? 1 : 0,
   costBasis: null, sector: "Unclassified",
 } as unknown as Position);
 
-const accounts = [acct("f1"), acct("f2"), acct("f3"), acct("f4"), acct("f5")];
+const accounts = [acct("f1"), acct("f2"), acct("f3"), acct("f4"), acct("f5"), acct("f6", "unknown")];
 const positions = [
   // f1 — fund units and an EMPTY cash sleeve: Buoyant's shape.
   pos("f1", "some-fund-class-a4", "AIF", 5e8), pos("f1", "cash", "Cash", 0),
@@ -47,7 +47,9 @@ const positions = [
   pos("f3", "other-fund-class-b1", "AIF", 0), pos("f3", "other-fund-class-b2", "AIF", 0),
   // f4 — nothing but ₹0 lines of two classes: still mixed, still named.
   pos("f4", "other-fund-class-b1", "AIF", 0), pos("f4", "cash", "Cash", 0),
-  // f5 — holds nothing at all.
+  // f5 — holds nothing at all, in an account whose statement calls it an AIF:
+  //      India SME's and Sky Capital's shape (Stage 10cd).
+  // f6 — holds nothing at all, and nothing says what the account is.
 ];
 const s = sectionsFor(accounts, positions);
 const aif = groupKeyFor("category", accountIndex(accounts), positions[0]);
@@ -59,8 +61,18 @@ ok("an account redeemed to nil is still filed under what it held",
   s.forAccount("category", "f3") === aif);
 ok("…and one holding nothing but empty lines of two classes is still named mixed",
   s.forAccount("category", "f4") === TXN_UNSECTIONED);
-ok("an account holding nothing at all is not filed",
-  s.forAccount("category", "f5") === TXN_UNSECTIONED);
+ok("an account holding nothing, with nothing saying what it is, is not filed",
+  s.forAccount("category", "f6") === TXN_UNSECTIONED);
+// Stage 10cd: a drawdown fund's dated CALLS put accounts that hold no valued
+// position on the Transactions card. The ACCOUNT's engagement is the
+// statement's own wording, so it answers the CATEGORY question — and only that
+// one; a basket or a family asset class is the family's review, keyed on a
+// product no row here carries.
+ok("an account holding nothing, whose statement calls it an AIF, is filed under AIF on the category axis",
+  s.forAccount("category", "f5") === aif, s.forAccount("category", "f5"));
+ok("…and on no other axis",
+  s.forAccount("basket", "f5") === TXN_UNSECTIONED && s.forAccount("assetClass", "f5") === TXN_UNSECTIONED,
+  `${s.forAccount("basket", "f5")} / ${s.forAccount("assetClass", "f5")}`);
 
 // ── the book ────────────────────────────────────────────────────────────────
 const book = sectionsFor(BOOK_ACCOUNTS, BOOK_POSITIONS);
