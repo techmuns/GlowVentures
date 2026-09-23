@@ -22,6 +22,7 @@ import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRed
 import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
 import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
+import { labelledAccounts, labelledPositions, labelVariants, securityLabel } from "@/lib/securityLabel";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -29,8 +30,18 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}`);
 };
 const money = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
-const consolidated = dedupedPositions(BOOK_POSITIONS);
-const index = buildSearchIndex({ positions: BOOK_POSITIONS, consolidated, accounts: BOOK_ACCOUNTS, money });
+/**
+ * THE BOOK AS THE PAGE NAMES IT. `SmartSearch` builds this list from
+ * `PortfolioContext`, which names every holding once (`labelledPositions`) and
+ * cases every strategy (`labelledAccounts`). Built from the raw statements
+ * instead, this suite checked a list the page does not draw — a company under
+ * whichever spelling its first row printed, a mandate in its manager's
+ * capitals — which is the gap `stockExposure.test.ts` was found to have with
+ * its fund list. One step, shared, so the two cannot diverge.
+ */
+const positions = labelledPositions(BOOK_POSITIONS);
+const consolidated = dedupedPositions(positions);
+const index = buildSearchIndex({ positions, consolidated, accounts: labelledAccounts(BOOK_ACCOUNTS), money });
 const top = (q: string) => searchEntries(index, q, 10)[0]?.entry;
 const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).map((h) => h.entry);
 
@@ -196,6 +207,47 @@ console.log("── the matching tiers ──");
   ok("an empty query returns nothing", searchEntries(index, "   ").length === 0);
   ok("a question reads as one", looksLikeQuestion("how much hdfc do i hold") && looksLikeQuestion("tax?"));
   ok("a name does not", !looksLikeQuestion("hdfc") && !looksLikeQuestion("sanshi fund"));
+}
+
+console.log("── one company, one name — and every name it was printed under finds it ──");
+{
+  /**
+   *   "when I am searching Kaynes in the search bar, it is coming up in small
+   *    cap and large cap both. It should be a single name only."
+   *
+   * The list is one row per `securityKey`, so a company is one row exactly when
+   * it is one key — which `KEY_ALIASES` made true of SBI, Karur Vysya and
+   * Crompton. What is checked here is the half that is NOT structural: the row
+   * carries the one name the page shows, cased as a name, and every spelling a
+   * statement printed still finds it. Joining two keys must not cost a reader
+   * the name they type — the depository's `SBI` found nothing once the key was
+   * State Bank of India's.
+   */
+  const holdings = index.filter((e) => e.kind === "holding");
+  const misnamed = holdings.filter((e) => {
+    const key = e.id.slice("holding:".length);
+    return e.label !== securityLabel(key, e.label);
+  });
+  ok("every holding row carries the one name the page shows", misnamed.length === 0,
+    misnamed.slice(0, 3).map((e) => e.label).join("; "));
+  const shouting = (s: string) => !/[a-z]/.test(s) && (s.match(/\b[A-Z]{2,}\b/g)?.length ?? 0) >= 2;
+  const cased = index.filter((e) => (e.kind === "holding" || e.kind === "mandate")
+    && (shouting(e.label) || /^[a-z]/.test(e.label) && !/^[a-z]+[A-Z]/.test(e.label)));
+  ok("...written as a name — never all in capitals, never opening in lower case", cased.length === 0,
+    cased.slice(0, 3).map((e) => e.label).join("; "));
+  const kaynes = searchEntries(index, "kaynes", 10).filter((h) => h.entry.kind === "holding");
+  ok("the company the family searched for is ONE holding row", kaynes.length === 1,
+    kaynes.map((h) => h.entry.label).join(" | "));
+  const variants = labelVariants();
+  ok("the book prints some companies under more than one name", variants.size > 0, String(variants.size));
+  const lost: string[] = [];
+  for (const [key, spellings] of variants) {
+    for (const sp of spellings) {
+      if (!searchEntries(index, sp, 10).some((h) => h.entry.id === `holding:${key}`)) lost.push(`${sp} → ${key}`);
+    }
+  }
+  ok("every spelling a statement printed finds its company", lost.length === 0, lost.slice(0, 5).join("; "));
+  ok("...the depository's `SBI` among them, first", top("sbi")?.id === "holding:state-bank-of-india", top("sbi")?.label);
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall search checks passed");

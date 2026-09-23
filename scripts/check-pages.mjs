@@ -2753,6 +2753,61 @@ const SOLD_ELSEWHERE = (() => {
 })();
 
 /**
+ * ── ONE COMPANY, ONE ROW IN THE TOP BAR'S SEARCH — AND EVERY NAME FINDS IT ──
+ *
+ *   "when I am searching Kaynes in the search bar, it is coming up in small cap
+ *    and large cap both. It should be a single name only."
+ *
+ * Two claims about the top bar's search, derived here and never read out of
+ * `searchIndex.ts` or `securityLabel.ts`:
+ *
+ *   • FAMILY — typing the company the family asked about (the one sold out of
+ *     one account while another holds it, `SOLD_ELSEWHERE`, as the first long
+ *     word of its key) finds exactly ONE holding row, and it is that company's.
+ *   • VARIANT — a spelling a statement printed that is NOT the one shown still
+ *     finds its company first. The depository's all-capitals spelling is chosen
+ *     because a cased spelling always wins the label, so it can never be the
+ *     one on screen; and only where no other spelling of the key contains it,
+ *     so the row can only be reached through the variant. On this book that is
+ *     the depository's `SBI`, which found nothing once the key became State
+ *     Bank of India's — the largest such company by value is taken, so the next
+ *     drop picks its own.
+ */
+const SEARCH_NAMES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const norm = (x) => String(x).normalize("NFKD").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
+    const small = smallKeysOf(positions);
+    const held = positions.filter((p) => !small.has(p.securityKey)
+      && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null));
+    const byKey = new Map();
+    for (const p of held) {
+      const e = byKey.get(p.securityKey) ?? { names: new Set(), mv: 0 };
+      e.names.add(p.security); e.mv += Number(p.marketValue || 0);
+      byKey.set(p.securityKey, e);
+    }
+    let variant = null;
+    for (const [key, e] of byKey) {
+      const names = [...e.names];
+      if (names.length < 2 || !names.some((n) => /[a-z]/.test(n))) continue;
+      for (const raw of names.filter((n) => !/[a-z]/.test(n))) {
+        const q = stripDepositoryTail(raw).trim();
+        const qn = norm(q);
+        if (qn.length < 2 || names.some((o) => o !== raw && norm(stripDepositoryTail(o)).includes(qn))) continue;
+        if (!variant || e.mv > variant.mv || (e.mv === variant.mv && key < variant.key)) variant = { key, query: q, mv: e.mv };
+      }
+    }
+    const fk = SOLD_ELSEWHERE?.key;
+    const word = fk ? fk.split("-").find((w) => w.length >= 5 && /^[a-z]+$/.test(w)) : null;
+    return {
+      family: fk && word ? { word, href: `/stock/${encodeURIComponent(fk)}` } : null,
+      variant,
+    };
+  } catch { return null; }
+})();
+
+/**
  * ── EVERY AIF FUND THE FAMILY HOLDS, BY FUND ───────────────────────────────
  *
  * The client named a company inside "Vikas Khemani's fund" — Carnelian Bharat
@@ -10567,6 +10622,24 @@ const INVARIANTS = {
       if (!want) return notChecked(`this book has no ${k} to type`);
       return SEARCH.results[k]?.rows?.[0]?.href === want;
     }]),
+    /**
+     * ONE COMPANY, ONE ROW — the family's own complaint, on the search they are
+     * most likely to type into — and joining two keys into one must not cost a
+     * reader the name they know it by. BOOLEANS: a returned description reads
+     * as a pass. See `SEARCH_NAMES`.
+     */
+    ["the company the family searched for is ONE row in the top bar's search, its own", () => {
+      const f = SEARCH_NAMES?.family;
+      if (!f) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+      const h = (SEARCH?.results?.family?.rows ?? []).filter((r) => r.kind === "holding");
+      return h.length === 1 && h[0].href === f.href;
+    }],
+    ["…and a name a statement printed, other than the one shown, still finds its company first", () => {
+      const v = SEARCH_NAMES?.variant;
+      if (!v) return { notChecked: "no company in this book is printed under two names" };
+      const h = (SEARCH?.results?.variant?.rows ?? []).filter((r) => r.kind === "holding");
+      return h[0]?.href === `/stock/${encodeURIComponent(v.key)}`;
+    }],
     ["a page's name opens the page", () => SEARCH?.results?.page?.rows?.[0]?.href === "/private-market"],
     ["a tab's name opens the page on that tab", () => SEARCH?.results?.tab?.rows?.[0]?.href === "/monitor?show=transactions"],
     // A TAB ANOTHER PAGE ADDED IS A TAB TOO. Sector Composition's Compare tab
@@ -17600,6 +17673,9 @@ for (const theme of THEMES) {
             // A NAME THE FAMILY HOLD AND NO STATEMENT REPORTS, in the review's
             // spelling and in theirs — derived from the generated gap list.
             gap: REVIEW_GAP_BOOK?.name, gapAlias: REVIEW_GAP_BOOK?.alias ?? undefined,
+            // ONE COMPANY, ONE ROW — and a spelling a statement printed that is
+            // not the one shown. See `SEARCH_NAMES`.
+            family: SEARCH_NAMES?.family?.word, variant: SEARCH_NAMES?.variant?.query,
           };
           const results = {};
           for (const [k, q] of Object.entries(queries)) if (q) results[k] = await run(q);

@@ -56,6 +56,7 @@
  */
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { holdingLabel } from "./schemeLabel";
+import { displaySecurity } from "./format";
 
 type Candidate = { label: string; cased: boolean; value: number };
 
@@ -96,13 +97,43 @@ export function securityLabel(securityKey: string, printedName: string): string 
   return CANONICAL.get(securityKey) ?? holdingLabel(securityKey, printedName);
 }
 
-/** Every key whose label was chosen among two or more printed spellings — for the suite. */
-export function labelVariants(): Map<string, string[]> {
+/** Every spelling the book's statements printed for each key, display-cased. */
+const SPELLINGS: ReadonlyMap<string, readonly string[]> = (() => {
   const m = new Map<string, Set<string>>();
   for (const p of BOOK_POSITIONS) {
     const s = m.get(p.securityKey) ?? new Set<string>();
     s.add(holdingLabel(p.securityKey, p.security));
     m.set(p.securityKey, s);
   }
-  return new Map([...m].filter(([, s]) => s.size > 1).map(([k, s]) => [k, [...s].sort()]));
+  return new Map([...m].map(([k, s]) => [k, [...s].sort()]));
+})();
+
+/** Every key whose label was chosen among two or more printed spellings — for the suite. */
+export function labelVariants(): Map<string, string[]> {
+  return new Map([...SPELLINGS].filter(([, s]) => s.length > 1).map(([k, s]) => [k, [...s]]));
+}
+
+/**
+ * EVERY SPELLING A STATEMENT PRINTED FOR A KEY — what a reader may TYPE, where
+ * `securityLabel` is what a reader SEES. One name on screen must not cost the
+ * others as a way in: the depository prints State Bank of India as `SBI`, which
+ * is what people type, and once the two keys became one the top bar's search
+ * found nothing for it. Display only, like the label: nothing here keys a row.
+ */
+export function printedSpellings(securityKey: string): readonly string[] {
+  return SPELLINGS.get(securityKey) ?? [];
+}
+
+/**
+ * THE BOOK AS EVERY PAGE NAMES IT — applied once, at `PortfolioContext`, and by
+ * any suite that must see the names the page shows rather than the statements'
+ * own. Two copies of this step were the first way the search suite came to
+ * check a list the page does not draw.
+ */
+export function labelledPositions<T extends { securityKey: string; security: string }>(positions: readonly T[]): T[] {
+  return positions.map((p) => ({ ...p, security: securityLabel(p.securityKey, p.security) }));
+}
+/** A manager's strategy as a name, never in the capitals its report printed. */
+export function labelledAccounts<T extends { strategy?: string | null }>(accounts: readonly T[]): T[] {
+  return accounts.map((a) => (a.strategy ? { ...a, strategy: displaySecurity(a.strategy) } : a));
 }

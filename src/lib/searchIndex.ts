@@ -56,6 +56,7 @@ import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
+import { printedSpellings } from "./securityLabel";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -378,7 +379,11 @@ export function buildSearchIndex(input: {
       // A redeemed fund's money is on the Transactions tab, where its
       // redemption is — its holding page would show a measured nil and little else.
       href: closed ? "/monitor?show=transactions" : `/stock/${encodeURIComponent(key)}`,
-      names: [head.security, key.replace(/-/g, " ")],
+      // EVERY SPELLING A STATEMENT PRINTED, not only the one shown. The row is
+      // named once, but a reader types whichever name they know: the depository
+      // prints State Bank of India as `SBI`, and with the two keys joined the
+      // label alone left "sbi" finding nothing.
+      names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
       codes: [head.isin, head.symbol].filter((c): c is string => !!c),
       keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),

@@ -14,8 +14,8 @@ import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs } from "@/lib/fundNavs";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
-import { displaySecurity, fmtCurrency } from "@/lib/format";
-import { securityLabel } from "@/lib/securityLabel";
+import { fmtCurrency } from "@/lib/format";
+import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
@@ -45,7 +45,7 @@ function defaultPortfolio(): Portfolio {
     // HERE, once, through the same rules as a security's name, because the
     // registry is read on a dozen pages and a per-page fix is a dozen chances to
     // miss one. The registry in `glowData.ts` keeps what the statement printed.
-    accounts: BOOK_ACCOUNTS.map((a) => (a.strategy ? { ...a, strategy: displaySecurity(a.strategy) } : a)),
+    accounts: labelledAccounts(BOOK_ACCOUNTS),
     // Standardise the mixed-case provider spellings once, at the source, so every
     // page (tables, dropdowns, the news/announcement holding tags) shows them the
     // same way. The securityKey is derived upstream from the raw name, so tidying
@@ -58,11 +58,11 @@ function defaultPortfolio(): Portfolio {
     // this book BY ISIN — see `src/lib/schemeLabel.ts`. Nothing downstream may
     // re-derive a key from this string, and nothing does.
     //
-    // `securityLabel` is that plus ONE NAME PER KEY: a security two statements
+    // `securityLabel` (through `labelledPositions`) is that plus ONE NAME PER KEY: a security two statements
     // spell differently (`ICICI Bank Ltd.` / `ICICI BANK-EQ`) takes one of the
     // spellings they printed, so it is one option in a pick-list and one name
     // in every table — see `src/lib/securityLabel.ts` for the rule.
-    positions: BOOK_POSITIONS.map((p) => ({ ...p, security: securityLabel(p.securityKey, p.security) })),
+    positions: labelledPositions(BOOK_POSITIONS),
     navHistory: BOOK_NAV_HISTORY,
     capitalGains: BOOK_CAPITAL_GAINS,
     // Dated external capital movements per account — the money-weighted-return
