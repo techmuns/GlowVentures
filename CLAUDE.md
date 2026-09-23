@@ -17282,8 +17282,15 @@ from main only by this branch's 51 `capitalRecordTo` lines. `replay:calls`,
 and `docs/BOOK-REPORT.md` is main's byte for byte.
 
 `build` · `tsc` · `test:ingest` · `test:family` · `check:family` ·
-`check:pages` on the 18 routes the merge touched (36 combinations) clean, with
-the full sweep still running when this was written. `npm run build-book` regenerates `glowData.ts` and
+`check:pages` **212 combinations clean, 0 invariant failures**, with the same
+eight evidenced abstentions across the same four pre-existing claims, read out
+of `report.json` by name — four on the Morning CIO panels (every KPI tile
+carries a figure), two on Private Market (every private holding reports a
+cost), one on the not-found drill-down's crumb and one on `stock-qty` (no
+pledge). None is this change's own: its two new Private Market checks and its
+capital checks each found their subject. MEASURED ON THE MERGED TREE — #72's
+own 210 plus `stock-capital` across both themes, which reconciles only because
+the sweep was run again. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` BYTE-IDENTICALLY — the capital basis is a presentation of
 figures the book already carries, and a change that moved a generated figure
 would not be one.
