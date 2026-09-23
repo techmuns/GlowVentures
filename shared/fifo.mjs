@@ -53,7 +53,7 @@ export const UNIT_TIE = 0.0005;
  * @returns lots still held, every realised match, and the totals a return needs.
  */
 export function fifoLedger(events, { tie = UNIT_TIE } = {}) {
-  const lots = [];          // { cls, date, units, cost, origin }
+  const lots = [];          // { cls, date, units, cost, origin, unitsBought, label, carriedFrom }
   const realised = [];      // { cls, buyDate, sellDate, units, cost, proceeds, gain }
   const shortfalls = [];    // { date, cls, units }
 
@@ -71,7 +71,11 @@ export function fifoLedger(events, { tie = UNIT_TIE } = {}) {
       if (lot.cls !== cls || lot.units <= tie) continue;
       const take = Math.min(lot.units, need);
       const cost = lot.units - take <= tie ? lot.cost : lot.cost * (take / lot.units);
-      taken.push({ date: lot.date, units: take, cost, origin: lot.origin });
+      // Units of THIS lot sold before now travel with it only when the whole of
+      // what is left is taken — a slice of a lot is not the lot's history.
+      const soldBefore = lot.units - take <= tie ? Math.max(0, lot.unitsBought - lot.units) : 0;
+      taken.push({ date: lot.date, units: take, cost, origin: lot.origin, cls: lot.cls, soldBefore,
+        label: lot.label, carriedFrom: lot.carriedFrom });
       lot.units -= take;
       lot.cost -= cost;
       need -= take;
@@ -85,7 +89,8 @@ export function fifoLedger(events, { tie = UNIT_TIE } = {}) {
     const units = Math.abs(e.units ?? 0);
     if (!(units > 0)) continue;
     if (e.kind === "buy") {
-      lots.push({ cls: e.cls ?? null, date: e.date, units, cost: Math.abs(e.amount ?? 0), origin: e.date });
+      lots.push({ cls: e.cls ?? null, date: e.date, units, cost: Math.abs(e.amount ?? 0), origin: e.date,
+        unitsBought: units, label: e.label ?? null, carriedFrom: null });
     } else if (e.kind === "sell") {
       const proceeds = Math.abs(e.amount ?? 0);
       const taken = consume(e.cls ?? null, units, e.date);
@@ -107,8 +112,17 @@ export function fifoLedger(events, { tie = UNIT_TIE } = {}) {
       // purchase date; only the unit count is restated, in proportion.
       const scale = outUnits > 0 && unitsIn > 0 ? unitsIn / units : 0;
       for (const t of taken) {
-        lots.push({ cls: e.to ?? null, date: t.date, units: t.units * scale, cost: t.cost, origin: t.origin });
+        // A lot partly sold BEFORE the switch stays partly sold after it: what
+        // was bought is scaled by the same ratio as what is carried.
+        lots.push({ cls: e.to ?? null, date: t.date, units: t.units * scale, cost: t.cost, origin: t.origin,
+          unitsBought: (t.units + t.soldBefore) * scale, label: t.label,
+          carriedFrom: t.carriedFrom ?? t.cls ?? e.from ?? null });
       }
+      // A CARRIED LOT KEEPS ITS PLACE IN THE QUEUE. It was bought when it was
+      // bought, so it must be consumed before a newer lot already in the class
+      // — appended at the end, a later sale would take the newest units first,
+      // which is LIFO wearing FIFO's name. Stable, so same-date lots keep order.
+      lots.sort((a, b) => a.date.localeCompare(b.date));
     }
   }
   // Re-sort by purchase date so a carried lot sits among the class's own lots

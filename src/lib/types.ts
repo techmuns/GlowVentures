@@ -129,6 +129,29 @@ export type Account = {
    * them means the money is gone.
    */
   noPositionsReason?: string | null;
+  /**
+   * A PMS MANDATE'S CAPITAL, SINCE INCEPTION, AS AT THE HOLDINGS' OWN DATE —
+   * what the family paid in and took out, from a statement that states it over
+   * that window (or the account's own dated capital record where it starts at
+   * inception). `null` on a mandate no statement states it for; absent on every
+   * other engagement.
+   *
+   * It is what lets a WHOLE mandate carry FIFO's full answer: everything the
+   * account has earned is `value + withdrawn − contributed`, however its units
+   * were matched, where the positions alone carry only the realised gain their
+   * capital gain statement's window reports. See `src/lib/fifo.ts`.
+   */
+  capital?: AccountCapital | null;
+};
+
+export type AccountCapital = {
+  contributed: number;
+  withdrawn: number;
+  /** The window the figures cover — inception to the holdings' own date. */
+  from: string;
+  to: string;
+  /** The document that states it, or "capital-record" for the account's own dated movements. */
+  source: string;
 };
 
 // One current position: a security held within one account.
@@ -184,13 +207,36 @@ export type Position = {
    */
   costBasis: number | null;      // INR
   unrealizedPnL: number | null;  // INR
+  /**
+   * REALISED GAIN ON THE UNITS OF THIS HOLDING ALREADY SOLD, matched FIFO, and
+   * the cost of those units — the half of a return the book used to leave out.
+   *
+   * From the account's capital gain statement (every lot a FIFO match by the
+   * manager or broker who sold it) or, for a fund, its own unit record run
+   * through `shared/fifo.mjs`. NULL where no record could carry it; ZERO where
+   * one exists and this holding sold nothing in it. Only sales on or before the
+   * holding's own statement date: a later sale's units are still in this
+   * snapshot at their mark (`realizedLotsAfter` counts them).
+   */
+  realizedPnL?: number | null;
+  costOfUnitsSold?: number | null;
+  /** Capital-gain lots sold AFTER this holding's statement date — named, never added. */
+  realizedLotsAfter?: number;
+  /**
+   * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
+   * percent — FIFO's one return, `fifoReturnPct`. Where nothing was sold it is
+   * unrealised ÷ cost.
+   */
   returnPct: number | null;
   /**
    * Where a cost basis came from another document — "opening-position" means the
    * broker's carried-forward ledger row, joined only where the quantities match
-   * exactly. Absent when the holdings statement printed the cost itself.
+   * exactly; "fifo" means the cost of the units still held after the fund's own
+   * unit record was matched first-in, first-out, which overrides a Cost column
+   * that restamps switched units. Absent when the holdings statement printed the
+   * cost itself.
    */
-  costBasisSource?: "opening-position";
+  costBasisSource?: "opening-position" | "fifo";
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
@@ -649,6 +695,13 @@ export type PositionTranches = {
   moves: CapitalMove[];
   /** Allotted units, which equal the position's own quantity — that is the gate. */
   units: number;
+  /**
+   * "fifo" where the tranches are the LOTS STILL HELD after the fund's own unit
+   * record was matched first-in, first-out — a partly redeemed contribution
+   * shows what is left of it, and a switched one appears in the class that
+   * holds its units now. Absent where the allotments are the tranches.
+   */
+  basis?: "fifo";
 };
 
 export type EntityCG = {

@@ -4,11 +4,19 @@
 export declare const UNIT_TIE: number;
 
 export type FifoEvent =
-  | { date: string; kind: "buy"; units: number; amount: number; cls?: string | null }
+  | { date: string; kind: "buy"; units: number; amount: number; cls?: string | null; label?: string | null }
   | { date: string; kind: "sell"; units: number; amount: number; cls?: string | null }
   | { date: string; kind: "switch"; units: number; unitsIn: number; from?: string | null; to?: string | null };
 
-export type FifoLot = { cls: string | null; date: string; units: number; cost: number; origin: string };
+export type FifoLot = {
+  cls: string | null; date: string; units: number; cost: number; origin: string;
+  /** The units this lot was bought as, in its CURRENT class — more than `units` where some were sold. */
+  unitsBought: number;
+  /** The purchase's own wording, as the record printed it. */
+  label: string | null;
+  /** The class a switch carried this lot out of, or null where it was bought here. */
+  carriedFrom: string | null;
+};
 export type FifoMatch = {
   cls: string | null; buyDate: string; sellDate: string;
   units: number; cost: number; proceeds: number; gain: number;
