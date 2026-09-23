@@ -194,8 +194,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   which return LISTED, PRIVATE and NOT-PLACED and never derive one from the
   others; `holdingBucket`, the ONE place that decides
   which section a holding sits in on a holdings table — including
-  `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund or
-  liquid ETF is cash whatever wrapper its statement typed it as. See Stage 10av.
+  `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund, a
+  liquid ETF or an ARBITRAGE fund is cash whatever wrapper its statement typed
+  it as, and `readerClassOf`, the class a page NAMES a holding under by the same
+  rule. See Stage 10av, and Stage 10bt for arbitrage.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's Capital in and out table and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag, and
@@ -311,7 +313,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   makes a current fund value reach every page rather than needing a per-page
   edit. It moves only what a price may move (§6) and deliberately never sets
   `live`: a quote is intraday and a NAV is struck once after the close, and the
-  two must never be added. See Stage 10bn.
+  two must never be added. See Stage 10bn. `depositoryCashHoldings` is its
+  second job: the arbitrage and liquid funds a depository reports on an account
+  that sent no holding statement, valued at `units × published NAV` on the LIVE
+  basis only, behind one switch (`VALUE_DEPOSITORY_CASH_UNITS`). See Stage 10bt.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -9343,6 +9348,13 @@ never fire on it, because a set called "the cash equivalents in this book" that
 omitted a liquid fund BECAUSE one document typed it correctly cannot be checked
 against the review at all.
 
+***BOTH HALVES OF THE NEXT PARAGRAPH HAVE SINCE CHANGED — see Stage 10bt.***
+Three arbitrage funds ARE held — as a depository's closing balances on Ajay's
+transaction-only demat, which is why no search over POSITIONS found one — and
+the map carries them now, valued at AMFI's NAV on the live basis. The paragraph
+stays in the order it was learnt, because "searched over every position" was a
+true measurement of the wrong set.
+
 **ARBITRAGE IS IN THE RULE AND NOT IN THE BOOK, WHICH IS TWO FACTS.** The
 family's review carries ₹41.08 Cr of it across four funds, the largest ₹30.99 Cr
 — and **not one is in this book**, searched over every position. So the map has
@@ -15533,6 +15545,200 @@ private holding reports a cost), one on the not-found drill-down and one on
 `stock-qty` (no row there carries a pledge). The count did not move because #69
 adds no route, and it is recorded as the same only because it was measured again.
 
+### Stage 10bt — ARBITRAGE IS CASH, AND THE CASH NO HOLDING STATEMENT REPORTS
+
+*"Wherever we have cash as asset class or category. Arbitrage funds or holdings
+into that cash as well, because arbitrage funds are nothing but basically cash.
+Implement this everywhere on the dashboard. Whenever, wherever we have cash as a
+line item, we need to show arbitrage funds inside it. Arbitrage funds need not be
+classified into any other category except for cash."*
+
+#### The rule was half-written already, and the other half had no row to land on
+
+Stage 10av put arbitrage **"in the rule and not in the book"**: its
+`CASH_EQUIVALENT_KEYS` carried the liquid funds only, because no arbitrage fund
+is a POSITION. That is still true of `glowData.ts`. What was not true is "not in
+the book". Measured over `BOOK_SHARE_MOVEMENTS`, three arbitrage funds sit on
+**Ajay's main demat 1201090012539150** — the account this file already calls
+*"the largest remaining gap"*, which sent a TRANSACTION statement and no holding
+statement — as depository closing balances that walked to their printed totals.
+
+So a classification change alone would have moved nothing on screen: a rule
+over rows that do not exist. **This is the tenth absence in this file recorded
+against a premise nobody rechecked**, and once again the answer was on a
+statement this pipeline had already read.
+
+| On the depository, 31 Jul 2026 | Units | AMFI NAV, 22 Sep 2026 | Value |
+| --- | ---: | ---: | ---: |
+| Motilal Oswal Arbitrage Fund — Direct Growth | 2,80,67,435.434 | ₹11.2834 | ₹31.67 Cr |
+| Kotak Arbitrage Fund — Direct Growth | 41,65,239.582 | ₹43.2772 | ₹18.03 Cr |
+| Bandhan Arbitrage Fund — Direct Growth | 33,71,575.697 | ₹37.8551 | ₹12.76 Cr |
+| HDFC Liquid Fund — Direct Growth | 2,282.178 | ₹5,587.7545 | ₹1.28 Cr |
+| Nippon India ETF Liquid BeES | 49.071 | ₹1,000.00 | ₹4,907 |
+| | | | **₹63.74 Cr** |
+
+#### So the LIVE book values them, and only the live book
+
+`depositoryCashHoldings` in `src/lib/fundNavs.ts` turns those balances into
+positions at `units × AMFI's published NAV`, and `PortfolioContext` appends them
+beside `applyQuotes` and `applyFundNavs`. **`glowData.ts` gains exactly one
+field** — `transactionsOnly: true` on that account — and regenerates
+byte-identically otherwise; `statementPortfolio` never sees a row. A fetched
+price may not enter the book (§7), and these rows have no statement mark at all:
+their value IS the published NAV, which is precisely the live overlay's job.
+
+Five gates, each a wrong row avoided:
+
+1. **The account sent a transaction statement and no holding statement, and
+   carries no position of its own.** `build-book` derives the flag from the
+   ARCHIVE — a transaction document and no holdings document — rather than from
+   "an account with no positions". That second test is what the first draft
+   used, and it also admits demat 37359311, whose holding statement IS in the
+   drop and reported only the AIF units `dropDepositoryDuplicates` removes
+   because the funds report them themselves. Nothing there is a cash
+   equivalent, so no figure moved — which is exactly when a wrong gate goes
+   unnoticed. Where a holding statement exists it is the authority, and the
+   same account's transaction tape is not a second one. Exactly one account
+   qualifies.
+2. **The block walked from its printed opening to its printed closing**
+   (`reason === null`) and closes with units.
+3. **AMFI publishes a NAV the builder cleared for value.** `build-fund-navs`
+   now joins a depository-only ISIN too, and records SEBI's category verbatim.
+   An ETF from a depository is NOT cleared: its units and its NAV can be on
+   different bases (DSP Gold's ten-fold break), and a depository balance carries
+   no statement mark for the factor-of-two gate to test. Liquid BeES reaches the
+   table only because the book carries its ISIN and the gate ran on the book's
+   own marks.
+4. **A cash equivalent by the committed map.** The other fourteen holdings on
+   that demat are not valued — see the last section.
+5. **No book position of the same ISIN and the same units**, or one holding is
+   counted twice.
+
+**THE LIVE BOOK READS ₹777.03 Cr on today's NAVs, ₹63.74 Cr of it the
+depository's cash** — ₹713.29 Cr without it.
+Statement-basis pages do not move: Private Market, Capital Gains, Data Audit and
+Ledger Insights still read `statementPortfolio`, and `/holdings`' own
+statement-basis line names the depository rows as the part of its figure no
+statement marks.
+
+**ONE SWITCH.** `VALUE_DEPOSITORY_CASH_UNITS` in `fundNavs.ts`. Set it false and
+every row goes, everywhere, and the account falls back to its generated reason.
+
+#### The unit basis has a witness, because the basis gate cannot run
+
+The builder's factor-of-two gate compares a published NAV against a STATEMENT
+MARK, and a depository balance has none — so the one failure that could make
+these rows wrong by ten times went unchecked by the gate written for it. A
+document nobody in this join controls is asked instead: **the family's own
+review records buying 1,63,08,407.445 units of Motilal Oswal Arbitrage at
+₹11.0367 on 20 May 2026, and the depository credits exactly those units the
+next day** (settlement, `PAYOUT-CR`). One purchase, two independent documents,
+three decimals — and ₹11.0367 is on the scale AMFI publishes today, ₹11.2834.
+`fundNavs.test.ts` asserts it rather than this paragraph.
+
+#### An account valued in part says so
+
+`partialValuationNotes`: the LIVE copy of the account drops its generated
+`noPositionsReason` — "values nothing" stopped being true the moment one row
+existed — and carries `partialValuation` instead: five cash-equivalent funds
+valued, from what, at which dates, and **fourteen other holdings on the same
+statement not valued**. Performance prints a `partial` marker beside the
+account's figure; Family & Entities lists it as *partly valued* under "held, and
+not valued here". A figure for SOME of an account's holdings names the rest.
+
+#### Cash on every axis, and what each one moved
+
+| Surface | Where arbitrage lands |
+| --- | --- |
+| Category (`holdingBucket`) | **Cash** — ₹14.2 Cr → **₹78 Cr**, 8 holdings: *includes 4 liquid and 3 arbitrage funds the family counts as cash* |
+| Family asset class | **Cash** — their review files arbitrage on its DEBT tab; the instruction overrules it |
+| Family basket | **Liquidity** — ₹28.5 Cr → **₹92.2 Cr**. There is no Cash basket, and their workbook files every cash equivalent it names on its Liquid sheet |
+| Security axis | in the partition's **cash**, and **not looked through** — an arbitrage fund's disclosure is long shares hedged by short futures, and reading it as stock would print exposure nobody carries. A liquid fund's paper is real credit exposure and keeps its look-through |
+| A class named on screen (`readerClassOf`) | Sector Composition's *Not a company share*, Return & Drawdown's wrapper rows, Data Refresh, Family & Entities |
+| The fund's own page | *"This holding is Cash — an arbitrage fund, which the family counts as cash and nothing else"*, and no look-through card |
+| A mandate's own page | a liquid or arbitrage fund inside a mandate counts in its **cash sleeve**. No row on this book moves — every one is already typed `Cash` by its statement — and the rule is what keeps the next manager's arbitrage sleeve from reading as "other" |
+
+Morning CIO's allocation and the Excel export read `holdingBucket` and the
+family taxonomy, so they follow with no edit of their own. The chat context
+gains a block naming the depository-valued rows, so the assistant is told where
+₹63.74 Cr of the family's cash comes from rather than finding it unexplained.
+**`CASH_EQUIVALENT_KEYS` is still the one list**, now eight keys, each cited —
+the three new ones to AMFI's category and the family's instruction.
+
+#### The cash instruction is its own rule, and the headings name which
+
+`TaxonomySource` gains **`cash-rule`**. Folded into the direct-stock `rule`, the
+Liquidity heading read **"₹62.5 Cr by the family's stated rule, not named
+individually"**, with a hover explaining that "all the direct stocks" belong to
+Thematic & Tactical — a sentence about the wrong rule, under the wrong basket,
+attached to the largest figure in the section. Both headings now print it apart
+(*"₹62.5 Cr counted as cash by the family's instruction"*), and Morning CIO's
+allocation note says it in its own sentence. **Where the review already says
+Cash — the liquid funds, on its Cash sheet by name — the review keeps the
+source**: an instruction that claimed them would misattribute them the other way.
+
+#### Arbitrage is identified by AMFI's category, never by a name
+
+`build-fund-navs` records each scheme's SEBI heading (`Hybrid Scheme - Arbitrage
+Fund`) and `isArbitrageFund` reads it by key or ISIN. `familyTaxonomy.test.ts`
+gains a SECOND detector that reads no name at all — every scheme AMFI files as
+Liquid or Arbitrage must be in the cash map — and the name detector now reads the
+depository's balances too, so a cash fund arriving on a transaction-only demat
+fails the suite by name instead of sitting under Mutual Fund.
+
+#### Two defects found on the way, neither in the ask
+
+- **"₹0 reported twice, counted once"** sat over the Monitor's Mutual Fund and
+  Thematic & Tactical headings **on main**. `collapsed = raw − subtotal` sums the
+  same numbers in two orders, and once published NAVs put unrounded values on
+  the rows the residue is a few millionths of a rupee, which `> 0` read as a
+  duplicate. The heading now needs more than a rupee — the bound the footer's own
+  `dupGap` has always used — and `NO_PHANTOM_DUPLICATE` asserts it, because the
+  zero scan reports a ₹0 as a lead and never as a finding.
+- **The closed-position checks struck on the wrong set.** `FUND_CLASS_BOOK`'s own
+  comment says *"a key is CLOSED only where every position under it is at nil"*,
+  and three checks read `closedKeys` — every key with ANY nil row. The two
+  coincided until HDFC Liquid: redeemed to nil in the HDFC folio, held on the
+  demat. They read `redeemedKeys` now, which is that comment made true.
+
+#### What it deliberately does not do
+
+**The same demat holds five mutual funds AMFI prices that are NOT cash** —
+Bandhan Large & Mid Cap ₹31.93 Cr, ICICI Equity Savings ₹23.44 Cr, ICICI India
+Opportunities ₹18.98 Cr, Kotak Multicap ₹9.05 Cr, Kotak Large & Midcap
+₹1.37 Cr, **₹84.8 Cr at today's NAV** — plus eight company shares and one AIF.
+The family asked for arbitrage to be cash, not for this account to be valued, so
+the cash gate refuses them and `fundNavs.test.ts` asserts it. They are worth
+naming because **they are the depository-clipped funds behind Stage 10ak's
+Stable Growth gap against the review**; widening the gate is one line, and it was
+offered rather than taken.
+
+The review also carries two Invesco arbitrage lines and a Kotak Equity
+Arbitrage REGULAR-plan line (6,42,940.095 units — not the Direct plan the
+depository reports). **No statement in the drop carries any of them**, so they
+are not here.
+
+#### Checked
+
+`check:pages` gains `stock-arbitrage` (the largest arbitrage fund's own page,
+derived from the book and AMFI's store) and `family-partial` (the member whose
+demat is partly valued). The checker's model of the book carries the depository
+rows too — **re-expressed, never imported**, the five gates written a second time
+off the committed data — because every partition check reconciles against a
+rendered figure and the page renders them. Invariants: every arbitrage fund is a
+row under Cash (category, asset class) and Liquidity (basket) and under nothing
+else; the Cash heading's own liquid/arbitrage count; the family-axis headings
+credit the arbitrage value to the cash instruction **to the rupee** and never to
+the direct-stock rule; Morning CIO's allocation note does the same; `/holdings`
+names the depository rows under its statement-basis line; Performance and Family
+& Entities mark the partial account; Sector Composition files arbitrage under
+Cash; the fund's page says Cash and draws no look-through.
+
+**THE BOOK'S PREMISE IS A FAILURE, NEVER AN ABSTENTION.** Every one of those
+reads `CASH_INSTRUCTION_BOOK`, and a derivation that finds no arbitrage in the
+live book has lost its input — reporting NOT CHECKED there would let the whole
+feature be deleted behind a clean sweep.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -16542,7 +16748,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   publishes the previous business day), committing only when a NAV moved.
   Idempotent; `-- --check` writes nothing. A scheme whose units are not on the
   same basis as its NAV carries the NAV and does NOT value the holding — see
-  Stage 10bn. Nothing it writes reaches `glowData.ts`.
+  Stage 10bn. Nothing it writes reaches `glowData.ts`. It records each
+  scheme's SEBI CATEGORY verbatim — which is how an arbitrage fund is known —
+  and also prices a fund a depository reports on a transaction-only account,
+  never an ETF there (no mark to test its basis against). See Stage 10bt.
 - `npm run build-upstox-instruments` refreshes `shared/upstoxInstruments.mjs`
   and `docs/UPSTOX-INSTRUMENTS.md` — which Upstox instrument each NSE symbol the
   dashboard asks about IS, from Upstox's own public instrument list (keyless),

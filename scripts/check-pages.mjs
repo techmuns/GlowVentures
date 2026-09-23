@@ -7798,6 +7798,21 @@ const ALLOC_CASH_RULE = (axis) => [
       && new RegExp(`is ${cashSection(axis)} by their instruction that arbitrage and liquid funds are cash`, "i").test(c.text);
   }],
 ];
+/**
+ * A SECTION HEADING NEVER CLAIMS A DOUBLE COUNT OF NOTHING. "₹0 reported twice,
+ * counted once" sat over the Mutual Fund and Thematic & Tactical headings on
+ * main — a floating-point residue between two sums of the same numbers, read as
+ * a duplicate — and no invariant could see it: the zero scan reports a ₹0 as a
+ * lead, never as a finding. A heading asserting a double count that does not
+ * exist is a sentence, not a figure, so it is struck here as one.
+ */
+const NO_PHANTOM_DUPLICATE = [
+  ["no section heading reports a duplicate worth nothing", (t, ctx) => {
+    const secs = ctx?.cashDom?.sections;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    return secs.every((x) => !/₹0 reported twice/.test(x.text));
+  }],
+];
 /** A DEPOSITORY BALANCE IS NO STATEMENT MARK, AND THE PAGE THAT OFFERS ONE SAYS SO. */
 const HB_DEPOSITORY = [
   ["the holdings no statement marks are named under the statement-basis figure, with their count", (t, ctx) => {
@@ -12209,6 +12224,23 @@ const INVARIANTS = {
      * `AssetClass`. What actually guards that is the fund-name check above,
      * which is struck on the wrappers' own names.
      */
+    /**
+     * …AND ITS CASH IS THE FAMILY'S CASH, ARBITRAGE INCLUDED. The card names
+     * each class it leaves out with its value, through `readerClassOf`, so an
+     * arbitrage fund is listed under Cash and never under Mutual Fund. Struck on
+     * the labelled figure against the book's own arbitrage value: a card that
+     * went back to the wrapper would still tie to its own total and still
+     * reconstruct the NAV — every rupee is still somewhere — and only a claim
+     * about WHICH label carries it can see the difference.
+     */
+    ["the excluded card files the arbitrage funds under Cash, never under Mutual Fund", (t) => {
+      const B = CASH_INSTRUCTION_BOOK;
+      if (!B) return false;
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const cash = /Cash ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(card[1]);
+      return !!cash && crU(cash[1], cash[2]) + 0.1 >= B.arbMV / 1e7;
+    }],
     ["the excluded card's total ties to the classes it lists", (t) => {
       const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
       if (!card) return false;
@@ -12972,6 +13004,7 @@ const INVARIANTS = {
        page printing any number would satisfy. */
     ...CASH_HEADING_COUNTS,
     ...CASH_ON_AXIS("category"),
+    ...NO_PHANTOM_DUPLICATE,
 
     /**
      * ── THE DATE, BESIDE THE AMOUNT ──────────────────────────────────────────
@@ -14228,9 +14261,9 @@ const INVARIANTS = {
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
   "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
-    ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS],
+    ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE],
   "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
-    ...CASH_ON_AXIS("basket"), ...CASH_RULE_HEADINGS("basket")],
+    ...CASH_ON_AXIS("basket"), ...CASH_RULE_HEADINGS("basket"), ...NO_PHANTOM_DUPLICATE],
   /**
    * ── AND ONE OF THEM ACTUALLY OPENED, ON THE DEFAULT AXIS ──────────────────
    *
