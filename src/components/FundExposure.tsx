@@ -64,6 +64,7 @@ import { fmtPct } from "@/lib/format";
 import { AbsentCell } from "@/components/Absent";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { splitFundClass } from "../../shared/securityKey.mjs";
 
 /** The columns, in the order this table's rows write their cells. */
 const FUND_EXPOSURE_COLS = ["fund", "instruments", "held", "weight", "share", "disclosed"] as const;
@@ -103,6 +104,27 @@ export function FundExposure({ exposure, securityKey, money }: {
   const aif = skipped.filter((s) => /^an AIF files/.test(s.reason));
   const other = skipped.filter((s) => !/^an AIF files/.test(s.reason));
   const aifValue = aif.reduce((a, s) => a + s.marketValue, 0);
+  /**
+   * ── THE AIFs ARE NAMED, BECAUSE "YOUR 12 AIF FOLIOS" ANSWERS NOBODY ────────
+   *
+   *   "According to the client, Kaynes Technologies Limited is also a holding
+   *    in Vikas Khemani Fund."
+   *
+   * That fund is the Carnelian Bharat Amritkaal Fund — Vikas Khemani manages it
+   * — and the family hold it as an AIF folio. Its statement is a statement of
+   * account: units, NAV, contributions, and NOT ONE LINE of what it owns; and
+   * Carnelian publishes factsheets for its PMS strategies and none for this
+   * fund. So a Kaynes holding inside it is real to the family and unmeasurable
+   * here, and a sentence that only COUNTED the AIFs left a reader who knows the
+   * fund holds Kaynes unable to tell whether this page had looked. Each fund is
+   * named, once per fund rather than once per unit class, so the answer to
+   * "is my Carnelian fund in this?" is on the card: it is, and nothing inside
+   * it can be seen.
+   */
+  const aifFunds = [...aif.reduce((m, s) => {
+    const fund = splitFundClass(s.fundName)?.fund ?? s.fundName;
+    return m.set(fund, (m.get(fund) ?? 0) + s.marketValue);
+  }, new Map<string, number>())].sort((a, b) => b[1] - a[1]).map(([name]) => name);
   /**
    * WHAT IT IS HELD AS, FROM THE FILINGS AND NOT FROM AN ASSUMPTION. A company
    * reached through its bonds must not read as an equity exposure: the negative
@@ -225,8 +247,10 @@ export function FundExposure({ exposure, securityKey, money }: {
         Read across {covered} of your {considered} fund holdings, on each AMC&rsquo;s whole monthly filing &mdash;
         shares, bonds, NCDs, commercial paper and every other line it carries, not the equity section alone.
         {other.length > 0 && <> {other.length} could not be read: {other.map((s) => s.fundName).join(", ")}.</>}
-        {aif.length > 0 && <> Your {aif.length} AIF folio{aif.length === 1 ? "" : "s"} ({money(aifValue)}) file no
-          portfolio disclosure this book can join, so nothing held inside them is visible here at all.</>}
+        {aif.length > 0 && <> Nothing held inside your {aifFunds.length} AIF fund{aifFunds.length === 1 ? "" : "s"}{" "}
+          ({money(aifValue)}) is visible here —{" "}
+          <span className="text-slate-400" data-fund-exposure-aifs={aifFunds.length}>{aifFunds.join(" · ")}</span>:
+          an AIF reports units and a NAV, never the companies it owns, so no figure for them is struck here.</>}
       </p>
     </div>
   );

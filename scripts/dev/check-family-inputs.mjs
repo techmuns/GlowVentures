@@ -960,8 +960,15 @@ check("...and names the mandates this book does carry",
     // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
     // account numbers with no reason reads as a broken feed rather than as a
     // measured absence, which is this book's founding distinction.
+    // AN ACCOUNT THAT SENT ONLY A TRANSACTION STATEMENT IS PARTLY VALUED on the
+    // live basis — its arbitrage and liquid funds at AMFI's NAV, the family's
+    // cash — so its generated "values nothing" reason is replaced by a note
+    // naming what is valued and what is not. Either sentence is a reason; what
+    // must never happen is a listed account with neither.
     check("...each with its own reason",
-      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))));
+      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))
+        || (a.transactionsOnly === true && /partly valued/.test(text)
+          && text.includes("sent a transaction statement and no holding statement"))));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
     check("...and the card says none of it is in the value above",

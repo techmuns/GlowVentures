@@ -18,10 +18,12 @@
 //
 // Every expectation is derived from `glowData.ts` on the run.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB } from "@/data/glowData";
-import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, sum } from "@/lib/analytics";
+import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
+import { depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
 import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
+import { labelledAccounts, labelledPositions, labelVariants, securityLabel } from "@/lib/securityLabel";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -29,8 +31,18 @@ const ok = (name: string, pass: boolean, detail = "") => {
   else console.log(`ok   ${name}`);
 };
 const money = (n: number) => `₹${(n / 1e7).toFixed(2)} Cr`;
-const consolidated = dedupedPositions(BOOK_POSITIONS);
-const index = buildSearchIndex({ positions: BOOK_POSITIONS, consolidated, accounts: BOOK_ACCOUNTS, money });
+/**
+ * THE BOOK AS THE PAGE NAMES IT. `SmartSearch` builds this list from
+ * `PortfolioContext`, which names every holding once (`labelledPositions`) and
+ * cases every strategy (`labelledAccounts`). Built from the raw statements
+ * instead, this suite checked a list the page does not draw — a company under
+ * whichever spelling its first row printed, a mandate in its manager's
+ * capitals — which is the gap `stockExposure.test.ts` was found to have with
+ * its fund list. One step, shared, so the two cannot diverge.
+ */
+const positions = labelledPositions(BOOK_POSITIONS);
+const consolidated = dedupedPositions(positions);
+const index = buildSearchIndex({ positions, consolidated, accounts: labelledAccounts(BOOK_ACCOUNTS), money });
 const top = (q: string) => searchEntries(index, q, 10)[0]?.entry;
 const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).map((h) => h.entry);
 
@@ -185,6 +197,43 @@ console.log("── the categories partition the book, as the allocation table d
   ok("the book carries a total to partition", total > 0);
 }
 
+console.log("── on the LIVE book: a cash equivalent is named Cash, and a partly valued account says so ──");
+{
+  /**
+   * The top bar searches what the PAGE is handed — the live portfolio, which
+   * carries the cash-equivalent funds a depository reports on an account that
+   * sent no holding statement (Stage 10ce). Everything above builds from
+   * `BOOK_POSITIONS`, which never holds those rows, so it cannot see either
+   * rule below. The registry is the one `PortfolioContext` builds, through the
+   * same helper, rather than a copy of it.
+   */
+  const dep = depositoryCashHoldings();
+  const livePositions = [...BOOK_POSITIONS, ...dep];
+  const liveAccounts = withPartialValuation(BOOK_ACCOUNTS, partialValuationNotes(dep));
+  const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money });
+  // A missing premise is a FAILURE, never an abstention: an empty set would
+  // let every assertion below pass by asserting nothing.
+  ok("the live book carries depository-valued cash equivalents to search", dep.length > 0, `${dep.length} rows`);
+  ok("…and every one of them is findable", dep.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
+    dep.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
+  const cashEntries = live.filter((e) => e.kind === "holding" && isCashEquivalent({ securityKey: e.id.slice("holding:".length) }));
+  const misnamed = cashEntries.filter((e) => e.chip !== "Cash");
+  ok("every liquid and arbitrage fund chips as Cash, never as its wrapper", cashEntries.length > 0 && misnamed.length === 0,
+    misnamed.map((e) => `${e.label} → ${e.chip}`).join("; "));
+  // LOAD-BEARING: the check must cover funds whose statement typed a WRAPPER,
+  // or it passes on the rows a PMS statement already filed under Cash.
+  const wrapped = cashEntries.filter((e) => livePositions.some((p) => `holding:${p.securityKey}` === e.id && p.assetClass !== "Cash"));
+  ok("…including funds a statement typed as a mutual fund or an ETF", wrapped.length > 0, `${wrapped.length} entries`);
+  const partial = liveAccounts.filter((a) => a.partialValuation);
+  ok("the live registry carries a partly valued account", partial.length > 0);
+  const saysPartial = live.filter((e) => e.kind === "account" && /^[^·]+ · partly valued · /.test(e.detail));
+  ok("…and exactly those accounts read \"partly valued\", before their figure",
+    saysPartial.length === partial.length && partial.every((a) => saysPartial.some((e) => e.id === `account:${a.accountId}`)),
+    `${saysPartial.length} entries vs ${partial.length} accounts`);
+  ok("on the statement basis no account is called partly valued",
+    !index.some((e) => e.kind === "account" && /partly valued/.test(e.detail)));
+}
+
 console.log("── the matching tiers ──");
 {
   ok("a whole word outranks the start of a longer word",
@@ -198,6 +247,47 @@ console.log("── the matching tiers ──");
   ok("an empty query returns nothing", searchEntries(index, "   ").length === 0);
   ok("a question reads as one", looksLikeQuestion("how much hdfc do i hold") && looksLikeQuestion("tax?"));
   ok("a name does not", !looksLikeQuestion("hdfc") && !looksLikeQuestion("sanshi fund"));
+}
+
+console.log("── one company, one name — and every name it was printed under finds it ──");
+{
+  /**
+   *   "when I am searching Kaynes in the search bar, it is coming up in small
+   *    cap and large cap both. It should be a single name only."
+   *
+   * The list is one row per `securityKey`, so a company is one row exactly when
+   * it is one key — which `KEY_ALIASES` made true of SBI, Karur Vysya and
+   * Crompton. What is checked here is the half that is NOT structural: the row
+   * carries the one name the page shows, cased as a name, and every spelling a
+   * statement printed still finds it. Joining two keys must not cost a reader
+   * the name they type — the depository's `SBI` found nothing once the key was
+   * State Bank of India's.
+   */
+  const holdings = index.filter((e) => e.kind === "holding");
+  const misnamed = holdings.filter((e) => {
+    const key = e.id.slice("holding:".length);
+    return e.label !== securityLabel(key, e.label);
+  });
+  ok("every holding row carries the one name the page shows", misnamed.length === 0,
+    misnamed.slice(0, 3).map((e) => e.label).join("; "));
+  const shouting = (s: string) => !/[a-z]/.test(s) && (s.match(/\b[A-Z]{2,}\b/g)?.length ?? 0) >= 2;
+  const cased = index.filter((e) => (e.kind === "holding" || e.kind === "mandate")
+    && (shouting(e.label) || /^[a-z]/.test(e.label) && !/^[a-z]+[A-Z]/.test(e.label)));
+  ok("...written as a name — never all in capitals, never opening in lower case", cased.length === 0,
+    cased.slice(0, 3).map((e) => e.label).join("; "));
+  const kaynes = searchEntries(index, "kaynes", 10).filter((h) => h.entry.kind === "holding");
+  ok("the company the family searched for is ONE holding row", kaynes.length === 1,
+    kaynes.map((h) => h.entry.label).join(" | "));
+  const variants = labelVariants();
+  ok("the book prints some companies under more than one name", variants.size > 0, String(variants.size));
+  const lost: string[] = [];
+  for (const [key, spellings] of variants) {
+    for (const sp of spellings) {
+      if (!searchEntries(index, sp, 10).some((h) => h.entry.id === `holding:${key}`)) lost.push(`${sp} → ${key}`);
+    }
+  }
+  ok("every spelling a statement printed finds its company", lost.length === 0, lost.slice(0, 5).join("; "));
+  ok("...the depository's `SBI` among them, first", top("sbi")?.id === "holding:state-bank-of-india", top("sbi")?.label);
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall search checks passed");

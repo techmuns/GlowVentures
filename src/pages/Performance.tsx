@@ -17,7 +17,7 @@ import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
-import { embeddedReturnFormula } from "@/lib/auditFormulas";
+import { fifoTotals } from "@/lib/fifo";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 
@@ -100,10 +100,15 @@ export function Performance() {
   const listedMV = consolidatedMarketValue(p);
   const listedCost = sumOrNull(priced.map((x) => x.costBasis));
   const listedPnL = sumOrNull(priced.map((x) => x.unrealizedPnL));
-  // Null, not 0: an embedded return needs a cost on both sides.
-  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0
-    ? (listedPnL / listedCost) * 100
-    : null;
+  /**
+   * FIFO — the same aggregator and the same costed set as Morning CIO's
+   * Consolidated return, so the two pages cannot print two figures for one
+   * book: unrealised on what is held plus realised on units already sold, over
+   * the capital that bought them, with each whole mandate struck on its
+   * capital since inception. Null, not 0, where no cost is reported.
+   */
+  const bookFifo = fifoTotals(priced.filter((x) => x.costBasis != null), { accounts, universe: consolidated });
+  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0 ? bookFifo.returnPct : null;
   const mvOf = (accountId: string) =>
     sum(p.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
 
@@ -248,9 +253,14 @@ export function Performance() {
             : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once`}
           icon={<Layers className="h-4 w-4" />} />
 
-        <StatTile label="Embedded return"
-          value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money)}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
-          sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
+        <StatTile label="Return · FIFO"
+          value={<Auditable formula={{
+            title: "Return (FIFO)",
+            excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100",
+            plain: "Everything the book has produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
+            worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}`,
+          }}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
+          sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
           <StatTile label="Money-weighted return (XIRR)"
@@ -439,6 +449,14 @@ export function Performance() {
                         measurement — see Account.noPositionsReason. */}
                     {x.account.noPositionsReason
                       ? <AbsentCell reason={x.account.noPositionsReason} />
+                      : x.account.partialValuation
+                      /* A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST.
+                         The depository's cash-equivalent units are valued on the
+                         live basis; the account's other holdings are not, and a
+                         bare total here would read as the whole account. */
+                      ? <span data-partial-valuation title={x.account.partialValuation}>
+                          {money(x.mv)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80">partial</span>
+                        </span>
                       : money(x.mv)}
                   </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>
