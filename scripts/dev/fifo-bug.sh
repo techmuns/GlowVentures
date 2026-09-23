@@ -76,10 +76,13 @@ run_case() {
     6) echo "   the mandate page's FIFO tile shows the unrealised ÷ cost it replaced"
        patch src/pages/MandateHoldings.tsx 'const ret = fifo.returnPct;' 'const ret = cost && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;' || return
        pages "mandate-fifo" ;;
+    7) echo "   the Monitor footer's return struck over the whole book, so the coverage test refuses it"
+       patch src/pages/PortfolioMonitor.tsx 'const totalRet = totFifoCosted.returnPct;' 'const totalRet = totFifo.returnPct;' || return
+       pages "monitor" ;;
     *) echo "   no such case"; return ;;
   esac
   restore
 }
 
-CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6)
+CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6 7)
 for c in "${CASES[@]}"; do run_case "$c"; done

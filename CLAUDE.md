@@ -16484,9 +16484,25 @@ do not match — and each withholds the record.
   dividend is not a gain on a unit. But a mandate struck on its capital includes
   whatever the capital shows — income collected, fees charged — because no
   statement splits those per share. `fifoBasisNote` says so in the hover.
-- **The book-level return still refuses where cost does not cover the set.**
-  60 depository positions report no cost; `costCoversSet` still decides, and
-  FIFO does not change what a depository did not print.
+- **A CATEGORY's return still refuses where cost does not cover it**, exactly
+  as it did: 60 depository positions report no cost, `costCoversSet` decides,
+  and FIFO does not change what a depository did not print — Direct Equity and
+  Mutual Fund stay dashes. **A FOOTER'S return is struck over the costed
+  holdings**, which is the set its own Invested and Unrealised cells already
+  sum and the set Morning CIO's Consolidated return tile covers.
+
+  **THE FIRST CUT OF THIS BRANCH TOOK THE MONITOR FOOTER'S RETURN AWAY, AND ONLY
+  THE PAGE SWEEP SAW IT.** `fifoTotals` carries the coverage test, the footer was
+  handed the WHOLE book, and 60 uncosted depository rows made it refuse — so the
+  Total row printed `—` where main printed +15.37%. Every suite passed. Two
+  standing `check:pages` claims fired (*"the footer totals nothing under the two
+  descriptor columns"*, whose third-from-last cell must be a percentage, and
+  *"the aggregate return stands under the measure it is on"*), and they are what
+  a reader would have seen: the one whole-book return on the page gone, on the
+  change asked for because returns were wrong. The footer reads **+16.68%** now,
+  FIFO over the costed set, and its arithmetic names the uncosted remainder.
+  Measured before filtering, not assumed: no PMS mandate holds a current
+  position without a cost, so the filter cannot knock a mandate out of whole.
 - **The fact sheet's printed profit is NOT used as a second witness**, on
   purpose: once contributed and withdrawn match, `gain − profit` is only the
   book's value less the fact sheet's closing value, which carries declared,

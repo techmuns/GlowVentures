@@ -962,7 +962,7 @@ export function PortfolioMonitor() {
    * than silently gone — this book shows what it can and names the rest.
    */
 
-  const { rows, totMV, totCost, totPnL, totFifo, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
@@ -1586,6 +1586,21 @@ export function PortfolioMonitor() {
       totCost: sumOrNull(db.map((x) => x.costBasis)),
       totPnL: sumOrNull(db.map((x) => x.unrealizedPnL)),
       totFifo: fifoTotals(db, fifoOpts),
+      /**
+       * THE FOOTER'S RETURN IS OVER THE HOLDINGS THAT REPORT A COST — the set its
+       * own Invested and Unrealised cells already sum (`sumOrNull` skips the
+       * rest), and the set Morning CIO's Consolidated return tile is struck over.
+       * Over the whole book the coverage test refuses it, because 60 depository
+       * rows print no cost; that is right for a CATEGORY a reader compares, and
+       * wrong for a footer whose two neighbouring cells are already the costed
+       * set. The uncosted remainder is named in the cell's own arithmetic.
+       *
+       * NO MANDATE CAN FALL OUT OF "WHOLE" BY THE FILTER: measured, no PMS
+       * mandate holds a current position without a cost. And the realised cell
+       * reads `totFifo`, which is the same figure — an uncosted holding carries
+       * no realised half in `fifoTotals`.
+       */
+      totFifoCosted: fifoTotals(db.filter((x) => x.costBasis != null && !x.costUnavailable), fifoOpts),
       rawMV: sum(out.map((r) => r.marketValue)),
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
@@ -1686,9 +1701,10 @@ export function PortfolioMonitor() {
   }, [rows, bucketTotals, groupAxis]);  const showBucketSections = bucket === "All" && bucketGroups.length > 1;
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
-  // FIFO over the footer's own positions — the same `fifoTotals` every row and
-  // section is struck with, so the three cannot divide three different ways.
-  const totalRet = totFifo.returnPct;
+  // FIFO over the footer's own COSTED positions — the same `fifoTotals` every
+  // row and section is struck with, so the three cannot divide three different
+  // ways, over the set the Invested and Unrealised cells beside it already sum.
+  const totalRet = totFifoCosted.returnPct;
   // In the by-entity view the displayed rows include both members' copies of a
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
@@ -3602,9 +3618,9 @@ export function PortfolioMonitor() {
                           {!onCost
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
-                            ? <AbsentCell reason="the holdings that report no cost are too large a part of this table for a return to describe it — each costed holding shows its own on its row" />
+                            ? <AbsentCell reason="no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row" />
                             : feedLive ? fmtPct(totalRet, { sign: true })
-                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifo.unrealised ?? 0, true)} + ${money(totFifo.realised ?? 0, true)}) ÷ ${money(totFifo.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>
                       )];
                     })),
