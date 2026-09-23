@@ -237,6 +237,16 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/drilldown.ts` — WHICH HOLDINGS ARE BEHIND A FIGURE. One definition per
   set, read by the page that PRINTS a figure (to build the link) and by
   `src/pages/HoldingsBehind.tsx` at `/holdings` (to list the rows). See Stage 10n.
+- `shared/fifo.mjs` + `src/lib/fifo.ts` — **FIFO: THE ONE RETURN.** The first is
+  the lot engine (buy / sell / class switch, oldest units first, a switch
+  carrying each lot's own cost and date) plus `fifoReturnPct` — `(unrealised +
+  realised) ÷ (cost held + cost of units sold)` — and `fifoFromCashFlows`, which
+  runs a fund's own dated unit record; `build-book` and the suites both import
+  it. The second is the only place a SET of holdings becomes a return
+  (`fifoTotals`): summed before it is divided, never an average of
+  percentages, and a PMS mandate the set holds whole is struck on its own
+  capital since inception. Every return on every page goes through one of the
+  two. See Stage 10bw.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
 - `src/lib/navSeries.ts` — the DATED NAV series' presentation half: the chained
   flow-adjusted index, the nearest-EARLIER alignment against an index series, and
@@ -16336,6 +16346,183 @@ one sat in different parts of the file, so git merged the pair cleanly and left
 two `### Stage 10bu` headings — the silent case Stage 10bl names, caught only
 because the letters were compared by hand after a merge that reported nothing.
 
+### Stage 10bw — EVERY RETURN IS FIFO: UNREALISED PLUS REALISED, OVER EVERY RUPEE DEPLOYED
+
+*"Everything in the returns part and all the calculations on the dashboard need
+to be accounted for using the methodology of FIFO. So basically we need to
+account for, match the number of units being sold and purchased, and use the
+methodology of FIFO to calculate returns on the dashboard and make sure that
+this is implemented every single place on the dashboard wherever we are showing
+returns. According to the client, the returns that we are showing on the
+dashboard are completely off. So find the root cause of it."*
+
+#### The root cause is one formula, and it was on every page
+
+**EVERY AGGREGATE RETURN WAS `Σ unrealised ÷ Σ cost of the units STILL HELD`.**
+That is FIFO's cost of what is left — the manager's own statements carry it that
+way — divided into the gain on what is left. It leaves out every unit already
+SOLD: the gain on it is gone from the numerator and what it cost is gone from the
+denominator. A mandate that sells its winners reads as if it had never made them.
+Measured on the whole-mandate figure against the survivors-only one:
+
+| Mandate | Was (survivors) | FIFO, on its capital |
+| --- | ---: | ---: |
+| V.E.C 128004 | 8.42% | **30.10%** |
+| SVAN 8710067 | 6.84% | 13.56% |
+| SVAN 8710090 | 5.75% | 12.73% |
+| Molecule 7810404 | 10.20% | 16.09% |
+| V.E.C 128005 | 1.84% | 8.28% |
+| Green Lantern 510854 · 510861 | 13.49% · 12.53% | 16.04% · 14.59% |
+| Goldstandard 100022 · 100023 | 6.27% · 6.78% | 6.97% · 7.48% |
+| Carnelian 3517383 | 24.98% | **19.91%** |
+
+**IT RUNS IN BOTH DIRECTIONS, WHICH IS WHAT SAYS IT IS NOT A THUMB ON THE SCALE.**
+Carnelian's manager sold LOSERS (−₹69.8 L realised since inception, and ₹98.8 L of
+fees), so its survivors read BETTER than the mandate did. A formula that only
+ever raised returns would be a presentation choice; this one lowers the one it
+should.
+
+**AND THE MANAGERS' OWN RECORDS SAY THE SAME NUMBER.** For every mandate whose
+performance history is dated at its capital's own date, `value + withdrawn −
+contributed` from the book's appraisal rows equals the manager's since-inception
+`realised + unrealised + income − fees` — Carnelian, both Goldstandards, both
+V.E.Cs — within ₹0.15. Two reports, two paths, one figure.
+
+Three more figures were wrong for the same reason in a different shape:
+
+- **Neo Infra** printed the ₹5 Cr ever drawn as the cost of the 4,85,837 units
+  still held, after 14,162.8 had been redeemed at ₹14.16 L. The cost of units
+  the family no longer owns was in the cost of the ones it does.
+- **3P** was redeemed in full for ₹31.06 Cr against ₹28.50 Cr invested and
+  carried NO realised figure — a ₹2.56 Cr gain that no return anywhere counted.
+- **Buoyant's class switch** was booked by the fund as a sale and a purchase at
+  the switch NAV — see Stage 10bv, which landed the fix on main while this was
+  being built.
+
+#### One engine, one aggregate, and nothing else strikes a return
+
+- **`shared/fifo.mjs`** — the lot engine. A buy is a dated lot; a sale takes the
+  OLDEST lots first; a class SWITCH is not a sale and carries each lot into the
+  new class with its own cost and its own purchase date. **A carried lot keeps
+  its place in the queue** — appended at the back, a later sale would take the
+  newest units first, which is LIFO wearing FIFO's name; the suite has a case
+  whose LIFO answer differs, so that bug cannot pass. A sale of more units than
+  the record bought is a SHORTFALL, reported and never absorbed into a lot at a
+  cost nobody paid. `fifoReturnPct` is the one formula — `(unrealised + realised)
+  ÷ (cost held + cost of units sold)`, null wherever cost is unknown.
+- **`src/lib/fifo.ts` → `fifoTotals`** turns ANY set — a row, a category, a
+  mandate, an owner, a sector, the book — into one return, SUMMED before it is
+  divided, never an average of percentages (which weights a ₹50,000 holding like
+  a ₹50 Cr one). **A mandate the set holds whole is struck on its capital**:
+  `(value + withdrawn − contributed) ÷ contributed`, which is FIFO's own total —
+  however units are matched, cost held plus cost sold is what was put in. A set
+  holding only PART of a mandate (a sector, a filter, one share) is struck
+  holding by holding, because a mandate's capital cannot be divided among its
+  shares. Wholeness is measured against `currentHoldings`, so a speck the floor
+  drops does not break it.
+- **Every surface calls one of the two**: the Portfolio Monitor's rows, category
+  totals and footer; the mandate page, which gains a **Return · FIFO** tile of
+  its own rather than a delta under the P&L tile; Morning CIO's consolidated
+  return and allocation rows; the holdings drill-down; Private Market; Family &
+  Entities; Sector Composition; the stock page; Return Analysis; Performance;
+  the Excel export; the live-quote and published-NAV overlays; and the
+  contribution-history panel's footer. `embeddedReturnFormula` is deleted
+  rather than left exported and uncalled.
+
+#### What each position carries now
+
+`build-book` emits on every position: `costBasis` (the cost of the units still
+held), `realizedPnL` and **`costOfUnitsSold`** (FIFO's other half), and
+`returnPct` struck through `fifoReturnPct`. The suite asserts the last is the
+formula on the position's own fields for every costed position in the book.
+
+- **A capital gain statement is taken only up to the holding's own date.** LKP's
+  holding statement is dated 31 March and its capital gain statements carry ten
+  sales after it; those units are still IN that statement's positions at its
+  mark, so their gain is not added — counting them would book the same units
+  once as value and once as profit. `realizedLotsAfter` counts them and the
+  empty cell's reason says so.
+- **Realised is a MEASURED zero** where a record covers the account and nothing
+  was sold — and null, with its reason, where no record covers it.
+
+#### Where FIFO restates a cost, and where it only checks one
+
+**FIFO RESTATES A COST ONLY WHERE UNITS LEFT THE HOLDING.** Neo Infra's capital
+redemption and 3P's redemption are sales; the position takes FIFO's cost, its
+realised gain and its cost of units sold, `costBasisSource: "fifo"`, and keeps
+the statement's figure as `printedCostBasis`. Neo: ₹4,85,83,720 held + ₹14,16,280
+sold = every rupee drawn. 3P: realised ₹2,56,09,033.87 + cost sold
+₹28,49,73,801.30 = ₹31,05,82,835.17, the redemption on the ICICI advice.
+
+**A SWITCH WITH NO SALE IS MAIN'S CLASS-SWITCH CARRY, AND FIFO CHECKS IT.** Stage
+10bv landed on main while this was being built, with its own Buoyant reader and
+`carryCostThroughSwitches`. Two implementations writing one cost is how two
+screens come to disagree about it, so they were reconciled rather than stacked:
+Buoyant's reader, archive and `npm run replay:flows` are main's; this branch's
+duplicate reader and replay were dropped; and the build runs FIFO over the same
+record anyway and NAMES the two as agreeing — ₹24,85,00,000 and
+₹46,00,58,861.66, to the rupee — or disagreeing. That is two pieces of code over
+one record, so agreement is a real check. `fifoFromCashFlows` moved into
+`shared/fifo.mjs` so the suite can hold the book to it too.
+
+**NEO INFRA'S READER STAYS**, and main's replay reproduces its archived record
+byte for byte (`0 would change`), which says the two readers agree on what the
+extractor writes. `neoFlows.test.mjs` breaks the real statement one figure at a
+time — units off face value, the redemption dropped, a capital row the columns
+do not match — and each withholds the record.
+
+#### What this deliberately does not do
+
+- **A holding sold down to nothing is not in an allocation total.** The family
+  asked for the allocation surfaces to show current holdings only (Stage 10am,
+  10as), and "a total must tie to its own columns" — adding 3P's realised into
+  the AIF row's return without drawing its row would be a total over rows the
+  table does not show. Its gain is on its own stock page and on the Transactions
+  card's capital record, whose return is `(value + taken out − paid in) ÷ paid
+  in` — FIFO's total again, invariant to how the units are matched.
+- **Income is not in a holding's return; it IS in a whole mandate's.** A
+  dividend is not a gain on a unit. But a mandate struck on its capital includes
+  whatever the capital shows — income collected, fees charged — because no
+  statement splits those per share. `fifoBasisNote` says so in the hover.
+- **The book-level return still refuses where cost does not cover the set.**
+  60 depository positions report no cost; `costCoversSet` still decides, and
+  FIFO does not change what a depository did not print.
+- **The fact sheet's printed profit is NOT used as a second witness**, on
+  purpose: once contributed and withdrawn match, `gain − profit` is only the
+  book's value less the fact sheet's closing value, which carries declared,
+  unreceived dividends §4b keeps out of market value. That checks the value, not
+  the return, and would look like a second path while being the first restated.
+
+#### Verification
+
+`test:family` gains `fifo.test.ts` (engine, aggregator, book); `test:ingest`
+gains `neoFlows.test.mjs`; main's `carriedCost.test.ts` had one claim widened —
+"the printed figure appears only where the book's cost differs" now names both
+restatements, `carried-through-switch` and `fifo`. `check:pages` gains an
+invariant on every Monitor mandate row (its Return cell equals the capital
+figure, re-derived in the sweep from `glowData.ts` rather than imported) and a
+`mandate-fifo` route — the mandate where FIFO and the survivors-only figure
+differ most, derived from the book — asserting the tile is the capital return
+AND that the figure it replaced differs materially.
+
+`build` · `tsc` · `test:ingest` (neoFlows 8, buoyant 42, classSwitch 44, golden 140) · `test:family` · `check:family` **86/0**. The full `check:pages` sweep on the merged tree is recorded in the PR.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+byte-identically from the merged archive, run as a control twice.
+
+#### Merged with main, and this time the collision was a whole feature
+
+Stage 10bt, 10bu and 10bv landed while this branch was open. The letter
+collision was avoided by checking main's tip before writing this heading — main
+holds 10bv, so this is **10bw**. The `ctx` literal did not conflict. What did
+was Buoyant: two readers, two replays under one npm name (`replay:flows` was
+declared twice in `package.json`, and git merged BOTH lines without a marker —
+the later key silently wins), and two cost mechanisms. Resolved as above: one
+reader, one replay, one source per cost, and the second implementation kept
+only as a named cross-check. Main's `SectorComposition` restructure was taken
+whole and the FIFO sector return re-applied onto `rollSectors`, rather than
+hand-merging a layout this branch never meant to touch.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -17300,7 +17487,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   own question about invested capital, answered by splitting the shortfall on the
   one line that decides what to ask for — and **D1**, the ask list grouped by the
   document that would close each line.
-- `npm run test:family` runs the derived-figure suites — the family-input
+- `npm run test:family` runs the derived-figure suites — among them
+  **`fifo.test.ts`** (Stage 10bw: the lot engine on constructed events whose
+  LIFO answer differs, the aggregator, and the book against the managers' own
+  since-inception bridges, the fund's cash deposits and the redemption the bank
+  received) — and the family-input
   arithmetic (deal register, household totals, plan columns, market-cap bands),
   the financial-table parser, the cash-flow/calendar reader, the ratio-table
   reader, the account XIRR, the private-market roll-up, the Excel export, the

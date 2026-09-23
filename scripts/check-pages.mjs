@@ -3152,6 +3152,9 @@ const ROUTES = [
   // publish none, so the plain `mandate` walk would assert the absence branch
   // and never see the table. Resolved from the book, like the fund one above.
   ["mandate-funded", () => (FUNDED_MANDATE ? `/mandate/${encodeURIComponent(FUNDED_MANDATE.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
+  // `FIFO_BOOK`. Derived from the book, never typed.
+  ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
    *
@@ -4302,6 +4305,61 @@ const FUNDED_MANDATE = (() => {
     return best ? { accountId: best[0], contributions: best[1] } : null;
   } catch { return null; }
 })();
+
+/**
+ * ── A WHOLE MANDATE'S RETURN IS FIFO'S TOTAL, STRUCK ON ITS CAPITAL ──────────
+ *
+ * *"Everything in the returns part … need to be accounted for using the
+ * methodology of FIFO … the returns that we are showing on the dashboard are
+ * completely off."*
+ *
+ * A mandate row used to read `Σ unrealised ÷ Σ cost of the shares still held`,
+ * which leaves out every gain on a share the manager already sold. Whole, a
+ * mandate needs no matching: whatever the lots, cost held plus cost sold is what
+ * was paid in, so FIFO's total is `(value + withdrawn − contributed) ÷
+ * contributed`. Re-derived here from `glowData.ts` — the account's own
+ * `capital` against its current holdings' values — rather than imported from
+ * `src/lib/fifo.ts`, on the terms `isMandateHeld` is: a check that imports the
+ * helper it is checking agrees with it by construction.
+ *
+ * `worst` is the mandate where the two figures differ MOST, which is the one the
+ * `mandate-fifo` route walks: a page that went back to the survivors-only
+ * figure is widest open there, and the next drop picks its own.
+ */
+const FIFO_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey));
+    const byAccountNo = new Map();
+    let worst = null;
+    for (const a of accounts) {
+      if (a.engagement !== "PMS" || !a.capital || !(a.capital.contributed > 0)) continue;
+      const held = current.filter((p) => p.accountId === a.accountId);
+      if (!held.length) continue;
+      const mv = held.reduce((x, p) => x + p.marketValue, 0);
+      const capitalRet = ((mv + a.capital.withdrawn - a.capital.contributed) / a.capital.contributed) * 100;
+      const costed = held.filter((p) => typeof p.costBasis === "number" && !p.costUnavailable);
+      const cost = costed.reduce((x, p) => x + p.costBasis, 0);
+      const survivors = cost > 0 ? (costed.reduce((x, p) => x + p.marketValue - p.costBasis, 0) / cost) * 100 : null;
+      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors };
+      byAccountNo.set(String(a.accountNo), row);
+      if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
+    }
+    return { byAccountNo, worst };
+  } catch { return null; }
+})();
+
+/** The first signed percentage in a cell, and half of its last printed decimal. */
+const pctIn = (text) => {
+  const m = /([+\u2212-]?)(\d[\d,]*)(?:\.(\d+))?%/.exec(text ?? "");
+  if (!m) return null;
+  const v = Number(`${m[2].replace(/,/g, "")}${m[3] ? `.${m[3]}` : ""}`) * (m[1] === "" || m[1] === "+" ? 1 : -1);
+  return { v, tie: 0.5 * 10 ** -(m[3]?.length ?? 0) + 1e-9 };
+};
 
 const MOCK_INDICES = [
   ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
@@ -13063,6 +13121,25 @@ const INVARIANTS = {
 
   monitor: [
     /**
+     * ── EVERY MANDATE ROW READS ITS FIFO RETURN, ON ITS OWN CAPITAL ──────────
+     *
+     * Struck per row against `FIFO_BOOK`, which re-derives the figure from the
+     * account's capital and its holdings' values. Checked on the ROW's Return
+     * cell, read at its own column, to the precision it prints. Every mandate
+     * the book carries a capital record for must be checked — a table that
+     * silently stopped drawing mandate rows would otherwise pass over nothing.
+     */
+    ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception", (t, ctx) => {
+      if (!FIFO_BOOK) return false;
+      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
+      if (!rows.length) return false;
+      return rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
+        const want = FIFO_BOOK.byAccountNo.get(String(r.accountNo)).capitalRet;
+        const got = pctIn(r.cells?.[COL.ret]);
+        return got !== null && Math.abs(got.v - want) <= got.tie;
+      });
+    }],
+    /**
      * ── AN INVESTED FIGURE CARRIED THROUGH A CLASS SWITCH SAYS SO ────────────
      *
      * *"The user does not believe this data."* Buoyant's row read ₹72.5 Cr, the
@@ -15803,6 +15880,32 @@ const INVARIANTS = {
    * resolved on every run — the worst case for a panel that truncates or blends,
    * and the one where a page drawing "1 payment" over four is visible.
    */
+  /**
+   * ── THE MANDATE PAGE'S RETURN IS FIFO'S, AND IT IS NOT THE OLD FIGURE ──────
+   *
+   * The route is the mandate where the two differ most (`FIFO_BOOK.worst`), so
+   * a tile that went back to unrealised ÷ cost of the survivors fails here by
+   * the widest margin the book offers. Both halves are asserted: the tile equals
+   * the capital-based figure, and it is materially NOT the survivors-only one —
+   * a tile that happened to agree with both would be checking nothing.
+   */
+  "mandate-fifo": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the Return · FIFO tile is the mandate's own capital return", (t) => {
+      const w = FIFO_BOOK?.worst;
+      if (!w) return false;
+      const m = /RETURN · FIFO\s+([+\u2212-]?\d[\d,]*(?:\.\d+)?%)/i.exec(t);
+      const got = m ? pctIn(m[1]) : null;
+      return got !== null && Math.abs(got.v - w.capitalRet) <= got.tie;
+    }],
+    ["…and the survivors-only figure it replaced is materially different (load-bearing)", () => {
+      const w = FIFO_BOOK?.worst;
+      return !!w && w.survivors !== null && Math.abs(w.capitalRet - w.survivors) > 1;
+    }],
+    ["the tile names what it is struck over — capital paid in since inception", (t) =>
+      /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
+  ],
   "mandate-funded": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
