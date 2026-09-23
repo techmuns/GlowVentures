@@ -17088,9 +17088,9 @@ and the picker says so.
 
 #### The verification
 
-`build` · `tsc` · `test:ingest` (every suite, #75's two new ones included) ·
+`build` · `tsc` · `test:ingest` (every suite, #75's and #72's new ones included) ·
 `test:family` (a new `tileSets.test.ts`, 48 checks) · `check:family` **86/0** ·
-`check:pages` **212 combinations clean** on the twice-merged tree, with eight
+`check:pages` **216 combinations clean** on the thrice-merged tree, with eight
 evidenced abstentions across four PRE-EXISTING claims — every KPI tile on this
 book carries a figure (four Morning CIO routes), no row on `stock-qty` carries a
 pledge, every private holding reports a cost (two routes), and the not-found
@@ -17098,7 +17098,7 @@ drill-down points at nothing on Morning CIO by design. **None of them is this
 change's**: the one it briefly added — the crumb on the retired `?of=invested`
 address — was turned into an assertion against the address it now resolves to.
 The count is measured on the merged tree and was never adjusted: this branch's
-own runs read 202 and 206 against bases that have since moved.
+own runs read 202, 206 and 212 against bases that have since moved.
 
 #### The bug pass, and the harness that runs it
 
@@ -17143,8 +17143,20 @@ did Stage 10bv (#75) — while the verification sweep for THAT merge was running
 and it took the letter this section had been written under. The letter check was
 re-run against main's tip immediately before this last merge rather than trusted
 from the first one, which is the only reason the collision was caught before it
-landed rather than after; this section is **10bx**, and its four references moved
-before the merge, so none of main's could be caught by the rename. The `ctx` literal conflicted on one line and was resolved as
+landed rather than after. **And then Stage 10bw (#72) landed during THAT merge's
+sweep and took the next letter too** — three collisions in one branch. This section
+is **10bx**; its references were renamed inside this branch's own conflict hunks
+and at the one line outside them, and each of main's `10bw` lines was left alone.
+
+**#72 BROUGHT THE ONE CONFLICT NO TEXT MERGE COULD SEE.** Its new search index
+(`src/lib/searchIndex.ts`) linked *Capital invested* and *Holdings with no cost
+reported* to `drilldownHref("invested")` — the scope this branch retired. Git
+merged the file cleanly; `tsc` refused it (`"invested"` is no longer a
+`DrilldownId`), which is the type doing exactly what deleting the id rather than
+hiding it was for. Both entries now open the value page's own cost facets, so the
+search box and the KPI tile land on one page. Two per-route walk blocks inserted at
+one spot shared a closing brace and each got its own; the `ctx` literal is a union
+again (main's `pmReturn`, 87 keys). The `ctx` literal conflicted on one line and was resolved as
 a union — main's `absentName` beside this branch's `tileSaved` and
 `hbCostShares`, 85 keys, none duplicated, each confirmed declared. `HoldingsBehind.tsx`
 auto-merged and was read rather than trusted: main added the `AbsentFromBook`
