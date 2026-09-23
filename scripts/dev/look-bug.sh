@@ -123,7 +123,7 @@ run_case 8 dark "every card carries a hard offset in the dark theme" \
 # wider in the fallback face this sweep draws in, and on the Buoyant page that
 # pushed Basis 14px behind a sideways scroll until the Managed-by sub-line was
 # allowed to give up the width. Since the position page became tabs (Stage
-# 10ci) the Basis column is gone and the cell carries a width cap of its own, so
+# 10ck) the Basis column is gone and the cell carries a width cap of its own, so
 # the anchor is that cell as the tabbed page writes it, and the case also walks
 # the holding every mandate carries — its account table prints V.E.C's long
 # strategy name, the case the cell's own comment names.
