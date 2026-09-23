@@ -15748,12 +15748,13 @@ twice.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + **42** + **44** + 30 + 22 +
 140 (2 not checked, 0 blocked) · `test:family` (two new suites, `carriedCost`
-and `txnAxis`) · `check:family` **85/0** · `check:pages` **194 combinations
+and `txnAxis`) · `check:family` **86/0** · `check:pages` **198 combinations
 clean**, with the same eight evidenced abstentions across the same four
-pre-existing claims — measured on the tree merged with #69, which is the only
-base that count is a fact about. `npm run build-book` regenerates `glowData.ts`
-and `docs/BOOK-REPORT.md` byte-identically on the merged tree, and
-`npm run replay:flows -- --check` is a no-op.
+pre-existing claims — measured on the tree merged with #69 AND #71, which is the
+only base that count is a fact about (it read 194 on the tree merged with #69
+alone; #71 adds its own routes, and the difference is theirs). `npm run
+build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically
+on the merged tree, and `npm run replay:flows -- --check` is a no-op.
 
 **AND THE LETTER COLLIDED TWICE WHILE THIS BRANCH WAS OPEN.** It was written
 as `10br`; #69 merged under that letter, so it became `10bs`; #71 then merged
