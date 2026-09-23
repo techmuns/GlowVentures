@@ -1,5 +1,5 @@
 // THE PRIVATE MARKET BOOK AS ONE TABLE — every fund, every folio behind it,
-// and the capital account each folio sends, in three sections.
+// and the capital account each folio sends, in two sections.
 //
 //   *"Why are these two tables separate they need to be in one master table
 //    itself … make one consolidated structured table instead of breaking it
@@ -26,7 +26,7 @@
 // The two groupings share every column, so switching between them changes which
 // rows are drawn and never what a column means.
 //
-// ── THE THREE SECTIONS, AND WHY TWO OF THEM START CLOSED ───────────────────
+// ── THE TWO SECTIONS, AND WHY THE SECOND STARTS CLOSED ─────────────────────
 //
 //   private    the private side of the book with a value — open.
 //   unvalued   private accounts whose statement carries NO value: a fund that
@@ -34,15 +34,19 @@
 //              nil. *"If this is missing data this needs to be like a hidden
 //              drop down clearly marked."* Their capital figures are real and
 //              are in the capital totals; their value is absent, never ₹0.
-//   elsewhere  the CAPITAL ACCOUNTS of AIFs the statements place on the LISTED
-//              side (Category III) or on neither side. Not private market — the
-//              family said so of Sanshi, Buoyant and Carnelian — and in no
-//              private total. Only their capital accounts are here, closed,
-//              because a drawdown structure is how an account funds itself and
-//              the capital totals count every one; their HOLDINGS are listed
-//              exposure and are not carried at all — *"Remove this, please.
-//              This is not relevant. These kind of placeholders are not
-//              relevant"*, said of the card that listed them with their values.
+//
+// ── AND THERE IS NO THIRD, BECAUSE THE FAMILY PLACED THEIR FUNDS ───────────
+//
+// This table carried a third section — the capital accounts of AIFs that are
+// NOT private market, closed and marked, so the capital columns would add to
+// every capital account in the book. The family then classified all fifteen
+// capital accounts themselves (Stage 10bw): *"Your dashboard should NOT
+// classify these 15 capital accounts as 'private-market funds'"*, and *"private
+// market fund needs to be here in private market only"*. A section of
+// public-market funds on a private-market page is exactly what that rules out,
+// however it is marked. So the page reads only the capital accounts
+// `capitalScope` places on the private side, and the ones it leaves out are
+// NAMED on the page in one clause — never counted, never dropped silently.
 //
 // ── THE TWO BASES, AND THE ONE PLACE THEY MEET ─────────────────────────────
 //
@@ -59,18 +63,18 @@
 // book's commitment register counts every one. Where a holding is counted once
 // but its two capital accounts are both counted, the fund row says so.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass, isUnplacedSide } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import { COST_COVERAGE_MIN, unvaluedAccounts, type UnvaluedKind } from "./privateMarket";
 import type { SchemeCall } from "./capitalCalls";
 
-export type BookSectionId = "private" | "unvalued" | "elsewhere";
+export type BookSectionId = "private" | "unvalued";
 export type BookGrouping = "fund" | "owner";
 /** Why a folio carries (or does not carry) a value. */
 export type FolioStatus = "valued" | UnvaluedKind;
 
-export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "unvalued", "elsewhere"];
+export const BOOK_SECTIONS: readonly BookSectionId[] = ["private", "unvalued"];
 
 /** One account's view of one fund — the atom every row of the table is built from. */
 export type BookFolio = {
@@ -189,10 +193,13 @@ export type BookSection = BookFigures & {
 export type PrivateBook = {
   grouping: BookGrouping;
   sections: Record<BookSectionId, BookSection>;
-  /** The private side — sections `private` and `unvalued` — on the consolidated basis. */
+  /**
+   * The whole table — both sections — on the consolidated basis. Its capital
+   * columns are every capital account on the page, which is what the capital
+   * tiles add to: there is no capital account on this page outside the two
+   * sections, so one total carries both.
+   */
   privateTotal: BookFigures;
-  /** Every capital account on the page, all three sections. What the capital tiles add to. */
-  allCapital: BookFigures;
   /** The consolidated private value — the denominator of every Weight cell. */
   privateValue: number;
   /** Every folio, in no particular order. */
@@ -210,14 +217,14 @@ function accountCategory(a: Account | undefined): string | null {
 }
 
 /**
- * WHICH SIDE-OF-THE-BOOK SECTION A POSITION SITS IN, or null if it is on none of
- * this table's three. `elsewhere` is exactly what `pageScopeNote` names: an AIF
- * on the listed side, or a holding no statement places.
+ * WHICH SECTION A HOLDING SITS IN, or null if it is not on this page. Only a
+ * PRIVATE holding is — the generated `marketSide`, which carries the family's
+ * own placing of each fund before the SEBI category (Stage 10bw). A holding on
+ * the listed side, or one nothing places, is on the Portfolio Monitor and the
+ * sides line under this table says what the rest of the book is worth.
  */
 function sectionOf(p: Position): BookSectionId | null {
-  if (isPrivateClass(p)) return "private";
-  if ((p.assetClass === "AIF" && p.marketSide === "listed") || isUnplacedSide(p)) return "elsewhere";
-  return null;
+  return isPrivateClass(p) ? "private" : null;
 }
 
 /**
@@ -226,9 +233,11 @@ function sectionOf(p: Position): BookSectionId | null {
  * `positions` are the CURRENT holdings the page draws (closed rows and specks
  * already out); `allPositions` is the whole book, which is what decides whether
  * an account holds nothing at all — the question `unvaluedAccounts` asks.
+ * `commitments` are the capital accounts ON THIS PAGE — `capitalScope`'s
+ * `onPage`, the private-market funds' — and `schemes` are read off the same set.
  *
  * A capital account lands on exactly one folio. Measured on this book every one
- * of the 15 attaches to a folio its own account already carries; one that
+ * of the 11 attaches to a folio its own account already carries; one that
  * cannot is not dropped — it becomes a folio of its own in `unvalued`, with the
  * account's own reason, because a commitment nobody can see is the defect this
  * page was built to end.
@@ -286,8 +295,10 @@ export function bookFolios(args: {
 
   // THE ACCOUNTS NOTHING VALUES. Their fund is named from their own paperwork —
   // the capital account's name, then the account's strategy, then its provider —
-  // and never matched against a holding elsewhere by name.
-  for (const u of unvaluedAccounts(accounts, allPositions, commitments)) {
+  // and never matched against a holding elsewhere by name. PRIVATE-MARKET FUNDS
+  // ONLY, by the same rule as the capital register (Stage 10bw): Motilal Oswal's
+  // Hedged Equity strategy is an AIF holding nothing too, and it is not one.
+  for (const u of unvaluedAccounts(accounts, allPositions, commitments).filter((x) => x.side === "private")) {
     const a = u.account;
     const c = commitmentOf.get(a.accountId);
     const name = c?.name || a.strategy || a.provider;
@@ -302,22 +313,7 @@ export function bookFolios(args: {
     out.push(unvaluedFolio(a, s.fund, "other",
       a?.noPositionsReason ?? "this capital account's statement carries no current holding", s, accIdx, s));
   }
-  /**
-   * NOT PRIVATE MARKET: ITS CAPITAL ACCOUNT AND NOTHING ELSE.
-   *
-   * An AIF on the listed side (or on neither) is here only because its capital
-   * account counts in the capital totals — so a folio with no capital account
-   * has no reason to be here and is dropped, and one with a capital account
-   * keeps that account and LOSES its holding. Carried, its value would be a
-   * figure about a fund this page does not cover, which is the card the family
-   * asked to be rid of; nulled here, no band, total or cell downstream can print
-   * it by accident, because it is not in the model at all.
-   */
-  return out
-    .filter((f) => f.section !== "elsewhere" || f.capital != null)
-    .map((f) => (f.section !== "elsewhere" ? f : {
-      ...f, position: null, units: null, cost: null, value: null, pnl: null, counted: false,
-    }));
+  return out;
 }
 
 function unvaluedFolio(
@@ -423,8 +419,8 @@ const byValueThenPaid = (a: { value: number | null; paid: number | null; committ
   (b.value ?? -1) - (a.value ?? -1) || (b.paid ?? -1) - (a.paid ?? -1) || (b.committed ?? -1) - (a.committed ?? -1);
 
 /**
- * THE TABLE: three sections of rows, grouped by fund or by family member, and the
- * two totals every capital figure on the page ties to.
+ * THE TABLE: two sections of rows, grouped by fund or by family member, and the
+ * one total every figure on the page ties to.
  */
 export function privateBook(folios: BookFolio[], grouping: BookGrouping): PrivateBook {
   const privateValue = figuresOf(folios.filter((f) => f.section === "private"), true).value ?? 0;
@@ -468,12 +464,10 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
       overlap: grouping === "owner" ? overlapOf(mine) : null,
     };
   }
-  const privateSide = folios.filter((f) => f.section !== "elsewhere");
   return {
     grouping,
     sections,
-    privateTotal: figuresOf(privateSide, true),
-    allCapital: figuresOf(folios, true),
+    privateTotal: figuresOf(folios, true),
     privateValue,
     folios,
   };

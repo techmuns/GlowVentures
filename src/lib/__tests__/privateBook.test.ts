@@ -11,8 +11,9 @@
 // perfectly when it is wrong:
 //
 //   · the private total is the book's private side, to the rupee;
-//   · the capital columns are the whole commitment register, never deduped,
-//     each capital account on exactly one folio;
+//   · the capital columns are the PRIVATE-MARKET funds' capital accounts —
+//     `capitalScope`'s, the family's own placing (Stage 10bw) — never deduped,
+//     each on exactly one folio, and not one public-market account among them;
 //   · a fund row counts each holding once and its folios add to MORE by the
 //     book's double count — the "Counted once" line — while a member row is
 //     on the printed basis and the section's line takes it back;
@@ -30,7 +31,7 @@ import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_COMMITMENTS, BOOK_SUMMARY } from "@
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { sum, currentHoldings, dedupedPositions } from "@/lib/analytics";
-import { privateScope, unvaluedAccounts } from "@/lib/privateMarket";
+import { privateScope, unvaluedAccounts, capitalScope } from "@/lib/privateMarket";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
 import { bookFolios, privateBook, figuresOf, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import type { SchemeCall } from "@/lib/capitalCalls";
@@ -55,14 +56,17 @@ const near = (name: string, got: number | null | undefined, want: number | null 
 // ── THE PAGE'S OWN INPUTS, BUILT THE WAY THE PAGE BUILDS THEM ───────────────
 const accIdx = accountIndex(BOOK_ACCOUNTS);
 const current = currentHoldings(BOOK_POSITIONS);
+/** The capital accounts ON the page — the private-market funds' — and the ones left out. */
+const cap = capitalScope(BOOK_COMMITMENTS, BOOK_ACCOUNTS);
+const commitments = cap.onPage;
 const schemes = schemeCalls(
-  BOOK_COMMITMENTS,
+  commitments,
   (c) => c.name,
   (c) => (c.ownerId ? ownerDisplayName(c.ownerId) : null),
 );
 const folios = bookFolios({
   positions: current, allPositions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS,
-  commitments: BOOK_COMMITMENTS, accIdx, schemes,
+  commitments, accIdx, schemes,
 });
 const byFund = privateBook(folios, "fund");
 const byOwner = privateBook(folios, "owner");
@@ -89,11 +93,11 @@ console.log("\n── the private total is the book's private side ──");
     byFund.sections.unvalued.value === null && byFund.sections.unvalued.folios > 0);
 }
 
-console.log("\n── the capital columns are the whole register, never deduped ──");
+console.log("\n── the capital columns are the private register, never deduped ──");
 {
   const ct = callTotals(schemes);
-  const all = byFund.allCapital;
-  eq("capital accounts", all.capitalAccounts, BOOK_COMMITMENTS.length);
+  const all = byFund.privateTotal;
+  eq("capital accounts", all.capitalAccounts, commitments.length);
   near("committed", all.committed, ct.committed);
   near("called", all.called, ct.called);
   eq("called covers", all.calledOf, ct.calledOf);
@@ -102,21 +106,24 @@ console.log("\n── the capital columns are the whole register, never deduped 
   near("still to call, summed as printed", all.uncalled, ct.uncalled);
   eq("still to call covers", all.uncalledOf, ct.uncalledOf);
   eq("dated calls", all.calls, ct.callCount);
-  // THE `?? 0` TRAP, stated as the relation it breaks: a figure on every
-  // account would make the coverage the whole register.
-  ok("still-to-call covers fewer accounts than the register holds",
-    all.uncalledOf < all.capitalAccounts, `${all.uncalledOf} of ${all.capitalAccounts}`);
+  // THE `?? 0` TRAP, stated as the relation it breaks: every private capital
+  // account prints an uncalled line on this book, so coverage is ALL of them —
+  // and it must be the count of accounts that PRINT one, never the count of
+  // rows. A `?? 0` would make those two the same number on any book; so the
+  // count is held to the statements themselves.
+  eq("still-to-call covers exactly the accounts that print it",
+    all.uncalledOf, commitments.filter((c) => c.undrawn != null).length);
   // EACH CAPITAL ACCOUNT ON EXACTLY ONE FOLIO — a commitment on two rows is
   // counted twice in every capital total, one on none is missing from them.
   const withCap = folios.filter((f) => f.capital);
-  eq("capital accounts attached to folios", withCap.length, BOOK_COMMITMENTS.length);
+  eq("capital accounts attached to folios", withCap.length, commitments.length);
   eq("…each to one folio", new Set(withCap.map((f) => f.capital!.accountId)).size, withCap.length);
   ok("…and to a folio of its own account", withCap.every((f) => f.capital!.accountId === f.accountId));
   // The same register whichever way the rows are grouped.
-  near("both groupings carry the same committed", byOwner.allCapital.committed, all.committed);
-  near("both groupings carry the same paid in", byOwner.allCapital.paid, all.paid);
+  near("both groupings carry the same committed", byOwner.privateTotal.committed, all.committed);
+  near("both groupings carry the same paid in", byOwner.privateTotal.paid, all.paid);
   // The sections partition the register.
-  near("the three sections' committed add to the register's",
+  near("the two sections' committed add to the register's",
     sum(BOOK_SECTIONS.map((s) => byFund.sections[s].committed ?? 0)), all.committed);
   eq("…and their capital accounts",
     sum(BOOK_SECTIONS.map((s) => byFund.sections[s].capitalAccounts)), all.capitalAccounts);
@@ -161,9 +168,9 @@ console.log("\n── counted once, and where the two bases meet ──");
     byFund.privateTotal.value, sum(scope.rows.map((p) => p.marketValue)) - scope.doubleCounted);
 }
 
-console.log("\n── the three sections ──");
+console.log("\n── the two sections ──");
 {
-  const un = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_COMMITMENTS);
+  const un = unvaluedAccounts(BOOK_ACCOUNTS, BOOK_POSITIONS, commitments).filter((u) => u.side === "private");
   const unFolios = byFund.sections.unvalued.groups.flatMap((g) => g.folios);
   eq("the unvalued section holds every private account nothing values", unFolios.length, un.length);
   ok("…each with no holding and no value",
@@ -172,35 +179,22 @@ console.log("\n── the three sections ──");
   const redeemed = unFolios.filter((f) => f.status === "redeemed");
   eq("redeemed-to-nil folios are named as such, not as missing", redeemed.length,
     un.filter((u) => u.kind === "redeemed").length);
-  // THE OTHER AIFs: ONLY THEIR CAPITAL ACCOUNTS. The family asked for the card
-  // that listed these funds with their values to go (*"These kind of
-  // placeholders are not relevant"*), so a not-private AIF is here only where a
-  // real drawdown capital account keeps it in the capital totals — and even
-  // then it carries that account and NO holding.
-  const elsewhere = byFund.sections.elsewhere.groups.flatMap((g) => g.folios);
-  const notPrivate = (p: (typeof current)[number]) =>
-    (p.assetClass === "AIF" && p.marketSide === "listed") || p.marketSide == null;
-  const capAccounts = new Set(schemes.map((c) => c.accountId));
-  ok("the Other AIFs section holds only capital accounts",
-    elsewhere.length > 0 && elsewhere.every((f) => f.capital != null));
-  ok("…each on an account whose holdings are AIFs on the listed side or on none",
-    elsewhere.every((f) => {
-      const held = current.filter((p) => p.accountId === f.accountId);
-      return held.length > 0 && held.every((p) => p.assetClass === "AIF" && notPrivate(p));
-    }));
-  ok("…and none of them carries a holding, a value, a cost or a unit",
-    elsewhere.every((f) => f.position === null && f.value === null && f.cost === null && f.units === null));
-  // THE LOAD-BEARING HALF: every not-private capital account IS here, so the
-  // capital columns still add to the capital tiles. A rule that dropped the
-  // section outright passes the three checks above and loses three accounts.
-  const wantAccounts = new Set(current.filter((p) => notPrivate(p) && capAccounts.has(p.accountId)).map((p) => p.accountId));
-  eq("…and every not-private account with a capital account is one of them",
-    new Set(elsewhere.map((f) => f.accountId)).size, wantAccounts.size);
-  ok("…which this book does exercise", wantAccounts.size > 0);
-  eq("the capital total still covers every capital account in the book",
-    byFund.allCapital.capitalAccounts, schemes.length);
-  near("…and none of its value is in the private total",
-    byFund.privateTotal.value, byFund.sections.private.value);
+  // THE PUBLIC-MARKET FUNDS' CAPITAL ACCOUNTS ARE ON NO ROW. This table carried
+  // them in a closed section of their own until the family placed each fund
+  // (Stage 10bw): *"private market fund needs to be here in private market
+  // only"*. So not one of `capitalScope`'s left-out accounts may reach a folio —
+  // and the set must be non-empty on this book, or the check asserts nothing.
+  ok("this book has capital accounts in public-market funds — so the check below has a subject",
+    cap.elsewhere.length > 0, `${cap.elsewhere.length}`);
+  const out = new Set(cap.elsewhere.map((x) => x.commitment.accountId));
+  ok("…and not one of them is on any folio of this table",
+    folios.every((f) => !out.has(f.accountId)));
+  ok("…each is on the listed side or on neither, never the private one",
+    cap.elsewhere.every((x) => x.side !== "private"));
+  eq("…and the page's accounts and the left-out ones are the whole register",
+    commitments.length + cap.elsewhere.length, BOOK_COMMITMENTS.length);
+  ok("every folio on the table is a private fund's — its holding on the private side, or an account whose fund is",
+    folios.every((f) => (f.position ? f.position.marketSide === "private" : f.section === "unvalued")));
   // Every current PRIVATE holding lands in exactly one folio with its holding;
   // nothing outside the private side carries one.
   eq("every private statement line is exactly one folio carrying its holding",
@@ -211,7 +205,7 @@ console.log("\n── units never add across funds ──");
 {
   ok("no band or total carries a unit count",
     BOOK_SECTIONS.every((s) => byFund.sections[s].units === null)
-    && byFund.privateTotal.units === null && byFund.allCapital.units === null);
+    && byFund.privateTotal.units === null);
   const multi = byFund.sections.private.groups.filter((g) => g.folios.filter((f) => f.position).length > 1);
   ok("a fund row held in several folios adds their units (counted once)",
     multi.length > 0 && multi.every((g) => g.units != null && g.units > 0));

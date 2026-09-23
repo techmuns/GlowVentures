@@ -226,7 +226,11 @@ cash holding's genuinely-zero return both match, and both are correct.
   fund two ways. Category III trades LISTED securities; Categories I and II are
   private capital; a fund whose own name says private equity or venture is
   private whichever it prints; and a fund printing none is on NEITHER side and is
-  named. See Stage 10bp.
+  named. See Stage 10bp. **The family's own placing outranks all of it** —
+  `FAMILY_MARKET_SIDE`, one committed table of what each fund invests in, in
+  their words (Stage 10bw) — and `fundMarketSideOf` is the fund-level half a
+  CAPITAL ACCOUNT is placed by, so a fund's holding and its capital account
+  cannot land on different sides of the Private Market page.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -319,13 +323,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   cell only, and an italic adjust row such as "Counted once"), and one
   `ExpandAllButton`. The columns, the sort and the drag stay `useTableView`'s,
   so a dragged column moves a parent, its children and the totals together.
-  See Stage 10bw.
+  See Stage 10bx.
 - `src/lib/privateBook.ts` — THE PRIVATE MARKET TABLE'S ONE MODEL. A folio is
   one account's view of one fund; a fund row, a member row and a section band
   are all built from folios, so no two can disagree. Fund rows are
   CONSOLIDATED and folio rows AS PRINTED, with the difference named on an adjust
   row; capital is never deduped; a total sums only what was reported and says
-  how much that covers. See Stage 10bw.
+  how much that covers. See Stage 10bx.
 - `src/lib/nav.ts` — THE ONE NAV TABLE, read by the sidebar AND by every page's
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
@@ -359,6 +363,21 @@ cash holding's genuinely-zero return both match, and both are correct.
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
   says saving is not switched on — never an empty column. See Stage 10bs.
+- `src/lib/fundReturns.ts` — WHICH RETURN A PRIVATE FUND SHOWS, AND WHY. Each
+  fund row's dated record (every call and every payout off its own capital
+  account, over the row's own deduped folios) and `fundMeasuredReturn`, which
+  resolves the Monitor's measures for a fund — HPR, CAGR, XIRR, YTD, CY and the
+  methodology — with a reason that is TRUE of that fund wherever it refuses one.
+  The picker and the one-column-per-measure mechanics are shared with the
+  Monitor (`src/components/ReturnMeasureSelect.tsx`, `src/lib/returnColumns.ts`).
+  See Stage 10bw — and Stage 10bx, where the Private Market master table
+  resolves a FOLIO row through the same function on its one statement.
+- `src/lib/searchIndex.ts` + `src/components/SmartSearch.tsx` — THE SEARCH BOX
+  IN THE TOP BAR. One index over every holding, mandate, account, member, page,
+  tab, category, sector and headline figure the app has, each with the address
+  that opens it; a question goes to Muns. Built from the book on every render
+  and never from a hand-kept list, and the ring-fenced security is in none of
+  it. See Stage 10bw.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -495,9 +514,13 @@ question and named the reversal; the family answered it, and the answer is the
 promoter row is out of this column and out of every total below it. See **The
 ring-fence** section.
 
-**Consolidated ₹710.39 Cr**: listed ₹655.82 Cr, private ₹37.88 Cr, and
-₹16.69 Cr no statement places on either side. The split reads the SEBI category
-the statements print — see `shared/aifCategory.mjs` and Stage 10bp.
+**Consolidated ₹710.39 Cr**: listed ₹699.76 Cr, private ₹10.62 Cr, and
+₹98,742 (Blue Ashva) that nothing places on either side. The split reads the
+family's own placing of a fund first and the SEBI category the statements print
+second — see `shared/aifCategory.mjs`, Stage 10bp and Stage 10bw. *(It was
+listed ₹655.82 Cr · private ₹37.88 Cr · not placed ₹16.69 Cr on the category
+alone; the family then placed Founders and Delphi on the listed side and Neo
+Infra on the private one.)*
 
 **IT HAS BEEN WRONG TWICE, THE SAME WAY.** It was `listedValue: totalValue,
 privateValue: 0` — true when every account was a listed-equity mandate, and false
@@ -3371,7 +3394,10 @@ Bharat Amritkaal) are listed exposure and are not on this page. The page is
 5 deduped rows / 7 raw and ₹37.88 Cr now, the ₹3.17 Cr double count below is
 still all of it, and the funds that left are NAMED on the page with their value
 and where they are shown. The reasoning above is unchanged and is why the axis is
-the HOLDING's and never the account's.
+the HOLDING's and never the account's. *(Since Stage 10bw the family's own
+placing decides first: 4 funds, 4 deduped rows / 6 raw, ₹10.62 Cr — Founders
+left for the listed side and Neo Infra joined. The double count is still all
+₹3.17 Cr of it.)*
 
 **THE WHOLE OF THIS BOOK'S DOUBLE COUNT IS PRIVATE.** Both duplicated holdings —
 360 ONE Special Opportunities under two CRNs, Transition Venture Fund I under
@@ -3721,6 +3747,11 @@ apart).
 *"Replace the top search bar with our muns chat… it should be able to take data
 from the dashboard and answer the client any queries. It should understand the
 context since the dashboard data will be available to it."*
+
+*(A REAL search box stands in that slot since Stage 10bw, with the chat as a
+compact "Ask Muns" button beside it and one keystroke from any search. The chat
+route's check still counts the DEAD box by its old placeholder, which the new one
+does not share.)*
 
 **WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
 box was an `<input>` with no `value`, no `onChange` and no handler, in the most
@@ -14280,7 +14311,9 @@ is the rule `shared/sectors.mjs` applies where its tiers disagree. The review is
 reported as a cross-check and is deliberately NOT a tier: its axis is not a
 total function onto this one (`Debt` maps to neither side) and it has a known
 counterexample, and *a rule with a known counterexample is not a rule this book
-applies to money*.
+applies to money*. *(The family have since SAID where Founders goes — it invests
+in listed Indian equities — and their word outranks the category now; the review
+is still not a tier, and the statement still says Category II. See Stage 10bw.)*
 
 **AND `null` IS A THIRD ANSWER, NEVER A DEFAULT.** Three funds print no category
 (₹16.69 Cr). Filing them private claims they are private capital; filing them
@@ -14292,6 +14325,9 @@ rule stops naming, silently.
 ```
 listed ₹655.82 Cr · private ₹37.88 Cr · not placed ₹16.69 Cr = ₹710.39 Cr
 ```
+
+*(Since Stage 10bw: listed ₹699.76 Cr · private ₹10.62 Cr · not placed ₹98,742 —
+the family placed two of the three uncategorised funds themselves.)*
 
 **`Position.marketSide` IS GENERATED, on every row including the ring-fenced
 one.** The answer needs the ACCOUNT's own `providerEngagement` as well as the
@@ -15472,7 +15508,7 @@ card and not in the table — and a call cannot be entered against them. Adding
 them as rows would put unvalued funds into a table whose footer sums market
 value, which is a decision for the family rather than this change.
 
-***CLOSED AT Stage 10bw.*** The fund table became the page's one master table,
+***CLOSED AT Stage 10bx.*** The fund table became the page's one master table,
 which already carried those funds as rows — in a closed "Not valued" section
 whose value cells are absent rather than summed, so nothing is added to a
 market value. Every fund-level row now carries a Capital call cell, and a fund
@@ -16357,7 +16393,534 @@ one sat in different parts of the file, so git merged the pair cleanly and left
 two `### Stage 10bu` headings — the silent case Stage 10bl names, caught only
 because the letters were compared by hand after a merge that reported nothing.
 
-### Stage 10bw — PRIVATE MARKET IS ONE TABLE, AND THE STANDARD EVERY OTHER TABLE ADOPTS
+### Stage 10bw — WHICH RETURN A FUND SHOWS, WHICH FUNDS ARE PRIVATE, AND A SEARCH BOX THAT GOES WHERE YOU MEAN
+
+*"Just like you have this return methodology in portfolio monitor we need to
+have it in private market table as well. The customer is confused about what
+kind of return this is that we're showing in the private market table."* ·
+*"Also please note private market fund needs to be here in private market
+only"* — sent with the family's own classification of all fifteen capital
+accounts: *"Your dashboard should NOT classify these 15 capital accounts as
+'private-market funds.'"* · *"this whole thing needs to be a very smart search
+bar which takes me to exactly where i want to go when i type the data in this …
+any equity, any fund, any position that I have taken, any tab, etc. … think as
+the customer: what all they can type."*
+
+Three asks. The second changed what the first is measured over, so it goes
+first.
+
+#### 1. The family placed their funds, and their word outranks the category
+
+The side of the book an AIF sits on was read off the SEBI category its statement
+prints (Stage 10bp). **The family have now said, fund by fund, what each one
+INVESTS IN** — and one of their answers contradicts the category: Motilal Oswal's
+Founders Fund prints Category II, the category this book treats as private
+capital, and invests in listed Indian equities. Their reasoning is the book's own,
+word for word — *"a capital-call/drawdown structure tells you how the investor
+funds the vehicle; it does not tell you whether the fund invests in private or
+public assets"* — which is exactly why a public-market fund does not belong on a
+private-market page.
+
+**`FAMILY_MARKET_SIDE` in `shared/aifCategory.mjs` is that answer, committed.**
+Ten entries: India SME, Baring, Transition Venture, Neo Infra and Sky Capital
+private; Carnelian Bharat Amritkaal, Delphi and Founders listed; Sanshi and
+Buoyant listed on the family's earlier instruction (Stage 10bp), recorded so a
+future statement that stops printing CAT-III cannot quietly move them. It has the
+ring-fence's standing — a decision about the family's affairs, applied where the
+side is GENERATED, reversible by deleting a line — and each entry says what the
+fund invests in and when they said it. **Matched on the fund's own whole name,
+never a similarity**: `Delphi Equity Fund` cannot reach another Motilal Oswal
+scheme, and `marketSide.test.ts` asserts no two entries match one fund.
+
+The order is now: **the family's placing → a fund whose own paperwork names
+private equity or venture → the SEBI category → neither**, and
+`fundMarketSideBasis` returns the reason with the side, because "Category III"
+and "the family classify it as investing in listed equity" are different
+evidence. Measured, `BOOK_SUMMARY.totalValue` does not move by a rupee and the
+split does:
+
+| | before | now |
+| --- | ---: | ---: |
+| listed | ₹655.82 Cr | **₹699.76 Cr** — Founders ×2 (₹32.82 Cr) and Delphi (₹11.13 Cr) join |
+| private | ₹37.88 Cr | **₹10.62 Cr** — Founders leaves, Neo Infra (₹5.55 Cr) joins |
+| not placed | ₹16.69 Cr | **₹98,742** — Blue Ashva alone |
+
+**Blue Ashva is still on neither side, and that is still the honest answer**: no
+statement prints its category and the family's list does not name it.
+`MARKET_SIDE_UNPLACED` now says BOTH sources are silent, because "no statement
+prints a category" sends a reader to chase a registration when the quicker answer
+is one line from the family.
+
+#### …and the capital accounts follow the fund, not the drawdown structure
+
+The Private Market page read the capital-account register WHOLE, on the same
+reasoning the family used — and it is why the whole register does not belong
+there. `capitalScope` places each account through the SAME `fundMarketSideOf`
+that places its holding, so a fund's holding and its capital account cannot land
+on different sides of the page (`marketSide.test.ts` asserts it on every account
+whose fund also reports a holding):
+
+| | accounts | committed | called | paid in | still to call |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| the whole register | 15 | ₹97.73 Cr | ₹71.75 Cr on 14 | ₹81.75 Cr on 15 | ₹15.97 Cr on 13 |
+| **on Private Market** | **11** | **₹42.73 Cr** | ₹26.75 Cr on 11 | ₹26.75 Cr on 11 | **₹15.97 Cr on 11** |
+| left out — public-market funds | 4 | ₹55.00 Cr | | ₹55.00 Cr | ₹0 on 2 |
+
+**The whole of the uncalled balance is private**, so the figure the client once
+questioned does not move; what moved is that it now covers 11 of 11 accounts
+rather than 13 of 15.
+
+**AND ONE WARNING BECAME FALSE, SO IT IS NOW CONDITIONAL.** On the whole register
+Called and Paid in covered different accounts — Delphi prints a contribution and
+no called line — and the page had to say they must not be subtracted. Delphi is a
+public-market fund; on the scoped register every account prints both, the two
+cover one set, and a warning about a valid subtraction would be a false claim.
+`calledPaidSameSet` is measured PER ACCOUNT, and `check:pages` asserts the
+warning in BOTH directions, in both places it can print — the Called tile's hover
+and the working line under the scheme table.
+
+**THE LEFT-OUT ACCOUNTS ARE NAMED IN ONE CLAUSE, NOT A CARD.** The family had
+just asked for the card about funds this page does not carry to go (Stage 10bs),
+and a commitment they signed must still not vanish without a word. So the working
+line under the scheme table says *"4 more capital accounts belong to
+public-market funds — Carnelian Bharat Amritkaal Fund, Motilal Oswal Delphi
+Equity Fund, Motilal Oswal Founders Fund, ₹55 Cr committed — and are counted
+nowhere on this page: the family class those funds as investing in listed
+equity, and their holdings are in the Portfolio Monitor's AIF section."* Every
+clause of that sentence is CONDITIONED on being true of the accounts in it rather
+than of this book's four — "public-market" only where every one is on the listed
+side, "the family class" only where it was their word that placed each, "their
+holdings are in the Monitor" only where each holds a valued row. The tiles'
+hovers carry the count too.
+
+**THREE MORE SURFACES FOLLOW THE SAME RULE, and each would otherwise disagree
+with the page it opens:** Morning CIO's Capital deployment card and the two tiles
+that read it (a tile counting ₹55 Cr the page it opens does not carry is the
+disagreement `drilldown.ts` exists to prevent); `privateScope`'s accounts holding
+nothing, which quietly counted 3P's folio (Category III, every class redeemed)
+and Motilal Oswal's Hedged Equity strategy (redeemed, no category) as private
+accounts; and the never-valued card, filtered to private funds for the same
+reason.
+
+#### 2. The Private Market fund table shows the return it names
+
+The table printed one "Return" column — value against cost, un-annualised — with
+nothing on screen saying so, which is what confused the customer. It carries the
+Monitor's picker now, in `?ret=` like every other view, with one column per
+ticked measure headed with its own name. **The picker and the column mechanics
+are SHARED** (`ReturnMeasureSelect`, `returnColumns.ts`, extracted from the
+Monitor), so the two tables cannot offer different measures or label them
+differently.
+
+**HOW A FUND RESOLVES A MEASURE IS NOT SHARED, because the Monitor's reasons are
+false of a fund.** "The statements cover the current period only, so no
+per-holding XIRR can be struck" is true of a share in a demat and FALSE of a
+drawdown fund, whose capital account prints every dated call since its first.
+`fundMeasuredReturn` in `src/lib/fundReturns.ts` resolves on the fund's OWN dated
+record — built over the row's own deduped folios, because the row's value counts
+each `dedupeGroup` once and its calls must come from the same folios (Transition
+Venture's two trusts would otherwise double the calls against one value).
+
+**THE FAMILY'S RULE, APPLIED TO A FUND:** a fund paid in several calls, or one
+that has paid cash back, is XIRR; one call and nothing back is the equity rule —
+HPR under a year, CAGR from a year. Nothing under a year is ever compounded onto
+one (Stage 10g(ii)). Measured on the four private funds:
+
+| Fund | Methodology | HPR | Why |
+| --- | --- | ---: | --- |
+| Neo Infra Income Opportunities | **XIRR +16.68%** | +11.00% | 6 calls since Oct 2023; ₹51.04 L paid back by the valuation |
+| Baring Private Equity India Fund 6 | **XIRR −6.42%** | −6.95% | 4 calls; ₹0.56 L paid back |
+| Transition Venture Capital Fund I | **HPR +128.61%** | +128.61% | one call, 165 days before the valuation — never annualised |
+| 360 ONE Special Opportunities | **HPR +48.67%** | +48.67% | no capital account in the book, so no dated record |
+
+**HPR MEANS THE SAME FIGURE HERE AS ON THE MONITOR** — value against cost — and
+where a fund has paid cash back its cell SAYS the payouts are not in it and names
+the column that counts them. One label meaning two figures on two pages is the
+failure this book keeps paying for. YTD and CY are absent on every fund with the
+reason (no statement values any of them on 1 January or at a year end), and the
+360 ONE fund's CAGR and XIRR name ITS gap rather than a generic one.
+
+**THE FOOTER HAS TWO RETURNS, NOT FIVE**: the whole private book's return on
+cost under HPR and the methodology, and a POOLED money-weighted rate under XIRR —
+**+21.12% across 3 of the 4 funds**, each folio closing on its own valuation date,
+over 1,000 days, with the fund left out named in the cell's hover. CAGR, YTD and
+CY have no book-level meaning and say why.
+
+#### …and it needed the half of the flows nothing had read
+
+A money-weighted return is every cash flow at the date it happened, and the calls
+are only half of them. **Neo Infra had paid the family ₹35.32 L of income and
+₹14.16 L of principal, plus ₹8.69 L of equalisation, every row DATED on its
+statement — and nothing read them.** An XIRR struck on the calls alone reports
+that cash as a loss and looks exactly like a correct one; the suite asserts the
+rate WITH payouts exceeds the rate without, so it cannot pass by leaving them out.
+
+`altFundStatements.mjs` and `transitionVenture.mjs` read them now, on the same
+licence as the calls (Stage 10ay): **a payout table is published only where each
+kind reproduces its own printed total** — income against Income Payout (Gross),
+principal against Principal Payout, equalisation against Net Equalisation, and
+the grid's own Total Payout must be the first two added before any row is
+checked. A row whose own gross − TDS ≠ net is a misread and refuses the whole
+table; anything short of the licence is `null`, NEVER `[]`, because an empty list
+says the fund paid nothing. Measured: Neo Infra 33 rows, Baring 2, both
+Transition Venture trusts a measured nil, India SME and Sky Capital `null`.
+`payouts.test.mjs` breaks a synthetic statement one figure at a time.
+
+Three details worth keeping:
+
+- **Neo Infra's smallest rows print their three figures run together**
+  (`54555490` is gross 545, TDS 55, net 490). `splitRunTogetherTriple` splits
+  only where EXACTLY ONE cut satisfies gross − TDS = net, and even then the
+  printed income total must license it.
+- **GROSS IS THE AMOUNT.** The funds value themselves pre-tax, so the cash
+  leaving them is counted on the same basis; TDS is the family's own tax, credited
+  back to them.
+- **A payout dated after the valuation is INSIDE that value**, so it is not
+  counted again (₹7.14 L of Neo Infra's 9 July distribution against a 30 June
+  mark) — decided where the return is struck, never by dropping the row.
+
+**AND BARING'S "NO DISTRIBUTION LINE" WAS FALSE.** Its statement prints
+`Less: Distribution (E)`; the reader never captured it, and the page said the
+fund printed none. `distributionOf` reads it where the payout reader reconciled
+it, so the Distributions tile covers 4 of the 11 accounts (₹0.50 Cr).
+Equalisation is NOT a distribution — the statements print it apart — so it is in
+the XIRR and not in that total.
+
+`npm run replay:calls` replays the payouts too, so this landed without
+`GLOW_PDF_PASSWORDS`; `--check` is a no-op on the committed tree.
+
+#### 3. The search box
+
+*"any equity, any fund, any position that I have taken, any tab … think as the
+customer: what all they can type."* The top bar's slot held a button that opened
+the Muns chat. It is a search over everything the book and the app carry now,
+and Muns is still one keystroke away.
+
+**ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 329
+entries on this book, each with the address that opens it:
+
+| Kind | | Opens |
+| --- | ---: | --- |
+| holding | 207 | its own `/stock/` page — or, if redeemed, the transactions where the money went |
+| account | 41 | the one holding it carries, or its owner's entity |
+| mandate | 10 | `/mandate/:accountId` |
+| member | 6 | `/family?entity=` |
+| page | 12 | every nav entry, with the words a reader would type for it |
+| view | 14 | a TAB — Transactions, the security axis, Morning CIO's panels, the NAV movers, Sector Composition's and Polycab's own tabs |
+| category · basket · asset class | 19 | that section's holdings drill-down |
+| sector | 10 | the Monitor's security axis narrowed to it |
+| figure | 10 | the page that shows AND explains it — uncalled capital, dry powder, the XIRR |
+
+**IT IS FOUND BY ANY IDENTIFIER A READER HAS IN FRONT OF THEM** — a name, a
+first word, an ISIN, an NSE symbol, an account number off a statement — and a
+typo within one edit on a word of four letters or more. Identifiers outrank
+names; a query that reads as a QUESTION puts "Ask Muns" first and hands the
+question over as typed, and every other query puts it last. `/` and Ctrl/⌘+K
+focus the box from anywhere, the arrows move, Enter opens, Esc clears. The empty
+box offers the reader's recent picks (per browser, like the nav's width) and six
+starting points.
+
+**`?show=transactions` IS NEW ON THE PORTFOLIO MONITOR** — the tab was component
+state, so a search result could not open it. It is an address now, which also
+makes it a link.
+
+**THE RING-FENCE HOLDS IN THE SEARCH.** The index is built from positions the
+promoter block was spliced out of at the book layer, so "polycab" finds the
+Polycab PAGE the nav already carries first, then that page's own two other tabs,
+and nothing else — asserted in the suite on keys and ISIN, and on the rendered
+page: every row must open the Polycab page itself, and a row opening anywhere
+else is the leak.
+
+**A SECOND LINE ON EVERY RESULT, DERIVED FROM THE BOOK**: a holding's value and
+its share of the book through the same `fmtFromBase` every page uses, so a result
+never states a figure in a different currency or on a different basis from the
+page it opens; a redeemed holding says so instead.
+
+**Kusumgarcorpo's search, which the family pointed at, could not be read from
+this session** — the repository was not reachable — so nothing here is copied
+from it.
+
+#### The checks, and what reintroducing the bugs found
+
+`test:family` gained `fundReturns.test.ts` (the record over deduped folios, the
+payouts on the right side of the valuation, XIRR above the calls-only rate, the
+annualisation guard, the refusals naming the true gap) and `searchIndex.test.ts`
+(every holding, ISIN, account number, member and nav label reaches its own
+address first and every unique NSE symbol within the top two; the ring-fence; no
+`undefined`, `NaN` or `null` in any address). `marketSide.test.ts` holds the family's placing to the book, entry by
+entry, and asserts a fund's holding and its capital account agree — as a COUNT with a floor on the pairs compared, because its first draft ended on a summary `ok(…, true)` that could not fail.
+`check:pages` gained `private-market-returns` (every concrete measure ticked) and
+`search` (types what a reader would and reads each row's own attributes, never
+its prose), and `CAPITAL_BOOK` / `SIDE_BOOK` re-express the family's placing off
+`glowData.ts` rather than importing the helper.
+
+**Fourteen bugs were put back one at a time**, restored by copy on a trap and
+rebuilt on the way out. Thirteen fire their own check: the XIRR dropping the
+payouts (4, including the rate against its independent bisection), the
+methodology always picking HPR, the cells untagged (6), the capital register
+unscoped (9), Morning CIO counting the whole register, the header counts
+including guarded cells, and seven search bugs — the `/` shortcut dead, Ask Muns
+always first (10), identifiers ignored, pages missing from the index, the list
+clipped under the page, Enter dead, the second line dropped.
+
+**The fourteenth is unreachable on this book and is recorded rather than tested
+for**: pooling every fund whose record has no GAP, rather than every fund whose
+record is complete, changes nothing here — the only fund with an unknown payout
+record is 360 ONE, which also has no capital account. The first drop bringing a
+fund with calls and an unreconciled payout table makes it reachable.
+
+**AND THE SEARCH WALK HAD TWO DEFECTS OF ITS OWN**, found by the same pass: a
+dead Enter left the page where it was and the walk then went BACK from there,
+off the route — so every generic check on it was struck on the page before, and
+a dead key read as a broken crumb. It goes back only if Enter went somewhere now.
+And a missing box abstained ("the walk did not run") where it must fail: these
+checks run only on the route that walks, so a null walk means the box was not
+there.
+
+#### Merged with main, and the letter collided for the fourteenth time
+
+**#71 landed while this branch was open and took `10bs`**, which this section
+held; main keeps it and this section moved to `10bt` — and, three merges later, to
+`10bw` (see the subsections below). Three code references moved with it
+(`fundReturns.ts`, `privateMarket.ts`, `replay-capital-calls.mjs`); main's own
+`10bs` references are all in this file and were left alone.
+
+**AND IT CHANGED THE SAME PAGE IN THE SAME PLACES.** Nine conflicts in
+`PrivateMarket.tsx`, three in `privateMarket.ts`, five in `check-pages.mjs`:
+
+- **the tiles** — main made each a label, a figure and one short line, with the
+  coverage in the hover; this branch had rewritten the same captions for the
+  scoped register. Main's form won and this branch's figures went into it.
+- **"Funds this page does not carry"** — this branch had given the card each
+  fund's REASON and a list of the public-market capital accounts; main REMOVED
+  it at the family's request. The removal won, `pageScopeNote` went back to its
+  two fields, and the ₹55 Cr of public-market commitments became the one clause
+  above, with its own handle (`data-pm-cap-elsewhere`) and its own check — the
+  card's `data-pm-elsewhere` handles are still asserted absent.
+- **the capital-call timeline** — main replaced it with the editable Capital call
+  column; this branch's `callWindows` read went with it. The column and the
+  return columns sit in one `FUND_COLS`, `return` expanding to one column per
+  measure and `call` last.
+- **the checks** — main reads each tile off `tileStrip.texts` / `details`; this
+  branch anchored the counts on the BOOK. Both were kept: every capital-account
+  check reads the tile where main put it and compares it with `CAPITAL_BOOK`.
+
+`build` · `tsc` · `test:ingest` (a new `payouts.test.mjs`, 29 cases) ·
+`test:family` (every suite) · `check:family` **86/0** · `check:pages` **196
+combinations clean, 0 invariant failures** — main's own 192 plus the two routes
+this change adds, across both themes — with the same eight evidenced abstentions
+across the same four pre-existing claims Stage 10bs records and none of this
+change's own. MEASURED ON THE MERGED TREE; this branch's pre-merge count was
+struck against a base that has since moved. `npm run build-book` regenerates
+`glowData.ts` and `docs/BOOK-REPORT.md` **byte-identically** on the merged tree,
+and `npm run replay:calls -- --check` is a no-op.
+
+#### …and again, while it waited: #70 took `10bt`
+
+**#70 — Polycab as one table card, Sector Composition in two halves with
+Compare as a tab — landed while this branch waited for the family's go-ahead,
+and took `10bt`.** Main keeps it and this section moved to `10bu` — and, when
+#73 and then #75 took the next two letters, to **`10bw`** (see the subsections
+below). The two sections sat
+at the same place in the file, so git marked the conflict this time, which is
+the safer of its two failure modes. The stage letters were compared against
+main's tip before anything was committed: the merged file differed from main by
+this section's letter alone, and main's ten historical duplicates were
+unchanged.
+
+**TWENTY LINES NAMED `10bt` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED** — by the section it sits in, or, outside both sections, by which side's
+own copy of this file carries it. None was on both. **Eleven are this branch's**
+and moved: the heading, the merge note above, four pointers in **Layout** and
+the data model, one each under Stages 10m and 10s, two under Stage 10bp, and
+the `replay:calls` note under **Build**. **Nine are main's** and were left
+alone: its own heading, two lines of its own merge note, and six pointers of
+its own in the Polycab and Sector Composition passages. The three code
+references this branch carries (`fundReturns.ts`, `privateMarket.ts`,
+`replay-capital-calls.mjs`) moved with it; main carries none.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND WAS RESOLVED AS A UNION** —
+this branch's `pmReturn` beside main's `sectorLayout` and `shortWindow`. The
+result was then checked rather than trusted: **83 keys, none duplicated, every
+one naming something declared in the file.** Nothing else overlapped: #70
+touches `Polycab.tsx`, `SectorComposition.tsx` and `polycabLive.ts`, which this
+branch does not, and neither side touched a generated book file.
+
+**AND THE MERGE MADE ONE OF THIS BRANCH'S CLAIMS FALSE, WHICH NO CONFLICT
+MARKER COULD SHOW.** The search box promises "any tab" in the family's own
+words, and #70 added tabs: Compare sectors, and Polycab's Corporate actions and
+Promoter group. Sector Composition's Direct Equity tab had been there since
+Stage 10aq and the index had missed it too. All four are views in the index now
+(329 entries, 14 views), so "compare sectors" opens the Compare tab and
+"polycab dividend" opens Polycab's Corporate actions table.
+
+**THAT MOVED THE RING-FENCE CHECK, AND THE CLAIM WAS RESTATED RATHER THAN
+LOOSENED.** "polycab" used to find exactly one result, the Polycab page. It now
+finds the page first and then that page's own two other tabs. Both the suite
+and the page check hold every row to opening the Polycab page itself, with the
+page first and at least one row. A holding, an account or a figure opening
+anywhere else would still fail, and an empty result cannot pass as a fence that
+held. The suite also asserts "direct equity" still opens the Direct Equity
+holdings rather than the new sector tab, because a view that outranked the
+category there would send the most common query to the wrong page.
+
+**FIVE BUGS WERE PUT BACK FOR THE FOUR TABS, AND EACH FIRED ITS OWN CHECK.**
+Four are in the suite: the Compare tab taken out of the index (the Compare
+check); a Polycab tab pointed at the ring-fenced holding's own address (three
+checks — the Polycab dividend query, the no-entry check on the holding's key,
+and the ring-fence); a Polycab tab pointed at another page (the ring-fence);
+and the sector tab renamed and boosted until it outranked the category (the
+Direct Equity check). **Two of those patches did not create their bug the first
+time** — one renamed only the entry's id, so the tab still worked, and one
+renamed only the label, so the category still won by two points — and each was
+rewritten until it did, because a patch that changes nothing gives a clean run
+that proves nothing. The fifth is in the browser: the search navigating with
+the query string dropped, which lands on the right PAGE and the wrong TAB. It
+fired the new *"Enter lands on that page with that tab selected"* check and
+nothing else. The older Enter check opens a holding, whose address has no query
+to lose, so without the new check this bug could not be seen.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, capitalCalls 30, payouts 29, hdfcOwner 22, golden 140 — 2 not checked, 0
+blocked) · `test:family` **34 suites, 1,778 checks, 0 failed** · `check:family`
+**86/0** · `check:pages` **202 combinations clean, 0 invariant failures** —
+main's own 198 plus this change's two routes across both themes — with the same
+eight evidenced abstentions across the same four pre-existing claims and none of
+this change's own. The search route was walked again on its own after the tab
+check was added, and is clean. MEASURED ON THE MERGED TREE: this branch's
+previous figure, 196, was struck against a base #70 has since moved, and 198 + 4
+reconciles only because the sweep was run again. `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` **byte-identically**, and
+`npm run replay:calls -- --check` is a no-op (28 replayed, 0 would change, 0
+refused).
+
+#### …and a third time: #73 took `10bu`, and the collision was the silent kind
+
+**#73 — a search that finds nothing says why — landed while this branch waited,
+and took `10bu`.** This time the two sections sat in DIFFERENT parts of the
+file, so git merged them cleanly: two sections under one letter, no conflict
+marker, no warning. That is the case Stage 10bl records as the dangerous one,
+and it was caught the same way, by comparing main's stage letters against the
+branch's own before committing. Main's keeps `10bu`; this section moved to
+`10bv` — and, when #75 took that too, to **`10bw`** (see the next subsection).
+
+**FIFTEEN LINES NAMED `10bu` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** **Thirteen are this branch's.** Its heading and two lines of its own
+merge notes moved. A third was reworded to name no letter, because it records a
+measurement taken while the letter was `10bu`. Nine pointers moved too: four in
+**Layout** and the data model, one each under Stages 10m and 10s, two under
+Stage 10bp, and the `replay:calls` note under **Build**. **Two are main's**,
+both inside its own section, and stayed. The three code references this branch
+carries moved with it; main's code carries none.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND WAS RESOLVED AS A UNION** —
+this branch's `pmReturn` beside main's `absentName`. **84 keys, none
+duplicated, every one declared in the file.**
+
+**AND #73'S RULE REACHED A SEARCH IT HAD NOT SEEN.** It reads *"an empty search
+result is an absent measurement, and it owes the same sentence"*, and it wired
+three searches. The top-bar search in this branch is a fourth. It answered
+"BSE", "BSE Ltd." and "Bombay Stock Exchange" with *"Nothing in this book or on
+these pages matches"* — the defect #73 fixed, in the box a reader is most likely
+to type it into. It renders `AbsentFromBook` in its empty state now, **and only
+there.** This search is fuzzy where the other three filter by substring, so it
+answers some review names with a holding. "HDFC Balanced Advantage Fund" finds
+both plans the book holds, and a note beside them would deny a fund the book
+carries. Measured over the 36 claimable gaps: **six of their own names find a
+holding here and thirty reach the empty state.** Two of the six find a company
+by near miss (`IFB Inds.`, `Neuland Labs.`), so they were checked rather than
+assumed. The book's IFB and Neuland are SVAN's. The review's lines are held at
+Motilal Oswal, on a demat whose statement in this drop is a transaction tape
+only. So #73's note is right about them, and this search answers with the
+company the book does hold.
+
+**THE PAGE CHECK THEN FOUND AN OLDER BUG IN THE SAME LIST, AND IT WAS THIS
+BRANCH'S.** The screenshot of the note showed Morning CIO's *Current value of
+holdings* and *Capital invested* drawn THROUGH the list. The top bar is `z-10`
+and a stacking context (`backdrop-blur`), so the list's own `z-50` counts only
+inside it. The KPI tiles lift their label and figure to `z-10` later in the
+page, and at an equal z-index the later element wins. **This had been true of
+every list the search drew over Morning CIO since it shipped**, and *"the list
+paints over the page"* passed the whole time, for two reasons:
+
+- it probed ONE point 90px down, which on a short list lands above the tiles;
+- `elementFromPoint` skips anything `pointer-events: none`, and that is exactly
+  how those tiles draw their text.
+
+The probe now samples the whole list on a grid, with hit-testing forced on so
+paint order is what is measured. It runs on a short list, a tall one and the
+one carrying the note. Before the top bar moved to `z-40` it failed on all
+three, with 16 sample points covered on each and a KPI tile label named at every
+one it recorded; after, it passes.
+`<main>` scrolls in its own box below the bar, so nothing else overlaps it, and
+the Muns dialog is portalled to `#root` at `z-50` and still covers it.
+
+**FOUR BUGS WERE PUT BACK, AND EACH FIRED ITS OWN CHECK:**
+
+| Bug put back | Fires |
+| --- | --- |
+| the note removed | three page checks, and `reviewGaps.test.ts`'s wiring check |
+| the note drawn outside the empty state | the held-fund check alone — the one that stops the note denying a held fund |
+| a note drawn whatever was typed | four |
+| the top bar back at `z-10` | the paint check |
+
+This merge's own full sweep was stopped part-way: #75 landed while it ran, and
+a sweep of a tree about to change would have verified the wrong thing. The four
+bugs above were measured on this merge's tree; everything else was measured once,
+after the next merge — see below.
+
+#### …and a fourth time: #75 took `10bv`
+
+**#75 — Buoyant: show what the family paid, not the fund's switch-day
+restatement — landed while this branch's checks were running, and took
+`10bv`.** Both sections were inserted after #73's, so git marked the conflict
+this time. Main's keeps `10bv`; this section is **`10bw`**, after it. The stage
+headings were compared against main's tip: the merged file differs from main by
+`10bw` alone, and main's ten historical duplicates are unchanged.
+
+**EIGHTEEN LINES NAMED `10bv` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** **Twelve are this branch's** and moved: its heading, two lines of its
+merge notes and its nine outside pointers, with its four code references. **Six
+are main's** — four outside its section and two inside it — and stayed, with the
+one in #75's own bug harness.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND WAS RESOLVED AS A UNION** —
+this branch's `pmReturn` beside #75's `costCarried`. **85 keys, none
+duplicated, every one declared in the file.**
+
+**TEN FILES OVERLAPPED AND EIGHT MERGED WITHOUT A MARKER**, which is when this
+file says to check by hand:
+
+- **The fund-statement reader** (`altFundStatements.mjs`) now carries this
+  branch's payout tables and #75's Buoyant capital flows. Both replays were run
+  on the merged archive — `replay:calls` over 28 commitment documents and
+  `replay:flows` over 33 fund statements — and **neither would change a byte**.
+  That is the merged reader reproducing both sides' output, not merely parsing.
+- **`glowData.ts` and `docs/BOOK-REPORT.md` were regenerated** from the merged
+  archive rather than trusted. The regeneration matched git's text merge byte
+  for byte, and a second run was identical.
+- **`build-book.mjs`, `types.ts`, the Portfolio Monitor and both test runners
+  kept both sides.** The ingest runner lists #75's `buoyant` and `classSwitch`
+  beside this branch's `capitalCalls` and `payouts`; the family runner lists
+  #75's `carriedCost` beside `fundReturns`, `searchIndex` and `reviewGaps`.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35,
+buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, golden
+140 — 2 not checked, 0 blocked) · `test:family` **37 suites, 1,891 checks, 0
+failed** · `npm run build-book` byte-identical and idempotent ·
+`replay:calls`, `replay:flows`, `replay:owners` and `replay:movements` each a
+no-op with `--check` · `reconcile:review -- --check` a no-op · CI (`build`) and
+Cloudflare Pages green on the pushed merge · `check:family` **86/0** ·
+`check:pages` **210 combinations clean, 0 invariant failures** — #75's own 206
+plus this change's two routes across both themes, which reconciles only because
+it was measured again — with the same eight evidenced abstentions across the
+same four pre-existing claims, read out of `report.json` by name: four on the
+Morning CIO panels (every KPI tile carries a figure), two on Private Market
+(every private holding reports a cost), one on the not-found drill-down's crumb
+and one on `stock-qty` (no pledge). None is this change's own. MEASURED ON THE
+MERGED TREE.
+
+### Stage 10bx — PRIVATE MARKET IS ONE TABLE, AND THE STANDARD EVERY OTHER TABLE ADOPTS
 
 *"This whole table has such an ugly ui … well-structured columns and rows so
 that it is easily expandable … a standard across the whole dashboard. And
@@ -16419,25 +16982,28 @@ Three things in it are load-bearing:
 
 One card, one table, three tabs — **By fund** (the default), **By owner**, and
 **Transactions**, which is the dated capital calls as rows of the same card,
-newest first, rather than a table of their own. Beside the name, eleven
-columns: Committed, Called, Paid in, Still to call, Units, Cost, Value, Return,
-Weight, As of — and the family's own **Capital call**, last, because it is the
-one column a reader writes to rather than reads.
+newest first, rather than a table of their own. Beside the name: Committed,
+Called, Paid in, Still to call, Units, Cost, Value, one **Return** column per
+measure the reader picks (Stage 10bw's picker), Weight, As of — and the family's
+own **Capital call**, last, because it is the one column a reader writes to
+rather than reads.
 
-Three sections, and the second is the family's "hidden drop down, clearly
+Two sections, and the second is the family's "hidden drop down, clearly
 marked":
 
 | Section | Opens | |
 | --- | --- | --- |
-| Private funds | open | the private side of the book (Stage 10bp) |
-| Not valued | **closed**, marked **missing data** | the accounts no statement values — each with what was paid in, in no value total |
-| Other AIFs | **closed**, marked **not private market** | the capital accounts of AIFs that are NOT private capital — the commitment and nothing else (see below) |
+| Private funds | open | the private side of the book, by the family's own placing (Stage 10bw) |
+| Not valued | **closed**, marked **missing data** | the private-market accounts no statement values — each with what was paid in, in no value total |
 
-**THE CAPITAL COLUMNS SPAN ALL THREE**, because a drawdown structure is how an
-account funds itself, not where it invests: 15 capital accounts, 12 of them on
-private funds and 3 in funds that are not private market. The tiles say so in
-those words rather than as a fraction of one set over another, and the table's
-own footer, **All capital accounts · 15**, is what the capital tiles add to.
+**THE CAPITAL COLUMNS SPAN THE PRIVATE-MARKET CAPITAL ACCOUNTS AND NOTHING
+ELSE**, because a capital account follows what its FUND invests in (Stage
+10bw's `capitalScope`): 11 of the register's 15. The table's one total row,
+**Private market total**, is what the capital tiles add to, and says how many
+accounts that is. The other four are NAMED in one clause under the table and
+counted nowhere on the page. *(The first build of this table had a third
+section, "Other AIFs · not private market", carrying those accounts'
+commitments — see the merge with Stage 10bw below for why it went.)*
 
 #### Merged with Stage 10bs, which removed two things this table had drawn
 
@@ -16448,20 +17014,17 @@ dropdown turned into tabs. **This table had drawn BOTH of the things it
 removed**, so the merge was a design decision on each, not a text resolution:
 
 - **THE TILES ARE 10bs's, WHOLE.** A label, a figure and one short line, with
-  the detail in the hover. Two hovers were re-worded because this page carries
-  what they describe: the uncalled and capital-account tiles say "funds that are
-  not private market" rather than "funds this page does not carry", because the
-  Other AIFs section is on this page.
-- **THE OTHER AIFs SECTION KEEPS THE COMMITMENT AND LOSES THE HOLDING.** As
+  the detail in the hover. Two hovers were re-worded for as long as this page
+  carried the Other AIFs section ("funds that are not private market" rather
+  than "funds this page does not carry"); with the section gone at the Stage
+  10bw merge, the words went back with it.
+- **THE OTHER AIFs SECTION KEPT THE COMMITMENT AND LOST THE HOLDING.** As
   first built it listed every not-private AIF WITH ITS VALUE — which is the
-  removed card, drawn as rows. `bookFolios` now keeps a not-private folio only
-  where a real capital account holds it, and NULLS its holding in the MODEL
-  (position, units, cost, value, P&L), so no band, total or cell downstream can
-  print it by accident. What stays is the commitment, because a drawdown fund
-  can call on the family whatever it invests in, and because without those
-  three accounts the capital columns would stop tying to the 15 the register
-  holds. The Category III holdings themselves are on the Portfolio Monitor, as
-  10bs's audit already records.
+  removed card, drawn as rows. `bookFolios` then kept a not-private folio only
+  where a real capital account held it, and NULLED its holding in the MODEL, so
+  what stayed was the commitment. *(That section is gone since the Stage 10bw
+  merge below: the family's own placing leaves a public-market fund no row here
+  at all, and its commitment is named in one clause instead.)*
 - **THE TRANSACTIONS TAB LOSES ITS WINDOWS.** It had carried "what can still be
   called" — Due now, three dated windows and the undated money — above the
   history. Three of the five could only ever read "nothing scheduled", which is
@@ -16495,38 +17058,77 @@ scrolls inside its own card, the page-body rule this file already sets. The same
 check now also runs on `private-market-calls`, where entered calls give the
 column real content — the one route where it could push a column off.
 
+#### Merged with Stage 10bw (#72) — the family's own placing, and the return picker
+
+Stage 10bw (#72) landed on main while this waited, and changed two things this
+table draws:
+
+- **THE FAMILY PLACED THEIR FUNDS, SO THE OTHER AIFs SECTION WENT.** *"Also
+  please note private market fund needs to be here in private market only"*,
+  sent with their own classification of all fifteen capital accounts.
+  `bookFolios` keeps the private folios alone, the unvalued ones filtered to
+  private-market funds, and `capitalScope` supplies the capital accounts: 11 on
+  the page and 4 NAMED in 10bw's one clause under the table — Carnelian Bharat
+  Amritkaal, Motilal Oswal Delphi Equity and both Founders folios, ₹55 Cr
+  committed. The check that asserted the section INVERTED rather than being
+  deleted: *"there is no third section — no public-market fund is a row of this
+  table"*, struck on the sections and rows the table draws. And 10bw's three
+  capital-account checks moved off the removed scheme table's `data-scheme` rows
+  onto the master table: each folio row carries `data-pm-capital-account`, the
+  total row `data-pm-capital-accounts`, and the named four plus the counted
+  eleven must rebuild the register with no account in both.
+- **THE RETURN PICKER CAME ONTO THE MASTER TABLE.** 10bw's one column per
+  measure, with every fund row resolved by `fundMeasuredReturn` on its own dated
+  record exactly as 10bw built it. A FOLIO row uses the same function on its one
+  statement — its own holding against its own account's calls and payouts — so a
+  line under a fund says the same KIND of thing the fund does; `fundReturns.ts`
+  takes `Pick<FundRow, "returnPct" | "cost">` now so a folio can be passed. A
+  section band, a member row and the total take 10bw's FOOTER rule: the return
+  on cost under the methodology and HPR, a POOLED money-weighted rate under XIRR
+  (over the funds for a consolidated set, over the statements for a member's),
+  and CAGR, YTD and CY refused with a reason naming whose row it is. A pooled
+  rate over part of its set prints "· 3 of 4" on its face and names what it
+  left out in its hover, and the total's cells carry 10bw's `data-return-foot`
+  handles, so every one of 10bw's footer checks runs unchanged against the one
+  total row. The header counts are struck on the fund rows whichever grouping is
+  drawn, because a measure resolves per FUND.
+- **TWO TILE HOVERS WERE CORRECTED, BECAUSE THIS TABLE MADE THEM FALSE.** 10bw's
+  Still to call and Never valued tiles said their figure was "in no total on
+  this page". The master table's total row DOES sum Still to call and Paid in,
+  so both say "never added to a value on this page" instead — which is the
+  misreading that actually costs money.
+- **THE MISSING-DATA COUNT MOVED WITH THE PLACING.** Motilal Oswal's Hedged
+  Equity strategy — redeemed, holding nothing — is not a private-market fund, so
+  the missing-data section holds 9 accounts rather than 10. `UNVALUED_BOOK` in
+  `check-pages.mjs` is scoped the same way, re-expressed through the sweep's own
+  `fundSideOf` rather than imported. With Hedged Equity off the page no account
+  in that section is redeemed to nil, so the measured-₹0 claim ABSTAINS with
+  that evidence rather than asserting over nothing — and the harness case that
+  reintroduced it went with its subject.
+- **PM-4 IS STRUCK ON THE ONE TOTAL ROW, AND ITS COVERAGE IS FULL.** The
+  Founders Fund's two folios, which print no undrawn figure, are public-market
+  now, so every capital account on the page prints the line and the total says
+  so by carrying no caveat under its figure. Never `have < of`: a coverage
+  struck against the page's own denominator passes the bug; this one is struck
+  against the book's.
+
 #### Verification
 
 `privateBook.test.ts` anchors the model on the generated book: the private total
 against `BOOK_SUMMARY.privateValue` less what `currentHoldings` drops, the
 capital columns against `callTotals` field by field, every capital account on
 one folio of its own account, the fund overlaps summing to the book's double
-count, the owner grouping printed with one overlap line — and the Other AIFs as
-capital accounts only: every not-private capital account present, none carrying
-a holding, a value, a cost or units. The page checks were rewritten onto the one
+count, the owner grouping printed with one overlap line — and the public-market
+capital accounts on no row: every one named, none on a folio, and the counted and
+the named together the register. The page checks were rewritten onto the one
 table and struck structurally — one cell per column, no table inside a cell, the
 bands adding to the totals, the missing-data section holding exactly the
 accounts nothing values, one Capital call cell on every fund-level row and on no
 other, on both groupings and with every section open.
 
-**`scripts/dev/pm-table-bug.sh` reintroduces twenty-one bugs one at a time** —
-fourteen from the table itself (a table inside a cell, the missing-data section
-open on arrival, an absent value summed as ₹0, fund rows on the printed basis,
-member rows deduped, a capital account attached twice, Expand all wired to
-nothing, calls oldest first, the section losing its marker, a measured nil drawn
-as a dash, the crossed-set tile wording, a total dropping its coverage, due-now
-claiming every account, a column cut off) and seven from the merge (a call cell
-on a member row, an unvalued fund with no cell, an entered call added into Still
-to call, an unreadable store drawn as ₹0, the one-line call cell pushing a
-column off, the timeline windows restored, the Other AIFs' holdings back as
-rows). **A no-patch control ran first and came back clean, and every one of the
-twenty-one fires.** Twenty fire a check on the rendered page. The twenty-first —
-the model carrying the Other AIFs' holdings again — fires two assertions in
-`privateBook.test.ts` and leaves the page clean, and that is the right answer
-rather than a blind check: the row that would draw those holdings is
-capital-only on its own (`figureCells` returns before the holding columns), so
-the page renders nothing different. It takes BOTH guards failing to put a value
-on those rows, and each is asserted where it can fail.
+**`scripts/dev/pm-table-bug.sh` reintroduces the table's bugs one at a time** —
+re-run on the tree merged with Stage 10bw; the count is recorded when it
+finishes.
 
 **ONE THING THE TABLE SHOWS THAT THE FAMILY SHOULD CONFIRM.** Transition Venture
 Fund I is one `dedupeGroup` — both trusts' statements report the same 7,500
@@ -16537,11 +17139,13 @@ of 7,500 units each is a question for the family — and the answer is §4c's
 duplicate policy, kept in one place for exactly this reversal, rather than
 anything on this page.
 
-**THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT EACH MERGE, AND MOVED THREE
+**THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT EACH MERGE, AND MOVED FOUR
 TIMES.** This section was drafted as `10bs`. #71 merged first and kept it, so it
 became `10bt`; while this branch's own checks ran, #70 took `10bt` and #73 took
-`10bu`, so it became `10bv`; and in the minutes between this branch's last merge
-and its push, #75 took `10bv` as well, so it is **`10bw`**. The last two
+`10bu`, so it became `10bv`; in the minutes between this branch's last merge
+and its push, #75 took `10bv` as well, so it became `10bw`; and while the PR sat
+open, #72 took `10bw`, so it is **`10bx`** and the Portfolio Monitor's stage is
+`10by`. The last two
 collisions were TEXTUAL (both sides had inserted above Stage 10k), which is the
 failure mode that announces itself — and the third is the case the rule to
 re-fetch main AT THE MOMENT OF MERGING exists for: nothing about this branch had
@@ -16553,7 +17157,11 @@ moved; the other eleven are main's (Polycab as one table, Sector Composition's
 two halves) and were left alone. At `10bv`: the same five moved; the other six
 are #75's — two in its own section, its two Layout bullets, the correction it
 notes in Stage 10ai and its `replay:flows` entry under **Build** — and were
-left alone.
+left alone. At `10bw`: three were this branch's — the two Layout bullets and the
+note that closes 10bs's limit — and moved; the other nine are #72's (its three
+Layout bullets — the fund split, `fundReturns.ts` and the search box — its four
+notes in the sides and category passages, the search slot, and its
+`replay:calls` payouts line) and were left alone.
 
 **THE `ctx` LITERAL IN `check-pages.mjs` CAME THROUGH AS A UNION EVERY TIME.** At
 #71: main's `callBuckets` and `callRows` beside this branch's probes, and twelve
@@ -16567,13 +17175,15 @@ Transactions tab (the history, its count and its footer). At #70 and #73: main's
 `absentName`, `sectorLayout` and `shortWindow` added — 82 keys, none duplicated,
 the exact union less the `schemeCalls` this branch removed with the table it
 read, and every key resolving to a declaration in the merged file. At #75:
-main's `costCarried` added — 83 keys on the same terms.
+main's `costCarried` added — 83 keys on the same terms. At #72: main's
+`pmReturn` added and its `schemeCalls` NOT, because the probe that declared it
+read the scheme table this page no longer draws — 85 keys, none duplicated, and
+every one resolving to a declaration.
 
 `build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
-`check:pages` **202 combinations clean** on the tree merged with #70 and #73,
-with the same eight evidenced abstentions as before this change — the count
-after #75 and the Portfolio Monitor is Stage 10bx's · `npm run build-book`
-byte-identical — a table's layout is not part of the book.
+`check:pages` on the tree merged with Stage 10bw — recorded when the full sweep
+finishes · `npm run build-book` byte-identical — a table's layout is not part of
+the book.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -17466,7 +18076,8 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   It only ever ADDS fields — `total`, `contributed`, `undrawn` and `distributed`
   are written back byte-identically and a run that would move one refuses — and
   `--check` writes nothing and is the control run, which must be a no-op.
-  Follow it with `build-book`.
+  Since Stage 10bw it replays the dated PAYOUTS too (Neo Infra, Baring,
+  Transition Venture), through the same readers. Follow it with `build-book`.
 - `npm run replay:movements` re-runs the DEMAT MOVEMENT reader over the committed
   archive — the dated credits and debits, and each holding's opening-to-closing
   split — from each document's own `pages.json`, through the same

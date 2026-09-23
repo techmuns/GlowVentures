@@ -38,7 +38,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=private-market,private-market-tiles,private-market-folios,private-market-owners,private-market-transactions,private-market-calls,private-market-calls-off
+ROUTES=private-market,private-market-tiles,private-market-folios,private-market-owners,private-market-transactions,private-market-returns,private-market-calls,private-market-calls-off
 
 put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
 
@@ -158,45 +158,53 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-# ── 9 ── the Other AIFs section loses its marker
-run_case "the not-private-market section is no longer marked" nosuite py <<'PY'
+# ── 9 ── a public-market fund back as a row (the family placed it on the listed side)
+run_case "a public-market AIF is a row of the private section again" nosuite py <<'PY'
 import sys
-p = "src/pages/PrivateMarket.tsx"
+p = "src/lib/privateBook.ts"
 s = open(p, encoding="utf-8").read()
-old = '    marker: <Pill className="whitespace-nowrap">not private market</Pill>,'
-new = '    marker: null,'
+old = '  return isPrivateClass(p) ? "private" : null;'
+new = '  return isPrivateClass(p) || p.assetClass === "AIF" ? "private" : null;'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-# ── 10 ── a measured nil drawn as an absence
-run_case "the redeemed account's ₹0 becomes a dash" nosuite py <<'PY'
+# ── 10 ── the public-market capital accounts counted on the page too
+#    (The redeemed-nil case that used to be here has no subject on this book
+#    since the family's placing: the only account redeemed to nil, Motilal
+#    Oswal's Hedged Equity strategy, is not a private-market fund, so the check
+#    ABSTAINS with that evidence and a bug there could not be watched firing.)
+run_case "the public-market capital accounts are counted on the page as well as named" nosuite py <<'PY'
 import sys
 p = "src/pages/PrivateMarket.tsx"
 s = open(p, encoding="utf-8").read()
-old = '                nil: f.status === "redeemed" ? valueWhy("redeemed", null) : undefined,\n'
+old = "    const commitments = cap.onPage;"
+new = "    const commitments = portfolio.commitments ?? [];"
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
 # ── 11 ── the crossed-set wording comes back on the uncalled tile
-run_case "the uncalled tile stops naming the Other AIFs' capital accounts" nosuite py <<'PY'
+run_case "the uncalled tile counts its accounts as a fraction of this page's" nosuite py <<'PY'
 import sys
 p = "src/pages/PrivateMarket.tsx"
 s = open(p, encoding="utf-8").read()
-old = "of them in funds that are not private market"
-new = "of them in funds this page does not carry"
+old = "        + `Across ${m.ct.count} capital accounts of private-market funds`"
+new = "        + `Across ${m.ct.count} of this page's ${m.scope.accounts.length} private accounts`"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-# ── 12 ── the coverage line drops off the totals
-run_case "a total stops saying how many accounts it covers" nosuite py <<'PY'
+# ── 12 ── a total prints a coverage caveat about nothing ("11 of 11 accounts")
+#    (Every private-market capital account prints every line since the family's
+#    placing, so the caveat that "drops off" has no subject; the direction that
+#    can still go wrong is a caveat where the coverage is full.)
+run_case "a total prints a coverage caveat where coverage is full" nosuite py <<'PY'
 import sys
 p = "src/pages/PrivateMarket.tsx"
 s = open(p, encoding="utf-8").read()
-old = '''      ? <div className="text-[10px] font-normal leading-tight text-slate-500" data-covered={`${n}/${of}`}>{n} of {of} accounts</div>'''
-new = '''      ? null'''
+old = '(k === "total" || k === "section") && of > 0 && n < of'
+new = '(k === "total" || k === "section") && of > 0 && n <= of'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
@@ -294,16 +302,37 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-# ── 21 ── the Other AIFs' holdings come back as rows (the removed card, in the table)
-run_case "the Other AIFs carry their holdings and values again" suite py <<'PY'
+# ── 21 ── THE RETURN COLUMNS (merged from main's #72): a pooled rate over part of
+#    its set stops saying which part
+run_case "the total's pooled XIRR stops saying how many funds it pools" nosuite py <<'PY'
 import sys
-p = "src/lib/privateBook.ts"
+p = "src/pages/PrivateMarket.tsx"
 s = open(p, encoding="utf-8").read()
-i = s.find('.map((f) => (f.section !== "elsewhere" ? f :')
-if i < 0: sys.exit(1)
-j = s.find(");", i)
-# drop the map that strips the holding off an Other-AIF folio
-open(p, "w", encoding="utf-8").write(s[:i] + s[j + 1:])
+old = '{part && <span className="text-[10.5px] font-normal text-slate-500"> · {part.covers} of {part.of}</span>}'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# ── 22 ── the total's XIRR pooled over the printed statements, not the funds
+run_case "the total's XIRR pools every statement instead of each fund once" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'cells={figureCells({ ...fig, ret: aggRet(book.folios, true, "total") }'
+new = 'cells={figureCells({ ...fig, ret: aggRet(book.folios, false, "total") }'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 23 ── a set's CAGR printed as its return on cost
+run_case "a band and the total print their HPR under CAGR, YTD and CY too" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '      if (measure === "auto" || measure === "absolute") {\n        if (fig.returnPct == null) {'
+new = '      if (measure !== "xirr") {\n        if (fig.returnPct == null) {'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
 echo ""

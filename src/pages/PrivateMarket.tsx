@@ -18,13 +18,22 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
-import { sum, sumOrNull, consolidatedMarketValue, currentHoldings } from "@/lib/analytics";
+import {
+  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef,
+  type MeasuredReturn, type ReturnMeasure,
+} from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  pageScopeNote,
+  pageScopeNote, capitalScope,
 } from "@/lib/privateMarket";
 import {
-  bookFolios, privateBook, BOOK_SECTIONS,
+  fundDatedRecords, fundMeasuredReturn, fundReturnColumnMeta, pooledFundXirr,
+  PM_AGG_NO_MEASURE, PM_RETURN_HINTS, type FundDated,
+} from "@/lib/fundReturns";
+import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
+import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
+import {
+  bookFolios, privateBook, figuresOf, BOOK_SECTIONS,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
@@ -55,6 +64,15 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * they are different documents; the header says which is which.
  */
 const BOOK_COLS = ["name", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+/**
+ * `return` IS A PLACEHOLDER, NOT A COLUMN — the Monitor's own mechanics, shared
+ * since Stage 10bw (`returnColumns.ts`). The reader's picker (`?ret=`) expands it
+ * to ONE COLUMN PER PICKED MEASURE, each headed with its own name, so a cell
+ * never has to say which of five returns it is by position alone. Every writer
+ * below walks the EXPANDED list, so a band, a fund, a folio and a total all put
+ * their return under the same measure's heading.
+ */
+type BookCol = string;
 /**
  * THE CAPITAL-CALL COLUMN'S OWN HOVER, and the one place the reason it exists
  * is stated: no fund publishes a forward schedule, so the calls a fund has
@@ -116,24 +134,31 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 //   By owner      the same folios grouped by family member, as printed.
 //   Transactions  what can still be called, and every dated call.
 //
-// and three sections inside the first two: the private funds with a value
-// (open), the private accounts with NO value (closed, marked "missing data"),
-// and the CAPITAL ACCOUNTS of AIFs that are not private market (closed,
-// marked) — only their capital accounts, because those count in the page's
-// capital totals; their holdings are listed exposure and are not drawn here.
+// and two sections inside the first two: the private funds with a value
+// (open), and the private accounts with NO value (closed, marked "missing
+// data").
 //
 // ── THE AXIS IS THE HOLDING'S OWN MARKET SIDE ───────────────────────────────
 //
-// `isPrivateClass` — which is `marketSide === "private"`, read from the SEBI
-// category the statements print — and never `Account.engagement`. On this book
-// keying on engagement would drop three real private holdings and pull in two
-// cash sleeves. The Category III folios (Sanshi, Buoyant, Carnelian Bharat
-// Amritkaal) are listed exposure — *"These are not private market
-// investments"* — so they are in no private total, and none is drawn here
-// except where a real drawdown capital account keeps it in the capital totals.
-// *"Remove this, please. This is not relevant. These kind of placeholders are
-// not relevant."* was said of the card that listed them with their values;
-// what stays is a capital account's figures and nothing else.
+// `isPrivateClass` — which is the generated `marketSide === "private"`: the
+// family's own placing of each fund first, then the SEBI category the
+// statements print (Stage 10bw) — and never `Account.engagement`. On this book
+// keying on engagement would drop real private holdings and pull in cash
+// sleeves. Sanshi, Buoyant, Carnelian Bharat Amritkaal, Delphi and both Founders
+// Fund folios invest in listed equity, so none is on this page.
+//
+// ── AND THE CAPITAL ACCOUNTS FOLLOW THE FUND ────────────────────────────────
+//
+//   *"private market fund needs to be here in private market only"* — sent with
+//    the family's own classification of all fifteen capital accounts.
+//
+// This table used to carry a third section: the capital accounts of AIFs that
+// are not private market, closed and marked, so its capital columns would add
+// to every capital account in the book. That is a public-market fund on a
+// private-market page however it is marked, so it went. `capitalScope` places
+// each capital account by what its FUND invests in, through the same rule that
+// places the holding, and the ones it leaves out are NAMED under the table in
+// one clause — counted nowhere, dropped nowhere.
 //
 // ── AND THE WHOLE OF THIS BOOK'S DOUBLE COUNT IS PRIVATE ────────────────────
 //
@@ -185,11 +210,6 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
     marker: <Pill tone="warn" className="whitespace-nowrap">missing data</Pill>,
     defaultOpen: false,
   },
-  elsewhere: {
-    title: "Not private market",
-    marker: <Pill className="whitespace-nowrap">not private market</Pill>,
-    defaultOpen: false,
-  },
 };
 
 /** A row of figures in the shape the accessors read — a group, a section, a total or a folio. */
@@ -197,7 +217,22 @@ type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled"
   & {
     /** The fund whose entered calls this row's Capital call cell shows — none on a member row or a band. */
     callKey?: string | null;
+    /**
+     * HOW THIS ROW RESOLVES A RETURN MEASURE — the ONE resolution its cells, the
+     * sort and the header counts all read, so a column cannot sort on one figure
+     * and draw another. A fund and a folio resolve on their own dated record
+     * (`fundMeasuredReturn`); a band, a member and a total on the set's.
+     */
+    ret?: (measure: ReturnMeasure) => RowReturn;
   };
+
+/**
+ * A RESOLVED RETURN, and — on a SET's pooled XIRR — how many of its records it
+ * pools. A total over part of a table has to say which part on its face, so the
+ * cell prints "· 3 of 4" beside the rate and the sweep reads both counts off
+ * the cell (Stage 10bw's footer rule, carried onto every band and total).
+ */
+type RowReturn = MeasuredReturn & { pool?: { covers: number; of: number } };
 
 const folioFigures = (f: BookFolio): RowFigures => ({
   committed: f.capital?.committed ?? null,
@@ -211,10 +246,14 @@ const folioFigures = (f: BookFolio): RowFigures => ({
   asOf: f.asOf ? [f.asOf] : [],
 });
 
+/** A resolution with nothing to show — the fallback for a row that states no resolver. */
+const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is struck on this row" };
+
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
   label: (r: RowFigures & { label?: string }) => string | null,
   callDate: (key: string | null | undefined) => string | null,
+  measures: readonly ReturnMeasure[],
 ): Record<string, Accessor<RowFigures & { label?: string }>> => ({
   name: (r) => label(r),
   committed: (r) => r.committed,
@@ -224,7 +263,10 @@ const bookAccessors = (
   units: (r) => r.units,
   cost: (r) => r.cost,
   value: (r) => r.value,
-  return: (r) => r.returnPct,
+  // ONE ACCESSOR PER PICKED MEASURE, reading the figure its own column prints —
+  // `returnAccessorsFor` sorts an absent return LAST in both directions, which
+  // `sortRows` does for every null.
+  ...returnAccessorsFor<RowFigures & { label?: string }>(measures, (r, m) => (r.ret ? r.ret(m) : NO_RETURN)),
   // Weight is value ÷ one denominator, so it orders exactly as value does; a
   // second expression of one figure would be a second chance to disagree.
   weight: (r) => r.value,
@@ -257,9 +299,23 @@ export function PrivateMarket() {
   const [view, setView] = useViewParam(BOOK_VIEWS, {}, "view");
   /** Open fund / member rows, keyed `<grouping>:<key>` so the two tabs keep their own. */
   const rows = useExpanded();
-  /** Open sections — the private funds start open, the two marked sections closed. */
+  /** Open sections — the private funds start open, the marked one closed. */
   const sections = useExpanded(BOOK_SECTIONS.filter((s) => SECTION_COPY[s].defaultOpen));
-  const bookView = useTableView("pm-book", BOOK_COLS);
+  /**
+   * WHICH RETURN(S) THE TABLE SHOWS — the Monitor's own picker and its own
+   * `?ret=` param (Stage 10bw), so "send me the XIRR view" is a link and the
+   * sweep reaches each measure by address. One column per ticked measure,
+   * expanded from the `return` placeholder exactly as on the Monitor.
+   *
+   * MEMOISED ON THE MEASURES, NOT REBUILT PER RENDER: `useTableView` keys its
+   * reconciliation on the column array's identity, and a fresh array every
+   * render re-runs it every render.
+   */
+  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
+  const measureKey = returnMeasures.join(",");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
+  const bookView = useTableView("pm-book", bookCols);
   const callView = useTableView("pm-calls", CALL_COLS);
   /**
    * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
@@ -284,7 +340,21 @@ export function PrivateMarket() {
      */
     const current = currentHoldings(portfolio.positions);
     const scope = privateScope(current, portfolio.accounts);
-    const commitments = portfolio.commitments ?? [];
+    /**
+     * ── THE CAPITAL ACCOUNTS OF PRIVATE-MARKET FUNDS, AND ONLY THOSE ─────────
+     *
+     *   *"private market fund needs to be here in private market only"* — sent
+     *    with the family's own classification of all fifteen capital accounts.
+     *
+     * `capitalScope` places each capital account by what its FUND invests in,
+     * through the same rule that places its holding, so a fund's holding and its
+     * capital account cannot land on different sides of the page. The ones it
+     * leaves out — Carnelian Bharat Amritkaal, Motilal Oswal Delphi and both
+     * Founders Fund folios, which call capital and invest in listed equity — are
+     * NAMED under the table with their figures, never dropped.
+     */
+    const cap = capitalScope(portfolio.commitments ?? [], portfolio.accounts);
+    const commitments = cap.onPage;
 
     const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
     const folios = folioRows(scope.rows, accIdx);
@@ -302,7 +372,11 @@ export function PrivateMarket() {
     );
     const cc = callTotals(schemes);
     const history = callHistory(schemes);
-    const unvalued = unvaluedAccounts(portfolio.accounts, portfolio.positions, commitments);
+    // PRIVATE-MARKET ACCOUNTS ONLY, by the same rule as the capital register:
+    // Motilal Oswal's Hedged Equity strategy is an AIF holding nothing too, and
+    // it is not a private-market fund.
+    const unvalued = unvaluedAccounts(portfolio.accounts, portfolio.positions, commitments)
+      .filter((u) => u.side === "private");
 
     // CONSOLIDATED — each dedupeGroup once — SUMMED FROM THE FUND ROWS, never
     // struck independently: a total must tie to its own columns.
@@ -326,7 +400,7 @@ export function PrivateMarket() {
     const dates = [...new Set(scope.accounts.map((a) => a.asOf).filter(Boolean))].sort();
 
     return {
-      scope, funds, folios, owners, ct, unvalued, commitments,
+      accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history,
       privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
@@ -334,14 +408,29 @@ export function PrivateMarket() {
       dates,
       scopeNote: pageScopeNote(current),
       /**
-       * CAPITAL ACCOUNTS OUTSIDE THE PRIVATE SCOPE — measured, never assumed. A
-       * drawdown structure is how an account funds itself and not where it
-       * invests, so the capital columns cover every capital account while the
-       * private total covers the private side. This is the size of the gap.
+       * THE CAPITAL ACCOUNTS OF PUBLIC-MARKET FUNDS — left out of every figure
+       * on this page and named, in one clause, under the table.
+       */
+      capElsewhere: cap.elsewhere,
+      /**
+       * Capital accounts the page COUNTS whose own account is not in its scope.
+       * Zero on this book, because `capitalScope` and `privateScope` place an
+       * account by the same rule; kept because the two could part on a drop
+       * where a private fund's capital account and its holding sit in
+       * different accounts, and the counts printed beside it must say so then.
        */
       capOutside: commitments.filter(
         (c) => c.accountId && !scope.accounts.some((a) => a.accountId === c.accountId),
       ).length,
+      /**
+       * WHETHER CALLED AND PAID IN ARE STRUCK OVER ONE SET OF ACCOUNTS. Where
+       * they are, the two may be set against each other; where they are not,
+       * the page must say they cannot. Measured per account rather than by
+       * comparing two counts — equal counts over different accounts is exactly
+       * the case the warning exists for.
+       */
+      calledPaidSameSet: schemes.every((r) => (r.called == null) === (r.paid == null)),
+      owned: new Set(portfolio.positions.map((p) => p.accountId)),
       byFund: privateBook(all, "fund"),
       byOwner: privateBook(all, "owner"),
     };
@@ -434,14 +523,17 @@ export function PrivateMarket() {
       sub: "Promised, not yet called",
       /**
        * TWO COUNTS FROM TWO SETS, AND THE WORDING MUST NOT MAKE ONE A FRACTION
-       * OF THE OTHER: three of the capital accounts belong to funds that are not
-       * private market, so "15 of this page's 18" would be a fraction that does
-       * not exist. Stage 10bp's fix, kept in the hover.
+       * OF THE OTHER: three of the capital accounts belong to funds this page
+       * does not carry, so "15 of this page's 18" would be a fraction that does
+       * not exist. Stage 10bp's fix, kept verbatim in the hover.
        */
       detail: "Money promised to these funds that they have not yet asked for — a bill that can arrive any day, "
         + "not an asset, and never added to a value on this page. "
-        + `Across ${m.ct.count} capital accounts`
-        + (m.capOutside > 0 ? `, ${m.capOutside} of them in funds that are not private market` : "")
+        + `Across ${m.ct.count} capital accounts of private-market funds`
+        + (m.capOutside > 0 ? `, ${m.capOutside} of them in funds this page does not carry` : "")
+        + (m.capElsewhere.length > 0
+          ? `; the ${m.capElsewhere.length} in public-market funds are not counted`
+          : "")
         + ". A fund whose capital account nobody sent contributes nothing, so this is a floor.",
     },
     /* ── COMMITTED vs CALLED vs PAID IN — three figures, not two ─────────────
@@ -453,13 +545,20 @@ export function PrivateMarket() {
       id: "committed", label: "Committed", icon: <Landmark className="h-4 w-4" />,
       value: money(m.ct.committed),
       sub: "Total promised to funds",
-      detail: `${m.ct.committedOf} of ${m.ct.count} capital accounts. The full amount signed for, whether or not the fund has asked for it yet — not money spent, and in no market value on this page.`,
+      detail: `${m.ct.committedOf} of ${m.ct.count} capital accounts of private-market funds`
+        + (m.capElsewhere.length > 0
+          ? ` — ${m.capElsewhere.length} more, in public-market funds, are not counted`
+          : "")
+        + ". The full amount signed for, whether or not the fund has asked for it yet — not money spent, and in no market value on this page.",
     },
     {
       id: "called", label: "Called", icon: <Banknote className="h-4 w-4" />,
       value: m.cc.called == null ? <AbsentValue /> : money(m.cc.called),
       sub: m.cc.called == null ? absentLine("No statement prints it") : "Asked for so far",
-      detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line. It covers a different set of accounts from Paid in, so the two must never be subtracted.`,
+      detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line.`
+        + (m.calledPaidSameSet
+          ? " Paid in covers the same accounts."
+          : " It covers a different set of accounts from Paid in, so the two must never be subtracted."),
     },
     {
       id: "paid", label: "Paid in", icon: <Wallet className="h-4 w-4" />,
@@ -481,7 +580,7 @@ export function PrivateMarket() {
       id: "unvalued", label: "Never valued", icon: <HelpCircle className="h-4 w-4" />,
       value: <span className="text-amber-400">{money(m.unvaluedDrawn)}</span>,
       sub: "Paid into funds with no NAV",
-      detail: `${m.unvaluedNoNav.length} folios in funds that publish no NAV at all. Real money, not in Market value, and in no total on this page.`,
+      detail: `${m.unvaluedNoNav.length} folios in funds that publish no NAV at all. Real money, not in Market value, and never added to a value on this page.`,
     },
     /* *"what is distributions?"* — the label is the client's own word and the
         short line under it is the answer. */
@@ -489,7 +588,7 @@ export function PrivateMarket() {
       id: "distributed", label: "Distributions", icon: <Coins className="h-4 w-4" />,
       value: money(m.ct.distributed),
       sub: "Cash paid back so far",
-      detail: `${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure. Not part of the value above, and it does not reduce what a fund can still call.`,
+      detail: `${m.ct.distributedOf} of ${m.ct.count} capital accounts have a distribution total this book reads. Not part of the value above, and it does not reduce what a fund can still call.`,
     },
     /* ── THE TWO THAT ARE ABSENT BY MEASUREMENT ──────────────────────────────
         Offered like every other metric: the answer to both is a fact about this
@@ -505,7 +604,7 @@ export function PrivateMarket() {
       id: "multiple", label: "TVPI / DPI", icon: <Handshake className="h-4 w-4" />,
       value: <AbsentValue />,
       sub: absentLine("Too few distribution figures"),
-      detail: `Only ${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure. A multiple divides what has come back plus what is still inside by what went in; ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all, and reading those as nil would report a fund that has returned nothing when its statement simply does not say.`,
+      detail: `Only ${m.ct.distributedOf} of ${m.ct.count} capital accounts have a distribution total this book reads. A multiple divides what has come back plus what is still inside by what went in; for the other ${m.ct.count - m.ct.distributedOf} this book carries no distribution total — the statement prints none, or prints one no reader here captures yet — and reading those as nil would report a fund that has returned nothing when its statement does not say so.`,
     },
     /* Counts of sets this page already draws, so none is a new measurement. */
     {
@@ -532,12 +631,13 @@ export function PrivateMarket() {
       sub: "Drawdown statements",
       /**
        * THE SAME CROSSED FRACTION THE UNCALLED TILE WAS FIXED FOR: three of
-       * these capital accounts belong to funds that are not private market, so the
+       * these capital accounts belong to funds this page does not carry, so the
        * two counts PARTITION the tile's own figure — the only form in which both
        * can be printed together.
        */
       detail: `${m.ct.count - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
-        + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds that are not private market` : "")
+        + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds this page does not carry` : "")
+        + (m.capElsewhere.length > 0 ? ` · ${m.capElsewhere.length} more, in public-market funds, are not counted` : "")
         + ". A capital account is the statement that prints a commitment and what has been called against it.",
     },
     {
@@ -578,7 +678,7 @@ export function PrivateMarket() {
   /** The date of the call a fund's cell shows, for the sort — null where none is entered or the store is not read. */
   const callDate = (key: string | null | undefined) =>
     key && entered.state.status === "ready" ? headlineCall(entered.state.calls, key, today)?.call.date ?? null : null;
-  const nameAcc = bookAccessors((r) => r.label ?? null, callDate);
+  const nameAcc = bookAccessors((r) => r.label ?? null, callDate, returnMeasures);
   /** A FUND row's call key. A member row is not a fund, so it has none. */
   const groupCallKey = (g: BookGroup) => (g.kind === "fund" ? callKeyOf(g.key, g.securityKey) : null);
   const folioCallKey = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
@@ -615,16 +715,120 @@ export function PrivateMarket() {
   );
   const pct = (v: number | null) => (v == null || !(book.privateValue > 0) ? null : (v / book.privateValue) * 100);
 
+  // ── WHICH RETURN A ROW SHOWS, AND SAYING WHICH ──────────────────────────────
+  //
+  //   *"The customer is confused about what kind of return this is that we're
+  //    showing in the private market table."* (Stage 10bw)
+  //
+  // Every return cell is resolved here, once per row and measure, and the cell,
+  // the sort and the header's count all read that one resolution. Built in the
+  // render rather than in `m` because its sentences carry figures in the DISPLAY
+  // currency, which `m` is not keyed on.
+  //
+  //   a FUND row    `fundMeasuredReturn` on the fund's own dated record, over the
+  //                 row's deduped folios — Stage 10bw's resolution, unchanged;
+  //   a FOLIO       the same function on ONE statement: its own holding against
+  //                 its own account's calls and payouts, so a line under a fund
+  //                 says the same KIND of thing the fund row does;
+  //   a band, a     the whole-book rule Stage 10bw set for the footer: the return
+  //   member, the   on cost under HPR and the methodology, a POOLED money-weighted
+  //   total         return under XIRR, and CAGR, YTD and CY absent with the reason
+  //                 — a set of funds has no one date the money went in.
+  const moneyN = (n: number) => money(n);
+  /** Per FUND, over the fund rows' own deduped positions — the record Stage 10bw built. */
+  const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, m.accIdx, moneyN, fmtDate);
+  /** Per FOLIO — one statement's own holding and its own capital account. */
+  const folioDated = new Map(m.byFund.folios.filter((f) => f.position).map((f) =>
+    [f.key, fundDatedRecords([f.position!], m.commitments, m.accIdx, moneyN, fmtDate).get(f.position!.securityKey)]));
+  /** A row with no value has no return on any measure, and every measure says so. */
+  const noValueReturn = (why: string) => (measure: ReturnMeasure): MeasuredReturn =>
+    ({ shown: false, tag: measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag, reason: why });
+  const NO_VALUE_RETURN = "no value to strike a return on — nothing here values the holding";
+  const groupRet = (g: BookGroup) => (g.kind !== "fund" || g.value == null
+    ? (g.kind === "fund" ? noValueReturn(NO_VALUE_RETURN) : aggRet(g.folios, false, "member"))
+    : (measure: ReturnMeasure) => fundMeasuredReturn(g, fundDated.get(g.securityKey ?? ""), measure, moneyN, fmtDate));
+  const folioRet = (f: BookFolio) => (f.value == null ? noValueReturn(NO_VALUE_RETURN)
+    : (measure: ReturnMeasure) => fundMeasuredReturn(
+      { returnPct: folioFigures(f).returnPct, cost: f.cost }, folioDated.get(f.key), measure, moneyN, fmtDate));
+  /**
+   * A SET OF FOLIOS — a family member's row, a section band, the total.
+   *
+   * `consolidated` picks the dated records the pooled XIRR is struck over, and it
+   * follows the set's own basis: counted once (a fund's record over its deduped
+   * folios, which is the total Stage 10bw's footer struck) or as printed (each
+   * statement's own record — a per-owner figure never dedupes). A record that
+   * cannot carry a dated return is NAMED in the cell's hover and left out, never
+   * pooled with a gap in it.
+   */
+  function aggRet(folios: BookFolio[], consolidated: boolean, scope: "member" | "section" | "total") {
+    const fig = figuresOf(folios, consolidated);
+    const held = folios.filter((f) => f.position && (!consolidated || f.counted));
+    const recs = consolidated
+      ? [...new Set(held.map((f) => f.fundKey))].map((k) => {
+        const f = held.find((x) => x.fundKey === k)!;
+        return { name: f.fundName, d: fundDated.get(k) };
+      })
+      : held.map((f) => ({ name: grouping === "owner" && scope !== "member" ? `${f.owner} — ${f.fundName}` : f.fundName, d: folioDated.get(f.key) }));
+    const complete = (d: FundDated | undefined): d is FundDated => !!d && !d.gap && d.payouts !== "unknown";
+    const pooledIn = recs.filter((r) => complete(r.d));
+    const pooledOut = recs.filter((r) => !complete(r.d));
+    const whose = scope === "total" ? "This is the whole private book, not one fund"
+      : scope === "section" ? "This band spans several funds" : "A family member's row spans their funds";
+    const unit = (n: number) => (consolidated ? (n === 1 ? "fund" : "funds") : (n === 1 ? "statement" : "statements"));
+    return (measure: ReturnMeasure): RowReturn => {
+      // A REFUSED cell under the methodology says AUTO, as a refused fund row
+      // and a refused Monitor row do: "HPR —" would name a measure the row
+      // does not show.
+      const tag = measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag;
+      if (fig.value == null) return { shown: false, tag, reason: NO_VALUE_RETURN };
+      if (measure === "auto" || measure === "absolute") {
+        if (fig.returnPct == null) {
+          return { shown: false, tag, reason: fig.cost == null
+            ? "no cost is reported across these holdings, so there is no capital to strike a return against"
+            : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another" };
+        }
+        return { shown: true, pct: fig.returnPct, tag: "HPR",
+          note: "Current value against the capital paid in, not annualised. Cash the funds have paid back is not in it — XIRR counts it." };
+      }
+      if (measure === "xirr") {
+        // WHICH RECORDS THE RATE POOLS, carried whether or not it shows one: a
+        // refused rate over "0 of 4" says as much as a struck one over "3 of 4".
+        const pool = { covers: pooledIn.length, of: recs.length };
+        if (!pooledIn.length) {
+          return { shown: false, tag, pool, reason: "no fund here carries a complete dated record of what went in and what came back, so no money-weighted return can be struck across them" };
+        }
+        const pooled = pooledFundXirr(pooledIn.map((r) => r.d!));
+        if (!pooled || pooled.pct == null) return { shown: false, tag, pool, reason: "the pooled flows do not solve to a rate" };
+        if (!pooled.annualised) {
+          return { shown: false, tag, pool, reason: `the pooled flows span ${pooled.windowDays} days — under a year, so an annual rate would be a projection; the holding-period return is under HPR` };
+        }
+        const left = pooledOut.map((r) => `${r.name} — ${r.d?.gap ?? "its payout record is not carried"}`).join("; ");
+        return { shown: true, pct: pooled.pct, tag, pool,
+          note: `Pooled across ${pooledIn.length} of ${recs.length} ${unit(recs.length)}: every dated call, every dated payout and each fund's own valuation date, annualised over the ${pooled.windowDays} days since the first call.`
+            + (pooledOut.length ? ` Not in it: ${left}.` : "") };
+      }
+      return { shown: false, tag, reason: `${whose}: ${PM_AGG_NO_MEASURE[measure] ?? "no such figure applies"}` };
+    };
+  }
+  /**
+   * THE FUND ROWS' RESOLVED CELLS — what each return heading's count and hover
+   * are struck on. Always the funds, whichever grouping is drawn: the measures
+   * resolve per FUND, and "2 money-weighted of 4" is a statement about the four
+   * funds a reader can open on either tab.
+   */
+  const fundCells = (measure: ReturnMeasure) =>
+    m.byFund.sections.private.groups.filter((g) => g.value != null).map((g) => groupRet(g)(measure));
+
   // ── THE CELLS, ONE WRITER FOR EVERY ROW KIND ────────────────────────────────
   //
   // Every row of the master table writes its ten figure cells here, keyed by
   // column, so a section band, a fund, a folio and a total cannot put one
   // figure under two headings. `kind` decides only the weight of the type and
   // what an absent cell SAYS — never which column a figure lands in.
-  type CellKind = "group" | "folio" | "section" | "total" | "capital";
-  type Cells = Partial<Record<(typeof BOOK_COLS)[number], ReactNode>>;
+  type CellKind = "group" | "folio" | "section" | "total";
+  type Cells = Partial<Record<BookCol, ReactNode>>;
   const pad = (k: CellKind) => (k === "folio" ? "px-2 py-1.5" : k === "section" ? "px-2 py-2" : "px-2 py-2.5");
-  const tone = (k: CellKind) => (k === "total" || k === "capital" ? "font-semibold text-slate-100"
+  const tone = (k: CellKind) => (k === "total" ? "font-semibold text-slate-100"
     : k === "section" ? "font-medium text-slate-300" : k === "folio" ? "text-slate-300" : "text-slate-200");
   /**
    * "14 of 15 accounts" — on a band or a total, where a figure covers fewer
@@ -632,7 +836,7 @@ export function PrivateMarket() {
    * the column is as wide as the figure and not as wide as the caveat.
    */
   const covered = (n: number, of: number, k: CellKind) =>
-    (k === "total" || k === "section" || k === "capital") && of > 0 && n < of
+    (k === "total" || k === "section") && of > 0 && n < of
       ? <div className="text-[10px] font-normal leading-tight text-slate-500" data-covered={`${n}/${of}`}>{n} of {of} accounts</div>
       : null;
 
@@ -649,13 +853,6 @@ export function PrivateMarket() {
     stale?: number | null;
     ties?: boolean | null;
     implied?: number | null;
-    /**
-     * A ROW THAT CARRIES ONLY ITS CAPITAL ACCOUNT — an AIF that is not private
-     * market. Its holding columns stay EMPTY rather than dashed: the model does
-     * not carry the holding at all, so there is nothing absent to explain on the
-     * row, and the band above it says why in one line.
-     */
-    capitalOnly?: boolean;
     /**
      * A MEASURED NIL — the account was redeemed and its statement's balance is
      * nothing. It renders ₹0 with the word beside it, never the dash an absent
@@ -696,9 +893,6 @@ export function PrivateMarket() {
             {covered(r.uncalledOf ?? 0, r.capitalAccounts ?? 0, k)}
           </>),
     };
-    // A capital-only total says nothing about holdings: those columns are left
-    // for `TrFoot` to fill, which is what a total with no figure in a column is.
-    if (k === "capital") return out;
     const asOfCell = () => {
       const first = r.asOf[0], last = r.asOf[r.asOf.length - 1];
       return (
@@ -713,11 +907,6 @@ export function PrivateMarket() {
         </td>
       );
     };
-    // The capital account's own statement date is still its date.
-    if (ctx.capitalOnly) {
-      out.asOf = asOfCell();
-      return out;
-    }
     // A band or a total spans several funds, and a unit of one fund is not a
     // unit of another: the cell says so rather than sitting blank.
     out.units = r.units != null ? td("units", fmtNum(r.units, 3), "text-slate-400")
@@ -729,11 +918,35 @@ export function PrivateMarket() {
     out.value = r.value != null ? td("value", money(r.value), k === "folio" ? "text-slate-200" : "text-slate-100")
       : ctx.nil ? td("value", <span title={ctx.nil} data-pm-nil>{money(0)} <span className="text-[10px] font-normal text-slate-500">redeemed</span></span>, "text-slate-400")
         : absent("value", ctx.noValue ?? "no statement here carries a valuation");
-    out.return = r.returnPct != null
-      ? td("return", <span className={changeColor(r.returnPct)}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</span>)
-      : absent("return", r.value == null ? "no value to strike a return on"
-        : r.cost == null ? "no cost is reported, so there is no capital to strike a return against"
-          : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another");
+    // ONE CELL PER PICKED MEASURE, each labelled where its header does not
+    // already name what it shows: always under the methodology (whose header
+    // can only say "Return"), and under a concrete measure only where the guard
+    // fired — a part-year fund under CAGR or XIRR shows its holding-period
+    // return, and an untagged figure under a heading reading XIRR would assert
+    // an annual rate for a year the money has not been invested. What the
+    // figure is struck over rides in its hover.
+    for (const measure of returnMeasures) {
+      const id = returnColId(measure);
+      const res = r.ret ? r.ret(measure) : NO_RETURN;
+      const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
+      const part = res.pool && res.pool.covers < res.pool.of ? res.pool : null;
+      out[id] = (
+        <td key={id} data-col-cell={id} data-return-cell={measure} data-return-tag={off ? res.tag : undefined}
+          data-return-shown={res.shown ? "1" : "0"} data-return-pct={res.shown ? res.pct.toFixed(4) : undefined}
+          {...(k === "total" ? {
+            "data-return-foot": measure,
+            "data-return-foot-covers": res.pool?.covers,
+            "data-return-foot-of": res.pool?.of,
+          } : {})}
+          className={`${p} whitespace-nowrap text-right mono ${t}`}>
+          {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+          {res.shown
+            ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true, decimals: 1 })}
+                {part && <span className="text-[10.5px] font-normal text-slate-500"> · {part.covers} of {part.of}</span>}</span>
+            : <AbsentCell reason={res.reason} />}
+        </td>
+      );
+    }
     if (ctx.weight !== undefined) {
       out.weight = ctx.weight == null ? absent("weight", ctx.weightWhy ?? "no value to weigh")
         : td("weight", `${ctx.weight.toFixed(1)}%`, "text-slate-400");
@@ -741,9 +954,13 @@ export function PrivateMarket() {
     if (holdingRow || k === "section") out.asOf = asOfCell();
     return out;
   };
-  /** A row's cells in the DECLARED order `<Tr>` expects, an empty cell where a column has none. */
+  /**
+   * A row's cells in the DECLARED order `<Tr>` expects, an empty cell where a
+   * column has none — walked over the EXPANDED list, so a return column the
+   * reader picked is a column on every row.
+   */
   const inOrder = (c: Cells, k: CellKind) =>
-    BOOK_COLS.slice(1).map((col) => c[col] ?? <td key={col} className={pad(k)} />);
+    bookCols.slice(1).map((col) => c[col] ?? <td key={col} className={pad(k)} />);
 
   /** The words under a fund's or a member's name: what it is, never a figure another column holds. */
   const groupSub = (g: BookGroup): ReactNode => {
@@ -761,13 +978,11 @@ export function PrivateMarket() {
   const noCapitalWhy = (section: BookSectionId, kind: "group" | "folio") =>
     kind === "folio"
       ? "this account sends no capital-account statement — it reports the holding without a commitment"
-      : section === "elsewhere" || section === "private"
+      : section === "private"
         ? "no folio of this fund sends a capital-account statement — the holding is reported without a commitment"
         : "no capital-account statement for these folios";
 
-  const weightWhy = (section: BookSectionId) => section === "elsewhere"
-    ? "not part of the private market value — this column is a share of that one figure"
-    : "no value to weigh — a share of the private market value needs a value";
+  const weightWhy = (_section: BookSectionId) => "no value to weigh — a share of the private market value needs a value";
 
   /** A fund or member row, its folios when open, and its "counted once" line. */
   const renderGroup = (g: BookGroup) => {
@@ -778,13 +993,12 @@ export function PrivateMarket() {
     const kids = sortRows(
       g.folios.map((f) => ({
         f, label: grouping === "fund" ? f.owner : f.fundName,
-        fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null },
+        fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null, ret: folioRet(f) },
       })),
       bookView.sort,
       Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string }) => a({ ...x.fig, label: x.label })])),
     );
     const scheme = (f: BookFolio) => f.capital;
-    const capitalOnly = g.section === "elsewhere";
     const fundCall = groupCallKey(g);
     const fundRowId = `fund:${g.key}`;
     return (
@@ -811,8 +1025,7 @@ export function PrivateMarket() {
             </>}
             sub={groupSub(g)} />
           {inOrder({
-            ...figureCells(g, "group", {
-            capitalOnly,
+            ...figureCells({ ...g, ret: groupRet(g) }, "group", {
             noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, "group") : undefined,
             noValue: valueWhy(g.status, g.folios[0]?.reason ?? null),
             nil: g.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -835,6 +1048,7 @@ export function PrivateMarket() {
             <Fragment key={f.key}>
             <Tr view={bookView} className={TREE_ROW.child}
               data-pm-folio-row={g.key} data-pm-row-section={g.section} data-account={f.accountId}
+              data-pm-capital-account={f.capital?.accountId ?? undefined}
               data-pm-value={f.value ?? undefined} data-pm-counted={f.counted ? "" : undefined}
               data-calls={s ? s.calls.length : undefined}>
               <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping === "fund" && g.overlap)}
@@ -853,7 +1067,6 @@ export function PrivateMarket() {
                 </>} />
               {inOrder({
                 ...figureCells(fig, "folio", {
-                capitalOnly,
                 noCapital: s ? undefined : noCapitalWhy(g.section, "folio"),
                 noValue: valueWhy(f.status, f.reason),
                 nil: f.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -881,6 +1094,8 @@ export function PrivateMarket() {
    * the row. In the columns it adjusts and empty in the ones it does not: the
    * capital accounts are separate statements and are never deduped.
    */
+  // A RETURN IS NOT AN ADJUSTMENT: the line is arithmetic on the holding
+  // columns, so every return column is an empty cell here, whichever are picked.
   const overlapRow = (o: Overlap, key: string, statements: number, weigh: boolean) => (
     <Tr view={bookView} key={`${key}-overlap`} className={TREE_ROW.adjust}
       data-pm-overlap={key} data-printed={Math.round(o.printed)} data-consolidated={Math.round(o.consolidated)} data-overlap={Math.round(o.value)}>
@@ -889,17 +1104,12 @@ export function PrivateMarket() {
         sub={grouping === "fund"
           ? `the same holding is reported on ${statements} statements; the row above counts it once`
           : `${statements} statements report 2 holdings twice between them; the total counts each once`} />
-      <td key="committed" className={pad("folio")} />
-      <td key="called" className={pad("folio")} />
-      <td key="paid" className={pad("folio")} />
-      <td key="uncalled" className={pad("folio")} />
-      <td key="units" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.units != null ? `−${fmtNum(o.units, 3)}` : ""}</td>
-      <td key="cost" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.cost != null ? `−${money(o.cost)}` : ""}</td>
-      <td key="value" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`} data-col-cell="value">−{money(o.value)}</td>
-      <td key="return" className={pad("folio")} />
-      <td key="weight" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{weigh && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : ""}</td>
-      <td key="asOf" className={pad("folio")} />
-      <td key="call" className={pad("folio")} />
+      {inOrder({
+        units: <td key="units" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.units != null ? `−${fmtNum(o.units, 3)}` : ""}</td>,
+        cost: <td key="cost" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.cost != null ? `−${money(o.cost)}` : ""}</td>,
+        value: <td key="value" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`} data-col-cell="value">−{money(o.value)}</td>,
+        weight: <td key="weight" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{weigh && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : ""}</td>,
+      }, "folio")}
     </Tr>
   );
 
@@ -908,24 +1118,17 @@ export function PrivateMarket() {
     const s = book.sections[id];
     if (!s.groups.length) return null;
     const copy = SECTION_COPY[id];
-    /**
-     * EVERY ROW HERE IS AN AIF BY CONSTRUCTION — `sectionOf` files a Category III
-     * AIF or one printing no category — so the band can say so in two words. It
-     * is checked rather than assumed, and falls back to the general words the
-     * day a drop files anything else here.
-     */
-    // `category` is set on an AIF's folio and on nothing else, and it survives
-    // the holding being dropped from this section — which `position` does not.
-    const title = id === "elsewhere" && s.groups.every((g) => g.folios.every((f) => f.category != null))
-      ? "Other AIFs" : copy.title;
+    const title = copy.title;
     const open = sectionOpen(id);
-    const shown = sortRows(s.groups.filter(groupMatches), bookView.sort, nameAcc as Record<string, Accessor<BookGroup>>);
+    // EACH ROW CARRIES ITS OWN RETURN RESOLVER before it is sorted, so the
+    // return columns order the rows on the figure each one prints.
+    const shown = sortRows(
+      s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
+      bookView.sort, nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>);
     const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds") : (s.groups.length === 1 ? "member" : "members");
     const sub = id === "private"
       ? `${s.groups.length} ${noun} · ${s.folios} folios · ${grouping === "fund" ? "each holding counted once" : "each statement as printed"}`
-      : id === "unvalued"
-        ? `${s.groups.length} ${noun} · ${s.folios} folios · the statements carry no value, so ${money(s.paid)} paid in is in no value total`
-        : `${s.groups.length} ${noun} · capital accounts only — ${s.groups.length === 1 && grouping === "fund" ? "this fund holds" : "these funds hold"} listed shares or print no category, so the holdings are on the Portfolio Monitor and in no private total`;
+      : `${s.groups.length} ${noun} · ${s.folios} folios · the statements carry no value, so ${money(s.paid)} paid in is in no value total`;
     return (
       <Fragment key={id}>
         <Tr view={bookView} className={`${TREE_ROW.section} ${id === "private" ? "" : "cursor-pointer"}`}
@@ -935,8 +1138,7 @@ export function PrivateMarket() {
           <TreeSectionCell title={title} marker={copy.marker && <span data-pm-marker={id}>{copy.marker}</span>} sub={sub}
             open={open} onToggle={() => sections.toggle(id)}
             toggleData={{ "data-pm-section-toggle": id }} />
-          {inOrder(figureCells(s, "section", {
-            capitalOnly: id === "elsewhere",
+          {inOrder(figureCells({ ...s, ret: aggRet(s.groups.flatMap((g) => g.folios), grouping === "fund", "section") }, "section", {
             noCapital: s.capitalAccounts === 0 ? "no capital account in this section" : undefined,
             noValue: id === "unvalued" ? "nothing in this section is valued — missing data, never a zero" : "no value",
             noHolding: id === "unvalued" ? "no valued holding in this section" : undefined,
@@ -950,15 +1152,22 @@ export function PrivateMarket() {
     );
   };
 
-  /** A total row, drawn with `TrFoot` so its label span follows the reader's column order. */
-  const totalRow = (key: "private" | "capital", fig: BookFigures, label: ReactNode, capitalOnly: boolean) => (
-    <TrFoot view={bookView} key={key} data-pm-total={key}
+  /**
+   * THE TOTAL — the whole table, each holding counted once, and every capital
+   * account on the page in its capital columns. ONE row, because since the
+   * family placed their funds (Stage 10bw) there is no capital account on this
+   * page outside the two sections: the private total and "every capital
+   * account" are the same set. Drawn with `TrFoot` so its label span follows the
+   * reader's column order.
+   */
+  const totalRow = (fig: BookFigures, label: ReactNode) => (
+    <TrFoot view={bookView} key="private" data-pm-total="private" data-pm-capital-accounts={fig.capitalAccounts}
       className={`${TREE_ROW.total} border-t-2 border-ink-600 ${TREE_CELL.parent} font-semibold text-slate-200`}
       label={label}
-      cells={figureCells(fig, capitalOnly ? "capital" : "total", {
+      cells={figureCells({ ...fig, ret: aggRet(book.folios, true, "total") }, "total", {
         noCapital: fig.capitalAccounts === 0 ? "no capital account on this page" : undefined,
         noValue: "no value",
-        weight: capitalOnly ? undefined : 100,
+        weight: 100,
       }) as Record<string, ReactNode>} />
   );
 
@@ -1021,6 +1230,14 @@ export function PrivateMarket() {
               suggestions={view === "transactions"
                 ? [...new Set(m.history.map((c) => c.fund))]
                 : allGroups.map((g) => g.label)} />
+            {/* THE RETURN PICKER, where the return columns are. The Monitor's own
+                control and its own `?ret=` param, with the hints this page's
+                funds make true (`PM_RETURN_HINTS`) — the Monitor's XIRR hint
+                says the statements carry no per-holding cash flows, which is
+                false of a drawdown fund. */}
+            {view !== "transactions" && (
+              <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} />
+            )}
             {view !== "transactions" && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>
         }>
@@ -1044,7 +1261,25 @@ export function PrivateMarket() {
                     title="What the units held cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
                   <SortHeader col="value" view={bookView} pad="px-2 py-2" note="fund's mark"
                     title="What the holding is worth on the fund's own statement date.">Value</SortHeader>
-                  <SortHeader col="return" view={bookView} pad="px-2 py-2" note="on cost">Return</SortHeader>
+                  {/* ONE HEADING PER PICKED MEASURE, each a `SortHeader` like its
+                      neighbours. The note is the count of FUNDS the measure
+                      answers and the hover the reason the rest do not, both
+                      struck on the SAME resolved cells the fund rows draw — so
+                      the count and the dashes cannot describe different sets.
+                      `auto` gets neither: it resolves per row, and every cell's
+                      own tag says which return it is. */}
+                  {returnMeasures.map((measure) => {
+                    const def = returnMeasureDef(measure);
+                    const auto = measure === "auto";
+                    const meta = fundReturnColumnMeta(measure, fundCells(measure), PM_RETURN_HINTS[measure] ?? def.hint);
+                    return (
+                      <SortHeader key={measure} col={returnColId(measure)} view={bookView} pad="px-2 py-2"
+                        title={auto ? PM_RETURN_HINTS.auto : undefined}
+                        note={meta?.note} noteTitle={meta?.title}>
+                        {auto ? "Return" : def.tag}
+                      </SortHeader>
+                    );
+                  })}
                   <SortHeader col="weight" view={bookView} pad="px-2 py-2" note="of private"
                     title="The row's value as a share of the private market value — the same denominator on every row.">Weight</SortHeader>
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
@@ -1061,17 +1296,14 @@ export function PrivateMarket() {
               <tbody className="divide-y divide-ink-700/60">
                 {renderSection("private")}
                 {renderSection("unvalued")}
-                {totalRow("private", book.privateTotal, <div>
-                  <div>Private market total</div>
-                  <div className="text-[11px] font-normal text-slate-500">the private side, each holding counted once</div>
-                </div>, false)}
-                {renderSection("elsewhere")}
               </tbody>
               <tfoot>
-                {totalRow("capital", book.allCapital, <div>
-                  <div>All capital accounts · {book.allCapital.capitalAccounts}</div>
-                  <div className="text-[11px] font-normal text-slate-500">every section, including not private — what the capital tiles add to</div>
-                </div>, true)}
+                {totalRow(book.privateTotal, <div>
+                  <div>Private market total</div>
+                  <div className="text-[11px] font-normal text-slate-500" data-pm-total-sub>
+                    each holding counted once · {book.privateTotal.capitalAccounts} capital {book.privateTotal.capitalAccounts === 1 ? "account" : "accounts"} — what the capital tiles add to
+                  </div>
+                </div>)}
               </tfoot>
             </table>
           </div>
@@ -1146,13 +1378,21 @@ export function PrivateMarket() {
                   called {money(m.cc.called)} is {money(m.cc.committedWhereCalled - m.cc.called)}, both struck over the same {m.cc.calledOf} accounts.
                 </li>
               )}
+              {/* WHETHER CALLED AND PAID IN MAY BE SET AGAINST EACH OTHER IS
+                  MEASURED PER ACCOUNT (Stage 10bw). On the whole register they
+                  could not — one fund printed a contribution and no called line —
+                  and the warning was true. Scoped to private-market funds every
+                  account prints both, and a warning that the two cover different
+                  sets would be false. */}
+              {!m.calledPaidSameSet && (
+                <li data-pm-subtract-warning>
+                  <span className="text-slate-300">Called and Paid in cover different accounts and must not be subtracted from each other:</span> the
+                  {" "}{m.cc.count - m.cc.calledOf} account{m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first
+                  {m.cc.count - m.cc.calledOf === 1 ? " is" : " are"} present in the second.
+                </li>
+              )}
               <li>
-                <span className="text-slate-300">Called and Paid in cover different accounts and must not be subtracted from each other:</span> the
-                {" "}{m.cc.count - m.cc.calledOf} account{m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first
-                {m.cc.count - m.cc.calledOf === 1 ? " is" : " are"} present in the second.
-              </li>
-              <li>
-                <span className="text-slate-300">This is every capital account in the book and not every commitment the family has.</span>{" "}
+                <span className="text-slate-300">This is every private-market capital account in the book and not every commitment the family has.</span>{" "}
                 {m.cc.count - m.capOutside} of this page&rsquo;s {m.scope.accounts.length} private accounts send a
                 capital-account statement; a commitment behind any other is invisible here, and the family&rsquo;s own
                 investment register names funds with no statement in this book at all. So {money(m.cc.uncalled)} is the floor
@@ -1174,11 +1414,46 @@ export function PrivateMarket() {
 
         {/* WHICH SIDE OF THE BOOK THIS PAGE IS — on every tab, because it is a
             claim about the page rather than about one of its tables. */}
-        {m.scopeNote.sides.length > 1 && (
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-            This page is the private side of the book:{" "}
-            {m.scopeNote.sides.map((x) => `${x.label} ${money(x.value)}`).join(" · ")}
-            {" "}· Total {money(m.scopeNote.bookMV)}.
+        {(m.scopeNote.sides.length > 1 || m.capElsewhere.length > 0) && (
+          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500" data-pm-sides>
+            {m.scopeNote.sides.length > 1 && (
+              <>This page is the private side of the book:{" "}
+                {m.scopeNote.sides.map((x) => `${x.label} ${money(x.value)}`).join(" · ")}
+                {" "}· Total {money(m.scopeNote.bookMV)}.</>
+            )}
+            {/* THE PUBLIC-MARKET FUNDS' CAPITAL ACCOUNTS, NAMED IN ONE CLAUSE — not a
+                card and not a section: the family asked for the card about funds
+                this page does not carry to go ("these kind of placeholders are not
+                relevant"), and then placed each fund themselves, so a public-market
+                fund has no row on a private-market page. A commitment they signed
+                must still not vanish without a word, so it is named HERE, visible on
+                every tab, with a handle the sweep holds to the book (Stage 10bw).
+                EVERY CLAUSE IS CONDITIONED ON WHAT IS TRUE OF THESE ACCOUNTS, not of
+                this book's four: "public-market" only where every one is placed on
+                the listed side, "the family class" only where it was the family's
+                word that placed each, and "in the Portfolio Monitor" only where each
+                one holds a valued row. */}
+            {m.capElsewhere.length > 0 && (() => {
+              const n = m.capElsewhere.length;
+              const one = n === 1;
+              const listed = m.capElsewhere.every((x) => x.side === "listed");
+              const byFamily = listed && m.capElsewhere.every((x) => x.basis === "family");
+              const held = m.capElsewhere.every((x) => m.owned.has(x.commitment.accountId));
+              return (
+                // ITS OWN LINE, so the sides line above stays a line of the sides
+                // and their total — the clause's ₹ figure beside them would read
+                // as a fourth side and stop the line adding up.
+                <span className="mt-1 block" data-pm-cap-elsewhere={m.capElsewhere.map((x) => x.commitment.accountId).join(" ")}>
+                  {n} more capital account{one ? " belongs" : "s belong"} to
+                  {" "}{listed ? "public-market funds" : "funds this page does not place on the private side"}
+                  {" "}— {[...new Set(m.capElsewhere.map((x) => x.commitment.name))].join(", ")},{" "}
+                  {money(sumOrNull(m.capElsewhere.map((x) => x.commitment.committed)))} committed — and{" "}
+                  {one ? "is" : "are"} counted nowhere on this page
+                  {byFamily ? <>: the family class {one ? "that fund" : "those funds"} as investing in listed equity</> : null}
+                  {held ? <>, and {one ? "its holding is" : "their holdings are"} in the Portfolio Monitor&rsquo;s AIF section</> : null}.
+                </span>
+              );
+            })()}
           </p>
         )}
       </Card>
