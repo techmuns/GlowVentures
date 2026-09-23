@@ -51,6 +51,7 @@ const SUITES = [
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
   ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
+  ["held through", "src/lib/__tests__/heldThrough.test.ts"],
   ["security names", "src/lib/__tests__/securityNames.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],

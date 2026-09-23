@@ -135,7 +135,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
           `pointer-events-auto` because everything else in the card passes
           clicks through to the tile's link. Adding a tile is not a control
           inside one: it is the ADD TILE card, the strip's own last cell
-          (Stage 10ck). */}
+          (Stage 10cl). */}
       {action && <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-20">{action}</div>}
     </div>
   );

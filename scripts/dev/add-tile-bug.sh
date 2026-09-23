@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VERIFY STAGE 10ck's CHECKS BY REINTRODUCING EACH BUG.
+# VERIFY STAGE 10cl's CHECKS BY REINTRODUCING EACH BUG.
 #
 # *"Add another tile. It should be a big empty tile with bold written: ADD TILE.
 # When I click on the ADD TILE button, I should be able to choose what I want to
@@ -22,7 +22,7 @@
 # build that fails as NOT A RESULT rather than as a clean run. Needs a
 # `vite preview` on :4173, like `check:pages` — or on the address `BASE=` names,
 # which is how it runs in a `git worktree` of its own while the working copy
-# stays clean (Stage 10ck). `CASES=3,7` runs a subset.
+# stays clean (Stage 10cl). `CASES=3,7` runs a subset.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
