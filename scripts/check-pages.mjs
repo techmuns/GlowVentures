@@ -1195,9 +1195,10 @@ const SIDE_BOOK = (() => {
       totalMV: val(ded),
       sides: [["Listed", val(on("listed"))], ["Private", val(on("private"))], ["Not placed", val(on(null))]]
         .filter(([, v]) => v !== 0).map(([k]) => k),
-      // The funds the family named, and the ones nothing places — both NAMED on
-      // the Private Market page, because dropping a row silently is the same
-      // defect as drawing a ₹0 one.
+      // The funds the family named, and the ones nothing places. They were
+      // NAMED on the Private Market page in a card of their own until the
+      // family asked for it to go; the page's check now asserts that none of
+      // them is named there, so the lists are still derived here.
       listedFunds: names(current(on("listed")).filter((p) => p.assetClass === "AIF")),
       unplacedFunds: names(current(on(null))),
       privateRows: current(on("private")).length,
@@ -2726,6 +2727,18 @@ const ROUTES = [
    */
   ["private-market-folios", "/private-market"],
   ["private-market-owners", "/private-market?view=owners"],
+  /**
+   * ── THE CAPITAL-CALL COLUMN, WITH A STORE BEHIND IT ──────────────────────
+   *
+   * *"it simply needs to be a editable coloumn in this table itself which
+   *  people can add and edit capital call and save and it stays same for
+   *  all."* The walk ADDS a call, EDITS one and DELETES one against a faked
+   * store, and the invariants hold both what the page SENT and what it then
+   * DREW to the store's own answer. The second route is the store before it is
+   * connected — the state production is in until the KV binding exists.
+   */
+  ["private-market-calls", "/private-market"],
+  ["private-market-calls-off", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
    * THE TRADES BRANCH HAD AN ADDRESS OF ITS OWN AND DOES NOT ANY MORE.
@@ -3196,7 +3209,14 @@ const ROUTES = [
 // entry whose absence the sweep then ASSERTS: the Polycab page must render its
 // whole company-level record from the committed store with this endpoint dead,
 // which is what the `polycab` invariants below are struck against.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab)|ERR_CONNECTION_RESET|Failed to load resource/;
+//
+// `capital-calls` joins on the `polycab` terms: a live Function with a live
+// caller (the Private Market fund table's Capital call column). `vite preview`
+// runs no Function, and `private-market-calls-off` answers it with the 503 the
+// real function sends before its store is connected — ON PURPOSE, because that
+// is the state it asserts. What the column does with each answer is checked on
+// its own routes, which is where a real fault in it would show.
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab|capital-calls)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -3556,6 +3576,15 @@ let DIRECT = null;
 /** The trades footer BEFORE the section filter narrowed it — see `monitor-txn-direct`. */
 let DIRECT_ALL = null;
 /**
+ * The section `monitor-axis-switch` narrowed to before it switched axis — null
+ * until the walk has actually clicked one. Without it the route's own claim
+ * ("switching axis WITH A FILTER SET leaves the table populated") would pass on
+ * a walk that never managed to set a filter, which is the case that used to be
+ * a `<select>` option and is a tab now: a walk still looking for the select
+ * finds nothing to pick and switches axis over an unfiltered table.
+ */
+let AXIS_SWITCH_PICK = null;
+/**
  * The per-account expansion opened on a NON-SECURITY axis — see
  * `monitor-category-drill`. Null on every other route, which its invariants
  * report as NOT CHECKED rather than as a pass.
@@ -3627,6 +3656,41 @@ const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
 const PM_TILE_IDS = [];
 let TILE_MENU = null;
 let TILE_PICK = null;
+/**
+ * ── THE CAPITAL-CALL STORE, FAKED FOR THE WALK THAT ASSERTS IT ─────────────
+ *
+ * `/api/capital-calls` is a Pages Function over Cloudflare KV and `vite preview`
+ * runs neither, so the plain walk sees the store as unavailable — which is an
+ * invariant in its own right. `private-market-calls` fulfils it from a fixture
+ * built out of the book's own private fund keys, and every write the page sends
+ * is captured, because "a save sends the right thing" is a claim about the
+ * REQUEST that no rendered pixel can make.
+ *
+ * Dates are relative to the walk's own today, so "the soonest call still to
+ * come" has the same answer whenever the sweep runs.
+ */
+const localIso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const plusDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return localIso(d); };
+const CALL_FIXTURE = (() => {
+  const keys = PM_FOLIO_BOOK ? [...PM_FOLIO_BOOK.statements.keys()].sort() : [];
+  if (keys.length < 3) return null;
+  const at = "2026-01-01T00:00:00.000Z";
+  return {
+    a: keys[0], b: keys[1],
+    newDate: plusDays(60),
+    nextA: plusDays(30),
+    calls: [
+      { id: "fixture-a-past", fund: keys[0], fundName: "fixture", date: "2026-01-15", amount: 5e6, note: "", updatedAt: at },
+      { id: "fixture-a-next", fund: keys[0], fundName: "fixture", date: plusDays(30), amount: 2.5e7, note: "", updatedAt: at },
+      { id: "fixture-a-later", fund: keys[0], fundName: "fixture", date: plusDays(90), amount: 1e7, note: "", updatedAt: at },
+      { id: "fixture-b-one", fund: keys[1], fundName: "fixture", date: "2026-01-10", amount: 1.5e7, note: "notice", updatedAt: at },
+    ],
+  };
+})();
+/** Every write the page sent to the faked store, in order — reset per walk. */
+const CALL_POSTS = [];
+/** What the interaction on `private-market-calls` did, or the error it hit. */
+let CALL_WALK = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -4211,6 +4275,48 @@ async function installFillingQuotes(page) {
  * ONE round rather than three. Reset per page so a walk reads its own.
  */
 let QUOTE_PRIORITY = null;
+
+/**
+ * THE STORE, ANSWERING. An in-memory copy of the fixture that applies each
+ * write exactly as the real function does — save replaces by id or appends
+ * with a new one, delete removes — and answers with the whole list, so the page
+ * is held to rendering the STORE's answer rather than its own optimistic copy.
+ */
+async function installCallStore(page) {
+  CALL_POSTS.length = 0;
+  let store = (CALL_FIXTURE?.calls ?? []).map((c) => ({ ...c }));
+  let n = 0;
+  const reply = (route, body) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(body) });
+  const sorted = () => [...store].sort((x, y) => x.date.localeCompare(y.date) || x.id.localeCompare(y.id));
+  await page.route("**/api/capital-calls", async (route) => {
+    const req = route.request();
+    if (req.method() === "GET") return reply(route, { ok: true, calls: sorted() });
+    let body = null;
+    try { body = JSON.parse(req.postData() ?? ""); } catch { body = null; }
+    CALL_POSTS.push({ body, contentType: req.headers()["content-type"] ?? "" });
+    if (body?.op === "save" && body.call) {
+      const call = { ...body.call, id: body.call.id ?? `walk-new-${++n}`, updatedAt: new Date().toISOString() };
+      store = [...store.filter((c) => c.id !== call.id), call];
+      return reply(route, { ok: true, calls: sorted(), id: call.id });
+    }
+    if (body?.op === "delete") {
+      store = store.filter((c) => c.id !== body.id);
+      return reply(route, { ok: true, calls: sorted(), id: body.id });
+    }
+    return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ ok: false, code: "INVALID", message: "bad walk request" }) });
+  });
+}
+
+/**
+ * THE STORE BEFORE ITS BINDING EXISTS — the production state until somebody
+ * with the Cloudflare account connects `GLOW_STORE`. The function's own 503.
+ */
+async function installCallStoreOff(page) {
+  await page.route("**/api/capital-calls", (route) => route.fulfill({
+    status: 503, contentType: "application/json",
+    body: JSON.stringify({ ok: false, code: "NOT_CONFIGURED", message: "Saving capital calls is not switched on yet." }),
+  }));
+}
 
 async function installLiveMocks(page) {
   QUOTE_PRIORITY = null;
@@ -5175,6 +5281,51 @@ const ALLOC_FAMILY_AXIS = [
  * that matched their prose would be retired silently by any rewording — which
  * is the failure `MANDATE_SUBLINE` already cost this sweep once.
  */
+/**
+ * ── THE SECTIONS ARE TABS, ON EVERY AXIS THAT HAS THEM ────────────────────
+ *
+ *   *"this dropdown needs to be as subcategories in portfolio monitor and you
+ *    can just give tabs to me to click and quickly reach instead of a dropdown
+ *    keep things clean"*
+ *
+ * Run by the category route and by both family axes, because the claims are
+ * the same three on each and only the axis differs. Struck on the tabs' own
+ * attributes — the section KEY each carries and the one `aria-selected` — never
+ * on their words, which are display labels a rewording is free to move.
+ *
+ * The first is the one that could fail silently: the tabs are built from the
+ * BOOK's positions and the headings from the table's own rows, two different
+ * builds of one list, so a control still offering category keys over a table of
+ * baskets — or a tab for a section the table never draws — fails here. The
+ * second is the REMOVAL, asserted rather than assumed: a build that put the
+ * select back beside the tabs satisfies the first and is exactly the clutter
+ * the family asked to be rid of. A missing tab row is a FAILURE, never an
+ * abstention; only a probe that did not run abstains.
+ */
+const sectionTabChecks = (axisParam, allTitle) => [
+  [`the ${axisParam} sections are one tab each, in the order the table draws them`, (t, ctx) => {
+    const f = ctx?.sectionFilter;
+    if (!f) return false;
+    const secs = ctx?.sectionRows;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    const offered = f.offered.filter((k) => k !== "All");
+    return f.axis === axisParam && f.offered[0] === "All"
+      && offered.length === secs.length && offered.every((k, i) => k === secs[i].key);
+  }],
+  [`the ${axisParam} section dropdown is gone: one row of tabs, one of them lit`, (t, ctx) => {
+    if (!ctx?.selectLabels) return { notChecked: "the filter row was not captured on this run" };
+    const f = ctx?.sectionFilter;
+    if (!f) return false;
+    return f.select === false && f.visible === true && f.rows === 1
+      && f.lit.length === 1 && f.lit[0] === f.active
+      && !ctx.selectLabels.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
+  }],
+  // "All" is one short word on the tab; which axis it spans rides in its hover,
+  // so the axis's own wording is not lost with the dropdown's first option.
+  [`the ${axisParam} "All" tab still says which sections it spans`, (t, ctx) =>
+    !!ctx?.sectionFilter && ctx.sectionFilter.allTitle === allTitle],
+];
+
 const NAV_TOL = 0.6;
 const axisChecks = (axis, expected) => [
   // 1. THE SECTIONS ARE THE FAMILY'S OWN, and no others. A section this axis
@@ -5237,11 +5388,12 @@ const axisChecks = (axis, expected) => [
     if (!secs?.length) return { notChecked: "no section headings on this run" };
     return secs.every((x) => !(x.ruleMV > 0) || /by the family's stated rule/i.test(x.text));
   }],
-  // 7. THE FILTER FOLLOWS THE AXIS. Its "all" option is the axis's own word, so
-  //    a reader is never offered "All categories" over a table of baskets — and
-  //    more to the point, never offered a category KEY that would match no row
-  //    and empty the table without a message.
-  [`the section filter offers this axis's own options`, (t) => new RegExp(ALL_LABEL_RE[axis], "i").test(t)],
+  // 7. THE FILTER FOLLOWS THE AXIS — never offering a category KEY over a
+  //    table of baskets, which would match no row and empty the table without
+  //    a message. It is a ROW OF TABS since the family asked for the dropdown
+  //    to go, so the claim is struck on what the tabs OFFER; see
+  //    `sectionTabChecks`, which the category route runs too.
+  ...sectionTabChecks(AXIS_PARAM[axis], ALL_TITLE[axis]),
 ];
 
 /**
@@ -5571,7 +5723,8 @@ const CAPITAL_SIDES = (() => {
 
 const UNCLASSIFIED_KEY = "Not classified in the family's review";
 const AXIS_PARAM = { "asset class": "assetClass", basket: "basket" };
-const ALL_LABEL_RE = { "asset class": "All asset classes", basket: "All baskets" };
+/** What the "All" tab's hover says per axis — `ALL_LABEL` in `groupAxis.ts`. */
+const ALL_TITLE = { "asset class": "All asset classes", basket: "All baskets" };
 /**
  * ── THE STOCK PAGE'S WIDTH, ITS RETURN COLUMN AND ITS TAX FOLD ──────────────
  *
@@ -5802,11 +5955,13 @@ const qtyChecks = (keyOf) => [
  * listed securities — so they are listed exposure held through a fund, and the
  * page no longer claims them.
  *
- * BOTH HALVES ARE ASSERTED AND NEITHER IMPLIES THE OTHER. Dropping them
- * silently is the same defect as drawing a ₹0 row: a reader who knows the
- * family hold Sanshi and cannot find it here learns that the dashboard lost it.
- * So they must be ABSENT from the tables AND NAMED in the card below them, with
- * their value and where they are shown.
+ * THEY WERE ALSO NAMED, in a card headed "Funds this page does not carry",
+ * and the family asked for that card to go: *"Remove this, please. This is not
+ * relevant. These kind of placeholders are not relevant."* So the naming check
+ * INVERTS — the card must stay gone — rather than being deleted with it, and
+ * what a reader cannot do without survives in the sides line under the fund
+ * table, whose listed term holds these funds' value and which the last check
+ * here still reconciles.
  *
  * Spread into every `private-market*` route, because the page's three views are
  * one card behind a toggle and a fund creeping back into any of them is the
@@ -5826,18 +5981,28 @@ const PRIVATE_SCOPE_CHECKS = [
     const rows = (pv.rowText ?? []).join(" \n ").toLowerCase();
     return SIDE_BOOK.listedFunds.every((n) => !rows.includes(n.toLowerCase()));
   }],
-  ["…and the page names them, with their value and where they are shown", (t) => {
-    if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
-    if (!SIDE_BOOK.listedFunds.length) return { notChecked: "no AIF in this book is on the listed side" };
-    // AND WHERE THEY WENT, not just the names: a list with neither tells a
-    // reader the funds exist and nothing about where their money is shown.
-    return SIDE_BOOK.listedFunds.every((n) => t.toLowerCase().includes(n.toLowerCase()))
-      && /category iii/i.test(t) && /portfolio monitor/i.test(t);
-  }],
-  ["…and the funds no statement places are named too", (t) => {
-    if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
-    if (!SIDE_BOOK.unplacedFunds.length) return { notChecked: "every fund in this book is placed" };
-    return SIDE_BOOK.unplacedFunds.every((n) => t.toLowerCase().includes(n.toLowerCase()));
+  /**
+   * THE "FUNDS THIS PAGE DOES NOT CARRY" CARD STAYS GONE — struck on its own
+   * handles AND on its two section headings, because either alone could be
+   * satisfied by a rewording.
+   *
+   * NOT on the funds' names, which the first draft of this check tried and
+   * which failed a correct page: Carnelian Bharat Amritkaal, Delphi and Neo
+   * Infra each have a real CAPITAL ACCOUNT, and the scheme table lists every
+   * capital account whichever side of the book its fund sits on — a drawdown
+   * structure is how an account funds itself, not where it invests. The claim
+   * is that the card is gone, not that the page may never name those funds.
+   */
+  ["the 'funds this page does not carry' card stays removed", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    // The HEADING, case-sensitive and on its own line: the scheme table's own
+    // working line says "…capital accounts from funds this page does not
+    // carry", legitimately, and a case-blind match failed a correct page on it.
+    return pv.elsewhere === 0
+      && !/(^|\n)Funds this page does not carry\s*\n/.test(t)
+      && !/Category III AIFs — listed markets/.test(t)
+      && !/Placed on neither side/.test(t);
   }],
   ["the page states which side of the book it is, and the sides add to the total", (t) => {
     if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
@@ -10780,47 +10945,70 @@ const INVARIANTS = {
      * committed − called", beside the very rows it is summed over. Both halves
      * are asserted, at their own addresses, and neither implies the other.
      */
-    ["every tile definition is short and legible", (t, ctx) => {
-      const hints = ctx?.statHints;
-      if (!hints?.length) return false;
-      /**
-       * TWO BOUNDS, AND ONLY ONE OF THEM IS ABOUT WORDS.
-       *
-       * 200 characters is roughly two short sentences; the paragraphs this
-       * replaced ran 600–900 apiece. And 12px is the floor for the size, read
-       * off the COMPUTED style — a class name says nothing about what was
-       * painted, and the previous 11px is what made the definition the least
-       * legible text on a page whose figures render at 22px.
-       */
-      const defs = hints.filter((h) => !h.absent);
-      if (!defs.length) return false;
-      return defs.every((h) => h.text.length <= 200)
-        // …and the SIZE floor covers every hint on the page, absent ones
-        // included: legibility was the other half of the request and a reason
-        // is no easier to read at 11px than a definition is.
-        && hints.every((h) => h.px >= 12);
+    /**
+     * ── A TILE IS A LABEL, A FIGURE AND ONE SHORT LINE ──────────────────────
+     *
+     *   *"the ui of this page is very ugly … these are action cards. They need
+     *    to have the major figure and a very short description, not such long
+     *    lines. No one will read this on the dashboard; it needs to be
+     *    absolutely simple and clear."*
+     *
+     * The third round of the same ask, and the one that finally made it
+     * measurable end to end. Every claim here is GEOMETRY or STRUCTURE — a
+     * paragraph and a line read identically to a regex — and each is struck on
+     * every tile the strip draws, so it runs on the default four here and on all
+     * eighteen on `private-market-tiles`.
+     *
+     * AND THE DETAIL MUST STILL EXIST. The coverage counts and the working moved
+     * into each tile's hover, and a build that simply deleted them would pass
+     * every one of the brevity claims — so the hover is required too, and the
+     * claims further down read their figures out of it.
+     */
+    ["every tile is a label, a figure and one short line", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st?.slots) return false;
+      const subs = Object.values(st.subs ?? {});
+      return st.hints === 0
+        && subs.length === st.slots
+        && subs.every((x) => !!x && x.text.length > 0 && x.text.length <= 40 && x.lines === 1 && x.px >= 12)
+        && Object.values(st.details ?? {}).filter((d) => d.trim().length > 0).length === st.slots;
+    }],
+    /**
+     * ...AND NO LABEL IS CUT OFF. "PRIVATE MARKET VAL…" and "STILL TO CALL
+     * (UNCALLED CAPIT…" were in the family's own screenshot, with a third of the
+     * header row empty beside them. Measured on the text's own box rather than
+     * on the words, because a truncated label renders the same characters.
+     */
+    ["no tile label is cut off", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st?.slots) return false;
+      return Array.isArray(st.clipped) && st.clipped.length === 0;
     }],
     ["the uncalled-capital tile says what it is", (t, ctx) => {
       const tile = ctx?.tileStrip?.texts?.uncalled;
-      if (!tile) return false;
+      const detail = ctx?.tileStrip?.details?.uncalled;
+      if (!tile || !detail) return false;
+      // What it IS stays on the tile, where a reader who never hovers sees it.
       return /promised/i.test(tile)
         && /not yet asked for|not yet called/i.test(tile)
         // …and that it is a LIABILITY rather than an asset, which is the one
         // thing a reader could otherwise get wrong about a figure sitting in a
-        // row of market values.
-        && /no total on this page/i.test(tile);
+        // row of market values. In the hover now, by the family's own ask for
+        // one short line — which is weaker than a caption and is recorded so.
+        && /no total on this page/i.test(detail) && /not an asset/i.test(detail);
     }],
     ["…and how it is arrived at is still on the page, beside the rows it sums", (t) =>
       /summed exactly as each fund prints it/i.test(t)
       && /never derived from committed − called/i.test(t)],
     ["the distributions tile says what it is, and the two things a reader would get wrong", (t, ctx) => {
       const tile = ctx?.tileStrip?.texts?.distributed;
-      if (!tile) return false;
+      const detail = ctx?.tileStrip?.details?.distributed;
+      if (!tile || !detail) return false;
       return /paid back/i.test(tile)
         // Neither is guessable from the number, and neither is stated anywhere
-        // else on this page — so both stayed when the paragraph went.
-        && /not part of the value above/i.test(tile)
-        && /does not reduce what a fund can still call|still be called/i.test(tile);
+        // else on this page — so both stayed, in the tile's hover.
+        && /not part of the value above/i.test(detail)
+        && /does not reduce what a fund can still call|still be called/i.test(detail);
     }],
     /**
      * …AND THE ONE MISREADING THAT WOULD COST THE MOST IS STILL WARNED AGAINST.
@@ -10843,7 +11031,17 @@ const INVARIANTS = {
     ["the tile explanation paragraphs stay removed", (t) =>
       !/How this number is arrived at:/i.test(t)
       && !/Why it is a floor and not a total:/i.test(t)],
-    ["the tile carries the client's own word for it", (t) => /Distributions \(cash returned\)/i.test(t)],
+    /**
+     * *"what is distributions?"* — the label is the client's own word and the
+     * one short line under it is the answer. It read "Distributions (cash
+     * returned)", which was cut off in the family's own screenshot; the answer
+     * moved under the figure, where there is room for it.
+     */
+    ["the tile carries the client's own word for it, and the answer under it", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.distributed;
+      if (!tile) return false;
+      return /^DISTRIBUTIONS\b/.test(tile) && /cash paid back/i.test(tile);
+    }],
 
     /**
      * ── THE HEADER PROSE AND BOTH PILLS ARE GONE ────────────────────────────
@@ -10870,9 +11068,11 @@ const INVARIANTS = {
      * matters is that a real figure is there and the tile still names its book.
      */
     ["the private value tile names how many accounts it spans", (t, ctx) => {
-      const tile = ctx?.tileStrip?.texts?.value;
-      if (!tile) return false;
-      const m = /across (\d+) accounts · each holding counted once/i.exec(tile);
+      // IN THE HOVER NOW. The tile keeps its share of the book, which is the
+      // one fact about its breadth a reader acts on at a glance.
+      const detail = ctx?.tileStrip?.details?.value;
+      if (!detail) return false;
+      const m = /across this page['\u2019]s (\d+) private accounts · each holding counted once/i.exec(detail);
       return !!m && Number(m[1]) > 0;
     }],
 
@@ -10980,9 +11180,17 @@ const INVARIANTS = {
      * A build that deleted the card AND its absent tile satisfies the removal
      * above and loses a measurement, which is the half a removal breaks quietly.
      */
-    ["the realised-gain and forward-schedule absences survive it", (t) =>
-      /no capital gain statement covers any private account/i.test(t)
-      && /No fund in this book publishes a forward drawdown schedule/i.test(t)],
+    /*
+     * BOTH MOVED A SECOND TIME, AND EACH TO THE PLACE IT NOW BELONGS. The
+     * realised-gain reason is that tile's own hover (its short line keeps the
+     * gist, "No statement reports it"). The forward-schedule one lived in the
+     * capital-call timeline's footer, and that card is gone at the family's
+     * request — so it is the hover on the Capital call COLUMN that replaced it,
+     * which is exactly where a reader wondering why calls are typed in looks.
+     */
+    ["the realised-gain and forward-schedule absences survive it", (t, ctx) =>
+      /no capital gain statement covers any private account/i.test(ctx?.tileStrip?.details?.realised ?? "")
+      && /No fund in this book publishes a forward drawdown schedule/i.test(ctx?.pmView?.callHead?.title ?? "")],
 
     // PM-2. What the page shows plus what it says it left out must reconstruct
     // the whole book. Narrowing on the wrong axis moves one side and not the other.
@@ -11014,9 +11222,11 @@ const INVARIANTS = {
      * "N% of the ₹X Cr book", the claim is about this page's own
      * consistency, which is what it was always for.
      */
-    ["the private tile is the book's private side, and the sides total the NAV", (t) => {
+    ["the private tile is the book's private side, and the sides total the NAV", (t, ctx) => {
       const nav = cr(new RegExp(String.raw`of the ` + CR + String.raw`\s+book`, "i").exec(t)?.[1]);
-      const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      // THE TILE'S OWN TEXT, not the page: its label is "Market value" now, and
+      // the words "market value" are free to appear anywhere else on a page.
+      const priv = cr(new RegExp(String.raw`^MARKET VALUE\s*` + CR, "i").exec(ctx?.tileStrip?.texts?.value ?? "")?.[1]);
       const line = /This page is the private side of the book:([^\n]*)/i.exec(t);
       if (![nav, priv].every(Number.isFinite) || !line) return false;
       const said = crU(...(new RegExp(String.raw`Private\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(line[1]) ?? []).slice(1));
@@ -11031,11 +11241,13 @@ const INVARIANTS = {
     // they add to the COSTED market value and not to the whole private book — and
     // the coverage count must be a strict subset. `costBasis ?? 0` leaves the
     // totals untouched and silently makes the count read 19 of 19.
-    ["invested + unrealised = the costed value, and the cost covers fewer rows than the book holds", (t) => {
+    ["invested + unrealised = the costed value, and the cost covers fewer rows than the book holds", (t, ctx) => {
       const inv = cr(new RegExp(String.raw`CAPITAL INVESTED\s*\n?\s*` + CR, "i").exec(t)?.[1]);
       const pnl = cr(new RegExp(String.raw`UNREALISED P&L\s*\n?\s*\+?` + CR, "i").exec(t)?.[1]);
-      const cov = cr(new RegExp(String.raw`covering\s*` + CR, "i").exec(t)?.[1]);
-      const n = /(\d+) of (\d+) folio rows report one/i.exec(t);
+      // The coverage and the costed value were the tiles' captions and are
+      // their hovers now — read there, or this check could only ever abstain.
+      const cov = cr(new RegExp(String.raw`covering\s*` + CR, "i").exec(ctx?.tileStrip?.details?.pnl ?? "")?.[1]);
+      const n = /(\d+) of (\d+) folio rows report one/i.exec(ctx?.tileStrip?.details?.cost ?? "");
       if (![inv, pnl, cov].every(Number.isFinite) || !n) return false;
       if (Math.abs(inv + pnl - cov) > Math.max(0.6, cov * 0.002)) return false;
       /**
@@ -11055,8 +11267,8 @@ const INVARIANTS = {
     // PM-4. Undrawn is summed AS PRINTED. Two folios print a commitment and a
     // drawdown and no undrawn figure; a `?? 0`, or deriving committed − drawn,
     // puts a figure on all fifteen and the coverage count gives it away.
-    ["the uncalled-capital tile covers fewer capital accounts than the register holds", (t) => {
-      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
+    ["the uncalled-capital tile covers fewer capital accounts than the register holds", (t, ctx) => {
+      const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
       // The footer now prints the figure and its coverage as two spans; the
       // working line under the table repeats both in words. BOTH are read, and
       // they must agree — a footer and a sentence describing it are exactly the
@@ -11078,8 +11290,8 @@ const INVARIANTS = {
     // called over 14, came to ₹26 Cr, and called it "the same figure the other
     // way" beside a printed ₹16 Cr. Both numbers were right; the sentence was a
     // contradiction a reader who subtracts would find in ten seconds.
-    ["committed − called reproduces the printed uncalled figure, on one matched set", (t) => {
-      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
+    ["committed − called reproduces the printed uncalled figure, on one matched set", (t, ctx) => {
+      const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
       const m = new RegExp(String.raw`The same figure the other way:\s*committed\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*less\s*called\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*is\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t);
       if (!Number.isFinite(tile) || !m) return false;
       const [c, cd, u] = [crU(m[1], m[2]), crU(m[3], m[4]), crU(m[5], m[6])];
@@ -11111,13 +11323,17 @@ const INVARIANTS = {
        * match for a caption is satisfied by any prose that shares its words,
        * which is the failure this sweep already records twice.
        */
-      const tile = ctx?.tileStrip?.texts?.uncalled;
+      // THE TILE'S HOVER, where its coverage moved when the tile became a
+      // figure and one line. The on-screen text is checked too: the crossed-set
+      // caption must be gone from BOTH.
+      const tile = ctx?.tileStrip?.details?.uncalled;
+      const shown = ctx?.tileStrip?.texts?.uncalled ?? "";
       if (!tile) return { notChecked: "the uncalled tile is not on this strip" };
       const m = /across (\d+) capital accounts/i.exec(tile);
       if (!m) return false;
       // THE OLD WORDING MUST BE GONE FROM THIS TILE — a removal is verified by
       // asserting it happened, and this one is the crossed-set caption itself.
-      if (/of this page['\u2019]s \d+ private accounts/i.test(tile)) return false;
+      if (/of this page['\u2019]s \d+ private accounts/i.test(tile + " " + shown)) return false;
       return Number(m[1]) > 0
         && /so this is a floor/i.test(tile)
         && /floor of what can still be called, never the ceiling/i.test(t);
@@ -11131,10 +11347,12 @@ const INVARIANTS = {
      * above, and the card below the table is checked on the same arithmetic.
      */
     ["the capital-account counts partition rather than crossing two sets", (t, ctx) => {
-      const tile = ctx?.tileStrip?.texts?.accounts;
-      const unc = ctx?.tileStrip?.texts?.uncalled;
-      if (!tile || !unc) return { notChecked: "the capital-accounts tile is not on this strip" };
-      const total = /CAPITAL ACCOUNTS\s+(\d+)/i.exec(tile);
+      // The FIGURE is on the tile; both counts are in the two tiles' hovers.
+      const shown = ctx?.tileStrip?.texts?.accounts;
+      const tile = ctx?.tileStrip?.details?.accounts;
+      const unc = ctx?.tileStrip?.details?.uncalled;
+      if (!shown || !tile || !unc) return { notChecked: "the capital-accounts tile is not on this strip" };
+      const total = /CAPITAL ACCOUNTS\s+(\d+)/i.exec(shown);
       const onPage = /(\d+) of this page['\u2019]s (\d+) private accounts/i.exec(tile);
       if (!total || !onPage) return false;
       /**
@@ -11162,7 +11380,7 @@ const INVARIANTS = {
      * Two independent renderings, so neither can drift alone.
      */
     ["the card's own account sentence ties to the tile's capital-account count", (t, ctx) => {
-      const tile = ctx?.tileStrip?.texts?.uncalled;
+      const tile = ctx?.tileStrip?.details?.uncalled;
       if (!tile) return { notChecked: "the uncalled tile is not on this strip" };
       const total = /across (\d+) capital accounts/i.exec(tile);
       const sent = /(\d+) of this page['\u2019]s (\d+) private accounts send a\s+capital-account statement/i.exec(t);
@@ -11171,40 +11389,84 @@ const INVARIANTS = {
       return Number(sent[1]) <= Number(sent[2])
         && Number(sent[1]) + off === Number(total[1]);
     }],
-    // PM-4d. THE TIMELINE'S WINDOWS ARE EMPTY AND MUST SAY WHY. No fund in this
-    // archive publishes a forward drawdown schedule, so 1/3/6 months carry
-    // nothing — and an empty window that does not name the document which would
-    // fill it reads as a feed that is down rather than a fact about the funds.
-    // The bucket that DOES hold the money must be the uncalled tile, or the
-    // card would answer "when" by quietly losing the "how much".
-    ["the call windows are empty, name what would fill them, and the undated bucket is the uncalled total", (t, ctx) => {
-      const buckets = ctx.callBuckets ?? [];
-      if (buckets.length < 5) return false;
-      const windows = buckets.filter((b) => ["1m", "3m", "6m"].includes(b.key));
-      const undated = buckets.find((b) => b.key === "unscheduled");
-      const tile = crU(...(new RegExp(String.raw`STILL TO CALL \(UNCALLED CAPITAL\)\s*\n?\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t) ?? []).slice(1));
-      if (windows.length !== 3 || !undated || !Number.isFinite(tile)) return false;
-      return windows.every((w) => /—/.test(w.text) && !/₹/.test(w.text))
-        && /No fund in this book publishes a forward drawdown schedule/i.test(t)
-        && /drawdown notice/i.test(t) && /commitment-period schedule/i.test(t)
-        && Math.abs(crU(...(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(undated.text) ?? []).slice(1)) - tile) <= 0.6;
+    /**
+     * PM-4d. THE CAPITAL-CALL TIMELINE STAYS REMOVED.
+     *
+     *   *"remove this, it simply needs to be a editable coloumn in this table
+     *    itself … We are trying to see all views on master table itself
+     *    instead of having such clutter."*
+     *
+     * It was five boxes and three of them could only ever read "nothing
+     * scheduled", because no fund in this archive publishes a forward schedule.
+     * INVERTED rather than deleted with the card, and struck on its own handles
+     * as well as its heading — and the undated money it held must still be the
+     * tile a reader sees, or the removal would have quietly taken the "how
+     * much" with the "when".
+     */
+    ["the capital-call timeline stays removed, and what it held is still on the page", (t, ctx) => {
+      const buckets = ctx?.callBuckets;
+      if (!Array.isArray(buckets)) return { notChecked: "the call-bucket probe did not run" };
+      const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
+      if (!Number.isFinite(tile) || !CAPITAL_BOOK) return false;
+      return buckets.length === 0
+        && !/Capital-call timeline/i.test(t)
+        && !/Nothing scheduled/i.test(t)
+        && !/Promised, no date/i.test(t)
+        // The undated uncalled total, still on the default tile, to the page's
+        // own printing precision.
+        && Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6;
     }],
-    // PM-4e. DUE NOW IS A MEASUREMENT AND MUST NOT BE MISTAKEN FOR A WINDOW. It
-    // is the only genuinely-due figure in this book, it is a MEASURED zero on
-    // this drop, and an account whose statement prints no such line is skipped
-    // rather than counted as owing nothing — so the coverage has to be on the
-    // face of it. A `?? 0` here would report every fund as fully paid up.
-    ["the due-now figure states the accounts it covers, and is not a window", (t, ctx) => {
-      const due = (ctx.callBuckets ?? []).find((b) => b.key === "due-now");
-      const m = /(\d+) of (\d+) accounts print this line/i.exec(t);
-      if (!due || !m || !CAPITAL_BOOK) return false;
+    /**
+     * ── THE CAPITAL-CALL COLUMN — the thing that replaced the timeline ──────
+     *
+     * One cell per fund row, under a header whose hover says what the column
+     * is. Struck on structure: the header is `th[data-col="call"]` and each
+     * cell carries its own state, because a dash from a store that could not
+     * be read and a dash from nothing entered look identical and only one of
+     * them is something a reader can fix by typing.
+     */
+    ["the fund table carries a Capital call column, one cell per fund, saying what it is", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      const head = pv.callHead;
+      if (!head || !pv.fundFolios.length) return false;
+      return /CAPITAL CALL/.test(head.text)
+        && pv.callCells.length === pv.fundFolios.length
+        && pv.callCells.every((c) => pv.fundFolios.some((f) => f.key === c.key))
+        && /entered by the family/i.test(head.title) && /saved for everyone/i.test(head.title)
+        && /never added into Called, Paid in or Still to call/i.test(head.title);
+    }],
+    /**
+     * ...AND A STORE THAT CANNOT BE READ IS NEVER SHOWN AS "NO CALLS". This
+     * route serves no Function, so every cell must be the unavailable state
+     * with its reason, and the header must say so ONCE — never an Add button
+     * that cannot save, and never a ₹0 that reads as nothing coming.
+     */
+    ["…and where the store cannot be read, every cell says why and none offers to save", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.state === "unavailable" && (c.reason ?? "").length > 20 && !/₹/.test(c.text))
+        && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
+    }],
+    // PM-4e. DUE NOW IS A MEASUREMENT, and its coverage must be said. It is
+    // the only genuinely-due figure in this book, it is a MEASURED zero on this
+    // drop, and an account whose statement prints no such line is skipped
+    // rather than counted as owing nothing. It lived in the timeline card and
+    // is the "Due now" tile now — its coverage in that tile's hover.
+    ["the due-now figure states the accounts it covers", (t, ctx) => {
+      const shown = ctx?.tileStrip?.texts?.due;
+      const detail = ctx?.tileStrip?.details?.due;
+      if (!shown || !detail) return { notChecked: "the due-now tile is not on this strip" };
+      const m = /(\d+) of (\d+) accounts print this line/i.exec(detail);
+      if (!m || !CAPITAL_BOOK) return false;
       // AGAINST THE BOOK, NEVER AGAINST THE PAGE'S OWN DENOMINATOR. A `?? 0` in
       // the total widens the coverage to every row and leaves the figure at ₹0,
       // so the count is the only thing that moves — and `N <= M` is satisfied by
       // the bug. The book says how many statements print the line.
       return Number(m[1]) === CAPITAL_BOOK.pendingOf && Number(m[2]) === CAPITAL_BOOK.count
-        && /a measured figure, not an assumption/i.test(t)
-        && /never counted as nil/i.test(due.text);
+        && /^DUE NOW\s*₹/i.test(shown) && /Called, not yet paid/i.test(shown)
+        && /a measured figure, not an assumption/i.test(detail)
+        && /never counted as nil/i.test(detail);
     }],
     // PM-4f. Every dated call reached the page through its own statement's
     // total, and the history must account for exactly the calls the per-scheme
@@ -11227,11 +11489,15 @@ const INVARIANTS = {
     // is one field carrying two quantities. Called and Invested cover different
     // sets here, so the page must SAY they cannot be subtracted: their printed
     // difference is a coverage gap and reads exactly like money paid twice.
-    ["committed, called and invested are three separate tiles, each stating its coverage", (t) => {
-      const tiles = ["COMMITTED", "CALLED BY THE FUNDS", "INVESTED \\(PAID IN\\)", "DUE NOW \\(CALLED, UNPAID\\)"];
-      if (!tiles.every((x) => new RegExp(x + String.raw`\s*\n`, "i").test(t))) return false;
-      const called = /(\d+) of (\d+) capital accounts print a called line/i.exec(t);
-      const paid = /(\d+) of (\d+) capital accounts · cash that has actually left/i.exec(t);
+    ["committed, called and invested are three separate tiles, each stating its coverage", (t, ctx) => {
+      // Struck on the strip's own tiles: each is its own slot, headed with its
+      // own short label, and each says what it is in its one line.
+      const st = ctx?.tileStrip;
+      if (!st) return false;
+      const want = { committed: /^COMMITTED\s*₹/, called: /^CALLED\s*₹/, paid: /^PAID IN\s*₹/, due: /^DUE NOW\s*₹/ };
+      if (!Object.entries(want).every(([id, re]) => re.test(st.texts?.[id] ?? ""))) return false;
+      const called = /(\d+) of (\d+) capital accounts print a called line/i.exec(st.details?.called ?? "");
+      const paid = /(\d+) of (\d+) capital accounts · cash that has actually left/i.exec(st.details?.paid ?? "");
       if (!called || !paid) return false;
       return Number(called[1]) <= Number(called[2]) && Number(paid[1]) <= Number(paid[2])
         && /must not be subtracted from each other/i.test(t);
@@ -11239,11 +11505,12 @@ const INVARIANTS = {
     // PM-5. The capital paid into funds that value nothing ties to its own table
     // and is NOT inside the private market value. Carrying drawn capital as a
     // mark would report what was paid as what the stake is worth.
-    ["the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total", (t) => {
+    ["the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total", (t, ctx) => {
       // The label was the client's own question — *"Drawn against no valuation
-      // means?"* — and it now says what it is. The check follows the tile.
-      const tile = cr(new RegExp(String.raw`PAID IN, BUT NEVER VALUED\s*\n?\s*` + CR, "i").exec(t)?.[1]);
-      const priv = cr(new RegExp(String.raw`PRIVATE MARKET VALUE\s*\n?\s*` + CR, "i").exec(t)?.[1]);
+      // means?"* — and it says what it is: "Never valued", with "Paid into funds
+      // with no NAV" under it. Read off the two tiles' own text.
+      const tile = cr(new RegExp(String.raw`^NEVER VALUED\s*` + CR, "i").exec(ctx?.tileStrip?.texts?.unvalued ?? "")?.[1]);
+      const priv = cr(new RegExp(String.raw`^MARKET VALUE\s*` + CR, "i").exec(ctx?.tileStrip?.texts?.value ?? "")?.[1]);
       const consol = cr(new RegExp(String.raw`Total\s*·\s*\d+\s*funds\s*` + CR + String.raw`\s*` + CR, "i").exec(t)?.[2]);
       const i = t.search(/Private accounts whose fund publishes no valuation/i);
       const j = t.search(/of drawn capital across \d+ of these accounts/i);
@@ -11438,6 +11705,92 @@ const INVARIANTS = {
       return Math.abs(total - foot) <= Math.max(0.6, owners.length * 0.06)
         && Math.abs(cr(said[1]) - foot) <= 0.6
         && Math.abs(cr(said[1]) - cr(said[2])) > 0.05;
+    }],
+  ],
+  /**
+   * ── THE CAPITAL-CALL COLUMN, AGAINST A STORE ──────────────────────────────
+   *
+   * The walk added a call, edited one and deleted one. Each claim is struck on
+   * the REQUEST the page sent or on the cell it drew from the store's answer —
+   * never on the editor's prose — and the figures are the fixture's own, so a
+   * page that rendered its optimistic copy instead of the store's reply, or
+   * sent a lakh where the reader typed a crore, fails by name.
+   */
+  "private-market-calls": [
+    ["the walk added, edited and deleted a call without an error", () =>
+      !!CALL_FIXTURE && !!CALL_WALK && !CALL_WALK.error && !!CALL_WALK.addKey],
+    ["a new call saves the reader's figure in rupees, on the fund's own key", () => {
+      const b = CALL_POSTS[0]?.body;
+      if (!b || !CALL_FIXTURE || !CALL_WALK) return false;
+      return b.op === "save" && b.call?.id == null
+        && b.call?.fund === CALL_WALK.addKey
+        && b.call?.date === CALL_FIXTURE.newDate
+        // "2 Cr" is ₹2,00,00,000 — a misread unit is a hundredfold error that
+        // looks like an ordinary amount.
+        && b.call?.amount === 2e7
+        && b.call?.note === "check-pages"
+        && /application\/json/.test(CALL_POSTS[0].contentType);
+    }],
+    ["an edit keeps the call's id and changes what was edited", () => {
+      const b = CALL_POSTS[1]?.body;
+      if (!b || !CALL_FIXTURE) return false;
+      return b.op === "save" && b.call?.id === "fixture-b-one" && b.call?.fund === CALL_FIXTURE.b
+        && b.call?.amount === 7.5e6 && b.call?.date === "2026-01-10" && b.call?.note === "notice";
+    }],
+    ["a delete sends the call's id and nothing else", () => {
+      const b = CALL_POSTS[2]?.body;
+      return !!b && b.op === "delete" && b.id === "fixture-a-past" && Object.keys(b).length === 2 && CALL_POSTS.length === 3;
+    }],
+    /**
+     * EACH CELL IS THE STORE'S ANSWER: the soonest call still to come, else the
+     * latest marked past, and how many more. Fund A lost its past call and
+     * keeps two upcoming; fund B's only call is past and was edited; the fund
+     * the walk added to shows exactly what was typed.
+     */
+    ["each cell shows the store's answer — the soonest call to come, else the latest, marked past", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv || !CALL_FIXTURE || !CALL_WALK?.addKey) return false;
+      const cell = (k) => pv.callCells.find((c) => c.key === k);
+      const a = cell(CALL_FIXTURE.a), b = cell(CALL_FIXTURE.b), c = cell(CALL_WALK.addKey);
+      if (!a || !b || !c) return false;
+      const others = pv.callCells.filter((x) => ![CALL_FIXTURE.a, CALL_FIXTURE.b, CALL_WALK.addKey].includes(x.key));
+      return a.state === "ready" && a.date === CALL_FIXTURE.nextA && a.amount === 2.5e7 && a.more === 1 && !/\bpast\b/.test(a.text)
+        && b.state === "ready" && b.amount === 7.5e6 && b.date === "2026-01-10" && /\bpast\b/.test(b.text)
+        && c.state === "ready" && c.amount === 2e7 && c.date === CALL_FIXTURE.newDate && c.more === 0
+        && others.every((x) => x.state === "empty" && /Add/.test(x.text));
+    }],
+    ["the editor lists the fund's calls, each with edit and delete", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv || !CALL_FIXTURE) return false;
+      return pv.callEditors === 1 && pv.callEditorFor === CALL_FIXTURE.a
+        && pv.callRows.length === 2 && pv.callRows.includes("fixture-a-next") && pv.callRows.includes("fixture-a-later");
+    }],
+    /**
+     * AN ENTERED CALL IS NEVER ADDED INTO A STATEMENT FIGURE. What the family
+     * types is what they have been TOLD; Still to call is what the funds'
+     * statements print. After three writes the tile and the scheme table's own
+     * footer must both still be the book's figure, to the page's precision.
+     */
+    ["an entered call is never added into a statement figure", (t, ctx) => {
+      const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
+      const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t);
+      if (!Number.isFinite(tile) || !said || !CAPITAL_BOOK) return false;
+      return Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6 && Math.abs(crU(said[1], said[2]) - CAPITAL_BOOK.uncalledCr) <= 0.6;
+    }],
+  ],
+  /**
+   * ── THE STORE BEFORE IT IS CONNECTED ──────────────────────────────────────
+   *
+   * The state production is in until the KV binding exists. The column must say
+   * saving is not switched on — in the reader's words, on every cell and once
+   * on the header — and must not offer an Add that cannot save.
+   */
+  "private-market-calls-off": [
+    ["a store that is not connected says so on every cell, and nothing offers to save", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.state === "unavailable" && /not switched on yet/i.test(c.reason ?? "") && !/₹/.test(c.text))
+        && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
     }],
   ],
   /**
@@ -12438,7 +12791,10 @@ const INVARIANTS = {
      * to catch. (That lesson is already recorded on the CIO tile checks.)
      */
     ["'Company Shares' appears nowhere on this page", (t) => !/company\s+shares/i.test(t)],
-    ["the class filter reads 'All categories'", (t) => /All categories/.test(t) && !/All asset classes/.test(t)],
+    // It used to assert the select read "All categories". The subject is a tab
+    // row now, so the claim moved onto the tabs rather than being deleted with
+    // the dropdown — see `sectionTabChecks`.
+    ...sectionTabChecks("category", "All categories"),
     /**
      * NOTHING MANDATE-HELD MAY STAND UNDER DIRECT EQUITY — asserted three ways,
      * each on a different piece of what the page draws, because the one thing a
@@ -13607,7 +13963,10 @@ const INVARIANTS = {
       const secs = ctx?.sectionRows;
       const selects = ctx?.selectLabels;
       if (!selects) return { notChecked: "the filter row was not captured on this run" };
-      return (secs?.length ?? 0) === 0 && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
+      // ...on EITHER control: the tab row that replaced the select must be
+      // hidden here as the select was, or a row of one tab changes nothing.
+      return (secs?.length ?? 0) === 0 && !ctx.sectionFilter
+        && !selects.some((s) => /^All (categories|asset classes|baskets|securities)$/i.test(s));
     }],
     /**
      * THE CAPTION IS GONE AND ITS ONE LOAD-BEARING CLAIM IS NOT.
@@ -13928,7 +14287,24 @@ const INVARIANTS = {
       if (!secs?.length) return { notChecked: "no section headings on this run" };
       return secs.every((x) => x.axis === "basket");
     }],
-    ["...and the filter went back to offering every basket", (t) => /All baskets/i.test(t)],
+    /**
+     * ...AND THE FILTER WENT BACK TO OFFERING EVERY BASKET. It used to match
+     * the words "All baskets" in the page text, which were the select's first
+     * option; the tab reads "All" and the axis rides in its hover, so the claim
+     * is struck on the tabs themselves — cleared to All, lit on All, and
+     * offering every basket the table draws.
+     */
+    ["...and the filter went back to offering every basket", (t, ctx) => {
+      const f = ctx?.sectionFilter;
+      if (!f) return false;
+      const secs = ctx?.sectionRows ?? [];
+      return f.axis === "basket" && f.active === "All" && f.lit.length === 1 && f.lit[0] === "All"
+        && secs.length > 0 && secs.every((x) => f.offered.includes(x.key));
+    }],
+    // ...AND THE WALK REALLY SET A FILTER FIRST, or the first claim above is
+    // true of any page that can switch axis at all.
+    ["...and the walk really did narrow to a section before it switched", () =>
+      typeof AXIS_SWITCH_PICK === "string" && AXIS_SWITCH_PICK !== "All"],
   ],
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
@@ -15293,9 +15669,9 @@ const INVARIANTS = {
  */
 const FULL_STRIP_ONLY = new Set([
   "the distributions tile says what it is, and the two things a reader would get wrong",
-  "the tile carries the client's own word for it",
+  "the tile carries the client's own word for it, and the answer under it",
   "the realised-gain and forward-schedule absences survive it",
-  "the due-now figure states the accounts it covers, and is not a window",
+  "the due-now figure states the accounts it covers",
   "committed, called and invested are three separate tiles, each stating its coverage",
   "the drawn-against-no-valuation tile is the sum of its own table's rows, and stays out of the private total",
   "the capital-account counts partition rather than crossing two sets",
@@ -15588,6 +15964,8 @@ for (const theme of THEMES) {
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
       if (name === "cio-live" || name === "cio-nav-live") await installLiveMocks(page);
+      if (name === "private-market-calls") await installCallStore(page);
+      if (name === "private-market-calls-off") await installCallStoreOff(page);
       if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
@@ -15770,12 +16148,10 @@ for (const theme of THEMES) {
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
         // Pick a real section on the Transactions side — whichever the control
         // offers first after "All", read off the DOM so the walk does not go
-        // stale when the next drop moves the book.
-        const sel = page.locator("[data-section-filter]").first();
-        if (await sel.count()) {
-          const opt = await sel.evaluate((el) => [...el.options].map((o) => o.value).find((v) => v !== "All") ?? null);
-          if (opt) { await sel.selectOption(opt); await page.waitForTimeout(700); }
-        }
+        // stale when the next drop moves the book. It is a TAB now, clicked,
+        // where it used to be an option picked out of a select.
+        const tab = page.locator('[data-section-filter] [data-section-tab]:not([data-section-tab="All"])').first();
+        if (await tab.count()) { await tab.click(); await page.waitForTimeout(700); }
         const h = page.getByRole("button", { name: /^Holdings$/ }).first();
         if (await h.count()) { await h.click(); await page.waitForTimeout(1200); }
       }
@@ -15826,8 +16202,10 @@ for (const theme of THEMES) {
             // yields a plausible wrong number either way it is parsed.
             return foot ? Number(foot.getAttribute("data-foot-trades")) : null;
           });
-          const sel = page.locator("[data-section-filter]").first();
-          if (await sel.count()) { await sel.selectOption("Direct Equity"); await page.waitForTimeout(900); }
+          // BY ITS KEY, never by its words: the tab's label is the axis's
+          // display name and may be reworded, the key is what the filter tests.
+          const tab = page.locator('[data-section-filter] [data-section-tab="Direct Equity"]').first();
+          if (await tab.count()) { await tab.click(); await page.waitForTimeout(900); }
         }
         // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL. It carried two
         // vocabularies until the family settled it on Buys/Sells, and a walk
@@ -15976,6 +16354,40 @@ for (const theme of THEMES) {
        * panel count then has to tie to the book fund by fund. Picking only the
        * biggest would pass a build where the other ten open onto nothing.
        */
+      /**
+       * ADD, EDIT AND DELETE, IN THAT ORDER, EACH WAITED ON BY WHAT THE STORE
+       * ANSWERED. The editor stays open on the last fund so the light-mode
+       * sweep reads its colours too — a control nobody can see on ivory is the
+       * failure that sweep exists for, and it can only find it on screen.
+       */
+      if (name === "private-market-calls" && CALL_FIXTURE) {
+        CALL_WALK = { addKey: null, error: null };
+        try {
+          await page.waitForSelector('[data-pm-call-state]:not([data-pm-call-state="loading"])', { timeout: 15000 });
+          const add = page.locator("[data-pm-call-add]").first();
+          CALL_WALK.addKey = await add.getAttribute("data-pm-call-add");
+          await add.click();
+          await page.fill('[data-pm-call-input="date"]', CALL_FIXTURE.newDate);
+          await page.fill('[data-pm-call-input="amount"]', "2 Cr");
+          await page.fill('[data-pm-call-input="note"]', "check-pages");
+          await page.click("[data-pm-call-save]");
+          await page.waitForSelector(`[data-pm-call="${CALL_WALK.addKey}"]`, { timeout: 10000 });
+
+          await page.click(`[data-pm-call="${CALL_FIXTURE.b}"]`);
+          await page.click('[data-pm-call-edit="fixture-b-one"]');
+          await page.fill('[data-pm-call-input="amount"]', "75 L");
+          await page.click("[data-pm-call-save]");
+          await page.waitForFunction((k) => document.querySelector(`[data-pm-call="${k}"]`)?.getAttribute("data-call-amount") === "7500000",
+            CALL_FIXTURE.b, { timeout: 10000 });
+
+          await page.click(`[data-pm-call="${CALL_FIXTURE.a}"]`);
+          await page.click('[data-pm-call-delete="fixture-a-past"]');
+          await page.click('[data-pm-call-delete-yes="fixture-a-past"]');
+          await page.waitForFunction((k) => document.querySelector(`[data-pm-call="${k}"]`)?.getAttribute("data-call-more") === "1",
+            CALL_FIXTURE.a, { timeout: 10000 });
+        } catch (e) { CALL_WALK.error = String(e?.message ?? e).slice(0, 200); }
+        await page.waitForTimeout(300);
+      }
       if (name === "private-market-folios") {
         const toggles = page.locator("[data-pm-folio-toggle]");
         const n = await toggles.count();
@@ -16098,11 +16510,17 @@ for (const theme of THEMES) {
         });
       }
       if (name === "monitor-axis-switch") {
-        const sel = page.locator("select").nth(2);        // the section filter
-        if (await sel.count()) {
-          const opts = await sel.locator("option").allTextContents();
-          const pick = opts.find((o) => !/^All /.test(o));
-          if (pick) { await sel.selectOption({ label: pick }); await page.waitForTimeout(400); }
+        // THE SECTION FILTER IS A ROW OF TABS, clicked by the first one after
+        // "All" — read off the DOM so the next drop picks its own. It used to be
+        // `select.nth(2)`, a POSITION among the page's selects, which on the tab
+        // build points at nothing and left this route switching axis over an
+        // unfiltered table while every claim below still passed.
+        const tab = page.locator('[data-section-filter] [data-section-tab]:not([data-section-tab="All"])').first();
+        if (await tab.count()) {
+          const key = await tab.getAttribute("data-section-tab");
+          await tab.click(); await page.waitForTimeout(400);
+          const active = await page.locator("[data-section-filter]").first().getAttribute("data-section-filter");
+          AXIS_SWITCH_PICK = active === key ? key : null;
         }
         const b = page.locator("button[data-group-axis='basket']").first();
         if (await b.count()) { await b.click(); await page.waitForTimeout(1200); }
@@ -16899,9 +17317,27 @@ for (const theme of THEMES) {
       const sectionFilter = FAST ? null : await page.evaluate(() => {
         const el = document.querySelector("[data-section-filter]");
         if (!el) return null;
+        // A ROW OF TABS since the family asked for the dropdown to go — "give
+        // tabs to me to click and quickly reach". Read off each tab's own
+        // `data-section-tab` (the section KEY) rather than its words, which are
+        // the axis's display labels and move with any rewording. `select` is
+        // kept so the claim that the dropdown is GONE has something to stand on
+        // rather than inferring it from the tabs being present.
+        const tabs = [...el.querySelectorAll("[data-section-tab]")];
+        const box = el.getBoundingClientRect();
         return {
           active: el.getAttribute("data-section-filter"),
-          offered: [...el.options].map((o) => o.value),
+          axis: el.getAttribute("data-section-axis"),
+          offered: el.tagName === "SELECT" ? [...el.options].map((o) => o.value) : tabs.map((b) => b.getAttribute("data-section-tab")),
+          lit: tabs.filter((b) => b.getAttribute("aria-selected") === "true").map((b) => b.getAttribute("data-section-tab")),
+          labels: tabs.map((b) => (b.textContent ?? "").replace(/\s+/g, " ").trim()),
+          // The "All" tab reads just "All"; WHICH axis it spans is its hover.
+          allTitle: el.querySelector('[data-section-tab="All"]')?.getAttribute("title") ?? null,
+          select: el.tagName === "SELECT" || !!el.querySelector("select"),
+          visible: box.width > 0 && box.height > 0 && el.offsetParent !== null,
+          // ONE ROW, which is the "keep things clean" half: a strip of tabs
+          // that wraps onto a second line reads as clutter again.
+          rows: new Set(tabs.map((b) => Math.round(b.getBoundingClientRect().top))).size,
         };
       });
       /**
@@ -17464,12 +17900,50 @@ for (const theme of THEMES) {
         })),
         /**
          * THE ROWS THE ACTIVE TABLE DRAWS, read off the TABLE rather than off
-         * the page. The card below it NAMES the funds this page no longer
-         * carries, on purpose, so a page-wide text match would report them
-         * present exactly when the fix is working.
+         * the page — a claim about which funds the TABLE carries is struck on
+         * the table, whatever else the page prints.
          */
         rowText: [...document.querySelectorAll("main table[data-pm-table] tbody tr")]
           .map((e) => (e.innerText ?? "").replace(/\s+/g, " ").trim()),
+        // The removed "funds this page does not carry" card's own handles.
+        elsewhere: document.querySelectorAll("main [data-pm-elsewhere]").length,
+        /**
+         * ── THE CAPITAL-CALL COLUMN, READ STRUCTURALLY ──────────────────────
+         *
+         * *"it simply needs to be a editable coloumn in this table itself which
+         * people can add and edit capital call and save and it stays same for
+         * all."* Each cell is one of four states and the difference between them
+         * is exactly what a text match cannot see — a dash from a store that
+         * could not be read and a dash from nothing entered would look the same,
+         * and only one of them is a thing the reader can fix by typing.
+         */
+        callHead: (() => {
+          const th = document.querySelector("main table[data-pm-table] th[data-col='call']");
+          if (!th) return null;
+          const note = th.querySelector("[data-col-note]");
+          return {
+            text: (th.innerText ?? "").replace(/\s+/g, " ").trim(),
+            title: th.getAttribute("title") ?? "",
+            note: note ? (note.textContent ?? "").trim() : null,
+            noteTitle: note?.getAttribute("title") ?? null,
+          };
+        })(),
+        callCells: [...document.querySelectorAll("main [data-pm-call-cell]")].map((td) => {
+          const el = td.querySelector("[data-pm-call-state]");
+          return {
+            key: td.getAttribute("data-pm-call-cell"),
+            state: el?.getAttribute("data-pm-call-state") ?? null,
+            amount: el?.hasAttribute("data-call-amount") ? Number(el.getAttribute("data-call-amount")) : null,
+            date: el?.getAttribute("data-call-date") ?? null,
+            more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
+            text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+            // An `AbsentCell` carries its reason in a title a reader hovers.
+            reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+          };
+        }),
+        callEditors: document.querySelectorAll("main [data-pm-call-editor]").length,
+        callEditorFor: document.querySelector("main [data-pm-call-editor]")?.getAttribute("data-pm-call-editor") ?? null,
+        callRows: [...document.querySelectorAll("main [data-pm-call-row]")].map((e) => e.getAttribute("data-pm-call-row")),
       }));
       /**
        * THE TILE DEFINITIONS — their text, their SIZE, and the tile each sits on.
@@ -18482,6 +18956,44 @@ for (const theme of THEMES) {
           // returns the rest of the page and the check silently widens.
           texts: Object.fromEntries([...strip.querySelectorAll("[data-tile-slot]")].map((sl) =>
             [sl.getAttribute("data-tile-slot") ?? "", (sl.querySelector(".card")?.innerText ?? "").replace(/\s+/g, " ").trim()])),
+          /**
+           * ...AND WHAT MOVED OFF THE TILE INTO ITS HOVER. *"these are action
+           * cards. They need to have the major figure and a very short
+           * description"* — so the coverage counts and the working that were
+           * paragraphs ride on the card's own `title` now, and every claim that
+           * used to read them off the tile reads them HERE. A hover is not in
+           * `innerText`, so without this each of those checks would have gone
+           * on "passing" by being unable to match.
+           */
+          details: Object.fromEntries([...strip.querySelectorAll("[data-tile-slot]")].map((sl) =>
+            [sl.getAttribute("data-tile-slot") ?? "", sl.querySelector(".card")?.getAttribute("title") ?? ""])),
+          /**
+           * THE ONE SHORT LINE, MEASURED. Its length, its rendered size and how
+           * many lines it actually paints — "one short line" is a claim about
+           * geometry as much as words, and a regex cannot see a wrap.
+           */
+          subs: Object.fromEntries([...strip.querySelectorAll("[data-tile-slot]")].map((sl) => {
+            const el = sl.querySelector("[data-stat-sub]");
+            if (!el) return [sl.getAttribute("data-tile-slot") ?? "", null];
+            const cs = getComputedStyle(el);
+            const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
+            return [sl.getAttribute("data-tile-slot") ?? "", {
+              text: (el.textContent ?? "").replace(/\s+/g, " ").trim(),
+              px: parseFloat(cs.fontSize),
+              lines: Math.max(1, Math.round(el.getBoundingClientRect().height / lh)),
+            }];
+          })),
+          // A definition paragraph under a tile — gone from this strip by request.
+          hints: strip.querySelectorAll("[data-stat-hint]").length,
+          /**
+           * LABELS CUT OFF. "PRIVATE MARKET VAL…" and "STILL TO CALL (UNCALLED
+           * CAPIT…" were in the family's own screenshot, so whether a label fits
+           * is measured on the text itself: a span whose content is wider than
+           * its box has been truncated, whatever the ellipsis looks like.
+           */
+          clipped: [...strip.querySelectorAll("[data-tile-select] span")]
+            .filter((el) => el.scrollWidth > el.clientWidth + 1)
+            .map((el) => (el.textContent ?? "").trim()),
           slots: strip.querySelectorAll("[data-tile-slot]").length,
           cards: cards.length,
           pickers: strip.querySelectorAll("[data-tile-select]").length,

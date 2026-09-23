@@ -25,7 +25,8 @@
 // must never do is re-implement `capitalCalls.ts`: a test that computes the
 // answer the same way agrees with it by construction.
 import { BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "@/data/glowData";
-import { schemeCalls, callTotals, callHistory, callWindows, CALL_WINDOWS } from "@/lib/capitalCalls";
+import * as capitalCalls from "@/lib/capitalCalls";
+import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
 import type { Commitment } from "@/lib/types";
 
 let fails = 0;
@@ -124,30 +125,20 @@ for (const [name, got, want] of [
     callHistory(rows).every((c) => /^\d{4}-\d{2}-\d{2}$/.test(c.date) && Number.isFinite(c.amount)));
 }
 
-// ── 5. THE WINDOWS ARE A FILTER, NOT A CONSTANT EMPTY ARRAY ────────────────
+// ── 5. THE FORWARD WINDOWS ARE GONE, AND SO IS EVERYTHING THEY READ ───────
 //
-// No fund in this archive publishes a forward schedule, so all three windows
-// are empty — and an empty array hard-coded would look identical. Feeding the
-// SAME rows a `from` before the first call must fill them, which is what says
-// the card will fill itself the day a fund issues a notice ahead of time.
+// *"These kind of placeholders are not relevant."* The page's 1/3/6-month
+// windows could only ever read "nothing scheduled" — no fund in this archive
+// publishes a forward schedule — so the family asked for them to go and for the
+// forward view to be the calls THEY enter. The helper and its constant went
+// with the card rather than being left exported with no caller, and the removal
+// is asserted rather than the case being deleted alongside it.
 {
-  const asOf = rows.map((r) => r.asOf).filter(Boolean).sort().pop() as string;
-  const live = callWindows(rows, asOf);
-  ok("three windows, in the order the family asked for them",
-    live.length === CALL_WINDOWS.length && live.map((w) => w.key).join() === "1m,3m,6m");
-  ok("nothing is scheduled ahead of the newest capital account",
-    live.every((w) => w.scheduled.length === 0),
-    JSON.stringify(live.map((w) => [w.key, w.scheduled.length])));
-
-  const earliest = callHistory(rows).map((c) => c.date).sort()[0];
-  const back = new Date(Date.parse(earliest) - 86_400_000).toISOString().slice(0, 10);
-  const filled = callWindows(rows, back);
-  ok("...and the windows DO fill from a date the calls follow, so they are a filter",
-    filled.some((w) => w.scheduled.length > 0),
-    JSON.stringify(filled.map((w) => [w.key, w.scheduled.length])));
-  ok("...widening the window can only add, never remove",
-    filled[0].scheduled.length <= filled[1].scheduled.length
-    && filled[1].scheduled.length <= filled[2].scheduled.length);
+  const exported = capitalCalls as Record<string, unknown>;
+  ok("the forward-window helper is gone with the card that drew it",
+    !("callWindows" in exported) && !("CALL_WINDOWS" in exported));
+  ok("...and the stale-uncalled aggregate only that card printed is gone too",
+    !("staleUncalled" in t) && !("staleRows" in t));
 }
 
 // ── 6. STALENESS IS MEASURED AGAINST THE NEWEST ACCOUNT, NOT AGAINST TODAY ──
@@ -159,8 +150,6 @@ for (const [name, got, want] of [
   ok("the newest capital account is zero days behind itself",
     rows.filter((r) => r.asOf === newest).every((r) => r.staleDays === 0));
   ok("nothing is ahead of the newest", rows.every((r) => (r.staleDays ?? 0) >= 0));
-  ok("the stale rows named are exactly those with uncalled capital on an older statement",
-    t.staleRows.every((r) => (r.staleDays ?? 0) > 31 && (r.uncalled ?? 0) > 0));
 }
 
 // ── 7. THE PAGE'S OWN DENOMINATOR: A FLOOR, NOT A TOTAL ────────────────────
