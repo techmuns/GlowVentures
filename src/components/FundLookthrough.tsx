@@ -328,7 +328,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
           {p.coveragePct != null && <> — the AMC states its own coverage at <span className="mono">{p.coveragePct.toFixed(1)}%</span></>};
           {" "}the rest is what a monthly filing rounds and the cash it does not itemise.
         </>}
-        {" "}<Link to="/monitor?group=category" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
+        {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10cf, where a fund is not. */}
+        {" "}<Link to="/monitor?group=category" data-monitor-in-full className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
         family&rsquo;s own holding of it.
       </p>
     </Card>

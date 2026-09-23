@@ -925,13 +925,26 @@ export function PortfolioMonitor() {
    * became the default view, so the table now says which picked holdings are not
    * rows here and why, and offers the one click that shows them: Category, where
    * every holding is a row. The selection is kept across that click.
+   *
+   * ONLY A HOLDING CATEGORY WOULD DRAW, because the line promises a row there.
+   * The pick-list also offers a closed position (3P, redeemed to nil) and a
+   * holding the reader's own entity or sector filter excludes; Category draws
+   * neither, so naming one here would send the reader to an empty table. Those
+   * keep the generic line, which names the reader's filters as the cause. The
+   * tests are the row build's own — `currentHoldings`, then entity, then sector
+   * — and the section filter is not one of them because switching axis clears it.
    */
   const pickedNotRows = useMemo(() => {
     if (!bySecurity || selected.size === 0) return [] as string[];
     const names = new Set<string>();
-    for (const p of positions) if (selected.has(p.security) && !isCompanyShare(p)) names.add(p.security);
+    for (const p of currentHoldings(positions)) {
+      if (!selected.has(p.security) || isCompanyShare(p)) continue;
+      if (entity !== "All" && ownerOf(accIdx, p) !== entity) continue;
+      if (sector !== "All" && p.sector !== sector) continue;
+      names.add(p.security);
+    }
     return [...names];
-  }, [bySecurity, selected, positions]);
+  }, [bySecurity, selected, positions, entity, sector, accIdx]);
   // Lets the sector filter reach the Transactions tape, which carries no sector of its own.
   const sectorByKey = useMemo(() => {
     const m = new Map<string, string>();

@@ -2275,6 +2275,26 @@ const PICK_FUND_BOOK = (() => {
   } catch { return null; }
 })();
 
+/**
+ * A CLOSED FUND THE PICK-LIST STILL OFFERS — see `monitor-pick-fund`. The list
+ * offers every position, redeemed ones included, and Category does not draw a
+ * closed position either; so picking one on All Securities must NOT promise it
+ * on Category. Only a closed name nothing current also carries qualifies, or
+ * Category would draw it after all. Queried by its first two words, because the
+ * page shows the display spelling of a name rather than the book's raw one.
+ */
+const PICK_CLOSED_BOOK = (() => {
+  try {
+    const positions = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const current = new Set(positions.filter((p) => !redeemed(p)).map((p) => String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
+    const c = positions.find((p) => redeemed(p) && !current.has(String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
+    if (!c) return null;
+    return { name: c.security, query: String(c.security).split(/\s+/).slice(0, 2).join(" ") };
+  } catch { return null; }
+})();
+
 const REVIEW_GAP_BOOK = (() => {
   try {
     const gaps = bookArray(readFileSync(new URL("../src/data/reviewGaps.ts", import.meta.url), "utf8"), "REVIEW_GAPS");
@@ -10216,6 +10236,23 @@ const FILTER_ROW = (holdings) => [
  * as on the control — the route walks the bare `/monitor`, and a default is
  * only a default if the page lands on it with no `?group=` asking for it.
  */
+/**
+ * ── "PORTFOLIO MONITOR CARRIES THIS IN FULL" OPENS THE VIEW WHERE IT DOES ────
+ *
+ * Three sentences promise the Monitor carries something in full — a fund's
+ * look-through card, a non-mandate account's page, a holdings drill-down. That
+ * is the Category view: on All Securities, the default since Stage 10cf, a fund
+ * is not a row. So the link must name `?group=category`, and a route that draws
+ * none of them has lost the sentence — a finding, not an abstention.
+ */
+const MONITOR_IN_FULL = [
+  ["the link saying Portfolio Monitor carries this in full opens its Category view", (t, ctx) => {
+    const l = ctx?.monitorInFull;
+    if (!l) return false;
+    return l.length >= 1 && l.every((h) => h === "/monitor?group=category");
+  }],
+];
+
 const DEFAULT_AXIS = [
   ["the axis control offers All Securities FIRST, under that name", (t, ctx) => {
     const a = ctx?.axisButtons;
@@ -11828,6 +11865,16 @@ const INVARIANTS = {
         && /not a company share/i.test(a.notice.text) && /All Securities/.test(a.notice.text)
         && a.button && !a.genericEmpty;
     }],
+    // …BUT ONLY WHERE CATEGORY WOULD DRAW IT. A redeemed fund is offered too,
+    // and Category draws no closed position, so "Show it on Category" there
+    // would be a promise of an empty table; the generic line names the cause.
+    ["…but a CLOSED fund picked there is not promised on Category — it gets the generic line", (t, ctx) => {
+      if (!PICK_CLOSED_BOOK) return { notChecked: "the book holds no closed fund the pick-list offers" };
+      const c = ctx?.pickedFund?.closed;
+      if (!c?.got) return false;       // the query found nothing — the list lost the closed fund
+      return c.got.toLowerCase().includes(PICK_CLOSED_BOOK.query.toLowerCase())
+        && c.notice === null && c.genericEmpty === true && c.rows === 0 && c.footer === false;
+    }],
     // AN EMPTY TABLE PRINTS NO TOTAL. A footer summed over nothing read
     // "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero (§2).
     ["…and the empty table under it prints no ₹0 footer", (t, ctx) => {
@@ -11847,8 +11894,12 @@ const INVARIANTS = {
       const u = new URL(ctx.url);
       const word = PICK_FUND_BOOK.word.toLowerCase();
       const rows = ctx?.tableRows ?? [];
+      // The pick survives the click: two picked reads "2 holdings", one reads
+      // the fund's own name — never the control's "All holdings".
+      const kept = pf.company ? pf.pickLabel === "2 holdings" : pf.pickLabel === pf.fund;
       return u.searchParams.get("group") === "category"
         && ctx.axisControl?.active === "category"
+        && kept
         && rows.some((r) => String(r.cells?.[0] ?? "").toLowerCase().includes(word));
     }],
     ["…and on Category the sentence is gone, because the fund is a row there", (t, ctx) =>
@@ -13193,6 +13244,7 @@ const INVARIANTS = {
    * present.
    */
   "stock-mf-lookthrough": [
+    ...MONITOR_IN_FULL,
     ["it renders the scheme card, naming the scheme and its AMC", (t) =>
       /The scheme — NAV, returns and what it holds/i.test(t) && /matched on (ISIN|name)/i.test(t)],
     /**
@@ -13707,6 +13759,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-book": [
+    ...MONITOR_IN_FULL,
     ...DRILLDOWN_CHROME_GONE,
     ...HB_DEPOSITORY,
     ...DRILLDOWN_FACET_NOTE,
@@ -19572,6 +19625,7 @@ const INVARIANTS = {
         || /NOT annualised and NOT money-weighted/i.test(t)],
   ],
   "mandate-fund": [
+    ...MONITOR_IN_FULL,
     ["the address resolved to a fund folio this book carries, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
     /**
@@ -21160,6 +21214,15 @@ for (const theme of THEMES) {
             button: !!document.querySelector("[data-show-on-category]"),
           };
         });
+        // A CLOSED FUND FIRST, ALONE, then the selection is cleared: the line
+        // below must not promise a row Category will not draw.
+        let closed = null;
+        if (PICK_CLOSED_BOOK) {
+          const got = await pick(PICK_CLOSED_BOOK.query);
+          closed = { got, ...(await state()) };
+          const x = box.locator('[data-multiselect-toggle] [title="Clear selection"]').first();
+          if (await x.count()) { await x.click(); await page.waitForTimeout(700); }
+        }
         const firstRow = await page.evaluate(() =>
           document.querySelector("table[data-monitor-table='holdings'] tbody tr[data-security-key] td")?.innerText?.trim() ?? null);
         const companyWord = (firstRow ?? "").split(/[^A-Za-z]+/).find((w) => w.length >= 6) ?? null;
@@ -21169,7 +21232,13 @@ for (const theme of THEMES) {
         const mixed = company ? await state() : null;
         const btn = page.locator("[data-show-on-category]").first();
         if (await btn.count()) { await btn.click(); await page.waitForTimeout(1200); }
-        PICKED_FUND = { fund, company, alone, mixed };
+        // WHAT THE PICK-LIST SAYS AFTER THE CLICK — "Show it on Category" must
+        // move the AXIS and keep the pick. A cleared selection would still draw
+        // the fund's row on Category (every holding is a row there), so the row
+        // alone cannot tell the two apart; the control's own label can.
+        const pickLabel = await page.evaluate(() =>
+          (document.querySelector("[data-multiselect-toggle='All holdings'] .truncate")?.textContent ?? "").trim() || null);
+        PICKED_FUND = { fund, company, alone, mixed, pickLabel, closed };
       }
       if (name === "monitor-arrange") {
         const tb = page.locator("main table").first();
@@ -22648,6 +22717,17 @@ for (const theme of THEMES) {
           holdingsBeforeEntities: !!h && !!e && h.right <= e.left + 1 && h.top < e.bottom && e.top < h.bottom,
         };
       });
+      /**
+       * THE LINKS THAT SAY THE MONITOR CARRIES SOMETHING "IN FULL" — on a fund's
+       * look-through card, a non-mandate account's page and a holdings
+       * drill-down. That is true of the Category view, where every holding is a
+       * row, and not of All Securities, the default, where a fund is not; so
+       * each names `?group=category`. Read off its handle, because the words
+       * "Portfolio Monitor" are also the breadcrumb, which rightly opens the page
+       * on whatever it opens on.
+       */
+      const monitorInFull = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main a[data-monitor-in-full]")].map((a) => a.getAttribute("href")));
       /**
        * ── THE AXIS CONTROL AS A WHOLE, not as a bag of buttons ───────────────
        *
@@ -24460,7 +24540,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url() }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
