@@ -17132,9 +17132,39 @@ bands adding to the totals, the missing-data section holding exactly the
 accounts nothing values, one Capital call cell on every fund-level row and on no
 other, on both groupings and with every section open.
 
-**`scripts/dev/pm-table-bug.sh` reintroduces the table's bugs one at a time** —
-re-run on the tree merged with Stage 10bw; the count is recorded when it
-finishes.
+**`scripts/dev/pm-table-bug.sh` reintroduces twenty-three bugs one at a time**,
+re-run on the tree merged with Stage 10bw after a no-patch control came back
+clean, and every one fires its own check — the folios drawn as a table inside a cell again fires four; the missing-data
+section opening by default, two; a set with nothing in it summing to ₹0, five;
+fund rows that stop counting a holding once, eleven; member rows that dedupe,
+three; a capital account attached to two folios, twenty-three; Expand all
+opening nothing, six; the calls read oldest first, one; a public-market AIF back
+as a private row, nineteen; the public-market capital accounts counted as well
+as named, twenty-five; the uncalled tile's crossed fraction, four; a total's
+caveat where coverage is full, four; due now claiming every account prints the
+line, two; the fund column grown until a column is cut off, three; a call cell
+on a member row, one; an unvalued fund with no row to type a call against, two;
+an entered call added into Still to call, one; the unavailable store drawn as
+₹0, three; the call cell back on one line, one; the timeline windows back, one;
+the pooled XIRR losing its "· N of M", one; pooling every statement rather than
+each fund once, two; and a band's HPR printed under CAGR, YTD and CY, one. Five
+of them — the ₹0 set, both dedupe cases, the capital account attached twice and
+due now — also fire in `privateBook.test.ts`, where the model's arithmetic is
+held.
+
+**FIVE OF THE TWENTY-ONE CASES IT CARRIED BEFORE THAT MERGE WENT WITH THEIR
+SUBJECTS**, rather than being kept to pass over nothing: the Other AIFs section's
+two (its marker, and the model carrying their holdings again); the redeemed
+account's measured ₹0, because no account in the missing-data section is
+redeemed to nil any more; the uncalled tile naming the Other AIFs' accounts; and
+a total that stopped saying how many accounts it covers — which cannot be seen on
+a book where the coverage is full, so its inverse took its place. **Seven took
+theirs**: a public-market AIF drawn as a private row again, the public-market
+capital accounts counted on the page as well as named, the uncalled tile's
+crossed fraction, a total printing a caveat where coverage is full, and three on
+the return columns — the total's pooled XIRR losing its "· N of M", pooling every
+statement rather than each fund once, and a band printing its HPR under CAGR, YTD
+and CY.
 
 **ONE THING THE TABLE SHOWS THAT THE FAMILY SHOULD CONFIRM.** Transition Venture
 Fund I is one `dedupeGroup` — both trusts' statements report the same 7,500
@@ -17187,9 +17217,12 @@ read the scheme table this page no longer draws — 85 keys, none duplicated, an
 every one resolving to a declaration.
 
 `build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
-`check:pages` on the tree merged with Stage 10bw — recorded when the full sweep
-finishes · `npm run build-book` byte-identical — a table's layout is not part of
-the book.
+`check:pages` **216 combinations clean** on the tree merged with Stage 10bw —
+main's 210 plus this change's three new routes across both themes — with nine
+evidenced abstentions across five claims: four are main's own, and the fifth is
+new here and earns its abstention off the book, because no private-market
+account is redeemed to nil once Hedged Equity left the page · `npm run
+build-book` byte-identical — a table's layout is not part of the book.
 
 ### Stage 10bz — ASK MUNS IS OFF THE TOP BAR, AND THE CHAT IS PAUSED RATHER THAN DELETED
 
