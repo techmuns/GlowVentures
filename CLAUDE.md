@@ -19621,6 +19621,73 @@ BYTE-IDENTICALLY, and `npm run reconcile:review` regenerates #73's
 `reviewGaps.ts` and `docs/REVIEW-RECONCILIATION.md` byte-identically too — the
 gap list is unchanged; what changed is which of its lines a search may claim.
 
+#### …and a sixth time, when the go-ahead came for four PRs at once
+
+*"#78, #74, #76, #77 — merge all of these PRs to main."* By then main had taken
+FIVE more letters while this branch waited: **#83** (Ask Muns off the top bar)
+took `10bz`, **#80** (every return FIFO) `10ca`, **#82** (the KPI tile
+layouts) `10cb`, and — merged first in this same round, being the smaller two —
+**#76** `10cc` and **#77** `10cd`. Main keeps all five; this section is
+**`10ce`**. The eleven code comments that named this section by its earlier
+letters (`10bv`, `10bx`, `10bz`) point at `10ce` now, and the stage headings
+differ from main's by `10ce` alone, with main's ten historical duplicates
+unchanged — compared as HEADINGS, which is the check the fourth collision above
+taught.
+
+**#76 AND #77 LANDED AS SQUASH MERGES, AND THAT CHANGES HOW A BRANCH CATCHES
+UP.** This branch had already merged both PRs' heads, so main's tree after their
+squashes was a tree this branch contained — but a squash shares no history with
+the commits it replaced, so merging main directly conflicted against the OLD
+base on every file those PRs touched. The fix was structural rather than a
+second resolution: merge #77's final head first (its tree IS main's), confirm
+main's tree and that head's are byte-identical, then record main with
+`git merge -s ours`. Resolving the same hunks twice would have been two chances
+to resolve them differently.
+
+**THE CONFLICTS THAT WERE REAL**, each resolved against the tree #76 and #77
+land as:
+
+- **`build-book`'s share-movement join keeps both halves.** #76 files a window
+  whose ISIN names one book company under that company; this branch splits an
+  unjoined window into nil closes, units still held on a transaction-only
+  account, and rows deliberately not carried. #76's note said its bridged
+  windows sit in an account that no longer holds the security — **7 of the 10
+  still hold units**, measured, so the note says both.
+- **`PortfolioContext`** sends the statement's rows through #84's
+  corporate-action layer and this branch's depository cash rows through the
+  quote overlay, then both through the published NAV, as before.
+- **The arbitrage look-through exclusion moved into #76's `heldFundVehicles`**,
+  so the page and the suite read one definition of which funds are looked
+  through rather than two.
+- **A depository cash row the book also carries takes #76's one name per key**
+  (`securityLabel`) rather than a second spelling of the same fund.
+- `types.ts`, `fundNavs.ts`, Morning CIO, the Portfolio Monitor and Return
+  Analysis are unions: #80's FIFO fields and capital basis beside this branch's
+  cash-rule sources.
+- **The `ctx` literal is a union of 92 keys**, none duplicated, each naming a
+  declared probe.
+
+**THE GENERATED FILES WERE REGENERATED, NOT MERGED.** `build-book` over the
+merged archive and builder reproduces `glowData.ts` and `docs/BOOK-REPORT.md`,
+and `BOOK_SUMMARY` does not move by a rupee: this change moves cash between
+sections and values a depository's cash, and neither is a new holding.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0 ·
+`check:family` **84/2** · `check:pages` **244 combinations, 3 with a finding**.
+
+**EVERY ONE OF THOSE FIVE FAILURES IS MAIN'S, AND WAS SHOWN TO BE BEFORE THIS
+MERGED.** The two `check:family` failures are the Extras-menu checks, which fail
+identically on main because #84 added a fifth page (`/corporate-actions`) to a
+dropdown the check still counts as four. The three `check:pages` findings are
+the three Private Market routes, failing the identical invariants on main's own
+run — the fund-return re-expression in the checker (#72's) still strikes HPR as
+value against cost, where #80 made every HPR FIFO. Neither was introduced here
+and neither is fixed here: a merge that also rewrote two other stages' checks
+would be a change nobody asked for, and the two are named here and in the PR so
+they are not mistaken for this branch's.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
