@@ -64,6 +64,9 @@ const PUBLISHERS = [
   // not-found page and report NOT CHECKED — a filter that silently stops
   // checking, which is what this list exists to prevent.
   ["holdings-book", (n) => n === "holdings-nocost"],
+  // The dense strip's address is built from what Morning CIO's own picker
+  // offers, so `cio` has to be walked first or the route has nothing to open.
+  ["cio", (n) => n === "cio-tiles-dense"],
 ];
 const walked = (name) =>
   !ONLY.length
@@ -2737,6 +2740,20 @@ const ROUTES = [
    * a cleared browser, none of which `localStorage` survives.
    */
   ["cio-tiles-saved", "/cio"],
+  /**
+   * THE NARROWEST STRIP THIS PAGE CAN DRAW, AND THE LONGEST LABELS IN IT.
+   * The heading defects the family photographed only bite where a label is too
+   * long for its tile, and the default five are not: measured, main's own
+   * truncating picker renders every one of them whole at five tiles and cuts
+   * "Current Value of Holdings" to 127px of the ~167px it needs at six. So this
+   * route opens the MAXIMUM tile count on the six longest labels Morning CIO's
+   * picker offers — read off the picker, never typed, so a renamed metric moves
+   * the worst case with it.
+   */
+  ["cio-tiles-dense", () => {
+    const six = [...CIO_TILE_OPTIONS].sort((a, b) => b.label.length - a.label.length).slice(0, 6).map((o) => o.id);
+    return six.length === 6 ? `/cio?tiles=${six.join(",")}` : "/cio?tiles=no-catalogue-captured-from-the-picker";
+  }],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -3756,6 +3773,8 @@ const CRUMB_ALIAS = { "holdings-invested-legacy": () => drilldownPath("book#cost
  * against and the address of the all-tiles route, so neither is typed here.
  */
 const PM_TILE_IDS = [];
+/** Morning CIO's picker, id and label, read off its open menu on the `cio` walk. */
+const CIO_TILE_OPTIONS = [];
 /**
  * WHAT EACH STRIP'S PICKER OFFERED AND WHAT A PICK DID, PER ROUTE. Morning CIO
  * and Private Market each carry a strip now, and one global would let the
@@ -10096,6 +10115,23 @@ const INVARIANTS = {
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV],
   "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-tiles-dense": [
+    /**
+     * THE ROUTE REALLY OPENED THE DENSE STRIP. Without this a renamed metric or
+     * an unread picker leaves the address naming ids the page does not know,
+     * the strip falls back to its default five, and the heading check below
+     * passes on exactly the width where it has nothing to catch.
+     */
+    ["it draws six tiles, the most the strip allows", (t, ctx) => {
+      if (CIO_TILE_OPTIONS.length < 6) return false;
+      return ctx?.tileStrip?.slots === 6;
+    }],
+    ["no tile heading is cut off, spills past its tile, or wraps with room to spare", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st?.slots) return false;
+      return headingsWhole(st);
+    }],
+  ],
   /**
    * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
    *
@@ -16235,10 +16271,20 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
   ["no tile heading is cut off or split mid-word", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st?.slots) return false;
-    return Array.isArray(st.clipped) && st.clipped.length === 0
-      && Array.isArray(st.brokenWords) && st.brokenWords.length === 0;
+    return headingsWhole(st);
   }],
 ];
+}
+
+/**
+ * THE FOUR WAYS A TILE HEADING FAILS, as one predicate, so the default strips
+ * and the dense one cannot hold a heading to two different standards: cut with
+ * an ellipsis, split mid-word, spilled past the tile, or wrapped with room to
+ * spare. Each is a probe field and an empty list is the only pass — a probe
+ * that stopped reporting a field is a failure, never a clean strip.
+ */
+function headingsWhole(st) {
+  return ["clipped", "brokenWords", "spill", "needlessWrap"].every((k) => Array.isArray(st?.[k]) && st[k].length === 0);
 }
 const TILE_PICKER_CHECKS = tilePickerChecks({
   defaults: ["value", "cost", "pnl", "uncalled"],
@@ -19676,6 +19722,42 @@ for (const theme of THEMES) {
             }
             return out;
           }),
+          /**
+           * ...NOR SPILLS PAST ITS TILE, NOR WRAPS WITH ROOM TO SPARE. The two
+           * other ways a heading sized from its own text goes wrong, and the
+           * two the bug pass found the clipping test blind to: a shrink-to-fit
+           * label with no ellipsis simply runs 3px past a narrow tile's edge,
+           * and under `--app-zoom` a box measured short of its own text wraps
+           * "CURRENT VALUE OF / HOLDINGS" beside empty space. The available
+           * edge is the label SLOT's, never the span's — in the defect the span
+           * is exactly as narrow as the bug made it, so measuring against it
+           * would agree with the bug.
+           */
+          spill: [...strip.querySelectorAll("[data-tile-select]")].filter((btn) => {
+            const slot = btn.parentElement?.parentElement;
+            return slot && btn.getBoundingClientRect().right > slot.getBoundingClientRect().right + 1;
+          }).map((btn) => (btn.textContent ?? "").trim()),
+          needlessWrap: [...strip.querySelectorAll("[data-tile-select] span")].flatMap((el) => {
+            const btn = el.closest("[data-tile-select]"), slot = btn?.parentElement?.parentElement, node = el.firstChild;
+            if (!slot || !node || node.nodeType !== 3) return [];
+            const text = node.textContent ?? "", words = [], re = /\S+/g;
+            let w;
+            while ((w = re.exec(text))) {
+              const r = document.createRange();
+              r.setStart(node, w.index);
+              r.setEnd(node, w.index + w[0].length);
+              const rect = r.getBoundingClientRect();
+              words.push({ top: Math.round(rect.top), left: rect.left, right: rect.right, width: rect.width });
+            }
+            const tops = [...new Set(words.map((x) => x.top))].sort((a, b) => a - b);
+            if (tops.length < 2) return [];
+            const line1 = words.filter((x) => x.top === tops[0]), next = words.find((x) => x.top === tops[1]);
+            // Where the span WOULD end if the button filled its slot.
+            const edge = slot.getBoundingClientRect().right - (btn.getBoundingClientRect().right - el.getBoundingClientRect().right);
+            const room = edge - Math.max(...line1.map((x) => x.right));
+            const space = parseFloat(getComputedStyle(el).fontSize) * 0.5;
+            return room >= next.width + space ? [(el.textContent ?? "").trim()] : [];
+          }),
           // Where the strip says a choice is kept: `shared`, `local` or
           // `loading`, off the strip's own handle.
           saved: strip.getAttribute("data-tile-saved") ?? "",
@@ -19711,6 +19793,10 @@ for (const theme of THEMES) {
           if (opts.length) {
             TILE_MENU.set(name, opts);
             if (/^private-market/.test(name) && !PM_TILE_IDS.length) PM_TILE_IDS.push(...opts);
+            if (name === "cio" && !CIO_TILE_OPTIONS.length) {
+              CIO_TILE_OPTIONS.push(...await page.$$eval("[data-tile-option]", (els) => els.map((e) =>
+                ({ id: e.getAttribute("data-tile-option") ?? "", label: (e.textContent ?? "").trim() }))));
+            }
           }
           /**
            * ...AND PICKING ONE ACTUALLY CHANGES THE TILE — AND IS STILL THERE

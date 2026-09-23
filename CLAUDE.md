@@ -335,6 +335,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
   says saving is not switched on — never an empty column. See Stage 10bs.
+- `src/lib/tileSets.ts` + `functions/api/tile-sets.js` — WHICH KPI TILES EACH
+  PAGE SHOWS, remembered for everyone. `SelectableTiles` (Private Market and
+  Morning CIO) saves a picked layout to the same `GLOW_STORE` KV binding, one key
+  per page, METRIC IDS AND NOTHING ELSE; `localStorage` is the instant copy the
+  page paints from and the whole memory where the store is not connected.
+  `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
+  made here the store never confirmed, then the shared layout. See Stage 10bv.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -5749,6 +5756,12 @@ set's caption.
 | Money-weighted return | `?of=measured` | Covered · Not covered |
 | Winners / losers | `?of=winners` / `losers` | Showing a gain · In neither count |
 | Dry powder · Distributions | `/private-market` | not holdings — no facet, and no holdings table |
+
+***CAPITAL INVESTED IS NO LONGER A SCOPE OF ITS OWN — see Stage 10bv.*** At the
+family's request it is the second line of the Current Value of Holdings tile, and
+`?of=invested` resolves to `?of=book&facet=costed`: a second facet GROUP on the
+value page (*Cost reported · No cost reported*) beside the listed / private one.
+The sets are unchanged; the row above records the addresses as they were.
 
 **THE OLD ADDRESSES STILL RESOLVE, DELIBERATELY.** `?of=listed`, `?of=private`
 and `?of=no-cost` map to their scope plus facet, so a bookmark keeps working —

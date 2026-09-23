@@ -26,13 +26,23 @@ const rel = (p) => path.join(ROOT, p);
 
 const CASES = [
   {
-    name: "a tile label sized to its own content again (the zoom + letter-spacing wrap)",
+    // WHAT MAIN SHIPPED, verbatim: the ellipsis in the family's screenshot.
+    name: "main's truncating tile label put back (\"PRIVATE MARKET VAL…\")",
+    file: "src/components/SelectableTiles.tsx",
+    edits: [
+      ["label-xs -ml-1 flex w-full items-start gap-1", "label-xs -ml-1 inline-flex max-w-full items-center gap-1"],
+      ['<span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">', '<span className="truncate">'],
+    ],
+    only: "cio-tiles-dense",
+  },
+  {
+    name: "a tile label sized to its own content, with no ellipsis to hide the overflow",
     file: "src/components/SelectableTiles.tsx",
     edits: [
       ["label-xs -ml-1 flex w-full items-start gap-1", "label-xs -ml-1 inline-flex items-start gap-1"],
       ['<span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">', '<span className="whitespace-normal leading-snug">'],
     ],
-    only: "private-market,cio",
+    only: "cio-tiles-dense",
   },
   {
     name: "a pick writes ?tiles= into the address again",
@@ -76,7 +86,7 @@ const CASES = [
   {
     name: "the page's invested line deleted from the headline",
     file: "src/pages/HoldingsBehind.tsx",
-    edits: [["data-hb-invested ", "data-hb-invested-gone "]],
+    edits: [["                  Invested <span className=\"mono font-semibold text-slate-100\">{money(cost)}</span>\n", ""]],
     only: "holdings-book",
   },
   {
@@ -142,7 +152,7 @@ try {
     for (const [from, to] of c.edits) {
       const count = text.split(from).length - 1;
       if (count !== 1) { applied = false; console.log(`  NOT A RESULT — patch anchor matched ${count} times in ${c.file}`); break; }
-      text = text.replace(from, to);
+      text = text.split(from).join(to); // never `.replace`: a `$` in `to` is a pattern there
     }
     if (!applied) { exitCode = 1; continue; }
     fs.writeFileSync(rel(c.file), text);
