@@ -16295,9 +16295,15 @@ both routes, because on the default view the account they were written for shows
 its XIRR rather than its HPR.
 
 `build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
-`check:pages` clean on every transactions, mandate and AIF drill-down route, the new `monitor-txn-returns` included. `npm run build-book` regenerates `glowData.ts` and
-`docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control before and after the
-merge.
+`check:pages` **202 combinations clean, 0 invariant failures**, MEASURED ON THE
+MERGED TREE — main's own 200 plus the two combinations `monitor-txn-returns`
+walks, the only route this change adds. The eight NOT CHECKED lines were read out
+of `report.json` BY NAME and every one is pre-existing: the absent-KPI-tile claim
+on the four Morning CIO routes, the cost-less fund row on the two Private Market
+fund routes, the crumb on `holdings-unknown` and the pledge on `stock-qty`. **Not
+one of this change's own checks abstains.** `npm run build-book` regenerates
+`glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control
+before and after the merge.
 
 #### Merged with main, and the letter moved twice before it was written
 
