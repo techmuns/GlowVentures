@@ -645,6 +645,23 @@ export type CapitalMove = {
   security: string | null;
   securityKey: string | null;
   /**
+   * Set where this movement is one of a DRAWDOWN FUND's own dated capital calls
+   * (`Commitment.calls`) rather than a row of the family's capital record.
+   * Never emitted by the ingest — `capitalMovesWithCalls` adds these at display
+   * time for the funds whose statements publish calls and no capital record, so
+   * a reader can see which kind of document a purchase date came from.
+   */
+  fromCall?: true;
+  /**
+   * Set where this movement is one of a DRAWDOWN FUND's own dated PAYOUTS
+   * (`Commitment.payouts`) — what kind of money came back, in the fund's own
+   * typing. Principal (`capital`) is capital returned, not gain; income and
+   * equalisation are gain paid out. Added at display time beside `fromCall`,
+   * and only for a payout dated on or before the fund's own valuation: one
+   * dated after it is INSIDE that value and is never counted a second time.
+   */
+  payoutKind?: "income" | "capital" | "equalisation";
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the

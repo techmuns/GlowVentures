@@ -1295,6 +1295,32 @@ const FAMILY_ENTITY = (() => {
  * over three funds no statement places on either side.
  */
 /**
+ * ── THE FAMILY'S DECLARED CATEGORIES, READ AS COMMITTED DATA ───────────────
+ *
+ *   "Motilal Oswal Wealth Delphi Equity Fund and Neo Infra Income Opportunities
+ *    Fund I — Class A5: classify both of these AIFs as Category 2 funds."
+ *
+ * `DECLARED_AIF_CATEGORY` in `shared/aifCategory.mjs` is parsed out of the
+ * source as text rather than imported, on the terms `CASH_EQUIVALENT_KEYS` is
+ * read: the two derivations below must reach the same side and section as the
+ * app by a SECOND expression, and one of them calling the other would be a
+ * tautology. A block this cannot parse yields `null`, and every check that
+ * depends on it then fails rather than abstaining — a renamed constant must
+ * never read as a family that declared nothing.
+ */
+const DECLARED_CATS = (() => {
+  try {
+    const a = readFileSync(new URL("../shared/aifCategory.mjs", import.meta.url), "utf8");
+    const i = a.indexOf("export const DECLARED_AIF_CATEGORY");
+    if (i < 0) return null;
+    const end = a.indexOf("\n};", i);
+    if (end < 0) return null;
+    const out = new Map();
+    for (const m of a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":\s*\{[^\n]*?category:\s*"(Category (?:I|II|III))"/gm)) out.set(m[1], m[2]);
+    return out.size ? out : null;
+  } catch { return null; }
+})();
+/**
  * ── WHICH SIDE OF THE BOOK A FUND IS ON, RE-EXPRESSED ─────────────────────
  *
  *   "Also please note private market fund needs to be here in private market
@@ -1331,13 +1357,18 @@ const familySideOf = (name, a) => {
   const hay = [name, a?.strategy, a?.provider].filter(Boolean).join(" · ");
   return FAMILY_MARKET_SIDE.find((d) => d.match.test(hay))?.side ?? null;
 };
-/** `"listed" | "private" | null` for one AIF, from its own name and account. */
-const fundSideOf = (name, a) => {
+/**
+ * `"listed" | "private" | null` for one AIF, from its own name and account.
+ * `securityKey` lets the family's DECLARED category (`DECLARED_CATS`, above)
+ * fill a category no statement prints — and only that: it is consulted where
+ * both printed fields are silent, and the family's placing outranks it anyway.
+ */
+const fundSideOf = (name, a, securityKey) => {
   const fam = familySideOf(name, a);
   if (fam) return fam;
   if (sideIsPE(name, a)) return "private";
   const u = [...new Set([...sideCats(name), ...sideCats(a?.providerEngagement)])];
-  const c = u.length === 1 ? u[0] : null;
+  const c = u.length === 1 ? u[0] : u.length === 0 ? (DECLARED_CATS?.get(securityKey) ?? null) : null;
   if (c === "Category III") return "listed";
   if (c === "Category I" || c === "Category II") return "private";
   return null;
@@ -1376,7 +1407,7 @@ const SIDE_BOOK = (() => {
       const a = acc.get(p.accountId);
       if (p.assetClass === "Unlisted" || p.assetClass === "Structured Product") return "private";
       if (p.assetClass !== "AIF") return "listed";
-      return fundSideOf(p.security, a);
+      return fundSideOf(p.security, a, p.securityKey);
     };
     void cats; void isPE;
     const seen = new Set();
@@ -1491,8 +1522,9 @@ const AIF_BOOK = (() => {
     for (const p of rows) {
       const a = acc.get(p.accountId);
       const named = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
+      const declared = named.length === 0 ? DECLARED_CATS?.get(p.securityKey) : undefined;
       const key = isPE(p, a) ? "Private Equity"
-        : named.length === 1 ? named[0] : "Category not stated";
+        : named.length === 1 ? named[0] : declared ?? "Category not stated";
       const e = sections.get(key) ?? { mv: 0, n: 0, keys: new Set() };
       e.mv += Number(p.marketValue) || 0; e.n += 1; e.keys.add(p.securityKey); sections.set(key, e);
     }
@@ -1510,12 +1542,17 @@ const AIF_BOOK = (() => {
      * book's own answer rather than to a shape.
      */
     const rowCats = new Map();
+    /** The drawn rows whose category rests on the family's word, not a document. */
+    const declaredRows = new Set();
     for (const p of rows) {
       const a = acc.get(p.accountId);
       const named = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
-      // Exactly as the page reads it: one named category resolves, anything
-      // else — none, or more than one — is not stated.
-      rowCats.set(p.securityKey, named.length === 1 ? named[0] : "");
+      // Exactly as the page reads it: one named category resolves; none falls
+      // to the family's declaration where there is one; anything else — none
+      // declared, or more than one printed — is not stated.
+      rowCats.set(p.securityKey, named.length === 1 ? named[0]
+        : named.length === 0 ? (DECLARED_CATS?.get(p.securityKey) ?? "") : "");
+      if (named.length === 0 && DECLARED_CATS?.has(p.securityKey)) declaredRows.add(p.securityKey);
     }
     // THE AGREEMENT GUARD, RE-STRUCK. Where BOTH printed fields name a single
     // category they must name the SAME one. Counted so it can be reported at
@@ -1547,6 +1584,8 @@ const AIF_BOOK = (() => {
       bothSpeak, disagree,
       /** One entry per drawn fund row, sorted, as a multiset to compare. */
       rowCats: [...rowCats.values()].sort(),
+      /** The securityKeys whose category the family declared — each row must say so. */
+      declaredRows: [...declaredRows].sort(),
       unvaluedSections: [...new Set(unvalued)],
       unvaluedCount: unvalued.length,
       /** True where the book carries a Category I AIF that no statement values. */
@@ -1716,7 +1755,7 @@ const PM_RETURN_BOOK = (() => {
       seen.add(p.dedupeGroup); return true;
     });
     const side = (p) => (p.assetClass === "Unlisted" || p.assetClass === "Structured Product") ? "private"
-      : p.assetClass !== "AIF" ? "listed" : fundSideOf(p.security, acc.get(p.accountId));
+      : p.assetClass !== "AIF" ? "listed" : fundSideOf(p.security, acc.get(p.accountId), p.securityKey);
     const priv = ded.filter((p) => side(p) === "private");
     const capital = new Map(commitments
       .filter((c) => fundSideOf(c.name, acc.get(c.accountId)) === "private")
@@ -2191,14 +2230,98 @@ const YTD_MEASURABLE = (() => {
  * compares a figure with its own copy cannot fail", arriving through a caption.
  * A view that quietly dropped an account fails here and nowhere else.
  */
-const FUNDED_ACCOUNTS = (() => {
+/**
+ * ── THE FAMILY'S DATED CAPITAL, AS THE TRANSACTIONS TABLE READS IT ─────────
+ *
+ * The capital record is `BOOK_CAPITAL_MOVES` PLUS a drawdown fund's own dated
+ * CALLS, for an account that publishes no record of its own (Stage 10cd) — a
+ * call is money the family paid a fund on a date, so it is a purchase. Before
+ * that, India SME, Sky Capital, Baring, Neo Infra and the rest were funded
+ * accounts with no row on a table headed "what the family bought".
+ *
+ * RE-EXPRESSED here rather than imported from `capitalMovesWithCalls`: a check
+ * that calls the helper it is checking agrees with it by construction. The two
+ * agreeing is the measurement. `undatedOut` is the accounts whose only record
+ * of money coming back is the commitment's own printed distribution total —
+ * no date on it, so it is no MOVEMENT, and it still puts the account on the
+ * redemption side.
+ */
+const CAPITAL_RECORD_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
-    if (!Array.isArray(moves)) return null;
-    return new Set(moves.map((m) => m.accountId)).size;
+    const commits = bookArray(src, "BOOK_COMMITMENTS");
+    const accs = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(moves) || !Array.isArray(commits) || !Array.isArray(accs)) return null;
+    const asOf = new Map(accs.map((a) => [a.accountId, a.asOf ?? null]));
+    const recorded = new Set(moves.map((m) => m.accountId));
+    const calls = [];
+    const payouts = [];
+    const undatedOut = new Set();
+    // A record row a payout has been TYPED onto, and the kind it was typed as —
+    // so two payouts of one amount on one day cannot both claim one row, and
+    // the split below counts the principal the page counts.
+    const typed = new Map();
+    for (const c of commits) {
+      const hasRecord = recorded.has(c.accountId);
+      // A CAPITAL RECORD IS THE AUTHORITY ON WHAT WENT IN, so its account takes
+      // no call from the commitment's list — the calls and the record are two
+      // printings of one set of payments.
+      const dated = hasRecord ? [] : (c.calls ?? []).filter((k) => k.date && k.amount > 0);
+      for (const k of dated) calls.push({ accountId: c.accountId, date: k.date, direction: "in", amount: k.amount });
+      // A fund whose payouts are carried DATED has them as redemptions — on or
+      // before its own valuation only; one dated after is inside that value
+      // (Stage 10cd). Only a fund with no dated record falls back to the one
+      // undated total its statement prints.
+      if (Array.isArray(c.payouts)) {
+        const v = asOf.get(c.accountId);
+        for (const r of c.payouts) {
+          if (!v || !r.date || r.date > v || !(Math.abs(r.gross) > 0)) continue;
+          /**
+           * ...AND A FUND WITH A CAPITAL RECORD OF ITS OWN KEEPS ITS PAYOUTS TOO.
+           *
+           * Since Stage 10ca Neo Infra's own unit record is a capital record —
+           * its drawdowns and the ₹14.16 L capital redemption — and the page
+           * (`capitalMovesWithCalls`) keeps its income and equalisation beside
+           * it, types the principal onto the record's own row (same day, same
+           * amount) rather than adding it twice, and leaves a principal the
+           * record does not show to the record. RE-EXPRESSED here rather than
+           * imported, and moved with the page: this block skipped a recorded
+           * account whole, so after the merge it counted Neo Infra's flows
+           * without the ₹44 L of income and equalisation the page draws, and
+           * the counter, the identity and the XIRR re-solve all failed a page
+           * that was right. A rule written twice has to be moved twice.
+           */
+          if (hasRecord) {
+            const dir = r.gross > 0 ? "out" : "in";
+            const same = moves.find((m) => m.accountId === c.accountId && !typed.has(m)
+              && m.direction === dir && m.date === r.date && m.amount != null
+              && Math.abs(m.amount - Math.abs(r.gross)) <= 1);
+            if (same) { typed.set(same, r.kind); continue; }
+            if (r.kind === "capital") continue;
+          }
+          payouts.push({ accountId: c.accountId, date: r.date, direction: r.gross > 0 ? "out" : "in",
+            amount: Math.abs(r.gross), payoutKind: r.kind });
+        }
+      } else if (dated.length && typeof c.distributed === "number" && c.distributed > 0) undatedOut.add(c.accountId);
+    }
+    const recordMoves = moves.map((m) => (typed.has(m) ? { ...m, payoutKind: typed.get(m) } : m));
+    return { moves: [...recordMoves, ...calls, ...payouts], calls, payouts, undatedOut, commitments: commits };
   } catch { return null; }
 })();
+
+/** Accounts that hold no valued position — see the basket-section check. */
+const UNVALUED_ACCOUNTS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accs = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const held = new Set(pos.map((p) => p.accountId));
+    return new Set(accs.map((a) => a.accountId).filter((a) => !held.has(a)));
+  } catch { return null; }
+})();
+
+const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId)).size : null;
 
 /**
  * ...AND HOW MANY ACCOUNTS THE BOOK HOLDS ALTOGETHER — the denominator the
@@ -3686,6 +3809,17 @@ const ROUTES = [
    * plainly has sections.
    */
   ["monitor-txn-secaxis", "/monitor?group=security"],
+  /**
+   * ── THE RETURN METHODOLOGY, ON THE TRANSACTIONS TABLE TOO ────────────────
+   *
+   *   *"Just like in the holdings page, we have return methodology selector add
+   *    the same to the transactions page as well. With the same functioning."*
+   *
+   * Every measure ticked at once, by URL — `?ret=` is shared with the Holdings
+   * table, so the picker is the same control reading the same param — and the
+   * walk clicks Transactions, as every route here does.
+   */
+  ["monitor-txn-returns", "/monitor?ret=absolute,cagr,xirr,ytd,calendar"],
   /**
    * ...AND CROSSING BACK FROM IT.
    *
@@ -5616,6 +5750,82 @@ const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
  * A MISSING TABLE IS A FINDING, NOT AN ABSTENTION — this card renders whether
  * or not the archive answered. Only the probe failing to run abstains.
  */
+/**
+ * THE TWO CLAIMS ABOUT WHAT A RETURN ON THE TRANSACTIONS TABLE IS STRUCK ON —
+ * spread into the default route AND the all-measures one, because on the
+ * default (`auto`) the fully redeemed account shows its XIRR and only the
+ * Absolute column shows its holding-period return: a claim about HPR on one
+ * route alone could not see the account it was written for.
+ */
+const CAPITAL_RETURN_CHECKS = [
+    /**
+   * ...AND 3P — THE ROW THE FAMILY POINTED AT — READS AS WHAT HAPPENED.
+   *
+   * Paid ₹28.5 Cr, redeemed every unit for ₹31.06 Cr, holds nothing. Its
+   * appreciation is ₹2.56 Cr and ALL of it is realised; unrealised is a
+   * computed zero (nothing is held), never a dash. Derived from the book
+   * rather than typed, so the next drop's fully-redeemed account is the one
+   * held to it: the account whose redemptions are dated and whose value
+   * today is nil.
+   */
+  ["a fully redeemed account books all its appreciation as realised",
+    (t, ctx) => {
+      if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+      const valued = new Map();
+      for (const p of pos) valued.set(p.accountId, (valued.get(p.accountId) ?? 0) + p.marketValue);
+      const closed = [...new Set(CAPITAL_RECORD_BOOK.moves.filter((m) => m.direction === "out").map((m) => m.accountId))]
+        .filter((a) => valued.get(a) === 0);
+      if (!closed.length) return { notChecked: "no account in this book has been redeemed to nil" };
+      return closed.every((a) => {
+        const r = ctx.mineRows.find((x) => x.accountId === a);
+        if (!r || r.realisedGain == null || r.unrealisedGain == null) return false;
+        const p = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === a && m.direction === "in").reduce((s, m) => s + m.amount, 0);
+        const o = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === a && m.direction === "out").reduce((s, m) => s + m.amount, 0);
+        return Number(r.unrealisedGain) === 0 && Math.abs(Number(r.realisedGain) - (o - p)) <= 1
+          // ...and the return is struck on what was PAID, never on a net:
+          // every shown return on that row divides the appreciation by it.
+          && r.returns.filter((x) => x.pct != null && (x.tag === "HPR" || x.measure === "absolute"))
+            .every((x) => Math.abs(x.pct - ((o - p) / p) * 100) < 0.01);
+      });
+    }],
+  /**
+   * ...AND NO RETURN ON THIS TABLE IS STRUCK ON A NET.
+   *
+   * Every HPR shown is appreciation ÷ purchase, re-derived here on the rupee
+   * handles. The old return divided by net invested, which on 3P is negative
+   * and on every partly redeemed account is too small — the gain came back
+   * in the redemption, and every return struck on it with it.
+   */
+  ["every holding-period return is appreciation over what was purchased",
+    (t, ctx) => {
+      if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
+      const paid = new Map();
+      for (const m of CAPITAL_RECORD_BOOK.moves) if (m.direction === "in") paid.set(m.accountId, (paid.get(m.accountId) ?? 0) + m.amount);
+      let checked = 0;
+      for (const r of ctx.mineRows) {
+        if (r.realisedGain == null || r.unrealisedGain == null) continue;
+        const p = paid.get(r.accountId);
+        if (!p) return false;
+        const hpr = ((Number(r.realisedGain) + Number(r.unrealisedGain)) / p) * 100;
+        for (const x of r.returns) {
+          // THE ABSOLUTE COLUMN CARRIES NO TAG — its header already names it
+          // HPR — so it is picked out by MEASURE as well as by tag. Filtered
+          // on the tag alone this check could only ever see the auto column's
+          // sub-year rows, whose redemption is nil, where a return struck on a
+          // NET and one struck on the purchase are the same number: a check
+          // that could not fail on the defect it was written for, measured by
+          // reintroducing it.
+          if (x.pct == null || !(x.tag === "HPR" || x.measure === "absolute")) continue;
+          if (Math.abs(x.pct - hpr) > 0.01) return false;
+          checked++;
+        }
+      }
+      return checked > 0;
+    }],
+];
+
 const txnMergedCore = () => [
   ["the capital/trades toggle is gone", (t, ctx) => {
     const r = ctx?.txnMerged;
@@ -5680,7 +5890,15 @@ const txnMergedCore = () => [
     // later cell sits at its own column — and `TrFoot` fills an untotalled
     // column rather than skipping it, so nothing shifts. The sweep opens a
     // fresh context, so no reader's drag has moved them.
-    const tie = (col) => {
+    // BY HEADING SINCE Stage 10cd. It was `tie(2) && tie(7)` — Capital in and
+    // Bought — and Committed arriving in front moved both: index 2 became the
+    // commitment and 7 the account's value, which both tie to their own rows,
+    // so the check went on passing while reading neither of the columns it
+    // names. Looked up by the header text, the claim follows the column.
+    const at = (label) => tbl.head.findIndex((h) => h.split("\n")[0].trim().toLowerCase() === label);
+    const tie = (label) => {
+      const col = at(label);
+      if (col < 0) return false;
       const parts = tbl.rows.map((r) => moneyCell(r.cells[col]));
       if (parts.some((p) => p !== null && !Number.isFinite(p))) return false;
       const total = moneyCell(tbl.foot[col]);
@@ -5691,7 +5909,7 @@ const txnMergedCore = () => [
       const sum = seen.reduce((a, p) => a + p, 0);
       return Math.abs(sum - total) <= (seen.length + 1) * 0.05;
     };
-    return tie(2) && tie(7);
+    return tie("purchase") && tie("redemption") && tie("committed") && tie("bought");
   }],
 ];
 
@@ -5778,7 +5996,24 @@ const txnBasketChecks = () => {
       const offered = new Set(ctx.sectionFilter?.offered ?? []);
       const drawn = sectionsOf(ctx);
       if (!offered.size || !drawn.length) return false;
-      return drawn.every((k) => offered.has(k));
+      /**
+       * ...OR IT IS THE ONE KEY NO HOLDING CAN PRODUCE, which the category
+       * check beside this already allows. Stage 10cd put seven accounts on this
+       * table that hold no valued position — India SME's and Sky Capital's
+       * folios, funded by dated calls — and which basket a fund belongs to is
+       * the family's review, keyed on a product this book has no row for. So
+       * they are NAMED as not stated rather than filed under a basket; the
+       * filter, built from the holdings, cannot offer a key no holding has.
+       *
+       * And it is allowed ONLY where the book says so: every row under it must
+       * be an account holding nothing, or it is a classification this table
+       * failed to make.
+       */
+      const U = "Not classified by the statement";
+      const heldNothing = UNVALUED_ACCOUNTS ?? new Set();
+      const legit = (ctx.datedTable?.rows ?? []).filter((r) => r.section === U).every((r) => r.capital)
+        && (ctx.mineRows ?? []).filter((r) => r.section === U).every((r) => heldNothing.has(r.accountId));
+      return drawn.every((k) => offered.has(k) || (k === "Not classified by the statement" && legit));
     }],
     /** The side control still says the family's own words on every axis. */
     ["the side control still reads Buys and Sells", (t, ctx) => {
@@ -6844,13 +7079,20 @@ const FUND_CLASSES = [
  */
 const CAPITAL_SIDES = (() => {
   try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
-    if (!Array.isArray(moves) || !moves.length) return null;
+    if (!CAPITAL_RECORD_BOOK?.moves.length) return null;
+    const moves = CAPITAL_RECORD_BOOK.moves;
     const of = (d) => new Set(moves.filter((m) => m.direction === d).map((m) => m.accountId));
+    // An account whose only payout is an undated printed total is still on the
+    // redemption side: the row shows that total under Redemption, dateless.
+    const out = of("out");
+    for (const a of CAPITAL_RECORD_BOOK.undatedOut) out.add(a);
     return {
-      in: of("in"), out: of("out"),
+      in: of("in"), out,
       all: new Set(moves.map((m) => m.accountId)),
+      // DATED movements per side — what the counter beside the table counts.
+      // An undated payout is no movement, so it is on no count.
+      inMoves: moves.filter((m) => m.direction === "in").length,
+      outMoves: moves.filter((m) => m.direction === "out").length,
       // The redemption the family went looking for: *"I cannot find the redeemed
       // 3P fund anywhere in the transactions page under sell side."* Named from
       // the book so the next drop picks its own, and asserted as a LABEL because
@@ -10120,21 +10362,24 @@ const INVARIANTS = {
      *
      * The strongest claim on this page, and the reason the merge is safe. One
      * table means a combined total IS one edit away now, so it is struck on the
-     * footer's own printed cells: Capital in and Bought are DIFFERENT figures,
+     * footer's own printed cells: Purchase and Bought are DIFFERENT figures,
      * and neither is the sum of the two.
      *
      * Measured on this book, adding them reports ₹291.9 Cr where the family
      * paid in ₹221.5 Cr — a plausible figure under the column a reader scans
      * for, which is exactly the shape nothing else here could see.
      */
-    ["Capital in and Bought are two columns, and neither is their sum", (t, ctx) => {
+    ["Purchase and Bought are two columns, and neither is their sum", (t, ctx) => {
       const f = ctx.datedTable?.foot;
       if (!f) return { notChecked: "the transactions footer was not on screen on this run" };
       // `moneyCell`, never `crU` on the raw cell: these render "₹221.5 Cr" and
       // "₹70.4 Cr", and reading the number without its SUFFIX is the 100×
       // error this file already records at the top of that helper.
-      const paidIn = moneyCell(f[2]);
-      const bought = moneyCell(f[7]);
+      const tbl = ctx.datedTable;
+      const col = (label) => tbl.head.findIndex((h) => h.split("\n")[0].trim().toLowerCase() === label);
+      if (!tbl.footByCol || tbl.footByCol.length !== tbl.head.length) return false;
+      const paidIn = moneyCell(tbl.footByCol[col("purchase")]);
+      const bought = moneyCell(tbl.footByCol[col("bought")]);
       if (!Number.isFinite(paidIn) || !Number.isFinite(bought)) return false;
       // Neither cell may be the total of both, within the page's own printing
       // precision — every figure here renders to one decimal in crore.
@@ -10343,17 +10588,24 @@ const INVARIANTS = {
          * wrong the moment a filter narrowed them — still has to agree with the
          * record.
          */
-        const m = /^Capital ([\d,]+) in · ([\d,]+) out\s*\|\s*Trades ([\d,]+) buys · ([\d,]+) sells$/
-          .exec(c.replace(/\s+/g, " ").trim());
+        /**
+         * THE FAMILY'S WORDS, SINCE Stage 10cd: *"Make it purchase redemption"*.
+         * "Capital N in · M out" was the old pair, and the check refuses it as
+         * well as requiring the new one — a counter that kept both would say
+         * one thing twice in two vocabularies.
+         */
+        const flat = c.replace(/\s+/g, " ").trim();
+        if (/Capital [\d,]+ in/i.test(flat)) return false;
+        const m = /^Purchases ([\d,]+) · redemptions ([\d,]+)\s*\|\s*Trades ([\d,]+) buys · ([\d,]+) sells$/
+          .exec(flat);
         if (!m) return false;
-        const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-        const moves = bookArray(src, "BOOK_CAPITAL_MOVES") ?? [];
         const n = (i) => Number(m[i].replace(/,/g, ""));
         // ...AND THE TWO PAIRS ARE DIFFERENT FIGURES. One shape printed twice is
         // a counter that has stopped reading one of the two records.
         if (n(1) === n(3) && n(2) === n(4)) return false;
-        return n(1) === moves.filter((x) => x.direction === "in").length
-          && n(2) === moves.filter((x) => x.direction === "out").length
+        // Against the RECORD the table reads — the capital moves AND the dated
+        // calls of a fund that publishes no record — never against the rows.
+        return n(1) === CAPITAL_SIDES.inMoves && n(2) === CAPITAL_SIDES.outMoves
           && n(3) > 0 && n(4) > 0;
       }],
     /**
@@ -10385,22 +10637,108 @@ const INVARIANTS = {
         /**
          * TWO HALVES, AND THE FIRST IS WHY THIS IS NOT VACUOUS.
          *
-         * Every row in THIS book states a return, so a per-row clause alone
-         * could never fail here — the `golden.mjs` rule, arriving through an
-         * `||`. The general condition therefore has to be somewhere a reader
-         * meeting the FIRST dash can find it, and that is the column head; the
-         * per-row reason is the specific case on top of it. The refusal itself
-         * is exercised on constructed inputs in `tranches.test.ts`, because this
-         * corpus cannot produce a row that fails the gate.
+         * The general condition has to be somewhere a reader meeting the FIRST
+         * dash can find it, and that is the column head; the per-row reason is
+         * the specific case on top of it.
+         *
+         * THE CONDITION CHANGED AT Stage 10cd, and so did the column. It was
+         * "the record provably reaches the account's inception", printed on the
+         * Return and Gain heads — Gain is gone with Net invested, and the return
+         * is one column PER MEASURE the reader ticks. What the default column
+         * must say now is the rule the family asked for and the one thing the
+         * old return got wrong: it is never struck on a figure with
+         * appreciation inside its denominator.
          */
         const cols = ctx.mineHead ?? [];
         if (!cols.length) return { notChecked: "the My-investments header did not parse on this run" };
-        // AT THE COLUMN, not off a page-wide title list — see `mineHead`.
-        const named = (label) => cols.some((c) => new RegExp(`^${label}$`, "i").test(c.text)
-          && /provably reaches the account's inception/i.test(c.title));
+        const ret = cols.find((c) => /^Return\b/i.test(c.text));
+        if (!ret || !/appreciation inside its denominator/i.test(ret.title)) return false;
         const rows = ctx.mineRows.every((r) => r.hasReturn || (r.returnReason ?? "").length > 20);
-        return named("Return") && named("Gain") && rows;
+        return rows;
       }],
+    /**
+     * ── PURCHASE, REDEMPTION, AND APPRECIATION IN TWO PARTS ─────────────────
+     *
+     *   *"Make it purchase redemption and appreciation and appreciation you can
+     *    show as realised and unrealised gains separately… Net invested amount
+     *    is a wrong figure. We do not need to show that."*
+     *
+     * The headings are asserted by their own text at the column, and the
+     * removal beside them: a table that kept "Net invested" or "Capital in"
+     * next to the new words says one thing twice in two vocabularies, and
+     * the first of those is the figure that read −₹2.56 Cr on 3P.
+     */
+    ["the capital columns are Committed, Purchase, Redemption, Realised and Unrealised — and Net invested is gone",
+      (t, ctx) => {
+        const cols = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toLowerCase());
+        if (!cols.length) return { notChecked: "the transactions header did not parse on this run" };
+        const need = ["committed", "purchase", "redemption", "realised", "unrealised", "value today"];
+        const gone = ["net invested", "net", "capital in", "capital out", "paid in", "taken out", "gain"];
+        return need.every((n) => cols.includes(n)) && !gone.some((g) => cols.includes(g));
+      }],
+    /**
+     * ...AND ON EVERY ROW THAT STATES ALL FOUR, THEY RECONCILE:
+     *
+     *   Purchase − Redemption + Realised + Unrealised = Value today
+     *
+     * Rewritten: a redemption is principal (what those units cost) plus the
+     * realised part; what is still held is its cost plus the unrealised part.
+     * The old Net invested broke exactly this — it put the realised part on the
+     * cost side. Struck on the rupee handles rather than on the compact text,
+     * whose rounding would let a row off by ₹4 L pass.
+     *
+     * A row that withholds either half is not asserted to reconcile — it is
+     * asserted, one check up, to NAME why — and the check requires at least
+     * one row that does state all four, so it cannot pass over nothing.
+     */
+    ["Purchase − Redemption + Realised + Unrealised = Value today, on every row that states all four",
+      (t, ctx) => {
+        if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
+        const byAcct = new Map();
+        for (const m of CAPITAL_RECORD_BOOK.moves) {
+          const a = byAcct.get(m.accountId) ?? { p: 0, r: 0 };
+          if (m.direction === "in") a.p += m.amount ?? 0; else a.r += m.amount ?? 0;
+          byAcct.set(m.accountId, a);
+        }
+        const dist = new Map(CAPITAL_RECORD_BOOK.commitments.map((c) => [c.accountId, c.distributed]));
+        const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+        const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+        const value = new Map();
+        for (const p of pos) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
+        let checked = 0;
+        for (const r of ctx.mineRows) {
+          if (r.realisedGain == null || r.unrealisedGain == null) continue;
+          const a = byAcct.get(r.accountId);
+          const v = value.get(r.accountId);
+          if (!a || v == null) return false;   // a split with nothing to reconcile it against
+          // Only an UNDATED payout total is added on top of the dated moves: a
+          // fund whose payouts are carried dated has them in `a.r` already, and
+          // adding its printed distribution too would count them twice.
+          const redeemed = CAPITAL_RECORD_BOOK.undatedOut.has(r.accountId)
+            ? (dist.get(r.accountId) ?? 0) + a.r : a.r;
+          const lhs = a.p - redeemed + Number(r.realisedGain) + Number(r.unrealisedGain);
+          if (Math.abs(lhs - v) > 1) return false;
+          checked++;
+        }
+        return checked > 0;
+      }],
+    ...CAPITAL_RETURN_CHECKS,
+    /**
+     * AN ACCOUNT NO STATEMENT VALUES IS STILL AN AIF ON THE CATEGORY AXIS,
+     * WHERE ITS OWN STATEMENT SAYS SO — India SME's and Sky Capital's folios,
+     * on this table since their dated calls became purchases (Stage 10cd). With
+     * no position to read a class off, the ACCOUNT's engagement is the only
+     * classification there is, and it is the statement's own wording. Derived
+     * from the book so the next drop's unvalued fund is the one held to it.
+     */
+    ["an unvalued fund account funded by calls is filed under AIF, not left unclassified", (t, ctx) => {
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const accs = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+      const want = accs.filter((a) => UNVALUED_ACCOUNTS?.has(a.accountId) && a.engagement === "AIF"
+        && CAPITAL_RECORD_BOOK?.moves.some((m) => m.accountId === a.accountId)).map((a) => a.accountId);
+      if (!want.length) return { notChecked: "no unvalued fund account carries a capital record in this book" };
+      return want.every((id) => ctx.mineRows.find((r) => r.accountId === id)?.section === "AIF");
+    }],
 
     /**
      * AND NO ROW OFFERS A DRILL-DOWN ANY MORE — *"remove the drill down pages
@@ -10432,10 +10770,16 @@ const INVARIANTS = {
      */
     ["a row with no withdrawal shows a dash, never a zero", (t, ctx) => {
       if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
-      const none = ctx.mineRows.filter((r) => r.withdrawals === 0);
+      // A payout the fund prints only as an UNDATED total is still money that
+      // came back: no dated withdrawal, and a redemption figure all the same.
+      // (Neo Infra's was, until Stage 10bw read its payouts dated; none is now,
+      // and the rule stands for the next one.) Read off the book, not the row.
+      const undated = CAPITAL_RECORD_BOOK?.undatedOut ?? new Set();
+      const cameBack = (r) => r.withdrawals > 0 || undated.has(r.accountId);
+      const none = ctx.mineRows.filter((r) => !cameBack(r));
       if (!none.length) return { notChecked: "every account in this book has taken money back out" };
       return none.every((r) => r.tookOutCell === "—")
-        && ctx.mineRows.filter((r) => r.withdrawals > 0).every((r) => r.tookOutCell !== "—");
+        && ctx.mineRows.filter(cameBack).every((r) => r.tookOutCell !== "—");
     }],
 
     /**
@@ -10557,6 +10901,179 @@ const INVARIANTS = {
       }],
   ],
 
+  "monitor-txn-returns": [
+    ...txnMergedChecks(),
+    ...CAPITAL_RETURN_CHECKS,
+    ["the return picker is on the Transactions view, offering every measure, with all five ticked", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return false;   // the handle is gone — the picker is, too
+      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+      return five.every((m) => rs.offers.includes(m) && rs.active.includes(m)) && rs.offers.includes("auto");
+    }],
+    /**
+     * ...AND EACH GETS A COLUMN OF ITS OWN, headed with its own name — the
+     * Holdings table's own mechanism (`withReturnCols`), not a second one.
+     */
+    ["…and the transactions table draws one return column per measure, headed with its own name", (t, ctx) => {
+      const heads = (ctx.mineHead ?? []).map((c) => c.text.split("\n")[0].trim().toUpperCase());
+      if (!heads.length) return false;
+      return ["HPR", "CAGR", "XIRR", "YTD", "CY"].every((h) => heads.includes(h)) && !heads.includes("RETURN");
+    }],
+    ["…and every capital row carries a cell in each of them, in order", (t, ctx) => {
+      if (!ctx.mineRows?.length) return false;
+      const want = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+      return ctx.mineRows.every((r) => r.returns.length === 5 && r.returns.every((x, i) => x.measure === want[i]));
+    }],
+    /**
+     * CY IS ABSENT ON EVERY ROW, WITH ITS REASON — no statement values an
+     * account at a past year-end — and never a figure borrowed from another
+     * measure.
+     */
+    ["…a calendar-year return is absent on every row and names why", (t, ctx) =>
+      (ctx.mineRows ?? []).length > 0 && ctx.mineRows.every((r) => {
+        const cy = r.returns.find((x) => x.measure === "calendar");
+        // The year-end reason where appreciation is struck; where it is itself
+        // withheld the cell names THAT cause instead, which is the prior one.
+        return cy && cy.pct == null && (cy.reason ?? "").length > 20;
+      })
+      && ctx.mineRows.some((r) => /year-end|start and end/i.test(r.returns.find((x) => x.measure === "calendar")?.reason ?? ""))],
+    /**
+     * CAGR IS REFUSED WHERE THE MONEY WENT IN OVER SEVERAL DATES, and says the
+     * money-weighted rate is XIRR. A single-start compound rate over a
+     * staggered account treats every rupee as invested on the first date,
+     * which overstates the time the later money has been at work.
+     */
+    ["…CAGR is refused on a staggered account, naming XIRR as its measure", (t, ctx) => {
+      const staggered = (ctx.mineRows ?? []).filter((r) => r.contributions > 1 && r.returns.some((x) => x.pct != null));
+      if (!staggered.length) return false;
+      return staggered.every((r) => {
+        const c = r.returns.find((x) => x.measure === "cagr");
+        return c && c.pct == null && /XIRR/.test(c.reason ?? "");
+      });
+    }],
+    /**
+     * ...AND NOTHING IS ANNUALISED OVER LESS THAN A YEAR. A CAGR or XIRR
+     * column carrying a figure on a sub-year account shows its holding-period
+     * return, TAGGED HPR — the +99.0% this book once printed was a 132-day
+     * return compounded onto a year.
+     */
+    ["…no CAGR or XIRR is struck over less than a year — those rows show HPR, tagged", (t, ctx) => {
+      if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const accs = new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a]));
+      let seen = 0;
+      for (const r of ctx.mineRows ?? []) {
+        const first = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === r.accountId && m.direction === "in")
+          .map((m) => m.date).sort()[0];
+        const to = accs.get(r.accountId)?.asOf;
+        if (!first || !to) continue;
+        const days = Math.round((Date.parse(to) - Date.parse(first)) / 864e5);
+        if (days >= 365) continue;
+        for (const x of r.returns.filter((x) => x.measure === "cagr" || x.measure === "xirr")) {
+          if (x.pct == null) continue;
+          if (x.tag !== "HPR") return false;
+          seen++;
+        }
+      }
+      return seen > 0;
+    }],
+    /**
+     * ── AN XIRR IS RE-SOLVED HERE, ON A PATH THE PAGE DOES NOT TAKE ─────────
+     *
+     * Every purchase negative on its own date, every dated redemption positive
+     * on its, and the account's value today on its own report date — solved by
+     * BISECTION on Σ cf·(1+r)^(−days/365) = 0 rather than by the page's
+     * Newton solver. A rate that divided by a net, dropped a redemption or
+     * closed on the wrong day lands somewhere else, and the page's own number
+     * compared with itself could not have told.
+     */
+    ["…every XIRR shown re-solves from the book's own dated flows", (t, ctx) => {
+      if (!CAPITAL_RECORD_BOOK) return { notChecked: "the book's capital record could not be read" };
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const accs = new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a]));
+      const pos = bookArray(src, "BOOK_POSITIONS") ?? [];
+      const value = new Map();
+      for (const p of pos) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
+      const solve = (flows) => {
+        const t0 = Math.min(...flows.map((f) => f.t));
+        const npv = (r) => flows.reduce((s, f) => s + f.a / Math.pow(1 + r, (f.t - t0) / (365 * 864e5)), 0);
+        let lo = -0.99, hi = 10;
+        if (Math.sign(npv(lo)) === Math.sign(npv(hi))) return null;
+        for (let i = 0; i < 200; i++) {
+          const mid = (lo + hi) / 2;
+          if (Math.sign(npv(mid)) === Math.sign(npv(lo))) lo = mid; else hi = mid;
+        }
+        return ((lo + hi) / 2) * 100;
+      };
+      let checked = 0;
+      for (const r of ctx.mineRows ?? []) {
+        const x = r.returns.find((y) => y.measure === "xirr");
+        if (!x || x.pct == null || x.tag === "HPR") continue;
+        const moves = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === r.accountId);
+        const flows = moves.map((m) => ({ t: Date.parse(m.date), a: m.direction === "in" ? -m.amount : m.amount }));
+        const v = value.get(r.accountId) ?? 0;
+        if (v > 0) flows.push({ t: Date.parse(accs.get(r.accountId).asOf), a: v });
+        const want = solve(flows);
+        if (want == null || Math.abs(want - x.pct) > 0.05) return false;
+        checked++;
+      }
+      return checked > 0;
+    }],
+    /**
+     * ...AND A PAYOUT'S DATE DECIDES WHETHER AN XIRR EXISTS. Dated, it is a
+     * flow at its date and the rate is struck — the re-solve above covers the
+     * figure, so this holds the rows that REST on payouts to having one at all
+     * (Neo Infra and Baring since Stage 10bw read theirs dated). Undated, a rate
+     * solved without it is the fund's return as if it had paid nothing back, so
+     * it is refused and says why. Both halves; it abstains only on a book with
+     * neither, and this one has the first.
+     */
+    ["…an account whose payouts are dated carries its XIRR; one with an undated payout carries none, and says why", (t, ctx) => {
+      const undated = CAPITAL_RECORD_BOOK?.undatedOut ?? new Set();
+      const dated = new Set((CAPITAL_RECORD_BOOK?.payouts ?? []).map((m) => m.accountId));
+      const rows = ctx.mineRows ?? [];
+      const d = rows.filter((r) => dated.has(r.accountId));
+      const u = rows.filter((r) => undated.has(r.accountId));
+      if (!d.length && !u.length) return { notChecked: "no account on this table has money back from a fund's payouts" };
+      if (dated.size && !d.length) return false;
+      return d.every((r) => { const x = r.returns.find((y) => y.measure === "xirr"); return !!x && x.pct != null && x.tag !== "HPR"; })
+        && u.every((r) => { const x = r.returns.find((y) => y.measure === "xirr"); return !!x && x.pct == null && /undated/i.test(x.reason ?? ""); });
+    }],
+    /**
+     * ...AND ITS SPLIT IS THE FUND'S OWN TYPING. Realised is the income and
+     * equalisation it paid out; the principal it returned is capital, not gain,
+     * so unrealised is value less the purchase NET of that principal. Both are
+     * re-derived here from the book's typed payouts — never from the row.
+     */
+    ["…and its realised and unrealised are split by the fund's own payout types", (t, ctx) => {
+      // EVERY TYPED MOVEMENT, a record row a payout was typed onto included:
+      // Neo Infra's principal is its own capital record's redemption row since
+      // Stage 10ca, typed "capital" rather than added a second time, and a split
+      // that left it out would expect unrealised on the whole call.
+      const pay = (CAPITAL_RECORD_BOOK?.moves ?? []).filter((m) => m.payoutKind != null);
+      const ids = [...new Set(pay.map((m) => m.accountId))];
+      if (!ids.length) return { notChecked: "no fund on this table pays back through a typed payout record" };
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const value = new Map();
+      for (const p of bookArray(src, "BOOK_POSITIONS") ?? []) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
+      return ids.every((id) => {
+        const r = (ctx.mineRows ?? []).find((x) => x.accountId === id);
+        if (!r) return false;
+        const mine = pay.filter((m) => m.accountId === id && m.direction === "out");
+        // The page splits only where EVERY movement out is typed; one untyped
+        // redemption beside the typed ones and the split is refused, not guessed.
+        const outs = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === id && m.direction === "out");
+        if (mine.length !== outs.length) return r.realisedGain == null && r.unrealisedGain == null;
+        if (r.realisedGain == null || r.unrealisedGain == null) return false;
+        const gain = mine.filter((m) => m.payoutKind !== "capital").reduce((a, m) => a + m.amount, 0);
+        const principal = mine.filter((m) => m.payoutKind === "capital").reduce((a, m) => a + m.amount, 0);
+        const bought = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === id && m.direction === "in").reduce((a, m) => a + m.amount, 0);
+        const v = value.get(id);
+        return Math.abs(Number(r.realisedGain) - gain) <= 1
+          && v != null && Math.abs(Number(r.unrealisedGain) - (v - (bought - principal))) <= 1;
+      });
+    }],
+  ],
   "monitor-txn-secaxis": [
     ...txnMergedChecks(),
     ["the security axis is not offered on Transactions", (t, ctx) =>
@@ -11232,13 +11749,22 @@ const INVARIANTS = {
     return ctx.mineRows.every((r) => col(r) === "—");
   }],
   /**
-   * ...AND THE NET IS WITHHELD, because a net over one side is not a net. It
-   * would tie to the two columns beside it and describe an account that also
-   * moved money the other way.
+   * ...AND THE APPRECIATION AND EVERY RETURN ARE WITHHELD, WITH THEIR REASON.
+   *
+   * This asserted the NET was withheld, and the Net column is gone at the
+   * family's request (Stage 10cd) — it subtracted a redemption that CARRIES
+   * appreciation from what was paid in, which is how 3P read −₹2.56 Cr. What
+   * replaced it is struck over the account's WHOLE record: purchases,
+   * redemptions and today's value. Over one side it describes an account that
+   * never moved money the other way — so under a side filter both halves of
+   * appreciation and every ticked return render an absence that NAMES the
+   * filter, never a figure struck over half a record.
    */
-  ["...and the net is withheld with its reason", (t, ctx) => {
+  ["...and the appreciation and every return are withheld with their reason", (t, ctx) => {
     if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
-    return ctx.mineRows.every((r) => r.netCell === "—");
+    return ctx.mineRows.every((r) => r.realisedGain == null && r.unrealisedGain == null
+      && r.returns.length > 0
+      && r.returns.every((x) => x.pct == null && /filtered to one side/i.test(x.reason ?? "")));
   }],
   /**
    * ...AND THE CONTROL SPEAKS ONE VOCABULARY, WHICH IS THE FAMILY'S.
@@ -11309,13 +11835,22 @@ const INVARIANTS = {
     return ctx.mineRows.every((r) => col(r) === "—");
   }],
   /**
-   * ...AND THE NET IS WITHHELD, because a net over one side is not a net. It
-   * would tie to the two columns beside it and describe an account that also
-   * moved money the other way.
+   * ...AND THE APPRECIATION AND EVERY RETURN ARE WITHHELD, WITH THEIR REASON.
+   *
+   * This asserted the NET was withheld, and the Net column is gone at the
+   * family's request (Stage 10cd) — it subtracted a redemption that CARRIES
+   * appreciation from what was paid in, which is how 3P read −₹2.56 Cr. What
+   * replaced it is struck over the account's WHOLE record: purchases,
+   * redemptions and today's value. Over one side it describes an account that
+   * never moved money the other way — so under a side filter both halves of
+   * appreciation and every ticked return render an absence that NAMES the
+   * filter, never a figure struck over half a record.
    */
-  ["...and the net is withheld with its reason", (t, ctx) => {
+  ["...and the appreciation and every return are withheld with their reason", (t, ctx) => {
     if (!ctx.mineRows?.length) return { notChecked: "no My-investments rows on this run" };
-    return ctx.mineRows.every((r) => r.netCell === "—");
+    return ctx.mineRows.every((r) => r.realisedGain == null && r.unrealisedGain == null
+      && r.returns.length > 0
+      && r.returns.every((x) => x.pct == null && /filtered to one side/i.test(x.reason ?? "")));
   }],
   /**
    * ...AND THE CONTROL SPEAKS ONE VOCABULARY, WHICH IS THE FAMILY'S.
@@ -11436,10 +11971,15 @@ const INVARIANTS = {
         if (!tbl?.foot || !tbl.footData) return false;
         // STRUCK ON THE RENDERED CELL, because the claim is that the fraction is
         // on SCREEN beside the figure — and reconciled against the handles, so a
-        // cell printing some other pair of numbers cannot satisfy it. Column 9
-        // on the merged table: name how in out net investedOn trades bought sold
-        // REALISED.
-        const m = /([\d,]+)\/([\d,]+)/.exec(tbl.foot[9] ?? "");
+        // cell printing some other pair of numbers cannot satisfy it. BY ITS
+        // HEADING — "P&L on sales" since Stage 10cd, which renamed the manager's
+        // realised column so it cannot be read as the family's Realised
+        // appreciation beside it. It was `foot[9]`, and Committed arriving in
+        // front moved every column after it.
+        if (!tbl.footByCol) return false;
+        const col = tbl.head.findIndex((h) => /^p&l on sales$/i.test(h.split("\n")[0].trim()));
+        if (col < 0) return false;
+        const m = /([\d,]+)\/([\d,]+)/.exec(tbl.footByCol[col] ?? "");
         if (!m) return false;
         const n = (x) => Number(x.replace(/,/g, ""));
         return n(m[1]) > 0 && n(m[1]) < n(m[2])
@@ -12450,6 +12990,51 @@ const INVARIANTS = {
       return un.length === AIF_BOOK.unvaluedCount
         && AIF_BOOK.unvaluedSections.every((k) => un.includes(k))
         && /drawn/i.test(t) && /no NAV|valued by no statement/i.test(t);
+    }],
+    /**
+     * ── …AND THEY ARE A DROPDOWN, SHUT ON ARRIVAL, WHOSE SUMMARY STILL SAYS
+     * WHAT IS INSIDE IT ─────────────────────────────────────────────────────
+     *
+     *   "the 'Held, and valued by no statement' section needs to be hidden as a
+     *    drop down list."
+     *
+     * Three claims and none implies another. It is a `<details>` (a heading
+     * over a list is not a dropdown however it is styled); it is SHUT when the
+     * page opens (a `<details open>` renders exactly the old section); and the
+     * summary it shows while shut carries the count and the Category I folios —
+     * the only place on this page a Category I AIF appears, so a fold that hid
+     * them behind a bare heading would tell a reader they hold none, which is
+     * the one way this page could mislead. The count is the BOOK's.
+     */
+    ["the folios no statement values are a dropdown, shut on arrival, that says what it holds", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.unvaluedCount) return { notChecked: "every AIF folio in this book carries a valued position" };
+      const f = ctx?.aifSections?.unvaluedFold;
+      if (!f || f.tag !== "DETAILS" || f.open) return false;
+      const sum = String(f.summary ?? "");
+      return new RegExp(`\\b${AIF_BOOK.unvaluedCount} AIF folios?\\b`).test(sum)
+        && /valued by no statement/i.test(sum)
+        && (!AIF_BOOK.catIOnlyUnvalued || /Category I\b/.test(sum));
+    }],
+    /**
+     * ── A CATEGORY THE FAMILY DECLARED SAYS SO ON ITS ROW ──────────────────
+     *
+     * Delphi and Neo Infra print no SEBI category; the family declared both
+     * Category II. They sit under the Category II heading exactly as firmly as
+     * a fund whose statement prints it — which is why the ROW must say which
+     * kind of claim it is. Struck on the keys, against the book's own list,
+     * so a row that lost the marker and a marker on the wrong row both fail.
+     */
+    ["every row filed by the family's declared category says so", (t, ctx) => {
+      if (!AIF_BOOK || !DECLARED_CATS) return false;
+      const got = ctx?.aifSections?.declared ?? [];
+      if (!AIF_BOOK.declaredRows.length) {
+        return got.length === 0 || { notChecked: "no drawn fund's category rests on the family's declaration" };
+      }
+      const keys = got.map((d) => d.key).filter(Boolean).sort();
+      return keys.length === AIF_BOOK.declaredRows.length
+        && keys.every((k, i) => k === AIF_BOOK.declaredRows[i])
+        && got.every((d) => /declared by the family/i.test(d.text));
     }],
     ["a Category I AIF the book holds but no statement values is named", (t, ctx) => {
       if (!AIF_BOOK) return false;
@@ -19335,7 +19920,8 @@ for (const theme of THEMES) {
       if (name === "monitor-txns" || name === "monitor-txn-manager"
         || name === "monitor-txn-drill" || name === "monitor-txn-direct"
         || name === "monitor-txn-in" || name === "monitor-txn-out"
-        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis") {
+        || name === "monitor-txn-basket" || name === "monitor-txn-secaxis"
+        || name === "monitor-txn-returns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
         /**
@@ -20553,6 +21139,25 @@ for (const theme of THEMES) {
         // in this book is one of these, so without them a category-clubbed page
         // tells a reader they hold no Category I at all.
         unvalued: [...document.querySelectorAll("[data-aif-unvalued]")].map((e) => e.getAttribute("data-aif-unvalued")),
+        // …which the family asked to see as a DROPDOWN: the container itself,
+        // whether it is a `<details>`, whether it opened on arrival, and what its
+        // summary line says while it is shut.
+        unvaluedFold: (() => {
+          const el = document.querySelector("[data-testid='aif-unvalued']");
+          if (!el) return null;
+          return {
+            tag: el.tagName,
+            open: el.tagName === "DETAILS" ? el.open : true,
+            summary: el.querySelector("summary")?.innerText ?? null,
+          };
+        })(),
+        // The rows whose category the FAMILY declared, by the key the row
+        // carries, and what each chip says — a declared category must be told
+        // apart from a printed one on the row itself.
+        declared: [...document.querySelectorAll("[data-aif-row-cat-source='family']")].map((e) => ({
+          key: e.closest("[data-hb-key]")?.getAttribute("data-hb-key") ?? null,
+          text: e.textContent ?? "",
+        })),
       }));
       /**
        * ── THE DAILY-NAV MOVERS CARD, READ AS STRUCTURE ───────────────────────
@@ -20663,12 +21268,21 @@ for (const theme of THEMES) {
           // construction.
           section: tr.getAttribute("data-mine-section") ?? "",
           how: tr.querySelector("[data-mine-how]")?.getAttribute("data-mine-how") ?? null,
-          // The two money cells and the net, as figures or as absences. A side
-          // filter must EMPTY the other side rather than print a ₹0 there, and
-          // must withhold the net — neither is visible in the row count alone.
-          paidInCell: (tr.cells[2]?.innerText ?? "").trim(),
-          tookOutCell: (tr.cells[3]?.innerText ?? "").trim(),
-          netCell: (tr.cells[4]?.innerText ?? "").trim(),
+          // The two money cells, as figures or as absences, READ BY HANDLE. A
+          // side filter must EMPTY the other side rather than print a ₹0 there —
+          // not visible in the row count alone. These were `tr.cells[2]`/`[3]`
+          // and Stage 10cd put Committed in front of them, so a positional read
+          // would have compared the commitment against the side filter: a real
+          // figure in the wrong place, which is what this sweep exists to catch.
+          committedCell: (tr.querySelector("[data-mine-cell=committed]")?.innerText ?? "").trim(),
+          paidInCell: (tr.querySelector("[data-mine-cell=in]")?.innerText ?? "").trim(),
+          tookOutCell: (tr.querySelector("[data-mine-cell=out]")?.innerText ?? "").trim(),
+          valueCell: (tr.querySelector("[data-mine-cell=value]")?.innerText ?? "").trim(),
+          // Appreciation, in its two parts — the figure rides on the cell as a
+          // handle, so a check can hold the identity to the RUPEE rather than to
+          // a compact "₹4.35 Cr" a reader sees.
+          realisedGain: tr.querySelector("[data-realised-gain]")?.getAttribute("data-realised-gain") ?? null,
+          unrealisedGain: tr.querySelector("[data-unrealised-gain]")?.getAttribute("data-unrealised-gain") ?? null,
           /**
            * EVERY ANCHOR IN THE ROW, not a named handle.
            *
@@ -20690,10 +21304,21 @@ for (const theme of THEMES) {
           // 7 it would have read BOUGHT — a real money figure in place of a
           // percentage, which is the plausible-wrong-answer this sweep exists to
           // catch rather than commit.
-          hasReturn: /%/.test((tr.cells[13]?.innerText ?? "")),
+          //
+          // AND IT MOVED AGAIN AT Stage 10cd — one return column PER MEASURE the
+          // reader ticks, as on the Holdings table — so it is read by its own
+          // handle now rather than counted: the first `data-return-cell`.
+          hasReturn: /%/.test((tr.querySelector("td[data-return-cell]")?.innerText ?? "")),
           // ...and where it is withheld, the cell must NAME why — the reason is
           // an `AbsentCell` `title`, which no `innerText` sweep can reach.
-          returnReason: tr.cells[13]?.querySelector("[title]")?.getAttribute("title") ?? null,
+          returnReason: tr.querySelector("td[data-return-cell]")?.querySelector("[title]")?.getAttribute("title") ?? null,
+          returns: [...tr.querySelectorAll("td[data-return-cell]")].map((td) => ({
+            measure: td.getAttribute("data-return-cell"),
+            tag: td.getAttribute("data-return-tag"),
+            pct: td.hasAttribute("data-return-pct") ? Number(td.getAttribute("data-return-pct")) : null,
+            text: (td.innerText ?? "").trim(),
+            reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+          })),
         })));
       /**
        * THE SIDE CONTROL AND THE COUNTER BESIDE IT.
@@ -20820,6 +21445,15 @@ for (const theme of THEMES) {
             cells: cells(tr),
           })),
           foot: foot ? cells(foot) : null,
+          /**
+           * THE FOOTER BY COLUMN, with each cell repeated over the columns it
+           * spans — so a claim about Purchase is struck under the heading
+           * Purchase, wherever the reader has dragged it. `foot[2]` meant Capital
+           * in until Stage 10cd put Committed in front of it, and a positional
+           * read would then have compared the COMMITMENT against Bought.
+           */
+          footByCol: foot ? [...foot.cells].flatMap((td) =>
+            Array.from({ length: td.colSpan || 1 }, () => (td.innerText ?? "").replace(/\s+/g, " ").trim())) : null,
           /** The footer cells whose column can carry no total, by their reason. */
           footTitles: foot ? [...foot.cells].map((td) => td.querySelector("[title]")?.getAttribute("title") ?? "") : null,
           /**

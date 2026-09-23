@@ -43,7 +43,28 @@ export type AifCategoryRead = {
    *   `unstated`   — neither field names one at all.
    */
   why: "ambiguous" | "conflict" | "unstated" | null;
+  /**
+   * Where the category came from: a STATEMENT printed it, or the FAMILY
+   * declared it for a fund whose statements print none. Null where there is no
+   * category.
+   */
+  source: "statement" | "family" | null;
 };
+
+/** One family declaration of a fund's SEBI category. */
+export type DeclaredAifCategory = {
+  category: AifCategory;
+  source: "family";
+  declaredOn: string;
+  /** What in the archive agrees with it, in words — null where nothing does. */
+  corroboration: string | null;
+};
+
+/** The family's declared categories, keyed on `securityKey`. Fills a gap only. */
+export declare const DECLARED_AIF_CATEGORY: Readonly<Record<string, DeclaredAifCategory>>;
+
+/** The family's declared category for one fund, where there is one. */
+export declare function declaredAifCategory(securityKey: string | null | undefined): DeclaredAifCategory | null;
 
 /** Whether the paperwork calls this fund a private-equity or venture vehicle. */
 export declare function readsAsPrivateEquity(
@@ -55,13 +76,14 @@ export declare function readsAsPrivateEquity(
 export declare function readAifCategory(
   security: string | null | undefined,
   account: CategoryAccount | null | undefined,
+  securityKey?: string | null,
 ): AifCategoryRead;
 
 /** Which side of the book a holding sits on. `null` = no statement places it. */
 export type MarketSide = "listed" | "private";
 
 /** The shape `marketSideOf` needs of a position. A real `Position` satisfies it. */
-export type SidePosition = { assetClass: string; security: string };
+export type SidePosition = { assetClass: string; security: string; securityKey?: string | null };
 
 export declare function marketSideOf(
   position: SidePosition,
@@ -96,7 +118,11 @@ export type FundMarketSide = {
   side: MarketSide | null;
   basis: MarketSideBasis;
   decision: FamilyMarketDecision | null;
-  /** The SEBI category the statement prints, whether or not it decided. */
+  /**
+   * The fund's SEBI category, whether or not it decided — as the statement
+   * prints it, or where it prints none, as the family declared it
+   * (`DECLARED_AIF_CATEGORY`, which only ever fills that gap).
+   */
   category: AifCategory | null;
 };
 
@@ -104,12 +130,14 @@ export type FundMarketSide = {
 export declare function fundMarketSideOf(
   name: string | null | undefined,
   account: CategoryAccount | null | undefined,
+  securityKey?: string | null,
 ): MarketSide | null;
 
 /** The side and the reason for it. */
 export declare function fundMarketSideBasis(
   name: string | null | undefined,
   account: CategoryAccount | null | undefined,
+  securityKey?: string | null,
 ): FundMarketSide;
 
 /** What `marketSide === null` means, in words. */

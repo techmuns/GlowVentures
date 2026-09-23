@@ -19764,6 +19764,18 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
 ];
 
 /**
+ * The accounts whose capital record provably STARTS AT INCEPTION: every class's
+ * earliest allotment brings the statement's own printed unit balance from zero
+ * to exactly the units it allots. A return on the family's money needs the
+ * whole record, and this is one of the three things that establishes it — see
+ * `capitalRecordFromInception` in build-book and `contributionsAreComplete`.
+ */
+export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
+  "3p-investment-managers-3000048",
+  "buoyant-capital-103473"
+];
+
+/**
  * Per-position contribution history, keyed `<accountId>|<securityKey>`, and
  * ONLY where the allotted units account for every unit held. Everything else
  * is absent by that gate rather than shown partially — see `positionTranchesFrom`.
