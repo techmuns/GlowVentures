@@ -53,8 +53,13 @@ console.log("\n── the book carries a cost through a switch, and says so ─�
 ok("some position's cost is carried through a class switch", carried.length > 0, `${carried.length} position(s)`);
 ok("...and every one keeps the statement's own figure beside it",
   carried.every((p) => typeof p.printedCostBasis === "number" && p.printedCostBasis !== p.costBasis));
+// Two things restate a statement's cost, and the printed figure rides beside
+// either: a class switch carried (above), and FIFO where units LEFT a holding
+// (`shared/fifo.mjs` — Neo Infra's capital redemption). Nothing else may.
 ok("the statement's figure appears ONLY where the book's cost differs from it",
-  BOOK_POSITIONS.filter((p) => p.printedCostBasis !== undefined).every((p) => p.costBasisSource === "carried-through-switch"));
+  BOOK_POSITIONS.filter((p) => p.printedCostBasis !== undefined).every((p) =>
+    (p.costBasisSource === "carried-through-switch" || p.costBasisSource === "fifo")
+    && p.printedCostBasis !== p.costBasis));
 ok("the dated record itself keeps the class each payment BOUGHT",
   BOOK_CAPITAL_MOVES.every((m) => !("carriedFrom" in m)));
 
