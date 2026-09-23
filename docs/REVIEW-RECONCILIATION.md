@@ -296,8 +296,8 @@ most actionable thing here, because the two halves need different documents.
 | | |
 | --- | ---: |
 | Review, invested at cost (its own tab totals) | **₹1,076.01 Cr** |
-| Book, invested at cost | **₹471.92 Cr** |
-| **Shortfall** | **₹604.09 Cr** |
+| Book, invested at cost | **₹470.30 Cr** |
+| **Shortfall** | **₹605.71 Cr** |
 
 Per tab, so the shortfall can be attributed rather than asserted:
 
