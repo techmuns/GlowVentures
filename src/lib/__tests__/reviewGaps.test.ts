@@ -211,10 +211,11 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
 // ── 7. EVERY SEARCH A READER CAN RUN OVER HOLDINGS IS WIRED TO IT ───────────
 //
 // `check:pages` drives the Portfolio Monitor's pick-list, which is the control
-// the family used — and it does NOT drive the other two, because reaching their
-// empty state needs a search that matches nothing and no route types one. So a
-// page quietly dropping the wiring would go unseen, which is the shape of
-// regression this repo keeps finding.
+// the family used, and the top bar's search, which types the same names — and
+// it does NOT drive the other two, because reaching their empty state needs a
+// search that matches nothing and no route types one. So a page quietly
+// dropping the wiring would go unseen, which is the shape of regression this
+// repo keeps finding.
 //
 // A SOURCE CHECK IS CRUDE AND IT CATCHES EXACTLY THAT. It cannot tell a working
 // note from a broken one — the Monitor walk is what does that, on the shared
@@ -225,6 +226,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     ["the Portfolio Monitor's holdings pick-list", "src/pages/PortfolioMonitor.tsx"],
     ["Family & Entities' holdings search", "src/pages/FamilyEntities.tsx"],
     ["the /holdings drill-down filter", "src/pages/HoldingsBehind.tsx"],
+    ["the top bar's search", "src/components/SmartSearch.tsx"],
   ];
   for (const [what, file] of SURFACES) {
     const src = readFileSync(file, "utf8");
