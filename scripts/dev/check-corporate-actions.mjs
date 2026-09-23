@@ -60,7 +60,7 @@ try {
     assert.match(await page.locator(selector).innerText(), new RegExp(expected.toFixed(2).replace(".", "\\.") + "%"));
     // The card sits on the position page's Price & returns tab, under the
     // returns table headed "excludes dividends" — the other half of that
-    // sentence. The page draws one tab at a time (Stage 10ck).
+    // sentence. The page draws one tab at a time (Stage 10cl).
     await page.goto(`${base}/stock/${target.securityKey}?tab=market`);
     await page.locator("[data-corporate-return-table]").waitFor();
     assert.match(await page.locator("main").innerText(), /Since each statement date, not since purchase/);

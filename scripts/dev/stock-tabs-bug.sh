@@ -42,7 +42,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research
 WANT="${CASES:-}"
 N=0
 
@@ -144,10 +144,10 @@ run_case "the tax card is drawn nowhere" py <<'PY'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '''            {!exited && (
+old = '''            {!exited && !fundOnly && !resolving && (
               <Card className="mt-5" title="Holding period & tax"'''
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, old.replace("{!exited && (", "{exited && ("), 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, old.replace("{!exited && ", "{exited && "), 1))
 PY
 
 run_case "a tax figure's dash loses its reason" py <<'PY'
@@ -210,9 +210,9 @@ run_case "a Total row drawn under a single account's row" py <<'PY'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '                    {posRows.length > 1 && ('
+old = '  const measuredFootShown = measuredFootRows.length > 1;'
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, '                    {posRows.length > 0 && (', 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, '  const measuredFootShown = measuredFootRows.length > 0;', 1))
 PY
 
 run_case "the plan-view sentence comes back on My targets" py <<'PY'
@@ -246,9 +246,9 @@ run_case "an AIF folio's price tab draws a returns table instead of stating its 
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '            {!notACompany ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />'
+old = '            ) : !notACompany ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />'
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, '            {(!notACompany || fundVehicle) && !schemeHalves ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />', 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, '            ) : (!notACompany || fundVehicle) && !schemeHalves ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />', 1))
 PY
 
 # ── THE MERGE WITH #74, #80 AND #84 ─────────────────────────────────────────
@@ -324,7 +324,7 @@ run_case "the position's return back to the survivors-only figure, not FIFO" py 
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null;'
+old = '  const ret = whole.costedReturn;'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, '  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;', 1))
 PY
