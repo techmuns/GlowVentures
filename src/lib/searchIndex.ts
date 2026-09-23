@@ -90,6 +90,34 @@ export type SearchEntry = {
 /** A ranked hit, with the tier that matched it — for tests and for the hover. */
 export type SearchHit = { entry: SearchEntry; score: number; matched: string };
 
+/**
+ * ── WHY AN ACCOUNT CARRIES NO VALUED HOLDING — TWO FACTS, NEVER ONE ─────────
+ *
+ * `redeemed`: every holding its statement prints is at nil units (3P, the HDFC
+ * folio), or the account prints no holding because its balance is nil (Motilal
+ * demat 37436848, the Hedged Equity strategy). That is a MEASURED zero.
+ *
+ * `unvalued`: no statement values it — India SME and Sky Capital publish no
+ * NAV, two 360 ONE folios report income only, a custody account holds shares at
+ * face value. That is an ABSENCE, and a figure for it would be invented.
+ *
+ * The chat context and the search's account rows both read this, so one says
+ * "a measured nil" where the other says it too (SC-A1, SC-D3). For an account
+ * with no position row the only evidence is the book's own reason, read the way
+ * `privateMarket.ts`'s `kindOf` reads it — a redemption is named as one.
+ */
+export type AccountEmptiness = { kind: "redeemed" | "unvalued"; reason: string } | null;
+
+export function accountEmptiness(a: Account, rows: readonly Position[]): AccountEmptiness {
+  if (rows.length > 0) {
+    return rows.every((p) => isRedeemedToNil(p))
+      ? { kind: "redeemed", reason: `every holding on its statement${a.asOf ? ` of ${a.asOf}` : ""} is redeemed to nil units` }
+      : null;
+  }
+  const reason = a.noPositionsReason ?? "no statement in this book values this account";
+  return { kind: /redeemed/i.test(reason) ? "redeemed" : "unvalued", reason };
+}
+
 type Money = (n: number) => string;
 
 // ── normalisation ─────────────────────────────────────────────────────────────

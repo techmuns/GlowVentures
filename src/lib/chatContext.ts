@@ -31,6 +31,7 @@ import {
   topByValue, sum,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
+import { accountEmptiness } from "@/lib/searchIndex";
 import type { Position } from "@/lib/types";
 
 /** How many rows of each list to send. Enough to answer, small enough to fit. */
@@ -138,14 +139,28 @@ export function buildDashboardContext(): ContextBlock[] {
       total: BOOK_ACCOUNTS.length,
       rows: BOOK_ACCOUNTS.map((a) => {
         const held = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+        /**
+         * ── AN ACCOUNT WITH NO VALUED HOLDING IS ONE OF TWO FACTS ───────────
+         *
+         * NULL where no statement values it, never 0 (SC-A1): India SME, Sky
+         * Capital, the income-only 360 ONE folios and the face-value custody
+         * accounts are ABSENCES, and a model handed `0` reports them as worth
+         * nothing — "what is my India SME investment worth?" answered with a
+         * zero. But 0 where every holding is REDEEMED TO NIL: 3P, the HDFC
+         * folio, Motilal demat 37436848 and the Hedged Equity strategy print a
+         * nil balance, and that is a MEASUREMENT. Both carry `valueNote` —
+         * the reason travels WITH the figure, so null and 0 cannot be read
+         * as one thing, which is the whole of this book's founding rule.
+         */
+        const empty = accountEmptiness(a, held);
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,
           strategy: a.strategy, engagement: a.engagement, asOf: a.asOf,
-          // NULL WHERE THE ACCOUNT HOLDS NOTHING, never 0 (A-14): an account no
-          // statement values beside its `noPositionsReason` is an absence, and
-          // a model handed `0` reports the account as worth nothing.
-          holdings: held.length, valueCr: held.length ? cr(sum(held.map((p) => p.marketValue))) : null,
-          noPositionsReason: a.noPositionsReason ?? null,
+          holdings: held.length,
+          valueCr: empty?.kind === "unvalued" ? null : empty?.kind === "redeemed" ? 0 : cr(sum(held.map((p) => p.marketValue))),
+          valueNote: empty
+            ? `${empty.kind === "redeemed" ? "A measured nil" : "Not valued — no figure"}: ${empty.reason}`
+            : null,
         };
       }).sort((x, y) => (y.valueCr ?? 0) - (x.valueCr ?? 0)).slice(0, TOP_ACCOUNTS),
     },

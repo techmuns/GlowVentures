@@ -144,6 +144,45 @@ ok("the context is a non-empty set of named blocks",
   ok("...and is flagged as NOT a holding", /never summed into NAV/i.test(c.note));
 }
 
+// ── AN ACCOUNT NO STATEMENT VALUES IS NULL; A REDEEMED ONE IS A MEASURED 0 ─
+//
+// SC-A1: the payload used to say `valueCr: 0` for every account with no
+// position row — India SME's three folios, Sky Capital's four, the income-only
+// 360 ONE pair, the face-value custody accounts — so "what is my India SME
+// investment worth?" was answered with a zero. The finiteness walk below cannot
+// see that: 0 is finite. So the two facts are re-derived HERE, from the book's
+// own rows and reasons by a different expression from the builder's, and held
+// to the payload account by account.
+{
+  const acc = block<{ rows: { accountNo: string; provider: string; valueCr: number | null; valueNote: string | null }[] }>("accounts");
+  const byNo = new Map(acc.rows.map((r) => [`${r.provider}|${r.accountNo}`, r]));
+  const absent: string[] = [], nil: string[] = [], wrong: string[] = [];
+  for (const a of BOOK_ACCOUNTS) {
+    const r = byNo.get(`${a.provider}|${a.accountNo}`);
+    if (!r) continue;
+    const rows = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+    // A measured nil: every row at nil units against a published price, or no
+    // row at all because the statement's balance is nil (its own words).
+    const measuredNil = rows.length
+      ? rows.every((p) => p.quantity === 0 && p.currentPrice != null)
+      : /balance is nil/i.test(a.noPositionsReason ?? "");
+    if (rows.length === 0 && !measuredNil) {
+      absent.push(a.accountNo);
+      if (r.valueCr !== null || !r.valueNote) wrong.push(`${a.accountNo} should be null with a reason, got ${r.valueCr}`);
+    } else if (measuredNil) {
+      nil.push(a.accountNo);
+      if (r.valueCr !== 0 || !/measured nil/i.test(r.valueNote ?? "")) wrong.push(`${a.accountNo} should be a measured 0, got ${r.valueCr} / ${r.valueNote}`);
+    } else if (typeof r.valueCr !== "number" || r.valueNote !== null) {
+      wrong.push(`${a.accountNo} holds a valued position, got ${r.valueCr} / ${r.valueNote}`);
+    }
+  }
+  ok("an account no statement values is null with its reason, a redeemed one a measured 0 with its reason",
+    wrong.length === 0, wrong.slice(0, 4).join("; "));
+  // LOAD-BEARING: both kinds exist on this book, or the check passes over nothing.
+  ok("...and this book has both kinds, so the check is not vacuous",
+    absent.length > 0 && nil.length > 0, `${absent.length} not valued, ${nil.length} measured nil`);
+}
+
 // ── NO FABRICATED ZEROS ANYWHERE IN THE CONTEXT ────────────────────────────
 //
 // A `?? 0` in the builder would hand the model a measured-looking zero for
