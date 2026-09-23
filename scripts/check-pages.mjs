@@ -11544,6 +11544,34 @@ const INVARIANTS = {
       return rs.every((r) => /^[+\-\u2212]\d+\.\d+%$/.test(r.text)
         || (r.text === "—" && /reports? a cost|a cost is reported for/i.test(r.title ?? "")));
     }],
+    /**
+     * …AND A RETURN APPEARS ONLY WHERE THE SECTOR'S COSTED HOLDINGS ACCOUNT FOR
+     * ITS WHOLE VALUE. The check above accepts any signed figure, so a page that
+     * dropped the coverage gate — striking a return over a sector's costed FEW
+     * and printing it beside the value of all of them — passed it, and on this
+     * book it would have printed one on every partially costed sector. The gate
+     * is `costCoversSet` (0.5% of the sector's value may be uncosted), RE-EXPRESSED
+     * here rather than imported, over the coverage the cell carries — and the
+     * attributes are tied to the row's own printed Positions count, so a cell
+     * cannot carry one set's coverage beside another set's row.
+     *
+     * AND A DASH'S REASON STATES THE COUNTS THE ROW CARRIES. "A cost is reported
+     * for 4 of the 7 holdings" is a claim a reader acts on — it says which
+     * documents to go and find — so it must be the row's own four and seven.
+     */
+    ["a return is struck only where the sector's costed holdings account for its whole value", (_t, ctx) => {
+      const rs = ctx?.sectorLayout?.returns;
+      if (!rs || !rs.length) return false;
+      return rs.every((r) => {
+        const { costed, holdings, uncosted, mv, count } = r;
+        if (![costed, holdings, uncosted, mv, count].every(Number.isFinite)) return false;
+        if (holdings !== count || costed > holdings || uncosted < 0 || uncosted > mv + 1) return false;
+        const covered = mv > 0 && uncosted <= mv * 0.005;
+        if (/^[+\-\u2212]\d+\.\d+%$/.test(r.text)) return covered && costed > 0;
+        if (costed === 0) return /No holding in this sector reports a cost/i.test(r.title ?? "");
+        return new RegExp(String.raw`A cost is reported for ${costed} of the ${holdings} holdings`).test(r.title ?? "");
+      });
+    }],
     ["it is the book's own Direct Equity bucket, to the rupee", (t) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const m = /DIRECT EQUITY\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
@@ -17700,7 +17728,12 @@ for (const theme of THEMES) {
           // `innerText` cannot see.
           returns: [...document.querySelectorAll("main [data-sector-row]")].map((r) => {
             const c = r.querySelector('[data-cell="return"]');
-            return { key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c) };
+            const n = (k) => (c?.hasAttribute(k) ? Number(c.getAttribute(k)) : null);
+            return {
+              key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c),
+              costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
+              count: Number((r.querySelector('[data-cell="count"]')?.innerText ?? "").trim()),
+            };
           }),
           compare: !!document.querySelector("main [data-sector-compare]"),
           compareCols: [...document.querySelectorAll("main [data-compare-col]")].map((th) => th.getAttribute("data-compare-col")),

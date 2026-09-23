@@ -171,5 +171,14 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,new))
 EOF
 
+# 13 ── a return is struck over a sector's costed few
+run_case "the coverage gate is dropped from the sector return" py <<'EOF'
+import sys
+p='src/pages/SectorComposition.tsx'; s=open(p).read()
+old='const returnPct = covered && cost !== null && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;'
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,'const returnPct = cost !== null && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;'))
+EOF
+
 echo ""
 echo "════════ done — the tree is restored by the EXIT trap"

@@ -108,6 +108,12 @@ type SectorRow = {
   cost: number | null; pnl: number | null; returnPct: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
   costed: number; holdings: number;
+  /**
+   * The part of the sector's value whose holdings report NO cost — what
+   * `costCoversSet` weighs. Null on Consolidated, where no cost is struck at all
+   * and a zero here would read as "fully costed".
+   */
+  uncostedMV: number | null;
   /** Why no return is struck, where none is — never a bare dash. */
   returnWhy: string | null;
   /** The largest company (Consolidated) or holding (Direct Equity). */
@@ -151,7 +157,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
         return {
           key, mv: v.mv, count: v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
           measured, derived, cost: null, pnl: null, returnPct: null,
-          costed: 0, holdings: positions.length, returnWhy: CONSOLIDATED_RETURN_WHY,
+          costed: 0, holdings: positions.length, uncostedMV: null, returnWhy: CONSOLIDATED_RETURN_WHY,
           top: byValue[0]?.name ?? null,
         };
       }
@@ -165,7 +171,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       return {
         key, mv: v.mv, count: positions.length, weight: tot > 0 ? v.mv / tot : 0,
         measured, derived, cost, pnl, returnPct,
-        costed: costedRows.length, holdings: positions.length,
+        costed: costedRows.length, holdings: positions.length, uncostedMV,
         returnWhy: returnPct !== null ? null
           : costedRows.length === 0
             ? "No holding in this sector reports a cost — a depository statement carries a value and no basis, so there is nothing to strike a return against."
@@ -772,13 +778,22 @@ export function SectorComposition() {
                                   /* The denominator is THIS page's set, not the book. */
                                   "the company shares on this page")}>{`${(s.weight * 100).toFixed(1)}%`}</Auditable>}
                           </td>
-                          <td className="px-3 py-2 text-right mono text-slate-400">{s.count}</td>
+                          <td className="px-3 py-2 text-right mono text-slate-400" data-cell="count">{s.count}</td>
                           {/* A RETURN ONLY WHERE ITS OWN COLUMNS CAN CARRY ONE. Refused
                               throughout Consolidated (its value is part derived), and on
                               Direct Equity wherever the holdings that report a cost do not
                               account for the whole sector — each refusal with its reason. */}
                           <td className={`px-3 py-2 text-right mono ${changeColor(s.returnPct)}`} title={liveBySector[s.key] && s.returnPct !== null ? LIVE_CELL : undefined}
-                            data-cell="return">
+                            data-cell="return"
+                            /* THE COVERAGE A RETURN IS GATED ON, carried on the cell
+                               it gates, so `check:pages` can hold a printed return
+                               to `costCoversSet` without re-implementing the three
+                               sector tiers to learn which holdings a sector holds.
+                               Direct Equity only: Consolidated strikes no cost. */
+                            {...(consolidatedView ? {} : {
+                              "data-costed": s.costed, "data-holdings": s.holdings,
+                              "data-uncosted-mv": Math.round(s.uncostedMV ?? 0), "data-mv": Math.round(s.mv),
+                            })}>
                             {s.returnPct === null
                               ? <AbsentCell reason={s.returnWhy ?? CONSOLIDATED_RETURN_WHY} />
                               : liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
