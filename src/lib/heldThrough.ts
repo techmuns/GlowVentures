@@ -380,5 +380,5 @@ export const HELD_ROUTE_NOTE: Record<HeldRoute, string> = {
   direct: "Bought in the family's own demat or broking account.",
   manager: "Chosen by a discretionary manager under a PMS mandate — the family owns the shares and the manager decides them. Every share a mandate holds is reported by name on its statement.",
   fund: "Inside the mutual funds and ETFs the family holds. The family owns units of each fund and the fund owns the shares, so this is DERIVED: the fund's own monthly filing gives the weight, and your share is your holding of the fund times that weight. It is never added to the book's own value — the fund's value already stands for it there.",
-  other: "Held in an account whose statement does not say how it is run, so this book does not file it as direct or as a manager's.",
+  other: "Held in an account that is neither the family's own nor a manager's mandate — one run as a fund, an advisory or a distribution engagement, or one whose statement does not say how it is run — so this book files it under neither.",
 };

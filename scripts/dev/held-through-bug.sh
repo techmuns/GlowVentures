@@ -3,7 +3,7 @@
 #
 # The company page's Position by account table has a tab per route — Direct,
 # PMS managers, Mutual funds — and a company held only inside the family's
-# funds has a page of its own (Stage 10ca). Each bug below is applied on its
+# funds has a page of its own (Stage 10cf). Each bug below is applied on its
 # own, rebuilt, run against the checks that should catch it, and restored — the
 # discipline `carried-cost-bug.sh` and `txn-merge-bug.sh` already follow:
 #
@@ -162,8 +162,8 @@ run_case page "the PMS managers tab draws the direct rows" py <<'PY'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = 'const TAB_ROUTE: Record<Exclude<HeldTab, "all">, HeldRoute> = { direct: "direct", managers: "manager",'
-new = 'const TAB_ROUTE: Record<Exclude<HeldTab, "all">, HeldRoute> = { direct: "direct", managers: "direct",'
+old = '  direct: "direct", managers: "manager", funds: "fund", other: "other",'
+new = '  direct: "direct", managers: "direct", funds: "fund", other: "other",'
 if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

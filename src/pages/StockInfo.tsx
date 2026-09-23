@@ -194,7 +194,8 @@ export function StockInfo() {
    * for exactly where the answer can land: a company page, or an address the
    * book's statements carry no row for — which is what a company held ONLY
    * inside the family's funds looks like from here, and the Portfolio
-   * Monitor's stock axis links 530 of those to this route. Every other page
+   * Monitor's stock axis links every one of those to this route — 466 on the
+   * book this was measured on. Every other page
    * (a fund folio, a cash line) never pays for the fetch.
    *
    * `useStockExposure` is the one place the look-through's three inputs are
@@ -213,7 +214,7 @@ export function StockInfo() {
    * as "Position closed · This name is fully exited", about a company the
    * family never held directly and still holds today through its funds. The
    * Portfolio Monitor's stock axis links every such company here, so the false
-   * sentence was one click from 530 rows.
+   * sentence was one click from 466 rows when this was measured.
    *
    * THREE STATES, NOT TWO. Until the look-through has answered, a page with no
    * row cannot tell a fund-held company from an exited one, and printing either
@@ -634,7 +635,15 @@ export function StockInfo() {
          which is a fact about the fixture rather than the page. */
       <Tr view={posView} key={r.accountId} data-account-row={r.accountId} data-held-route={heldRouteOf(route)} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
-        <td className="px-4 py-2.5 text-[12px] text-slate-400">
+        {/* THE WIDEST TEXT IN THE TABLE MAY WRAP; A FIGURE MAY NOT. A
+            provider's legal name runs to forty-odd characters and this
+            column is sized by its widest unbreakable cell, so with every cell
+            on one line a name held through a demat, a mandate and a fund
+            pushed Return and Basis past the card's right edge — the sideways
+            scroll Stage 10ba measured and removed. It wraps inside the same
+            12rem floor the fund lines below it already keep. */}
+        <td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
+          <div className="min-w-[12rem]">
           <div>{providerOf(accIdx, r)}</div>
           {/* The route reads as a phrase — "via manager's mandate"
               — because the column header no longer supplies the
@@ -661,6 +670,7 @@ export function StockInfo() {
               </Link>
             </>
           )}
+          </div>
           </div>
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>

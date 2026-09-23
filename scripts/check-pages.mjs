@@ -4516,7 +4516,7 @@ const ROUTES = [
   ["stock-held-funds", () => (HELD_BOOK?.both ? `/stock/${encodeURIComponent(HELD_BOOK.both.key)}?held=funds` : "/stock/no-company-held-two-ways-in-the-book")],
   // ...AND A COMPANY THE FAMILY HOLDS ONLY INSIDE ITS FUNDS, which this page
   // used to call "Position closed · fully exited". The Monitor's stock axis
-  // links 530 of these here.
+  // links every one of these here — 466 on the book this was measured on.
   ["stock-funds-only", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}` : "/stock/no-company-held-only-inside-funds")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
@@ -19742,7 +19742,8 @@ const INVARIANTS = {
     /**
      * THE PAGE THIS FIXES. With no statement row it read "Position closed ·
      * This name is fully exited" about a company the family holds today
-     * through its funds — the Monitor's stock axis links 530 of these here.
+     * through its funds — the Monitor's stock axis links every one of these
+     * here, 466 on the book this was measured on.
      */
     ["a company held only inside funds says so, and never that the position is closed",
       (t, ctx) => ctx.heldTable?.pill === "funds-only" && !/Position closed/i.test(t) && !/fully exited/i.test(t)],
@@ -23256,15 +23257,17 @@ for (const theme of THEMES) {
        * to leave its "…" state before reading — a table read while the store
        * is loading would assert over lines that were never drawn.
        */
+      /* THE TABLE IS READ WHETHER OR NOT THE TABS ARE DRAWN. An early return
+         here once handed the claims a probe with `tabs: null` and nothing else,
+         so a page that lost its tabs made eleven of them THROW on a missing
+         field — reported as failures, but as defects in the check rather than
+         findings about the page. With the tabs gone the table is still there
+         to be read, `tabs` is an empty list, and every claim fails on what the
+         page actually drew. Only the wait needs the tabs. */
       const heldTable = FAST ? null : await (async () => {
-        if (!(await page.$("[data-held-tabs]"))) return { tabs: null, ...(await page.evaluate(() => ({
-          pill: document.querySelector("[data-stock-held]")?.getAttribute("data-stock-held") ?? null,
-          research: document.querySelector("[data-stock-research]")?.getAttribute("data-stock-research") ?? null,
-          taxToggles: document.querySelectorAll("[data-tax-toggle]").length,
-          avgTile: !!document.querySelector("[data-stock-avg-cost]"),
-        }))) };
-        await page.waitForFunction(() => !/…/.test(document.querySelector('[data-held-tab="funds"]')?.innerText ?? ""),
-          null, { timeout: 8000 }).catch(() => {});
+        if (await page.$("[data-held-tabs]"))
+          await page.waitForFunction(() => !/…/.test(document.querySelector('[data-held-tab="funds"]')?.innerText ?? ""),
+            null, { timeout: 8000 }).catch(() => {});
         return page.evaluate(() => {
           const t = document.querySelector("table[data-held-table]");
           const txt = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();

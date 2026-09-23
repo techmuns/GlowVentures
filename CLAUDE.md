@@ -229,6 +229,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   `securityKey` → sector map — a PROJECTION of the same function, never a second
   resolver — which is how Family & Entities classifies a company the same way
   Sector Composition does over a set of its own. See Stage 10bq.
+- `src/lib/heldThrough.ts` — EVERY WAY THE FAMILY HOLDS ONE COMPANY, for the
+  company page's Position by account table: the statement rows filed by ROUTE
+  (their own accounts, a PMS manager's mandate, anything else) and one DERIVED
+  line per family member per fund whose filing names the company — the same
+  `familyValue` the Monitor's stock axis sums, never added into the measured
+  figures. `measuredTotals` strikes the average cost over the units that REPORT
+  a cost, never over every unit. See Stage 10cf.
 - `shared/aifCategory.mjs` — WHICH SEBI CATEGORY AN AIF IS, read from the two
   places the statements print it, and WHICH SIDE OF THE BOOK that puts a holding
   on. Read by BOTH `build-book` (which generates `Position.marketSide` and the
