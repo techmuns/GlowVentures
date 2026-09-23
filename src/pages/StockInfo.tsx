@@ -15,6 +15,8 @@ import {
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { fundNavFor } from "@/lib/fundNavs";
+import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
+import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -386,6 +388,14 @@ export function StockInfo() {
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * A COST CARRIED THROUGH A FUND'S CLASS SWITCH, and the figure the fund's own
+   * statement prints instead. This is the page a reader opens with that
+   * statement in hand, so the two must be told apart here in the same words the
+   * Portfolio Monitor uses — `carriedCostNote` is the one place they are chosen.
+   */
+  const carried = cost === null ? null : carriedCostOf(drows, BOOK_POSITION_TRANCHES);
+  const carriedWhy = carried ? carriedCostNote(carried, (v) => money(v)) : "";
 
   /**
    * THE MARK, AND WHY IT IS NOT `rows[0]`.
@@ -608,7 +618,9 @@ export function StockInfo() {
             whether the figure was missing or the page was broken. */}
         <Kpi label="Avg cost"
           value={avgCost === null ? <AbsentValue /> : <span className="mono">{price(avgCost)}</span>}
-          sub={cost === null ? <span className="text-slate-500">{costWhy}</span> : `invested ${money(cost)}`}
+          sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
+            : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
+            : `invested ${money(cost)}`}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
@@ -740,7 +752,13 @@ export function StockInfo() {
                               {price(r.currentPrice)}
                             </span>}
                       </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400"
+                        data-cost-carried={r.costBasisSource === "carried-through-switch" ? (r.costBasis ?? undefined) : undefined}
+                        data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}>
+                        {r.costBasisSource === "carried-through-switch"
+                          ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>
+                          : money(r.costBasis)}
+                      </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
                       <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
                       {/*

@@ -155,11 +155,28 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   };
 
   const forAccount = (axis: GroupAxis, accountId: string): string => {
-    const keys = new Set((byAccount.get(accountId) ?? []).map((p) => groupKeyFor(axis, idx, p)));
-    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No account in
-    // this book is mixed on any axis — measured, all eleven funded ones resolve
-    // to one — and an account that holds nothing at all cannot be filed either:
-    // its capital record is real and its section is simply not established.
+    const all = byAccount.get(accountId) ?? [];
+    /**
+     * A LINE THAT HOLDS NOTHING IS NOT WHERE THE MONEY WENT.
+     *
+     * Buoyant's two folios each carry an empty cash sleeve — a MEASURED ₹0 —
+     * beside the fund units their deposits bought. Counted, it made both
+     * accounts "mixed" on every axis, and their payments were filed under the
+     * heading that says no statement stated what the instrument is: false of a
+     * fund whose own statement names the class each payment bought. So a ₹0 line
+     * is set aside where the account holds something else, and ONLY there: an
+     * account holding nothing but ₹0 lines — 3P, redeemed to nil — is still
+     * filed under what it held, which is where its money went. The zero is not
+     * altered or summed anywhere; it simply decides no section.
+     */
+    const held = all.filter((p) => p.marketValue !== 0);
+    const keys = new Set((held.length ? held : all).map((p) => groupKeyFor(axis, idx, p)));
+    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No funded account
+    // in this book is mixed on any axis once an empty line is set aside —
+    // measured, all thirteen resolve to one, and `txnAxis.test.ts` holds the
+    // book to that — and an account that holds nothing at all cannot be filed
+    // either: its capital record is real and its section is simply not
+    // established.
     return keys.size === 1 ? [...keys][0] : TXN_UNSECTIONED;
   };
 
