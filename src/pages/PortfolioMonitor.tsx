@@ -15,7 +15,7 @@ import {
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, returnMeasureDef,
-  type ReturnMeasure, type ReturnInput,
+  type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
@@ -58,6 +58,7 @@ import { Auditable } from "@/components/Auditable";
 // this page supplies only how one of ITS rows resolves a measure.
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
 import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
+import { useDatedCapital } from "@/lib/useDatedCapital";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -277,6 +278,13 @@ type Row = {
   // null rather than 0 so nothing downstream can sum them into a total.
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null; returnPct: number | null; weight: number;
   costNA: boolean;
+  /**
+   * THE DATED CAPITAL BEHIND THE ROW, where the row IS whole accounts
+   * (`datedCapital.ts`) — which is what lets its XIRR column, and the family's
+   * rule under `auto`, strike a money-weighted return. Undefined on a holding
+   * inside an account, which keeps the per-holding refusal.
+   */
+  capital?: RowCapital | null;
   /**
    * The oldest unit still held, where every lot behind this row reports one.
    *
@@ -560,6 +568,19 @@ const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund h
 
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
+  /**
+   * THE DATED CAPITAL BEHIND A ROW THAT IS WHOLE ACCOUNTS (`datedCapital.ts`).
+   *
+   * Struck on the STATEMENT book, exactly as the Transactions card strikes the
+   * same accounts, so a folio's money-weighted return is one figure on both
+   * pages: each account closes at the value its own statement prints, on that
+   * statement's date. A live quote moves a mandate row's value today, and
+   * closing today's value on a month-old date would credit the rate with days
+   * nobody measured. `holdingsUniverse` is the current holdings "every holding
+   * of an account" is measured against — the same set the row build's
+   * `fifoOpts.universe` is, before any filter.
+   */
+  const { dated: datedCap, universe: holdingsUniverse } = useDatedCapital();
   /**
    * `?show=transactions` OPENS THE TRANSACTIONS TAB — the address the top bar's
    * search sends "transactions", "buys" or a redeemed fund to. The switch stays
@@ -1127,6 +1148,9 @@ export function PortfolioMonitor() {
         invested: costNA ? null : fifo.invested,
         weight: weightBase > 0 ? mv / weightBase : 0,
         costNA,
+        // WHOLE, the mandate is an account and may carry its dated record's
+        // money-weighted rate; filtered to part of it, it has none of its own.
+        capital: datedCap?.behind(ps, fifoOpts.universe) ?? undefined,
         live: livePs.length > 0,
         dayChange,
         dayChangePct: livePs.length && liveMV - dayChange !== 0 ? (dayChange / (liveMV - dayChange)) * 100 : null,
@@ -1289,6 +1313,11 @@ export function PortfolioMonitor() {
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
+          // A fund's row over its WHOLE folios is those accounts, and carries
+          // their dated record's money-weighted rate; a share inside an account
+          // is not an account and carries none. The deduped set, like every
+          // other figure here: one of two trusts reporting one holding.
+          capital: datedCap?.behind(dps, fifoOpts.universe) ?? undefined,
           // Struck over the DEDUPED set, like every other figure on this row: the
           // raw one reports Transition Venture Fund I twice and would count one
           // subscription as two payments.
@@ -1350,6 +1379,8 @@ export function PortfolioMonitor() {
         fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
+        // One statement line that is the whole folio IS the account.
+        capital: datedCap?.behind([p], fifoOpts.universe) ?? undefined,
         investedOn: investedOnOf([p]),
         trancheSet: [p],
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
@@ -1585,7 +1616,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -2328,7 +2359,11 @@ export function PortfolioMonitor() {
         mv: fmtFromBase(v.marketValue, { compact: true }),
         weight: pctOfBook(v.marketValue),
         pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(v.unrealizedPnL),
-        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, assetClass: v.assetClass, costNA: v.costNA }, measure),
+        // A line that is one WHOLE folio is that account, and carries its dated
+        // record's money-weighted rate — Buoyant's two folios under the row
+        // pooling both, each at the rate its own fact sheet prints.
+        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, assetClass: v.assetClass, costNA: v.costNA,
+          capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
         "data-venue": v.route, "data-venue-class": v.cls ?? "", "data-venue-share": v.share,
@@ -2451,7 +2486,7 @@ export function PortfolioMonitor() {
         }
         right={
           <button onClick={handleExport} disabled={exporting}
-            className="inline-flex items-center gap-1.5 rounded-md border border-champagne-500/40 bg-champagne-500/10 px-3 py-2 text-sm font-medium text-champagne-400 transition-colors hover:bg-champagne-500/20 disabled:opacity-60"
+            className="btn-excel"
             title="Download the full Portfolio Monitor — holdings and the transaction tape — as a styled Excel workbook">
             <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
           </button>
@@ -3484,6 +3519,15 @@ export function PortfolioMonitor() {
                           const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
                           return (
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts
+                                 (`datedCapital.ts`) — the sweep re-solves the rate over
+                                 them from the book, and holds each to being whole in
+                                 this row, rather than reading the page's figure back. */
+                              {...(r.capital ? {
+                                "data-capital": r.capital.dated ? "dated" : "undated",
+                                "data-capital-accounts": r.capital.accountIds.join(" "),
+                                "data-row-keys": r.realizedKeys.join(" "),
+                              } : {})}
                               className="px-2 py-1.5 text-right mono whitespace-nowrap"
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                               {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}

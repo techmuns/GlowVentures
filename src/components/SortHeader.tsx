@@ -71,7 +71,7 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
         const from = e.dataTransfer.getData("text/plain");
         if (from && from !== col) view.move(from, col);
       } : undefined}
-      className={`label-xs select-none ${pad} font-medium ${alignCls} ${active ? "text-slate-300" : ""} ${
+      className={`label-xs select-none ${pad} font-semibold ${alignCls} ${active ? "text-slate-300" : ""} ${
         over ? "bg-champagne-500/15" : ""} ${className}`}>
       {/* ── NOT ONE FLEX BOX IN THIS CELL, AND THAT IS LOAD-BEARING ─────────
           `innerText` blockifies the CHILDREN of a flex container, so an

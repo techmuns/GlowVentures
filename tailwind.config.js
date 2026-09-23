@@ -29,9 +29,13 @@ export default {
         gain: "#10b981",
         loss: "#ef4444",
       },
+      // Glow Central Research's two faces: Inter for reading, Plus Jakarta Sans
+      // for titles and headline figures. JetBrains Mono is gone — figures are
+      // Inter with tabular digits (see `.mono` in index.css), which lines up a
+      // column exactly as well and reads like the rest of the page.
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        display: ['"Plus Jakarta Sans"', "Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
         card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 1px 2px 0 rgba(0,0,0,0.5)",

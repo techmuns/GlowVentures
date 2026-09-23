@@ -215,6 +215,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   `carriedCostOf` / `carriedCostNote` are the ONE place a cost carried through a
   fund's class switch is described on screen, read by the Portfolio Monitor and
   the company page alike — see Stage 10bv.
+  `recordShortfall` is the rule that a capital RECORD must reach the date its
+  value is struck on (`Account.capitalRecordTo`) — see Stage 10cf.
+- `src/lib/datedCapital.ts` + `src/lib/useDatedCapital.ts` — WHICH ROWS OF A
+  HOLDINGS TABLE ARE WHOLE ACCOUNTS, and the money-weighted rate over them. It
+  defines nothing of its own: the accounts, their dated flows and the value they
+  close on are `capitalRollup`'s, so a folio's XIRR on the Portfolio Monitor and
+  the company page is its XIRR on the Transactions card by construction. A
+  holding inside an account has no cash flows and gets none. See Stage 10cf.
 - `scripts/lib/classSwitch.mjs` — WHAT A FUND'S CLASS SWITCH DOES TO THE FAMILY'S
   COST. Buoyant moved both folios from Class A1 into A4 and restated the units'
   cost at the switch-day NAV; this carries each dated contribution through the
@@ -19720,6 +19728,370 @@ value against cost, where #80 made every HPR FIFO. Neither was introduced here
 and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
+
+### Stage 10cf — A ROW THAT IS WHOLE ACCOUNTS CARRIES THE MONEY-WEIGHTED RETURN ITS PAYMENTS SUPPORT
+
+*"According to the client the return [on] all this AIF is a lot higher than what
+we are showing on the dashboard. So please check if we are missing anything and
+in case there is any calculation mistake … check it for all other investments as
+well."* — sent with a screenshot of Buoyant Opportunities Strategy Class A4's
+company page. Then, on the merge: *"#78, #74, #76, #77 — merge all of these PRs
+to main."*
+
+**THIS IS #78, AND MOST OF WHAT IT BUILT HAD ALREADY LANDED ANOTHER WAY BY THE
+TIME IT WAS MERGED.** It was written as Stage 10bx while other PRs were open, and
+its answer to the client had two halves:
+
+1. **Every return struck on the capital the family put in**, not on the cost of
+   the units held today — a new `src/lib/capital.ts` read by every surface that
+   prints an Invested, a P&L or a return.
+2. **A money-weighted return wherever a row IS an account** whose every payment
+   is dated — the XIRR the Monitor's column had never carried, and the figure
+   Buoyant's own fact sheet prints.
+
+**THE FIRST HALF IS SUPERSEDED AND WAS NOT PORTED.** Stage 10ca (#80) made every
+return FIFO — `(unrealised + realised) ÷ (cost held + cost of units sold)`, with a
+whole PMS mandate struck on its capital since inception, which is #78's own
+figure for a mandate by construction — and Stage 10cd (#77) put the family's own
+dated capital record on the Transactions card with its own purchase, redemption
+and appreciation. Porting a third basis beside those two would have given one
+account three returns on three pages. So `capital.ts`, its suite, the net-capital
+Invested and P&L on the Monitor, Morning CIO, `/holdings`, Family & Entities,
+Private Market and Return & Drawdown, the Excel sheet's capital columns and the
+chat context's capital fields are **not** on main, and are recorded here rather
+than deleted from memory. Buoyant's cost half had landed a third way, through
+Stage 10bv's carried cost.
+
+**THE SECOND HALF IS NEW, AND IT IS WHAT LANDED** — rebuilt on main's own
+machinery rather than on `capital.ts`:
+
+- **`Account.capitalRecordTo` and `recordShortfall`** (`build-book`,
+  `tranches.ts`). A capital RECORD must reach the date the value beside it is
+  struck on, as well as reach back to inception. Green Lantern 510861's record
+  comes from a quarterly report ending **30 June** against holdings struck **27
+  July**, so the withdrawals between the two are in its value and not in its
+  record. `capitalRollup` now refuses that account's appreciation and return with
+  the reason — on the Transactions card and on the mandate page too, which had
+  been striking one over the gap. It is the ONLY account it moves.
+- **`src/lib/datedCapital.ts`** — which rows of a holdings table ARE whole
+  accounts, and the pooled rate over them. It adds no definition of its own: the
+  accounts, their flows and the value they close on are `capitalRollup`'s, the
+  construction the Transactions card already strikes each account's XIRR from.
+  So a folio's XIRR on the Monitor is its XIRR on the Transactions card **by
+  construction**, and the suite asserts it to the millionth on all eight accounts
+  funded more than a year ago.
+- **The whole-account rule.** An account's record describes the whole account,
+  so it stands behind a row only where the row carries every holding of it that
+  carries money — a mandate row, a fund's row over its folios, a statement line
+  that is the whole folio. A share of a mandate keeps the per-holding refusal.
+  Buoyant prints a **₹0 Cash** line beside its units; counted, both folios would
+  be "split" and lose a rate the whole of their money supports, so a ₹0 line with
+  no cost carries nothing — and a ₹0 line WITH a cost (a write-off) still splits.
+- **The Portfolio Monitor's XIRR column** shows the pooled rate on those rows,
+  each account closing on its own statement's value and date, and the reason on
+  every other row. Its header counts RATES (`N money-weighted of M`), because a
+  row funded under a year ago shows its holding-period return, tagged HPR, and is
+  not one.
+- **The family's own rule on `auto`** — *"an XIRR when there are multiple
+  tranches"* (Stage 10af): several dated payments → XIRR, one payment a year or
+  more ago → CAGR, under a year → the holding-period return, tagged. The CAGR
+  column refuses a several-payment row and points at XIRR, exactly as the
+  Transactions card refuses the same account. **HPR is untouched everywhere** —
+  still FIFO's figure on every row.
+- **The company page** prints XIRR as a third line under a statement row that is
+  the whole account — **15.30% and 9.76%** on Buoyant's two folios, the IRR
+  Buoyant's own fact sheet prints for each, reproduced to the printed decimal
+  from the dated deposits. Under a year it prints none.
+
+**ON THE DEFAULT VIEW, SIX ROWS NOW SHOW XIRR WHERE THEY SHOWED A CUMULATIVE
+RETURN** — Buoyant, Sanshi, Neo Infra and Baring, and SVAN's two mandates, each
+funded over several dated payments more than a year ago. The cumulative figure
+has not gone: it is the HPR column, unchanged. For the two mandates it is FIFO's
+return on their capital (13.56% and 12.73%), so Stage 10ca's check that every
+mandate row's Return is FIFO's now expects XIRR on exactly those two, re-solved
+from the book, and FIFO on the other eight — and requires the FIFO half to have a
+subject, so a build that sent every mandate to XIRR cannot pass by never checking
+FIFO.
+
+| Row on the Monitor | Accounts | Measure on `auto` | |
+| --- | ---: | --- | ---: |
+| Buoyant Opportunities Strategy — Class A4 | 2 | XIRR, pooled | 12.11% |
+| Sanshi Fund-I (both classes, clubbed) | 5 | XIRR, pooled | 42.31% |
+| Neo Infra Income Opportunities | 1 | XIRR | 16.68% |
+| Baring Private Equity India Fund 6 | 1 | XIRR | −6.42% |
+| SVAN 8710067 · 8710090 | 1 each | XIRR | 9.07% · 8.60% |
+| Transition Venture Capital Fund I | 1 | HPR — 165 days | +128.61% |
+| Green Lantern 510861 | 1 | FIFO, as before — no rate | record ends 30 Jun |
+
+#### The checks, and two that could no longer see what they were for
+
+`datedCapital.test.ts` (in `test:family`) anchors the rate OUTSIDE the code: the
+IRR Buoyant's fact sheet prints, read out of the committed `pages.json`. It holds
+`recordShortfall` load-bearing — the same record with its reach stated as met
+WOULD be rated, so nothing else is refusing Green Lantern — and the two paths,
+the whole-account rule and every branch of the methodology on constructed
+capital. `tranches.test.ts` and `capitalRecord.test.ts` had synthetic record
+accounts with no `capitalRecordTo`; their fixtures now state a record that
+reaches their value, and the refusal side is asserted on the real book.
+
+`check:pages` restates both halves off `glowData.ts` in **`DATED_CAPITAL_BOOK`**
+— which accounts are rated, which rows are whole, and the pooled rate by
+BISECTION, never importing `datedCapital.ts`. The Monitor's XIRR route asserts
+the rate stands only on whole dated rows and re-solves; that every row the book
+says is whole carries its accounts (the converse, which is what catches the ₹0
+line splitting Buoyant); and the header's count. Every company page asserts its
+XIRR line exactly where the book says, and **`stock-capital`** walks Buoyant's.
+The return cell carries `data-capital`, `data-capital-accounts` and
+`data-row-keys` for this; the ctx literal needed no new key.
+
+- **The CAGR sort check read the whole column as one list** — true while every
+  CAGR figure sat in Direct Equity. Rows rank within their section (Stage 10bh),
+  and Transition Venture's figure is in AIF, so it failed a correctly sorted
+  table. It ranks per section now.
+- **"No return of 100% p.a." scanned every percentage in a row**, and read
+  Transition Venture's +128.61% — tagged HPR, money in for 165 days — as the
+  extrapolation regressing. It is struck on the untagged cells, the annual ones.
+
+**SIX BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK** (`scripts/dev/dated-capital-bug.py`,
+committed so the next verification is one command): the ₹0 line splitting an
+account fires three (the converse and both company-page claims); the record-reach
+rule dropped fires two (Green Lantern rated, and marked dated where the book says
+undated); a rate closed on the wrong value fires both re-solves; the company
+page's XIRR line dropped fires two; a row holding PART of an account given its
+rate fires the converse; and the multiple-tranche rule dropped from `auto` fires
+the FIFO mandate-row check on SVAN's two rows. The pass ran twice: first on the
+port before it was merged, after a no-patch control came back clean, and again
+with the committed harness on the merged tree. Both runs gave the same six
+results, and each time the files were restored and the tree rebuilt after the
+last case. On the merged tree the full sweep below is the control, and it was
+clean on every route these cases walk.
+
+#### Merged with main
+
+**THE LETTER.** #78 wrote this as Stage 10bx. While it waited, main took 10bx
+(#79), 10by (#81), 10bz (#83), 10ca (#80), 10cb (#82), 10cc (#76), 10cd (#77) and
+10ce (#74), so it is **10cf** — checked against main's tip at the moment of
+merging, and no line on main names 10cf. The code comments this port adds name
+10cf; none of #78's own `10bx` references came across, because the files that
+carried them did not.
+
+**THE MECHANICS.** The branch's own history is kept — main came in as a merge
+commit, never a rewrite — and that commit's TREE is main's plus this port: every
+file #78 changed that is not re-implemented here was taken as main has it.
+`src/lib/capital.ts`, `capitalBasis.test.ts` and `scripts/dev/capital-bug.sh` are
+therefore gone, and so is every edit #78 made to the eleven surfaces the
+net-capital basis touched. #78 had already given its ingest half up to #75's
+reader, so of the ingest and generation code only `build-book`'s one field moved.
+
+**THE `ctx` LITERAL NEEDED NO NEW KEY.** The `returnCells` and `posTable` probes
+gained fields; nothing else in the sweep's shared context moved.
+
+**THE GENERATED BOOK WAS REGENERATED RATHER THAN SPLICED.** `glowData.ts` is main's
+book plus `capitalRecordTo` on every account — a date on the 14 that publish a
+dated record, null on the other 37 — and `BOOK_SUMMARY` does not move by a rupee.
+`docs/BOOK-REPORT.md` is byte-identical.
+
+**VERIFIED ON THE MERGED TREE** (main at `c1bfddd` plus this port): `build` ·
+`tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant
+42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+140 — 2 not checked, 0 blocked) · `test:family` (46 suites, 2,466 checks, 0
+failed) · `build-book` byte-identical · `check:family` **84/2** · `check:pages`
+**246 combinations, 3 with a finding**. That is main's 244 plus `stock-capital` in
+both themes, and it reconciles only because the sweep was re-run.
+
+**EVERY ONE OF THOSE FAILURES IS MAIN'S, AND EACH WAS SHOWN TO BE ON `c1bfddd`
+ALONE BEFORE THIS MERGED.** The two `check:family` failures are the Extras-menu
+checks: #84 added a fifth page and the check still counts four. The three
+`check:pages` findings are the Private Market routes, 8 invariants in all, and the
+identical 8 fail on main's own build. #72's fund-return re-expression still
+computes HPR as value against cost where #80 made it FIFO. Stage 10ce named both
+and left them, and so does this. The 10 invariants not checked are all
+pre-existing claims with no subject on this book (six KPI-tile lines across the
+Morning CIO routes, three Private Market lines, one crumb on the not-found
+drill-down); none is this stage's.
+
+**AND THE DEFAULT VIEW MOVES, MEASURED ON BOTH BUILDS.** The Monitor's `auto`
+Return reads XIRR where it read HPR: Buoyant +8.65% → 12.11% (both folios pooled),
+Sanshi +29.84% → 42.31%, Neo Infra +13.83% → 16.68%, Baring −6.95% → −6.42%, SVAN
++13.56% · +12.73% → 9.07% · 8.60%. The HPR and Absolute columns read exactly what
+they did. SVAN's figure falls because a cumulative return over almost two years
+became an annual rate. Buoyant's rises because 75% of its ₹70.86 Cr went in
+during the last year, so an annual rate is above the 790-day cumulative figure.
+
+### Stage 10cg — GLOW CENTRAL RESEARCH'S FONTS AND COLOURS
+
+*"also look how good the font is and the ui is of glow-central research -
+colours white etc - can you make this dashboard also with right color pallet and
+fonts please i think right now its too monotonous and dull"*
+
+**THE PALETTE AND THE FACES ARE GCR'S OWN, READ OFF ITS REPO RATHER THAN
+MATCHED BY EYE.** `techmuns/glow-central-research` is read-only here, and three
+of its files decide the look: `scripts/glow-palette.cjs` (ivory page `#f4f2ec`,
+white surfaces, navy ink `#1a1830`, gold `#c3a962` → `#8a6a1c`, emerald
+`#047857`), `public/css/glow.css` (the two faint gold glows at the top of the
+page) and `public/index.html` (Inter for reading, Plus Jakarta Sans for titles
+and headline figures, loaded from the same Google Fonts URL).
+
+**WHAT MADE IT DULL WAS THAT EVERYTHING WAS ONE TONE.** The nav, the top bar
+and the page were three shades of one beige, the tables were set in a
+monospace, and the only thing that stood out was the cards. What changed, and
+where it lives:
+
+| | was | is |
+| --- | --- | --- |
+| reading face | Inter with the single-storey `a` and open digits | plain Inter, as GCR sets it |
+| figures (`.mono`, ~400 cells) | JetBrains Mono | Inter with tabular digits |
+| titles, card titles, headline figures | Inter semibold | Plus Jakarta Sans bold (`font-display`) |
+| nav and top bar | the page's ivory | white (`app-sidebar`, `app-topbar`) |
+| the page | ivory on a graph-paper grid | ivory under two gold glows |
+| where you are in the nav | a beige wash | GCR's active tab: gold type on a pale-gold wash, a gold edge |
+| an active toggle or tab | flat gold | GCR's gold gradient, ink on it |
+| table headings | grey, medium weight | darker, semibold, on GCR's cream band |
+| cards | 12px corners, a grey shadow | 16px corners, GCR's two soft layers |
+| Export Excel | a gold outline | green, as GCR's is |
+| wordmark | "Glow Ventures Family Office" | GCR's: a gold G and GLOW VENTURES in gold capitals |
+
+**THE DARK THEME KEEPS ITS COLOURS AND TAKES THE FACES.** The family pointed at
+the light one, and the dark theme is the palette's native form; it gets the new
+type and nothing else.
+
+**ONE RULE HOLDS THROUGHOUT, AND IT IS WHY TWO THINGS DIFFER FROM GCR.** GCR
+prints white type on its gold "Portfolio" pill and on its green Export Excel
+button. `check:pages` rejects exactly that on a light page, because pale type is
+what a missing light-mode remap looks like, so an active control here is gold
+with INK on it (7:1) and Export Excel is a green tint with deep-green type
+(6.8:1). Nothing on the light theme is a dark fill or white text.
+
+**AND NO CARD MAY CARRY A HARD OFFSET.** A `0 Npx 0 0` shadow layer is what
+makes a KPI tile read as a button (Stage 10y), and the page check fails any card
+carrying one that opens nothing. GCR's card shadow is two blurred layers, so it
+was taken as it is.
+
+**WHERE INTER CANNOT LOAD, A FIGURE FALLS BACK TO A MONOSPACE — and that was
+measured, not chosen.** The page check cannot fetch a web font, so it renders
+every page in the machine's fallback faces. With `.mono` falling back to a
+proportional face, the company page's position table ran 16px past its card
+(DejaVu Sans digits are 0.64em against the monospace's 0.60em) and the check
+failed. With Inter loaded — every real reader — no table got wider. Measured
+with the real fonts from a local copy, on main and on this branch, both merged
+with #80 and #81: the company page's position table fits either way, Private
+Market's master table has exactly 0px to spare either way, and the Portfolio
+Monitor's — which has always scrolled inside its own card — is 2px NARROWER
+(1,670px against 1,672px in a 1,440px card). So a figure's fallback is the
+monospace these columns were fitted to, the check keeps measuring the wider of
+the two, and a reader whose network blocks Google Fonts sees exactly the columns
+they saw before.
+
+**THE LOOK IS CHECKED ON EVERY ROUTE, BY COMPUTED STYLE.** Five claims, and not
+one is in the page's words — a page renders the same text in any face and on any
+colour. In the light theme, on every page the sweep walks: the body reads in
+Inter; the title asks for Plus Jakarta Sans; a figure is Inter with tabular
+digits; the nav and the top bar are white; and the nav entry you are on is gold.
+The declared font stack is what is asserted, because the sweep cannot load the
+fonts and the stack is what a regression would change.
+
+**AND ONE TABLE HAD TO LEARN TO WRAP, BECAUSE A HEADING IS NOT A FIGURE.** The
+headings are semibold now, and a figure's fallback does nothing for them: where
+Inter cannot load, the reading face falls back to the machine's own sans, whose
+semibold is a real Bold and runs wider. On the Buoyant company page — the one
+whose Managed-by sub-line is longest — that put the position table 14px past its
+card, and *the position table fits its card* failed on `stock-carried` alone,
+while main passed it. With Inter loaded the table fits, and measured column by
+column it is the SAME width with or without the fix. So the Managed-by cell may
+wrap now (`whitespace-normal` on that one cell, the table staying `nowrap`
+around it). An auto-width table narrows a wrappable column only when it would
+not otherwise fit, so where it fits nothing moves, and where a wider face is
+drawn the sub-line gives up the width rather than pushing Basis behind a
+sideways scroll. All fifteen company-page routes sweep clean in both themes.
+
+**`scripts/dev/look-bug.sh` reintroduces nine bugs one at a time**, after a
+no-patch control came back clean on its ten route/theme combinations, and every
+one fires its own check — the seventh only after the check it exists for was
+fixed. The five routes are `cio`, `cio-allocation`, `monitor`, `holdings-book`
+and `stock`; the ninth case sweeps `stock-carried`, the page it is about:
+
+| Bug put back | Fires |
+| --- | --- |
+| the page title back in Inter | the title check, on the three routes whose title is `PageHeader`'s (a drill-down and a company page draw their own, also in the display face) |
+| figures back in JetBrains Mono | the figure check, 5 of 5 |
+| the nav ivory again | the white-chrome check, 5 of 5 |
+| the top bar ivory again | the same check, 5 of 5 |
+| the nav entry you are on not gold | the gold check, on every route that IS a nav entry (3 of 5) |
+| white type on an active gold toggle | the light-theme contrast probe, on the Monitor |
+| every card given a hard offset | **nothing, at first — see below**; the raised-card check on 5 of 5 after |
+| the same, in the dark theme only | the raised-card check, 5 of 5 |
+| the Managed-by cell no longer wraps | the position-table check, on `stock-carried` |
+
+**THE SEVENTH CAME BACK CLEAN, AND THAT IS THE FINDING.** *A raised card must
+be a button* was measured on every route and ASSERTED on one, `/holdings` —
+whose four summary tiles, the only cards that ever opened nothing, went at
+Stage 10bd. Every card left there contains a link, so a stylesheet raising
+every card in the app swept clean, and it had been unable to fail since. Two
+fixes. The claim is asserted on EVERY route, in both themes, beside the look
+checks. And a link must COVER the card to count: a table card whose rows link
+to company pages is not a button, and under the old rule — any `a[href]` inside
+— it could never fail at all, which on the Portfolio Monitor and on `/holdings`
+is every card on the page. The eighth case is the dark-theme half of the same
+claim: each theme has its own raised rule, and a restyle of one does not touch
+the other.
+
+**MERGED WITH MAIN FOUR TIMES, AND THE LETTER MOVED SIX TIMES BEFORE IT WAS
+WRITTEN DOWN.** This was drafted as `10ca`. #80 (FIFO returns) took that and
+#81 (four text blocks, seven NAV benchmarks) took `10by` in the same hour; #82
+(the KPI tiles) took `10cb` while this branch's first full sweep ran; and while
+the second one ran, #76 (one company, one key), #77 (purchase, redemption and
+appreciation) and #74 (arbitrage is cash) took `10cc`, `10cd` and `10ce`; and
+#78 (XIRR on a row that is whole accounts) took `10cf` in the hour this PR sat
+waiting for its CI — so this section is **`10cg`**, and the code comments that
+name the stage moved with it. The first two merges each brought one conflict, resolved by keeping
+main's structure and giving it the new look: #81 put a percentage beside the
+published-NAV movers' figure, and #82 gave a KPI tile a second line and a name
+for its link. The figure takes the display face, and the link takes the 16px
+corner the cards now have. The third merge — five commits, 85 files — brought
+none, which is when this file says to check by hand: the `ctx` literal came
+through as main's own 92 keys, each declared once, because this change adds
+none (its checks read their own probe); and `build-book` regenerated the book
+byte-identically. The fourth — #78 alone — brought one conflict, here: both
+stages had been inserted above Stage 10k, and main's 10cf now comes first. It
+also changed the Buoyant company page this change had just fixed, so that
+table was measured again rather than assumed: it fits in both faces, its Return
+column two pixels wider with Inter than before.
+
+**FIVE CHECKS ON THREE ROUTES FAIL ON THIS TREE AND ON MAIN, IDENTICALLY, AND
+THEY ARE NOT THIS CHANGE'S.** Built and swept side by side against main's
+`c1bfddd`, and again at `3a5b4d1` once #78 landed, neither of which carries
+anything of this branch. All five are Private Market's
+fund returns: `private-market` and `private-market-tiles` each fail *the
+methodology picks the measure each fund's own dated record supports* and *each
+XIRR is the money-weighted rate … each HPR is value against cost*;
+`private-market-returns` fails the second of those and *the XIRR column shows a
+rate exactly where the dated record is complete*, *the XIRR footer pools exactly
+the funds with a complete record* and *the HPR footer is the whole private
+book's value against its cost*. All of them compare the fund table's returns
+with the sweep's own re-derivation, and #80 moved fund returns onto a FIFO
+basis; #82's own commit message records the first two. (A subset run of
+`monitor-txn-drill` also fails four checks, on both trees alike; in the full
+sweep it passes. A subset is not the whole walk.)
+
+And `check:family` fails two on both trees, 84 passed against 2, at both of
+main's commits: Extras holds
+exactly the four pages the family named, and clicking it reveals all four —
+#84 added a fifth, Corporate Actions, and the check still names four. Whether
+that page belongs in Extras is #84's question rather than a look's.
+
+A typeface and a colour move no figure and no row. They are named here rather
+than fixed, because the fixes belong to the changes that own returns and the
+Extras menu; queuing them as a separate task timed out three times.
+
+`build` · `tsc` · `test:ingest` (golden 140, 2 not checked) · `test:family` (46
+suites, 2,466 checks, 0 failed) · `check:family` **84 passed, 2 failed — the
+same two as main** · `check:pages` **246 combinations, 3 with a finding — the
+three Private Market routes above, and none of this change's own**, with ten
+evidenced abstentions across four claims, none of them this change's (every KPI
+tile on this book carries a figure, on the six Morning CIO routes; every private
+holding reports a cost; nothing on Morning CIO points at an undefined drill-down;
+no private account is redeemed to nil) · `npm run build-book` regenerates the
+book byte-identically: a colour and a typeface are not part of the book.
 
 ### Stage 10k — News & Announcements: REMOVED
 

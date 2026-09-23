@@ -271,8 +271,13 @@ eq("a refused group publishes no return", capitalReturn(gateGroups[0], "auto").s
 eq("...and no appreciation either", gateGroups[0].appreciation, null);
 ok("...but keeps what it DID pay in", gateGroups[0].paidIn === 1e7);
 ok("...and names why the return is absent", !!gateGroups[0].incompleteReason);
+// A CAPITAL RECORD MUST ALSO REACH THE DATE ITS VALUE IS STRUCK ON (Stage
+// 10cf, `recordShortfall`), so the accepted fixture says so: its value is at
+// 2026-06-30 and its record runs to the same day. The refusal side of that rule
+// is asserted on the real book in `datedCapital.test.ts`.
 const okGroups = capitalRollup(gateMoves,
-  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01" }],
+  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01",
+    asOf: "2026-06-30", capitalRecordTo: "2026-06-30" }],
   gatePos, {});
 ok("an accepted group does publish one", capitalReturn(okGroups[0], "absolute").shown);
 eq("...with no reason attached", okGroups[0].incompleteReason, null);
