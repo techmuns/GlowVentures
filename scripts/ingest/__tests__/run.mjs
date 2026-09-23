@@ -16,6 +16,8 @@ const SUITES = [
   { name: "layout",   file: "layout.test.mjs",   required: true },
   { name: "pipeline", file: "pipeline.test.mjs", required: true },
   { name: "altFund",  file: "altFund.test.mjs",  required: true },
+  { name: "buoyant",  file: "buoyantFlows.test.mjs", required: true },
+  { name: "classSwitch", file: "classSwitch.test.mjs", required: true },
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },
