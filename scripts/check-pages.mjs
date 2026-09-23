@@ -10126,7 +10126,7 @@ const INVARIANTS = {
       if (CIO_TILE_OPTIONS.length < 6) return false;
       return ctx?.tileStrip?.slots === 6;
     }],
-    ["no tile heading is cut off, spills past its tile, or wraps with room to spare", (t, ctx) => {
+    ["no tile heading is cut off, split mid-word, or wrapped with room to spare", (t, ctx) => {
       const st = ctx?.tileStrip;
       if (!st?.slots) return false;
       return headingsWhole(st);
@@ -16277,14 +16277,13 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
 }
 
 /**
- * THE FOUR WAYS A TILE HEADING FAILS, as one predicate, so the default strips
- * and the dense one cannot hold a heading to two different standards: cut with
- * an ellipsis, split mid-word, spilled past the tile, or wrapped with room to
- * spare. Each is a probe field and an empty list is the only pass — a probe
+ * THE THREE WAYS A TILE HEADING FAILS, as one predicate, so the default strips
+ * and the dense one cannot hold a heading to two different standards: cut or
+ * overflowing its box, split mid-word, or wrapped with room to spare. Each is a probe field and an empty list is the only pass — a probe
  * that stopped reporting a field is a failure, never a clean strip.
  */
 function headingsWhole(st) {
-  return ["clipped", "brokenWords", "spill", "needlessWrap"].every((k) => Array.isArray(st?.[k]) && st[k].length === 0);
+  return ["clipped", "brokenWords", "needlessWrap"].every((k) => Array.isArray(st?.[k]) && st[k].length === 0);
 }
 const TILE_PICKER_CHECKS = tilePickerChecks({
   defaults: ["value", "cost", "pnl", "uncalled"],
@@ -19723,41 +19722,55 @@ for (const theme of THEMES) {
             return out;
           }),
           /**
-           * ...NOR SPILLS PAST ITS TILE, NOR WRAPS WITH ROOM TO SPARE. The two
-           * other ways a heading sized from its own text goes wrong, and the
-           * two the bug pass found the clipping test blind to: a shrink-to-fit
-           * label with no ellipsis simply runs 3px past a narrow tile's edge,
-           * and under `--app-zoom` a box measured short of its own text wraps
-           * "CURRENT VALUE OF / HOLDINGS" beside empty space. The available
-           * edge is the label SLOT's, never the span's — in the defect the span
-           * is exactly as narrow as the bug made it, so measuring against it
-           * would agree with the bug.
+           * ...NOR WRAPS WITH ROOM TO SPARE — the other way a heading sized from
+           * its own text goes wrong, and the one the two tests above are blind
+           * to: every word whole, nothing overflowing, and still on two lines
+           * beside empty space. Measured
+           * against the TILE, never against the label's own boxes: the defect
+           * the family photographed was a label CONTAINER sized to its content,
+           * and under `--app-zoom` Chromium measures such a box short of its own
+           * text — so on a five-tile strip "UNCALLED CAPITAL" wrapped in 101px
+           * of a 122px tile and "DISTRIBUTIONS" split mid-word. Every box inside
+           * the label shrinks with the bug and would agree with it; the header
+           * ROW does not. So the available edge is the row's own right edge, up
+           * to whatever sits beside the label in it (the icon, the controls).
            */
-          spill: [...strip.querySelectorAll("[data-tile-select]")].filter((btn) => {
-            const slot = btn.parentElement?.parentElement;
-            return slot && btn.getBoundingClientRect().right > slot.getBoundingClientRect().right + 1;
-          }).map((btn) => (btn.textContent ?? "").trim()),
-          needlessWrap: [...strip.querySelectorAll("[data-tile-select] span")].flatMap((el) => {
-            const btn = el.closest("[data-tile-select]"), slot = btn?.parentElement?.parentElement, node = el.firstChild;
-            if (!slot || !node || node.nodeType !== 3) return [];
-            const text = node.textContent ?? "", words = [], re = /\S+/g;
-            let w;
-            while ((w = re.exec(text))) {
-              const r = document.createRange();
-              r.setStart(node, w.index);
-              r.setEnd(node, w.index + w[0].length);
-              const rect = r.getBoundingClientRect();
-              words.push({ top: Math.round(rect.top), left: rect.left, right: rect.right, width: rect.width });
-            }
-            const tops = [...new Set(words.map((x) => x.top))].sort((a, b) => a - b);
-            if (tops.length < 2) return [];
-            const line1 = words.filter((x) => x.top === tops[0]), next = words.find((x) => x.top === tops[1]);
-            // Where the span WOULD end if the button filled its slot.
-            const edge = slot.getBoundingClientRect().right - (btn.getBoundingClientRect().right - el.getBoundingClientRect().right);
-            const room = edge - Math.max(...line1.map((x) => x.right));
-            const space = parseFloat(getComputedStyle(el).fontSize) * 0.5;
-            return room >= next.width + space ? [(el.textContent ?? "").trim()] : [];
-          }),
+          ...(() => {
+            const edgeOf = (btn) => {
+              const card = btn.closest(".card");
+              if (!card) return null;
+              let row = btn;
+              while (row.parentElement && row.parentElement !== card) row = row.parentElement;
+              let box = btn;
+              while (box.parentElement && box.parentElement !== row) box = box.parentElement;
+              const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+              const beside = box.nextElementSibling;
+              return beside ? beside.getBoundingClientRect().left - gap : row.getBoundingClientRect().right;
+            };
+            const btns = [...strip.querySelectorAll("[data-tile-select]")];
+            return {
+              needlessWrap: btns.flatMap((btn) => {
+                const el = btn.querySelector("span"), node = el?.firstChild, edge = edgeOf(btn);
+                if (!el || edge == null || !node || node.nodeType !== 3) return [];
+                const text = node.textContent ?? "", words = [], re = /\S+/g;
+                let w;
+                while ((w = re.exec(text))) {
+                  const r = document.createRange();
+                  r.setStart(node, w.index);
+                  r.setEnd(node, w.index + w[0].length);
+                  const rect = r.getBoundingClientRect();
+                  words.push({ top: Math.round(rect.top), right: rect.right, width: rect.width });
+                }
+                const tops = [...new Set(words.map((x) => x.top))].sort((x, y) => x - y);
+                if (tops.length < 2) return [];
+                const line1 = words.filter((x) => x.top === tops[0]), next = words.find((x) => x.top === tops[1]);
+                // What the chevron and the button's own padding take after the text.
+                const tail = btn.getBoundingClientRect().right - el.getBoundingClientRect().right;
+                const room = edge - tail - Math.max(...line1.map((x) => x.right));
+                return room >= next.width + parseFloat(getComputedStyle(el).fontSize) * 0.5 ? [(el.textContent ?? "").trim()] : [];
+              }),
+            };
+          })(),
           // Where the strip says a choice is kept: `shared`, `local` or
           // `loading`, off the strip's own handle.
           saved: strip.getAttribute("data-tile-saved") ?? "",

@@ -36,13 +36,21 @@ const CASES = [
     only: "cio-tiles-dense",
   },
   {
-    name: "a tile label sized to its own content, with no ellipsis to hide the overflow",
+    // Measured before it was trusted: 191px of "CURRENT VALUE OF HOLDINGS" in
+    // a 145px box, running over the chevron with no ellipsis to show it.
+    name: "a tile label that will not wrap, overflowing its box",
     file: "src/components/SelectableTiles.tsx",
-    edits: [
-      ["label-xs -ml-1 flex w-full items-start gap-1", "label-xs -ml-1 inline-flex items-start gap-1"],
-      ['<span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">', '<span className="whitespace-normal leading-snug">'],
-    ],
+    edits: [['<span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">', '<span className="min-w-0 flex-1 whitespace-nowrap leading-snug">']],
     only: "cio-tiles-dense",
+  },
+  {
+    // THE FAMILY'S OWN SCREENSHOT, on the default five: a label CONTAINER
+    // sized to its content, measured short of its text under --app-zoom —
+    // "DISTRIBUTION / S", and "UNCALLED CAPITAL" wrapped in 101px of 122.
+    name: "the KPI label container sized to its content (the zoom wrap)",
+    file: "src/components/Kpi.tsx",
+    edits: [['<div className="label-xs flex min-w-0 flex-1 items-start">', '<div className="label-xs inline-flex items-start">']],
+    only: "cio",
   },
   {
     name: "a pick writes ?tiles= into the address again",
