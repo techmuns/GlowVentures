@@ -435,13 +435,6 @@ export function FamilyEntities() {
   const sleeveNoteText = selSleeve.length === 0 ? ""
     : ` Of that, ${sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is grouped`
       + ` as its own statement totals it, cash sleeve included, so that value is counted in the ${MANDATE_BUCKET} section.`;
-  const sleeveNote = selSleeve.length === 0 ? null : (
-    <>
-      {" "}Of that, {sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is
-      grouped as its own statement totals it, cash sleeve included, so that value is counted in the{" "}
-      <span className="text-slate-400">{MANDATE_BUCKET}</span> section.
-    </>
-  );
   const holdings = (() => {
     if (!selected) return [];
     const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
@@ -868,22 +861,27 @@ export function FamilyEntities() {
             )}
             {/* When there are no company shares at all the AbsentSection above has
                 already named every class, so this would only say it twice. */}
-            {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              {selMandateShares.length > 0 && <>Both routes count here: {money(selMandateSharesMV)} of these shares were chosen by a
-                discretionary manager and have a sector exactly like the ones {scope} bought directly. Which of the two chose a
-                name is in the <span className="text-slate-400">Held via</span> column below.{" "}</>}
+            {/* ONE LINE, the reasoning in its hover — the family asked for the
+                notes around the tables to go. The figure a reader needs (what
+                the chart leaves out, and how much) stays on screen. */}
+            {selShares.length > 0 && <p className="mt-3 text-[11px] text-slate-500"
+              title={[
+                selMandateShares.length > 0
+                  ? `Both routes count here: ${money(selMandateSharesMV)} of these shares were chosen by a discretionary manager and have a sector exactly like the ones ${scope} bought directly. Which of the two chose a name is in the Held via column below.`
+                  : "",
+                selExcluded.length > 0
+                  ? `A GICS sector is a property of a company; a fund holds many and no statement in this book prints a sector for a folio, so every wrapper would land in one false "Unclassified" slice and bury the sectors this chart exists to show. All of them are in the holdings table below.${sleeveNoteText}`
+                  : "",
+              ].filter(Boolean).join(" ") || undefined}>
               {selExcluded.length > 0
                 ? <>{money(selExcludedMV)} across {selExcluded.reduce((n, c) => n + c.count, 0)} position
-                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}.
-                  A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a
-                  folio, so every wrapper would land in one false “Unclassified” slice and bury the sectors this chart exists to show.
-                  All of them are in the holdings table below.{sleeveNote}</>
+                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}</>
                 : <>Every one of this entity&rsquo;s positions is a share in a company, so nothing is excluded from the chart above.</>}
             </p>}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
-            subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
-              under a mandate, and the fund vehicles and cash beside them.</>}
+            subtitle={<span title={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}>
+              Grouped by who chose each holding: directly, under a mandate, or through a fund</span>}
             right={<SearchInput value={holdingsQ} onChange={setHoldingsQ} placeholder="Search this entity…" className="w-56" suggestions={Array.from(new Set(selRows.map((x) => x.security))).sort()} />}>
             <div className="max-h-[520px] overflow-auto">
               <table className="min-w-full text-sm">
@@ -978,14 +976,21 @@ export function FamilyEntities() {
                       className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300"
                       label={<>
                         Total
-                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500">
+                        {/* THE COUNT ON SCREEN, AND WHAT THE RETURN COVERS IN ITS
+                            HOVER — the sentence that ran across the footer was
+                            the widest note on this page. */}
+                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500"
+                          title={[
+                            showSections ? "The section subtotals above add to this figure." : "",
+                            visNoCost > 0
+                              ? visCost === null
+                                ? `Every one of these ${visNoCost} ${visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying ${money(visNoCostMV)} with nothing to measure a return against.`
+                                : `The return covers ${money(visMV - visNoCostMV)} of the ${money(visMV)} beside it, struck on ${money(visCost)} of cost — the other ${visNoCost} ${visNoCost === 1 ? "row" : "rows"}, carrying ${money(visNoCostMV)}, ${visNoCost === 1 ? "reports" : "report"} no cost basis and ${visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero.`
+                              : "",
+                          ].filter(Boolean).join(" ") || undefined}>
                           {filtered
                             ? <>{holdings.length} of {selRows.length} positions match the search — {scope} holds {money(selMV)} in all</>
                             : <>{holdings.length} {holdings.length === 1 ? "position" : "positions"}</>}
-                          {showSections && <> · the section subtotals above add to this figure</>}
-                          {visNoCost > 0 && (visCost === null
-                            ? <> · every one of these {visNoCost} {visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying {money(visNoCostMV)} with nothing to measure a return against</>
-                            : <> · the return covers {money(visMV - visNoCostMV)} of the {money(visMV)} beside it, struck on {money(visCost)} of cost — the other {visNoCost} {visNoCost === 1 ? "row" : "rows"}, carrying {money(visNoCostMV)}, {visNoCost === 1 ? "reports" : "report"} no cost basis and {visNoCost === 1 ? "is" : "are"} skipped rather than counted as zero</>)}
                         </span>
                       </>}
                       cells={{
@@ -1028,15 +1033,13 @@ export function FamilyEntities() {
               * says so: it is what was PAID, never what the stake is worth. */}
           {unvalued.length > 0 && (
             <Card className="mt-5" title={`${scope} — held, and not valued here`}
-              subtitle={<>{unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} {scope} holds
-                {unvalued.length === 1 ? " reports" : " report"} a holding that no statement in this book puts a
-                value on, so {unvalued.length === 1 ? "it stands" : "they stand"} in no table above. What each one
-                holds, and why it carries no figure:</>}>
-              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length}>
+              subtitle={<span title={`${unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} ${scope} holds ${unvalued.length === 1 ? "reports" : "report"} a holding that no statement in this book puts a value on, so ${unvalued.length === 1 ? "it stands" : "they stand"} in no table above. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck. Hover an account for why it carries no figure.`}>
+                None of these figures is in the {money(selMV)} above — no statement values these holdings</span>}>
+              <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length}>
                 {unvalued.map((u) => (
                   <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
                     <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-slate-300">
+                      <span className="text-slate-300" title={u.reason ?? undefined} data-unvalued-reason={u.reason ? "" : undefined}>
                         {u.account.provider}
                         <span className="text-slate-500"> · {u.account.accountNo}</span>
                       </span>
@@ -1049,16 +1052,9 @@ export function FamilyEntities() {
                           : <span title="Capital called to date, as this fund's own statement prints it. What was PAID, not what the stake is worth — it is in no total on this page.">{money(u.drawn)} paid in</span>}
                       </span>
                     </div>
-                    {u.reason && (
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{u.reason}</p>
-                    )}
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 border-t border-dashed border-ink-700 pt-3 text-[11px] leading-relaxed text-slate-500">
-                None of these figures is in the {money(selMV)} above. A contribution is what was paid into a fund,
-                not what the holding is worth, and adding the two would report a valuation nobody struck.
-              </p>
             </Card>
           )}
         </>

@@ -2685,7 +2685,14 @@ export function PortfolioMonitor() {
                                 · includes {grp.rows.filter((r) => isCashEquivalent(r)).length} liquid {grp.rows.filter((r) => isCashEquivalent(r)).length === 1 ? "holding" : "holdings"} the statements type as a fund
                               </span></>
                             )}
-                            {grp.collapsed > 0 && (
+                            {/* A RUPEE OR MORE, NEVER FLOAT DUST. The rows and the
+                                subtotal are summed along two paths, and the
+                                published NAVs carry four decimals, so on a section
+                                with no duplicate at all the two differ by a few
+                                paise — which rendered "₹0 reported twice, counted
+                                once" over Mutual Fund: a claim about a duplicate
+                                that does not exist, printed as a figure. */}
+                            {grp.collapsed >= 1 && (
                               <>{" "}<span title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
                                 · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
                               </span></>

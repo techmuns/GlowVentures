@@ -579,18 +579,24 @@ export function StockInfo() {
           no way to see WHAT ELSE that manager chose is half an answer. */}
       {mandates.length > 0 && (
         <p className="mb-4 text-[12.5px] leading-relaxed text-slate-400">
-          <span className="font-medium text-slate-300">Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
-          {/* THE NOUN IS DERIVED, NOT TYPED — see `mandateAllShares` above. This
-              sentence renders for every mandate-held row, and a mandate's bucket
-              takes its whole account, so "these shares" was printed over the
-              cash sleeve, the liquid sweep and a TDS receivable as well as over
-              Jammu & Kashmir Bank. A mixed set gets the neutral wording rather
-              than one of its classes speaking for the rest. */}
-          {mandateAllShares
-            ? " — the family owns these shares and the manager decides them: "
-            : mandateNoShares && mandateClass
-              ? ` — this is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose: `
-              : " — the family owns these holdings and the manager runs the accounts they sit in: "}
+          {/* ONE LINE: the route and the mandates it runs through, each a link.
+              The sentence that explained it is the hover on the first words —
+              the family asked for the notes around the tables to go, and the
+              fact a reader acts on is the link, not the prose. */}
+          <span className="font-medium text-slate-300"
+            /* THE NOUN IS DERIVED, NOT TYPED — see `mandateAllShares` above.
+               This renders for every mandate-held row, and a mandate's bucket
+               takes its whole account, so "these shares" was printed over the
+               cash sleeve, the liquid sweep and a TDS receivable as well as
+               over Jammu & Kashmir Bank. A mixed set gets the neutral wording
+               rather than one of its classes speaking for the rest. */
+            title={`${mandateAllShares
+              ? "The family owns these shares and the manager decides them."
+              : mandateNoShares && mandateClass
+                ? `This is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose.`
+                : "The family owns these holdings and the manager runs the accounts they sit in."} Every other holding in ${mandates.length === 1 ? "that mandate is on its" : "those mandates is on their"} own page.`}>
+            Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}:
+          </span>{" "}
           {mandates.map((m, i) => (
             <span key={m.accountId}>
               {i > 0 && ", "}
@@ -598,8 +604,6 @@ export function StockInfo() {
               <span className="text-slate-500">{m.label === m.provider ? "" : ` · ${m.provider}`} · {m.owner}</span>
             </span>
           ))}
-          {". Every other holding in "}{mandates.length === 1 ? "that mandate" : "those mandates"}{" is on "}
-          {mandates.length === 1 ? "its" : "their"}{" own page."}
         </p>
       )}
 
@@ -829,11 +833,10 @@ export function StockInfo() {
                 line the two disagree by exactly the duplicate and a reader who
                 adds the column has found a contradiction. */}
             {dupCollapsed > 1 && (
-              <p className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                The rows above add to {money(sum(rows.map((r) => r.marketValue)))}: this is ONE holding, reported on
-                each of the {held} statements listed. Both are shown as printed, and the Total counts it once —
-                {money(mv)}, the same basis as the current value of holdings. Which statement owns it is a question about the
-                family's affairs, not a parsing rule, so neither row is suppressed.
+              <p className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500"
+                title="Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings. Which statement owns it is a question about the family's affairs, not a parsing rule, so neither row is suppressed.">
+                One holding, reported on each of the {held} statements listed — the rows add to{" "}
+                {money(sum(rows.map((r) => r.marketValue)))}, the Total counts it once at {money(mv)}.
               </p>
             )}
           </Card>
@@ -896,11 +899,10 @@ export function StockInfo() {
             </div>
           ) : led.txns.length === 0 ? (
             <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
-              <span className="max-w-md">
+              <span className="max-w-md"
+                title="A holding bought before that window and untraded since carries no row here — the transaction statements are a period record, not a lot history.">
                 No transaction in this name over the window the statements cover
                 {led.periodFrom && led.periodTo ? <> ({fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)})</> : null}.
-                A holding bought before that window and untraded since carries no row here — the transaction
-                statements are a period record, not a lot history.
               </span>
             </div>
           ) : (
@@ -956,49 +958,26 @@ export function StockInfo() {
 
       {notACompany ? (
         <Card className="mt-5" title={`Company research — not applicable to ${NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
-          <p className="text-[12.5px] leading-relaxed text-slate-400">
+          {/* TWO SHORT LINES, the reasoning in their hovers — the family asked
+              for the notes around the tables to go. What a reader must still see
+              is that this is a decided absence rather than a broken feed, and
+              why a fund shows no list of companies; both are on screen. */}
+          <p className="text-[12.5px] leading-relaxed text-slate-400"
+            title={`So there is no price history, no PE, no balance sheet, no concall and no insider filing for it, and the five panels that carry those for a company are absent here by decision rather than by a feed being down.${fundVehicle ? " A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : ""}`}>
             This holding is <span className="font-medium text-slate-300">{assetClassLabel(assetClass)}</span>
             {fundVehicle
-              ? <> — one line standing for a portfolio the manager assembles, not a share in a company.</>
-              : <> — a balance, not a share in a company.</>} So there is no price history, no PE, no balance sheet,
-            no concall and no insider filing for it, and the five panels that carry those for a company are absent
-            here by decision rather than by a feed being down.
+              ? <> — one line standing for a portfolio the manager assembles, not a share in a company</>
+              : <> — a balance, not a share in a company</>}, so company research does not apply.
           </p>
           {fundVehicle && (
-            <>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                The companies inside it are the manager's holdings, not this book's — no statement issued to this family
-                names them. {canHaveLookthrough(rows[0])
-                  ? <>A MUTUAL FUND scheme nonetheless discloses its portfolio monthly, and where that disclosure
-                    resolves it is shown above under its own heading. It is the AMC's document, not this family's, so
-                    the fund&rsquo;s value still stays whole here and in every total rather than being spread across the
-                    sectors of companies the family does not directly own.</>
-                  : <>An AIF publishes no such disclosure — SEBI requires a monthly portfolio from a mutual fund and not
-                    from a Category II or III alternative fund — so there is no scheme document to join to this folio,
-                    and the fund&rsquo;s value stays whole.</>}
-              </p>
-              {/* WHY THIS HAS TO BE SAID HERE, AND SAID AS A CONTRAST.
-                  A reader who has just learnt that a share held through a PMS is
-                  listed inside that manager's drill-down will come to a fund
-                  expecting the same page and read its absence as something not
-                  built yet. The two look alike and are not: a PMS reports every
-                  share it holds because the FAMILY owns those shares — the
-                  manager only chose them — so the rollup is a real, documented
-                  one. A fund unit is one purchase of somebody else's portfolio,
-                  the fund owns the companies, and no statement here says which
-                  they are. So there is no list to render, and this is a decided,
-                  permanent absence rather than an empty table waiting on a feed. */}
-              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                <span className="font-medium text-slate-300">A mandate&rsquo;s constituents and a fund&rsquo;s are two
-                different kinds of fact, and the difference is worth keeping in view.</span> Under a mandate the family
-                owns each share and the manager merely picks it, so every one is reported BY NAME on a statement issued
-                to this family, and the mandate&rsquo;s own page carries all of them at the family&rsquo;s own cost and
-                value. A fund unit is the opposite: the fund owns the companies, and what this family is told is only
-                what the unit is worth. Anything shown above about what the scheme holds comes from the AMC&rsquo;s
-                public disclosure and carries no cost, no purchase date and no figure about this family except the one
-                derived from a published weight.
-              </p>
-            </>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
+              title={canHaveLookthrough(rows[0])
+                ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. A mutual fund scheme discloses its portfolio monthly; it is the AMC's document, not this family's, so the fund's value still stays whole here and in every total."
+                : "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. SEBI requires a monthly portfolio from a mutual fund and not from a Category II or III alternative fund, so there is no scheme document to join to this folio, and the fund's value stays whole."}>
+              {canHaveLookthrough(rows[0])
+                ? <>What the scheme holds is shown above, from the AMC&rsquo;s own monthly disclosure.</>
+                : <>An AIF publishes no such disclosure, so no list of its companies can be shown.</>}
+            </p>
           )}
         </Card>
       ) : (

@@ -526,8 +526,16 @@ export function HoldingsBehind() {
             rather than glossed, and the treatment the Portfolio Monitor already
             gives the same three facts at the family's own instruction. */}
         <div className="text-right">
+          {/* THE TWO SENTENCES THAT SAT UNDER THE TABLE AND UNDER THE PAGE ARE THIS
+              FIGURE'S HOVER. *"no one is reading these kind of … notes that you
+              have put in across tables."* The counts they restated are the line
+              beneath it; what they added — the figure to the rupee, how many
+              entities, that the statements are drawn on their own dates, and the
+              same holdings on statement marks alone — is one hover away on the
+              figure it is about. Weaker than a caption, and recorded as such. */}
           <div className="mono text-2xl font-semibold text-slate-100"
-               data-hb-total={mv}>{money(mv)}</div>
+               data-hb-total={mv}
+               title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone — before any live quote — these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}. Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.` : ""}`}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {shareOfBook == null
               ? "no book value to measure a share against"
@@ -882,14 +890,19 @@ export function HoldingsBehind() {
                 folios are listed with the capital they have DRAWN, and the note
                 says plainly that drawn capital is what was paid rather than
                 what the stake is worth and is in no total on this page. */}
-            {unvalued.length > 0 && (
-              <div className="border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
-                <div className="label-xs text-slate-300">Held, and valued by no statement</div>
-                <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">
-                  {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} report units and the capital drawn
-                  against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is
-                  in none of its totals. Drawn capital is what was <em>paid</em>, never what the stake is worth.
-                </p>
+            {unvalued.length > 0 && (() => {
+              const drawnTotal = sumOrNull(unvalued.map((f) => f.drawn));
+              return (
+              // ONE COLLAPSED LINE, the list inside it — the family asked for the
+              // notes under the tables to go. The line still says the three
+              // things a reader must not miss: how many folios, that no statement
+              // values them, and that what they drew is in no total above.
+              <details className="border-t border-ink-700/60 px-5 py-3 text-[11.5px] text-slate-500" data-testid="aif-unvalued">
+                <summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200"
+                  title="These folios report units and the capital drawn against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is in none of its totals. Drawn capital is what was paid, never what the stake is worth.">
+                  {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio is" : "folios are"} valued by no statement
+                  {drawnTotal != null && <> · {money(drawnTotal)} drawn, in no total above</>}
+                </summary>
                 <ul className="mt-2 space-y-1">
                   {unvalued.map((f) => (
                     <li key={f.accountId} className="text-[11.5px] text-slate-400" data-aif-unvalued={f.section}
@@ -906,15 +919,9 @@ export function HoldingsBehind() {
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-            <p className="px-5 pb-5 pt-3 text-[11.5px] leading-relaxed text-slate-500">
-              {full(mv)} across {fmtNum(rows.length)} {rows.length === 1 ? "holding" : "holdings"} and {fmtNum(names.size)}{" "}
-              {names.size === 1 ? "name" : "names"}, held by {fmtNum(owners.size)} {owners.size === 1 ? "entity" : "entities"} in{" "}
-              {fmtNum(accounts.size)} {accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own
-              dates, so this total is a blend rather than one report date — {" "}
-              <Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries every account in full.
-            </p>
+              </details>
+              );
+            })()}
           </Card>
 
           {/* ── HOW THIS FIGURE IS WORKED OUT ────────────────────────────────
@@ -993,18 +1000,9 @@ export function HoldingsBehind() {
         </>
       )}
 
-      {/* The statement-basis total, stated once. `statementPortfolio` is the book
-          the live feed never touches; on LIVE basis the figures above have moved
-          and this has not, which is the difference a reader holding the PDF
-          needs in order to reconcile the two. */}
-      {statementPortfolio && !d.absent && (
-        <p className="mt-4 text-[11.5px] leading-relaxed text-slate-500">
-          On statement marks alone — before any live quote — these holdings are worth{" "}
-          <span className="mono text-slate-400">{full(statementValue(statementPortfolio.positions, rows))}</span>.
-          Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a
-          realised gain or a dated cash flow.
-        </p>
-      )}
+      {/* The statement-basis total is in the headline figure's hover —
+          `statementPortfolio` is the book the live feed never touches, and a
+          reader holding the PDF needs it to reconcile the two. */}
     </div>
   );
 }

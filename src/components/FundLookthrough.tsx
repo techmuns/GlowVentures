@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
@@ -314,18 +313,14 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         </div>
       )}
 
-      <p className="mt-4 text-[11.5px] leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-400">None of this is in any total on this site.</span> The fund&rsquo;s
-        own value — {money(holdingValue)} — is what the book carries, and it already stands for everything above;
-        counting both would count the same money twice. The look-through column is this holding&rsquo;s value times the
-        scheme&rsquo;s published weight, so it is an estimate of exposure rather than a position the family can sell.
-        {rows.length > 0 && <>
-          {" "}The disclosed weights add to <span className="mono">{weight.toFixed(1)}%</span> of the scheme
-          {p.coveragePct != null && <> — the AMC states its own coverage at <span className="mono">{p.coveragePct.toFixed(1)}%</span></>};
-          {" "}the rest is what a monthly filing rounds and the cash it does not itemise.
-        </>}
-        {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
-        family&rsquo;s own holding of it.
+      {/* ONE LINE, the rest in its hover — the family asked for the notes
+          under the tables to go. What must stay on screen is that none of this
+          is in any total: a derived exposure beside a measured one is exactly
+          where this book has been bitten. */}
+      <p className="mt-3 text-[11.5px] text-slate-500"
+        title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell.${rows.length > 0 ? ` The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.` : ""}`}>
+        <span className="font-medium text-slate-400">None of this is in any total on this site</span> — the fund&rsquo;s
+        own value already stands for it.
       </p>
     </Card>
   );

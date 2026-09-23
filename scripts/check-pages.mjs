@@ -2886,6 +2886,24 @@ const DRILLDOWN_CHROME_GONE = [
    * the closed count is the footer's own hover. A check that banned those would
    * fail the page for keeping the facts the family did not ask to lose.
    */
+  /**
+   * ── THE TWO SENTENCES UNDER THE TABLE AND UNDER THE PAGE ARE THE HEADLINE'S
+   *    HOVER ─────────────────────────────────────────────────────────────────
+   *
+   *   *"no one is reading these kind of A cliff of notes that you have put in
+   *    across tables."*
+   *
+   * One restated the headline's own counts and added that the set is a blend of
+   * report dates; the other gave the same holdings on statement marks alone.
+   * Both are the `title` of the figure they are about now. Asserted in BOTH
+   * directions: gone from the page, AND present in a hover — a build that simply
+   * deleted them passes the first and loses the reconciliation a reader holding
+   * the PDF needs.
+   */
+  ["the notes under the drill-down's table moved into the headline figure's hover", (t, ctx) =>
+    !/a blend rather than one report date/i.test(t) && !/On statement marks alone/i.test(t)
+    && (ctx?.titles ?? []).some((x) => /a blend rather than one report date/i.test(x))
+    && (ctx?.titles ?? []).some((x) => /On statement marks alone — before any live quote — these holdings are worth ₹/i.test(x))],
   ["the holdings table's subtitle paragraph stays removed", (t) =>
     !/Weight is within this set, not within the book/i.test(t)
     && !/dropped automatically/i.test(t)],
@@ -6475,13 +6493,18 @@ const qtyChecks = (keyOf) => [
       if (!pledged.length) return { notChecked: "no row on this page carries a pledge or lock-in move" };
       return pledged.every((r) => Math.abs(r.opening + r.unitsIn + r.pledge - r.unitsOut + r.ca - r.closing) > QTY_EPS);
     }],
+  // The identity is ON SCREEN and the pledge's exclusion is the identity's own
+  // hover — the three paragraphs under this table are one line now, at the
+  // family's request, and each sentence is still on the words it explains.
   ["the four terms are named as the identity and the pledge is named as outside it",
     (t, ctx) => !!ctx.qtyTable?.identity
-      && /opening \+ units in − units out \+ corporate action = closing/i.test(t)],
+      && /opening \+ units in − units out \+ corporate action = closing/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /pledge, unpledge or early pay-in earmark is counted and is in none of these columns/i.test(x))],
   // WHAT THIS IS NOT. Without it "units in" reads as a purchase, and a
   // depository movement names no price, no counterparty and no consideration.
   ["the table says these are depository movements and not trades",
-    (t) => /depository movements, not trades/i.test(t) && /no\s+price, amount or gain/i.test(t)],
+    (t, ctx) => /depository movements, not trades/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /no\s+price, amount or gain/i.test(x))],
   /**
    * AN OPENING BALANCE IS A CLAIM ABOUT A DATE. Without the window on screen,
    * "opening 4,875" is a figure with no period attached and a reader cannot
@@ -6543,6 +6566,31 @@ const qtyChecks = (keyOf) => [
  * the total. On every tab, because it is a claim about the page rather than
  * about one of its tables.
  */
+/**
+ * ── …AND BOTH ARE ONE COLLAPSED LINE UNDER THE TABLE, NOT PROSE ───────────
+ *
+ *   *"no one is reading these kind of A cliff of notes that you have put in
+ *    across tables."*
+ *
+ * The sides line and the clause naming the public-market funds' capital
+ * accounts were visible prose under the table on every tab; they are inside
+ * "How the totals are worked out" now, which is closed on arrival. Struck on
+ * the page's STRUCTURE as the walk found it, before it opened the fold: the
+ * figures inside are asserted by the two checks above, which read the fold
+ * opened — so a build that dropped the clause fails there, and one that moved
+ * it back out from under the fold fails here.
+ */
+const PM_FOLD_CHECK = ["the notes under the table are one collapsed line, holding the sides line and the public-market clause", (t, ctx) => {
+  if (!ctx?.foldsOnArrival) return { notChecked: "the fold probe did not run" };
+  const folds = ctx.foldsOnArrival.filter((x) => x.id === "pm-working");
+  if (folds.length !== 1) return false;
+  const [f] = folds;
+  if (f.open || f.sidesOutside) return false;
+  const wantSides = !!SIDE_BOOK && SIDE_BOOK.sides.length > 1;
+  const wantCap = !!CAPITAL_BOOK?.elsewhereCount;
+  return (!wantSides || f.sidesInside === true) && (!wantCap || f.capInside === true);
+}];
+
 const PRIVATE_SIDES_CHECK = (t) => {
   if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
   const line = /This page is the private side of the book:([^\n]*)/i.exec(t);
@@ -6693,6 +6741,7 @@ const PRIVATE_SCOPE_CHECKS = [
       && /the family class (that fund|those funds) as investing in listed equity/i.test(c.text) === CAPITAL_BOOK.elsewhereFamilyListed;
   }],
   ["the page states which side of the book it is, and the sides add to the total", PRIVATE_SIDES_CHECK],
+  PM_FOLD_CHECK,
 ];
 
 /**
@@ -11205,8 +11254,9 @@ const INVARIANTS = {
       const expect = (hv * pct) / 100;
       return Number.isFinite(shown) && Math.abs(shown - expect) <= Math.max(0.02, expect * 0.02);
     }],
-    ["the card states none of it is in any total on the site", (t) =>
-      /None of this is in any total on this site/i.test(t) && /count the same money twice/i.test(t)],
+    ["the card states none of it is in any total on the site", (t, ctx) =>
+      /None of this is in any total on this site/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /count the same money twice/i.test(x))],
   ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
@@ -11519,6 +11569,20 @@ const INVARIANTS = {
       return un.length === AIF_BOOK.unvaluedCount
         && AIF_BOOK.unvaluedSections.every((k) => un.includes(k))
         && /drawn/i.test(t) && /no NAV|valued by no statement/i.test(t);
+    }],
+    /**
+     * …AND THEY ARE ONE COLLAPSED LINE, NOT A PARAGRAPH AND A LIST. The line
+     * still says the three things a reader must not miss — how many folios,
+     * that no statement values them, and that what they drew is in no total —
+     * and the folios themselves are inside it. Read on arrival, before the walk
+     * opens it for the two checks around this one.
+     */
+    ["the folios no statement values are one collapsed line under the table", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.unvaluedCount) return { notChecked: "every AIF folio in this book carries a valued position" };
+      const f = (ctx?.foldsOnArrival ?? []).filter((x) => x.id === "aif-unvalued");
+      return f.length === 1 && f[0].open === false
+        && /valued by no statement/i.test(t) && /drawn, in no total above/i.test(t);
     }],
     ["a Category I AIF the book holds but no statement values is named", (t, ctx) => {
       if (!AIF_BOOK) return false;
@@ -13290,6 +13354,7 @@ const INVARIANTS = {
       return newestFirst && pmClose(amounts.reduce((a, b) => a + b, 0), foot);
     }],
     ["the page states which side of the book it is, and the sides add to the total", PRIVATE_SIDES_CHECK],
+    PM_FOLD_CHECK,
   ],
   /**
    * ── THE CAPITAL-CALL COLUMN, AGAINST A STORE ──────────────────────────────
@@ -17095,8 +17160,11 @@ const INVARIANTS = {
      * let it read as one would answer the question wrongly in exactly the
      * direction they were worried about.
      */
+    // Struck on the RETURN rather than on the sentence around it: that sentence
+    // is the label's hover now, so a check keyed on it would pass by finding
+    // nothing. Wherever a gain and a return are printed, the label is on screen.
     ["the return beneath it is labelled, not left to read as money-weighted",
-      (t) => !/held over the whole record above/i.test(t)
+      (t) => !/Net invested[^\n]*today —/i.test(t)
         || /NOT annualised and NOT money-weighted/i.test(t)],
   ],
   "mandate-fund": [
@@ -17206,8 +17274,9 @@ const INVARIANTS = {
      * which is the fabrication the look-through store must not enable.
      */
     ["an AIF renders no look-through table", (t) => !/What this fund holds/i.test(t)],
-    ["...and says why: an AIF publishes no monthly portfolio disclosure", (t) =>
-      /publishes no such disclosure/i.test(t) && /Category II or III/i.test(t)],
+    ["...and says why: an AIF publishes no monthly portfolio disclosure", (t, ctx) =>
+      /publishes no such disclosure/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /Category II or III/i.test(x))],
   ],
   // The AIF drill-down for a holding reported under two members. "AIF holdings
   // must be shown inside the respective AIF page drill down" — so every
@@ -18316,14 +18385,109 @@ for (const theme of THEMES) {
         await page.waitForTimeout(300);
       }
       /**
+       * ── A NOTE ON A TABLE IS ONE SHORT LINE ──────────────────────────────
+       *
+       *   *"no one is reading these kind of A cliff of notes that you have put
+       *    in across tables … It's just that I have issues with the extreme
+       *    verbatim and verbose footnotes that you have put, which make the
+       *    whole table ugly."*
+       *
+       * "Across tables" is a claim about all of them, so it is measured on
+       * EVERY route — the treatment the every-table sort check gets — rather
+       * than on the handful of pages the family screenshotted: a list would
+       * silently stop covering the next table somebody adds a paragraph under.
+       *
+       * THREE PLACES A NOTE CAN SIT, each measured on its own, per card that
+       * holds a table: its SUBTITLE, the text UNDER its last table, and the
+       * text of any single CELL. Measured BEFORE the walk opens a fold, because
+       * a collapsed `<details>` is the one-line form this change moved the
+       * working into — its summary counts, its contents do not. Text in a
+       * `title` is not read at all: that is where the sentences went, and a
+       * reader who wants one hovers for it.
+       *
+       * LENGTHS, NOT WORDS, because a paragraph is a SHAPE: the same claim can
+       * be a figure-bearing line or a cliff of prose, and only its size says
+       * which. The bounds are one line at this width, set from the lines this
+       * change left on screen — a subtitle of 120 characters, a line under a
+       * table of 150 and at most two of them, a cell of 180 (a fund's full name
+       * with its identity line underneath reaches ~130). An upstream document
+       * declared `data-table-static` is exempt from the cell bound: its cells
+       * are the source's own text.
+       */
+      const tableNotes = FAST ? null : await page.evaluate(() => {
+        const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+        const BLOCK = new Set(["P", "DIV", "LI", "SUMMARY", "UL", "SECTION", "DETAILS", "TABLE"]);
+        const out = [];
+        for (const card of document.querySelectorAll("main .card")) {
+          const tables = [...card.querySelectorAll("table")].filter((t) => t.querySelector("tbody td"));
+          if (!tables.length) continue;
+          const last = tables[tables.length - 1];
+          const head = card.querySelector(".h-section");
+          const title = (head?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+          const subEl = head?.nextElementSibling ?? null;
+          const sub = subEl && vis(subEl) ? subEl.innerText.replace(/\s+/g, " ").trim() : "";
+          const under = [];
+          for (const el of card.querySelectorAll("p, div, li, summary")) {
+            if (el.closest("table") || !vis(el)) continue;
+            if (!(last.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
+            if ([...el.children].some((c) => BLOCK.has(c.tagName))) continue;
+            const d = el.closest("details");
+            if (d && !d.open && el.tagName !== "SUMMARY" && !el.closest("summary")) continue;
+            const t = el.innerText.replace(/\s+/g, " ").trim();
+            if (t) under.push(t);
+          }
+          let cell = "";
+          for (const tb of tables) {
+            if (tb.hasAttribute("data-table-static")) continue;
+            for (const td of tb.querySelectorAll("td, th")) {
+              // A cell holding a form or a table of its own is a panel, not a
+              // note — the capital-call editor is one — and is not measured.
+              if (!vis(td) || td.querySelector("input, textarea, select, table")) continue;
+              const t = td.innerText.replace(/\s+/g, " ").trim();
+              if (t.length > cell.length) cell = t;
+            }
+          }
+          out.push({ title, sub, under, cell });
+        }
+        return out;
+      });
+      /**
+       * …AND THE TWO FOLDS THIS CHANGE LEANS ON ARE CLOSED ON ARRIVAL. Private
+       * Market's "How the totals are worked out" and the AIF drill-down's
+       * valued-by-no-statement line each hold what used to be visible prose,
+       * and a fold that opened itself would be the paragraph back with a
+       * chevron on it. Read before the walk opens either.
+       */
+      const foldsOnArrival = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main details[data-pm-working], main details[data-testid='aif-unvalued']")].map((d) => ({
+          id: d.getAttribute("data-pm-working") !== null ? "pm-working" : "aif-unvalued",
+          open: d.open,
+          sidesInside: d.hasAttribute("data-pm-working") ? !!d.querySelector("[data-pm-sides]") : null,
+          capInside: d.hasAttribute("data-pm-working") ? !!d.querySelector("[data-pm-cap-elsewhere]") : null,
+          sidesOutside: !!document.querySelector("main [data-pm-sides]:not(details [data-pm-sides])"),
+        })));
+      /**
        * …AND THE WORKING LINE UNDER THE TABLE, OPENED. It is a collapsed
        * `<details>` at the family's request — fewer explanations on this page —
        * and a collapsed `<details>` is not in `innerText`, so the claims about
        * how the capital totals are worked out would otherwise have no subject.
-       * Opened on these routes only, and only that one element.
+       * Opened on these routes only, and only that one element. Since the family
+       * asked for the notes under the tables to go it also holds the line saying
+       * which side of the book this page is and the clause naming the
+       * public-market funds' capital accounts, on every tab.
        */
       if (/^private-market/.test(name)) {
         await page.$$eval("main details[data-pm-working]", (ds) => ds.forEach((d) => { d.open = true; }));
+        await page.waitForTimeout(150);
+      }
+      /**
+       * …AND THE AIF DRILL-DOWN'S VALUED-BY-NO-STATEMENT LINE, OPENED on the
+       * drill-down routes, for the same reason: the folios it names (Category I
+       * among them) are inside it now, and a check that could not read them
+       * would abstain on a page that is right.
+       */
+      if (/^holdings/.test(name)) {
+        await page.$$eval("main details[data-testid='aif-unvalued']", (ds) => ds.forEach((d) => { d.open = true; }));
         await page.waitForTimeout(150);
       }
       // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
@@ -20224,7 +20388,10 @@ for (const theme of THEMES) {
        */
       const qtyTable = FAST ? null : await page.evaluate(() => {
         const t = document.querySelector("table[data-qty-movement]");
-        const note = document.querySelector("[data-qty-unmoved]")?.innerText ?? null;
+        // The note's text AND its hover: the reason it gives (no opening balance
+        // is invented) moved into the `title` when the paragraph became a line.
+        const noteEl = document.querySelector("[data-qty-unmoved]");
+        const note = noteEl ? `${noteEl.innerText} ${noteEl.getAttribute("title") ?? ""}` : null;
         if (!t) return note === null ? null
           : { rows: [], total: null, headers: [], identity: false, unmoved: note };
         const num = (td) => {
@@ -20253,7 +20420,7 @@ for (const theme of THEMES) {
           total: foot ? read(foot) : null,
           headers: [...t.querySelectorAll("thead th")].map((h) => h.innerText.trim().toLowerCase()),
           identity: !!document.querySelector("[data-qty-identity]"),
-          unmoved: document.querySelector("[data-qty-unmoved]")?.innerText ?? null,
+          unmoved: note,
         };
       });
       /**
@@ -21366,6 +21533,24 @@ for (const theme of THEMES) {
           }
         }
       }
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0]) {
+        for (const tn of tableNotes ?? []) {
+          const where = tn.title || "an untitled card";
+          if (tn.sub.length > 120) {
+            invariants.push(`a note on a table is one short line — "${where}" has a ${tn.sub.length}-character subtitle: ${tn.sub.slice(0, 90)}…`);
+          }
+          const long = tn.under.filter((u) => u.length > 150);
+          if (long.length || tn.under.length > 2) {
+            invariants.push(`a note on a table is one short line — "${where}" has ${tn.under.length} line(s) under its table${long.length ? `, the longest ${Math.max(...long.map((u) => u.length))} characters: ${long[0].slice(0, 90)}…` : ""}`);
+          }
+          if (tn.cell.length > 180) {
+            invariants.push(`a note on a table is one short line — a cell in "${where}" holds ${tn.cell.length} characters: ${tn.cell.slice(0, 90)}…`);
+          }
+        }
+        for (const f of foldsOnArrival ?? []) {
+          if (f.open) invariants.push(`the "${f.id}" fold is closed on arrival — a fold that opens itself is the paragraph back`);
+        }
+      }
       // ANY VIEW OF THE POLYCAB PAGE, not only the param-free one: the page grew
       // a `?view=` toggle, and `/\/polycab$/` would have fired the ring-fence
       // absence check on the page whose whole job is to name the holding.
@@ -21409,7 +21594,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow, tableNotes, foldsOnArrival }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
