@@ -42,7 +42,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital
 WANT="${CASES:-}"
 N=0
 
@@ -315,6 +315,15 @@ old = '  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct 
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, '  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;', 1))
 PY
+
+run_case "the tabbed account table drops #78's XIRR line on a whole folio" py <<'PY2'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '<ReturnCells p={r} asOf={portfolio.asOf} capital={rowCap} />'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '<ReturnCells p={r} asOf={portfolio.asOf} />', 1))
+PY2
 
 echo ""
 echo "════════ done ($N cases)"

@@ -7,7 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
-  measuredReturn,
+  measuredReturn, type RowCapital,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
@@ -37,6 +37,7 @@ import { useViewParam } from "@/components/ViewToggle";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { useDatedCapital } from "@/lib/useDatedCapital";
 
 /**
  * THE RETURN, AND WHICH RETURN IT IS.
@@ -53,19 +54,28 @@ import { useTableView, sortRows } from "@/lib/tableView";
  * row without a date shows the holding-period figure alone and the tooltip says
  * which document would supply one.
  *
- * XIRR IS DELIBERATELY NOT A THIRD LINE HERE. It is absent for every holding in
- * this book for one reason — the statements cover the current period, so there
- * is no per-holding cash-flow history to solve against — and printing a dash on
- * every row of every name would say that 371 times. The Return column's own
- * picker on the Portfolio Monitor states it once, per its own rule.
+ * XIRR IS A THIRD LINE ONLY WHERE THE ROW IS AN ACCOUNT. A holding inside an
+ * account has no cash flows of its own — the statements cover the current
+ * period — so a dash on every row of every name would say that 371 times, and
+ * none is drawn. But a row that is one WHOLE folio of a fund (Buoyant's, a
+ * Sanshi folio, a drawdown fund) IS that account, and the account's dated
+ * record of every payment in and out is exactly what a money-weighted return is
+ * solved over (`datedCapital.ts`). There it shows — **15.30% and 9.76%** on
+ * Buoyant's two folios, the IRR Buoyant's own fact sheet prints — beside the
+ * holding-period return, never instead of it. Under a year it does not show:
+ * the guard that refuses to compound a part-year is the one in
+ * `measuredReturn`, and a second line repeating the HPR would be one number
+ * under two names.
  */
-function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
+function ReturnCells({ p, asOf, capital }: { p: Position; asOf: string; capital?: RowCapital | null }) {
   const hpr = measuredReturn(p, "absolute", asOf);
-  const cagr = measuredReturn(p, "cagr", asOf);
+  const cagr = measuredReturn({ ...p, capital }, "cagr", asOf);
   // Only where the guard actually annualised. `cagr` falls back to the
   // holding-period figure under a year and tags it HPR — printing that as a
   // second line would show one number twice under two names.
   const annual = cagr.shown && cagr.tag === "CAGR" ? cagr : null;
+  const xirr = capital?.dated ? measuredReturn({ ...p, capital }, "xirr", asOf) : null;
+  const money = xirr && xirr.shown && xirr.tag === "XIRR" ? xirr : null;
   return (
     <>
       <span className="whitespace-nowrap">
@@ -78,6 +88,12 @@ function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
         <div className="whitespace-nowrap">
           <span className="ret-tag mr-0.5">CAGR</span>
           <span className={changeColor(annual.pct)} title={annual.note}>{fmtPct(annual.pct, { sign: true, decimals: 1 })}</span>
+        </div>
+      )}
+      {money && (
+        <div className="whitespace-nowrap" data-stock-xirr={money.pct}>
+          <span className="ret-tag mr-0.5">XIRR</span>
+          <span className={changeColor(money.pct)} title={money.note}>{fmtPct(money.pct, { sign: true, decimals: 1 })}</span>
         </div>
       )}
     </>
@@ -194,6 +210,8 @@ export function StockInfo() {
   // WHICH TAB IS OPEN — see `STOCK_TABS` for what the five are and why the
   // choice lives in the URL.
   const [tab, setTab] = useViewParam(STOCK_TABS, {}, "tab");
+  // Which account rows ARE a whole account on a dated record, for the XIRR line.
+  const { dated: datedCap, universe: holdingsUniverse } = useDatedCapital();
   const [led, setLed] = useState<StockLedger | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -906,13 +924,16 @@ export function StockInfo() {
                         <SortHeader col="current" view={posView}>Market value</SortHeader>
                         <SortHeader col="pnl" view={posView}>Unreal. P&L</SortHeader>
                         <SortHeader col="return" view={posView}
-                          title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. A money-weighted XIRR is not shown per holding at all: it needs every cash flow for this name and these statements cover the current period only — the per-account XIRR is on the Performance page.">Return</SortHeader>
+                          title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. XIRR appears only on a row that is a WHOLE account whose every payment in and out is dated — a fund folio, a drawdown fund — solved over the same record the Transactions card uses; a holding inside an account has no cash flows of its own, so it has none.">Return</SortHeader>
                       </Tr>
                     </thead>
                     <tbody className="divide-y divide-ink-700/60">
                       {posRows.map((r) => {
                       const eng = engagementOf(accIdx, r) || null;
                       const route = holdingRoute(eng);
+                      // The account's dated capital where this row IS the whole account
+                      // — the XIRR line's only source; undefined on a holding inside one.
+                      const rowCap = datedCap?.behind([r], holdingsUniverse) ?? undefined;
                       return (
                         /* COUNTED STRUCTURALLY, NEVER BY LINE. `check:pages` used to
                            count these rows by splitting the table's innerText on
@@ -982,8 +1003,9 @@ export function StockInfo() {
                           <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
                           {/* WHICH RETURN, stated in the cell. `measuredReturn` is
                               the one place the methodology lives (Stage 10af). */}
-                          <td className="px-4 py-2.5 text-right mono" data-stock-return>
-                            <ReturnCells p={r} asOf={portfolio.asOf} />
+                          <td className="px-4 py-2.5 text-right mono" data-stock-return
+                            data-capital={rowCap ? (rowCap.dated ? "dated" : "undated") : undefined}>
+                            <ReturnCells p={r} asOf={portfolio.asOf} capital={rowCap} />
                           </td>
                         </Tr>
                       );
