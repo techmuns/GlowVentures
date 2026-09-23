@@ -25,6 +25,7 @@ import { securityKeyOf } from "../shared/securityKey.mjs";
 import { marketSideOf, readAifCategory, readsAsPrivateEquity } from "../shared/aifCategory.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
+import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
 
 /**
@@ -893,8 +894,6 @@ function attributionFrom(snapshotsByAccount, positions, notes) {
 // figure to check against, `amount` is null and says so — differencing a
 // sequence that might not be cumulative is how the ₹22 Cr above gets invented.
 const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
-/** Half of the last decimal a unit count is printed to — `dropDepositoryDuplicates`'s rule. */
-const UNIT_TIE = 0.0005;
 
 function capitalMovesFrom(cashFlows, accountId, notes, label) {
   const all = cashFlows ?? [];
@@ -1122,7 +1121,7 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
  * report a return on a holding that is partly missing — the same failure the
  * ST/LT split already refuses on Pricol and Belrise.
  */
-function positionTranchesFrom(capitalMoves, positions, notes) {
+function positionTranchesFrom(capitalMoves, reclassifications, positions, notes) {
   const byKey = new Map();
   for (const m of capitalMoves) {
     // MONEY IN ONLY. A redemption now carries the units it took OUT, and folding
@@ -1134,8 +1133,15 @@ function positionTranchesFrom(capitalMoves, positions, notes) {
     if (!byKey.has(k)) byKey.set(k, []);
     byKey.get(k).push(m);
   }
+
+  // THROUGH A CLASS SWITCH THE MONEY KEEPS ITS DATE AND ITS COST — see
+  // `carryLotsThroughSwitches` in `lib/classSwitch.mjs`.
+  carryLotsThroughSwitches(byKey, reclassifications, capitalMoves, notes);
+
   const out = {};
   for (const [k, moves] of [...byKey.entries()].sort()) {
+    // Every lot moved out of this class by a switch: nothing is left to tie.
+    if (!moves.length) continue;
     const [accountId, securityKey] = k.split("|");
     const held = positions.filter((p) => p.accountId === accountId && p.securityKey === securityKey);
     if (held.length !== 1) {
@@ -1335,6 +1341,8 @@ function build(docs) {
   const accountCashFlows = {};
   /** The family's OWN dated investments — see `capitalMovesFrom`. */
   const capitalMoves = [];
+  /** A fund moving a holding between its own unit classes — see `reclassificationsFrom`. */
+  const reclassifications = [];
   const accountReturns = {};
   const corporateActionsAll = [];
   const realisedByClass = new Map();
@@ -1820,8 +1828,15 @@ function build(docs) {
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
         costBasis,
-        /** "opening-position" where the cost came from the broker's ledger, not this statement. */
+        /**
+         * "opening-position" where the cost came from the broker's ledger, not
+         * this statement; "carried-through-switch" where a fund's class switch
+         * restated it and `carryCostThroughSwitches` carried the family's own
+         * cost through — set there, after the tranches, never here.
+         */
         costBasisSource: joinedCost !== null ? "opening-position" : undefined,
+        /** The statement's own cost, kept beside a cost this book carried — a CHECK, never a source. */
+        printedCostBasis: undefined,
         marketValue,
         // Derived from whatever cost we ended up with, so a joined cost yields a
         // gain on the same basis. Both stay null when there is no cost at all —
@@ -2066,6 +2081,7 @@ function build(docs) {
     // contribution or a withdrawal, wherever they appear, and is the only place
     // in this book that answers "what did WE buy, and when".
     capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+    reclassifications.push(...reclassificationsFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
 
     const register = group.find((d) => d.reportType === "capital-register" && (d.cashFlows ?? []).length);
     const bank = group.find((d) => d.reportType === "bank-book" && (d.cashFlows ?? []).length);
@@ -2354,7 +2370,13 @@ function build(docs) {
   // regenerates byte-identically; the accountId breaks ties within a date.
   capitalMoves.sort((a, b) =>
     a.date.localeCompare(b.date) || a.accountId.localeCompare(b.accountId) || a.direction.localeCompare(b.direction));
-  const positionTranches = positionTranchesFrom(capitalMoves, positions, notes);
+  const positionTranches = positionTranchesFrom(capitalMoves, reclassifications, positions, notes);
+  // After the tranches, because the tranches ARE the licence: a cost is carried
+  // through a switch only onto a holding whose dated contributions account for
+  // every unit it holds. Market value, and therefore every total and every side
+  // of the book, is untouched — this moves cost and the three figures derived
+  // from it, on the positions a switch restated and nowhere else.
+  carryCostThroughSwitches(positions, positionTranches, reclassifications, accountBridges, notes);
   const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes);
 
   return {

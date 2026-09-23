@@ -43,6 +43,8 @@
 import type { CapitalMove, Position, PositionTranches } from "./types";
 import { holdingReturn, type HoldingReturn, type ReturnMode } from "./analytics";
 import { sortRows, type TxnSort } from "./txnSort";
+import { splitFundClass } from "../../shared/securityKey.mjs";
+import { fmtDate } from "./format";
 
 export type TrancheRow = {
   move: CapitalMove;
@@ -60,6 +62,12 @@ export type TrancheRow = {
    * decimals. Not read from the archive, because the extractor does not carry
    * that column — so this is the one figure on the row whose check lives in the
    * suite rather than in the data (`tranches.test.ts`).
+   *
+   * EXCEPT on a tranche carried through a fund's class switch, where it is per
+   * unit of the class held TODAY — invested ÷ the carried units — because that
+   * is the only basis on which the rows of one panel can be compared: every row
+   * is valued at one class's NAV. The NAV it was BOUGHT at is `boughtNavOf`,
+   * and that one is the printed figure (`carriedCost.test.ts`).
    */
   navAtEntry: number;
   /** These units at the position's own current mark. */
@@ -113,7 +121,7 @@ export const trancheKey = (accountId: string, securityKey: string) => `${account
  * That is the partial-coverage failure the ST/LT split already refuses.
  *
  * Returns null wherever that does not hold, which is the common case and not a
- * defect: 41 of 51 accounts publish no dated capital record at all. The caller
+ * defect: 38 of 51 accounts publish no dated capital record at all. The caller
  * says so; it must not draw an empty table.
  */
 export function trancheTable(
@@ -167,6 +175,107 @@ export function trancheTable(
     positionUnits, positionValue, positionCost,
   };
 }
+
+// ── A COST CARRIED THROUGH A FUND'S CLASS SWITCH, AND WHAT TO SAY ABOUT IT ──
+//
+// *"The user does not believe this data."* Buoyant moved both family folios
+// from Class A1 into Class A4 and booked each switch as a redemption and an
+// allotment at the switch-day NAV, so its statements print a "cost" that
+// restarts at that day's value — ₹72.5 Cr, against ₹70.9 Cr the family
+// actually paid. `build-book` now carries what was PAID through the switch
+// (`costBasisSource: "carried-through-switch"`) and keeps the statement's own
+// figure beside it as `printedCostBasis`, a CHECK and never a source.
+//
+// A reader who knows the fund's statement will see two figures for one thing,
+// so the page has to say which is which — and it must say it the same way on
+// every surface, which is why the facts are gathered here once. Everything is
+// READ off the book (the position's two figures, and each carried tranche's
+// own `carriedFrom`), never re-derived: a second derivation of the carry is a
+// second chance for the Portfolio Monitor and the company page to disagree.
+
+/** One class switch the carried money went through. */
+export type ClassSwitch = {
+  /** The unit class the money was bought in — `A1`, or the full name where no class is printed. */
+  fromClass: string;
+  /** The class it is held in today. */
+  toClass: string;
+  /** The date the fund moved it. */
+  on: string;
+};
+
+export type CarriedCost = {
+  /** What the family paid, carried through the switch — the book's own cost. */
+  paid: number;
+  /** What the statements print instead: the cost restated at the switch-day NAV. */
+  printed: number;
+  /** Every switch behind the row, oldest first. */
+  switches: ClassSwitch[];
+};
+
+const classOf = (security: string | null | undefined): string | null =>
+  security ? (splitFundClass(security)?.cls ?? null) : null;
+
+/**
+ * The carried cost behind a ROW — one or more positions — or null where no
+ * constituent's cost was carried.
+ *
+ * Summed over the constituents that REPORT a cost, on both sides, so `paid` is
+ * exactly the row's own Invested figure and `printed` is what that same set
+ * would read on the statements' basis. A constituent with no cost is in
+ * neither: `sumOrNull`'s rule, and the only way the two stay comparable.
+ */
+export function carriedCostOf(ps: Position[], index: Record<string, PositionTranches>): CarriedCost | null {
+  if (!ps.some((p) => p.costBasisSource === "carried-through-switch")) return null;
+  let paid = 0, printed = 0;
+  const seen = new Map<string, ClassSwitch>();
+  for (const p of ps) {
+    if (p.costBasis === null) continue;
+    paid += p.costBasis;
+    printed += p.printedCostBasis ?? p.costBasis;
+    if (p.costBasisSource !== "carried-through-switch") continue;
+    const toClass = classOf(p.security) ?? p.security;
+    for (const m of index[trancheKey(p.accountId, p.securityKey)]?.moves ?? []) {
+      if (!m.carriedFrom) continue;
+      const fromClass = classOf(m.carriedFrom.security) ?? m.carriedFrom.security ?? "an earlier class";
+      const k = `${fromClass}|${toClass}|${m.carriedFrom.switchedOn}`;
+      if (!seen.has(k)) seen.set(k, { fromClass, toClass, on: m.carriedFrom.switchedOn });
+    }
+  }
+  return {
+    paid, printed,
+    switches: [...seen.values()].sort((a, b) => a.on.localeCompare(b.on) || a.fromClass.localeCompare(b.fromClass)),
+  };
+}
+
+/**
+ * WHY THIS INVESTED FIGURE IS NOT THE ONE THE FUND'S STATEMENT PRINTS.
+ *
+ * The facts are `carriedCostOf`'s, read off the book; this only words them.
+ * The gap is named by its SIGN, never assumed to be a gain: a switch made
+ * after a fall restates the cost DOWNWARDS, and calling that "growth" would
+ * be a sentence the arithmetic beside it contradicts.
+ */
+export function carriedCostNote(c: CarriedCost, money: (v: number) => string): string {
+  const moves = new Map<string, string[]>();
+  for (const x of c.switches) {
+    const k = `Class ${x.fromClass} into ${x.toClass}`;
+    (moves.get(k) ?? moves.set(k, []).get(k)!).push(fmtDate(x.on));
+  }
+  const how = [...moves].map(([k, ds]) => `${k} on ${ds.join(" and ")}`).join("; ");
+  const gap = c.printed - c.paid;
+  return `This is what was PAID IN. The fund moved this holding from ${how} and booked each move as a sale and a `
+    + `fresh purchase at that day's NAV, so its statements print the cost as ${money(c.printed)}. `
+    + `The ${money(Math.abs(gap))} between the two is the ${gap >= 0 ? "growth" : "fall in value"} the fund booked at the switch; `
+    + `the switch itself moved no money in or out.`;
+}
+
+/**
+ * The per-unit price a CARRIED tranche was bought at, in the class it was
+ * bought in — the Allotment NAV the statement prints. Null on a tranche that
+ * was bought in the class it is held in, whose `navAtEntry` already is that.
+ */
+export const boughtNavOf = (t: TrancheRow): number | null =>
+  t.move.carriedFrom && t.move.carriedFrom.units > 0 ? t.invested / t.move.carriedFrom.units : null;
 
 // ── WHAT THE FAMILY DID, PER MANDATE AND PER FUND ───────────────────────────
 //
