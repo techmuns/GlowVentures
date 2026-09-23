@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VERIFY STAGE 10bv's CHECKS BY REINTRODUCING EACH BUG.
+# VERIFY STAGE 10bw's CHECKS BY REINTRODUCING EACH BUG.
 #
 # *"Remove the highlighted texts from the dashboard UI"* and *"Allow us to
 # select different benchmarks … make sure that the benchmark returns are live
