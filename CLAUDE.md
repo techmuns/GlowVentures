@@ -17279,23 +17279,27 @@ requires its entry to lead with the marker. Reintroducing the wrapper chip fails
 the suite (naming all seven funds) and the rendered check alike, and so does
 dropping the marker.
 
-#### Fifteen bugs reintroduced, and two were not results the first time
+#### Seventeen bugs reintroduced, and two were not results the first time
 
 Each case was applied alone in a separate worktree on its own port, rebuilt and
 swept over the routes it touches (light theme, where the invariants run), with
 the files restored from a snapshot, VERIFIED byte for byte, and the tree rebuilt
-on the way out. The unpatched control ran first and came back clean. Four cases
-also ran the unit suites.
+on the way out. The unpatched control ran first and came back clean, and seven
+cases also ran the unit suites. **The whole pass — the control and all seventeen
+cases — was run again on the tree merged with #72**, because #72 edited three of
+the files it patches (`analytics.ts`, `MorningCIO.tsx`, `PortfolioMonitor.tsx`),
+added the one the two new cases patch (`searchIndex.ts`) and changed the checker
+every case runs. The table is that run.
 
 | Bug put back | Fires |
 | --- | --- |
-| the three arbitrage keys removed from `CASH_EQUIVALENT_KEYS` | **10 invariants across 6 routes** — every axis, both headings, the allocation card and the fund's own page — **and 8 FAIL lines in two suites**, the name detector naming all three depository balances by the names they print |
-| the switch off, so the live book carries no depository cash | **24 invariants across 13 routes and 14 FAIL lines in three suites** — which is also the measured reach of the switch. The checker's copy of these rows deliberately does not read it, so turning the valuation off fails the sweep by name on every surface the rows reach, rather than leaving a stale model agreeing with a changed page |
+| the three arbitrage keys removed from `CASH_EQUIVALENT_KEYS` | **11 invariants across 7 routes** — every axis, both headings, the allocation card, the fund's own page and the search box — **and 10 FAIL lines in three suites**, the name detector naming all three depository balances by the names they print |
+| the switch off, so the live book carries no depository cash | **26 invariants on all 14 routes the pass walks, and 16 FAIL lines in four suites** — which is also the measured reach of the switch. The checker's copy of these rows deliberately does not read it, so turning the valuation off fails the sweep by name on every surface the rows reach, rather than leaving a stale model agreeing with a changed page |
 | the cash instruction folded back into the direct-stock rule | 5 invariants on 4 routes, and 3 suite lines naming each fund `rule/rule` |
 | arbitrage looked through on the security axis | the partition: the five buckets stop rebuilding NAV |
 | the arbitrage fund's page draws a look-through card | its no-look-through check |
 | Performance drops the `partial` marker | its own check on `performance` |
-| `/holdings` stops naming the depository rows | its own check |
+| `/holdings` stops naming the depository rows | its own check — and, on the first run, one check on a page it does not render; see below |
 | Morning CIO drops the cash-instruction sentence | both family-axis allocation routes |
 | a sub-rupee gap read as a duplicate again | `NO_PHANTOM_DUPLICATE`, on three routes |
 | Family & Entities drops the partly valued account | its own check |
@@ -17304,30 +17308,49 @@ also ran the unit suites.
 | the Cash heading stops counting arbitrage | its own count, on two routes |
 | a depository row loses its NAV caption | the new caption check on `stock-arbitrage` |
 | the review-gap tier removed | the new review-gap check on `monitor-absent-name`, and 2 lines in the review-gap suite |
+| the search chip names the wrapper again | the rendered chip check on `search`, and a suite line naming all seven cash-equivalent funds by the wrapper they were given |
+| the search drops the partly valued marker | the rendered marker check on `search`, and its suite line (`0 entries vs 1 accounts`) |
 
 Every case carried exactly one NOT CHECKED — the pre-existing KPI-tile claim on
 `cio-allocation` — so no bug turned a finding into an abstention. **Two patches
 first came back NOT A RESULT**, and the harness saying so is the point: setting
 the switch to the literal `false` narrowed its type until a comparison in
 `fundNavs.test.ts` stopped compiling, and deleting the `partial` condition removed
-the narrowing its own hover depended on. Both were rewritten to keep their types
-and re-run on the tree merged with #73, beside the control and the review-gap
-case — and none of the three files they patch is one #75 went on to edit.
+the narrowing its own hover depended on. Both were rewritten to keep their types.
 
-`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 22 + 140 (2 not checked,
-0 blocked) · `test:family` (new cases in `familyTaxonomy.test.ts`,
-`fundNavs.test.ts` and `reviewGaps.test.ts`) · `check:family` **86/0** ·
-`check:pages` **204 combinations clean, 0 invariant failures**, with the eight
-evidenced abstentions main's own sweep carries and not one of this change's —
-four from the KPI-tile claim spread across Morning CIO's panels, two from every
-private holding reporting a cost, the not-found crumb and the pledge claim on
-`stock-qty` — read out of the log BY NAME.
+**AND ONE CASE FIRED A CHECK ITS PATCH CANNOT REACH, ONCE.** Hiding `/holdings`'
+depository line also failed *"a company held only inside a fund renders its
+measured cells absent, never zero"* on the security-axis Monitor — a page that
+does not render `HoldingsBehind`, which only `App.tsx` imports. Run again alone,
+the case fired its own check and nothing else. Eleven more walks of that page —
+three quiet, eight with every core saturated by busy loops — passed that check
+every time, with all 547 fund-only rows present and all 547 of their reasons
+read. **So the cause is NOT ESTABLISHED, and it is recorded rather than called a
+flake.** The one mechanism the walk's own order suggests — it reads the page's
+`title`s before its rows, so rows landing between the two reads would leave their
+reasons unread — is what the loaded walks were run to reproduce, and they did
+not. The first failure happened while the full sweep ran a second browser on the
+same machine, which the busy loops do not imitate; and one quiet walk read 701
+more `title`s than the other ten, so the page is not always in the same state
+when it is read. That is a lead for whoever next touches the walk, not a cause.
 
-**MEASURED ON THE TREE MERGED WITH #73, AND IT RECONCILES ONLY BECAUSE IT WAS
-RE-RUN.** Main's route table carries two fewer routes than this branch's, so
-main's own sweep is 200, and this change's two routes (`family-partial`,
-`stock-arbitrage`) across both themes make 204. This branch's pre-merge sweep
-was 196 and failed two of them.
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 42 + 44 + 30 + 29 + 22 + 140
+(2 not checked, 0 blocked) · `test:family` **38 suites, 0 failed** (new cases in
+`familyTaxonomy.test.ts`, `fundNavs.test.ts`, `reviewGaps.test.ts` and
+`searchIndex.test.ts`; the one NOT CHECKED is the fund-NAV basis gate's, which
+predates this change) · `check:family` **86/0** · CI (`build`) and Cloudflare
+Pages green on the pushed merge · `check:pages` **214 combinations clean, 0
+invariant failures**, with the eight evidenced abstentions main's own sweep
+carries and not one of this change's — four from the KPI-tile claim spread across
+Morning CIO's panels, two from every private holding reporting a cost, the
+not-found crumb and the pledge claim on `stock-qty` — read out of the log BY
+NAME.
+
+**MEASURED ON THE TREE MERGED WITH #72, AND IT RECONCILES ONLY BECAUSE IT WAS
+RE-RUN.** Main's own sweep is 210 — Stage 10bw's figure — and this change's two
+routes (`family-partial`, `stock-arbitrage`) across both themes make 214. This
+section's earlier figures were each true of their own base and of no other: 196
+before any merge, which failed two of them, and 204 on the tree merged with #73.
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 BYTE-IDENTICALLY, and `npm run reconcile:review` regenerates #73's
