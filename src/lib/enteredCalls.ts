@@ -31,7 +31,10 @@
 //   · the store answered with an error, which carries its own sentence.
 //
 // None of them is ever rendered as an empty column, which would read as "no
-// calls are coming" — the one thing a reader could act on wrongly.
+// calls are coming" — the one thing a reader could act on wrongly. Each cell
+// names its cause in a word (`CAUSE_WORD`) and opens the editor on a click,
+// where the whole reason is — and, for a store nobody has connected, the steps
+// that connect it (`SWITCH_ON_STEPS`).
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type EnteredCall = {
@@ -57,10 +60,18 @@ export type CallDraft = {
   note: string;
 };
 
+/**
+ * WHICH of the causes stopped the column filling. The reason is the sentence a
+ * reader is shown; the cause is what picks the WORD on every cell and whether
+ * the editor shows the one-time set-up steps — which belong only to a store
+ * nobody has connected, never to a reader who was merely signed out.
+ */
+export type StoreCause = "not-configured" | "signed-out" | "no-function" | "no-answer" | "error";
+
 export type EnteredCallsState =
   | { status: "loading" }
   | { status: "ready"; calls: EnteredCall[] }
-  | { status: "unavailable"; reason: string };
+  | { status: "unavailable"; reason: string; cause: StoreCause };
 
 export const CALLS_ENDPOINT = "/api/capital-calls";
 
@@ -77,7 +88,41 @@ export const REASONS = {
   noAnswer: "The shared capital-call store did not answer. Nothing was lost; try again in a moment.",
 } as const;
 
-type Reply = { ok: true; calls: EnteredCall[] } | { ok: false; reason: string };
+/**
+ * ── THE WORD ON EVERY CELL ──────────────────────────────────────────────────
+ *
+ * *"We need to keep the ability for the customer to add a date in this Capital
+ *  Call column, which is empty right now."* The column was not empty — every
+ * cell was an em dash with its reason in a hover — and that is the finding: a
+ * column of dashes reads as "nothing entered", which is the one misreading this
+ * store was built to prevent. So each cell names its cause in a word a reader
+ * can see, and is the button that opens the editor where the whole reason is.
+ * Title case here; the column header prints it in lower case.
+ */
+export const CAUSE_WORD: Record<StoreCause, string> = {
+  "not-configured": "Not set up",
+  "signed-out": "Signed out",
+  "no-function": "Not available",
+  "no-answer": "Not answering",
+  error: "Not available",
+};
+
+/**
+ * ── HOW TO SWITCH IT ON, ONCE ───────────────────────────────────────────────
+ *
+ * The store is one Cloudflare KV namespace bound to the Pages project as
+ * `GLOW_STORE`. Nothing in this repository can create it — it lives in the
+ * Cloudflare account — so the editor names the steps rather than leaving the
+ * next reader to find them in a code comment. Shown ONLY for `not-configured`.
+ * Menu names as Cloudflare's own documentation gives them (checked 2026-09-23).
+ */
+export const SWITCH_ON_STEPS = [
+  "In the Cloudflare dashboard, open Storage & databases → Workers KV → Create instance, and create a namespace (any name, e.g. glow-store).",
+  "Open Workers & Pages → this site's Pages project → Settings → Bindings → Add → KV namespace. Variable name: GLOW_STORE; KV namespace: the one just created. Add it for Production, and for Preview too if preview links are used.",
+  "Redeploy the site (Deployments → latest deployment → Retry deployment). Once it is live, reload this page: every cell turns into an Add button.",
+] as const;
+
+type Reply = { ok: true; calls: EnteredCall[] } | { ok: false; reason: string; cause: StoreCause };
 
 /** Read one answer from the store, naming the actual cause of any failure. */
 export async function readReply(r: Response): Promise<Reply> {
@@ -87,13 +132,15 @@ export async function readReply(r: Response): Promise<Reply> {
     // The edge gate answers every unauthenticated request with its login page;
     // a local preview answers with the app's own shell. Both are HTML and only
     // one of them is the reader's to fix.
-    return { ok: false, reason: text.includes("/__auth/login") ? REASONS.signedOut : REASONS.noFunction };
+    return text.includes("/__auth/login")
+      ? { ok: false, reason: REASONS.signedOut, cause: "signed-out" }
+      : { ok: false, reason: REASONS.noFunction, cause: "no-function" };
   }
   let j: { ok?: boolean; calls?: unknown; code?: string; message?: string } | null = null;
   try { j = await r.json(); } catch { j = null; }
   if (j?.ok === true && Array.isArray(j.calls)) return { ok: true, calls: j.calls.filter(isCall) };
-  if (j?.code === "NOT_CONFIGURED") return { ok: false, reason: REASONS.notConfigured };
-  return { ok: false, reason: j?.message || `The shared capital-call store answered HTTP ${r.status}.` };
+  if (j?.code === "NOT_CONFIGURED") return { ok: false, reason: REASONS.notConfigured, cause: "not-configured" };
+  return { ok: false, reason: j?.message || `The shared capital-call store answered HTTP ${r.status}.`, cause: "error" };
 }
 
 /**
@@ -150,7 +197,7 @@ async function send(body: unknown): Promise<Reply> {
     });
     return await readReply(r);
   } catch {
-    return { ok: false, reason: REASONS.noAnswer };
+    return { ok: false, reason: REASONS.noAnswer, cause: "no-answer" };
   }
 }
 
@@ -169,7 +216,7 @@ export function useEnteredCalls() {
     try {
       reply = await readReply(await fetch(CALLS_ENDPOINT, { credentials: "same-origin", cache: "no-store" }));
     } catch {
-      reply = { ok: false, reason: REASONS.noAnswer };
+      reply = { ok: false, reason: REASONS.noAnswer, cause: "no-answer" };
     }
     if (!alive.current) return;
     // A REFRESH THAT FAILS KEEPS WHAT WAS ALREADY SHOWN. Swapping a list that
@@ -177,7 +224,7 @@ export function useEnteredCalls() {
     // on focus hit a blip, would empty the column under a reader who changed
     // nothing — only a FIRST load that fails says the store is unavailable.
     setState((prev) => reply.ok ? { status: "ready", calls: reply.calls }
-      : prev.status === "ready" ? prev : { status: "unavailable", reason: reply.reason });
+      : prev.status === "ready" ? prev : { status: "unavailable", reason: reply.reason, cause: reply.cause });
   }, []);
 
   useEffect(() => {

@@ -2433,6 +2433,49 @@ const REGISTER_SENTINEL = (() => {
  * page rather than from here, because `displaySecurity` rewrites a depository's
  * clipped label and the book's own `security` is not what this list offers.
  */
+/**
+ * THE FUND A READER PICKS ON ALL SECURITIES — see `monitor-pick-fund`.
+ *
+ * The largest current holding that is NOT a company share, derived from the
+ * book so the next drop picks its own, and searched by one distinctive word of
+ * its name rather than its whole label: the pick-list offers the DISPLAY name
+ * (`displaySecurity`), which is not always what the book stores. Current means
+ * what every allocation surface draws — a fund at nil units still publishing a
+ * NAV has been redeemed — re-derived here rather than imported.
+ */
+const PICK_FUND_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const top = positions.filter((p) => p.assetClass !== "Equity" && !redeemed(p))
+      .sort((a, b) => b.marketValue - a.marketValue)[0];
+    const word = top ? String(top.security).split(/[^A-Za-z]+/).find((w) => w.length >= 5) ?? null : null;
+    return word ? { name: top.security, word } : null;
+  } catch { return null; }
+})();
+
+/**
+ * A CLOSED FUND THE PICK-LIST STILL OFFERS — see `monitor-pick-fund`. The list
+ * offers every position, redeemed ones included, and Category does not draw a
+ * closed position either; so picking one on All Securities must NOT promise it
+ * on Category. Only a closed name nothing current also carries qualifies, or
+ * Category would draw it after all. Queried by its first two words, because the
+ * page shows the display spelling of a name rather than the book's raw one.
+ */
+const PICK_CLOSED_BOOK = (() => {
+  try {
+    const positions = bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS");
+    if (!Array.isArray(positions)) return null;
+    const redeemed = (p) => ["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const current = new Set(positions.filter((p) => !redeemed(p)).map((p) => String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
+    const c = positions.find((p) => redeemed(p) && !current.has(String(p.security).split(/\s+/).slice(0, 2).join(" ").toLowerCase()));
+    if (!c) return null;
+    return { name: c.security, query: String(c.security).split(/\s+/).slice(0, 2).join(" ") };
+  } catch { return null; }
+})();
+
 const REVIEW_GAP_BOOK = (() => {
   try {
     const gaps = bookArray(readFileSync(new URL("../src/data/reviewGaps.ts", import.meta.url), "utf8"), "REVIEW_GAPS");
@@ -4145,7 +4188,22 @@ const ROUTES = [
   // with no allocation table on it at all.
   ["cio-alloc-basket", "/cio?tab=allocation&alloc=basket"],
   ["cio-alloc-class", "/cio?tab=allocation&alloc=assetClass"],
-  ["monitor", "/monitor"],
+  /**
+   * ── THE CATEGORY VIEW HAS AN ADDRESS OF ITS OWN NOW ──────────────────────
+   *
+   *   *"Make this view as All Securities and make it first in portfolio monitor
+   *    and default open."*
+   *
+   * `/monitor` opens on All Securities, so every route below that was written
+   * against the CATEGORY table — its sections, its mandate rows, its category
+   * totals, its fund and tranche rows — walks `?group=category`, which is the
+   * address that view has now. Left on the bare path they would walk a table
+   * with no sections and no mandate rows, and most of their claims would
+   * ABSTAIN rather than fail: a sweep reporting clean over checks that stopped
+   * running. The DEFAULT is asserted where it now lives, on `monitor-security`,
+   * which walks the bare `/monitor`.
+   */
+  ["monitor", "/monitor?group=category"],
   ["private-market", "/private-market"],
   /**
    * ...AND THE SAME PAGE WITH EVERY METRIC SELECTED.
@@ -4217,6 +4275,13 @@ const ROUTES = [
    */
   ["private-market-calls", "/private-market"],
   ["private-market-calls-off", "/private-market"],
+  /**
+   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cl. The editor shows the
+   * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
+   * a signed-out reader is told to sign in, never handed set-up steps for a
+   * store that works. The two routes are the two sides of that one rule.
+   */
+  ["private-market-calls-signedout", "/private-market"],
   ["monitor-txns", "/monitor"],          // same route, Transactions toggle clicked
   /**
    * THE TRADES BRANCH HAD AN ADDRESS OF ITS OWN AND DOES NOT ANY MORE.
@@ -4242,13 +4307,13 @@ const ROUTES = [
   // figure opens into the dated contributions behind it, and the panel's whole
   // claim is that those tranches account for the row — which is only testable
   // once one is expanded.
-  ["monitor-tranche", "/monitor"],
+  ["monitor-tranche", "/monitor?group=category"],
   // ...AND THE HISTORY CARRIED THROUGH A FUND'S CLASS SWITCH — Buoyant's, whose
   // earlier contributions were bought as Class A1 and are held as A4 — and the
   // one carrying two payments at one entry NAV. Each opens the row the BOOK
   // names (`CARRIED_BOOK`, `SHARED_NAV_TRANCHE`), never a row chosen by size.
-  ["monitor-tranche-switch", "/monitor"],
-  ["monitor-tranche-shared", "/monitor"],
+  ["monitor-tranche-switch", "/monitor?group=category"],
+  ["monitor-tranche-shared", "/monitor?group=category"],
   /**
    * ...AND THE HOLDINGS TABLE AFTER A READER HAS ARRANGED IT.
    *
@@ -4261,7 +4326,7 @@ const ROUTES = [
    * left in declared order while the body follows a drag puts every total
    * under the wrong heading.
    */
-  ["monitor-arrange", "/monitor"],
+  ["monitor-arrange", "/monitor?group=category"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -4292,6 +4357,13 @@ const ROUTES = [
    * control and reading what comes back.
    */
   ["monitor-absent-name", "/monitor"],
+  /**
+   * ...AND A FUND PICKED ON THE DEFAULT VIEW. All Securities lists companies, so
+   * a fund picked there is not a row — which drew an empty table over a footer
+   * of ₹0 until the table learnt to say why. It is the ORDINARY case since that
+   * view became the default, and nothing but a walk that picks one can see it.
+   */
+  ["monitor-pick-fund", "/monitor"],
   ["monitor-txn-in", "/monitor"],
   ["monitor-txn-out", "/monitor"],
   /**
@@ -4361,25 +4433,25 @@ const ROUTES = [
   // both of this book's duplicate holdings are AIF — and that disagreement was
   // a real ₹3.17 Cr defect. `?view=entity` is the same contract every other
   // multi-view route in this app uses.
-  ["monitor-entity", "/monitor?view=entity"],
+  ["monitor-entity", "/monitor?group=category&view=entity"],
   // ...AND EACH RETURN MEASURE THE PICKER OFFERS, reached by URL (`?ret=`)
   // rather than by a click — the picker replaced the Absolute/CAGR toggle, and
   // the measure lives in the URL like every other view on this page, so the
   // sweep navigates straight to it. The one Return column shows the chosen
   // measure, labelled; the guard that keeps CAGR safe is asserted on the figures
   // the annualised view draws.
-  ["monitor-cagr", "/monitor?ret=cagr"],
+  ["monitor-cagr", "/monitor?group=category&ret=cagr"],
   // ...YTD IS NOW A MEASURE, NOT A COLUMN. The separate YTD column is gone; when
   // ticked, YTD renders in the one Return column under the same rule — measurable
   // only where a holding was opened during the year, a dash naming why otherwise.
-  ["monitor-ytd", "/monitor?ret=ytd"],
+  ["monitor-ytd", "/monitor?group=category&ret=ytd"],
   // ...AND XIRR, which per holding this book cannot strike (the statements carry
   // no cash-flow history per security), so every cell is a dash with the reason
   // rather than the banned `positionIrrPct` extrapolation.
-  ["monitor-xirr", "/monitor?ret=xirr"],
+  ["monitor-xirr", "/monitor?group=category&ret=xirr"],
   // ...AND TWO MEASURES AT ONCE, the multi-select the family asked for: the one
   // column shows both, each on its own labelled line.
-  ["monitor-returns-multi", "/monitor?ret=absolute,cagr"],
+  ["monitor-returns-multi", "/monitor?group=category&ret=absolute,cagr"],
   /**
    * ...AND A RETURN COLUMN SORTED ON ITS OWN FIGURE.
    *
@@ -4389,7 +4461,7 @@ const ROUTES = [
    * Walked as its own route because the comparator is only exercised once
    * something clicks a header.
    */
-  ["monitor-ret-sort", "/monitor?ret=absolute,cagr"],
+  ["monitor-ret-sort", "/monitor?group=category&ret=absolute,cagr"],
   /**
    * ...AND THE FOURTH AXIS, WHICH IS NOT AN ALLOCATION AXIS AT ALL.
    *
@@ -4402,7 +4474,14 @@ const ROUTES = [
    * chose is clubbed with the same name held directly. Reached by URL like every
    * other view on this page.
    */
-  ["monitor-security", "/monitor?group=security"],
+  /**
+   * …ON THE BARE `/monitor`, because it is the DEFAULT now. Walking the plain
+   * path is what makes every claim below a claim about the page the family
+   * opens — a default that quietly moved back to Category would fail the whole
+   * block rather than one line of it. The routes after this one keep the
+   * explicit `?group=security`, so the old address is walked too.
+   */
+  ["monitor-security", "/monitor"],
   /**
    * ...AND THE SECTOR FILTER, WHOSE DROPDOWN IS GONE BUT WHOSE BRANCHES ARE NOT.
    * Walked on the security axis, where every row is a security and therefore
@@ -4432,11 +4511,14 @@ const ROUTES = [
   /**
    * THE SAME COMPANY FROM THE MONITOR, where the family searched for it: the
    * row is opened and must name the account that sold it out. And the search
-   * list itself, on the default axis and the security axis, read whole — one
-   * option per company, each written as a name.
+   * list itself, on the category axis and the security axis, read whole — one
+   * option per company, each written as a name. (The first walked the bare
+   * `/monitor`, which WAS Category until All Securities became the default —
+   * Stage 10cm — so it names its axis in the address now, or the two routes
+   * would read the same list twice and the category build would go unchecked.)
    */
   ["monitor-sold-elsewhere", "/monitor?group=security"],
-  ["monitor-picklist", "/monitor"],
+  ["monitor-picklist", "/monitor?group=category"],
   ["monitor-security-picklist", "/monitor?group=security"],
   /**
    * ...AND THE SAME DRILL-DOWN WITH THE LOOK-THROUGH STORE HELD OPEN.
@@ -4460,9 +4542,9 @@ const ROUTES = [
    *    Default view will remain the current one, category wise."
    *
    * Both are reached by URL for the same reason `monitor-entity` is: the axis
-   * lives in `?group=`, so a slice is a link. The DEFAULT axis is asserted on
-   * the plain `monitor` route above — that it is still category, and that
-   * nothing about it moved.
+   * lives in `?group=`, so a slice is a link. The DEFAULT axis — All Securities
+   * since the family asked for it first and open — is asserted on
+   * `monitor-security`, the route that walks the bare `/monitor`.
    */
   ["monitor-assetclass", "/monitor?group=assetClass"],
   ["monitor-basket", "/monitor?group=basket"],
@@ -4471,12 +4553,13 @@ const ROUTES = [
    * show individual investments return in the drop down for securities you need
    * to implement the same for category/asset class/basket as well."*
    *
-   * The DEFAULT axis, because that is where the family reported it: on Category
-   * the name cell drew no chevron at all, and the per-account expansion was
-   * reachable only on `?group=security`. Walked on the plain route so a
-   * regression cannot hide behind a URL nobody uses.
+   * The CATEGORY axis, because that is where the family reported it: on
+   * Category the name cell drew no chevron at all, and the per-account expansion
+   * was reachable only on `?group=security`. It was the default when this was
+   * written and walked on the plain route for that reason; All Securities is the
+   * default now, so it walks `?group=category`, which is Category's own address.
    */
-  ["monitor-category-drill", "/monitor"],
+  ["monitor-category-drill", "/monitor?group=category"],
   /**
    * ...AND THE CLUBBED FUND OPENED INTO ITS OWN UNIT CLASSES — the second half
    * of *"we should only show 3P funds a single line item and then when we click
@@ -4485,7 +4568,7 @@ const ROUTES = [
    * the classes are where a reader goes to see which of them is which, so the
    * row and its expansion are one claim and are checked as one.
    */
-  ["monitor-fund-drill", "/monitor"],
+  ["monitor-fund-drill", "/monitor?group=category"],
   /**
    * ...AND THE WHOLE TREE OPEN, through the table's own Expand all — every row
    * that can open, every section, so every claim about what a row opens INTO
@@ -4493,13 +4576,13 @@ const ROUTES = [
    * chevron is also a check on the control: wired to nothing, it leaves the
    * rows shut and every claim below fails by name.
    */
-  ["monitor-open-all", "/monitor"],
+  ["monitor-open-all", "/monitor?group=category"],
   // ...AND ONE SECTION FOLDED ON ITS BAND, which is the half of the standard a
   // reader uses to put a category out of the way without losing its totals.
-  ["monitor-section-closed", "/monitor"],
+  ["monitor-section-closed", "/monitor?group=category"],
   // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
   // one way to reach the stale-filter defect. See the walk step of this name.
-  ["monitor-axis-switch", "/monitor"],
+  ["monitor-axis-switch", "/monitor?group=category"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -5305,6 +5388,20 @@ let SEARCH = null;
 let HEAD = null;
 /** The opened return-measure dropdown's alignment/viewport fit — see `monitor`. */
 let RETURN_DROPDOWN = null;
+/**
+ * The opened HOLDINGS pick-list's alignment and fit — see `monitor-security`.
+ * It moved to the right end of the filter row at the family's request, where a
+ * panel anchored to its LEFT edge would open past the page; measured on the
+ * default route, the one the family opens.
+ */
+let HOLDINGS_DROPDOWN = null;
+/**
+ * WHAT ALL SECURITIES SAID WHEN A FUND WAS PICKED, and what one click on its
+ * own button did — see `monitor-pick-fund`. Captured before the click, because
+ * the invariants read the page AFTER it: two states, one walk, the pattern
+ * `DIRECT_ALL` already follows.
+ */
+let PICKED_FUND = null;
 
 /**
  * ── THE DRILL-DOWN ADDRESSES, AND THE FIGURES THEY MUST RECONSTRUCT ──────────
@@ -5360,6 +5457,15 @@ const CIO_TILE_OPTIONS = [];
  */
 const TILE_MENU = new Map();
 const TILE_PICK = new Map();
+/**
+ * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10cl. Its
+ * menu, the metric picked (the LAST one offered, so a card that ignores the
+ * choice and appends the first spare metric fails), the strip read back after,
+ * and the page opened again.
+ */
+const TILE_ADD = new Map();
+/** What the Capital Call editor said when opened on a store that cannot save. */
+let CALL_OFF = null;
 /** The routes whose strip is picked from on the walk — never one a pick would spoil. */
 const PICK_WALK = new Set(["private-market", "private-market-tiles", "cio"]);
 /**
@@ -6182,6 +6288,18 @@ async function installCallStore(page) {
  * THE STORE BEFORE ITS BINDING EXISTS — the production state until somebody
  * with the Cloudflare account connects `GLOW_STORE`. The function's own 503.
  */
+/**
+ * A READER THE EDGE GATE HAS SIGNED OUT. The gate answers every `/api/*` path
+ * with its own login page, HTTP 200 and HTML — which is exactly what the page
+ * must read as "signed out", never as a store to set up.
+ */
+async function installCallStoreSignedOut(page) {
+  await page.route("**/api/capital-calls", (route) => route.fulfill({
+    status: 200, contentType: "text/html; charset=utf-8",
+    body: `<!doctype html><form method="POST" action="/__auth/login?next=%2F"><input type="password" name="password"></form>`,
+  }));
+}
+
 async function installCallStoreOff(page) {
   await page.route("**/api/capital-calls", (route) => route.fulfill({
     status: 503, contentType: "application/json",
@@ -8778,6 +8896,21 @@ const CIO_TILE_PICKER = [
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     return ctx.kpiTiles.length > 0 && ctx.kpiTiles.every((x) => x.controls >= 2 && x.links.length <= 1);
   }],
+  /**
+   * ...AND THE ADD TILE CARD TAKES THE STRIP'S NEXT COLUMN, NOT A ROW OF ITS
+   * OWN — Stage 10cl. This page does not scroll (Stage 10bj): a second row of
+   * KPI tiles takes its height from the panel under it. So the card is counted
+   * in `--kpi-cols`, and wherever the strip has fewer than six tiles it sits on
+   * the tiles' own row. Every claim above passes with the card on a row by
+   * itself — it is still the next cell, the size of a tile — so this one is
+   * struck on its ROW.
+   */
+  ["the ADD TILE card shares the tiles' row while the strip has room", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st?.addTile) return false;
+    if (st.slots >= 6) return { notChecked: `${st.slots} tiles fill the six-column strip, so the card takes the next row by design` };
+    return st.addTile.sameRow === true;
+  }],
 ];
 
 /**
@@ -10791,6 +10924,120 @@ const RETURN_COLUMNS = [
 ];
 
 /**
+ * ── THE MONITOR'S FILTER ROW: THE AXIS FIRST, THE TWO SELECTORS AT THE END ──
+ *
+ *   *"put the all holding and all entities selectors to the right end of after
+ *    return selector"*
+ *
+ * A factory, spread into a Holdings route on each kind of axis and into a
+ * Transactions route, because the row is ONE row on all three and the claim
+ * must not hold on the page the change was tested on and fail on the others.
+ * `holdings` is the only thing that differs: Expand all is a Holdings control,
+ * so only that row may carry it. The return picker is on BOTH — Transactions
+ * gained it at the family's request (Stage 10cd) — so on both rows the two
+ * selectors come after it, which is exactly where they were asked to be.
+ *
+ * NONE OF THESE CAN BE STRUCK ON THE PAGE TEXT — the row prints the same words
+ * whichever end the selectors sit at — so every claim reads the row's own
+ * children by handle and their boxes. A row that lost its handle is a FAILURE:
+ * nothing but a rewrite of the row produces that state.
+ */
+const FILTER_ROW = (holdings) => [
+  [`the filter row reads the axis, then which return${holdings ? " (and Expand all)" : ""}, and then the two selectors, last`, (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f) return false;
+    const seq = f.order.filter((k) => k !== "other").join(",");
+    return holdings ? /^axis,return(,expand)?,right$/.test(seq) : seq === "axis,return,right";
+  }],
+  ["…with All holdings and All entities inside that last group, and nowhere else on the row", (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f) return false;
+    return f.holdingsInRow === 1 && f.entitiesInRow === 1 && f.holdingsInGroup && f.entitiesInGroup;
+  }],
+  ["…and the group sits at the row's right end, All holdings then All entities", (t, ctx) => {
+    const f = ctx?.filterRow;
+    if (!f || f.groupRight === null) return false;
+    return Math.abs(f.groupRight - f.rowRight) <= 2 && f.holdingsBeforeEntities;
+  }],
+];
+
+/**
+ * ── ALL SECURITIES IS FIRST, IS CALLED THAT, AND IS WHAT `/monitor` OPENS ON ──
+ *
+ *   *"Make this view as All Securities and make it first in portfolio monitor
+ *    and default open."*
+ *
+ * Three claims, none implying another: a build that renamed the button and left
+ * it last passes the first alone; one that moved it first and kept Category as
+ * the default passes the first two. The third is struck on the ADDRESS as well
+ * as on the control — the route walks the bare `/monitor`, and a default is
+ * only a default if the page lands on it with no `?group=` asking for it.
+ */
+/**
+ * ── "PORTFOLIO MONITOR CARRIES THIS IN FULL" OPENS THE VIEW WHERE IT DOES ────
+ *
+ * A non-mandate account's page says the Monitor "carries this account in full".
+ * That is the Category view: on All Securities, the default since Stage 10cm, a
+ * fund is not a row. So the link must name `?group=category`, and the route that
+ * walks that page drawing none has lost the sentence — a finding, not an
+ * abstention.
+ *
+ * THERE WERE THREE SUCH SENTENCES AND ONE IS LEFT. The fund look-through card's
+ * and the holdings drill-down's went with the notes around every table, at the
+ * family's request (Stage 10ci, #90), so the check runs where the sentence
+ * still is rather than failing two pages for obeying that request.
+ */
+const MONITOR_IN_FULL = [
+  ["the link saying Portfolio Monitor carries this in full opens its Category view", (t, ctx) => {
+    const l = ctx?.monitorInFull;
+    if (!l) return false;
+    return l.length >= 1 && l.every((h) => h === "/monitor?group=category");
+  }],
+];
+
+const DEFAULT_AXIS = [
+  ["the axis control offers All Securities FIRST, under that name", (t, ctx) => {
+    const a = ctx?.axisButtons;
+    if (!a?.length) return false;
+    return a[0].key === "security" && a[0].label === "All Securities"
+      && a.map((b) => b.key).join(",") === "security,category,assetClass,basket";
+  }],
+  ["…and the bare /monitor opens on it — no ?group= in the address, and it is the one lit", (t, ctx) => {
+    const c = ctx?.axisControl, a = ctx?.axisButtons;
+    if (!c || !a?.length || !ctx?.url) return false;
+    const u = new URL(ctx.url);
+    const lit = a.filter((b) => b.selected);
+    return u.pathname === "/monitor" && !u.searchParams.has("group")
+      && c.view === "holdings" && c.active === "security"
+      && lit.length === 1 && lit[0].key === "security";
+  }],
+  /**
+   * …AND WHAT IT OPENS ON IS THE SECURITY TABLE, NOT A CATEGORY TABLE UNDER A
+   * RELABELLED BUTTON. The rest of this block asserts the table itself; this is
+   * the one line saying so outright, off the two things only that table draws.
+   */
+  ["…and the table it opens is the security table: no section headings, and the two derived columns", (t, ctx) => {
+    const secs = ctx?.sectionRows, notes = ctx?.colNotes;
+    if (!notes) return false;
+    return (secs?.length ?? 0) === 0 && notes.filter((n) => /derived/i.test(n.text)).length === 2;
+  }],
+  /**
+   * THE PICK-LIST, OPENED WHERE IT NOW SITS. Its panel is wider than its
+   * trigger, so at the row's right end a panel anchored to the trigger's LEFT
+   * edge opens past the page — the defect the return picker once had as the
+   * row's last control. Measured on this route alone, where the family opens it.
+   */
+  ["the opened holdings pick-list opens leftward and stays on screen", (t, ctx) => {
+    const d = ctx?.holdingsDropdown;
+    // MEASURED ON EXACTLY THE PASS THESE INVARIANTS RUN ON, so a null here
+    // means the trigger was not on the page — the control is gone, which is a
+    // finding and not a reason to abstain.
+    if (!d || !d.opened) return false;
+    return d.anchor === "right" && d.rightAligned === true && d.withinViewport === true;
+  }],
+];
+
+/**
  * ── EVERY WAY ONE COMPANY IS HELD: the claims, per tab ────────────────────
  *
  * *"I write type a stock I want to know how much I'm holding directly and how
@@ -11496,8 +11743,13 @@ const INVARIANTS = {
     }],
     ["…and the security axis is NOT offered here", (t, ctx) =>
       !!ctx.axisControl && !ctx.axisControl.offered.includes("security")],
-    ["…and it opens on Category, the default on both screens", (t, ctx) =>
+    // CATEGORY IS TRANSACTIONS' OWN DEFAULT, whatever the Holdings table is on:
+    // this route crosses from the bare `/monitor`, whose Holdings table now
+    // opens on All Securities — an axis Transactions does not have — so this is
+    // the fallback taken on the ordinary path rather than on an edge one.
+    ["…and it opens on Category, its own default, whatever Holdings is on", (t, ctx) =>
       !!ctx.axisControl && ctx.axisControl.active === "category"],
+    ...FILTER_ROW(false),
     /**
      * BOTH RECORDS ARE ON SCREEN, which is what the tabs used to make a reader
      * choose between. They are two measurements and must never share a footer —
@@ -12465,6 +12717,84 @@ const INVARIANTS = {
       }
       return a.note === null;
     }],
+  ],
+
+  /**
+   * ── A FUND PICKED ON ALL SECURITIES IS NAMED, NOT SWALLOWED ────────────────
+   *
+   * All Securities lists companies; a fund is one purchase of somebody else's
+   * portfolio, so it is not a row there. Before this view was the default that
+   * was a corner — reached only by `?group=security` — and picking a fund on it
+   * drew "No positions match your filters." over a footer of ₹0. As the default
+   * it is the ordinary case, and a family who know they hold the fund would read
+   * the table as having lost it.
+   *
+   * Five claims from one walk, and none implies another: the fund alone gets a
+   * sentence naming it; that table prints no ₹0 footer; a company picked beside
+   * it gets its row AND the fund keeps its sentence; and the one click the
+   * sentence offers lands on Category with the pick kept and the fund a row.
+   */
+  "monitor-pick-fund": [
+    ["a fund picked on All Securities is named, with why it is not a row", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!PICK_FUND_BOOK) return { notChecked: "the book holds no current holding that is not a company share" };
+      if (!pf?.fund) return false;       // the word found nothing — the pick-list lost the fund
+      const a = pf.alone;
+      if (!a?.notice) return false;
+      return a.notice.count === 1 && a.notice.text.includes(pf.fund)
+        && /not a company share/i.test(a.notice.text) && /All Securities/.test(a.notice.text)
+        && a.button && !a.genericEmpty;
+    }],
+    // …AND THE LINE IS ONE SHORT LINE, WITH THE REST IN ITS HOVER. Every note in
+    // a table cell is capped at 180 characters since Stage 10ci — `tableNotes`
+    // measures that on every route — and the sentence this line replaced ran to
+    // 182 with Sanshi's name in it. What moved into the hover is WHAT All
+    // Securities lists and WHERE the holding is a row, so the hover must say both.
+    ["…in one short line, with what All Securities lists and where the fund IS a row in its hover", (t, ctx) => {
+      const n = ctx?.pickedFund?.alone?.notice;
+      if (!n) return false;
+      const h = n.hover ?? "";
+      return n.text.length <= 180 && /one row per company/i.test(h) && /row on Category/i.test(h);
+    }],
+    // …BUT ONLY WHERE CATEGORY WOULD DRAW IT. A redeemed fund is offered too,
+    // and Category draws no closed position, so "Show it on Category" there
+    // would be a promise of an empty table; the generic line names the cause.
+    ["…but a CLOSED fund picked there is not promised on Category — it gets the generic line", (t, ctx) => {
+      if (!PICK_CLOSED_BOOK) return { notChecked: "the book holds no closed fund the pick-list offers" };
+      const c = ctx?.pickedFund?.closed;
+      if (!c?.got) return false;       // the query found nothing — the list lost the closed fund
+      return c.got.toLowerCase().includes(PICK_CLOSED_BOOK.query.toLowerCase())
+        && c.notice === null && c.genericEmpty === true && c.rows === 0 && c.footer === false;
+    }],
+    // AN EMPTY TABLE PRINTS NO TOTAL. A footer summed over nothing read
+    // "₹0 ₹0 ₹0 0.0%", and a total of nothing is not a measured zero (§2).
+    ["…and the empty table under it prints no ₹0 footer", (t, ctx) => {
+      const a = ctx?.pickedFund?.alone;
+      if (!a) return false;
+      return a.rows === 0 && a.footer === false && !/₹0\b/.test(a.footerText);
+    }],
+    ["…and a company picked beside it gets its row, while the fund keeps its sentence", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!pf?.company) return { notChecked: "the table's first row gave no word to search for" };
+      const m = pf.mixed;
+      return !!m && m.rows >= 1 && m.footer === true && m.notice?.count === 1 && m.notice.text.includes(pf.fund);
+    }],
+    ["…and its one click shows the fund on Category, with the pick kept", (t, ctx) => {
+      const pf = ctx?.pickedFund;
+      if (!pf?.fund || !ctx?.url) return false;
+      const u = new URL(ctx.url);
+      const word = PICK_FUND_BOOK.word.toLowerCase();
+      const rows = ctx?.tableRows ?? [];
+      // The pick survives the click: two picked reads "2 holdings", one reads
+      // the fund's own name — never the control's "All holdings".
+      const kept = pf.company ? pf.pickLabel === "2 holdings" : pf.pickLabel === pf.fund;
+      return u.searchParams.get("group") === "category"
+        && ctx.axisControl?.active === "category"
+        && kept
+        && rows.some((r) => String(r.cells?.[0] ?? "").toLowerCase().includes(word));
+    }],
+    ["…and on Category the sentence is gone, because the fund is a row there", (t, ctx) =>
+      !!ctx?.pickedFund?.fund && !/not (?:a )?company shares?, so (?:it is|they are) not/i.test(t)],
   ],
   "monitor-arrange": [
     ["clicking a money heading reorders the rows", (t, ctx) => {
@@ -13938,6 +14268,17 @@ const INVARIANTS = {
       const st = ctx?.tileStrip;
       if (!st?.slots) return false;
       return headingsWhole(st);
+    }],
+    /**
+     * ...AND THE ADD TILE CARD, ALONE ON THE NEXT ROW, IS STILL THE SIZE OF A
+     * TILE — Stage 10cl. Six tiles fill Morning CIO's six columns, so this is the
+     * one state in which its card sits on a row by itself; `auto-rows-fr` is what
+     * keeps that row as tall as the tiles' rather than as short as two words.
+     */
+    ["…and the ADD TILE card, alone on the next row, is still the size of a tile", (t, ctx) => {
+      const a = ctx?.tileStrip?.addTile;
+      if (!a) return false;
+      return a.sameSize && a.nextCell && !a.sameRow && a.lastCell;
     }],
   ],
   /**
@@ -15843,6 +16184,21 @@ const INVARIANTS = {
       return pv.callCells.every((c) => c.state === "unavailable" && (c.reason ?? "").length > 20 && !/₹/.test(c.text))
         && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
     }],
+    /**
+     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cl.
+     *
+     * *"We need to keep the ability for the customer to add a date in this
+     *  Capital Call column, which is empty right now."* It was a column of em
+     * dashes with the reason in a hover, and a column of dashes reads as
+     * "nothing entered". So each cell says what it is in a word and can be
+     * clicked — and never says "Add", because nothing here can be saved.
+     */
+    ["…each of them a button naming the cause in a word, never an Add", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.tag === "button" && c.cause === "no-function"
+        && c.text === "Not available" && !/\badd\b/i.test(c.text));
+    }],
     // PM-4e. DUE NOW IS A MEASUREMENT, and its coverage must be said. It is
     // the only genuinely-due figure in this book, it is a MEASURED zero on this
     // drop, and an account whose statement prints no such line is skipped
@@ -16278,6 +16634,52 @@ const INVARIANTS = {
       if (!pv?.callCells?.length) return false;
       return pv.callCells.every((c) => c.state === "unavailable" && /not switched on yet/i.test(c.reason ?? "") && !/₹/.test(c.text))
         && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
+    }],
+    /**
+     * ── STAGE 10cl: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
+     *
+     * The state production is in until the KV binding exists. Every cell is a
+     * button reading "Not set up", the header note says it once, and clicking
+     * one opens the editor — which states the reason, gives the one-time
+     * Cloudflare steps naming the binding the function reads, and keeps Save
+     * off. "Saved for everyone" is not printed, because nothing here is.
+     */
+    ["every cell is a button reading Not set up, and the header says it once", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.tag === "button" && c.cause === "not-configured" && c.text === "Not set up")
+        && pv.callHead?.note === "not set up";
+    }],
+    ["clicking a cell opens the editor: the reason, the one-time steps, and no Save", (t, ctx) => {
+      const o = ctx?.callOff;
+      if (!o || o.error) return false;
+      const steps = (o.steps ?? []).join(" ");
+      return o.editors === 1 && o.cause === "not-configured" && /not switched on yet/i.test(o.reason ?? "")
+        && (o.steps ?? []).length === 3
+        && /Variable name:\s*GLOW_STORE\b/.test(steps) && /Workers KV/.test(steps) && /Settings → Bindings/.test(steps) && /redeploy/i.test(steps)
+        && o.saveDisabled && o.inputs >= 3 && o.inputsDisabled && !o.savedForEveryone;
+    }],
+  ],
+  /**
+   * ── A SIGNED-OUT READER — Stage 10cl ────────────────────────────────────────
+   *
+   * The other side of the set-up steps' rule: they belong to a store nobody has
+   * connected, and a reader whom the edge gate signed out is told to sign in —
+   * never handed Cloudflare steps for a store that works.
+   */
+  "private-market-calls-signedout": [
+    ["every cell is a button reading Signed out, and none offers to save", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv?.callCells?.length) return false;
+      return pv.callCells.every((c) => c.state === "unavailable" && c.tag === "button" && c.cause === "signed-out"
+        && c.text === "Signed out" && /sign in again/i.test(c.reason ?? ""))
+        && pv.callHead?.note === "signed out";
+    }],
+    ["the editor tells a signed-out reader to sign in, and shows no set-up steps", (t, ctx) => {
+      const o = ctx?.callOff;
+      if (!o || o.error) return false;
+      return o.editors === 1 && o.cause === "signed-out" && /sign in again/i.test(o.reason ?? "")
+        && o.steps === null && o.saveDisabled && !o.savedForEveryone;
     }],
   ],
   /**
@@ -17357,6 +17759,7 @@ const INVARIANTS = {
      * shared axis now — and the reason this is struck structurally did not
      * move with it.)
      */
+    ...FILTER_ROW(true),
     ["the removed Holdings basis switch and Review deck button stay removed",
       () => {
         if (!HEAD) return { notChecked: "the header geometry was not measured on this pass" };
@@ -17584,25 +17987,25 @@ const INVARIANTS = {
     // book's duplicates are AIF holdings: in the by-entity view the AIF heading
     // summed ₹3.17 Cr that the (deduped) footer beneath it correctly did not.
     /**
-     * THE DEFAULT SLICE IS STILL CATEGORY, AND IS STILL THE ONE IT WAS.
+     * THE CATEGORY SLICE IS THE CATEGORY AXIS, AT ITS OWN ADDRESS.
      *
-     *   "Default view will remain the current one, category wise."
-     *
-     * Two new axes were added beside it, and the whole risk of that change is
-     * that the DEFAULT quietly becomes one of them — the page would render
-     * perfectly, every figure would be right, and the family would be looking
-     * at a different table from the one they asked to keep. So the plain
-     * `/monitor` walk (no `?group=`) asserts the axis it landed on, off the
+     * This read "the default slice is still the category axis", from the
+     * family's *"Default view will remain the current one, category wise."* They
+     * have since asked for All Securities first and open, so the default moved
+     * and is asserted where it now lives (`monitor-security`, the bare
+     * `/monitor`). What stays true HERE is that `?group=category` — the address
+     * this route walks, and the one every "carries this account in full" link
+     * points at — lands on the category table and nothing else, off the
      * heading's own attribute rather than its words.
      */
-    ["the default slice is still the category axis", (t, ctx) => {
+    ["the category address lands on the category axis", (t, ctx) => {
       const secs = ctx?.sectionRows;
       if (!secs?.length) return { notChecked: "no section headings were rendered on this run" };
       return secs.every((x) => x.axis === "category");
     }],
     // ...and the sections are the ones it has always drawn. A category axis that
     // started emitting a basket name would satisfy the check above.
-    ["the default slice draws the category sections and no family basket", (t, ctx) => {
+    ["the category slice draws the category sections and no family basket", (t, ctx) => {
       const secs = ctx?.sectionRows;
       if (!secs?.length) return { notChecked: "no section headings on this run" };
       const BASKETS = ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"];
@@ -18326,13 +18729,17 @@ const INVARIANTS = {
       return hasDerived === 2 && says;
     }],
 
-    ["the axis is offered as a fourth segment and is the one selected", (t, ctx) => {
+    // It was the FOURTH segment until the family asked for it first and open;
+    // the order, the name and the default are `DEFAULT_AXIS`'s, spread below.
+    ["the axis is offered beside the other three and is the one selected", (t, ctx) => {
       const axes = ctx?.axisButtons;
-      if (!axes?.length) return { notChecked: "the axis segments were not captured on this run" };
+      if (!axes?.length) return false;
       const want = ["category", "assetClass", "basket", "security"];
       return want.every((k) => axes.some((a) => a.key === k))
         && axes.find((a) => a.selected)?.key === "security";
     }],
+    ...DEFAULT_AXIS,
+    ...FILTER_ROW(true),
     /**
      * "AIF ITSELF SHOULDN'T SHOW UP AS A SECURITY." Struck on the fund NAMES the
      * book carries, every one of them, rather than on a count: a table that
@@ -19977,7 +20384,7 @@ const INVARIANTS = {
         && [...AIF_FUND_KEYS].every((k) => got.has(k));
     }],
   ],
-  "monitor-picklist": pickListChecks("the default axis"),
+  "monitor-picklist": pickListChecks("the category axis"),
   "monitor-security-picklist": pickListChecks("the security axis", true),
   "stock-qty": [
     ...qtyChecks(() => QTY_BOOK?.tableKey),
@@ -20517,6 +20924,7 @@ const INVARIANTS = {
         || /NOT annualised and NOT money-weighted/i.test(t)],
   ],
   "mandate-fund": [
+    ...MONITOR_IN_FULL,
     ["the address resolved to a fund folio this book carries, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
     /**
@@ -21005,10 +21413,66 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
     if (!pick) return false;
     return /saved in this browser only/i.test(pick.savedWhere ?? "") && /not running here/i.test(pick.savedWhere ?? "");
   }],
-  ["the + sits on the last tile only, and every tile can be removed", (t, ctx) => {
+  /**
+   * ── THE ADD TILE CARD — Stage 10cl ───────────────────────────────────────
+   *
+   * *"Add another tile. It should be a big empty tile with bold written: ADD
+   * TILE. When I click on the ADD TILE button, I should be able to choose what
+   * I want to see in that tile."* It replaced a 20px `+` in the last tile's
+   * corner. It is ONE control, it is its own grid cell and not part of any
+   * tile, and it sits where the next tile will land — and every tile can still
+   * be removed, or a metric added by mistake is permanent.
+   */
+  ["the ADD TILE card sits where the next tile will land, and every tile can be removed", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st) return false;
-    return st.adds === 1 && st.addOnLast && st.removes === st.slots;
+    const a = st.addTile;
+    return st.adds === 1 && !!a && !a.inCard && a.lastCell && a.nextCell && st.removes === st.slots;
+  }],
+  /**
+   * BIG, EMPTY AND BOLD, EACH MEASURED. Big is the size of a tile — even alone
+   * on a row, which is what `auto-rows-fr` is for; empty is no figure in it and
+   * a dashed edge rather than a card's; bold is the label's computed weight. A
+   * `+` restyled as a larger button passes none of the three.
+   */
+  ["the ADD TILE card is a big empty tile, the size of a tile, reading ADD TILE in bold", (t, ctx) => {
+    const a = ctx?.tileStrip?.addTile;
+    if (!a) return false;
+    return a.text === "ADD TILE" && a.weight >= 700 && a.sameSize && a.figures === 0 && a.border === "dashed";
+  }],
+  /**
+   * CLICKING IT OFFERS EXACTLY WHAT IS NOT ON SCREEN, ADDS WHAT WAS PICKED, AND
+   * THE NEXT VISIT OPENS ON IT. The walk picks the LAST metric offered: the `+`
+   * this replaced appended the FIRST spare metric whatever the reader wanted,
+   * and a card wired the same way passes every structural claim above. The new
+   * tile must be that metric, in the last slot, named on its own picker; the
+   * address must carry no `?tiles=` (a choice is SAVED, Stage 10cb, not written
+   * into the URL); and the page opened again must still carry it.
+   */
+  ["clicking ADD TILE offers the metrics not on screen, adds the one picked, and the page reopens with it", (t, ctx) => {
+    const a = ctx?.tileAdd;
+    const menu = ctx?.tileMenu;
+    const st = ctx?.tileStrip;
+    if (!a || a.error || !menu?.length || !st) return false;
+    const want = menu.filter((id) => !a.before.includes(id));
+    if (want.length < 2) return { notChecked: "fewer than two metrics are off the strip, so a pick cannot tell the first from the last" };
+    const after = a.after;
+    return a.before.join(",") === st.ids.join(",")
+      && a.offered.map((o) => o.id).join(",") === want.join(",")
+      && a.picked === want[want.length - 1]
+      && !!after
+      && after.ids.join(",") === [...a.before, a.picked].join(",")
+      && new URLSearchParams(after.search).get("tiles") == null
+      && after.lastSlot === a.picked
+      && after.lastLabel === a.pickedLabel
+      && !after.menuOpen
+      && after.addLast
+      && Array.isArray(a.revisit) && a.revisit.join(",") === after.ids.join(",");
+  }],
+  ["the ADD TILE menu opens over the page, and Escape closes it", (t, ctx) => {
+    const a = ctx?.tileAdd;
+    if (!a || a.error) return false;
+    return !!a.paint?.onTop && a.paint.h >= 60 && a.escClosed === true;
   }],
   /**
    * ...AND EVERY HEADING IS SHOWN WHOLE.
@@ -21063,6 +21527,16 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
       const st = ctx?.tileStrip, menu = ctx?.tileMenu;
       if (!st || !menu?.length) return false;
       return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
+    }],
+    /**
+     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cl. A
+     * card that opened an empty menu would be the control that looks live and
+     * does nothing, and this is the one route where the whole catalogue is up.
+     */
+    ["with every metric on screen there is no ADD TILE card", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st) return false;
+      return st.slots > 0 && st.adds === 0 && st.addTile === null;
     }],
   ];
 }
@@ -21264,6 +21738,7 @@ for (const theme of THEMES) {
       const tileStore = {}, tilePosts = [];
       if (name === "cio-tiles-saved") await installTileStore(ctx, tileStore, tilePosts);
       if (name === "private-market-calls-off") await installCallStoreOff(page);
+      if (name === "private-market-calls-signedout") await installCallStoreSignedOut(page);
       if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
       if (name === "cio-index-loading") await installStalledIndices(page);
@@ -21778,7 +22253,8 @@ for (const theme of THEMES) {
         }
       }
       /**
-       * A HOLDING OPENED ON THE DEFAULT (CATEGORY) AXIS.
+       * A HOLDING OPENED ON THE CATEGORY AXIS (`?group=category` — it was the
+       * default when this walk was written; All Securities is now).
        *
        * Picks the row held through the MOST accounts, chosen off the DOM rather
        * than named here — the same rule as `data-days` and `data-tranche-rows`:
@@ -22072,6 +22548,43 @@ for (const theme of THEMES) {
           sidesOutside: !!document.querySelector("main [data-pm-sides]:not(details [data-pm-sides])"),
         })));
       /**
+       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cl ──────────────────────
+       *
+       * *"They should be able to simply click, select the date, and save it."*
+       * The cells were em dashes nothing could click; they name their cause and
+       * open the editor now. So the walk CLICKS one and reads what the editor
+       * says — the reason, the set-up steps where they apply, and whether Save
+       * is really off — and leaves it open, with the steps unfolded, so the
+       * light-mode sweep reads their colours too.
+       */
+      if (name === "private-market-calls-off" || name === "private-market-calls-signedout") {
+        CALL_OFF = { error: null };
+        try {
+          await page.waitForSelector('[data-pm-call-state]:not([data-pm-call-state="loading"])', { timeout: 15000 });
+          await page.locator('[data-pm-call-state="unavailable"]').first().click();
+          await page.waitForSelector("main [data-pm-call-editor]", { timeout: 5000 });
+          await page.$$eval("main [data-pm-call-setup]", (ds) => ds.forEach((d) => { d.open = true; }));
+          await page.waitForTimeout(150);
+          Object.assign(CALL_OFF, await page.evaluate(() => {
+            const ed = document.querySelector("main [data-pm-call-editor]");
+            const said = ed?.querySelector("[data-pm-call-unavailable]");
+            const setup = ed?.querySelector("[data-pm-call-setup]");
+            const save = ed?.querySelector("[data-pm-call-save]");
+            const inputs = [...(ed?.querySelectorAll("[data-pm-call-input]") ?? [])];
+            return {
+              editors: document.querySelectorAll("main [data-pm-call-editor]").length,
+              reason: (said?.textContent ?? "").trim() || null,
+              cause: said?.getAttribute("data-pm-call-unavailable") ?? null,
+              steps: setup ? [...setup.querySelectorAll("li")].map((li) => (li.textContent ?? "").replace(/\s+/g, " ").trim()) : null,
+              saveDisabled: !!save && save.disabled === true,
+              inputs: inputs.length,
+              inputsDisabled: inputs.length > 0 && inputs.every((i) => i.disabled === true),
+              savedForEveryone: /saved for everyone/i.test(ed?.textContent ?? ""),
+            };
+          }));
+        } catch (e) { CALL_OFF.error = String(e?.message ?? e).slice(0, 200); }
+      }
+      /**
        * …AND THE WORKING LINE UNDER THE TABLE, OPENED. It is a collapsed
        * `<details>` at the family's request — fewer explanations on this page —
        * and a collapsed `<details>` is not in `innerText`, so the claims about
@@ -22248,6 +22761,72 @@ for (const theme of THEMES) {
         await back.fill("");
         await back.type(REVIEW_GAP_BOOK.name, { delay: 5 });
         await page.waitForTimeout(250);
+      }
+      /**
+       * A FUND PICKED ON ALL SECURITIES — the default view since the family
+       * asked for it first — then a company beside it, then the one click the
+       * table offers. Picked by TYPING a word of the book's largest fund and
+       * taking the option that comes back, as a reader does; the company is the
+       * table's own first row, read off the page before anything is picked.
+       */
+      if (name === "monitor-pick-fund" && PICK_FUND_BOOK) {
+        const box = page.locator("[data-multiselect='All holdings']");
+        const pick = async (q) => {
+          await box.locator("[data-multiselect-toggle]").click();
+          const input = box.locator("input").first();
+          await input.fill("");
+          await input.type(q, { delay: 5 });
+          await page.waitForTimeout(250);
+          const opt = box.locator("[data-option]").first();
+          const got = (await opt.count()) ? await opt.getAttribute("data-option") : null;
+          if (got) await opt.dispatchEvent("mousedown");
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(700);
+          return got;
+        };
+        const state = () => page.evaluate(() => {
+          const table = document.querySelector("table[data-monitor-table='holdings']");
+          const n = document.querySelector("[data-picked-not-rows]");
+          return {
+            notice: n ? {
+              count: Number(n.getAttribute("data-picked-not-rows")),
+              text: (n.innerText ?? "").replace(/\s+/g, " ").trim(),
+              // The reason's longer half is a hover since the notes around every
+              // table became one short line (Stage 10ci), so it is read there.
+              hover: n.querySelector("[title]")?.getAttribute("title") ?? null,
+            } : null,
+            rows: table ? table.querySelectorAll("tbody tr[data-security-key]").length : null,
+            footer: !!table?.querySelector("[data-footer-total]"),
+            footerText: (table?.querySelector("tfoot")?.innerText ?? "").replace(/\s+/g, " ").trim(),
+            genericEmpty: /No positions match your filters/i.test(table?.innerText ?? ""),
+            button: !!document.querySelector("[data-show-on-category]"),
+          };
+        });
+        // A CLOSED FUND FIRST, ALONE, then the selection is cleared: the line
+        // below must not promise a row Category will not draw.
+        let closed = null;
+        if (PICK_CLOSED_BOOK) {
+          const got = await pick(PICK_CLOSED_BOOK.query);
+          closed = { got, ...(await state()) };
+          const x = box.locator('[data-multiselect-toggle] [title="Clear selection"]').first();
+          if (await x.count()) { await x.click(); await page.waitForTimeout(700); }
+        }
+        const firstRow = await page.evaluate(() =>
+          document.querySelector("table[data-monitor-table='holdings'] tbody tr[data-security-key] td")?.innerText?.trim() ?? null);
+        const companyWord = (firstRow ?? "").split(/[^A-Za-z]+/).find((w) => w.length >= 6) ?? null;
+        const fund = await pick(PICK_FUND_BOOK.word);
+        const alone = await state();
+        const company = companyWord ? await pick(companyWord) : null;
+        const mixed = company ? await state() : null;
+        const btn = page.locator("[data-show-on-category]").first();
+        if (await btn.count()) { await btn.click(); await page.waitForTimeout(1200); }
+        // WHAT THE PICK-LIST SAYS AFTER THE CLICK — "Show it on Category" must
+        // move the AXIS and keep the pick. A cleared selection would still draw
+        // the fund's row on Category (every holding is a row there), so the row
+        // alone cannot tell the two apart; the control's own label can.
+        const pickLabel = await page.evaluate(() =>
+          (document.querySelector("[data-multiselect-toggle='All holdings'] .truncate")?.textContent ?? "").trim() || null);
+        PICKED_FUND = { fund, company, alone, mixed, pickLabel, closed };
       }
       if (name === "monitor-arrange") {
         const tb = page.locator("main table").first();
@@ -23702,7 +24281,56 @@ for (const theme of THEMES) {
         [...document.querySelectorAll("[data-group-axis]")].map((b) => ({
           key: b.getAttribute("data-group-axis"),
           selected: b.getAttribute("aria-selected") === "true",
+          // THE WORDS ON THE BUTTON, for the one claim that is about a label:
+          // *"Make this view as All Securities"*. Every other claim reads the key.
+          label: (b.textContent ?? "").replace(/\s+/g, " ").trim(),
         })));
+      /**
+       * ── THE FILTER ROW'S ORDER AND ITS RIGHT END, MEASURED ─────────────────
+       *
+       *   *"put the all holding and all entities selectors to the right end of
+       *    after return selector"*
+       *
+       * Two claims, and NEITHER IS VISIBLE IN THE PAGE TEXT: the row renders the
+       * same words whichever end the selectors sit at. So the order is read off
+       * the row's own children (by handle, never by label) and the right end off
+       * the boxes — the group's right edge must be the row's.
+       */
+      const filterRow = FAST ? null : await page.evaluate(() => {
+        const row = document.querySelector("[data-monitor-filter-row]");
+        if (!row) return null;
+        const kind = (el) => el.matches("[data-axis-control]") ? "axis"
+          : el.matches("[data-return-measures]") ? "return"
+          : el.matches("[data-monitor-filters-right]") ? "right"
+          : el.matches("[data-tree-expand-all]") || el.querySelector("[data-tree-expand-all]") ? "expand" : "other";
+        const box = (el) => (el ? el.getBoundingClientRect() : null);
+        const right = row.querySelector("[data-monitor-filters-right]");
+        const holdings = right?.querySelector("[data-multiselect='All holdings']") ?? null;
+        const entities = right?.querySelector("[data-entity-filter]") ?? null;
+        const r = box(row), g = box(right), h = box(holdings), e = box(entities);
+        return {
+          order: [...row.children].map(kind),
+          // Anywhere in the row, so a selector drawn OUTSIDE the right-hand
+          // group — back at the head of the row — is counted, not missed.
+          holdingsInRow: row.querySelectorAll("[data-multiselect='All holdings']").length,
+          entitiesInRow: row.querySelectorAll("[data-entity-filter]").length,
+          holdingsInGroup: !!holdings, entitiesInGroup: !!entities,
+          rowRight: r.right,
+          groupRight: g ? g.right : null,
+          holdingsBeforeEntities: !!h && !!e && h.right <= e.left + 1 && h.top < e.bottom && e.top < h.bottom,
+        };
+      });
+      /**
+       * THE LINK THAT SAYS THE MONITOR CARRIES SOMETHING "IN FULL" — on a
+       * non-mandate account's page, the one such sentence the notes' removal
+       * left. That is true of the Category view, where every holding is a row,
+       * and not of All Securities, the default, where a fund is not; so it names
+       * `?group=category`. Read off its handle, because the words "Portfolio
+       * Monitor" are also the breadcrumb, which rightly opens the page on
+       * whatever it opens on.
+       */
+      const monitorInFull = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("main a[data-monitor-in-full]")].map((a) => a.getAttribute("href")));
       /**
        * ── THE AXIS CONTROL AS A WHOLE, not as a bag of buttons ───────────────
        *
@@ -24127,8 +24755,11 @@ for (const theme of THEMES) {
               date: el?.getAttribute("data-call-date") ?? null,
               more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
               text: txt(td),
-              // An `AbsentCell` carries its reason in a title a reader hovers.
+              // A cell that cannot save carries its whole reason in a title, and
+              // names its cause in a word on screen — Stage 10cl.
               reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+              tag: el?.tagName?.toLowerCase() ?? null,
+              cause: el?.getAttribute("data-pm-call-cause") ?? null,
             };
           }),
           callEditors: document.querySelectorAll("main [data-pm-call-editor]").length,
@@ -25157,6 +25788,35 @@ for (const theme of THEMES) {
         }
       }
       /**
+       * THE HOLDINGS PICK-LIST, OPENED AT THE ROW'S RIGHT END. Same shape as the
+       * return dropdown above and for the same reason: its panel is wider than
+       * its trigger, and at the right end of the row a panel anchored to the
+       * trigger's LEFT edge opens past the page. Measured after `mainText`, and
+       * closed again, so its option list never reaches a text check.
+       */
+      if (!FAST && name === "monitor-security" && theme === THEMES[0] && width === WIDTHS[0]) {
+        const trig = page.locator("[data-multiselect-toggle='All holdings']").first();
+        if (await trig.count()) {
+          await trig.click();
+          await page.waitForTimeout(150);
+          HOLDINGS_DROPDOWN = await page.evaluate(() => {
+            const trigger = document.querySelector("[data-multiselect-toggle='All holdings']");
+            const panel = document.querySelector("[data-multiselect='All holdings'] [data-multiselect-panel]");
+            if (!trigger || !panel) return { opened: false };
+            const t = trigger.getBoundingClientRect();
+            const l = panel.getBoundingClientRect();
+            return {
+              opened: true,
+              anchor: panel.getAttribute("data-multiselect-panel"),
+              rightAligned: Math.abs(l.right - t.right) <= 2,
+              withinViewport: l.left >= -1 && l.right <= window.innerWidth + 1,
+            };
+          });
+          await page.keyboard.press("Escape").catch(() => {});
+          await page.waitForTimeout(60);
+        }
+      }
+      /**
        * HOW MANY TABLE ROWS A READER ACTUALLY SEES WITHOUT SCROLLING.
        *
        * "Right now I cannot even see 2 companies completely, which is very
@@ -25400,6 +26060,46 @@ for (const theme of THEMES) {
         if (!strip) return null;
         const adds = [...strip.querySelectorAll("[data-tile-add]")];
         const cards = [...strip.querySelectorAll(".card")];
+        /**
+         * THE ADD TILE CARD — Stage 10cl. *"a big empty tile with bold written:
+         * ADD TILE."* Every word of that is geometry or style — big, empty,
+         * bold, and where it sits — so it is MEASURED: its box against the last
+         * tile's, its label's computed weight, its border, and whether it is
+         * the grid's last cell, which is where the next tile will land.
+         */
+        const addTile = (() => {
+          const el = adds[0];
+          const slot = strip.querySelector("[data-tile-add-slot]");
+          if (!el || !slot) return null;
+          const tiles = [...strip.querySelectorAll("[data-tile-slot] .card")];
+          const lastTile = tiles[tiles.length - 1];
+          const r = slot.getBoundingClientRect();
+          const t = lastTile?.getBoundingClientRect();
+          const sr = strip.getBoundingClientRect();
+          const label = el.querySelector("[data-tile-add-label]");
+          const kids = [...strip.children];
+          const near = (a, b) => Math.abs(a - b) <= 2;
+          return {
+            text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+            weight: label ? Number(getComputedStyle(label).fontWeight) : 0,
+            border: getComputedStyle(el).borderTopStyle,
+            inCard: !!el.closest(".card"),
+            figures: slot.querySelectorAll("[data-stat-value]").length,
+            lastCell: kids[kids.length - 1] === slot,
+            // THE SAME SIZE AS A TILE, even alone on a row of its own.
+            sameSize: !!t && near(r.width, t.width) && near(r.height, t.height),
+            // ON THE LAST TILE'S OWN ROW — what Morning CIO requires while its
+            // strip has room, and what Private Market's full four do not allow.
+            sameRow: !!t && near(r.top, t.top),
+            // WHERE THE NEXT TILE LANDS: beside the last tile on its row, or
+            // at the start of the next row when that row is full.
+            nextCell: !!t && ((near(r.top, t.top) && r.left > t.right)
+              || (r.top >= t.bottom - 1 && near(r.left, sr.left))),
+            w: Math.round(r.width), h: Math.round(r.height),
+            tileW: t ? Math.round(t.width) : 0, tileH: t ? Math.round(t.height) : 0,
+            title: el.getAttribute("title") ?? "",
+          };
+        })();
         return {
           ids: (strip.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
           // EACH TILE'S OWN TEXT, so a claim about one tile is struck on that
@@ -25528,9 +26228,7 @@ for (const theme of THEMES) {
           pickers: strip.querySelectorAll("[data-tile-select]").length,
           removes: strip.querySelectorAll("[data-tile-remove]").length,
           adds: adds.length,
-          // THE `+` IS ON THE LAST TILE, which is where the family put it — and
-          // "somewhere on the strip" is a different and weaker claim.
-          addOnLast: adds.length === 1 && cards.length > 0 && cards[cards.length - 1].contains(adds[0]),
+          addTile,
         };
       });
       /**
@@ -25597,6 +26295,97 @@ for (const theme of THEMES) {
             await page.keyboard.press("Escape");
           }
         } catch { /* a strip with no picker is a finding below, not a crash here */ }
+      }
+      /**
+       * ── …AND THE ADD TILE CARD, USED — Stage 10cl ───────────────────────────
+       *
+       * *"When I click on the ADD TILE button, I should be able to choose what
+       * I want to see in that tile."* The walk opens the card's menu, reads what
+       * it offers, checks Escape closes it, opens it again and picks the LAST
+       * metric offered — the one a card that ignored the choice and appended the
+       * first spare metric (what the `+` it replaced did) could never add — then
+       * reads the strip and the address back, OPENS THE PAGE AGAIN with no
+       * `?tiles=` (the family's "next time"), and puts the page back as
+       * addressed. Both strips, wherever a card is drawn.
+       */
+      if (!FAST && PICK_WALK.has(name) && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.adds) {
+        const rec = { error: null };
+        TILE_ADD.set(name, rec);
+        const stripIds = () => page.evaluate(() =>
+          (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+        const menuOpen = async () => (await page.locator("main [data-tile-add-menu]").count()) > 0;
+        try {
+          const before = await stripIds();
+          await page.click("main [data-tile-add]");
+          await page.waitForSelector("main [data-tile-add-menu]", { timeout: 5000 });
+          const offered = await page.$$eval("main [data-tile-add-option]", (els) =>
+            els.map((e) => ({ id: e.getAttribute("data-tile-add-option") ?? "", label: (e.textContent ?? "").trim() })));
+          /**
+           * THE MENU IS ON TOP OF THE PAGE. It opens over the card — on Private
+           * Market a row of its own just above the fund table, on Morning CIO
+           * the strip's last column above the panel — so a menu painting UNDER
+           * what follows would show a strip of options cut through by figures,
+           * with every word of it still in the DOM. Sampled on a grid with
+           * hit-testing switched on, as the search list is, because paint order
+           * is what is measured.
+           */
+          const paint = await page.evaluate(() => {
+            const menu = document.querySelector("main [data-tile-add-menu]");
+            if (!menu) return null;
+            const r = menu.getBoundingClientRect();
+            const st = document.createElement("style");
+            st.textContent = "* { pointer-events: auto !important; }";
+            document.head.appendChild(st);
+            let covered = 0, total = 0;
+            for (let y = r.top + 6; y < r.bottom - 6; y += 12) {
+              for (let i = 0; i <= 6; i++) {
+                const x = r.left + 6 + (i * (r.width - 12)) / 6;
+                total++;
+                const hit = document.elementFromPoint(x, y);
+                if (hit && !menu.contains(hit)) covered++;
+              }
+            }
+            st.remove();
+            return { onTop: covered === 0 && total > 0, covered, total, w: Math.round(r.width), h: Math.round(r.height) };
+          });
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(150);
+          const escClosed = !(await menuOpen());
+          const pick = offered.at(-1) ?? null;
+          let after = null, revisit = null;
+          if (pick) {
+            // OPENED ONLY IF IT IS SHUT, so a broken Escape fails its own claim
+            // and not this one too: clicking the card over an open menu would
+            // toggle it CLOSED and read as a pick that did not land.
+            if (!(await menuOpen())) await page.click("main [data-tile-add]");
+            await page.waitForSelector("main [data-tile-add-menu]", { timeout: 5000 });
+            await page.click(`main [data-tile-add-option="${pick.id}"]`);
+            await page.waitForFunction((n) =>
+              (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean).length === n,
+            before.length + 1, { timeout: 5000 });
+            after = await page.evaluate(() => {
+              const strip = document.querySelector("main [data-tile-strip]");
+              const slots = [...(strip?.querySelectorAll("[data-tile-slot]") ?? [])];
+              const kids = [...(strip?.children ?? [])];
+              return {
+                ids: (strip?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+                search: location.search,
+                lastSlot: slots.at(-1)?.getAttribute("data-tile-slot") ?? null,
+                lastLabel: (slots.at(-1)?.querySelector("[data-tile-select] span")?.textContent ?? "").trim(),
+                menuOpen: !!document.querySelector("main [data-tile-add-menu]"),
+                addLast: !!kids.at(-1)?.hasAttribute("data-tile-add-slot"),
+              };
+            });
+            const bare = (() => { const u = new URL(BASE + path); u.searchParams.delete("tiles"); return u.pathname + u.search; })();
+            await page.goto(BASE + bare, { waitUntil: "networkidle" });
+            revisit = await stripIds();
+          }
+          Object.assign(rec, { before, offered, paint, escClosed, picked: pick?.id ?? null, pickedLabel: pick?.label ?? null, after, revisit });
+        } catch (e) { rec.error = String(e?.message ?? e).slice(0, 200); }
+        try {
+          await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
+          await page.goto(BASE + path, { waitUntil: "networkidle" });
+        } catch { /* the next read reports what the page is */ }
       }
       /**
        * ── EVERY TABLE IS SORTABLE AND EVERY COLUMN BUT THE FIRST MOVES ───────
@@ -25737,7 +26526,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url() , tableNotes, foldsOnArrival }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url() , tableNotes, foldsOnArrival }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

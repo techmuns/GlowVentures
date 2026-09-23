@@ -58,7 +58,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
   href?: string;
   /** What the reader will find there. Required in spirit whenever `href` is set. */
   hrefTitle?: string;
-  /** Controls that act on the TILE — remove, add. Lifted above the click target. */
+  /** Controls that act on the TILE — remove it. Lifted above the click target. Adding is the ADD TILE card's, a grid cell of its own. */
   action?: ReactNode;
   /** Raise the tile above its neighbours while its picker's menu hangs over them. */
   raise?: boolean;
@@ -129,11 +129,13 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
         )}
         {sub && <span className="text-slate-400">{sub}</span>}
       </div>
-      {/* THE TILE'S OWN CONTROLS — remove, and add on the last — IN THE BOTTOM
-          CORNER, above the click target. In the header they took the width the
-          label needed; down here they sit beside a figure that is left-aligned
-          and short. `pointer-events-auto` because everything else in the card
-          passes clicks through to the tile's link. */}
+      {/* THE TILE'S OWN CONTROL — remove — IN THE BOTTOM CORNER, above the
+          click target. In the header it took the width the label needed; down
+          here it sits beside a figure that is left-aligned and short.
+          `pointer-events-auto` because everything else in the card passes
+          clicks through to the tile's link. Adding a tile is not a control
+          inside one: it is the ADD TILE card, the strip's own last cell
+          (Stage 10cl). */}
       {action && <div className="pointer-events-auto absolute bottom-2.5 right-2.5 z-20">{action}</div>}
     </div>
   );
