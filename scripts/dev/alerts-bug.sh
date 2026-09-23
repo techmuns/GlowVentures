@@ -333,6 +333,19 @@ run_case "SENDER: a level kept here as too high is said to have no NSE symbol" "
   patch $RL '  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high to send)" : "";' \
             '  const stayWhy = " (no NSE symbol)";'
 
+# ── A COMPANY HELD ONLY INSIDE THE FAMILY'S FUNDS (#88's page) ──────────────
+# That page is badged "Held only inside your funds", and the alert card under it
+# said the company was "not held in this book" and "has no NSE symbol" — both
+# false of a listed company the family reaches through a fund. The first case
+# walks that page as well; the second is the same words on the sending side.
+ROUTES=$ROUTES,stock-funds-only run_case "a company held only inside funds is said to be not held in this book" "pages" \
+  patch $PA '  if (!rows.length) return { state: "none", reason: "not held on any statement in this book, so no price is fetched for it" };' \
+            '  if (!rows.length) return { state: "none", reason: "not held in this book, so no price is fetched for it" };'
+
+run_case "SENDER: a holding this dashboard has no symbol for is said to have none" "suite" \
+  patch $RL '        why: `${RESEARCH_NAME} follows listed companies by their NSE symbol, and this dashboard has no NSE symbol for this holding`,' \
+            '        why: `${RESEARCH_NAME} follows listed companies by their NSE symbol, and this holding has none`,'
+
 run_case "the price line's hover is dropped, taking its reasons with it" "pages" \
   patch $AA '        <p data-alert-feed={quotesStatus} title={feedWhy}>{feedLine}</p>' \
             '        <p data-alert-feed={quotesStatus}>{feedLine}</p>'
