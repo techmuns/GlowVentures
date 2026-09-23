@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
-import { marketSideOf, readAifCategory, readsAsPrivateEquity } from "../shared/aifCategory.mjs";
+import { marketSideOf, readAifCategory, readsAsPrivateEquity, fundMarketSideBasis } from "../shared/aifCategory.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
@@ -1559,6 +1559,18 @@ function build(docs) {
          * call short of what the family actually paid.
          */
         calls: (c.calls ?? []).map((k) => ({ date: k.date, label: k.label ?? null, amount: r2(k.amount) })),
+        /**
+         * WHAT THE FUND PAID BACK, dated, each already reconciled by the reader
+         * against the totals its own statement prints. NULL where the book
+         * carries no payout record for the fund and `[]` only where the
+         * statement prints a measured nil — the two are different claims, and a
+         * money-weighted return may lean on the second and never on the first.
+         */
+        payouts: c.payouts == null ? null : c.payouts.map((k) => ({
+          date: k.date, kind: k.kind, label: k.label ?? null,
+          gross: r2(k.gross), tds: r2(k.tds), net: r2(k.net),
+          inPrintedTotal: k.inPrintedTotal !== false,
+        })),
         arithmeticHolds: isNum(c.total) && isNum(c.contributed) && isNum(c.undrawn)
           ? Math.abs(c.total - c.contributed - c.undrawn) <= 1
           : null,
@@ -2313,18 +2325,47 @@ function build(docs) {
     const L = side("listed"), P = side("private"), U = side(null);
     notes.push(`market side: listed ${r2(val(L)).toLocaleString("en-IN")} over ${L.length} holding(s), `
       + `private ${r2(val(P)).toLocaleString("en-IN")} over ${P.length}, `
-      + `and ${r2(val(U)).toLocaleString("en-IN")} over ${U.length} that no statement places on either side. `
-      + "Read from the SEBI category the statements print: Category III trades LISTED securities, Categories I "
-      + "and II are private capital, and a fund naming its own discipline as private equity or venture is "
-      + "private whichever category it prints. The three are summed from the positions and none is the "
-      + "remainder of the other two.");
+      + `and ${r2(val(U)).toLocaleString("en-IN")} over ${U.length} that nothing places on either side. `
+      + "An AIF is placed first by the family's own classification of what the fund invests in "
+      + "(FAMILY_MARKET_SIDE in shared/aifCategory.mjs), then by a fund naming its own discipline as private "
+      + "equity or venture, then by the SEBI category the statements print: Category III trades LISTED "
+      + "securities, Categories I and II are private capital. The three are summed from the positions and "
+      + "none is the remainder of the other two.");
+    /**
+     * THE FAMILY'S PLACINGS, NAMED — and the ones that DIFFER from what the
+     * statement's category alone would say, named apart. A decision that
+     * overrules a printed category silently reads, in the book, exactly like
+     * the category having decided; this is the line that says it did not.
+     * Reported on every run, including when nothing differs.
+     */
+    {
+      const fam = dedupedForTotal.filter((p) => p.assetClass === "AIF")
+        .map((p) => {
+          const acct = accounts.find((a) => a.accountId === p.accountId);
+          return { p, b: fundMarketSideBasis(p.security, acct) };
+        })
+        .filter((x) => x.b.basis === "family");
+      const differs = fam.filter(({ p, b }) => {
+        const acct = accounts.find((a) => a.accountId === p.accountId);
+        const byCategory = readsAsPrivateEquity(p.security, acct) ? "private"
+          : b.category === "Category III" ? "listed"
+          : b.category === "Category I" || b.category === "Category II" ? "private" : null;
+        return byCategory !== b.side;
+      });
+      const differFunds = [...new Set(differs.map(({ p, b }) => `${p.security} (${b.category ?? "no category printed"} → ${b.side}: ${b.decision.invests})`))].sort();
+      notes.push(`market side: ${fam.length} AIF holding(s) placed by the family's own classification of what the `
+        + `fund invests in; ${differs.length} of them, in ${differFunds.length} fund(s), differ from what the printed SEBI `
+        + `category alone would say`
+        + (differFunds.length ? ` — ${differFunds.join("; ")}` : "")
+        + ". The statement's category is unchanged; only the side is taken from the family.");
+    }
     if (U.length) {
       const funds = [...new Set(U.map((p) => p.security))].sort();
-      notes.push(`market side: ${funds.length} fund(s) print NO SEBI category, so they are on neither side `
-        + `and are counted apart rather than defaulted to one: ${funds.join("; ")}. `
+      notes.push(`market side: ${funds.length} fund(s) print NO SEBI category and the family have not classified `
+        + `them, so they are on neither side and are counted apart rather than defaulted to one: ${funds.join("; ")}. `
         + "Putting them private would claim they are private capital and putting them listed would claim the "
-        + "opposite, and both are claims no document in this archive makes. A fund's own SEBI registration or "
-        + "its contribution agreement settles each one.");
+        + "opposite, and no document in this archive makes either claim. One line from the family, or a fund's own "
+        + "SEBI registration, settles each one.");
     }
     /**
      * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
@@ -2333,8 +2374,11 @@ function build(docs) {
      * unplaced despite naming its own discipline. Silent, that reads as the
      * category having placed it.
      */
+    // …and only where the PE read is what actually decided: a fund the family
+    // have placed themselves is theirs, and crediting its side to the PE read
+    // would name the wrong reason for it.
     const pe = dedupedForTotal.filter((p) => p.assetClass === "AIF"
-      && readsAsPrivateEquity(p.security, accounts.find((a) => a.accountId === p.accountId))
+      && fundMarketSideBasis(p.security, accounts.find((a) => a.accountId === p.accountId)).basis === "private-equity"
       && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category I"
       && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category II");
     if (pe.length) {

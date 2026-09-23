@@ -979,7 +979,7 @@ export type HoldingReturn =
   /** No figure, and the reason a reader needs in order to act on it. */
   | { kind: "absent"; reason: string };
 
-const daysBetween = (fromISO: string, toISO: string) =>
+export const daysBetween = (fromISO: string, toISO: string) =>
   Math.round((Date.parse(toISO) - Date.parse(fromISO)) / 86_400_000);
 
 /**
@@ -1230,7 +1230,7 @@ const NO_COST_RETURN =
  */
 const NO_HOLDING_XIRR =
   "no XIRR for this row: a money-weighted return needs every payment into it, dated, and a holding inside an account has no payments of its own — the family paid money into the account, and a share in it was bought by the manager or recorded by a depository that reports what is held, not what was paid. Where a row is a whole investment whose payments are dated, its XIRR is shown.";
-const noCalendarReason = (asOf: string) =>
+export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
 /**
