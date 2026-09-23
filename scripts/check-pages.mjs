@@ -222,6 +222,29 @@ function bookArray(src, name) {
 }
 
 /**
+ * THE STATEMENT BOOK — `BOOK_POSITIONS` exactly as generated: no published NAV
+ * overlaid and no depository cash added. It is what `statementPortfolio`
+ * carries, and so what the Transactions card and the dated-capital index close
+ * an account's money-weighted return on (Stage 10cf). `bookArray` hands every
+ * other caller the LIVE model, which is right for a page drawn on it and wrong
+ * for a rate struck at the statement.
+ */
+/** The first signed percentage in a string, or NaN — never 0 for a missing match. */
+const signedPctOf = (x) => {
+  const m = /([+\-−]?)(\d+(?:\.\d+)?)%/.exec(String(x ?? ""));
+  return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : NaN;
+};
+
+function statementBookPositions(src) {
+  const i = src.indexOf("export const BOOK_POSITIONS");
+  if (i < 0) return null;
+  const start = src.indexOf("= [", i);
+  const end = start < 0 ? -1 : src.indexOf("\n];", start);
+  if (end < 0) return null;
+  try { return JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
+}
+
+/**
  * ── THE CASH MAP, READ ONCE AS COMMITTED DATA ──────────────────────────────
  *
  * `CASH_EQUIVALENT_KEYS` in `src/lib/analytics.ts`, parsed rather than imported
@@ -1881,7 +1904,7 @@ const PM_RETURN_BOOK = (() => {
      * shows its XIRR, and both checks below failed on main for as long as nobody
      * walked this route after the FIFO change. An absent field adds nothing: a
      * position that sold nothing carries a measured zero or no record, and
-     * neither moves the arithmetic. (Stage 10cf.)
+     * neither moves the arithmetic. (Stage 10cg.)
      */
     const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     /** ACT/365 IRR by bisection, in percent; null where the flows do not bracket a root. */
@@ -2490,6 +2513,155 @@ const UNVALUED_ACCOUNTS = (() => {
 })();
 
 const FUNDED_ACCOUNTS = CAPITAL_RECORD_BOOK ? new Set(CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId)).size : null;
+
+/**
+ * ── WHICH ACCOUNTS CARRY A MONEY-WEIGHTED RETURN, AND WHICH ROWS ARE THEM ──
+ *
+ * Stage 10cf: a row that IS one or more whole accounts, every payment of which
+ * is dated, carries the XIRR the Transactions card strikes on those accounts —
+ * on the Portfolio Monitor and on the company page. This is that decision made
+ * a SECOND time, off `glowData.ts`, and never imported from `capitalRollup` or
+ * `datedCapital.ts`: a check that calls the helper it checks agrees with it by
+ * construction, and the two agreeing is the measurement.
+ *
+ * AN ACCOUNT IS RATED where its record reaches both ends and everything the
+ * rate needs is stated:
+ *   • back to inception — the statement's own running unit balance starts from
+ *     zero (`BOOK_CAPITAL_FROM_INCEPTION`); or a drawdown fund's dated calls
+ *     reproduce the total its statement prints as called; or every holding the
+ *     account has carried is unit-tied to its contributions; or its printed
+ *     inception is on or after its first payment;
+ *   • forward to the account's own as-of — a capital RECORD must reach the
+ *     statement date its value is struck on (`capitalRecordTo`, Stage 10cf); a
+ *     fund's call list is read off that very statement;
+ *   • every payment in states its amount, a statement values the account, and
+ *     what came back is stated — and dated, where a fund carries it at all.
+ *
+ * A ROW IS WHOLE ACCOUNTS where, for every account the row's positions touch,
+ * every current holding carrying that account's money is in the row — measured
+ * on the LIVE book's current holdings, which is what the page draws its rows
+ * from. A ₹0 line with no cost carries nothing (Buoyant's Cash beside its units).
+ *
+ * `solve(ids)` pools every flow of every account at its own date, each account
+ * closing at its own STATEMENT value on its own date — by BISECTION on the
+ * ACT/365 NPV, a path the page's Newton solver does not take.
+ */
+const DATED_CAPITAL_BOOK = (() => {
+  try {
+    if (!CAPITAL_RECORD_BOOK) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const statement = statementBookPositions(src);
+    const live = bookArray(src, "BOOK_POSITIONS");
+    const recordedMoves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const tranches = bookObject(src, "BOOK_POSITION_TRANCHES") ?? {};
+    const fromInception = new Set(bookArray(src, "BOOK_CAPITAL_FROM_INCEPTION") ?? []);
+    if (![accounts, statement, live, recordedMoves].every(Array.isArray)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const recorded = new Set(recordedMoves.map((m) => m.accountId));
+    const commitmentOf = new Map(CAPITAL_RECORD_BOOK.commitments.map((c) => [c.accountId, c]));
+    const byAcct = new Map();
+    for (const m of CAPITAL_RECORD_BOOK.moves) {
+      if (!byAcct.has(m.accountId)) byAcct.set(m.accountId, []);
+      byAcct.get(m.accountId).push(m);
+    }
+    const rated = new Map();
+    for (const [id, ms] of byAcct) {
+      const a = acc.get(id);
+      const c = commitmentOf.get(id) ?? null;
+      const fromCalls = !recorded.has(id);
+      const ins = ms.filter((m) => m.direction === "in");
+      const firstIn = ins.map((m) => m.date).sort()[0];
+      if (!firstIn) continue;
+      const own = statement.filter((p) => p.accountId === id);
+      const printedCalled = c?.called ?? c?.drawn ?? c?.paid ?? null;
+      const reachesBack = fromInception.has(id) || (fromCalls
+        ? printedCalled != null && Math.abs(printedCalled - ins.reduce((t, m) => t + (m.amount ?? 0), 0)) < 1
+        : (own.length > 0 && own.every((p) => tranches[`${p.accountId}|${p.securityKey}`]))
+          || (!!a?.inceptionDate && a.inceptionDate >= firstIn));
+      const reachesNow = fromCalls || (!!a?.asOf && !!a?.capitalRecordTo && a.capitalRecordTo >= a.asOf);
+      const value = own.length ? own.reduce((t, p) => t + p.marketValue, 0) : null;
+      const datedBack = fromCalls && c?.payouts != null;
+      const backStated = !fromCalls || datedBack || c?.distributed != null;
+      const undatedBack = fromCalls && !datedBack && typeof c?.distributed === "number" && c.distributed > 0;
+      const flows = ms.filter((m) => m.amount != null)
+        .map((m) => ({ t: Date.parse(m.date), a: m.direction === "in" ? -m.amount : m.amount }));
+      if (!reachesBack || !reachesNow || ins.some((m) => m.amount == null) || value == null
+        || !backStated || undatedBack || !flows.length) continue;
+      rated.set(id, { flows, value, asOf: a.asOf });
+    }
+    const solve = (ids) => {
+      const cs = ids.map((id) => rated.get(id));
+      if (!cs.length || cs.some((c) => !c)) return null;
+      const flows = [];
+      let since = null, to = null;
+      for (const c of cs) {
+        flows.push(...c.flows);
+        const lastFlow = Math.max(...c.flows.map((f) => f.t));
+        const close = c.value === 0 ? lastFlow : Date.parse(c.asOf);
+        if (c.value > 0) flows.push({ t: close, a: c.value });
+        for (const f of c.flows) if (f.a < 0 && (since === null || f.t < since)) since = f.t;
+        if (to === null || close > to) to = close;
+      }
+      if (since === null) return null;
+      const t0 = Math.min(...flows.map((f) => f.t));
+      const npv = (r) => flows.reduce((s, f) => s + f.a / Math.pow(1 + r, (f.t - t0) / (365 * 864e5)), 0);
+      let lo = -0.99, hi = 10, annual = null;
+      if (Math.sign(npv(lo)) !== Math.sign(npv(hi))) {
+        for (let i = 0; i < 200; i++) {
+          const mid = (lo + hi) / 2;
+          if (Math.sign(npv(mid)) === Math.sign(npv(lo))) lo = mid; else hi = mid;
+        }
+        annual = ((lo + hi) / 2) * 100;
+      }
+      return { annual, days: Math.round((to - since) / 864e5) };
+    };
+    // THE LIVE BOOK'S CURRENT HOLDINGS — what the pages draw rows from.
+    const small = smallKeysOf(live);
+    const current = live.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey));
+    const carries = (p) => p.marketValue !== 0 || (typeof p.costBasis === "number" && p.costBasis !== 0);
+    /**
+     * THE ACCOUNTS A SET OF POSITIONS IS WHOLE OF — or null where it is not
+     * whole accounts at all. `set` is what the row holds; the rule is
+     * `datedCapital.behind`'s, restated: every account it touches, every holding
+     * of it that carries money, by that account's OWN keys in the set.
+     */
+    const wholeOf = (set) => {
+      const keysIn = new Map();
+      for (const p of set) {
+        if (!keysIn.has(p.accountId)) keysIn.set(p.accountId, new Set());
+        keysIn.get(p.accountId).add(p.securityKey);
+      }
+      if (!keysIn.size) return null;
+      for (const [id, keys] of keysIn) {
+        const own = current.filter((p) => p.accountId === id && carries(p));
+        if (!own.length || !own.every((p) => keys.has(p.securityKey))) return null;
+      }
+      return [...keysIn.keys()].sort();
+    };
+    /** A consolidated row's positions: current holdings under its keys, each dedupeGroup once — first wins, as the page's. */
+    const consolidated = (keys) => {
+      const seen = new Set();
+      return current.filter((p) => {
+        if (!keys.has(p.securityKey)) return false;
+        if (!p.dedupeGroup) return true;
+        if (seen.has(p.dedupeGroup)) return false;
+        seen.add(p.dedupeGroup); return true;
+      });
+    };
+    /**
+     * THE INVESTMENT THE CLIENT POINTED AT — Buoyant, derived rather than typed:
+     * the accounts its provider runs, and the security holding most of their
+     * value, which is the Class A4 page the screenshot showed.
+     */
+    const buoyant = accounts.filter((a) => /buoyant/i.test(a.provider ?? "")).map((a) => a.accountId).sort();
+    const byKey = new Map();
+    for (const p of current.filter((x) => buoyant.includes(x.accountId))) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
+    const buoyantKey = [...byKey.entries()].sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
+    return { rated, solve, wholeOf, consolidated, current, carries, acc, buoyant, buoyantKey };
+  } catch { return null; }
+})();
 
 /**
  * ...AND HOW MANY ACCOUNTS THE BOOK HOLDS ALTOGETHER — the denominator the
@@ -3884,7 +4056,7 @@ const ROUTES = [
   ["private-market-calls", "/private-market"],
   ["private-market-calls-off", "/private-market"],
   /**
-   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cf. The editor shows the
+   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cg. The editor shows the
    * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
    * a signed-out reader is told to sign in, never handed set-up steps for a
    * store that works. The two routes are the two sides of that one rule.
@@ -4401,6 +4573,11 @@ const ROUTES = [
   // the page a reader opens with the fund's own statement in hand, which prints
   // a different cost. Derived (`CARRIED_BOOK`), so the next drop picks its own.
   ["stock-carried", () => (CARRIED_BOOK?.rows[0] ? `/stock/${encodeURIComponent(CARRIED_BOOK.rows[0].key)}` : "/stock/no-cost-carried-through-a-switch-in-the-book")],
+  // THE FUND THE CLIENT POINTED AT — *"the return on this AIF is a lot higher
+  // than what we are showing"* — where each whole folio shows the XIRR its own
+  // fact sheet prints (Stage 10cf). Derived (`DATED_CAPITAL_BOOK`), so a drop
+  // that renames the class moves the route with it.
+  ["stock-capital", () => (DATED_CAPITAL_BOOK?.buoyantKey ? `/stock/${encodeURIComponent(DATED_CAPITAL_BOOK.buoyantKey)}` : "/stock/no-investment-on-dated-capital-in-the-book")],
   ["stock-cmp-split", () => (CMP_BOOK.splitKey ? `/stock/${encodeURIComponent(CMP_BOOK.splitKey)}` : "/stock/no-holding-marked-two-ways-in-the-book")],
   // ...and one marked at a TOTAL VALUE, where there is no per-unit mark to show
   // at all. A different absence from the one above and it must not borrow its
@@ -4931,7 +5108,7 @@ const CIO_TILE_OPTIONS = [];
 const TILE_MENU = new Map();
 const TILE_PICK = new Map();
 /**
- * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10cf. Its
+ * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10cg. Its
  * menu, the metric picked (the LAST one offered, so a card that ignores the
  * choice and appends the first spare metric fails), the strip read back after,
  * and the page opened again.
@@ -7527,6 +7704,42 @@ const stockLayoutChecks = () => [
    */
   ["the tax basis is behind a click and starts closed",
     (t, ctx) => !!ctx.posTable && ctx.posTable.taxToggles === 1 && ctx.posTable.taxOpen === false],
+  /**
+   * ── XIRR ON A ROW THAT IS A WHOLE ACCOUNT, AND ON NO OTHER ──────────────
+   *
+   * Stage 10cf. A statement row that IS the whole of its account — a fund
+   * folio, a drawdown fund — carries that account's money-weighted return
+   * beside the holding-period one, where the account's every payment is dated
+   * and the money has been in a year or more. A holding inside an account has
+   * no cash flows of its own and carries none.
+   *
+   * RE-SOLVED, NOT READ BACK: each row's rate against `DATED_CAPITAL_BOOK`,
+   * which restates both halves — whole and rated — off the book. Struck in
+   * both directions on every company page, so a line invented for a share in
+   * a demat fails exactly as a missing one on a whole folio does.
+   */
+  ["an XIRR line stands exactly on the rows that are whole accounts on a dated record — and re-solves",
+    (t, ctx) => {
+      const rows = ctx.posTable?.stockReturns;
+      if (!rows?.length) return false;
+      const B = DATED_CAPITAL_BOOK;
+      if (!B) return false;
+      const key = decodeURIComponent(String(ctx.path ?? "").replace(/^\/stock\//, "").split(/[?#]/)[0]);
+      for (const r of rows) {
+        if (!r.account) return false;
+        const set = B.current.filter((p) => p.accountId === r.account && p.securityKey === key);
+        const whole = set.length ? B.wholeOf(set) : null;
+        const want = !whole ? null : B.rated.has(r.account) ? "dated" : "undated";
+        if ((r.capital ?? null) !== want) return false;
+        const sol = want === "dated" ? B.solve([r.account]) : null;
+        const expect = sol && sol.days >= 365 && sol.annual !== null ? sol.annual : null;
+        if (expect === null) { if (r.xirr !== null) return false; continue; }
+        // To the printed decimal: the line renders one place.
+        if (r.xirr === null || Math.abs(Number(r.xirr) - expect) > 0.006
+          || !/XIRR/.test(r.xirrText ?? "") || Math.abs(signedPctOf(r.xirrText) - expect) > 0.051) return false;
+      }
+      return true;
+    }],
 ];
 
 /**
@@ -8214,7 +8427,7 @@ const CIO_TILE_PICKER = [
   }],
   /**
    * ...AND THE ADD TILE CARD TAKES THE STRIP'S NEXT COLUMN, NOT A ROW OF ITS
-   * OWN — Stage 10cf. This page does not scroll (Stage 10bj): a second row of
+   * OWN — Stage 10cg. This page does not scroll (Stage 10bj): a second row of
    * KPI tiles takes its height from the panel under it. So the card is counted
    * in `--kpi-cols`, and wherever the strip has fewer than six tiles it sits on
    * the tiles' own row. Every claim above passes with the card on a row by
@@ -10139,7 +10352,9 @@ const RETURN_COLUMNS = [
         if (!concrete.length) return false;
         const ok = concrete.every((h) =>
           // A COUNT, not a word: "N of M" is the figure the paragraph carried.
-          /\b\d[\d,]* (?:annualised )?of \d[\d,]*\b/.test(h.note ?? "")
+          // The XIRR column counts RATES ("N money-weighted of M"), because a
+          // sub-year row it shows is an HPR and is not one.
+          /\b\d[\d,]* (?:annualised |money-weighted )?of \d[\d,]*\b/.test(h.note ?? "")
           // ...and the reason behind it, which a `title` carries and `innerText`
           // cannot see. A note with no sentence is a number with no cause.
           && (h.noteTitle ?? "").length > 40);
@@ -13156,7 +13371,7 @@ const INVARIANTS = {
     }],
     /**
      * ...AND THE ADD TILE CARD, ALONE ON THE NEXT ROW, IS STILL THE SIZE OF A
-     * TILE — Stage 10cf. Six tiles fill Morning CIO's six columns, so this is the
+     * TILE — Stage 10cg. Six tiles fill Morning CIO's six columns, so this is the
      * one state in which its card sits on a row by itself; `auto-rows-fr` is what
      * keeps that row as tall as the tiles' rather than as short as two words.
      */
@@ -15064,7 +15279,7 @@ const INVARIANTS = {
         && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
     }],
     /**
-     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cf.
+     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cg.
      *
      * *"We need to keep the ability for the customer to add a date in this
      *  Capital Call column, which is empty right now."* It was a column of em
@@ -15514,7 +15729,7 @@ const INVARIANTS = {
         && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
     }],
     /**
-     * ── STAGE 10cf: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
+     * ── STAGE 10cg: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
      *
      * The state production is in until the KV binding exists. Every cell is a
      * button reading "Not set up", the header note says it once, and clicking
@@ -15539,7 +15754,7 @@ const INVARIANTS = {
     }],
   ],
   /**
-   * ── A SIGNED-OUT READER — Stage 10cf ────────────────────────────────────────
+   * ── A SIGNED-OUT READER — Stage 10cg ────────────────────────────────────────
    *
    * The other side of the set-up steps' rule: they belong to a store nobody has
    * connected, and a reader whom the edge gate signed out is told to sign in —
@@ -16458,15 +16673,37 @@ const INVARIANTS = {
      * the book carries a capital record for must be checked — a table that
      * silently stopped drawing mandate rows would otherwise pass over nothing.
      */
-    ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception", (t, ctx) => {
+    /**
+     * …EXCEPT WHERE THE FAMILY'S OWN METHODOLOGY NAMES ANOTHER MEASURE. On the
+     * default view the Return column resolves per row, and the family's rule is
+     * *"an XIRR when there are multiple tranches"* (Stage 10af). A mandate whose
+     * every payment is dated, funded over several of them and more than a year
+     * ago, is exactly that row since Stage 10cf — so its cell is the XIRR,
+     * re-solved from the book by `DATED_CAPITAL_BOOK`, and FIFO's return on its
+     * capital is what every OTHER mandate row shows. Both halves are held, and
+     * the FIFO half must have a subject, or a build that sent every mandate to
+     * XIRR would pass by never checking FIFO at all.
+     */
+    ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception — or the XIRR where the methodology names it", (t, ctx) => {
       if (!FIFO_BOOK) return false;
       const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
       if (!rows.length) return false;
-      return rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
-        const want = FIFO_BOOK.byAccountNo.get(String(r.accountNo)).capitalRet;
-        const got = pctIn(r.cells?.[COL.ret]);
-        return got !== null && Math.abs(got.v - want) <= got.tie;
+      let onFifo = 0;
+      const ok = rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
+        const book = FIFO_BOOK.byAccountNo.get(String(r.accountNo));
+        const cell = r.cells?.[COL.ret] ?? "";
+        const got = pctIn(cell);
+        if (got === null) return false;
+        const B = DATED_CAPITAL_BOOK;
+        const dated = B?.rated.get(book.accountId);
+        const sol = dated ? B.solve([book.accountId]) : null;
+        if (sol && sol.days >= 365 && dated.flows.length > 1 && sol.annual !== null) {
+          return /\bXIRR\b/.test(cell) && Math.abs(got.v - sol.annual) <= got.tie + 0.001;
+        }
+        onFifo++;
+        return !/\bXIRR\b/.test(cell) && Math.abs(got.v - book.capitalRet) <= got.tie;
       });
+      return ok && onFifo > 0;
     }],
     /**
      * ── …AND ITS INVESTED IS THE CAPITAL THAT RETURN IS DIVIDED BY ───────────
@@ -17922,10 +18159,21 @@ const INVARIANTS = {
      * four-figure rate here is the extrapolation bug regressing, which is how
      * both previous occurrences announced themselves.
      */
-    ["no return of 100% p.a. or more appears once the basis is annualised", (t) => {
+    ["no return of 100% p.a. or more appears once the basis is annualised", (t, ctx) => {
       const rows = t.split("\n").filter(isDataRow);
       if (rows.length === 0) return false;             // nothing drawn is nothing checked
-      return !rows.some((r) => /[+-]\s?\d{3,}(\.\d+)?%/.test(r));
+      /**
+       * STRUCK ON THE ANNUAL RATES, NOT ON EVERY PERCENTAGE IN A ROW. A cell
+       * tagged HPR is the guard FIRING — a total return over a window under a
+       * year, which is not a claim about a year — and since Stage 10cf a whole
+       * account on a dated record shows one here: Transition Venture Fund I is
+       * +128.61% on money in for 165 days. A text scan of every row read that as
+       * the extrapolation regressing. The claim was always about a RATE, so it is
+       * struck on the cells whose figure IS the column's own measure (untagged).
+       */
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr");
+      if (!cells.length) return false;
+      return !cells.some((c) => !c.tag && Math.abs(signedPctOf(c.text)) >= 100);
     }],
     /**
      * THE COVERAGE LINE IS COUNTED OFF THE BOOK, and it must reconcile: the
@@ -17942,12 +18190,16 @@ const INVARIANTS = {
       const [, cagr, total] = m.map(Number);
       const guarded = Number(/(\d+) rows? (?:is|are) held under a year/.exec(why)?.[1] ?? 0);
       const absent = Number(/(\d+) report no purchase date/.exec(why)?.[1] ?? 0);
+      // A WHOLE ACCOUNT FUNDED OVER SEVERAL DATED PAYMENTS is refused a CAGR for
+      // a different reason from a holding with no date (Stage 10cf) and is
+      // counted in its own sentence — which is still part of the partition.
+      const staggered = Number(/(\d+) rows? (?:is a whole account|are whole accounts) funded over several dated payments/.exec(why)?.[1] ?? 0);
       // ...AND THE HEADER'S SHORT NOTE AGREES WITH IT. Both come from ONE
       // coverage object (`returnColumnMeta`), so a build that let them drift has
       // started deriving the visible count separately from the sentence a reader
       // opens to check it.
       const short = /(\d+) annualised of (\d+)/.exec(h.note ?? "");
-      return cagr + guarded + absent === total && total > 0
+      return cagr + guarded + absent + staggered === total && total > 0
         && !!short && Number(short[1]) === cagr && Number(short[2]) === total;
     }],
     // ...and the guard is VISIBLY firing: a sub-year row is marked, never
@@ -18033,26 +18285,100 @@ const INVARIANTS = {
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       return rs.active.length === 1 && rs.active[0] === "xirr";
     }],
-    ["every cell in the XIRR column is a dash, never an invented rate", (t, ctx) => {
+    /**
+     * ── A RATE ONLY WHERE THE ROW IS WHOLE ACCOUNTS ON A DATED RECORD ─────
+     *
+     * Stage 10cf. A holding inside an account still has none — the statements
+     * carry no cash-flow history per security, and `positionIrrPct` is the
+     * banned extrapolation — and this column was a dash on every row for that
+     * reason. What changed is that a row can BE accounts: a fund over its whole
+     * folios, a mandate, whose every payment in and out is dated. That row has
+     * a money-weighted return, re-solved here from the book on a path the page
+     * does not take — so an invented rate, one struck over a record that does
+     * not reach both ends, or one pooled over the wrong accounts, fails.
+     *
+     * Under a year the money has not seen a year, and the cell is the row's
+     * holding-period return TAGGED HPR (Stage 10g(ii)'s guard) — never a rate.
+     */
+    ["an XIRR stands only on a row of whole accounts on a complete dated record — and it re-solves from the book", (t, ctx) => {
       const cells = ctx?.returnCells;
       if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      const B = DATED_CAPITAL_BOOK;
+      if (!B) return false;
       const mine = cells.filter((c) => c.measure === "xirr");
       if (mine.length !== cells.length) return false;
-      return mine.every((c) => /—/.test(c.text) && !/[+-]\d+(\.\d+)?%/.test(c.text));
+      let rates = 0;
+      for (const c of mine) {
+        const v = signedPctOf(c.text);
+        if (c.capital !== "dated") {
+          // A holding inside an account, or accounts with no complete dated
+          // record: a dash, never a figure.
+          if (!Number.isNaN(v) || !/—/.test(c.text)) return false;
+          continue;
+        }
+        if (!c.capitalAccounts.length || !c.capitalAccounts.every((id) => B.rated.has(id))) return false;
+        const r = B.solve(c.capitalAccounts);
+        if (!r) return false;
+        if (r.days < 365) {
+          if (!Number.isNaN(v) && c.tag !== "HPR") return false;
+          continue;
+        }
+        if (r.annual === null) { if (!Number.isNaN(v)) return false; continue; }
+        if (c.tag || Number.isNaN(v) || Math.abs(v - r.annual) > 0.006) return false;
+        rates++;
+      }
+      // …and the column is not a column of dashes: this book holds accounts
+      // whose every payment is dated, and a build that drew none has lost them.
+      return rates > 0;
     }],
     /**
-     * …AND THE REASON IS ON THE COLUMN. This is the one removed caption whose
-     * second claim a reader cannot get anywhere else: the per-ACCOUNT
-     * money-weighted return IS measurable, and it is on Performance. Without
-     * that pointer a column of dashes tells a reader only that the answer does
-     * not exist. Read off the header's hover, because a `title` is not in
-     * `innerText` — the same fix the cost-cell reasons already needed.
+     * …AND EVERY ROW THE BOOK SAYS IS WHOLE ACCOUNTS IS TREATED AS THEM.
+     *
+     * The converse, and the half a regression in the whole-account rule breaks
+     * silently: drop the ₹0-cash exemption and Buoyant's two folios stop being
+     * whole, their rows go to dashes, and the claim above still passes on the
+     * rates left standing. So each row's accounts are restated here from its
+     * own keys — a mandate is its one account; any other row is the current
+     * holdings under its keys, each dedupeGroup once, as the page builds it —
+     * and the page must mark exactly the rows that are whole, as dated exactly
+     * where every account behind them is rated, naming exactly those accounts.
      */
-    ["the XIRR column names why it is absent and points to Performance", (t, ctx) => {
+    ["…and every row the book says is whole accounts carries them, dated exactly where the book rates every one", (t, ctx) => {
+      const cells = ctx?.returnCells;
+      if (!cells?.length) return { notChecked: "no return cells captured on this run" };
+      const B = DATED_CAPITAL_BOOK;
+      if (!B) return false;
+      let whole = 0;
+      for (const c of cells.filter((x) => x.measure === "xirr")) {
+        const keys = new Set(c.rowKeys.length ? c.rowKeys : c.rowKey ? [c.rowKey] : []);
+        if (!keys.size) return false;
+        const accounts = c.mandate
+          ? (c.capitalAccounts.length === 1 && B.wholeOf(B.current.filter((p) => p.accountId === c.capitalAccounts[0])) ? c.capitalAccounts : null)
+          : B.wholeOf(B.consolidated(keys));
+        if (!accounts) { if (c.capital !== null) return false; continue; }
+        whole++;
+        const want = accounts.every((id) => B.rated.has(id)) ? "dated" : "undated";
+        if (c.capital !== want || c.capitalAccounts.join(" ") !== accounts.join(" ")) return false;
+      }
+      return whole > 0;
+    }],
+    /**
+     * …AND THE COLUMN SAYS WHICH ROWS HAVE ONE AND WHY THE REST DO NOT. Its
+     * count is RATES, not cells shown: a sub-year row is shown as an HPR and is
+     * not one. Held to the cells the column draws, and it still points to
+     * Performance for an account a row does not stand on. Read off the header's
+     * hover, because a `title` is not in `innerText`.
+     */
+    ["the XIRR column counts the rows that carry one, names why the rest do not, and points to Performance", (t, ctx) => {
       const h = (ctx?.returnHead ?? []).find((x) => /^XIRR$/i.test(x.label));
       if (!h) return { notChecked: "the XIRR column was not on screen on this run" };
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "xirr");
+      if (!cells.length) return false;
+      const rates = cells.filter((c) => c.capital === "dated" && !c.tag && !Number.isNaN(signedPctOf(c.text))).length;
+      const short = /(\d+) money-weighted of (\d+)/.exec(h.note ?? "");
       const why = h.noteTitle ?? "";
-      return /money-weighted XIRR/.test(why) && /Performance/.test(why);
+      return !!short && Number(short[1]) === rates && Number(short[2]) === cells.length
+        && /money-weighted XIRR/.test(why) && /Performance/.test(why) && !/absent on all/.test(why);
     }],
   ],
   /**
@@ -18125,20 +18451,37 @@ const INVARIANTS = {
         const m = /([+\-−]?)(\d+(?:\.\d+)?)%/.exec(x);
         return m ? Number(m[2]) * (m[1] === "-" || m[1] === "−" ? -1 : 1) : null;
       };
-      const vals = cells.map((c) => num(c.text));
-      const shown = vals.filter((v) => v !== null);
-      if (shown.length < 2) return { notChecked: "fewer than two CAGR figures are drawn on this book" };
-      // Descending over the figures that exist…
-      for (let i = 1; i < shown.length; i++) if (shown[i] > shown[i - 1]) return false;
       /**
-       * …AND EVERY ABSENT ONE AFTER THEM. `?? 0` would file every holding whose
-       * statement reports no cost among the flat performers, in the middle of a
-       * column a reader is scanning for its extremes — the absent-vs-zero rule
-       * arriving through a comparator, where no rendered figure shows it.
+       * RANKED WITHIN EACH SECTION, NEVER ACROSS — the table's own rule (Stage
+       * 10bh), because a section is a partition of one list. This read the
+       * whole column as one list for as long as every CAGR figure on this book
+       * sat in Direct Equity; since Stage 10cf a whole account on a dated record
+       * shows its figure in its own section (Transition Venture's, in AIF), and
+       * the whole-column reading failed a table sorted exactly as designed.
        */
-      const firstAbsent = vals.findIndex((v) => v === null);
-      if (firstAbsent === -1) return true;
-      return vals.slice(firstAbsent).every((v) => v === null);
+      const sections = new Map();
+      for (const c of cells) {
+        const k = c.bucket ?? "";
+        if (!sections.has(k)) sections.set(k, []);
+        sections.get(k).push(num(c.text));
+      }
+      let figures = 0;
+      for (const vals of sections.values()) {
+        const shown = vals.filter((v) => v !== null);
+        figures += shown.length;
+        // Descending over the figures that exist…
+        for (let i = 1; i < shown.length; i++) if (shown[i] > shown[i - 1]) return false;
+        /**
+         * …AND EVERY ABSENT ONE AFTER THEM. `?? 0` would file every holding whose
+         * statement reports no cost among the flat performers, in the middle of a
+         * column a reader is scanning for its extremes — the absent-vs-zero rule
+         * arriving through a comparator, where no rendered figure shows it.
+         */
+        const firstAbsent = vals.findIndex((v) => v === null);
+        if (firstAbsent !== -1 && !vals.slice(firstAbsent).every((v) => v === null)) return false;
+      }
+      if (figures < 2) return { notChecked: "fewer than two CAGR figures are drawn on this book" };
+      return true;
     }],
     /**
      * …AND IT IS NOT THE HPR COLUMN'S ORDER. The strongest available claim that
@@ -19164,6 +19507,31 @@ const INVARIANTS = {
     ["the book carries a holding with a purchase date a year old",
       () => !!CAGR_KEY],
   ],
+  /**
+   * ── THE FUND THE CLIENT POINTED AT SHOWS THE RATE ITS FACT SHEET PRINTS ──
+   *
+   * *"the return on this AIF is a lot higher than what we are showing on the
+   * dashboard"* — sent with Buoyant Class A4's page. The holding-period return
+   * is FIFO's and stays; what was missing is the money-weighted one, and the
+   * fund's own fact sheet prints it per folio (15.30% and 9.76%, which
+   * `datedCapital.test.ts` holds the book to). Here it is asserted to REACH
+   * the page, on every Buoyant folio, beside the HPR and never instead of it.
+   */
+  "stock-capital": [
+    ...stockLayoutChecks(),
+    ["the book carries the investment the client pointed at, on a dated record",
+      () => !!DATED_CAPITAL_BOOK?.buoyantKey && DATED_CAPITAL_BOOK.buoyant.some((id) => DATED_CAPITAL_BOOK.rated.has(id))],
+    ["every one of its folios shows its money-weighted return beside the holding-period return",
+      (t, ctx) => {
+        const B = DATED_CAPITAL_BOOK, rows = ctx.posTable?.stockReturns;
+        if (!B || !rows?.length) return false;
+        const folios = rows.filter((r) => B.buoyant.includes(r.account));
+        return folios.length > 0 && folios.every((r) => r.capital === "dated" && r.xirr !== null
+          && /^HPR/.test(r.text) && /XIRR/.test(r.text));
+      }],
+    ["…and the column's own heading says where an XIRR stands",
+      (t, ctx) => /XIRR appears only on a row that is a WHOLE account/.test(ctx.posTable?.returnTitle ?? "")],
+  ],
   stock: [
     ...stockLayoutChecks(),
     // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
@@ -19897,7 +20265,7 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
     return /saved in this browser only/i.test(pick.savedWhere ?? "") && /not running here/i.test(pick.savedWhere ?? "");
   }],
   /**
-   * ── THE ADD TILE CARD — Stage 10cf ───────────────────────────────────────
+   * ── THE ADD TILE CARD — Stage 10cg ───────────────────────────────────────
    *
    * *"Add another tile. It should be a big empty tile with bold written: ADD
    * TILE. When I click on the ADD TILE button, I should be able to choose what
@@ -20012,7 +20380,7 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
       return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
     }],
     /**
-     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cf. A
+     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cg. A
      * card that opened an empty menu would be the control that looks live and
      * does nothing, and this is the one route where the whole catalogue is up.
      */
@@ -20925,7 +21293,7 @@ for (const theme of THEMES) {
         await page.waitForTimeout(300);
       }
       /**
-       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cf ──────────────────────
+       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cg ──────────────────────
        *
        * *"They should be able to simply click, select the date, and save it."*
        * The cells were em dashes nothing could click; they name their cause and
@@ -22977,7 +23345,7 @@ for (const theme of THEMES) {
               more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
               text: txt(td),
               // A cell that cannot save carries its whole reason in a title, and
-              // names its cause in a word on screen — Stage 10cf.
+              // names its cause in a word on screen — Stage 10cg.
               reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
               tag: el?.tagName?.toLowerCase() ?? null,
               cause: el?.getAttribute("data-pm-call-cause") ?? null,
@@ -23121,6 +23489,18 @@ for (const theme of THEMES) {
             .filter((h) => h.getBoundingClientRect().right > right + 0.5)
             .map((h) => h.innerText.trim()),
           returns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => e.innerText.replace(/\s+/g, " ").trim()),
+          // PER ACCOUNT ROW, which the XIRR claims need (Stage 10cf): the row's
+          // account, whether the page treats it as a whole account on a dated
+          // record, and the rate the line carries — read as the figure the
+          // page solved AND as the text a reader sees.
+          stockReturns: [...t.querySelectorAll("td[data-stock-return]")].map((e) => ({
+            account: e.closest("tr")?.getAttribute("data-account-row") ?? null,
+            capital: e.getAttribute("data-capital"),
+            xirr: e.querySelector("[data-stock-xirr]")?.getAttribute("data-stock-xirr") ?? null,
+            xirrText: (e.querySelector("[data-stock-xirr]")?.innerText ?? "").replace(/\s+/g, " ").trim(),
+            text: e.innerText.replace(/\s+/g, " ").trim(),
+          })),
+          returnTitle: t.querySelector('thead th[data-col="return"]')?.getAttribute("title") ?? null,
           // THE MARK COLUMN, READ STRUCTURALLY. `data-cmp` carries the figure
           // the BOOK holds and the cell text carries what a reader sees, so a
           // cell that stopped rendering its own attribute's value fails on the
@@ -23592,6 +23972,17 @@ for (const theme of THEMES) {
             // still has to say for itself now that the header names the rest.
             tag: td.getAttribute("data-return-tag"),
             text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+            // WHICH ACCOUNTS THE ROW IS, where it is whole accounts (Stage 10cf),
+            // and the keys it holds — so the sweep can re-solve the rate AND
+            // restate whether the row really is whole, rather than read either
+            // back. The row's own handles ride along for the converse claim.
+            capital: td.getAttribute("data-capital"),
+            capitalAccounts: (td.getAttribute("data-capital-accounts") || "").split(" ").filter(Boolean),
+            rowKeys: (td.getAttribute("data-row-keys") || "").split(" ").filter(Boolean),
+            rowKey: td.closest("tr")?.getAttribute("data-security-key") ?? null,
+            mandate: !!td.closest("tr")?.hasAttribute("data-mandate"),
+            clubbed: !!td.closest("tr")?.querySelector("[data-fund-classes]"),
+            bucket: td.closest("tr")?.getAttribute("data-bucket") ?? null,
           })));
       /**
        * ...AND WHAT EACH RETURN COLUMN'S HEADER SAYS. The coverage count the five
@@ -24048,7 +24439,7 @@ for (const theme of THEMES) {
         const adds = [...strip.querySelectorAll("[data-tile-add]")];
         const cards = [...strip.querySelectorAll(".card")];
         /**
-         * THE ADD TILE CARD — Stage 10cf. *"a big empty tile with bold written:
+         * THE ADD TILE CARD — Stage 10cg. *"a big empty tile with bold written:
          * ADD TILE."* Every word of that is geometry or style — big, empty,
          * bold, and where it sits — so it is MEASURED: its box against the last
          * tile's, its label's computed weight, its border, and whether it is
@@ -24284,7 +24675,7 @@ for (const theme of THEMES) {
         } catch { /* a strip with no picker is a finding below, not a crash here */ }
       }
       /**
-       * ── …AND THE ADD TILE CARD, USED — Stage 10cf ───────────────────────────
+       * ── …AND THE ADD TILE CARD, USED — Stage 10cg ───────────────────────────
        *
        * *"When I click on the ADD TILE button, I should be able to choose what
        * I want to see in that tile."* The walk opens the card's menu, reads what
