@@ -997,6 +997,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -1028,6 +1029,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null,
@@ -5217,6 +5219,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5245,6 +5248,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5273,6 +5277,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-08-06",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5301,6 +5306,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5329,6 +5335,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5357,6 +5364,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5385,6 +5393,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5413,6 +5422,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5441,6 +5451,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5469,6 +5480,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5497,6 +5509,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5525,6 +5538,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5553,6 +5567,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -5581,6 +5596,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -6227,6 +6243,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-06-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -7459,6 +7476,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -7487,6 +7505,7 @@ export const BOOK_POSITIONS: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-07-31",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null
@@ -11893,6 +11912,7 @@ export const BOOK_POLYCAB: Position[] = [
     "ltCostBasis": null,
     "daysToLT": null,
     "heldSince": null,
+    "priceAsOf": "2026-03-30",
     "accruedIncome": null,
     "dividendReceived": null,
     "positionIrrPct": null

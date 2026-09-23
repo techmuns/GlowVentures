@@ -333,6 +333,15 @@ export type Position = {
    * in ./analytics, which renders it absent rather than guessing the window.
    */
   heldSince: string | null;
+  /**
+   * ISO date the STATEMENT says its price or value is struck at — which need
+   * not be its account's `asOf`: ICICI's NSDL balance is at 31 Mar 2026 and its
+   * values are "Prices as on 30-Mar-2026". Present only where the statement
+   * prints one, and never inferred from the as-of. A STATEMENT-basis fact: once
+   * a live quote or a published NAV has moved the price (`live`, `navPriced`),
+   * it no longer dates the figure on screen.
+   */
+  priceAsOf?: string | null;
   dividendReceived: number | null; // INR, cumulative
   /** Income accrued but not yet received, carried separately from market value. */
   accruedIncome?: number | null;

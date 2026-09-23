@@ -5015,6 +5015,9 @@ const FENCED = (() => {
         accountId: p.accountId,
         shares: Number.isFinite(p.quantity) ? p.quantity : null,
         asOf: byId.get(p.accountId)?.asOf ?? null,
+        // The date the row's statement PRINTS its values at — `build-book`'s
+        // field, held below against the statement's own text in the archive.
+        priceAsOf: p.priceAsOf ?? null,
       })),
     };
   } catch { return null; }
@@ -18709,23 +18712,49 @@ const INVARIANTS = {
       return rowsOk && (dates.length === 1 ? dmyRe(dates[0]).test(foot) : foot.includes(`${dates.length} dates — blended`));
     }],
     /**
-     * THE MARK'S HOVER DOES NOT DATE THE VALUATION TO THE BALANCE DATE WHERE THE
-     * STATEMENT PRICES ON ANOTHER DAY. The balance is as of 31 Mar 2026 and the
-     * depository struck its values at "Prices as on 30-Mar-2026"; the hover said
-     * the mark was "as of the statement's date". Struck against the statement's
-     * own text in the audit archive, so it binds only where the two dates differ.
+     * THE MARK'S HOVER NAMES THE STATEMENT'S PRICING DATE APART FROM ITS BALANCE
+     * DATE. The balance is as of 31 Mar 2026 and the depository struck its values
+     * at "Prices as on 30-Mar-2026". The hover once said the mark was "as of the
+     * statement's date", and then — while the book could not carry the pricing
+     * date — only that it "need not be the balance date". The book carries it now
+     * (`priceAsOf`), so the claim is the date itself, each date in its own role.
+     *
+     * THREE PATHS TO ONE DATE, and none is typed here: the statement's own text
+     * in the audit archive (`POLYCAB_STATEMENT_BOOK`, read by this file's own
+     * regex), `build-book`'s `priceAsOf` on `BOOK_POLYCAB` (`FENCED`), and the
+     * rendered hover. The first two must agree row for row — a reader that
+     * stopped reading the date, or a book that stopped carrying it, fails there —
+     * and every row's Mark hover, and the heading's where the rows share one pair,
+     * must name the book's pricing date as the PRICING date and the account's
+     * as-of as the BALANCE date. Where no statement prints a pricing date, the
+     * hover must assert none, in the wording that makes no date claim.
      */
-    ["the mark's hover does not date the statement's valuation to its balance date where the statement prices on another day", (_t, ctx) => {
-      if (!POLYCAB_STATEMENT_BOOK) return { notChecked: "the fenced demat's statement is not in the audit archive" };
+    ["the mark's hover names the statement's pricing date apart from its balance date, both off the book", (_t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
       const d = ctx?.polycabDom;
-      if (!d) return { notChecked: "the DOM probe did not run" };
-      if (!POLYCAB_STATEMENT_BOOK.some((s) => s.pricesAsOn && s.pricesAsOn !== s.asOf)) {
-        return { notChecked: "every fenced statement prices on its own balance date" };
+      if (!d) return false; // a missing probe is a finding, not an abstention
+      if (!POLYCAB_STATEMENT_BOOK) return false; // the fenced statement must be in the archive to witness the date
+      for (const s of POLYCAB_STATEMENT_BOOK) {
+        const b = FENCED.balances.find((x) => x.accountId === s.accountId && x.asOf === s.asOf);
+        if (!b || (b.priceAsOf ?? null) !== (s.pricesAsOn ?? null)) return false;
       }
-      const t = d.noteTitleOf?.mark ?? "";
-      return /divided by the units it prints/i.test(t)
-        && !/as of the statement(?:['’]s)? date/i.test(t)
-        && /need not be the balance date/i.test(t);
+      const rows = d.holdingRows ?? [];
+      if (rows.length !== FENCED.balances.length || rows.some((r) => r.markTitle == null)) return false;
+      const note = d.noteTitleOf?.mark ?? "";
+      const statementDate = /as of the statement(?:['’]s)? date/i;
+      if (!/divided by the units it prints/i.test(note) || statementDate.test(note)) return false;
+      const dated = FENCED.balances.filter((b) => b.priceAsOf);
+      if (!dated.length) {
+        return /need not be the balance date/i.test(note) && rows.every((r) => /need not be the balance date/i.test(r.markTitle));
+      }
+      const names = (t, b) => new RegExp(String.raw`balance as of ${dmyRe(b.asOf).source}`, "i").test(t)
+        && new RegExp(String.raw`valued at the ${dmyRe(b.priceAsOf).source} session`, "i").test(t);
+      for (const b of dated) {
+        const r = rows.find((x) => x.account === b.accountId);
+        if (!r || !names(r.markTitle, b) || statementDate.test(r.markTitle)) return false;
+      }
+      const pairs = new Set(FENCED.balances.map((b) => `${b.asOf}|${b.priceAsOf}`));
+      return pairs.size === 1 && dated.length === FENCED.balances.length ? names(note, dated[0]) : /each row/i.test(note);
     }],
     /**
      * THIS DEMAT'S PLEDGE REASON MAY NOT DENY WHAT THE STATEMENT PRINTS. It said
@@ -37224,6 +37253,9 @@ for (const theme of THEMES) {
             pledgeTitle: tipOf(cellOf(tr, "pledge")),
             price: cellOf(tr, "price")?.innerText.trim() ?? null,
             asOf: cellOf(tr, "asOf")?.innerText.trim() ?? null,
+            // `null` where the cell is not there at all — a Mark cell that lost
+            // its handle is a finding, not a row with no hover.
+            markTitle: cellOf(tr, "mark") ? tipOf(cellOf(tr, "mark")) ?? "" : null,
           })),
           holdingFoot: document.querySelector("main [data-polycab-holding-foot]")?.innerText ?? null,
           holdingFootAsOf: document.querySelector('main [data-polycab-holding-foot] [data-cell="asOf"]')?.innerText.trim() ?? null,

@@ -134,11 +134,20 @@ const PLEDGE_WHY = "the NSDL statement behind this holding prints no pledge colu
  * THE MARK'S DATE IS THE STATEMENT'S PRICING DATE, WHICH NEED NOT BE ITS BALANCE
  * DATE. This said the mark was "a statement figure as of the statement's date";
  * the ICICI statement reports its balance at 31 Mar 2026 and values it "Prices
- * as on 30-Mar-2026". The book does not carry that pricing date, so the hover no
- * longer asserts one — it says the valuation is at the prices the statement
- * states, which is true whatever the gap.
+ * as on 30-Mar-2026". The book carries that pricing date now (`priceAsOf`, off
+ * the reader's own reading of the total row), so the hover names BOTH dates, each
+ * in its own role. Where a statement prints no pricing date the row carries none,
+ * and the hover falls back to saying only that the valuation is at the prices the
+ * statement states — which is true whatever the gap, and asserts no date.
  */
-const MARK_HOW = "The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column. It is the statement's own valuation, at the prices the statement itself states it is struck at — which need not be the balance date in the As-of column — and not a live price; the market price is its own column and is never substituted for this one.";
+const MARK_DERIVED = "The mark is the value the NSDL depository prints, divided by the units it prints — a depository statement carries no rate column.";
+const MARK_NOT_LIVE = "and not a live price; the market price is its own column and is never substituted for this one.";
+const MARK_UNDATED = "at the prices the statement itself states it is struck at — which need not be the balance date in the As-of column —";
+/** "balance as of 31 Mar 2026, valued at the 30 Mar 2026 session's prices", or null where no pricing date was printed. */
+function markWhen(balanceAsOf: string | null | undefined, priceAsOf: string | null | undefined): string | null {
+  if (!priceAsOf) return null;
+  return `balance as of ${balanceAsOf ? fmtDate(balanceAsOf) : "a date the statement does not state"}, valued at the ${fmtDate(priceAsOf)} session's prices`;
+}
 
 /**
  * A CORPORATE ACTION AS A ROW. Dividends carry a derived entitlement on this
@@ -161,6 +170,17 @@ const BALANCES: StatementBalance[] = BOOK_POLYCAB.map((p) => ({
   asOf: ACCOUNT_BY_ID.get(p.accountId)?.asOf ?? null,
 }));
 const STATEMENT_DATES = statementDates(BALANCES);
+/**
+ * The column's own hover. One balance date and one pricing date across every
+ * row are named outright; rows dated differently each carry their own pair in
+ * the Mark cell's hover, and the heading says so rather than naming one of them.
+ */
+const MARK_WHENS = [...new Set(BOOK_POLYCAB.map((p) => markWhen(ACCOUNT_BY_ID.get(p.accountId)?.asOf, p.priceAsOf) ?? ""))];
+const MARK_HOW = MARK_WHENS.length === 1 && MARK_WHENS[0]
+  ? `${MARK_DERIVED} It is the statement's own valuation — ${MARK_WHENS[0]} — ${MARK_NOT_LIVE}`
+  : MARK_WHENS.some(Boolean)
+    ? `${MARK_DERIVED} It is the statement's own valuation, at the prices each statement states — each row's hover names its own balance date and pricing date, which need not be the same — ${MARK_NOT_LIVE}`
+    : `${MARK_DERIVED} It is the statement's own valuation, ${MARK_UNDATED} ${MARK_NOT_LIVE}`;
 
 export function Polycab() {
   const { fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
@@ -450,6 +470,12 @@ export function Polycab() {
                   const qty = typeof p.quantity === "number" ? p.quantity : null;
                   const rowMark = qty !== null && qty > 0 ? p.marketValue / qty : null;
                   const atMarket = markedValue(qty, quote);
+                  /* THIS ROW'S TWO DATES, in the Mark cell's hover — its balance
+                     date and the pricing date its own statement prints. */
+                  const when = markWhen(a?.asOf, p.priceAsOf);
+                  const markTitle = when
+                    ? `${when[0].toUpperCase()}${when.slice(1)} — the statement's own value divided by its units, not a live price.`
+                    : `The statement's own value divided by its units, ${MARK_UNDATED} not a live price.`;
                   return (
                     <Tr view={holdingView} key={`${p.securityKey}-${p.accountId}`} className="hover:bg-ink-700/40"
                       data-polycab-demat-row={p.accountId}>
@@ -477,7 +503,7 @@ export function Polycab() {
                       <td className={`${CELL} text-right mono text-slate-200`} data-cell="shares">
                         {qty === null ? <AbsentCell reason="no statement here reports a share count for this row" /> : fmtNum(qty)}
                       </td>
-                      <td className={`${CELL} text-right mono text-slate-400`}>
+                      <td className={`${CELL} text-right mono text-slate-400`} data-cell="mark" title={markTitle}>
                         {price(rowMark) ?? <AbsentCell reason="this row reports no quantity, so a per-share mark cannot be derived from its value" />}
                       </td>
                       <td className={`${CELL} text-right mono text-slate-100`} data-cell="value">{money(p.marketValue)}</td>

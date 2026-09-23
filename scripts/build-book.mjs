@@ -2820,6 +2820,10 @@ function build(docs) {
         ltCostBasis,
         daysToLT,
         heldSince,
+        // The date the statement PRINTS its price or value as struck at, which
+        // need not be the account's as-of: ICICI's NSDL balance is at 31 Mar and
+        // its values "Prices as on 30-Mar-2026". Only where printed; never the as-of.
+        priceAsOf: h.priceAsOn ?? undefined,
         accruedIncome: h.accruedIncome ?? cp?.accruedIncome ?? null,
         dividendReceived: dividendByKey.get(h.securityKey) ?? null,
         positionIrrPct: cp?.positionIrrPct ?? null,
