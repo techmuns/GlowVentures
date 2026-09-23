@@ -1,0 +1,135 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2024-06-01",
+   "",
+   "Cash Deposits",
+   "contribution",
+   20000000,
+   "",
+   "",
+   ""
+  ],
+  [
+   "2025-02-01",
+   "",
+   "Cash Deposits",
+   "contribution",
+   100000000,
+   "",
+   "",
+   ""
+  ],
+  [
+   "2025-08-01",
+   "",
+   "Cash Deposits",
+   "contribution",
+   25000000,
+   "",
+   "",
+   ""
+  ],
+  [
+   "2025-11-01",
+   "",
+   "Cash Deposits",
+   "contribution",
+   50000000,
+   "",
+   "",
+   ""
+  ],
+  [
+   "2026-01-01",
+   "",
+   "Cash Deposits",
+   "contribution",
+   53500000,
+   "",
+   "",
+   ""
+  ],
+  [
+   "2025-02-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "reclassification",
+   20910446.32,
+   "",
+   170498.1912,
+   ""
+  ],
+  [
+   "2025-02-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "allotment",
+   100000000,
+   "",
+   815373.2761,
+   ""
+  ],
+  [
+   "2025-08-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "allotment",
+   25000000,
+   "",
+   186976.1312,
+   ""
+  ],
+  [
+   "2025-11-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "allotment",
+   50000000,
+   "",
+   362043.4462,
+   ""
+  ],
+  [
+   "2026-01-01",
+   "Buoyant Opportunities Strategy — Category III — Class A4",
+   "Units Allotment",
+   "allotment",
+   53500000,
+   "",
+   384062.1556,
+   ""
+  ],
+  [
+   "2024-06-01",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
+   "Units Allotment",
+   "allotment",
+   20000000,
+   "",
+   155557.405,
+   ""
+  ],
+  [
+   "2025-02-01",
+   "Buoyant Opportunities Strategy — Category III — Class A1",
+   "Unit Redemption",
+   "reclassification",
+   -20910446.38,
+   "",
+   -155557.405,
+   ""
+  ]
+ ]
+}

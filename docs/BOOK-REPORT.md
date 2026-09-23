@@ -116,9 +116,9 @@ Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated
 
 ## The family's own dated investments
 
-**26** dated contribution(s) totalling **2,21,50,00,000** and **95** withdrawal(s) totalling **31,08,68,739.02**, across **11 of 51** account(s).
+**42** dated contribution(s) totalling **2,97,35,00,000** and **96** withdrawal(s) totalling **31,22,85,019.02**, across **14 of 51** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 40 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 37 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **7** position(s), of which **2** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
@@ -430,4 +430,5 @@ never guessed into the nearest plausible bucket.
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b1 in 3p-investment-managers-3000048: the 965892.766 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. Where the units went is on the statement's own dated table, in the archive.
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b2 in 3p-investment-managers-3000048: the 282737.451 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. Where the units went is on the statement's own dated table, in the archive.
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b3 in 3p-investment-managers-3000048: the 767615.745 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- no per-contribution breakdown for neo-infra-income-opportunities-fund-i-class-a5 in neo-infra-income-opportunities-fund-9039920536: the statement allots 500000 unit(s) against 485837 held, so the dated contributions do not account for the position and a per-contribution return would be struck on part of it
 - share movements: 89 holding-window(s) from the demat statements, 89 of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. 23 join a position this book carries; the rest are securities the account no longer holds. 0 movement row(s) matched no known particular and are counted in the in/out totals by their own balance change. 1 demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.

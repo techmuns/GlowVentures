@@ -20,6 +20,7 @@
     "reconcile:register": "node scripts/register-reconcile.mjs",
     "build-book": "node scripts/build-book.mjs",
     "replay:calls": "node scripts/replay-capital-calls.mjs",
+    "replay:flows": "node scripts/replay-unit-flows.mjs",
     "replay:owners": "node scripts/replay-owners.mjs",
     "coverage:source": "node scripts/source-coverage.mjs",
     "check:pages": "node scripts/check-pages.mjs",

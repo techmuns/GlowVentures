@@ -17422,6 +17422,39 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b1"
   },
   {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2023-10-04",
+    "direction": "in",
+    "label": "Initial Contribution",
+    "amount": 2500000,
+    "invested": 2500000,
+    "units": 25000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2023-10-24",
+    "direction": "in",
+    "label": "First Drawdown",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": 75000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2024-02-26",
+    "direction": "in",
+    "label": "Second Drawdown",
+    "amount": 10000000,
+    "invested": 10000000,
+    "units": 100000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2024-05-31",
     "direction": "in",
@@ -17431,6 +17464,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": 144363.028,
     "security": "3P India Equity Fund 1 - Class B1",
     "securityKey": "3p-india-equity-fund-1-class-b1"
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "date": "2024-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 20000000,
+    "invested": 20000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2024-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 35000000,
+    "invested": 35000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
   },
   {
     "accountId": "3p-investment-managers-3000048",
@@ -17560,6 +17615,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital outflow",
     "amount": 2891.25,
     "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-02-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 100000000,
+    "invested": 100000000,
     "units": null,
     "security": null,
     "securityKey": null
@@ -17818,6 +17884,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b1"
   },
   {
+    "accountId": "buoyant-capital-103473",
+    "date": "2025-07-16",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 25000000,
+    "invested": 25000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-07-24",
     "direction": "out",
@@ -17857,6 +17934,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital outflow",
     "amount": 2965,
     "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-08-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 25000000,
+    "invested": 25000000,
     "units": null,
     "security": null,
     "securityKey": null
@@ -18148,6 +18236,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2025-09-25",
+    "direction": "in",
+    "label": "Third Drawdown",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": 75000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-09-25",
     "direction": "out",
@@ -18335,6 +18434,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b2"
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-11-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2025-11-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-11-11",
     "direction": "out",
@@ -18478,6 +18599,39 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "date": "2026-01-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 53500000,
+    "invested": 53500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2026-01-05",
+    "direction": "out",
+    "label": "Capital Redemption",
+    "amount": 1416280,
+    "invested": null,
+    "units": -14162.8,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2026-02-05",
+    "direction": "in",
+    "label": "Fourth Drawdown",
+    "amount": 7500000,
+    "invested": 7500000,
+    "units": 75000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2026-02-10",
     "direction": "out",
@@ -18599,6 +18753,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "buoyant-capital-103473",
+    "date": "2026-04-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 100000000,
+    "invested": 100000000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "green-lantern-capital-llp-510861",
     "date": "2026-04-02",
     "direction": "out",
@@ -18616,6 +18781,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Capital outflow",
     "amount": 9426,
     "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "neo-infra-income-opportunities-fund-9039920536",
+    "date": "2026-04-22",
+    "direction": "in",
+    "label": "Fifth Drawdown",
+    "amount": 15000000,
+    "invested": 15000000,
+    "units": 150000,
+    "security": "Neo Infra Income Opportunities Fund I — Class A5",
+    "securityKey": "neo-infra-income-opportunities-fund-i-class-a5"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2026-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 250000000,
+    "invested": 250000000,
     "units": null,
     "security": null,
     "securityKey": null

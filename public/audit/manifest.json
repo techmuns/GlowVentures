@@ -2323,6 +2323,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_AccountStatement5004CT.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -2332,6 +2333,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103472_AccountStatement5004CT.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 13,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -2501,6 +2508,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -2510,6 +2518,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 14,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -3136,6 +3150,7 @@
   "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
   "pages": 4,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -3145,6 +3160,12 @@
   "fy": "2026-06-30",
   "source": "source/_extracted/august-2026-d/MOTILAL REPORTS/NEO_Statement of Accounts_AJAY JAISINGHANI_9039920536.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 8,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -5402,6 +5423,7 @@
   "sourcePath": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
   "pages": 3,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -5411,6 +5433,12 @@
   "fy": "2026-07-31",
   "source": "source/_extracted/august-2026/reports/BUOYANT - AJAY.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 14,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
