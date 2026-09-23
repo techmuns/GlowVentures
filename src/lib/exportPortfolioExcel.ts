@@ -7,9 +7,9 @@ import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, DASH } from "./format";
-import { measuredReturn, onCapitalBasis } from "./analytics";
+import { holdingYtd } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
-import { reportsNoCost, type CapitalModel, type CapitalSource, type InvestedBehind } from "./capital";
+import { fifoTotals } from "./fifo";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
   holdingBucket, bucketLabel, holdingRoute, ROUTE_LABEL,
@@ -47,48 +47,10 @@ type HoldingRow = {
    */
   costNone: boolean;
   qty: number; avgCost: number | null; cmp: number | null; marketValue: number;
-  /**
-   * WHAT THE FAMILY HAS IN THIS ROW — the capital put in where the row carries a
-   * WHOLE investment whose capital is published (a fund folio), and the cost of
-   * the units held otherwise. See `src/lib/capital.ts`; `returnBasis` says which.
-   */
-  invested: number | null;
-  weight: number | null;
-  /**
-   * Market value less what is invested, over the parts that carry a basis. On a
-   * row measured on its capital that includes everything the investment has
-   * realised — a class switch, a payout — so it is "P&L", not "Unreal. P&L".
-   */
-  pnl: number | null; returnPct: number | null;
-  /**
-   * The money-weighted annual rate — only on a row whose every rupee is a dated
-   * payment and whose payments span a year. A holding inside an account has no
-   * payments of its own, so it is an em dash there, as on the tab.
-   */
-  xirrPct: number | null;
+  weight: number | null; pnl: number | null; returnPct: number | null;
   /** The holding's own year to date, or null where the book cannot measure it. */
   ytdPct: number | null;
-  /** What P&L and Return are struck on, in words — the column that makes both readable. */
-  returnBasis: string;
-  /** True where the row is measured on the capital put in. Counted in the note under the total. */
-  onCapital: boolean;
 };
-
-/** What each capital source is, short enough for a cell. The full sentence is `CAPITAL_SOURCE_LABEL`. */
-const SOURCE_SHORT: Record<CapitalSource, string> = {
-  "dated-record": "dated payments",
-  "statement": "manager's statement",
-  "capital-account": "fund's dated calls and payouts",
-};
-
-/** The Return basis cell, from the one model every surface reads. */
-function basisLabel(b: InvestedBehind): string {
-  if (!b.onCapital.length) return b.onCost.count ? "Cost of units held" : "No cost reported";
-  const srcs = [...new Set(b.onCapital.map((x) => SOURCE_SHORT[x.capital.source]))].join(" + ");
-  return b.onCost.count || b.noBasis.count
-    ? `Capital put in (${srcs}) + cost of units`
-    : `Capital put in (${srcs})`;
-}
 
 /**
  * Consolidate positions into the rows the Holdings sheet exports — the full book,
@@ -114,7 +76,7 @@ function basisLabel(b: InvestedBehind): string {
  * company, the question the regroup was built for. Split, every cell is one
  * fact and each mandate's rows sum to the mandate row on the tab.
  */
-function consolidate(positions: Position[], accounts: Account[], capital: CapitalModel): HoldingRow[] {
+function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
   const idx = accountIndex(accounts);
   /**
    * THE BOOK'S OWN REPORT DATE, not `new Date()`. The year a "year to date"
@@ -170,59 +132,7 @@ function consolidate(positions: Position[], accounts: Account[], capital: Capita
       // down and export a return nobody measured.
       const cost = sumOrNull(ps.map((x) => x.costBasis));
       const qty = ps.reduce((s, x) => s + x.quantity, 0);
-      /**
-       * THE ROW'S BASIS, FROM THE ONE MODEL EVERY SURFACE READS.
-       *
-       * On the capital the family put in where the row carries a WHOLE account
-       * whose capital is published — a fund folio, whose one row here IS the
-       * investment — and on the cost of its units otherwise. A mandate's shares
-       * are split one per row on this sheet, so no row carries a mandate whole
-       * and every one of them keeps its cost: a holding inside an account has no
-       * capital of its own. The tab rolls each mandate into ONE row, which is why
-       * a mandate's own return on its capital is there and not here.
-       *
-       * It also ends a quieter defect this sheet carried. P&L was `mv − cost`
-       * with `cost` from `sumOrNull`, so a row mixing a costed position with a
-       * cost-less one booked the cost-less one's whole value as profit. `behind`
-       * strikes both sides over the parts that carry a basis. Measured, no row in
-       * this drop mixes the two, which is exactly when the fix is cheapest.
-       */
-      const b = capital.behind(ps);
-      const onCap = onCapitalBasis(b);
-      const invested = b.invested;
-      const pnl = b.gain;
-      // A RETURN ONLY WHERE THE PARTS WITH A BASIS ARE ESSENTIALLY THE ROW — the
-      // test the tab applies, so a return never sits between two columns that
-      // cover different sets.
-      const returnPct = b.covers && invested !== null && invested > 0 ? b.returnPct : null;
-      // AVERAGE COST IS A PER-UNIT FIGURE OF THE UNITS THAT REPORT ONE, and stays
-      // the cost of the units on a row measured on capital: it is the tax figure,
-      // and it is still true. Only the RETURN moved to the capital.
-      const costed = ps.filter((x) => !reportsNoCost(x));
-      const costedQty = costed.reduce((s, x) => s + x.quantity, 0);
-      const costedCost = costed.reduce((s, x) => s + (x.costBasis as number), 0);
-      /**
-       * The HOLDING's year to date and the money-weighted rate, on the same rule
-       * as the tab — `measuredReturn` dispatches on the basis, so a row on its
-       * capital answers from the dated payments and a holding from its own lots.
-       *
-       * `heldSince` is the oldest unit still held and only exists where the lots
-       * account for the units exactly, so the consolidated row takes it only when
-       * EVERY constituent reports one — one missing start makes the row's start
-       * unknown, not older.
-       */
-      const since = ps.every((x) => x.heldSince)
-        ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
-        : null;
-      const input = {
-        returnPct, heldSince: since, assetClass: ps[0].assetClass,
-        costNA: invested === null, capital: onCap ? b : null,
-      };
-      const y = measuredReturn(input, "ytd", bookAsOf);
-      // The XIRR column carries an XIRR or nothing. Where the payments span under
-      // a year `measuredReturn` returns the holding-period figure tagged HPR —
-      // right in a tagged cell, and wrong under a header that says XIRR.
-      const x = measuredReturn(input, "xirr", bookAsOf);
+      const costNA = cost === null || (cost === 0 && mv > 0);
       rows.push({
         security: ps[0].security, bucket, sector: ps[0].sector,
         // THE FAMILY'S OWN AXES, struck on the same position the bucket is and
@@ -246,15 +156,32 @@ function consolidate(positions: Position[], accounts: Account[], capital: Capita
         // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
         // NAV per unit). Kept null here and rendered as an em dash by the caller,
         // never as a zero price that would read as a measurement.
-        qty, avgCost: costedQty > 0 ? costedCost / costedQty : null, cmp: ps[0].currentPrice ?? null,
-        marketValue: mv, invested, weight: totalMV > 0 ? (mv / totalMV) * 100 : null,
+        qty, avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, cmp: ps[0].currentPrice ?? null,
+        marketValue: mv, weight: totalMV > 0 ? (mv / totalMV) * 100 : null,
         // NULL, NEVER 0. The cell already rendered an em dash; the zero survived
         // in the model and was summed into the Total row below.
-        pnl, returnPct,
-        xirrPct: x.shown && x.tag === "XIRR" ? x.pct : null,
-        ytdPct: y.shown ? y.pct : null,
-        returnBasis: basisLabel(b),
-        onCapital: onCap,
+        pnl: costNA ? null : mv - (cost as number),
+        // FIFO, through the same aggregator the tab uses — the realised gain on
+        // units already sold stays in the return.
+        returnPct: costNA || (cost as number) <= 0 ? null : fifoTotals(ps).returnPct,
+        /**
+         * The HOLDING's year to date, on the same rule as the tab.
+         *
+         * `heldSince` is the oldest unit still held and only exists where the
+         * lots account for the units exactly, so the consolidated row takes it
+         * only when EVERY constituent reports one — one missing start makes the
+         * row's start unknown, not older. `holdingYtd` then answers only for a
+         * holding opened during the year; every other row is a dash here, in
+         * the sheet exactly as on screen.
+         */
+        ytdPct: (() => {
+          const since = ps.every((x) => x.heldSince)
+            ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
+            : null;
+          const ret = costNA || (cost as number) <= 0 ? null : ((mv - (cost as number)) / (cost as number)) * 100;
+          const y = holdingYtd({ returnPct: ret, heldSince: since }, bookAsOf);
+          return y.kind === "since-open" ? y.pct : null;
+        })(),
       });
     }
   }
@@ -372,7 +299,7 @@ const PRICE = "#,##0.00";
 const PCT = '+0.0"%";-0.0"%";0.0"%"';
 const QTY = "#,##0";
 
-function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Account[], capital: CapitalModel) {
+function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Account[]) {
   const ws = wb.addWorksheet("Holdings", { views: [{ state: "frozen", ySplit: 3 }] });
   /**
    * THE MONEY READS FIRST AND THE DESCRIPTORS CLOSE THE SHEET — the same
@@ -393,34 +320,18 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "security", header: "Security", width: 34 },
     { key: "qty", header: "Qty", width: 14, numFmt: QTY, align: "right" },
     { key: "avgCost", header: "Avg Cost (₹)", width: 13, numFmt: PRICE, align: "right" },
-    // BESIDE AVG COST, AS ON THE TAB. On a row measured on its capital the two
-    // part company — Avg Cost is still what the units cost, Invested is what the
-    // family put in — and a reader can only check a P&L against the column it is
-    // struck on, which is this one.
-    { key: "invested", header: "Invested (₹)", width: 18, numFmt: MONEY, align: "right" },
     { key: "cmp", header: "CMP (₹)", width: 12, numFmt: PRICE, align: "right" },
     { key: "marketValue", header: "Market Value (₹)", width: 18, numFmt: MONEY, align: "right" },
     // Named on the header rather than left to be assumed: the denominator is the
     // WHOLE consolidated book — every class, listed and private — not the class
     // section the row sits in.
     { key: "weight", header: "Weight of book", width: 14, numFmt: '0.0"%"', align: "right" },
-    // "P&L", NOT "Unreal. P&L": on a row measured on its capital the figure is
-    // value less the money put in, which carries everything the investment has
-    // realised — the gain a class switch folded into cost, a fund's payouts.
-    { key: "pnl", header: "P&L (₹)", width: 18, numFmt: MONEY_SIGNED, align: "right", signed: true },
-    // Cumulative — the holding-period return on the row's basis, never annualised.
+    { key: "pnl", header: "Unreal. P&L (₹)", width: 18, numFmt: MONEY_SIGNED, align: "right", signed: true },
     { key: "returnPct", header: "Return", width: 11, numFmt: PCT, align: "right", signed: true },
-    // The annual rate over every dated payment, where the row is a whole
-    // investment whose payments span a year. An em dash everywhere else.
-    { key: "xirrPct", header: "XIRR", width: 11, numFmt: PCT, align: "right", signed: true },
     // The HOLDING's year to date, never the share's market move — and an em
     // dash wherever the book cannot measure it, which on this drop is every
     // row. See `holdingYtd`; the sheet says the same thing the tab does.
     { key: "ytdPct", header: "YTD", width: 11, numFmt: PCT, align: "right", signed: true },
-    // WHAT P&L AND RETURN ARE STRUCK ON, per row, as the first descriptor so it
-    // sits beside the money it explains. A sheet mixing two bases with nothing
-    // saying which row is on which is two measurements in one column.
-    { key: "returnBasis", header: "Return basis", width: 36 },
     { key: "bucket", header: "Class", width: 18 },
     /**
      * THE FAMILY'S OWN TWO SLICES, AS COLUMNS RATHER THAN AS SECTIONS.
@@ -452,11 +363,10 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   // columns carry the tab's grouping; the subtitle no longer claims its layout.
   titleBlock(ws, cols.length,
     `Holdings · one row per security per class, and per mandate inside PMS mandates · `
-    + `classes largest first · each dedupeGroup counted once · P&L and Return on the capital put in `
-    + `where a row is a whole investment, on the cost of the units otherwise · values in INR · exported ${asOf}`);
+    + `classes largest first · each dedupeGroup counted once · values in INR · exported ${asOf}`);
   headerRow(ws, cols, 3);
 
-  const rows = consolidate(positions, accounts, capital);
+  const rows = consolidate(positions, accounts);
   let r = 4;
   for (const h of rows) {
     // `?? DASH` on every absent cell, never null and never a blank: an empty
@@ -466,15 +376,12 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       security: displaySecurity(h.security),
       qty: h.qty,
       avgCost: h.avgCost ?? DASH,
-      invested: h.invested ?? DASH,
       cmp: h.cmp ?? DASH,
       marketValue: h.marketValue,
       weight: h.weight ?? DASH,
       pnl: h.pnl ?? DASH,
       returnPct: h.returnPct ?? DASH,
-      xirrPct: h.xirrPct ?? DASH,
       ytdPct: h.ytdPct ?? DASH,
-      returnBasis: h.returnBasis,
       bucket: bucketLabel(h.bucket),
       heldVia: h.heldVia,
       familyClass: h.familyClass,
@@ -495,11 +402,6 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   // not regenerate with the book.
   const priced = rows.filter((h) => h.pnl !== null);
   const totPnL = sumOrNull(rows.map((h) => h.pnl));
-  // Summed FROM THE ROWS, like P&L beside it, so the footer ties to the column
-  // above it by construction: each row is on its own basis and the total is
-  // their sum, never a second basis struck over the whole sheet.
-  const totInvested = sumOrNull(rows.map((h) => h.invested));
-  const capRows = rows.filter((h) => h.onCapital);
   const unpricedRows = rows.length - priced.length;
   const unpricedMV = rows.reduce((s, h) => s + (h.pnl === null ? h.marketValue : 0), 0);
   /**
@@ -538,7 +440,6 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   };
   set(1, `Total · ${rows.length} holdings`);
   for (let c = 2; c <= cols.length; c++) set(c, "");
-  set(colAt(cols, "invested"), totInvested ?? DASH, totInvested === null ? undefined : MONEY);
   set(colAt(cols, "marketValue"), totMV, MONEY);
   set(colAt(cols, "pnl"), totPnL ?? DASH, totPnL === null ? undefined : MONEY_SIGNED, totPnL ?? undefined);
   tr.height = 18;
@@ -549,9 +450,9 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   r++;
   ws.mergeCells(r, 1, r, cols.length);
   const note = ws.getRow(r).getCell(1);
-  const coverage = unpricedRows === 0
-    ? `P&L covers all ${rows.length} rows. Market value covers all ${rows.length}.`
-    : `P&L covers ${priced.length} of ${rows.length} rows. The other ${unpricedRows}`
+  note.value = unpricedRows === 0
+    ? `Unrealised P&L covers all ${rows.length} rows. Market value covers all ${rows.length}.`
+    : `Unrealised P&L covers ${priced.length} of ${rows.length} rows. The other ${unpricedRows}`
       + ` (${fmtCr(unpricedMV, 2)} of market value) have no cost basis this total can stand on, so they are`
       + ` left out of it rather than counted as zero`
       + (zeroCostRows > 0
@@ -559,23 +460,6 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
           + ` the whole holding as profit`
         : ``)
       + `. Whose statements they are: ${sourceList}. Market value covers all ${rows.length}.`;
-  /**
-   * WHAT THE TOTAL IS STRUCK ON, counted rather than asserted — and where it
-   * differs from the tab's own footer, which it does by construction. The tab
-   * rolls each PMS mandate into ONE row and measures it on the capital put in;
-   * this sheet lists a mandate's holdings one per row, and a holding has no
-   * capital of its own. Both are right, and a reader who sets one total beside
-   * the other must be told why they differ rather than left to find it.
-   */
-  const basis = capRows.length === 0
-    ? ` Every P&L and Return here is on the cost of the units held.`
-    : ` P&L and Return on ${capRows.length} row${capRows.length === 1 ? "" : "s"} — each a whole investment`
-      + ` the family funded — are struck on the capital put in (${fmtCr(sumOrNull(capRows.map((h) => h.invested)) ?? 0, 2)}),`
-      + ` which carries what the investment has realised; on the other rows, on the cost of the units held today,`
-      + ` which is right for a holding inside an account. A PMS mandate's own return on its capital is on the`
-      + ` Portfolio Monitor, which rolls each mandate into one row — this sheet lists a mandate's holdings one per`
-      + ` row, so its total differs from the tab's by construction.`;
-  note.value = coverage + basis;
   note.font = { name: "Calibri", size: 9, italic: true, color: { argb: C.muted } };
   // WRAPPED, AND THE ROW MADE TALL ENOUGH TO SHOW IT. A merged cell CLIPS rather
   // than overflowing, so at `wrapText: false` and a fixed 16pt this sentence —
@@ -632,25 +516,18 @@ function buildTransactions(wb: ExcelJS.Workbook, txns: Txn[]) {
  * asserted on the real book: this file had no coverage at all, and a sheet
  * whose columns have silently swapped opens perfectly.
  */
-export function buildPortfolioWorkbook(
-  positions: Position[], accounts: Account[], txns: Txn[], capital: CapitalModel,
-): ExcelJS.Workbook {
+export function buildPortfolioWorkbook(positions: Position[], accounts: Account[], txns: Txn[]): ExcelJS.Workbook {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Glow Ventures Family Office";
   wb.created = new Date();
-  buildHoldings(wb, positions, accounts, capital);
+  buildHoldings(wb, positions, accounts);
   buildTransactions(wb, txns);
   return wb;
 }
 
 // Build the styled workbook and trigger a browser download.
-// `capital` is REQUIRED, not defaulted: an export that quietly fell back to the
-// cost of the units would print the returns this change exists to correct, in
-// the one artefact nobody re-checks once it has been sent.
-export async function exportPortfolioExcel(
-  positions: Position[], accounts: Account[], txns: Txn[], capital: CapitalModel,
-): Promise<void> {
-  const wb = buildPortfolioWorkbook(positions, accounts, txns, capital);
+export async function exportPortfolioExcel(positions: Position[], accounts: Account[], txns: Txn[]): Promise<void> {
+  const wb = buildPortfolioWorkbook(positions, accounts, txns);
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });

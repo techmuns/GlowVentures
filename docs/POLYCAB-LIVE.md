@@ -8,29 +8,17 @@ book total, and it is deliberately NOT a statement about what the family's
 own demat reports — that distinction is the whole design and is set out at
 the top of `scripts/build-polycab-live.mjs`.
 
-Retrieved `2026-09-22T15:56:39.171Z`.
+Retrieved `2026-09-23T15:46:09.211Z`.
 
 ## Identity — the gate everything else passed
 
-The exchange returns **INE455K01017** for scrip `542652`, and the book's
-ring-fenced holding carries **INE455K01017**. They match, so the figures below are published.
-
-| | |
-| --- | --- |
-| Security id | POLYCAB |
-| Face value | 10 |
-| Industry | Cables - Electricals |
-| Group / index | A / BSE 200 |
+**The identity gate did not pass this run**, so nothing from the exchange was
+refreshed. Whatever the store already held is kept and carries its own dates.
 
 ## Corporate actions — the exchange's own record since listing
 
-**8** action(s), fetched whole this run.
+**8** action(s) — **kept from a previous run**, so not republished as complete.
 By kind: 8 dividend.
-
-**No bonus, split or spin-off has ever been declared on this scrip.** The record
-is complete from listing, so that is a MEASURED nil rather than an absence of
-reporting — which is the one thing this store retires from the page's own
-"unreported rather than confirmed" wording.
 
 | Ex-date | Kind | Per share | Ratio | Record | Payment | The exchange's own words |
 | --- | --- | ---: | --- | --- | --- | --- |
@@ -94,4 +82,5 @@ That is recorded rather than worked around; nothing above needs it.
 
 ## This run's findings
 
+- **fail** `identity` — BSE identity refused — HTTP 403. Nothing from the exchange is published this run.
 - **info** `promoter-agreement` — 6 quarter(s) carried by both witnesses; all agree within 0.05pp.

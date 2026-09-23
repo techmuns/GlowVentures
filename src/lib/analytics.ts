@@ -4,7 +4,6 @@
 // account registry, because "which entity owns this" and "which platform holds
 // this" are two different questions the account string cannot answer on its own.
 import type { Account, FundInvestment, Position, StartupInvestment } from "./types";
-import type { InvestedBehind } from "./capital";
 import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -580,29 +579,49 @@ export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
  * on a shared HOUSE, and a section heading looks equally authoritative whichever
  * rows sit under it.
  *
- * ── ARBITRAGE IS IN THE RULE AND NOT YET IN THE BOOK, WHICH IS TWO FACTS ────
+ * ── ARBITRAGE IS CASH, EVERYWHERE, AND THE FAMILY HAS NOW SAID SO TWICE ────
  *
- * The family named arbitrage in the same breath as liquid, and their review
- * carries ₹41.08 Cr of it — four funds, the largest ₹30.99 Cr. Two things about
- * that are worth stating rather than glossing:
+ *   "Wherever we have cash as asset class or category — arbitrage funds or
+ *    holdings into that cash as well, because arbitrage funds are nothing but
+ *    basically cash. Implement this everywhere on the dashboard. Whenever,
+ *    wherever we have cash as a line item, we need to show arbitrage funds
+ *    inside it. Arbitrage funds need not be classified into any other category
+ *    except for cash."  (23 Sep 2026)
  *
- *   • It is the ONE place this departs from their workbook. That workbook lists
- *     all four on its DEBT sheet — which is why `familyTaxonomy.ts` files them
- *     as Debt on the family's own asset-class axis, and that stays. It also
- *     codes every one of them basket `Liquid`, so the workbook was already half
- *     of this way. The instruction above is the family overruling their own
- *     sheet placement for the category axis, which is theirs to do.
- *   • NOT ONE OF THEM IS IN THIS BOOK. Searched over every position: no holding
- *     carries an arbitrage name, so this map has no arbitrage entry today and
- *     the screen shows none. Saying "arbitrage now shows in cash" would be a
- *     claim about a row that does not exist.
+ * This block used to record arbitrage as "in the rule and not yet in the book":
+ * the family named it beside liquid, their review carries four arbitrage funds,
+ * and no POSITION carried one, so this map had no arbitrage entry and the
+ * screen showed none. The second half was true of the positions and it was not
+ * the whole truth. Three arbitrage funds ARE held — Motilal Oswal, Kotak and
+ * Bandhan, on Ajay's main demat 1201090012539150 — and the only document that
+ * says so is that account's TRANSACTION statement, which prints closing units
+ * and no rate. The book carries them as quantities (`BOOK_SHARE_MOVEMENTS`) and
+ * the dashboard now values them at AMFI's published NAV — `fundNavs.ts`, where
+ * the reasoning and the gates live. They are keyed below on the depository's
+ * own securityKey, because that is the key those holdings carry.
  *
- * That second point is exactly how a typed list goes stale in silence, so it is
- * not left to a future reader to notice: `cashEquivalentCandidates` below finds
- * what this map does not name, and `familyTaxonomy.test.ts` FAILS on the first
- * drop that brings one. The detector REPORTS and never DECIDES — check (c)'s
- * "flagged, never deduped", one axis over — because a rule that moved money on
- * the strength of a name is the failure the paragraph above refuses.
+ * ── HOW EACH ARBITRAGE ENTRY IS KNOWN TO BE ONE — BY IDENTIFIER, NOT BY NAME ─
+ *
+ * AMFI files every scheme under SEBI's own category, and `build-fund-navs`
+ * records it against the ISIN. Each entry below is `Hybrid Scheme - Arbitrage
+ * Fund` in that file; `familyTaxonomy.test.ts` asserts it, and asserts the
+ * converse too — any scheme the dashboard carries that AMFI files as a liquid or
+ * arbitrage fund must be in this map, or the suite fails and names it. That is
+ * a stronger net than the name pattern below, which cannot see a depository's
+ * clipping of a name.
+ *
+ * ── AND IT OVERRULES THE FAMILY'S OWN WORKBOOK, ON PURPOSE ─────────────────
+ *
+ * Their review lists its arbitrage funds on the DEBT sheet, and codes every one
+ * basket `Liquid`. "Need not be classified into any other category except for
+ * cash" is the family overruling their own sheet, on every axis — category,
+ * their own asset class, and the basket axis's cash, which is Liquidity. That is
+ * theirs to do, and `familyTaxonomy.ts` files it as their RULE rather than as
+ * the review, so the page can say which.
+ *
+ * The detector below still REPORTS and never DECIDES — check (c)'s "flagged,
+ * never deduped", one axis over — because a rule that moved money on the
+ * strength of a name is the failure the committed list exists to refuse.
  */
 export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "absl-liqf-d-growth": "Aditya Birla SL Liquid Fund-Direct (G) — Cash sheet",
@@ -619,6 +638,22 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
    * find it missing.
    */
   "axis-liquid-fund-direct-plan-growth-option": "Axis Liquid Fund - Direct Plan - Growth Option — Cash sheet",
+  /**
+   * THE ARBITRAGE FUNDS — the family's instruction of 23 Sep 2026, each one an
+   * `Arbitrage Fund` in AMFI's own SEBI categorisation against its ISIN.
+   * Motilal Oswal's is the holding their 30 June review carries (Debt tab,
+   * Liquid basket), and its own transaction rows record the same 16,308,407.445
+   * units the depository credited on 21 May. The review's Kotak line is that
+   * scheme's REGULAR plan, 642,940 units bought in May 2025 — a different
+   * holding from these Direct-plan units, which the depository credited on
+   * 3 July 2026 with Bandhan's, after the review was drawn.
+   */
+  "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
+    "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
+  "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth":
+    "Kotak Arbitrage Fund - Direct Growth (INF174K01LC6) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
+  "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
+    "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
 };
 
 /**
@@ -630,6 +665,24 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
  */
 export const isCashEquivalent = (p: { securityKey?: string }) =>
   p.securityKey != null && Object.prototype.hasOwnProperty.call(CASH_EQUIVALENT_KEYS, p.securityKey);
+
+/**
+ * THE CLASS A READER IS SHOWN FOR A HOLDING.
+ *
+ * `assetClass` stays what the ISSUING DOCUMENT called the instrument — §5, and
+ * the archive goes on describing the statements. This is the class a PAGE
+ * prints wherever a holding's class is a line a reader reads: every cash
+ * equivalent is `Cash`, never the wrapper its statement typed it as. One place,
+ * because "arbitrage need not be classified into any other category except for
+ * cash" is a claim about every surface at once, and a second copy of it on one
+ * page is how one page ends up disagreeing with the rest.
+ *
+ * It is for DISPLAY and for grouping what a page shows. What a holding IS for
+ * logic — whether it is a fund with a disclosure to look through, which side of
+ * the listed/private split it sits on — still reads `assetClass`.
+ */
+export const readerClassOf = (p: { assetClass: string; securityKey?: string }): string =>
+  isCashEquivalent(p) ? "Cash" : p.assetClass;
 
 /**
  * WHAT THE MAP DOES NOT NAME, SO THE NEXT DROP CANNOT LAND SILENTLY.
@@ -811,9 +864,12 @@ export function excludedClasses(positions: Position[], keep: (p: Position) => bo
   const m = new Map<string, { mv: number; count: number }>();
   for (const p of positions) {
     if (keep(p)) continue;
-    const e = m.get(p.assetClass) ?? { mv: 0, count: 0 };
+    // THE READER'S CLASS, so a liquid or arbitrage fund left out of a company
+    // view is named under Cash — the one category the family allows it.
+    const k = readerClassOf(p);
+    const e = m.get(k) ?? { mv: 0, count: 0 };
     e.mv += p.marketValue; e.count += 1;
-    m.set(p.assetClass, e);
+    m.set(k, e);
   }
   return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
 }
@@ -847,6 +903,10 @@ export type Bucket = {
   count: number; returnPct: number | null; weight: number;
   /** How many of `count` positions reported no cost — the rest of the bucket is still real. */
   withoutCost: number;
+  /** FIFO: the realised gain on units already sold, over the costed holdings. */
+  realised: number;
+  /** FIFO: the capital behind `returnPct` — cost of units held plus cost of units sold. */
+  deployed: number | null;
 };
 
 /**
@@ -863,15 +923,25 @@ export type Bucket = {
  * in this book prints one.
  */
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
-  const m = new Map<string, { mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number }>();
+  const m = new Map<string, {
+    mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number;
+    realised: number; deployed: (number | null)[];
+  }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0 };
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [] };
     c.mv += p.marketValue;
     c.costs.push(p.costBasis);
     c.pnls.push(p.unrealizedPnL);
     c.count += 1;
     if (p.costBasis === null || p.costBasis === undefined) c.withoutCost += 1;
+    // FIFO: the realised gain on units already sold, and what they cost. A
+    // holding with no cost contributes neither — it is not in the denominator
+    // either, so leaving its realised out keeps the two on one set.
+    if (typeof p.costBasis === "number" && Number.isFinite(p.costBasis)) {
+      if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
+      c.deployed.push(p.costBasis + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0));
+    }
     m.set(k, c);
   }
   const total = [...m.values()].reduce((s, v) => s + v.mv, 0);
@@ -879,6 +949,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     .map(([key, v]) => {
       const cost = sumOrNull(v.costs);
       const pnl = sumOrNull(v.pnls);
+      const deployed = sumOrNull(v.deployed);
       return {
         key,
         mv: v.mv,
@@ -886,9 +957,14 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         pnl,
         count: v.count,
         withoutCost: v.withoutCost,
-        // A return needs BOTH sides on the same basis. Null when either is
-        // absent — not 0, which reads as "this bucket broke even".
-        returnPct: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        realised: v.realised,
+        deployed,
+        // FIFO's one return, summed before it is divided: (unrealised +
+        // realised) ÷ (cost held + cost sold). Null when either side is absent
+        // — not 0, which reads as "this bucket broke even". A caller that can
+        // see WHOLE mandates strikes them on their capital instead
+        // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
+        returnPct: deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
         weight: total > 0 ? v.mv / total : 0,
       };
     })
@@ -1123,23 +1199,10 @@ export function ytdCoverage(positions: Holdable[], asOf: string) {
 //    `auto` and `cagr` delegate to it, so a sub-year window can never be
 //    compounded onto a year (the +99.0% / +47,695% failure this repo has met).
 //  - A measure this book cannot strike renders a DASH WITH THE REASON, never a
-//    plausible wrong number. `positionIrrPct` is the banned extrapolation, and a
-//    HOLDING inside an account has no payments of its own to solve an XIRR over
-//    — the family funded the account, not the share.
-//
-// AND A ROW THAT IS A WHOLE INVESTMENT IS MEASURED ON THE CAPITAL PUT INTO IT.
-// A mandate, a fund folio, a fund held in a folio of its own: the family paid
-// money INTO that account, and the account's own statements publish how much —
-// often dated, payment by payment. `ReturnInput.capital` carries it (see
-// `src/lib/capital.ts`), and then every measure below is struck on that capital
-// rather than on the cost of the units held today, which a class switch, a
-// manager's trading or a fund's payout resets. This was the root cause of the
-// family's report that an AIF's return "is a lot higher than what we are
-// showing": Buoyant read +3.71% on the cost of its current class and returns
-// +7.17% on the ₹46 Cr put in, or 15.30% a year money-weighted — the IRR its
-// own statement prints. The XIRR measure is no longer absent everywhere: where
-// every payment behind a row is dated it is solved, which is exactly the
-// family's own rule — "an XIRR when there are multiple tranches".
+//    plausible wrong number. Per-holding XIRR is the honest example: the
+//    statements cover the current period only, so no cash-flow history exists to
+//    solve one against, and `positionIrrPct` is the banned extrapolation — so the
+//    XIRR measure names why it is absent rather than reaching for a figure.
 
 export type ReturnMeasure = "auto" | "absolute" | "cagr" | "xirr" | "ytd" | "calendar";
 
@@ -1156,18 +1219,18 @@ export type ReturnMeasureDef = {
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "auto", label: "By methodology", tag: "AUTO",
-    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Several dated payments into an investment, or fixed income: XIRR. Each cell says which one it is." },
+    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
-    hint: "The total return since the money went in, not annualised — on the capital the family put in where a row is a whole investment, on the cost of the units otherwise." },
+    hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
     hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
-    hint: "The annual rate across every payment in and out, each at its own date. Struck where a row is a whole investment whose payments are dated; a holding inside an account has no payments of its own, so it is shown as absent." },
+    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount, which the statements carry for a whole ACCOUNT and never for a holding inside one — so it shows on a row that is whole accounts with every payment dated, and is absent, with the reason, everywhere else." },
   { key: "ytd", label: "Year to date", tag: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
   { key: "calendar", label: "Calendar year", tag: "CY",
@@ -1201,15 +1264,40 @@ export type ReturnInput = {
   assetClass: string | null | undefined;
   costNA?: boolean;
   /**
-   * THE CAPITAL BASIS — set on a row that carries at least one WHOLE account
-   * whose capital is published (a mandate, a fund folio). Then `returnPct` is
-   * ALREADY the return on that capital, and this carries what every measure
-   * needs beyond it: when the money went in, whether each payment is dated, and
-   * the money-weighted rate over them. Absent or null everywhere else, and then
-   * nothing below changes. See `src/lib/capital.ts`.
+   * THE DATED CAPITAL BEHIND THE ROW, where the row IS one or more whole
+   * accounts (`datedCapital.ts`). Undefined on a holding inside an account —
+   * which has no cash flows of its own and keeps every rule below unchanged.
    */
-  capital?: InvestedBehind | null;
+  capital?: RowCapital | null;
 };
+
+/**
+ * ── THE DATED CAPITAL BEHIND A ROW ──────────────────────────────────────────
+ *
+ * Set by `datedCapital.ts` where a row carries every holding of one or more
+ * accounts. `dated: true` where every one of those accounts has a complete dated
+ * record of the family's payments (`capitalRollup`) — the one thing a
+ * money-weighted return needs — and `dated: false`, with the reason, where the
+ * row is whole accounts and one of them has no such record. A HOLDING has none:
+ * it is not an account, and `capital` is left undefined.
+ */
+export type RowCapital =
+  | {
+      dated: true;
+      /** The accounts behind the row, sorted — what the checks re-solve over. */
+      accountIds: string[];
+      /** How many accounts the rate pools, each closing on its own statement date. */
+      accounts: number;
+      /** Dated flows behind it, in and out — the family's rule routes more than one to XIRR. */
+      flows: number;
+      /** The first payment in, and the latest statement date a value is struck on. */
+      since: string;
+      to: string;
+      days: number;
+      /** The pooled XIRR, annual; null where the flows do not solve. */
+      annualPct: number | null;
+    }
+  | { dated: false; accountIds: string[]; reason: string };
 
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
@@ -1219,19 +1307,41 @@ export type MeasuredReturn =
 
 const NO_COST_RETURN =
   "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
-/**
- * WHY A HOLDING HAS NO XIRR — and the reason used to be false. It read "the
- * statements in this book cover the current period only", which stopped being
- * true when the dated capital records were read (Stage 10ag) and the class
- * switch after them. The honest reason is about WHAT A HOLDING IS: the family
- * paid money into the ACCOUNT, and a share inside it was bought by the manager
- * with the account's money — so the holding has no payments of its own. Where a
- * row IS a whole account with dated payments, the XIRR is struck.
- */
 const NO_HOLDING_XIRR =
-  "no XIRR for this row: a money-weighted return needs every payment into it, dated, and a holding inside an account has no payments of its own — the family paid money into the account, and a share in it was bought by the manager or recorded by a depository that reports what is held, not what was paid. Where a row is a whole investment whose payments are dated, its XIRR is shown.";
+  "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
 export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
+
+/** Under a year of dated capital: the holding-period return, marked, never annualised. */
+function capitalSubYear(returnPct: number, cap: Extract<RowCapital, { dated: true }>): MeasuredReturn {
+  return { shown: true, pct: returnPct, tag: "HPR",
+    note: `The money has been in for ${cap.days} days — under a year — so this is the holding-period return, not an annual rate.` };
+}
+
+/** One dated payment a year or more ago: the holding-period return compounded over the days since it. */
+function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: true }>, tag: "CAGR"): MeasuredReturn {
+  if (cap.days < YEAR_DAYS) return capitalSubYear(returnPct, cap);
+  const growth = 1 + returnPct / 100;
+  if (growth <= 0) return { shown: true, pct: returnPct, tag: "HPR", note: "A total loss has no compound rate, so this is the holding-period return." };
+  return { shown: true, pct: (Math.pow(growth, YEAR_DAYS / cap.days) - 1) * 100, tag,
+    note: `One payment on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}.` };
+}
+
+/**
+ * The money-weighted rate over a row's dated capital — or, under a year, its
+ * holding-period return, tagged HPR (Stage 10g(ii)'s guard: a sub-year window
+ * compounded onto a year is how this book once printed +99.0%).
+ */
+function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean): MeasuredReturn {
+  if (cap.days < YEAR_DAYS) {
+    return noCost ? { shown: false, tag: "XIRR", reason: NO_COST_RETURN } : capitalSubYear(p.returnPct as number, cap);
+  }
+  if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
+  return { shown: true, pct: cap.annualPct, tag: "XIRR",
+    note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "payment" : "payments"}`
+      + (cap.accounts > 1 ? ` across ${cap.accounts} accounts, each closing on its own statement's value and date` : ", and the value on the statement's own date")
+      + `, from ${cap.since} to ${cap.to} (${cap.days} days) — the same record the Transactions card solves over.` };
+}
 
 /**
  * The return to print for one holding, on the measure the reader picked.
@@ -1243,12 +1353,24 @@ export const noCalendarReason = (asOf: string) =>
  * `cagr` delegate to `holdingReturn` so the annualisation guard is defined once.
  */
 export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: string): MeasuredReturn {
-  if (onCapitalBasis(p.capital)) return capitalMeasured(p, p.capital, measure, asOf);
   const noCost = !!p.costNA || p.returnPct === null || p.returnPct === undefined;
 
   if (measure === "absolute") {
     if (noCost) return { shown: false, tag: "HPR", reason: NO_COST_RETURN };
     return { shown: true, pct: p.returnPct as number, tag: "HPR" };
+  }
+
+  const cap = p.capital;
+  if (measure === "cagr" && cap?.dated) {
+    // SEVERAL DATED PAYMENTS: a single-start compound rate would treat every
+    // rupee as invested on the first date. The Transactions card refuses the
+    // same account the same way, so the two pages cannot disagree about it.
+    if (cap.flows > 1) {
+      return { shown: false, tag: "CAGR",
+        reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR" };
+    }
+    if (noCost) return { shown: false, tag: "CAGR", reason: NO_COST_RETURN };
+    return capitalCompound(p.returnPct as number, cap, "CAGR");
   }
 
   if (measure === "cagr") {
@@ -1274,7 +1396,9 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   }
 
   if (measure === "xirr") {
-    return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+    if (cap && !cap.dated) return { shown: false, tag: "XIRR", reason: cap.reason };
+    if (!cap) return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+    return capitalXirrOf(p, cap, noCost);
   }
 
   if (measure === "calendar") {
@@ -1283,6 +1407,22 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   // ── auto: the methodology ──────────────────────────────────────────────────
   if (noCost) return { shown: false, tag: "AUTO", reason: NO_COST_RETURN };
+  /**
+   * A ROW THAT IS WHOLE ACCOUNTS ON A DATED RECORD takes the family's rule on
+   * its dated payments — the rule the Transactions card applies to the same
+   * accounts: under a year the holding-period return; a year or more, XIRR
+   * where the money went in (or came out) over several dates and CAGR for a
+   * single payment. The HPR itself is this row's own FIFO figure, unchanged.
+   */
+  if (cap?.dated) {
+    if (cap.days < YEAR_DAYS) return capitalSubYear(p.returnPct as number, cap);
+    if (cap.flows > 1) {
+      const x = capitalXirrOf(p, cap, false);
+      return x.shown ? x : { shown: true, pct: p.returnPct as number, tag: "HPR",
+        note: `Several dated payments call for XIRR, and ${x.reason} — so this is the holding-period return.` };
+    }
+    return capitalCompound(p.returnPct as number, cap, "CAGR");
+  }
   const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
   if (isFixedIncome(p.assetClass)) {
     // The rule routes fixed income to XIRR, which this book cannot strike per
@@ -1306,84 +1446,6 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
       : `Held ${heldDays} days — under a year, so this is the total return on cost.` };
 }
 
-/** A row measured on the capital behind it — it carries at least one whole account. */
-export const onCapitalBasis = (c: InvestedBehind | null | undefined): c is InvestedBehind =>
-  !!c && c.onCapital.length > 0;
-
-/**
- * EVERY MEASURE, ON THE CAPITAL PUT IN.
- *
- * The annualisation guard is the one this whole layer is built round, and it
- * holds here exactly as it does on cost: nothing is compounded over a window
- * shorter than a year. What changes is WHAT IS ANNUALISED. A holding bought on
- * one date compounds its return over the time since — a CAGR. An investment the
- * family paid into several times has no single start, so its annual rate is the
- * money-weighted one, solved with every payment at its own date — an XIRR. For
- * ONE payment in and nothing out the two are the same number, and the cell says
- * CAGR because that is what it is.
- *
- * A capital published only as a TOTAL since inception dates nothing, so no
- * annual rate can be struck on it; its holding-period return is its whole
- * return, and the manager's own published since-inception figure is on
- * Performance. That is a refusal, not a gap: annualising a total over the time
- * since inception would assume every rupee went in on day one.
- */
-function capitalMeasured(p: ReturnInput, c: InvestedBehind, measure: ReturnMeasure, bookAsOf: string): MeasuredReturn {
-  const hpr = c.covers && p.returnPct !== null && p.returnPct !== undefined ? p.returnPct : null;
-  const basis = c.basisNote ?? "";
-  const xirr = c.dated ? c.xirr : null;
-  const annual = xirr && xirr.pct !== null && xirr.annualised ? xirr.pct : null;
-  // ONE payment in, none out, one account: the money-weighted rate IS the CAGR.
-  const single = c.payments === 1 && c.paymentsOut === 0 && c.onCapital.length === 1;
-  const annualTag = single ? "CAGR" : "XIRR";
-  const window = xirr?.windowDays ?? null;
-  const annualNote = single
-    ? `One payment in, on ${c.since}, so its annual rate is exact — the return on the capital put in, compounded over the ${window} days since.`
-    : `Money-weighted over ${c.payments} dated payment${c.payments === 1 ? "" : "s"} in${c.paymentsOut ? ` and ${c.paymentsOut} out` : ""} since ${c.since}, each at the date it was made — the annual rate on the capital put in.`;
-  const noHpr = !c.covers
-    ? "the parts of this row that carry a basis cover too little of its value to strike a return on"
-    : "this row's capital does not solve to a return";
-  const undatedWhy = c.xirrWhy ?? "the capital behind this row is not dated, so no annual rate can be struck on it";
-  const shortWhy = window !== null
-    ? `The payments span ${window} days — under a year — so this is the total return on the capital put in, not an annual rate.`
-    : "The payments span less than a year, so this is the total return on the capital put in, not an annual rate.";
-  const yearStart = `${(c.closes ?? bookAsOf).slice(0, 4)}-01-01`;
-
-  if (measure === "absolute") {
-    return hpr === null ? { shown: false, tag: "HPR", reason: noHpr } : { shown: true, pct: hpr, tag: "HPR", note: basis };
-  }
-  if (measure === "cagr" || measure === "xirr") {
-    const tag = measure === "cagr" ? "CAGR" : "XIRR";
-    if (annual !== null) {
-      return { shown: true, pct: annual, tag: measure === "cagr" ? annualTag : "XIRR",
-        note: measure === "cagr" && !single
-          ? `${annualNote} A CAGR needs one start date, and money that went in on ${c.payments} different dates has none — the money-weighted rate is the annual rate here.`
-          : annualNote };
-    }
-    // THE GUARD: dated, but under a year — the total return stands, marked.
-    if (xirr && xirr.pct !== null && hpr !== null) return { shown: true, pct: hpr, tag: "HPR", note: `${shortWhy} ${basis}` };
-    return { shown: false, tag, reason: xirr && xirr.pct === null ? "these dated payments and this value do not solve to a rate" : undatedWhy };
-  }
-  if (measure === "ytd") {
-    if (c.openedOn && c.openedOn >= yearStart && hpr !== null) {
-      return { shown: true, pct: hpr, tag: "YTD",
-        note: `First funded ${c.openedOn}, during the current year, so its year-to-date return is its whole return on the capital put in.` };
-    }
-    return { shown: false, tag: "YTD", reason:
-      `a year-to-date return on this investment needs its value on 1 January, and no statement in this book is dated before the year began${c.openedOn ? ` — it was first funded ${c.openedOn}` : ""}.` };
-  }
-  if (measure === "calendar") return { shown: false, tag: "CY", reason: noCalendarReason(bookAsOf) };
-
-  // ── auto — the family's rule on capital: several dated payments → XIRR; one
-  //    payment a year or more ago → CAGR; otherwise the holding-period return.
-  if (hpr === null) return { shown: false, tag: "AUTO", reason: noHpr };
-  if (annual !== null) return { shown: true, pct: annual, tag: annualTag, note: annualNote };
-  return { shown: true, pct: hpr, tag: "HPR",
-    note: xirr && xirr.pct !== null ? `${shortWhy} ${basis}`
-      : c.dated ? basis
-      : `${basis} Not annualised: ${undatedWhy}.` };
-}
-
 /**
  * How many rows a measure can and cannot answer, for the column caption.
  *
@@ -1392,22 +1454,20 @@ function capitalMeasured(p: ReturnInput, c: InvestedBehind, measure: ReturnMeasu
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, annualised = 0, moneyWeighted = 0, absolute = 0, onCapital = 0;
+  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0;
   for (const r of rows) {
+    // A row that is whole accounts funded over several dated payments — the
+    // case CAGR refuses and XIRR answers — counted so a header can say where
+    // those rows' annual rate is rather than filing them under "no date".
+    if (r.capital?.dated && r.capital.flows > 1) staggered++;
     const m = measuredReturn(r, measure, asOf);
     if (!m.shown) { absent++; continue; }
     shown++;
-    if (onCapitalBasis(r.capital)) onCapital++;
-    // AN ANNUAL RATE IS A CAGR OR AN XIRR. An investment paid into on several
-    // dates is annualised money-weighted — under the CAGR heading too, because
-    // a CAGR needs one start date — and counting only the CAGR tag would report
-    // it as held under a year, which is the claim the guard exists to refuse.
-    if (m.tag === "CAGR" || m.tag === "XIRR") {
-      annualised++;
-      if (m.tag === "XIRR") moneyWeighted++;
-    } else absolute++;   // HPR (absolute, guarded, fixed-income) and YTD alike
+    if (m.tag === "CAGR") cagr++;
+    else if (m.tag === "XIRR") xirr++;
+    else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, annualised, moneyWeighted, absolute, onCapital };
+  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered };
 }
 
 /**

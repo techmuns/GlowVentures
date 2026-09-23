@@ -386,6 +386,10 @@ text = await page.locator("body").innerText();
 // is asserted beside it. Read off the removed pill this would have gone on
 // "passing" by being unable to match, which is the failure mode this suite has
 // already recorded once.
+// …AND THE FUND COUNT MOVED AGAIN, with the table: the page is one table now
+// and its "Private funds" section band counts the funds and the folios behind
+// them, where the old fund table's footer counted funds alone.
+//
 // ...AND THE ACCOUNTS COUNT IS NOW THE TILE'S HOVER. The family asked for the
 // tiles to be a figure and one short line — "No one will read this on the
 // dashboard" — so the coverage behind the figure rides in the tile's `title`,
@@ -394,8 +398,10 @@ text = await page.locator("body").innerText();
 const valueHover = await page.$eval('[data-tile-slot="value"] [title]', (el) => el.getAttribute("title") ?? "")
   .catch(() => "");
 check("the Private Market page still counts the funds and accounts it covers",
-  /Total · \d+ funds/i.test(text) && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
-  /across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)");
+  /\d+ funds · \d+ folios · each holding counted once/i.test(text)
+    && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
+  (/\d+ funds · \d+ folios/i.exec(text)?.[0] ?? "(no section count)") + " | "
+    + (/across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)"));
 check("...and its header pills and lead paragraph stay removed",
   !/\d+ funds · \d+ accounts/.test(text)
   && !/\bSTATEMENT\s*·\s*as of/i.test(text)
@@ -420,9 +426,13 @@ check("its private market value is a real measured figure, not the removed page'
  * opening the strip on it. Neither implies the other: a build that deleted the
  * metric passes the first, and one that dropped the card passes the second.
  */
+// THE CARD IS A SECTION OF THE ONE TABLE NOW — *"if this is missing data this
+// needs to be like a hidden drop down clearly marked"* — so the claim is struck
+// on its band, which states the paid-in capital and that it is in no value
+// total even while the section is folded.
 check("the capital the family paid into funds that publish no NAV is stated on its own",
-  /of drawn capital across \d+ of these accounts is real, paid, and in no total on this page/i.test(text)
-  && /must not be added to it/i.test(text));
+  /Not valued/i.test(text) && /missing data/i.test(text)
+  && /₹[\d,.]+\s*(?:Cr|L) paid in is in no value total/i.test(text));
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
@@ -759,8 +769,15 @@ if (await watched.count()) {
     // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
     // account numbers with no reason reads as a broken feed rather than as a
     // measured absence, which is this book's founding distinction.
+    // AN ACCOUNT THAT SENT ONLY A TRANSACTION STATEMENT IS PARTLY VALUED on the
+    // live basis — its arbitrage and liquid funds at AMFI's NAV, the family's
+    // cash — so its generated "values nothing" reason is replaced by a note
+    // naming what is valued and what is not. Either sentence is a reason; what
+    // must never happen is a listed account with neither.
     check("...each with its own reason",
-      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))));
+      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))
+        || (a.transactionsOnly === true && /partly valued/.test(text)
+          && text.includes("sent a transaction statement and no holding statement"))));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
     check("...and the card says none of it is in the value above",

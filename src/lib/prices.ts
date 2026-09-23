@@ -15,6 +15,15 @@ export type PriceHistory = {
   symbol: string;
   currency: string | null;
   exchange: string | null;
+  /**
+   * WHAT THE UPSTREAM CALLED THE INSTRUMENT — the evidence the benchmark
+   * identity check is struck on (`benchmarkIdentity` in `benchmarks.ts`).
+   * Optional because a company page never reads it; a benchmark treats its
+   * absence as UNVERIFIED rather than as a match.
+   */
+  name?: string | null;
+  longName?: string | null;
+  shortName?: string | null;
   first: string;
   last: string;
   count: number;

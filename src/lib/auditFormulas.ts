@@ -54,35 +54,34 @@ export const returnFormula = (
   cost: number | null | undefined,
   retPct: number | null | undefined,
   m: Money,
-): FormulaDef => ({
-  title: "Return",
-  excel: "= (Market value − Cost) ÷ Cost × 100",
-  plain: has(cost)
-    ? "How much the holding has gained or lost against what you paid, as a percentage."
-    : "This holding's statement reports a market value and no cost — a depository holds shares, it does not record what they cost — so there is nothing to measure the gain against.",
-  worked: `= (${m(mv)} − ${orDash(cost, (c) => m(c))}) ÷ ${orDash(cost, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`,
-});
-
-/**
- * THE SAME TWO FIGURES ON THE CAPITAL PUT IN — for a row that is a whole
- * investment (see `src/lib/capital.ts`). Named apart from `pnlFormula` because
- * they are a different measurement: this gain includes what was realised,
- * received and paid out along the way, where the unrealised gain on the units
- * held includes none of it.
- */
-export const capitalPnlFormula = (value: number, invested: number, gain: number, basis: string, m: Money): FormulaDef => ({
-  title: "P&L on the capital put in",
-  excel: "= Market value − Capital put in",
-  plain: `${basis} Everything the investment has made is in it — what is still held and what was realised, received and paid out along the way — because the capital is what left the family's account.`,
-  worked: `= ${m(value)} − ${m(invested)} = ${m(gain, true)}`,
-});
-
-export const capitalReturnFormula = (value: number, invested: number, retPct: number | null | undefined, basis: string, m: Money): FormulaDef => ({
-  title: "Return on the capital put in",
-  excel: "= (Market value − Capital put in) ÷ Capital put in × 100",
-  plain: `${basis} Not annualised — the money-weighted annual rate is under XIRR where every payment is dated.`,
-  worked: `= (${m(value)} − ${m(invested)}) ÷ ${m(invested)} × 100 = ${orDash(retPct, pct)}`,
-});
+  /**
+   * FIFO's other half, where the holding (or the set) has one: the realised gain
+   * on units already sold and the capital behind the return — cost held plus the
+   * cost of the units sold, or a whole mandate's capital paid in. Omitted, the
+   * formula is the familiar unrealised ÷ cost, which is what FIFO reduces to
+   * where nothing was sold.
+   */
+  fifo?: { realised?: number | null; costSold?: number | null; deployed?: number | null },
+): FormulaDef => {
+  const realised = fifo?.realised ?? 0;
+  const deployed = fifo?.deployed ?? (has(cost) ? (cost as number) + (fifo?.costSold ?? 0) : null);
+  const sold = has(cost) && deployed !== null && Math.abs(deployed - (cost as number)) > 0.5;
+  const withRealised = realised !== 0 || sold;
+  return {
+    title: "Return (FIFO)",
+    excel: withRealised
+      ? "= (Market value − Cost held + Realised) ÷ (Cost held + Cost of units sold) × 100"
+      : "= (Market value − Cost) ÷ Cost × 100",
+    plain: !has(cost)
+      ? "This holding's statement reports a market value and no cost — a depository holds shares, it does not record what they cost — so there is nothing to measure the gain against."
+      : withRealised
+        ? "Everything the holding has produced — the gain still in the units held and the gain already taken on units sold, matched first-in, first-out — against every rupee that bought a unit of it."
+        : "How much the holding has gained or lost against what you paid, as a percentage. Nothing has been sold from it, so first-in, first-out has nothing to match.",
+    worked: withRealised
+      ? `= (${m(mv)} − ${orDash(cost, (c) => m(c))} + ${m(realised, true)}) ÷ ${orDash(deployed, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`
+      : `= (${m(mv)} − ${orDash(cost, (c) => m(c))}) ÷ ${orDash(cost, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`,
+  };
+};
 
 // Net total return — the private book's one money-multiple. TVPI once a holding
 // has returned cash, MOIC while it hasn't; the popover names whichever applies
@@ -190,9 +189,6 @@ export const sumFormula = (title: string, plain: string, parts: { label: string;
   worked: `= ${parts.map((p) => m(p.value)).join(" + ")} = ${m(total)}`,
 });
 
-export const embeddedReturnFormula = (pnl: number | null | undefined, cost: number | null | undefined, retPct: number | null | undefined, m: Money): FormulaDef => ({
-  title: "Embedded return",
-  excel: "= Unrealised P&L ÷ Cost × 100",
-  plain: "The gain still sitting inside the book — unrealised profit measured against what those holdings cost.",
-  worked: `= ${orDash(pnl, (v) => m(v))} ÷ ${orDash(cost, (v) => m(v))} × 100 = ${orDash(retPct, pct)}`,
-});
+// `embeddedReturnFormula` (unrealised ÷ cost) is DELETED rather than left
+// uncalled: its one caller, Performance's book return, is FIFO now and states
+// its own formula — see `src/lib/fifo.ts`.

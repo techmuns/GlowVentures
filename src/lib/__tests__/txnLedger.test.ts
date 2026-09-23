@@ -44,7 +44,7 @@ const near = (name: string, a: number | null, b: number | null, tol = 0.01) =>
 const acct = (o: Partial<Account>): Account => ({
   accountId: "gl", provider: "Green Lantern", accountNo: "510861", owner: "Ajay Jaisinghani",
   ownerId: "ajay", strategy: "GLC Growth Fund", engagement: "PMS", providerEngagement: null,
-  members: [], asOf: "2026-07-27", inceptionDate: "2025-01-16", capitalRecordTo: "2026-07-27", custodian: null,
+  members: [], asOf: "2026-07-27", inceptionDate: "2025-01-16", custodian: null,
   noPositionsReason: null, ...o,
 } as Account);
 const txn = (o: Partial<Txn>): Txn => ({
@@ -117,7 +117,7 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   ok("a mandate with no dated capital record still draws its row", rows.length === 1);
   ok("...with the capital half NULL rather than a zeroed group", rows[0].capital === null);
   const t = datedTotals(rows);
-  ok("...so Net invested is absent, never ₹0", t.net === null, `${t.net}`);
+  ok("...so Redemption is absent, never ₹0", t.redemption === null, `${t.redemption}`);
   ok("...and no payment is counted", t.contributions === 0 && t.withdrawals === 0);
   near("...while Bought still totals", t.bought, 17_500_000);
   // AND THE ACCOUNT IS STILL WORTH SOMETHING TODAY. Nine of this book's ten
@@ -139,39 +139,31 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   ok("...and the Value today total is absent over a table of them", t.value === null && t.valueOf === 0);
 }
 
-// ── GAIN IS AN AMOUNT, SO IT CARRIES A TOTAL — and Return is a RATE, so it
-//    cannot. The footer left this column BLANK in the first cut: a summable
-//    rupee figure with no total and no reason, sitting between Value today
-//    (which has one) and Return (which correctly refuses one). Nothing on the
-//    page could see it, because the check that guards that footer counted the
-//    cells which NAME a reason and stopped at four — and there were four.
+// ── APPRECIATION IS AN AMOUNT, SO IT CARRIES A TOTAL — and a return is a
+//    RATE, so it cannot. The total is the sum of the rows that PUBLISH one,
+//    asserted as that relation rather than as a literal.
 {
   const a = acct({});
   const cap = capitalRollup([move({})], [a], [pos({})], {}, "all", "recent");
   const rows = mergeDatedRecords(cap, [], sectionOf, () => 114_000_000);
   const t = datedTotals(rows);
-  // Whatever the fixture's own gain works out to, the TOTAL is the sum of the
-  // rows that publish one — asserted as that relation rather than as a literal,
-  // so it survives the fixture moving.
-  const published = rows.map((r) => r.capital?.gain).filter((g): g is number => g != null);
-  ok("the Gain total covers exactly the rows that publish one", t.gainOf === published.length, `${t.gainOf} vs ${published.length}`);
+  const published = rows.map((r) => r.capital?.appreciation).filter((g): g is number => g != null);
+  ok("the Appreciation total covers exactly the rows that publish one", t.appreciationOf === published.length, `${t.appreciationOf} vs ${published.length}`);
   if (published.length) {
-    near("...and it is their sum", t.gain ?? NaN, published.reduce((x, y) => x + y, 0));
+    near("...and it is their sum", t.appreciation ?? NaN, published.reduce((x, y) => x + y, 0));
   }
 }
 
-// ── ...AND AN UNPUBLISHED GAIN IS SKIPPED, NEVER BLENDED IN AS ZERO ─────────
-//    `CapitalGroup.gain` is absent wherever the contribution history does not
-//    provably reach inception, and averaging one of those in as ₹0 would drag
-//    the total towards a figure nobody measured — `sumOrNull`'s own rule,
-//    arriving in a footer.
+// ── ...AND AN UNPUBLISHED ONE IS SKIPPED, NEVER BLENDED IN AS ZERO ─────────
 {
   const trd = rollup([txn({ provider: "LKP", accountNo: "98245", amount: 500_000 })],
     [acct({ accountId: "lkp", provider: "LKP", accountNo: "98245", engagement: "Execution", strategy: null })],
     "auto", "recent", () => "Direct Equity");
   const t = datedTotals(mergeDatedRecords([], trd, sectionOf, valueOf));
-  ok("a table with no capital half at all totals NO gain, rather than ₹0",
-    t.gain === null && t.gainOf === 0, `${t.gain} / ${t.gainOf}`);
+  ok("a table with no capital half at all totals NO appreciation, rather than ₹0",
+    t.appreciation === null && t.appreciationOf === 0, `${t.appreciation} / ${t.appreciationOf}`);
+  ok("...and no realised or unrealised part either",
+    t.realisedGain === null && t.unrealisedGain === null);
 }
 
 // ── a SECTION disagreement draws TWO rows rather than picking one ───────────
@@ -252,7 +244,7 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
 {
   const byAccount = new Map<string, number>();
   for (const p of BOOK_POSITIONS) byAccount.set(p.accountId, (byAccount.get(p.accountId) ?? 0) + p.marketValue);
-  const valueOfAccount = (id: string) => byAccount.get(id) ?? 0;
+  const valueOfAccount = (id: string): number | null => (byAccount.has(id) ? byAccount.get(id)! : null);
   const cap = capitalRollup(BOOK_CAPITAL_MOVES, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, "all", "recent");
   ok("the book's capital record rolls up to rows", cap.length > 0, `${cap.length} accounts`);
   // TWO PATHS TO ONE NUMBER. `capitalRollup` sums an account's positions itself;
@@ -260,7 +252,10 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   // drifting definition of "what this account holds" is the failure
   // `holdingBucket` and `companyExposure` were each extracted to stop, and it
   // would show as a Value today that disagreed with the Return beside it.
-  const off = cap.filter((g) => Math.abs(g.value - valueOfAccount(g.accountId)) > 0.01);
+  const off = cap.filter((g) => {
+    const v = valueOfAccount(g.accountId);
+    return (g.value == null) !== (v == null) || (g.value != null && v != null && Math.abs(g.value - v) > 0.01);
+  });
   ok("...and the merge's account value agrees with the rollup's own, to the paisa",
     off.length === 0, off.map((g) => `${g.accountId}: ${g.value} vs ${valueOfAccount(g.accountId)}`).join("; "));
 

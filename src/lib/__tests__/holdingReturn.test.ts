@@ -244,19 +244,12 @@ ok("the book still carries a report date for the window to close against", !!BOO
   ok("auto on fixed income shows the return on cost (HPR) and its note names XIRR",
      (() => { const r = measuredReturn(mr(6, long, "Bond"), "auto", ASOF); return r.shown && r.tag === "HPR" && !!r.note && /XIRR/.test(r.note); })());
 
-  // XIRR — never a figure for a HOLDING; a dash with the reason. The reason used
-  // to be "the statements cover the current period only", which stopped being
-  // true when the dated capital records were read. The true one is about what a
-  // holding IS: the family paid into the ACCOUNT, and a share inside it has no
-  // payments of its own. A row that IS a whole account with dated payments gets
-  // its XIRR — see the capital-basis suite.
+  // XIRR — never a per-holding figure on this book; a dash with the reason.
   {
     const r = measuredReturn(mr(40, long, "Equity"), "xirr", ASOF);
-    ok("XIRR on a holding is absent — a holding inside an account has no payments of its own", !r.shown && r.tag === "XIRR");
-    ok("...and its reason names the money-weighted basis and says where an XIRR IS shown",
-       !r.shown && /money-weighted/i.test(r.reason) && /whole investment whose payments are dated/.test(r.reason));
-    ok("...and no longer asserts the stale premise that the statements cover the current period only",
-       !r.shown && !/current period only/.test(r.reason));
+    ok("XIRR per holding is absent — the statements carry no cash-flow history per security", !r.shown && r.tag === "XIRR");
+    ok("...and its reason names the money-weighted basis and points to Performance",
+       !r.shown && /money-weighted/i.test(r.reason) && /Performance/.test(r.reason));
   }
   ok("XIRR never reads the banned per-position IRR — even a real returnPct yields a dash",
      !measuredReturn(mr(193.9, long, "Equity"), "xirr", ASOF).shown);
@@ -288,12 +281,7 @@ ok("the book still carries a report date for the window to close against", !!BOO
     ok("...and covers exactly the rows absolute does", auto.shown === abs.shown, `${auto.shown} vs ${abs.shown}`);
     // The methodology's CAGR branch fires on the same rows the CAGR measure annualises.
     const cagr = returnCoverage(BOOK_POSITIONS, "cagr", ASOF);
-    ok("auto annualises exactly the rows CAGR does", auto.annualised === cagr.annualised, `${auto.annualised} vs ${cagr.annualised}`);
-    // A POSITION CARRIES NO CAPITAL OF ITS OWN, so nothing here is on capital or
-    // money-weighted — the capital basis belongs to a row that holds a whole
-    // account, and `capitalBasis.test.ts` is where that is asserted.
-    ok("no bare position is on capital or money-weighted", cagr.onCapital === 0 && cagr.moneyWeighted === 0,
-       `${cagr.onCapital} on capital, ${cagr.moneyWeighted} XIRR`);
+    ok("auto annualises exactly the rows CAGR does", auto.cagr === cagr.cagr, `${auto.cagr} vs ${cagr.cagr}`);
   }
   // XIRR and CALENDAR are absent on EVERY row — this book cannot strike either.
   ok("XIRR is absent on every position", returnCoverage(BOOK_POSITIONS, "xirr", ASOF).shown === 0);

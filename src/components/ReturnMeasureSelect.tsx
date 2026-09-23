@@ -12,9 +12,9 @@ import { RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure 
 // picker, and its state lives in the URL (`?ret=`) on whichever page it sits.
 //
 // WHAT A PAGE MAY OVERRIDE IS THE HINT, AND ONLY WHERE THE MONITOR'S WORDING IS
-// FALSE OF IT. The XIRR hint says a holding inside an account has no payments
-// of its own — true of a share in a mandate or a demat, and beside the point for
-// a drawdown fund, whose capital account prints every dated call since its
+// FALSE OF IT. The XIRR hint says the statements "do not carry per holding"
+// each tranche's date and amount — true of a share in a demat, and false of a
+// drawdown fund, whose capital account prints every dated call since its
 // first. Private Market passes its own sentence for exactly the measures where
 // that is so; the labels, tags, order and mutual exclusion stay one definition.
 

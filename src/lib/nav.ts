@@ -46,6 +46,7 @@ export const NAV: readonly NavEntry[] = [
   { to: "/capital-gains", label: "Capital Gains & Tax", icon: Receipt, group: EXTRAS },
   { to: "/performance", label: "NAV & Performance", icon: Activity, group: EXTRAS },
   { to: "/returns", label: "Return & Drawdown", icon: Gauge, group: EXTRAS },
+  { to: "/corporate-actions", label: "Corporate actions & dividends", icon: Receipt, group: EXTRAS },
   { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: EXTRAS },
   // ── ADMIN CLOSES THE NAV, AND DATA AUDIT IS NOW IN IT ───────────────────
   // *"move data audit page at the bottom of the left navigation bar just above

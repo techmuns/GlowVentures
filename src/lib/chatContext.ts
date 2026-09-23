@@ -24,13 +24,12 @@
 // it is the part that keeps the answers honest, and it is derived too.
 import {
   BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
-  BOOK_CAPITAL_MOVES, BOOK_ACCOUNT_BRIDGES, BOOK_POSITION_TRANCHES,
 } from "@/data/glowData";
+import { depositoryCashHoldings } from "./fundNavs";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
-  topByValue, sum, currentHoldings, onCapitalBasis,
+  topByValue, sum,
 } from "@/lib/analytics";
-import { buildCapitalModel, CAPITAL_SOURCE_LABEL } from "@/lib/capital";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
 
@@ -40,9 +39,6 @@ const TOP_ACCOUNTS = 50;
 
 const cr = (n: number | null | undefined) =>
   typeof n === "number" && Number.isFinite(n) ? Math.round((n / 1e7) * 100) / 100 : null;
-/** A percentage to two decimals, or null — never a defaulted zero. */
-const pct2 = (n: number | null | undefined) =>
-  typeof n === "number" && Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
 
 /** One `DASHBOARD_INPUTS` entry — a named block of derived facts. */
 export type ContextBlock = { kind: string; [k: string]: unknown };
@@ -57,20 +53,6 @@ export type ContextBlock = { kind: string; [k: string]: unknown };
  */
 export function buildDashboardContext(): ContextBlock[] {
   const accts = accountIndex(BOOK_ACCOUNTS);
-  /**
-   * THE CAPITAL BEHIND EACH INVESTMENT — the same model every screen reads, on
-   * the statement marks this context is built from. A model handed only what the
-   * units HELD cost will divide by it and answer "what has Buoyant returned?"
-   * with the figure the family already told us is wrong: a class switch folds
-   * the old class's gain into the new class's cost, a manager's trading and a
-   * fund's payouts reset it. So each account carries the capital put in, where
-   * its statements publish it, and the return on that. See `src/lib/capital.ts`.
-   */
-  const capital = buildCapitalModel({
-    accounts: BOOK_ACCOUNTS, capitalMoves: BOOK_CAPITAL_MOVES, bridges: BOOK_ACCOUNT_BRIDGES,
-    commitments: BOOK_COMMITMENTS, tranches: BOOK_POSITION_TRANCHES,
-    positions: currentHoldings(BOOK_POSITIONS),
-  });
   const deduped = dedupedPositions(BOOK_POSITIONS);
   const split = publicPrivateSplit(deduped);
   // `staleAccounts` takes a Portfolio, and the count is the only thing needed
@@ -154,24 +136,12 @@ export function buildDashboardContext(): ContextBlock[] {
       kind: "accounts",
       shown: Math.min(TOP_ACCOUNTS, BOOK_ACCOUNTS.length),
       total: BOOK_ACCOUNTS.length,
-      returnNote: "An investment's return is struck on the capital the family PUT IN (capitalPutInCr), never on "
-        + "what the units held today cost — a class switch, a manager's trading or a fund's payout resets that cost. "
-        + "returnOnCapitalPct is cumulative since the money went in, not annualised. xirrPct is the annual "
-        + "money-weighted rate, given only where every payment in and out is dated and they span a year. All three "
-        + "are null where the account's statements publish no capital put in: say so, never substitute the cost.",
       rows: BOOK_ACCOUNTS.map((a) => {
         const held = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
-        const inv = capital.ofAccount(a.accountId);
-        const onCap = onCapitalBasis(inv);
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,
           strategy: a.strategy, engagement: a.engagement, asOf: a.asOf,
           holdings: held.length, valueCr: cr(sum(held.map((p) => p.marketValue))),
-          capitalPutInCr: onCap ? cr(inv.invested) : null,
-          capitalSource: onCap ? CAPITAL_SOURCE_LABEL[inv.onCapital[0].capital.source] : null,
-          capitalSince: onCap ? inv.openedOn : null,
-          returnOnCapitalPct: onCap && inv.covers ? pct2(inv.returnPct) : null,
-          xirrPct: onCap && inv.dated && inv.xirr?.annualised ? pct2(inv.xirr.pct) : null,
           noPositionsReason: a.noPositionsReason ?? null,
         };
       }).sort((x, y) => (y.valueCr ?? 0) - (x.valueCr ?? 0)).slice(0, TOP_ACCOUNTS),
@@ -181,8 +151,6 @@ export function buildDashboardContext(): ContextBlock[] {
       shown: Math.min(TOP_HOLDINGS, deduped.length),
       total: deduped.length,
       basis: "consolidated — each dually-reported holding counted once",
-      costNote: "costBasisCr is what the UNITS held today cost — a tax figure, not the capital the family put in. "
-        + "Never compute an investment's return from it; use the accounts block's returnOnCapitalPct.",
       rows: topByValue(deduped, TOP_HOLDINGS).map(row),
     },
     {
@@ -193,6 +161,29 @@ export function buildDashboardContext(): ContextBlock[] {
         fund: c.name, provider: c.provider, ownerId: c.ownerId, asOf: c.asOf,
         committedCr: cr(c.committed), drawnCr: cr(c.drawn), undrawnCr: cr(c.undrawn),
         distributedCr: cr(c.distributed),
+      })),
+    },
+    /**
+     * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS.
+     *
+     * Everything above is on the STATEMENT basis, and the arbitrage funds the
+     * family asked to see inside Cash are on no statement's holdings: they sit
+     * on a demat that sent a transaction statement and no holding statement.
+     * The dashboard values them at the depository's closing units × AMFI's NAV
+     * and files them under Cash. Told only the blocks above, a model asked "how
+     * much cash do I hold" would answer without them and contradict the screen.
+     */
+    {
+      kind: "cash_valued_from_depository_units",
+      note: "Arbitrage and liquid funds count as CASH — the family's own instruction, on every axis, never any "
+        + "other category. These are held on an account that sent a transaction statement and no holding "
+        + "statement, so no statement values them and they are NOT in the statement-basis totals above. The "
+        + "dashboard values them at the depository's closing units × AMFI's published NAV and includes them in "
+        + "its Cash line and in its current value of holdings. Their units date from the statement's close.",
+      totalCr: cr(sum(depositoryCashHoldings().map((p) => p.marketValue))),
+      rows: depositoryCashHoldings().map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
       })),
     },
     /**
@@ -243,9 +234,7 @@ export function buildDashboardContext(): ContextBlock[] {
           + "and holdings figure above. It is shown only on the Polycab page. Do not add it to the NAV.",
       },
       notCarried: [
-        "An XIRR for a holding inside an account — the family paid money into the ACCOUNT, not into the share, so "
-          + "a holding has no dated payments of its own. Where a whole account's payments are dated, its XIRR is in "
-          + "the accounts block.",
+        "Per-security XIRR — the transaction statements cover the current period only.",
         "Realised gains for accounts whose manager issues no capital gain statement.",
         "A holding's own YTD or calendar-year return — the archive begins in April, so no 1 January value exists.",
         "Any figure about a private fund's underlying companies, except for the mutual funds and ETFs whose AMC "
@@ -299,8 +288,6 @@ export function contextPreamble(blocks: ContextBlock[]): string {
     "3. All *Cr fields are crore rupees. Do not convert or rescale them.",
     "4. Consolidated totals are a BLEND of report dates; say so when a date matters.",
     "5. The ring-fenced promoter holding is NOT part of any total here. Never add it in.",
-    "6. An investment's return is on the capital put in: use accounts[].returnOnCapitalPct and xirrPct. Never",
-    "   divide a gain by costBasisCr — what the units held cost is a tax figure, reset by switches and payouts.",
     "",
     "DASHBOARD DATA:",
     JSON.stringify(blocks),

@@ -42,13 +42,10 @@
 // ── HPR STAYS WHAT IT IS ON EVERY OTHER PAGE ────────────────────────────────
 //
 // The Holding Period Return here is the SAME figure the Monitor's AIF section
-// prints for the same fund, because one label meaning two figures on two pages
-// is the failure this book keeps paying for. Both strike it on the row's own
-// Invested (`fundRollup`): the CAPITAL the family put in where the fund's folios
-// are whole accounts whose capital is published (`src/lib/capital.ts`), and the
-// cost of the units otherwise. On capital a fund's payouts are netted out of
-// what it is struck on; on cost they cannot be seen, and there the cell says so
-// and names the column that can. Either way the note says which it is.
+// prints for the same fund — value against cost — because one label meaning two
+// figures on two pages is the failure this book keeps paying for. It is the
+// figure that CANNOT see a payout, and where a fund has paid cash back the cell
+// says so and names the column that can.
 import type { Commitment, FundPayout, Position } from "./types";
 import type { AccountIndex } from "./accounts";
 import {
@@ -108,6 +105,14 @@ export type FundDated = {
   /** Distinct dated calls — the family's "tranches". */
   tranches: number;
   /**
+   * WHAT THE HOLDING-PERIOD RETURN ALREADY COUNTS OF THE CASH PAID BACK: the
+   * FIFO cost of units the fund has REDEEMED (`costOfUnitsSold`). A principal
+   * redemption is a sale of units, so FIFO books it in the HPR — its cost in
+   * the denominator, its gain in the numerator — and only the rest of the
+   * payouts (income, equalisation) are outside that figure.
+   */
+  redeemedAtCost: number;
+  /**
    * WHY THIS RECORD CANNOT CARRY A DATED RETURN, in a sentence that is true of
    * this fund — or null where it can. Lower-case and full-stop-free, so each
    * measure can put it in its own sentence.
@@ -146,6 +151,7 @@ export function fundDatedRecords(
     const gaps: string[] = [];
     let unknownPayouts = false;
     let withoutAccount = 0;
+    let redeemedAtCost = 0;
     for (const p of g) {
       const valuedAt = accIdx.get(p.accountId)?.asOf ?? null;
       if (!valuedAt) { gaps.push("a folio behind this fund states no valuation date"); continue; }
@@ -160,8 +166,17 @@ export function fundDatedRecords(
         continue;
       }
       const sumCalls = c.calls.reduce((t, k) => t + k.amount, 0);
-      if (p.costBasis == null || Math.abs(sumCalls - p.costBasis) > 1) {
-        gaps.push(`the dated calls add to ${money(sumCalls)} against the ${p.costBasis == null ? "unreported" : money(p.costBasis)} cost its statement reports for this holding, so the two sides of a return would describe different money`);
+      /**
+       * THE CALLS ARE EVERY RUPEE DEPLOYED INTO THE HOLDING, and under FIFO
+       * that is the cost of the units still held PLUS the cost of the units
+       * already redeemed — Neo Infra's ₹5 Cr called is ₹4.86 Cr held and
+       * ₹14.16 L redeemed. Held against the cost held alone, a fund that has
+       * redeemed any units would read as a gap and lose its XIRR in silence.
+       */
+      const sold = typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
+      const deployed = p.costBasis == null ? null : p.costBasis + sold;
+      if (deployed == null || Math.abs(sumCalls - deployed) > 1) {
+        gaps.push(`the dated calls add to ${money(sumCalls)} against the ${deployed == null ? "unreported" : money(deployed)} ${sold > 0 ? "capital deployed into this holding (cost of the units held plus the cost of those redeemed)" : "cost its statement reports for this holding"}, so the two sides of a return would describe different money`);
         unknownPayouts = true;
         continue;
       }
@@ -172,6 +187,7 @@ export function fundDatedRecords(
         continue;
       }
       for (const k of c.calls) calls.push({ date: k.date, amount: k.amount, kind: "call", accountId: p.accountId, label: k.label });
+      redeemedAtCost += sold;
       if (c.payouts == null) { unknownPayouts = true; continue; }
       for (const r of c.payouts) {
         const flow: FundFlow = { date: r.date, amount: r.gross, kind: r.kind, accountId: p.accountId, label: r.label };
@@ -201,6 +217,7 @@ export function fundDatedRecords(
       lastCall: calls[calls.length - 1]?.date ?? null,
       valuedAt,
       tranches: new Set(calls.map((c) => `${c.accountId}|${c.date}`)).size,
+      redeemedAtCost,
       gap: gaps[0] ?? null,
     });
   }
@@ -247,13 +264,19 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /**
  * The return to print for ONE FUND ROW, on the measure the reader picked.
  *
- * `f.returnPct` is the row's value against its own Invested — the capital put
- * in where the row stands on it, the cost of the units otherwise — the Monitor's
- * HPR for the same fund, struck on the same deduped rows, and the ONLY figure
- * here not derived from the dated record. Everything dated comes from `d`.
+ * `f.returnPct` is the row's value against its cost — the Monitor's HPR for the
+ * same fund, struck on the same deduped rows — and is the ONLY figure here not
+ * derived from the dated record. Everything dated comes from `d`.
+ *
+ * ONLY THOSE TWO FIELDS ARE READ, so that is all the type asks for: the Private
+ * Market master table resolves a fund row AND each folio under it here, and a
+ * folio is one statement's holding rather than a `FundRow` — its own value
+ * against its own cost, with its own account's dated record.
  */
+export type FundReturnInput = Pick<FundRow, "returnPct" | "cost">;
+
 export function fundMeasuredReturn(
-  f: FundRow,
+  f: FundReturnInput,
   d: FundDated | undefined,
   measure: ReturnMeasure,
   money: Money,
@@ -264,31 +287,23 @@ export function fundMeasuredReturn(
   const noHpr = f.cost == null
     ? "no cost is reported for this fund, so there is no capital to strike a return against"
     : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another";
-  /*
-   * WHERE THE PAYOUTS ARE, SAID FOR THE BASIS THIS ROW IS ON. On the cost of the
-   * units a payout is invisible, and the cell says XIRR counts it. On the
-   * capital put in, the fund's capital account has already netted it out — the
-   * capital model reads the SAME dated payouts to the same valuation — so saying
-   * "not in this figure" there would be false. The netted sentence is used only
-   * where the capital's own taken-out figure IS these payouts, to the rupee;
-   * anything else names what the capital was struck on instead.
+  /**
+   * WHICH OF THE CASH PAID BACK THIS FIGURE COUNTS. The HPR is FIFO — the gain
+   * on units still held plus the gain on units redeemed, over the cost of both
+   * — so a PRINCIPAL redemption is inside it: the units were sold, at their
+   * cost. Income and equalisation are not units, and XIRR is what counts them.
    */
-  const onCap = f.capital?.onCapital.length ? f.capital : null;
-  const tookOut = onCap ? onCap.onCapital.reduce((t, x) => t + (x.capital.tookOut ?? 0), 0) : 0;
+  const principalIn = d && d.redeemedAtCost > 0 ? d.paidOutByKind.capital : 0;
+  const outside = d ? d.paidOut - principalIn : 0;
   const paidNote = d && d.paidOut > 0 && d.valuedAt
-    ? !onCap
-      ? ` The ${money(d.paidOut)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts(d, money)}) is not in this figure — XIRR counts it.`
-      : Math.abs(tookOut - d.paidOut) <= 1
-        ? ` The ${money(d.paidOut)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts(d, money)}) is netted out of the capital this is struck on — XIRR dates each payment.`
-        : ` It is struck on the capital put in, net of ${money(tookOut)} taken out as its own record states it; the ${money(d.paidOut)} the fund paid back by the ${date(d.valuedAt)} valuation is dated in the XIRR.`
+    ? (principalIn > 0
+      ? ` The ${money(principalIn)} returned as principal is in this figure — FIFO books those units as redeemed at their cost.${outside > 0 ? ` The other ${money(outside)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts({ ...d, paidOutByKind: { ...d.paidOutByKind, capital: 0 } }, money)}) is not — XIRR counts it.` : ""}`
+      : ` The ${money(d.paidOut)} it had paid back by the ${date(d.valuedAt)} valuation (${payoutParts(d, money)}) is not in this figure — XIRR counts it.`)
     : "";
-  const hprBasis = onCap && d && d.paidOut > 0
-    ? "Current value against the capital put in, net of what the fund has paid back, not annualised."
-    : "Current value against the capital paid in, not annualised.";
 
   if (measure === "absolute") {
     if (hpr == null) return { shown: false, tag, reason: noHpr };
-    return { shown: true, pct: hpr, tag, note: `${hprBasis}${paidNote}` };
+    return { shown: true, pct: hpr, tag, note: `FIFO: the gain on the units held plus the gain on any units redeemed, over the capital paid in for both — not annualised.${paidNote}` };
   }
 
   if (measure === "calendar") {
@@ -377,7 +392,7 @@ export function fundMeasuredReturn(
 }
 
 /** The XIRR measure, which `auto` and `ytd` also lean on. */
-function xirrOf(f: FundRow, d: FundDated | undefined, money: Money, date: DateFmt): MeasuredReturn {
+function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date: DateFmt): MeasuredReturn {
   const tag = "XIRR";
   if (!d || d.gap) return { shown: false, tag, reason: `a money-weighted return needs every dated cash flow, and ${d?.gap ?? "no dated contribution for this fund is in the book"}` };
   if (d.payouts === "unknown") {
@@ -465,7 +480,7 @@ export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export const PM_RETURN_HINTS: Partial<Record<ReturnMeasure, string>> = {
   auto: "One call, held under a year: holding-period return. One call held a year or more: CAGR. More than one dated call, or cash paid back: XIRR. Each cell says which one it is.",
-  absolute: "Current value against the capital put in, not annualised. Where a fund's capital account dates every call and payout, what it has paid back is netted out of that capital; where it does not, the payouts are not in this figure. XIRR weights each by its date.",
+  absolute: "FIFO: the gain on the units held plus the gain on any units redeemed, over the capital paid in for both — not annualised. Income a fund has paid out is not in it — XIRR counts that.",
   cagr: "The return on cost annualised — only for a fund paid in one call at least a year ago that has paid nothing back. A fund paid in several calls is money-weighted instead.",
   xirr: "Money-weighted across every dated call, every dated payout and the value on the fund's statement date — each fund's own capital account prints every one.",
   ytd: "The fund's own return since 1 January — measurable only where it was entered during the year, because no statement here values a fund on 1 January.",

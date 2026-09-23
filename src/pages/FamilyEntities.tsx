@@ -14,9 +14,10 @@ import {
   byEntity, byCustodian, bucketBy, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
   isCompanyShare, isFundVehicle, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
-  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, onCapitalBasis,
+  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
+import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
@@ -34,8 +35,7 @@ const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "t
 const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
-import { pnlFormula, returnFormula, weightFormula, capitalPnlFormula, capitalReturnFormula } from "@/lib/auditFormulas";
-import type { InvestedBehind } from "@/lib/capital";
+import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 
 /**
  * Sections in reading order, mirroring Portfolio Monitor's: what the entity
@@ -89,7 +89,7 @@ const ALL_ENTITIES = "All";
 const WEIGHT_OF = "the whole consolidated book — every account and every asset class, each dedupeGroup counted once";
 
 export function FamilyEntities() {
-  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, capital } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
   const entityView = useTableView("family-entities", ENTITY_COLS);
@@ -174,20 +174,18 @@ export function FamilyEntities() {
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.
   /**
-   * ── AN ENTITY IS A SET OF WHOLE INVESTMENTS, SO ITS RETURN IS ON CAPITAL ──
-   *
-   * Every account belongs to exactly one member, so a member's rows carry each
-   * of their accounts whole — and the P&L and Return here are struck on the
-   * capital they put into each investment that publishes it (a mandate, a fund
-   * folio), and on the cost of the units for the rest. On cost alone a member
-   * whose manager realised a loss, or whose fund switched class, read a return
-   * nothing the family earned. See `src/lib/capital.ts`.
+   * EACH ENTITY'S RETURN IS FIFO, AND A WHOLE MANDATE IS STRUCK ON ITS CAPITAL.
+   * `byEntity` rolls up every holding with no account registry, so it cannot
+   * see that an entity holds the whole of a PMS mandate — and an entity's
+   * mandates carry most of its realised gains. Over the holdings that report a
+   * cost, which is the set this column has always been struck on.
    */
   const entities = byEntity(p, portfolio.accounts).map((e) => {
-    const b = capital.behind(p.filter((x) => ownerOf(accIdx, x) === e.key));
-    return onCapitalBasis(b)
-      ? { ...e, cost: b.invested, pnl: b.gain, returnPct: b.covers ? b.returnPct : null, capital: b as InvestedBehind | null }
-      : { ...e, capital: null as InvestedBehind | null };
+    const fifo = fifoTotals(
+      p.filter((x) => ownerOf(accIdx, x) === e.key && x.costBasis != null && !x.costUnavailable),
+      { accounts: accIdx, universe: p },
+    );
+    return { ...e, returnPct: fifo.returnPct, fifo };
   });
   // The table's own order; the default is `byEntity`'s (largest first).
   const entityRows = sortRows(entities, entityView.sort, {
@@ -370,6 +368,17 @@ export function FamilyEntities() {
     ? unvaluedHoldingsOf(scope, portfolio.accounts, portfolio.positions, portfolio.commitments ?? [])
     : [];
   /**
+   * AND THE ACCOUNTS THAT ARE ONLY PARTLY VALUED. An account that sent a
+   * transaction statement and no holding statement has its cash-equivalent
+   * funds valued at AMFI's NAV on the live basis, so it now carries positions
+   * and `unvaluedHoldingsOf` no longer lists it — while the rest of what it
+   * holds is still valued nowhere. Dropping it from this card would say the
+   * family's whole demat is in the table above; its own note says what is not.
+   */
+  const partlyValued = selected
+    ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
+    : [];
+  /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
    * A GICS sector is a property of a COMPANY. An AIF folio, a mutual-fund scheme
@@ -451,13 +460,34 @@ export function FamilyEntities() {
   const sleeveNoteText = selSleeve.length === 0 ? ""
     : ` Of that, ${sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is grouped`
       + ` as its own statement totals it, cash sleeve included, so that value is counted in the ${MANDATE_BUCKET} section.`;
-  const sleeveNote = selSleeve.length === 0 ? null : (
-    <>
-      {" "}Of that, {sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is
-      grouped as its own statement totals it, cash sleeve included, so that value is counted in the{" "}
-      <span className="text-slate-400">{MANDATE_BUCKET}</span> section.
-    </>
-  );
+  /**
+   * WHAT THE SECTOR MIX LEAVES OUT, AND WHY — the paragraph that stood under
+   * the chart, as the subtitle's hover. *"remove the highlighted texts from the
+   * dashboard UI"* pointed at that paragraph, and every claim in it was audited
+   * before it went:
+   *
+   *   · the mandate-chosen share of these companies, and that the Held via
+   *     column says which route chose each name — the figure had no second home;
+   *   · what is excluded from the chart, per class with its value — the
+   *     subtitle states the company-share count and value, so the complement is
+   *     implied, but the per-class split had no second home;
+   *   · why a fund has no sector, and where a mandate's cash sleeve went — no
+   *     second home.
+   *
+   * So they are the hover on the subtitle whose count they qualify. A hover is
+   * weaker than a caption and that is recorded rather than glossed; what is
+   * unchanged is that each is derived from this entity's own positions and that
+   * `check:pages` still reads the excluded value, at its new address.
+   */
+  const excludedCount = selExcluded.reduce((n, c) => n + c.count, 0);
+  const sectorMixWhy = [
+    selMandateShares.length > 0
+      ? `Both routes count here: ${money(selMandateSharesMV)} of these shares were chosen by a discretionary manager and have a sector exactly like the ones ${scope} bought directly. Which of the two chose a name is in the Held via column below.`
+      : "",
+    selExcluded.length > 0
+      ? `${money(selExcludedMV)} across ${excludedCount} position${excludedCount === 1 ? "" : "s"} is excluded rather than folded in — ${classList(selExcluded)}. A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a folio, so every wrapper would land in one false "Unclassified" slice and bury the sectors this chart exists to show. All of them are in the holdings table below.${sleeveNoteText}`
+      : "Every one of this entity's positions is a share in a company, so nothing is excluded from the chart.",
+  ].filter(Boolean).join("\n\n");
   const holdings = (() => {
     if (!selected) return [];
     const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
@@ -531,18 +561,12 @@ export function FamilyEntities() {
    * is derived here, so it follows the book rather than this note.
    */
   const visMV = sum(holdings.map((h) => h.marketValue));
-  /**
-   * A HOLDING THAT IS ITS ACCOUNT'S WHOLE VALUE IS AN INVESTMENT — Ajay's Buoyant
-   * folio, a Sanshi folio — and its return is on the capital put in; a share
-   * inside a mandate keeps the cost of its units. The footer stands an account
-   * on capital only where ONE row carries it, so it ties to the rows above.
-   */
-  const rowCap = (h: Position) => { const c = capital.behind([h]); return onCapitalBasis(c) ? c : null; };
-  const visBasis = capital.behind(holdings, (h) => h.securityKey + "@" + h.accountId);
-  const visCost = onCapitalBasis(visBasis) ? visBasis.invested : sumOrNull(holdings.map((h) => h.costBasis));
-  const visPnL = onCapitalBasis(visBasis) ? visBasis.gain : sumOrNull(holdings.map((h) => h.unrealizedPnL));
-  const visRet = visCost !== null && visPnL !== null && visCost > 0 ? (visPnL / visCost) * 100 : null;
-  const visNoCostRows = holdings.filter((h) => (h.costBasis === null || h.costBasis === undefined) && !rowCap(h));
+  const visCost = sumOrNull(holdings.map((h) => h.costBasis));
+  const visPnL = sumOrNull(holdings.map((h) => h.unrealizedPnL));
+  const visRet = visCost !== null && visPnL !== null && visCost > 0
+    ? fifoTotals(holdings.filter((h) => h.costBasis != null && !h.costUnavailable), { accounts: accIdx, universe: p }).returnPct
+    : null;
+  const visNoCostRows = holdings.filter((h) => h.costBasis === null || h.costBasis === undefined);
   const visNoCost = visNoCostRows.length;
   const visNoCostMV = sum(visNoCostRows.map((h) => h.marketValue));
   const filtered = holdings.length !== selRows.length;
@@ -560,9 +584,7 @@ export function FamilyEntities() {
      * three places it groups, `analytics.isPriced`), and it is what the footer's
      * own `visNoCost` counts, so the row and the total now name the same set.
      */
-    const cap = rowCap(h);
-    const noCost = !cap && (!!h.costUnavailable || h.costBasis === null || h.costBasis === undefined);
-    const ret = cap ? (cap.covers ? cap.returnPct : null) : h.returnPct;
+    const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
     return (
       <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
@@ -601,10 +623,7 @@ export function FamilyEntities() {
             : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
-        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(ret)}`} data-fe-basis={cap ? "capital" : "cost"}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" />
-          : cap && cap.invested !== null
-          ? <Auditable formula={capitalReturnFormula(cap.value, cap.invested, ret, cap.basisNote ?? "", money)}>{fmtPct(ret, { sign: true })}</Auditable>
-          : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </Tr>
     );
   };
@@ -690,9 +709,8 @@ export function FamilyEntities() {
                     <SortHeader col="nav" view={entityView}>NAV</SortHeader>
                     <SortHeader col="weight" view={entityView}>Weight</SortHeader>
                     <SortHeader col="positions" view={entityView}>Positions</SortHeader>
-                    <SortHeader col="pnl" view={entityView}
-                      title="The gain on what the member has invested: on the capital put into each whole investment — realised and unrealised together — and on the cost of the units for the rest.">P&L</SortHeader>
-                    <SortHeader col="return" view={entityView} title="Cumulative return on what is invested — the capital put into each whole investment, the cost of the units for the rest (holding-period, not annualized)">Return</SortHeader>
+                    <SortHeader col="pnl" view={entityView}>Unreal. P&L</SortHeader>
+                    <SortHeader col="return" view={entityView} title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</SortHeader>
                     <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
                     <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
                     {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
@@ -736,12 +754,8 @@ export function FamilyEntities() {
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
-                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={e.capital && e.cost !== null && e.pnl !== null
-                          ? capitalPnlFormula(e.capital.value, e.cost, e.pnl, e.capital.basisNote ?? "", money)
-                          : pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={e.capital && e.cost !== null
-                          ? capitalReturnFormula(e.capital.value, e.cost, e.returnPct, e.capital.basisNote ?? "", money)
-                          : returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed })}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
@@ -828,8 +842,8 @@ export function FamilyEntities() {
             subtitle={selShares.length === 0
               ? <>No company shares — this entity holds fund vehicles and cash only{" · "}{selRows.length} position{selRows.length === 1 ? "" : "s"}{" · "}
                 {fmtFromBase(selMV, { compact: true })} NAV</>
-              : <>Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
-                {fmtFromBase(selMV, { compact: true })} NAV</>}>
+              : <span data-fe-sector-why title={sectorMixWhy} className="cursor-help">Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
+                {fmtFromBase(selMV, { compact: true })} NAV</span>}>
             {selShares.length === 0
               ? <AbsentSection what={`${scope} holds no shares in a company`}
                   needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${classList(selExcluded)}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />
@@ -900,20 +914,6 @@ export function FamilyEntities() {
                 )}
               </div>
             )}
-            {/* When there are no company shares at all the AbsentSection above has
-                already named every class, so this would only say it twice. */}
-            {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              {selMandateShares.length > 0 && <>Both routes count here: {money(selMandateSharesMV)} of these shares were chosen by a
-                discretionary manager and have a sector exactly like the ones {scope} bought directly. Which of the two chose a
-                name is in the <span className="text-slate-400">Held via</span> column below.{" "}</>}
-              {selExcluded.length > 0
-                ? <>{money(selExcludedMV)} across {selExcluded.reduce((n, c) => n + c.count, 0)} position
-                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}.
-                  A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a
-                  folio, so every wrapper would land in one false “Unclassified” slice and bury the sectors this chart exists to show.
-                  All of them are in the holdings table below.{sleeveNote}</>
-                : <>Every one of this entity&rsquo;s positions is a share in a company, so nothing is excluded from the chart above.</>}
-            </p>}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
             subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
@@ -1060,13 +1060,25 @@ export function FamilyEntities() {
               *
               * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
               * says so: it is what was PAID, never what the stake is worth. */}
-          {unvalued.length > 0 && (
+          {(unvalued.length > 0 || partlyValued.length > 0) && (
             <Card className="mt-5" title={`${scope} — held, and not valued here`}
-              subtitle={<>{unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} {scope} holds
-                {unvalued.length === 1 ? " reports" : " report"} a holding that no statement in this book puts a
-                value on, so {unvalued.length === 1 ? "it stands" : "they stand"} in no table above. What each one
+              subtitle={<>{unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} {scope} holds
+                {unvalued.length + partlyValued.length === 1 ? " reports" : " report"} holdings that no statement in this book puts a
+                value on, so they stand in no table above{partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. What each one
                 holds, and why it carries no figure:</>}>
-              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length}>
+              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}>
+                {partlyValued.map((a) => (
+                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-300">
+                        {a.provider}
+                        <span className="text-slate-500"> · {a.accountNo}</span>
+                      </span>
+                      <span className="text-[11px] text-amber-400/80 whitespace-nowrap">partly valued</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{a.partialValuation}</p>
+                  </li>
+                ))}
                 {unvalued.map((u) => (
                   <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
                     <div className="flex items-baseline justify-between gap-3">
@@ -1092,6 +1104,8 @@ export function FamilyEntities() {
               <p className="mt-4 border-t border-dashed border-ink-700 pt-3 text-[11px] leading-relaxed text-slate-500">
                 None of these figures is in the {money(selMV)} above. A contribution is what was paid into a fund,
                 not what the holding is worth, and adding the two would report a valuation nobody struck.
+                {partlyValued.length > 0 && <> The cash-equivalent funds a partly valued account&rsquo;s note names ARE
+                  in that figure, valued at AMFI&rsquo;s NAV; the rest of the account is not.</>}
               </p>
             </Card>
           )}

@@ -4,8 +4,8 @@ import {
   ReferenceDot, ReferenceArea,
 } from "recharts";
 import { Card } from "@/components/Card";
-import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
+import { useViewParam } from "@/components/ViewToggle";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { BOOK_NAV_COVERAGE } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
@@ -15,11 +15,11 @@ import {
   indexCurve, indexReturnBetween, rangeStart, rangeEnd, NAV_RANGES, type NavRangeKey,
 } from "@/lib/navSeries";
 import { fetchPriceHistory, toPoints, type PriceHistory } from "@/lib/prices";
-import { NIFTY_500_SYMBOL, NIFTY_500_LABEL } from "@/lib/indices";
+import { BENCHMARKS, benchmarkByKey, benchmarkIdentity, benchmarkMismatchReason } from "@/lib/benchmarks";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle } from "@/lib/chartTheme";
 
-// ── THE DATED NAV SERIES, CHARTED AGAINST THE NIFTY 500 ──────────────────────
+// ── THE DATED NAV SERIES, CHARTED AGAINST A BENCHMARK THE READER PICKS ──────
 //
 // This card replaces one that rendered an `AbsentSection` reading "No valuation
 // series in this book · each account's statements carry exactly two points".
@@ -91,8 +91,26 @@ function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (
 
 export function NavVsIndex() {
   const { portfolio, fmtFromBase } = usePortfolio();
+  /**
+   * WHICH BENCHMARK THE BOOK IS SET AGAINST. In the URL (`?bench=`) like every
+   * other view in this app, so "send me the book against the Sensex" is a link
+   * rather than an instruction — and Morning CIO's tab label reads the same
+   * param, so the tab always names the index the panel behind it draws. The
+   * Nifty 500 is first and therefore param-free: every existing link keeps
+   * landing on the chart the family has been reading. See `benchmarks.ts`.
+   */
+  const [benchKey, setBenchKey] = useViewParam(BENCHMARKS, {}, "bench");
+  const bench = benchmarkByKey(benchKey);
   const [index, setIndex] = useState<PriceHistory | null>(null);
-  const [indexState, setIndexState] = useState<"loading" | "ok" | "down">("loading");
+  /**
+   * FOUR STATES, and `mismatch` is the one this control added. The service
+   * answered, and answered for a DIFFERENT instrument than the benchmark
+   * declares — trap 2 in `indices.js`, which is a real figure about the wrong
+   * market. It draws no line and says what answered, which is a different
+   * sentence from "the service is down" and sends a reader somewhere different.
+   */
+  const [indexState, setIndexState] = useState<"loading" | "ok" | "down" | "mismatch">("loading");
+  const [reportedName, setReportedName] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState(true);
   /**
    * HOW FAR BACK THE CHART LOOKS. Defaults to 1Y rather than the book's own five
@@ -105,12 +123,22 @@ export function NavVsIndex() {
 
   useEffect(() => {
     let alive = true;
-    fetchPriceHistory(NIFTY_500_SYMBOL).then((r) => {
+    // THE PREVIOUS BENCHMARK'S CURVE MUST NOT OUTLIVE ITS LABEL. Switching
+    // clears it first, so for the length of a fetch the chart draws the book
+    // alone rather than the last index under the new one's name.
+    setIndex(null);
+    setIndexState("loading");
+    setReportedName(null);
+    fetchPriceHistory(bench.symbol).then((r) => {
       if (!alive) return;
-      if (r.ok) { setIndex(r); setIndexState("ok"); } else setIndexState("down");
+      if (!r.ok) { setIndexState("down"); return; }
+      const id = benchmarkIdentity(r, bench);
+      if (!id.ok) { setReportedName(id.reportedName); setIndexState("mismatch"); return; }
+      setIndex(r);
+      setIndexState("ok");
     });
     return () => { alive = false; };
-  }, []);
+  }, [bench]);
 
   const model = useMemo(() => {
     if (!portfolio) return null;
@@ -122,7 +150,7 @@ export function NavVsIndex() {
     const pts = index ? toPoints(index) : [];
 
     // The book's own seven points, sampled from the index at the same dates —
-    // what the like-for-like pill and the tooltip need.
+    // what the like-for-like pair in the title's hover and the tooltip need.
     const idx = pts.length ? rebasedIndex(pts, dates) : new Map<string, number>();
 
     /**
@@ -264,7 +292,7 @@ export function NavVsIndex() {
   // about.
   if (model.dates.length < 2) {
     return (
-      <Card className="flex flex-col" title="Portfolio NAV vs Nifty 500"
+      <Card className="flex flex-col" title={`Portfolio NAV vs ${bench.label}`}
         subtitle="Dated portfolio values from the statements, against the index">
         <AbsentSection
           what="No account in this book publishes more than one dated valuation"
@@ -274,83 +302,84 @@ export function NavVsIndex() {
     );
   }
 
+  /**
+   * ── THE BASIS, THE COMPARISON AND THE DISCLOSURE ARE THE TITLE'S HOVER ──────
+   *
+   * *"remove the highlighted texts from the dashboard UI"* — pointed at this
+   * card's basis line AND at the four headline pills (Book, the index, the
+   * not-proven disclosure and the window under them). Every claim was audited
+   * before anything went, the method CLAUDE.md records for each removal:
+   *
+   *   · THE LIKE-FOR-LIKE PAIR — the book and the benchmark over the book's own
+   *     window. The chart's tooltip at the book's last point prints exactly
+   *     that pair (both lines are rebased at the book's first point), so it has
+   *     a second home ON THE FIGURE; it is also stated here in words.
+   *   · THE WINDOW, THE POINT COUNT, THE COVERAGE AND THE REBASE — the collapsed
+   *     list below names the accounts that CANNOT supply a series, which is the
+   *     complement; the figures themselves had no second home.
+   *   · THE NOT-PROVEN DISCLOSURE — no second home, and it qualifies the book's
+   *     return, which is the first sentence here.
+   *
+   * So all of it is this hover, on the heading that names the comparison. A
+   * hover is weaker than a caption, and that is recorded rather than glossed —
+   * what is unchanged is that every one of these is still derived, still on the
+   * card, and still read by `check:pages` at its new address.
+   */
+  const lastNav = model.book[model.book.length - 1].nav;
+  const basisHover = [
+    bookRet == null
+      ? `The book's own series over ${bookFrom} → ${bookTo} carries no return.`
+      : indexRet != null
+        ? `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows, ${bench.label} ${fmtPct(indexRet, { sign: true })} over the same dates. Hover the chart for both lines at any date.`
+        : `Over the book's own window, ${bookFrom} → ${bookTo}: the book ${fmtPct(bookRet, { sign: true })} net of capital flows. ${indexState === "loading" ? `The ${bench.label} history is still loading.` : `No ${bench.label} line is drawn, so there is no comparison figure.`}`,
+    `${model.dates.length} dated points, ${cov.from} → ${cov.to} · ${stats.coveredCount} of ${stats.accountsTotal} accounts, ${fmtFromBase(lastNav, { compact: true })} of the ${fmtFromBase(stats.consolidatedValue, { compact: true })} book · both lines rebased to 100 at ${cov.from}.`,
+    "Each point holds every account at its most recent mark on or before that date, and counts a holding two accounts both report once.",
+    panelLast > panelFirst && completeFrom
+      ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts valued at both of its ends, so an account arriving contributes nothing — and the dashed NAV line starts where the panel does.`
+      : "",
+    unproven.length > 0
+      ? `Not proven to be performance: ${fmtFromBase(Math.max(...unproven.map((u) => u.unreportedFlowValue)), { compact: true })} of the move. ${stats.unreportedFlowAccounts.length} covered account(s) publish no dated capital record and hold more than one security — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — so a subscription or redemption inside one of them would appear in the book's return. The other covered accounts either publish a capital register or hold a single security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.`
+      : "",
+  ].filter(Boolean).join("\n\n");
+
   return (
     <Card className="flex flex-col"
-      title="Portfolio NAV vs Nifty 500"
-      /* ── THE SUBTITLE IS A BASIS LINE, NOT A PARAGRAPH ──────────────────────
-           *"remove the highlighted text from the dashboard ui."*
-
-           It ran four sentences, and every claim was checked before a word went.
-           THREE HAD NO SECOND HOME AND A READER ACTS ON ALL THREE, so they are
-           kept — at one line, which is the removal the family asked for:
-
-             · THE WINDOW AND THE POINT COUNT. The range note under the chart
-               names the INDEX’s window, which is a different and much longer
-               one; the book’s own span is stated nowhere else.
-             · THE COVERAGE. A reader comparing this line to an index has to know
-               how much of the book it measures. The <details> below names the 38
-               accounts that CANNOT supply a series, which is the complement and
-               not the figure.
-             · THE REBASE. The y-axis reads 84 / 91 / 98 — a RATIO, not an
-               amount — so without it those ticks are unitless and the chart
-               quietly stops saying what it is measuring. Same rule as
-               <BasisPill> elsewhere: the basis rides with the figure.
-
-           WHAT WENT INTO THE HOVER IS METHODOLOGY — how a point is struck, and
-           how the panel grows. Neither changes what a reader does with the
-           chart, and a hover is weaker than a caption, which is said here
-           rather than glossed. */
-      subtitle={
-        <span title={[
-          "Each point holds every account at its most recent mark on or before that date, and counts a holding two accounts both report once.",
-          panelLast > panelFirst && completeFrom
-            ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts valued at both of its ends, so an account arriving contributes nothing — and the dashed NAV line starts where the panel does.`
-            : "",
-        ].filter(Boolean).join(" ")}>
-          {model.dates.length} dated points, {cov.from} → {cov.to}
-          {" · "}<strong className="text-slate-300">{stats.coveredCount} of {stats.accountsTotal} accounts</strong>
-          {", "}{fmtFromBase(model.book[model.book.length - 1].nav, { compact: true })} of the{" "}
-          {fmtFromBase(stats.consolidatedValue, { compact: true })} book
-          {" · rebased to 100 at "}{cov.from}
+      title={
+        <span data-testid="nav-basis" title={basisHover} className="cursor-help">
+          Portfolio NAV vs {bench.label}
         </span>
       }
       right={
-        /* THE HEADLINE IS THE LIKE-FOR-LIKE PAIR, AND ONLY THAT.
-           Both figures are struck over the BOOK'S OWN WINDOW, which is the only
-           window in which a comparison exists. The selected range's own index
-           return sits under the chart instead, labelled market history — a
-           reader must never find an index figure over five years sitting beside
-           a book figure over five weeks, which is a caption widening a figure it
-           does not narrow. */
-        <div className="flex flex-col items-end gap-1">
-          {bookRet == null ? <Pill>— no return</Pill> : (
-            <Pill tone={bookRet >= 0 ? "gain" : "loss"}>Book {fmtPct(bookRet, { sign: true })}</Pill>
-          )}
-          {indexRet == null
-            ? <span title="The index history could not be fetched, so no comparison is drawn."><Pill>— {NIFTY_500_LABEL}</Pill></span>
-            : <Pill tone="info">{NIFTY_500_LABEL} {fmtPct(indexRet, { sign: true })}</Pill>}
-          {/* ── A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE, BESIDE THE
-                 FIGURE IT QUALIFIES ─────────────────────────────────────────
-              This was a paragraph under the chart and the family asked for the
-              paragraphs to go. It is a DISCLOSURE rather than chrome — four
-              covered accounts publish no dated capital record and hold more
-              than one security, so a subscription inside one of them would
-              appear in the Book pill directly above as a return — and a
-              disclosure that qualifies a figure belongs against that figure.
-              Amber and in words on the pill, with the accounts in the hover:
-              the same treatment `AbsentCell` gives a reason that would make a
-              table unreadable if it were set out in full on screen. */}
-          {unproven.length > 0 && (
-            <span data-testid="nav-unproven"
-              title={`Not proven to be performance: ${stats.unreportedFlowAccounts.length} covered account(s) publish no dated capital record and hold more than one security — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — so a subscription or redemption inside one of them would appear here as a return. The other covered accounts either publish a capital register or hold a single security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.`}>
-              <Pill tone="warn" className="whitespace-nowrap">
-                {fmtFromBase(Math.max(...unproven.map((u) => u.unreportedFlowValue)), { compact: true })} not proven
-              </Pill>
-            </span>
-          )}
-          <span className="text-[10px] uppercase tracking-wide text-slate-500">
-            over {cov.from} → {cov.to}
-          </span>
+        /* ── THE BENCHMARK CONTROL, WHERE THE PILLS WERE ──────────────────────
+           *"Allow us to select different benchmarks to compare the portfolio
+           returns with and make sure that the benchmark returns are live just
+           like the Nifty 500 benchmark."*
+
+           Every option comes through `/api/prices`, the call the Nifty 500 line
+           has always used, and is checked by the NAME the service reports
+           before a close is drawn — see `benchmarks.ts`. Tabs rather than a
+           dropdown, which is what the family asked for on the Portfolio
+           Monitor: one click to reach, and every option visible.
+
+           KEYED `data-bench`, because a claim about which benchmarks this card
+           offers must not be struck on labels a redesign is free to reword. */
+        <div className="flex flex-wrap items-center justify-end gap-2" data-testid="nav-bench">
+          <span className="label-xs">Benchmark</span>
+          <div role="tablist" aria-label="Benchmark to compare the book against"
+            className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
+            {BENCHMARKS.map((b) => (
+              <button key={b.key} type="button" role="tab" aria-selected={bench.key === b.key}
+                data-bench={b.key} data-bench-symbol={b.symbol} onClick={() => setBenchKey(b.key)}
+                title={b.title}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  bench.key === b.key
+                    ? "bg-champagne-500 text-ink-950"
+                    : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
+                }`}>
+                {b.label}
+              </button>
+            ))}
+          </div>
         </div>
       }>
 
@@ -375,7 +404,7 @@ export function NavVsIndex() {
               data-range={r.key} onClick={() => setRange(r.key)}
               title={r.key === "book"
                 ? "The window both lines cover — the book's own first to last statement date."
-                : `${r.label} of Nifty 500 closes ending at the book's last statement date. The book's own line still covers only its measured window.`}
+                : `${r.label} of ${bench.label} closes ending at the book's last statement date. The book's own line still covers only its measured window.`}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                 range === r.key
                   ? "bg-champagne-500 text-ink-950"
@@ -423,7 +452,7 @@ export function NavVsIndex() {
           <span className="text-[11px] text-slate-500" data-testid="nav-range-note">
             {rangeFrom} → {rangeTo} · {indexRuns} index closes
             {rangeRet != null && (
-              <> · {NIFTY_500_LABEL} alone over this period{" "}
+              <> · {bench.label} alone over this period{" "}
                 <span className={changeColor(rangeRet)}>{fmtPct(rangeRet, { sign: true })}</span></>
             )}
           </span>
@@ -446,7 +475,7 @@ export function NavVsIndex() {
           of them passed against an empty frame, because the words were right. A
           chart is checked on its geometry or it is not checked; see the
           `nav-chart` probe in `check-pages.mjs`. */}
-      <div className="h-[22rem]" data-testid="nav-chart">
+      <div className="h-[22rem]" data-testid="nav-chart" data-bench-state={indexState} data-bench-key={bench.key}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 8, right: 8, left: 4, bottom: 0 }}>
             <CartesianGrid stroke={GRID_COLOR} strokeDasharray="2 4" vertical={false} />
@@ -477,7 +506,7 @@ export function NavVsIndex() {
             <Legend wrapperStyle={{ fontSize: 11 }} payload={[
               { value: "Book · ex capital flows", type: "line", id: "book", color: BOOK_COLOR },
               ...(showRaw ? [{ value: "NAV incl. capital added", type: "line" as const, id: "nav", color: NAV_COLOR }] : []),
-              { value: NIFTY_500_LABEL, type: "line", id: "index", color: INDEX_COLOR },
+              { value: bench.label, type: "line", id: "index", color: INDEX_COLOR },
             ]} />
             {/* THE STRETCH THE COMPARISON COVERS, SHADED.
                 On the 1Y and longer views most of the axis is index history the
@@ -490,7 +519,7 @@ export function NavVsIndex() {
                 strokeOpacity={0.5} ifOverflow="hidden" />
             )}
             <Line type="monotone" dataKey="index" stroke={INDEX_COLOR} strokeWidth={1.8} dot={false}
-              name={NIFTY_500_LABEL} connectNulls isAnimationActive={false} />
+              name={bench.label} connectNulls isAnimationActive={false} />
             {showRaw && (
               <Line type="monotone" dataKey="nav" stroke={NAV_COLOR} strokeWidth={1.5} strokeDasharray="4 3" dot={false}
                 name="NAV incl. capital added" connectNulls isAnimationActive={false} />
@@ -539,9 +568,18 @@ export function NavVsIndex() {
           and §"a figure that exists for SOME accounts is shown for those and
           the rest are NAMED" is a standing rule of this book. */}
 
+      {/* THE WRONG INSTRUMENT IS NOT AN OUTAGE, AND THE SENTENCE SAYS WHICH.
+          Told "could not be fetched", a reader waits for a service that is up;
+          told what answered, they know the symbol is what needs changing. */}
+      {indexState === "mismatch" && (
+        <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400"
+          data-testid="nav-bench-mismatch">
+          {benchmarkMismatchReason(bench, reportedName)} The book&rsquo;s own series is unaffected and is shown alone.
+        </p>
+      )}
       {indexState === "down" && (
         <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400">
-          The {NIFTY_500_LABEL} history could not be fetched, so no comparison line is drawn — the book&rsquo;s own series is
+          The {bench.label} history could not be fetched, so no comparison line is drawn — the book&rsquo;s own series is
           unaffected and is shown alone. The price service runs as a server-side function on the deployed site and is not
           available in local preview.
         </p>

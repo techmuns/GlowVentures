@@ -54,12 +54,12 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import type { CapitalModel, InvestedBehind } from "./capital";
 import {
   sum, sumOrNull, dedupedPositions, isPrivateClass, marketSides,
   type MarketSideRow,
 } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
+import { fifoTotals } from "./fifo";
 import {
   fundMarketSideOf, fundMarketSideBasis,
   type AifCategory, type MarketSide, type MarketSideBasis,
@@ -226,8 +226,6 @@ export type FundRow = {
   costedMV: number;
   /** Non-null only where the cost side covers essentially the whole row. */
   returnPct: number | null;
-  /** Where the row is on the capital put in rather than the cost of its units. */
-  capital: InvestedBehind | null;
 };
 
 /**
@@ -238,16 +236,7 @@ export type FundRow = {
  * no caller can quietly get the deduped count back: an optional parameter that
  * changes a figure is the trap this book has paid for before.
  */
-export function fundRollup(
-  dedupedRows: Position[], accIdx: AccountIndex, rawRows: Position[],
-  /**
-   * The capital model on the page's own basis. Where a fund's rows carry whole
-   * accounts whose capital is published, its Invested and Gain are on that
-   * capital — the money the family put in — rather than on the cost of the
-   * units, which a payout or a class switch resets. See `src/lib/capital.ts`.
-   */
-  capital?: CapitalModel,
-): FundRow[] {
+export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRows: Position[]): FundRow[] {
   const groups = new Map<string, Position[]>();
   for (const p of dedupedRows) {
     const g = groups.get(p.securityKey) ?? [];
@@ -258,12 +247,10 @@ export function fundRollup(
   for (const p of rawRows) statements.set(p.securityKey, (statements.get(p.securityKey) ?? 0) + 1);
   return [...groups.values()]
     .map((g) => {
-      const b = capital ? capital.behind(g) : null;
-      const onCap = b && b.onCapital.length > 0 ? b : null;
-      const cost = onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis));
+      const cost = sumOrNull(g.map((p) => p.costBasis));
       const mv = sum(g.map((p) => p.marketValue));
-      const pnl = onCap ? onCap.gain : sumOrNull(g.map((p) => p.unrealizedPnL));
-      const costedMV = onCap ? onCap.value : sum(g.filter((p) => p.costBasis != null).map((p) => p.marketValue));
+      const pnl = sumOrNull(g.map((p) => p.unrealizedPnL));
+      const costedMV = sum(g.filter((p) => p.costBasis != null).map((p) => p.marketValue));
       return {
         securityKey: g[0].securityKey,
         security: g[0].security,
@@ -275,11 +262,12 @@ export function fundRollup(
         mv,
         pnl,
         costedMV,
+        // FIFO over the fund's own holdings — the realised gain on units
+        // already redeemed stays in the return (`fifoTotals`).
         returnPct:
           cost != null && cost > 0 && pnl != null && mv > 0 && costedMV >= mv * COST_COVERAGE_MIN
-            ? (pnl / cost) * 100
+            ? fifoTotals(g).returnPct
             : null,
-        capital: onCap,
       };
     })
     .sort((a, b) => b.mv - a.mv);
@@ -301,18 +289,10 @@ export type FolioRow = {
    */
   alsoCount: number;
   alsoReportedUnder: string[];
-  /**
-   * What the family has in this folio: the capital put in where the folio is a
-   * WHOLE account whose capital is published, the statement's cost otherwise —
-   * so a fund reads the same Invested in its row and in the folio lines under
-   * it. `capital` carries the working, for the hover.
-   */
-  invested: number | null;
-  capital: InvestedBehind | null;
 };
 
 /** Every private row as printed, with the duplicate count struck on the raw set. */
-export function folioRows(rows: Position[], accIdx: AccountIndex, capital?: CapitalModel): FolioRow[] {
+export function folioRows(rows: Position[], accIdx: AccountIndex): FolioRow[] {
   const byGroup = new Map<string, number>();
   for (const p of rows) {
     if (!p.dedupeGroup) continue;
@@ -321,11 +301,7 @@ export function folioRows(rows: Position[], accIdx: AccountIndex, capital?: Capi
   return rows
     .map((p) => {
       const a = accIdx.get(p.accountId);
-      const b = capital ? capital.behind([p]) : null;
-      const onCap = b && b.onCapital.length > 0 ? b : null;
       return {
-        invested: onCap ? onCap.invested : p.costBasis ?? null,
-        capital: onCap,
         position: p,
         accountId: p.accountId,
         owner: ownerOf(accIdx, p),
@@ -339,12 +315,7 @@ export function folioRows(rows: Position[], accIdx: AccountIndex, capital?: Capi
     .sort((a, b) => b.position.marketValue - a.position.marketValue);
 }
 
-export type OwnerRow = {
-  owner: string; rows: number; mv: number;
-  /** The capital put into each whole account this member holds here, plus the cost of the rest. */
-  cost: number | null;
-  capital: InvestedBehind | null;
-};
+export type OwnerRow = { owner: string; rows: number; mv: number; cost: number | null };
 
 /**
  * Per-owner subtotals — DELIBERATELY NOT DEDUPED.
@@ -354,7 +325,7 @@ export type OwnerRow = {
  * printed. Deduping here is the mirror failure that once emptied Bharat's
  * 360 ONE row to ₹0 for an account holding ₹1.46 Cr.
  */
-export function ownerRollup(rows: Position[], accIdx: AccountIndex, capital?: CapitalModel): OwnerRow[] {
+export function ownerRollup(rows: Position[], accIdx: AccountIndex): OwnerRow[] {
   const by = new Map<string, Position[]>();
   for (const p of rows) {
     const who = ownerOf(accIdx, p);
@@ -363,19 +334,12 @@ export function ownerRollup(rows: Position[], accIdx: AccountIndex, capital?: Ca
     by.set(who, g);
   }
   return [...by.entries()]
-    .map(([owner, g]) => {
-      // Each member's own accounts, whole: RAW like the rest of this view, so a
-      // holding two members both report stands on each member's own capital.
-      const b = capital ? capital.behind(g) : null;
-      const onCap = b && b.onCapital.length > 0 ? b : null;
-      return {
-        owner,
-        rows: g.length,
-        mv: sum(g.map((p) => p.marketValue)),
-        cost: onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis)),
-        capital: onCap,
-      };
-    })
+    .map(([owner, g]) => ({
+      owner,
+      rows: g.length,
+      mv: sum(g.map((p) => p.marketValue)),
+      cost: sumOrNull(g.map((p) => p.costBasis)),
+    }))
     .sort((a, b) => b.mv - a.mv);
 }
 

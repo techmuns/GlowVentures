@@ -17,7 +17,10 @@
 //   a category, a basket, a side      → the holdings behind that allocation row
 //   a sector ("banks", "pharma")      → the holdings in it
 //   a figure ("uncalled", "XIRR")     → the page that shows and explains it
-//   a question                        → Muns, with the question already asked
+//
+// (A QUESTION used to go to Muns from the list's own last row. That row went
+// with the top bar's Ask Muns button at the family's request — Stage 10bz — and
+// `looksLikeQuestion` below is kept for the day it comes back.)
 //
 // ── EVERY ENTRY IS DERIVED FROM THE BOOK THE PAGE ALREADY HOLDS ─────────────
 //
@@ -50,12 +53,13 @@ import type { Account, Position } from "./types";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
   currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
-  isRedeemedToNil, negligibleKeys, sum,
+  isRedeemedToNil, negligibleKeys, readerClassOf, sum,
 } from "./analytics";
 import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
+import { printedSpellings } from "./securityLabel";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -215,6 +219,11 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
  * IS THIS A QUESTION RATHER THAN A PLACE? Then Muns goes first. A search for
  * "HDFC" wants the holding; "how much HDFC do I hold across funds?" wants an
  * answer, and the one surface that composes answers is the chat.
+ *
+ * NO CALLER SINCE Stage 10bz: the search list's Ask Muns row it ordered went
+ * with the top bar's button when the family paused the chat. Kept, and still
+ * asserted in `searchIndex.test.ts`, because the chat is paused rather than
+ * removed — see `MunsChat.tsx` for how both come back.
  */
 export function looksLikeQuestion(query: string): boolean {
   const q = query.trim().toLowerCase();
@@ -252,6 +261,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/capital-gains": ["tax", "capital gains", "realised", "realized", "ltcg", "stcg", "gains"],
   "/performance": ["performance", "returns", "nav history", "benchmark"],
   "/returns": ["drawdown", "return analysis", "risk"],
+  "/corporate-actions": ["corporate actions", "stock split", "bonus", "dividend adjustment", "dividend-inclusive return", "entitlements", "total return"],
   "/ledger": ["ledger", "dividends", "dividend", "income", "lots", "realised by trade"],
   "/audit": ["audit", "statements", "documents", "source", "pdf", "archive", "extraction"],
   "/history": ["upload history", "history", "uploads"],
@@ -302,10 +312,10 @@ const FIGURES: { id: string; label: string; href: string; words: string[]; detai
   { id: "fig:book", label: "Current Value of Holdings", href: drilldownHref("book"),
     words: ["current value", "value", "nav", "net asset value", "total", "worth", "portfolio value", "aum", "net worth"],
     detail: "Every holding in the book, counted once, with each figure's basis" },
-  { id: "fig:invested", label: "Capital invested", href: drilldownHref("invested"),
+  { id: "fig:invested", label: "Capital invested", href: drilldownHref("book", undefined, "costed"),
     words: ["invested", "cost", "amount invested", "capital invested", "cost basis"],
-    detail: "The holdings that report a cost, and the return struck on it" },
-  { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("invested", undefined, "no-cost"),
+    detail: "Current Value of Holdings, on the holdings that report a cost — and the return struck on it" },
+  { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("book", undefined, "no-cost"),
     words: ["no cost", "missing cost", "cost not reported"],
     detail: "The positions whose statement prints a value and no cost — and why" },
   { id: "fig:xirr", label: "Money-weighted return (XIRR)", href: drilldownHref("measured"),
@@ -365,8 +375,13 @@ export function buildSearchIndex(input: {
     const accountsHolding = new Set(raw.map((p) => p.accountId)).size;
     const owners = [...new Set(raw.map((p) => idx.get(p.accountId)?.owner).filter(Boolean))] as string[];
     const bucket = groupKeyFor("category", idx, head);
-    const chip = head.assetClass === "Equity" ? "Stock"
-      : head.assetClass === "Mutual Fund" ? "Mutual fund" : head.assetClass;
+    // THE CLASS A READER IS SHOWN is `readerClassOf`'s, never the wrapper the
+    // statement typed: a liquid or arbitrage fund is Cash on every screen, at
+    // the family's instruction (Stage 10ce), and a chip reading "Mutual fund"
+    // beside a detail line reading "Cash" would name it twice, two ways.
+    const cls = readerClassOf(head);
+    const chip = cls === "Equity" ? "Stock"
+      : cls === "Mutual Fund" ? "Mutual fund" : cls;
     out.push({
       id: `holding:${key}`, kind: "holding", chip,
       label: head.security,
@@ -378,7 +393,11 @@ export function buildSearchIndex(input: {
       // A redeemed fund's money is on the Transactions tab, where its
       // redemption is — its holding page would show a measured nil and little else.
       href: closed ? "/monitor?show=transactions" : `/stock/${encodeURIComponent(key)}`,
-      names: [head.security, key.replace(/-/g, " ")],
+      // EVERY SPELLING A STATEMENT PRINTED, not only the one shown. The row is
+      // named once, but a reader types whichever name they know: the depository
+      // prints State Bank of India as `SBI`, and with the two keys joined the
+      // label alone left "sbi" finding nothing.
+      names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
       codes: [head.isin, head.symbol].filter((c): c is string => !!c),
       keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),
@@ -420,8 +439,13 @@ export function buildSearchIndex(input: {
     out.push({
       id: `account:${a.accountId}`, kind: "account", chip: "Account",
       label: `${a.provider} · ${a.accountNo}`,
+      // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
+      // basis a transaction-only demat values the cash-equivalent funds its
+      // depository reports and nothing else on that statement (Stage 10ce), so
+      // its total must not read as the account's — the words lead, because
+      // this line is truncated to one row.
       detail: `${a.owner} · ${allClosed ? "every holding redeemed — the money is on Transactions"
-        : rows.length ? `${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
+        : rows.length ? `${a.partialValuation ? "partly valued · " : ""}${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
         + (a.asOf ? ` · as of ${a.asOf}` : ""),
       href,
       names: [],

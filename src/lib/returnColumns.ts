@@ -84,7 +84,7 @@ export const returnAccessorsFor = <T,>(
  */
 export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
   cagr: "annualising needs one purchase date and this holds many, bought over years, so a CAGR here would compound a window nothing was held over.",
-  xirr: "a money-weighted return needs every payment into the whole set, dated, and nothing in it is a whole investment whose payments are dated.",
+  xirr: "a money-weighted return needs every dated cash flow of the thing it measures, and no statement reports those per category.",
   ytd: "a year-to-date figure needs this category's value on 1 January, and the earliest statement in this book is dated after the year began.",
   calendar: "a calendar-year return needs its value at both ends of that year, and this book is not dated early enough to carry either.",
 };
@@ -111,11 +111,11 @@ export const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  * object so the short note and the sentence behind it cannot describe different
  * sets.
  *
- * THESE SENTENCES ARE ABOUT THE MONITOR'S ROWS, which is why the Private Market
- * fund table does not use them: they count a row by whether a HOLDING or a WHOLE
- * INVESTMENT with dated payments carries the figure, and a fund row resolves on
- * its own capital account's dated calls and payouts instead. That table words
- * its own headers from its own resolved cells (`fundReturnColumnMeta`).
+ * THESE SENTENCES ARE ABOUT HOLDINGS, which is why the Private Market fund table
+ * does not use them: "the statements here cover the current period only" is true
+ * of a share in a demat and FALSE of a drawdown fund, whose statement prints
+ * every dated call since its first. That table words its own headers from its
+ * own resolution (`fundReturnColumnMeta`), on the same coverage object.
  *
  * `auto` gets neither: its measure resolves per row, so there is no column-wide
  * count to state and the tag on every cell is what names it.
@@ -129,13 +129,16 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
         // THE ANNUALISED COUNT, not `shown`: a sub-year holding is SHOWN in this
         // column and shown as its holding-period return, tagged HPR. Reporting
         // it as annualised would be the very claim the guard exists to refuse.
-        // An investment paid into on several dates IS annualised here — as an
-        // XIRR, because a CAGR needs one start date — so both tags count.
-        note: `${cov.annualised} annualised of ${cov.total}`,
-        title: `Annualised where a year can be measured — ${cov.annualised} of ${cov.total} rows.`
-          + (cov.moneyWeighted > 0 ? ` ${cov.moneyWeighted} of them ${cov.moneyWeighted === 1 ? "is an investment" : "are investments"} the family paid into on several dates, marked XIRR: money that went in on different dates has no single start to compound from, so the money-weighted rate is the annual rate.` : "")
-          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return instead — on the capital put in where the row stands on it, on the cost of the units otherwise — marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
-          + (cov.absent > 0 ? ` ${cov.absent} carry no dated start the window could close over — a holding inside a mandate has no purchase date of its own, a capital published only as a total since inception dates nothing, and the depository holdings report no cost.` : ""),
+        note: `${cov.cagr} annualised of ${cov.total}`,
+        title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
+          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
+          // A WHOLE ACCOUNT FUNDED OVER SEVERAL DATED PAYMENTS is refused here
+          // for a different reason from a holding with no date, and has its
+          // annual rate one column over — so it is counted apart rather than
+          // filed under "no purchase date", which would send a reader looking
+          // for a document the row does not need.
+          + (cov.staggered > 0 ? ` ${cov.staggered} ${cov.staggered === 1 ? "row is a whole account" : "rows are whole accounts"} funded over several dated payments: a single-start compound rate would treat every rupee as invested on the first date, so ${cov.staggered === 1 ? "its" : "their"} annual rate is in the XIRR column.` : "")
+          + (cov.absent - cov.staggered > 0 ? ` ${cov.absent - cov.staggered} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
     case "ytd":
       return {
@@ -146,18 +149,21 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
               : "No row can be measured on this drop. ")
           + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
       };
-    case "xirr":
+    case "xirr": {
+      // THE COUNT IS OF RATES, not of cells shown: a whole account whose
+      // payments span under a year is SHOWN here as its holding-period return,
+      // tagged HPR, and calling that money-weighted would be the claim the
+      // guard exists to refuse.
+      const fallback = cov.shown - cov.xirr;
       return {
-        note: `${cov.shown} of ${cov.total}`,
-        /* THIS SENTENCE READ "absent on all N rows" AND STOPPED BEING TRUE the
-           day a row could stand on the capital put in: an investment whose
-           every payment in and out is on its statements — a fund folio, a
-           mandate — has a money-weighted return, and it is in this column. What
-           still has none is named, with why. */
-        title: `A money-weighted XIRR needs every payment behind a row, each at its own date. ${cov.shown} of ${cov.total} rows have them — investments whose every payment in and out is on their own statements`
-          + (cov.moneyWeighted < cov.shown ? `, ${cov.shown - cov.moneyWeighted} of them over payments spanning under a year, so showing their total return on the capital put in, marked HPR` : "")
-          + `. The other ${cov.absent} have none: a holding inside an account has no cash flows of its own, a capital published only as a total since inception dates nothing, and the depository holdings report no cost. Each manager's own published return is on Performance.`,
+        note: `${cov.xirr} money-weighted of ${cov.total}`,
+        title: (cov.xirr > 0
+          ? `A money-weighted XIRR on ${cov.xirr} of ${cov.total} rows — each a whole account, or a fund over its whole folios, whose every payment in and out is dated, solved over the same record the Transactions card uses.`
+          : `A money-weighted XIRR needs every dated payment behind a row, and no row here is a whole account with every payment on record.`)
+          + (fallback > 0 ? ` ${fallback} ${fallback === 1 ? "row is" : "rows are"} funded under a year ago and show ${fallback === 1 ? "its" : "their"} holding-period return instead, marked HPR, because annualising a part-year would state a rate for a year the money has not seen.` : "")
+          + (cov.absent > 0 ? ` The other ${cov.absent} are holdings inside an account, which have no cash flows of their own, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
+    }
     case "calendar":
       return {
         note: `${cov.shown} of ${cov.total}`,
@@ -166,7 +172,7 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
     default:
       return {
         note: `${cov.shown} of ${cov.total}`,
-        title: `Holding Period Return is the total return since the money went in, not annualised — on the capital the family put in where a row stands on a whole investment (${cov.onCapital} of ${cov.total} rows), and on the cost of the units otherwise. It is shown on ${cov.shown} of ${cov.total} rows`
+        title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
           + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
       };
   }
