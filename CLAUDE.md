@@ -214,7 +214,9 @@ cash holding's genuinely-zero return both match, and both are correct.
   every surface that prints an Invested, a P&L or a return. Which of three
   documents publishes an account's capital — a dated record reaching inception
   AND the account's own as-of, the manager's since-inception statement, a
-  drawdown fund's capital account where its payout line is printed — and
+  drawdown fund's capital account read on its own dated calls and payouts to
+  the valuation (never on the printed distribution total, which can include a
+  payout the value still holds) — and
   `behind(set, unitOf)`, which stands a WHOLE account on that capital and
   everything else on the cost of its units. The methodology on top of it (XIRR
   over several dated payments, CAGR over one, the holding-period return under a
@@ -16909,6 +16911,382 @@ Morning CIO panels (every KPI tile carries a figure), two on Private Market
 (every private holding reports a cost), one on the not-found drill-down's crumb
 and one on `stock-qty` (no pledge). None is this change's own. MEASURED ON THE
 MERGED TREE.
+
+### Stage 10bx — AN INVESTMENT'S RETURN IS STRUCK ON THE CAPITAL PUT IN
+
+*"Open PR and do not merge until i tell you to. According to the client the return
+[on] all this AIF is a lot higher than what we are showing on the dashboard. So
+please check if we are missing anything and in case there is any calculation
+mistake … check it for all other investments as well … There might be a
+possibility that we are showing wrong return profiles for all the other funds as
+well. So we need to make sure that the root cause of this is fixed."* — sent with
+a screenshot of Buoyant Opportunities Strategy Class A4's company page.
+
+**THE CLIENT WAS RIGHT, AND NOTHING WAS MISCALCULATED.** Every return on this
+dashboard was struck on the COST OF THE UNITS HELD TODAY — a tax figure, correct
+as a tax figure, and equal to the money the family put in only while nothing in
+the account has ever been realised. Three things in this book break that, each
+moving the return a different way, and the error runs BOTH ways:
+
+- **A CLASS SWITCH** (Buoyant). A switch is a redemption and a re-allotment,
+  so the new class's cost is the switch-in value: Class A1's gain is realised and
+  folded into A4's cost. Ajay's folio read **+3.71%** — two months of A4 — on the
+  ₹46.00 Cr he paid in, against **+7.17%**, and **XIRR +15.30%**. *(Stage 10bv
+  fixed the COST half of this from the other side while this branch was open —
+  see "…then merged with #75" below. On the merged tree Buoyant's cost is what was
+  paid, so on cost and on capital agree there; what this stage still adds for
+  Buoyant is the money-weighted rate.)*
+- **A MANAGER TRADING** (every PMS). Realised gains, dividends and fees never
+  reach a return struck on what is held. V.E.C 128004 read **+8.42%** against
+  **+30.12%** on capital; SVAN 8710067 +6.84% against +13.57%; Carnelian
+  **+24.98% against +19.93%**, because its manager realised losses and charged
+  fees — so this was never "the dashboard understates", it was "the dashboard
+  measures the wrong thing".
+- **A FUND PAYING OUT** (Neo Infra). ₹51.04 L had come back by its 30 June
+  valuation — income, principal returned and equalisation — and no return on
+  cost can see money that is no longer in the fund: +11.00% on cost,
+  **+23.62%** on the capital put in, **XIRR +16.68%**. *(The capital was ₹1.56 L
+  different before the merge with #72 — see "…and merged with #72" below.)*
+
+Every one of the twenty-one accounts that publishes its capital, measured on the
+merged tree at statement marks:
+
+| Account | Capital from | Capital | Units cost | Value | On cost | **On capital** | XIRR |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Buoyant 103473 | dated payments | ₹46.00 Cr | ₹46.01 Cr\* | ₹49.30 Cr | 7.16% | **7.17%** | 15.30% |
+| Buoyant 103472 | dated payments | ₹24.85 Cr | ₹24.85 Cr\* | ₹27.69 Cr | 11.42% | **11.42%** | 9.76% |
+| Carnelian 3517383 | manager's statement | ₹32.96 Cr | ₹31.63 Cr | ₹39.53 Cr | 24.98% | **19.93%** | — |
+| Goldstandard 100022 | manager's statement | ₹7.50 Cr | ₹7.55 Cr | ₹8.02 Cr | 6.27% | **6.98%** | — |
+| Goldstandard 100023 | manager's statement | ₹17.49 Cr | ₹17.61 Cr | ₹18.80 Cr | 6.78% | **7.48%** | — |
+| Green Lantern 510854 | manager's statement | ₹4.99 Cr | ₹5.11 Cr | ₹5.80 Cr | 13.49% | **16.05%** | — |
+| Green Lantern 510861 | manager's statement | ₹9.99 Cr | ₹10.17 Cr | ₹11.45 Cr | 12.53% | **14.61%** | — |
+| Molecule 7810404 | manager's statement | ₹1.00 Cr | ₹1.05 Cr | ₹1.16 Cr | 10.20% | **16.10%** | — |
+| Neo Infra 9039920536 | fund's capital account | ₹4.49 Cr | ₹5.00 Cr | ₹5.55 Cr | 11.00% | **23.62%** | 16.68% |
+| Baring PE Fund 6 | fund's capital account | ₹2.02 Cr | ₹2.03 Cr | ₹1.88 Cr | −6.95% | **−6.69%** | −6.42% |
+| SVAN 8710067 | dated payments | ₹14.49 Cr | ₹15.40 Cr | ₹16.45 Cr | 6.84% | **13.57%** | 9.07% |
+| SVAN 8710090 | dated payments | ₹9.49 Cr | ₹10.12 Cr | ₹10.70 Cr | 5.75% | **12.74%** | 8.60% |
+| V.E.C 128004 | manager's statement | ₹5.00 Cr | ₹6.00 Cr | ₹6.50 Cr | 8.42% | **30.12%** | — |
+| V.E.C 128005 | manager's statement | ₹18.74 Cr | ₹19.92 Cr | ₹20.29 Cr | 1.84% | **8.28%** | — |
+| Sanshi — five folios | dated payments | ₹157.50 Cr | ₹157.49 Cr | ₹204.48 Cr | 17.4–38.8% | **the same, to 0.01 pp** | 42.91%, 43.97% on the two a year old |
+| Transition Venture — two trusts | dated payments | ₹0.75 Cr each | ₹0.75 Cr each | ₹1.71 Cr each | 128.61% | **128.61%** | — under a year |
+
+\* carried through the class switch by Stage 10bv — the statement's own cost
+column prints ₹47.54 Cr and ₹24.94 Cr, and before #75 the dashboard divided by
+those: +3.71% and +11.01%.
+
+Twenty-one accounts in all — eleven on dated payments, eight on the manager's
+statement, two on a fund's capital account — and every other account stays on
+the cost of its units, exactly as before. The Sanshi folios and both Transition
+Venture trusts barely move, because nothing has been realised in them (Sanshi's
+0.01% is the stamp duty: the capital is what LEFT the family's bank, the cost is
+what was allotted). **A figure copied into prose does not regenerate**, so the
+suite is anchored on the manager's own printed IRR and on the inequality running
+both ways, not on this table, and the table should be re-measured rather than
+edited.
+
+#### The ingest half was written twice, and main's is the one that stands
+
+Buoyant's Account Statement prints every Cash Deposit since inception, the Class
+A1 → A4 switch and a reinvested gain distribution BENEATH the one-row summary the
+reader took — so the book held no dated capital for either folio and could only
+ever divide by the stepped-up cost. That is the tenth absence in this file
+recorded against a document already in hand.
+
+**THIS BRANCH WROTE A READER FOR THOSE TABLES, AND SO DID #75.** Stage 10bv
+landed first, with a `buoyantFlows` that pairs every deposit with its own
+allotment and every redemption with its switch leg, and a carried cost on top.
+So the merge takes main's reader, its `replay:flows` and its archive, and
+DELETES this branch's — two readers of one table are two chances to publish
+different deposits, and the one already merged is the one every later drop will
+be read by. `extract.mjs` went back to main with it: the `readerFor` export it
+gained existed only to feed this branch's replay, and an export nothing calls is
+the failure this file keeps naming.
+
+**AND TWO WITNESSES OUTSIDE THE CODE STILL AGREE WITH IT.** The ten deposits
+equal the performance appraisal's Net Capital In, and an XIRR solved over them
+reproduces the IRR Buoyant's own fact sheet prints — **15.30% and 9.76%** — which
+is the strongest check this book has on a return: a figure the manager published,
+reproduced from dated primitives rather than read off the page. Both hold on
+main's reader exactly as they held on this branch's, which is the evidence the
+two read the same tables.
+
+#### The model: `src/lib/capital.ts`, one definition every surface reads
+
+A return on an INVESTMENT is struck on the capital the family put into it, and
+the investment is the ACCOUNT — a mandate, a fund folio, a capital account: the
+thing the family funded. Its capital is PUBLISHED by one of three documents, in
+this order:
+
+1. **a dated record** of every payment in and out, provably reaching inception
+   (`contributionsAreComplete`) AND the account's own as-of
+   (`Account.capitalRecordTo`, new in `build-book`). Green Lantern 510861's
+   record comes from a quarterly report ending 30 June against holdings struck
+   27 July, so it cannot state the capital behind that value and falls to —
+2. **the manager's since-inception statement** on the account's OWN as-of — Net
+   Capital In, or Contribution less Withdrawal — every copy agreeing to a rupee;
+3. **a drawdown fund's capital account**, on its own DATED calls and payouts —
+   the calls, which must be the money paid, less every payout dated on or
+   before the valuation, at gross, each table reconciled against the totals its
+   statement prints. Where the payout table is not reconciled there is no
+   capital here at all: an unread record read as nil would assert a fund
+   returned nothing when its statement does not say. *(It was paid in less the
+   PRINTED distribution total until the merge with #72 — see below for why that
+   was wrong.)*
+
+**A HOLDING INSIDE AN ACCOUNT HAS NO CAPITAL OF ITS OWN.** The family funded the
+account, not the share, so a share a manager bought — or a stock in a demat —
+keeps its return on the cost of its units, exactly as before. Nothing here
+touches a position's cost, and the Avg cost column, the tax card and Capital
+Gains are unchanged: the cost of the units is still the right figure for tax and
+the wrong one for a return, and both stay true.
+
+**THE WHOLE-ACCOUNT RULE.** An account's capital describes the WHOLE account, so
+it stands in for a set only where the set carries the account's whole value — a
+mandate row, a bucket, an entity, the book do; a sector table picking three
+shares out of a mandate does not, and those shares keep their cost. Two
+refinements, both measured rather than assumed:
+
+- **THE UNIVERSE IS COMPARED BY IDENTITY.** Whole-ness is struck over the
+  current holdings the surface draws from, so a closed row or a ₹54 speck in a
+  raw set cannot stop an account being whole — and a copy of a position is not
+  that position.
+- **A TOTAL OVER ROWS PASSES `unitOf`.** An account stands on its capital in a
+  section or footer only where ONE ROW carries it whole, because the rows are
+  what the total must tie to: an account split across two rows is on cost in
+  both, and a total that put it back on capital would add up to something its
+  own rows do not.
+
+**THE FAMILY'S METHODOLOGY, ON CAPITAL** (`capitalMeasured` in `analytics.ts`):
+several dated payments → **XIRR**; one payment a year or more ago → **CAGR**
+(for one payment in and nothing out they are the same number, and the cell says
+CAGR because that is what it is); a window under a year → the holding-period
+return, tagged, never annualised — Stage 10g(ii)'s guard, in the one place it
+lives; a capital published only as a TOTAL since inception dates nothing, so its
+annual rate is REFUSED with the reason rather than struck as if every rupee went
+in on day one.
+
+**A REALISED GAIN IS ALREADY INSIDE A P&L ON CAPITAL** — the switch realised it,
+the payout paid it — so wherever a row is on capital its Realised cell is absent
+with that reason and no footer counts it twice. The column is headed **P&L**,
+not "Unreal. P&L", on every surface where a row can be on capital.
+
+#### Every surface that prints an Invested, a P&L or a return
+
+| Surface | What moved |
+| --- | --- |
+| Portfolio Monitor | rows, section totals, footer, venue panel — `capital.behind(set, unitOf)` |
+| Company page | each account row on its own capital; P&L and Avg cost tiles say which basis; Realised says "already inside P&L" |
+| Mandate page | the Invested and P&L tiles, with the XIRR where the payments are dated |
+| Morning CIO | Capital invested, Consolidated return, every allocation row |
+| `/holdings` | every group; the dead cost-only set figures deleted rather than left |
+| Family & Entities | every entity and every holding row |
+| Private Market | the fund, folio and owner views and the two tiles that print a basis |
+| Return & Drawdown | the per-account table and the spread struck from it |
+| Excel export | Invested, XIRR and Return basis columns; the note under the total |
+| Chat context | every account's capital put in, its return, its XIRR, and a rule never to divide by the units' cost |
+
+**THE EXCEL SHEET DIFFERS FROM THE TAB'S TOTAL, BY CONSTRUCTION, AND SAYS SO.**
+The tab rolls a mandate into ONE row on its capital; the sheet lists a mandate's
+holdings one per row, and a holding has no capital of its own. Five fund-folio
+rows are on capital there; the note under the total counts them and names the
+difference. **And the sheet's own old P&L was wrong in a second way**: `mv −
+cost` with `cost` from `sumOrNull` booked a cost-less position's whole value as
+profit wherever a row mixed one with a costed one. Measured, no row in this drop
+does — which is exactly when a fix is cheapest.
+
+**THE CHAT ASSISTANT WAS THE ONE SURFACE THAT COULD REINTRODUCE THE DEFECT ON ITS
+OWN.** It was handed each holding's `costBasisCr` and no capital, so "what has
+Buoyant returned?" would have been answered by dividing by the stepped-up cost —
+fluently, and with no dash anywhere. Each account now carries
+`capitalPutInCr`, `returnOnCapitalPct` and `xirrPct`, and rule 6 of the preamble
+forbids dividing a gain by `costBasisCr`.
+
+**TWO TILES STAY ON COST AND SAY WHAT THEY ARE NOT.** "Embedded return" on NAV &
+Performance and on Return & Drawdown is the unrealised gain still inside the
+holdings, on what they cost — a real and different figure — and each now says
+the return on the capital put in is Morning CIO's Consolidated return.
+
+#### The checks, and what the pass found
+
+`capitalBasis.test.ts` (189) is anchored outside the code: the fact sheet's IRR,
+the appraisal's Net Capital In, and the return on capital differing from the
+return on cost in BOTH directions. `portfolioExcel`, `chatContext` and `tranches`
+gained their own cases, each with a load-bearing gate — a suite that asserted
+the capital basis would otherwise pass on a book where capital and cost agree.
+
+`check:pages` re-expresses the three sources as **`CAPITAL_PUT_IN`**, never
+importing `capital.ts` — measured to agree with the model on **all 51 accounts:
+source, figure to the rupee and whether it is dated**, with all 8 annual XIRRs
+re-solved to within 0.006 pp, on the merged tree — and holds the Monitor, the company page the
+client screenshotted (`stock-capital`, derived: the security holding most of
+Buoyant's money) and Return & Drawdown to it, struck on each cell's own
+`data-capital-accounts` / `data-invested` rather than on a hover.
+
+#### The first full sweep failed ten combinations, and not one was a regression
+
+Every one was a claim that had been TRUE of a book where nothing stood on
+capital, and each is the finding rather than noise — so each was re-derived
+rather than loosened:
+
+- **A ₹0 CASH LINE SPLIT BOTH BUOYANT FOLIOS ACROSS TWO ROWS.** Each folio
+  prints a ₹0 `Cash` line beside its units, and every axis files it apart from
+  them — so the footer, counting the folio's rows, found two and stood it on
+  COST, while its own AIF section stood it on CAPITAL, and the sections stopped
+  adding to the footer on four routes across all three axes. A line at ₹0 value
+  and ₹0 cost moves no total on either basis, so the one-row test now counts
+  only the positions that carry some of the account's money — and a ₹0 line
+  carrying a COST (a write-off) still splits, which the suite asserts, because
+  that is money. **The same line put Buoyant in the Transactions card's "unstated"
+  section**, because the section join read it as part of what the account is.
+  Stage 10bv found that one independently and its `txnAxis.forAccount` is the
+  one that stands; this branch's copy went in the merge.
+- **THE XIRR COLUMN WAS ASSERTED TO BE DASHES ON EVERY ROW** — true of every
+  HOLDING, and no longer of every ROW: a fund folio or a mandate standing on a
+  dated record has a money-weighted return, and prints it. The check is now
+  that a rate appears ONLY where every payment behind the row is dated — and
+  that it RE-SOLVES: `CAPITAL_PUT_IN.rowRate` solves it again from the book by
+  bisection, each account closing at its own value on its own date, on a path
+  the page does not take. Its caption read "absent on all 72 rows"; it counts
+  what it has now (5 of 72) and names why the rest do not.
+- **THE CAGR COLUMN'S CAPTION CALLED AN XIRR "HELD UNDER A YEAR".**
+  `returnCoverage` counted only the `CAGR` tag as annualised, so an investment
+  paid into on several dates — annualised money-weighted, under the CAGR
+  heading because a CAGR needs one start date — was reported among the rows the
+  guard refused to annualise. It counts CAGR and XIRR alike, and the check now
+  reconciles the caption against the CELLS rather than against a second copy
+  of the same object.
+- **"NO RETURN OF 100% P.A." FAILED THE PAGE FOR OBEYING THE GUARD.**
+  Transition Venture's +128.61% is the TOTAL return on what the trusts paid,
+  over payments spanning under a year — shown as a total, marked HPR, exactly
+  as the guard requires. The check scanned every row for a triple-digit figure;
+  it reads the annual cells only now (untagged, or marked XIRR).
+- **THE SORT CHECK READ THE TABLE AS ONE LIST**, and rows are ranked within
+  their section (Stage 10bh). It held while every figure in the CAGR column sat
+  in one section; the AIF section drew figures of its own the day a fund folio
+  could carry a rate. Both ordering claims are per section now.
+- **AND TWO READ A LABEL OR A DATE THAT MOVED WITH THE BASIS.** Private
+  Market's P&L tile is headed "P&L" rather than "Unrealised P&L" — its gain is
+  struck on the capital put in, which carries whatever a fund paid back — so
+  PM-3 reads each tile's own text now. And a row on dated capital shows the
+  record's FIRST PAYMENT under Invested on: the date of the figure beside it,
+  not a borrowed one. The "never a borrowed date" check still holds every other
+  undated row to a dash, and holds this one to that exact date, derived again.
+
+#### The bug-reintroduction pass
+
+*(Being run on the final merged tree — `scripts/dev/capital-bug.sh`, then
+#75's `scripts/dev/carried-cost-bug.sh`, one at a time. Recorded here when they
+report; nothing below this line claims they have.)*
+
+#### Rebased onto #70 and #73, then merged with #75 — the one that overlapped
+
+The branch was open while main took Stages 10bt and 10bu. That rebase conflicted
+on exactly ONE line — the `ctx` literal — resolved as a mechanical union.
+
+**THEN #75 LANDED THE SAME BUOYANT FIX FROM THE COST SIDE**, and that merge is
+worth recording because it is not the collision this file predicts. The letter
+collided (main keeps 10bv; this section moved on, and is 10bx since #72) and the `ctx` literal conflicted as it
+always does — this branch's `raRows` beside main's `costCarried`, 85 keys, each
+naming a declared probe — but the real overlap was the FEATURE: two readers of
+one statement, two `replay:flows`, two fixes for one ₹0 cash line. Main merged
+first, so main's ingest stands and this branch's copies were deleted (above).
+
+**ON BUOYANT THE TWO PATHS NOW AGREE, AND THAT IS ASSERTED RATHER THAN
+ASSUMED.** #75 carries each dated contribution through the switch and sets the
+units' cost to what bought them; this module reads the same deposits as the
+capital. They differ by exactly one printed figure: the ₹58,861.66 Gain Distr.
+the fund paid on 1 Apr 2026 and reinvested in that day's allotment. It BOUGHT
+units, so it is cost — the family's own review carries Buoyant at
+₹70,85,58,861.66 for that reason — and it never left the family's bank, so it is
+not capital; it is return. `capitalBasis.test.ts` holds carried cost = capital +
+reinvested, account by account, to the paisa, and requires at least one account
+to carry a reinvestment, or the equality could not tell the capital from the
+cost.
+
+**AND THREE CHECKS NARROWED WITH IT.** "The investment the client asked about is
+struck on the capital put in", the company page's "…which is not what its units
+cost", and the suite's "the return on capital exceeds the return on cost by more
+than 3 pp" each rested on Buoyant's capital and cost being more than a lakh
+apart. After #75 they are ₹58,861.66 apart, so the first two compare the
+full-precision attributes at a rupee (which still separates them) and the third
+became the two-path equality above. The Avg cost tile keeps main's "as paid,
+across a class switch" where a cost was carried and "units cost" everywhere
+else, and the Invested cell's hover names the carried cost first and the capital
+second: a reader holding the statement needs the first before the second.
+
+#### …and merged with #72, which made the capital account DATED — and showed it had been counted twice
+
+#72 (Stage 10bw) landed while this branch waited, and it is the second main
+merge whose FEATURE overlapped rather than its text. It gave the Private Market
+fund table the Monitor's return picker, resolved on each fund's own dated calls
+— and it read the dated PAYOUTS nothing had read, Neo Infra's 33 rows among them.
+
+**THOSE DATES MADE A DEFECT IN THIS BRANCH VISIBLE.** The capital-account source
+was paid in less the PRINTED distribution total, ₹49.48 L. Neo Infra's statement
+is struck at 30 June, and that total includes ₹7.13 L of income paid on
+**9 July** — after the valuation, so still inside the value the capital is set
+against. It was counted twice: once in the value, once out of the capital. And
+the printed total leaves out the ₹8.69 L of equalisation the family received,
+which is cash back from this investment all the same.
+
+**SO THE SOURCE IS NOW THE DATED RECORD, AND IT IS THE SAME MONEY #72 SOLVES
+OVER.** Calls — which must equal the money paid, none after the valuation — less
+every payout dated on or before the valuation, every kind, at gross. Neo Infra:
+₹500.00 L − ₹51.04 L = **₹448.96 L**, +23.62% on capital (it read ₹450.52 L and
++23.19%). The source is dated now, so it carries an XIRR — **16.68%** — and
+**Baring** joins it: its payout table is reconciled though its statement prints
+no distribution line, so it stands on ₹201.94 L, **−6.69%** on capital, XIRR
+**−6.42%**. On both funds the capital model's XIRR equals the fund table's to a
+millionth of a point, reached by a different route written by a different stage
+for a different page, and `capitalBasis.test.ts` holds them to it. The printed
+total is not used at all any more: Neo Infra is the measurement that it can
+disagree with its own dated rows about which payouts the value still holds.
+
+**AND #72'S NOTE BECAME FALSE, SO IT SAYS WHICH BASIS IT IS ON.** Its HPR cell
+read *"the ₹51.04 L it had paid back … is not in this figure — XIRR counts it"*.
+True on the cost of the units, which is where #72 struck it — and false on the
+merged tree, where Neo Infra's row stands on capital that already nets those
+payouts out. The note now says "netted out of the capital this is struck on"
+where the row's capital nets exactly those payouts, and #72's own sentence where
+it is on cost. The footer's hover and the picker's HPR hint say the same. #72's
+principle is kept rather than traded: **the Private Market HPR is still the
+Monitor's HPR for the same fund** — both are on capital now.
+
+**THE RETURN COLUMNS MOVED FILES, AND THIS BRANCH'S CHANGES WENT WITH THEM.**
+#72 extracted `AGG_NO_MEASURE`, `returnColumnMeta` and the accessors into
+`src/lib/returnColumns.ts` so both tables share them. This branch had rewritten
+the first two in place — the XIRR column's "absent on all N rows" became false
+the day a row could stand on dated capital — so the merge ports that wording
+into the shared file rather than leaving a second copy in the page. `aggXirr`,
+which only the Monitor's footer and sections use, stays on the Monitor.
+
+**BOTH PREDICTED CONFLICTS ARRIVED, and a third.** The letter: main took 10bw,
+so this is **10bx**; two references in this file and two in the checker moved,
+and the other fifteen `10bw` lines are #72's own. The `ctx` literal: a union,
+86 keys — this branch's `raRows` beside #72's `pmReturn` — each naming a declared
+probe. And the checker itself: git interleaved `CAPITAL_PUT_IN` with #72's
+`PM_RETURN_BOOK` and `SEARCH_BOOK` (they share their first four lines), and the
+three were restored whole, one after another. `PM_RETURN_BOOK` now strikes HPR
+on each row's own Invested, re-expressed through `CAPITAL_PUT_IN`, and keeps
+`hprOnCost` beside it so two new checks can prove the two differ: a fund on
+capital shows its HPR on capital, and its note says the payouts are netted out,
+never missing.
+
+**THE GENERATED FILES WERE RE-DERIVED RATHER THAN TRUSTED.** `glowData.ts` and
+`docs/BOOK-REPORT.md` regenerate byte-identically to git's text merge, and differ
+from main only by this branch's 51 `capitalRecordTo` lines. `replay:calls`,
+`replay:flows`, `replay:owners` and `replay:movements` are each a no-op with
+`--check`, so the merged readers reproduce both sides' archive exactly.
+
+`glowData.ts` on the merged tree is main's book plus `Account.capitalRecordTo`,
+and `docs/BOOK-REPORT.md` is main's byte for byte.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` ·
+`check:pages` on the 18 routes the merge touched (36 combinations) clean, with
+the full sweep still running when this was written. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY — the capital basis is a presentation of
+figures the book already carries, and a change that moved a generated figure
+would not be one.
 
 ### Stage 10k — News & Announcements: REMOVED
 
