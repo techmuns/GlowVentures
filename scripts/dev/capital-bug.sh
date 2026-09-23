@@ -28,7 +28,6 @@ FILES=(
   "src/lib/analytics.ts"
   "src/lib/chatContext.ts"
   "src/lib/exportPortfolioExcel.ts"
-  "src/lib/txnAxis.ts"
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/StockInfo.tsx"
   "src/pages/ReturnAnalysis.tsx"
@@ -230,13 +229,18 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-# ── 13 ── the Transactions join files a funded account on its ₹0 line ──────
-run_case_on "monitor-txn-basket" "the section join reads the ₹0 line as part of what an account is" py <<'PY'
+# ── 13 ── the capital counts a reinvested distribution as money put in ─────
+# (The ₹0-line section join this case used to cover is Stage 10bv's code since
+# the merge, and its own harness — `scripts/dev/carried-cost-bug.sh` — carries
+# the case.) What this module adds on top of the carried cost is the one figure
+# the two paths must NOT agree on: Buoyant's ₹58,861.66 Gain Distr., reinvested
+# on 1 Apr 2026, bought units and never left the family's bank.
+run_case_on "monitor,stock-capital" "the capital counts the reinvested distribution as money put in" py <<'PY'
 import sys
-p = "src/lib/txnAxis.ts"
+p = "src/lib/capital.ts"
 s = open(p, encoding="utf-8").read()
-old = "    const keys = new Set((carrying.length ? carrying : held).map((p) => groupKeyFor(axis, idx, p)));"
-new = "    const keys = new Set(held.map((p) => groupKeyFor(axis, idx, p)));"
+old = "    const paidIn = ins.reduce((t, m) => t + (m.amount as number), 0);"
+new = "    const paidIn = ins.reduce((t, m) => t + ((m.invested ?? m.amount) as number), 0);"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

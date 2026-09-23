@@ -188,6 +188,7 @@ const AUDIT = path.join(process.cwd(), "public", "audit");
 const manifest = JSON.parse(fs.readFileSync(path.join(AUDIT, "manifest.json"), "utf8")) as
   { docKey: string; accountNo: string }[];
 let navChecked = 0;
+let navCarried = 0;
 for (const k of keys) {
   const tr = BOOK_POSITION_TRANCHES[k];
   const p = posOf(tr.accountId, tr.securityKey);
@@ -200,6 +201,14 @@ for (const k of keys) {
   const raw = fs.readFileSync(pagesPath, "utf8");
   const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
   for (const r of t.rows) {
+    // A TRANCHE CARRIED THROUGH A FUND'S CLASS SWITCH is priced here in the
+    // class held TODAY — invested ÷ the carried units — which no statement
+    // prints. The NAV it was BOUGHT at is the printed one, and
+    // `carriedCost.test.ts` finds every such figure on the account's own pages
+    // and FAILS where it cannot. Counted apart here rather than falling into the
+    // silent skip below, whose comment ("this issuer prints no NAV column")
+    // would be false of it: Buoyant prints every NAV.
+    if (r.move.carriedFrom) { navCarried++; continue; }
     // The statement prints its NAV to four decimals, so that is the precision
     // the derived figure is held to — the document's own, never a widened one.
     const printed = r.navAtEntry.toFixed(4);
@@ -211,6 +220,11 @@ for (const k of keys) {
 // A check that finds nothing to check must say so rather than pass — golden.mjs's
 // rule. Every Sanshi tranche prints a NAV, so this cannot legitimately be zero.
 ok("the archive actually witnessed some entry NAVs", navChecked >= 10, `${navChecked} matched`);
+// ...and the carried ones were set aside by NAME, not lost: exactly the book's
+// own count of tranches carrying a `carriedFrom`, over the same positions.
+const carriedInBook = keys.reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.filter((m) => m.carriedFrom).length, 0);
+ok("every tranche carried through a class switch was set aside for carriedCost.test.ts, and only those",
+  navCarried === carriedInBook, `${navCarried} set aside, ${carriedInBook} in the book`);
 
 console.log("\n── the completeness gate, on inputs this book does not contain ──");
 // EVERY FUNDED ACCOUNT IN THIS BOOK PASSES THE GATE — seven by units, three

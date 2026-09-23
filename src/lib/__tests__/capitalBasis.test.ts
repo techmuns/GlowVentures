@@ -24,7 +24,9 @@
 //   3. THE DEFECT, AS AN INEQUALITY. On the accounts that realised something the
 //      return on capital must differ from the return on cost — in BOTH
 //      directions — or a suite asserting the new basis would pass just as
-//      happily against the old one.
+//      happily against the old one. Buoyant's cost is carried through its class
+//      switch since Stage 10bv, so there it is an EQUALITY instead, to the paisa,
+//      up to the one distribution the fund reinvested.
 import fs from "node:fs";
 import path from "node:path";
 import {
@@ -142,8 +144,10 @@ const ANKITA = "buoyant-capital-103472";
     return cost > 0 ? ((mv - cost) / cost) * 100 : null;
   };
   const cases = [
-    // The account the family reported, and the three largest gaps either way.
-    { id: AJAY, dir: "up" as const, min: 3 },
+    // The three largest gaps either way. Buoyant is NOT among them any more, and
+    // that is Stage 10bv rather than a weaker test: its cost is now CARRIED
+    // through the class switch, so on this account the cost and the capital are
+    // two paths to one figure — asserted as such below.
     { id: "v-e-c-assago-capital-management-llp-128004", dir: "up" as const, min: 15 },
     { id: "molecule-ventures-llp-7810404", dir: "up" as const, min: 4 },
     { id: "carnelian-asset-management-and-advisors-pvt-ltd-3517383", dir: "down" as const, min: 3 },
@@ -159,9 +163,39 @@ const ANKITA = "buoyant-capital-103472";
   }
   // And Ajay's own figure, exactly: ₹49,29,81,982.01 against ₹46,00,00,000.
   const a = model.behind(own(AJAY));
-  ok("Ajay's Buoyant: invested is the ₹46 Cr he paid in, not the ₹47.54 Cr the units cost",
+  ok("Ajay's Buoyant: invested is the ₹46 Cr he paid in, not the ₹47.54 Cr the statement's cost column prints",
     a.invested === 460000000, cr(a.invested));
   ok("Ajay's Buoyant: +7.17% on capital", a.returnPct !== null && Math.abs(a.returnPct - 7.1700) < 0.01, String(a.returnPct));
+
+  // TWO PATHS TO BUOYANT'S MONEY, AND THEY MUST AGREE TO THE PAISA. Stage 10bv
+  // carries each dated contribution through the class switch in `build-book`
+  // (`scripts/lib/classSwitch.mjs`) and sets the units' cost to what bought
+  // them; this module reads the same deposits as the capital put in. They differ
+  // by exactly one printed figure and it is not a discrepancy: the ₹58,861.66
+  // Gain Distr. the fund paid on 1 Apr 2026 and reinvested in that day's
+  // allotment. It BOUGHT units, so it is cost — the family's own review carries
+  // Buoyant at ₹70,85,58,861.66 for that reason — and it never left the family's
+  // bank, so it is not capital: it is part of the return. So carried cost =
+  // capital + reinvested, account by account, and a change to either path that
+  // moved a rupee fails here by name.
+  let tied = 0, withReinvestment = 0;
+  for (const id of [...new Set(universe.filter((p) => p.costBasisSource === "carried-through-switch").map((p) => p.accountId))]) {
+    const cap = model.of(id);
+    const carried = own(id).filter((p) => p.costBasisSource === "carried-through-switch")
+      .reduce((t, p) => t + (p.costBasis ?? 0), 0);
+    const reinvested = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === id && m.direction === "in")
+      .reduce((t, m) => t + ((m.invested ?? m.amount ?? 0) - (m.amount ?? 0)), 0);
+    if (reinvested > 0) withReinvestment += 1;
+    const ties = cap?.source === "dated-record" && Math.abs(cap.net + reinvested - carried) <= 1;
+    if (ties) tied += 1;
+    ok(`${id}: the capital put in and the cost carried through the switch differ by exactly the reinvested distribution`,
+      ties, `capital ${cap?.net} + reinvested ${reinvested.toFixed(2)} vs carried ${carried}`);
+  }
+  ok("...on both of Buoyant's folios", tied >= 2, String(tied));
+  // LOAD-BEARING: the reinvestment is what makes the two paths DIFFERENT, so at
+  // least one account must carry one, or the equality above could not tell the
+  // capital from the cost.
+  ok("...and on at least one of them the reinvested distribution is not zero", withReinvestment >= 1, String(withReinvestment));
 }
 
 // ── 4. The whole-account rule ───────────────────────────────────────────────

@@ -156,24 +156,6 @@ const BY_PROVIDER_REPORT_TYPE = {
   "Buoyant Capital": { holdings: altFunds, unknown: altFunds },
 };
 
-/**
- * WHICH READER A DOCUMENT GOES TO — report type first, then the house.
- *
- * Exported so the replays route a committed document exactly as extraction did.
- * `replay:flows` first selected documents by asking the alt-fund reader whether
- * it recognised the TEXT, and every Buoyant page names the strategy, so it ran
- * that reader over Buoyant's appraisal, fact sheet and capital register — which
- * extraction sends to the PMS reader. Its gate refused all six, which is the
- * gate working; a second copy of this rule inside the replay is how the two
- * would have drifted the next time either changed.
- */
-export const readerFor = (meta) => BY_REPORT_TYPE[meta.reportType]
-  ?? BY_PROVIDER_REPORT_TYPE[meta.provider]?.[meta.reportType]
-  ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
-
-/** The alt-fund reader, for a replay to compare `readerFor`'s answer against. */
-export { altFunds };
-
 /** Which reader produced a document, for a warning that has to be actionable. */
 const extractorName = (m) => m?.PROVIDER ?? m?.REPORT_TYPE ?? "the extractor";
 
@@ -454,7 +436,9 @@ function noTextLayer(grid) {
   // The reader is chosen by REPORT TYPE first, then by provider. The SEBI PMS
   // investor report is one prescribed layout that several managers issue, so it
   // has one reader; everything else is a house format and is keyed on the house.
-  const extractor = readerFor(meta);
+  const extractor = BY_REPORT_TYPE[meta.reportType]
+    ?? BY_PROVIDER_REPORT_TYPE[meta.provider]?.[meta.reportType]
+    ?? (meta.provider ? EXTRACTORS[meta.provider] : null);
   if (!extractor) {
     return makeDocument({
       ...base,
@@ -991,11 +975,4 @@ async function main() {
   console.log("  docs/extraction-report.json");
 }
 
-// ONLY WHEN RUN, NEVER WHEN IMPORTED. `readerFor` is imported by the replays,
-// and an import that started a full extraction would, without
-// GLOW_PDF_PASSWORDS, try to drop the eight encrypted statements from the
-// archive — refused by `guardAgainstShrinkingTheArchive`, and still not
-// something importing a routing table should ever be able to set off.
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main().catch((e) => { console.error(e); process.exit(1); });
-}
+main().catch((e) => { console.error(e); process.exit(1); });

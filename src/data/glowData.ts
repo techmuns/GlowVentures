@@ -1074,12 +1074,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 1918953.2,
-    "avgCost": 129.97,
+    "avgCost": 129.4977,
     "currentPrice": 144.2878,
-    "costBasis": 249410446.32,
+    "costBasis": 248500000,
+    "costBasisSource": "carried-through-switch",
+    "printedCostBasis": 249410446.32,
     "marketValue": 276881535.53,
-    "unrealizedPnL": 27471089.21,
-    "returnPct": 11.01,
+    "unrealizedPnL": 28381535.53,
+    "returnPct": 11.42,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -1124,12 +1126,14 @@ export const BOOK_POSITIONS: Position[] = [
     "assetClass": "AIF",
     "marketSide": "listed",
     "quantity": 3416657.417,
-    "avgCost": 139.13,
+    "avgCost": 134.6517,
     "currentPrice": 144.2878,
-    "costBasis": 475353990.9,
+    "costBasis": 460058861.66,
+    "costBasisSource": "carried-through-switch",
+    "printedCostBasis": 475353990.9,
     "marketValue": 492981982.05,
-    "unrealizedPnL": 17627991.15,
-    "returnPct": 3.71,
+    "unrealizedPnL": 32923120.39,
+    "returnPct": 7.16,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -17490,7 +17494,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 20000000,
     "invested": 20000000,
-    "units": null,
+    "units": 155557.405,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
@@ -17501,7 +17505,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 35000000,
     "invested": 35000000,
-    "units": null,
+    "units": 272225.4587,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
@@ -17644,7 +17648,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 100000000,
     "invested": 100000000,
-    "units": null,
+    "units": 815373.2761,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
@@ -17908,7 +17912,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 25000000,
     "invested": 25000000,
-    "units": null,
+    "units": 168006.6462,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
@@ -17963,7 +17967,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 25000000,
     "invested": 25000000,
-    "units": null,
+    "units": 186976.1312,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
@@ -18447,7 +18451,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 50000000,
     "invested": 50000000,
-    "units": null,
+    "units": 362043.4462,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
@@ -18458,7 +18462,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 50000000,
     "invested": 50000000,
-    "units": null,
+    "units": 331782.2205,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
@@ -18612,7 +18616,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 53500000,
     "invested": 53500000,
-    "units": null,
+    "units": 384062.1556,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
@@ -18743,8 +18747,8 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "in",
     "label": "Cash Deposits",
     "amount": 100000000,
-    "invested": 100000000,
-    "units": null,
+    "invested": 100058861.66,
+    "units": 717459.6778,
     "security": "Buoyant Opportunities Strategy — Category III — Class A1",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
   },
@@ -18777,7 +18781,7 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "label": "Cash Deposits",
     "amount": 250000000,
     "invested": 250000000,
-    "units": null,
+    "units": 1796901.6155,
     "security": "Buoyant Opportunities Strategy — Category III — Class A4",
     "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
@@ -18910,6 +18914,160 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
  * is absent by that gate rather than shown partially — see `positionTranchesFrom`.
  */
 export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
+  "buoyant-capital-103472|buoyant-opportunities-strategy-category-iii-class-a4": {
+    "accountId": "buoyant-capital-103472",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "moves": [
+      {
+        "accountId": "buoyant-capital-103472",
+        "date": "2024-06-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 20000000,
+        "invested": 20000000,
+        "units": 170498.1912,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+        "carriedFrom": {
+          "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+          "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1",
+          "units": 155557.405,
+          "switchedOn": "2025-02-01"
+        }
+      },
+      {
+        "accountId": "buoyant-capital-103472",
+        "date": "2025-02-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 100000000,
+        "invested": 100000000,
+        "units": 815373.2761,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+      },
+      {
+        "accountId": "buoyant-capital-103472",
+        "date": "2025-08-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 25000000,
+        "invested": 25000000,
+        "units": 186976.1312,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+      },
+      {
+        "accountId": "buoyant-capital-103472",
+        "date": "2025-11-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 50000000,
+        "invested": 50000000,
+        "units": 362043.4462,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+      },
+      {
+        "accountId": "buoyant-capital-103472",
+        "date": "2026-01-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 53500000,
+        "invested": 53500000,
+        "units": 384062.1556,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+      }
+    ],
+    "units": 1918953.2
+  },
+  "buoyant-capital-103473|buoyant-opportunities-strategy-category-iii-class-a4": {
+    "accountId": "buoyant-capital-103473",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+    "moves": [
+      {
+        "accountId": "buoyant-capital-103473",
+        "date": "2024-06-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 35000000,
+        "invested": 35000000,
+        "units": 296036.5639,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+        "carriedFrom": {
+          "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+          "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1",
+          "units": 272225.4587,
+          "switchedOn": "2026-06-01"
+        }
+      },
+      {
+        "accountId": "buoyant-capital-103473",
+        "date": "2025-07-16",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 25000000,
+        "invested": 25000000,
+        "units": 182701.9063,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+        "carriedFrom": {
+          "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+          "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1",
+          "units": 168006.6462,
+          "switchedOn": "2026-06-01"
+        }
+      },
+      {
+        "accountId": "buoyant-capital-103473",
+        "date": "2025-11-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 50000000,
+        "invested": 50000000,
+        "units": 360802.656,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+        "carriedFrom": {
+          "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+          "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1",
+          "units": 331782.2205,
+          "switchedOn": "2026-06-01"
+        }
+      },
+      {
+        "accountId": "buoyant-capital-103473",
+        "date": "2026-04-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 100000000,
+        "invested": 100058861.66,
+        "units": 780214.6749,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4",
+        "carriedFrom": {
+          "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+          "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1",
+          "units": 717459.6778,
+          "switchedOn": "2026-06-01"
+        }
+      },
+      {
+        "accountId": "buoyant-capital-103473",
+        "date": "2026-06-01",
+        "direction": "in",
+        "label": "Cash Deposits",
+        "amount": 250000000,
+        "invested": 250000000,
+        "units": 1796901.6155,
+        "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+        "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+      }
+    ],
+    "units": 3416657.417
+  },
   "sanshi-fund-9039671821|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
     "accountId": "sanshi-fund-9039671821",
     "securityKey": "sanshi-fund-i-open-ended-aif-cat-iii-class-e",

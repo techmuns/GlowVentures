@@ -15,6 +15,8 @@ import {
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { fundNavFor } from "@/lib/fundNavs";
+import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
+import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
 import { describeCapital, type InvestedBehind } from "@/lib/capital";
 
@@ -437,6 +439,14 @@ export function StockInfo() {
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * A COST CARRIED THROUGH A FUND'S CLASS SWITCH, and the figure the fund's own
+   * statement prints instead. This is the page a reader opens with that
+   * statement in hand, so the two must be told apart here in the same words the
+   * Portfolio Monitor uses — `carriedCostNote` is the one place they are chosen.
+   */
+  const carried = cost === null ? null : carriedCostOf(drows, BOOK_POSITION_TRANCHES);
+  const carriedWhy = carried ? carriedCostNote(carried, (v) => money(v)) : "";
 
   /**
    * THE MARK, AND WHY IT IS NOT `rows[0]`.
@@ -659,11 +669,15 @@ export function StockInfo() {
             whether the figure was missing or the page was broken. */}
         {/* THE AVG COST IS THE UNITS' OWN, and where the P&L beside it is on the
             capital put in, its caption says "units cost" — the two differ by
-            whatever a class switch or a payout folded into the units' cost, and
-            one screen must not print two figures under one word. */}
+            whatever a manager's trading or a payout folded into the units' cost,
+            and one screen must not print two figures under one word. A cost
+            CARRIED through a fund's class switch says so instead: there the
+            units' cost is what was paid, and the statement prints another. */}
         <Kpi label="Avg cost"
           value={avgCost === null ? <AbsentValue /> : <span className="mono">{price(avgCost)}</span>}
-          sub={cost === null ? <span className="text-slate-500">{costWhy}</span> : totalCapital ? `units cost ${money(cost)}` : `invested ${money(cost)}`}
+          sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
+            : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
+            : totalCapital ? `units cost ${money(cost)}` : `invested ${money(cost)}`}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label={totalCapital ? "P&L" : "Unrealised P&L"}
           value={totPnl === null ? <AbsentValue /> : <span className={changeColor(totPnl)}>{fmtFromBase(totPnl, { compact: true, sign: true })}</span>}
@@ -810,7 +824,15 @@ export function StockInfo() {
                         data-capital-accounts={rowCapital.get(r)?.onCapital.map((x) => x.accountId).join(" ")}
                         data-invested={onBasis(r).invested ?? ""}
                         data-unit-cost={r.costBasis ?? ""}
-                        title={rowCapital.get(r) ? describeCapital(rowCapital.get(r)!, (n) => money(n), r.costBasis) : undefined}>
+                        data-cost-carried={r.costBasisSource === "carried-through-switch" ? (r.costBasis ?? undefined) : undefined}
+                        data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}
+                        // ONE HOVER, BOTH FACTS, carried first — see the Portfolio
+                        // Monitor's Invested cell, which composes it the same way.
+                        title={[
+                          r.costBasisSource === "carried-through-switch"
+                            ? carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v)) : null,
+                          rowCapital.get(r) ? describeCapital(rowCapital.get(r)!, (n) => money(n), r.costBasis) : null,
+                        ].filter(Boolean).join(" ") || undefined}>
                         {money(onBasis(r).invested)}
                       </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
