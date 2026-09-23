@@ -68,5 +68,49 @@ export declare function marketSideOf(
   account: CategoryAccount | null | undefined,
 ): MarketSide | null;
 
+/**
+ * One fund the family have placed themselves — what it invests in, in their
+ * words, and when they said it. Matched on the fund's own name.
+ */
+export type FamilyMarketDecision = {
+  fund: string;
+  match: RegExp;
+  side: MarketSide;
+  invests: string;
+  said: string;
+};
+
+/** The family's own classification of the funds they hold, by what each invests in. */
+export declare const FAMILY_MARKET_SIDE: readonly FamilyMarketDecision[];
+
+/** The family's placing of one fund, or null where they have not named it. */
+export declare function familyMarketDecision(
+  name: string | null | undefined,
+  account: CategoryAccount | null | undefined,
+): FamilyMarketDecision | null;
+
+/** Why a fund is on the side it is on. */
+export type MarketSideBasis = "family" | "private-equity" | "category" | "unstated";
+
+export type FundMarketSide = {
+  side: MarketSide | null;
+  basis: MarketSideBasis;
+  decision: FamilyMarketDecision | null;
+  /** The SEBI category the statement prints, whether or not it decided. */
+  category: AifCategory | null;
+};
+
+/** The side of one AIF from its own name — for a capital account with no position. */
+export declare function fundMarketSideOf(
+  name: string | null | undefined,
+  account: CategoryAccount | null | undefined,
+): MarketSide | null;
+
+/** The side and the reason for it. */
+export declare function fundMarketSideBasis(
+  name: string | null | undefined,
+  account: CategoryAccount | null | undefined,
+): FundMarketSide;
+
 /** What `marketSide === null` means, in words. */
 export declare const MARKET_SIDE_UNPLACED: string;

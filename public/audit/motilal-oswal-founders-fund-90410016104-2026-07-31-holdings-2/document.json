@@ -115,7 +115,8 @@
     "label": "Contribution",
     "amount": 100000000
    }
-  ]
+  ],
+  "payouts": null
  },
  "capitalAccount": [],
  "postTaxNav": null,

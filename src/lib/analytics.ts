@@ -978,7 +978,7 @@ export type HoldingReturn =
   /** No figure, and the reason a reader needs in order to act on it. */
   | { kind: "absent"; reason: string };
 
-const daysBetween = (fromISO: string, toISO: string) =>
+export const daysBetween = (fromISO: string, toISO: string) =>
   Math.round((Date.parse(toISO) - Date.parse(fromISO)) / 86_400_000);
 
 /**
@@ -1198,7 +1198,7 @@ const NO_COST_RETURN =
   "no statement in this book reports a cost for this holding, so it has no return to strike — it is held through a depository account that records what is held and not what it cost";
 const NO_HOLDING_XIRR =
   "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
-const noCalendarReason = (asOf: string) =>
+export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
 
 /**
