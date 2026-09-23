@@ -20104,7 +20104,7 @@ measured, not one of 213 securities has an unmarked first row and a marked later
 one. Both are written down here rather than left to be rediscovered as a clean
 run that looks like a pass.
 
-#### Merged with main three times, and the letter is `10cf`
+#### Merged with main four times, and the letter is `10cg`
 
 **#79 (Stage 10bx, one master table each) conflicted in `check-pages.mjs`**: a
 walk comment and the `ctx` literal. Resolved as a union — main's line plus this
@@ -20196,14 +20196,15 @@ lost it:
 **THE LETTER MOVED AGAIN, AND THE SKIP DID NOT SAVE IT.** This section skipped
 `10by` and `10ca` on purpose because #81 and #80 carried them; #82 then merged
 under `10cb` first, and #76, #77 and #74 took `10cc` to `10ce`. Main keeps all of
-them, and this section is **`10cf`**. Of the 22 lines naming `10cb` after the
+them, and this section became **`10cf`** — until the fourth merge, below. Of the
+22 lines naming `10cb` after the
 merge, each was classified by whether it exists on main or on this branch —
 **none is on both**: 10 are main's (its heading, two pointers and seven lines of
 merge notes across its own sections) and stay; 12 are this branch's — nine
 pointers moved, with the one comment in `cmp-bug.sh`, and the three in this
 section's own merge note are rewritten above.
-The stage headings now differ from main's by `10cf` alone, main's ten historical
-duplicates unchanged.
+The stage headings then differed from main's by `10cf` alone, main's ten
+historical duplicates unchanged.
 
 **THE `ctx` LITERAL CONFLICTED**, and was resolved as the union of main's 92
 keys and this branch's `stockPage` — 93, none duplicated, every key's root
@@ -20213,6 +20214,63 @@ route) taken as main wrote them.
 **THE GENERATED FILES WERE CHECKED, NOT TRUSTED.** Neither side's page work
 touches the ingest: `glowData.ts` and `docs/BOOK-REPORT.md` are main's byte for
 byte, and `build-book` regenerates both byte-identically.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` exit 0 · `check:family` **85/2** · `check:pages` over **266
+combinations** with **3 findings, none of them this change's**, all read out of
+the log by name. The two `check:family` failures are the Extras-menu checks,
+which fail identically on main: #84 added a fifth page (`/corporate-actions`) to
+a dropdown the check still counts as four. The three sweep findings are the
+Private Market routes (`private-market`, `-tiles`, `-returns`), failing the
+fund-return invariants main's own Stage 10cc and 10ce notes record failing on
+main: #80 made a fund's HPR FIFO, and the sweep's re-expression (#72's) still
+strikes it as value against cost. Both are other stages' checks, named here so
+they are not mistaken for this branch's, and neither is rewritten by a merge.
+The ten NOT CHECKED lines are all main's evidenced abstentions: six Morning CIO
+routes (every KPI tile carries a figure), two Private Market fund routes (every
+private holding reports a cost), #79's redeemed private account (none is) and
+the not-found drill-down's crumb. **Not one stock route abstains or fails.**
+
+#### …and a fourth time: #78 took `10cf`, and put an XIRR line in the account table
+
+**#78 — XIRR where a row is a whole account on a dated record — landed while the
+third merge's full sweep was running, and took `10cf`**, the letter this section
+had just settled on. It was caught before the PR opened, by fetching main and
+comparing its stage headings with this branch's; git marked the conflict too,
+because both sections sat after `10ce`. Main keeps `10cf`; this section is
+**`10cg`**. Of the 18 lines naming `10cf` after the
+merge, none is on both sides: 6 are #78's (its heading, its two Layout pointers
+and three lines of its own letter note) and stay; 12 are this branch's — nine
+pointers moved to `10cg`, and the three in this section's merge notes are
+rewritten above. Two code comments moved with them (`check-corporate-actions.mjs`
+and `cmp-bug.sh`); #78's own twelve in `check-pages.mjs` and its new files stay.
+
+**#78 EDITED THE STOCK PAGE, INSIDE THE LONG SINGLE PAGE AGAIN**, so its changes
+were re-applied to the tabbed one rather than merged hunk by hunk: the
+`useDatedCapital` hook, each account row's dated capital (`datedCap.behind`), and
+the Return cell's `data-capital` with the capital handed to `ReturnCells` — so a
+row that is a WHOLE folio on a dated record shows its money-weighted return
+beside the holding-period one, on the Position tab's account table. `ReturnCells`
+and the column's heading auto-merged. Every line #78 added to the page was then
+checked to be present in the merged file, line by line. **The hook sits beside
+the tab hook, before the page's early return** — the hooks-order rule this
+rewrite already applied to four `useMemo` calls.
+
+**ITS CHECK LANDED WHERE ITS SUBJECT IS DRAWN.** #78's XIRR claim is in
+`stockLayoutChecks`, the account table's own claims, which on this branch run
+only on routes that walk the Position tab — so it is struck where the table is
+drawn and nowhere it is correctly absent. Main's *"the tax basis is behind a click
+and starts closed"* is superseded: the tax card is a tab away now, asserted by
+`stockActivityChecks` on every Transactions route. #78's own route,
+`stock-capital`, carries `stockTabChecks("position")` like every one of the 27
+stock routes, and joins the bug harness's route list. **The `ctx` literal did not
+change: #78 added no probe key**, and the union is still 93, none duplicated,
+every root declared.
+
+**THE GENERATED FILES WERE REGENERATED, NOT MERGED.** #78 changed `build-book`
+and `glowData.ts`; `build-book` over the merged builder and archive reproduces
+`glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, and both equal main's —
+this change still touches nothing the book is built from.
 
 ### Stage 10k — News & Announcements: REMOVED
 
