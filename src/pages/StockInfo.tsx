@@ -31,6 +31,7 @@ import { RatioTable } from "@/components/RatioTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { CompanyResearchPreview } from "@/components/CompanyResearchPreview";
 import { QuantityMovement } from "@/components/QuantityMovement";
+import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -846,6 +847,7 @@ export function StockInfo() {
             )}
           </Card>
 
+          <CorporateActionReturns securityKey={securityKey} />
           <Card className="mt-5" title="Tax basis & holding" pad={false}>
             <details className="group">
               <summary className="cursor-pointer list-none px-4 py-2.5 text-[12px] text-slate-400 hover:text-slate-200"

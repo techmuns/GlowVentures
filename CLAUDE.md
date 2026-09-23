@@ -185,6 +185,14 @@ cash holding's genuinely-zero return both match, and both are correct.
 
 ## Layout
 
+- Corporate-action integration (2026-09-23): see `docs/CORPORATE-ACTIONS.md`.
+  `shared/corporateActions.mjs` normalizes the Glow Central Research feed;
+  `src/lib/corporateActions.ts` projects ONLY post-statement events before live
+  marking. The statement book stays immutable. Gross dividend entitlements are
+  included in a separately labelled **since-statement** return, never in cash,
+  NAV or account XIRR. The public calendar is not proof of historical holdings
+  or payment receipt, and incomplete evidence withholds the affected calculation.
+
 - `src/pages/*` — one file per dashboard route (see `src/App.tsx`).
 - `src/lib/types.ts` — the canonical model. Read this first.
 - `src/lib/securityKey.ts` — the join key (see below).

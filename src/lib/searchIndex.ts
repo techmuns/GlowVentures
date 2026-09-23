@@ -260,6 +260,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/capital-gains": ["tax", "capital gains", "realised", "realized", "ltcg", "stcg", "gains"],
   "/performance": ["performance", "returns", "nav history", "benchmark"],
   "/returns": ["drawdown", "return analysis", "risk"],
+  "/corporate-actions": ["corporate actions", "stock split", "bonus", "dividend adjustment", "dividend-inclusive return", "entitlements", "total return"],
   "/ledger": ["ledger", "dividends", "dividend", "income", "lots", "realised by trade"],
   "/audit": ["audit", "statements", "documents", "source", "pdf", "archive", "extraction"],
   "/history": ["upload history", "history", "uploads"],

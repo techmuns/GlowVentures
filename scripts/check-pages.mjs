@@ -3779,6 +3779,7 @@ const ROUTES = [
   // break silently: that Exposure & IPS still reaches the store both pages
   // wrote to.
   ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
+  ["corporate-actions", "/corporate-actions"],
   // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
   // has no price history, no PE, no filings and no insider trades, so the five
   // company panels are absent BY DECISION there. Walked as its own route so a
@@ -4677,6 +4678,9 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
       const names = new Set();
       for (const p of positions) {
         if (!keys.includes(bucket(p))) continue;
+        // A known sale after the stored balance prevents projecting its old
+        // quantity forward, even when the quote endpoint supplies a price.
+        if ((p.realizedLotsAfter ?? 0) > 0) continue;
         const sym = p.symbol || symbols[p.securityKey];
         if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
         names.add(p.securityKey);
@@ -5118,6 +5122,15 @@ async function installCallStoreOff(page) {
 
 async function installLiveMocks(page, opts = {}) {
   QUOTE_PRIORITY = null;
+  // This fixture measures a pure +10% PRICE move. Keep corporate actions empty
+  // and fully covered for its dated window, rather than letting a changing
+  // external capture change the expected movers. The dedicated corporate-action
+  // browser regression supplies split/dividend events and checks their effects.
+  const actionFeed = { version: 1, capturedAt: "2026-09-23T10:00:00.000Z", requestedFrom: "2020-01-01",
+    requestedTo: "2027-09-23", verifiedThrough: "2026-09-23", symbols: null, isins: [], rows: [],
+    sourceUrl: "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json" };
+  await page.route("**/api/corporate-actions?*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, feed: actionFeed }) }));
+  await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(actionFeed) }));
   await page.route("**/api/quotes", async (route) => {
     let want = [], sentPriority = null;
     try {

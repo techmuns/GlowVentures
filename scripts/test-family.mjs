@@ -20,6 +20,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = fs.mkdtempSync(path.join(ROOT, "node_modules", ".glow-test-"));
 
 const SUITES = [
+  ["corporate actions & dividends", "src/lib/__tests__/corporateActions.test.ts"],
+  ["corporate-action feed", "src/lib/__tests__/corporateActionsFunction.test.ts"],
   ["family arithmetic", "src/lib/__tests__/familyMath.test.ts"],
   ["financial tables", "src/lib/__tests__/financialTables.test.ts"],
   ["cash flow & calendar", "src/lib/__tests__/yfinStatements.test.ts"],
