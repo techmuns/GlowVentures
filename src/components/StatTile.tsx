@@ -5,7 +5,7 @@ function changeColor(n: number) { return n > 0 ? "text-gain" : n < 0 ? "text-los
 export function StatTile({ label, value, sub, delta, icon, hint, action, title, className = "" }: {
   /**
    * NORMALLY A STRING, and a node where the tile's own label is a CONTROL —
-   * `SelectableTiles` renders a `<select>` here, because the label is where a
+   * `SelectableTiles` renders its metric picker here, because the label is where a
    * reader already looks to see which metric they are reading and a picker
    * tucked into a corner is invisible on a touch screen.
    */
@@ -56,7 +56,11 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
         )}
         {/* `data-stat-sub` so a claim about the ONE short line under a figure
             is struck on that line rather than on the tile's words. */}
-        {sub && <span className="text-slate-400" data-stat-sub>{sub}</span>}
+        {/* 13px in `slate-300`: *"the small text below the KPI tile … is not
+            legible at all."* It was 12px in `slate-400` — the palest, smallest
+            text on the card, under a 24px figure. A line worth keeping is worth
+            reading, and a line not worth reading is removed by its caller. */}
+        {sub && <span className="text-[13px] leading-snug text-slate-300" data-stat-sub>{sub}</span>}
       </div>
       {/* THE DEFINITION UNDER A FIGURE, AND IT HAS TO BE READABLE.
           *"just tell what is it in short and legible font text."* At 11px in

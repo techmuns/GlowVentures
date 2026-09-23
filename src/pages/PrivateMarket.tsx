@@ -444,6 +444,14 @@ export function PrivateMarket() {
    * "Cash sent to funds", "Cash paid back so far". An absent tile's line is its
    * REASON, in a few words, because an em dash must always name its cause.
    *
+   * AND A LINE THAT SAYS NOTHING THE LABEL DOES NOT IS REMOVED, NOT KEPT FOR
+   * SYMMETRY. *"make sure these sub-texts are shorter and direct so the user can
+   * actually read them. If it is irrelevant then remove them."* "Capital
+   * invested — Cost of these holdings", "Funds — Distinct funds held" and
+   * "Folios — Statement lines" each restated their own heading, so those three
+   * tiles are a label and a figure; every line that stays carries something the
+   * label does not (a share, a return, a definition, a reason).
+   *
    * WHAT A HOVER COSTS, stated rather than glossed: it is not read by someone
    * scanning. The two claims on this strip that a reader could be misled by
    * without it — that uncalled capital is a liability in no total, and that
@@ -464,7 +472,6 @@ export function PrivateMarket() {
     {
       id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       value: money(m.privCost),
-      sub: "Cost of these holdings",
       detail: `The cost these statements report · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
     },
     {
@@ -564,13 +571,11 @@ export function PrivateMarket() {
     {
       id: "funds", label: "Funds", icon: <Handshake className="h-4 w-4" />,
       value: fmtNum(m.funds.length),
-      sub: "Distinct funds held",
       detail: "Each fund counted once however many members hold it.",
     },
     {
       id: "folios", label: "Folios", icon: <Layers className="h-4 w-4" />,
       value: fmtNum(m.folios.length),
-      sub: "Statement lines",
       detail: `One per statement line — ${m.folios.length - m.funds.length} more than the fund count, because a fund held in several folios is one fund row.`,
     },
     {
@@ -687,7 +692,7 @@ export function PrivateMarket() {
           while 12 of 15 accounts print no distribution line — and the family
           asked for every metric they might want to see, which includes the ones
           whose answer is an em dash and a reason. */}
-      <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
+      <SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
 
       {/* ── THE PRIVATE BOOK — ONE CARD, TWO VIEWS, AND THE THIRD IS A ROW ───
           *"in the private markets Page there are three separate sectioned

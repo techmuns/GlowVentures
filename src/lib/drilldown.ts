@@ -52,7 +52,7 @@ export const TOP_NAMES = 10;
  * return a class this drop does not carry). Every other id names a fixed set.
  */
 export type DrilldownId =
-  | "book"        // every holding — Current Value of Holdings, Positions, Distinct names
+  | "book"        // every holding — Current Value of Holdings (and the capital invested in it), Positions, Distinct names
   | "bucket"      // one allocation row, on the CATEGORY axis
   /**
    * ONE ALLOCATION ROW ON EACH OF THE FAMILY'S OWN TWO AXES.
@@ -71,7 +71,6 @@ export type DrilldownId =
    */
   | "basket"        // …on the family's BASKET axis
   | "family-class"  // …on the family's own ASSET-CLASS axis
-  | "invested"    // Capital invested and the Consolidated return struck on it
   | "measured"    // the accounts the money-weighted return covers
   | "top-names"
   | "cross-held"
@@ -80,7 +79,7 @@ export type DrilldownId =
 
 const IDS = new Set<DrilldownId>([
   "book", "bucket", "basket", "family-class",
-  "invested", "measured", "top-names", "cross-held", "winners", "losers",
+  "measured", "top-names", "cross-held", "winners", "losers",
 ]);
 
 /**
@@ -123,6 +122,17 @@ export type Facet = {
   key: string;
   /** The toggle's label. */
   label: string;
+  /**
+   * WHICH QUESTION THIS FACET ANSWERS, where a figure is made of sets along two.
+   *
+   * The Current Value of Holdings page carries the SIDES of the book (listed,
+   * private, not placed) and, since Capital invested was folded into it, the
+   * COST split too (reports a cost, reports none). Each group partitions the
+   * page's rows on its own; the two together do not, so the toggle draws a
+   * divider between them and a check reconciles each group separately.
+   * Absent on a scope with one group.
+   */
+  group?: "side" | "cost";
   /** What this set IS, rendered when it is the active one. */
   note: string;
   rows: Position[];
@@ -141,7 +151,19 @@ export const FACET_PARAM = "facet";
 const LEGACY: Record<string, { id: DrilldownId; facet: string }> = {
   listed: { id: "book", facet: "listed" },
   private: { id: "book", facet: "private" },
-  "no-cost": { id: "invested", facet: "no-cost" },
+  /**
+   * CAPITAL INVESTED WAS ITS OWN PAGE, AND IS NOW PART OF THIS ONE.
+   *
+   * *"Capital invested and current value of holdings can be a single KPI tile
+   * rather than two separate KPI tiles opening two separate pages … they can be
+   * a single one, with a consolidated view."* The two pages drew the same
+   * table over the same holdings; what the Capital invested page added was the
+   * split between the holdings that report a cost and the ones that do not.
+   * That split is two facets of the Current Value of Holdings page now, and the
+   * old addresses land on them rather than on a not-found page.
+   */
+  invested: { id: "book", facet: "costed" },
+  "no-cost": { id: "book", facet: "no-cost" },
 };
 
 export function drilldownHref(id: DrilldownId, key?: string, facet?: string): string {
@@ -364,36 +386,6 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       };
     }
 
-    case "invested": {
-      // THE SAME `sumOrNull` SPLIT THE TILE MAKES. A statement that reports no
-      // cost is skipped by the sum rather than entered as zero, so the tile's
-      // figure covers a narrower set than the NAV beside it — and this is that
-      // narrower set, with the remainder carried as a companion rather than
-      // dropped.
-      const costed = consolidated.filter((p) => p.costBasis != null);
-      const without = consolidated.filter((p) => p.costBasis == null);
-      return withFacets({
-        ...base, id: scope.id, key: "",
-        title: "Capital invested",
-        crumb: "Capital invested",
-        absent: costed.length ? null : {
-          what: "No holding in this book reports a cost",
-          needs: "Every statement in the drop prints a holding without a basis. Capital invested and the Consolidated return are absent rather than zero until one carries a cost column.",
-        },
-      }, [
-        {
-          key: "costed", label: "Reports a cost",
-          note: "The rows both capital figures are summed over.",
-          rows: costed,
-        },
-        ...(without.length ? [{
-          key: "no-cost", label: "Reports none",
-          note: "In the NAV and in neither capital figure. A depository reports what is held, never what it was bought for, so their cost is absent rather than zero — and a zero would report the whole of their market value as profit at an infinite return. Measured across the whole audit archive, not one of these (account, security) pairs carries a cost on any record type.",
-          rows: without,
-        }] : []),
-      ]);
-    }
-
     case "measured": {
       /**
        * A PER-ACCOUNT FIGURE READS `portfolio.positions`, NOT THE DEDUPED SET —
@@ -549,6 +541,61 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const priv = consolidated.filter(isPrivateClass);
       const unplaced = consolidated.filter(isUnplacedSide);
       const split = [listed, priv, unplaced].filter((r) => r.length > 0).length > 1;
+      const sideFacets: Facet[] = [
+        ...(listed.length ? [{
+          key: "listed", label: "Listed", group: "side" as const,
+          note: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the"
+            + " Category III AIFs whose own statements say they trade listed securities.",
+          rows: listed,
+        }] : []),
+        ...(priv.length ? [{
+          key: "private", label: "Private", group: "side" as const,
+          note: "Private capital: unlisted holdings, structured products, and the AIFs whose statements"
+            + " print Category I or II or name their own discipline as private equity or venture.",
+          rows: priv,
+        }] : []),
+        ...(unplaced.length ? [{
+          key: "unplaced", label: "Not placed", group: "side" as const,
+          note: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; a fund's`
+            + " own SEBI registration or its contribution agreement would settle each one.",
+          rows: unplaced,
+        }] : []),
+      ];
+      /**
+       * ── AND THE CAPITAL INVESTED IN IT, WHICH WAS A PAGE OF ITS OWN ────────
+       *
+       * *"Capital invested and current value of holdings can be a single KPI
+       * tile … inside that page keep the current value of holdings view and add
+       * the columns and data regarding the invested capital that we were showing
+       * as a separate page."* That page listed the same holdings split one other
+       * way — by whether a statement reports what they cost — so the split is two
+       * facets here and the page's own figures now carry both halves.
+       *
+       * THE SAME `sumOrNull` SPLIT THE CAPITAL FIGURE MAKES. A statement that
+       * reports no cost is skipped by the sum rather than entered as zero, so
+       * Capital invested covers a narrower set than the value beside it; the
+       * first facet is that narrower set and the second is what it leaves out.
+       * Offered only where both exist — a toggle to an empty half invites a
+       * click into a table that can only be empty.
+       */
+      const costed = consolidated.filter((p) => p.costBasis != null);
+      const without = consolidated.filter((p) => p.costBasis == null);
+      const costFacets: Facet[] = costed.length && without.length ? [
+        {
+          key: "costed", label: "Cost reported", group: "cost",
+          note: "The holdings whose statement reports what they cost — the rows Capital invested and the"
+            + " Consolidated return are summed over.",
+          rows: costed,
+        },
+        {
+          key: "no-cost", label: "No cost reported", group: "cost",
+          note: "In the current value and in neither capital figure. A depository reports what is held, never"
+            + " what it was bought for, so their cost is absent rather than zero — and a zero would report the"
+            + " whole of their market value as profit at an infinite return. Measured across the whole audit"
+            + " archive, not one of these (account, security) pairs carries a cost on any record type.",
+          rows: without,
+        },
+      ] : [];
       return withFacets({
         ...base, id: "book", key: "",
         title: "Every holding in the book",
@@ -560,27 +607,11 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
           what: "The book carries no holding",
           needs: "No statement has been ingested, so there is nothing to list. Ingest a statement and every figure on this site populates itself.",
         },
-      }, split ? [
+      }, [
         { key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated },
-        ...(listed.length ? [{
-          key: "listed", label: "Listed",
-          note: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the"
-            + " Category III AIFs whose own statements say they trade listed securities.",
-          rows: listed,
-        }] : []),
-        ...(priv.length ? [{
-          key: "private", label: "Private",
-          note: "Private capital: unlisted holdings, structured products, and the AIFs whose statements"
-            + " print Category I or II or name their own discipline as private equity or venture.",
-          rows: priv,
-        }] : []),
-        ...(unplaced.length ? [{
-          key: "unplaced", label: "Not placed",
-          note: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; a fund's`
-            + " own SEBI registration or its contribution agreement would settle each one.",
-          rows: unplaced,
-        }] : []),
-      ] : [{ key: "all", label: "All holdings", note: "Every position in the book.", rows: consolidated }]);
+        ...(split ? sideFacets : []),
+        ...costFacets,
+      ]);
     }
   }
 }
