@@ -42,6 +42,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
     "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
@@ -57,6 +58,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-05-18",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Alternates Asset Management",
     "noPositionsReason": "no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them."
   },
@@ -85,6 +87,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
     "noPositionsReason": null
   },
@@ -113,6 +116,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     ],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "360 ONE Private Wealth",
     "noPositionsReason": null
   },
@@ -128,6 +132,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-07-31",
     "custodian": "3P Investment Managers",
     "noPositionsReason": null
   },
@@ -143,6 +148,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Baring Private Equity India Fund",
     "noPositionsReason": null
   },
@@ -158,6 +164,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-06-01",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -173,6 +180,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-06-01",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "Buoyant Capital",
     "noPositionsReason": null
   },
@@ -188,6 +196,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-10",
     "inceptionDate": "2025-01-06",
+    "capitalRecordTo": null,
     "custodian": "Carnelian Asset Management and Advisors Pvt Ltd",
     "noPositionsReason": null,
     "capital": {
@@ -210,6 +219,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Carnelian Bharat Amritkaal Fund",
     "noPositionsReason": null
   },
@@ -225,6 +235,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-11",
     "inceptionDate": "2025-12-26",
+    "capitalRecordTo": null,
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -247,6 +258,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-11",
     "inceptionDate": "2025-12-26",
+    "capitalRecordTo": null,
     "custodian": "Goldstandard Wealth Private Limited",
     "noPositionsReason": null,
     "capital": {
@@ -269,6 +281,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-27",
     "inceptionDate": "2025-01-13",
+    "capitalRecordTo": null,
     "custodian": "Green Lantern Capital LLP",
     "noPositionsReason": null,
     "capital": {
@@ -291,6 +304,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-27",
     "inceptionDate": "2025-01-16",
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Green Lantern Capital LLP",
     "noPositionsReason": null,
     "capital": {
@@ -313,6 +327,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-29",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -328,6 +343,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-29",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Bank (NSDL demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-08-29 carries 1 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -343,6 +359,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-06",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "HDFC Mutual Fund",
     "noPositionsReason": null
   },
@@ -358,6 +375,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-07",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Helios Mutual Fund",
     "noPositionsReason": null
   },
@@ -373,6 +391,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "ICICI Bank (NSDL demat)",
     "noPositionsReason": null
   },
@@ -388,6 +407,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -403,6 +423,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -418,6 +439,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "India SME Investments",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-06-30 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -433,6 +455,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "LKP Securities",
     "noPositionsReason": null
   },
@@ -448,6 +471,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-10-24",
+    "capitalRecordTo": null,
     "custodian": "Molecule Ventures LLP",
     "noPositionsReason": null,
     "capital": {
@@ -470,6 +494,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-06",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Active Momentum Fund",
     "noPositionsReason": null
   },
@@ -485,6 +510,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Delphi Equity Fund",
     "noPositionsReason": null
   },
@@ -500,6 +526,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian",
     "transactionsOnly": true
@@ -516,6 +543,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -531,6 +559,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -546,6 +575,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": null
   },
@@ -561,6 +591,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "this custody account values nothing: its statement of 2026-07-31 carries 2 holding(s) whose only price is the FACE VALUE the security was allotted at, which is not a mark anybody struck. The units are in the archive; multiplying by a face value would put a valuation nobody made into the book"
   },
@@ -576,6 +607,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
     "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
   },
@@ -591,6 +623,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -606,6 +639,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Founders Fund",
     "noPositionsReason": null
   },
@@ -621,6 +655,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Motilal Oswal Hedged Equity Multi Factor Strategy",
     "noPositionsReason": "every holding on this account's holdings statement of 2026-07-31 has been redeemed — the balance is nil, and that is a measurement"
   },
@@ -636,6 +671,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Neo Infra Income Opportunities Fund",
     "noPositionsReason": null
   },
@@ -651,6 +687,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -666,6 +703,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -681,6 +719,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -696,6 +735,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -711,6 +751,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-06-30",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-06-30",
     "custodian": "Sanshi Fund",
     "noPositionsReason": null
   },
@@ -726,6 +767,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 2 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -741,6 +783,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -756,6 +799,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -771,6 +815,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": null,
+    "capitalRecordTo": null,
     "custodian": "Sky Capital Rising Titans Fund",
     "noPositionsReason": "this fund publishes no NAV: its statement of 2026-07-31 carries 1 holding(s) with units and the capital drawn against a commitment, and no valuation. The units and the cost are in the archive; there is nothing to mark them at, and the contributions are what was paid rather than what the stake is worth"
   },
@@ -786,6 +831,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-09-03",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
     "capital": {
@@ -808,6 +854,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-31",
     "inceptionDate": "2024-12-03",
+    "capitalRecordTo": "2026-07-31",
     "custodian": "SVAN Investment Managers LLP",
     "noPositionsReason": null,
     "capital": {
@@ -830,6 +877,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
     "noPositionsReason": null
   },
@@ -845,6 +893,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-03-31",
     "inceptionDate": null,
+    "capitalRecordTo": "2026-03-31",
     "custodian": "Transition Venture Capital",
     "noPositionsReason": null
   },
@@ -860,6 +909,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-13",
     "inceptionDate": "2025-07-29",
+    "capitalRecordTo": null,
     "custodian": "V.E.C Assago Capital Management LLP",
     "noPositionsReason": null,
     "capital": {
@@ -882,6 +932,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-13",
     "inceptionDate": "2025-07-30",
+    "capitalRecordTo": null,
     "custodian": "V.E.C Assago Capital Management LLP",
     "noPositionsReason": null,
     "capital": {

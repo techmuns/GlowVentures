@@ -1219,7 +1219,7 @@ export type ReturnMeasureDef = {
 /** The picker's options, in reading order — `auto` first, as the default. */
 export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "auto", label: "By methodology", tag: "AUTO",
-    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Fixed income: XIRR. Each cell says which one it is." },
+    hint: "Equity held under a year: holding-period return. A year or more: CAGR. Fixed income, and an account funded over several dated payments: XIRR. Each cell says which one it is." },
   // The measure KEY stays "absolute" — the URL is `?ret=absolute`, and the
   // internal ReturnMode and HoldingReturn kind are "absolute" too, so the whole
   // not-annualised basis shares one identifier. Only the reader-facing label and
@@ -1230,7 +1230,7 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
     hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",
-    hint: "A money-weighted return across every cash flow. It needs each tranche's date and amount, which the statements here do not carry per holding — so per holding it is shown as absent, and the per-account XIRR is on Performance." },
+    hint: "A money-weighted return across every cash flow. It needs each payment's date and amount, which the statements carry for a whole ACCOUNT and never for a holding inside one — so it shows on a row that is whole accounts with every payment dated, and is absent, with the reason, everywhere else." },
   { key: "ytd", label: "Year to date", tag: "YTD",
     hint: "The holding's own return since 1 January — measurable only where it was opened during the year, because otherwise its value on 1 January is missing." },
   { key: "calendar", label: "Calendar year", tag: "CY",
@@ -1263,7 +1263,41 @@ export type ReturnInput = {
   heldSince: string | null;
   assetClass: string | null | undefined;
   costNA?: boolean;
+  /**
+   * THE DATED CAPITAL BEHIND THE ROW, where the row IS one or more whole
+   * accounts (`datedCapital.ts`). Undefined on a holding inside an account —
+   * which has no cash flows of its own and keeps every rule below unchanged.
+   */
+  capital?: RowCapital | null;
 };
+
+/**
+ * ── THE DATED CAPITAL BEHIND A ROW ──────────────────────────────────────────
+ *
+ * Set by `datedCapital.ts` where a row carries every holding of one or more
+ * accounts. `dated: true` where every one of those accounts has a complete dated
+ * record of the family's payments (`capitalRollup`) — the one thing a
+ * money-weighted return needs — and `dated: false`, with the reason, where the
+ * row is whole accounts and one of them has no such record. A HOLDING has none:
+ * it is not an account, and `capital` is left undefined.
+ */
+export type RowCapital =
+  | {
+      dated: true;
+      /** The accounts behind the row, sorted — what the checks re-solve over. */
+      accountIds: string[];
+      /** How many accounts the rate pools, each closing on its own statement date. */
+      accounts: number;
+      /** Dated flows behind it, in and out — the family's rule routes more than one to XIRR. */
+      flows: number;
+      /** The first payment in, and the latest statement date a value is struck on. */
+      since: string;
+      to: string;
+      days: number;
+      /** The pooled XIRR, annual; null where the flows do not solve. */
+      annualPct: number | null;
+    }
+  | { dated: false; accountIds: string[]; reason: string };
 
 export type MeasuredReturn =
   /** A figure to print, and the tag that says which measure it is. */
@@ -1277,6 +1311,37 @@ const NO_HOLDING_XIRR =
   "a money-weighted return (XIRR) needs every cash flow for this holding — each tranche's date and amount — and the statements in this book cover the current period only, so no per-holding XIRR can be struck. The per-account money-weighted return is on the Performance page.";
 export const noCalendarReason = (asOf: string) =>
   `a calendar-year return needs the holding's value at the start and end of that year, and the earliest statement in this book is dated in ${asOf.slice(0, 4)}, after the current year began — there is no earlier window to measure from.`;
+
+/** Under a year of dated capital: the holding-period return, marked, never annualised. */
+function capitalSubYear(returnPct: number, cap: Extract<RowCapital, { dated: true }>): MeasuredReturn {
+  return { shown: true, pct: returnPct, tag: "HPR",
+    note: `The money has been in for ${cap.days} days — under a year — so this is the holding-period return, not an annual rate.` };
+}
+
+/** One dated payment a year or more ago: the holding-period return compounded over the days since it. */
+function capitalCompound(returnPct: number, cap: Extract<RowCapital, { dated: true }>, tag: "CAGR"): MeasuredReturn {
+  if (cap.days < YEAR_DAYS) return capitalSubYear(returnPct, cap);
+  const growth = 1 + returnPct / 100;
+  if (growth <= 0) return { shown: true, pct: returnPct, tag: "HPR", note: "A total loss has no compound rate, so this is the holding-period return." };
+  return { shown: true, pct: (Math.pow(growth, YEAR_DAYS / cap.days) - 1) * 100, tag,
+    note: `One payment on ${cap.since}, compounded over the ${cap.days} days to ${cap.to}.` };
+}
+
+/**
+ * The money-weighted rate over a row's dated capital — or, under a year, its
+ * holding-period return, tagged HPR (Stage 10g(ii)'s guard: a sub-year window
+ * compounded onto a year is how this book once printed +99.0%).
+ */
+function capitalXirrOf(p: ReturnInput, cap: Extract<RowCapital, { dated: true }>, noCost: boolean): MeasuredReturn {
+  if (cap.days < YEAR_DAYS) {
+    return noCost ? { shown: false, tag: "XIRR", reason: NO_COST_RETURN } : capitalSubYear(p.returnPct as number, cap);
+  }
+  if (cap.annualPct == null) return { shown: false, tag: "XIRR", reason: "these dated payments and this value do not solve to a rate" };
+  return { shown: true, pct: cap.annualPct, tag: "XIRR",
+    note: `Money-weighted over ${cap.flows} dated ${cap.flows === 1 ? "payment" : "payments"}`
+      + (cap.accounts > 1 ? ` across ${cap.accounts} accounts, each closing on its own statement's value and date` : ", and the value on the statement's own date")
+      + `, from ${cap.since} to ${cap.to} (${cap.days} days) — the same record the Transactions card solves over.` };
+}
 
 /**
  * The return to print for one holding, on the measure the reader picked.
@@ -1293,6 +1358,19 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   if (measure === "absolute") {
     if (noCost) return { shown: false, tag: "HPR", reason: NO_COST_RETURN };
     return { shown: true, pct: p.returnPct as number, tag: "HPR" };
+  }
+
+  const cap = p.capital;
+  if (measure === "cagr" && cap?.dated) {
+    // SEVERAL DATED PAYMENTS: a single-start compound rate would treat every
+    // rupee as invested on the first date. The Transactions card refuses the
+    // same account the same way, so the two pages cannot disagree about it.
+    if (cap.flows > 1) {
+      return { shown: false, tag: "CAGR",
+        reason: "the money went in and came out over several dates, so a single-start compound rate would treat all of it as invested on the first date — the money-weighted rate for this row is XIRR" };
+    }
+    if (noCost) return { shown: false, tag: "CAGR", reason: NO_COST_RETURN };
+    return capitalCompound(p.returnPct as number, cap, "CAGR");
   }
 
   if (measure === "cagr") {
@@ -1318,7 +1396,9 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
   }
 
   if (measure === "xirr") {
-    return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+    if (cap && !cap.dated) return { shown: false, tag: "XIRR", reason: cap.reason };
+    if (!cap) return { shown: false, tag: "XIRR", reason: NO_HOLDING_XIRR };
+    return capitalXirrOf(p, cap, noCost);
   }
 
   if (measure === "calendar") {
@@ -1327,6 +1407,22 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   // ── auto: the methodology ──────────────────────────────────────────────────
   if (noCost) return { shown: false, tag: "AUTO", reason: NO_COST_RETURN };
+  /**
+   * A ROW THAT IS WHOLE ACCOUNTS ON A DATED RECORD takes the family's rule on
+   * its dated payments — the rule the Transactions card applies to the same
+   * accounts: under a year the holding-period return; a year or more, XIRR
+   * where the money went in (or came out) over several dates and CAGR for a
+   * single payment. The HPR itself is this row's own FIFO figure, unchanged.
+   */
+  if (cap?.dated) {
+    if (cap.days < YEAR_DAYS) return capitalSubYear(p.returnPct as number, cap);
+    if (cap.flows > 1) {
+      const x = capitalXirrOf(p, cap, false);
+      return x.shown ? x : { shown: true, pct: p.returnPct as number, tag: "HPR",
+        note: `Several dated payments call for XIRR, and ${x.reason} — so this is the holding-period return.` };
+    }
+    return capitalCompound(p.returnPct as number, cap, "CAGR");
+  }
   const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
   if (isFixedIncome(p.assetClass)) {
     // The rule routes fixed income to XIRR, which this book cannot strike per
@@ -1358,15 +1454,20 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
  * than claimed — the same discipline `returnModeCoverage` keeps for the toggle.
  */
 export function returnCoverage(rows: ReturnInput[], measure: ReturnMeasure, asOf: string) {
-  let shown = 0, absent = 0, cagr = 0, absolute = 0;
+  let shown = 0, absent = 0, cagr = 0, absolute = 0, xirr = 0, staggered = 0;
   for (const r of rows) {
+    // A row that is whole accounts funded over several dated payments — the
+    // case CAGR refuses and XIRR answers — counted so a header can say where
+    // those rows' annual rate is rather than filing them under "no date".
+    if (r.capital?.dated && r.capital.flows > 1) staggered++;
     const m = measuredReturn(r, measure, asOf);
     if (!m.shown) { absent++; continue; }
     shown++;
     if (m.tag === "CAGR") cagr++;
+    else if (m.tag === "XIRR") xirr++;
     else absolute++;   // ABS (absolute, guarded, fixed-income) and YTD alike
   }
-  return { total: rows.length, shown, absent, cagr, absolute };
+  return { total: rows.length, shown, absent, cagr, absolute, xirr, staggered };
 }
 
 /**

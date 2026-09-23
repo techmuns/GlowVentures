@@ -117,6 +117,14 @@ export type Account = {
   asOf: string;             // report date of THIS account's latest statement (ISO)
   /** First investment date, where a statement prints one. Null when none does. */
   inceptionDate?: string | null;
+  /**
+   * The date the account's DATED CAPITAL RECORD reaches — the latest window end
+   * of the documents carrying a payment row. Null when no statement dates the
+   * family's payments at all. A record ending before `asOf` cannot state the
+   * capital behind a value struck on `asOf`: see `recordShortfall` in
+   * `src/lib/tranches.ts`.
+   */
+  capitalRecordTo?: string | null;
   /** Who holds the assets. For a PMS mandate this is the manager. */
   custodian?: string;
   /**
