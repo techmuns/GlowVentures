@@ -77,6 +77,11 @@ console.log("── what is sent ──");
   ok("...under the book's own name", d.send[0].name === "Abc Ltd");
   ok("a holding with no NSE symbol stays here, and says why",
     d.unsendable.some((u) => u.securityKey === "fund" && u.reason === "no-symbol" && /NSE symbol/.test(u.why)));
+  // A company the family holds only INSIDE a fund has a page of its own (#88)
+  // and may well be listed: what is missing is THIS dashboard's symbol for it,
+  // not a listing. "This holding has none" would be false of exactly that page.
+  ok("...in words true of a listed company this dashboard simply has no symbol for",
+    d.unsendable.every((u) => u.reason !== "no-symbol" || (/this dashboard has no NSE symbol/.test(u.why) && !/has none/.test(u.why))));
   ok("a level the receiving side would refuse as a typo is named here instead of sinking a batch",
     d.unsendable.some((u) => u.securityKey === "typo" && u.reason === "too-high"));
   const dsum = syncSummary(d, EMPTY_SENT, null);

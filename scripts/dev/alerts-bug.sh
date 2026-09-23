@@ -148,8 +148,8 @@ run_case "the Buy level never fires — the old check left it out" "pages suite"
             '    const levels = ALERT_DEFS.filter((d) => d.kind !== "entry" && isLevel(entry[d.field]));'
 
 run_case "an alert with no live price is checked against the statement mark" "pages suite" \
-  patch $PA '  if (!rows.length) return { state: "none", reason: "not held in this book, so no price is fetched for it" };' \
-            '  if (!rows.length) return { state: "none", reason: "not held in this book, so no price is fetched for it" };
+  patch $PA '  if (!rows.length) return { state: "none", reason: "not held on any statement in this book, so no price is fetched for it" };' \
+            '  if (!rows.length) return { state: "none", reason: "not held on any statement in this book, so no price is fetched for it" };
   const stale = rows.find(hasPrice);
   if (stale) return { state: "live", price: stale.currentPrice as number };'
 

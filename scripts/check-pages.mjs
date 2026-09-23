@@ -20867,6 +20867,20 @@ const INVARIANTS = {
       (t, ctx) => ctx.heldTable?.taxToggles === 0 && ctx.heldTable?.avgTile === false],
     ["research that needs a symbol says once why it is absent, instead of four empty panels",
       (t, ctx) => ctx.heldTable?.research === "funds-only" && !/No price history for this security/i.test(t)],
+    /**
+     * THE ALERT CARD MUST NOT CONTRADICT THE BADGE ABOVE IT. The page says
+     * "Held only inside your funds", and the card's reason for having no price
+     * read "not held in this book" — two claims about one company, one screen
+     * apart. What is true is narrower: no STATEMENT in this book holds it, so
+     * this dashboard fetches no price for it. Read off the chip's own hover,
+     * because the card renders it whether or not a level is saved.
+     */
+    ["the alert card's reason agrees with the badge: no statement holds it, never 'not held in this book'",
+      (t, ctx) => {
+        const why = (ctx?.titles ?? []).filter((x) => /^No price to check alerts against/.test(x));
+        return why.length > 0
+          && why.every((x) => /not held on any statement in this book/.test(x) && !/not held in this book/.test(x));
+      }],
   ],
   "stock-fund": [
     ["a fund page states the company research does not apply", (t) => /not applicable to/i.test(t)],

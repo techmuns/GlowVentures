@@ -152,7 +152,7 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
             empty card has nothing to warn about. */}
         {now.state === "none" && anyLevel && (
           <p data-alert-unchecked-note className="mt-2.5 text-[11.5px] text-slate-500">
-            Saved, but these alerts can&rsquo;t be checked: {now.reason}.
+            Saved, but this dashboard can&rsquo;t check these alerts: {now.reason}.
           </p>
         )}
 

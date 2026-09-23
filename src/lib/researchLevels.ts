@@ -155,7 +155,7 @@ export function researchLevelsFrom(watchlist: Watchlist, resolve: Resolve): Deri
     if (!ticker || !RESEARCH_SYMBOL_RE.test(ticker)) {
       unsendable.push({
         securityKey: key, name, reason: "no-symbol",
-        why: `${RESEARCH_NAME} follows listed companies by their NSE symbol, and this holding has none`,
+        why: `${RESEARCH_NAME} follows listed companies by their NSE symbol, and this dashboard has no NSE symbol for this holding`,
       });
       continue;
     }
@@ -488,7 +488,7 @@ export function summaryLine(s: SyncSummary, busy: boolean, origin = ""): { text:
       + " from another device — levels set there, or removed there. Change a level here to send these instead.");
   }
   if (s.refused > 0) why.push(`${s.refused} refused: ${RESEARCH_NAME}'s list of companies is full.`);
-  if (s.local > s.tooHigh) why.push("A fund or an AIF has no NSE symbol, so its alerts stay in this dashboard.");
+  if (s.local > s.tooHigh) why.push("An alert on a holding this dashboard has no NSE symbol for, such as a fund or an AIF, stays in this dashboard.");
   if (s.tooHigh > 0) {
     why.push(`${s.tooHigh} ${s.tooHigh === 1 ? "has a level" : "have levels"} above ₹1 crore a share, which ${RESEARCH_NAME}`
       + " would read as a typo — it stays here until the level is corrected.");

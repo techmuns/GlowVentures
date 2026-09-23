@@ -136,7 +136,7 @@ export function priceNowFor(rows: readonly Position[], feed: FeedState): PriceNo
   if (live) return { state: "live", price: live.currentPrice as number };
   const nav = rows.find((r) => r.navPriced && hasPrice(r));
   if (nav) return { state: "nav", price: nav.currentPrice as number, asOf: nav.navDate ?? "" };
-  if (!rows.length) return { state: "none", reason: "not held in this book, so no price is fetched for it" };
+  if (!rows.length) return { state: "none", reason: "not held on any statement in this book, so no price is fetched for it" };
   const sym = rows.map(feed.symbolOf).find((s): s is string => !!s) ?? null;
   if (sym) {
     if (feed.status === "loading") return { state: "checking" };
