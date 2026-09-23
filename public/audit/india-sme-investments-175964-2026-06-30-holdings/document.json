@@ -145,7 +145,8 @@
     "label": "Eighth Contribution",
     "amount": 4500000
    }
-  ]
+  ],
+  "payouts": null
  },
  "capitalAccount": [],
  "postTaxNav": null,

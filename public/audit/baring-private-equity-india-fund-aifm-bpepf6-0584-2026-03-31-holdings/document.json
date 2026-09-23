@@ -121,6 +121,26 @@
     "label": "Drawdown 4",
     "amount": 6250000
    }
+  ],
+  "payouts": [
+   {
+    "date": "2025-09-30",
+    "kind": "equalisation",
+    "label": "Compensating contribution",
+    "gross": 18909,
+    "tds": 1891,
+    "net": 17018,
+    "inPrintedTotal": true
+   },
+   {
+    "date": "2026-03-31",
+    "kind": "income",
+    "label": "Net Distribution STCG FY2025-26 · Net Distribution Dividend FY2025-26",
+    "gross": 37252,
+    "tds": 9636,
+    "net": 27616,
+    "inPrintedTotal": true
+   }
   ]
  },
  "capitalAccount": [],
