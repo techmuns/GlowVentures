@@ -302,6 +302,21 @@ cash holding's genuinely-zero return both match, and both are correct.
   cannot sit. A table that must NOT be rearranged declares
   `data-table-static="<reason>"` — an upstream financial document, a transposed
   metric grid, a fixed list of facts. See Stage 10bh.
+- `src/components/TreeTable.tsx` — THE STANDARD FOR A TABLE WHOSE ROWS OPEN
+  INTO OTHER ROWS. A row opens into ROWS OF THE SAME TABLE, in the same columns
+  — never into a table drawn inside a cell, whose columns cannot line up with
+  the ones above it. Four kinds of row (a section band that can close, a parent
+  whose whole row is the control, a child under a tree guide drawn in the FIRST
+  cell only, and an italic adjust row such as "Counted once"), and one
+  `ExpandAllButton`. The columns, the sort and the drag stay `useTableView`'s,
+  so a dragged column moves a parent, its children and the totals together.
+  See Stage 10bt.
+- `src/lib/privateBook.ts` — THE PRIVATE MARKET TABLE'S ONE MODEL. A folio is
+  one account's view of one fund; a fund row, a member row and a section band
+  are all built from folios, so no two can disagree. Fund rows are
+  CONSOLIDATED and folio rows AS PRINTED, with the difference named on an adjust
+  row; capital is never deduped; a total sums only what was reported and says
+  how much that covers. See Stage 10bt.
 - `src/lib/nav.ts` — THE ONE NAV TABLE, read by the sidebar AND by every page's
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
@@ -15413,6 +15428,12 @@ card and not in the table — and a call cannot be entered against them. Adding
 them as rows would put unvalued funds into a table whose footer sums market
 value, which is a decision for the family rather than this change.
 
+***CLOSED AT Stage 10bt.*** The fund table became the page's one master table,
+which already carried those funds as rows — in a closed "Not valued" section
+whose value cells are absent rather than summed, so nothing is added to a
+market value. Every fund-level row now carries a Capital call cell, and a fund
+no statement values keys its calls on its own name (`fund-<slug>`).
+
 #### 5. The Monitor's section dropdown is a row of tabs
 
 `All · Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash` on
@@ -15532,6 +15553,203 @@ abstentions read out of `report.json` BY NAME — four on the Morning CIO panels
 private holding reports a cost), one on the not-found drill-down and one on
 `stock-qty` (no row there carries a pledge). The count did not move because #69
 adds no route, and it is recorded as the same only because it was measured again.
+
+### Stage 10bt — PRIVATE MARKET IS ONE TABLE, AND THE STANDARD EVERY OTHER TABLE ADOPTS
+
+*"This whole table has such an ugly ui … well-structured columns and rows so
+that it is easily expandable … a standard across the whole dashboard. And
+instead of seeing these kind of sub-rows which have data indented towards the
+right and left, this does not make sense."* · *"Why are these two tables
+separate … make one consolidated structured table … One table that can show me
+everything that is required to be seen."* · *"why is this table there, cant it
+be a transactions tab in the same table view"* · *"If this is missing data this
+needs to be like a hidden drop down clearly marked."*
+
+Four asks about one page, and the first names the defect exactly. The page drew
+a fund table, a capital-account table, a calls table and a missing-data card,
+and a fund row opened into a SECOND TABLE DRAWN INSIDE ITS CELL. A nested table
+sizes its own columns, so a folio's Value sat at one x in one panel and another
+x in the next, and neither lined up with the Value above it — which is "data
+indented towards the right and left".
+
+#### `src/components/TreeTable.tsx` — the standard
+
+A row opens into ROWS OF THE SAME TABLE, in the SAME columns, and never into a
+table inside a cell. Four kinds of row, each looking like what it is:
+
+| | |
+| --- | --- |
+| **section** | a band: heading, a marker chip, one quiet line, and the section's own totals in their columns. It can close |
+| **parent** | one line per thing, with a chevron; the WHOLE ROW is the control (links and buttons inside it keep their own click) |
+| **child** | the lines behind a parent, under a tree guide drawn in the FIRST cell only — every other cell is in its own column |
+| **adjust** | an italic line that makes the children add to the parent — "Counted once" — so a reader sees it is arithmetic, not a holding |
+
+A table adopts it by writing its first cell with `TreeNameCell` /
+`TreeSectionCell` and its rows with `TREE_ROW`; the columns, the sort and the
+drag stay `useTableView`'s, so a dragged column moves a parent, its children and
+the totals together. `ExpandAllButton` is the one control for every row a table
+can open.
+
+#### `src/lib/privateBook.ts` — the one model behind the table
+
+A FOLIO is one account's view of one fund, and every row is built from folios:
+a fund row is its folios, a member row is theirs, a section band is its rows.
+Three things in it are load-bearing:
+
+- **THE BASES STAY APART.** A fund row is CONSOLIDATED — each `dedupeGroup`
+  counted once — and a folio row is the statement AS PRINTED, so where two
+  accounts report one holding the folios add to more than their fund, and an
+  adjust row names the difference. Measured, that is this book's whole
+  ₹3.17 Cr double count (360 ONE Special Opportunities under two CRNs,
+  Transition Venture Fund I under both trusts). The By-owner grouping is printed
+  throughout and names the same ₹3.17 Cr once, on its section.
+- **CAPITAL IS NEVER DEDUPED.** A capital account is a contract between one
+  account and one fund, so both trusts' Transition Venture calls are real money
+  and both are counted, each attached to exactly ONE folio of its own account.
+- **ABSENT IS NOT ZERO, IN A TOTAL.** `figuresOf` sums only the rows that report
+  a figure and carries WHICH rows those were, so a total prints its coverage
+  ("14 of 15 accounts") on its own line under the figure, and a set with nothing
+  reported is absent rather than ₹0. A redeemed folio is the opposite case and
+  prints a MEASURED `₹0 redeemed`.
+
+#### The page
+
+One card, one table, three tabs — **By fund** (the default), **By owner**, and
+**Transactions**, which is the dated capital calls as rows of the same card,
+newest first, rather than a table of their own. Beside the name, eleven
+columns: Committed, Called, Paid in, Still to call, Units, Cost, Value, Return,
+Weight, As of — and the family's own **Capital call**, last, because it is the
+one column a reader writes to rather than reads.
+
+Three sections, and the second is the family's "hidden drop down, clearly
+marked":
+
+| Section | Opens | |
+| --- | --- | --- |
+| Private funds | open | the private side of the book (Stage 10bp) |
+| Not valued | **closed**, marked **missing data** | the accounts no statement values — each with what was paid in, in no value total |
+| Other AIFs | **closed**, marked **not private market** | the capital accounts of AIFs that are NOT private capital — the commitment and nothing else (see below) |
+
+**THE CAPITAL COLUMNS SPAN ALL THREE**, because a drawdown structure is how an
+account funds itself, not where it invests: 15 capital accounts, 12 of them on
+private funds and 3 in funds that are not private market. The tiles say so in
+those words rather than as a fraction of one set over another, and the table's
+own footer, **All capital accounts · 15**, is what the capital tiles add to.
+
+#### Merged with Stage 10bs, which removed two things this table had drawn
+
+Stage 10bs (#71) landed on main while this branch waited, answering four more
+asks — crisp tiles, the "funds this page does not carry" card removed, the
+capital-call timeline replaced by an editable column, and the Monitor's section
+dropdown turned into tabs. **This table had drawn BOTH of the things it
+removed**, so the merge was a design decision on each, not a text resolution:
+
+- **THE TILES ARE 10bs's, WHOLE.** A label, a figure and one short line, with
+  the detail in the hover. Two hovers were re-worded because this page carries
+  what they describe: the uncalled and capital-account tiles say "funds that are
+  not private market" rather than "funds this page does not carry", because the
+  Other AIFs section is on this page.
+- **THE OTHER AIFs SECTION KEEPS THE COMMITMENT AND LOSES THE HOLDING.** As
+  first built it listed every not-private AIF WITH ITS VALUE — which is the
+  removed card, drawn as rows. `bookFolios` now keeps a not-private folio only
+  where a real capital account holds it, and NULLS its holding in the MODEL
+  (position, units, cost, value, P&L), so no band, total or cell downstream can
+  print it by accident. What stays is the commitment, because a drawdown fund
+  can call on the family whatever it invests in, and because without those
+  three accounts the capital columns would stop tying to the 15 the register
+  holds. The Category III holdings themselves are on the Portfolio Monitor, as
+  10bs's audit already records.
+- **THE TRANSACTIONS TAB LOSES ITS WINDOWS.** It had carried "what can still be
+  called" — Due now, three dated windows and the undated money — above the
+  history. Three of the five could only ever read "nothing scheduled", which is
+  exactly what 10bs removed; the two real figures are tiles. The check that
+  asserted the windows INVERTED rather than being deleted with them.
+- **THE CAPITAL CALL COLUMN IS ON EVERY FUND-LEVEL ROW OF THE MASTER TABLE.** By
+  fund that is the fund row; By owner it is each member's line in a fund,
+  because a call is made by a fund on the folio that owes it. A member row, a
+  band, a total and a "Counted once" line carry none — the same tree rule every
+  other column follows. The editor opens as a row under the row that opened it,
+  in the table.
+
+**AND THAT CLOSES THE ONE LIMIT 10bs STATED.** The column shipped on a table of
+VALUED funds, so India SME (≈₹11.5 Cr of the ₹16 Cr still to call) and Sky
+Capital's angel folios had no row to type a call against. The master table
+already carries them, in the closed Not valued section whose value cells are
+absent rather than summed — so they get a cell, keyed on their own name
+(`account:<slug>` → `fund-<slug>`, the shape the store accepts). **The limit that
+REPLACES it is stated at `callKeyOf`**: if such a fund one day publishes a NAV,
+its row keys on its `securityKey` instead and calls entered under the name need
+re-entering.
+
+**TWELVE COLUMNS DID NOT FIT, AND THAT WAS MEASURED.** The call column cost
+~137px and the eleven-column table had ~69px to spare. The cells went to `px-2`,
+the name column to 15rem, `Still to call` and `Capital call` break their labels
+over two lines, and an entered call draws its amount over its date rather than
+`₹2.5 Cr · 23 Oct 2026 · +1` on one line — which was the widest thing in the
+table. It now fits at 1500px with ~55px to spare and runs 14px over at 1440, so
+the check that asserts it is struck from 1500 and says so; below that the table
+scrolls inside its own card, the page-body rule this file already sets. The same
+check now also runs on `private-market-calls`, where entered calls give the
+column real content — the one route where it could push a column off.
+
+#### Verification
+
+`privateBook.test.ts` anchors the model on the generated book: the private total
+against `BOOK_SUMMARY.privateValue` less what `currentHoldings` drops, the
+capital columns against `callTotals` field by field, every capital account on
+one folio of its own account, the fund overlaps summing to the book's double
+count, the owner grouping printed with one overlap line — and the Other AIFs as
+capital accounts only: every not-private capital account present, none carrying
+a holding, a value, a cost or units. The page checks were rewritten onto the one
+table and struck structurally — one cell per column, no table inside a cell, the
+bands adding to the totals, the missing-data section holding exactly the
+accounts nothing values, one Capital call cell on every fund-level row and on no
+other, on both groupings and with every section open.
+
+**`scripts/dev/pm-table-bug.sh` reintroduces twenty-one bugs one at a time** —
+fourteen from the table itself (a table inside a cell, the missing-data section
+open on arrival, an absent value summed as ₹0, fund rows on the printed basis,
+member rows deduped, a capital account attached twice, Expand all wired to
+nothing, calls oldest first, the section losing its marker, a measured nil drawn
+as a dash, the crossed-set tile wording, a total dropping its coverage, due-now
+claiming every account, a column cut off) and seven from the merge (a call cell
+on a member row, an unvalued fund with no cell, an entered call added into Still
+to call, an unreadable store drawn as ₹0, the one-line call cell pushing a
+column off, the timeline windows restored, the Other AIFs' holdings back as
+rows). **A no-patch control ran first and came back clean, and every one of the
+twenty-one fires.** Twenty fire a check on the rendered page. The twenty-first —
+the model carrying the Other AIFs' holdings again — fires two assertions in
+`privateBook.test.ts` and leaves the page clean, and that is the right answer
+rather than a blind check: the row that would draw those holdings is
+capital-only on its own (`figureCells` returns before the holding columns), so
+the page renders nothing different. It takes BOTH guards failing to put a value
+on those rows, and each is asserted where it can fail.
+
+**ONE THING THE TABLE SHOWS THAT THE FAMILY SHOULD CONFIRM.** Transition Venture
+Fund I is one `dedupeGroup` — both trusts' statements report the same 7,500
+units — so its fund row counts the holding once at a cost of ₹75 L, while both
+trusts' capital accounts are real and show ₹1.5 Cr paid in. The table states
+both honestly; whether these are one investment reported twice or two investments
+of 7,500 units each is a question for the family — and the answer is §4c's
+duplicate policy, kept in one place for exactly this reversal, rather than
+anything on this page.
+
+**THE LETTER WAS CHECKED AGAINST MAIN'S TIP, AND COLLIDED FOR THE FOURTEENTH
+TIME.** This section was drafted as `10bs`; #71 merged first and keeps it, so
+this is `10bt`. Nothing else in the file named the draft's letter, so only the
+heading moved. The `ctx` literal in `check-pages.mjs` came through as a union
+(main's `callBuckets` and `callRows` beside this branch's probes), and twelve
+invariant hunks were resolved by INTENT rather than by side: main's reading of a
+tile's figure off its face and its counts out of its hover, this branch's
+reading of every table figure by the column its header names — and main's check
+of the removed scheme table's call counts DROPPED, because that table is not on
+this page; its two halves are asserted on `private-market-folios` (every capital
+account on one folio row, their calls every call in the register) and on the
+Transactions tab (the history, its count and its footer).
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
+`check:pages` **194 combinations clean**, with eight evidenced abstentions · `npm run build-book` byte-identical — a table's
+layout is not part of the book.
 
 ### Stage 10k — News & Announcements: REMOVED
 
