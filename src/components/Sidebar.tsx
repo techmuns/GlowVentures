@@ -123,7 +123,7 @@ export function Sidebar() {
       className="app-sidebar relative flex h-full shrink-0 flex-col border-r border-ink-700 bg-ink-900">
       {/* THE WORDMARK IS GLOW CENTRAL RESEARCH'S — a gold "G" and GLOW VENTURES
           in gold capitals, with what this particular app is underneath — so
-          the two dashboards the family uses read as one house (Stage 10cf). */}
+          the two dashboards the family uses read as one house (Stage 10cg). */}
       <div className="flex h-16 items-center gap-2.5 border-b border-ink-700 px-5">
         <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-champagne-500 to-champagne-600 text-ink-950 shadow-glow">
           <span className="font-display text-[15px] font-extrabold">G</span>

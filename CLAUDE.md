@@ -19688,7 +19688,7 @@ and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
 
-### Stage 10cf — GLOW CENTRAL RESEARCH'S FONTS AND COLOURS
+### Stage 10cg — GLOW CENTRAL RESEARCH'S FONTS AND COLOURS
 
 *"also look how good the font is and the ui is of glow-central research -
 colours white etc - can you make this dashboard also with right color pallet and
@@ -19805,14 +19805,15 @@ is every card on the page. The eighth case is the dark-theme half of the same
 claim: each theme has its own raised rule, and a restyle of one does not touch
 the other.
 
-**MERGED WITH MAIN THREE TIMES, AND THE LETTER MOVED FIVE TIMES BEFORE IT WAS
+**MERGED WITH MAIN FOUR TIMES, AND THE LETTER MOVED SIX TIMES BEFORE IT WAS
 WRITTEN DOWN.** This was drafted as `10ca`. #80 (FIFO returns) took that and
 #81 (four text blocks, seven NAV benchmarks) took `10by` in the same hour; #82
 (the KPI tiles) took `10cb` while this branch's first full sweep ran; and while
 the second one ran, #76 (one company, one key), #77 (purchase, redemption and
-appreciation) and #74 (arbitrage is cash) took `10cc`, `10cd` and `10ce` — so
-this section is **`10cf`**, and the code comments that name the stage moved
-with it. The first two merges each brought one conflict, resolved by keeping
+appreciation) and #74 (arbitrage is cash) took `10cc`, `10cd` and `10ce`; and
+#78 (XIRR on a row that is whole accounts) took `10cf` in the hour this PR sat
+waiting for its CI — so this section is **`10cg`**, and the code comments that
+name the stage moved with it. The first two merges each brought one conflict, resolved by keeping
 main's structure and giving it the new look: #81 put a percentage beside the
 published-NAV movers' figure, and #82 gave a KPI tile a second line and a name
 for its link. The figure takes the display face, and the link takes the 16px

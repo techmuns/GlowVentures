@@ -732,7 +732,7 @@ export function StockInfo() {
                           wider face is drawn — the fallback when Inter cannot
                           load, whose semibold headings run wider — this sub-line
                           gives up the width rather than pushing Basis behind a
-                          sideways scroll (Stage 10cf). */}
+                          sideways scroll (Stage 10cg). */}
                       <td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
                         <div>{providerOf(accIdx, r)}</div>
                         {/* The route reads as a phrase — "via manager's mandate"
