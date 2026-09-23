@@ -26,6 +26,7 @@ FILES=(
   "src/lib/privateBook.ts"
   "src/lib/capitalCalls.ts"
   "src/components/TreeTable.tsx"
+  "src/components/EnteredCalls.tsx"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -37,7 +38,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=private-market,private-market-tiles,private-market-folios,private-market-owners,private-market-transactions
+ROUTES=private-market,private-market-tiles,private-market-folios,private-market-owners,private-market-transactions,private-market-calls,private-market-calls-off
 
 put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
 
@@ -216,10 +217,93 @@ run_case "the fund column grows until a column is cut off" nosuite py <<'PY'
 import sys
 p = "src/pages/PrivateMarket.tsx"
 s = open(p, encoding="utf-8").read()
-old = 'className="min-w-[16.5rem]"'
+old = 'className="min-w-[15rem]"'
 new = 'className="min-w-[36rem]"'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 15 ── THE CAPITAL CALL COLUMN (merged from main): a member row is not a fund
+run_case "a call cell is drawn on a member row as well" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'const groupCallKey = (g: BookGroup) => (g.kind === "fund" ? callKeyOf(g.key, g.securityKey) : null);'
+new = 'const groupCallKey = (g: BookGroup) => callKeyOf(g.key, g.securityKey);'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 16 ── the gap the column shipped with: a fund no statement values gets no cell
+run_case "an unvalued fund has no row to type a call against" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'securityKey ?? fundKey.replace(/^account:/, "fund-");'
+new = 'securityKey ?? "";'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 17 ── what the family typed folded into what the statements print
+run_case "an entered call is added into Still to call" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'value: <span className="text-amber-400">{money(m.ct.undrawn)}</span>,'
+new = 'value: <span className="text-amber-400">{money((m.ct.undrawn ?? 0) + (entered.state.status === "ready" ? entered.state.calls.reduce((a, c) => a + c.amount, 0) : 0))}</span>,'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 18 ── a store that cannot be read drawn as a figure
+run_case "the unavailable store renders ₹0 with no reason" nosuite py <<'PY'
+import sys
+p = "src/components/EnteredCalls.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'return <span data-pm-call-state="unavailable"><AbsentCell reason={state.reason} /></span>;'
+new = 'return <span data-pm-call-state="unavailable">₹0</span>;'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 19 ── the entered call back on one line, the widest thing in the table
+run_case "the call cell goes back to one line and pushes a column off" nosuite py <<'PY'
+import sys
+p = "src/components/EnteredCalls.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'className={`inline-flex flex-col items-start rounded'
+new = 'className={`inline-flex whitespace-nowrap items-start rounded'
+if old not in s: sys.exit(1)
+s = s.replace(old, new, 1)
+# …and widen what it says, the way the one-line cell read
+old2 = '<span className="text-[10.5px] text-slate-500">\n        {fmtDate(head.call.date)}'
+new2 = '<span className="text-[12px] text-slate-500">&nbsp;·&nbsp;Next call entered&nbsp;{fmtDate(head.call.date)}'
+if old2 not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old2, new2, 1))
+PY
+
+# ── 20 ── the removed "what can still be called" windows come back
+run_case "the timeline windows come back on the Transactions tab" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '                <tr className={TREE_ROW.section} data-pm-call-section="history">'
+new = '                <tr data-call-bucket="1m"><td colSpan={callView.order.length}>Next 1 month — nothing scheduled</td></tr>\n' + old
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 21 ── the Other AIFs' holdings come back as rows (the removed card, in the table)
+run_case "the Other AIFs carry their holdings and values again" suite py <<'PY'
+import sys
+p = "src/lib/privateBook.ts"
+s = open(p, encoding="utf-8").read()
+i = s.find('.map((f) => (f.section !== "elsewhere" ? f :')
+if i < 0: sys.exit(1)
+j = s.find(");", i)
+# drop the map that strips the holding off an Other-AIF folio
+open(p, "w", encoding="utf-8").write(s[:i] + s[j + 1:])
 PY
 
 echo ""

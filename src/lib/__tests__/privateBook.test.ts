@@ -172,20 +172,39 @@ console.log("\n── the three sections ──");
   const redeemed = unFolios.filter((f) => f.status === "redeemed");
   eq("redeemed-to-nil folios are named as such, not as missing", redeemed.length,
     un.filter((u) => u.kind === "redeemed").length);
-  // THE OTHER AIFs: every folio is an AIF on the listed side or on neither,
-  // and none of them is inside the private total.
+  // THE OTHER AIFs: ONLY THEIR CAPITAL ACCOUNTS. The family asked for the card
+  // that listed these funds with their values to go (*"These kind of
+  // placeholders are not relevant"*), so a not-private AIF is here only where a
+  // real drawdown capital account keeps it in the capital totals — and even
+  // then it carries that account and NO holding.
   const elsewhere = byFund.sections.elsewhere.groups.flatMap((g) => g.folios);
-  ok("the Other AIFs section holds only AIFs on the listed side or on none",
-    elsewhere.length > 0 && elsewhere.every((f) => f.position?.assetClass === "AIF"
-      && (f.position.marketSide === "listed" || f.position.marketSide == null)));
-  ok("…and no private folio is filed there", elsewhere.every((f) => f.position?.marketSide !== "private"));
+  const notPrivate = (p: (typeof current)[number]) =>
+    (p.assetClass === "AIF" && p.marketSide === "listed") || p.marketSide == null;
+  const capAccounts = new Set(schemes.map((c) => c.accountId));
+  ok("the Other AIFs section holds only capital accounts",
+    elsewhere.length > 0 && elsewhere.every((f) => f.capital != null));
+  ok("…each on an account whose holdings are AIFs on the listed side or on none",
+    elsewhere.every((f) => {
+      const held = current.filter((p) => p.accountId === f.accountId);
+      return held.length > 0 && held.every((p) => p.assetClass === "AIF" && notPrivate(p));
+    }));
+  ok("…and none of them carries a holding, a value, a cost or a unit",
+    elsewhere.every((f) => f.position === null && f.value === null && f.cost === null && f.units === null));
+  // THE LOAD-BEARING HALF: every not-private capital account IS here, so the
+  // capital columns still add to the capital tiles. A rule that dropped the
+  // section outright passes the three checks above and loses three accounts.
+  const wantAccounts = new Set(current.filter((p) => notPrivate(p) && capAccounts.has(p.accountId)).map((p) => p.accountId));
+  eq("…and every not-private account with a capital account is one of them",
+    new Set(elsewhere.map((f) => f.accountId)).size, wantAccounts.size);
+  ok("…which this book does exercise", wantAccounts.size > 0);
+  eq("the capital total still covers every capital account in the book",
+    byFund.allCapital.capitalAccounts, schemes.length);
   near("…and none of its value is in the private total",
     byFund.privateTotal.value, byFund.sections.private.value);
-  // Every current holding the page is about lands in exactly one section.
-  const inScope = current.filter((p) => p.marketSide === "private"
-    || (p.assetClass === "AIF" && p.marketSide === "listed") || p.marketSide == null);
-  eq("every in-scope statement line is exactly one folio",
-    folios.filter((f) => f.position).length, inScope.length);
+  // Every current PRIVATE holding lands in exactly one folio with its holding;
+  // nothing outside the private side carries one.
+  eq("every private statement line is exactly one folio carrying its holding",
+    folios.filter((f) => f.position).length, current.filter((p) => p.marketSide === "private").length);
 }
 
 console.log("\n── units never add across funds ──");

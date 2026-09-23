@@ -28,6 +28,7 @@ const SUITES = [
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["private market table", "src/lib/__tests__/privateBook.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
+  ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
   ["chat context", "src/lib/__tests__/chatContext.test.ts"],

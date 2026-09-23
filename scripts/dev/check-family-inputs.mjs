@@ -389,17 +389,29 @@ text = await page.locator("body").innerText();
 // …AND THE FUND COUNT MOVED AGAIN, with the table: the page is one table now
 // and its "Private funds" section band counts the funds and the folios behind
 // them, where the old fund table's footer counted funds alone.
+//
+// ...AND THE ACCOUNTS COUNT IS NOW THE TILE'S HOVER. The family asked for the
+// tiles to be a figure and one short line — "No one will read this on the
+// dashboard" — so the coverage behind the figure rides in the tile's `title`,
+// which `innerText` cannot see. Read it there rather than let this go on
+// "passing" against text that is no longer on the page.
+const valueHover = await page.$eval('[data-tile-slot="value"] [title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the Private Market page still counts the funds and accounts it covers",
-  /\d+ funds · \d+ folios · each holding counted once/i.test(text) && /across \d+ accounts · each holding counted once/i.test(text),
-  /\d+ funds · \d+ folios/i.exec(text)?.[0]);
+  /\d+ funds · \d+ folios · each holding counted once/i.test(text)
+    && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
+  (/\d+ funds · \d+ folios/i.exec(text)?.[0] ?? "(no section count)") + " | "
+    + (/across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)"));
 check("...and its header pills and lead paragraph stay removed",
   !/\d+ funds · \d+ accounts/.test(text)
   && !/\bSTATEMENT\s*·\s*as of/i.test(text)
   && !/Every private-market holding the statements in this drop report/i.test(text));
+// The tile reads "Market value" now — the page is already the private one, so
+// "Private market value" said "private" twice — and the claim is unchanged.
 check("its private market value is a real measured figure, not the removed page's ₹0",
-  /PRIVATE MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
-  && !/PRIVATE MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
-  /PRIVATE MARKET VALUE\s*\n?\s*(₹[\d,.]+\s*(?:Cr|L))/i.exec(text)?.[1]);
+  /MARKET VALUE\s*\n?\s*₹[\d,.]+\s*(Cr|L)/i.test(text)
+  && !/MARKET VALUE\s*\n?\s*₹0\b/i.test(text),
+  /MARKET VALUE\s*\n?\s*(₹[\d,.]+\s*(?:Cr|L))/i.exec(text)?.[1]);
 /**
  * THE TILE'S LABEL WAS THE CLIENT'S OWN QUESTION — *"Drawn against no valuation
  * means?"* — so it says what it is. The CLAIM is unchanged and is what this
@@ -425,8 +437,10 @@ check("the capital the family paid into funds that publish no NAV is stated on i
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
 const unvaluedTile = await page.locator("body").innerText();
+// Struck on the SLOT, not only on its words: "never valued" is also the card's
+// own heading under the table, so a text match would pass with no tile at all.
 check("...and it is still one of the metrics a reader can put on a tile",
-  /PAID IN, BUT NEVER VALUED/i.test(unvaluedTile));
+  (await page.locator('[data-tile-slot="unvalued"]').count()) > 0 && /NEVER VALUED/i.test(unvaluedTile));
 await page.goto(`${BASE}/private-market`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
 text = await page.locator("body").innerText();
@@ -578,13 +592,17 @@ check("the Transactions tab still renders", /transaction/i.test(text));
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 
-// Read the OPTIONS off the DOM, not the label innerText shows: a `<select>`
-// renders only its selected option, so matching page text would check one of
-// them and report on all.
-const categories = await page.$$eval("select", (sels) => {
-  const cat = sels.find((s) => [...s.options].some((o) => /All categories/i.test(o.textContent || "")));
-  return cat ? [...cat.options].map((o) => (o.textContent || "").trim()) : [];
-});
+// Read the TABS off the DOM. The categories were a `<select>` until the family
+// asked for them as tabs — "give tabs to me to click and quickly reach instead
+// of a dropdown" — so each is a button carrying its section key, read by its
+// own text rather than off page prose that also names these categories.
+const categories = await page.$$eval("[data-section-filter] [data-section-tab]", (tabs) =>
+  tabs.map((b) => (b.textContent || "").trim()));
+check("the categories are tabs, and the dropdown is gone",
+  categories.length > 1
+    && (await page.$$eval("main select", (sels) => sels.filter((s) =>
+      [...s.options].some((o) => /^All categories$/i.test((o.textContent || "").trim()))).length)) === 0,
+  categories.join(" · "));
 check("the category filter offers Direct Equity and PMS mandates as separate choices",
   categories.includes("Direct Equity") && categories.includes("PMS mandates"),
   categories.join(" · "));
@@ -594,9 +612,9 @@ check("...and no longer offers the retired 'Company Shares' category",
 // Narrowing to the mandates must leave MANDATES on screen — one row per account,
 // each standing for the shares inside it. A filter that returned 263 share rows
 // would be the regrouping undone with the label still in place.
-const catSelect = page.locator('select:has(option:text-is("PMS mandates"))').first();
-if (await catSelect.count()) {
-  await catSelect.selectOption({ label: "PMS mandates" });
+const catTab = page.locator('[data-section-filter] [data-section-tab="PMS mandates"]').first();
+if (await catTab.count()) {
+  await catTab.click();
   await page.waitForTimeout(800);
   text = await page.locator("body").innerText();
   /**
@@ -621,10 +639,10 @@ if (await catSelect.count()) {
   check("each mandate row stands for the shares inside it",
     mandateRows.length > 0 && constituents > mandateRows.length,
     `${constituents} constituent holdings across ${mandateRows.length} mandates`);
-  await catSelect.selectOption({ label: "All categories" });
+  await page.locator('[data-section-filter] [data-section-tab="All"]').first().click();
   await page.waitForTimeout(600);
 } else {
-  check("filtering to PMS mandates lists mandates, one row each", false, "no category filter offering PMS mandates");
+  check("filtering to PMS mandates lists mandates, one row each", false, "no category tab for PMS mandates");
 }
 
 // ── The link is the whole point: a mandate row must OPEN its drill-down ─────

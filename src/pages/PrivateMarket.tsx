@@ -9,8 +9,8 @@ import { useTableView, sortRows, type Accessor } from "@/lib/tableView";
 import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { useViewParam } from "@/components/ViewToggle";
-import { Auditable } from "@/components/Auditable";
-import { AbsentCell, AbsentSection, absentTile, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { CallCell, CallEditor } from "@/components/EnteredCalls";
 import {
   TREE_ROW, TREE_CELL, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
@@ -27,8 +27,8 @@ import {
   bookFolios, privateBook, BOOK_SECTIONS,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
-import { schemeCalls, callTotals, callHistory, callWindows } from "@/lib/capitalCalls";
-import { weightFormula } from "@/lib/auditFormulas";
+import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
+import { useEnteredCalls, headlineCall, todayIso } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 
 /**
@@ -54,7 +54,35 @@ const PM_DEFAULT_TILES = ["value", "cost", "pnl", "uncalled"] as const;
  * what the units held cost (the holding statement). They agree on most funds and
  * they are different documents; the header says which is which.
  */
-const BOOK_COLS = ["name", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf"] as const;
+const BOOK_COLS = ["name", "committed", "called", "paid", "uncalled", "units", "cost", "value", "return", "weight", "asOf", "call"] as const;
+/**
+ * THE CAPITAL-CALL COLUMN'S OWN HOVER, and the one place the reason it exists
+ * is stated: no fund publishes a forward schedule, so the calls a fund has
+ * announced — in a notice, an email, a phone call — are typed in here. It is
+ * also where the one rule a reader of this column must not get wrong lives:
+ * these are the family's figures, never added into a statement total.
+ *
+ * `call` IS THE FAMILY'S OWN COLUMN, and LAST, because it is the one column a
+ * reader writes to rather than reads — and a stored arrangement that predates
+ * it gets it appended rather than losing it (`useTableView`).
+ */
+const CALL_COLUMN_TITLE = "Upcoming capital calls, entered by the family and saved for everyone who opens this dashboard. "
+  + "No fund in this book publishes a forward drawdown schedule, so a call a fund has announced is entered here. "
+  + "An entered call is never added into Called, Paid in or Still to call — those are what the funds' own statements print.";
+/**
+ * THE KEY A FUND'S ENTERED CALLS ARE SAVED UNDER.
+ *
+ * A fund with a valued holding keys on its own `securityKey` — the join the
+ * shared store was built on. A fund NO statement values has no securityKey, and
+ * those are exactly the funds most likely to call: India SME's three folios hold
+ * most of the money still to call in this book. So it keys on its own name,
+ * slugged the way the book slugs one (`account:<slug>` → `fund-<slug>`), which
+ * is the shape the store accepts. If such a fund one day publishes a NAV its row
+ * will key on the securityKey instead, and calls entered under the name will
+ * need re-entering — a limit stated here rather than discovered.
+ */
+const callKeyOf = (fundKey: string, securityKey: string | null) =>
+  securityKey ?? fundKey.replace(/^account:/, "fund-");
 /** The Transactions tab: what can still be called, then every dated call. */
 const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 
@@ -90,7 +118,9 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 //
 // and three sections inside the first two: the private funds with a value
 // (open), the private accounts with NO value (closed, marked "missing data"),
-// and the AIFs that are not private market at all (closed, marked).
+// and the CAPITAL ACCOUNTS of AIFs that are not private market (closed,
+// marked) — only their capital accounts, because those count in the page's
+// capital totals; their holdings are listed exposure and are not drawn here.
 //
 // ── THE AXIS IS THE HOLDING'S OWN MARKET SIDE ───────────────────────────────
 //
@@ -99,8 +129,11 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 // keying on engagement would drop three real private holdings and pull in two
 // cash sleeves. The Category III folios (Sanshi, Buoyant, Carnelian Bharat
 // Amritkaal) are listed exposure — *"These are not private market
-// investments"* — so they sit in the closed not-private section, named with
-// their value, and in no private total.
+// investments"* — so they are in no private total, and none is drawn here
+// except where a real drawdown capital account keeps it in the capital totals.
+// *"Remove this, please. This is not relevant. These kind of placeholders are
+// not relevant."* was said of the card that listed them with their values;
+// what stays is a capital account's figures and nothing else.
 //
 // ── AND THE WHOLE OF THIS BOOK'S DOUBLE COUNT IS PRIVATE ────────────────────
 //
@@ -160,7 +193,11 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
 };
 
 /** A row of figures in the shape the accessors read — a group, a section, a total or a folio. */
-type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "asOf">;
+type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "asOf">
+  & {
+    /** The fund whose entered calls this row's Capital call cell shows — none on a member row or a band. */
+    callKey?: string | null;
+  };
 
 const folioFigures = (f: BookFolio): RowFigures => ({
   committed: f.capital?.committed ?? null,
@@ -175,7 +212,10 @@ const folioFigures = (f: BookFolio): RowFigures => ({
 });
 
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
-const bookAccessors = (label: (r: RowFigures & { label?: string }) => string | null): Record<string, Accessor<RowFigures & { label?: string }>> => ({
+const bookAccessors = (
+  label: (r: RowFigures & { label?: string }) => string | null,
+  callDate: (key: string | null | undefined) => string | null,
+): Record<string, Accessor<RowFigures & { label?: string }>> => ({
   name: (r) => label(r),
   committed: (r) => r.committed,
   called: (r) => r.called,
@@ -189,6 +229,9 @@ const bookAccessors = (label: (r: RowFigures & { label?: string }) => string | n
   // second expression of one figure would be a second chance to disagree.
   weight: (r) => r.value,
   asOf: (r) => r.asOf[r.asOf.length - 1] ?? null,
+  // The date of the call the cell shows. A row with none sorts last in both
+  // directions, like every absent value in this app.
+  call: (r) => callDate(r.callKey),
 });
 
 /** Why a folio or a fund has no value — the book's own reason where it has one. */
@@ -218,6 +261,14 @@ export function PrivateMarket() {
   const sections = useExpanded(BOOK_SECTIONS.filter((s) => SECTION_COPY[s].defaultOpen));
   const bookView = useTableView("pm-book", BOOK_COLS);
   const callView = useTableView("pm-calls", CALL_COLS);
+  /**
+   * THE CALLS THE FAMILY HAS ENTERED, and which row's editor is open. Called up
+   * here with the page's other hooks, before any early return — a hook below
+   * one runs on some renders and not others.
+   */
+  const entered = useEnteredCalls();
+  const [openCall, setOpenCall] = useState<string | null>(null);
+  const today = todayIso();
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
 
@@ -251,13 +302,6 @@ export function PrivateMarket() {
     );
     const cc = callTotals(schemes);
     const history = callHistory(schemes);
-    /**
-     * The windows run from the NEWEST capital-account date rather than from
-     * `new Date()`, because that is the date the uncalled balances are struck
-     * at — the same reason `pooledXirr` closes each account on its own as-of.
-     */
-    const asOfCalls = schemes.map((r) => r.asOf).filter(Boolean).sort().pop() ?? null;
-    const windows = asOfCalls ? callWindows(schemes, asOfCalls) : [];
     const unvalued = unvaluedAccounts(portfolio.accounts, portfolio.positions, commitments);
 
     // CONSOLIDATED — each dedupeGroup once — SUMMED FROM THE FUND ROWS, never
@@ -283,7 +327,7 @@ export function PrivateMarket() {
 
     return {
       scope, funds, folios, owners, ct, unvalued, commitments,
-      schemes, cc, history, windows, asOfCalls,
+      schemes, cc, history,
       privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
@@ -325,213 +369,189 @@ export function PrivateMarket() {
    * labels beside the tiles would be a second chance for a dropdown to offer a
    * metric the strip cannot draw.
    *
-   * Each entry's `value`, `sub` and `hint` are the ones the fixed tiles carried,
-   * moved verbatim — the coverage lines, the four "must not be subtracted"
-   * warnings and the two absences with their own reasons. Nothing here is
-   * derived that was not derived before.
+   * ── A TILE IS A LABEL, A FIGURE AND ONE SHORT LINE ─────────────────────────
+   *
+   *   *"these are action cards. They need to have the major figure and a very
+   *    short description, not such long lines. No one will read this on the
+   *    dashboard; it needs to be absolutely simple and clear so people can
+   *    understand. It should be concise and crisp."*
+   *
+   * Each tile carried a coverage line and a two-sentence definition, and the
+   * labels were long enough to be cut off ("PRIVATE MARKET VAL…", "STILL TO
+   * CALL (UNCALLED CAPIT…"). So every label is now short enough to fit, every
+   * `sub` is ONE line of a few words saying what the figure IS, and the
+   * coverage counts and the working that were paragraphs are `detail` — the
+   * tile's own hover. Nothing was deleted to get there: every count and every
+   * warning that stood on a tile is in its `detail`, word for word where the
+   * sweep reads it, and the working behind the capital-account figures is also
+   * printed in full under the table, beside the rows it sums.
+   *
+   * THE ONE THING A SHORT LINE MUST STILL DO is say what the figure is, so a
+   * reader who never hovers is not left guessing: "Promised, not yet called",
+   * "Cash sent to funds", "Cash paid back so far". An absent tile's line is its
+   * REASON, in a few words, because an em dash must always name its cause.
+   *
+   * WHAT A HOVER COSTS, stated rather than glossed: it is not read by someone
+   * scanning. The two claims on this strip that a reader could be misled by
+   * without it — that uncalled capital is a liability in no total, and that
+   * Called and Paid in must not be subtracted — are ALSO printed under the
+   * table, which is where a reader doing that arithmetic already is.
    */
+  const retPct = m.privCost != null && m.privCost > 0 && m.privPnL != null ? (m.privPnL / m.privCost) * 100 : null;
+  const share = (a: number, b: number, decimals: number) => (b > 0 ? fmtPct((a / b) * 100, { decimals }) : DASH);
+  const absentLine = (why: string) => <span className="text-slate-500">{why}</span>;
   const tileMetrics: TileMetric[] = [
     {
-      id: "value", label: "Private market value", icon: <Handshake className="h-4 w-4" />,
-      value: <Auditable formula={weightFormula(m.privMV, m.bookMV, m.bookMV > 0 ? (m.privMV / m.bookMV) * 100 : null, money, "the consolidated book")}>{money(m.privMV)}</Auditable>,
-      sub: `${m.bookMV > 0 ? fmtPct((m.privMV / m.bookMV) * 100, { decimals: 2 }) : DASH} of the ${money(m.bookMV)} book · across ${m.scope.accounts.length} accounts · each holding counted once`,
+      id: "value", label: "Market value", icon: <Handshake className="h-4 w-4" />,
+      value: money(m.privMV),
+      sub: `${share(m.privMV, m.bookMV, 1)} of the ${money(m.bookMV)} book`,
+      detail: `${money(m.privMV)} ÷ ${money(m.bookMV)} = ${share(m.privMV, m.bookMV, 2)} of the consolidated book. `
+        + `Across this page's ${m.scope.accounts.length} private accounts · each holding counted once.`,
     },
     {
       id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       value: money(m.privCost),
-      sub: `cost in · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one`,
+      sub: "Cost of these holdings",
+      detail: `The cost these statements report · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
     },
     {
       id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
       value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
-      sub: m.privCost != null && m.privCost > 0
-        ? `on the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} above`
-        : "no statement here reports a cost to measure a gain against",
+      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} on cost`,
+      detail: m.privCost != null && m.privCost > 0
+        ? `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
+        : "No statement here reports a cost to measure a gain against.",
     },
-    /*
-        *"How are you calculating this uncalled capital of 16 crores? …
-         Something seems amiss here. According to me, the number is not 16
-         crores."* — the client, on this tile, a round after it first grew a
-        definition.
-
-        THE ARITHMETIC WAS RIGHT AND THE TILE WAS STILL WRONG, and both halves
-        of that are worth stating because only the second is fixable:
-
-          · the ₹15.98 Cr ties. Summed as printed over the 13 accounts that
-            print an uncalled line it is ₹15,97,50,000, and committed less
-            CALLED over all 15 comes to the same figure to the rupee. Two
-            paths, one answer, and the per-scheme table below shows every row.
-          · IT IS A FLOOR AND THE TILE NEVER SAID SO. It covers the capital
-            accounts this book HAS A STATEMENT FOR, and those are a minority of
-            the family's private accounts. A fund whose capital account nobody
-            sent contributes nothing to this figure and can still call money
-            tomorrow, so a reader who knows about such a commitment is right
-            that the number is too small — and the tile gave them no way to see
-            that.
-
-        So the tile states the coverage as its own sub-line rather than burying
-        it, and the card below names which accounts are outside it.
-    */
+    /* *"How are you calculating this uncalled capital of 16 crores? …
+        Something seems amiss here."* — the arithmetic ties two ways (see the
+        working line under the scheme table) and the figure is a FLOOR: it
+        covers only the capital accounts this book has a statement for. Both
+        halves ride in the hover now, and the floor is also stated under the
+        scheme table, which is where a reader checking the figure already is. */
     {
-      id: "uncalled", label: "Still to call (uncalled capital)", icon: <Fuel className="h-4 w-4" />,
+      id: "uncalled", label: "Still to call", icon: <Fuel className="h-4 w-4" />,
       value: <span className="text-amber-400">{money(m.ct.undrawn)}</span>,
+      sub: "Promised, not yet called",
       /**
-       * TWO COUNTS FROM TWO SETS, AND THE CAPTION MUST NOT MAKE ONE A FRACTION
-       * OF THE OTHER. This read `${m.ct.count} of this page's ${...} private
-       * accounts` — which was true while the page carried every AIF and stopped
-       * being true the moment it stopped: three of the capital accounts belong
-       * to funds shown elsewhere (a Category III fund with a real drawdown
-       * structure, and two the statements place on neither side), so 15 is not
-       * a subset of 18 and a reader who reads it as one is reading a fraction
-       * that does not exist.
+       * TWO COUNTS FROM TWO SETS, AND THE WORDING MUST NOT MAKE ONE A FRACTION
+       * OF THE OTHER: three of the capital accounts belong to funds that are not
+       * private market, so "15 of this page's 18" would be a fraction that does
+       * not exist. Stage 10bp's fix, kept in the hover.
        */
-      sub: `across ${m.ct.count} capital accounts`
+      detail: "Money promised to these funds that they have not yet asked for — a bill that can arrive any day, "
+        + "not an asset, and never added to a value on this page. "
+        + `Across ${m.ct.count} capital accounts`
         + (m.capOutside > 0 ? `, ${m.capOutside} of them in funds that are not private market` : "")
-        + ` · a fund whose capital account nobody sent contributes nothing, so this is a floor`,
-      hint: "Money promised to these funds that they have not yet asked for. A bill that can arrive any day — not an asset, and never added to a value on this page.",
+        + ". A fund whose capital account nobody sent contributes nothing, so this is a floor.",
     },
-    /* ── COMMITTED vs CALLED vs INVESTED — three figures, not two ────────────
-        *"Capital committed, or is it capital invested? What is capital
-         committed versus invested? … Because committed can be one thing. I
-         would commit 10 crores, but I may have only invested so far 5 crores,
-         and 5 crores is remaining to be drawn."*
-
-        The client is describing the model exactly, and the page was printing
-        two of its three figures under one word. `Drawn` was whichever of
-        CALLED and PAID each fund's own layout happened to match — the same
-        field meaning two things across fifteen rows. They are separate now,
-        each read off the line its own statement labels, and each tile says
-        which of the four quantities it is in the client's own words. */
+    /* ── COMMITTED vs CALLED vs PAID IN — three figures, not two ─────────────
+        *"Capital committed, or is it capital invested? … I would commit 10
+         crores, but I may have only invested so far 5 crores."* Each is read
+        off the line its own statement labels, and each short line says which
+        of the three it is in the client's own words. */
     {
       id: "committed", label: "Committed", icon: <Landmark className="h-4 w-4" />,
-      value: money(m.ct.committed), sub: `${m.ct.committedOf} of ${m.ct.count} capital accounts`,
-      hint: "The full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value on this page.",
+      value: money(m.ct.committed),
+      sub: "Total promised to funds",
+      detail: `${m.ct.committedOf} of ${m.ct.count} capital accounts. The full amount signed for, whether or not the fund has asked for it yet — not money spent, and in no market value on this page.`,
     },
     {
-      id: "called", label: "Called by the funds", icon: <Banknote className="h-4 w-4" />,
-      value: m.cc.called == null ? DASH : money(m.cc.called),
-      sub: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line`,
-      hint: "What the funds have demanded so far. It covers a different set of accounts from Invested, so the two must never be subtracted.",
+      id: "called", label: "Called", icon: <Banknote className="h-4 w-4" />,
+      value: m.cc.called == null ? <AbsentValue /> : money(m.cc.called),
+      sub: m.cc.called == null ? absentLine("No statement prints it") : "Asked for so far",
+      detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line. It covers a different set of accounts from Paid in, so the two must never be subtracted.`,
     },
     {
-      id: "paid", label: "Invested (paid in)", icon: <Wallet className="h-4 w-4" />,
-      value: m.cc.paid == null ? DASH : money(m.cc.paid),
-      sub: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank`,
-      hint: "Cash that has actually left the family’s bank. Not the same set as Capital invested above, which is the cost of every private holding.",
+      id: "paid", label: "Paid in", icon: <Wallet className="h-4 w-4" />,
+      value: m.cc.paid == null ? <AbsentValue /> : money(m.cc.paid),
+      sub: m.cc.paid == null ? absentLine("No statement prints it") : "Cash sent to funds",
+      detail: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank. Not the same set as Capital invested, which is the cost of the holdings in the table below.`,
     },
     {
-      id: "due", label: "Due now (called, unpaid)", icon: <CalendarClock className="h-4 w-4" />,
-      value: m.cc.dueNow == null ? DASH : <span className={m.cc.dueNow > 0 ? "text-amber-400" : undefined}>{money(m.cc.dueNow)}</span>,
-      sub: m.cc.dueNowOf === 0
-        ? "no statement here prints a called-but-unpaid line"
-        : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line · a measured figure, not an assumption`,
-      hint: "Called by the fund and not yet paid — the one figure here that is genuinely owed rather than merely possible.",
+      id: "due", label: "Due now", icon: <CalendarClock className="h-4 w-4" />,
+      value: m.cc.dueNow == null ? <AbsentValue /> : <span className={m.cc.dueNow > 0 ? "text-amber-400" : undefined}>{money(m.cc.dueNow)}</span>,
+      sub: m.cc.dueNowOf === 0 ? absentLine("No statement prints it") : "Called, not yet paid",
+      detail: m.cc.dueNowOf === 0
+        ? "No statement here prints a called-but-unpaid line."
+        : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line · a measured figure, not an assumption. The rest are skipped, never counted as nil.`,
     },
-    /* THE FIGURE THIS PAGE EXISTS FOR. Real money, paid, and in NO total above
-        it: adding drawn capital to a market value reports what was paid as
-        what the stake is worth.
-
-        THE LABEL WAS THE CLIENT'S THIRD QUESTION — *"Drawn against no
-        valuation means?"* — and it was jargon twice over: "drawn" is the
-        fund's word for having taken the money, and "against no valuation" is a
-        property of the STATEMENT rather than of the money. */
+    /* Real money, paid, and in NO total on this page: adding drawn capital to
+        a market value reports what was paid as what the stake is worth. */
     {
-      id: "unvalued", label: "Paid in, but never valued", icon: <HelpCircle className="h-4 w-4" />,
+      id: "unvalued", label: "Never valued", icon: <HelpCircle className="h-4 w-4" />,
       value: <span className="text-amber-400">{money(m.unvaluedDrawn)}</span>,
-      sub: `${m.unvaluedNoNav.length} folios in funds that publish no NAV at all · not in the private market value above`,
-      hint: "Cash paid into funds that have never published a valuation. Real money, and in no total on this page.",
+      sub: "Paid into funds with no NAV",
+      detail: `${m.unvaluedNoNav.length} folios in funds that publish no NAV at all. Real money, not in Market value, and in no total on this page.`,
     },
-    /* *"what is distributions?"* — same treatment, and the label carries the
-        client's own word beside the plain one rather than only the plain one:
-        the sub-line under this tile has always said "distribution figure", so a
-        reader who asks what a distribution is was reading a word the tile used
-        and never defined. */
+    /* *"what is distributions?"* — the label is the client's own word and the
+        short line under it is the answer. */
     {
-      id: "distributed", label: "Distributions (cash returned)", icon: <Coins className="h-4 w-4" />,
+      id: "distributed", label: "Distributions", icon: <Coins className="h-4 w-4" />,
       value: money(m.ct.distributed),
-      sub: `${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`,
-      hint: "Cash these funds have already paid back. Not part of the value above, and it does not reduce what a fund can still call.",
+      sub: "Cash paid back so far",
+      detail: `${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure. Not part of the value above, and it does not reduce what a fund can still call.`,
     },
     /* ── THE TWO THAT ARE ABSENT BY MEASUREMENT ──────────────────────────────
-        They are OFFERED like every other metric, because the family asked for
-        every metric they might want to see and the answer to both is a fact
-        about this corpus rather than a gap in the picker. A catalogue that
-        silently omitted them would take with it the two things a reader of a
-        private book most needs told. */
+        Offered like every other metric: the answer to both is a fact about this
+        corpus rather than a gap in the picker. The short line is the REASON,
+        and the full reason and what would fill it is the hover. */
     {
       id: "realised", label: "Realised gain", icon: <Coins className="h-4 w-4" />,
-      ...absentTile(
-        "no capital gain statement covers any private account in this drop",
-        "Every AIF-engagement account carries that absence verbatim in the book's capital-gain record. Their redemptions are real; what they realised was never reported to this book, so it is absent rather than nil."),
+      value: <AbsentValue />,
+      sub: absentLine("No statement reports it"),
+      detail: "No capital gain statement covers any private account in this drop. Every AIF-engagement account carries that absence verbatim in the book's capital-gain record. Their redemptions are real; what they realised was never reported to this book, so it is absent rather than nil.",
     },
-    /* ITS REASON WAS HALF FALSE THE MOMENT THE CALLS WERE READ, and this repo
-        has recorded that failure — an absence standing on a premise nobody
-        rechecked — often enough to catch it in its own change. It read "none
-        publishes its calls as dated data", which was true when written and is
-        now false of every one of these fifteen accounts. What is still missing
-        is the OTHER half, and only that half: a distribution figure on 12 of
-        the 15. */
     {
-      id: "multiple", label: "Net multiple (TVPI / DPI)", icon: <Handshake className="h-4 w-4" />,
-      ...absentTile(
-        `only ${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure`,
-        `A multiple divides what has come back plus what is still inside by what went in. The last of those three is now measurable per folio — ${m.cc.callCount} dated calls, each reconciled against its own statement — and the first is not: ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all. Reading those as nil would report a fund that has returned nothing when its statement simply does not say, and a DPI built on that understates every folio it touches.`),
+      id: "multiple", label: "TVPI / DPI", icon: <Handshake className="h-4 w-4" />,
+      value: <AbsentValue />,
+      sub: absentLine("Too few distribution figures"),
+      detail: `Only ${m.ct.distributedOf} of ${m.ct.count} capital accounts publish a distribution figure. A multiple divides what has come back plus what is still inside by what went in; ${m.ct.count - m.ct.distributedOf} of these ${m.ct.count} accounts print no distribution line at all, and reading those as nil would report a fund that has returned nothing when its statement simply does not say.`,
     },
-    /* ── AND THE FIGURES THE REMOVED SUBTITLE USED TO CARRY ──────────────────
-        *"Give option for every single metric the user might want to see."* The
-        subtitle counted this page's funds, accounts and owners and went at the
-        family's request because the tables state two of the three; as OPTIONAL
-        tiles they cost nothing and a reader who wants the count can have it
-        back. Each is a count of a set this page already draws, so none is a new
-        measurement. */
+    /* Counts of sets this page already draws, so none is a new measurement. */
     {
-      id: "funds", label: "Funds held", icon: <Handshake className="h-4 w-4" />,
+      id: "funds", label: "Funds", icon: <Handshake className="h-4 w-4" />,
       value: fmtNum(m.funds.length),
-      sub: `distinct funds · each counted once however many members hold it`,
+      sub: "Distinct funds held",
+      detail: "Each fund counted once however many members hold it.",
     },
     {
-      id: "folios", label: "Folio rows", icon: <Layers className="h-4 w-4" />,
+      id: "folios", label: "Folios", icon: <Layers className="h-4 w-4" />,
       value: fmtNum(m.folios.length),
-      sub: `one per statement line · ${m.folios.length - m.funds.length} more than the fund count above`,
-      hint: "Every statement as printed. Two holdings here are reported under two members each, which is why this is the larger number.",
+      sub: "Statement lines",
+      detail: `One per statement line — ${m.folios.length - m.funds.length} more than the fund count, because a fund held in several folios is one fund row.`,
     },
     {
       id: "owners", label: "Owners", icon: <Users className="h-4 w-4" />,
       value: fmtNum(m.owners.length),
-      sub: "family members and trusts holding something private",
+      sub: "Members and trusts",
+      detail: "Family members and trusts holding something private.",
     },
     {
       id: "accounts", label: "Capital accounts", icon: <Landmark className="h-4 w-4" />,
       value: fmtNum(m.ct.count),
+      sub: "Drawdown statements",
       /**
-       * AND THE SAME CROSSED FRACTION THE UNCALLED TILE WAS FIXED FOR, ON THIS
-       * TILE. It read `${m.ct.count} of this page's ${...} private accounts` —
-       * 15 of 18 — while three of those 15 belong to funds this page does not
-       * carry, so 15 is not a subset of 18 and the "other 3" a reader infers
-       * does not exist. The two counts PARTITION the tile's own figure now,
-       * which is the only form in which both can be printed together.
+       * THE SAME CROSSED FRACTION THE UNCALLED TILE WAS FIXED FOR: three of
+       * these capital accounts belong to funds that are not private market, so the
+       * two counts PARTITION the tile's own figure — the only form in which both
+       * can be printed together.
        */
-      sub: `${m.ct.count - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
-        + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds that are not private market` : ""),
-      hint: "A capital account is the statement that prints a commitment and what has been called against it. The rest report a holding and no commitment.",
+      detail: `${m.ct.count - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
+        + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds that are not private market` : "")
+        + ". A capital account is the statement that prints a commitment and what has been called against it.",
     },
     {
-      id: "calls", label: "Dated capital calls", icon: <CalendarClock className="h-4 w-4" />,
+      id: "calls", label: "Capital calls", icon: <CalendarClock className="h-4 w-4" />,
       value: fmtNum(m.cc.callCount),
-      sub: `across ${m.ct.count} capital accounts · every one reconciled against its own statement's printed total`,
-      hint: "Each call the funds have made, with its own date. A statement whose rows did not reproduce its own printed total publishes none of them here.",
+      sub: "Dated calls so far",
+      detail: `Across ${m.ct.count} capital accounts, every one reconciled against its own statement's printed total.`,
     },
-    /* THE RAW TOTAL, OFFERED WITH ITS OWN DOUBLE COUNT NAMED. The folio view's
-        footer already prints it, and a reader who wants it on the strip is
-        entitled to it — but a private total that is ₹3.17 Cr above the
-        consolidated one must never appear without saying why, which is the
-        whole reason this is a tile with a sub-line rather than a second
-        unlabelled figure. */
+    /* THE RAW TOTAL, and it never appears without its own double count named. */
     {
-      id: "raw", label: "Private value, as printed", icon: <Layers className="h-4 w-4" />,
+      id: "raw", label: "Value as printed", icon: <Layers className="h-4 w-4" />,
       value: money(m.rawMV),
-      sub: `every statement as printed · ${money(m.scope.doubleCounted)} of it is two holdings reported under two members each`,
-      hint: "Not the consolidated figure. Use it to tie this page to the statements one by one; the Private market value tile counts each holding once.",
+      sub: `Includes ${money(m.scope.doubleCounted)} double count`,
+      detail: `Every statement as printed. ${money(m.scope.doubleCounted)} of it is two holdings reported under two members each; Market value counts each once.`,
     },
   ];
 
@@ -555,7 +575,44 @@ export function PrivateMarket() {
       sections.setMany(BOOK_SECTIONS, true);
     }
   };
-  const nameAcc = bookAccessors((r) => r.label ?? null);
+  /** The date of the call a fund's cell shows, for the sort — null where none is entered or the store is not read. */
+  const callDate = (key: string | null | undefined) =>
+    key && entered.state.status === "ready" ? headlineCall(entered.state.calls, key, today)?.call.date ?? null : null;
+  const nameAcc = bookAccessors((r) => r.label ?? null, callDate);
+  /** A FUND row's call key. A member row is not a fund, so it has none. */
+  const groupCallKey = (g: BookGroup) => (g.kind === "fund" ? callKeyOf(g.key, g.securityKey) : null);
+  const folioCallKey = (f: BookFolio) => callKeyOf(f.fundKey, f.securityKey);
+  /**
+   * ── THE CAPITAL CALL CELL, AND THE EDITOR IT OPENS ─────────────────────────
+   *
+   * *"it simply needs to be a editable coloumn in this table itself which people
+   *  can add and edit capital call and save and it stays same for all."*
+   *
+   * ONE CELL PER FUND, and on the FUND level of whichever grouping is drawn: By
+   * fund it is the fund row itself, By owner it is each member's line in a fund.
+   * A member is not a fund and a band is not one either, so those carry none —
+   * the same tree rule the other columns follow, where a figure sits on the
+   * level it describes. Every fund row gets one, in every section, and that is
+   * what closes the gap the column shipped with: a fund NO statement values
+   * (India SME, Sky Capital) used to have no row to type a call against, and
+   * India SME holds most of the money still to call in this book.
+   */
+  const callCell = (rowId: string, fund: string, fundName: string) => (
+    <td key="call" data-col-cell="call" data-pm-call-cell={fund} className="px-2 py-1.5 whitespace-nowrap">
+      <CallCell fund={fund} fundName={fundName} state={entered.state} today={today}
+        open={openCall === rowId} money={money}
+        onToggle={() => setOpenCall((cur) => (cur === rowId ? null : rowId))} />
+    </td>
+  );
+  /** The editor, as a row under the one that opened it — never a floating panel the table's scroll could clip. */
+  const callEditorRow = (rowId: string, fund: string, fundName: string) => openCall === rowId && (
+    <tr key={`${rowId}-editor`} className="bg-ink-900/60" data-pm-call-editor={fund}>
+      <td colSpan={bookView.order.length} className="px-3 pb-3 pt-1">
+        <CallEditor fund={fund} fundName={fundName} state={entered.state} money={money}
+          onSave={entered.save} onDelete={entered.remove} onClose={() => setOpenCall(null)} />
+      </td>
+    </tr>
+  );
   const pct = (v: number | null) => (v == null || !(book.privateValue > 0) ? null : (v / book.privateValue) * 100);
 
   // ── THE CELLS, ONE WRITER FOR EVERY ROW KIND ────────────────────────────────
@@ -566,7 +623,7 @@ export function PrivateMarket() {
   // what an absent cell SAYS — never which column a figure lands in.
   type CellKind = "group" | "folio" | "section" | "total" | "capital";
   type Cells = Partial<Record<(typeof BOOK_COLS)[number], ReactNode>>;
-  const pad = (k: CellKind) => (k === "folio" ? "px-2.5 py-1.5" : k === "section" ? "px-2.5 py-2" : "px-2.5 py-2.5");
+  const pad = (k: CellKind) => (k === "folio" ? "px-2 py-1.5" : k === "section" ? "px-2 py-2" : "px-2 py-2.5");
   const tone = (k: CellKind) => (k === "total" || k === "capital" ? "font-semibold text-slate-100"
     : k === "section" ? "font-medium text-slate-300" : k === "folio" ? "text-slate-300" : "text-slate-200");
   /**
@@ -592,6 +649,13 @@ export function PrivateMarket() {
     stale?: number | null;
     ties?: boolean | null;
     implied?: number | null;
+    /**
+     * A ROW THAT CARRIES ONLY ITS CAPITAL ACCOUNT — an AIF that is not private
+     * market. Its holding columns stay EMPTY rather than dashed: the model does
+     * not carry the holding at all, so there is nothing absent to explain on the
+     * row, and the band above it says why in one line.
+     */
+    capitalOnly?: boolean;
     /**
      * A MEASURED NIL — the account was redeemed and its statement's balance is
      * nothing. It renders ₹0 with the word beside it, never the dash an absent
@@ -635,6 +699,25 @@ export function PrivateMarket() {
     // A capital-only total says nothing about holdings: those columns are left
     // for `TrFoot` to fill, which is what a total with no figure in a column is.
     if (k === "capital") return out;
+    const asOfCell = () => {
+      const first = r.asOf[0], last = r.asOf[r.asOf.length - 1];
+      return (
+        <td key="asOf" data-col-cell="asOf" data-as-of={r.asOf.join(" ") || undefined} className={`${p} whitespace-nowrap text-slate-400`}>
+          {r.asOf.length === 0 ? <AbsentCell reason="this account states no report date" />
+            : r.asOf.length === 1 ? fmtDate(first)
+              // A RANGE IS TWO DATES, AND IT SAYS SO: the folios behind this row
+              // are marked on different statement dates, and one date here would
+              // present a blend as one clean as-of.
+              : <><div>{rangeStart(first, last)} →</div><div>{fmtDate(last)}</div></>}
+          {(ctx.stale ?? 0) > 31 && <div className="text-[10.5px] text-amber-400">{ctx.stale}d behind</div>}
+        </td>
+      );
+    };
+    // The capital account's own statement date is still its date.
+    if (ctx.capitalOnly) {
+      out.asOf = asOfCell();
+      return out;
+    }
     // A band or a total spans several funds, and a unit of one fund is not a
     // unit of another: the cell says so rather than sitting blank.
     out.units = r.units != null ? td("units", fmtNum(r.units, 3), "text-slate-400")
@@ -655,20 +738,7 @@ export function PrivateMarket() {
       out.weight = ctx.weight == null ? absent("weight", ctx.weightWhy ?? "no value to weigh")
         : td("weight", `${ctx.weight.toFixed(1)}%`, "text-slate-400");
     }
-    if (holdingRow || k === "section") {
-      const first = r.asOf[0], last = r.asOf[r.asOf.length - 1];
-      out.asOf = (
-        <td key="asOf" data-col-cell="asOf" data-as-of={r.asOf.join(" ") || undefined} className={`${p} whitespace-nowrap text-slate-400`}>
-          {r.asOf.length === 0 ? <AbsentCell reason="this account states no report date" />
-            : r.asOf.length === 1 ? fmtDate(first)
-              // A RANGE IS TWO DATES, AND IT SAYS SO: the folios behind this row
-              // are marked on different statement dates, and one date here would
-              // present a blend as one clean as-of.
-              : <><div>{rangeStart(first, last)} →</div><div>{fmtDate(last)}</div></>}
-          {(ctx.stale ?? 0) > 31 && <div className="text-[10.5px] text-amber-400">{ctx.stale}d behind</div>}
-        </td>
-      );
-    }
+    if (holdingRow || k === "section") out.asOf = asOfCell();
     return out;
   };
   /** A row's cells in the DECLARED order `<Tr>` expects, an empty cell where a column has none. */
@@ -706,11 +776,17 @@ export function PrivateMarket() {
     const toggle = () => rows.toggle(key);
     const inPrivate = g.section === "private";
     const kids = sortRows(
-      g.folios.map((f) => ({ f, fig: folioFigures(f), label: grouping === "fund" ? f.owner : f.fundName })),
+      g.folios.map((f) => ({
+        f, label: grouping === "fund" ? f.owner : f.fundName,
+        fig: { ...folioFigures(f), callKey: grouping === "owner" ? folioCallKey(f) : null },
+      })),
       bookView.sort,
       Object.fromEntries(Object.entries(nameAcc).map(([c, a]) => [c, (x: { fig: RowFigures; label: string }) => a({ ...x.fig, label: x.label })])),
     );
     const scheme = (f: BookFolio) => f.capital;
+    const capitalOnly = g.section === "elsewhere";
+    const fundCall = groupCallKey(g);
+    const fundRowId = `fund:${g.key}`;
     return (
       <Fragment key={key}>
         <Tr view={bookView} className={TREE_ROW.parent} {...rowToggle(toggle)}
@@ -734,7 +810,9 @@ export function PrivateMarket() {
               )}
             </>}
             sub={groupSub(g)} />
-          {inOrder(figureCells(g, "group", {
+          {inOrder({
+            ...figureCells(g, "group", {
+            capitalOnly,
             noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, "group") : undefined,
             noValue: valueWhy(g.status, g.folios[0]?.reason ?? null),
             nil: g.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -743,12 +821,19 @@ export function PrivateMarket() {
             weightWhy: weightWhy(g.section),
             stale: g.staleDays,
             ties: g.ties,
-          }), "group")}
+            }),
+            ...(fundCall ? { call: callCell(fundRowId, fundCall, g.label) } : {}),
+          }, "group")}
         </Tr>
+        {fundCall && callEditorRow(fundRowId, fundCall, g.label)}
         {open && kids.map(({ f, fig }, i) => {
           const s = scheme(f);
+          // BY OWNER the folio is the fund level, so the call cell is here.
+          const folioCall = grouping === "owner" ? folioCallKey(f) : null;
+          const folioRowId = `owner:${g.key}:${f.key}`;
           return (
-            <Tr view={bookView} key={f.key} className={TREE_ROW.child}
+            <Fragment key={f.key}>
+            <Tr view={bookView} className={TREE_ROW.child}
               data-pm-folio-row={g.key} data-pm-row-section={g.section} data-account={f.accountId}
               data-pm-value={f.value ?? undefined} data-pm-counted={f.counted ? "" : undefined}
               data-calls={s ? s.calls.length : undefined}>
@@ -766,7 +851,9 @@ export function PrivateMarket() {
                     </span></>
                   )}
                 </>} />
-              {inOrder(figureCells(fig, "folio", {
+              {inOrder({
+                ...figureCells(fig, "folio", {
+                capitalOnly,
                 noCapital: s ? undefined : noCapitalWhy(g.section, "folio"),
                 noValue: valueWhy(f.status, f.reason),
                 nil: f.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
@@ -776,8 +863,12 @@ export function PrivateMarket() {
                 stale: s?.staleDays ?? null,
                 ties: s?.uncalledTies ?? null,
                 implied: s?.impliedUncalled ?? null,
-              }), "folio")}
+                }),
+                ...(folioCall ? { call: callCell(folioRowId, folioCall, f.fundName) } : {}),
+              }, "folio")}
             </Tr>
+            {folioCall && callEditorRow(folioRowId, folioCall, f.fundName)}
+            </Fragment>
           );
         })}
         {open && grouping === "fund" && g.overlap && overlapRow(g.overlap, g.key, g.overlap.statements, inPrivate)}
@@ -808,6 +899,7 @@ export function PrivateMarket() {
       <td key="return" className={pad("folio")} />
       <td key="weight" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{weigh && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : ""}</td>
       <td key="asOf" className={pad("folio")} />
+      <td key="call" className={pad("folio")} />
     </Tr>
   );
 
@@ -822,7 +914,9 @@ export function PrivateMarket() {
      * is checked rather than assumed, and falls back to the general words the
      * day a drop files anything else here.
      */
-    const title = id === "elsewhere" && s.groups.every((g) => g.folios.every((f) => f.position?.assetClass === "AIF"))
+    // `category` is set on an AIF's folio and on nothing else, and it survives
+    // the holding being dropped from this section — which `position` does not.
+    const title = id === "elsewhere" && s.groups.every((g) => g.folios.every((f) => f.category != null))
       ? "Other AIFs" : copy.title;
     const open = sectionOpen(id);
     const shown = sortRows(s.groups.filter(groupMatches), bookView.sort, nameAcc as Record<string, Accessor<BookGroup>>);
@@ -831,7 +925,7 @@ export function PrivateMarket() {
       ? `${s.groups.length} ${noun} · ${s.folios} folios · ${grouping === "fund" ? "each holding counted once" : "each statement as printed"}`
       : id === "unvalued"
         ? `${s.groups.length} ${noun} · ${s.folios} folios · the statements carry no value, so ${money(s.paid)} paid in is in no value total`
-        : `${s.groups.length} ${noun} · ${s.folios} folios · Category III trades listed shares, and the rest print no category. Shown in Portfolio Monitor; in no private total.`;
+        : `${s.groups.length} ${noun} · capital accounts only — ${s.groups.length === 1 && grouping === "fund" ? "this fund holds" : "these funds hold"} listed shares or print no category, so the holdings are on the Portfolio Monitor and in no private total`;
     return (
       <Fragment key={id}>
         <Tr view={bookView} className={`${TREE_ROW.section} ${id === "private" ? "" : "cursor-pointer"}`}
@@ -842,6 +936,7 @@ export function PrivateMarket() {
             open={open} onToggle={() => sections.toggle(id)}
             toggleData={{ "data-pm-section-toggle": id }} />
           {inOrder(figureCells(s, "section", {
+            capitalOnly: id === "elsewhere",
             noCapital: s.capitalAccounts === 0 ? "no capital account in this section" : undefined,
             noValue: id === "unvalued" ? "nothing in this section is valued — missing data, never a zero" : "no value",
             noHolding: id === "unvalued" ? "no valued holding in this section" : undefined,
@@ -879,20 +974,6 @@ export function PrivateMarket() {
       amount: (c) => c.amount,
     },
   );
-  /**
-   * Which statements the uncalled figure is stale on — one entry per fund and
-   * date, with how many accounts share it, so two trusts holding one fund read
-   * as one fund held twice rather than as the same name printed twice.
-   */
-  const staleFunds = [...m.cc.staleRows.reduce((acc, r) => {
-    const k = `${r.fund}|${r.asOf}`;
-    acc.set(k, { fund: r.fund, asOf: r.asOf!, n: (acc.get(k)?.n ?? 0) + 1 });
-    return acc;
-  }, new Map<string, { fund: string; asOf: string; n: number }>()).values()];
-  const staleNote = m.cc.staleUncalled != null && m.cc.staleUncalled > 0
-    ? `${money(m.cc.staleUncalled)} of it is on statements older than the newest here (${staleFunds.map((x) => `${x.fund}${x.n > 1 ? ` ×${x.n} accounts` : ""} · ${fmtDate(x.asOf)}`).join("; ")}), so a call made since would not show.`
-    : null;
-
   const tabs = (
     <div className="inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
       role="tablist" aria-label="What the private market table shows">
@@ -949,24 +1030,32 @@ export function PrivateMarket() {
             <table className="min-w-full text-[13px]" data-pm-table={view}>
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
-                  <SortHeader col="name" view={bookView} align="left" className="min-w-[16.5rem]">{grouping === "fund" ? "Fund" : "Family member"}</SortHeader>
-                  <SortHeader col="committed" view={bookView} pad="px-2.5 py-2" note="promised"
+                  <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : "Family member"}</SortHeader>
+                  <SortHeader col="committed" view={bookView} pad="px-2 py-2" note="promised"
                     title="What the family signed up to invest, whether or not the fund has asked for it yet.">Committed</SortHeader>
-                  <SortHeader col="called" view={bookView} pad="px-2.5 py-2" note="asked for"
+                  <SortHeader col="called" view={bookView} pad="px-2 py-2" note="asked for"
                     title="What the fund has demanded so far, off the line its own statement labels.">Called</SortHeader>
-                  <SortHeader col="paid" view={bookView} pad="px-2.5 py-2" note="cash sent"
+                  <SortHeader col="paid" view={bookView} pad="px-2 py-2" note="cash sent"
                     title="Cash that has actually left the family's bank for this fund — its capital account.">Paid in</SortHeader>
-                  <SortHeader col="uncalled" view={bookView} pad="px-2.5 py-2" note="not yet asked"
-                    title="Promised and not yet asked for, exactly as the fund prints it — never worked out as committed − called. A bill that can arrive any day, never added to a value.">Still to call</SortHeader>
-                  <SortHeader col="units" view={bookView} pad="px-2.5 py-2">Units</SortHeader>
-                  <SortHeader col="cost" view={bookView} pad="px-2.5 py-2" note="of units held"
+                  <SortHeader col="uncalled" view={bookView} pad="px-2 py-2" note="not yet asked"
+                    title="Promised and not yet asked for, exactly as the fund prints it — never worked out as committed − called. A bill that can arrive any day, never added to a value.">Still to<br />call</SortHeader>
+                  <SortHeader col="units" view={bookView} pad="px-2 py-2">Units</SortHeader>
+                  <SortHeader col="cost" view={bookView} pad="px-2 py-2" note="of units held"
                     title="What the units held cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
-                  <SortHeader col="value" view={bookView} pad="px-2.5 py-2" note="fund's mark"
+                  <SortHeader col="value" view={bookView} pad="px-2 py-2" note="fund's mark"
                     title="What the holding is worth on the fund's own statement date.">Value</SortHeader>
-                  <SortHeader col="return" view={bookView} pad="px-2.5 py-2" note="on cost">Return</SortHeader>
-                  <SortHeader col="weight" view={bookView} pad="px-2.5 py-2" note="of private"
+                  <SortHeader col="return" view={bookView} pad="px-2 py-2" note="on cost">Return</SortHeader>
+                  <SortHeader col="weight" view={bookView} pad="px-2 py-2" note="of private"
                     title="The row's value as a share of the private market value — the same denominator on every row.">Weight</SortHeader>
-                  <SortHeader col="asOf" view={bookView} pad="px-2.5 py-2" align="left">As of</SortHeader>
+                  <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
+                  {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
+                      is where the reason it exists lives — no fund publishes a
+                      forward schedule — and while the store cannot be read the
+                      header says so once, rather than every row repeating it. */}
+                  <SortHeader col="call" view={bookView} pad="px-2 py-2" align="left"
+                    title={CALL_COLUMN_TITLE}
+                    note={entered.state.status === "unavailable" ? "not available" : "you enter"}
+                    noteTitle={entered.state.status === "unavailable" ? entered.state.reason : undefined}>Capital<br />call</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
@@ -1002,56 +1091,16 @@ export function PrivateMarket() {
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
-                {/* WHAT CAN STILL BE CALLED — measured where the statements
-                    measure it, and a named absence where they do not. NOT ONE
-                    document in this archive publishes a forward drawdown
-                    schedule, so the three windows are empty by measurement and
-                    the one bucket that holds money is the one no window can
-                    claim. A forecast from the observed cadence would read as the
-                    sixteenth measured figure, which is why there is none. */}
-                <tr className={TREE_ROW.section} data-pm-call-section="upcoming">
-                  <TreeSectionCell colSpan={callView.order.length} title="What can still be called"
-                    sub={<>
-                      {m.asOfCalls ? `From ${fmtDate(m.asOfCalls)}, the newest capital-account date here. ` : ""}
-                      <span className="text-slate-400">No fund in this book publishes a forward drawdown schedule</span> — a
-                      {" "}drawdown notice or a commitment-period schedule from each fund is what would fill the windows.
-                    </>} />
-                </tr>
-                <Tr view={callView} data-call-bucket="due-now" className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2 font-medium text-slate-200">Due now</td>
-                  <td className="px-4 py-2 text-slate-300">Called by a fund and not yet paid</td>
-                  <td className="px-4 py-2 text-slate-400">
-                    {m.cc.dueNowOf === 0 ? "no statement here prints the line" : `${m.cc.dueNowOf} of ${m.cc.count} accounts print this line`}
-                  </td>
-                  <td className="px-4 py-2 text-[11.5px] text-slate-500">
-                    measured where printed — the rest are skipped, never counted as nil
-                  </td>
-                  <td data-call-amount className="px-4 py-2 text-right mono text-slate-100">{m.cc.dueNow == null ? <AbsentCell reason="no statement prints a called-but-unpaid line" /> : money(m.cc.dueNow)}</td>
-                </Tr>
-                {m.windows.map((w) => (
-                  <Tr view={callView} key={w.key} data-call-bucket={w.key} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2 font-medium text-slate-200">{w.label}</td>
-                    <td className="px-4 py-2 text-slate-300">Calls a fund has dated into this window</td>
-                    <td className="px-4 py-2 text-slate-400">{w.scheduled.length ? `${w.scheduled.length} scheduled` : "none scheduled"}</td>
-                    <td className="px-4 py-2 text-[11.5px] text-slate-500">{w.scheduled.length ? "from the funds' own notices" : "no fund publishes a schedule"}</td>
-                    <td data-call-amount className="px-4 py-2 text-right mono text-slate-400">
-                      {w.scheduled.length === 0
-                        ? <AbsentCell reason="no fund in this book publishes a forward drawdown schedule, so nothing can be placed in this window. A drawdown notice or a commitment-period schedule from the fund is what would fill it." />
-                        : money(sum(w.scheduled.map((c) => c.amount)))}
-                    </td>
-                  </Tr>
-                ))}
-                <Tr view={callView} data-call-bucket="unscheduled" className="hover:bg-ink-700/40">
-                  <td className="px-4 py-2 font-medium text-amber-400">Promised, no date</td>
-                  <td className="px-4 py-2 text-slate-300">
-                    Still to call — the funds can ask for it on any day
-                    {staleNote && <div className="text-[11px] text-slate-500">{staleNote}</div>}
-                  </td>
-                  <td className="px-4 py-2 text-slate-400">{m.ct.undrawnOf} of {m.ct.count} accounts</td>
-                  <td className="px-4 py-2 text-[11.5px] text-slate-500">not in a window because no fund has scheduled it, not because it is far off</td>
-                  <td data-call-amount className="px-4 py-2 text-right mono text-amber-400">{money(m.ct.undrawn)}</td>
-                </Tr>
-
+                {/* THE "WHAT CAN STILL BE CALLED" ROWS THAT STOOD HERE ARE GONE, at
+                    the family's request — *"remove this, it simply needs to be a
+                    editable coloumn in this table itself … We are trying to see
+                    all views on master table itself instead of having such
+                    clutter."* Three of their five figures were permanently empty
+                    (no fund publishes a forward schedule), and the two real ones
+                    survive where the family reads them: Due now is a tile, and
+                    the undated still to call is a tile, a column and the total
+                    above. What could fill the empty windows is the family's own
+                    upcoming calls, and they are the Capital call column now. */}
                 <tr className={TREE_ROW.section} data-pm-call-section="history">
                   <TreeSectionCell colSpan={callView.order.length} title="Every capital call made"
                     sub={`${m.history.length} calls, newest first — each fund's rows reproduce the total its own statement prints, or none of them are shown`} />
@@ -1112,7 +1161,8 @@ export function PrivateMarket() {
               <li>
                 <span className="text-slate-300">No fund in this book publishes a forward drawdown schedule</span>, so
                 nothing here says when the {money(m.cc.uncalled)} will be called — the Transactions tab lists every call
-                made so far, dated.
+                made so far, dated, and a call a fund has announced is entered in the Capital call column, where it
+                stays the family&rsquo;s figure and is never added into Called, Paid in or Still to call.
               </li>
               <li>
                 Where two statements report one holding, the fund row counts it once and its folios show both, with a

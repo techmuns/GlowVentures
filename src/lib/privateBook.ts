@@ -34,11 +34,15 @@
 //              nil. *"If this is missing data this needs to be like a hidden
 //              drop down clearly marked."* Their capital figures are real and
 //              are in the capital totals; their value is absent, never ₹0.
-//   elsewhere  AIFs the statements place on the LISTED side (Category III) or on
-//              neither side. Not private market — the family said so of Sanshi,
-//              Buoyant and Carnelian — and in no private total. They are shown,
-//              closed, because three of them run real capital accounts and a
-//              capital table missing them would not add to the capital tiles.
+//   elsewhere  the CAPITAL ACCOUNTS of AIFs the statements place on the LISTED
+//              side (Category III) or on neither side. Not private market — the
+//              family said so of Sanshi, Buoyant and Carnelian — and in no
+//              private total. Only their capital accounts are here, closed,
+//              because a drawdown structure is how an account funds itself and
+//              the capital totals count every one; their HOLDINGS are listed
+//              exposure and are not carried at all — *"Remove this, please.
+//              This is not relevant. These kind of placeholders are not
+//              relevant"*, said of the card that listed them with their values.
 //
 // ── THE TWO BASES, AND THE ONE PLACE THEY MEET ─────────────────────────────
 //
@@ -298,7 +302,22 @@ export function bookFolios(args: {
     out.push(unvaluedFolio(a, s.fund, "other",
       a?.noPositionsReason ?? "this capital account's statement carries no current holding", s, accIdx, s));
   }
-  return out;
+  /**
+   * NOT PRIVATE MARKET: ITS CAPITAL ACCOUNT AND NOTHING ELSE.
+   *
+   * An AIF on the listed side (or on neither) is here only because its capital
+   * account counts in the capital totals — so a folio with no capital account
+   * has no reason to be here and is dropped, and one with a capital account
+   * keeps that account and LOSES its holding. Carried, its value would be a
+   * figure about a fund this page does not cover, which is the card the family
+   * asked to be rid of; nulled here, no band, total or cell downstream can print
+   * it by accident, because it is not in the model at all.
+   */
+  return out
+    .filter((f) => f.section !== "elsewhere" || f.capital != null)
+    .map((f) => (f.section !== "elsewhere" ? f : {
+      ...f, position: null, units: null, cost: null, value: null, pnl: null, counted: false,
+    }));
 }
 
 function unvaluedFolio(
