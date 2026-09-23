@@ -16,7 +16,7 @@ import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
-import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION } from "@/data/glowData";
+import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -197,7 +197,7 @@ const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const
  * same list the Transactions table reads, so a fund's page and that table
  * cannot disagree about what was paid in and when. See `capitalMovesWithCalls`.
  */
-const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS);
+const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"] as const;
 
 export function MandateHoldings() {

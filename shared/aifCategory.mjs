@@ -271,34 +271,152 @@ export function readAifCategory(security, account, securityKey) {
  */
 const ALWAYS_PRIVATE = new Set(["Unlisted", "Structured Product"]);
 
+// ── WHAT A FUND INVESTS IN, AS THE FAMILY HAVE STATED IT ────────────────────
+//
+//   "private market fund needs to be here in private market only" — sent with
+//    the family's own classification of every capital account in the book:
+//    India SME, Baring, Transition, Neo Infra and Sky Capital are PRIVATE
+//    MARKET; Carnelian Bharat Amritkaal, Motilal Oswal Delphi Equity and
+//    Motilal Oswal Founders Fund are PUBLIC MARKET. "A capital-call/drawdown
+//    structure tells you how the investor funds the vehicle; it does not tell
+//    you whether the fund invests in private or public assets."
+//
+// THE SEBI CATEGORY WAS A PROXY FOR THAT, AND THIS BOOK HOLDS ITS COUNTEREXAMPLE.
+// Motilal Oswal's Founders Fund prints Category II — the category this file
+// treats as private capital — and invests in LISTED Indian equities. The
+// family's consolidated review had already filed it as `Equity`, and this file
+// used to say THE STATEMENT WINS. The statement still says Category II and
+// nothing here overwrites that; what changed is that the SIDE is no longer
+// inferred from it for a fund the family have placed themselves. A rule with a
+// known counterexample is not a rule this book applies to money — that was this
+// file's own argument against the review, and it cuts against the category too.
+//
+// Two funds the statements never placed at all are placed here by the same
+// statement: Delphi (an equity fund of Category III managers — listed) and Neo
+// Infra (operating road and renewable assets — private).
+//
+// ── A DECISION ABOUT THE FAMILY'S AFFAIRS, NOT A PARSING RULE ───────────────
+//
+// It is the ring-fence's standing (`RINGFENCED_SECURITY_KEYS` in build-book):
+// one committed table, applied where the side is GENERATED, reversible by
+// deleting a line. Each entry says what the fund invests in, in the family's
+// words, and when they said it. Matched on the FUND'S OWN NAME — the name its
+// statement prints, or its capital account's — never on a similarity: every
+// pattern is the fund's whole name anchored on the word, so `Delphi Equity
+// Fund` cannot reach a different Motilal Oswal scheme. A fund the family have
+// not named falls through to the SEBI category exactly as before.
+//
+// Sanshi and Buoyant are here on the family's EARLIER instruction ("Sanshi,
+// Buoyant and Carnelian. These are not private market investments"), which the
+// category happened to agree with; recording it means a future statement that
+// stops printing CAT-III cannot quietly move them.
+export const FAMILY_MARKET_SIDE = [
+  { fund: "India SME Investments", match: /\bindia sme investments?\b/i, side: "private",
+    invests: "private equity in early-growth SMEs", said: "2026-09-23" },
+  { fund: "Baring Private Equity India Fund", match: /\bbaring private equity india\b/i, side: "private",
+    invests: "private equity", said: "2026-09-23" },
+  { fund: "Transition Venture Capital Fund", match: /\btransition venture capital\b/i, side: "private",
+    invests: "early-stage energy-transition companies — venture capital", said: "2026-09-23" },
+  { fund: "Neo Infra Income Opportunities Fund", match: /\bneo infra income opportunities\b/i, side: "private",
+    invests: "operating road and renewable infrastructure assets", said: "2026-09-23" },
+  { fund: "Sky Capital Rising Titans Fund", match: /\bsky capital rising titans\b/i, side: "private",
+    invests: "venture investments in private companies", said: "2026-09-23" },
+  { fund: "Carnelian Bharat Amritkaal Fund", match: /\bcarnelian bharat amritkaal\b/i, side: "listed",
+    invests: "a flexi-cap portfolio of listed Indian equities", said: "2026-09-23" },
+  { fund: "Motilal Oswal Delphi Equity Fund", match: /\bdelphi equity fund\b/i, side: "listed",
+    invests: "Category III equity managers, as a fund of funds", said: "2026-09-23" },
+  { fund: "Motilal Oswal Founders Fund", match: /\bmotilal oswal founders fund\b/i, side: "listed",
+    invests: "listed Indian equities", said: "2026-09-23" },
+  { fund: "Sanshi Fund", match: /\bsanshi fund\b/i, side: "listed",
+    invests: "listed securities", said: "Stage 10bp" },
+  { fund: "Buoyant Opportunities Strategy", match: /\bbuoyant opportunities strategy\b/i, side: "listed",
+    invests: "listed securities", said: "Stage 10bp" },
+];
+
+/**
+ * THE FAMILY'S OWN PLACING OF A FUND, or null where they have not named it.
+ *
+ * Matched on the fund's name and on the account's own strategy and provider —
+ * the same haystack `readsAsPrivateEquity` reads — because a capital account
+ * and its holding print the fund's name in different fields. First match wins,
+ * and no two entries can match one fund: every pattern is a different fund's
+ * whole name, which `marketSide.test.ts` asserts against the book.
+ */
+export function familyMarketDecision(name, account) {
+  const hay = [name, account?.strategy, account?.provider].filter(Boolean).join(" · ");
+  return FAMILY_MARKET_SIDE.find((d) => d.match.test(hay)) ?? null;
+}
+
+/**
+ * WHICH SIDE ONE AIF IS ON, from its name — the fund-level half of
+ * `marketSideOf`, for a caller holding a fund rather than a position.
+ *
+ * A CAPITAL ACCOUNT is the case that needs it: India SME and Sky Capital
+ * publish no NAV, so they carry no position to read a side off, and the Private
+ * Market page still has to know which side their capital account belongs on.
+ * ONE rule for both, so a fund's holding and its capital account cannot land
+ * on different sides of the page.
+ */
+export function fundMarketSideOf(name, account, securityKey) {
+  return fundMarketSideBasis(name, account, securityKey).side;
+}
+
+/**
+ * THE SIDE AND THE REASON FOR IT — which a page needs in order to say why a
+ * fund is where it is. Four reasons, in the order they are tried:
+ *
+ *   family          the family have said what the fund invests in
+ *   private-equity  the paperwork names its own discipline
+ *   category        the SEBI category the statements print
+ *   unstated        none of the three places it
+ */
+export function fundMarketSideBasis(name, account, securityKey) {
+  const decision = familyMarketDecision(name, account);
+  // `securityKey` lets the family's DECLARED category fill a category no
+  // statement prints (Stage 10bx). It can only ever fill: `readAifCategory`
+  // consults it where both printed fields are silent.
+  const read = readAifCategory(name, account, securityKey);
+  if (decision) return { side: decision.side, basis: "family", decision, category: read.category };
+  if (readsAsPrivateEquity(name, account)) return { side: "private", basis: "private-equity", decision: null, category: read.category };
+  if (read.category === CATEGORY_III) return { side: "listed", basis: "category", decision: null, category: read.category };
+  if (read.category === CATEGORY_I || read.category === CATEGORY_II) {
+    return { side: "private", basis: "category", decision: null, category: read.category };
+  }
+  return { side: null, basis: "unstated", decision: null, category: null };
+}
+
 /**
  * WHICH SIDE OF THE BOOK ONE HOLDING SITS ON — `"listed"`, `"private"`, or
  * `null` where no statement places it.
  *
- * `null` IS A THIRD ANSWER AND NEVER A DEFAULT TO EITHER SIDE. Three holdings
- * in this book reached it (₹16.69 Cr) until the family declared two of them —
- * Motilal Oswal Wealth Delphi Equity Fund and Neo Infra Income Opportunities —
- * Category II (`DECLARED_AIF_CATEGORY`). Blue Ashva Varenya still reaches it:
- * no statement prints its category and nobody has declared one. Filing it
- * private would claim it is private capital; filing it listed would claim the
- * opposite. Both are claims no document makes, so the split is three-way and
- * the third is NAMED with its value wherever the other two are printed.
+ * `null` IS A THIRD ANSWER AND NEVER A DEFAULT TO EITHER SIDE. When this was
+ * written three holdings reached it (₹16.69 Cr) — Motilal Oswal Wealth Delphi
+ * Equity Fund, Neo Infra Income Opportunities and Blue Ashva Varenya, none of
+ * whose statements print a SEBI category. The family have since placed the
+ * first two (below), and declared both Category II (`DECLARED_AIF_CATEGORY`),
+ * so ONE reaches it today: Blue Ashva, ₹98,742. Filing it private would claim
+ * it is private capital; filing it listed would claim the opposite. Both are
+ * claims no document makes, so the split is three-way and the third is NAMED
+ * with its value wherever the other two are printed — the count here is
+ * history, `BOOK_SUMMARY.unplacedValue` is the measurement.
  *
  * Private equity outranks the category for the same reason it does in the AIF
  * drill-down: a fund whose own name says `Private Equity` is private capital
  * whether its statement calls it Category I or II, and Transition Venture's
  * `Category I/II` — the issuer declining to commit — would otherwise be
  * unplaced despite naming its own discipline.
+ *
+ * AND THE FAMILY'S OWN PLACING OUTRANKS BOTH (see `FAMILY_MARKET_SIDE`). Two of
+ * the three funds above are placed by it now — Delphi on the listed side, Neo
+ * Infra on the private one — and one fund the category DID place, Motilal
+ * Oswal's Founders Fund, moves from private to listed: its statement prints
+ * Category II and it invests in listed Indian equities.
  */
 export function marketSideOf(position, account) {
   const cls = position?.assetClass;
   if (ALWAYS_PRIVATE.has(cls)) return "private";
   if (cls !== "AIF") return "listed";
-  if (readsAsPrivateEquity(position.security, account)) return "private";
-  const { category } = readAifCategory(position.security, account, position.securityKey);
-  if (category === CATEGORY_III) return "listed";
-  if (category === CATEGORY_I || category === CATEGORY_II) return "private";
-  return null;
+  return fundMarketSideOf(position.security, account, position.securityKey);
 }
 
 /**
@@ -308,7 +426,13 @@ export function marketSideOf(position, account) {
  * facet's rows, a list of funds — and never over one holding. The singular
  * version read "…for this fund…" under a list of three, and lowercase after a
  * full stop.
+ *
+ * TWO SOURCES NOW, AND THE SENTENCE NAMES BOTH: a fund is placed by the SEBI
+ * category its statement prints or by the family's own classification, so a
+ * fund on neither side is one where BOTH are silent. Saying only "no statement
+ * prints a category" would send a reader to chase a registration when the
+ * quicker answer is one line from the family.
  */
 export const MARKET_SIDE_UNPLACED =
-  "No statement for these funds prints a SEBI category, so this book places them on neither"
-  + " the listed nor the private side";
+  "No statement for these funds prints a SEBI category and the family have not classified them,"
+  + " so this book places them on neither the listed nor the private side";

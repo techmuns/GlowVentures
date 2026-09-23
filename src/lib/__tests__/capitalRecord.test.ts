@@ -31,7 +31,10 @@ import {
 import {
   capitalRollup, capitalMovesWithCalls, capitalReturn, capitalXirr, capitalTotals, type CapitalGroup,
 } from "@/lib/tranches";
-import type { Account, CapitalMove, Position } from "@/lib/types";
+import type { Account, CapitalMove, Commitment, Position } from "@/lib/types";
+import { privateScope } from "@/lib/privateMarket";
+import { fundDatedRecords, pooledFundXirr } from "@/lib/fundReturns";
+import { accountIndex } from "@/lib/accounts";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -42,7 +45,7 @@ const near = (name: string, a: number | null | undefined, b: number | null | und
   ok(name, a != null && b != null && Math.abs(a - b) <= tol, `${a} vs ${b}`);
 const cr = (n: number | null | undefined) => (n == null ? "—" : `₹${(n / 1e7).toFixed(4)} Cr`);
 
-const RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS);
+const RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 const book = (opts: { windowed?: boolean } = {}, side: "all" | "in" | "out" = "all") =>
   capitalRollup(RECORD, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, side, "recent", {
     commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION, ...opts,
@@ -167,21 +170,76 @@ console.log("\n── PMS mandates ──");
   }
 }
 
-// ── 8. A FUND THAT PAID BACK AN UNDATED TOTAL AND IS STILL HELD ─────────────
-console.log("\n── an undated payout ──");
+// ── 8. A FUND THAT PAID BACK, DATED AND TYPED, AND IS STILL HELD ───────────
+// Stage 10bw read Neo Infra's and Baring's payouts — every row dated and typed
+// by the fund (income, principal, equalisation) and reconciled against the
+// statement's own totals. They are redemptions on their dates now, which makes
+// both the split and the XIRR strikable. Two independent witnesses:
+//   · the fund's OWN typing, read straight off `Commitment.payouts` here;
+//   · the Private Market page's `fundDatedRecords` / `pooledFundXirr`, a
+//     separate module over the same statements — the two pages must agree.
+console.log("\n── dated, typed payouts ──");
 {
-  const neo = byId.get("neo-infra-income-opportunities-fund-9039920536");
-  ok("Neo Infra is on the table through its dated calls", neo?.source === "calls");
-  if (neo) {
-    near("its redemption is the payout total its statement prints", neo.redemption, 4_948_221);
-    ok("…carried as undated", neo.undatedOut === 4_948_221);
-    ok("appreciation is struck", neo.appreciation != null);
-    ok("…but its split is WITHHELD, not guessed", neo.realised === null && neo.unrealised === null && !!neo.realisedNote);
-    ok("XIRR is withheld — an undated payout cannot be placed in time",
-      !capitalReturn(neo, "xirr").shown && /undated/.test((capitalReturn(neo, "xirr") as { reason: string }).reason));
-    ok("…and auto falls back to HPR, saying so", capitalReturn(neo, "auto").shown && capitalReturn(neo, "auto").tag === "HPR");
-    near("committed is the fund's printed commitment", neo.committed, 50_000_000);
+  const s = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
+  const recs = fundDatedRecords(s.dedupedRows, BOOK_COMMITMENTS, accountIndex(BOOK_ACCOUNTS), String, String);
+  const withPayouts = BOOK_COMMITMENTS.filter((c) => c.payouts != null && c.payouts.length > 0
+    && !BOOK_CAPITAL_MOVES.some((m) => m.accountId === c.accountId));
+  ok("the book carries a fund with dated payouts and no capital record (LOAD-BEARING)",
+    withPayouts.length > 0, withPayouts.map((c) => c.accountId).join(", "));
+  for (const c of withPayouts) {
+    const g = byId.get(c.accountId);
+    const asOf = BOOK_ACCOUNTS.find((x) => x.accountId === c.accountId)?.asOf ?? "";
+    const before = (c.payouts ?? []).filter((r) => r.date <= asOf);
+    const byKind = (k: string) => before.filter((r) => r.kind === k).reduce((t, r) => t + r.gross, 0);
+    ok(`${c.accountId}: on the table, no undated total`, !!g && g.undatedOut === null);
+    if (!g) continue;
+    near(`${c.accountId}: redemption is every payout dated on or before the valuation`, g.redemption,
+      before.reduce((t, r) => t + r.gross, 0));
+    const after = (c.payouts ?? []).filter((r) => r.date > asOf);
+    ok(`${c.accountId}: a payout dated after the valuation is inside the value and is not counted again`,
+      after.every((r) => !RECORD.some((m) => m.accountId === c.accountId && m.date === r.date && m.payoutKind === r.kind)),
+      `${after.length} after`);
+    near(`${c.accountId}: realised is the income and equalisation the fund typed`, g.realised,
+      byKind("income") + byKind("equalisation"));
+    near(`${c.accountId}: unrealised is value less the purchase net of principal returned`, g.unrealised,
+      (g.value ?? NaN) - (g.paidIn - byKind("capital")));
+    // THE SECOND PATH: the Private Market page's own money-weighted rate for
+    // the fund this account holds.
+    const key = BOOK_POSITIONS.find((p) => p.accountId === c.accountId)?.securityKey;
+    const rec = key ? recs.get(key) : undefined;
+    const theirs = rec ? pooledFundXirr([rec])?.annualPct ?? null : null;
+    const ours = capitalReturn(g, "xirr");
+    ok(`${c.accountId}: XIRR is struck`, ours.shown && ours.tag === "XIRR");
+    near(`${c.accountId}: XIRR agrees with the Private Market page's, by its own module`,
+      ours.shown ? (ours as { pct: number }).pct : null, theirs, 0.01);
   }
+  const neo = byId.get("neo-infra-income-opportunities-fund-9039920536");
+  ok("Neo Infra returned principal, so its unrealised is NOT the Holdings page's (statement cost = whole call)",
+    !!neo && neo.unrealised != null && Math.abs(neo.unrealised - ((neo.value ?? 0) - 50_000_000)) > 1_000_000,
+    neo ? `${cr(neo.unrealised)} vs ${cr((neo.value ?? 0) - 50_000_000)}` : "missing");
+  near("committed is the fund's printed commitment", neo?.committed, 50_000_000);
+}
+
+// ── 8b. …AND ONE WHOSE STATEMENT PRINTS ONLY AN UNDATED TOTAL ──────────────
+// No fund in this book since Stage 10bw, so a constructed one: a payout that
+// cannot be placed in time refuses the XIRR, and one that is not typed refuses
+// the split rather than guessing it.
+console.log("\n── an undated payout (constructed) ──");
+{
+  const acc = [{ accountId: "u", provider: "Fund", accountNo: "1", owner: "O", strategy: null,
+    inceptionDate: "2024-01-01", asOf: "2026-06-30", engagement: "AIF" }];
+  const commitment = { accountId: "u", name: "Fund", total: 10_000_000, contributed: 10_000_000,
+    called: 10_000_000, paid: 10_000_000, pending: null, undrawn: 0, distributed: 500_000,
+    calls: [{ date: "2024-01-01", amount: 10_000_000, label: "Call 1" }], payouts: null } as unknown as Commitment;
+  const moves = capitalMovesWithCalls([], [commitment], acc);
+  ok("no payout row is invented from an undated total", !moves.some((m) => m.direction === "out"));
+  const u = capitalRollup(moves, acc, [{ accountId: "u", securityKey: "f", security: "Fund", assetClass: "AIF",
+    quantity: 1, marketValue: 11_000_000, costBasis: 10_000_000 } as Position], {}, "all", "recent",
+    { commitments: [commitment] })[0];
+  ok("the undated total is carried as undated", u?.undatedOut === 500_000);
+  ok("…its split is WITHHELD, not guessed", !!u && u.realised === null && u.unrealised === null && !!u.realisedNote);
+  ok("…and XIRR is withheld — an undated payout cannot be placed in time",
+    !!u && !capitalReturn(u, "xirr").shown && /undated/.test((capitalReturn(u, "xirr") as { reason: string }).reason));
 }
 
 // ── 9. DRAWDOWN FUNDS: calls are purchases, and never on top of a record ───
@@ -259,8 +317,10 @@ console.log("\n── the guard ──");
   near("appreciation counts what came back and what is held", partial.appreciation, 2_000_000);
   near("HPR divides by the purchase, not by purchase less redemption",
     capitalReturn(partial, "absolute").shown ? (capitalReturn(partial, "absolute") as { pct: number }).pct : null, 20);
-  ok("…where the old 'net invested' would have divided by ₹40 L and read +50%", true,
-    `(6 + 6 − 10) ÷ (10 − 6) = 50% against the honest 20%`);
+  const onNet = partial.appreciation != null ? (partial.appreciation / (partial.paidIn - (partial.redemption ?? 0))) * 100 : null;
+  near("…where the old 'net invested' would have divided by ₹40 L and read +50%", onNet, 50);
+  ok("…and the two are not the same figure", onNet != null && capitalReturn(partial, "absolute").shown
+    && Math.abs(onNet - (capitalReturn(partial, "absolute") as { pct: number }).pct) > 1);
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall capital-record checks passed");

@@ -18,8 +18,8 @@ export const BOOK_AS_OF = "2026-08-29";
 
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-29",
-  "listedValue": 6558187115.41,
-  "privateValue": 545593373.75,
+  "listedValue": 6997625652.26,
+  "privateValue": 106154836.9,
   "unplacedValue": 98742,
   "totalValue": 7103879231.16,
   "positionsCount": 371,
@@ -5696,7 +5696,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": "private",
+    "marketSide": "listed",
     "quantity": 99995,
     "avgCost": null,
     "currentPrice": 1112.931,
@@ -6840,7 +6840,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": "private",
+    "marketSide": "listed",
     "quantity": 9514997.798,
     "avgCost": null,
     "currentPrice": 11.5502,
@@ -6866,7 +6866,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": "private",
+    "marketSide": "listed",
     "quantity": 18895852.36,
     "avgCost": null,
     "currentPrice": 11.5502,
@@ -22949,6 +22949,26 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 6250000
       }
     ],
+    "payouts": [
+      {
+        "date": "2025-09-30",
+        "kind": "equalisation",
+        "label": "Compensating contribution",
+        "gross": 18909,
+        "tds": 1891,
+        "net": 17018,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-03-31",
+        "kind": "income",
+        "label": "Net Distribution STCG FY2025-26 · Net Distribution Dividend FY2025-26",
+        "gross": 37252,
+        "tds": 9636,
+        "net": 27616,
+        "inPrintedTotal": true
+      }
+    ],
     "arithmeticHolds": true
   },
   {
@@ -22976,6 +22996,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 50000000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23033,6 +23054,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 13500000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23090,6 +23112,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 4500000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23142,6 +23165,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 4500000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23164,6 +23188,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 100000000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23196,6 +23221,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 40000000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": null
   },
   {
@@ -23223,6 +23249,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 100000000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": null
   },
   {
@@ -23268,6 +23295,305 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "date": "2026-04-22",
         "label": "Fifth Drawdown",
         "amount": 15000000
+      }
+    ],
+    "payouts": [
+      {
+        "date": "2024-06-13",
+        "kind": "income",
+        "label": "Short term capital gain",
+        "gross": 123033,
+        "tds": 12303,
+        "net": 110730,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-06-13",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 120149,
+        "tds": 12015,
+        "net": 108134,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-08-30",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 242079,
+        "tds": 24208,
+        "net": 217871,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-08-30",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 733,
+        "tds": 73,
+        "net": 660,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-08-30",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 186952,
+        "tds": 18695,
+        "net": 168257,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-11-29",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 1937,
+        "tds": 194,
+        "net": 1743,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-11-29",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 180447,
+        "tds": 18045,
+        "net": 162402,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2024-11-29",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 139843,
+        "tds": 13984,
+        "net": 125859,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-03-25",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 4,
+        "tds": null,
+        "net": 4,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-03-25",
+        "kind": "income",
+        "label": "Short Term Capital Gain",
+        "gross": 15921,
+        "tds": 1592,
+        "net": 14329,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-03-25",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 409033,
+        "tds": 40903,
+        "net": 368130,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-03-25",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 204822,
+        "tds": 20482,
+        "net": 184340,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-06-09",
+        "kind": "income",
+        "label": "Short Term Capital Gain",
+        "gross": 14748,
+        "tds": 1475,
+        "net": 13273,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-06-09",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 160511,
+        "tds": 16051,
+        "net": 144460,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-06-09",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 62,
+        "tds": 6,
+        "net": 56,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-06-09",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 139870,
+        "tds": 13987,
+        "net": 125883,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Short Term Capital Gain",
+        "gross": 63144,
+        "tds": 6314,
+        "net": 56830,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 2193,
+        "tds": 219,
+        "net": 1974,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Long term capital gain",
+        "gross": 29777,
+        "tds": 2978,
+        "net": 26799,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 106194,
+        "tds": 10619,
+        "net": 95575,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 3406,
+        "tds": 341,
+        "net": 3065,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 16554,
+        "tds": 1655,
+        "net": 14899,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2025-08-29",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 182570,
+        "tds": 18257,
+        "net": 164313,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-01-05",
+        "kind": "income",
+        "label": "Short Term Capital Gain",
+        "gross": 68787,
+        "tds": 6879,
+        "net": 61908,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-01-05",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 903365,
+        "tds": 90336,
+        "net": 813029,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-01-05",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 545,
+        "tds": 55,
+        "net": 490,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-01-05",
+        "kind": "capital",
+        "label": "Capital Redemption",
+        "gross": 1416280,
+        "tds": null,
+        "net": 1416280,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-01-05",
+        "kind": "equalisation",
+        "label": "Equalisation received",
+        "gross": 15298,
+        "tds": 1530,
+        "net": 13768,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-03-30",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 331231,
+        "tds": 33123,
+        "net": 298108,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-03-30",
+        "kind": "income",
+        "label": "Short Term Capital Gain",
+        "gross": 24282,
+        "tds": 2428,
+        "net": 21854,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-03-30",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 628,
+        "tds": 62,
+        "net": 566,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-07-09",
+        "kind": "income",
+        "label": "Distribution of Interest Income",
+        "gross": 713178,
+        "tds": 71319,
+        "net": 641859,
+        "inPrintedTotal": true
+      },
+      {
+        "date": "2026-07-09",
+        "kind": "income",
+        "label": "Distribution on Other Income",
+        "gross": 455,
+        "tds": 46,
+        "net": 409,
+        "inPrintedTotal": false
       }
     ],
     "arithmeticHolds": true
@@ -23317,6 +23643,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 135000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23339,6 +23666,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 15000000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23361,6 +23689,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 7500000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23383,6 +23712,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 7500000
       }
     ],
+    "payouts": null,
     "arithmeticHolds": true
   },
   {
@@ -23405,6 +23735,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 7500000
       }
     ],
+    "payouts": [],
     "arithmeticHolds": true
   },
   {
@@ -23427,6 +23758,7 @@ export const BOOK_COMMITMENTS: Commitment[] = [
         "amount": 7500000
       }
     ],
+    "payouts": [],
     "arithmeticHolds": true
   }
 ];

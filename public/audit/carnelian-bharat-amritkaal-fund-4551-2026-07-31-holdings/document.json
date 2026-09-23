@@ -111,7 +111,8 @@
     "label": "Drawdown",
     "amount": 50000000
    }
-  ]
+  ],
+  "payouts": null
  },
  "capitalAccount": [],
  "postTaxNav": null,

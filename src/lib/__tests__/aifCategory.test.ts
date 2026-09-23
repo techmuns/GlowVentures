@@ -33,6 +33,7 @@ import {
   readsAsPrivateEquity, isAifHolding, unvaluedAifFolios,
   AIF_SECTION_ORDER, aifSectionOrd, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION,
   CATEGORY_I, CATEGORY_II, CATEGORY_III, DECLARED_AIF_CATEGORY, declaredAifCategory,
+  familyMarketDecision,
 } from "@/lib/aifCategory";
 import { readFileSync } from "node:fs";
 
@@ -270,7 +271,14 @@ console.log("\n── the family's declared categories ──");
       const r = aifCategoryOf(accts, p);
       eq(`…so it reads the declared category (${p.accountId})`, [r.category, r.source, r.why], [CATEGORY_II, "family", null]);
       eq(`…files under that section`, aifSectionOf(accts, p), CATEGORY_II);
-      eq(`…and sits on the private side`, p.marketSide, "private");
+      // THE SIDE IS NOT THE DECLARATION'S TO DECIDE. The family's own placing
+      // (`FAMILY_MARKET_SIDE`, Stage 10bw) outranks any category: Delphi is a
+      // Category II fund investing in listed equity — the Founders Fund's case
+      // — and Neo Infra a private one. So the side is whatever their placing
+      // says, and the declared category decides the drill-down section alone.
+      const placed = familyMarketDecision(p.security, a)?.side ?? null;
+      ok(`…and its side is the family's placing, not the category (${p.accountId})`,
+        placed != null && p.marketSide === placed, `${p.marketSide} vs placed ${placed}`);
     }
   }
 

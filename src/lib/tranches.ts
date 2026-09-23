@@ -470,8 +470,13 @@ export function contributionsAreComplete(
  * Only a call schedule that reproduced its statement's own total was ever
  * published (`callsIfTheyTie`), so there is no partial list to be misled by.
  */
-export function capitalMovesWithCalls(moves: CapitalMove[], commitments: Commitment[]): CapitalMove[] {
+export function capitalMovesWithCalls(
+  moves: CapitalMove[],
+  commitments: Commitment[],
+  accounts: readonly { accountId: string; asOf?: string | null }[],
+): CapitalMove[] {
   const recorded = new Set(moves.map((m) => m.accountId));
+  const valuedAt = new Map(accounts.map((a) => [a.accountId, a.asOf ?? null]));
   const out = [...moves];
   for (const c of commitments) {
     if (recorded.has(c.accountId)) continue;
@@ -484,6 +489,39 @@ export function capitalMovesWithCalls(moves: CapitalMove[], commitments: Commitm
         // and no unit count rides with a call either. Null, never the amount.
         invested: null, units: null, security: null, securityKey: null,
         fromCall: true,
+      });
+    }
+    /**
+     * ── AND THE FUND'S OWN DATED PAYOUTS, AS REDEMPTIONS (Stage 10bx) ──────
+     *
+     * Stage 10bw read every payout Neo Infra and Baring print — income,
+     * principal and equalisation, each dated and each reconciled against the
+     * statement's own totals — and nothing on this table used them: Neo Infra's
+     * ₹49.5 L sat here as one UNDATED total, which refused its XIRR and its
+     * split while the Private Market page one link away struck both.
+     *
+     * A payout dated ON OR BEFORE the fund's valuation is cash outside that
+     * value and is a redemption on its date. One dated AFTER it is inside the
+     * value and is not counted again — the rule `fundDatedRecords` applies,
+     * so the two pages cannot disagree about which cash came back. A fund
+     * whose valuation date is unknown gets none: without it there is no way to
+     * say which side of the value a payout is on.
+     *
+     * GROSS IS THE AMOUNT: the funds value themselves pre-tax, and TDS is the
+     * family's own tax withheld. Equalisation carries a sign — its column is
+     * headed "(paid)/received" — so a negative one is money the family PAID
+     * and is a purchase, never a negative redemption.
+     */
+    const asOf = valuedAt.get(c.accountId) ?? null;
+    if (!asOf || c.payouts == null) continue;
+    for (const r of c.payouts) {
+      if (!r.date || r.date > asOf || !(Math.abs(r.gross) > 0)) continue;
+      out.push({
+        accountId: c.accountId, date: r.date, direction: r.gross > 0 ? "out" : "in",
+        label: r.label || (r.kind === "capital" ? "Principal returned" : r.kind === "income" ? "Income distributed" : "Equalisation"),
+        amount: Math.abs(r.gross),
+        invested: null, units: null, security: null, securityKey: null,
+        fromCall: true, payoutKind: r.kind,
       });
     }
   }
@@ -528,7 +566,11 @@ export function capitalRollup(
     const source: CapitalGroup["source"] = all.length > 0 && all.every((m) => m.fromCall) ? "calls" : "record";
     // An undated payout rides only on a call-derived row: a capital RECORD lists
     // its redemptions dated, so its own out-movements are the whole of it.
-    const undatedOut = source === "calls" && c?.distributed != null && c.distributed > 0 ? c.distributed : null;
+    // A fund whose payouts are carried DATED (`Commitment.payouts`) has them as
+    // redemption rows already — `capitalMovesWithCalls` — and only a fund with no
+    // such record falls back to the one undated total its statement prints.
+    const datedPayouts = source === "calls" && c?.payouts != null;
+    const undatedOut = source === "calls" && !datedPayouts && c?.distributed != null && c.distributed > 0 ? c.distributed : null;
     const showsUndated = undatedOut != null && side !== "in";
     if (!ms.length && !showsUndated) continue;
     const a = accounts.find((x) => x.accountId === accountId);
@@ -544,7 +586,7 @@ export function capitalRollup(
      * DISTRIBUTED, and null where it prints no such line.
      */
     const redemption: number | null = side === "in" ? null
-      : source === "record" ? tookOut
+      : source === "record" || datedPayouts ? tookOut
       : c?.distributed != null ? (c.distributed ?? 0) + tookOut
       : null;
 
@@ -563,7 +605,7 @@ export function capitalRollup(
     const filtered = sideFiltered || windowed;
     const allIn = all.filter((m) => m.direction === "in");
     const P = allIn.reduce((s, m) => s + (m.amount ?? 0), 0);
-    const R = source === "record"
+    const R = source === "record" || datedPayouts
       ? all.filter((m) => m.direction === "out").reduce((s, m) => s + (m.amount ?? 0), 0)
       : c?.distributed != null ? c.distributed : null;
     const unknownAmount = allIn.some((m) => m.amount == null);
@@ -579,7 +621,7 @@ export function capitalRollup(
     const appreciation = appreciationReason ? null : value! + R! - P;
 
     /**
-     * ── THE SPLIT, WHICH HAS FOUR HONEST CASES AND ONE REFUSAL ──────────────
+     * ── THE SPLIT, WHICH HAS FIVE HONEST CASES AND ONE REFUSAL ──────────────
      *
      *   • NOTHING CAME BACK — every rupee of appreciation is still on paper, so
      *     realised is a COMPUTED ZERO and says why. Unrealised is struck against
@@ -594,17 +636,23 @@ export function capitalRollup(
      *     unrealised is value less that cost, exactly the Holdings page's
      *     unrealised P&L for the same account, and realised is the rest: gains
      *     booked on sales plus dividends and interest, less fees and charges.
-     *   • A FUND THAT PAID SOMETHING BACK AND IS STILL HELD — refused. Whether a
-     *     payout returned capital or distributed gain is exactly the split, and
-     *     the book's record of these funds prints the payout as one total and
-     *     the units at their full original cost. The total stands; its split is
-     *     not published rather than guessed. (Neo Infra.)
+     *   • A FUND THAT PAID SOMETHING BACK AND IS STILL HELD, WHOSE STATEMENT
+     *     TYPES EACH PAYOUT — principal returned is capital, income and
+     *     equalisation are gain paid out, so the split is the fund's own.
+     *     (Neo Infra, Baring — since Stage 10bw read their dated payouts.)
+     *   • …AND ONE WHOSE STATEMENT PRINTS ONLY A TOTAL — refused. Whether a
+     *     payout returned capital or distributed gain is exactly the split. The
+     *     total stands; its split is not published rather than guessed. (No
+     *     fund in this book since Stage 10bw; the rule stands for the next one.)
      *
      * Where appreciation itself is withheld, unrealised on what is HELD can still
      * be struck against the statement's own cost — the same figure the Holdings
      * page prints — so a drawdown fund that prints no distribution line still
      * shows its mark. It says what it is struck against.
      */
+    const outsAll = all.filter((m) => m.direction === "out");
+    /** Every payout typed by the fund itself — the case the split can be struck on. */
+    const typedPayouts = outsAll.length > 0 && outsAll.every((m) => m.payoutKind != null);
     let realised: number | null = null, unrealised: number | null = null;
     let realisedNote: string | null = null, unrealisedNote: string | null = null;
     const isPms = a?.engagement === "PMS";
@@ -642,6 +690,27 @@ export function capitalRollup(
         unrealisedNote = "value today less the manager's own cost of everything the mandate holds, cash included — the same unrealised P&L the Holdings page shows for this mandate";
         realised = appreciation - unrealised;
         realisedNote = "booked inside the mandate: gains on the manager's sales plus dividends and interest, less fees and charges — appreciation less what is still on paper";
+      } else if (typedPayouts) {
+        /**
+         * A FUND THAT PAID BACK AND IS STILL HELD — and whose statement TYPES
+         * each payout. Principal returned is capital coming back, not gain;
+         * income and equalisation are gain paid out. So realised is the
+         * second, and unrealised is value less what the units still held
+         * cost: the purchase less the principal returned. Neo Infra's units
+         * say the same thing a second way — 5,00,000 called at ₹100 and
+         * 4,85,837 held, so the ₹14.16 L principal redeemed 14,163 of them.
+         */
+        const principal = outsAll.filter((m) => m.payoutKind === "capital").reduce((t, m) => t + (m.amount ?? 0), 0);
+        realised = R! - principal;
+        unrealised = appreciation - realised;
+        const statementCostIsWholeCall = costOfHeld != null && Math.abs(costOfHeld - P) <= 1;
+        realisedNote = principal > 0
+          ? "the income and equalisation this fund has paid out, as its own statement types each payout — the principal it returned is capital coming back, not gain, and is not in this figure"
+          : "the income and equalisation this fund has paid out, as its own statement types each payout";
+        unrealisedNote = principal > 0
+          ? "value today less what the units still held cost: the purchase less the principal the fund has returned"
+            + (statementCostIsWholeCall ? ". The Holdings page prints the statement's own cost, which is the whole amount called, so its unrealised P&L reads lower by that principal" : "")
+          : "value today less the whole purchase amount — the fund has returned no principal, so every unit it called is still held; the Holdings page's unrealised P&L for this fund";
       } else {
         realisedNote = unrealisedNote = "this fund has paid money back while the family still holds its units, and its statement prints the payout as one total with the units still at their full cost — so how much of the payout returned capital and how much was gain is not stated. The total appreciation stands; its split is not published rather than guessed";
       }

@@ -20,14 +20,20 @@ import {
   readsAsPrivateEquity as readsAsPrivateEquityText,
   marketSideOf as marketSideOfText,
   MARKET_SIDE_UNPLACED,
+  FAMILY_MARKET_SIDE, familyMarketDecision, fundMarketSideOf, fundMarketSideBasis,
   type AifCategory, type AifCategoryRead, type MarketSide,
+  type FamilyMarketDecision, type FundMarketSide, type MarketSideBasis,
 } from "../../shared/aifCategory.mjs";
 
 export {
   CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
   categoriesNamedIn, MARKET_SIDE_UNPLACED, DECLARED_AIF_CATEGORY, declaredAifCategory,
+  // THE FAMILY'S OWN PLACING OF A FUND, and the fund-level read built on it —
+  // re-exported rather than re-written, so a capital account on the Private
+  // Market page and a holding in the book are placed by one rule.
+  FAMILY_MARKET_SIDE, familyMarketDecision, fundMarketSideOf, fundMarketSideBasis,
 };
-export type { AifCategory, AifCategoryRead, MarketSide };
+export type { AifCategory, AifCategoryRead, MarketSide, FamilyMarketDecision, FundMarketSide, MarketSideBasis };
 
 /**
  * THE CATEGORY OF ONE HOLDING, given the shapes this app holds.
