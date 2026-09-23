@@ -43,7 +43,7 @@ import {
   MONITOR_GROUP_VIEWS, GROUP_VIEWS, type MonitorAxis, type GroupAxis,
   SECURITY_AXIS, SECURITY_SECTION,
   groupKeyFor, groupSourceFor, groupOrdFor, groupLabelFor,
-  ALL_LABEL, GROUP_COLUMN_HEAD, bucketFor, heldUnderMandate,
+  ALL_LABEL, GROUP_COLUMN_HEAD, GROUP_NOUN, bucketFor, heldUnderMandate,
 } from "@/lib/groupAxis";
 // WHICH SECTION A DATED RECORD LANDS IN — the same three axes, joined to a
 // trade's own fields. See its header for why the security axis is unreachable
@@ -2012,23 +2012,6 @@ export function PortfolioMonitor() {
             </button>
           ))}
         </div>
-        {/* THE SECTION FILTER IS HIDDEN ON THE SECURITY AXIS, which files every
-            holding in one section by design — the control would offer a single
-            option and change nothing, which is worse than no control. On
-            Transactions the axis is never `security` (`txnAxis` is the one that
-            resolves it), so the control is always offered there.
-
-            ITS OPTIONS COME FROM THE BOOK on both views — the same sections in
-            the same order, because a filter that offered one list beside the
-            holdings and another beside the transactions is the inconsistency
-            being fixed. A section with no dated record says so in the table
-            rather than being missing from the control. */}
-        {!(view === "holdings" && bySecurity) && (
-          <select value={bucket} onChange={(e) => setBucket(e.target.value)} data-section-filter={bucket}
-            className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-            {buckets.map((s) => <option key={s} value={s}>{s === "All" ? ALL_LABEL[activeAxis] : groupLabelFor(activeAxis)(s)}</option>)}
-          </select>
-        )}
         {/*
           THE RETURN-MEASURE PICKER, in place of the Absolute/CAGR toggle. The
           guard still lives in `holdingReturn` and not here: `auto` and CAGR
@@ -2042,6 +2025,59 @@ export function PortfolioMonitor() {
           <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
         )}
       </div>
+
+      {/*
+        ── THE SECTIONS ARE TABS, ON A ROW OF THEIR OWN ───────────────────────
+
+          *"this dropdown needs to be as subcategories in portfolio monitor and
+           you can just give tabs to me to click and quickly reach instead of a
+           dropdown keep things clean"*
+
+        An "All categories" select made a reader open a list to find out what
+        the table could be narrowed to. Every section of the active axis is one
+        click now — Direct Equity, PMS mandates, ETF, Mutual Fund, AIF and Cash
+        on Category; the family's own asset classes or baskets on the other two.
+
+        NOTHING ABOUT WHAT A SECTION IS HAS CHANGED. These are the `buckets` the
+        select offered, in the same order, setting the same `bucket` state —
+        built from the BOOK through `groupKeyFor` on BOTH views, so the Holdings
+        table and the Transactions table narrow on one definition, and a switch
+        of axis or view still clears it (`setGroupAxis`, `setView`). A section
+        with no dated record says so in the table rather than going missing here.
+
+        A ROW OF ITS OWN because the row above already carries four controls:
+        seven tabs beside them wrap it on Category and more than that on Basket,
+        and a control that jumps lines every time the axis changes is the clutter
+        this replaces. It is the SECOND level of the axis picked above, which is
+        what "subcategories" asks for, and it is drawn lighter than that picker
+        for the same reason.
+
+        HIDDEN ON THE SECURITY AXIS, as the select was: that axis files every
+        holding in one section by design, so a tab row would offer one tab that
+        changes nothing. On Transactions the axis is never `security` (`txnAxis`
+        resolves it), so the row is always there. `data-section-filter` names the
+        active section, so the sweep reads what the control is set to without
+        clicking it.
+      */}
+      {!(view === "holdings" && bySecurity) && (
+        <div className="mb-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 border-b border-ink-700" role="tablist"
+          aria-label={`Show one ${GROUP_NOUN[activeAxis].one}`}
+          data-section-filter={bucket} data-section-axis={activeAxis}>
+          {buckets.map((s) => {
+            const on = bucket === s;
+            return (
+              <button key={s} type="button" role="tab" aria-selected={on} data-section-tab={s}
+                title={s === "All" ? ALL_LABEL[activeAxis] : undefined}
+                onClick={() => setBucket(s)}
+                className={`-mb-px border-b-2 px-2.5 py-1 text-xs transition-colors ring-focus ${on
+                  ? "border-champagne-500 font-medium text-champagne-400"
+                  : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                {s === "All" ? "All" : groupLabelFor(activeAxis)(s)}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
