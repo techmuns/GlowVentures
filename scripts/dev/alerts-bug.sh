@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VERIFY THE PRICE-ALERT CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR
-# (Stage 10ck).
+# (Stage 10cl).
 #
 # A check nobody has watched fail is a check nobody knows can fail. Each bug
 # below is applied on its own, rebuilt, run through the layer that should
