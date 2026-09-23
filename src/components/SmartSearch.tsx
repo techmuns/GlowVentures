@@ -54,8 +54,12 @@ function writeRecent(list: Recent[]) {
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, RECENT_MAX))); } catch { /* private mode */ }
 }
 
-/** Where a reader might start when the box is empty — found in the index by id. */
-const SUGGESTED = ["page:/monitor", "view:transactions", "page:/private-market", "fig:uncalled", "page:/family", "view:security"];
+/**
+ * Where a reader might start when the box is empty — found in the index by id.
+ * Six DIFFERENT destinations: the Monitor opens on All Securities now, so the
+ * sixth is its Category view rather than a second way to the same screen.
+ */
+const SUGGESTED = ["page:/monitor", "view:transactions", "page:/private-market", "fig:uncalled", "page:/family", "view:category"];
 
 type Row =
   | { type: "hit"; entry: SearchEntry; matched: string }

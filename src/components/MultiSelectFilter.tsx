@@ -14,6 +14,7 @@ export function MultiSelectFilter({
   placeholder = "Search…",
   className = "w-72",
   dense = false,
+  align = "left",
   render,
   emptyNote,
 }: {
@@ -26,6 +27,14 @@ export function MultiSelectFilter({
   className?: string;
   /** Tighter type and padding, to sit in a dense filter bar. */
   dense?: boolean;
+  /**
+   * WHICH EDGE THE OPEN PANEL IS ANCHORED TO. `left` opens it rightward from the
+   * trigger, which is right wherever the control starts a row. A control at the
+   * RIGHT END of a row passes `right`, so the panel — wider than its trigger —
+   * grows leftward into the row instead of past the page's edge. The Portfolio
+   * Monitor's pick-list moved to the right end at the family's request.
+   */
+  align?: "left" | "right";
   // How to DISPLAY an option, where the stored value is not the readable one.
   // The economic calendar stores ISO country codes ("IN") and must show
   // "India"; searching still runs over both, so typing either finds the row.
@@ -115,7 +124,8 @@ export function MultiSelectFilter({
       </button>
 
       {open && (
-        <div className="absolute left-0 z-50 mt-1 w-[min(24rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40">
+        <div data-multiselect-panel={align}
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} z-50 mt-1 w-[min(24rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40`}>
           <div className="border-b border-ink-700 p-2">
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
