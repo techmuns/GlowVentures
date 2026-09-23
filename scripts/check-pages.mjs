@@ -1869,6 +1869,26 @@ const UNVALUED_BOOK = (() => {
  * The XIRR is solved here too, by bisection on the same ACT/365 NPV, so a page
  * that dropped the payouts (and printed a LOWER rate that looks exactly as
  * plausible) fails on the figure rather than on a label.
+ *
+ * ── AND IT IS FIFO, BECAUSE THE PAGE IS (Stage 10ca, Stage 10cj) ────────────
+ *
+ * A rule expressed twice has to be MOVED twice. Stage 10ca put every return on
+ * FIFO — `(unrealised + realised) ÷ (cost of the units held + cost of the units
+ * sold)` — and moved `fundReturns.ts` with it, and this block was left on the
+ * rule it replaced, in two places:
+ *
+ *   - the HPR was `value ÷ cost held − 1`, which leaves out the units a fund
+ *     has already redeemed: Neo Infra 14.23% here against the page's 13.83%;
+ *   - a fund's dated calls were held to the cost of the units STILL HELD, and
+ *     Neo's ₹5 Cr called is ₹4.86 Cr held plus ₹14.16 L redeemed — so this
+ *     side marked it a gap, expected no XIRR and pooled three funds as two,
+ *     while the page (correctly) printed +16.7%.
+ *
+ * Five checks failed on a page that was right, from the day #80 landed. Both
+ * are written out here from each position's own fields — `costBasis`,
+ * `realizedPnL`, `costOfUnitsSold` — and never through `fifoTotals`, which is
+ * the code under test. The held-cost figure is kept beside the FIFO one
+ * (`hprHeld`) only so a check can prove the two differ on this book.
  */
 const PM_RETURN_BOOK = (() => {
   try {
@@ -1895,18 +1915,6 @@ const PM_RETURN_BOOK = (() => {
       .map((c) => [c.accountId, c]));
     const DAY = 864e5;
     const days = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY);
-    /**
-     * FIFO'S OTHER HALF, read off each position — Stage 10ca. The page strikes a
-     * fund's HPR as (unrealised + realised) ÷ (cost of units held + cost of units
-     * redeemed), and holds its dated calls to that same "every rupee deployed".
-     * This re-expression kept value ÷ cost held, so Neo Infra — which redeemed
-     * 14,162.8 units at their cost — read as a gap here while the page correctly
-     * shows its XIRR, and both checks below failed on main for as long as nobody
-     * walked this route after the FIFO change. An absent field adds nothing: a
-     * position that sold nothing carries a measured zero or no record, and
-     * neither moves the arithmetic. (Stage 10cj.)
-     */
-    const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     /** ACT/365 IRR by bisection, in percent; null where the flows do not bracket a root. */
     const irr = (flows) => {
       if (!flows.length) return null;
@@ -1922,14 +1930,22 @@ const PM_RETURN_BOOK = (() => {
     };
     const groups = new Map();
     for (const p of priv) groups.set(p.securityKey, [...(groups.get(p.securityKey) ?? []), p]);
+    /** A FIFO field a position may carry — a measured figure, or nothing to add. */
+    const fifoOf = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     const funds = [];
     for (const [key, g] of groups) {
       const cost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
       const mv = g.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
       const costCoversAll = g.every((p) => p.costBasis != null);
-      const sold = g.reduce((t, p) => t + num(p.costOfUnitsSold), 0);
-      const realised = g.reduce((t, p) => t + num(p.realizedPnL), 0);
-      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost + realised) / (cost + sold)) * 100 : null;
+      // FIFO: the gain on the units held plus the gain on the units redeemed,
+      // over what both cost — every rupee deployed into the holding.
+      const soldCost = g.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
+      const realised = g.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
+      const deployed = cost == null ? null : cost + soldCost;
+      const hpr = deployed != null && deployed > 0 && costCoversAll ? ((mv - cost + realised) / deployed) * 100 : null;
+      // What the page printed before FIFO — value against the cost of the units
+      // still held. Never an expectation; only what a regression would print.
+      const hprHeld = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
       let gap = false, unknown = false, withAccount = 0;
       const flows = [];
       const calls = new Set();
@@ -1943,7 +1959,11 @@ const PM_RETURN_BOOK = (() => {
         withAccount++;
         const cs = Array.isArray(c.calls) ? c.calls : [];
         const sumCalls = cs.reduce((t, k) => t + (Number(k.amount) || 0), 0);
-        if (!cs.length || p.costBasis == null || Math.abs(sumCalls - (p.costBasis + num(p.costOfUnitsSold))) > 1 || cs.some((k) => k.date > v)) {
+        // THE CALLS ARE EVERY RUPEE DEPLOYED: under FIFO the cost of the units
+        // held PLUS the cost of the units already redeemed. Held against the
+        // cost held alone, a fund that has redeemed any units reads as a gap.
+        const deployedHere = p.costBasis == null ? null : Number(p.costBasis) + fifoOf(p.costOfUnitsSold);
+        if (!cs.length || deployedHere == null || Math.abs(sumCalls - deployedHere) > 1 || cs.some((k) => k.date > v)) {
           gap = true; continue;
         }
         for (const k of cs) {
@@ -1985,7 +2005,7 @@ const PM_RETURN_BOOK = (() => {
         : window >= 365 ? { shown: true, tag: null, pct: rate }
         : tranches === 1 && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
         : { shown: false };
-      funds.push({ key, security: g[0].security, mv, cost, hpr, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
+      funds.push({ key, security: g[0].security, mv, cost, soldCost, hpr, hprHeld, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
     }
     const pooledIn = funds.filter((f) => f.complete);
     const pooled = pooledIn.length ? irr(pooledIn.flatMap((f) => f.flows)) : null;
@@ -1993,13 +2013,20 @@ const PM_RETURN_BOOK = (() => {
       ? days(pooledIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
         pooledIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
       : null;
+    // THE WHOLE PRIVATE BOOK, FIFO over the holdings that report a cost — the
+    // gain on units held and redeemed, over the capital deployed in both.
     const costed = priv.filter((p) => p.costBasis != null);
-    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis) + num(p.costOfUnitsSold), 0);
-    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis) + num(p.realizedPnL), 0);
+    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis), 0);
+    const bookSold = costed.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
+    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
+    const bookRealised = costed.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
-      footHpr: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
+      footHprHeld: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      /** Whether any private holding here has redeemed units — what makes the FIFO claims bite. */
+      redeemed: bookSold > 0,
       paying: funds.filter((f) => f.complete && f.paidOut > 0).length,
     };
   } catch { return null; }
@@ -4074,7 +4101,7 @@ const ROUTES = [
   ["private-market-calls", "/private-market"],
   ["private-market-calls-off", "/private-market"],
   /**
-   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cj. The editor shows the
+   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10ck. The editor shows the
    * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
    * a signed-out reader is told to sign in, never handed set-up steps for a
    * store that works. The two routes are the two sides of that one rule.
@@ -5126,7 +5153,7 @@ const CIO_TILE_OPTIONS = [];
 const TILE_MENU = new Map();
 const TILE_PICK = new Map();
 /**
- * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10cj. Its
+ * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10ck. Its
  * menu, the metric picked (the LAST one offered, so a card that ignores the
  * choice and appends the first spare metric fails), the strip read back after,
  * and the page opened again.
@@ -8317,10 +8344,12 @@ const PM_RETURN_CHECKS = [
   /**
    * EVERY FIGURE UNDER A NAME IS THAT NAME'S FIGURE: an XIRR is the rate over
    * every dated call, every payout dated on or before the valuation and the
-   * value; an HPR is value against cost. The bound is the page's own printing
-   * precision — one decimal — reproduced, never a tolerance widened.
+   * value; an HPR is FIFO — the gain on the units held plus the gain on the
+   * units redeemed, over what both cost (Stage 10ca). The bound is the page's
+   * own printing precision — one decimal — reproduced, never a tolerance
+   * widened.
    */
-  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is value against cost", (t, ctx) => {
+  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is FIFO over every rupee deployed", (t, ctx) => {
     const pr = ctx?.pmReturn;
     if (!pr || !PM_RETURN_BOOK) return false;
     let checked = 0;
@@ -8336,6 +8365,26 @@ const PM_RETURN_CHECKS = [
       }
     }
     return checked > 0;
+  }],
+  /**
+   * THE BOOK'S HPR SAYS WHAT IT COUNTS OF THE CASH PAID BACK, AND SAYS IT
+   * TRULY. The figure is FIFO, so the principal a fund returned by REDEEMING
+   * units is in it — their cost in what was paid in, any gain in the gain — and
+   * the hover on the one cell that sums the whole private book read "cash the
+   * funds have paid back is not in it" from Stage 10ca until Stage 10cj, false
+   * of Neo Infra's ₹14.16 L. Struck on the book's own redeemed units, so it
+   * asks for the principal clause only where there is principal to name; a
+   * figure that renders the same either way can only be told apart by the
+   * words beside it.
+   */
+  ["the private book's HPR hover says it is FIFO, and what it counts of the cash paid back", (t, ctx) => {
+    const foot = ctx?.pmReturn?.foot?.find((x) => (x.measure === "auto" || x.measure === "absolute") && /%/.test(x.text));
+    if (!foot || !PM_RETURN_BOOK) return false;
+    const says = foot.titles ?? "";
+    if (!/\bFIFO\b/.test(says)) return false;
+    return PM_RETURN_BOOK.redeemed
+      ? /principal returned on redeemed units is in it/i.test(says) && !/paid back is not in it/i.test(says)
+      : /paid back is not in it/i.test(says);
   }],
 ];
 
@@ -8368,6 +8417,26 @@ const PM_RETURN_ROUTE_CHECKS = [
       return Math.abs(f.rate - f.rateNoPayouts) > 0.1 && Math.abs(pct - f.rate) <= 0.06;
     });
   }],
+  /**
+   * AND THE SAME PROOF FOR FIFO. A fund that has redeemed units must show
+   * FIFO's holding-period return — the gain on the units held and redeemed,
+   * over what both cost — and the check first proves it can tell that from the
+   * figure every HPR used to be, value against the cost of the units STILL
+   * held: the two must differ by more than the printing precision on this
+   * book, or the comparison would pass a page that went back. On this book
+   * that is Neo Infra, 13.83% against 14.23%.
+   */
+  ["a fund that redeemed units shows FIFO's return, not value against the cost of the units it still holds", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const redeemed = PM_RETURN_BOOK.funds.filter((f) => f.soldCost > 0);
+    if (!redeemed.length) return notChecked("no private fund in this book has redeemed units, so FIFO and value against the cost held are one figure");
+    return redeemed.every((f) => {
+      const c = pr.rows.find((r) => r.key === f.key)?.cells.find((x) => x.measure === "absolute");
+      if (!c?.shown || f.hpr == null || f.hprHeld == null) return false;
+      return Math.abs(f.hpr - f.hprHeld) > 0.1 && Math.abs(pctOfCell(c.text) - f.hpr) <= 0.06;
+    });
+  }],
   ["the XIRR footer pools exactly the funds with a complete record, and says how many", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "xirr");
     if (!foot || !PM_RETURN_BOOK) return false;
@@ -8386,7 +8455,7 @@ const PM_RETURN_ROUTE_CHECKS = [
     if (cells.some((c) => !c)) return false;
     return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
   }],
-  ["the HPR footer is the whole private book's value against its cost", (t, ctx) => {
+  ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
     if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
     return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.footHpr) <= 0.06;
@@ -8476,7 +8545,7 @@ const CIO_TILE_PICKER = [
   }],
   /**
    * ...AND THE ADD TILE CARD TAKES THE STRIP'S NEXT COLUMN, NOT A ROW OF ITS
-   * OWN — Stage 10cj. This page does not scroll (Stage 10bj): a second row of
+   * OWN — Stage 10ck. This page does not scroll (Stage 10bj): a second row of
    * KPI tiles takes its height from the panel under it. So the card is counted
    * in `--kpi-cols`, and wherever the strip has fewer than six tiles it sits on
    * the tiles' own row. Every claim above passes with the card on a row by
@@ -13434,7 +13503,7 @@ const INVARIANTS = {
     }],
     /**
      * ...AND THE ADD TILE CARD, ALONE ON THE NEXT ROW, IS STILL THE SIZE OF A
-     * TILE — Stage 10cj. Six tiles fill Morning CIO's six columns, so this is the
+     * TILE — Stage 10ck. Six tiles fill Morning CIO's six columns, so this is the
      * one state in which its card sits on a row by itself; `auto-rows-fr` is what
      * keeps that row as tall as the tiles' rather than as short as two words.
      */
@@ -15348,7 +15417,7 @@ const INVARIANTS = {
         && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
     }],
     /**
-     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cj.
+     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10ck.
      *
      * *"We need to keep the ability for the customer to add a date in this
      *  Capital Call column, which is empty right now."* It was a column of em
@@ -15799,7 +15868,7 @@ const INVARIANTS = {
         && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
     }],
     /**
-     * ── STAGE 10cj: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
+     * ── STAGE 10ck: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
      *
      * The state production is in until the KV binding exists. Every cell is a
      * button reading "Not set up", the header note says it once, and clicking
@@ -15824,7 +15893,7 @@ const INVARIANTS = {
     }],
   ],
   /**
-   * ── A SIGNED-OUT READER — Stage 10cj ────────────────────────────────────────
+   * ── A SIGNED-OUT READER — Stage 10ck ────────────────────────────────────────
    *
    * The other side of the set-up steps' rule: they belong to a store nobody has
    * connected, and a reader whom the edge gate signed out is told to sign in —
@@ -20403,7 +20472,7 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
     return /saved in this browser only/i.test(pick.savedWhere ?? "") && /not running here/i.test(pick.savedWhere ?? "");
   }],
   /**
-   * ── THE ADD TILE CARD — Stage 10cj ───────────────────────────────────────
+   * ── THE ADD TILE CARD — Stage 10ck ───────────────────────────────────────
    *
    * *"Add another tile. It should be a big empty tile with bold written: ADD
    * TILE. When I click on the ADD TILE button, I should be able to choose what
@@ -20518,7 +20587,7 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
       return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
     }],
     /**
-     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cj. A
+     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10ck. A
      * card that opened an empty menu would be the control that looks live and
      * does nothing, and this is the one route where the whole catalogue is up.
      */
@@ -21536,7 +21605,7 @@ for (const theme of THEMES) {
           sidesOutside: !!document.querySelector("main [data-pm-sides]:not(details [data-pm-sides])"),
         })));
       /**
-       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cj ──────────────────────
+       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10ck ──────────────────────
        *
        * *"They should be able to simply click, select the date, and save it."*
        * The cells were em dashes nothing could click; they name their cause and
@@ -23621,7 +23690,7 @@ for (const theme of THEMES) {
               more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
               text: txt(td),
               // A cell that cannot save carries its whole reason in a title, and
-              // names its cause in a word on screen — Stage 10cj.
+              // names its cause in a word on screen — Stage 10ck.
               reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
               tag: el?.tagName?.toLowerCase() ?? null,
               cause: el?.getAttribute("data-pm-call-cause") ?? null,
@@ -24800,7 +24869,7 @@ for (const theme of THEMES) {
         const adds = [...strip.querySelectorAll("[data-tile-add]")];
         const cards = [...strip.querySelectorAll(".card")];
         /**
-         * THE ADD TILE CARD — Stage 10cj. *"a big empty tile with bold written:
+         * THE ADD TILE CARD — Stage 10ck. *"a big empty tile with bold written:
          * ADD TILE."* Every word of that is geometry or style — big, empty,
          * bold, and where it sits — so it is MEASURED: its box against the last
          * tile's, its label's computed weight, its border, and whether it is
@@ -25036,7 +25105,7 @@ for (const theme of THEMES) {
         } catch { /* a strip with no picker is a finding below, not a crash here */ }
       }
       /**
-       * ── …AND THE ADD TILE CARD, USED — Stage 10cj ───────────────────────────
+       * ── …AND THE ADD TILE CARD, USED — Stage 10ck ───────────────────────────
        *
        * *"When I click on the ADD TILE button, I should be able to choose what
        * I want to see in that tile."* The walk opens the card's menu, reads what

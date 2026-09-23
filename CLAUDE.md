@@ -414,7 +414,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
   says saving is not switched on — never an empty column. See Stage 10bs, and
-  Stage 10cj: every cell names that cause in a word ("Not set up") and opens an
+  Stage 10ck: every cell names that cause in a word ("Not set up") and opens an
   editor giving the one-time Cloudflare steps (`SWITCH_ON_STEPS`) — the same one
   step that switches on the shared tile layouts below.
 - `src/lib/fundReturns.ts` — WHICH RETURN A PRIVATE FUND SHOWS, AND WHY. Each
@@ -441,7 +441,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
   made here the store never confirmed, then the shared layout. See Stage 10cb.
   A tile is ADDED from the strip's own last cell, the ADD TILE card, and saved
-  the same way — see Stage 10cj.
+  the same way — see Stage 10ck.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -12245,7 +12245,7 @@ the one's that they want to see. Also add a small + button on the last 4th KPI
 tile so the user can also increase the no. of KPI tile and add a new one on the
 page as per their requirement."*
 
-***THE `+` IS A TILE OF ITS OWN SINCE Stage 10cj*** — *"a big empty tile with
+***THE `+` IS A TILE OF ITS OWN SINCE Stage 10ck*** — *"a big empty tile with
 bold written: ADD TILE"*, in the grid cell where the next tile will land, on
 both strips, and clicking it offers the metrics not on screen rather than
 appending the first of them. Everything else in this passage is unchanged.
@@ -15594,7 +15594,7 @@ Settings → Bindings → add a KV namespace binding named **`GLOW_STORE`** (for
 Production and Preview) → redeploy. Until that is done every cell reads "Saving
 is not switched on yet" and nothing offers to save.
 
-***IT DID NOT READ THAT — see Stage 10cj.*** Each cell was an em dash with that
+***IT DID NOT READ THAT — see Stage 10ck.*** Each cell was an em dash with that
 sentence in its HOVER and nothing to click, and the family read the column as
 *"empty right now"*. Each cell says "Not set up" now and opens the editor, which
 gives the reason and these steps, in Cloudflare's current menu names.
@@ -18756,7 +18756,7 @@ three that are not:
 - `private-market`, `private-market-tiles` and `private-market-returns` fail
   **on `main` too**, measured on a worktree at `6453c99`: #80 made a fund's HPR
   FIFO, and the sweep's re-expression still strikes it as value against cost.
-  That is main's own check to move, not this merge's.
+  That is main's own check to move, not this merge's. *(Moved at Stage 10cj.)*
 
 The ten NOT CHECKED lines are all main's evidenced abstentions: six Morning CIO
 panels (every KPI tile carries a figure), two Private Market fund routes (every
@@ -19200,7 +19200,7 @@ refused, as the page does. A rule written twice has to be moved twice.
 - `private-market`, `private-market-tiles` and `private-market-returns` — **fail
   on `main` too**, measured on a worktree at `6453c99`: #80 made a fund's HPR
   FIFO and the sweep's re-expression still strikes it as value against cost.
-  Main's check to move, not this merge's.
+  Main's check to move, not this merge's. *(Moved at Stage 10cj.)*
 
 The ten NOT CHECKED lines are main's evidenced abstentions, as on #76. `build` ·
 `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
@@ -19751,7 +19751,7 @@ run — the fund-return re-expression in the checker (#72's) still strikes HPR a
 value against cost, where #80 made every HPR FIFO. Neither was introduced here
 and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
-they are not mistaken for this branch's.
+they are not mistaken for this branch's. *(Both fixed at Stage 10cj.)*
 
 ### Stage 10cf — A ROW THAT IS WHOLE ACCOUNTS CARRIES THE MONEY-WEIGHTED RETURN ITS PAYMENTS SUPPORT
 
@@ -19929,7 +19929,7 @@ checks: #84 added a fifth page and the check still counts four. The three
 `check:pages` findings are the Private Market routes, 8 invariants in all, and the
 identical 8 fail on main's own build. #72's fund-return re-expression still
 computes HPR as value against cost where #80 made it FIFO. Stage 10ce named both
-and left them, and so does this. The 10 invariants not checked are all
+and left them, and so does this. *(Both fixed at Stage 10cj.)* The 10 invariants not checked are all
 pre-existing claims with no subject on this book (six KPI-tile lines across the
 Morning CIO routes, three Private Market lines, one crumb on the not-found
 drill-down); none is this stage's.
@@ -20105,7 +20105,8 @@ that page belongs in Extras is #84's question rather than a look's.
 
 A typeface and a colour move no figure and no row. They are named here rather
 than fixed, because the fixes belong to the changes that own returns and the
-Extras menu; queuing them as a separate task timed out three times.
+Extras menu; queuing them as a separate task timed out three times. *(Both were
+fixed at Stage 10cj, and Corporate Actions stays in Extras at the family's word.)*
 
 `build` · `tsc` · `test:ingest` (golden 140, 2 not checked) · `test:family` (46
 suites, 2,466 checks, 0 failed) · `check:family` **84 passed, 2 failed — the
@@ -20632,7 +20633,8 @@ of each fund's return still gates the dated calls against a cost basis that #80
 made FIFO. This branch was walked against pristine main (`c1bfddd`) on
 `private-market` and `private-market-returns`, and the same invariants fail
 there. Stages 10ce and 10cf each recorded it and left it, and so does this one:
-the fix is to the checker, and it belongs in its own change.
+the fix is to the checker, and it belongs in its own change. *(It had one: Stage
+10cj, with the Extras count beside it.)*
 
 #### Verification
 
@@ -20681,7 +20683,161 @@ three: #84's evidence cell and #77's capital summary on two routes. All three
 are fixed (§4), and a targeted sweep of those routes is clean. Each was found by
 the guard firing, which is the same demonstration as a defect put back.
 
-### Stage 10cj — AN ADD TILE CARD, AND A CAPITAL CALL COLUMN THAT SAYS WHY IT CANNOT SAVE
+### Stage 10cj — SEVEN CHECKS FAILED ON A CORRECT PAGE: FIFO RETURNS, AND THE FIFTH EXTRAS PAGE
+
+*"yes please do whatever is needful , yes"* — the family's answer to two
+questions: whether to fix the seven checks that had failed on `main` since #80
+and #84, and whether Corporate actions & dividends stays in Extras.
+
+#### Seven failures, two causes, and the page was right both times
+
+Five `check:pages` invariants on the three Private Market routes — eight
+failures in all, since two of the five failed on more than one route — and two
+`check:family` rows had failed on every run since #80 and #84 landed. Six stage
+records named them as `main`'s and left them — 10cc, 10cd, 10ce, 10cf, 10cg and
+10ci — because each of those changes was about something else. **Measured on the page
+and on the book before anything moved, the page was right every time:**
+
+| | The page (FIFO) | The sweep's re-derivation, before |
+| --- | ---: | ---: |
+| Neo Infra — HPR | +13.8% | 14.23% |
+| Neo Infra — XIRR | +16.7% | not shown: the sweep called the record a gap |
+| Pooled XIRR | 3 of 4 funds, +21.1% | 2 of 4 |
+| Whole private book — HPR | +22.8% | 23.15% |
+
+**CAUSE ONE: A RULE EXPRESSED TWICE WAS MOVED ONCE.** Stage 10ca put every
+return on FIFO — `(unrealised + realised) ÷ (cost of the units held + cost of the
+units sold)` — and moved `fundReturns.ts` with it. `PM_RETURN_BOOK`, the sweep's
+own re-derivation of the same methodology (Stage 10bw), was left on the rule
+FIFO replaced, in two places:
+
+- **HPR was value ÷ cost held.** That leaves out the units a fund has already
+  redeemed. Neo Infra redeemed 14,162.8 units at their ₹14,16,280 cost, so FIFO
+  gives 13.83% where value against the cost of what is left gives 14.23%.
+- **A fund's dated calls were held to the cost of the units STILL held.** Neo's
+  ₹5 Cr called is ₹4.86 Cr held plus ₹14.16 L redeemed, so the sweep marked its
+  record a gap, expected no XIRR, and pooled two funds where the page pools three.
+  That is the identical defect Stage 10ca found and fixed in `fundDatedRecords`,
+  where it had turned Neo's +16.68% into a dash; the fix reached the page and
+  not the page's second expression.
+
+Both are now written out from each position's own `costBasis`, `realizedPnL` and
+`costOfUnitsSold`, and never through `fifoTotals`, which is the code under test.
+
+**CAUSE TWO: A LIST THE NAV OUTGREW.** #84 filed Corporate actions & dividends
+under Extras, beside Return & Drawdown, and `check:family` went on expecting
+exactly four pages there. The family have confirmed it stays. `EXTRAS_PAGES` is
+now ONE list read by every Extras row, so the count cannot drift between them
+again, and the page is opened by its own address like the other four.
+
+**A CHECK THAT FAILS ON A CORRECT PAGE IS NOT HARMLESS.** Through the ten
+changes that landed after #80 the full sweep read three routes with a finding,
+and through the seven after #84 `check:family` read "2 failed" — on correct
+trees. Each change had to prove, by building `main` beside itself, that the
+failures were not its own. A standing red is read as noise, and the next real
+failure would have been read the same way beside it.
+
+#### One caption FIFO had made false
+
+The Private Market table's whole-book HPR — and every band and member row, which
+share the resolver — carried the hover *"Current value against the capital paid
+in, not annualised. Cash the funds have paid back is not in it — XIRR counts
+it."* Under FIFO the principal a fund returns by REDEEMING units is in the
+figure: their cost in what was paid in, any gain on them in the gain. So the
+sentence was false of Neo's ₹14.16 L on the one cell that sums the whole private
+book, while the fund row above it (`fundMeasuredReturn`) already said the right
+thing. `aggHprNote` gives a set the fund note's own rule: where a holding in it
+has redeemed units, principal on them is in the figure and income, equalisation
+and any payout that redeemed no units are not; where none has, cash paid back is
+not in it. XIRR counts all of it either way.
+
+#### The checks
+
+- The two re-named invariants — *each HPR is FIFO over every rupee deployed*
+  and *the HPR footer is FIFO over the whole private book* — strike the page on
+  FIFO.
+- **A NEW PROOF, BECAUSE A CHECK THAT CANNOT TELL THE TWO BASES APART COULD NOT
+  CATCH A PAGE GOING BACK:** *a fund that redeemed units shows FIFO's return, not
+  value against the cost of the units it still holds.* It first requires the two
+  to differ by more than the printing precision on this book (Neo, 13.83% against
+  14.23%), then the page to show the FIFO one; on a book where no fund has
+  redeemed units it abstains with that evidence. The payouts check beside it has
+  the same shape for the same reason.
+- *The private book's HPR hover says it is FIFO, and what it counts of the cash
+  paid back* — on all three Private Market routes, struck on the book's own
+  redeemed units, so it asks for the principal clause only where there is
+  principal to name. A figure that renders the same either way can only be told
+  apart by the words beside it.
+
+#### The bug-reintroduction pass
+
+`scripts/dev/pm-fifo-bug.sh` puts each bug back on its own, rebuilds, runs the
+suite it lives in and restores by copy on a trap — verified with `cmp` and
+rebuilt on the way out. It ran twice, on this change's own tree and again on the
+tree merged with #90, and a no-patch control ran first each time and was clean
+on both suites (the three Private Market routes clean; `check:family` 88 passed,
+then 89 once #90 added a row). Every case fires its own check, the same checks
+on both trees:
+
+| # | Bug put back | Fires |
+| --- | --- | --- |
+| 1 | a fund row's HPR back on value against the cost held | *each HPR is FIFO…* and the new proof, on `private-market-returns` |
+| 2 | the page's own calls held to the cost still held — Neo Infra reads as a gap | *the methodology picks…* on `private-market` and `private-market-tiles`; the XIRR column, the payouts check and the pooled footer on `private-market-returns` — 3 of 3 routes |
+| 3 | the whole-book HPR back on the cost held | *the HPR footer is FIFO…* |
+| 4 | the hover back to *"cash the funds have paid back is not in it"* | the hover check, on all three routes |
+| 5 | the hover names FIFO but never the principal on redeemed units | the hover check, on all three routes |
+| 6 | Corporate actions & dividends filed outside Extras | 4 `check:family` rows — the five pages, the reveal, the by-address opening, and Allocation's own entries |
+| 7 | Extras holds the five out of order | 2 rows — the order, and the reveal |
+| 8 | **the original defect, in the checker** — its HPR back on the cost held, against the page as it is | *each HPR is FIFO…* and the new proof |
+
+**CASE 1 FIRES ON ONE ROUTE OF THREE, AND THAT IS RIGHT.** On the two default
+routes the methodology shows Neo Infra's XIRR, so a fund row's HPR is drawn only
+where a reader ticks it. **Case 8 is what the new proof is for.** Put the
+checker's own HPR back on the cost held and it can no longer tell the two bases
+apart, so it could not catch cases 1 or 3 — and had the page drifted back with
+it, every HPR check would have agreed with it. The proof fails instead, because
+it asks first whether the two bases differ on this book at all.
+
+#### What this does not claim
+
+**The subset-only `monitor-txn-drill` failure Stage 10cg named did not
+reproduce.** Run on its own, on both themes, on this tree, it is clean. That is
+the shape Stage 10cc recorded for `monitor-txn-out` — a failure under load that a
+lone run does not repeat — and it is named here rather than counted as fixed.
+
+#### Merged with #90, which took `10ci`
+
+#90 landed while this was being checked, and took `10ci`, so this is **`10cj`**.
+Both had written a `### Stage 10ci` above Stage 10k, so git marked the conflict
+— the safer of its two failure modes. Main's section keeps the letter and comes
+first. Every `10ci` line was read before it moved: eleven were this change's
+(six in this file, five code comments) and moved, and seven are #90's (five in
+this file, two code comments) and stayed.
+
+**#90 ALSO NAMED THESE FAILURES AND LEFT THEM**, the sixth record to do so, and
+its paragraph now points here.
+
+**THREE CODE FILES MERGED WITHOUT A MARKER, WHICH IS WHEN TO CHECK BY HAND.**
+`check-pages.mjs`, `check-family-inputs.mjs` and `PrivateMarket.tsx` each differ
+from main by exactly this change, and the sweep's `ctx` literal is main's, byte
+for byte, because this change adds no probe. #90 changed 207 lines of
+`PrivateMarket.tsx`, so an anchor of the harness could have moved; it was re-run
+on the merged tree for that reason, and every case applied and fired.
+
+Every result below is from the tree that ships — this change merged with #90
+(main `1e0ab78`) — and each was run again there rather than carried across.
+`build` · `tsc` · `test:ingest` (every suite passes; golden 140 passed, 2 not
+checked, 0 blocked) · `test:family` (46 suites, 2,466 checks, 0 failed) ·
+`check:family` **89 passed, 0 failed** — 85 and 2 on `main` · `check:pages`
+**246 combinations clean** — 3 with a finding on `main` — with the same ten evidenced
+abstentions across four claims that Stage 10cg records, none of them this
+stage's: every KPI tile on this book carries a figure (six Morning CIO routes),
+every private holding reports a cost, no private account is redeemed to nil, and
+nothing on Morning CIO points at an undefined drill-down. The count does not
+move because this change adds no route. `npm run build-book` regenerates the
+book byte-identically: a checker and a hover are not part of the book.
+
+### Stage 10ck — AN ADD TILE CARD, AND A CAPITAL CALL COLUMN THAT SAYS WHY IT CANNOT SAVE
 
 *"Add another tile. It should be a big empty tile with bold written: ADD TILE.
 When I click on the ADD TILE button, I should be able to choose what I want to
@@ -20988,7 +21144,7 @@ byte-identically.
 Main's tip still carries the stale FIFO lines in `PM_RETURN_BOOK`, so section
 3's fix is still this change's to make.
 
-**AND THEN #90 TOOK `10ci`, SO THIS IS `10cj`.** It landed while this PR waited
+**AND THEN #90 TOOK `10ci`, SO THIS WAS `10cj`.** It landed while this PR waited
 for the go-ahead to merge. Both sections sat at the same place, so git marked
 the conflict this time. Main's keeps `10ci`; this section follows it. Every line
 naming `10ci` was placed by which side's own copy of its file carries it: 21

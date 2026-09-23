@@ -198,13 +198,20 @@ check("...and the now-empty Setup group heading went with it",
   !groupOf("Setup") && !/(^|\n)\s*SETUP\s*(\n|$)/.test(text));
 
 // *"Move the following page buttons inside a drop down option ... labelled as
-//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups.
+//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups,
+// and since #84 a FIFTH: Corporate actions & dividends, which that change filed
+// under Extras beside Return & Drawdown. The family confirmed it stays there
+// (Stage 10cj). This list still said four through the seven changes that landed
+// after #84, and failed two rows on every run — a check that fails on a correct
+// page is read as noise, and the next real failure goes unread beside it. ONE
+// list, used by every row below, so the count cannot drift between them again.
+const EXTRAS_PAGES = ["/capital-gains", "/performance", "/returns", "/corporate-actions", "/ledger"];
 const extras = groupOf("Extras");
 check("Extras is a group, and the only collapsible one",
   !!extras && extras.collapsible && navGroups.filter((g) => g.collapsible).length === 1,
   `${navGroups.filter((g) => g.collapsible).length} collapsible`);
-check("...holding exactly the four pages the family named, in the order given",
-  same(extras?.entries, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+check("...holding exactly the five pages it carries, in the order given",
+  same(extras?.entries, EXTRAS_PAGES),
   extras?.entries.join(" · "));
 check("...and the emptied Tax and Analytics headings went with their entries",
   !groupOf("Tax") && !groupOf("Analytics")
@@ -212,8 +219,8 @@ check("...and the emptied Tax and Analytics headings went with their entries",
 check("...sitting above Admin, so Data Audit and Upload History still close the nav",
   navGroups.findIndex((g) => g.group === "Extras") >= 0
   && navGroups.findIndex((g) => g.group === "Extras") < navGroups.findIndex((g) => g.group === "Admin"));
-// IT IS A DROPDOWN: shut until asked, and none of the four clickable meanwhile.
-check("Extras starts collapsed, with none of its four pages reachable",
+// IT IS A DROPDOWN: shut until asked, and none of the five clickable meanwhile.
+check("Extras starts collapsed, with none of its five pages reachable",
   extras?.expanded === false && extras?.visible.length === 0,
   `${extras?.visible.length ?? "?"} visible`);
 
@@ -236,8 +243,8 @@ const clickExtras = async () => {
   navGroups = await readNav();
 };
 await clickExtras();
-check("clicking Extras reveals all four page buttons",
-  hasExtrasToggle && same(groupOf("Extras")?.visible, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+check("clicking Extras reveals all five page buttons",
+  hasExtrasToggle && same(groupOf("Extras")?.visible, EXTRAS_PAGES),
   hasExtrasToggle ? groupOf("Extras")?.visible.join(" · ") : "no Extras toggle to click");
 // ...AND IT IS A TOGGLE RATHER THAN A ONE-WAY REVEAL. Without this, a control
 // that ignored its own state and simply rendered open would pass the row above.
@@ -252,7 +259,7 @@ check("...and clicking it again puts them away",
 // nav, which reads as the page having left the app. It was just collapsed by
 // hand two lines up, so this also proves the ROUTE re-opens it rather than a
 // stored preference doing the work.
-for (const to of ["/capital-gains", "/performance", "/returns", "/ledger"]) {
+for (const to of EXTRAS_PAGES) {
   await page.goto(`${BASE}${to}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
   navGroups = await readNav();
