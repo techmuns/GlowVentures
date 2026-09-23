@@ -31,6 +31,9 @@ FILES=(
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/StockInfo.tsx"
   "src/pages/ReturnAnalysis.tsx"
+  "src/lib/returnColumns.ts"
+  "src/lib/fundReturns.ts"
+  "src/lib/privateMarket.ts"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -268,12 +271,14 @@ open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
 # ── 16 ── a return column sorts on the return on cost ──────────────────────
+# The accessors moved to `returnColumns.ts` when #72 shared them with the
+# Private Market fund table, so the patch follows them there.
 run_case_on "monitor-ret-sort" "every return column is ranked on the holding-period return" py <<'PY'
 import sys
-p = "src/pages/PortfolioMonitor.tsx"
+p = "src/lib/returnColumns.ts"
 s = open(p, encoding="utf-8").read()
 old = "    return res.shown ? res.pct : null;"
-new = "    return res.shown ? (r.returnPct ?? null) : null;"
+new = "    return res.shown ? ((r as { returnPct?: number | null }).returnPct ?? null) : null;"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
@@ -286,6 +291,78 @@ s = open(p, encoding="utf-8").read()
 old = "      return ins.length ? { ...r, investedOn: { first: ins[0], last: ins[ins.length - 1], payments: ins.length } } : r;"
 new = "      return ins.length ? { ...r, investedOn: { first: ins[ins.length - 1], last: ins[ins.length - 1], payments: ins.length } } : r;"
 if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 18 ── a fund's capital account subtracts the PRINTED distribution total ──
+# Neo Infra's total includes a payout dated after its valuation, still inside
+# the value — the double count the dated rule exists to stop.
+run_case_on "monitor,private-market-returns" "a fund's capital subtracts the printed distribution total" py <<'PY'
+import sys
+p = "src/lib/capital.ts"
+s = open(p, encoding="utf-8").read()
+old = "      const tookOut = back.reduce((t, r) => t + r.gross, 0);"
+new = "      const tookOut = isNum(c.distributed) ? c.distributed : back.reduce((t, r) => t + r.gross, 0);"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+run_suite_case "a fund's capital subtracts the printed distribution total" py <<'PY'
+import sys
+p = "src/lib/capital.ts"
+s = open(p, encoding="utf-8").read()
+old = "      const tookOut = back.reduce((t, r) => t + r.gross, 0);"
+new = "      const tookOut = isNum(c.distributed) ? c.distributed : back.reduce((t, r) => t + r.gross, 0);"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 19 ── (suite) a payout after the valuation comes out of the capital too ─
+run_suite_case "a payout dated after the valuation is subtracted from the capital" py <<'PY'
+import sys
+p = "src/lib/capital.ts"
+s = open(p, encoding="utf-8").read()
+old = "      const back = c.payouts.filter((r) => r.date <= asOf);"
+new = "      const back = c.payouts;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 20 ── (suite) equalisation received is not counted as cash back ────────
+run_suite_case "equalisation received is left out of what came back" py <<'PY'
+import sys
+p = "src/lib/capital.ts"
+s = open(p, encoding="utf-8").read()
+old = "      const back = c.payouts.filter((r) => r.date <= asOf);"
+new = '      const back = c.payouts.filter((r) => r.date <= asOf && r.kind !== "equalisation");'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 21 ── the fund table's HPR note says the payouts are missing ───────────
+# On a fund standing on its capital they are netted out of it, so "not in
+# this figure" would be false — the note #72 wrote for the cost basis.
+run_case_on "private-market-returns" "a fund on capital is told its payouts are not in its HPR" py <<'PY'
+import sys
+p = "src/lib/fundReturns.ts"
+s = open(p, encoding="utf-8").read()
+old = "  const onCap = f.capital?.onCapital.length ? f.capital : null;"
+new = "  const onCap = (false as boolean) && f.capital?.onCapital.length ? f.capital : null;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 22 ── the fund table strikes a fund on capital on the cost of its units ─
+run_case_on "private-market-returns" "the fund table strikes every fund on the cost of its units" py <<'PY'
+import sys
+p = "src/lib/privateMarket.ts"
+s = open(p, encoding="utf-8").read()
+old = """      const b = capital ? capital.behind(g) : null;
+      const onCap = b && b.onCapital.length > 0 ? b : null;
+      const cost = onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis));"""
+new = """      const b = capital && (false as boolean) ? capital.behind(g) : null;
+      const onCap = b && b.onCapital.length > 0 ? b : null;
+      const cost = onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis));"""
+if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
