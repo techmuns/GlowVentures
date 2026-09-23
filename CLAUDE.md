@@ -20018,11 +20018,16 @@ corner the cards now have. The third merge — five commits, 85 files — brough
 none, which is when this file says to check by hand: the `ctx` literal came
 through as main's own 92 keys, each declared once, because this change adds
 none (its checks read their own probe); and `build-book` regenerated the book
-byte-identically.
+byte-identically. The fourth — #78 alone — brought one conflict, here: both
+stages had been inserted above Stage 10k, and main's 10cf now comes first. It
+also changed the Buoyant company page this change had just fixed, so that
+table was measured again rather than assumed: it fits in both faces, its Return
+column two pixels wider with Inter than before.
 
 **FIVE CHECKS ON THREE ROUTES FAIL ON THIS TREE AND ON MAIN, IDENTICALLY, AND
 THEY ARE NOT THIS CHANGE'S.** Built and swept side by side against main's
-`c1bfddd`, which carries nothing of this branch. All five are Private Market's
+`c1bfddd`, and again at `3a5b4d1` once #78 landed, neither of which carries
+anything of this branch. All five are Private Market's
 fund returns: `private-market` and `private-market-tiles` each fail *the
 methodology picks the measure each fund's own dated record supports* and *each
 XIRR is the money-weighted rate … each HPR is value against cost*;
@@ -20035,7 +20040,8 @@ basis; #82's own commit message records the first two. (A subset run of
 `monitor-txn-drill` also fails four checks, on both trees alike; in the full
 sweep it passes. A subset is not the whole walk.)
 
-And `check:family` fails two on both trees, 84 passed against 2: Extras holds
+And `check:family` fails two on both trees, 84 passed against 2, at both of
+main's commits: Extras holds
 exactly the four pages the family named, and clicking it reveals all four —
 #84 added a fifth, Corporate Actions, and the check still names four. Whether
 that page belongs in Extras is #84's question rather than a look's.
@@ -20044,9 +20050,9 @@ A typeface and a colour move no figure and no row. They are named here rather
 than fixed, because the fixes belong to the changes that own returns and the
 Extras menu; queuing them as a separate task timed out three times.
 
-`build` · `tsc` · `test:ingest` (golden 140, 2 not checked) · `test:family` (45
-suites, 2,409 checks, 0 failed) · `check:family` **84 passed, 2 failed — the
-same two as main** · `check:pages` **244 combinations, 3 with a finding — the
+`build` · `tsc` · `test:ingest` (golden 140, 2 not checked) · `test:family` (46
+suites, 2,466 checks, 0 failed) · `check:family` **84 passed, 2 failed — the
+same two as main** · `check:pages` **246 combinations, 3 with a finding — the
 three Private Market routes above, and none of this change's own**, with ten
 evidenced abstentions across four claims, none of them this change's (every KPI
 tile on this book carries a figure, on the six Morning CIO routes; every private
