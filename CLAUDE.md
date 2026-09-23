@@ -15398,7 +15398,71 @@ FAILS rather than skips.
 statement". It does send one — `I83_103472_AccountStatement`, in the same bundle
 — and it is the document this reader reads.)
 
-BUG_PASS_PLACEHOLDER
+#### And the full sweep found a defect this change exposed, in code it had not touched
+
+Funding Buoyant's capital record put its two folios on the Transactions card —
+and `monitor-txn-basket` failed *"every section is one the shared filter
+offers"*. **Each Buoyant folio carries an empty cash sleeve, a MEASURED ₹0,
+beside its fund units**, so `txnAxis.forAccount` read both accounts as MIXED on
+every axis and filed their payments under *"Not classified by the statement"* —
+false of a fund whose statement names the class every payment bought. Its own
+comment said *"No account in this book is mixed on any axis — measured, all
+eleven funded ones resolve to one"*: true of eleven, not of thirteen.
+
+A line that holds nothing is set aside now where the account holds something
+else, and only there — an account holding nothing but ₹0 lines (3P, redeemed to
+nil) is still filed under what it held. `txnAxis.test.ts` holds every funded
+account to a real section on all three axes, and asserts load-bearingly that the
+rule does work on this book (both Buoyant folios are mixed only while the ₹0 line
+is counted). **The page check sees it on the Basket axis alone** — on Category
+the unstated heading is one the filter offers — so the suite is what covers the
+other two.
+
+#### Sixteen bugs reintroduced, each caught by its own check
+
+`scripts/dev/carried-cost-bug.sh` applies each alone, runs the layer it lives in,
+and restores by copy on a trap — rebuilding on the way out. A no-patch control
+ran clean first.
+
+| Bug put back | Caught by |
+| --- | --- |
+| the Invested cell's hover loses the carried note | `monitor` — the carried-cost cell check |
+| the row shows the statement's restated cost again | the same check (₹72.5 Cr shown, not ₹70.9 Cr) |
+| a switched contribution loses its mark | four `monitor-tranche-switch` checks |
+| the as-bought NAV becomes the restated one | "…and each names the NAV it was bought at" |
+| the panel stops saying what a switched row is | "the panel says what a switched row is" |
+| the HPR attribute carries the printed (maybe annualised) return | "a cheaper entry NAV always shows the higher return" |
+| the company page's Avg cost tile forgets its basis | `stock-carried` — the tile check |
+| the company page's account cell forgets its hover | `stock-carried` — the account-row check |
+| an empty cash sleeve makes a funded account mixed again | `monitor-txn-basket` — "every section is one the shared filter offers" |
+| the cost is never carried (book) | `carriedCost` ×3 and `tranches` ×2 |
+| the lots are carried unit for unit, ignoring the ratio (book) | `carriedCost` ×3 — the tranche gate refuses, so nothing is carried |
+| a carried lot takes the switch-day value as its cost (book) | `carriedCost` ×3 — gate B refuses, for the same reason |
+| gate A removed | `classSwitch` ×2 |
+| gate B removed | `classSwitch` ×2 |
+| the deposits not held to `Capital Invested` | `buoyantFlows` ×2 |
+| a class switch published as money in and out | `buoyantFlows` ×10 |
+
+**TWO OF THE BOOK CASES LEAVE `tranches.test.ts` CLEAN, AND THAT IS CORRECT
+RATHER THAN A GAP.** Both break the carry in a way the tranche gate then
+refuses, so Buoyant publishes no breakdown at all and the suite has nothing of
+Buoyant's to check; `carriedCost.test.ts` is what fails, by its load-bearing
+gate, and a suite that caught them would have to be asserting the same thing
+twice.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + **42** + **44** + 30 + 22 +
+140 (2 not checked, 0 blocked) · `test:family` (two new suites, `carriedCost`
+and `txnAxis`) · `check:family` **85/0** · `check:pages` **194 combinations
+clean**, with the same eight evidenced abstentions across the same four
+pre-existing claims — measured on the tree merged with #69, which is the only
+base that count is a fact about. `npm run build-book` regenerates `glowData.ts`
+and `docs/BOOK-REPORT.md` byte-identically on the merged tree, and
+`npm run replay:flows -- --check` is a no-op.
+
+**AND THE LETTER COLLIDED AGAIN, FOR THE THIRTEENTH TIME.** This section was
+`10br` until #69 merged under the same letter while this branch was open; main
+keeps it and this is `10bs`. Caught by comparing main's stage letters against
+the branch's own before merging — the check this file says to run every time.
 
 ### Stage 10k — News & Announcements: REMOVED
 
