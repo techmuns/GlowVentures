@@ -19695,6 +19695,191 @@ and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
 
+### Stage 10cf — ONE COMPANY, EVERY WAY IT IS HELD: A TAB PER ROUTE, AND THE FUNDS AS LINE ITEMS
+
+*"we need to show all in the table when i am in an entity as sub tabs"* · *"I
+write type a stock I want to know how much I'm holding directly and how much I'm
+going holding through managers."* · *"Which are the other managers owning it or
+I am owning it through which other managers… why should it not show me as a
+line item holding it through mutual fund here?"* — sent with a screenshot of
+ICICI Bank's Position by account table: three statement rows, an average cost of
+₹438.34, and nothing about the funds.
+
+**THE TABLE ANSWERED "WHICH STATEMENTS REPORT THIS" AND THE FAMILY ASKED "HOW
+DO I HOLD IT".** Three rows in the order the book happened to hold them, with no
+word for the route each one is — and the one route a reader cannot work out for
+themselves, the funds, not on the page at all. The Portfolio Monitor's stock
+axis has carried that half since Stage 10aj (`companyExposure`); the company
+page, which is where a reader lands after typing a name, never asked for it.
+
+#### `src/lib/heldThrough.ts` — the rows by route, and the funds as lines
+
+| | ICICI Bank, measured on this build | |
+| --- | --- | ---: |
+| **Direct** | Ankita's Motilal Oswal demat, 14,500 shares | ₹2 Cr |
+| **PMS managers** | Goldstandard's Aristos mandate for Ajay and for Ankita, 5,000 + 2,000 | ₹1 Cr |
+| **Mutual funds** | 14 lines — one per family member per fund — across 10 funds, **derived** | ₹2.77 Cr |
+| **All** | the three as bands, and three footers kept apart | ₹5.77 Cr |
+
+- **A STATEMENT ROW IS FILED BY ITS ACCOUNT'S ROUTE**, through `holdingRoute`
+  and nothing else: an own account is Direct, a discretionary mandate is PMS
+  managers, and anything else — an account run as a fund, an advisory or a
+  distribution engagement, or one whose statement states no engagement — is
+  **Other accounts**, a tab drawn only where the book has such a row. On this
+  book it has none, measured: the 298 company-share rows are 263 in PMS
+  mandates, 26 in the family's own demats and 9 at a broker. `heldRouteOf` is
+  the one place the route becomes one of four.
+- **A FUND LINE IS ONE FAMILY MEMBER'S HOLDING OF ONE FUND**, valued
+  `familyValue(holding, pctAum)` — the same figure the Monitor's stock axis sums
+  for that company, so the two screens cannot disagree. One line per member per
+  fund rather than one per fund, because *"through which"* is asked by a member.
+- **IT IS NEVER ADDED INTO THE BOOK'S OWN FIGURES.** The table carries three
+  footers, the Stage 10aj construction one page over: the measured total (the
+  statements), the derived total (the funds), and **Total exposure · incl.
+  derived**, the only line that adds them and says so. A fund line fills none of
+  the family's own columns — quantity, cost, P&L and return are `AbsentCell`,
+  each naming why — and says **derived** in words on the row, never in a tooltip.
+- **AND IT SAYS WHAT THE FUND HOLDS OF THE COMPANY** — `shares`, `debt` or
+  `shares + debt`, read off each instrument's own class in the filing. A liquid
+  fund holding a bank's certificates of deposit and a flexi-cap fund holding its
+  shares are both exposure to the bank, and only one of them is a share a reader
+  could set beside the demat row above it.
+- **THE AIF HOLDINGS ARE NAMED, NEVER DROPPED**: *"Your 11 AIF holdings
+  (₹352.3 Cr) file no portfolio this book can join"* — the look-through's own
+  `skipReason`, so whether they hold the company reads as not known rather than
+  as no.
+
+#### The tabs
+
+`All · Direct · PMS managers · Mutual funds` (+ `Other accounts` where it has
+rows), at **`?held=`** like every other view in this app, so a tab is a link and
+the sweep reaches each by address. Each tab prints its own figure. **A statement
+route the book has none of reads "none" and cannot be picked — never `₹0`**,
+which would read as a measured holding of nothing. The Mutual funds tab reads
+`none` where no readable fund discloses the company and STAYS OPEN, because it
+still has something to say — which funds were read, and that the AIFs disclose
+nothing. It reads `…` while the filings load and `—` if the store does not
+answer, each with the cause in its hover: a fact about the fetch is never worded
+as a fact about the holding. Only the active tab's rows are in the DOM, which is
+why the checks walk four addresses rather than one.
+
+#### The average cost was struck over every unit
+
+`₹94.2 L ÷ 21,500 shares = ₹438.34` — and only the mandate's 7,000 shares report
+a cost; the demat's 14,500 are a depository's, which holds the shares and did not
+buy them. Over the units that report a cost it is **₹1,346.33**, which is the
+per-unit cost Goldstandard's own statement prints on both of its rows.
+`measuredTotals` divides by `costedQty`, and the Total row says so in words
+(*"Invested, avg cost, P&L and return are on the 7,000 of 21,500 shares that
+report a cost"*) — the tile above the table carries the same basis in its caption.
+**THE RETURN IS FIFO OVER THOSE SAME ROWS** (Stage 10ca), through
+`fifoTotals`, so the figure, its average cost and its caption describe one set.
+
+#### A company held only inside the family's funds had no page
+
+**The Monitor's stock axis links every company only a fund holds to its own
+`/stock/` page — 466 of them on this book — and each opened on *"Position closed
+· This name is fully exited"*.** The page read "no statement row" as "sold",
+about companies the family never held directly and still holds today. The
+largest is HDFC Bank, ₹3.18 Cr across its fund lines.
+
+- **THREE STATES, NOT TWO.** Until the look-through answers, a page with no row
+  cannot tell a fund-held company from an exited one, so it claims neither.
+- A fund-only company reads **Held only inside your funds**, its table is the
+  fund lines and their derived total, and the Direct and PMS managers tabs read
+  "none".
+- **THE TAX CARD AND THE AVERAGE-COST TILE ARE NOT DRAWN** — every figure on
+  them is the family's own, and here the family owns units of funds, not the
+  company.
+- **RESEARCH IS ABSENT ONCE, WITH ITS CAUSE**: every research panel is keyed on
+  the NSE symbol a statement row resolves, none of the family's statements names
+  this company, so none was looked up — *"It is not a feed being down"*. Four
+  empty panels read as four failed feeds; this is one decided absence.
+
+#### The table fits its card
+
+A company held through a demat, two mandates and ten funds — State Bank of
+India, the one the checks walk — pushed Return and Basis **54px** past the card's
+edge, the sideways scroll Stage 10ba measured and removed. The Managed-by column
+now wraps above the same `12rem` floor the fund lines keep; a figure never wraps.
+
+#### The checks
+
+- **`heldThrough.test.ts`** (`npm run test:family`) is anchored on `glowData.ts`
+  and the committed `public/lookthrough/` store, read through the same three
+  inputs `useStockExposure` builds: every company's rows partition across the
+  routes; no derived rupee reaches the measured figure; the fund lines tie to the
+  store's totals and to `familyValue`, one per member per fund; the average cost
+  is over the costed units, **load-bearing on ICICI Bank** (it must differ from
+  cost ÷ every unit); the largest fund-only company resolves; the AIFs are
+  named; the loading and unreachable states claim nothing; and the ring-fenced
+  holding never appears.
+- **`check:pages`** walks `stock-held`, `stock-held-managers`,
+  `stock-held-funds` and `stock-funds-only`. `HELD_BOOK` re-derives every
+  expectation off `glowData.ts` — the company the book reports through the most
+  routes (then the largest), and the largest fund-only company — so the next drop
+  picks its own. Every claim returns a boolean or `{ notChecked }`, never a
+  string, and a missing probe is a failure rather than an abstention. The probe
+  reads the table even when its tabs are gone, so a page that lost them fails on
+  what it drew rather than making the claims throw on a missing field.
+- **`scripts/dev/held-through-bug.sh`** reintroduces 18 bugs — five in the model,
+  thirteen on the page — restoring by copy on a trap and rebuilding on the way
+  out. On the tree before the merge all eighteen ran: seventeen fired
+  their own checks, and one reported NOT A RESULT — its patch searched for
+  `TAB_ROUTE` written on one line, where the file writes one entry per line — and
+  was re-targeted. **The run also found a defect in the probe rather than the
+  page**: with the tabs gone, the probe handed the claims `tabs: null` and
+  nothing else, so eleven of them THREW on a missing field instead of failing on
+  what the page drew. It reads the table whether or not the tabs are drawn now,
+  and the tab-figure claim returns false on a missing tab rather than reading
+  `.value` off it.
+
+#### Merged with `main`, and the collisions this file predicts
+
+`main` moved by eight commits while this branch was open — FIFO on every return
+(#80), four text blocks and seven benchmarks (#81), the KPI tiles (#82),
+corporate actions (#84), one company one key one name (#76), purchase and
+redemption (#77), arbitrage as cash (#74) and a Polycab refresh. Three files
+conflicted, and each was resolved by intent rather than by side:
+
+- **`StockInfo.tsx`** — main's FIFO caption on the Unrealised tile, its
+  corporate-action card and its cash-fund research card, beside this branch's
+  tabs, fund lines and funds-only page. **The table's measured footer takes
+  main's rule, not this branch's.** It had refused a return wherever some rows
+  report no cost; Stage 10ca strikes it FIFO over the rows that DO report one.
+  So the footer does the same and says which units it covers — one rule for the
+  tile above the table and the total inside it.
+- **`heldThrough.ts` and its suite follow.** `measuredTotals` carries
+  `fifoTotals` over its costed rows (a cost the statement marks unusable is not
+  one), and the suite builds the look-through's inputs through main's
+  `heldFundVehicles`, `bookIsinBridge` and `bookCompanyKeys` — the helpers
+  `useStockExposure` calls — so it cannot exercise a join the page does not make.
+- **The `ctx` literal is main's 92 keys plus this branch's `heldTable`** — 93,
+  none duplicated, every one naming a declared probe, checked by parsing both
+  parents rather than by trusting the merge. `test-family.mjs` runs both sides'
+  suites.
+
+**AND THE MERGE CHANGED WHICH COMPANY THE CHECKS WALK, WHICH IS HOW THE WIDTH
+DEFECT WAS FOUND.** Before it, State Bank of India's demat row was keyed `sbi`
+and its four PMS rows `state-bank-of-india`, so it was two companies, each held
+one way. Stage 10cc joined them into one company held two ways — and measured
+on the two books, it took the companies the statements report two ways from ONE
+(ICICI Bank) to FOUR (SBI ₹4.46 Cr, ICICI Bank ₹3.00 Cr, Karur Vysya ₹1.43 Cr,
+Crompton ₹0.66 Cr). `HELD_BOOK` picks the company reported through the most
+routes, then the largest, so the walk moved from ICICI Bank to SBI by itself —
+and SBI's table was the one too wide for its card. A check keyed on a typed company name would have gone on
+walking ICICI Bank and never seen it.
+
+**THE STAGE LETTER WAS CHECKED AGAINST MAIN'S TIP AT THE MOMENT OF MERGING.**
+Main carries 10ca to 10ce, so this is 10cf. The headings duplicated in the merged
+file are exactly main's ten historical ones, and none is new.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0, the
+new suite included · `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY — nothing here touches the book.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -20695,6 +20880,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   under two keys, one label per key and always one a statement printed, nothing
   shouted in capitals or left in lower case, and an instrument's coupon, maturity
   and footnote marks kept off its issuer's name),
+  the **ways one company is held** (`heldThrough.test.ts`, Stage 10cf — each
+  company's statement rows partition across the routes, no derived rupee reaches
+  the measured figure, the fund lines tie to the store's own totals one line per
+  member per fund, and the average cost is over the units that report a cost —
+  load-bearing on ICICI Bank, where cost ÷ every unit read ₹438.34),
   the **family's own dated investments** (`tranches.test.ts`, Stage 10ag: the
   tranches must tie to the position's own quantity, cost basis and market value
   on three separate paths; the derived entry NAV is checked against the one the

@@ -10258,8 +10258,11 @@ const heldChecks = (which, tab) => [
   ["each route's tab carries the book's own figure for that route — and a route the book has none of is offered as none, not as a zero figure",
     (t, ctx) => {
       const h = ctx.heldTable, c = heldCompany(which);
-      if (!h?.tabs || !c) return false;
+      // No tabs drawn is a FAILURE here, and must read as one — not as a check
+      // that threw reading `.value` off a tab that does not exist.
+      if (!h?.tabs?.length || !c) return false;
       const by = Object.fromEntries(h.tabs.map((x) => [x.key, x]));
+      if (!["all", "direct", "managers", "funds"].every((k) => by[k])) return false;
       const measuredOk = ["direct", "managers"].every((k) => {
         const r = c.routes[HELD_TAB_KEYS[k]];
         return r.rows ? heldNear(by[k].value, r.mv) && !by[k].disabled && by[k].lines === r.rows
