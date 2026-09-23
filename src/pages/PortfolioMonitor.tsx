@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, ChevronRight, ChevronDown, Check, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
+import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
@@ -14,8 +14,7 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, RETURN_MEASURES, returnMeasureDef, isReturnMeasure,
-  type ReturnMeasure, type ReturnCoverage,
+  measuredReturn, returnCoverage, returnMeasureDef,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
@@ -50,6 +49,11 @@ import {
 // from there by type rather than by an omitted button.
 import { sectionsFor, orderSections, TXN_UNSECTIONED, TXN_UNSECTIONED_WHY, type TxnSections } from "@/lib/txnAxis";
 import { Auditable } from "@/components/Auditable";
+// THE RETURN-METHODOLOGY PICKER AND ITS COLUMNS ARE SHARED with the Private
+// Market fund table now. Everything that used to be defined here moved verbatim;
+// this page supplies only how one of ITS rows resolves a measure.
+import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
+import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } from "@/lib/returnColumns";
 // `weightFormula` is deliberately NOT imported, and the REASON has changed under
 // this comment — which is why it is being restated rather than left standing.
 //
@@ -425,52 +429,10 @@ const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | und
   // PLACEHOLDER in the column list rather than a column — `withReturnCols`
   // expands it to one id per ticked measure — so no view ever declares it and
   // an accessor for it would rank nothing while looking like the one that
-  // ranks the return columns. `returnAccessors` supplies the real ones, each
+  // ranks the return columns. `returnAccessorsFor` supplies the real ones, each
   // reading the measure its own column prints.
   entity: (r) => r.entities[0] ?? null,
 };
-
-/**
- * ── ONE RETURN COLUMN PER PICKED MEASURE ────────────────────────────────────
- *
- *   *"Whenever we select multiple return profiles to see on the dashboard it
- *   should add a new return column rather than show all returns in the same
- *   return column side by side — a new column with that return name should be
- *   made, and also removed when we select or deselect returns."*
- *
- * So `return` above is a PLACEHOLDER, not a column: the declared list expands it
- * to one id per ticked measure, which is what makes every mechanism in
- * `useTableView` do the right thing for free. A column list that grows and
- * shrinks is exactly the case that hook already reconciles — unknown ids
- * dropped, new ones appended in declared order — so ticking a measure adds a
- * column a reader can sort and drag like any other, and unticking it removes
- * the column and leaves the rest where they were dragged to.
- *
- * `TrFoot`'s span and `COL_COUNT` are struck on the view's own column count, so
- * neither has to be told. Written as a literal the count goes wrong SILENTLY:
- * an expansion simply stops reaching the last column and nothing fails.
- */
-const withReturnCols = (cols: readonly string[], measures: readonly ReturnMeasure[]) =>
-  cols.flatMap((c) => (c === "return" ? measures.map((m) => `ret:${m}`) : [c]));
-
-/**
- * AND SORTING A RETURN COLUMN ORDERS ON THE FIGURE THAT COLUMN PRINTS, resolved
- * through `measuredReturn` — the same function the cell draws, so the column a
- * reader clicks and the order they get cannot disagree about what a row's CAGR
- * is. Reusing `returnPct` for all of them would leave the CAGR arrow ordering by
- * the raw return on cost, and this book is where that lie is visible: one
- * holding annualises and the rest fall back to their absolute figure, so the two
- * orders genuinely differ.
- *
- * An absent return then sorts LAST in both directions, because `sortRows` does
- * that for every null — which is the rule this column needs and did not have to
- * restate.
- */
-const returnAccessors = (measures: readonly ReturnMeasure[], asOf: string) =>
-  Object.fromEntries(measures.map((m) => [`ret:${m}`, (r: Row) => {
-    const res = measuredReturn(r, m, asOf);
-    return res.shown ? res.pct : null;
-  }])) as Record<string, (r: Row) => number | null>;
 
 /**
  * One category's aggregate of every money metric, struck over the POSITIONS the
@@ -512,123 +474,28 @@ type BucketTotals = {
 // keep the trace. The inputs that don't move (quantity, cost) keep theirs either way.
 const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from the ledger; this figure is worked out from them, so it has no workbook cell to trace to.";
 
-/** The picker's option keys, in reading order — `auto` first. */
-const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
-
 /**
  * THE ONE SENTENCE THE DERIVED COLUMNS CARRY, written once so the two headers
  * cannot come to say different things about the same fence.
  */
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
-/**
- * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — held in the URL (`?ret=`) like
- * every other view on this page, so "send me the CAGR view" is a link.
- *
- * `auto` is the methodology and the param-free default, so `/monitor` stays one
- * URL. It is MUTUALLY EXCLUSIVE with the concrete measures: picking Absolute or
- * CAGR means "show me that one", not "that one on top of the rule", so a concrete
- * selection replaces auto and clearing everything falls back to it. The concrete
- * measures multi-select — the family can pin Absolute AND CAGR side by side, each
- * labelled, which is the "always have a CAGR column" ask answered without a
- * second column.
- */
-function useReturnMeasures(): [ReturnMeasure[], (next: ReturnMeasure[]) => void] {
-  const [sp, setSp] = useSearchParams();
-  const set = new Set((sp.get("ret") ?? "").split(",").map((s) => s.trim()).filter(isReturnMeasure));
-  // Concrete measures win over auto, in canonical order; empty → auto.
-  const concrete = MEASURE_KEYS.filter((k) => k !== "auto" && set.has(k));
-  const measures = concrete.length ? concrete : (["auto"] as ReturnMeasure[]);
-  const setMeasures = useCallback((next: ReturnMeasure[]) => {
-    const clean = MEASURE_KEYS.filter((k) => k !== "auto" && next.includes(k));
-    const nextSp = new URLSearchParams(sp);
-    if (clean.length === 0) nextSp.delete("ret");
-    else nextSp.set("ret", clean.join(","));
-    setSp(nextSp);
-  }, [sp, setSp]);
-  return [measures, setMeasures];
-}
-
-/**
- * THE RETURN-MEASURE PICKER — replaces the Absolute/CAGR toggle.
- *
- * "When you say return… what return is it? I can give you ten different returns
- * for one scheme." So this offers every one of them, the single Return column
- * shows whichever are ticked, and each cell is labelled with the measure it is.
- * `auto` behaves as a reset-to-methodology choice (mutually exclusive); the rest
- * tick on and off together. It is never empty — unticking the last one falls back
- * to auto — because an empty selection is not a state a reader means to be in.
- */
-function ReturnMeasureSelect({ measures, onChange }: { measures: ReturnMeasure[]; onChange: (m: ReturnMeasure[]) => void }) {
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => { if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
-  }, [open]);
-  const isAuto = measures.length === 1 && measures[0] === "auto";
-  const ticked = (k: ReturnMeasure) => (k === "auto" ? isAuto : measures.includes(k));
-  const toggle = (k: ReturnMeasure) => {
-    if (k === "auto") { onChange(["auto"]); return; }
-    const set = new Set(measures.filter((m) => m !== "auto"));
-    set.has(k) ? set.delete(k) : set.add(k);
-    onChange(MEASURE_KEYS.filter((m) => m !== "auto" && set.has(m)));
-  };
-  const label = isAuto ? "Return · by methodology"
-    : measures.length === 1 ? returnMeasureDef(measures[0]).label
-    : `${measures.length} return types`;
-  return (
-    <div ref={wrapRef} className="relative"
-      data-return-measures={MEASURE_KEYS.join(",")} data-return-active={measures.join(",")}>
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox"
-        title="Which return to show — the methodology, or pick one or more explicitly. Every cell is labelled with the return it is showing."
-        className="flex w-fit items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
-        <span className="truncate">{label}</span>
-        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {/* RIGHT-ALIGNED PANEL, so it can never extend past the trigger's right
-          edge into horizontal overflow. The picker is the last control on the
-          filter row, so a `left-0` panel opened rightward and ran off the page —
-          the family had to scroll sideways to read it. Anchored to the right, its
-          22rem width grows leftward into the row it already occupies, and the
-          `92vw` cap keeps it on screen at any width. */}
-      {open && (
-        <div className="absolute right-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
-          <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
-          <ul className="max-h-80 overflow-auto py-1">
-            {RETURN_MEASURES.map((m) => {
-              const on = ticked(m.key);
-              return (
-                <li key={m.key} role="option" aria-selected={on}
-                  onMouseDown={(e) => { e.preventDefault(); toggle(m.key); }}
-                  className={`flex cursor-pointer items-start gap-2 px-3 py-1.5 text-sm hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
-                  <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
-                    <Check className="h-3 w-3" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-1.5">
-                      <span className="font-medium">{m.label}</span>
-                      <span className="ret-tag">{m.tag}</span>
-                    </span>
-                    <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">{m.hint}</span>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function PortfolioMonitor() {
   const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
-  const [view, setViewState] = useState<"holdings" | "transactions">("holdings");
+  /**
+   * `?show=transactions` OPENS THE TRANSACTIONS TAB — the address the top bar's
+   * search sends "transactions", "buys" or a redeemed fund to. The switch stays
+   * local state (it is not a view of the SAME rows, so it never belonged in
+   * `?view=`); the param only says where to land, and it is re-read when it
+   * changes so a search from this very page still switches the tab.
+   */
+  const [showParams] = useSearchParams();
+  const showParam = showParams.get("show");
+  const [view, setViewState] = useState<"holdings" | "transactions">(
+    showParam === "transactions" ? "transactions" : "holdings");
+  useEffect(() => {
+    if (showParam === "transactions" || showParam === "holdings") setViewState(showParam);
+  }, [showParam]);
   /**
    * BY SECURITY IS THE ONLY VIEW WITH A CONTROL — the switch was removed at the
    * family's request, who read the consolidated table as the one they want.
@@ -809,7 +676,7 @@ export function PortfolioMonitor() {
     // `portfolio` is not narrowed until the guard below and a hook cannot sit
     // after one; these accessors are only ever called from `sortRows` under it,
     // so the fallback is unreachable rather than a default date standing in.
-    () => ({ ...MONITOR_ACCESSORS, ...returnAccessors(returnMeasures, portfolio?.asOf ?? "") }),
+    () => ({ ...MONITOR_ACCESSORS, ...returnAccessorsFor<Row>(returnMeasures, (r, m) => measuredReturn(r, m, portfolio?.asOf ?? "")) }),
     [returnMeasures, portfolio?.asOf]);
   // ORDER-INDEPENDENT BY CONSTRUCTION: a span struck on the view's own column
   // count cannot drift from the header when a reader moves a column, where the
@@ -3934,97 +3801,6 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
   const raw = sum(built.map((v) => v.marketValue));
   for (const v of built) v.share = raw > 0 ? v.marketValue / raw : 0;
   return built;
-}
-
-/**
- * WHY AN AGGREGATE HAS NO SUCH RETURN — one sentence per measure, read by the
- * category totals row and by the footer.
- *
- * Both print a CUMULATIVE ON COST figure and neither follows the measure picker:
- * a category and a whole book have no single purchase date to annualise over, no
- * per-holding cash-flow history to solve an XIRR against, and no dated opening
- * value for a year. With a column per measure that has to be SAID rather than
- * left as one figure under a header that could mean any of five things — so the
- * cumulative figure stands under HPR and under `auto`, and every other column
- * renders a dash carrying the reason from here.
- *
- * `auto` and `absolute` are absent from this table on purpose: those two ARE the
- * basis the aggregate is struck on, so asking it for a reason would be asking
- * why a figure it does have is missing.
- */
-const AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
-  cagr: "annualising needs one purchase date and this holds many, bought over years, so a CAGR here would compound a window nothing was held over.",
-  xirr: "a money-weighted return needs every dated cash flow of the thing it measures, and no statement reports those per category.",
-  ytd: "a year-to-date figure needs this category's value on 1 January, and the earliest statement in this book is dated after the year began.",
-  calendar: "a calendar-year return needs its value at both ends of that year, and this book is not dated early enough to carry either.",
-};
-
-/**
- * ── WHAT A RETURN COLUMN COVERS, AND WHY IT COVERS NO MORE ────────────────
- *
- *   *"remove the highlighted text from the dashboard UI."*
- *
- * The five paragraphs this replaces sat under the table, one per ticked measure,
- * and each was audited before it went. Every one made TWO claims: a COUNT of how
- * much of the table its measure can answer, and the REASON the rest is absent.
- *
- *   • the REASON already survives per row — `measuredReturn` returns it and the
- *     cell renders an `AbsentCell` carrying it, which is the stronger statement
- *     because it is about the row the reader is looking at;
- *   • the COUNT was stated NOWHERE ELSE, and it is the one a reader acts on: a
- *     column of dashes with nothing saying why reads as a broken feed rather
- *     than as a measurement this book cannot strike.
- *
- * So the count rides in the column header's own note and the reason in its
- * hover — which is where this book puts a claim about a column, and which only
- * became possible when each measure got a column of its own (ask 3 built the
- * home for what ask 2 removed). Returned as ONE object so the short note and
- * the sentence behind it cannot describe different sets.
- *
- * `auto` gets neither: its measure resolves per row, so there is no column-wide
- * count to state and the tag on every cell is what names it. The family asked
- * for that caption gone at Stage 10af and it stays gone.
- */
-function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, asOf: string):
-  { note: string; title: string } {
-  const year = asOf.slice(0, 4);
-  switch (measure) {
-    case "cagr":
-      return {
-        // THE ANNUALISED COUNT, not `shown`: a sub-year holding is SHOWN in this
-        // column and shown as its holding-period return, tagged HPR. Reporting
-        // it as annualised would be the very claim the guard exists to refuse.
-        note: `${cov.cagr} annualised of ${cov.total}`,
-        title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
-          + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
-          + (cov.absent > 0 ? ` ${cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
-      };
-    case "ytd":
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: "YTD is the holding's own return this year, not the share's market move. "
-          + (cov.shown > 0
-              ? `It is measurable on ${cov.shown} of ${cov.total} rows — the holdings opened during the year, whose whole return since purchase IS their year to date. `
-              : "No row can be measured on this drop. ")
-          + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
-      };
-    case "xirr":
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `A money-weighted XIRR needs every cash flow for a holding — each tranche's date and amount — and the statements here cover the current period only, so it is absent on all ${cov.total} rows. The per-account money-weighted return is on Performance.`,
-      };
-    case "calendar":
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `A calendar-year return needs the holding's value at the start and end of that year, and the book's earliest statement is dated in ${year}, after the current year began — so it is absent on all ${cov.total} rows.`,
-      };
-    default:
-      return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `Holding Period Return is the total return on cost since purchase, not annualised. It is shown on ${cov.shown} of ${cov.total} rows`
-          + (cov.absent > 0 ? `; the other ${cov.absent} report no cost, so there is nothing to strike a return against.` : "."),
-      };
-  }
 }
 
 /*

@@ -47,8 +47,12 @@ const tvc = await import(path.join(ROOT, "scripts/ingest/providers/transitionVen
 
 /** The four figures this replay must reproduce and must never change. */
 const FROZEN = ["total", "contributed", "undrawn", "distributed"];
-/** The fields it exists to add. */
-const ADDED = ["called", "paid", "pending", "calls"];
+/**
+ * The fields it exists to add. `payouts` joined them with the Private Market
+ * return methodology (Stage 10bt): a money-weighted return needs what the fund
+ * PAID BACK as well as what it called, and both are read off the same page.
+ */
+const ADDED = ["called", "paid", "pending", "calls", "payouts"];
 
 const eq = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
@@ -79,12 +83,14 @@ function replay(doc, text) {
     return {
       called: paid, paid, pending: null,
       calls: ok ? rows.map((c) => ({ date: c.date, label: c.description, amount: c.amount })).sort((a, b) => a.date.localeCompare(b.date)) : [],
+      // The reader's own function over the same text and the same dated rows.
+      payouts: tvc.payoutsFrom(text, doc.cashFlows, () => {}),
     };
   }
   const layout = alt.layoutFor(text);
   if (!layout?.capitalFrom) return null;
-  const { called = null, paid = null, pending = null, calls = [] } = layout.capitalFrom(text, () => {}) ?? {};
-  return { called, paid, pending, calls };
+  const { called = null, paid = null, pending = null, calls = [], payouts = null } = layout.capitalFrom(text, () => {}) ?? {};
+  return { called, paid, pending, calls, payouts };
 }
 
 let changed = 0, checked = 0, refused = 0;
@@ -125,7 +131,8 @@ for (const entry of manifest) {
   if (eq(next, doc.commitment)) continue;
   changed += 1;
   const n = add.calls.length;
-  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(66)} called=${add.called ?? "—"} paid=${add.paid ?? "—"} pending=${add.pending ?? "—"} calls=${n}`);
+  const pay = add.payouts == null ? "—" : add.payouts.length;
+  console.log(`${CHECK ? "would update" : "updated"} ${entry.docKey.padEnd(66)} called=${add.called ?? "—"} paid=${add.paid ?? "—"} pending=${add.pending ?? "—"} calls=${n} payouts=${pay}`);
   if (!CHECK) {
     doc.commitment = next;
     fs.writeFileSync(file, JSON.stringify(doc, null, 1) + "\n");

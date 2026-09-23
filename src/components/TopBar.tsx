@@ -4,6 +4,7 @@ import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
 import { MunsChat } from "@/components/MunsChat";
+import { SmartSearch } from "@/components/SmartSearch";
 
 const THEME_KEY = "glow:theme";
 
@@ -116,7 +117,13 @@ export function TopBar() {
           slot on the app. The Muns chat takes its place: same slot, and it does
           something. Nothing was lost, which is why this is a replacement rather
           than a removal to be asserted. */}
-      <MunsChat />
+      {/* THE SEARCH, AND MUNS BESIDE IT. The slot is a real search now — over
+          every holding, fund, mandate, member, account, page and tab — and a
+          question typed into it goes to Muns from the list's own last row. */}
+      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2">
+        <SmartSearch />
+        <MunsChat />
+      </div>
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
         <CurrencySwitch />

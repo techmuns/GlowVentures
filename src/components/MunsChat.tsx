@@ -4,12 +4,13 @@ import { Sparkles, Send, X, Loader2, TriangleAlert } from "lucide-react";
 import { askMuns, type ChatTurn } from "@/lib/munsChat";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
 
-// ── ASK THE BOOK — the Muns chat, in place of the search bar ────────────────
+// ── ASK THE BOOK — the Muns chat, beside the search box ─────────────────────
 //
-// The control it replaces was an `<input>` with no state, no handler and no
-// onChange: a search box that looked alive and searched nothing. Replacing it
-// costs no working feature, which is worth recording because this repo removes
-// dead controls rather than leaving them to be discovered.
+// This chat first replaced an `<input>` with no state, no handler and no
+// onChange: a search box that looked alive and searched nothing. The slot holds
+// a REAL search now (`SmartSearch`), and the chat sits beside it — opened by its
+// own button, or from the search list's "Ask Muns" row with the question already
+// asked. The dead box is still gone, and `check:pages` still asserts it.
 //
 // ── AN ANSWER IS NOT A MEASUREMENT, AND MUST NOT LOOK LIKE ONE ──────────────
 //
@@ -33,6 +34,19 @@ import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/ch
 // `upstreamStatus.ts`: THE CAUSE PICKS THE HEADLINE.
 
 type Msg = { role: "user" | "assistant"; text: string; failure?: string | null; done?: boolean };
+
+/**
+ * ── OPENING THE CHAT FROM ELSEWHERE, WITH A QUESTION ALREADY ASKED ──────────
+ *
+ * The top bar's search box offers "Ask Muns" as a row, and puts it FIRST when
+ * what was typed reads as a question. It must not need to know how this panel
+ * holds its state, so it dispatches one event and the panel answers it: open,
+ * and ask — once the dashboard snapshot the question is briefed on exists.
+ */
+export const ASK_MUNS_EVENT = "glow:ask-muns";
+export function openMunsWith(question: string) {
+  window.dispatchEvent(new CustomEvent(ASK_MUNS_EVENT, { detail: { question } }));
+}
 
 const SUGGESTIONS = [
   "What is the book worth, and how is it split?",
@@ -89,6 +103,9 @@ export function MunsChat() {
   const chatId = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  // A question handed over by the search box, asked once the panel is open and
+  // its context built — never before, or it would be sent with no snapshot.
+  const [pending, setPending] = useState<string | null>(null);
 
   // Built once per open, from the book — so an answer is briefed on what the
   // reader is looking at rather than on whatever the model remembers.
@@ -107,6 +124,16 @@ export function MunsChat() {
   // Cancel an answer in flight when the panel closes, so a stream cannot go on
   // writing into a component nobody is looking at.
   useEffect(() => { if (!open) { abort.current?.abort(); abort.current = null; } }, [open]);
+
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const question = (e as CustomEvent<{ question?: string }>).detail?.question?.trim();
+      setOpen(true);
+      if (question) setPending(question);
+    };
+    window.addEventListener(ASK_MUNS_EVENT, onAsk);
+    return () => window.removeEventListener(ASK_MUNS_EVENT, onAsk);
+  }, []);
 
   const ask = async (text: string) => {
     const question = text.trim();
@@ -154,16 +181,26 @@ export function MunsChat() {
     abort.current = null;
   };
 
+  useEffect(() => {
+    if (!open || !context || !pending || busy) return;
+    const question = pending;
+    setPending(null);
+    void ask(question);
+    // `ask` is recreated each render and reads the same state this effect
+    // watches; listing it would re-run the effect for no reason.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, context, pending, busy]);
+
   return (
     <>
-      {/* The trigger, in the slot the dead search box used to fill. */}
+      {/* THE TRIGGER, BESIDE THE SEARCH BOX THAT NOW HOLDS ITS OLD SLOT. The
+          slot is a real search (`SmartSearch`) and asks Muns from its own last
+          row; this button opens the chat directly, empty, as it always did. */}
       <button type="button" onClick={() => setOpen(true)} data-testid="muns-chat-open"
-        className="group flex max-w-md flex-1 items-center gap-2.5 rounded-md border border-ink-700 bg-ink-800 py-2 pl-3 pr-3 text-left text-sm text-slate-500 ring-focus hover:border-champagne-500/40 hover:text-slate-300">
+        title="Ask Muns about this book — an AI answer from a snapshot of the dashboard, not a statement figure"
+        className="flex shrink-0 items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2.5 py-2 text-sm text-slate-400 ring-focus hover:border-champagne-500/40 hover:text-slate-300">
         <Sparkles className="h-4 w-4 shrink-0 text-champagne-400" />
-        <span className="truncate">Ask about this book…</span>
-        <span className="ml-auto hidden shrink-0 rounded border border-ink-600 px-1.5 py-0.5 text-[10px] text-slate-500 sm:inline">
-          Muns
-        </span>
+        <span className="hidden whitespace-nowrap sm:inline">Ask Muns</span>
       </button>
 
       {/*

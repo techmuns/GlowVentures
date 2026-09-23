@@ -49,6 +49,8 @@ const SUITES = [
   ["daily NAV movers", "src/lib/__tests__/navMovers.test.ts"],
   ["AIF category", "src/lib/__tests__/aifCategory.test.ts"],
   ["market side", "src/lib/__tests__/marketSide.test.ts"],
+  ["fund returns", "src/lib/__tests__/fundReturns.test.ts"],
+  ["search index", "src/lib/__tests__/searchIndex.test.ts"],
   ["share movements", "src/lib/__tests__/shareMovements.test.ts"],
   ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
   ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
