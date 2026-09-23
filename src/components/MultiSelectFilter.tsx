@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search, ChevronDown, Check, X } from "lucide-react";
 
 // A click-to-open, multi-select dropdown filter. Unlike SearchInput (which only
@@ -15,6 +15,7 @@ export function MultiSelectFilter({
   className = "w-72",
   dense = false,
   render,
+  emptyNote,
 }: {
   options: string[];
   selected: Set<string>;
@@ -29,6 +30,13 @@ export function MultiSelectFilter({
   // The economic calendar stores ISO country codes ("IN") and must show
   // "India"; searching still runs over both, so typing either finds the row.
   render?: (option: string) => string;
+  /**
+   * What ELSE to say when a search matches no option — for a caller that can
+   * explain the absence. The Portfolio Monitor's holdings list uses it to name
+   * a holding the family's own review carries that no statement in this book
+   * reports; every other caller passes nothing and keeps the plain line.
+   */
+  emptyNote?: (query: string) => ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -127,7 +135,17 @@ export function MultiSelectFilter({
               : <span className="text-slate-600">Pick one or more</span>}
           </div>
           <ul role="listbox" aria-multiselectable="true" className="max-h-64 overflow-auto border-t border-ink-700 py-1">
-            {filtered.length === 0 && <li className="px-3 py-2 text-sm text-slate-500">No {noun} match “{q}”.</li>}
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-sm text-slate-500">
+                No {noun} match “{q}”.
+                {/* AND WHERE THE BOOK KNOWS WHY, IT SAYS SO. An empty result and
+                    a defect look identical, which is how a search for BSE read
+                    as the dashboard having lost a holding. `emptyNote` renders
+                    nothing when the caller has no answer, so a plain typo still
+                    gets the plain line above and nothing more. */}
+                {emptyNote?.(q)}
+              </li>
+            )}
             {filtered.map((o) => {
               const on = selected.has(o);
               return (

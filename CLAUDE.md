@@ -197,7 +197,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund, a
   liquid ETF or an ARBITRAGE fund is cash whatever wrapper its statement typed
   it as, and `readerClassOf`, the class a page NAMES a holding under by the same
-  rule. See Stage 10av, and Stage 10bu for arbitrage.
+  rule. See Stage 10av, and Stage 10bv for arbitrage.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's Capital in and out table and the
   per-contribution breakdown a holdings row opens into. See Stage 10ag, and
@@ -316,7 +316,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   two must never be added. See Stage 10bn. `depositoryCashHoldings` is its
   second job: the arbitrage and liquid funds a depository reports on an account
   that sent no holding statement, valued at `units × published NAV` on the LIVE
-  basis only, behind one switch (`VALUE_DEPOSITORY_CASH_UNITS`). See Stage 10bu.
+  basis only, behind one switch (`VALUE_DEPOSITORY_CASH_UNITS`). See Stage 10bv.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -9371,7 +9371,7 @@ never fire on it, because a set called "the cash equivalents in this book" that
 omitted a liquid fund BECAUSE one document typed it correctly cannot be checked
 against the review at all.
 
-***BOTH HALVES OF THE NEXT PARAGRAPH HAVE SINCE CHANGED — see Stage 10bu.***
+***BOTH HALVES OF THE NEXT PARAGRAPH HAVE SINCE CHANGED — see Stage 10bv.***
 Three arbitrage funds ARE held — as a depository's closing balances on Ajay's
 transaction-only demat, which is why no search over POSITIONS found one — and
 the map carries them now, valued at AMFI's NAV on the live basis. The paragraph
@@ -15852,8 +15852,261 @@ carries and **not one of this change's own**. This branch's pre-merge sweep was
 `sectors-compare`) across both themes on top of its base — and #71 adds two
 (`private-market-calls`, `private-market-calls-off`), so 198 reconciles; it is
 recorded because it was measured again, not because it adds up.
+### Stage 10bu — BSE IS THEIRS, NO STATEMENT REPORTS IT, AND THE SCREEN NOW SAYS SO
 
-### Stage 10bu — ARBITRAGE IS CASH, AND THE CASH NO HOLDING STATEMENT REPORTS
+*"Open PR and do not merge until i tell you to."* · *"According to the client,
+BSE is a holding for them and it is also provided for in the statements that
+they have provided us. But it is not visible anywhere on the dashboard… check
+why we cannot find BSE as a holding. Find the root cause of it and fix it. It is
+named either Bombay Stock Exchange or BSE."*
+
+**THEY ARE RIGHT THAT THEY HOLD IT AND WRONG THAT A STATEMENT CARRIES IT, AND
+SEPARATING THOSE IS THE WHOLE OF THE ANSWER** — because the two need completely
+different work, and only one of them is code.
+
+#### 1. Where BSE actually is, measured rather than reasoned about
+
+| Searched | BSE-the-COMPANY |
+| --- | --- |
+| **251 source PDFs**, every ZIP expanded, read with pdfjs | **0 hits.** All 55 matches are the EXCHANGE COLUMN on a trade row (`Thermax Ltd BSE 304.000`) or the broker's own `SEBI Regn. No.(BSE/NSE/MCX/NCDEX)` line |
+| the **8 encrypted** ones, which need `GLOW_PDF_PASSWORDS` | read at ingest — all 8 resolve to documents in `public/audit/`, and the archive carries no BSE and **no "Bombay" at all** |
+| **7 spreadsheets** | **one hit, and it is the finding** — see below |
+| `INE118H01025`, BSE Ltd.'s own ISIN | **0**, in `source/` and in the archive |
+| the **3 text-less PDFs** | the ones this file already documents: Bharat's HDFC scan (4 JPEG pages, and **no value column at all**) and the two trust statements, read by rendering, one Swapeco line each |
+
+**THE ONE HIT IS THE FAMILY'S OWN CONSOLIDATED REVIEW**: `BSE Ltd.`, 40,000
+shares, **₹15.46 Cr**, Ajay Jaisinghani, via MOPWM, coded `Direct Equity - Non
+MO` — and its own transaction history reconciles to that closing quantity
+exactly: 13,500 bought 19 Jul 2023, 9,500 more 23 Oct 2024, a 2:1 bonus on 23
+May 2025 and 29,000 sold 26 Aug 2025. **That workbook is NOT A SOURCE — by
+decision**, so the book is
+right to carry nothing: a figure for it would be the fabrication this whole book
+exists to prevent.
+
+**AND THE RECONCILER HAD ALREADY SAID ALL OF IT.** `docs/REVIEW-RECONCILIATION.md`
+has carried BSE Ltd. in section C2 (*"no statement in `source/` reports this"*)
+and on the D1 ask list (*"held at Motilal Oswal; the drop carries a holding
+statement for three of its demat accounts and a transaction tape only for a
+fourth"*) for as long as that report has existed. **Nothing was wrong with the
+book, the archive or the analysis. What was wrong is that a reader could not
+reach any of it from the screen.**
+
+#### 2. So the defect is the SCREEN, and it is one this file has already named
+
+The family typed BSE into the holdings pick-list and got:
+
+> **No holdings match “BSE”.**
+
+which is indistinguishable, to them, from the dashboard having lost a ₹15 Cr
+position they know they own. That is the Fractal Analytics defect one layer up
+— *"the family opened Fractal Analytics and saw four dashed tiles and asked
+whether the data was absent or the dashboard was buggy. **That question is the
+defect**"* — and it is answered by the same rule: *a reader who cannot tell "no
+custodian sent this" from "the dashboard is broken" assumes the second.*
+`costWhy` names the custodian on a cost cell for exactly this reason. **An empty
+search result is an absent measurement, and it owes the same sentence.**
+
+#### 3. `src/data/reviewGaps.ts` — emitted by the reconciler, not by a second reader
+
+`npm run reconcile:review` now writes the module beside the report, and
+`custodianNote` and `askFor` were **hoisted to module scope so both read the
+same two functions**. Two copies would be two chances for the ask list and the
+dashboard to name different documents for one line — the drift
+`registerRead.mjs` was extracted to stop, one workbook over. The hoist was
+verified as behaviour-neutral BEFORE anything was added: the report regenerates
+**byte-identically**.
+
+**`--check` IS THE CONTROL RUN** and covers both outputs, the convention every
+other generator here follows. It is a no-op.
+
+**NOT ONE FIGURE OF THE REVIEW'S CROSSES OVER, AND THAT IS THE WHOLE LICENCE FOR
+PUBLISHING ANY OF IT.** `ReviewGap` has no value and no quantity — only the
+name, where the review says it is held, and the two sentences the report already
+prints, neither of which is a valuation. Three guards, because they fail
+differently:
+
+- the **emitter throws** on a numeric field, so a future edit that adds `mv` to
+  the projection fails the run rather than shipping a review valuation;
+- `reviewGaps.test.ts` asserts the emitted TEXT carries no `₹` and no crore or
+  lakh figure — a value smuggled through prose is not a schema change;
+- and `check:pages` asserts the same of what RENDERS, which is the other end.
+
+**AN AGGREGATE IS LEFT OUT**, for the reason `askFor` already gives: `Private
+Equity ₹136.16 Cr` is a block the review itemises on another tab and no
+custodian issues a statement for it, so it is neither a name anybody searches
+nor a document anybody can send. 44 lines remain.
+
+#### 4. The alias is committed and cited, and there is still no fuzzy tier
+
+The family named it twice in one sentence — *"either Bombay Stock Exchange or
+BSE"* — and the review prints only the short form, so a reader typing the long
+one finds nothing. `SEARCH_ALIASES` is one entry with that quotation beside it.
+
+**A SEARCH ALIAS JOINS NOTHING AND MOVES NO MONEY**, which is what makes it a
+different object from `SECURITY_ALIASES`: it decides only whether a reader finds
+a sentence about an absence, so getting one wrong costs a wrong sentence rather
+than a wrong figure. It is still a hand-checked table. `reviewGapsFor` matches
+by SUBSTRING IN BOTH DIRECTIONS and nothing looser — `shared/nameMatch.mjs`
+records what a token-overlap rule did to this corpus (`KIRANAKART TECHNOLOGIES`
+to `TATA TECHNOLOGIES`), and the bug pass below reproduces it here: the tier
+matched `Deep Industries` to `Man Industries` and to `Manorama Industries`.
+
+A one-character query matches nothing: at that length a substring rule names
+half the list, which is noise rather than an answer.
+
+#### 4b. AND THE NOTE MAY NOT CLAIM A NAME THE BOOK MAY HOLD UNDER A CLIPPED ONE
+
+**FOUND BY READING THE 44 NAMES RATHER THAN BY A CHECK, and it was live.** The
+list carries `Onesource Specialty Pharma` — and the family's own screenshot of
+the defect shows `Onesource Special` in their table at ₹8.15 Cr. The book's row
+is `ONESOURCE SPECIAL-EQ`, 48,000 shares, ₹8.61 Cr: a DEPOSITORY'S CLIPPED
+SPELLING of the same company. Reproduced against the running page — searching
+the review's spelling returned 0 options and a note saying no statement reported
+it, **about a position one search away**. That is worse than the silence this
+change replaces, because it is a false statement rather than no statement.
+
+**THE RECONCILER IS RIGHT AND THE SCREEN WAS WRONG, WHICH IS WHY THE FIX IS NOT
+IN THE JOIN.** `shared/nameMatch.mjs`'s prefix tier runs ONE WAY on purpose, and
+its own comment records why: accepting the reverse matched `Vedanta Power`,
+`Vedanta Iron & Steel` and `Vedanta Oil & Gas` onto the single book row named
+`Vedanta` — four demerged companies reported against 12,909 shares of their
+former parent. Loosening it would re-commit that.
+
+So the SUPPRESSION tier is looser than the JOIN tier, deliberately, and the
+asymmetry is the argument: **there a weak match publishes a figure; here it only
+decides whether to stay quiet.** Suppressing too much costs the silence a reader
+already had; suppressing too little tells them their own holding is missing.
+`reviewGapsFor` therefore withholds any gap whose key is prefix-related to a
+book position's in EITHER direction, or on the same letters with the separators
+removed.
+
+**IT WITHHOLDS 8 OF THE 44, AND THREE OF THOSE ARE REAL GAPS.** Five are the
+clipped spellings it exists for — Onesource, Bharat Parenteral, Infinium Pharma,
+Kaynes Technology, Zaggle Prepaid — and three are Vedanta's spin-offs, which the
+book genuinely does not hold and which this rule declines to claim anyway,
+because nothing here can tell a clipped name from a demerged one without the
+hand-checked abbreviation table this file already names as the remedy. **Three
+real answers withheld rather than one false one published**, stated rather than
+glossed.
+
+**AND IT IMMEDIATELY BROKE A CHECK OF MY OWN, which is the same lesson one level
+down.** The fuzzy-tier suite check carried `"vedanta"` as its anti-vacuity probe
+— *the probes must actually find gaps, or the check passes by matching nothing*
+— and Vedanta is precisely what the new rule withholds, so a correct build
+failed. A probe list that names a case BY HAND goes stale the moment the rule it
+was written against moves; the probes are derived from the claimable list now.
+
+#### 5. Three searches are wired, ONE is walked, and the other two are guarded
+
+`AbsentFromBook` lives in `Absent.tsx` because it is the whole-holding form of
+everything already there, and it is rendered by the Portfolio Monitor's
+pick-list, Family & Entities' holdings search and the `/holdings` filter.
+
+**ONLY THE FIRST IS DRIVEN BY `check:pages`**, and that is stated rather than
+implied: reaching the other two needs a search that matches nothing, and no
+route types one. So the suite carries a SOURCE check that each of the three
+still renders it — crude, and it cannot tell a working note from a broken one,
+which is what the Monitor walk does on the shared component. What it catches is
+a caller that stopped rendering one at all, which is the half nothing else would
+report. Reintroducing exactly that fires it.
+
+#### 6. Ten bugs reintroduced, and TWO of them were defects in the checks
+
+`scripts/dev/absent-name-bug.sh`, committed so the next session's verification
+is one command. Restores BY COPY on a `trap … EXIT` — three of the files it
+patches are new and untracked, where `git checkout --` silently does nothing —
+**and rebuilds on the way out**, and reports a failed patch or a failed build as
+NOT A RESULT. A no-patch control runs first. **The work was committed before it
+ran at all**, which is Stage 10bm's own rule after a harness there destroyed a
+day of unversioned work.
+
+Eight fired first time. The two that did not are the return on running it:
+
+- **REMOVING `emptyNote` FROM THE MONITOR — THE ORIGINAL DEFECT, EXACTLY — LEFT
+  ITS OWN INVARIANT GREEN.** It returned a descriptive STRING on failure, and
+  the harness reads any truthy return as a PASS (`else if (!r)
+  invariants.push(desc)`). That is the Stage 10an defect, committed again in a
+  change written with that paragraph open, and only its two neighbours spoke.
+  Booleans now.
+- **AND "AN ORDINARY RESULT IS NOT GIVEN ONE" COULD NOT CATCH THE NOTE
+  RENDERING UNDER EVERY TYPO.** A query that MATCHES options never reaches the
+  empty state at all, so `emptyNote` is never called and the note is absent
+  whether or not the component guards itself — measured, dropping the guard
+  produced a completely clean sweep. What catches it is a query that empties the
+  list AND names no gap, which is what a typo does. Derived by reversing a real
+  name rather than typed, and the check abstains if it ever matches something.
+
+Two more defects were found by reading rather than by the harness:
+`REVIEW_GAP_BOOK.held` was computed and read by nothing once the probe moved,
+and was deleted with its reader; and the held-name probe was taken from the BOOK
+until it abstained on a correct page — `displaySecurity` rewrites a depository's
+clipped label into the AMC's published name (Stage 10az), so `Position.security`
+is routinely NOT what the control offers. It is read off the rendered options
+now.
+
+**AND CAPITALISING THE SENTENCE BROKE A CHECK, which is the `label-xs` trap
+again**: `innerText` returns the TRANSFORMED text, so a literal comparison
+failed a note carrying exactly the right words. Case-folded.
+
+**THE WALK LEAVES THE NOTE ON SCREEN** at the end, which is not tidiness: the
+contrast sweep resolves computed colour on what is RENDERED, and this is the
+only thing in the app drawing `text-champagne-400` inside a dropdown. A
+`champagne` variant with no light-mode remap has shipped twice here and both
+times it rendered only in a state no route walked.
+
+#### 7. What the family should actually be asked for
+
+**One document, and it is already named in `docs/REVIEW-RECONCILIATION.md`'s D1:
+Motilal Oswal holding statements for the demat and PWM accounts not in the
+drop.** The drop carries a holding statement for three of the family's Motilal
+demat accounts and, for the fourth — Ajay's main one, `1201090012539150` — only
+a TRANSACTION tape, whose closing balances carry quantities and no rates.
+
+**BSE IS ONE OF TWENTY LINES BEHIND THAT ONE DOCUMENT**, which is what makes it
+the ask worth putting in front of the family rather than a list of holdings to
+chase. The other two asks account for the rest of the 44: ten lines wait on
+Bharat's HDFC Bank NSDL statement AS A TEXT PDF RATHER THAN A SCAN, and fourteen
+on AMC folio statements or a CAS. The moment the Motilal one arrives, BSE leaves
+this list and enters the book with
+a figure struck by the institution that holds it — and `reviewGaps.test.ts`
+flips to saying so rather than passing over a sentence that has quietly become
+false.
+
+#### 8. Merged twice, and the second round brought BOTH predicted conflicts
+
+Held open at the family's request (*"do not merge until it tell you to"*), and
+main moved twice while it waited — #70 and #71, then #70 again as `8bcd2c8`.
+
+**THE FIRST MERGE WAS CLEAN, WHICH IS EXACTLY WHEN TO CHECK BY HAND**, and all
+three were: the `ctx` literal auto-merged and was PROVED a mechanical union
+rather than trusted (35 keys, nothing dropped from either side, nothing
+invented); the ten duplicated stage letters were byte-identical to main's own
+pre-existing ten, so none was introduced; and every generated file was
+re-derived byte-identically.
+
+**THE SECOND BROUGHT THE IDENTICAL PAIR THIS FILE HAS NOW RECORDED TWELVE
+TIMES**, and it is also what was blocking CI: `mergeable_state: "dirty"`, and
+GitHub cannot build `refs/pull/N/merge` on a conflicted PR, so the workflow
+never fired at all. The five runs GitHub showed for this branch were the
+PREVIOUS PR's, on a branch name reused — which reads as CI having passed until
+the head SHAs are compared.
+
+- **The `ctx` literal conflicted**, this time as a FRAGMENT of a two-line
+  literal rather than the whole of it, so a naive split on `{`…`}` throws. Split
+  on the continuation up to `})`, unioned, and each of the 37 keys then
+  confirmed to resolve to a declaration in the merged file — because a key
+  naming a probe that no longer exists throws inside every check and is reported
+  as a broken matcher on every route, not as a clean page. **Mine is
+  `absentName`; main's two are `sectorLayout` and `shortWindow`.**
+- **And the stage letter collided TEXTUALLY rather than silently**, because both
+  sides inserted at the same anchor — the one failure mode that announces
+  itself. Main's `10bt` merged first and keeps it; this section is `10bu`.
+  **Every one of the nine `10bt` references in the file is main's** — they name
+  Polycab-as-one-table and Sector Composition's two halves — and this section
+  references no letter at all, so none moved. Checked one at a time rather than
+  swept.
+
+### Stage 10bv — ARBITRAGE IS CASH, AND THE CASH NO HOLDING STATEMENT REPORTS
 
 *"Wherever we have cash as asset class or category. Arbitrage funds or holdings
 into that cash as well, because arbitrage funds are nothing but basically cash.
@@ -17059,7 +17312,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   Stage 10bn. Nothing it writes reaches `glowData.ts`. It records each
   scheme's SEBI CATEGORY verbatim — which is how an arbitrage fund is known —
   and also prices a fund a depository reports on a transaction-only account,
-  never an ETF there (no mark to test its basis against). See Stage 10bu.
+  never an ETF there (no mark to test its basis against). See Stage 10bv.
 - `npm run build-upstox-instruments` refreshes `shared/upstoxInstruments.mjs`
   and `docs/UPSTOX-INSTRUMENTS.md` — which Upstox instrument each NSE symbol the
   dashboard asks about IS, from Upstox's own public instrument list (keyless),

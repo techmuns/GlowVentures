@@ -29,6 +29,7 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
+import * as XLSX from "xlsx";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
 const OUT = process.env.OUT ?? "docs/page-check";
@@ -1718,6 +1719,106 @@ const REGISTER_SENTINEL = (() => {
 })();
 
 /**
+ * ── THE NAME THE FAMILY WILL SEARCH FOR AND NOT FIND ───────────────────────
+ *
+ *   *"We cannot find BSE as a holding anywhere on the dashboard … It is named
+ *    either Bombay Stock Exchange or BSE."*
+ *
+ * They hold it; no statement in `source/` reports it; so the book carries
+ * nothing and the screen must say WHY rather than "No holdings match". This
+ * reads the generated gap list and picks the case that exercises BOTH search
+ * paths — a line carrying an ALIAS, so the walk can type the review's own name
+ * AND a spelling only the family use. Derived, never typed: a literal would
+ * stop being this book's worst case the moment a drop closed it, and would go
+ * on passing while checking a name nobody searches.
+ *
+ * The control's own options supply the CONTRARY case — a search that really
+ * matches something must get the list and no note — and they are read off the
+ * page rather than from here, because `displaySecurity` rewrites a depository's
+ * clipped label and the book's own `security` is not what this list offers.
+ */
+const REVIEW_GAP_BOOK = (() => {
+  try {
+    const gaps = bookArray(readFileSync(new URL("../src/data/reviewGaps.ts", import.meta.url), "utf8"), "REVIEW_GAPS");
+    if (!gaps?.length) return null;
+    const withAlias = gaps.find((g) => g.aliases?.length) ?? gaps[0];
+    /**
+     * AND A NAME THE NOTE MUST NOT CLAIM — re-expressed here rather than
+     * imported from `src/lib/reviewGaps.ts`, on the same terms as
+     * `isMandateHeld` and `NAV_MOVERS_BOOK`: a check that calls the helper it is
+     * checking agrees with it by construction. The two agreeing is the
+     * measurement.
+     *
+     * A depository CLIPS a name, so the book's `ONESOURCE SPECIAL-EQ` and the
+     * review's `Onesource Specialty Pharma` key apart — and the note once told a
+     * reader no statement reported a ₹8.61 Cr position sitting one search away.
+     */
+    const flat = (k) => k.replace(/-/g, "");
+    const bookKeys = [...new Set((bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? [])
+      .map((p) => securityKeyOf(p.security)))].filter(Boolean);
+    const related = (n) => {
+      const k = securityKeyOf(n);
+      return !!k && bookKeys.some((bk) =>
+        bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+    };
+    /**
+     * …AND A REVIEW LINE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE
+     * (Stage 10bv) — derived here BY THE JOIN THAT LICENSES IT, never read from
+     * `REVIEW_LINE_ISINS`, which would agree with the page by construction: the
+     * review's own purchase of that exact line is a credit the depository makes,
+     * unit for unit, to an ISIN this checker's own copy of the depository rows
+     * carries. `depositoryRows` is what makes a null here a FINDING rather than
+     * an abstention: while the live book values any depository balance, a
+     * derivation that ties none has lost its input.
+     */
+    let depositoryValued = null, depositoryRows = 0;
+    try {
+      // `bookArray` already appends this checker's re-expressed depository rows
+      // to BOOK_POSITIONS — running them through the gates a second time finds
+      // the account carrying positions and yields nothing, which is how a first
+      // draft of this read "the live book values no depository balance".
+      const gsrc = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const dep = (bookArray(gsrc, "BOOK_POSITIONS") ?? []).filter((p) => p.depositoryUnits);
+      depositoryRows = dep.length;
+      const isins = new Set(dep.map((p) => String(p.isin ?? "").toUpperCase()).filter(Boolean));
+      const credits = [];
+      for (const src of new Set(dep.map((p) => p.depositoryUnits?.source).filter(Boolean))) {
+        try {
+          const doc = JSON.parse(readFileSync(new URL(`../public/audit/${src}/document.json`, import.meta.url), "utf8"));
+          for (const t of doc.transactions ?? [])
+            if (t.isin && isins.has(String(t.isin).toUpperCase()) && t.date && typeof t.quantity === "number" && t.quantity > 0) credits.push(t);
+        } catch { /* a document that will not read contributes no credit */ }
+      }
+      const wb = XLSX.read(readFileSync(new URL("../source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx", import.meta.url)));
+      const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
+      const rows = sheet ? XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, blankrows: false, defval: "" }) : [];
+      const excelDate = (n) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
+      const days = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+      const gapNames = new Set(gaps.map((g) => g.name));
+      for (const r of rows) {
+        const i = r.findIndex((c) => /^purchase$/i.test(String(c).trim()));
+        if (i < 1) continue;
+        const product = String(r[i - 1]), units = Number(r[i + 2]), date = excelDate(Number(r[i + 1]));
+        if (!gapNames.has(product) || !(units > 0)) continue;
+        if (credits.some((c) => Math.abs(c.quantity - units) < 0.0005 && days(c.date, date) <= 5)) { depositoryValued = product; break; }
+      }
+    } catch { depositoryValued = null; }
+    return {
+      depositoryValued,
+      depositoryRows,
+      // Any one of them exercises the claim equally, so the list's own first.
+      suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
+      count: gaps.length,
+      name: withAlias.name,
+      alias: withAlias.aliases?.[0] ?? null,
+      why: withAlias.why,
+      ask: withAlias.ask,
+      custodian: withAlias.custodian,
+    };
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY HOLDINGS THE BOOK ITSELF SAYS WERE OPENED DURING ITS OWN YEAR — the
  * only rows a year-to-date figure can legitimately appear on, since a holding
  * already held on 1 January needs an opening value the book does not carry.
@@ -2924,6 +3025,14 @@ const ROUTES = [
   // that was reading the manager's TAPE. Two routes because the two sides are
   // different sets and a filter that matched everything would satisfy one of
   // them; the third state (All) is `monitor-txns` above.
+  /**
+   * ...AND THE SEARCH THAT FINDS NOTHING, which is the one the family actually
+   * ran. Its own route because no figure on any page can see it: the table, the
+   * totals and every caption render identically whether the empty state names
+   * the cause or says nothing at all, so this is checked by TYPING into the
+   * control and reading what comes back.
+   */
+  ["monitor-absent-name", "/monitor"],
   ["monitor-txn-in", "/monitor"],
   ["monitor-txn-out", "/monitor"],
   /**
@@ -3733,6 +3842,16 @@ let AXIS_DRILL = null;
  * first and last states would call that a working move.
  */
 const ARRANGE = { before: null, desc: null, sorted: null, moved: null };
+/**
+ * WHAT THE HOLDINGS SEARCH SAYS WHEN IT FINDS NOTHING — read off the control
+ * the family used, on `monitor-absent-name` only, `null` everywhere else.
+ *
+ * Three searches rather than one, because they fail differently: the review's
+ * own name, a spelling only the family use, and a name the book DOES carry —
+ * the last being what stops a paragraph about the review rendering under every
+ * ordinary result.
+ */
+let ABSENT_NAME = null;
 // THE CLUBBED FUND'S OWN EXPANSION — its class lines, read off the panel the
 // `monitor-fund-drill` walk opens. Null on every other route.
 let FUND_DRILL = null;
@@ -9036,6 +9155,143 @@ const INVARIANTS = {
    * A SNAPSHOT THAT WAS NOT TAKEN IS `notChecked`, NEVER A PASS: the route
    * runs on `/monitor` only and every other walk leaves `ctx.arrange` empty.
    */
+  /**
+   * ── A SEARCH THAT FINDS NOTHING SAYS WHY ───────────────────────────────────
+   *
+   *   *"We cannot find BSE as a holding anywhere on the dashboard. So check why
+   *    … find the root cause of it and fix it."*
+   *
+   * The root cause is that no statement in `source/` reports it — so the book
+   * is right and the SCREEN was wrong: "No holdings match “BSE”." is
+   * indistinguishable, to the reader, from the dashboard having lost a holding
+   * they know they own. That is the Fractal Analytics defect one layer up, and
+   * the same rule answers it: an absence names its own cause.
+   *
+   * NONE OF THIS IS VISIBLE TO A VALUE CHECK. The table, the footer, every
+   * total and every caption render identically whether the note is there or
+   * not, which is why this route types into the control and reads the DOM.
+   */
+  "monitor-absent-name": [
+    ["a search for a name no statement reports names it, and says why", (t, ctx) => {
+      const a = ctx.absentName?.byName;
+      if (!a) return { notChecked: "the holdings search was not driven" };
+      const g = REVIEW_GAP_BOOK;
+      /**
+       * BOOLEANS, DELIBERATELY. The harness reads any truthy return as a PASS
+       * (`else if (!r) invariants.push(desc)`), so a returned DESCRIPTION of
+       * the failure is how a check comes to be unable to fail. This one
+       * returned two of them, and the bug pass is what found it: removing
+       * `emptyNote` from the Monitor — the original defect, exactly — left
+       * this invariant GREEN and only its two neighbours spoke.
+       */
+      // The search really did find no option — a gap name that MATCHES one is
+      // a gap the book carries, which is a failure and not an abstention.
+      if (a.options !== 0) return false;
+      if (!a.note) return false;
+      // The three things a reader acts on: WHICH name, WHY it is absent, and
+      // WHAT would close it. Struck on the gap list's own sentences, so a note
+      // that drifted from the report fails here rather than reading plausibly.
+      /**
+       * CASE-FOLDED, because `innerText` returns the TRANSFORMED text. The
+       * report renders these as table cells where a lower-case opener is right,
+       * and the component capitalises the first letter because on screen each
+       * is a sentence of its own — so a literal comparison fails a note that is
+       * carrying exactly the right words. Same trap as `label-xs`, which is
+       * `uppercase`, and which once failed a check reading "Listed NAV" against
+       * a page rendering "LISTED NAV".
+       */
+      const note = a.note.toLowerCase();
+      return a.named.includes(g.name)
+        && note.includes(g.why.toLowerCase())
+        && note.includes(g.ask.toLowerCase());
+    }],
+    ["…and it names no figure, because the review is not a source", (t, ctx) => {
+      const a = ctx.absentName?.byName;
+      if (!a?.note) return { notChecked: "no note was rendered" };
+      /**
+       * THE FENCE, STRUCK ON WHAT RENDERS. `reviewGaps.test.ts` asserts the
+       * generated module carries no numeric field; this is the other end — that
+       * nothing on screen quotes the review's own valuation. The review says
+       * this holding is worth ₹15.46 Cr and that figure may never sit beside
+       * figures every one of which traces to the institution that struck it.
+       */
+      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note)
+        && /review/i.test(a.note);
+    }],
+    ["…and the family's own spelling of the name finds it too", (t, ctx) => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g?.alias) return { notChecked: "no gap in this book carries an alias" };
+      const a = ctx.absentName?.byAlias;
+      if (!a) return { notChecked: "the alias search was not driven" };
+      // *"It is named either Bombay Stock Exchange or BSE."* The review prints
+      // only one of the two, so without the alias the reader who types the
+      // other is back where they started.
+      return a.options === 0 && !!a.note && a.named.includes(g.name);
+    }],
+    ["…and an ordinary result is not given one", (t, ctx) => {
+      const a = ctx.absentName?.held;
+      if (!a) return { notChecked: "no held security was available to search for" };
+      /**
+       * THE HALF THAT STOPS THE FIX BECOMING NOISE. A note that rendered
+       * whatever the reader typed would satisfy every check above and put a
+       * paragraph about the review under every search in the app. So a query
+       * that MATCHES something must get the list and nothing else.
+       */
+      if (a.options === 0) return { notChecked: `“${a.q}” matched nothing, so this cannot be tested` };
+      return a.note === null;
+    }],
+    ["…and neither is a name the book may carry under a clipped spelling", (t, ctx) => {
+      const a = ctx.absentName?.suppressed;
+      if (!a) return { notChecked: "no review line in this book is prefix-related to a held position" };
+      /**
+       * THE CASE THE FAMILY'S OWN SCREENSHOT CONTAINS. Their table shows
+       * `Onesource Special` at ₹8.15 Cr; the review writes `Onesource Specialty
+       * Pharma`. The keys differ, so the reconciler reports it absent — rightly,
+       * since accepting the reverse prefix once joined four demerged Vedanta
+       * companies onto their former parent — and the DASHBOARD must not turn
+       * that into a claim. Silence here is the reader's status quo; a false
+       * claim is not.
+       */
+      // …and the empty state must really have been reached, or this asserts
+      // nothing: a name that MATCHES an option never calls `emptyNote` at all.
+      if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
+      return a.note === null;
+    }],
+    /**
+     * …NOR A LINE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE (Stage 10bv).
+     * The review prints Motilal Oswal Arbitrage and HDFC Liquid; the depository
+     * reports both on a demat that sent no holding statement, and the live book
+     * values them at AMFI's NAV under Cash. Typed in the review's own spelling
+     * the list empties — no option carries the review's "(G)" — so the note IS
+     * consulted, and it must not tell a reader "no statement reports it … no
+     * value or quantity" about a holding the table is valuing.
+     */
+    ["…nor a review line the live book values from a depository's balance", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.depositoryValued) {
+        // The premise is struck on `CASH_INSTRUCTION_BOOK`, a separate
+        // derivation — a guard read off the same computation as the name it
+        // guards abstains exactly when that computation breaks.
+        return (CASH_INSTRUCTION_BOOK?.depositoryCount ?? 0) > 0 ? false : { notChecked: "the live book values no depository balance" };
+      }
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const a = ctx.absentName.depositoryValued;
+      if (!a) return false;
+      if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
+      return !a.named.includes(a.q);
+    }],
+    ["…and neither is a search that names nothing at all", (t, ctx) => {
+      const a = ctx.absentName?.typo;
+      if (!a) return { notChecked: "the nonsense search was not driven" };
+      // Both halves of the premise, or this asserts nothing: the list must be
+      // empty (so the empty state IS reached and `emptyNote` IS called) and no
+      // gap may answer it (so there is nothing legitimate to say).
+      if (a.options !== 0 || a.named.length) {
+        return { notChecked: "the derived nonsense string matched something on this book" };
+      }
+      return a.note === null;
+    }],
+  ],
   "monitor-arrange": [
     ["clicking a money heading reorders the rows", (t, ctx) => {
       const a = ctx.arrange ?? {};
@@ -16832,6 +17088,99 @@ for (const theme of THEMES) {
        * strictest case: it is the only move that can land a column against the
        * boundary `useTableView` refuses to cross.
        */
+      /**
+       * THE SEARCH THAT FINDS NOTHING, TYPED AS A READER TYPES IT.
+       *
+       * Nothing on this page renders differently when the empty state stops
+       * naming the cause — the table, the footer and every caption are
+       * identical — so the only way to check it is to open the control, type,
+       * and read what comes back. Three probes: the review's own name, the
+       * family's own spelling of it, and a security the book HOLDS.
+       */
+      if (name === "monitor-absent-name" && REVIEW_GAP_BOOK) {
+        const box = page.locator("[data-multiselect='All holdings']");
+        const read = async (q) => {
+          await box.locator("[data-multiselect-toggle]").click();
+          const input = box.locator("input").first();
+          await input.fill("");
+          await input.type(q, { delay: 5 });
+          await page.waitForTimeout(250);
+          const out = await box.evaluate((el) => ({
+            text: el.innerText,
+            // The note's own node, so the claim is not struck on prose the
+            // component is free to reword.
+            note: el.querySelector("[data-absent-from-book]")?.innerText ?? null,
+            named: [...el.querySelectorAll("[data-review-gap]")].map((n) => n.getAttribute("data-review-gap")),
+            options: el.querySelectorAll("[data-option]").length,
+          }));
+          // Closed between probes, so one search cannot leave state for the next.
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(120);
+          return out;
+        };
+        /**
+         * THE HELD NAME IS TAKEN FROM THE CONTROL'S OWN OPTIONS, not from the
+         * book. `displaySecurity` rewrites a depository's clipped label into
+         * the AMC's published name (Stage 10az), so `Position.security` is
+         * routinely NOT what this list offers — searching for it matched
+         * nothing and the check abstained on a page that was right.
+         */
+        await box.locator("[data-multiselect-toggle]").click();
+        const offered = await box.evaluate((el) =>
+          [...el.querySelectorAll("[data-option]")].map((n) => n.getAttribute("data-option")));
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(120);
+        // A distinctive word of a real option — long enough not to match half
+        // the list, and taken from the page so the next drop picks its own.
+        const heldWord = (offered.find((o) => /[A-Za-z]{6,}/.test(o)) ?? "")
+          .split(/[^A-Za-z]+/).find((w) => w.length >= 6) ?? null;
+        ABSENT_NAME = {
+          byName: await read(REVIEW_GAP_BOOK.name),
+          byAlias: REVIEW_GAP_BOOK.alias ? await read(REVIEW_GAP_BOOK.alias) : null,
+          held: heldWord ? { q: heldWord, ...(await read(heldWord)) } : null,
+          /**
+           * AND A STRING THAT IS NOT A NAME — the case that actually catches a
+           * note rendering whatever was typed.
+           *
+           * `held` cannot: a query that MATCHES options never reaches the empty
+           * state, so `emptyNote` is not called at all and the note is absent
+           * whether or not the component guards itself. Measured — dropping the
+           * guard produced a completely clean sweep. What is needed is a query
+           * that empties the list AND names no gap, which is the state a typo
+           * puts a reader in.
+           *
+           * Derived by reversing a real name rather than typed, so it is a
+           * string this book cannot contain rather than a literal somebody
+           * chose; the invariant abstains if it ever matches something.
+           */
+          typo: await read([...REVIEW_GAP_BOOK.name].reverse().join("")),
+          // A review line whose name the BOOK may carry under a clipped
+          // spelling — the note must decline to claim that one absent.
+          suppressed: REVIEW_GAP_BOOK.suppressed
+            ? { q: REVIEW_GAP_BOOK.suppressed, ...(await read(REVIEW_GAP_BOOK.suppressed)) }
+            : null,
+          // A review line the LIVE book values from a depository's balance —
+          // the note must not call it unreported beside the row valuing it.
+          depositoryValued: REVIEW_GAP_BOOK.depositoryValued
+            ? { q: REVIEW_GAP_BOOK.depositoryValued, ...(await read(REVIEW_GAP_BOOK.depositoryValued)) }
+            : null,
+        };
+        /**
+         * AND THE NOTE IS LEFT ON SCREEN, which is not tidiness.
+         *
+         * The contrast sweep resolves computed colour on what is RENDERED, and
+         * this note is the only thing in the app that draws `text-champagne-400`
+         * inside a dropdown. A `champagne` variant with no light-mode remap has
+         * shipped twice in this repo and both times it rendered only in a state
+         * no route walked — a `hover:` one (Stage 10ag) and an opacity one
+         * (Stage 10an), each invisible until a route first entered the state.
+         */
+        await box.locator("[data-multiselect-toggle]").click();
+        const back = box.locator("input").first();
+        await back.fill("");
+        await back.type(REVIEW_GAP_BOOK.name, { delay: 5 });
+        await page.waitForTimeout(250);
+      }
       if (name === "monitor-arrange") {
         const tb = page.locator("main table").first();
         ARRANGE.before = await tb.evaluate((t) => ({
@@ -19614,7 +19963,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, cashDom, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, cashDom, path, url: page.url(), sectorLayout, shortWindow}); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
