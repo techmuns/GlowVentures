@@ -37,7 +37,7 @@ import {
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
-import { useEnteredCalls, headlineCall, todayIso } from "@/lib/enteredCalls";
+import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 import { fifoTotals, positionFifoReturn } from "@/lib/fifo";
 
@@ -1313,11 +1313,13 @@ export function PrivateMarket() {
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
                   {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
                       is where the reason it exists lives — no fund publishes a
-                      forward schedule — and while the store cannot be read the
-                      header says so once, rather than every row repeating it. */}
+                      forward schedule. While the store cannot be read the note
+                      under the heading names the cause, and every cell names it
+                      too, in a word, and opens the editor that says why: a
+                      column of dashes read as "nothing entered". */}
                   <SortHeader col="call" view={bookView} pad="px-2 py-2" align="left"
                     title={CALL_COLUMN_TITLE}
-                    note={entered.state.status === "unavailable" ? "not available" : "you enter"}
+                    note={entered.state.status === "unavailable" ? CAUSE_WORD[entered.state.cause].toLowerCase() : "you enter"}
                     noteTitle={entered.state.status === "unavailable" ? entered.state.reason : undefined}>Capital<br />call</SortHeader>
                 </Tr>
               </thead>
