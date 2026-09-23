@@ -3,7 +3,18 @@ import { useSearchParams } from "react-router-dom";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { StatTile } from "@/components/StatTile";
 
-/** One metric a slot can be set to. `value`/`sub`/`hint` are what `StatTile` renders. */
+/**
+ * One metric a slot can be set to: a short LABEL, the FIGURE, one short line
+ * under it, and the DETAIL a reader can hover for.
+ *
+ * *"these are action cards. They need to have the major figure and a very
+ * short description, not such long lines. No one will read this on the
+ * dashboard; it needs to be absolutely simple and clear."* So `sub` is one
+ * line of a few words and there is no paragraph under it; the coverage counts
+ * and the working that used to be paragraphs are `detail`, which rides on the
+ * tile's own hover. `hint` stays on the type for a page that wants a visible
+ * definition, and no metric on the Private Market sets one.
+ */
 export type TileMetric = {
   id: string;
   label: string;
@@ -11,6 +22,7 @@ export type TileMetric = {
   value: ReactNode;
   sub?: ReactNode;
   hint?: ReactNode;
+  detail?: string;
 };
 
 /**
@@ -132,6 +144,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, param = "tiles"
               value={m.value}
               sub={m.sub}
               hint={m.hint}
+              title={m.detail}
               label={<MetricPicker slot={i} metrics={metrics} current={m} onPick={(next) => choose(i, next)} />}
               action={
                 <div className="flex items-center gap-1">
@@ -200,7 +213,7 @@ function MetricPicker({ slot, metrics, current, onPick }: {
     <div ref={box} className="relative">
       <button type="button" data-tile-select={slot} aria-haspopup="listbox" aria-expanded={open}
         onClick={() => setOpen((v) => !v)} title="Choose what this tile shows"
-        className="label-xs -ml-1 flex max-w-full items-center gap-1 rounded px-1 py-0.5 text-slate-400 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
+        className="label-xs -ml-1 inline-flex max-w-full items-center gap-1 rounded px-1 py-0.5 text-slate-400 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
         <span className="truncate">{current.label}</span>
         <ChevronDown className="h-3 w-3 shrink-0" />
       </button>
