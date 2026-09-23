@@ -3,7 +3,7 @@
 #
 # The company page's Position by account table has a tab per route — Direct,
 # PMS managers, Mutual funds — and a company held only inside the family's
-# funds has a page of its own (Stage 10cf). Each bug below is applied on its
+# funds has a page of its own (Stage 10cg). Each bug below is applied on its
 # own, rebuilt, run against the checks that should catch it, and restored — the
 # discipline `carried-cost-bug.sh` and `txn-merge-bug.sh` already follow:
 #
