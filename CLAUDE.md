@@ -17382,6 +17382,39 @@ only because the sweep was run again. `npm run build-book` regenerates
 the ingest, and a benchmark control that moved a generated figure would not be
 one.
 
+#### Merged with main, and the letter collided again: #79 took `10bx`
+
+This section was `10bx` until the family said to merge, and **#79 — one master
+table each on Private Market and the Portfolio Monitor — had landed on main
+under that letter in the meantime.** The two sections were inserted at the same
+place, so git marked the conflict. Main's keeps `10bx`; this section is
+**`10by`**, after it. The stage headings were compared against main's tip: the
+merged file differs from main by `10by` alone.
+
+**EIGHT LINES NAMED `10bx` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** Four are this branch's and moved: the heading, the `benchmarks.ts`
+entry in **Layout**, and the two §6 notes that Sector Composition lost its
+`<BasisPill>`. Four are main's and stayed: three pointers in **Layout** and the
+Stage 10bf note that the fund table became the master table. The bug harness's
+own header moved with this section.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND THE UNION DROPPED ONE KEY ON
+PURPOSE.** Main's side carries #79's `treeState`; this side carries
+`priceRequests` and `schemeCalls`. #79 removed the `schemeCalls` probe with the
+view it read, so a key naming it would throw inside every check on every route.
+Every other key resolves to a declaration in the merged file.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+golden 140 — 2 not checked, 0 blocked) · `test:family` (every suite, including
+#79's `privateBook.test.ts` and this change's `benchmarks.test.ts`) ·
+`check:family` **86/0** · `check:pages` **220 combinations clean**, with eleven
+evidenced abstentions: the ten above, and #79's own claim about a redeemed
+private account, which this book does not have. None is this change's own.
+MEASURED ON THE MERGED TREE; the 214 above was struck against a base #79 has
+since moved. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` byte-identically.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
