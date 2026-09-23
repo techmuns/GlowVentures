@@ -3168,6 +3168,10 @@ violate any of them.**
   panel whose feed is momentarily down. During the outage above that is eight
   empty boxes reading as eight failures. `CompanyResearchPreview` states, once,
   above that group, that those four are absent by decision and not by failure.
+  *(Those four cards were removed at the family's request, and
+  `CompanyResearchPreview` itself is DELETED since Stage 10cb, when the position
+  page became tabs. The decided absence is recorded in `InsiderDeals.tsx`'s
+  header, the file its last live table moved into.)*
 
 ### Formatting and layout
 
@@ -8298,7 +8302,8 @@ headings are derived from the entries, so the group disappears on its own.
 **`src/lib/ratios.ts` WENT WITH IT.** `fetchRatios`, `isRatiosError` and
 `DEFAULT_METRICS` had no other caller, and a builder nothing calls is the
 dead-code-that-looks-alive failure this file keeps naming. `functions/api/ratios.js`
-STAYS — `RatioTable` on the company page still calls it.
+STAYS — `RatioTable` on the company page still calls it (the Ratios sub-tab of
+the Company research card since Stage 10cb).
 
 **IT FORWARDS TO PORTFOLIO MONITOR**, which is the surviving surface nearest its
 purpose rather than a neutral fallback: that page's SECURITY axis is one row per
@@ -10825,7 +10830,9 @@ Three moves, and the measurement afterwards is **overflow 0, no column cut**:
   printed twice (the mandate LINK is labelled with it).
 - **The tax card left the row and became a click.** Collapsing it in place would
   not have helped: it would still have held a third of the width. Its figures are
-  untouched.
+  untouched. *(It is on the position page's **Transactions** tab since Stage
+  10cb — a tab rather than a fold, beside the dated buys its purchase dates come
+  from — and the Basis column went at the same time: a dash on 368 of 371 rows.)*
 - **The Return column names its measure and shows both.** `HPR` renders on every
   costed row — the holding-period return, which the family called the most
   important — and `CAGR` renders **beside it, never instead of it**, only where a
@@ -13483,7 +13490,9 @@ single outlier, and it is the page a reader opens when they want one holding.
 SOURCE.** Top-right, 2xl, captioned with its statement date. What the table had
 was Avg cost, then `Invested`, then **`Current` — which is the market VALUE**, so
 a reader scanning the row for a price finds a column called Current and it is
-money. The ask names the right fix: a column, beside the cost.
+money. The ask names the right fix: a column, beside the cost. *(The header's
+mark is the PRICE TILE since Stage 10cb — one of six tiles above the position
+page's tabs — and the one-figure-or-none rule below governs it unchanged.)*
 
 #### …and reading the header's own figure found a quieter fabrication
 
@@ -13728,7 +13737,8 @@ column, so setting it would fold a NAV dated yesterday into a card headed
 the intraday fields are left untouched.
 
 **THE DISPLAY STOPS CALLING IT A STATEMENT MARK.** The Monitor's not-live `◦`
-marker and the stock page's headline caption and per-row hovers name AMFI and
+marker and the stock page's headline caption (the price tile's line since Stage
+10cb) and per-row hovers name AMFI and
 the publication date. A figure from one source wearing another's label is the
 only thing here that could mislead, and the caption is the only thing on the
 page that can tell a reader which it is.
@@ -15330,6 +15340,12 @@ failure this file keeps recording. What must not happen is the card going blank
 because the feed changed. `fetchPriceHistory` is memoised per symbol per page
 load, so the two cards share ONE request and cannot show two different fetches;
 a failed answer is not kept.
+
+***THE TRADING RANGE CARD HAS SINCE BEEN REMOVED — see Stage 10cb.*** Its
+52-week high and low are two columns of the returns table on the same tab, struck
+from the same daily closes, so the card printed one figure twice. What went with
+it is stated there rather than glossed: the muns quote's INTRADAY extremes where
+they existed, and the bar showing where today's price sat in the range.
 
 #### Verification
 
@@ -17251,6 +17267,198 @@ no route — with the same nine evidenced abstentions across the same five
 pre-existing claims, none of them this change's. `npm run build-book`
 regenerates the book byte-identically: nothing here touches the ingest.
 
+### Stage 10cb — THE POSITION PAGE IS FIVE TABS, AND IT IS THE SAME FIVE ON EVERY HOLDING
+
+*"When I come inside a portfolio position it's an unbelievable bad UI experience —
+please fix it all by making top sub tabs like we have done for others and not
+having a long page I have to scroll, and remove what is not necessary and
+consolidate what can be consolidated so it's one clean template for all."* — sent
+with a screenshot of Clean Max Enviro Energy Solutions' page.
+
+**MEASURED BEFORE ANYTHING MOVED, at the sweep's 1500×1000:** a company page was
+**1,496px taller than its window** and a fund's 774px. Top to bottom it was a
+header, six tiles, the account table, a folded tax card, the quantity account,
+the transaction tape, the price chart, the family's own targets, a ratio table, a
+research card, a trading-range card, an insider table and a paragraph describing
+the cards above it. A fund's page was a different stack again, so no two holdings
+read the same way — which is the "one template" half of the ask.
+
+#### Five tabs, at the right-hand end of the name's line
+
+| Tab | Answers | For a fund or a cash line |
+| --- | --- | --- |
+| **Position** | who holds it, through which account, at what cost and mark | the same table |
+| **Transactions** | the tax split and purchase dates, the depository's quantity account, the dated buys and sells | the same |
+| **Price & returns** | a company's price history and returns table | a mutual fund's AMFI NAV and its own returns; an AIF or a cash line states the absence once |
+| **Research** | one Company research card — Financials, Cash flow, Ratios, Street estimates, Documents, Concalls, Insider deals | a mutual fund's disclosed holdings, and one line saying company research does not apply |
+| **My targets** | the family's own target price, fair value, levels, alerts and notes | the same |
+
+**THE HEADER AND THE SIX TILES ARE OUTSIDE THE PANEL, AND ONLY THE PANEL
+SCROLLS** — Morning CIO's construction (Stage 10bj), for its reason: what was asked
+is that the headline and the tiles stop moving. Measured after, on every one of
+22 walked stock routes: document scroll 0, `<main>` scroll 0. The panel is
+allowed to scroll inside itself and is deliberately not asserted not to: a tab
+taller than the window must still reach its content. The fixed-height layout is
+`lg:` only — below it the page flows as a phone needs.
+
+**A TAB THAT HAS NO ANSWER FOR THIS KIND OF HOLDING STILL OPENS, AND SAYS SO ONCE.**
+Hiding it would make the template differ by asset class, which is exactly what was
+reported. It is `?tab=` like every other view, so a tab is a link, Back steps
+between tabs and `check:pages` reaches each by URL; the first is param-free. The
+tab labels are deliberately not the card headings they open, so a check struck on
+a heading cannot be satisfied by the tab strip.
+
+#### What went, what merged, and the one thing that was lost
+
+- **The CMP headline and the "Change today" tile are ONE price tile** — the
+  figure, today's move beside it where a live quote carries one, and one short
+  line saying WHICH mark this is. The line took the old caption's five states and
+  gained two: a cash line ("a balance, as the statement prints it") and a fund
+  with no published daily NAV ("the NAV on the statement of …"), where "no NSE
+  symbol resolves" was true and beside the point. Each line is a few words; the
+  full sentence is the hover. **A NAV's move is in the line, never the tile's
+  arrow**: it is the scheme's move on its own publication date, and an arrow
+  beside a price reads as today's.
+- **The Trading range card is gone.** Its 52-week high and low are two columns of
+  the returns table on the same tab, struck from the same daily closes since
+  Upstox became the quote feed (Stage 10br). **What that loses, stated rather than
+  glossed:** where the muns quote supplied the exchange's own INTRADAY 52-week
+  extremes, the card showed those rather than the closes; and it drew a bar of
+  where today's price sat in the range. Neither is on the page now.
+- **Ratio analysis and Insider & bulk deals are sub-tabs of the Company research
+  card**, each fetched when opened. `CompanyResearchPreview` is DELETED — the
+  trading range and a paragraph pointing at "the cards above" were the rest of
+  it — and its insider table is `InsiderDeals`, keeping the same table-view
+  storage key so a reader's own column order survives the move. The decided
+  absence it recorded (segments, operating KPIs, value chain, calendar: no
+  endpoint serves them) is carried in that file's header. `RatioTable` lost its
+  stand-alone card mode with its last caller rather than keeping a mode nothing
+  selects.
+- **The tax card is on Transactions** — *"tax maybe just make it a click"* — beside
+  the dated buys its purchase dates come from. Its "Weight in book" row went: the
+  Holding value tile states the same figure on every tab.
+- **The Basis column went.** It printed LT or ST per row from a lot register one
+  account in this book issues — a dash on 368 of 371 positions — and the split it
+  summarised is the tax card's, cost by cost.
+- **The Total row draws only over two or more rows.** A total of one row is the
+  row again, and the tiles carry the same four figures — the Polycab table's rule.
+- **The route pill folded into the bucket pill's hover** (the bucket already names
+  the route for every holding here, and every account row states it again), and
+  the provider's own sector wording into the sector chip's hover.
+- **The mandate line under the name is ONE line.** Up to two mandates it links
+  each; past two it is a count, because a cash sleeve sits in all ten of this
+  book's mandates and ten links was a five-line wall above the figures. Every
+  mandate is still one click away — each account row links its own.
+- **A mutual fund's scheme card is two halves on two tabs** (`FundLookthrough`
+  takes a `part`): its NAV, the NAV's move and its own returns are its PRICE; what
+  it holds is what a reader researches it for.
+- **The research card's sub-tabs are the page tabs' size**, not a size larger.
+
+#### Four corrections the rewrite found, none of them asked for and each on this page
+
+- **THE SECTOR CHIP READ `rows[0].sector` — the statement and nothing else.** A
+  depository prints no industry, so every share the family bought in its own
+  demat said "Unclassified" here — **Clean Max in the family's own screenshot** —
+  while Sector Composition, Family & Entities and the Monitor's stock axis all
+  placed it. It reads `companySectorIndex` now, the same three tiers, and the hover
+  names which tier placed it. Clean Max reads Utilities.
+- **A CASH LINE WORE "Cash" AS A SECTOR PILL** beside the Cash bucket — a GICS
+  claim nobody made. It carries no sector chip, and its Unrealised P&L tile says
+  why it is flat in the tile (§2): *"a balance — its cost and value are one
+  amount"*, worded that way because the book's cash rows net to **₹0.11** of
+  paise rounding and "no P&L" would overstate it.
+- **A NAME NO STATEMENT HOLDS PRINTED "₹0 · 0.0% of book" AND "0 held"** — summing
+  an EMPTY collection, which is the founding rule broken in its most literal form.
+  Pre-existing; the tiles are absent with "no current holding" now, and Avg cost
+  and P&L say that rather than "no statement reports a cost", which would send a
+  reader looking. A holding its fund redeemed to nil still HAS rows and keeps its
+  measured zero.
+- **"Plan — these fill … columns on Portfolio Monitor's plan view."** That view
+  was REMOVED at the family's request (the `PublicDashboardView` note), so the My
+  targets panel was sending a reader to look for a column that does not exist. It
+  says what the fields are now. And four `useMemo` calls that sat AFTER the page's
+  early return — a hooks-order error waiting for a render on which the book had
+  not loaded — moved above it.
+
+#### The checks: the same six claims on every holding, and every card on its tab
+
+**NOT ONE CLAIM ABOUT THE ASK CAN BE STRUCK ON PROSE**: the page renders the same
+words whether the research card is on its own tab or under the price chart on one
+long page. `stockTabChecks(expected)` is spread into EVERY stock route — a
+company's, a mutual fund's, an AIF's, a cash line's — and reads the control, the
+panel's own handles (`data-stock-tab-key`, `data-stock-panel`,
+`data-stock-section`) and bounding boxes: the same five tabs in order; this
+address's tab lit and only it; exactly one tab's content in the DOM; the page not
+scrolling; the six tiles above the panel; the tabs at the right-hand end of the
+name's line.
+
+**EVERY CLAIM FOLLOWED ITS CARD TO ITS TAB, and none was softened on the way** — a
+check that stops running because its card moved behind a tab is a check that
+silently stopped. The quantity-account routes (`stock-qty`, `-pledge`, `-unmoved`)
+walk `?tab=activity` with `stockActivityChecks` (the tax card and its reasons, the
+dated record, and the account table ABSENT); `stock-fund` walks the AIF's Research
+tab and `stock-fund-market` its Price & returns; `stock-mf-lookthrough` walks the
+fund's NAV half and the new `stock-mf-holdings` its holdings, each asserting it
+draws ITS half and not the other; `stock-market`, `stock-research`,
+`stock-targets` and `stock-activity` walk the company's other four tabs.
+`stock-research` CLICKS Ratios, Insider deals and Financials in turn and reads each
+panel by its own handle — a sub-tab that lights and draws nothing renders a card
+every text check reads as fine.
+
+**AND TWO CLAIMS NEEDED NEW SUBJECTS.** "The Total row carries the agreed mark"
+was struck on Aditya Birla Capital, which one account holds — so it has no Total
+row now, and `stock` asserts THAT instead while `stock-cmp-agree` (the largest
+holding several statements mark alike, derived as `CMP_BOOK.agreedKey`) carries
+the original claim. And `stock-mandates-many` (`MANY_MANDATES`, derived) walks
+the holding the most mandates hold — cash, on this book — for the count, the one
+line, every mandate linked from its row, and the cash line's missing sector and
+its P&L reason, with `stock-cash-market` for its Price & returns tab.
+
+**WHAT NO ROUTE WALKS, stated:** the fully-exited branch. Its only subjects are
+keys the dated ledger carries and no statement holds, and deriving one needs the
+audit archive rather than `glowData.ts`; the fix to its tiles was verified by
+screenshot.
+
+`check:family` opens My targets by its key before reading the Investment tools
+panel, and a missing tab is a finding — the panel then has no way to be reached.
+
+#### The bug pass
+
+`scripts/dev/stock-tabs-bug.sh` puts seventeen bugs back one at a time, restoring by copy on a trap and rebuilding on the way out, after a no-patch control. *(Its result is recorded here when the run finishes.)*
+
+**AND TWO OLDER HARNESSES PATCH THIS PAGE, SO BOTH WERE RE-CHECKED RATHER THAN
+TRUSTED.** `carried-cost-bug.sh` (Stage 10bv) finds both of its anchors in the
+new page. `cmp-bug.sh` (Stage 10bm) did not: six of its ten patches pointed at
+code the rewrite moved, so each would have reported NOT A RESULT — a harness that
+cannot apply its bug proves nothing, however clean its run looks. Its anchors are
+the new page's now, every patch was dry-run against a copy of it, and its route
+list dropped `stock-cmp-derived` (retired at Stage 10bn) and gained
+`stock-cmp-agree` and `stock-cmp-nav`. *(Its run is recorded here when it finishes.)*
+
+#### Merged with main twice, and the letter is `10cb`
+
+**#79 (Stage 10bx, one master table each) conflicted in `check-pages.mjs`**: a
+walk comment and the `ctx` literal. Resolved as a union — main's line plus this
+branch's `stockPage` — with main's `schemeCalls` NOT carried, because main
+deleted the probe that declared it. **#83 (Stage 10bz, Ask Muns off the top bar)
+merged without a marker**, which is when this file says to check by hand: the
+literal is exactly main's 85 keys plus `stockPage`, none duplicated, and every
+key resolving to a declaration. Neither PR touched a file this change rewrote
+except `check-family-inputs.mjs` (#79), which kept both sides.
+
+**THE LETTER SKIPS TWO, ON PURPOSE.** Main's Stage 10bx names `10by` as the
+Portfolio Monitor's stage and #83 took `10bz` past it; of the open PRs, #81
+already carries a `10by` section and #80 a `10ca`. Taking either would make a
+collision certain the moment one merges, so this is `10cb` — a gap costs nothing
+and a duplicate letter makes every cross-reference to it ambiguous. The nine
+pointers this change adds to older passages — Conventions, and Stages 10ap,
+10ba, 10bm, 10bn, 10br, 10c, 10j (*"the complaint came back"*) and 10k — all
+name `10cb`, so a move of the letter at merge time is one search.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **— recorded on the merged tree** ·
+`check:pages` **— recorded on the merged tree when the full sweep finishes**. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY: nothing here touches the ingest.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -17261,7 +17469,7 @@ leaving it would have been a button to a redirect.
 
 `src/lib/announcements.ts` STAYS. `insider.ts` imports its `AnnHolding` type and
 its NSE-symbol resolution, and the company page's insider panel is still wired to
-both. Deleting a module because its most visible caller went is how a working
+both (`InsiderDeals`, the research card's Insider deals sub-tab since Stage 10cb). Deleting a module because its most visible caller went is how a working
 panel goes dark one release later.
 
 `check:family` asserts the removal happened — both redirects, the nav entry gone
@@ -17443,7 +17651,8 @@ established after its first draft turned out to match static prose:
 - a new `stock-aif-dual` route on the holding reported under both CRNs asserts
   the entity COUNT agrees with the account rows rendered (against the rows, never
   against a literal — the count is a generated figure), that the rows-vs-total
-  gap is named, and that no zero price stands in the CMP headline.
+  gap is named, and that no zero price stands in the CMP headline (the price
+  tile since Stage 10cb).
 
 ### Stage 10c — measuring against the deployed site
 
@@ -17479,7 +17688,7 @@ Node's fetch can, with `NODE_USE_ENV_PROXY=1`, which is why the bridge exists at
 all rather than pointing a browser straight at the deployment.
 
 **The quote feed's `marketCap` is in RUPEES**, which unblocked a real feature.
-`CompanyResearchPreview` had withheld a rupee market cap because the unit was
+`CompanyResearchPreview` (deleted at Stage 10cb) had withheld a rupee market cap because the unit was
 unverified and "a value here could be wrong by a factor of a crore" — correct to
 withhold, and this is the check: ABCAPITAL reads ₹1,11,403 Cr against
 screener.in's ₹1,11,347 Cr, 0.05% apart on two snapshots minutes apart.
