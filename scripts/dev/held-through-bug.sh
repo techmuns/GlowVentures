@@ -45,7 +45,7 @@ restore() {
 }
 trap restore EXIT
 
-# The position page is five tabs since Stage 10cm, and a funds-only company's
+# The position page is five tabs since Stage 10cn, and a funds-only company's
 # tax, price and research claims are struck on the tabs that draw them — so the
 # three routes that walk those tabs are swept too.
 ROUTES=stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research
