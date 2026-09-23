@@ -20509,8 +20509,76 @@ change, so none of #78's checks had to move.
 `build` · `tsc` · `test:ingest` (the same eleven suites, golden 140 passed, 2 not
 checked, 0 blocked) · `test:family` exit 0, #78's `datedCapital.test.ts` among
 them · `npm run build-book` byte-identical, and equal to main's own copies —
-neither side moves the book. The page sweep and the bug pass are being re-run
-on this tree, and their results replace this sentence when they finish.
+neither side moves the book. `check:pages` **248 combinations, 3 with a
+finding, and all three are main's**: the Private Market routes, the same 8
+checks that fail on main's own build (#72's fund-return re-expression still
+strikes HPR as value against cost, where #80 made it FIFO). The 10 NOT CHECKED
+lines are main's pre-existing claims with no subject on this book. The bug pass
+did not finish on this tree before main moved again; it ran in full on the next
+one, below.
+
+#### …and a third time: #87 took `10cg`, and #89 `10ch`
+
+**#87 — Glow Central Research's fonts and colours — and #89 — the notes for
+the Portfolio Monitor's master table — landed while that sweep ran, and took
+`10cg` and `10ch`.** Main keeps both; this section is **`10ci`**. The letters
+were compared as HEADINGS against main's tip, and no prose on main names a
+letter after `10ch`. As at `10cf`, both sides had inserted at one place, so git
+marked the conflict, and main's two sections come first.
+
+**EIGHTEEN LINES NAMED `10cg` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED**, against both sides' own copies of its file. Eight are this change's:
+seven moved to `10ci` — the note under Stage 10z, two check-script comments, the
+bug harness's header and the three "in full" link comments — and the one in the
+merge note above was reworded, because it records the letter this section held
+then. Ten are main's and stayed: #87's heading and merge note, #89's line that
+main had taken every letter from `10bz` to `10cg`, three check-script comments,
+#87's bug harness, `Sidebar.tsx`, `index.css` and `StockInfo.tsx`. (The merge
+commit's message says eleven; ten is the count.)
+
+**ONLY THIS FILE CONFLICTED, AND THE THREE PAGES BOTH SIDES TOUCH WERE READ.**
+#87 set page titles and headline figures in its display face and gave Export
+Excel a class of its own; this change's lines in `PortfolioMonitor.tsx`,
+`MandateHoldings.tsx` and `HoldingsBehind.tsx` sit beside those edits
+untouched, and the merged tree's diff against main is this change's thirteen
+files alone. The `ctx` literal is main's 92 keys and this change's 4 — 96, none
+duplicated; #87 and #89 added none.
+
+**#87's TWO NEW CHECKS RUN ON EVERY ROUTE, THIS CHANGE'S INCLUDED, AND PASS
+THERE.** In the light theme the page reads in Inter, its title and figures in
+their own faces, the nav and top bar are white and the entry you are on is gold;
+in both themes a raised card must be covered by a link. No route in the sweep
+below reports either, and none reports a contrast finding.
+
+**THE FULL SWEEP FOUND FIVE ROUTES, AND NONE IS THIS CHANGE'S.** It ran while
+the bug pass was building and sweeping on the same four-core machine. Three are
+the Private Market routes: the identical 8 checks fail on main's own build at
+`4148c1a`, walked for this record rather than assumed. Two are Transactions
+routes — `monitor-txn-drill` (4 checks) and `monitor-txn-in` (3) — and those
+are TIMING. The walk clicks Transactions, waits a fixed 1.2 s, then clicks the
+next control and silently skips it if it is not drawn yet. Measured: once the
+click lands, the dated table takes 0.9–1.4 s to appear on a quiet machine, from
+main's old Category default as well, so that wait is marginal on main already
+(Stage 10cc saw `monitor-txn-out` fail the same way). Under four busy loops the
+two routes fail the same 7 checks on main's own build as on this one, twice
+each; with the machine quiet both pass on both builds. The defect is the fixed
+wait in main's walk, and it is left to a change of its own rather than widened
+into this one.
+
+What this change does move is how long the CLICK takes. From bare `/monitor`
+(All Securities, 565-odd rows and the fund look-through) the click waits
+2.5–3.2 s for the page to settle, against about 0.5 s from Category. The walk
+tolerates that, because a click waits for its target, and the window that
+matters — after the click — is the same from both.
+
+`build` · `tsc` · `test:ingest` (the same eleven suites, golden 140 passed, 2 not
+checked, 0 blocked) · `test:family` (2,466 checks, 0 failed; its six NOT CHECKED
+lines are main's own) · `npm run build-book` byte-identical, and equal to main's
+own copies · `check:family` **87/2**, the two being main's Extras-menu checks ·
+`check:pages` **248 combinations**, 5 with a finding and all five accounted for
+above, with main's 10 evidenced abstentions and none of this change's · **the
+bug pass: all 12 cases fire their own checks**, after a clean control
+(`scripts/dev/all-securities-bug.sh`, run on this tree in a worktree of its own).
 
 ### Stage 10k — News & Announcements: REMOVED
 
