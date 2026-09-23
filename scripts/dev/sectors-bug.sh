@@ -192,5 +192,14 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'const returnPct = cost !== null && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;'))
 EOF
 
+# 14 ── the grid's row stops being bounded, so both halves grow with their content
+run_case "the two halves grow with their content, so the page scrolls on a short window" py <<'EOF'
+import sys
+p='src/pages/SectorComposition.tsx'; s=open(p).read()
+old=' lg:grid-rows-[minmax(0,1fr)]'
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,''))
+EOF
+
 echo ""
 echo "════════ done — the tree is restored by the EXIT trap"

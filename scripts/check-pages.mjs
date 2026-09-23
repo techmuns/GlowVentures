@@ -786,6 +786,34 @@ function sectorSourceChecks(bookCount) {
 }
 
 /**
+ * ── THE SAME PAGE ON A SHORT WINDOW ─────────────────────────────────────────
+ *
+ * Polycab and Sector Composition both claim that the page itself never scrolls
+ * and that a table too long for the window scrolls INSIDE its card, heading
+ * pinned. At the sweep's own 1000px most of their tables fit whole — so there
+ * "the page does not scroll" cannot tell a card that shrinks and scrolls
+ * inside itself from one that simply GREW with its content. That second shape
+ * is what a reviewer raised on the Polycab card, and a longer corporate-action
+ * record or a shorter screen would turn it into a page that scrolls its sticky
+ * heading away, with every figure on it still correct.
+ *
+ * So the same geometry is struck again at `SHORT_H`, where these tables do not
+ * fit: the page must still not scroll, no card may spill its content past its
+ * own box, and a table that does not fit must sit in a scroller INSIDE its
+ * card, on screen, holding the rest. The window really must have been short —
+ * a resize that silently did nothing would measure the 1000px page again and
+ * pass by asserting nothing.
+ */
+const SHORT_H = 480;
+const SHORT_WINDOW_CHECK = [`on a ${SHORT_H}px window the page still does not scroll, and a table that does not fit scrolls inside its card`, (_t, ctx) => {
+  const s = ctx?.shortWindow;
+  if (!s) return { notChecked: "the short-window probe did not run" };
+  return s.height === SHORT_H && s.hasTable && s.cardsHeld
+    && s.docScroll <= 0 && s.mainScroll <= 0
+    && (s.tableFits || (s.innerInCard && s.innerVisible && s.innerOverflow > 0));
+}];
+
+/**
  * ── SECTOR COMPOSITION IS TWO HALVES AND THREE TABS ─────────────────────────
  *
  *   *"this compare sectors needs to be a subtab next to direct equity, you have
@@ -838,6 +866,7 @@ function sectorLayoutChecks(expected) {
       if (!L) return false;
       return L.tableClip !== null && L.tableClip <= 1;
     }],
+    SHORT_WINDOW_CHECK,
   ];
 }
 
@@ -1967,6 +1996,8 @@ const POLYCAB_LIVE_BOOK = (() => {
       // record was fetched WHOLE — a truncated response and a company that
       // declared none produce the identical empty list.
       measuredNil: d.actionsComplete === true && actions.filter((a) => SHARE.has(a.kind)).length === 0,
+      // …and the flag itself, which the card's subtitle is gated on.
+      complete: d.actionsComplete === true,
       quarters,
       latest,
       quote: d.quote ?? null,
@@ -2040,6 +2071,7 @@ const polycabViewChecks = (expected) => [
     if (!d) return { notChecked: "the DOM probe did not run" };
     return d.docScroll <= 0 && d.mainScroll <= 0;
   }],
+  SHORT_WINDOW_CHECK,
 ];
 
 /**
@@ -7824,6 +7856,24 @@ const INVARIANTS = {
      * store vouches for the record, and where it does and carries none, the page
      * must say so rather than fall back to a dash.
      */
+    /**
+     * "WHOLE SINCE LISTING" IS SAID ONLY WHERE THE LAST REFRESH FETCHED THE
+     * RECORD WHOLE. The card's subtitle printed it unconditionally, so a
+     * refresh that kept a stored record through a failed fetch — the builder's
+     * own `actionsComplete: false` path — would have called a possibly
+     * truncated list complete while the nil beneath it correctly refused to.
+     * Struck on the subtitle's own node against the committed store, both ways
+     * round: the complete wording where the store is whole, the incomplete one
+     * where it is not, and never neither.
+     */
+    ["the card calls the record whole since listing only where the last refresh fetched it whole", (_t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const sub = d.cardSub ?? "";
+      const whole = /whole since listing/i.test(sub);
+      return POLYCAB_LIVE_BOOK.complete ? whole : !whole && /could not confirm it is whole/i.test(sub);
+    }],
     ["the bonus/split nil is claimed only where the exchange's record was fetched whole",
       (t) => {
         if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
@@ -15471,6 +15521,34 @@ const OVERFLOW = () => {
   return { overflow, worst };
 };
 
+/**
+ * What `SHORT_WINDOW_CHECK` reads, measured while the window is `SHORT_H` high.
+ * The table's own scroller is the nearest ancestor below `<main>` that scrolls;
+ * every box is read in the same zoomed space, so they compare with each other.
+ */
+const SHORT_WINDOW = () => {
+  const de = document.documentElement, m = document.querySelector("main");
+  const t = document.querySelector("main [data-polycab-table], main [data-sector-table], main [data-sector-compare]");
+  const scrolls = (el) => ["auto", "scroll"].includes(getComputedStyle(el).overflowY);
+  let sc = t?.parentElement ?? null;
+  while (sc && sc !== m && !scrolls(sc)) sc = sc.parentElement;
+  const inner = sc && sc !== m ? sc : null;
+  const mb = m?.getBoundingClientRect() ?? null, tb = t?.getBoundingClientRect() ?? null, ib = inner?.getBoundingClientRect() ?? null;
+  const cards = [...document.querySelectorAll("main .card")];
+  return {
+    height: window.innerHeight,
+    docScroll: de.scrollHeight - de.clientHeight,
+    mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
+    hasTable: !!t,
+    tableFits: !!(tb && mb && tb.bottom <= mb.bottom + 1),
+    innerOverflow: inner ? inner.scrollHeight - inner.clientHeight : null,
+    innerInCard: !!inner?.closest(".card"),
+    innerVisible: !!(ib && mb && ib.top >= mb.top - 1 && ib.bottom <= mb.bottom + 1),
+    // No card spills its content past its own box: it holds it, or scrolls it.
+    cardsHeld: cards.length > 0 && cards.every((c) => c.scrollHeight <= c.clientHeight + 1 || scrolls(c)),
+  };
+};
+
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
 const report = [];
 
@@ -17606,6 +17684,7 @@ for (const theme of THEMES) {
           },
           sources: txt("main [data-polycab-sources]"),
           shareActionsText: txt("main [data-polycab-share-actions]"),
+          cardSub: txt("main [data-polycab-card-sub]"),
           docScroll: de.scrollHeight - de.clientHeight,
           mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
         };
@@ -18104,6 +18183,21 @@ for (const theme of THEMES) {
       // is counted apart from both, because a check that passes over no input
       // claims confidence nobody earned and one that fails over no input is red
       // about a page that is rendering correctly.
+      /**
+       * THE SHORT WINDOW, on the two pages whose checks read it. Taken LAST,
+       * because it resizes the page, and the viewport is RESTORED before the
+       * invariants run and the screenshot is taken. The pause lets the charts'
+       * ResizeObservers and React's commit land before the page is read.
+       */
+      let shortWindow = null;
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && /^(polycab|sectors)(-|$)/.test(name)) {
+        const was = page.viewportSize();
+        await page.setViewportSize({ width, height: SHORT_H });
+        await page.waitForTimeout(250);
+        shortWindow = await page.evaluate(SHORT_WINDOW);
+        await page.setViewportSize(was ?? { width, height: 1000 });
+        await page.waitForTimeout(250);
+      }
       const invariants = [], notCheckedHere = [];
       /**
        * THE RING-FENCE, ASSERTED ON EVERY PAGE THAT IS NOT THE POLYCAB PAGE.
@@ -18566,7 +18660,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

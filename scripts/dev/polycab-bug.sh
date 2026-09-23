@@ -307,5 +307,28 @@ s=s.replace(old2,"What the promoter group discloses each quarter.")
 open(p,'w').write(s)
 EOF
 
+# 21 ── the card calls the record whole while the last refresh could not fetch it
+run_case "the 'whole since listing' subtitle is claimed on an incomplete record" py <<'EOF'
+import sys
+p='src/pages/Polycab.tsx'; s=open(p).read()
+old='  const actionsSub = live.complete\n'
+# Always true at runtime, and nothing TS can see through: the subtitle stops
+# reading the flag while the store below says the record is incomplete.
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,'  const actionsSub = live.complete || live.dividends.length >= 0\n'))
+p2='src/data/polycabLive.ts'; t=open(p2).read()
+if t.count('"actionsComplete": true')!=1: sys.exit(1)
+open(p2,'w').write(t.replace('"actionsComplete": true','"actionsComplete": false'))
+EOF
+
+# 22 ── the card grows with its content instead of shrinking into the page
+run_case "the table card grows with its content, so the page scrolls on a short window" py <<'EOF'
+import sys
+p='src/pages/Polycab.tsx'; s=open(p).read()
+old='      <Card pad={false} className="flex min-h-0 flex-col"'
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,'      <Card pad={false} className="flex min-h-0 flex-none flex-col"'))
+EOF
+
 echo ""
 echo "════════ done — the tree is restored by the EXIT trap"

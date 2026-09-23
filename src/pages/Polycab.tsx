@@ -91,6 +91,9 @@ const POLYCAB_VIEWS = [
     key: "actions", label: "Corporate actions",
     title: "Every dividend, bonus and split Polycab has declared, from the exchange's own record.",
     cardTitle: "What Polycab has declared",
+    // Only the COMPLETE wording is written here; the card reads `actionsSub`,
+    // which falls back to the incomplete one when the last refresh could not
+    // fetch the record whole. "Whole since listing" is a claim about a fetch.
     cardSub: "The exchange's own corporate-action record, whole since listing.",
   },
   {
@@ -234,6 +237,19 @@ export function Polycab() {
   const active = POLYCAB_VIEWS.find((v) => v.key === view)!;
 
   /**
+   * "WHOLE SINCE LISTING" IS A CLAIM ABOUT A FETCH, SO IT IS GATED ON ONE.
+   * `actionsComplete` is set only on a refresh that reached the exchange and read
+   * its whole record; a stored record kept through a failed fetch keeps its rows
+   * and loses this flag. Printed unconditionally, the subtitle would call a
+   * possibly-truncated list complete — the same claim the bonus/split nil below
+   * the table already refuses to make without that flag.
+   */
+  const actionsSub = live.complete
+    ? POLYCAB_VIEWS.find((v) => v.key === "actions")!.cardSub
+    : "The exchange's own corporate-action record, as last stored — the latest refresh could not confirm it is whole.";
+  const cardSub = active.key === "actions" ? actionsSub : active.cardSub;
+
+  /**
    * THE SOURCES LINE, under the two company-level tables — the only data on this
    * site that is not the family's own paperwork, so a reader has to be able to
    * see which source carried it and when it was last refreshed. One line, where
@@ -277,7 +293,7 @@ export function Polycab() {
           window, so the page never scrolls and the headings stay pinned. */}
       <Card pad={false} className="flex min-h-0 flex-col"
         title={active.cardTitle}
-        subtitle={active.cardSub || undefined}
+        subtitle={cardSub ? <span data-polycab-card-sub>{cardSub}</span> : undefined}
         right={
           <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
             role="tablist" aria-label="Which Polycab table to show">
