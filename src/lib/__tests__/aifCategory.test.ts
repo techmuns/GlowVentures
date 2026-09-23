@@ -32,8 +32,9 @@ import {
   categoriesNamedIn, readAifCategory, aifCategoryOf, aifSectionOf, aifCategoryWhy,
   readsAsPrivateEquity, isAifHolding, unvaluedAifFolios,
   AIF_SECTION_ORDER, aifSectionOrd, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION,
-  CATEGORY_I, CATEGORY_II, CATEGORY_III,
+  CATEGORY_I, CATEGORY_II, CATEGORY_III, DECLARED_AIF_CATEGORY, declaredAifCategory,
 } from "@/lib/aifCategory";
+import { readFileSync } from "node:fs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -238,6 +239,71 @@ ok("an unknown section sorts last", aifSectionOrd("something else") >= AIF_SECTI
   // the same folio is reported as both held and unvalued.
   ok("no folio appears in both the table and the unvalued list",
     un.every((f) => !withPositions.has(f.accountId)));
+}
+
+// ── WHAT THE FAMILY DECLARED, AND THE THREE RULES IT MUST KEEP ─────────────
+//
+//   "Motilal Oswal Wealth Delphi Equity Fund and Neo Infra Income Opportunities
+//    Fund I — Class A5: classify both of these AIFs as Category 2 funds."
+//
+// A declaration FILLS A SILENT STATEMENT and nothing else; it is keyed on the
+// securityKey, never on a name; and the read says where the category came from.
+console.log("\n── the family's declared categories ──");
+{
+  const keys = Object.keys(DECLARED_AIF_CATEGORY);
+  eq("the family declared exactly the two funds they named", keys.sort(),
+    ["motilal-oswal-wealth-delphi-equity-fund", "neo-infra-income-opportunities-fund-i-class-a5"]);
+  ok("every declaration is Category II, as they said",
+    keys.every((k) => DECLARED_AIF_CATEGORY[k].category === CATEGORY_II));
+
+  // LOAD-BEARING: every declared fund's own statement must be SILENT, or the
+  // declaration is overriding a printed category — a conflict to show a human,
+  // never a value to take. Checked on every position the book carries under
+  // each key, against the account it sits in.
+  for (const k of keys) {
+    const rows = BOOK_POSITIONS.filter((p) => p.securityKey === k);
+    ok(`${k} is in the book`, rows.length > 0);
+    for (const p of rows) {
+      const a = accts.get(p.accountId);
+      const printed = [...categoriesNamedIn(p.security), ...categoriesNamedIn(a?.providerEngagement)];
+      ok(`…and no printed field names its category (${p.accountId})`, printed.length === 0, printed.join(","));
+      const r = aifCategoryOf(accts, p);
+      eq(`…so it reads the declared category (${p.accountId})`, [r.category, r.source, r.why], [CATEGORY_II, "family", null]);
+      eq(`…files under that section`, aifSectionOf(accts, p), CATEGORY_II);
+      eq(`…and sits on the private side`, p.marketSide, "private");
+    }
+  }
+
+  // THE STATEMENT WINS. A declaration never reaches a fund whose paperwork
+  // prints a category — constructed, because no declared fund here prints one.
+  const k0 = keys[0];
+  const printedIII = readAifCategory({ security: "Some Fund (AIF CAT-III)", securityKey: k0 }, undefined);
+  eq("a printed category beats a declaration on the same key", [printedIII.category, printedIII.source], [CATEGORY_III, "statement"]);
+  const ambiguous = readAifCategory({ security: "Some Fund", securityKey: k0 },
+    { providerEngagement: "Category I/II AIF — drawdown" } as Account);
+  eq("…and so does a statement naming TWO (it stays unstated rather than taking the declaration)",
+    [ambiguous.category, ambiguous.why], [null, "ambiguous"]);
+  // KEYED ON THE KEY, NEVER THE NAME — the browser renders a display label in
+  // `security`, and a name matcher here would be a fuzzy tier.
+  const byName = readAifCategory({ security: "Motilal Oswal Wealth Delphi Equity Fund" }, undefined);
+  eq("the fund's NAME alone does not reach the declaration", [byName.category, byName.why], [null, "unstated"]);
+  eq("an unknown key has no declaration", declaredAifCategory("not-a-fund"), null);
+  ok("a printed category says it came from a statement",
+    readAifCategory({ security: "Sanshi Fund-I (Open Ended AIF CAT-III) — Class E" }, undefined).source === "statement");
+
+  // WHAT THE ARCHIVE CORROBORATES, re-read from the committed text rather than
+  // trusted from the comment that says so. Neo Infra's own statement prints its
+  // manager's Category II registration; Delphi's prints nothing, and its entry
+  // says so by carrying no corroboration.
+  const neo = JSON.stringify(JSON.parse(readFileSync(
+    "public/audit/neo-infra-income-opportunities-fund-9039920536-2026-06-30-holdings/pages.json", "utf8")));
+  ok("Neo Infra's own statement prints a Category II registration", /Category-II No : IN\/AIF2\//.test(neo));
+  ok("…and its declaration names that corroboration",
+    /IN\/AIF2/.test(DECLARED_AIF_CATEGORY["neo-infra-income-opportunities-fund-i-class-a5"].corroboration ?? ""));
+  const delphi = JSON.stringify(JSON.parse(readFileSync(
+    "public/audit/motilal-oswal-delphi-equity-fund-9049241536-2026-06-30-holdings/pages.json", "utf8")));
+  ok("Delphi's statement prints no category and no registration", !/categor|IN\/AIF/i.test(delphi));
+  eq("…so its declaration claims no corroboration", DECLARED_AIF_CATEGORY["motilal-oswal-wealth-delphi-equity-fund"].corroboration, null);
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall AIF category checks passed");

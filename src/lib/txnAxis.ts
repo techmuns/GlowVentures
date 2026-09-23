@@ -155,7 +155,30 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   };
 
   const forAccount = (axis: GroupAxis, accountId: string): string => {
-    const keys = new Set((byAccount.get(accountId) ?? []).map((p) => groupKeyFor(axis, idx, p)));
+    const held = byAccount.get(accountId) ?? [];
+    /**
+     * AN ACCOUNT THAT HOLDS NO VALUED POSITION IS STILL AN AIF ON THE CATEGORY
+     * AXIS, WHEN ITS OWN STATEMENT SAYS SO.
+     *
+     * Stage 10bt put a drawdown fund's dated CALLS on this table for the
+     * accounts that publish no capital record — India SME's three folios and
+     * Sky Capital's four among them — and none of those seven carries a
+     * position, because no statement values them. Left to the holdings they
+     * would all file under "not classified", on a page whose Category axis the
+     * family read them on as AIFs. The ACCOUNT's engagement is the statement's
+     * own wording (`Category I Alternative Investment Fund – Angel Fund`,
+     * `Category II AIF - drawdown…`), never defaulted, so it answers the
+     * CATEGORY question — and only that one: which basket or family asset
+     * class a fund belongs to is the family's review, keyed on a product this
+     * book holds no row for, so those two axes still say it is not stated.
+     */
+    if (!held.length) {
+      if (axis === "category" && idx.get(accountId)?.engagement === "AIF") {
+        return groupKeyFor(axis, idx, { assetClass: "AIF", securityKey: "", accountId });
+      }
+      return TXN_UNSECTIONED;
+    }
+    const keys = new Set(held.map((p) => groupKeyFor(axis, idx, p)));
     // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No account in
     // this book is mixed on any axis — measured, all eleven funded ones resolve
     // to one — and an account that holds nothing at all cannot be filed either:

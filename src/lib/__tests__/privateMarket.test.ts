@@ -65,9 +65,17 @@ const accIdx = accountIndex(BOOK_ACCOUNTS);
 const scope = privateScope(BOOK_POSITIONS, BOOK_ACCOUNTS);
 
 console.log("\n── the private set ──");
-eq("raw private rows", scope.rows.length, 7);
-eq("deduped private rows", scope.dedupedRows.length, 5);
-eq("accounts in scope", scope.accounts.length, 17);
+// RE-MEASURED when the family declared Delphi and Neo Infra Category II
+// (`DECLARED_AIF_CATEGORY`): both statements print no category, so both sat on
+// neither side and off this page. Declared, they are private capital — two
+// more rows, two more accounts, ₹16.68 Cr more value, ₹15 Cr more cost.
+eq("raw private rows", scope.rows.length, 9);
+eq("deduped private rows", scope.dedupedRows.length, 7);
+eq("accounts in scope", scope.accounts.length, 19);
+ok("both family-declared funds are on this page",
+  ["motilal-oswal-wealth-delphi-equity-fund", "neo-infra-income-opportunities-fund-i-class-a5"]
+    .every((k) => scope.rows.some((p) => p.securityKey === k)),
+  "the family declared both Category II, which is private capital");
 // EVERY ROW IS ON THE PRIVATE SIDE, which is now what `isPrivateClass` means —
 // read from the SEBI category rather than from the asset class. The class test
 // this replaced would pass on a page carrying every Category III folio, which
@@ -82,7 +90,7 @@ ok("...and none of them is a Category III fund",
 const dedupedMV = sum(scope.dedupedRows.map((p) => p.marketValue));
 const rawMV = sum(scope.rows.map((p) => p.marketValue));
 near("deduped private value === BOOK_SUMMARY.privateValue", dedupedMV, BOOK_SUMMARY.privateValue);
-near("raw private value", rawMV, 410533909.91);
+near("raw private value", rawMV, 577319748.51);
 near("double count = raw − deduped", scope.doubleCounted, rawMV - dedupedMV);
 near("the double count is ₹3.17 Cr", scope.doubleCounted, 31726374.76);
 ok("the double count is the WHOLE book's double count",
@@ -91,11 +99,11 @@ ok("the double count is the WHOLE book's double count",
 
 console.log("\n── funds ──");
 const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
-eq("distinct funds", funds.length, 4);
+eq("distinct funds", funds.length, 6);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
-near("cost", sumOrNull(funds.map((f) => f.cost)), 337616647);
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 41190888.15);
+near("cost", sumOrNull(funds.map((f) => f.cost)), 487616647);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 57976726.75);
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
 // already. What a `?? 0` would do is put a figure on rows that report none,
@@ -135,7 +143,7 @@ eq("the folio count adds to the RAW row count, not the deduped one",
 
 console.log("\n── folios (per-account: NOT deduped) ──");
 const folios = folioRows(scope.rows, accIdx);
-eq("folio rows", folios.length, 7);
+eq("folio rows", folios.length, 9);
 near("folio rows add to the RAW total", sum(folios.map((f) => f.position.marketValue)), rawMV);
 const dual = folios.filter((f) => f.alsoCount > 1);
 eq("rows reported under more than one account", dual.length, 4);

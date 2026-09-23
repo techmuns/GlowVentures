@@ -583,6 +583,14 @@ export type CapitalMove = {
   /** The security those units are in — only a unitised fund names one. */
   security: string | null;
   securityKey: string | null;
+  /**
+   * Set where this movement is one of a DRAWDOWN FUND's own dated capital calls
+   * (`Commitment.calls`) rather than a row of the family's capital record.
+   * Never emitted by the ingest — `capitalMovesWithCalls` adds these at display
+   * time for the funds whose statements publish calls and no capital record, so
+   * a reader can see which kind of document a purchase date came from.
+   */
+  fromCall?: true;
 };
 
 /**

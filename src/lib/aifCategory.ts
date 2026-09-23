@@ -16,6 +16,7 @@ import { isMandateHeld } from "./analytics";
 import {
   CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
   categoriesNamedIn, readAifCategory as readAifCategoryText,
+  DECLARED_AIF_CATEGORY, declaredAifCategory,
   readsAsPrivateEquity as readsAsPrivateEquityText,
   marketSideOf as marketSideOfText,
   MARKET_SIDE_UNPLACED,
@@ -24,7 +25,7 @@ import {
 
 export {
   CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
-  categoriesNamedIn, MARKET_SIDE_UNPLACED,
+  categoriesNamedIn, MARKET_SIDE_UNPLACED, DECLARED_AIF_CATEGORY, declaredAifCategory,
 };
 export type { AifCategory, AifCategoryRead, MarketSide };
 
@@ -34,12 +35,12 @@ export type { AifCategory, AifCategoryRead, MarketSide };
  * Takes the `Account` rather than an index so it can be called with either;
  * `aifCategoryOf` below is the one that takes the index.
  */
-export const readAifCategory = (p: Pick<Position, "security">, account: Account | undefined): AifCategoryRead =>
-  readAifCategoryText(p.security, account);
+export const readAifCategory = (p: Pick<Position, "security"> & { securityKey?: string }, account: Account | undefined): AifCategoryRead =>
+  readAifCategoryText(p.security, account, p.securityKey);
 
 /** The same read, given the account index every page already holds. */
 export const aifCategoryOf = (idx: AccountIndex, p: Position): AifCategoryRead =>
-  readAifCategoryText(p.security, idx.get(p.accountId));
+  readAifCategoryText(p.security, idx.get(p.accountId), p.securityKey);
 
 /**
  * WHICH SIDE OF THE BOOK A HOLDING SITS ON, derived live.

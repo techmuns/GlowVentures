@@ -30,8 +30,11 @@
  * ₹9.5 Cr + ₹85.4 L.
  *
  * So the row is one row and the COLUMNS stay in two blocks that are never
- * added — Capital in / out / Net invested, and Bought / Sold / Realized P&L —
- * each summed down its own column into its own footer cell. A cell whose row
+ * added — Committed / Purchase / Redemption / Realised / Unrealised, and
+ * Bought / Sold / P&L on sales — each summed down its own column into its own
+ * footer cell. (It was Capital in / out / Net invested until Stage 10bt: a net
+ * that subtracted a redemption CARRYING appreciation from what was paid in, so
+ * 3P read −₹2.56 Cr of "net invested" and every return struck on it was wrong.) A cell whose row
  * has no half to fill it renders `AbsentCell` with the reason, which is this
  * book's standing rule for a figure that exists for some rows and not others.
  *
@@ -154,7 +157,7 @@ export function mergeDatedRecords(
   capital: CapitalGroup[],
   trades: GroupRow[],
   sectionOfAccount: (accountId: string) => string,
-  valueOfAccount: (accountId: string) => number,
+  valueOfAccount: (accountId: string) => number | null,
   sort: TxnSort = "recent",
 ): DatedRow[] {
   const byKey = new Map<string, DatedRow>();
@@ -263,11 +266,20 @@ export function datedTotals(rows: DatedRow[]) {
     withdrawals: c.withdrawals,
     paidIn: c.paidIn,
     tookOut: c.tookOut,
-    // A COLUMN OF DASHES HAS NO TOTAL, and an EMPTY one has none either.
-    // `capitalTotals` reduces to 0 over no rows, which is right for a table of
-    // capital rows and wrong here: a table with no capital half at all would
-    // print ₹0 net under a column that is refusing to state one.
-    net: cap.length === 0 ? null : c.net,
+    /**
+     * NET INVESTED IS GONE, AND IT WAS NOT A LAYOUT CHOICE.
+     *
+     * It was purchases less redemptions, and a redemption is principal PLUS
+     * appreciation — so the footer subtracted every rupee of gain that had come
+     * back from the money that went in, exactly as each row did (3P read
+     * −₹2.56 Cr). Redemption and appreciation are their own columns now, each
+     * totalled over the rows that state one, and nothing adds or subtracts them
+     * from the purchase column.
+     */
+    redemption: cap.length === 0 ? null : c.redemption,
+    redemptionOf: c.redemptionOf,
+    committed: c.committed,
+    committedOf: c.committedOf,
     /**
      * VALUE IS THIS MODULE'S OWN, and deliberately not `capitalTotals.value`.
      * That one is struck over the capital groups; this is struck over the
@@ -279,22 +291,18 @@ export function datedTotals(rows: DatedRow[]) {
     value: sumOrNull(rows.map((r) => r.value)),
     valueOf: rows.filter((r) => r.value !== null).length,
     /**
-     * ...AND GAIN IS SUMMED THE SAME WAY, over the rows that PUBLISH one.
-     *
-     * `CapitalGroup.gain` is value less NET INVESTED, published only where the
-     * contribution history provably reaches inception — so it is absent on a
-     * row whose denominator is partial, exactly as `returnPct` beside it is.
-     * Over the rows that carry one it is an ordinary rupee total, which is why
-     * this column gets one where Return cannot: a gain is an AMOUNT and a
-     * return is a RATE on a per-row denominator.
-     *
-     * IT WAS LEFT BLANK IN THE FIRST CUT — a summable figure with no total and
-     * no reason — and the footer check could not see it, because that check
-     * counted the columns which NAME a reason and stopped at four. There were
-     * exactly four.
+     * APPRECIATION AND ITS TWO PARTS, over the capital rows that PUBLISH each —
+     * `capitalTotals`' own `sumOrNull`, so a withheld figure is skipped rather
+     * than blended in as zero and the count says how many rows stand behind it.
+     * They are AMOUNTS, which is why they get a total where a return — a rate
+     * on each row's own denominator — cannot.
      */
-    gain: sumOrNull(rows.map((r) => r.capital?.gain ?? null)),
-    gainOf: rows.filter((r) => r.capital?.gain != null).length,
+    appreciation: c.appreciation,
+    appreciationOf: c.appreciationOf,
+    realisedGain: c.realised,
+    realisedGainOf: c.realisedOf,
+    unrealisedGain: c.unrealised,
+    unrealisedGainOf: c.unrealisedOf,
     trades: t.trades,
     buys: t.buys,
     sells: t.sells,

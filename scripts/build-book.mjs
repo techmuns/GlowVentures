@@ -896,6 +896,39 @@ const CAPITAL_KINDS = new Set(["contribution", "withdrawal"]);
 /** Half of the last decimal a unit count is printed to — `dropDepositoryDuplicates`'s rule. */
 const UNIT_TIE = 0.0005;
 
+/**
+ * ── DOES THIS ACCOUNT'S CAPITAL RECORD START AT INCEPTION? ──────────────────
+ *
+ *   *"how can net invested be negative?"* — 3P, whose record could not carry a
+ *   return at all, because nothing said its list of purchases was the whole of
+ *   them.
+ *
+ * A fund statement that prints a RUNNING UNIT BALANCE beside each allotment
+ * answers the question itself: where a class's EARLIEST row allots exactly the
+ * units its printed balance then stands at, the balance was ZERO before it — the
+ * record begins where the holding does. 3P prints it on every row of every class
+ * (its reader refuses the table unless the running total reproduces every printed
+ * balance), and so does Sanshi.
+ *
+ * STRUCK PER CLASS AND REQUIRED OF EVERY ONE. A single class that begins
+ * mid-stream would leave some purchase unrecorded, so every contribution row must
+ * carry a security, units and a printed balance, and every class's first row must
+ * start from zero within half the last printed decimal. Anything less is not
+ * evidence and the account is not listed — the caller then falls back to the
+ * other two tests, and failing those, withholds the return with the reason.
+ */
+function capitalRecordFromInception(cashFlows) {
+  const rows = (cashFlows ?? []).filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
+  const ins = rows.filter((c) => c.kind === "contribution");
+  if (!ins.length) return false;
+  if (!ins.every((c) => c.securityKey && isNum(c.units) && isNum(c.balance))) return false;
+  const first = new Map();
+  for (const c of [...rows].filter((r) => r.securityKey && isNum(r.units) && isNum(r.balance)).sort((a, b) => a.date.localeCompare(b.date))) {
+    if (!first.has(c.securityKey)) first.set(c.securityKey, c);
+  }
+  return [...first.values()].every((c) => c.kind === "contribution" && Math.abs(Math.abs(c.balance) - Math.abs(c.units)) <= UNIT_TIE);
+}
+
 function capitalMovesFrom(cashFlows, accountId, notes, label) {
   const all = cashFlows ?? [];
   const rows = all.filter((c) => c.date && CAPITAL_KINDS.has(c.kind));
@@ -1335,6 +1368,8 @@ function build(docs) {
   const accountCashFlows = {};
   /** The family's OWN dated investments — see `capitalMovesFrom`. */
   const capitalMoves = [];
+  /** Accounts whose own printed running balance proves the record starts at inception. */
+  const capitalFromInception = new Set();
   const accountReturns = {};
   const corporateActionsAll = [];
   const realisedByClass = new Map();
@@ -1815,7 +1850,7 @@ function build(docs) {
          * where a fallback rule hides, and a fallback rule is a second
          * definition of the split.
          */
-        marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security }, acctForPositions),
+        marketSide: marketSideOf({ assetClass: h.assetClass, security: h.security, securityKey: h.securityKey }, acctForPositions),
         quantity: h.quantity,
         avgCost: h.unitCost,
         currentPrice: h.marketPrice,
@@ -2066,6 +2101,7 @@ function build(docs) {
     // contribution or a withdrawal, wherever they appear, and is the only place
     // in this book that answers "what did WE buy, and when".
     capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+    if (capitalRecordFromInception(dated.cashFlows)) capitalFromInception.add(accountId);
 
     const register = group.find((d) => d.reportType === "capital-register" && (d.cashFlows ?? []).length);
     const bank = group.find((d) => d.reportType === "bank-book" && (d.cashFlows ?? []).length);
@@ -2289,6 +2325,17 @@ function build(docs) {
         + "its contribution agreement settles each one.");
     }
     /**
+     * THE FAMILY'S DECLARED CATEGORIES, NAMED — on every run, including at
+     * zero. A category no statement printed places a holding exactly as
+     * firmly as one that did, so the report says which placements rest on
+     * the family's word (`DECLARED_AIF_CATEGORY`) rather than on a document.
+     */
+    const declared = dedupedForTotal.filter((p) => p.assetClass === "AIF"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).source === "family");
+    notes.push(`market side: ${declared.length} holding(s) take a SEBI category the FAMILY declared, because no `
+      + `statement for them prints one${declared.length ? ` — ${[...new Set(declared.map((p) => p.security))].sort().join("; ")}` : ""}. `
+      + "A declaration only ever fills a category the statements leave empty and never overrides one they print.");
+    /**
      * THE PE OVERRIDE, NAMED. A fund whose own name says private equity or
      * venture is private whatever category it prints, and Transition Venture's
      * `Category I/II` — the issuer declining to commit — would otherwise be
@@ -2297,8 +2344,8 @@ function build(docs) {
      */
     const pe = dedupedForTotal.filter((p) => p.assetClass === "AIF"
       && readsAsPrivateEquity(p.security, accounts.find((a) => a.accountId === p.accountId))
-      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category I"
-      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId)).category !== "Category II");
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).category !== "Category I"
+      && readAifCategory(p.security, accounts.find((a) => a.accountId === p.accountId), p.securityKey).category !== "Category II");
     if (pe.length) {
       notes.push(`market side: ${pe.length} holding(s) are private because the paperwork names their own `
         + `discipline, not because of a category — ${[...new Set(pe.map((p) => p.security))].sort().join("; ")}. `
@@ -2360,6 +2407,7 @@ function build(docs) {
   return {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     capitalMoves, positionTranches, shareMovements,
+    capitalFromInception: [...capitalFromInception].sort(),
     navHistory, accountNavHistory, navCoverage, attribution,
     excludedAccounts,
     // Sorted deterministically: classified first (biggest book first), the
@@ -2543,6 +2591,15 @@ function emit(book) {
   L.push(`export const BOOK_CAPITAL_MOVES: CapitalMove[] = ${j(book.capitalMoves)};`);
   L.push("");
   L.push("/**");
+  L.push(" * The accounts whose capital record provably STARTS AT INCEPTION: every class's");
+  L.push(" * earliest allotment brings the statement's own printed unit balance from zero");
+  L.push(" * to exactly the units it allots. A return on the family's money needs the");
+  L.push(" * whole record, and this is one of the three things that establishes it — see");
+  L.push(" * `capitalRecordFromInception` in build-book and `contributionsAreComplete`.");
+  L.push(" */");
+  L.push(`export const BOOK_CAPITAL_FROM_INCEPTION: string[] = ${j(book.capitalFromInception)};`);
+  L.push("");
+  L.push("/**");
   L.push(" * Per-position contribution history, keyed `<accountId>|<securityKey>`, and");
   L.push(" * ONLY where the allotted units account for every unit held. Everything else");
   L.push(" * is absent by that gate rather than shown partially — see `positionTranchesFrom`.");
@@ -2722,6 +2779,10 @@ function report(book) {
   const cinTot = sum(cin.map((m) => m.amount ?? 0));
   const coutTot = sum(cout.map((m) => m.amount ?? 0));
   const cAccts = new Set(book.capitalMoves.map((m) => m.accountId));
+  L.push(`**${book.capitalFromInception.length}** of those account(s) print a running unit balance that starts `
+    + `from zero on every class's first allotment, which proves their record reaches inception: `
+    + `${book.capitalFromInception.join(", ") || "none"}.`);
+  L.push("");
   L.push(`**${cin.length}** dated contribution(s) totalling **${r2(cinTot).toLocaleString("en-IN")}** and `
     + `**${cout.length}** withdrawal(s) totalling **${r2(coutTot).toLocaleString("en-IN")}**, across `
     + `**${cAccts.size} of ${book.accounts.length}** account(s).`);

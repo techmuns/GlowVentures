@@ -19,8 +19,8 @@ export const BOOK_AS_OF = "2026-08-29";
 export const BOOK_SUMMARY: BookSummary = {
   "asOf": "2026-08-29",
   "listedValue": 6558187115.41,
-  "privateValue": 378807535.15,
-  "unplacedValue": 166884580.6,
+  "privateValue": 545593373.75,
+  "unplacedValue": 98742,
   "totalValue": 7103879231.16,
   "positionsCount": 371,
   "entitiesCount": 6,
@@ -5692,7 +5692,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": null,
+    "marketSide": "private",
     "quantity": 99995,
     "avgCost": null,
     "currentPrice": 1112.931,
@@ -6887,7 +6887,7 @@ export const BOOK_POSITIONS: Position[] = [
     "sector": "Unclassified",
     "providerSector": null,
     "assetClass": "AIF",
-    "marketSide": null,
+    "marketSide": "private",
     "quantity": 485837,
     "avgCost": null,
     "currentPrice": null,
@@ -18741,6 +18741,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "security": null,
     "securityKey": null
   }
+];
+
+/**
+ * The accounts whose capital record provably STARTS AT INCEPTION: every class's
+ * earliest allotment brings the statement's own printed unit balance from zero
+ * to exactly the units it allots. A return on the family's money needs the
+ * whole record, and this is one of the three things that establishes it — see
+ * `capitalRecordFromInception` in build-book and `contributionsAreComplete`.
+ */
+export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
+  "3p-investment-managers-3000048"
 ];
 
 /**

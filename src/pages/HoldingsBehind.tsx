@@ -393,6 +393,19 @@ export function HoldingsBehind() {
     );
     return unvaluedAifFolios(portfolio.accounts, withPositions, drawn);
   }, [aifSectioned, portfolio]);
+  /**
+   * WHAT THE COLLAPSED SUMMARY STATES: the sections the folios sit in, in the
+   * page's own reading order, and what they have drawn between them. The total
+   * is `sumOrNull`'s — a folio whose statement prints no drawn figure is
+   * skipped rather than blended in as zero, and a set where none prints one has
+   * no total at all.
+   */
+  const unvaluedBySection = useMemo(() => {
+    const by = new Map<string, number>();
+    for (const f of unvalued) by.set(f.section, (by.get(f.section) ?? 0) + 1);
+    return [...by.entries()].sort((a, b) => aifSectionOrd(a[0]) - aifSectionOrd(b[0]));
+  }, [unvalued]);
+  const unvaluedDrawn = useMemo(() => sumOrNull(unvalued.map((f) => f.drawn)), [unvalued]);
 
   /** What one row of this table IS, so the header and the footer can say it. */
   const anyMandate = groups.some((g) => g.kind === "mandate");
@@ -752,8 +765,19 @@ export function HoldingsBehind() {
                                     none send a reader to different documents. */}
                                 {aifSectioned && (() => {
                                   const read = aifCategoryOf(accIdx, g.rows[0]);
+                                  // A CATEGORY THE FAMILY DECLARED SAYS SO. It
+                                  // files the fund exactly as firmly as a printed
+                                  // one, and a section heading looks equally
+                                  // authoritative either way — so the difference
+                                  // is on the row, in words, not in a colour.
                                   return read.category
-                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}> · {read.category}</span>
+                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}
+                                        data-aif-row-cat-source={read.source ?? undefined}
+                                        title={read.source === "family"
+                                          ? "No statement for this fund prints a SEBI category. The family declared it " + read.category + ", and this book files it there on their word."
+                                          : undefined}>
+                                        {" "}· {read.category}{read.source === "family" ? " · declared by the family" : ""}
+                                      </span>
                                     : <span className="text-[10.5px] text-slate-500" data-aif-row-cat="" title={aifCategoryWhy(read)}> · category not stated</span>;
                                 })()}
                                 {/*
@@ -882,9 +906,34 @@ export function HoldingsBehind() {
                 folios are listed with the capital they have DRAWN, and the note
                 says plainly that drawn capital is what was paid rather than
                 what the stake is worth and is in no total on this page. */}
+            {/*
+              ── A DROPDOWN, AT THE FAMILY'S REQUEST, AND THE SUMMARY STILL SAYS
+              WHAT IS INSIDE IT ──────────────────────────────────────────────
+
+                *"the 'Held, and valued by no statement' section needs to be
+                 hidden as a drop down list."*
+
+              Collapsed by default, so the table is what the page is. What it
+              must not become is a fold a reader has no reason to open: the
+              summary line carries the COUNT, the categories and the drawn total
+              — the Category I folios above all, because this is the only place
+              on the page a Category I AIF appears — and the list is one click
+              away. A `<details>` rather than state, so it needs no handler and
+              every row stays in the DOM for the structural checks.
+            */}
             {unvalued.length > 0 && (
-              <div className="border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
-                <div className="label-xs text-slate-300">Held, and valued by no statement</div>
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
+                <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden">
+                  <span className="inline-flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" />
+                    <span className="label-xs text-slate-300">Held, and valued by no statement</span>
+                  </span>
+                  <span className="ml-2" data-aif-unvalued-summary>
+                    {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} with no NAV
+                    {" · "}{unvaluedBySection.map(([k, n]) => `${k} ×${n}`).join(", ")}
+                    {unvaluedDrawn != null && <> · <span className="mono">{money(unvaluedDrawn)}</span> drawn, in no total</>}
+                  </span>
+                </summary>
                 <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">
                   {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} report units and the capital drawn
                   against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is
@@ -906,7 +955,7 @@ export function HoldingsBehind() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </details>
             )}
             <p className="px-5 pb-5 pt-3 text-[11.5px] leading-relaxed text-slate-500">
               {full(mv)} across {fmtNum(rows.length)} {rows.length === 1 ? "holding" : "holdings"} and {fmtNum(names.size)}{" "}

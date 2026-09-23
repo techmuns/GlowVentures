@@ -40,6 +40,7 @@ const SUITES = [
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
+  ["capital record", "src/lib/__tests__/capitalRecord.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],

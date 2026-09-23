@@ -197,10 +197,11 @@ cash holding's genuinely-zero return both match, and both are correct.
   `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund or
   liquid ETF is cash whatever wrapper its statement typed it as. See Stage 10av.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
-  by both surfaces: the Transactions card's Capital in and out table and the
-  per-contribution breakdown a holdings row opens into. See Stage 10ag, and
-  Stage 10bg for `capitalSectionRollup`, which files each account's record under
-  the same section its holdings sit in.
+  by both surfaces: the Transactions card's Purchase / Redemption / appreciation
+  columns and the per-contribution breakdown a holdings row opens into. See Stage
+  10ag, and Stage 10bv for `capitalRollup`'s appreciation split, `capitalReturn`
+  (the return methodology struck on the family's own money) and
+  `capitalMovesWithCalls` (a drawdown fund's dated calls as purchases).
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
@@ -217,7 +218,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   fund two ways. Category III trades LISTED securities; Categories I and II are
   private capital; a fund whose own name says private equity or venture is
   private whichever it prints; and a fund printing none is on NEITHER side and is
-  named. See Stage 10bp.
+  named. See Stage 10bp. `DECLARED_AIF_CATEGORY` is the one tier that is not
+  read off a statement — the FAMILY's own declaration, keyed on `securityKey`,
+  cited, and only ever filling a category both printed fields leave blank; it
+  can never overrule a statement. See Stage 10bv.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -16093,6 +16097,216 @@ the head SHAs are compared.
   Polycab-as-one-table and Sector Composition's two halves — and this section
   references no letter at all, so none moved. Checked one at a time rather than
   swept.
+
+### Stage 10bv — PURCHASE, REDEMPTION AND APPRECIATION, AND NO RETURN IS STRUCK ON A NET
+
+*"Open PR and do not merge until it tell you to."* · *"Motilal Oswal Wealth
+Delphi Equity Fund and Neo Infra Income Opportunities Fund I — Class A5 classify
+both of these AIFs as Category 2 funds."* · *"the 'Held, and valued by no
+statement' section needs to be hidden as a drop down list."* · *"how can net
+invested be negative? … find the root cause … Make it purchase redemption and
+appreciation and appreciation you can show as realised and unrealised gains
+separately … Net invested amount is a wrong figure. We do not need to show
+that."* · *"the returns that we are showing in transactions are also wrong."* ·
+*"Just like in the holdings page, we have return methodology selector add the
+same to the transactions page as well. With the same functioning."*
+
+#### 1. The root cause: a redemption is principal AND appreciation
+
+`Net invested` was **Capital in − Capital out**. A redemption is not principal:
+it is what the redeemed units COST plus what they GAINED. So subtracting it from
+what was paid in subtracts the appreciation along with the principal, and the
+"principal" that remains is wrong by exactly the realised gain. On 3P that is the
+whole account — ₹28.50 Cr paid in, every unit redeemed for ₹31.06 Cr — so its net
+read **−₹2.56 Cr**: negative principal, which is the family's own question.
+Nothing was misread; the column was the arithmetic of two real figures that must
+never be subtracted.
+
+**EVERY RETURN ON THE CARD WAS STRUCK ON THAT NET**, which is the second
+complaint and the same defect: a return divided by a figure with the realised
+gain already taken OUT of it is too large on every partly redeemed account and
+meaningless on a fully redeemed one. Accounts with no redemption (the Sanshi
+folios, both Transition trusts) happened to be right, because there the net IS
+what was paid — which is exactly why the error survived on a table most of whose
+rows looked fine.
+
+So the capital block is now what the family asked for, and one identity ties it:
+
+```
+Committed · Purchase · Redemption · Realised · Unrealised · Value today
+
+Purchase − Redemption + Realised + Unrealised = Value today
+```
+
+`Net invested` and `Gain` are gone. **Appreciation is a RESULT and appears only
+as its two parts**; nothing is ever divided by a figure that contains it.
+
+#### 2. The split, and the one case it refuses
+
+`capitalRollup` in `src/lib/tranches.ts`. Appreciation = value + redemption −
+purchase, over the account's WHOLE record, and its split has four honest cases:
+
+| Case | Realised | Unrealised | Example |
+| --- | --- | --- | --- |
+| nothing came back | a COMPUTED ₹0 | all of it — value less the purchase, stamp duty included | Sanshi, Transition |
+| nothing is held | all of it | a COMPUTED ₹0 | **3P: +₹2.56 Cr realised** |
+| a PMS mandate | the rest: booked gains, dividends, interest, less fees | value less the manager's own cost of everything held — the Holdings page's unrealised P&L for the same mandate | SVAN ×2, Green Lantern |
+| a fund that paid back and is still held | **refused** | **refused** | Neo Infra |
+
+**NEO INFRA'S SPLIT IS WITHHELD, NOT GUESSED.** Its statement prints ₹49.5 L of
+payouts as ONE undated total and still carries the units at their full original
+cost, so how much of the payout returned capital and how much was gain is exactly
+the thing it does not say. The appreciation (+₹1.04 Cr) stands; its split names
+why it is not published.
+
+**WHERE APPRECIATION ITSELF IS WITHHELD, UNREALISED CAN STILL STAND** — a
+drawdown fund that prints no distribution line (Carnelian Amritkaal, Delphi, both
+Founders Fund folios, Baring) cannot say what came back, so appreciation cannot
+be struck; but its units are held at a cost its statement prints, so value less
+that cost is measurable and is shown, saying what it is struck against.
+
+**AN ACCOUNT NO STATEMENT VALUES IS `—`, NEVER ₹0.** `valueOfAccount` returned
+₹0 for an account with no positions, so India SME's and Sky Capital's folios
+would have read as worth nothing — a measured zero standing in for an absent
+measurement. It is `null` now and names the account's own `noPositionsReason`.
+
+#### 3. A drawdown fund's dated calls are purchases
+
+Thirteen accounts publish no capital RECORD but their commitment prints every
+call, dated — `capitalMovesWithCalls` turns those into purchases (`fromCall`) for
+exactly the accounts with no record, so nothing is counted twice. The table went
+from 11 funded rows to **24**, and `Committed` is filled from the same commitment
+(₹97.73 Cr across 15). An undated payout (Neo Infra's) is shown under Redemption,
+dateless, and puts the account on the Sells side of the filter while being on no
+dated count.
+
+**AND A CALL LIST MUST TIE TO THE STATEMENT BEFORE IT IS A RECORD.**
+`contributionsAreComplete` accepts a call-derived record only where the calls sum
+to the statement's own called (or drawn, or paid) figure within a rupee, and 3P's
+own capital record is accepted as complete only because its running UNIT balance
+starts at the first contribution — `BOOK_CAPITAL_FROM_INCEPTION`, generated by
+`build-book` from the rows' own balances rather than asserted.
+
+**AND THE SEVEN THAT HOLD NOTHING ARE AIFs ON THE CATEGORY AXIS.** India SME and
+Sky Capital carry no valued position, so `forAccount` had no holding to read a
+section off and filed all seven under "Not classified". Their ACCOUNT's
+engagement is the statement's own wording (`Category I Alternative Investment Fund
+– Angel Fund`), never defaulted, so on the Category axis it answers; on the
+family's two axes it does not — a basket is the family's review, keyed on a
+product this book holds no row for — and they stay named as not stated.
+
+#### 4. The return methodology, on the family's own money
+
+`capitalReturn(g, measure)` — the Holdings page's measures, struck on a capital
+account rather than on a holding, and reading the SAME `?ret=` param through the
+same picker, which now renders on both views. One column per ticked measure,
+through the same `withReturnCols` placeholder, with the same header coverage
+note:
+
+- **HPR** — appreciation ÷ purchase. Never ÷ a net.
+- **CAGR** — one purchase compounded over the years since; **refused on a
+  staggered account** and saying XIRR is its measure, because a single-start rate
+  treats every rupee as invested on the first date.
+- **XIRR** — every purchase negative on its date, every dated redemption positive
+  on its, the value today on the account's own report date. **Refused where a
+  payout is undated**: solved without it, it is the fund's return as if it had
+  paid nothing back.
+- **YTD** only where the first purchase is inside the current year; **CY**
+  absent everywhere — no statement values an account at a past year-end.
+- **AUTO** is the family's rule: under a year HPR, a year or more CAGR for one
+  purchase and XIRR for several. **Nothing is annualised over less than a
+  year** — Stage 10g(ii)'s guard, where a 132-day return once read +99.0%.
+
+3P reads **XIRR +6.49%** on the default view and **HPR +8.98%** on the Absolute
+column — ₹2.56 Cr on ₹28.50 Cr paid, not on a negative net.
+
+**AND THE FOOTER CARRIES NO RETURN, FOR THE SAME REASON THE HOLDINGS FOOTER
+DOESN'T** — a sum of accounts has no single purchase date or flow set of its own.
+Every return column's footer cell names that.
+
+#### 5. Three defects found on the way, none of them asked about
+
+- **THE DATE FILTER DID NOT WITHHOLD WHAT THE SIDE FILTER DID.** A reader who
+  narrowed to one year got that year's purchases set against the account's WHOLE
+  value today — a gain including every earlier year's money as profit. Both
+  filters now withhold appreciation and every return, naming the filter.
+- **THE MANDATE PAGE'S CONTRIBUTION TABLE printed each row's NET under a footer
+  summing the GROSS** — two figures under one heading that did not add. It prints
+  the gross Purchase and Redemption now, the net in the hover, and a summary line
+  with the identity, HPR and XIRR.
+- **AND IT CLAIMED A RETURN "NEEDS A VALUATION ON EACH DATE"**, which is false of
+  a money-weighted rate — it needs the dated flows and one terminal value. That
+  sentence is gone.
+
+#### 6. Delphi and Neo Infra are Category II — declared, and fill-only
+
+Neither prints a SEBI category on a field `readAifCategory` reads, so both sat on
+NEITHER side of the book (Stage 10bp). `DECLARED_AIF_CATEGORY` in
+`shared/aifCategory.mjs` is the family's declaration, keyed on `securityKey`,
+dated, and cited — **Neo Infra's is corroborated by its own statement**, which
+prints its SEBI registration `IN/AIF2/22-23/1042` (AIF2 is Category II) and whose
+units the family's demat files as CAT II AIF; **Delphi's is the family's word
+alone**, and says so (`corroboration: null`). It is a FILL-ONLY tier: it applies
+only where both printed fields are silent, so a statement that prints a category
+always wins, and the AIF drill-down's chip says "declared by the family" on the
+two rows it placed.
+
+```
+private      ₹37.88 Cr → ₹54.56 Cr   (+ Delphi ₹11.13 Cr, Neo Infra ₹5.55 Cr)
+not placed   ₹16.69 Cr → ₹98,742     (Blue Ashva alone)
+listed       ₹655.82 Cr               unchanged
+```
+
+`build-book` prints every declared holding on every run, and
+`aifCategory.test.ts` asserts the declaration can never overrule a printed
+category.
+
+#### 7. "Held, and valued by no statement" is a fold
+
+A `<details>` on the AIF drill-down, collapsed, whose summary still carries the
+count, the sections and the drawn capital — so a reader who never opens it still
+learns Category I exists and what was paid into it. `check:pages` asserts the
+fold AND that the summary names what it hides.
+
+#### The verification
+
+`src/lib/__tests__/capitalRecord.test.ts` — the identity on every row that states
+all four, HPR's denominator, 3P against an independent bisection XIRR, Sanshi,
+the PMS unrealised equal to the holdings P&L, Neo's withheld split and refused
+XIRR, calls against a record, an unvalued account never ₹0, the filters, the
+sub-year guard. `check:pages` gains `monitor-txn-returns` (every measure ticked)
+and re-homes the transactions invariants onto cell HANDLES
+(`data-mine-cell`, `data-realised-gain`, `data-unrealised-gain`,
+`data-return-cell`) and header LABELS — the positional reads (`tr.cells[2]`,
+`foot[9]`, `tie(2) && tie(7)`) all moved when Committed arrived in front, and
+**two of them went on passing while reading the wrong column**: `tie(2)` became
+the commitment and `tie(7)` the value, both of which tie to their own rows.
+
+**SEVEN BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK** — HPR struck on the net,
+XIRR dropping the redemptions, CAGR allowed on a staggered account, sub-year
+annualised, `Net invested` back as a header, the category fallback removed, and
+realised/unrealised swapped on the fully redeemed account. **The first came back
+CLEAN**, which is the finding: the HPR check filtered on `data-return-tag`, and
+the Absolute column carries NO tag because its header already names it — so the
+check could only see the auto column's sub-year rows, whose redemption is nil,
+where a return on the net and one on the purchase are the same number. It picks
+the column out by measure as well now, and the two return claims are spread into
+both routes, because on the default view the account they were written for shows
+its XIRR rather than its HPR.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
+`check:pages` clean on every transactions, mandate and AIF drill-down route, the new `monitor-txn-returns` included. `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control before and after the
+merge.
+
+#### Merged with main, and the letter moved twice before it was written
+
+This section was going to be `10bt`; **#70 and #73 landed on main while it was
+being verified and took `10bt` and `10bu`**, so it is `10bv` — compared against
+main's tip at the moment of merging rather than against the base the branch was
+cut from. The merge was textually clean, and the `ctx` literal was checked by
+hand anyway: **83 keys, the exact union of both sides, none lost and none
+invented.** Neither side changed a generated book file.
 
 ### Stage 10k — News & Announcements: REMOVED
 
