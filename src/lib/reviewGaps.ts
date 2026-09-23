@@ -17,6 +17,7 @@
 // sentences, and its generator throws rather than emit a number.
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
+import { depositoryCashHoldings } from "@/lib/fundNavs";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
@@ -51,7 +52,43 @@ export { REVIEW_AS_OF };
  */
 const flat = (k: string) => k.replace(/-/g, "");
 const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+
+/**
+ * ── …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S OWN BALANCE ──────────
+ *
+ * Stage 10ce values the cash-equivalent funds a depository reports on an
+ * account that sent a transaction statement and no holding statement — at
+ * units × AMFI's published NAV, on the LIVE basis only — so `BOOK_POSITIONS`
+ * above never carries them, and the name tier cannot see them either: the
+ * depository prints the AMC's name in front of the scheme's. Two of them are
+ * lines the family's review prints, and left claimable, a search that empties
+ * a narrowed page would say "no statement reports it … no value or quantity"
+ * beside the Cash row that values it.
+ *
+ * JOINED BY ISIN THROUGH A HAND-CHECKED TABLE, never by a name rule, and each
+ * entry says what ties the review's line to the depository's balance. Keyed on
+ * what the live book ACTUALLY carries rather than on the table alone, so
+ * switching that valuation off (`VALUE_DEPOSITORY_CASH_UNITS`) brings the
+ * sentence back — which is then true again.
+ */
+export const REVIEW_LINE_ISINS: ReadonlyMap<string, string> = new Map([
+  // The review's transaction sheet records Ajay buying 1,63,08,407.445 units at
+  // ₹11.0367 on 20 May 2026, and the depository credits exactly those units on
+  // his demat the next day — the unit witness `fundNavs.test.ts` asserts.
+  ["Motilal Oswal Arbitrage Fund Direct (G)", "INF247L01ED1"],
+  // The review's Cash tab and its transaction sheet both print Ajay's 2,282.178
+  // units: the depository's closing balance on the same demat, to the third
+  // decimal.
+  ["HDFC Liquid Fund -Direct(G)", "INF179KB1HP9"],
+]);
+const DEPOSITORY_VALUED = new Set(
+  depositoryCashHoldings().map((p) => p.isin?.trim().toUpperCase()).filter((x): x is string => !!x));
+/** Whether the live book values this review line from a depository's balance. */
+export const valuedFromDepository = (g: ReviewGap) =>
+  DEPOSITORY_VALUED.has(REVIEW_LINE_ISINS.get(g.name) ?? "");
+
 const CLAIMABLE = REVIEW_GAPS.filter((g) => {
+  if (valuedFromDepository(g)) return false;
   const k = securityKeyOf(g.name);
   if (!k) return false;
   return !BOOK_KEYS.some((bk) =>

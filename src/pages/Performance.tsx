@@ -449,6 +449,14 @@ export function Performance() {
                         measurement — see Account.noPositionsReason. */}
                     {x.account.noPositionsReason
                       ? <AbsentCell reason={x.account.noPositionsReason} />
+                      : x.account.partialValuation
+                      /* A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST.
+                         The depository's cash-equivalent units are valued on the
+                         live basis; the account's other holdings are not, and a
+                         bare total here would read as the whole account. */
+                      ? <span data-partial-valuation title={x.account.partialValuation}>
+                          {money(x.mv)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80">partial</span>
+                        </span>
                       : money(x.mv)}
                   </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>

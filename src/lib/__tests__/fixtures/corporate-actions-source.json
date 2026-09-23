@@ -1,0 +1,246 @@
+{
+  "version": 1,
+  "capturedAt": "2026-09-23T09:48:37.390Z",
+  "source": "NSE + Screener corporate actions",
+  "requestedFrom": "2023-09-24",
+  "requestedTo": "2027-09-23",
+  "rowCount": 4,
+  "companyCount": 2621,
+  "typeCounts": {
+    "bonus": 386,
+    "buyback": 95,
+    "capital-reduction": 3,
+    "demerger": 37,
+    "distribution": 229,
+    "dividend": 6767,
+    "interest": 206,
+    "redemption": 2,
+    "rights": 376,
+    "split": 388
+  },
+  "skipped": 0,
+  "excludedMeetings": 882,
+  "duplicates": 0,
+  "crossSourceDuplicates": 5243,
+  "sourceCounts": {
+    "nse": 5837,
+    "screener": 7895,
+    "enriched": 5243,
+    "screenerOnly": 2652
+  },
+  "sources": {
+    "nse": {
+      "state": "live",
+      "capturedAt": "2026-09-23T09:48:37.390Z",
+      "rowCount": 5837
+    },
+    "screener": {
+      "state": "live",
+      "capturedAt": "2026-09-23T09:48:32.921Z",
+      "checkedAt": "2026-09-23T09:48:32.921Z",
+      "fullHistory": true,
+      "rowCount": 7895,
+      "catalogues": {
+        "bonus": {
+          "publishedTotal": 1751,
+          "lastPage": 71,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "right": {
+          "publishedTotal": 861,
+          "lastPage": 35,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "split": {
+          "publishedTotal": 1853,
+          "lastPage": 75,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "buyback": {
+          "publishedTotal": 700,
+          "lastPage": 28,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "dividend:2023": {
+          "publishedTotal": 1961,
+          "lastPage": 79,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "dividend:2024": {
+          "publishedTotal": 2129,
+          "lastPage": 86,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "dividend:2025": {
+          "publishedTotal": 2232,
+          "lastPage": 90,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "dividend:2026": {
+          "publishedTotal": 2078,
+          "lastPage": 84,
+          "pagesFetched": 1,
+          "full": false
+        },
+        "dividend:2027": {
+          "publishedTotal": 0,
+          "lastPage": 1,
+          "pagesFetched": 1,
+          "full": false
+        }
+      }
+    }
+  },
+  "rows": [
+    {
+      "ticker": "V2RETAIL",
+      "company": "V2 Retail Limited",
+      "isin": "INE945H01013",
+      "series": "EQ",
+      "purpose": "Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share",
+      "actionType": "split",
+      "faceValue": "1",
+      "exDate": "2026-03-25",
+      "recordDate": "2026-03-26",
+      "bookClosureStart": null,
+      "bookClosureEnd": null,
+      "source": "NSE + Screener",
+      "sourceUrl": "https://www.nseindia.com/companies-listing/corporate-filings-actions?symbol=V2RETAIL&tabIndex=equity",
+      "id": "INE945H01013|EQ|2026-03-25|2026-03-26|Face Value Split (Sub-Division) - From Rs 10/- Per Share To Re 1/- Per Share",
+      "sources": [
+        "NSE",
+        "Screener"
+      ],
+      "screenerUrl": "https://www.screener.in/actions/split/",
+      "screenerCompanyUrl": "https://www.screener.in/company/V2RETAIL/",
+      "screener": {
+        "companyKey": "V2RETAIL",
+        "ticker": "V2RETAIL",
+        "company": "V2 Retail",
+        "companyUrl": "https://www.screener.in/company/V2RETAIL/",
+        "actionType": "split",
+        "exDate": "2026-03-25",
+        "catalogueKey": "split",
+        "sourceUrl": "https://www.screener.in/actions/split/",
+        "observedAt": "2026-09-23T05:55:19.537Z",
+        "oldFaceValue": "10.00",
+        "newFaceValue": "1.00",
+        "id": "V2RETAIL|split|2026-03-25|"
+      }
+    },
+    {
+      "ticker": "CUB",
+      "company": "City Union Bank Limited",
+      "isin": "INE491A01021",
+      "series": "EQ",
+      "purpose": "Bonus 1:3",
+      "actionType": "bonus",
+      "faceValue": "1",
+      "exDate": "2026-06-12",
+      "recordDate": "2026-06-12",
+      "bookClosureStart": null,
+      "bookClosureEnd": null,
+      "source": "NSE + Screener",
+      "sourceUrl": "https://www.nseindia.com/companies-listing/corporate-filings-actions?symbol=CUB&tabIndex=equity",
+      "id": "INE491A01021|EQ|2026-06-12|2026-06-12|Bonus 1:3",
+      "sources": [
+        "NSE",
+        "Screener"
+      ],
+      "screenerUrl": "https://www.screener.in/actions/bonus/",
+      "screenerCompanyUrl": "https://www.screener.in/company/CUB/",
+      "screener": {
+        "companyKey": "CUB",
+        "ticker": "CUB",
+        "company": "City Union Bank",
+        "companyUrl": "https://www.screener.in/company/CUB/",
+        "actionType": "bonus",
+        "exDate": "2026-06-12",
+        "catalogueKey": "bonus",
+        "sourceUrl": "https://www.screener.in/actions/bonus/",
+        "observedAt": "2026-09-23T09:48:32.921Z",
+        "ratio": "1:3",
+        "id": "CUB|bonus|2026-06-12|"
+      }
+    },
+    {
+      "ticker": "JAMNAAUTO",
+      "company": "Jamna Auto Industries Limited",
+      "isin": "INE039C01016",
+      "series": "EQ",
+      "purpose": "Dividend - Rs 1.50 Per Share",
+      "actionType": "dividend",
+      "faceValue": "1",
+      "exDate": "2026-09-22",
+      "recordDate": "2026-09-22",
+      "bookClosureStart": null,
+      "bookClosureEnd": null,
+      "source": "NSE + Screener",
+      "sourceUrl": "https://www.nseindia.com/companies-listing/corporate-filings-actions?symbol=JAMNAAUTO&tabIndex=equity",
+      "id": "INE039C01016|EQ|2026-09-22|2026-09-22|Dividend - Rs 1.50 Per Share",
+      "sources": [
+        "NSE",
+        "Screener"
+      ],
+      "screenerUrl": "https://www.screener.in/actions/dividend/",
+      "screenerCompanyUrl": "https://www.screener.in/company/JAMNAAUTO/consolidated/",
+      "screener": {
+        "companyKey": "JAMNAAUTO",
+        "ticker": "JAMNAAUTO",
+        "company": "Jamna Auto Inds.",
+        "companyUrl": "https://www.screener.in/company/JAMNAAUTO/consolidated/",
+        "actionType": "dividend",
+        "exDate": "2026-09-22",
+        "catalogueKey": "dividend:2026",
+        "sourceUrl": "https://www.screener.in/actions/dividend/",
+        "observedAt": "2026-09-23T05:55:19.537Z",
+        "dividendType": "Final",
+        "percent": "150.00",
+        "id": "JAMNAAUTO|dividend|2026-09-22|final"
+      }
+    },
+    {
+      "id": "screener:544755|dividend|2026-09-23|final",
+      "ticker": "RECLTD",
+      "company": "Recode Studios",
+      "isin": null,
+      "series": null,
+      "purpose": "Dividend · Final · 2.50%",
+      "purposeSource": "Derived from Screener fields",
+      "actionType": "dividend",
+      "faceValue": null,
+      "exDate": "2026-09-23",
+      "recordDate": null,
+      "bookClosureStart": null,
+      "bookClosureEnd": null,
+      "source": "Screener",
+      "sources": [
+        "Screener"
+      ],
+      "sourceUrl": "https://www.screener.in/actions/dividend/",
+      "screenerUrl": "https://www.screener.in/actions/dividend/",
+      "screenerCompanyUrl": "https://www.screener.in/company/544755/",
+      "screener": {
+        "companyKey": "544755",
+        "ticker": "RECLTD",
+        "company": "Recode Studios",
+        "companyUrl": "https://www.screener.in/company/544755/",
+        "actionType": "dividend",
+        "exDate": "2026-09-23",
+        "catalogueKey": "dividend:2026",
+        "sourceUrl": "https://www.screener.in/actions/dividend/",
+        "observedAt": "2026-09-23T09:48:32.921Z",
+        "dividendType": "Final",
+        "percent": "2.50",
+        "id": "544755|dividend|2026-09-23|final"
+      }
+    }
+  ]
+}
