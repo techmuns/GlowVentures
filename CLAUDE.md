@@ -256,6 +256,12 @@ cash holding's genuinely-zero return both match, and both are correct.
   `src/data/schemeNames.json` (`npm run build-scheme-names`), with the plan
   phrase cut to one word. Display only, on `stripDepositoryTail`'s terms:
   `securityKeyOf` is not routed through it. See Stage 10az.
+- `src/lib/securityLabel.ts` — ONE NAME PER `securityKey`, ON EVERY SCREEN. One
+  of the spellings the book's own statements printed, chosen by a stated rule
+  (a spelling the statement cased beats one this app had to title-case, then the
+  longest, then the larger holding) and applied at `PortfolioContext`, so a
+  company two statements spell two ways is one option and one row. Display
+  only. See Stage 10bv.
 - `shared/polycabSources.mjs` — WHAT THE EXCHANGE SAYS ABOUT THE RING-FENCED
   HOLDING, read once and imported by BOTH the daily builder
   (`scripts/build-polycab-live.mjs`) and the live edge function
@@ -16094,6 +16100,211 @@ the head SHAs are compared.
   references no letter at all, so none moved. Checked one at a time rather than
   swept.
 
+### Stage 10bv — ONE COMPANY, ONE KEY, ONE NAME — AND THE WINDOW THAT HELD AJAY'S KAYNES
+
+*"Open PR and do not merge until i tell you to. According to the client, Kaynes
+Technologies Limited is also a holding in Vikas Khemani Fund. And also a holding
+of the family entity Ajay's account. Also, when I am searching Kaynes in the
+search bar, it is coming up in small cap and large cap both. It should be a
+single name only. Make sure that the name of all the entities is written
+correctly neither in all full cap nor in all small cap. Otherwise 2 separate
+names of the same company does not make sense."* · *"Find the root cause of the
+issue and fix it."*
+
+Three claims in one message, and each had a DIFFERENT root cause — which is the
+whole reason this section is organised by cause rather than by screen. Two of
+them turned out to be the same defect this file has recorded before in other
+shapes: a join struck on a NAME where an identifier was available.
+
+#### 1. Ajay's Kaynes was in the archive, on a key no page read
+
+**THE DEPOSITORY SAYS IT, DATE BY DATE.** Ajay's main demat (`…12539150`)
+issues a transaction statement and no holdings statement, and its Kaynes block
+reads: 16,300 shares on 1 April 2026; 16,300 delivered out on 10 April; 16,300
+credited back on 5 May; 1,313 delivered out on 12 May and 14,987 on 13 May —
+**nil from 13 May, and nil at the 31 July closing.** Ten dated rows — three
+deliveries out, one credit in, and six early-pay-in earmarks that move nothing and
+are counted in no column — every one walking the statement's own printed balance.
+
+**AND NOTHING SHOWED IT, BECAUSE THE WINDOW WAS KEYED ON A SPELLING.** The
+statement prints `KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES`, whose key is
+`kaynes-technology-india`; the book's Kaynes — Ankita's 4,875 shares, printed
+`KAYNES TECHNOLOGY-EQ` — is `kaynes-technology`. `shareMovementsFrom` joined a
+window to a position by (account, ISIN), and Ajay's account no longer holds any,
+so nothing joined and the window stood on a key no position carries: the one
+record in the archive of Ajay holding Kaynes this year reached no page. This is
+Stage 10ak's lesson one table over — a key is only an identity where it is the
+same function of the same name, and two statements spelling one company is
+exactly where it is not.
+
+**THE FIX IS THE IDENTIFIER, IN THE BUILDER.** A window whose ISIN is carried by
+exactly ONE company this book holds is filed under that company's key. Measured:
+**10 windows bridged, 0 ISINs ambiguous, 0 collisions, 0 overwrites** — and **4
+windows deliberately NOT bridged**, because they are a depository's copy of AIF
+units the fund's own statement already reports; keyed onto the fund they would
+stand beside the fund's record as a second account of the same units. The note
+prints every count on every run, zeros included.
+
+**THEN BOTH PAGES SAY IT.** The company page's quantity table marks the row
+*Sold out in this window* (or *Held, and not valued here* where an account that
+publishes no holdings statement still closes above nil), and the Portfolio
+Monitor's row expansion names the account, its opening and its nil closing, with
+a link to the company page — `DematElsewhere`, which renders only where a row's
+own venues do not already carry that account.
+
+**AND THE FAMILY'S OWN REVIEW DISAGREES, WHICH IS STATED RATHER THAN RESOLVED.**
+The consolidated review dated 30 June 2026 carries 21,175 Kaynes shares under
+"Ajay Jaisinghani / Ankita Jaisinghani", and its *Transactions since inception*
+sheet closes Ajay at **16,300 on 30 June** — seven weeks after the depository
+shows his account at nil, and with none of the April and May movements on it.
+That is almost certainly where the client's belief comes from. The statement is
+the custodian's own record and the newer document, so the book follows it. If
+the family believe Ajay holds Kaynes today, those shares sit in an account whose
+statement is not in `source/`, and that statement is the ask.
+
+#### 2. "Vikas Khemani Fund" is an AIF, and an AIF discloses no portfolio
+
+The fund is the **Carnelian Bharat Amritkaal Fund** — Vikas Khemani runs
+Carnelian — held by the family as an AIF folio. Its statement is a statement of
+account: units, a NAV, contributions, and not one line of what it owns; and
+Carnelian publishes factsheets for its PMS strategies and none for this fund. So
+a Kaynes holding inside it is real to the family and **unmeasurable here**, which
+is the same finding Stage 10aj records for the whole AIF block.
+
+What changed is that the page stopped making a reader guess. The look-through
+card said *"your N AIF folios … file no portfolio disclosure"* — a count, which
+answers nobody who wants to know whether THEIR fund was looked into. It names
+every AIF fund now, once per fund rather than once per unit class, under
+`data-fund-exposure-aifs`, and the sweep holds that list to the book's own set.
+
+#### 3. The search list compared NAMES, and names are what disagreed
+
+*"Kaynes Technology"* and *"KAYNES TECHNOLOGY INDIA LIMITED"* were one company on
+one row — the look-through had joined HDFC Balanced Advantage's line to the book's
+Kaynes on the ISIN. The PICK-LIST built its options from the rows' names instead,
+so the fund's spelling of a company the book holds was offered as a second
+company; and ticking only that one drew a derived row of ₹79,181 and none of the
+family's ₹1.64 Cr in the same shares. **Which of the two a reader clicked changed
+the answer.** A company the book holds is offered once now, under the book's own
+label, and the look-through adds only what the book does not hold — by KEY.
+
+That exposed three more layers of the same failure, each fixed where it lives:
+
+- **ONE COMPANY, TWO KEYS.** No label can merge two rows. `SBI - EQ` (27,750
+  shares, ₹2.90 Cr, a Motilal demat) and `State Bank of India` (four PMS rows,
+  ₹1.56 Cr); `THE KARUR VYS-EQ` and `Karur Vysya Bank Ltd.`; LKP's clipped
+  `Crompton Greaves Consumer Elec` and V.E.C's full name. Each pair is
+  corroborated by an identifier nobody here controls — the depository row's ISIN
+  resolves the same NSE symbol the other spelling's name does — and none is a
+  name the strip could reach, because each is an ABBREVIATION or a clipping
+  rather than furniture. `KEY_ALIASES` in `shared/securityKey.mjs` joins exactly
+  those three, and `build-book` now prints how many NSE symbols stand under two
+  keys (0) on every run. The Helios fund-unit twins are deliberately NOT aliased:
+  they are the extractor join `docs/BOOK-REPORT.md` names, not a spelling.
+- **ONE KEY, TWO LABELS.** Seven keys are printed two ways by two statements
+  (`ICICI Bank` / `ICICI Bank Ltd.`, `SBI` / `State Bank of India`, `The Karur
+  Vys` / `Karur Vysya Bank Ltd.`…), and each position carried its own.
+  `src/lib/securityLabel.ts` picks ONE of the printed spellings per key by a
+  stated rule — a spelling the statement CASED beats one this app title-cased,
+  then the longest, then the larger holding — and `PortfolioContext` applies it
+  once, so the ledger, the tranche panels and every table read the same name.
+  **No name is supplied that no statement printed**: a fund's fuller spelling of
+  a company the book holds is somebody else's document and is not borrowed.
+- **ONE NAME, THE WRONG CASE.** `THE KARUR VYS-EQ` printed as *"the Karur Vys"* —
+  a name opening in lower case, which is exactly what was asked about; `State Bank
+  Of India` and `State Bank of India` read as two companies; four managers print
+  their strategy names in capitals (`CARNELIAN BESPOKE PORTFOLIO`); 142 filing
+  lines arrive all in capitals and a handful carry a filer's lowercase slip
+  (`Himachal pradesh`, `SBI funds Management ltd.`). The title-caser now opens a
+  name in capitals, lowers only connectives inside it, keeps a measured list of
+  acronyms that are names (`SG`, `LLP`, `SVAN`, `SDL`, …) and restores `360 ONE`
+  as a brand; `displayFiledName` capitalises a filer's slip and leaves a brand
+  like `eClerx` alone.
+
+#### 4. A bond is not a company, and neither is its maturity date
+
+With the list keyed properly, it still offered 738 options, and a measured
+normaliser found the rest of the same complaint in them: `Karur Vysya Bank Ltd.
+(17/11/2026) **#` beside `Karur Vysya Bank Ltd.`, `8.31% Aditya Birla Capital
+Ltd. (11/07/2034) **` beside Aditya Birla Capital, *"The Jammu & Kashmir Bank
+Limited"* beside the book's J&K Bank, LIC twice, Vedanta twice, and the
+Government of India as twenty-odd rows — `Government of India (24/07/2037)`,
+`7.18% GOI MAT 140833`, `91 DAY T-BILL 05.11.26`. Three causes, each fixed at the
+join in `loadStockExposure` and none in the display:
+
+- **A ROW WAS NAMED BY ONE OF ITS INSTRUMENTS.** `issuerNameOf` removes what
+  names the instrument — coupon, bracketed or trailing maturity, `(ZCB)`, the
+  `MAT`/`ISD` date codes, a dangling dash, the filer's footnote marks — and only
+  ever removes. A bracket that is not a date stays: *Tata Teleservices
+  (Maharastra)* is a different company from *Tata Teleservices*. The instrument
+  lines under a row keep their full names, because there the coupon and the
+  maturity ARE the name; only the footnote marks go, since the store carries the
+  line and never the filer's legend (804 of the store's 2,362 lines carry one).
+- **THE ISSUER TIER COULD NOT SEE THE BOOK'S OWN COMPANY.** It took the book's
+  key only where a FILING carried an ISIN the book carries. No fund here files
+  Karur Vysya's share, City Union's or Indian Bank's — only their certificates of
+  deposit — so their paper stood as companies of their own. The book's own
+  company ISINs now seed the issuer (characters 1-7, company prefixes only, and
+  only where the prefix names ONE book key: a warrant and a share of one company
+  are two holdings).
+- **A MANDATE'S COMPANIES HAD NO ISIN AT ALL.** A PMS statement prints none, so
+  J&K Bank, LIC, Great Eastern Shipping and Vedanta joined to no fund's line.
+  `bookIsinBridge` reads the LISTING's ISIN off two committed maps this app
+  already trusts with money — `nseSymbols.json` (what the quote feed prices by)
+  and `UPSTOX_INSTRUMENTS` (`NSE_EQ|<ISIN>`, which the feed must echo back): **120
+  companies gain an ISIN, 0 refused.** The statement's own ISIN wins where it
+  printed one, and a listing ISIN another book key claims is refused, never
+  reassigned. Shared by the hook and the suite, so the two cannot build the index
+  differently.
+- **GOVERNMENT PAPER CARRIES NO ISIN — 177 lines, not one.** `issuerKeyOf` reads
+  the issuer off the words that DEFINE it: `GOI`, `GOI STRIPS` and every treasury
+  bill are the Government of India; an `SDL` is its state's, and so is the one
+  loan printed with a government date code and no `SDL` (six lines, Madhya
+  Pradesh and Maharashtra), which another AMC files as `State Government of …`.
+  **`Government Securities` is deliberately left alone**: it names no government,
+  and a heading assigning one would be a classification nobody made.
+
+**TWO KEYS NOW SPAN TWO ISSUER CODES, AND BOTH ARE REAL MERGERS.** Aditya Birla
+Finance's NCDs kept `INE860H` when it amalgamated into Aditya Birla Capital
+(`INE674K`); Tata Capital Financial Services' kept `INE306N` inside Tata Capital
+(`INE976I`). Every filing names both as the surviving company, and the name tier
+follows the filer — the suite asserts every multi-code key is supported by its
+filings' own issuer names.
+
+**The result, measured on the rendered list:** 738 → **670** options on the
+security axis and 209 on the default one, **0 duplicate companies**, nothing all
+in capitals, nothing opening in lower case, no coupon, maturity or footnote mark;
+the Government of India is one row of 54 instruments across 7 funds.
+
+#### The rekey defect this change found, which no figure on screen would have
+
+`KEY_ALIASES` changes a key, so the archive had to be re-keyed without the PDF
+passwords (`npm run rekey:archive`). **Its first run walked top-level arrays
+only.** LKP's opening-position rows sit NESTED inside `positionsAsOf`, so
+Crompton's holding moved to the new key while its opening row stayed on the old
+one — and the next `build-book` joined nothing, **dropping Crompton's ₹15,47,017.80
+cost basis and its −27.78% return** with every total still reconciling. Caught by
+comparing the rebuilt book field by field. The walker now visits every object
+carrying a `securityKey` at any depth, and its gate refuses a half-moved archive,
+which is exactly the state the first run produced. 9 rows across 6 documents
+moved; `BOOK_SUMMARY` did not move by a rupee.
+
+**`nseSymbols.json` WAS DELIBERATELY NOT REGENERATED.** A fresh run would drop
+HEG's symbol — NSE has renamed the listing — which is the decision Stage 10br
+already recorded. The three pre-alias keys therefore remain in that map as
+entries no position carries; they resolve nothing and harm nothing, and the next
+deliberate `build-symbols` retires them.
+
+#### The checks, and what the bug pass found
+
+`securityNames.test.ts` (new), `stockExposure.test.ts` and `shareMovements.test.ts`
+carry the arithmetic, anchored on the generated book, the committed store and the
+two symbol maps; `check:pages` walks four new routes — both search lists read
+whole, and the Kaynes case on the company page and on the Monitor row, derived by
+ISIN so a regression to the orphan key FAILS rather than abstaining. The sweep's
+own re-expression of the look-through join (`SECURITY_AXIS_BOOK`) was rewritten
+tier for tier rather than imported.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -17016,6 +17227,11 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   an unchanged function. It refuses outright if any name carries more than one
   stored key, because then the key is not a function of the name and this pass
   cannot reproduce it. Follow it with `build-symbols` and `build-book`.
+  **It walks EVERY object carrying a `securityKey`, at any depth** — the first
+  version read top-level arrays only, and LKP's nested `positionsAsOf` opening
+  rows kept the old key while their holding moved, which silently cost Crompton
+  its ₹15,47,017.80 cost basis and its return on the next `build-book` (see
+  Stage 10bv). The gate refuses a half-moved archive for exactly that reason.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
   **It takes no options** — a stray argument is IGNORED, not rejected, so
   `extract.mjs --help` runs a full extraction. Without `GLOW_PDF_PASSWORDS` that
@@ -17068,7 +17284,12 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the **share movements** (`shareMovements.test.ts`, Stage 10ba — the four
   printed figures must add across on every window, and the exclusion of a pledge
   is asserted as LOAD-BEARING: counting one must BREAK the identity that holds
-  without it),
+  without it; since Stage 10bv also that a window whose ISIN names one company
+  the book holds is keyed on that company, found by the ISIN and never by key),
+  the **security names** (`securityNames.test.ts`, Stage 10bv — no NSE symbol
+  under two keys, one label per key and always one a statement printed, nothing
+  shouted in capitals or left in lower case, and an instrument's coupon, maturity
+  and footnote marks kept off its issuer's name),
   the **family's own dated investments** (`tranches.test.ts`, Stage 10ag: the
   tranches must tie to the position's own quantity, cost basis and market value
   on three separate paths; the derived entry NAV is checked against the one the

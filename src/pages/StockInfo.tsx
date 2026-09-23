@@ -863,7 +863,8 @@ export function StockInfo() {
       {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
           which prints all four. Above the tape deliberately: the family asked
           for the quantity account first and the dated rows second. */}
-      <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts} />
+      <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts}
+        held={new Set(rows.map((p) => p.accountId))} />
 
       {/* Transaction history */}
       <Card className="mt-5" title="Transaction history" subtitle='Every dated buy & sell from the ledger — the "Transaction Info" drill-down' pad={false}

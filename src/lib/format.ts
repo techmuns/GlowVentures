@@ -123,22 +123,95 @@ const NAME_ACRONYMS = new Set([
   // about what the statement printed.
   "PG", "DSP", "ABSL", "GHCL", "PVR", "BLS", "EIH", "MPS", "GMM", "KSB", "ZF",
   "EMA", "DCW", "EFPL", "HEG", "IFB", "SBFC", "VIP", "SGS", "AIF", "DP", "NFT",
+  /**
+   * *"Make sure that the name of all the entities is written correctly neither
+   * in all full cap nor in all small cap."* Measured rather than guessed: every
+   * all-caps name this app renders — the book's own statements, the four
+   * mandate strategy names, and the fund filings behind the look-through — was
+   * put through this and every run it would title-case was read. These are the
+   * ones that are names in their own right and must keep their capitals:
+   *
+   *   SG      `SG Mart Limited` was printing as "Sg Mart"
+   *   LLP     both strategy names that carry it — "Green Lantern Capital Llp"
+   *   GLC     Green Lantern Capital's own strategy prefix
+   *   SVAN    the manager's name, printed in capitals on its own report
+   *   GOI     every government security a fund files — "7.18% Goi Mat 140833"
+   *   DBS     `DBS Bank India Limited`, filed in capitals by one AMC
+   *   NABARD  filed in capitals and with no properly-cased sibling to borrow
+   *   MF      the depository's `HDFC MF-…` scheme prefix
+   *   HSBC · JNK · MIM · SRF · WAM — company names five all-caps filing lines
+   *           carry (`CANARA HSBC LIFE…`, `JNK INDIA`, `INDO-MIM`, `SRF LTD.`,
+   *           `360 ONE WAM`) with no properly-cased sibling in the store
+   *
+   * The list is still a list, and what it cannot know is written down rather
+   * than hidden: a new all-caps acronym arriving in a filing title-cases like a
+   * word until it is listed here. That is why `lookthrough.ts` first borrows a
+   * name another filing printed in its own case (61 of the 142 all-caps lines in
+   * today's store have one) and only falls back to this where none exists.
+   */
+  "SG", "LLP", "GLC", "SVAN", "GOI", "DBS", "NABARD", "MF",
+  "HSBC", "JNK", "MIM", "SRF", "WAM",
+  /**
+   * SDL — a State Development Loan, which one AMC files in capitals
+   * (`TAMIL NADU SDL - Mat 290636^`). Title-cased it read "Tamil Nadu Sdl", a
+   * word nobody writes; it is the instrument's own abbreviation.
+   */
+  "SDL",
 ]);
+/**
+ * A BRAND THAT IS NOT AN ACRONYM AND STILL KEEPS ITS CAPITALS. "ONE" is a word
+ * everywhere except in `360 ONE`, the wealth house this book holds two
+ * engagements with and one fund from; listing ONE as an acronym would shout it
+ * in every other name. So the brand is restored after title-casing, and only
+ * where it is the brand.
+ */
+const BRANDS: [RegExp, string][] = [[/\b360 One Wam\b/gi, "360 ONE WAM"], [/\b360 One\b/g, "360 ONE"]];
+/** The brands above, applied to a name however it arrived. */
+const withBrands = (name: string): string => BRANDS.reduce((acc, [re, to]) => acc.replace(re, to), name);
 const NAME_SUFFIX: Record<string, string> = {
   LIMITED: "Limited", LTD: "Ltd", "LTD.": "Ltd.", PVT: "Pvt", "PVT.": "Pvt.",
   PRIVATE: "Private", CO: "Co", "CO.": "Co.", CORP: "Corp", INC: "Inc",
 };
 const NAME_LOWER_WORDS = new Set(["AND", "OF", "THE", "OR"]);
+/** The same four, as a source prints them when it has cased the name itself. */
+const MIXED_LOWER_WORDS = new Set(["Of", "And", "The", "Or"]);
+/**
+ * The words a name legitimately carries in lower case mid-name — the four above
+ * and the prepositions a debt line uses (`Additional Tier I Bond under Basel
+ * III`). Every OTHER all-lowercase word in a name its filer otherwise cased is a
+ * typo in the filing, measured on the store: `Himachal pradesh`, `SBI funds
+ * Management ltd.`, `Reliance Retail ventures Ltd.`, `Aditya Birla Capital
+ * ltd.`. Those are what a reader sees as "written in small cap", and each is
+ * one word the filer forgot to capitalise.
+ */
+const FILED_LOWER_WORDS = new Set(["of", "and", "the", "or", "for", "in", "on", "at", "to", "by", "with", "under"]);
+/**
+ * A ROMAN NUMERAL IS NOT A WORD, and fund names are full of them — see below.
+ * The STRICT pattern, so it matches numerals and not any string of those
+ * letters.
+ */
+const ROMAN = /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/;
 
-function normNameToken(tok: string): string {
-  // Already intentionally cased (has a lowercase letter) or carries a digit → leave.
-  if (/[a-z]/.test(tok) || /\d/.test(tok)) return tok;
+/**
+ * One token of a name, cased for display. `first` is whether it opens the name,
+ * because a connective is a word everywhere except at the start: `THE KARUR
+ * VYS-EQ` was printing as "the Karur Vys" — a name beginning in lower case,
+ * which is exactly the "all small cap" the family asked never to see.
+ */
+function normNameToken(tok: string, first: boolean): string {
+  // A token the SOURCE cased (it carries a lowercase letter) is the source's own
+  // spelling and is left — with one exception: a connective. "State Bank Of
+  // India" and "State Bank of India" are one company printed by two statements,
+  // and a reader shown both in one list reads them as two.
+  if (/[a-z]/.test(tok)) return !first && MIXED_LOWER_WORDS.has(tok) ? tok.toLowerCase() : tok;
+  // A digit means a code, a class or a series (`1D`, `SER20-C6`) — leave it.
+  if (/\d/.test(tok)) return tok;
   const alpha = tok.replace(/[^A-Za-z]/g, "");
   if (!alpha) return tok; // "&", "-", …
   if (tok in NAME_SUFFIX) return NAME_SUFFIX[tok];
   const up = alpha.toUpperCase();
   if (up in NAME_SUFFIX) return NAME_SUFFIX[up];
-  if (NAME_LOWER_WORDS.has(up)) return up.toLowerCase();
+  if (NAME_LOWER_WORDS.has(up)) return first ? up[0] + up.slice(1).toLowerCase() : up.toLowerCase();
   if (alpha.length === 1) return tok; // single initial: J, K, L
   if (NAME_ACRONYMS.has(up)) return tok; // keep acronyms upper-case
   /**
@@ -157,9 +230,20 @@ function normNameToken(tok: string): string {
    * named MIX keeping the casing its statement printed, which is the safe
    * direction to fail in.
    */
-  if (alpha.length > 1 && /^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/.test(up)) return tok;
-  // Title-case each alphabetic run (handles HI-TECH → Hi-Tech, (INDIA) → (India)).
-  return tok.replace(/[A-Za-z]+/g, (w) => w[0] + w.slice(1).toLowerCase());
+  if (alpha.length > 1 && ROMAN.test(up)) return tok;
+  /**
+   * Title-case each alphabetic run (HI-TECH → Hi-Tech, (INDIA) → (India)) —
+   * AND APPLY THE SAME TWO RULES PER RUN, because the whole-token tests above
+   * cannot see inside a hyphen. Sanshi's statement prints `(Open Ended AIF
+   * CAT-III)` and the token `CAT-III` is not a numeral, so the fall-through
+   * title-cased every run and the fund read "Cat-Iii" on every screen that
+   * named it; an acronym joined to a word (`AIF-CAT`) went the same way.
+   */
+  return tok.replace(/[A-Za-z]+/g, (w) => {
+    const u = w.toUpperCase();
+    if (w.length > 1 && (ROMAN.test(u) || NAME_ACRONYMS.has(u))) return w;
+    return w[0] + w.slice(1).toLowerCase();
+  });
 }
 
 /**
@@ -173,7 +257,68 @@ function normNameToken(tok: string): string {
 export function displaySecurity(name: string): string {
   if (!name) return name;
   const clean = stripDepositoryTail(name);
-  return clean.split(/(\s+)/).map((p) => (/^\s+$/.test(p) ? p : normNameToken(p))).join("");
+  let first = true;
+  const cased = clean.split(/(\s+)/).map((p) => {
+    if (/^\s+$/.test(p) || p === "") return p;
+    const out = normNameToken(p, first);
+    first = false;
+    return out;
+  }).join("");
+  return withBrands(cased);
+}
+
+/**
+ * A name somebody ELSE printed — an AMC's portfolio disclosure — cased for
+ * display without second-guessing the filer.
+ *
+ * 94% of the lines in the look-through store are already printed in their
+ * filer's own case (`KPIT Technologies Ltd.`, `LIC Housing Finance Ltd.`), and
+ * running those through the title-caser would turn every capitalised acronym it
+ * does not list into a word: "Kpit Technologies". So a name that carries a
+ * lowercase letter keeps its filer's casing and only has its connectives
+ * lowered — the one thing two filers disagree on. A name printed ENTIRELY in
+ * capitals carries no casing information at all, and only that one is
+ * title-cased; `lookthrough.ts` borrows another filing's spelling of the same
+ * identifier first, and this is the fallback when there is none.
+ */
+export function displayFiledName(name: string): string {
+  if (!name) return name;
+  const bare = stripFilingMarks(name);
+  if (!/[a-z]/.test(bare)) return displaySecurity(bare);
+  let first = true;
+  // A filer that cased the name still writes a brand its own way — one AMC
+  // prints `360 One Wam Ltd.` — and the brand is restored here as it is in
+  // `displaySecurity`, so the house reads one way on every screen.
+  return withBrands(bare.split(/(\s+)/).map((p) => {
+    if (/^\s+$/.test(p) || p === "") return p;
+    let out = !first && MIXED_LOWER_WORDS.has(p) ? p.toLowerCase() : p;
+    // A WORD THE FILER LEFT IN LOWER CASE, in a name it otherwise cased. Only a
+    // token with NO capital at all: `eClerx` and `iShares` are brands and keep
+    // their spelling; `pradesh` and `ltd.` are a filer's slip and do not.
+    const letters = out.replace(/[^A-Za-z]/g, "");
+    if (letters && letters === letters.toLowerCase() && !/\d/.test(out)
+      && (first || !FILED_LOWER_WORDS.has(letters))) {
+      out = out.replace(/[a-z]/, (c) => c.toUpperCase());
+    }
+    first = false;
+    return out;
+  }).join(""));
+}
+
+/**
+ * ── A FILER'S FOOTNOTE MARK IS NOT PART OF A NAME ───────────────────────────
+ *
+ * An AMC's monthly disclosure appends `**`, `#`, `^`, `$`, `@` or `~` to a line
+ * to point at a legend at the foot of ITS OWN filing — "** thinly traded",
+ * "# certificate of deposit", "^ awaiting listing". The store carries the line
+ * and not the legend, so on this dashboard the mark points at nothing: it made
+ * `Karur Vysya Bank Ltd. (17/11/2026) **#` read as a different name from
+ * `Karur Vysya Bank Ltd.`, which is the "two names for one company" the family
+ * asked never to see. Display only, and it only ever removes — anchored at the
+ * END, where every one of the store's 804 marked lines carries it.
+ */
+export function stripFilingMarks(name: string): string {
+  return String(name ?? "").replace(/(?:\s*[*#^$@~]+)+\s*$/, "").trim();
 }
 
 // Compact fiscal-year axis label: "FY2021-22" → "FY21-22", "Q1 FY26-27" → "Q1FY26-27".

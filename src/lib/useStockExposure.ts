@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { currentHoldings, isCompanyShare, isFundVehicle } from "@/lib/analytics";
-import { loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { bookIsinBridge, loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
 import type { Position } from "@/lib/types";
 
 /**
@@ -59,16 +59,15 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
    * depository's `SBI - EQ` to an AMC's `State Bank of India`. Without it those
    * two stand as separate rows and the family's own question — how much of this
    * company do I hold altogether — gets two answers.
+   *
+   * AND THE LISTING'S ISIN WHERE THE STATEMENT PRINTED NONE — a company held
+   * only through a PMS mandate carries no ISIN on any statement, so it joined to
+   * nothing and stood twice. See `bookIsinBridge`, which is shared with the
+   * suite so the two cannot build the index differently.
    */
-  const isinToBookKey = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const p of consolidated) {
-      if (!isCompanyShare(p) || !p.isin) continue;
-      const k = p.isin.trim().toUpperCase();
-      if (k && !m.has(k)) m.set(k, p.securityKey);
-    }
-    return m;
-  }, [consolidated]);
+  const isinToBookKey = useMemo(() => bookIsinBridge(consolidated).index, [consolidated]);
+  const bookCompanyKeys = useMemo(
+    () => new Set(consolidated.filter(isCompanyShare).map((p) => p.securityKey)), [consolidated]);
 
   /**
    * THE RING-FENCE, CARRIED ONTO THE DERIVED SIDE.
@@ -89,8 +88,8 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
   useEffect(() => {
     if (!enabled) return;
     let live = true;
-    loadStockExposure(heldVehicles, isinToBookKey, ringFenced).then((s) => { if (live) setExposure(s); });
+    loadStockExposure(heldVehicles, isinToBookKey, ringFenced, bookCompanyKeys).then((s) => { if (live) setExposure(s); });
     return () => { live = false; };
-  }, [enabled, heldVehicles, isinToBookKey, ringFenced]);
+  }, [enabled, heldVehicles, isinToBookKey, ringFenced, bookCompanyKeys]);
   return exposure;
 }

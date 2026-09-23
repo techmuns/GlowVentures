@@ -43,6 +43,7 @@
 import type { CapitalMove, Position, PositionTranches } from "./types";
 import { holdingReturn, type HoldingReturn, type ReturnMode } from "./analytics";
 import { sortRows, type TxnSort } from "./txnSort";
+import { securityLabel } from "./securityLabel";
 
 export type TrancheRow = {
   move: CapitalMove;
@@ -326,7 +327,17 @@ export function capitalRollup(
       // every row on its oldest payment — a list ordered one way containing
       // lists ordered the other, which is the ordering complaint one level
       // down. `date` is the only field a movement has, and `sortRows` reads it.
-      moves: sortRows(ms.map((m) => ({ ...m })), sort, (m) => m.amount ?? null),
+      //
+      // AND EACH MOVEMENT NAMES ITS SECURITY THE WAY EVERY OTHER TABLE DOES. The
+      // record carries the spelling its statement printed — Sanshi's reads
+      // `(Open Ended AIF CAT-III)` — while the holdings table beside it was
+      // printing the same class through the title-caser, so one fund had two
+      // names on one page. A movement that names no security keeps its null:
+      // a name the record did not print is not supplied for it.
+      moves: sortRows(ms.map((m) => ({
+        ...m,
+        security: m.securityKey && m.security != null ? securityLabel(m.securityKey, m.security) : m.security,
+      })), sort, (m) => m.amount ?? null),
       contributions: ins.length,
       withdrawals: outs.length,
       paidIn, tookOut, net,

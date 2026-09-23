@@ -28,6 +28,7 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 // The book's own normalisation, so the checker keys a disclosed name exactly as
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
+import { UPSTOX_INSTRUMENTS } from "../shared/upstoxInstruments.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
@@ -395,11 +396,8 @@ const SECURITY_AXIS_BOOK = (() => {
 
     // ── The look-through, recomputed here rather than imported ──────────────
     // A check that calls the helper it is checking agrees with it by
-    // construction. So the join is written out again: ISIN to the BOOK's key
-    // where the book carries that ISIN, then a first-seen ISIN keyed on its own
-    // normalised name, then the name alone. One disclosed line per fund per
-    // company, which is what stops a scheme listing two share classes counting
-    // its company twice.
+    // construction. So the join is written out again, tier for tier, from the
+    // two committed maps and the store — never from `src/lib/lookthrough.ts`.
     const dir = new URL("../public/lookthrough/", import.meta.url);
     const idx = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
     const isinToBookKey = new Map();
@@ -407,6 +405,45 @@ const SECURITY_AXIS_BOOK = (() => {
       const i = (p.isin ?? "").trim().toUpperCase();
       if (i && !isinToBookKey.has(i)) isinToBookKey.set(i, p.securityKey);
     }
+    // THE LISTING'S ISIN, for a company whose statements print none — a PMS
+    // statement prints no ISIN, so a company held only through a mandate joined
+    // to no fund's line and stood twice. Read off the book key's NSE symbol and
+    // that symbol's instrument in the price source's own list, `NSE_EQ|<ISIN>`.
+    const nseSym = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    for (const k of new Set(stocks.map((p) => p.securityKey))) {
+      const inst = nseSym[k] ? UPSTOX_INSTRUMENTS[nseSym[k]] : null;
+      if (!inst || !String(inst.key).startsWith("NSE_EQ|")) continue;
+      const i = String(inst.key).slice(7).trim().toUpperCase();
+      if (/^IN[EF][A-Z0-9]{9}$/.test(i) && !isinToBookKey.has(i)) isinToBookKey.set(i, k);
+    }
+    const bookCompanyKeys = new Set(stocks.map((p) => p.securityKey));
+    // THE ISSUER, NOT THE INSTRUMENT. A debt line names its coupon, its
+    // maturity and the filer's footnote marks; the row is its issuer.
+    const marksOff = (x) => String(x ?? "").replace(/(?:\s*[*#^$@~]+)+\s*$/, "").trim();
+    const issuerName = (x) => {
+      const raw = marksOff(x);
+      const out = marksOff(raw
+        .replace(/^\s*\d+(?:\.\d+)?\s*%(?:\s*%)?\s*/, "")
+        .replace(/\(\s*(?:MD\s+)?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\s*\)/gi, " ")
+        .replace(/\(\s*ZCB\s*\)/gi, " ")
+        .replace(/\b(?:MAT|ISD)\s*\d{6}(?:\d{2})?\b/gi, " ")
+        .replace(/\s+\d{1,2}\.\d{1,2}\.\d{2,4}\s*$/, " "))
+        .replace(/\s+-\s*$/, "").replace(/\s{2,}/g, " ").trim();
+      return out || raw;
+    };
+    // GOVERNMENT PAPER carries no ISIN in this store, so its issuer is read off
+    // the words that DEFINE it: GOI, a treasury bill, a state's SDL.
+    const issuerKey = (x) => {
+      const bare = issuerName(x);
+      if (/^(?:GOI|GOI\s+STRIPS|Government\s+of\s+India)$/i.test(bare)
+        || /\b(?:T-?\s?BILLS?|TBILLS?|TREASURY\s+BILLS?)\b/i.test(bare)) return "government-of-india";
+      const sdl = bare.match(/^(.+?)\s+SDL$/i);
+      if (sdl) return `state-government-of-${securityKeyOf(sdl[1])}`;
+      if (/\bMAT\s*\d{6}/i.test(String(x ?? "")) && !/\b(?:Ltd|Limited|Bank|Corp|Corporation|Finance|Co)\b/i.test(bare)) {
+        return `state-government-of-${securityKeyOf(bare)}`;
+      }
+      return securityKeyOf(bare);
+    };
     // THE RING-FENCE APPLIES TO THE DERIVED SIDE. A scheme discloses the
     // promoter block's own company, and the fence is about a SECURITY wherever
     // it is reported — including inside somebody else's portfolio. Recomputed
@@ -414,6 +451,8 @@ const SECURITY_AXIS_BOOK = (() => {
     const fenced = bookArray(src, "BOOK_POLYCAB") ?? [];
     const fencedKeys = new Set(fenced.map((p) => p.securityKey));
     const fencedIsins = new Set(fenced.map((p) => (p.isin ?? "").trim().toUpperCase()).filter(Boolean));
+    const isFenced = (isin, name) => (!!isin && fencedIsins.has(isin))
+      || fencedKeys.has(securityKeyOf(name)) || fencedKeys.has(issuerKey(name));
     const vehicles = new Map();
     for (const p of ded) {
       if (!["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)) continue;
@@ -422,36 +461,65 @@ const SECURITY_AXIS_BOOK = (() => {
       vehicles.set(p.securityKey, e);
     }
     const derivedByKey = new Map();
-    const isinSeen = new Map();
-    // An ISIN-bearing filing settles the key for its normalised NAME, so a
-    // scheme that files the same company without one does not split it. Read
-    // first, as the page reads it — see `loadStockExposure`.
-    const nameToKey = new Map();
     const portfolios = new Map();
     for (const v of vehicles.values()) {
       const m = idx.schemes?.[v.key];
       if (!m) continue;
       try { portfolios.set(v.key, JSON.parse(readFileSync(new URL(`${m.schemecode}.json`, dir), "utf8"))); } catch { /* skipped below */ }
     }
-    // ONE KEY PER ISSUER, decided over every filing before a row is placed.
-    // An Indian ISIN carries its issuer in characters 1-7 whatever the next two
-    // say — `INE115A01026` is LIC Housing's share and `INE115A07QY1` one of its
-    // NCDs — so keying on the full ISIN gave one company as many rows as it has
-    // instruments. Written out again here rather than imported, on purpose.
+    // ONE KEY PER ISSUER (characters 1-7 of an ISIN), decided over every
+    // filing before a row is placed: the book's own ISIN on a line, then the
+    // book holding a share of the same company prefix, then the issuer name.
     const issuerOf = (i) => i.slice(0, 7).toUpperCase();
-    const issuerSeen = new Map();
+    const equitySeries = (i) => /^IN[EF][A-Z0-9]{5}01/.test(i);
+    const bookIssuer = new Map();
+    {
+      const cand = new Map();
+      for (const [i, k] of isinToBookKey) {
+        if (!i.startsWith("INE")) continue;
+        const m = cand.get(issuerOf(i)) ?? new Map();
+        m.set(k, (m.get(k) ?? false) || equitySeries(i));
+        cand.set(issuerOf(i), m);
+      }
+      for (const [pre, m] of cand) {
+        const ks = [...m.keys()];
+        const eqs = ks.filter((k) => m.get(k));
+        const pick = ks.length === 1 ? ks[0] : eqs.length === 1 ? eqs[0] : null;
+        if (pick) bookIssuer.set(pre, pick);
+      }
+    }
+    const byPrefix = new Map();
     for (const pf of portfolios.values()) {
       for (const h of pf.holdings ?? []) {
         const isin = (h.isin ?? "").trim().toUpperCase();
         if (!isin || !(h.pctAum > 0)) continue;
-        const nameKey = securityKeyOf(h.name);
-        if (!nameKey || fencedIsins.has(isin) || fencedKeys.has(nameKey)) continue;
-        const iss = issuerOf(isin);
-        const bookKey = isinToBookKey.get(isin);
-        if (bookKey) issuerSeen.set(iss, bookKey);
-        else if (!issuerSeen.has(iss)) issuerSeen.set(iss, nameKey);
-        if (!isinToBookKey.has(isin)) isinSeen.set(isin, issuerSeen.get(iss));
-        if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, issuerSeen.get(iss));
+        const k = issuerKey(h.name);
+        if (!k || isFenced(isin, h.name)) continue;
+        (byPrefix.get(issuerOf(isin)) ?? byPrefix.set(issuerOf(isin), []).get(issuerOf(isin))).push({ isin, name: h.name, k });
+      }
+    }
+    const prefixKey = new Map();
+    for (const [pre, lines] of byPrefix) {
+      lines.sort((a, b) => Number(equitySeries(b.isin)) - Number(equitySeries(a.isin))
+        || issuerName(a.name).length - issuerName(b.name).length || a.k.localeCompare(b.k));
+      const direct = lines.filter((l) => isinToBookKey.has(l.isin))
+        .sort((a, b) => Number(equitySeries(b.isin)) - Number(equitySeries(a.isin)))[0];
+      let k = direct ? isinToBookKey.get(direct.isin) : bookIssuer.get(pre);
+      if (!k) {
+        const inBook = [...new Set(lines.map((l) => l.k).filter((x) => bookCompanyKeys.has(x)))];
+        k = inBook.length === 1 ? inBook[0] : lines[0].k;
+      }
+      prefixKey.set(pre, k);
+    }
+    // An ISIN-bearing filing settles the key for its issuer NAME, so a scheme
+    // that files the same company without one does not split it; a contested
+    // name goes to the book's key.
+    const nameToKey = new Map();
+    for (const [pre, lines] of byPrefix) {
+      const k = prefixKey.get(pre);
+      for (const l of lines) {
+        const prev = nameToKey.get(l.k);
+        if (!prev || (!bookCompanyKeys.has(prev) && bookCompanyKeys.has(k))) nameToKey.set(l.k, k);
       }
     }
     let covered = 0, derived = 0, disclosedValue = 0, skippedValue = 0, aifCount = 0, aifValue = 0;
@@ -476,12 +544,9 @@ const SECURITY_AXIS_BOOK = (() => {
         const isin = (h.isin ?? "").trim().toUpperCase() || null;
         const nameKey = securityKeyOf(h.name);
         if (!nameKey && !isin) continue;
-        if ((isin && fencedIsins.has(isin)) || (nameKey && fencedKeys.has(nameKey))) continue;
-        let key;
-        if (isin) {
-          key = isinToBookKey.get(isin) ?? issuerSeen.get(issuerOf(isin)) ?? isinSeen.get(isin) ?? nameKey;
-          if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
-        } else key = nameToKey.get(nameKey) ?? nameKey;
+        if (isFenced(isin, h.name)) continue;
+        const ik = issuerKey(h.name);
+        const key = isin ? (isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? ik) : (nameToKey.get(ik) ?? ik);
         const dedupeOn = isin ?? `name:${nameKey}`;
         if (seenHere.has(dedupeOn)) continue;
         const value = (v.mv * h.pctAum) / 100;
@@ -490,14 +555,17 @@ const SECURITY_AXIS_BOOK = (() => {
         if (!(value > 0)) continue;
         seenHere.add(dedupeOn);
         derived += value;
-        const e = derivedByKey.get(key) ?? { key, name: h.name, value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map() };
-        // THE SHORTEST DISCLOSED NAME IS THE ISSUER'S. An AMC files the same
-        // company six ways once every instrument of it is read — `LIC Housing
-        // Finance Ltd. (09/09/2026) **` is one commercial paper's maturity and
-        // footnote markers, not a company. Re-derived here rather than taken
-        // from the page, and only so the walk can FIND the row; every figure
-        // asserted against it is still computed independently.
-        if (h.name.length < e.name.length) e.name = h.name;
+        const e = derivedByKey.get(key) ?? { key, name: issuerName(h.name), value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map(), lineNames: new Set() };
+        // EVERY issuer spelling the filings give this key — so a list that
+        // offers a company the book holds a second time, under whichever of
+        // them a page happened to pick, is caught whichever it picked.
+        e.lineNames.add(issuerName(h.name));
+        // THE ROW IS NAMED BY ITS ISSUER — re-derived here only so the walk can
+        // FIND it by typing; every figure asserted against it is computed
+        // independently. The spelling that states the row's own key wins.
+        const bare = issuerName(h.name);
+        if (securityKeyOf(bare) === key && securityKeyOf(e.name) !== key) e.name = bare;
+        else if ((securityKeyOf(bare) === key) === (securityKeyOf(e.name) === key) && bare.length < e.name.length) e.name = bare;
         e.value += value;
         if (!fundsHere.has(key)) { e.funds += 1; fundsHere.add(key); }
         e.instruments += 1;
@@ -626,6 +694,8 @@ const SECURITY_AXIS_BOOK = (() => {
       // sweep to disagree with the page about a figure they both derive.
       derivedByKey,
       measuredByKey: measuredKeys,
+      // Every name the book's own statements print for a company share.
+      bookRawNames: [...new Set(stocks.map((p) => p.security))],
       aifCount, aifValueCr: aifValue / 1e7,
       splitCount,
       spelled,
@@ -2260,6 +2330,95 @@ const QTY_BOOK = (() => {
 })();
 
 /**
+ * ── A COMPANY ONE ACCOUNT SOLD OUT OF WHILE ANOTHER STILL HOLDS IT ─────────
+ *
+ *   "Kaynes Technologies Limited is also a holding… of the family entity
+ *    Ajay's account."
+ *
+ * Ajay's demat carried the company from 16,300 shares to nil inside the
+ * statement's window. The window sat on a key no position carries, so it
+ * reached no page, and the only record in the archive of Ajay holding it this
+ * year was invisible.
+ *
+ * FOUND BY THE ISIN, NEVER BY THE WINDOW'S KEY. The defect WAS the key: a
+ * derivation keyed on it would lose the case in exactly the build that has the
+ * defect, and the two routes below would abstain over a page showing nothing.
+ * Matched on the identifier, the case is found whatever key the builder put the
+ * window under, and the pages are held to showing it on the BOOK's company. The
+ * largest opening balance wins, so the next drop picks its own.
+ */
+const SOLD_ELSEWHERE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const moves = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    if (!moves || !positions.length) return null;
+    const isinOf = (x) => (x?.isin ?? "").trim().toUpperCase();
+    let best = null;
+    for (const m of Object.values(moves)) {
+      const isin = isinOf(m);
+      if (!isin || !(m.opening > 0) || m.closing !== 0) continue;
+      if (positions.some((p) => p.accountId === m.accountId && isinOf(p) === isin)) continue;
+      const owners = positions.filter((p) => p.assetClass === "Equity" && isinOf(p) === isin);
+      if (!owners.length) continue;
+      if (!best || m.opening > best.opening) {
+        best = { key: owners[0].securityKey, accountId: m.accountId, opening: m.opening, windowKey: m.securityKey,
+          heldAccounts: [...new Set(owners.map((p) => p.accountId))] };
+      }
+    }
+    return best;
+  } catch { return null; }
+})();
+
+/**
+ * ── EVERY AIF FUND THE FAMILY HOLDS, BY FUND ───────────────────────────────
+ *
+ * The client named a company inside "Vikas Khemani's fund" — Carnelian Bharat
+ * Amritkaal, an AIF — and an AIF discloses no portfolio this book can join, so
+ * no figure for it can be struck. What the page CAN do is name it: the
+ * look-through card lists every AIF fund it cannot see into. Re-derived here
+ * off the current holdings, clubbed to the fund by the class rule
+ * `FUND_CLASS_BOOK` already re-expresses, and compared as a SET of keys so a
+ * list that drops the fund the client asked about fails by name.
+ */
+const AIF_FUND_KEYS = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const RE = /^(.*?)[\s,\-–—]*(?:sub[-\s]?)?class\s+([a-z]{1,2}\d{0,2}|\d{1,2})\s*$/i;
+    const keys = new Set();
+    for (const p of positions) {
+      if (p.assetClass !== "AIF") continue;
+      if (p.quantity === 0 && p.currentPrice != null) continue;
+      const base = RE.exec(String(p.security))?.[1] ?? p.security;
+      keys.add(securityKeyOf(base));
+    }
+    return keys.size ? keys : null;
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT "ONE COMPANY" MEANS TO A READER SCANNING A LIST ────────────────────
+ *
+ * Two options a reader takes for one company are two spellings of a name that
+ * differ only in its legal form, its capitals and its punctuation — `Great
+ * Eastern Shipping Co. Ltd.` and `The Great Eastern Shipping Company Limited`.
+ * A bracket that is not a date is kept: `Tata Teleservices (Maharastra)` is a
+ * different company, and folding it would fail a correct list.
+ */
+const sameCompany = (x) => String(x ?? "").toLowerCase()
+  .replace(/\b(?:the|ltd|limited|co|company|corporation|corp|pvt|private|inc)\b\.?/g, " ")
+  .replace(/&/g, " and ").replace(/[^a-z0-9()]+/g, " ").replace(/\s+/g, " ").trim();
+const LOWER_WORDS = new Set(["of", "and", "the", "or", "for", "in", "on", "at", "to", "by", "with", "under"]);
+/** Two or more words in capitals — one is an acronym by construction. */
+const shouting = (x) => !/[a-z]/.test(x) && (String(x).match(/\b[A-Z]{2,}\b/g)?.length ?? 0) >= 2;
+/** Opens small, unless it is a brand that capitalises inside its first word. */
+const opensSmall = (x) => /^[a-z]/.test(x) && !/^[a-z]+[A-Z]/.test(x);
+const lowerSlip = (x) => String(x).split(/\s+/).slice(1).some((t) => /^[a-z]+[.,)]*$/.test(t) && !LOWER_WORDS.has(t.replace(/[^a-z]/g, "")));
+/** An instrument's words: a coupon, a bracketed maturity, a MAT code, a filer's footnote mark. */
+const instrumentWords = (x) => /\d%|\(\d{1,2}\/\d{1,2}\/\d{2,4}\)|\bMAT\s*\d{6}|[*#^$@~]\s*$/i.test(x);
+
+/**
  * A HOLDING WITH A PURCHASE DATE AT LEAST A YEAR OLD — the one row on which the
  * stock page can print a CAGR beside the holding-period return. Derived off
  * `heldSince`, which `build-book` emits only where a lot register accounts for
@@ -2991,6 +3150,15 @@ const ROUTES = [
    */
   ["monitor-lookthrough-instruments", "/monitor?group=security"],
   /**
+   * THE SAME COMPANY FROM THE MONITOR, where the family searched for it: the
+   * row is opened and must name the account that sold it out. And the search
+   * list itself, on the default axis and the security axis, read whole — one
+   * option per company, each written as a name.
+   */
+  ["monitor-sold-elsewhere", "/monitor?group=security"],
+  ["monitor-picklist", "/monitor"],
+  ["monitor-security-picklist", "/monitor?group=security"],
+  /**
    * ...AND THE SAME DRILL-DOWN WITH THE LOOK-THROUGH STORE HELD OPEN.
    *
    * The loading state is TRANSIENT — `monitor-security-drill` waits for a
@@ -3225,6 +3393,11 @@ const ROUTES = [
    * the claim is a FAILURE when it regresses rather than an abstention.
    */
   ["stock-pledge", () => (QTY_BOOK?.pledgeKey ? `/stock/${encodeURIComponent(QTY_BOOK.pledgeKey)}` : "/stock/no-pledged-demat-holding-in-the-book")],
+  /**
+   * ...AND A COMPANY ONE ACCOUNT SOLD OUT OF WHILE ANOTHER STILL HOLDS IT —
+   * the family's Kaynes, on the company's own page (see `SOLD_ELSEWHERE`).
+   */
+  ["stock-sold-elsewhere", () => (SOLD_ELSEWHERE ? `/stock/${encodeURIComponent(SOLD_ELSEWHERE.key)}` : "/stock/no-company-sold-out-of-one-account")],
   /**
    * ...AND THE ONE HOLDING WHOSE PURCHASE DATE LICENSES AN ANNUAL RATE. The
    * family asked for the holding-period return AND the annualised one, and the
@@ -3729,6 +3902,8 @@ const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
  */
 const PM_TILE_IDS = [];
 let TILE_MENU = null;
+/** What each search-list route found in its list, read off `data-option`. */
+const PICK_OPTIONS = {};
 let TILE_PICK = null;
 /**
  * ── THE CAPITAL-CALL STORE, FAKED FOR THE WALK THAT ASSERTS IT ─────────────
@@ -7831,6 +8006,69 @@ const RETURN_COLUMNS = [
       }
       return true;
     }],
+];
+
+/**
+ * ── THE SEARCH LIST, READ WHOLE ──────────────────────────────────────────────
+ *
+ *   "when I am searching Kaynes in the search bar, it is coming up in small cap
+ *    and large cap both. It should be a single name only. Make sure that the
+ *    name of all the entities is written correctly neither in all full cap nor
+ *    in all small cap."
+ *
+ * A FACTORY, run on both axes, because the list is built differently on each —
+ * the security axis adds every company a fund discloses — and a defect in one
+ * build is invisible from the other. Struck on `data-option`, the value a
+ * reader ticks, never on the list's prose.
+ *
+ * A LIST THAT WAS NOT READ IS A FAILURE on the first claim, not an abstention:
+ * an empty list satisfies every "no option is…" below by asserting over nothing.
+ */
+const pickListChecks = (axis, security = false) => [
+  [`the search list on ${axis} was read, and offers at least every company the book holds`, (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    return ctx.pickOptions.length >= (SECURITY_AXIS_BOOK?.names ?? 1);
+  }],
+  ["...no two of its options are one company written two ways", (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    const g = new Map();
+    for (const o of ctx.pickOptions) g.set(sameCompany(o), [...(g.get(sameCompany(o)) ?? []), o]);
+    return [...g.values()].every((v) => v.length === 1);
+  }],
+  ["...none is written all in capitals", (t, ctx) =>
+    ctx.pickOptions == null ? { notChecked: "the list is read on the primary pass only" } : !ctx.pickOptions.some(shouting)],
+  ["...none opens in lower case or carries a word its filer forgot to capitalise", (t, ctx) =>
+    ctx.pickOptions == null ? { notChecked: "the list is read on the primary pass only" }
+      : !ctx.pickOptions.some((o) => opensSmall(o) || lowerSlip(o))],
+  ["...none is named by an instrument — a coupon, a maturity or a filer's footnote mark", (t, ctx) =>
+    ctx.pickOptions == null ? { notChecked: "the list is read on the primary pass only" } : !ctx.pickOptions.some(instrumentWords)],
+  /**
+   * ...AND A COMPANY THE BOOK HOLDS IS NOT OFFERED AGAIN UNDER A FUND'S NAME
+   * FOR IT. The list offered `Kaynes Technology` AND `Kaynes Technology India
+   * Limited` — one company, the second being how a fund files it. The spellings
+   * the funds give each book company are read off this sweep's OWN join
+   * (`SECURITY_AXIS_BOOK.derivedByKey`), so a page that joined less — no
+   * listing ISIN, no issuer seed — offers a spelling this sweep knows is the
+   * book's company, and fails. Security axis only: the only list that offers
+   * what a fund discloses.
+   */
+  ...(!security ? [] : [["...and no company the book holds is offered again under a fund's spelling of it", (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    const b = SECURITY_AXIS_BOOK;
+    if (!b?.derivedByKey) return false;
+    const bookNames = new Set(b.bookRawNames.map((n) => sameCompany(stripDepositoryTail(n))));
+    const fundSpellings = new Set();
+    for (const [k, e] of b.derivedByKey) {
+      if (!b.measuredByKey.has(k)) continue;
+      for (const n of e.lineNames) fundSpellings.add(sameCompany(n));
+    }
+    return !ctx.pickOptions.some((o) => fundSpellings.has(sameCompany(o)) && !bookNames.has(sameCompany(o)));
+  }]]),
+  ["...and the company the family searched for is ONE option", (t, ctx) => {
+    if (ctx.pickOptions == null) return { notChecked: "the list is read on the primary pass only" };
+    if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+    return ctx.pickOptions.filter((o) => securityKeyOf(o) === SOLD_ELSEWHERE.key).length === 1;
+  }],
 ];
 
 const INVARIANTS = {
@@ -12824,6 +13062,24 @@ const INVARIANTS = {
 
   monitor: [
     /**
+     * ── A MANDATE IS NAMED, NOT SHOUTED ────────────────────────────────────
+     *
+     * Four strategy names are printed in capitals by their managers' own
+     * reports — `CARNELIAN BESPOKE PORTFOLIO`, `SVAN INVESTMENT MANAGERS LLP -
+     * VELOCITY` — and they are the names on this table's mandate rows. Struck on
+     * the row's own `data-mandate` and its rendered cell, and gated on the BOOK
+     * printing such a name at all, so a drop with none abstains by evidence
+     * rather than passing over nothing.
+     */
+    ["no mandate row is named in capitals, though its manager printed it so", (t, ctx) => {
+      const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const printed = (bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => a.strategy).filter(Boolean);
+      if (!printed.some(shouting)) return { notChecked: "no strategy in this book is printed in capitals" };
+      const rows = ctx.mandateRows ?? [];
+      if (!rows.length) return false;
+      return rows.every((r) => !shouting(r.mandate ?? "") && !shouting((r.nameCell ?? "").replace(/PMS mandate/i, "").trim()));
+    }],
+    /**
      * ── THE SCHEME IS CALLED WHAT THE AMC CALLS IT ───────────────────────────
      *
      *   *"BNDH L&MC is large and mid cap. Now it's very important, Bandhan,
@@ -13517,7 +13773,11 @@ const INVARIANTS = {
     ["...and names the vehicles it cannot look through, without claiming to be equity-only", (t, ctx) => {
       const fe = ctx?.fundExposure;
       if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
-      return /AIF folio/i.test(fe.text)
+      // THE AIFs ARE NAMED NOW, NOT COUNTED — "your 12 AIF folios" answered
+      // nobody who asked whether their Carnelian fund had been looked into. So
+      // the claim is struck on the list's own handle: as many names as funds,
+      // and at least one. The prose it used to match is gone by design.
+      return Number(fe.aifs) > 0 && (fe.aifNames ?? []).length === Number(fe.aifs)
         && !/EQUITY ONLY/i.test(fe.text)
         && !/debt and cash sleeves\s+are outside this store/i.test(fe.text)
         && /whole monthly filing/i.test(fe.text)
@@ -15107,6 +15367,47 @@ const INVARIANTS = {
    * a corporate action. A single-account name would let a broken TOTAL row pass
    * and a name with no corporate action would let the fourth term be dropped.
    */
+  /**
+   * ── THE KAYNES CASE ─────────────────────────────────────────────────────────
+   *
+   * A company one account sold out of inside the statement's window while
+   * another account still holds it. Both halves are asserted, on both surfaces,
+   * and neither implies the other: the account that sold it is SHOWN, and it is
+   * shown as sold — not as a holding, and not as a quantity nobody printed.
+   */
+  "stock-sold-elsewhere": [
+    ["the account that sold this company out is on its quantity table, marked sold out, from the opening it printed", (t, ctx) => {
+      if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+      const r = (ctx.qtyTable?.rows ?? []).find((x) => x.account === SOLD_ELSEWHERE.accountId);
+      return !!r && r.notHeld === "sold-out" && r.closing === 0 && Math.abs((r.opening ?? NaN) - SOLD_ELSEWHERE.opening) < 5e-4;
+    }],
+    ["...and an account that still holds it carries no such mark", (t, ctx) => {
+      if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+      const held = (ctx.qtyTable?.rows ?? []).filter((x) => SOLD_ELSEWHERE.heldAccounts.includes(x.account));
+      if (!held.length) return { notChecked: "no account that holds it printed a window of its own" };
+      return held.every((x) => !x.notHeld);
+    }],
+  ],
+  "monitor-sold-elsewhere": [
+    ["the company's row names the account that sold it out, with the nil it closed at", (t, ctx) => {
+      if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+      return (ctx.dematElsewhere ?? []).some((x) => x.account === SOLD_ELSEWHERE.accountId && x.closing === "0");
+    }],
+    ["...in words a reader acts on: sold out in this window", (t, ctx) => {
+      if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
+      const x = (ctx.dematElsewhere ?? []).find((d) => d.account === SOLD_ELSEWHERE.accountId);
+      return !!x && /sold out/i.test(x.text);
+    }],
+    ["the look-through card names every AIF fund it cannot see into — the fund the client asked about among them", (t, ctx) => {
+      if (!AIF_FUND_KEYS) return { notChecked: "this book holds no AIF" };
+      const fe = ctx.fundExposure;
+      if (!fe) return false;
+      const got = new Set((fe.aifNames ?? []).map((n) => securityKeyOf(n)));
+      return Number(fe.aifs) === AIF_FUND_KEYS.size && [...AIF_FUND_KEYS].every((k) => got.has(k));
+    }],
+  ],
+  "monitor-picklist": pickListChecks("the default axis"),
+  "monitor-security-picklist": pickListChecks("the security axis", true),
   "stock-qty": [
     ...qtyChecks(() => QTY_BOOK?.tableKey),
     ...stockLayoutChecks(),
@@ -16297,9 +16598,17 @@ for (const theme of THEMES) {
         const opener = page.locator("[data-multiselect-toggle='All holdings']").first();
         if (await opener.count()) { await opener.click(); await page.waitForTimeout(300); }
         const box = page.locator("[data-multiselect='All holdings'] input").first();
-        if (await box.count()) { await box.fill(FUND_INSTRUMENTS.name); await page.waitForTimeout(400); }
-        const opt = page.locator(`[data-option="${FUND_INSTRUMENTS.name.replace(/"/g, '\\"')}"]`).first();
-        if (await opt.count()) { await opt.click(); await page.waitForTimeout(700); }
+        // TYPE THE ISSUER, THEN TICK THE OPTION THAT IS THAT ISSUER. The option
+        // reads as the page names the issuer — cased, with the filer's footnote
+        // marks gone — so the walk types the first words of the issuer's name,
+        // as a reader would, and ticks the option whose own name keys to the
+        // issuer rather than whichever sorted first.
+        const typed = FUND_INSTRUMENTS.name.split(/\s+/).slice(0, 2).join(" ");
+        if (await box.count()) { await box.fill(typed); await page.waitForTimeout(400); }
+        const offered = await page.$$eval("[data-option]", (els) => els.map((e) => e.getAttribute("data-option")));
+        const pick = offered.find((o) => o && securityKeyOf(o) === FUND_INSTRUMENTS.key) ?? null;
+        const opt = pick ? page.locator(`[data-option="${pick.replace(/"/g, '\\"')}"]`).first() : null;
+        if (opt && await opt.count()) { await opt.click(); await page.waitForTimeout(700); }
         await opener.click().catch(() => {});
         await page.waitForTimeout(400);
         const row = page.locator(`tr[data-security-key="${FUND_INSTRUMENTS.key}"] button`).first();
@@ -16321,6 +16630,30 @@ for (const theme of THEMES) {
           if (c > bestN) { bestN = c; best = i; }
         }
         if (best >= 0) { await toggles.nth(best).click(); await page.waitForTimeout(500); }
+      }
+      // THE KAYNES ROW, OPENED where the family searched for it.
+      if (name === "monitor-sold-elsewhere" && SOLD_ELSEWHERE) {
+        const row = page.locator(`tr[data-security-key="${SOLD_ELSEWHERE.key}"] button`).first();
+        if (await row.count()) {
+          await row.click();
+          await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
+          await page.waitForTimeout(500);
+        }
+      }
+      /**
+       * THE SEARCH LIST, READ WHOLE. It renders its options only while open, so
+       * it is opened, read and CLOSED again before anything else is captured —
+       * left open, seven hundred option labels would land in the page text every
+       * generic check reads.
+       */
+      if ((name === "monitor-picklist" || name === "monitor-security-picklist")
+        && theme === THEMES[0] && width === WIDTHS[0]) {
+        const opener = page.locator("[data-multiselect-toggle='All holdings']").first();
+        if (await opener.count()) {
+          await opener.click(); await page.waitForTimeout(400);
+          PICK_OPTIONS[name] = await page.$$eval("[data-option]", (els) => els.map((e) => e.getAttribute("data-option") ?? ""));
+          await opener.click().catch(() => {}); await page.waitForTimeout(300);
+        } else PICK_OPTIONS[name] = [];
       }
       /**
        * THE CAGR COLUMN'S OWN SORT. Clicked by the column's LABEL inside the
@@ -18086,8 +18419,20 @@ for (const theme of THEMES) {
             cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
           })),
           text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
+          // THE AIF FUNDS IT CANNOT SEE INTO, named on the card rather than
+          // counted into a sentence: the client asked about one of them.
+          aifs: document.querySelector("[data-fund-exposure-aifs]")?.getAttribute("data-fund-exposure-aifs") ?? null,
+          aifNames: (document.querySelector("[data-fund-exposure-aifs]")?.textContent ?? "").split(" · ").map((x) => x.trim()).filter(Boolean),
         };
       });
+      // THE ACCOUNTS THAT CARRIED A COMPANY AND NO LONGER HOLD IT, as a row's
+      // expansion names them.
+      const dematElsewhere = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("[data-demat-elsewhere-row]")].map((e) => ({
+          account: e.getAttribute("data-demat-elsewhere-row"),
+          closing: e.getAttribute("data-closing"),
+          text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+        })));
       // THE STOCK AXIS'S COVERAGE STATEMENT, read off its own handle rather than
       // out of the page text: the partition sits in one paragraph among several
       // and a page-wide regex would happily match a figure from another card.
@@ -18287,7 +18632,9 @@ for (const theme of THEMES) {
           const mag = (v) => (v === null || Number.isNaN(v) ? v : Math.abs(v));
           return { opening: num(td[1]), unitsIn: mag(num(td[2])), unitsOut: mag(num(td[3])),
             ca: num(td[4]), closing: num(td[5]), pledge: num(td[6]),
-            account: tr.getAttribute("data-qty-account"), ties: tr.getAttribute("data-qty-ties") };
+            account: tr.getAttribute("data-qty-account"), ties: tr.getAttribute("data-qty-ties"),
+            // WHETHER THE ACCOUNT STILL HOLDS IT, read off the row's own mark.
+            notHeld: tr.querySelector("[data-qty-not-held]")?.getAttribute("data-qty-not-held") ?? null };
         };
         const foot = t.querySelector("tr[data-qty-total]");
         return {
@@ -19449,7 +19796,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow}); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

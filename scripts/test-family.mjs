@@ -41,6 +41,7 @@ const SUITES = [
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
+  ["security names", "src/lib/__tests__/securityNames.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],
   ["fund NAVs", "src/lib/__tests__/fundNavs.test.ts"],
   ["return attribution", "src/lib/__tests__/attribution.test.ts"],
