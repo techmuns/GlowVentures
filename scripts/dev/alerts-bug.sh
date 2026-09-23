@@ -72,7 +72,7 @@ SUITES=(
   "src/lib/__tests__/researchLevels.test.ts"
 )
 suite() {
-  local d f rc fired=0; d=$(mktemp -d -p node_modules)
+  local label="${1:-THE BUG DID NOT FIRE}" d f rc fired=0; d=$(mktemp -d -p node_modules)
   for f in "${SUITES[@]}"; do
     if ! ./node_modules/.bin/esbuild "$f" --bundle --platform=node --format=esm \
       --outfile="$d/t.mjs" --packages=external --alias:@="$(pwd)/src" --log-level=error; then
@@ -85,7 +85,7 @@ suite() {
     fi
   done
   rm -rf "$d"
-  if [ $fired -eq 0 ]; then echo "   SUITE CLEAN — THE BUG DID NOT FIRE"; fi
+  if [ $fired -eq 0 ]; then echo "   SUITE CLEAN — $label"; fi
 }
 
 # layers: any of "pages", "family", "suite"
@@ -131,7 +131,9 @@ PY
 # A NO-PATCH CONTROL FIRST. Without it a tree that was already failing reports
 # every bug below as "fired".
 echo "════════ CONTROL: no patch"
-npm run build >/dev/null 2>&1 && sweep && family && suite
+# The control's clean suite is the RESULT it exists for, so it says so rather
+# than reading, in a log, like a case that did not fire.
+npm run build >/dev/null 2>&1 && sweep && family && suite "as a control should be"
 
 PA=src/lib/priceAlerts.ts
 CIO=src/pages/MorningCIO.tsx
