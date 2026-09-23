@@ -21,6 +21,7 @@ const SUITES = [
   { name: "capitalCalls", file: "capitalCalls.test.mjs", required: true },
   { name: "payouts", file: "payouts.test.mjs", required: true },
   { name: "hdfcOwner", file: "hdfcNsdlOwner.test.mjs", required: true },
+  { name: "neoFlows", file: "neoFlows.test.mjs", required: true },
   // Exit 2 = BLOCKED: the real statements are not present. Reported, not failed.
   { name: "golden",   file: "golden.mjs",        required: false },
 ];

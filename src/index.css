@@ -200,6 +200,24 @@ body {
     0 1px 3px -1px rgba(0, 0, 0, 0.5);
 }
 
+/* ---------------------------------------------------------------------------
+   THE KPI STRIP'S COLUMNS FOLLOW HOW MANY TILES THE READER HAS CHOSEN.
+   *"we should be able to select different metrics and also add or remove number
+   of KPI tiles on the page."* A fixed six-column grid would leave a hole where a
+   removed tile was and push a seventh onto a row of its own; so at desktop width
+   the strip takes one column per tile up to six (`--kpi-cols`, set on the strip
+   by `SelectableTiles`), and wraps at six. A plain grid rule rather than a
+   Tailwind utility because the count is a runtime value.
+
+   `.grid.kpi-grid`, TWO CLASSES, AND THAT IS LOAD-BEARING. Tailwind emits its
+   responsive variants (`lg:grid-cols-3`) at the very END of the stylesheet, so a
+   one-class rule here loses on source order at equal specificity and the strip
+   stayed at three columns on a 1500px screen — measured, not reasoned about.
+   ------------------------------------------------------------------------- */
+@media (min-width: 1280px) {
+  .grid.kpi-grid { grid-template-columns: repeat(var(--kpi-cols, 6), minmax(0, 1fr)); }
+}
+
 /* A reader who has asked not to be animated gets the depth and none of the
    movement — the shadow still says "raised", the tile just does not jump. */
 @media (prefers-reduced-motion: reduce) {

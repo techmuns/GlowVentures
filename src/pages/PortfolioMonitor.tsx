@@ -22,7 +22,8 @@ import {
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
-import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
+import { loadTransactions, type Txn } from "@/lib/ledger";
+import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, type FifoTotals } from "@/lib/fifo";
 import { rollup, type GroupRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, carriedCostOf, carriedCostNote, boughtNavOf,
@@ -344,6 +345,30 @@ type Row = {
    * the other two.
    */
   groupSource: "review" | "rule" | "derived" | null;
+  /**
+   * ── THE ROW'S FIFO TOTALS, AND ITS REALISED GAIN ─────────────────────────
+   *
+   * Struck by `fifoTotals` over exactly the positions the row sums, so the
+   * Return cell, the Realised cell and the section totals are one computation.
+   * A WHOLE mandate row is struck on its capital since inception, so its
+   * realised is everything the account has booked — every sale since it
+   * opened, and its income less its fees — which is what the manager's own
+   * since-inception record reports.
+   *
+   * `realised` is NULL where no position behind the row has a realised record
+   * (no capital gain statement, no dated unit record) — never a zero.
+   */
+  realised: number | null;
+  fifo: FifoTotals | null;
+  /**
+   * WHAT THE INVESTED CELL PRINTS, where it is not `costBasis` — set on a
+   * mandate row, and there only. A WHOLE mandate enters at the capital the
+   * family paid into it (`fifoTotals().invested`), which is what its Return is
+   * divided by; `costBasis` keeps the cost of the shares it holds now, which
+   * Unrealised P&L is struck on and which the cell's hover names. Undefined on
+   * every other row, where the two are one figure.
+   */
+  invested?: number | null;
   /** Set on `kind === "mandate"` and nowhere else. */
   mandate?: MandateInfo;
   /**
@@ -441,11 +466,14 @@ const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedO
 // so there is one column list, and a column a reader drags moves a row and
 // everything it opens into together.
 
+/** The Invested cell's figure: a mandate row's capital basis where it has one, else the cost held. */
+const investedOf = (r: Row): number | null => (r.invested !== undefined ? r.invested : r.costBasis);
+
 const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | undefined> = {
   security: (r) => r.security,
   qty: (r) => r.quantity,
   avgCost: (r) => r.avgCost,
-  invested: (r) => r.costBasis,
+  invested: (r) => investedOf(r),
   investedOn: (r) => r.investedOn?.first ?? null,
   cmp: (r) => r.currentPrice,
   day: (r) => r.dayChangePct,
@@ -454,6 +482,7 @@ const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | und
   totalExposure: (r) => r.totalExposure,
   weight: (r) => r.weight,
   pnl: (r) => r.unrealizedPnL,
+  realised: (r) => r.realised,
   // NO `return` ACCESSOR, and its absence is deliberate. `return` is a
   // PLACEHOLDER in the column list rather than a column — `withReturnCols`
   // expands it to one id per ticked measure — so no view ever declares it and
@@ -481,6 +510,8 @@ type BucketTotals = {
   costedMV: number;
   costedCount: number;
   heldCount: number;
+  /** The section's FIFO totals — its return and its realised, struck on its own positions. */
+  fifo: FifoTotals;
 };
 
 /**
@@ -732,16 +763,10 @@ export function PortfolioMonitor() {
   const toggleSection = (k: string) =>
     setClosedSections((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [exporting, setExporting] = useState(false);
-  // Realised P&L per security (by securityKey) from the archive's sales —
-  // undefined = loading, null = the archive didn't respond. A VALUE of null in
-  // the map is a third thing again: the name was sold, but no capital gain
-  // statement covers that account, so what it realised was never reported.
-  const [realized, setRealized] = useState<Map<string, number | null> | null | undefined>(undefined);
-  useEffect(() => {
-    let alive = true;
-    loadSales().then((s) => { if (alive) setRealized(s ? new Map(s.rows.map((r) => [r.securityKey, r.realized])) : null); });
-    return () => { alive = false; };
-  }, []);
+  // REALISED IS THE BOOK'S OWN NOW, per holding and matched FIFO — see
+  // `Position.realizedPnL`. It used to be fetched from the archive's sales and
+  // keyed per SECURITY across the whole book, which is why a mandate row could
+  // show none of it and the footer could not tie to its own column.
   if (!portfolio) return null;
   const positions = portfolio.positions;
   // Owner comes from the account registry, never from the account string.
@@ -854,11 +879,18 @@ export function PortfolioMonitor() {
    * than silently gone — this book shows what it can and names the rest.
    */
 
-  const { rows, totMV, totCost, totPnL, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
     let base = currentHoldings(positions);
+    /**
+     * WHAT "EVERY HOLDING OF A MANDATE" IS MEASURED AGAINST — the unfiltered
+     * book. A filter that drops one share of a mandate drops the mandate back
+     * to holding-by-holding, because its capital cannot be divided among the
+     * shares left in view (`fifoTotals`).
+     */
+    const fifoOpts = { accounts: accIdx, universe: base };
     /**
      * WHAT THE ₹1,000 FLOOR TOOK, struck on the UNFILTERED book deliberately.
      *
@@ -988,6 +1020,7 @@ export function PortfolioMonitor() {
       const liveMV = sum(livePs.map((x) => x.marketValue));
       const dayChange = sum(livePs.map((x) => x.dayChange ?? 0));
       const whole = mandateTotals.get(accountId);
+      const fifo = fifoTotals(ps, fifoOpts);
       return {
         kind: "mandate" as const,
         bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
@@ -1031,7 +1064,14 @@ export function PortfolioMonitor() {
         entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
         quantity: null, avgCost: null, currentPrice: null,
         costBasis: cost, marketValue: mv, unrealizedPnL: costNA ? null : pnl,
-        returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
+        // FIFO: a whole mandate on its capital since inception, a filtered one
+        // holding by holding — never the survivors' unrealised over their cost.
+        returnPct: costNA ? null : fifo.returnPct,
+        realised: fifo.realised,
+        fifo,
+        // *"Invested shows what FIFO divides by"* — a whole mandate's capital
+        // paid in; a filtered one, the cost of the shares left in view.
+        invested: costNA ? null : fifo.invested,
         weight: weightBase > 0 ? mv / weightBase : 0,
         costNA,
         live: livePs.length > 0,
@@ -1175,6 +1215,7 @@ export function PortfolioMonitor() {
          */
         const fundClasses = clubbedClassesOf(ps);
         const perUnit = fundClasses.length === 0;
+        const fifo = fifoTotals(dps, fifoOpts);
         return {
           kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
@@ -1186,7 +1227,11 @@ export function PortfolioMonitor() {
           currentPrice: perUnit ? ps[0].currentPrice : null,
           navPriced: perUnit && !!ps[0].navPriced, navDate: ps[0].navDate,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
-          returnPct: !costNA && pnl !== null && (cost as number) > 0 ? (pnl / (cost as number)) * 100 : null,
+          // FIFO over the row's own deduped holdings: the realised gain on
+          // units already sold stays in the return (`fifoTotals`).
+          returnPct: costNA ? null : fifo.returnPct,
+          realised: fifo.realised,
+          fifo,
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
@@ -1246,6 +1291,8 @@ export function PortfolioMonitor() {
         navPriced: !!p.navPriced, navDate: p.navDate,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
+        realised: p.realizedPnL ?? null,
+        fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
         investedOn: investedOnOf([p]),
@@ -1355,6 +1402,7 @@ export function PortfolioMonitor() {
             venues: [],
             quantity: null, avgCost: null, currentPrice: null,
             costBasis: null, marketValue: 0, unrealizedPnL: null, returnPct: null,
+            realised: null, fifo: null,
             weight: weightBase > 0 ? e.total / weightBase : 0,
             costNA: true,
             heldSince: null,
@@ -1442,7 +1490,7 @@ export function PortfolioMonitor() {
     for (const x of db) {
       const k = groupKeyFor(groupAxis, accIdx, x);
       let t = bucketTotals.get(k);
-      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0 }));
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, fifo: fifoTotals([]) }));
       t.mv += x.marketValue;
       t.heldCount += 1;
       // `sumOrNull` semantics, accumulated: a statement that reports no cost
@@ -1451,10 +1499,30 @@ export function PortfolioMonitor() {
       if (x.costBasis != null) { t.cost = (t.cost ?? 0) + x.costBasis; t.costedMV += x.marketValue; t.costedCount += 1; }
       if (x.unrealizedPnL != null) t.pnl = (t.pnl ?? 0) + x.unrealizedPnL;
     }
+    // Each section's FIFO totals, over exactly the positions its totals row sums.
+    for (const [k, t] of bucketTotals) {
+      t.fifo = fifoTotals(db.filter((x) => groupKeyFor(groupAxis, accIdx, x) === k), fifoOpts);
+    }
     return {
       rows: out, totMV: totalMV,
       totCost: sumOrNull(db.map((x) => x.costBasis)),
       totPnL: sumOrNull(db.map((x) => x.unrealizedPnL)),
+      totFifo: fifoTotals(db, fifoOpts),
+      /**
+       * THE FOOTER'S RETURN IS OVER THE HOLDINGS THAT REPORT A COST — the set its
+       * own Invested and Unrealised cells already sum (`sumOrNull` skips the
+       * rest), and the set Morning CIO's Consolidated return tile is struck over.
+       * Over the whole book the coverage test refuses it, because 60 depository
+       * rows print no cost; that is right for a CATEGORY a reader compares, and
+       * wrong for a footer whose two neighbouring cells are already the costed
+       * set. The uncosted remainder is named in the cell's own arithmetic.
+       *
+       * NO MANDATE CAN FALL OUT OF "WHOLE" BY THE FILTER: measured, no PMS
+       * mandate holds a current position without a cost. And the realised cell
+       * reads `totFifo`, which is the same figure — an uncosted holding carries
+       * no realised half in `fifoTotals`.
+       */
+      totFifoCosted: fifoTotals(db.filter((x) => x.costBasis != null && !x.costUnavailable), fifoOpts),
       rawMV: sum(out.map((r) => r.marketValue)),
       costedMV: sum(costed.map((x) => x.marketValue)),
       costedCount: costed.length,
@@ -1589,7 +1657,10 @@ export function PortfolioMonitor() {
   }, [rows, portfolio.asOf]);
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
-  const totalRet = totCost !== null && totPnL !== null && totCost > 0 ? (totPnL / totCost) * 100 : null;
+  // FIFO over the footer's own COSTED positions — the same `fifoTotals` every
+  // row and section is struck with, so the three cannot divide three different
+  // ways, over the set the Invested and Unrealised cells beside it already sum.
+  const totalRet = totFifoCosted.returnPct;
   // In the by-entity view the displayed rows include both members' copies of a
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
@@ -1703,104 +1774,18 @@ export function PortfolioMonitor() {
   const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
   const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
   /**
-   * THE REALISED COLUMN CANNOT ADD UP TO ITS OWN FOOTER, AND THE PAGE SAYS SO.
+   * ── THE REALISED COLUMN NOW TIES TO ITS FOOTER ────────────────────────────
    *
-   * The footer sums the realised gain over the UNION of every row's keys, which
-   * is right — rolling 281 shares into ten mandate rows must not empty the book's
-   * realised figure. But a mandate row shows `—` in that column, deliberately: a
-   * name's realised gain is reported per security across the whole book and
-   * these managers hold the same names in more than one mandate, so attributing
-   * it to one mandate row would count it twice.
-   *
-   * Six of the seven accounts that issue a capital gain statement in this drop
-   * are mandates, so most of the footer is made inside rows that display none of
-   * it. That is a printed total which does not tie to its own visible cells,
-   * and this book's
-   * own rule is that such a gap is NAMED with its size rather than left for a
-   * reader to find by adding. `inMandates` is that size — derived from the same
-   * map the cells read, so it cannot drift from the total beside it.
-   *
-   * A name held BOTH inside a mandate and in the family's own demat has a
-   * security row of its own, which displays it — so it is removed from the
-   * hidden set rather than counted as concealed.
+   * It used to be read from the archive's SALES, keyed per security across the
+   * whole book — so a mandate row could show none of it (a name's figure was
+   * not the mandate's), the categories had to CLAIM each name once, and the
+   * footer summed a union no column displayed. The book now carries realised
+   * per HOLDING, matched FIFO by the statement that sold it (`realizedPnL`),
+   * and a whole mandate carries everything its capital shows it has booked.
+   * So every row's realised is its own, a section's is the sum of its rows,
+   * and the footer is the sum of the sections: `fifoTotals`, three times, over
+   * the same positions.
    */
-  const realisedSplit = (() => {
-    if (!consolidate || !realized) return null;
-    const shown = new Set<string>();
-    const inside = new Set<string>();
-    for (const r of rows) for (const k of r.realizedKeys) (r.kind === "mandate" ? inside : shown).add(k);
-    for (const k of shown) inside.delete(k);
-    const val = (k: string) => realized.get(k) ?? null;
-    const keys = [...shown, ...inside];
-    return {
-      total: sumOrNull(keys.map(val)),
-      inMandates: sumOrNull([...inside].map(val)),
-      names: [...inside].filter((k) => val(k) !== null).length,
-      /**
-       * WHICH ABSENCE IT IS, because the footer used to give one reason for two.
-       *
-       * `total` is null in two situations the ROW cells already keep apart, and a
-       * reader acts differently on each: no key of any visible row appears in the
-       * realised map at all — nothing here was ever sold — or keys are present and
-       * every value is null, meaning these names WERE sold and no capital gain
-       * statement covers the accounts they were sold from. Told the second when the
-       * first is true, a reader goes hunting for statements that were never owed.
-       */
-      anySold: keys.some((k) => realized.has(k)),
-    };
-  })();
-  /**
-   * ── THE REALISED COLUMN, SPLIT ACROSS THE CATEGORIES THAT MADE IT ──────────
-   *
-   * The footer sums realised gain over the UNION of every row's securityKeys,
-   * because a name's realised figure is reported PER SECURITY across the whole
-   * book and rolling 281 shares into ten mandate rows must not empty it. The
-   * per-category totals have to add to that, so they are struck the same way and
-   * a key is CLAIMED BY EXACTLY ONE CATEGORY — the first in reading order that
-   * holds the name.
-   *
-   * A name held both directly and inside a mandate is the case that makes the
-   * claiming rule necessary, and it is the case this book does not contain
-   * (measured: zero of 175 distinct equity names). Counted per category without
-   * it, such a name's gain would be added under both and the categories would
-   * sum above their own Total row. `shared` is how many names it fired on, so
-   * the cell can SAY the figure was attributed rather than divided — there is no
-   * per-category split to divide it by, and inventing one would be the
-   * fabrication this book exists to prevent.
-   */
-  const realisedByBucket = useMemo(() => {
-    const claimed = new Map<string, string>();      // securityKey -> bucket
-    const shared = new Map<string, number>();       // bucket -> names it also appears under
-    const keysOf = new Map<string, string[]>();     // bucket -> the keys it claimed
-    // Reading order, so the claim is deterministic rather than dependent on the
-    // sort the reader happens to have applied.
-    for (const grp of bucketGroups) {
-      const mine: string[] = [];
-      // DISTINCT NAMES on both counts. A key reached twice inside one category —
-      // two rows of one mandate's constituents, or a name in two mandates — is
-      // one name, and counting occurrences would report a category as sharing
-      // more names than it holds.
-      const elsewhere = new Set<string>();
-      for (const r of grp.rows) for (const k of r.realizedKeys) {
-        const owner = claimed.get(k);
-        if (owner === undefined) { claimed.set(k, grp.key); mine.push(k); }
-        else if (owner !== grp.key) elsewhere.add(k);
-      }
-      keysOf.set(grp.key, mine);
-      if (elsewhere.size) shared.set(grp.key, elsewhere.size);
-    }
-    return { keysOf, shared };
-  }, [bucketGroups]);
-  /**
-   * One category's realised total, on exactly the footer's basis: `sumOrNull`
-   * over the keys it claimed, so a name that was never sold contributes nothing
-   * rather than a zero that would report a sale nobody made.
-   */
-  const realisedFor = (key: string) => {
-    if (!realized) return null;
-    const keys = realisedByBucket.keysOf.get(key) ?? [];
-    return { total: sumOrNull(keys.map((k) => realized.get(k) ?? null)), anySold: keys.some((k) => realized.has(k)) };
-  };
   // Day move across the live-priced rows only — a holding on a workbook mark has
   // no "today" to report, so folding it in at zero would understate the move.
   //
@@ -2784,8 +2769,10 @@ export function PortfolioMonitor() {
                       // verbatim; only the category axis has a label function.
                       const label = groupLabelFor(groupAxis)(grp.key);
                       const covered = costCoversSet(tot.mv, uncostedMV);
-                      const ret = covered && tot.cost !== null && tot.pnl !== null && tot.cost > 0
-                        ? (tot.pnl / tot.cost) * 100 : null;
+                      // FIFO over the section's own positions — the realised gain on
+                      // units already sold stays in it, and a whole mandate is struck
+                      // on its capital since inception (`fifoTotals`).
+                      const ret = covered ? tot.fifo.returnPct : null;
                       /**
                        * AND A REFUSED RETURN NAMES THE FAILURE IT ACTUALLY HAD.
                        *
@@ -2804,8 +2791,15 @@ export function PortfolioMonitor() {
                         : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
                         : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
                         : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
-                      const realised = realisedFor(grp.key);
-                      const sharedNames = realisedByBucket.shared.get(grp.key) ?? 0;
+                      const realised = tot.fifo.realised;
+                      /**
+                       * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
+                       * whole mandate's row prints its capital paid in — so the
+                       * section swaps each whole mandate's cost held for that,
+                       * and names both. Everything else stays the cost held.
+                       */
+                      const totInvested = investedWithCapital(tot.cost, tot.fifo);
+                      const capitalWhy = investedBasisNote(tot.fifo, (v) => fmtFromBase(v, { compact: true }));
                       const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
@@ -2831,8 +2825,10 @@ export function PortfolioMonitor() {
                           <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                             {tot.cost === null
                               ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
-                              : <span title={uncostedMV > 1 ? costCover : undefined}>
-                                  {fmtFromBase(tot.cost, { compact: true })}
+                              : <span title={[capitalWhy, uncostedMV > 1 ? costCover : ""].filter(Boolean).join(" · ") || undefined}
+                                  data-invested-capital={capitalWhy ? totInvested ?? undefined : undefined}
+                                  data-invested-cost-held={capitalWhy ? tot.cost ?? undefined : undefined}>
+                                  {fmtFromBase(totInvested, { compact: true })}
                                   {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
                                 </span>}
                           </td>
@@ -2880,18 +2876,13 @@ export function PortfolioMonitor() {
                               book, so the categories claim each name once and the
                               rows inside a mandate show none of it — the same
                               split the footer already names in the caption. */}
-                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
-                            !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
-                            : realized === undefined ? <span className="font-normal text-slate-500">…</span>
-                            : realised === null || realised.total === null ? <AbsentCell reason={realised?.anySold
-                                ? `these names were sold, but no capital gain statement covers the accounts they were sold from`
-                                : `no sale of a name held in ${label} appears on the transaction statements in this drop`} />
-                            : <span className={changeColor(realised.total)}
-                                title={sharedNames > 0
-                                  ? `${sharedNames} of these names are also held in another category. A name's realised gain is reported once for the whole book, so it is counted under the first category that holds it rather than split between them — there is no per-category split on any statement to divide it by.`
-                                  : undefined}>
-                                {fmtFromBase(realised.total, { compact: true, sign: true })}
-                              </span>
+                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={realised ?? undefined}>{
+                            realised === null
+                              ? <AbsentCell reason={`no holding in ${label} is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported`} />
+                              : <span className={changeColor(realised)}
+                                  title={`Realised on units already sold, over the ${tot.fifo.realisedCovered} of ${tot.fifo.holdings} holdings in ${label} with a record that could carry it${tot.fifo.wholeMandates.length ? `; ${tot.fifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception` : ""}.`}>
+                                  {fmtFromBase(realised, { compact: true, sign: true })}
+                                </span>
                           }</td>
                           {/*
                               ── ONE CELL PER RETURN COLUMN, AND ONLY ONE OF THEM
@@ -2925,7 +2916,7 @@ export function PortfolioMonitor() {
                               <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
                                 {!onCost || ret === null
                                   ? <AbsentCell reason={why} />
-                                  : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
+                                  : <span title={`${fifoBasisNote(tot.fifo, (n) => fmtFromBase(n, { compact: true }))}. Cumulative, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
                                       {fmtPct(ret, { sign: true })}
                                     </span>}
                               </td>
@@ -2998,6 +2989,10 @@ export function PortfolioMonitor() {
                    */
                   const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
                   const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
+                  // A WHOLE MANDATE'S INVESTED IS ITS CAPITAL PAID IN, and the
+                  // cell names the cost of the shares it holds beside it.
+                  const capitalNote = r.kind === "mandate" && r.fifo && r.invested !== undefined
+                    ? investedBasisNote(r.fifo, (v) => fmtFromBase(v, { compact: true })) : "";
                   return (
                     <Fragment key={r.key}>
                       {/* THE SECURITY AXIS'S OWN HANDLES. A structural claim must
@@ -3143,8 +3138,12 @@ export function PortfolioMonitor() {
                             above. The handles are what the sweep reads. */}
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-cost-carried={carried ? carried.paid : undefined}
-                          data-cost-printed={carried ? carried.printed : undefined}>
+                          data-cost-printed={carried ? carried.printed : undefined}
+                          data-invested-capital={capitalNote ? investedOf(r) ?? undefined : undefined}
+                          data-invested-cost-held={capitalNote ? r.costBasis ?? undefined : undefined}>
                           {r.costNA ? "—"
+                            : capitalNote
+                            ? <span title={capitalNote}>{fmtFromBase(investedOf(r), { compact: true })}</span>
                             : carriedWhy
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : fmtFromBase(r.costBasis, { compact: true })}
@@ -3251,19 +3250,22 @@ export function PortfolioMonitor() {
                             : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
                             : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
                         </td>
-                        {/* Distinct states, never collapsed into one dash without
-                            a reason: a mandate (whose names are reported per
-                            security across the book, not per mandate), the
-                            per-entity view, an unreachable archive, a name never
-                            sold, and a name sold under no capital gain statement. */}
-                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
-                          m ? <AbsentCell reason="realised gain is reported per security across the whole book, and these managers hold the same names in more than one mandate — attributing a name's whole realised figure to this mandate would count it twice. Open the mandate's drill-down, or Capital Gains, for the per-account figures." />
-                          : !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
-                          : realized === undefined ? <span className="text-slate-500">…</span>
-                          : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
-                          : !realized.has(r.securityKey) ? <AbsentCell reason="no sale of this name on the transaction statements" />
-                          : realized.get(r.securityKey) == null ? <AbsentCell reason="sold, but no capital gain statement covers that account" />
-                          : <span className={changeColor(realized.get(r.securityKey)!)}>{fmtFromBase(realized.get(r.securityKey)!, { compact: true, sign: true })}</span>
+                        {/* REALISED, MATCHED FIFO, ON THE ROW'S OWN HOLDINGS —
+                            a whole mandate carries everything its capital shows
+                            it has booked since inception. Never a dash without
+                            its reason: no record covers the account, or the
+                            sale came after the holding's own statement date. */}
+                        <td className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={r.realised ?? undefined}>{
+                          r.realised === null
+                            ? <AbsentCell reason={r.trancheSet.length
+                                ? realisedReason(r.trancheSet.find((x) => x.realizedLotsAfter) ?? r.trancheSet[0])
+                                : "no capital gain statement or dated unit record covers these holdings, so what their sales realised is not reported"} />
+                            : <span className={changeColor(r.realised)}
+                                title={m && r.fifo?.wholeMandates.length
+                                  ? `Everything this mandate has booked since it opened — every sale its manager made, and its income less its fees — which is its value plus withdrawals less the capital paid in, less the unrealised gain on the shares it holds now.`
+                                  : "Realised on units of these holdings already sold, matched first-in, first-out by the statement that sold them."}>
+                                {fmtFromBase(r.realised, { compact: true, sign: true })}
+                              </span>
                         }</td>
                         {/*
                           ── ONE CELL PER PICKED RETURN, IN ITS OWN COLUMN ────────
@@ -3316,7 +3318,7 @@ export function PortfolioMonitor() {
                           const value = !res.shown
                             ? <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
-                              ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
+                              ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
                               : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                           /**
                            * TAG UNLESS THE HEADER ALREADY NAMES IT.
@@ -3408,7 +3410,15 @@ export function PortfolioMonitor() {
                   label={<>Total · {rows.length} rows</>}
                   cells={{
                     invested: (
-                    <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                    <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"
+                      data-invested-capital={totFifo.wholeMandates.length ? investedWithCapital(totCost, totFifo) ?? undefined : undefined}><Auditable formula={{
+                        title: "Total invested",
+                        excel: totFifo.wholeMandates.length ? "= Σ Cost of the holdings still held − their cost in whole mandates + those mandates' capital paid in" : "= Σ Cost of all holdings",
+                        plain: `What the holdings in this table cost, added together — every asset class, not the listed ones alone.${totFifo.wholeMandates.length ? ` ${investedBasisNote(totFifo, money)}, so this is the sum of the Invested cells above it.` : ""}`,
+                        worked: totFifo.wholeMandates.length
+                          ? `= ${money(totCost)} − ${money(totFifo.wholeCostHeld)} + ${money(totFifo.wholeContributed)} = ${money(investedWithCapital(totCost, totFifo))} across ${rows.length} rows`
+                          : `= ${money(totCost)} across ${rows.length} rows`,
+                      }}>{fmtFromBase(investedWithCapital(totCost, totFifo), { compact: true })}</Auditable></td>
                     ),
                     /*
                       THE COLUMN COUNTS WHAT IT COVERS RATHER THAN LEAVING A WALL
@@ -3530,32 +3540,19 @@ export function PortfolioMonitor() {
                                 : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`,  }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
                     </td>
                     ),
-                    /* sumOrNull, not sum: a name with no realised figure must not
-                        be added in as zero — that turns "never reported" into a
-                        measurement and drags the total towards it.
-                        AND IT SUMS OVER THE UNION OF THE ROWS' OWN KEYS, not over
-                        one key per row. Ten mandate rows now stand for 281 shares,
-                        and most of this book's realised gain was made inside them;
-                        reading `r.securityKey` alone would have quietly emptied
-                        this cell the moment the shares moved into their mandates.
-                        A Set, because a name in two mandates is still one name on
-                        the capital gain statements.
-                        The consequence — a total whose visible column shows only
-                        part of it — is measured in `realisedSplit` and named in the
-                        caption under the table. Each state gets its OWN reason: a
-                        still-loading archive, an unreachable one and a book with no
-                        capital gain statement are three different findings, and the
-                        cell used to report all three as "shown in the consolidated
-                        view". */
+                    /* THE FOOTER'S REALISED IS THE SUM OF THE SECTIONS', which
+                        are the sums of their rows' — `fifoTotals` over the same
+                        positions three times, so a reader adding the column gets
+                        the footer. A holding with no record contributes nothing
+                        rather than a zero. */
                     realised: (
-                    <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap">{
-                      !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
-                      : realized === undefined ? <span className="text-slate-500">…</span>
-                      : realized === null ? <AbsentCell reason="the audit archive didn't respond" />
-                      : realisedSplit === null || realisedSplit.total === null ? <AbsentCell reason={realisedSplit?.anySold
-                          ? "these names were sold, but no capital gain statement covers the accounts they were sold from"
-                          : "no sale of these names appears on the transaction statements in this drop"} />
-                      : <span className={changeColor(realisedSplit.total)}>{fmtFromBase(realisedSplit.total, { compact: true, sign: true })}</span>
+                    <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}>{
+                      totFifo.realised === null
+                        ? <AbsentCell reason="no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported" />
+                        : <span className={changeColor(totFifo.realised)}
+                            title={`Realised on units already sold, matched first-in, first-out, over the ${totFifo.realisedCovered} of ${totFifo.holdings} holdings with a record that could carry it${totFifo.wholeMandates.length ? `; ${totFifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception — every sale, and income less fees` : ""}.`}>
+                            {fmtFromBase(totFifo.realised, { compact: true, sign: true })}
+                          </span>
                     }</td>
                     ),
                     /* THE FOOTER RETURN IS THE WHOLE BOOK ON COST — cumulative, on
@@ -3576,12 +3573,14 @@ export function PortfolioMonitor() {
                     ...Object.fromEntries(returnMeasures.map((measure) => {
                       const onCost = measure === "auto" || measure === "absolute";
                       return [`ret:${measure}`, (
-                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totPnL) : "text-slate-500"}`}
+                        <td key={`ret:${measure}`} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${onCost ? changeColor(totalRet) : "text-slate-500"}`}
                           title={onCost && feedLive ? LIVE_CELL : undefined}>
                           {!onCost
-                            ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`} />
+                            ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
+                            : totalRet === null
+                            ? <AbsentCell reason="no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row" />
                             : feedLive ? fmtPct(totalRet, { sign: true })
-                            : <Auditable formula={{ title: "Total return", excel: "= Total P&L ÷ Total cost × 100", plain: "The whole listed book's gain or loss versus what it cost.", worked: `= ${money(totPnL)} ÷ ${money(totCost)} × 100 = ${fmtPct(totalRet, { sign: true })}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
                         </td>
                       )];
                     })),
@@ -3876,7 +3875,8 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       isMandate: heldUnderMandate(accIdx, xs[0]),
       quantity,
       marketValue, costBasis, unrealizedPnL: pnl,
-      returnPct: !costNA && pnl !== null && (costBasis as number) > 0 ? (pnl / (costBasis as number)) * 100 : null,
+      // FIFO: the holding's realised gain on units already sold stays in it.
+      returnPct: costNA ? null : fifoTotals(xs).returnPct,
       costNA, share: 0,
       positions: xs,
       // DERIVED as cost ÷ units, exactly as the consolidated row above derives
@@ -4533,7 +4533,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                 <SortHeader col="gain" view={dv} pad="px-3 py-2.5"
                   title="Value today less net invested, struck only where the contribution list provably reaches the account's inception — either the allotted units account for every unit held, or the statement's own printed inception date is on or after the first contribution. A gain against a partial record of what was paid in overstates itself by everything it missed.">Gain</SortHeader>
                 <SortHeader col="return" view={dv} pad="px-3 py-2.5"
-                  title="Value today against net invested, struck only where the contribution list provably reaches the account's inception — either the allotted units account for every unit held, or the statement's own printed inception date is on or after the first contribution. A return against a partial record of what was paid in overstates itself by everything it missed.">Return</SortHeader>
+                  title="FIFO on the family's own capital: value today plus capital out less capital in, over capital in — every rupee that bought a unit, whether that unit is still held or was already paid back. Struck only where the contribution list provably reaches the account's inception — either the allotted units account for every unit held, or the statement's own printed inception date is on or after the first contribution. A return against a partial record of what was paid in overstates itself by everything it missed.">Return</SortHeader>
                 <SortHeader col="entity" view={dv} align="left" pad="px-3 py-2.5">Entity</SortHeader>
               </Tr>
             </thead>
@@ -4915,7 +4915,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     </td>,
                     investedOn: <td key="investedOn" className="px-3 py-2.5 text-left"><AbsentCell reason="a span of dates has no total — each row states its own first and last contribution" /></td>,
                     traded: <td key="traded" className="px-3 py-2.5 text-left"><AbsentCell reason="a span of dates has no total — each row states its own first and last trade" /></td>,
-                    return: <td key="return" className="px-3 py-2.5 text-right"><AbsentCell reason="every row's return is struck against its own net invested over its own window, so there is no denominator a whole-table figure could sit on. The money-weighted return across the accounts that can carry one is on Performance." /></td>,
+                    return: <td key="return" className="px-3 py-2.5 text-right"><AbsentCell reason="every row's return is struck against its own capital in over its own window, so there is no denominator a whole-table figure could sit on. The money-weighted return across the accounts that can carry one is on Performance." /></td>,
                     entity: <td key="entity" className="px-3 py-2.5 text-left"><AbsentCell reason="a column of names has no sum — the Entity filter above narrows the table to one" /></td>,
                   }} />
               </tfoot>
