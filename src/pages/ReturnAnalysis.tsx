@@ -16,7 +16,9 @@ import { useTableView, sortRows } from "@/lib/tableView";
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel, readerClassOf } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isCompanyShare, bucketLabel, readerClassOf } from "@/lib/analytics";
+import { companySectorIndex } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
 import { fifoTotals } from "@/lib/fifo";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
@@ -73,6 +75,24 @@ export function ReturnAnalysis() {
   const { portfolio, consolidated, fmtFromBase } = usePortfolio();
   const sectorView = useTableView("returns-sectors", RA_SECTOR_COLS);
   const accountView = useTableView("returns-accounts", RA_ACCOUNT_COLS);
+  /**
+   * ── A COMPANY'S SECTOR IS THE ONE SECTOR COMPOSITION DRAWS ────────────────
+   *
+   * The sector table keyed each share on `x.sector` — the family's own
+   * statement and nothing else — so every share a depository reports (an ISIN,
+   * a quantity, a rate and no industry) landed in an "Unclassified" row worth
+   * +₹2.76 Cr of this page's return, and the page's sector split disagreed with
+   * Sector Composition's for the same companies. `companySectorIndex` is the
+   * projection of `companyExposure`'s three tiers — the statement, a fund's SEBI
+   * filing on the ISIN, screener.in on the NSE symbol, a lower tier only ever
+   * filling an empty sector — built over every consolidated company share, as
+   * Family & Entities builds it. No second resolver.
+   */
+  const exposure = useStockExposure(consolidated, true);
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
 
   const model = useMemo(() => {
     if (!portfolio) return null;
@@ -144,15 +164,19 @@ export function ReturnAnalysis() {
     // word — so this table cannot print a class name that Portfolio Monitor,
     // Morning CIO or Exposure & IPS have since relabelled. A sector is the
     // provider's own normalised taxonomy and is never passed through it.
-    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number }>();
+    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number; keys: Set<string> }>();
+    // EVERY HOLDING THAT IS NOT A COMPANY SHARE IS BY CLASS — a fund wrapper,
+    // a private instrument, and a cash row too, whose statement prints the
+    // sector string "Cash" but which is not a company and has no sector.
     for (const x of priced) {
-      const byClass = isFundVehicle(x) || isPrivateClass(x);
+      const byClass = !isCompanyShare(x);
       // The READER'S class: a liquid or arbitrage fund is Cash here as on every
       // other page, never the wrapper its statement typed it as.
-      const secKey = byClass ? readerClassOf(x) : x.sector;
-      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0 };
+      const secKey = byClass ? readerClassOf(x) : (companySectors.get(x.securityKey)?.sector || "Unclassified");
+      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0, keys: new Set<string>() };
       e.pnl += x.unrealizedPnL + realisedOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
       e.deployed += x.costBasis + soldOf(x);
+      e.keys.add(x.securityKey);
       bySector.set(secKey, e);
     }
     // The wrapper classes this table bucketed BY CLASS, derived from the same
@@ -165,11 +189,23 @@ export function ReturnAnalysis() {
     // sides, because a caption naming "Mutual Fund" over a row headed something
     // else would satisfy a reader and fail the reader's arithmetic.
     const wrapperClasses = [...new Set(
-      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(readerClassOf(x))),
+      priced.filter((x) => !isCompanyShare(x)).map((x) => bucketLabel(readerClassOf(x))),
     )].sort();
+    // WHICH TIER PLACED EACH COMPANY IN THIS TABLE, over the companies it
+    // draws, and what none of them could — the same count Family & Entities
+    // and Data & Refresh print, so borrowed evidence is never unmarked.
+    const shareKeys = [...new Set(priced.filter(isCompanyShare).map((x) => x.securityKey))];
+    const placedBy = { book: 0, disclosure: 0, vendor: 0 };
+    let unplaced = 0;
+    for (const k of shareKeys) {
+      const t = companySectors.get(k)?.from ?? null;
+      if (t) placedBy[t]++; else unplaced++;
+    }
+    const sectorSource = { companies: shareKeys.length, ...placedBy, unplaced };
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({
         sector, ...e,
+        companies: e.keys.size,
         label: e.isClass ? bucketLabel(sector) : sector,
         returnPct: e.deployed > 0 ? (e.pnl / e.deployed) * 100 : null,
         contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
@@ -226,7 +262,7 @@ export function ReturnAnalysis() {
     const rated = byAccount.filter((a) => a.returnPct !== null);
     const winners = priced.filter((x) => x.unrealizedPnL > 0);
     return {
-      priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, byAccount, winners: winners.length,
+      priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, sectorSource, byAccount, winners: winners.length,
       embeddedRet: deployed > 0 ? ((pnl + realised) / deployed) * 100 : null,
       realised, deployed,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
@@ -236,7 +272,7 @@ export function ReturnAnalysis() {
       spreadEnds: rated.length >= 2 ? [rated[0], rated[rated.length - 1]] : null,
       unrated: byAccount.filter((a) => a.returnPct === null).map((a) => a.account.accountNo),
     };
-  }, [portfolio]);
+  }, [portfolio, consolidated, companySectors]);
 
   if (!portfolio || !model) return null;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -373,7 +409,8 @@ export function ReturnAnalysis() {
               <tbody>
                 {sectorRows.map((s) => (
                   <Tr view={sectorView} key={s.sector} className="border-t border-ink-700/60">
-                    <td className="px-2 py-2 text-slate-200">{s.label}</td>
+                    <td className="px-2 py-2 text-slate-200" data-xa="returns-sector-row" data-sector={s.sector}
+                      data-class={s.isClass ? "1" : "0"} data-companies={s.companies} data-pnl={s.pnl}>{s.label}</td>
                     <td className={`px-2 py-2 text-right mono ${changeColor(s.pnl)}`}>{money(s.pnl, true)}</td>
                     <td className="px-2 py-2 text-right mono">
                       {s.returnPct === null
@@ -398,13 +435,40 @@ export function ReturnAnalysis() {
               notes under the tables to go. Which classes are bucketed by class
               stays on screen, because that is what makes a row readable. */}
           <p className="mt-2 text-[11px] text-slate-500"
-            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead; its gain still counts.">
+            title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead — as does anything else that is not a share in a company, cash included; its gain still counts. A company's sector is the one Sector Composition draws: its own statement's, then a fund's filing on the ISIN, then screener.in on the NSE symbol, a lower tier only ever filling a sector the statements left empty.">
             {/* Stage 10cp: the line is the classes alone; that contributions
                 add to the total exactly is the first words of its hover. */}
             {m.wrapperClasses.length > 0
               ? <>Funds by class: <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span></>
               : <>Contributions add to the total return exactly</>}
           </p>
+          {/* WHICH TIER PLACED THE COMPANIES IN THIS TABLE — borrowed evidence
+              is counted where it is used, and `data-status` carries the fetch's
+              own state so a walk can tell a tier still landing from a settled
+              one. Until the funds' filings land, a company only a filing places
+              sits in Unclassified and its row WILL move; the strip says so. */}
+          {m.sectorSource.companies > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"
+              data-returns-sector-source data-xa="returns-sector-source"
+              data-status={exposure.status}
+              data-from-book={m.sectorSource.book}
+              data-from-disclosure={m.sectorSource.disclosure}
+              data-from-vendor={m.sectorSource.vendor}
+              data-unplaced={m.sectorSource.unplaced}
+              data-companies={m.sectorSource.companies}>
+              <span className="text-slate-500">Sector source</span>
+              <span><span className="mono text-slate-200">{m.sectorSource.book}</span> from a statement in this book</span>
+              {m.sectorSource.disclosure > 0 && <span><span className="mono text-slate-200">{m.sectorSource.disclosure}</span> from a fund&rsquo;s filing</span>}
+              {m.sectorSource.vendor > 0 && <span><span className="mono text-slate-200">{m.sectorSource.vendor}</span> from screener.in</span>}
+              {m.sectorSource.unplaced > 0 && <span className="text-slate-500"><span className="mono">{m.sectorSource.unplaced}</span> unplaced</span>}
+              {exposure.status === "loading" && <span className="text-slate-500">still reading the funds&rsquo; filings</span>}
+              {exposure.status === "unreachable" && (
+                <span className="text-amber-400/80" title="The look-through store did not answer, so no company is placed by a fund's own filing on this visit; those companies sit in Unclassified. Nothing is misplaced by it — that tier only ever fills a sector the statements left empty.">
+                  a fund&rsquo;s filings could not be read
+                </span>
+              )}
+            </div>
+          )}
         </Card>
       </div>
 

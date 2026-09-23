@@ -5743,9 +5743,148 @@ const XA_BOOK = (() => {
       const joined = Math.max(0, (n.accountsOnDate ?? 0) + (n.accountsCarried ?? 0) - (n.linkAccounts ?? 0));
       return { date: n.date, link, level, joined };
     });
-    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history };
+    // ── Data & Refresh / NAV & Performance: WHICH HOLDINGS A COUNT COUNTS
+    // (XA-10). `currentHoldings` re-expressed — the deduped book, less a fund
+    // redeemed to nil, less a security whose whole value is under the floor —
+    // through this file's own `smallKeysOf` and closed test, never through
+    // `analytics.ts`, which is what the pages call.
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const ownerOfAcc = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
+    const small = smallKeysOf(positions);
+    const current = (x) => !closed(x) && !small.has(x.securityKey);
+    const seenGroup = new Set();
+    const deduped = positions.filter((x) => {
+      if (!x.dedupeGroup) return true;
+      if (seenGroup.has(x.dedupeGroup)) return false;
+      seenGroup.add(x.dedupeGroup); return true;
+    });
+    const held = deduped.filter(current);
+    const heldRaw = positions.filter(current);
+    const noCost = held.filter((x) => x.costBasis == null);
+    const mvOf = (xs) => xs.reduce((a, x) => a + x.marketValue, 0);
+    const counts = {
+      rows: positions.length,
+      held: held.length,
+      names: new Set(held.map((x) => x.securityKey)).size,
+      entities: new Set(heldRaw.map((x) => ownerOfAcc.get(x.accountId))).size,
+      twice: positions.length - deduped.length,
+      closed: deduped.filter(closed).length,
+      negligible: deduped.filter((x) => !closed(x) && small.has(x.securityKey)).length,
+      isin: held.filter((x) => !!x.isin).length,
+      noCost: noCost.length,
+      noCostNames: new Set(noCost.map((x) => x.securityKey)).size,
+      noCostMV: mvOf(noCost),
+    };
+    // ── Sector placement (XA-11). Tiers 1 and 3 re-expressed — the book's own
+    // statement, then screener.in on the NSE symbol — straight off the
+    // committed files. Tier 2 (a fund's own filing) is a fetch this sweep does
+    // not repeat, and it only ever FILLS a sector the statements left empty, so
+    // whatever tiers 1 and 3 place is a FLOOR the page must reach, and the book
+    // count is exact.
+    const nse = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const vendor = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const sharesByKey = new Map();
+    for (const x of deduped) {
+      if (x.assetClass !== "Equity") continue;
+      const a = sharesByKey.get(x.securityKey) ?? [];
+      a.push(x); sharesByKey.set(x.securityKey, a);
+    }
+    const tier1 = new Set(), tier3 = new Set();
+    for (const [k, xs] of sharesByKey) {
+      if (xs.some((x) => x.sector && x.sector !== "Unclassified")) { tier1.add(k); continue; }
+      const sym = xs.find((x) => x.symbol)?.symbol ?? nse[k] ?? null;
+      const hit = sym ? vendor[sym] : null;
+      if (hit && hit.gics && hit.gics !== "Unclassified") tier3.add(k);
+    }
+    const tiersOver = (rows) => {
+      const keys = new Set(rows.map((x) => x.securityKey));
+      const k1 = [...keys].filter((k) => tier1.has(k)).length;
+      const floor = [...keys].filter((k) => tier1.has(k) || tier3.has(k)).length;
+      const mv = mvOf(rows);
+      return {
+        companies: keys.size, book: k1, placedFloor: floor,
+        unplacedCeiling: keys.size - floor, bookUnplaced: keys.size - k1,
+        coverageFloor: mv > 0 ? (mvOf(rows.filter((x) => tier1.has(x.securityKey) || tier3.has(x.securityKey))) / mv) * 100 : null,
+        coverageBookOnly: mv > 0 ? (mvOf(rows.filter((x) => tier1.has(x.securityKey))) / mv) * 100 : null,
+      };
+    };
+    const isPricedRow = (x) => !x.costUnavailable
+      && typeof x.costBasis === "number" && Number.isFinite(x.costBasis) && x.costBasis > 0
+      && typeof x.unrealizedPnL === "number" && Number.isFinite(x.unrealizedPnL)
+      && typeof x.returnPct === "number" && Number.isFinite(x.returnPct);
+    const sectors = {
+      upload: tiersOver(held.filter((x) => x.assetClass === "Equity")),
+      returns: tiersOver(deduped.filter((x) => x.assetClass === "Equity" && isPricedRow(x))),
+    };
+    // ── NAV & Performance's Return · FIFO (DL-3), re-expressed: FIFO over the
+    // current costed holdings, a whole PMS mandate struck on its capital since
+    // inception — the set and the arithmetic Morning CIO's Consolidated return
+    // is struck on. Struck twice, over the current set and over the whole
+    // consolidated book, because the second is the figure the tile printed and
+    // the check is only worth making where the two differ.
+    const accById = new Map(accounts.map((a) => [a.accountId, a]));
+    const fifoOver = (set, universe) => {
+      const costed = set.filter((x) => typeof x.costBasis === "number" && !x.costUnavailable);
+      const whole = new Set();
+      for (const acct of new Set(costed.map((x) => x.accountId))) {
+        const a = accById.get(acct), cap = a?.capital;
+        if (a?.engagement !== "PMS" || !cap || !(cap.contributed > 0)) continue;
+        const keys = new Set(costed.filter((x) => x.accountId === acct).map((x) => x.securityKey));
+        const all = universe.filter((x) => x.accountId === acct);
+        if (all.length && all.every((x) => keys.has(x.securityKey))) whole.add(acct);
+      }
+      let gain = 0, deployed = 0;
+      for (const x of costed) {
+        if (whole.has(x.accountId)) continue;
+        gain += x.marketValue - x.costBasis + (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+        deployed += x.costBasis + (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
+      }
+      for (const acct of whole) {
+        const cap = accById.get(acct).capital;
+        gain += costed.filter((x) => x.accountId === acct).reduce((a, x) => a + x.marketValue, 0) + cap.withdrawn - cap.contributed;
+        deployed += cap.contributed;
+      }
+      return deployed > 0 ? (gain / deployed) * 100 : null;
+    };
+    const fifo = { current: fifoOver(held, held), consolidated: fifoOver(deduped, held) };
+    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo };
   } catch { return null; }
 })();
+/**
+ * THE SECTOR-SOURCE STRIP, held to the book from both ends — one factory for
+ * both pages that draw one, parameterised on the one thing that differs: which
+ * set of company shares the page classifies. A strip computed from the index
+ * while the TABLE or TILE beside it still reads `x.sector` would pass every
+ * count here, so each page also carries a check on the figure it draws.
+ */
+const xaSectorSourceChecks = (key, which) => [
+  ["the sector-source strip has settled, and names the three tiers over this page's own companies", (t, ctx) => {
+    const el = xaEl(ctx, key);
+    const b = XA_BOOK?.sectors?.[which];
+    if (!b) return { notChecked: "the company shares could not be re-derived from glowData.ts" };
+    if (!el) return false;
+    const a = el.attrs;
+    const n = (k) => Number(a[k]);
+    return a.status === "ok"
+      && n("companies") === b.companies
+      && n("from-book") === b.book
+      && n("from-book") + n("from-disclosure") + n("from-vendor") + n("unplaced") === n("companies");
+  }],
+  ["…and the two lower tiers place companies the statements alone leave unplaced", (t, ctx) => {
+    const el = xaEl(ctx, key);
+    const b = XA_BOOK?.sectors?.[which];
+    if (!b) return { notChecked: "the company shares could not be re-derived from glowData.ts" };
+    if (!el) return false;
+    // LOAD-BEARING: the book must leave companies unplaced on tier 1 alone, or
+    // a page that never read the other two tiers would pass this.
+    if (!(b.bookUnplaced > b.unplacedCeiling)) return { notChecked: "tiers 1 and 3 place no more companies than tier 1 alone on this book" };
+    return Number(el.attrs.unplaced) <= b.unplacedCeiling;
+  }],
+];
+/** The count a `data-xa` element carries, as a number (NaN when absent). */
+const xaNum = (ctx, key, attr = "value") => Number(xaEl(ctx, key)?.attrs?.[attr]);
 /** A compact rupee figure as the page prints it (`₹33.1 L`, `−₹4.3 L`, `₹713.3 Cr`), in rupees. NaN when absent. */
 const xaRupees = (s) => {
   const m = /([−-])?\s*₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(s ?? "");
@@ -24990,6 +25129,30 @@ const INVARIANTS = {
       const table = t.slice(i, end > i ? end : i + 2000);
       return !/(Flexi Cap Fund|Sanshi Fund|Opportunities Strategy|Founders Fund|Active Momentum|Liquid ?Bees)/i.test(table);
     }],
+    // ── XA-11: A COMPANY'S SECTOR IS THE ONE SECTOR COMPOSITION DRAWS ───────
+    ...xaSectorSourceChecks("returns-sector-source", "returns"),
+    // THE TABLE, NOT ONLY THE STRIP. A strip computed from the three-tier
+    // index beside a table still keyed on `x.sector` passes every count above,
+    // so the table's own Unclassified row is held to the strip: it must be
+    // struck over exactly the companies no tier places, and every company must
+    // sit in exactly one sector row.
+    ["the Unclassified row is struck over exactly the companies no tier places", (t, ctx) => {
+      const strip = xaEl(ctx, "returns-sector-source");
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "returns-sector-row");
+      if (!strip || !rows.length) return false;
+      const company = rows.filter((r) => r.attrs.class === "0");
+      const unc = company.find((r) => r.attrs.sector === "Unclassified");
+      const unplaced = Number(strip.attrs.unplaced);
+      return (unc ? Number(unc.attrs.companies) : 0) === unplaced
+        && company.reduce((a, r) => a + Number(r.attrs.companies), 0) === Number(strip.attrs.companies);
+    }],
+    // A cash row is not a company and has no sector, whatever string its
+    // statement printed in the column.
+    ["no cash row stands as a sector", (t, ctx) => {
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "returns-sector-row");
+      if (!rows.length) return false;
+      return rows.every((r) => r.attrs.sector !== "Cash" || r.attrs.class === "1");
+    }],
   ],
   /*
    * COMPARE COMPANIES IS REMOVED, at the family's request, and its block goes
@@ -25257,6 +25420,91 @@ const INVARIANTS = {
       return head.includes(NAV_SERIES_BOOK.seriesFrom) && head.includes(NAV_SERIES_BOOK.seriesTo)
         && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
     }],
+    // ── DL-3: ONE RETURN FOR ONE BOOK ───────────────────────────────────────
+    // The tile was FIFO over every consolidated row — the funds redeemed to nil
+    // included — so 3P India Equity Fund 1's realised gain and cost of units
+    // sold were in it and not in Morning CIO's: +16.24% against +16.68%.
+    ["Return · FIFO is Morning CIO's figure: the current costed holdings, whole mandates on their capital", (t, ctx) => {
+      const f = XA_BOOK?.fifo;
+      if (!f || f.current == null) return { notChecked: "the book's FIFO return could not be re-derived from glowData.ts" };
+      // LOAD-BEARING: the book must carry a closed holding that moves the figure.
+      if (!(f.consolidated != null && Math.abs(f.consolidated - f.current) > 0.05)) {
+        return { notChecked: "no closed holding moves the FIFO return on this book" };
+      }
+      const el = xaEl(ctx, "perf-fifo");
+      const v = Number(el?.attrs?.value);
+      const shown = pctIn(el?.text ?? "");
+      return Number.isFinite(v) && Math.abs(v - f.current) < 1e-6
+        && !!shown && Math.abs(shown.v - f.current) <= shown.tie;
+    }],
+    // ── XA-10: ONE COUNT OF WHAT THE FAMILY HOLDS ──────────────────────────
+    ["the value tile counts the current holdings Morning CIO counts, and names the rows it leaves out", (t, ctx) => {
+      const c = XA_BOOK?.counts;
+      if (!c) return { notChecked: "the book's holdings could not be re-derived from glowData.ts" };
+      // LOAD-BEARING: the book must carry rows that are not current holdings.
+      if (!(c.held < c.rows)) return { notChecked: "every statement row is a current holding on this book" };
+      const titles = ctx?.titles ?? [];
+      return xaNum(ctx, "perf-positions") === c.held
+        && xaNum(ctx, "perf-positions", "names") === c.names
+        && titles.some((x) => x.includes(`${c.rows} statement rows`) && x.includes(`The ${c.held} left`)
+          && (!c.closed || /redeemed to nil/.test(x)) && (!c.negligible || /under /.test(x)));
+    }],
+  ],
+  /**
+   * ── DATA & REFRESH: THE SAME HOLDINGS, THE SAME SECTORS ───────────────────
+   *
+   * XA-10: the Positions tile printed every statement ROW (371) beside Morning
+   * CIO's 358; the ISIN and no-cost counts were struck over two more sets.
+   * XA-11: sector coverage read the statement tier alone (41.6%) on a book
+   * Sector Composition places almost whole, and a sentence said the book
+   * carries no look-through behind a fund, which Sector Composition's derived
+   * half contradicts. Every expectation is re-derived in `XA_BOOK`.
+   */
+  upload: [
+    ["Positions counts the current holdings Morning CIO counts, and names the rows it leaves out", (t, ctx) => {
+      const c = XA_BOOK?.counts;
+      if (!c) return { notChecked: "the book's holdings could not be re-derived from glowData.ts" };
+      if (!(c.held < c.rows)) return { notChecked: "every statement row is a current holding on this book" };
+      const titles = ctx?.titles ?? [];
+      return xaNum(ctx, "upload-positions") === c.held
+        && xaNum(ctx, "upload-positions", "names") === c.names
+        && xaNum(ctx, "upload-positions", "entities") === c.entities
+        && xaNum(ctx, "upload-positions", "rows") === c.rows
+        && titles.some((x) => x.includes(`${c.rows} statement rows`) && x.includes(`The ${c.held} left`)
+          && (!c.twice || x.includes(`${c.twice} ${c.twice === 1 ? "is" : "are"} reported under two members`))
+          && (!c.closed || x.includes(`${c.closed} ${c.closed === 1 ? "is a fund" : "are funds"} redeemed to nil`))
+          && (!c.negligible || x.includes(`${c.negligible} ${c.negligible === 1 ? "is a holding" : "are holdings"} worth under`)));
+    }],
+    ["the ISIN and no-cost counts are fractions of the same current holdings", (t, ctx) => {
+      const c = XA_BOOK?.counts;
+      if (!c) return { notChecked: "the book's holdings could not be re-derived from glowData.ts" };
+      const isin = xaEl(ctx, "upload-isin")?.text ?? "";
+      const nc = /(\d+) names · (\d+) of (\d+) holdings · (.+)$/.exec((xaEl(ctx, "upload-nocost")?.text ?? "").trim());
+      if (!nc) return false;
+      const mv = xaRupees(nc[4]);
+      return isin.trim() === `${c.isin} of ${c.held}`
+        && Number(nc[1]) === c.noCostNames && Number(nc[2]) === c.noCost && Number(nc[3]) === c.held
+        // The page prints the value compact, to one decimal of a crore.
+        && Math.abs(mv - c.noCostMV) <= 0.05e7 + 1;
+    }],
+    ...xaSectorSourceChecks("upload-sector-source", "upload"),
+    // THE TILE, NOT ONLY THE STRIP: the coverage figure must reach what the
+    // book's own statement and screener.in place — tier 2 only adds to that —
+    // and the book must be one where that differs from the statement alone.
+    ["sector coverage reaches what the statement and screener.in place, never the statement alone", (t, ctx) => {
+      const b = XA_BOOK?.sectors?.upload;
+      if (!b || b.coverageFloor == null) return { notChecked: "the company shares could not be re-derived from glowData.ts" };
+      if (!(b.coverageFloor - b.coverageBookOnly > 1)) return { notChecked: "screener.in places no more company-share value than the statements on this book" };
+      const v = xaNum(ctx, "upload-coverage");
+      return Number.isFinite(v) && v >= b.coverageFloor - 1e-6 && v <= 100 + 1e-9;
+    }],
+    // STRUCK ON THE HOVERS AS WELL AS THE FACE. The claim sat in a footnote
+    // under the list until #95 moved every footnote into the hover on the
+    // figure it explains (Stage 10cp) — this one onto the Sector coverage
+    // tile — so a check reading the page text alone could no longer fail on
+    // the sentence coming back where it now lives.
+    ["the claim that the book carries no look-through behind a fund is gone", (t, ctx) =>
+      ![t, ...(ctx?.titles ?? [])].some((x) => /carries no look-through behind a fund/i.test(x))],
   ],
 
   history: [
@@ -26547,6 +26795,15 @@ for (const theme of THEMES) {
       // as missing when it is really a race.
       if (name === "family-entity") {
         await page.waitForSelector('[data-fe-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      // The same fetch behind Data & Refresh's coverage tile and Return &
+      // Drawdown's sector table (XA-11) — read settled, or a tier still landing
+      // reads as a tier that is missing.
+      if (name === "upload") {
+        await page.waitForSelector('[data-upload-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      if (name === "returns") {
+        await page.waitForSelector('[data-returns-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
       }
       /**
        * THE RESEARCH CARD'S SUB-TABS, CLICKED THE WAY A READER DOES.
