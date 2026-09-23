@@ -16309,12 +16309,13 @@ twice.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + **42** + **44** + 30 + 22 +
 140 (2 not checked, 0 blocked) · `test:family` (two new suites, `carriedCost`
-and `txnAxis`) · `check:family` **86/0** · `check:pages` **204 combinations
+and `txnAxis`) · `check:family` **86/0** · `check:pages` **206 combinations
 clean**, with the same eight evidenced abstentions across the same four
-pre-existing claims — measured on the tree merged with #69, #71 AND #70, which is
-the only base that count is a fact about. It read 194 with #69 alone and 198 with
-#71 as well; #71 adds two routes and #70 three, so every step reconciles, and
-only because each was measured rather than carried across. The bug pass above
+pre-existing claims — measured on the tree merged with #69, #71, #70 AND #73,
+which is the only base that count is a fact about. It read 194 with #69 alone,
+198 with #71 and 204 with #70; #71 adds two routes, #70 three and #73 one, so
+every step reconciles, and only because each was measured rather than carried
+across. The bug pass above
 was run on the #69 + #71 tree; on the final one the seven routes it walks were
 re-run clean. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` byte-identically on every merged tree, and `npm run
