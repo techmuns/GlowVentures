@@ -41,13 +41,30 @@ import {
  *   • and nothing here is in any book total, because the fund's own value
  *     already is.
  */
-export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }: {
+/**
+ * ── TWO HALVES, ON TWO TABS OF THE POSITION PAGE ────────────────────────────
+ *
+ * The position page is one template for every holding now — Position,
+ * Transactions, Price & returns, Research, My targets — and a scheme answers two
+ * of those questions: its NAV and returns ARE its price and returns, and what it
+ * holds IS its research. So the card draws one half per tab rather than one card
+ * standing under both. `part` picks which; the loading and absence states are
+ * the same in both, so a reader on either tab learns the store did not answer.
+ */
+const PART_TITLE = {
+  nav: "The scheme — NAV and returns",
+  holdings: "What the scheme holds",
+} as const;
+
+export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part }: {
   securityKey: string;
   name: string;
   /** What the family's units are worth, for the derived exposure column. */
   holdingValue: number;
   /** The account's own report date — not the book's newest. */
   asOfHolding: string;
+  /** Which half of the scheme to draw — see `PART_TITLE`. */
+  part: keyof typeof PART_TITLE;
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
@@ -89,9 +106,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
 
   if (state.status === "loading") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
-        <p className="text-[12.5px] text-slate-500">Reading the scheme's NAV, returns and disclosed portfolio…</p>
-      </Card>
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
+          <p className="text-[12.5px] text-slate-500">Reading the scheme's NAV, returns and disclosed portfolio…</p>
+        </Card>
+      </div>
     );
   }
 
@@ -100,21 +119,25 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   // over an unreachable archive.
   if (state.status === "unreachable") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
-        <AbsentSection
-          what="The fund store did not respond"
-          needs="This scheme's NAV, returns and disclosed portfolio are committed under public/lookthrough/ and read when the page opens. The request did not come back, so nothing is shown rather than a partial answer — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
-      </Card>
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
+          <AbsentSection
+            what="The fund store did not respond"
+            needs="This scheme's NAV, returns and disclosed portfolio are committed under public/lookthrough/ and read when the page opens. The request did not come back, so nothing is shown rather than a partial answer — reload, and if it persists the store may not have been built for this deployment (npm run build-lookthrough)." />
+        </Card>
+      </div>
     );
   }
 
   if (state.status === "none") {
     return (
-      <Card className="mt-5" title="The scheme — NAV, returns and what it holds">
+      <div data-fund-lookthrough={part}>
+        <Card className="mt-5" title={PART_TITLE[part]}>
         <AbsentSection
           what={`No scheme resolves for ${name}`}
           needs={`${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
-      </Card>
+        </Card>
+      </div>
     );
   }
 
@@ -124,11 +147,16 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   const periods = Object.entries(p.returns);
 
   return (
+    <div data-fund-lookthrough={part}>
     <Card className="mt-5"
-      title="The scheme — NAV, returns and what it holds"
-      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name}${p.amc ? ` · ${p.amc}` : ""} — AMFI's daily NAV and the AMC's own monthly disclosure, not a statement issued to this family.`}
+      title={PART_TITLE[part]}
+      /* Each half names ITS OWN document — AMFI's daily NAV for the first, the
+         AMC's monthly disclosure for the second — and both say, in words, that
+         neither is a statement issued to this family. */
+      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name}${p.amc ? ` · ${p.amc}` : ""} — ${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : "the AMC's own monthly disclosure"}, not a statement issued to this family.`}
       right={<Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>}>
 
+      {part === "nav" && (<>
       {/* ── NAV, its daily change, and the plan ──────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
@@ -228,8 +256,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         </div>
       )}
 
+      </>)}
+
+      {part === "holdings" && (<>
       {/* ── the holdings ─────────────────────────────────────────────────── */}
-      <div className="mt-6 mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
           <span title="A scheme discloses its portfolio monthly; the family's units are valued on their own statement's date. The two rarely coincide, so both are shown rather than one standing for the other.">
             portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · holding {fmtDate(asOfHolding)}
@@ -327,6 +358,8 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
         {" "}<Link to="/monitor" className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries the
         family&rsquo;s own holding of it.
       </p>
+      </>)}
     </Card>
+    </div>
   );
 }
