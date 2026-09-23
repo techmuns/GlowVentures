@@ -32,6 +32,7 @@ FILES=(
   "src/components/PageHeader.tsx"
   "src/components/Sidebar.tsx"
   "src/pages/PortfolioMonitor.tsx"
+  "src/pages/StockInfo.tsx"
   "tailwind.config.js"
 )
 SNAP=$(mktemp -d)
@@ -49,6 +50,7 @@ ROUTES=cio,monitor,holdings-book,stock
 put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
 
 # run_case <number> <themes> <name> <patch command…>
+# (`CASE_ROUTES` sweeps one case over other routes than the default four.)
 run_case() {
   local num="$1" themes="$2" name="$3"; shift 3
   if [ -n "${CASES:-}" ] && ! [[ ",$CASES," == *",$num,"* ]]; then return; fi
@@ -58,7 +60,7 @@ run_case() {
   if ! npm run build >/dev/null 2>&1; then
     echo "   NOT A RESULT — the bugged tree does not build"
   else
-    THEMES=$themes ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗|contrast=[1-9]|dark-|pale-' | grep -v 'NOT CHECKED' | sed 's/^/   /'
+    THEMES=$themes ONLY=${CASE_ROUTES:-$ROUTES} npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗|contrast=[1-9]|dark-|pale-' | grep -v 'NOT CHECKED' | sed 's/^/   /'
   fi
   put_back
 }
@@ -116,3 +118,11 @@ run_case 7 light "every card carries a hard offset, like a button" \
 run_case 8 dark "every card carries a hard offset in the dark theme" \
   sub tailwind.config.js 'card: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 1px 2px 0 rgba(0,0,0,0.5)",' \
     'card: "0 2px 0 0 #14142b, 0 1px 2px 0 rgba(0,0,0,0.5)",'
+
+# ── 9 ── the one cell that may wrap stops wrapping. The semibold headings run
+# wider in the fallback face this sweep draws in, and on the Buoyant page that
+# pushed Basis 14px behind a sideways scroll until the Managed-by sub-line was
+# allowed to give up the width.
+CASE_ROUTES=stock-carried run_case 9 light "the Managed-by cell may no longer wrap, so the position table overflows" \
+  sub src/pages/StockInfo.tsx '<td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">' \
+    '<td className="px-4 py-2.5 text-[12px] text-slate-400">'

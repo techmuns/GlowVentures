@@ -727,7 +727,13 @@ export function StockInfo() {
                        which is a fact about the fixture rather than the page. */
                     <Tr view={posView} key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
-                      <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                      {/* THE ONE CELL THAT MAY WRAP, and only when the table would
+                          not otherwise fit. Where it fits nothing changes; where a
+                          wider face is drawn — the fallback when Inter cannot
+                          load, whose semibold headings run wider — this sub-line
+                          gives up the width rather than pushing Basis behind a
+                          sideways scroll (Stage 10cf). */}
+                      <td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
                         <div>{providerOf(accIdx, r)}</div>
                         {/* The route reads as a phrase — "via manager's mandate"
                             — because the column header no longer supplies the
