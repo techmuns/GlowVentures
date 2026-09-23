@@ -75,6 +75,23 @@ export type FifoTotals = {
   realised: number | null;
   /** The capital behind the return — cost held + cost sold, or a mandate's capital paid in. */
   deployed: number | null;
+  /**
+   * WHAT AN "INVESTED" COLUMN PRINTS FOR THIS SET: the cost of the units still
+   * held, except that a WHOLE mandate enters at the capital the family paid
+   * into it (`capital.contributed`). NULL where nothing in the set is costed.
+   *
+   * *"Invested shows what FIFO divides by: ₹121.7 Cr paid into the PMS
+   * mandates, with ₹124.6 Cr (cost of shares held) in the hover."* A whole
+   * mandate's return is struck on its capital; printed beside the cost of its
+   * surviving shares it divides one figure by another a reader cannot see. It
+   * is NOT `deployed`: a holding struck holding by holding stays at the cost of
+   * what is held, because Invested and Unrealised must still add to its value.
+   */
+  invested: number | null;
+  /** The whole mandates' own cost held, paid in and withdrawn — for the hover that names both bases. */
+  wholeCostHeld: number;
+  wholeContributed: number;
+  wholeWithdrawn: number;
   /** unrealised + realised. */
   gain: number | null;
   /** gain ÷ deployed, in percent — NULL where cost does not cover the set. */
@@ -143,7 +160,8 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
 
   let marketValue = 0, uncostedValue = 0, uncosted = 0, realisedCovered = 0;
   let costHeld: number | null = null, unrealised: number | null = null;
-  let realised: number | null = null, deployed: number | null = null;
+  let realised: number | null = null, deployed: number | null = null, invested: number | null = null;
+  let wholeCostHeld = 0, wholeContributed = 0, wholeWithdrawn = 0;
   const add = (a: number | null, b: number) => (a ?? 0) + b;
 
   const mandateMV = new Map<string, number>();
@@ -163,6 +181,7 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     if (!costed(p)) { uncostedValue += p.marketValue; uncosted += 1; continue; }
     const c = p.costBasis as number;
     costHeld = add(costHeld, c);
+    invested = add(invested, c);
     unrealised = add(unrealised, p.marketValue - c);
     const sold = isNum(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
     deployed = add(deployed, c + sold);
@@ -175,13 +194,18 @@ export function fifoTotals(set: readonly Position[], opts: FifoOptions = {}): Fi
     const unr = mv - (mandateCost.get(acct) ?? 0);
     realised = add(realised, gain - unr);
     deployed = add(deployed, cap.contributed);
+    invested = add(invested, cap.contributed);
+    wholeCostHeld += mandateCost.get(acct) ?? 0;
+    wholeContributed += cap.contributed;
+    wholeWithdrawn += cap.withdrawn;
   }
 
   const gain = unrealised === null && realised === null ? null : (unrealised ?? 0) + (realised ?? 0);
   const covers = costCoversSet(marketValue, uncostedValue) || (marketValue === 0 && isNum(deployed) && deployed > 0);
   const returnPct = covers && gain !== null && isNum(deployed) && deployed > 0 ? (gain / deployed) * 100 : null;
   return {
-    marketValue, costHeld, unrealised, realised, deployed, gain, returnPct,
+    marketValue, costHeld, unrealised, realised, deployed, invested, gain, returnPct,
+    wholeCostHeld, wholeContributed, wholeWithdrawn,
     uncostedValue, uncosted, realisedCovered, holdings: set.length, wholeMandates: [...whole].sort(),
   };
 }
@@ -198,6 +222,32 @@ export function fifoBasisNote(t: FifoTotals, money: (n: number) => string): stri
     parts.push(`${t.wholeMandates.length} whole mandate(s) are struck on their capital since inception — value plus withdrawals less what was paid in — so their realised includes every sale since inception and the income less fees`);
   }
   parts.push("capital deployed is the cost of the units still held plus the cost of the units already sold");
+  return parts.join(" · ");
+}
+
+/**
+ * A cost-held total — `sumOrNull` over `costBasis` — with each WHOLE mandate in
+ * the set swapped for its capital paid in: the figure an Invested column prints
+ * for a set that may mix whole mandates with everything else. A caller that
+ * already summed the cost its own way keeps its own null semantics this way,
+ * rather than trading them for `invested`'s.
+ */
+export const investedWithCapital = (cost: number | null, f: FifoTotals): number | null =>
+  cost === null ? null : cost - f.wholeCostHeld + f.wholeContributed;
+
+/**
+ * The words for an Invested cell whose set holds a whole mandate: which figure
+ * is printed, and the other basis beside it. Empty where the set holds none —
+ * there the printed figure IS the cost of what is held, and needs no note.
+ */
+export function investedBasisNote(t: FifoTotals, money: (n: number) => string): string {
+  if (!t.wholeMandates.length) return "";
+  const n = t.wholeMandates.length;
+  const parts = [
+    `${n === 1 ? "This mandate enters" : `${n} whole mandates enter`} at the capital paid in, ${money(t.wholeContributed)} — what its return is divided by`,
+    `the cost of the shares ${n === 1 ? "it holds" : "they hold"} now is ${money(t.wholeCostHeld)}, and Unrealised P&L is struck on that`,
+  ];
+  if (t.wholeWithdrawn > 0) parts.push(`${money(t.wholeWithdrawn)} has been withdrawn since inception, so Invested + Unrealised + Realised comes to the value plus that`);
   return parts.join(" · ");
 }
 

@@ -15,7 +15,7 @@
 # or a build that fails, is NOT A RESULT — never read as a clean run.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
-FILES=(src/lib/fifo.ts shared/fifo.mjs src/lib/tranches.ts src/pages/PortfolioMonitor.tsx src/pages/MandateHoldings.tsx scripts/build-book.mjs src/data/glowData.ts)
+FILES=(src/lib/fifo.ts shared/fifo.mjs src/lib/tranches.ts src/pages/PortfolioMonitor.tsx src/pages/MandateHoldings.tsx src/pages/MorningCIO.tsx src/pages/HoldingsBehind.tsx scripts/build-book.mjs src/data/glowData.ts)
 SNAP=$(mktemp -d)
 for f in "${FILES[@]}"; do mkdir -p "$SNAP/$(dirname "$f")"; cp "$f" "$SNAP/$f"; done
 exec 9>"$SNAP/.lock"
@@ -82,10 +82,25 @@ run_case() {
     8) echo "   two contributions at one entry NAV earn different holding-period returns by date"
        patch src/lib/tranches.ts 'const returnPct = ((value - m.invested) / m.invested) * 100;' 'const returnPct = ((value - m.invested) / m.invested) * 100 + (m.date < "2025-01-01" ? 1 : 0);' || return
        pages "monitor-tranche-shared" ;;
+    9) echo "   a Monitor mandate row's Invested back to the cost of its shares, beside a return on its capital"
+       patch src/pages/PortfolioMonitor.tsx 'invested: costNA ? null : fifo.invested,' 'invested: costNA ? null : cost,' || return
+       pages "monitor" ;;
+    10) echo "   a Monitor category's Invested back to the cost held while its rows print capital"
+       patch src/pages/PortfolioMonitor.tsx 'const totInvested = investedWithCapital(tot.cost, tot.fifo);' 'const totInvested = tot.cost;' || return
+       pages "monitor" ;;
+    11) echo "   Morning CIO's allocation rows back to the cost held (Invested, Current and Return stop tying)"
+       patch src/pages/MorningCIO.tsx 'invested: investedWithCapital(cost, fifo),' 'invested: cost,' || return
+       pages "cio-allocation" ;;
+    12) echo "   the PMS drill-down's mandate rows back to the cost held"
+       patch src/pages/HoldingsBehind.tsx '? { invested: investedWithCapital(cost, f), capital: f }' '? { invested: cost, capital: f }' || return
+       pages "holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5,holdings-row-6" ;;
+    13) echo "   the capital swap itself returns the cost held, on every surface at once"
+       patch src/lib/fifo.ts 'cost === null ? null : cost - f.wholeCostHeld + f.wholeContributed;' 'cost;' || return
+       pages "monitor,cio-allocation,holdings-row-1,holdings-row-2,holdings-row-3,holdings-row-4,holdings-row-5,holdings-row-6" ;;
     *) echo "   no such case"; return ;;
   esac
   restore
 }
 
-CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6 7 8)
+CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6 7 8 9 10 11 12 13)
 for c in "${CASES[@]}"; do run_case "$c"; done

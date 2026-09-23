@@ -23,7 +23,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn } from "@/lib/ledger";
-import { fifoTotals, fifoBasisNote, realisedReason, type FifoTotals } from "@/lib/fifo";
+import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, type FifoTotals } from "@/lib/fifo";
 import { rollup, type GroupRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, carriedCostOf, carriedCostNote, boughtNavOf,
@@ -327,6 +327,15 @@ type Row = {
    */
   realised: number | null;
   fifo: FifoTotals | null;
+  /**
+   * WHAT THE INVESTED CELL PRINTS, where it is not `costBasis` — set on a
+   * mandate row, and there only. A WHOLE mandate enters at the capital the
+   * family paid into it (`fifoTotals().invested`), which is what its Return is
+   * divided by; `costBasis` keeps the cost of the shares it holds now, which
+   * Unrealised P&L is struck on and which the cell's hover names. Undefined on
+   * every other row, where the two are one figure.
+   */
+  invested?: number | null;
   /** Set on `kind === "mandate"` and nowhere else. */
   mandate?: MandateInfo;
   /**
@@ -424,11 +433,14 @@ const MANDATE_DRILL_COLS = ["security", "qty", "avgCost", "invested", "cmp", "mv
 const VENUE_COLS = ["route", "vehicle", "entity", "qty", "mv", "share", "pnl", "return"] as const;
 const VENUE_CLASS_COLS = ["cls", "route", "vehicle", "entity", "qty", "mv", "share", "pnl", "return"] as const;
 
+/** The Invested cell's figure: a mandate row's capital basis where it has one, else the cost held. */
+const investedOf = (r: Row): number | null => (r.invested !== undefined ? r.invested : r.costBasis);
+
 const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | undefined> = {
   security: (r) => r.security,
   qty: (r) => r.quantity,
   avgCost: (r) => r.avgCost,
-  invested: (r) => r.costBasis,
+  invested: (r) => investedOf(r),
   investedOn: (r) => r.investedOn?.first ?? null,
   cmp: (r) => r.currentPrice,
   day: (r) => r.dayChangePct,
@@ -1152,6 +1164,9 @@ export function PortfolioMonitor() {
         returnPct: costNA ? null : fifo.returnPct,
         realised: fifo.realised,
         fifo,
+        // *"Invested shows what FIFO divides by"* — a whole mandate's capital
+        // paid in; a filtered one, the cost of the shares left in view.
+        invested: costNA ? null : fifo.invested,
         weight: weightBase > 0 ? mv / weightBase : 0,
         costNA,
         live: livePs.length > 0,
@@ -2304,6 +2319,10 @@ export function PortfolioMonitor() {
                    */
                   const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
                   const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
+                  // A WHOLE MANDATE'S INVESTED IS ITS CAPITAL PAID IN, and the
+                  // cell names the cost of the shares it holds beside it.
+                  const capitalNote = r.kind === "mandate" && r.fifo && r.invested !== undefined
+                    ? investedBasisNote(r.fifo, (v) => fmtFromBase(v, { compact: true })) : "";
                   /**
                    * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
                    * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
@@ -2505,8 +2524,12 @@ export function PortfolioMonitor() {
                             a chevron that opens nothing is worse than none. */}
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-cost-carried={carried ? carried.paid : undefined}
-                          data-cost-printed={carried ? carried.printed : undefined}>
-                          {r.costNA ? "—" : trancheCount > 0 ? (
+                          data-cost-printed={carried ? carried.printed : undefined}
+                          data-invested-capital={capitalNote ? investedOf(r) ?? undefined : undefined}
+                          data-invested-cost-held={capitalNote ? r.costBasis ?? undefined : undefined}>
+                          {r.costNA ? "—" : capitalNote
+                            ? <span title={capitalNote}>{fmtFromBase(investedOf(r), { compact: true })}</span>
+                            : trancheCount > 0 ? (
                             <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
                               data-tranche-toggle={r.key} data-tranche-rows={trancheCount}
                               title={`Bought over ${trancheCount} dated contribution${trancheCount === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.${trancheGroups.length > 1 ? ` Shown per unit class, because each class is marked at its own NAV.` : ""}${carriedWhy ? ` ${carriedWhy}` : ""}`}
@@ -3302,6 +3325,14 @@ export function PortfolioMonitor() {
                         : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
                         : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
                       const realised = tot.fifo.realised;
+                      /**
+                       * THE SECTION'S INVESTED IS THE SUM OF ITS ROWS', and a
+                       * whole mandate's row prints its capital paid in — so the
+                       * section swaps each whole mandate's cost held for that,
+                       * and names both. Everything else stays the cost held.
+                       */
+                      const totInvested = investedWithCapital(tot.cost, tot.fifo);
+                      const capitalWhy = investedBasisNote(tot.fifo, (v) => fmtFromBase(v, { compact: true }));
                       const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
                       return (
                         /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
@@ -3327,8 +3358,10 @@ export function PortfolioMonitor() {
                           <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                             {tot.cost === null
                               ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
-                              : <span title={uncostedMV > 1 ? costCover : undefined}>
-                                  {fmtFromBase(tot.cost, { compact: true })}
+                              : <span title={[capitalWhy, uncostedMV > 1 ? costCover : ""].filter(Boolean).join(" · ") || undefined}
+                                  data-invested-capital={capitalWhy ? totInvested ?? undefined : undefined}
+                                  data-invested-cost-held={capitalWhy ? tot.cost ?? undefined : undefined}>
+                                  {fmtFromBase(totInvested, { compact: true })}
                                   {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
                                 </span>}
                           </td>
@@ -3458,7 +3491,15 @@ export function PortfolioMonitor() {
                   label={<>Total · {rows.length} rows</>}
                   cells={{
                     invested: (
-                    <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"><Auditable formula={{ title: "Total invested (cost)", excel: "= Σ Cost of all holdings", plain: "What the holdings in this table cost, added together — every asset class, not the listed ones alone.", worked: `= ${money(totCost)} across ${rows.length} rows`,  }}>{fmtFromBase(totCost, { compact: true })}</Auditable></td>
+                    <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"
+                      data-invested-capital={totFifo.wholeMandates.length ? investedWithCapital(totCost, totFifo) ?? undefined : undefined}><Auditable formula={{
+                        title: "Total invested",
+                        excel: totFifo.wholeMandates.length ? "= Σ Cost of the holdings still held − their cost in whole mandates + those mandates' capital paid in" : "= Σ Cost of all holdings",
+                        plain: `What the holdings in this table cost, added together — every asset class, not the listed ones alone.${totFifo.wholeMandates.length ? ` ${investedBasisNote(totFifo, money)}, so this is the sum of the Invested cells above it.` : ""}`,
+                        worked: totFifo.wholeMandates.length
+                          ? `= ${money(totCost)} − ${money(totFifo.wholeCostHeld)} + ${money(totFifo.wholeContributed)} = ${money(investedWithCapital(totCost, totFifo))} across ${rows.length} rows`
+                          : `= ${money(totCost)} across ${rows.length} rows`,
+                      }}>{fmtFromBase(investedWithCapital(totCost, totFifo), { compact: true })}</Auditable></td>
                     ),
                     /*
                       THE COLUMN COUNTS WHAT IT COVERS RATHER THAN LEAVING A WALL
