@@ -404,8 +404,16 @@ text = await page.locator("body").innerText();
 // "passing" against text that is no longer on the page.
 const valueHover = await page.$eval('[data-tile-slot="value"] [title]', (el) => el.getAttribute("title") ?? "")
   .catch(() => "");
+// …AND THE BASIS IS THE BAND'S HOVER NOW, the counts staying on its face. The
+// family asked for the lines that say what the table is to go (*"its obvious
+// from the table what it is"*), so "each holding counted once" left the band's
+// visible line for its `title` — read there, and asserted gone from the text.
+const privateBandHover = await page.$eval('tr[data-pm-section="private"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the Private Market page still counts the funds and accounts it covers",
-  /\d+ funds · \d+ folios · each holding counted once/i.test(text)
+  /\d+ funds · \d+ folios/i.test(text)
+    && /each holding counted once/i.test(privateBandHover)
+    && !/\d+ funds · \d+ folios · each holding counted once/i.test(text)
     && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
   (/\d+ funds · \d+ folios/i.exec(text)?.[0] ?? "(no section count)") + " | "
     + (/across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)"));
@@ -437,9 +445,16 @@ check("its private market value is a real measured figure, not the removed page'
 // needs to be like a hidden drop down clearly marked"* — so the claim is struck
 // on its band, which states the paid-in capital and that it is in no value
 // total even while the section is folded.
+// …AND WHAT IT PAID IS THE BAND'S HOVER, the band's face keeping its name,
+// its "missing data" marker and its counts — the sentence under it went at the
+// family's request, and must no longer be in the page's text.
+const unvaluedBandHover = await page.$eval('tr[data-pm-section="unvalued"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /Not valued/i.test(text) && /missing data/i.test(text)
-  && /₹[\d,.]+\s*(?:Cr|L) paid in is in no value total/i.test(text));
+  && /₹[\d,.]+\s*(?:Cr|L) paid in here is in no value total/i.test(unvaluedBandHover)
+  && !/paid in (?:here )?is in no value total/i.test(text),
+  unvaluedBandHover.slice(0, 120));
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
