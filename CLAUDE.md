@@ -20621,19 +20621,24 @@ the fix is to the checker, and it belongs in its own change.
 
 #### Verification
 
-On the tree merged with #87 and #89 (main `4148c1a`): `tsc` clean, and
-`build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
-byte-identically.
+Every result below is from the tree that ships: this branch merged with #87
+and #89 (main `4148c1a`).
 
-On the tree merged with #78 (main `3a5b4d1`), which #87 and #89 changed only in
-fonts, colours and notes:
-
-- `build` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35,
-  buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
-  neoFlows 8, golden 140; 2 not checked, 0 blocked) · `test:family` (0 failed).
+- `tsc` · `build` · `build-book` regenerates `glowData.ts` and
+  `docs/BOOK-REPORT.md` byte-identically.
+- `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant 42,
+  classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+  140; 2 not checked, 0 blocked) · `test:family` (0 failed).
 - `check:family` **85/2**. The two failures are main's own Extras-menu count,
   which Stage 10cf records: #84 added a fifth page and the check still counts
   four.
+- `check:pages` **246 combinations, 3 with a finding, and the new guard passes
+  on every route.** The three are the Private Market routes, and their 8 failing
+  checks fail the same way on main: the fund-return check Stage 10cf records.
+  The 10 checks marked not checked are main's too, each with nothing to check on
+  this book: 6 KPI-tile lines across the Morning CIO routes, 2 Private Market
+  cost lines, 1 redeemed private account, and the not-found drill-down's crumb.
+  246 is main's own count, because this change adds no route and removes none.
 
 **EVERY DEFECT THIS CHANGE GUARDS AGAINST WAS PUT BACK, ONE AT A TIME.** Each ran
 in a scratch worktree with its own server, and the files were restored from git
@@ -20660,9 +20665,6 @@ that is fixed (§4). A full sweep on the tree merged with #78 found the other
 three: #84's evidence cell and #77's capital summary on two routes. All three
 are fixed (§4), and a targeted sweep of those routes is clean. Each was found by
 the guard firing, which is the same demonstration as a defect put back.
-
-`check:pages` is being re-run in full on the tree merged with #87 and #89. Its
-result replaces this line.
 
 ### Stage 10k — News & Announcements: REMOVED
 
