@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CSSProperties, ReactNode, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { StatTile } from "@/components/StatTile";
@@ -52,6 +52,11 @@ export type TileMetric = {
  * they will select the one's that they want to see. Also add a small + button
  * on the last 4th KPI tile so the user can also increase the no. of KPI tile
  * and add a new one on the page as per their requirement."*
+ *
+ * THE `+` HAS SINCE BECOME A TILE OF ITS OWN — see `AddTile` below:
+ * *"Add another tile. It should be a big empty tile with bold written: ADD
+ * TILE. When I click on the ADD TILE button, I should be able to choose what I
+ * want to see in that tile."*
  *
  * THE DROPDOWN IS THE TILE'S OWN LABEL, which costs no space and is where a
  * reader already looks to see which metric they are reading. A control tucked
@@ -236,17 +241,31 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
     commit(next);
   };
 
-  const add = () => {
-    const spare = metrics.find((m) => !ids.includes(m.id));
-    if (spare && ids.length < cap) commit([...ids, spare.id]);
+  /**
+   * THE METRICS NOT ON SCREEN, in the catalogue's order — what the ADD TILE
+   * card offers. A metric already showing is never offered twice: the reader
+   * can see it, and a second copy would spend a slot on nothing.
+   */
+  const spare = metrics.filter((m) => !ids.includes(m.id));
+  /**
+   * ADD THE METRIC THE READER CHOSE. The `+` this replaced appended the FIRST
+   * spare metric in catalogue order and left the reader to change it with that
+   * tile's own picker — two steps, the first of them a guess. It saves the
+   * same way a pick does, through `commit`.
+   */
+  const add = (id: string) => {
+    if (!byId.has(id) || ids.includes(id) || ids.length >= cap) return;
+    commit([...ids, id]);
   };
+  /** Only where a metric is left to add — a card that opened an empty menu would look live and do nothing. */
+  const showAdd = ids.length < cap && spare.length > 0;
 
   /** Where the choice is kept, in words — shown inside the picker, never on the strip. */
   const savedWhere = store.status === "shared" ? SAVED_FOR_EVERYONE
     : store.status === "local" ? store.reason
     : "Saved in this browser — checking the shared store…";
 
-  const controls = (i: number, last: boolean) => (
+  const controls = (i: number) => (
     <div className="flex items-center gap-1">
       {/* NEVER BELOW ONE SLOT. A strip with no tiles is a page whose figures
           have gone, which no reader asked for and which a saved empty set would
@@ -259,27 +278,24 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
           <X className="h-3 w-3" />
         </button>
       )}
-      {/* ON THE LAST TILE, as asked — and only where a metric is left to put in
-          it, so the control is never one that looks live and does nothing. */}
-      {last && ids.length < cap && (
-        <button type="button" data-tile-add onClick={add}
-          title="Add another tile" aria-label="Add another tile"
-          className="grid h-5 w-5 place-items-center rounded border border-ink-700 bg-ink-800/60 text-slate-400 ring-focus transition-colors hover:bg-ink-700/60 hover:text-slate-200">
-          <Plus className="h-3 w-3" />
-        </button>
-      )}
     </div>
   );
 
   return (
     <div data-tile-strip={ids.join(",")} data-tile-saved={store.status}
-      className={variant === "kpi" ? "kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4"}
-      style={variant === "kpi" ? ({ "--kpi-cols": Math.min(Math.max(ids.length, 1), 6) } as CSSProperties) : undefined}
+      /* `auto-rows-fr`: EVERY ROW AS TALL AS THE TALLEST, which is what makes
+         the ADD TILE card the size of a tile even when it sits alone on a row
+         of its own — without it that row is as short as the card's own two
+         words. And on Morning CIO the card is COUNTED in `--kpi-cols`, so it
+         takes the strip's next column rather than a row of its own: that page
+         does not scroll (Stage 10bj), and a second row of KPI tiles would take
+         its height from the panel under it. */
+      className={variant === "kpi" ? "kpi-grid grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3" : "grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"}
+      style={variant === "kpi" ? ({ "--kpi-cols": Math.min(Math.max(ids.length + (showAdd ? 1 : 0), 1), 6) } as CSSProperties) : undefined}
       data-testid={variant === "kpi" ? "kpi-strip" : undefined}>
       {ids.map((id, i) => {
         const m = byId.get(id);
         if (!m) return null;
-        const last = i === ids.length - 1;
         const picker = (
           <MetricPicker slot={i} metrics={metrics} current={m} savedWhere={savedWhere}
             onOpenChange={(o) => setOpenSlot((s) => (o ? i : s === i ? null : s))}
@@ -298,7 +314,7 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
                 icon={m.icon}
                 href={m.href}
                 hrefTitle={m.hrefTitle ?? m.detail}
-                action={controls(i, last)}
+                action={controls(i)}
                 raise={openSlot === i} />
             ) : (
               <StatTile
@@ -309,11 +325,94 @@ export function SelectableTiles({ metrics, defaults, storageKey, page, param = "
                 hint={m.hint}
                 title={m.detail}
                 label={picker}
-                action={controls(i, last)} />
+                action={controls(i)} />
             )}
           </div>
         );
       })}
+      {showAdd && <AddTile spare={spare} savedWhere={savedWhere} onPick={add} />}
+    </div>
+  );
+}
+
+/**
+ * CLOSE A MENU ON A CLICK OUTSIDE IT AND ON ESCAPE — one hook, so the tile
+ * picker and the ADD TILE menu cannot behave differently. A menu that can only
+ * be closed by choosing something forces a choice on a reader who opened it to
+ * look.
+ */
+function useDismiss(open: boolean, box: RefObject<HTMLElement>, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) close(); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [open, box, close]);
+}
+
+/**
+ * ── THE ADD TILE CARD ───────────────────────────────────────────────────────
+ *
+ * *"Add another tile. It should be a big empty tile with bold written: ADD
+ * TILE. When I click on the ADD TILE button, I should be able to choose what I
+ * want to see in that tile."*
+ *
+ * IT IS THE STRIP'S LAST GRID CELL, which is exactly where the tile a reader
+ * adds will appear: beside the last tile where the row has room, on the next
+ * row where it does not. It is the size of a tile because the strip's rows are
+ * equal (`auto-rows-fr`); on Morning CIO it is also counted as a column, so it
+ * never starts a row of its own there.
+ *
+ * DASHED AND UNFILLED, NOT A `.card`, because it is EMPTY — a card drawn like
+ * the tiles beside it would read as one more figure that failed to load. It is
+ * also NOT inside a tile's click target, so on Morning CIO, where a whole tile
+ * is a link, choosing a metric here can never navigate.
+ *
+ * THE MENU OFFERS ONLY WHAT IS NOT ON SCREEN and adds the one picked. It opens
+ * OVER the card and exactly as wide, so from the last column it can never run
+ * off the right edge of the page; a label wraps rather than being cut, because
+ * on Morning CIO's six-column strip the card is narrow. Its last line says
+ * where the choice is kept, as the tile picker's does.
+ */
+function AddTile({ spare, onPick, savedWhere }: {
+  spare: readonly TileMetric[];
+  onPick: (id: string) => void;
+  /** Where the choice is kept, in words — the menu's last line. */
+  savedWhere: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, box, close);
+  return (
+    <div ref={box} data-tile-add-slot className="relative">
+      <button type="button" data-tile-add aria-haspopup="listbox" aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        title={`Add a tile — choose one of the ${spare.length} figure${spare.length === 1 ? "" : "s"} not on screen`}
+        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-600 text-slate-400 ring-focus transition-colors hover:border-champagne-500/70 hover:bg-ink-700/30 hover:text-champagne-400">
+        <Plus className="h-5 w-5" aria-hidden />
+        <span data-tile-add-label className="text-sm font-bold uppercase tracking-[0.14em]">Add tile</span>
+      </button>
+      {open && (
+        <div data-tile-add-menu
+          className="absolute inset-x-0 top-0 z-40 rounded-md border border-ink-600 bg-ink-800 p-1 text-left shadow-card">
+          <div className="label-xs px-2 pb-1 pt-1.5">Choose what it shows</div>
+          <div role="listbox" aria-label="Choose what the new tile shows" className="max-h-72 overflow-y-auto">
+            {spare.map((m) => (
+              <button key={m.id} type="button" role="option" aria-selected={false} data-tile-add-option={m.id}
+                onClick={() => { onPick(m.id); setOpen(false); }}
+                className="block w-full whitespace-normal rounded px-2 py-1.5 text-left text-[12.5px] leading-snug text-slate-200 transition-colors hover:bg-ink-700/60">
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p data-tile-saved-where className="mt-1 border-t border-ink-700 px-2 pb-1 pt-1.5 text-[11.5px] leading-snug text-slate-400">
+            {savedWhere}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -349,14 +448,8 @@ function MetricPicker({ slot, metrics, current, onPick, onOpenChange, savedWhere
   report.current = onOpenChange;
   useEffect(() => { report.current?.(open); }, [open]);
   const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(open, box, close);
 
   return (
     // `pointer-events-auto` ON THE PICKER'S OWN BOX: on a Morning CIO tile the

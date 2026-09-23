@@ -420,7 +420,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   same list. What the family has been TOLD is coming, never a statement figure:
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
-  says saving is not switched on — never an empty column. See Stage 10bs.
+  says saving is not switched on — never an empty column. See Stage 10bs, and
+  Stage 10cl: every cell names that cause in a word ("Not set up") and opens an
+  editor giving the one-time Cloudflare steps (`SWITCH_ON_STEPS`) — the same one
+  step that switches on the shared tile layouts below.
 - `src/lib/fundReturns.ts` — WHICH RETURN A PRIVATE FUND SHOWS, AND WHY. Each
   fund row's dated record (every call and every payout off its own capital
   account, over the row's own deduped folios) and `fundMeasuredReturn`, which
@@ -444,6 +447,8 @@ cash holding's genuinely-zero return both match, and both are correct.
   page paints from and the whole memory where the store is not connected.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
   made here the store never confirmed, then the shared layout. See Stage 10cb.
+  A tile is ADDED from the strip's own last cell, the ADD TILE card, and saved
+  the same way — see Stage 10cl.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -6367,7 +6372,7 @@ the change that silently moves the default, and the page would render perfectly
 while showing the family a table they asked to keep.
 
 *(THE MONITOR'S DEFAULT HAS SINCE MOVED, AT THE FAMILY'S REQUEST — see Stage
-10cl. `/monitor` opens on All Securities and this table is
+10cm. `/monitor` opens on All Securities and this table is
 `/monitor?group=category`; Morning CIO's allocation card still opens on
 Category. The rule above is why the move is asserted rather than assumed.)*
 
@@ -12252,6 +12257,11 @@ the one's that they want to see. Also add a small + button on the last 4th KPI
 tile so the user can also increase the no. of KPI tile and add a new one on the
 page as per their requirement."*
 
+***THE `+` IS A TILE OF ITS OWN SINCE Stage 10cl*** — *"a big empty tile with
+bold written: ADD TILE"*, in the grid cell where the next tile will land, on
+both strips, and clicking it offers the metrics not on screen rather than
+appending the first of them. Everything else in this passage is unchanged.
+
 `src/components/SelectableTiles.tsx`. Private Market's twelve fixed tiles become
 **four slots out of an eighteen-metric catalogue** — value, cost, P&L, uncalled,
 committed, called, paid, due now, unvalued, distributions, realised, multiple,
@@ -15595,6 +15605,11 @@ dashboard → Storage & Databases → KV → create a namespace → the Pages pr
 Settings → Bindings → add a KV namespace binding named **`GLOW_STORE`** (for
 Production and Preview) → redeploy. Until that is done every cell reads "Saving
 is not switched on yet" and nothing offers to save.
+
+***IT DID NOT READ THAT — see Stage 10cl.*** Each cell was an em dash with that
+sentence in its HOVER and nothing to click, and the family read the column as
+*"empty right now"*. Each cell says "Not set up" now and opens the editor, which
+gives the reason and these steps, in Cloudflare's current menu names.
 
 **WHAT IT CANNOT DO YET, STATED RATHER THAN PAPERED OVER.** The column is on the
 FUND table, and a fund is a row there only if some statement values it. India
@@ -21130,7 +21145,386 @@ came back clean and all eighteen cases fired their own checks. #92 changed none
 of the files the harness patches beyond a stage letter in a comment, so the full
 sweep above is that run's control on the tree that ships.
 
-### Stage 10cl — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
+### Stage 10cl — AN ADD TILE CARD, AND A CAPITAL CALL COLUMN THAT SAYS WHY IT CANNOT SAVE
+
+*"Add another tile. It should be a big empty tile with bold written: ADD TILE.
+When I click on the ADD TILE button, I should be able to choose what I want to
+see in that tile."* · *"We need to keep the ability for the customer to add a
+date in this Capital Call column, which is empty right now. They should be able
+to simply click, select the date, and save it, and it should be a common view
+for everybody using the system."*
+
+Two asks on the Private Market page. The first is a new control, and since
+Stage 10cb made Morning CIO's strip the same component it lands on both. The
+second turned out to be a feature that already existed and was switched off —
+and the defect was that the screen could not say so.
+
+#### 1. The `+` became a tile of its own
+
+It replaces a 20px `+` in the last tile's corner, which appended the FIRST spare
+metric in catalogue order and left the reader to change it with that tile's own
+picker — two steps, the first of them a guess. `AddTile` in
+`src/components/SelectableTiles.tsx`:
+
+- **IT SITS WHERE THE NEXT TILE WILL LAND.** It is the strip's last grid cell.
+  On Private Market's four-column strip the default four tiles fill the row, so
+  the card starts the next one. On Morning CIO the card is COUNTED in
+  `--kpi-cols`, so the default five tiles and the card fill one six-column row —
+  exactly the width Stage 10cb's `cio-tiles-dense` route already holds every
+  heading to. That page does not scroll (Stage 10bj), and a second row of KPI
+  tiles would take its height from the panel under it.
+- **IT IS THE SIZE OF A TILE, EVEN ALONE ON A ROW.** `auto-rows-fr` makes every
+  row as tall as the tallest, which is what makes it "big" rather than a button
+  the height of two words. Measured at 1500 × 1000: on Private Market 305 × 116
+  against the tiles' 305 × 116, alone on the second row; on Morning CIO 199 × 116
+  against 199 × 116 in the sixth column — and the same alone on the next row
+  when six tiles fill the first.
+- **DASHED AND UNFILLED, NOT A `.card`,** because it is EMPTY. Drawn like the
+  tiles beside it, it would read as one more figure that failed to load. It is
+  also its own grid cell, never inside a tile's click target, so on Morning CIO
+  choosing a metric can never navigate.
+- **THE MENU OFFERS ONLY WHAT IS NOT ON SCREEN**, in the catalogue's order, and
+  appends the one picked. It opens over the card and exactly as wide, so it can
+  never run off the right edge of the page from the last column; a label wraps
+  rather than being cut, because on Morning CIO the card is a sixth of the row.
+- **IT SAVES THE WAY A PICK DOES** — through `commit`, so the new tile goes to
+  this browser at once and to the shared layout store behind it, and the
+  address carries no `?tiles=` (Stage 10cb). The menu's last line says where
+  the choice was kept, in the tile picker's own words.
+- **NOT DRAWN ONCE EVERY METRIC IS ON SCREEN.** A card that opened an empty menu
+  would be the control that looks live and does nothing.
+- **ESCAPE AND A CLICK OUTSIDE CLOSE IT**, through `useDismiss`, now shared with
+  the tile picker so the two menus cannot behave differently.
+
+**WHAT IT COSTS, STATED:** on Private Market, with the default four tiles, the
+card starts a second row — about 130px above the fund table. That is what a big
+tile where the next tile lands means there; squeezing it into the first row
+would shrink every tile. On Morning CIO each of the default five tiles is a
+sixth of the row rather than a fifth.
+
+#### 2. The Capital Call column was not empty — it was switched off
+
+The live site shows "not available" under the column heading and a dash in every
+cell. The column (Stage 10bs) saves to a Cloudflare KV namespace bound to the
+Pages project as **`GLOW_STORE`**, and that binding was never added. It cannot
+be added from this repository — it lives in the Cloudflare account — and it
+could not be confirmed from here either: every `/api/*` path is behind the edge
+password, which this session does not hold.
+
+**THE SAME ONE STEP SWITCHES ON STAGE 10cb's SHARED TILE LAYOUTS**, which read
+the same binding. Until it exists, a layout a reader picks is kept in their
+browser alone, and the tile picker says so.
+
+**WHAT WAS WRONG ON SCREEN IS WHAT THIS CHANGE FIXES.** Each cell was an em dash
+with the reason in a hover and nothing to click, and a column of dashes reads as
+"nothing entered" — the misreading Stage 10bs was built to prevent, and the one
+the family reported. Stage 10bs's own paragraph said every cell would READ
+"Saving is not switched on yet"; it never did.
+
+- **EVERY CELL NAMES ITS CAUSE IN A WORD** (`CAUSE_WORD` in
+  `src/lib/enteredCalls.ts`) — "Not set up" (no binding), "Signed out",
+  "Not available" (no function running), "Not answering" — and is a BUTTON that
+  opens the editor. Never "Add": nothing can be saved.
+- **THE EDITOR SAYS WHY AND KEEPS SAVE OFF.** The reason in amber, the date,
+  amount and note inputs and the Add call button all disabled, and the "Saved
+  for everyone" line dropped, because with the store off it would be false.
+- **THE ONE-TIME STEPS, FOR THE ONE CAUSE THEY FIX** (`SWITCH_ON_STEPS`),
+  folded, because the family reads this page and the steps are for whoever
+  manages the site. A signed-out reader is told to sign in and is never handed
+  Cloudflare steps for a store that works. Menu names as Cloudflare's own
+  documentation gives them, checked 2026-09-23: Storage & databases → Workers KV
+  → Create instance; Workers & Pages → the project → Settings → Bindings → Add →
+  KV namespace, variable name `GLOW_STORE`; then redeploy.
+- **THE HEADER NOTE NAMES THE CAUSE TOO** — "not set up", "signed out",
+  "not available".
+- **THE STEPS AND THE FUNCTION CANNOT DRIFT.** `enteredCalls.test.ts` takes the
+  variable name OUT of the steps' own words and hands it to the function as the
+  binding; the function must then answer. Renaming either side alone fails.
+
+Once the binding exists every cell turns into "+ Add", and a click opens a date
+picker, an amount and a note, saved for everyone — the store is shared, and a
+save shows for other readers within about a minute (KV is eventually
+consistent, Stage 10bs).
+
+#### 3. A stale checker, found on the way — and fixed on main first
+
+Private Market invariants had failed on main since #80 — two on
+`private-market` itself, confirmed on a worktree at `f2f3f3e`, and eight across
+three routes as Stage 10cf measured them on `c1bfddd` and left them as main's.
+Among them *"the methodology picks the measure each fund's own dated record
+supports"* and *"each XIRR is the money-weighted rate … and each HPR is value
+against cost"*. `PM_RETURN_BOOK` in `check-pages.mjs` still struck a fund's HPR
+as value ÷ cost held and held its dated calls to the cost held. Stage 10ca made
+both FIFO on the page — the HPR over the cost of units held plus units
+redeemed, and the calls against every rupee deployed — so Neo Infra, which
+redeemed 14,162.8 units at their cost, read as a GAP in the sweep while the
+page correctly showed XIRR +16.7% and HPR +13.8%. **The page was right and the
+checker was stale.**
+
+**THIS CHANGE FIXED IT BECAUSE ITS OWN CLAIMS LIVE ON THOSE ROUTES.** The
+Capital Call checks are struck on `private-market`, and a route already failing
+for an unrelated reason hides a real failure of this change's among its
+findings.
+
+**AND #92 (STAGE 10cj) LANDED THE SAME FIX ON MAIN FIRST**, while this PR waited
+for the go-ahead to merge. Two fixes for one re-derivation would be two
+definitions of one figure, so the merge kept main's — `fifoOf`, the calls held
+to every rupee deployed, the footer on FIFO, and the `hprHeld` proof, which
+first asks whether the two bases differ on this book at all — and deleted this
+change's own helper rather than leaving it beside main's. What this change still
+carries of it is two harness cases, 21 and 22 below, and both fire against
+main's checker.
+
+#### The checks
+
+`check:pages` gains one route, `private-market-calls-signedout`, and these
+claims:
+
+- **the ADD TILE card sits where the next tile will land**, is not inside any
+  tile, and every tile can still be removed — in `tilePickerChecks`, so both
+  strips are held to it;
+- **it is a big empty tile reading ADD TILE in bold** — the size of a tile, a
+  dashed edge, no figure in it, the label's computed weight ≥ 700;
+- **clicking it offers exactly the metrics not on screen, adds the one picked,
+  and the page reopens with it** — the walk picks the LAST metric offered, which
+  a card that ignored the choice and appended the first spare metric (what the
+  `+` did) cannot add; it reads the strip back, requires the address to carry no
+  `?tiles=`, and opens the page again. It runs on BOTH strips, wherever a card
+  is drawn;
+- **on Morning CIO the card shares the tiles' row while the strip has room**,
+  struck on its row — every claim above passes with the card on a row by itself —
+  and **on the dense six-tile strip, alone on the next row, it is still the size
+  of a tile**;
+- **its menu paints over the page, and Escape closes it** — sampled on a grid
+  with hit-testing on, as the search list is;
+- **with every metric on screen there is no card** (`private-market-tiles`);
+- **the Capital Call cells are buttons naming their cause, never "Add"** — on
+  the default route ("Not available"), `private-market-calls-off` ("Not set
+  up", and the header) and `private-market-calls-signedout` ("Signed out");
+- **a click opens the editor**: on the unconnected store the reason, three steps
+  naming `GLOW_STORE`, Workers KV, the Bindings screen and a redeploy, and every
+  input and Save disabled with no "saved for everyone"; on the signed-out store
+  the sign-in sentence and no steps at all.
+
+#### Twenty-two bugs reintroduced, and each one fires its own check
+
+`scripts/dev/add-tile-bug.sh`, committed so the next session's verification is
+one command. Each bug is applied on its own, rebuilt and swept on the routes it
+touches; the files are restored BY COPY on a `trap … EXIT`, each restore
+verified with `cmp`, and **rebuilt on the way out** — restoring the source alone
+leaves `dist/` at the bugged build for the next run to report under the wrong
+name. A `flock` makes a second copy refuse rather than race one `dist/`; a patch
+that does not apply, or a build that fails, is reported as NOT A RESULT rather
+than as a clean sweep; `CASES=` re-runs one case. A no-patch CONTROL runs first
+and was clean.
+
+| # | Bug put back | Fires |
+| --- | --- | --- |
+| 1 | the card not drawn | all four card checks on both strips, and Morning CIO's row check |
+| 2 | a pick appends the first spare metric whatever was chosen — what the `+` did | the click-and-add check, on both strips |
+| 3 | the menu offers metrics already on screen | the click-and-add check, on both strips |
+| 4 | Private Market's rows sized to their content (no `auto-rows-fr`) | "a big empty tile, the size of a tile", on Private Market |
+| 5 | the same on Morning CIO's `kpi` grid | the dense strip's size check, on `cio-tiles-dense` |
+| 6 | ADD TILE not bold | "a big empty tile…", on both strips |
+| 7 | the card drawn as a `.card` | the placement check on both strips — and main's two picker checks, which count a `.card` as one more figure tile |
+| 8 | the card drawn with nothing left to add | "with every metric on screen there is no ADD TILE card" |
+| 9 | the menu painted under the page | the paint-and-Escape check, and the click-and-add check — a menu under the page cannot be clicked |
+| 10 | Escape does not close it | the paint-and-Escape check, alone |
+| 11 | the card not counted in Morning CIO's columns | "the ADD TILE card shares the tiles' row while the strip has room" |
+| 12 | an added tile shown and never saved | the click-and-add check — the reopened page has lost it |
+| 13 | a Capital Call cell an unclickable dash again — the defect the family reported | five checks across the three call routes |
+| 14 | an unsaveable cell says "Add" | the cell check, on all three call routes |
+| 15 | the Cloudflare steps shown to a signed-out reader | the signed-out editor check |
+| 16 | "Saved for everyone" printed while saving is off | both editor checks |
+| 17 | Save left on while the store cannot save | both editor checks |
+| 18 | the header note stops naming the cause | the cell-and-header check, on both switched-off routes |
+| 19 | *(suite)* the steps name a binding the function does not read | `enteredCalls.test.ts`, exit 1 |
+| 20 | *(suite)* a store nobody connected reads as a generic error | `enteredCalls.test.ts`, exit 1 |
+| 21 | the page's fund HPR back to value ÷ cost held | three checks on `private-market-returns`: both HPR checks, and the HPR footer |
+| 22 | a fund's dated calls held to the cost of the units still held | four checks across two routes: the methodology, the XIRR column, the payouts, the XIRR footer |
+
+**AND THE PASS WAS RUN FOUR TIMES, BECAUSE MAIN MOVED UNDER IT.** All 22 cases
+fired on each merged tree in turn — the one with #82 (`46a3716`), the one
+with #78 (`538f4d3`), the one with #87 and #89 (`d8391fc`), and the one with
+#92 (`49db719`), which carries #90 too — with a clean control first each time.
+The table is the last run. On that tree, cases 21 and 22 ran against MAIN's
+checker rather than this change's, which is what section 3 claims of them.
+#92's own `pm-fifo-bug.sh` was re-run there as well: a clean control, then all
+eight cases fired, each on the same checks #92's table records. Neither harness
+was run again on the tree merged with #88, which changed none of the files they
+patch and none of the checks they fire; the full sweep on that tree is their
+control.
+
+**THE ESCAPE CASE FIRST FAILED THE WRONG CHECK, AND THE WALK WAS THE DEFECT.**
+With Escape broken, the click-and-add claim failed as well as the Escape one:
+the walk re-clicked the card to reopen the menu, the menu Escape had failed to
+close was still open, and the click CLOSED it. The page was right and the walk
+was wrong, which reads exactly like a second regression. It reopens the menu
+only if it is shut now, and the case fires the one claim it exists for.
+
+**AND IT RUNS IN A SEPARATE WORKTREE, BECAUSE A HARNESS THAT PATCHES FILES
+LEAVES THE WORKING COPY DIRTY FOR AS LONG AS IT RUNS.** The pass takes about
+half an hour, and for all of it the working copy carries whichever bug is in.
+This session's stop hook read that as uncommitted work, and committing to
+satisfy it mid-run would have committed a bug. So the pass runs in a
+`git worktree add` copy with its own `vite preview` on another port, and `BASE=`
+points the sweep at it. The working copy stays clean, and the rest of the
+verification runs beside it.
+
+#### The verification
+
+Every result below is from the tree that ships: this change merged with #88
+(main `37c93ba`), and each was run again there rather than carried across.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (47 suites,
+2,500 checks, 0 failed — `enteredCalls.test.ts` among them) · `check:family`
+**89/0** · `check:pages` **256 combinations clean, 0 invariant failures** ·
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY: a tile strip and a column that cannot save move no figure in
+the book. CI (`build`) and Cloudflare Pages are green on the final commit.
+
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10ck records 254 combinations
+clean on main; this change adds one route, `private-market-calls-signedout`, in
+both themes — 256. The ten invariants not checked are the ten main's sweep
+carries, read out of the log by route: six KPI-tile lines across the Morning
+CIO routes (every tile carries a figure), two Private Market cost lines (every
+private holding reports a cost), one redeemed-account line on
+`private-market-folios` and one crumb on `holdings-unknown`. All are
+pre-existing claims with no subject on this book, and none is this change's.
+
+#### Merged with main six times, and the letter moved six times
+
+This change was drafted as `10cb` against a main whose tile strip was Private
+Market's alone, with a `+` on the last tile. While its bug harness ran, **six
+commits landed on main and four of them took `10cb`, `10cc`, `10cd` and
+`10ce`** — and `10cb` (#82) rewrote `SelectableTiles` itself: a shared layout
+store, a `kpi` variant carrying Morning CIO's strip, and a pick that no longer
+writes `?tiles=`. So it became `10cf`.
+
+**THE COMPONENT WAS RESOLVED BY TAKING MAIN'S WHOLE and re-applying the card on
+top**, never by hand-merging a file whose saving model had changed underneath
+it: `add` now goes through main's `commit`, the card's menu gained the picker's
+"where it was kept" line, and the card is counted in `--kpi-cols`. The checker
+was resolved the same way — main's file, with this change's edits re-applied by
+anchor, each anchor required to occur exactly once — because the `ctx` literal,
+the tile probe and the check factory had all moved.
+
+**AND A CHECK'S NAME TURNED OUT TO BE LOAD-BEARING.** Main runs a subset of
+`tilePickerChecks` on `private-market-tiles`, chosen by a REGEX over the checks'
+names (`/offers every metric|next visit opens on it|cut off or split/`). This
+change's walk claim was first renamed to end "…and the next visit opens on it",
+which matched that regex and put a claim about the ADD TILE card on the one
+route where every metric is on screen and no card is drawn — a correct page
+failing by name. It reads "…and the page reopens with it" now. A filter over
+prose is a filter a rename can widen, and the sweep is what said so.
+
+**THEN #78 LANDED WHILE THE MERGED TREE WAS BEING VERIFIED, AND TOOK `10cf`.**
+Main keeps it, and this became `10cg`. The merge raised no conflict — this
+section was not yet written, and its four pointers sat in other paragraphs — so
+nothing marked the collision: two sections would have answered to one letter,
+and every "see Stage 10cf" in this file would have pointed at whichever came
+first. It was caught by comparing main's stage letters against the branch's own
+before committing, which is the check Stage 10bl says to run on every merge.
+Every line naming `10cf` was then placed by which side's own copy of the file
+carries it, never by a bulk replace: this change's 4 pointers in this file, 14
+comments in `check-pages.mjs`, the harness's header and one comment in
+`Kpi.tsx` moved; #78's 6 lines here and 12 comments there stayed.
+
+**AND THEN #87 AND #89 TOOK `10cg` AND `10ch`, SO THIS WAS `10ci`** — while the
+pass above was running on the tree merged with #78, and caught the same way, by
+the letters rather than by a marker. The same placement moved this change's
+lines and left theirs: 3 lines here, 3 comments in `check-pages.mjs`, and one
+line each in `Sidebar.tsx`, `index.css`, `StockInfo.tsx` and `look-bug.sh`. No
+later letter is claimed in main's prose.
+
+**#87 ROUNDED EVERY `.card`, SO THE CARD FOLLOWED BY HAND.** Its
+fonts-and-colours change moved `.card` from `rounded-xl` to `rounded-2xl`. The
+ADD TILE card is deliberately not a `.card` (see above), so it did not follow
+on its own, and a card the size of a tile with the tiles' old corners reads as
+a different kind of control. It is `rounded-2xl` now, and the harness's `.card`
+case, which anchors on that class string, moved with it.
+
+**AND A CLEAN MERGE WAS CHECKED BY HAND.** The last two merges raised no marker
+at all, in this file or in `check-pages.mjs`, which is when this file says to
+look. On the final tree the invariants' `ctx` literal is the exact union of
+both sides — 94 keys, none duplicated, nothing lost — the route table carries
+every route from both (118, among them `private-market-calls-signedout` and the
+`stock-capital` route #78 added), and `build-book` regenerates the book
+byte-identically. Main's tip then still carried the stale FIFO lines in
+`PM_RETURN_BOOK`, so section 3's fix was still this change's to make — until
+#92, below.
+
+**AND THEN #90 TOOK `10ci`, SO THIS WAS `10cj`.** It landed while this PR waited
+for the go-ahead to merge. Both sections sat at the same place, so git marked
+the conflict this time. Main's keeps `10ci`; this section follows it. Every line
+naming `10ci` was placed by which side's own copy of its file carries it: 21
+were this change's and moved with the heading (4 pointers in this file, 14
+comments in `check-pages.mjs`, 2 in the bug harness, 1 in `Kpi.tsx`); main's
+7 stayed; and one line of this section's history keeps `10ci`, because it
+records the letter it held then. Two conflicts in `check-pages.mjs`, both unions:
+
+- **The walk.** #90's two probes (`tableNotes`, `foldsOnArrival`) and this
+  change's store-off walk were inserted at one spot under one shared `/**`.
+  #90's run first, because they read the page as it arrives and this walk opens
+  an editor; each got its own comment opener.
+- **The `ctx` literal.** #90's `fundLines`, `tableNotes` and `foldsOnArrival`
+  beside this change's `tileAdd` and `callOff`. #90 deleted `FundExposure.tsx`
+  and the `fundExposure` probe with it, so that key stays out: 96 keys, none
+  duplicated, every one declared.
+
+#90 did not touch the tile strip, the Capital Call cells or their store.
+
+**AND THEN #92 TOOK `10cj`, SO THIS WAS `10ck` — AND IT HAD FIXED THE SAME
+CHECKER.** It landed while this PR still waited, and both stages sat at the
+same place, so git marked the conflict. Main's keeps `10cj`; this section
+follows it. Every line naming `10cj` was placed by which side's own copy of its
+file carries it: 20 were this change's and moved with the heading (4 pointers in
+this file, 13 comments in `check-pages.mjs`, 2 in the bug harness, 1 in
+`Kpi.tsx`); main's 13 stayed; and one line of this section's history keeps
+`10cj`, because it records the letter it held then. The branch's fourteenth
+`10cj` comment in `check-pages.mjs` did not move — it went with the helper
+below.
+
+- **Three hunks in `check-pages.mjs`, all inside `PM_RETURN_BOOK`,** were the
+  two fixes of one checker meeting. Each was resolved by taking main's side, so
+  the block is main's byte for byte, and this change's own helper was deleted
+  rather than left beside it (section 3).
+- **The `ctx` literal came through with no marker,** because #92 added no
+  probe. It was read rather than trusted: 96 keys, none duplicated, the exact
+  union of both sides, every one declared.
+- **`PrivateMarket.tsx` merged without a marker too.** It differs from the
+  pre-merge branch only by #92's `aggHprNote`, and from main only by the
+  Capital Call column's heading, which names the cause in a word.
+- **`check:family` reads 89/0 now**, where every earlier run of this change read
+  84/2: #92 taught its Extras rows the fifth page (`/corporate-actions`) — the
+  fix this section used to name as main's to make.
+
+Both bug harnesses were re-run on the merged tree, each after a clean control —
+see the pass paragraph above.
+
+**AND THEN #88 TOOK `10ck`, SO THIS IS `10cl`.** It landed in the minutes after
+this section's notes were pushed, before the PR could merge. Both sections sat
+after `10cj`, so git marked the conflict. Main's keeps `10ck` and comes first.
+Every line naming `10ck` was placed by which side's own copy of its file carries
+it: 20 were this change's and moved with the heading (4 pointers in this file, 13
+comments in `check-pages.mjs`, 2 in the bug harness, 1 in `Kpi.tsx`); #88's 6
+stayed (4 in this file, 1 in its bug harness, 1 in `StockInfo.tsx`); and one line
+of this section's history keeps `10ck`, because it records the letter it held
+then.
+
+- **The `ctx` literal conflicted and was resolved as a union**: #88's
+  `heldTable` beside this change's `tileAdd` and `callOff`. 97 keys, none
+  duplicated, every one declared.
+- **#88 changed the company page and its own checks, and none of this
+  change's code.** It touches none of the files either bug harness patches and
+  none of the checks they fire, so neither harness was re-run; the full sweep is
+  their control on this tree.
+- **Neither side touched a generated file**, and `build-book` still regenerates
+  the book byte-identically.
+
+### Stage 10cm — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
 
 *"Make this view as All Securities and make it first in portfolio monitor and
 default open and put the all holding and all entities selectors to the right
@@ -21497,7 +21891,7 @@ two #90's cell limit added (the hover dropped, and the long sentence put back).
 
 **#88, which gives the company page a tab per way a company is held, landed
 while this change's results were being written up. It took `10ck`.** Main keeps
-it, and this section is **`10cl`**. Its section and this one had both been
+it, and this section became **`10cl`**. Its section and this one had both been
 inserted at the same place, so git marked the conflict. The headings were then
 compared against main's tip. The merged file differs from main's by `10cl`
 alone, main's ten historical duplicates are unchanged, and no prose on main
@@ -21537,7 +21931,47 @@ The only other changes are those two comment renames and the `ctx` line.
 So the bug pass above stands on this tree, and the full sweep below is its
 control. That is the reasoning #88's own record gives for #92's merge.
 
-RESULTS_M6
+On the tree merged with #88 (main `37c93ba`), `build`, `tsc`, `test:ingest`
+(golden 140 passed, 2 not checked, 0 blocked), `test:family` (#88's
+`heldThrough.test.ts` among the suites) and `check:family` **92/0** all passed,
+and `npm run build-book` was byte-identical. The full sweep had started when #85
+landed. It was stopped rather than finished, because that tree would not ship.
+
+#### …and a seventh time: #85 took `10cl`
+
+**#85 landed while that sweep ran.** It gives Private Market and Morning CIO an
+add-tile card, and makes the Capital Call cells say why saving is off. It took
+`10cl`, having itself collided with #88 first. Main keeps it, and this section is
+**`10cm`**. Git marked the conflict in this file, and #85's section comes first.
+The headings differ from main's tip by `10cm` alone, main's ten historical
+duplicates are unchanged, and no prose on main names a letter after `10cl`.
+
+**THIRTY-ONE LINES NAMED `10cl` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** Each was checked against both sides' own copies of its file.
+
+- Twenty-two are #85's, and they stayed: its heading and merge note, four notes
+  it left in earlier sections, thirteen check-script comments, two in its bug
+  harness, and one in `Kpi.tsx`.
+- Nine were this change's.
+  - Six moved to `10cm`: the heading, the note under Stage 10z, two
+    check-script comments, the bug harness's header, and the "in full" link
+    comment.
+  - Three are in the sixth merge note above. They stay as that merge's record,
+    and one of them now reads "this section became".
+
+**THE CHECK SCRIPT CONFLICTED ON THE `ctx` LITERAL ONLY.** It is main's line plus
+this change's four keys: 101 keys in all (#85 added `tileAdd` and `callOff`), none
+duplicated, each declared. Measured line by line, the merged file carries every
+one of #85's +358/−7 lines. The only other changes are the two comment renames
+and the `ctx` line. #85's other ten files merged without a marker and are
+byte-identical to main's.
+
+**#85 CHANGED NOTHING THIS CHANGE TOUCHES.** Its pages are Private Market and
+Morning CIO, and none of its checks walks a `/monitor` address. The files this
+change's bug harness patches are unchanged by it, so the bug pass on the #92
+tree stands. The full sweep below is its control on the tree that ships.
+
+RESULTS_M7
 
 ### Stage 10k — News & Announcements: REMOVED
 

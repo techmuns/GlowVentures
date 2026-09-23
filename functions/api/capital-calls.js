@@ -41,12 +41,14 @@
 //
 // ── SET-UP, ONCE ────────────────────────────────────────────────────────────
 //
-// Cloudflare dashboard → Storage & Databases → KV → create a namespace (any
-// name) → the Pages project → Settings → Bindings → add a KV namespace binding
-// with the variable name `GLOW_STORE` (for Production and Preview) → redeploy.
-// Until that is done every request answers 503 `NOT_CONFIGURED`, and the page
-// says saving is not switched on — never an empty column that would read as
-// "no calls are coming".
+// Cloudflare dashboard → Storage & databases → Workers KV → Create instance
+// (any name) → Workers & Pages → the Pages project → Settings → Bindings → Add
+// → KV namespace, variable name `GLOW_STORE` (for Production, and Preview if
+// preview links are used) → redeploy. Until that is done every request answers
+// 503 `NOT_CONFIGURED`, and every cell of the column says "Not set up" and
+// opens an editor that gives these same steps (`SWITCH_ON_STEPS` in
+// `src/lib/enteredCalls.ts`) — never an empty column that would read as "no
+// calls are coming".
 
 const PREFIX = "capital-call:";
 /** A fund row's own `securityKey` — the join to the table on the page. */

@@ -438,7 +438,7 @@ export function MandateHoldings() {
             </p>
           )}
           <p className="mt-4 text-[12px] text-slate-500">
-            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10cl, where a fund is not. */}
+            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10cm, where a fund is not. */}
             <Link to="/monitor?group=category" data-monitor-in-full className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries this
             account in full.
           </p>
