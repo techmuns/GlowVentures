@@ -2258,9 +2258,16 @@ const CAPITAL_RECORD_BOOK = (() => {
     const calls = [];
     const payouts = [];
     const undatedOut = new Set();
+    // A record row a payout has been TYPED onto, and the kind it was typed as —
+    // so two payouts of one amount on one day cannot both claim one row, and
+    // the split below counts the principal the page counts.
+    const typed = new Map();
     for (const c of commits) {
-      if (recorded.has(c.accountId)) continue;
-      const dated = (c.calls ?? []).filter((k) => k.date && k.amount > 0);
+      const hasRecord = recorded.has(c.accountId);
+      // A CAPITAL RECORD IS THE AUTHORITY ON WHAT WENT IN, so its account takes
+      // no call from the commitment's list — the calls and the record are two
+      // printings of one set of payments.
+      const dated = hasRecord ? [] : (c.calls ?? []).filter((k) => k.date && k.amount > 0);
       for (const k of dated) calls.push({ accountId: c.accountId, date: k.date, direction: "in", amount: k.amount });
       // A fund whose payouts are carried DATED has them as redemptions — on or
       // before its own valuation only; one dated after is inside that value
@@ -2270,12 +2277,36 @@ const CAPITAL_RECORD_BOOK = (() => {
         const v = asOf.get(c.accountId);
         for (const r of c.payouts) {
           if (!v || !r.date || r.date > v || !(Math.abs(r.gross) > 0)) continue;
+          /**
+           * ...AND A FUND WITH A CAPITAL RECORD OF ITS OWN KEEPS ITS PAYOUTS TOO.
+           *
+           * Since Stage 10ca Neo Infra's own unit record is a capital record —
+           * its drawdowns and the ₹14.16 L capital redemption — and the page
+           * (`capitalMovesWithCalls`) keeps its income and equalisation beside
+           * it, types the principal onto the record's own row (same day, same
+           * amount) rather than adding it twice, and leaves a principal the
+           * record does not show to the record. RE-EXPRESSED here rather than
+           * imported, and moved with the page: this block skipped a recorded
+           * account whole, so after the merge it counted Neo Infra's flows
+           * without the ₹44 L of income and equalisation the page draws, and
+           * the counter, the identity and the XIRR re-solve all failed a page
+           * that was right. A rule written twice has to be moved twice.
+           */
+          if (hasRecord) {
+            const dir = r.gross > 0 ? "out" : "in";
+            const same = moves.find((m) => m.accountId === c.accountId && !typed.has(m)
+              && m.direction === dir && m.date === r.date && m.amount != null
+              && Math.abs(m.amount - Math.abs(r.gross)) <= 1);
+            if (same) { typed.set(same, r.kind); continue; }
+            if (r.kind === "capital") continue;
+          }
           payouts.push({ accountId: c.accountId, date: r.date, direction: r.gross > 0 ? "out" : "in",
             amount: Math.abs(r.gross), payoutKind: r.kind });
         }
       } else if (dated.length && typeof c.distributed === "number" && c.distributed > 0) undatedOut.add(c.accountId);
     }
-    return { moves: [...moves, ...calls, ...payouts], calls, payouts, undatedOut, commitments: commits };
+    const recordMoves = moves.map((m) => (typed.has(m) ? { ...m, payoutKind: typed.get(m) } : m));
+    return { moves: [...recordMoves, ...calls, ...payouts], calls, payouts, undatedOut, commitments: commits };
   } catch { return null; }
 })();
 
@@ -11015,7 +11046,11 @@ const INVARIANTS = {
      * re-derived here from the book's typed payouts — never from the row.
      */
     ["…and its realised and unrealised are split by the fund's own payout types", (t, ctx) => {
-      const pay = CAPITAL_RECORD_BOOK?.payouts ?? [];
+      // EVERY TYPED MOVEMENT, a record row a payout was typed onto included:
+      // Neo Infra's principal is its own capital record's redemption row since
+      // Stage 10ca, typed "capital" rather than added a second time, and a split
+      // that left it out would expect unrealised on the whole call.
+      const pay = (CAPITAL_RECORD_BOOK?.moves ?? []).filter((m) => m.payoutKind != null);
       const ids = [...new Set(pay.map((m) => m.accountId))];
       if (!ids.length) return { notChecked: "no fund on this table pays back through a typed payout record" };
       const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -11023,8 +11058,13 @@ const INVARIANTS = {
       for (const p of bookArray(src, "BOOK_POSITIONS") ?? []) value.set(p.accountId, (value.get(p.accountId) ?? 0) + p.marketValue);
       return ids.every((id) => {
         const r = (ctx.mineRows ?? []).find((x) => x.accountId === id);
-        if (!r || r.realisedGain == null || r.unrealisedGain == null) return false;
+        if (!r) return false;
         const mine = pay.filter((m) => m.accountId === id && m.direction === "out");
+        // The page splits only where EVERY movement out is typed; one untyped
+        // redemption beside the typed ones and the split is refused, not guessed.
+        const outs = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === id && m.direction === "out");
+        if (mine.length !== outs.length) return r.realisedGain == null && r.unrealisedGain == null;
+        if (r.realisedGain == null || r.unrealisedGain == null) return false;
         const gain = mine.filter((m) => m.payoutKind !== "capital").reduce((a, m) => a + m.amount, 0);
         const principal = mine.filter((m) => m.payoutKind === "capital").reduce((a, m) => a + m.amount, 0);
         const bought = CAPITAL_RECORD_BOOK.moves.filter((m) => m.accountId === id && m.direction === "in").reduce((a, m) => a + m.amount, 0);
