@@ -747,12 +747,12 @@ export function StockInfo() {
           THE TABS ARE AT THE RIGHT-HAND END OF THE NAME'S LINE, as on Morning
           CIO, and KEYED `data-stock-tab-key` — a claim about which tabs this
           page offers must not be struck on labels a redesign is free to reword.
-          The name is `text-xl`, every other page's headline size, where it was
-          `text-2xl` on this page alone. */}
+          The name is `text-xl` in the display face, every other page's headline
+          (`PageHeader`), where it was `text-2xl` on this page alone. */}
       <div className="mb-3 shrink-0" data-stock-head>
         <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2" data-stock-headline>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-100">{name}</h1>
+          <h1 className="font-display text-xl font-bold tracking-tight text-slate-100">{name}</h1>
           <div role="tablist" aria-label="Which part of this holding to show" data-stock-tabs
             className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
             {STOCK_TABS.map((v) => (
@@ -855,7 +855,7 @@ export function StockInfo() {
             rest. See `cmpMarks` for what the split is and why the tile refuses
             it rather than picking, and `priceNote` for the five states. */}
         <Kpi label={fundVehicle ? "NAV" : "CMP"}
-          value={<span className="mono" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp ?? <AbsentValue />}</span>}
+          value={<span data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp ?? <AbsentValue />}</span>}
           delta={live && !cmpSplit ? dayPct : null}
           sub={<span className="text-slate-500" data-stock-mark-note title={priceNote.tip}>{priceNote.line}</span>}
           icon={<Tag className="h-4 w-4" />} />
@@ -946,7 +946,10 @@ export function StockInfo() {
                               never break, and a mandate's printed strategy name
                               ("V.E.C ASSAGO Small and Mid-Cap Growth") pushed the
                               Return column past the card's edge. Names wrap here;
-                              figures do not. */}
+                              figures do not. Stage 10cg reached this same cell for
+                              a second reason: where Inter cannot load, the fallback
+                              face's semibold headings run wider, and this sub-line
+                              is what gives up the width. */}
                           <td className="max-w-[20rem] whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
                             <div>{providerOf(accIdx, r)}</div>
                             {/* The route reads as a phrase — "via manager's mandate"

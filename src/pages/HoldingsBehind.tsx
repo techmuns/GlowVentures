@@ -233,7 +233,7 @@ export function HoldingsBehind() {
     return (
       <div>
         <PageNav className="mb-2" trail={[{ label: "Morning CIO", to: "/cio" }, { label: "Nothing named to open" }]} />
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-slate-100">Nothing named to open</h1>
+        <h1 className="mb-4 font-display text-2xl font-bold tracking-tight text-slate-100">Nothing named to open</h1>
         <Card>
           <AbsentSection
             what="This address does not name a set of holdings"
@@ -494,7 +494,7 @@ export function HoldingsBehind() {
       <PageNav className="mb-2" trail={crumbTrail} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{heading}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{heading}</h1>
           {/* NO LEAD PARAGRAPH. *"Remove all the highlighted text and the
               sections from the dashboard UI."* What it said — which set this is
               and on what basis — is the HEADING plus the figure beside it.
@@ -598,7 +598,7 @@ export function HoldingsBehind() {
             rather than glossed, and the treatment the Portfolio Monitor already
             gives the same three facts at the family's own instruction. */}
         <div className="text-right">
-          <div className="mono text-2xl font-semibold text-slate-100"
+          <div className="font-display text-2xl font-bold tabular text-slate-100"
                data-hb-total={mv}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500">
             {shareOfBook == null

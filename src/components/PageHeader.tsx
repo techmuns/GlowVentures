@@ -60,7 +60,7 @@ export function PageHeader({ eyebrow, title, subtitle, beside, right, trail }: {
     <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <PageNav trail={steps} />
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-100">{title}</h1>
+        <h1 className="font-display text-xl font-bold tracking-tight text-slate-100">{title}</h1>
         {beside}
       </div>
       {right}

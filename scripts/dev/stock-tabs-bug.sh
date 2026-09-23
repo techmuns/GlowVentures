@@ -325,5 +325,18 @@ if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, '<ReturnCells p={r} asOf={portfolio.asOf} />', 1))
 PY2
 
+# Stage 10cg (#87) set every page title in the display face. The position page
+# draws its own <h1> rather than `PageHeader`'s, so that change had to be made
+# here by hand when #87 merged — and #87's own harness patches `PageHeader`
+# alone, so nothing else would notice this page's title falling back to Inter.
+run_case "the position page's name back in the reading face, not the display face" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '<h1 className="font-display text-xl font-bold tracking-tight text-slate-100">{name}</h1>'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '<h1 className="text-xl font-bold tracking-tight text-slate-100">{name}</h1>', 1))
+PY
+
 echo ""
 echo "════════ done ($N cases)"
