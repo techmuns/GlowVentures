@@ -16549,16 +16549,24 @@ the column out by measure as well now, and the two return claims are spread into
 both routes, because on the default view the account they were written for shows
 its XIRR rather than its HPR.
 
-`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
-`check:pages` **202 combinations clean, 0 invariant failures**, MEASURED ON THE
-MERGED TREE — main's own 200 plus the two combinations `monitor-txn-returns`
-walks, the only route this change adds. The eight NOT CHECKED lines were read out
-of `report.json` BY NAME and every one is pre-existing: the absent-KPI-tile claim
-on the four Morning CIO routes, the cost-less fund row on the two Private Market
-fund routes, the crumb on `holdings-unknown` and the pledge on `stock-qty`. **Not
-one of this change's own checks abstains.** `npm run build-book` regenerates
-`glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control
-before and after the merge.
+**AND AN EIGHTH, FOR THE CASE THE MERGE CREATED** — Buoyant's reinvested
+distribution filed as unrealised again — fires three `capitalRecord.test.ts`
+checks: realised is not the distribution, unrealised is not the Holdings page's
+figure, and it IS value less the cash paid.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 42 + 44 + 30 + 22 + 140 (2
+not checked, 0 blocked) · `test:family` · `check:family` **86/0** ·
+`check:pages` **208 combinations clean, 0 invariant failures**, MEASURED ON THE
+TREE MERGED WITH #75 — main's own 206 plus the two combinations
+`monitor-txn-returns` walks, the only route this change adds. (It read 202 on the
+tree merged with #70 and #73 alone; #75 adds three routes, so both steps
+reconcile, and only because each was re-run.) The eight NOT CHECKED lines were
+read out of `report.json` BY NAME and every one is pre-existing: the absent-KPI-tile
+claim on the four Morning CIO routes, the cost-less fund row on the two Private
+Market fund routes, the crumb on `holdings-unknown` and the pledge on `stock-qty`.
+**Not one of this change's own checks abstains.** `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a
+control on the merged tree.
 
 #### Merged with main — and the letter moved THREE times before it held
 
