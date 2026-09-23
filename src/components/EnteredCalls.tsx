@@ -182,7 +182,10 @@ export function CallEditor({ fund, fundName, state, onSave, onDelete, onClose, m
       {state.status === "unavailable" && state.cause === "not-configured" && (
         <details className="mt-2 rounded-md border border-ink-700/70 px-3 py-2 text-[12px] text-slate-400" data-pm-call-setup>
           <summary className="cursor-pointer text-slate-300">How to switch saving on — once, for everyone</summary>
-          <ol className="mt-1.5 list-decimal space-y-1 pl-5">
+          {/* `data-prose-ok`: A PROCEDURE, NOT A NOTE. These are steps somebody
+              opens on purpose to switch the store on, inside a fold that is
+              closed until they do — shortening them loses the menu names. */}
+          <ol className="mt-1.5 list-decimal space-y-1 pl-5" data-prose-ok="setup steps">
             {SWITCH_ON_STEPS.map((step) => <li key={step}>{step}</li>)}
           </ol>
         </details>

@@ -794,6 +794,8 @@ export function MandateHoldings() {
           {stmtMV !== null && (
             <span title={[
               `This is the sum of every row above${basis === "LIVE" ? " at its statement mark" : ""}, on the basis this book derives, and not a figure copied from the statement's own total line — which is why the rows add to it, and what makes this page checkable against the source document.`,
+              basis === "LIVE" && Math.abs(mv - stmtMV) >= 1
+                ? `The Total shown is ${money(mv)} because live prices are applied; the statement figure is unchanged.` : "",
               // THE MANAGER'S OWN PRINTED TOTAL, BESIDE IT AND NOT INSTEAD OF
               // IT. This sentence used to attribute the figure above to the
               // manager, and a reader who followed the link to check found a
@@ -819,10 +821,13 @@ export function MandateHoldings() {
                   ].filter(Boolean).join(", ")}. A figure this book does not carry renders as an em dash instead, never as a zero.`
                 : "",
             ].filter(Boolean).join(" ")}>
-              {money(stmtMV)} is this account's own statement total
+              {/* THE FIGURES, NOT THE SENTENCES (Stage 10cp): the statement total
+                  and the live Total are on the face; what each is and why they
+                  differ is this line's hover. */}
+              Statement total {money(stmtMV)}
               {(zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) && <> · every ₹0 above is measured</>}
               {basis === "LIVE" && Math.abs(mv - stmtMV) >= 1 && (
-                <> · The Total shown is {money(mv)} because live prices are applied; the statement figure is unchanged</>
+                <> · Total at live prices {money(mv)}</>
               )}
             </span>
           )}
@@ -1044,7 +1049,11 @@ function CapitalIn({ account }: { account: Account }) {
                 <div>
                   {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
                   {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
-                  {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500" title={xirr.note}> — in under a year, so no annual rate is struck</span>}
+                  {/* The guard stays ON THE FACE (Stage 10g(ii)) — a sub-year
+                      return read as a rate is the +99% error — in four words;
+                      the sentence is its hover (Stage 10cp). */}
+                  {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500" data-capital-not-annualised
+                    title={`In under a year, so no annual rate is struck. ${xirr.note ?? ""}`.trim()}> · under a year, not annualised</span>}
                   {!xirr.shown && <span className="text-slate-500" title={xirr.reason}> · no XIRR: {firstClause(xirr.reason)}</span>}.
                 </div>
               );

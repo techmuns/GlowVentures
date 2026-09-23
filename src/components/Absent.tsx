@@ -114,25 +114,25 @@ export function AbsentFromBook({ query, className = "" }: { query: string; class
             and both halves belong in the first line a reader reads. */}
         on the consolidated review · no statement reports it
       </div>
-      <ul className="space-y-2">
+      {/* THE NAME AND WHERE IT IS HELD ARE THE FACE; why it is absent and the
+          document that would close it are the name's hover (Stage 10cp). The
+          report renders those two as table cells, where a lower-case opener is
+          right; in the hover each is a sentence of its own. */}
+      <ul className="space-y-1">
         {gaps.map((g) => (
-          <li key={g.name} data-review-gap={g.name} className="text-xs leading-snug text-slate-300">
+          <li key={g.name} data-review-gap={g.name} className="text-xs leading-snug text-slate-300"
+            title={`${g.why.charAt(0).toUpperCase() + g.why.slice(1)}.\n\nWhat would close it: ${g.ask}.`}>
             <span className="font-semibold text-slate-100">{g.name}</span>
             {g.custodian && <span className="text-slate-400"> · {g.custodian}</span>}
-            {/* The report renders these as table cells, where a lower-case
-                opener is right; here each is a sentence of its own. */}
-            <div className="text-slate-400">{g.why.charAt(0).toUpperCase() + g.why.slice(1)}.</div>
-            <div className="text-slate-400">
-              <span className="text-slate-500">What would close it: </span>{g.ask}.
-            </div>
           </li>
         ))}
       </ul>
-      {/* The provenance and the fence, in one line: this comes from the family's
-          own review, it is dated, and no figure of its own is on this screen. */}
-      <div className="mt-2 border-t border-ink-700/70 pt-1.5 text-[11px] leading-snug text-slate-500">
-        From the family’s consolidated review as at {REVIEW_AS_OF}, which is a cross-check and not a
-        source — so this book publishes no value or quantity for it until a statement arrives.
+      {/* The provenance and the fence, in one short line — the sentence behind
+          it is its hover: this comes from the family's own review, it is dated,
+          and no figure of its own is on this screen. */}
+      <div className="mt-2 border-t border-ink-700/70 pt-1.5 text-[11px] leading-snug text-slate-500"
+        title={`From the family's consolidated review as at ${REVIEW_AS_OF}, which is a cross-check and not a source — so this book publishes no value or quantity for it until a statement arrives.`}>
+        Review as at {REVIEW_AS_OF} · a cross-check, not a source
       </div>
     </div>
   );

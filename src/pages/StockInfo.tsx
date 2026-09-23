@@ -1395,9 +1395,16 @@ export function StockInfo() {
             above the figures. Beyond two it is a count, and every mandate is
             still one click away — each account row on the Position tab links
             to its own. */}
+        {/* Beyond two, the count is the whole line: where each mandate is
+            linked from is the line's hover (Stage 10cp), because "each linked
+            from its row on the Position tab" is a sentence about the page, not
+            a fact about the holding. */}
         {mandates.length > 0 && (
           <p className="mt-1.5 truncate text-[12px] text-slate-400" data-stock-mandates={mandates.length}
-            title={mandates.map((m) => `${m.label}${m.label === m.provider ? "" : ` · ${m.provider}`} · ${m.owner}`).join("\n")}>
+            title={[
+              ...(mandates.length > 2 ? ["Each is linked from its own row on the Position tab:"] : []),
+              ...mandates.map((m) => `${m.label}${m.label === m.provider ? "" : ` · ${m.provider}`} · ${m.owner}`),
+            ].join("\n")}>
             {/* The sentence that explains the route is the hover on these first
                 words (main's Stage 10ci). THE NOUN IS DERIVED, NOT TYPED — see
                 `mandateAllShares` above: a mandate's bucket takes its whole
@@ -1410,16 +1417,16 @@ export function StockInfo() {
                   ? `This is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose.`
                   : "The family owns these holdings and the manager runs the accounts they sit in."} Every other holding in ${mandates.length === 1 ? "that mandate is on its" : "those mandates is on their"} own page.`}>
               Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
-            {" — "}
-            {mandates.length > 2
-              ? <span className="text-slate-500">each linked from its row on the Position tab</span>
-              : mandates.map((m, i) => (
+            {mandates.length <= 2 && <>
+              {" — "}
+              {mandates.map((m, i) => (
                 <span key={m.accountId}>
                   {i > 0 && "; "}
                   <Link to={`/mandate/${encodeURIComponent(m.accountId)}`} className="text-champagne-400 hover:underline" title="Open the mandate — every holding the manager runs inside it, and the statement it ties to">{m.label}</Link>
                   <span className="text-slate-500">{m.label === m.provider ? "" : ` · ${m.provider}`} · {m.owner}</span>
                 </span>
               ))}
+            </>}
           </p>
         )}
       </div>
@@ -1633,11 +1640,14 @@ export function StockInfo() {
                     name reported under two members has two rows; the Total is
                     the consolidated figure, which counts the holding once.
                     One line, the reasoning in its hover (main's Stage 10ci). */}
+                {/* The count and both figures on the face, the reasoning in its
+                    hover (Stage 10cp) — a reader dividing the rows by the Total
+                    still finds the two figures that explain the gap. */}
                 {visibleDup > 1 && (
-                  <p className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500"
-                    title="Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings. Which statement owns it is a question about the family's affairs, not a parsing rule, so neither row is suppressed.">
-                    One holding, reported on each of the {new Set(visibleMeasured.map((r) => r.accountId)).size} statements listed — the rows add to{" "}
-                    {money(sum(visibleMeasured.map((r) => r.marketValue)))}, the Total counts it once at {money(measuredTotals(visibleMeasured).mv)}.
+                  <p className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500" data-stock-dup-note
+                    title="The same holding is reported on each of the statements listed. Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings. Which statement owns it is a question about the family's affairs, not a parsing rule, so neither row is suppressed.">
+                    One holding on {new Set(visibleMeasured.map((r) => r.accountId)).size} statements · rows{" "}
+                    {money(sum(visibleMeasured.map((r) => r.marketValue)))} · counted once in the Total, {money(measuredTotals(visibleMeasured).mv)}
                   </p>
                 )}
                 {/* AND THE FUND LINES' OWN "COUNT ONCE", which no holding in this
@@ -1739,10 +1749,12 @@ export function StockInfo() {
                   </div>
                 ) : led.txns.length === 0 ? (
                   <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
-                    <span className="max-w-md"
-                      title="A holding bought before that window and untraded since carries no row here — the transaction statements are a period record, not a lot history.">
-                      No transaction in this name over the window the statements cover
-                      {led.periodFrom && led.periodTo ? <> ({fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)})</> : null}.
+                    {/* ONE SHORT LINE (Stage 10cp): the state and its window on the
+                        face, the sentence saying what the window is on its hover. */}
+                    <span className="max-w-md" data-stock-no-txn
+                      title="No transaction in this name over the window the statements cover. A holding bought before that window and untraded since carries no row here — the transaction statements are a period record, not a lot history.">
+                      No transactions
+                      {led.periodFrom && led.periodTo ? <> · {fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)}</> : null}
                     </span>
                   </div>
                 ) : (
@@ -1875,6 +1887,7 @@ export function StockInfo() {
                   <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research-na={fundVehicle ? "fund" : "balance"}
                     data-stock-class={cashFund ? "Cash" : assetClass ?? ""}
                     title={[
+                      cashFund ? "The family counts an arbitrage or liquid fund as cash, whatever wrapper its statement typed it as." : "",
                       "Company research does not apply, so there is no PE, no balance sheet, no concall and no insider filing for it, and the panels that carry those for a company are absent here by decision rather than by a feed being down.",
                       fundVehicle ? "A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : "",
                       !fundVehicle ? ""
@@ -1886,7 +1899,7 @@ export function StockInfo() {
                     ].filter(Boolean).join(" ")}>
                     This holding is <span className="font-medium text-slate-300">{cashFund ? "Cash" : assetClassLabel(assetClass)}</span>
                     {cashFund
-                      ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund the family counts as cash</>
+                      ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund</>
                       : fundVehicle
                       ? <> — one line for a manager&rsquo;s portfolio, not a company</>
                       : <> — a balance, not a company</>}

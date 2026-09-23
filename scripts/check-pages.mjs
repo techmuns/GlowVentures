@@ -7527,8 +7527,15 @@ const ALLOC_AXIS = [
  * swept into whichever section happens to be first.
  */
 const ALLOC_FAMILY_AXIS = [
+  // Whose taxonomy it is stays ON the face; how their review states it is the
+  // line's hover since Stage 10cp — so both halves are read, each where it is.
   ["a family axis says whose taxonomy it is",
-    (t) => /Grouped by the family’s own (basket|asset class), as their consolidated review states it/.test(t)],
+    (t, ctx) => {
+      const src = ctx?.cashDom?.allocSource;
+      if (!src) return false;
+      return /^The family’s own (baskets|asset classes)\b/.test(src.text)
+        && /Grouped by the family's own (basket|asset class), as their consolidated review states it/.test(src.title);
+    }],
   /**
    * AN UNPLACED ROW NAMES ITS CAUSE. Gated on the row EXISTING, because a later
    * review that names everything is a book with no such row — and a check that
@@ -7655,11 +7662,16 @@ const axisChecks = (axis, expected) => [
   // 5. AN UNCLASSIFIED SECTION NAMES ITS CAUSE. "Other" would read as a bucket
   //    the family chose. If the axis ever classifies everything this passes
   //    vacuously and correctly — there is nothing to disclose.
+  // The heading names the cause and the clause beside it says what is missing;
+  // the sentence naming the review and what would fill it is that clause's
+  // hover since Stage 10cp.
   [`an unclassified ${axis} section says the review does not list it`, (t, ctx) => {
     const secs = ctx?.sectionRows;
     if (!secs?.length) return { notChecked: "no section headings on this run" };
     const un = secs.find((x) => x.key === UNCLASSIFIED_KEY);
-    return !un || /review does not list/i.test(un.text);
+    return !un || (/not classified in the family.s review/i.test(un.text)
+      && new RegExp(`no ${axis === "basket" ? "basket" : "asset class"} stated`, "i").test(un.text)
+      && (ctx.titles ?? []).some((x) => /review \(30 June 2026\) does not list this holding/.test(x ?? "")));
   }],
   // 6. AND A SECTION FILLED BY THE FAMILY'S RULE SAYS HOW MUCH. The review
   //    naming a product and a rule covering a class are different claims, and
@@ -8359,9 +8371,13 @@ const qtyChecks = (keyOf) => [
       && (ctx?.titles ?? []).some((x) => /pledge, unpledge or early pay-in earmark is counted and is in none of these columns/i.test(x))],
   // WHAT THIS IS NOT. Without it "units in" reads as a purchase, and a
   // depository movement names no price, no counterparty and no consideration.
-  ["the table says these are depository movements and not trades",
-    (t, ctx) => /depository movements, not trades/i.test(t)
-      && (ctx?.titles ?? []).some((x) => /no\s+price, amount or gain/i.test(x))],
+  // "Depository" is in the card's TITLE since Stage 10cp, and "not trades",
+  // with what that means, is the title's hover — the phrase under the table
+  // is gone, and asserted gone so a rewording cannot bring the line back.
+  ["the table says these are depository movements and not trades — the kind in its title, the caveat in its hover",
+    (t, ctx) => /Depository quantity through the year/i.test(t)
+      && !/depository movements, not trades/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /depository movements, not trades/i.test(x) && /no\s+price, amount or gain/i.test(x))],
   /**
    * AN OPENING BALANCE IS A CLAIM ABOUT A DATE. Without the window on screen,
    * "opening 4,875" is a figure with no period attached and a reader cannot
@@ -11432,8 +11448,11 @@ const CASH_HEADING_COUNTS = [
     if (!inc) return { notChecked: "the probe did not run" };
     const B = CASH_INSTRUCTION_BOOK;
     if (!B) return false;
+    // The count is on the heading; that the family counts them as cash, and
+    // why, is the count's own hover since Stage 10cp.
     return inc.length === 1 && inc[0] === `${B.liquid.length}/${B.arb.length}`
-      && /includes \d+ liquid and \d+ arbitrage funds? the family counts as cash/i.test(t);
+      && /includes \d+ liquid and \d+ arbitrage funds?\b/i.test(t)
+      && (ctx.titles ?? []).some((x) => /^Cash is liquid and arbitrage — the family's own instruction/.test(x ?? ""));
   }],
 ];
 /**
@@ -11452,7 +11471,8 @@ const CASH_RULE_HEADINGS = (axis) => [
     if (!B) return false;
     const sec = secs.find((x) => x.key === cashSection(axis));
     return !!sec && sec.cashRuleMV != null && Math.abs(sec.cashRuleMV - B.arbMV) <= 1
-      && /counted as cash by the family.s instruction/i.test(sec.text);
+      && /by the family.s cash instruction/i.test(sec.text)
+      && (ctx.titles ?? []).some((x) => /by the family's instruction that arbitrage and liquid funds are cash/.test(x ?? ""));
   }],
   ["...and no heading credits them to the direct-stock rule, or the cash instruction to anything else", (t, ctx) => {
     const secs = ctx?.cashDom?.sections;
@@ -11469,8 +11489,11 @@ const ALLOC_CASH_RULE = (axis) => [
     const B = CASH_INSTRUCTION_BOOK;
     if (!B) return false;
     const c = d.allocCashRule;
+    // The value and the rule's name are on the face; what the instruction says
+    // is the line's hover since Stage 10cp.
     return !!c && Math.abs(c.mv - B.arbMV) <= 1
-      && new RegExp(`is ${cashSection(axis)} by their instruction that arbitrage and liquid funds are cash`, "i").test(c.text);
+      && new RegExp(`is ${cashSection(axis)} by their cash instruction$`, "i").test(c.text)
+      && /instruction that arbitrage and liquid funds are cash/i.test(c.title ?? "");
   }],
 ];
 /**
@@ -12858,10 +12881,14 @@ const INVARIANTS = {
        * `uppercase`, and which once failed a check reading "Listed NAV" against
        * a page rendering "LISTED NAV".
        */
-      const note = a.note.toLowerCase();
+      // The name is on the face and the two sentences are its hover since
+      // Stage 10cp, so each is read where it is — and the face alone must not
+      // carry them, or the note is the paragraph back.
+      const tips = (a.noteTips ?? []).join(" \n ").toLowerCase();
       return a.named.includes(g.name)
-        && note.includes(g.why.toLowerCase())
-        && note.includes(g.ask.toLowerCase());
+        && tips.includes(g.why.toLowerCase())
+        && tips.includes(g.ask.toLowerCase())
+        && !a.note.toLowerCase().includes(g.ask.toLowerCase());
     }],
     ["…and it names no figure, because the review is not a source", (t, ctx) => {
       const a = ctx.absentName?.byName;
@@ -12873,7 +12900,8 @@ const INVARIANTS = {
        * this holding is worth ₹15.46 Cr and that figure may never sit beside
        * figures every one of which traces to the institution that struck it.
        */
-      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note)
+      const all = `${a.note} \n ${(a.noteTips ?? []).join(" \n ")}`;
+      return !/₹/.test(all) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(all)
         && /review/i.test(a.note);
     }],
     ["…and the family's own spelling of the name finds it too", (t, ctx) => {
@@ -14068,14 +14096,17 @@ const INVARIANTS = {
       if (a.rows.some((x) => x.kind !== "ask") || a.empty !== true || !a.note) return false;
       // Case-folded: `innerText` returns the TRANSFORMED text, and the note
       // capitalises each sentence the report prints in lower case.
-      const note = a.note.toLowerCase();
-      return a.named.includes(g.name) && note.includes(g.why.toLowerCase()) && note.includes(g.ask.toLowerCase());
+      // Why and what would close it are the name's hover since Stage 10cp.
+      const tips = (a.noteTips ?? []).join(" \n ").toLowerCase();
+      return a.named.includes(g.name) && tips.includes(g.why.toLowerCase()) && tips.includes(g.ask.toLowerCase())
+        && !a.note.toLowerCase().includes(g.ask.toLowerCase());
     }],
     ["…and the note names no figure, because the review is not a source", () => {
       if (!REVIEW_GAP_BOOK) return { notChecked: "no review gap to search for" };
       const a = SEARCH?.results?.gap;
       if (!a?.note) return false;
-      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note) && /review/i.test(a.note);
+      const all = `${a.note} \n ${(a.noteTips ?? []).join(" \n ")}`;
+      return !/₹/.test(all) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(all) && /review/i.test(a.note);
     }],
     ["…and the family's own spelling of the name finds it too", () => {
       const g = REVIEW_GAP_BOOK;
@@ -14826,8 +14857,9 @@ const INVARIANTS = {
      */
     /* THE PROVENANCE LINE WENT WITH THE LEAD PARAGRAPH, and it is not lost:
        Morning CIO's allocation card — the surface this page is opened FROM —
-       states it on the family's two axes ("Grouped by the family's own basket,
-       as their consolidated review states it"), and that is asserted on the
+       states it on the family's two axes ("The family's own baskets", with
+       "as their consolidated review states it" its hover since Stage 10cp),
+       and that is asserted on the
        `cio-alloc-basket` / `cio-alloc-class` routes. A reader reaches these
        rows through that card, so the judgement is named before they arrive.
        Asserted here as an ABSENCE so the removal is recorded rather than the
@@ -15700,11 +15732,20 @@ const INVARIANTS = {
      * is a claim a reader acts on. A card that kept the title and lost the
      * per-account terminal date would pass a title check and mislead.
      */
-    ["the money-weighted derivation says how the rate is struck", (t) =>
-      /find r where/i.test(t) && /\(1 \+ r\)/.test(t)
-      && /its own report date/i.test(t)
-      && /compounded up to a yearly rate/i.test(t)
-      && /not a flow/i.test(t)],
+    // One line per rule since Stage 10cp, each sentence the line's hover —
+    // so both are required: the rule on the face, and what it means in the
+    // hover a reader opens it by.
+    ["the money-weighted derivation says how the rate is struck — each rule on the face, its sentence in the hover",
+      (t, ctx) => {
+        const tips = ctx?.titles ?? [];
+        return /find r where/i.test(t) && /\(1 \+ r\)/.test(t)
+          && /its own report date/i.test(t)
+          && /Under a year: the return over that window, not annualised/i.test(t)
+          && /not a flow/i.test(t)
+          && tips.some((x) => /credit the earlier ones with standing still/i.test(x))
+          && tips.some((x) => /never compounded up to a yearly rate/i.test(x))
+          && tips.some((x) => /Only money the family put in or took out counts/i.test(x));
+      }],
     /**
      * ...OVER THE ACCOUNT COUNT THE PAGE'S OWN TILE REPORTS. The card states how
      * many accounts the rate is struck on, and a number typed into prose is the
@@ -15732,7 +15773,7 @@ const INVARIANTS = {
       return c.tableTop < c.derivationTop;
     }],
     ["...on the same account count its own tile reports", (t) => {
-      const card = Number(/in or out of the\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      const card = Number(/dated flows of\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
       const tile = Number(/·\s*([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
       return Number.isFinite(card) && Number.isFinite(tile) && card > 0 && card === tile;
     }],
@@ -21112,14 +21153,16 @@ const INVARIANTS = {
      */
     ["the Total ties to the account's own statement total", (t) => {
       const foot = new RegExp(String.raw`^Total\b[^\n]*₹([\d,.]+)\s*(Cr|L|K)?\s*100\.0\s?%`, "m").exec(t);
-      const stmt = /₹([\d,.]+)\s*(Cr|L|K)?\s+is\s+this account.s own statement total/i.exec(t);
+      // "Statement total ₹X" since Stage 10cp — the figure on the face, what
+      // it is in the line's hover.
+      const stmt = /Statement total ₹([\d,.]+)\s*(Cr|L|K)?/.exec(t);
       if (!foot || !stmt) return false;
       const [total, printed] = [crU(foot[1], foot[2]), crU(stmt[1], stmt[2])];
       if (![total, printed].every(Number.isFinite)) return false;
       if (Math.abs(total - printed) <= 0.005) return true;
       // On LIVE basis the Total has moved and the statement figure has not. The
       // page must say so; a silent difference is a total that ties to nothing.
-      return /The Total shown is .* because live prices are applied/i.test(t);
+      return /Total at live prices ₹/.test(t);
     }],
     /**
      * AND IT AGREES WITH THE MONITOR ROW THAT LINKS HERE. Two pages printing two
@@ -21545,6 +21588,16 @@ const INVARIANTS = {
         return !!m && !!MANY_MANDATES && m.count === MANY_MANDATES.count && m.links === 0
           && m.height <= m.lineHeight * 1.6;
       }],
+    // THE COUNT IS THE WHOLE LINE, AND WHERE EACH MANDATE IS LINKED IS ITS
+    // HOVER (Stage 10cp): "each linked from its row on the Position tab" is a
+    // sentence about the page, so it may not be on the face — and a line that
+    // lost it from both places would leave a reader no way to find the links.
+    ["...and where each mandate is linked is the line's hover, not its face",
+      (t, ctx) => {
+        const m = ctx.stockPage?.mandates;
+        return !!m && /^Held through \d+ discretionary mandates$/.test(m.text)
+          && /linked from its own row on the Position tab/i.test(m.title);
+      }],
     ["...and every one of those mandates is linked from its own row",
       (t, ctx) => !!MANY_MANDATES
         && new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h))).size === MANY_MANDATES.count],
@@ -21566,8 +21619,12 @@ const INVARIANTS = {
   ],
   "stock-cash-market": [
     ...stockTabChecks("market"),
+    // The headline carries the verdict on its face and the reason is the
+    // absence box's hover since Stage 10cp, so the two halves are read where
+    // each now is — a `title` is not in `innerText`.
     ["a cash line's price tab says there is no market price, and why",
-      (t) => /not applicable to a cash line/i.test(t) && /a balance, not a priced security/i.test(t)],
+      (t, ctx) => /not applicable to a cash line/i.test(t) && /No market price — a cash line is a balance/.test(t)
+        && (ctx.titles ?? []).some((x) => /a balance, not a priced security/i.test(x ?? ""))],
     ["the book carries a cash line held through three or more mandates", () => !!MANY_MANDATES?.cash],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
@@ -21758,8 +21815,16 @@ const INVARIANTS = {
     }],
     // Both rows show and the Total counts the holding once, so the column does
     // NOT add to its own footer — which is only honest because the page says so.
-    ["the rows-vs-total gap is named where a holding is reported twice",
-      (t) => /reported on\s+each of the \d+ statements listed/i.test(t)],
+    // One line of figures since Stage 10cp — the statement count, the rows'
+    // own sum and the Total — and the reason is that line's hover. The count
+    // is held to the account rows drawn, so a line naming a different number
+    // of statements than the table lists fails.
+    ["the rows-vs-total gap is named where a holding is reported twice — its figures on the face, its reason in the hover",
+      (t, ctx) => {
+        const m = /One holding on (\d+) statements · rows ₹[\d,.]+\s*(?:Cr|L|K)? · counted once in the Total, ₹[\d,.]+/i.exec(t);
+        return !!m && Number(m[1]) === ctx?.accountRows
+          && (ctx?.titles ?? []).some((x) => /Both rows are shown as printed, and the Total counts the holding once/i.test(x));
+      }],
     // A holding its statement marks at a TOTAL value has no per-unit price. This
     // headline read "₹0" for exactly that reason (`currentPrice ?? 0`), which is
     // a figure produced by a default over a ₹1.47 Cr position.
@@ -21892,11 +21957,13 @@ const INVARIANTS = {
   ],
   "stock-arbitrage-research": [
     ...stockTabChecks("research"),
-    ["an arbitrage fund's own page says it is Cash — an arbitrage fund the family counts as cash", (t, ctx) => {
+    // "Cash — an arbitrage fund" on the face; that the FAMILY counts it as cash
+    // is the line's hover since Stage 10cp, and is required there.
+    ["an arbitrage fund's own page says it is Cash — an arbitrage fund, the family's instruction in its hover", (t, ctx) => {
       const d = ctx?.cashDom;
       if (!d) return { notChecked: "the probe did not run" };
-      return d.stockClass === "Cash" && /arbitrage fund/i.test(d.stockClassText ?? "")
-        && /counts as cash/i.test(d.stockClassText ?? "");
+      return d.stockClass === "Cash" && /is Cash — an arbitrage fund$/i.test(d.stockClassText ?? "")
+        && /family counts an arbitrage or liquid fund as cash/i.test(d.stockClassTitle ?? "");
     }],
     /**
      * …AND DRAWS NO LOOK-THROUGH. Struck on the fund card's own handle rather than
@@ -21922,14 +21989,18 @@ const INVARIANTS = {
     ...stockTabChecks("market"),
     ["an arbitrage fund's price tab draws the scheme's price half and never its holdings", (t, ctx) =>
       !!ctx.stockPage && ctx.stockPage.lookthrough.join() === "nav"],
-    ["...and a scheme the fund store never saw is not said to be named in the store's report", (t) => {
+    ["...and a scheme the fund store never saw is not said to be named in the store's report", (t, ctx) => {
       const key = CASH_INSTRUCTION_BOOK?.largestArb;
       if (!key) return false;
       let idx = null;
       try { idx = JSON.parse(readFileSync(new URL("../public/lookthrough/index.json", import.meta.url), "utf8")); } catch { return false; }
       const unseen = !idx?.schemes?.[key] && !(idx?.unresolved ?? []).some((u) => u.securityKey === key);
       if (!unseen) return { notChecked: "the fund store carries or names this scheme, so its own report applies" };
-      return /has no entry for this holding/i.test(t) && !/FUND-LOOKTHROUGH\.md names every one/.test(t);
+      // The reason is the absence box's hover since Stage 10cp, so it is read
+      // there — and the false claim must be in neither the face nor a hover.
+      const tips = (ctx?.titles ?? []).join(" \n ");
+      return /has no entry for this holding/i.test(tips)
+        && !/FUND-LOOKTHROUGH\.md names every one/.test(t) && !/FUND-LOOKTHROUGH\.md names every one/.test(tips);
     }],
   ],
   /**
@@ -22623,6 +22694,10 @@ for (const theme of THEMES) {
               // The review-gap note's own node, so the claim is not struck on
               // prose the component is free to reword.
               note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
+              // …and its hovers: why each name is absent and what would close
+              // it are the name's own `title` since Stage 10cp.
+              noteTips: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-absent-from-book] [title]")]
+                .map((n) => n.getAttribute("title") ?? ""),
               named: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-review-gap]")]
                 .map((n) => n.getAttribute("data-review-gap")),
             }));
@@ -23472,6 +23547,8 @@ for (const theme of THEMES) {
             // The note's own node, so the claim is not struck on prose the
             // component is free to reword.
             note: el.querySelector("[data-absent-from-book]")?.innerText ?? null,
+            // …and its hovers (Stage 10cp): why and what would close it.
+            noteTips: [...el.querySelectorAll("[data-absent-from-book] [title]")].map((n) => n.getAttribute("title") ?? ""),
             named: [...el.querySelectorAll("[data-review-gap]")].map((n) => n.getAttribute("data-review-gap")),
             options: el.querySelectorAll("[data-option]").length,
           }));
@@ -24528,9 +24605,13 @@ for (const theme of THEMES) {
         })),
         allocCashRule: (() => {
           const e = document.querySelector("[data-testid=alloc-cash-rule]");
-          return e ? { mv: Number(e.getAttribute("data-cash-rule-mv")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+          return e ? { mv: Number(e.getAttribute("data-cash-rule-mv")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+            title: e.getAttribute("title") ?? "" } : null;
         })(),
-        allocSource: (document.querySelector("[data-testid=alloc-taxonomy-source]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+        allocSource: (() => {
+          const e = document.querySelector("[data-testid=alloc-taxonomy-source]");
+          return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
+        })(),
         hbDepository: (() => {
           const e = document.querySelector("[data-hb-depository]");
           // The line carries a count and a short clause; the SENTENCE naming why
@@ -24550,6 +24631,9 @@ for (const theme of THEMES) {
         })),
         stockClass: document.querySelector("[data-stock-class]")?.getAttribute("data-stock-class") ?? null,
         stockClassText: (document.querySelector("[data-stock-class]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+        // Why it is Cash is the line's hover since Stage 10cp; `textContent`
+        // cannot see a `title`.
+        stockClassTitle: document.querySelector("[data-stock-class]")?.getAttribute("title") ?? null,
       }));
       /**
        * ── THE AIF DRILL-DOWN'S SECTIONS, READ AS STRUCTURE ───────────────────
@@ -26042,6 +26126,8 @@ for (const theme of THEMES) {
             links: mandates.querySelectorAll('a[href^="/mandate/"]').length,
             height: mandates.getBoundingClientRect().height,
             lineHeight: parseFloat(getComputedStyle(mandates).lineHeight) || 18,
+            text: mandates.innerText.replace(/\s+/g, " ").trim(),
+            title: mandates.getAttribute("title") ?? "",
           } : null,
           sector: document.querySelector("[data-stock-sector]")?.getAttribute("data-stock-sector") ?? null,
           // THE FIGURES ON THE STRIP, so an absent tile can be told from a ₹0.
@@ -27605,6 +27691,12 @@ for (const theme of THEMES) {
             invariants.push(`no explainer line outside a table — ${longBlocks.length} sentence(s) run past ${PROSE_LINE_MAX} characters, e.g. ${longBlocks[0].slice(0, 110)}…`);
           }
           const longCells = prose.cells.filter((c) => c.length > PROSE_CELL_MAX && proseWords(c) >= PROSE_WORDS);
+          // `PROSE_DUMP=1` prints every flagged line rather than the first, for
+          // a pass that fixes them all at once.
+          if (process.env.PROSE_DUMP) {
+            for (const x of longBlocks) console.log(`    PROSE line  [${name}] ${x}`);
+            for (const x of longCells) console.log(`    PROSE cell  [${name}] ${x}`);
+          }
           if (longCells.length) {
             invariants.push(`no explainer line inside a table — ${longCells.length} cell(s) run past ${PROSE_CELL_MAX} characters as a sentence, e.g. ${longCells[0].slice(0, 110)}…`);
           }

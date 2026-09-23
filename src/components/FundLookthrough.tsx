@@ -226,8 +226,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         <div className="mt-5">
           <div className="mb-2 flex flex-wrap items-baseline gap-2">
             <span className="label-xs">Scheme returns</span>
-            <span className="text-[11px] text-slate-500">
-              the scheme's own, on this plan{p.returnsAsOf ? ` · to ${fmtDate(p.returnsAsOf)}` : ""} — not this family's return, which depends on when they bought
+            {/* The scheme's, not the family's, on the face; why the two differ
+                is the hover (Stage 10cp). */}
+            <span className="text-[11px] text-slate-500" data-scheme-returns-basis
+              title="The scheme's own returns, on this plan, from its published NAVs. Not this family's return, which depends on when they bought.">
+              the scheme&rsquo;s, not this family&rsquo;s{p.returnsAsOf ? ` · to ${fmtDate(p.returnsAsOf)}` : ""}
             </span>
           </div>
           <div className="overflow-x-auto">

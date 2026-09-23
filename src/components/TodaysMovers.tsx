@@ -347,7 +347,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           round is in flight. When the SCOPE ITSELF is incomplete the card draws
           no figures at all — see `settling` above. */}
       {quotesStatus === "loading" && !settling && model.rows.length > 0 && (
-        <p className="mb-4 text-[11.5px] text-slate-500">Refreshing prices — figures are the last complete round until they settle.</p>
+        <p className="mb-4 text-[11.5px] text-slate-500" data-movers-refreshing
+          title="The figures below are the last complete round of prices; a newer round is in flight and replaces them when it settles.">Refreshing prices</p>
       )}
 
       {/*
