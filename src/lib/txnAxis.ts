@@ -155,12 +155,12 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   };
 
   const forAccount = (axis: GroupAxis, accountId: string): string => {
-    const held = byAccount.get(accountId) ?? [];
+    const all = byAccount.get(accountId) ?? [];
     /**
      * AN ACCOUNT THAT HOLDS NO VALUED POSITION IS STILL AN AIF ON THE CATEGORY
      * AXIS, WHEN ITS OWN STATEMENT SAYS SO.
      *
-     * Stage 10bt put a drawdown fund's dated CALLS on this table for the
+     * Stage 10bw put a drawdown fund's dated CALLS on this table for the
      * accounts that publish no capital record — India SME's three folios and
      * Sky Capital's four among them — and none of those seven carries a
      * position, because no statement values them. Left to the holdings they
@@ -172,17 +172,32 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
      * class a fund belongs to is the family's review, keyed on a product this
      * book holds no row for, so those two axes still say it is not stated.
      */
-    if (!held.length) {
+    if (!all.length) {
       if (axis === "category" && idx.get(accountId)?.engagement === "AIF") {
         return groupKeyFor(axis, idx, { assetClass: "AIF", securityKey: "", accountId });
       }
       return TXN_UNSECTIONED;
     }
-    const keys = new Set(held.map((p) => groupKeyFor(axis, idx, p)));
-    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No account in
-    // this book is mixed on any axis — measured, all eleven funded ones resolve
-    // to one — and an account that holds nothing at all cannot be filed either:
-    // its capital record is real and its section is simply not established.
+    /**
+     * A LINE THAT HOLDS NOTHING IS NOT WHERE THE MONEY WENT.
+     *
+     * Buoyant's two folios each carry an empty cash sleeve — a MEASURED ₹0 —
+     * beside the fund units their deposits bought. Counted, it made both
+     * accounts "mixed" on every axis, and their payments were filed under the
+     * heading that says no statement stated what the instrument is: false of a
+     * fund whose own statement names the class each payment bought. So a ₹0 line
+     * is set aside where the account holds something else, and ONLY there: an
+     * account holding nothing but ₹0 lines — 3P, redeemed to nil — is still
+     * filed under what it held, which is where its money went. The zero is not
+     * altered or summed anywhere; it simply decides no section.
+     */
+    const held = all.filter((p) => p.marketValue !== 0);
+    const keys = new Set((held.length ? held : all).map((p) => groupKeyFor(axis, idx, p)));
+    // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No funded account
+    // in this book is mixed on any axis once an empty line is set aside —
+    // measured, all thirteen resolve to one, and `txnAxis.test.ts` holds the
+    // book to that — and an account that holds nothing at all is filed only
+    // where its own statement names what it is (above).
     return keys.size === 1 ? [...keys][0] : TXN_UNSECTIONED;
   };
 

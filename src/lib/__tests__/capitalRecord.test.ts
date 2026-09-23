@@ -130,6 +130,30 @@ console.log("\n── nothing redeemed ──");
   }
 }
 
+// ── 6b. A DISTRIBUTION THE FUND REINVESTED ─────────────────────────────────
+// Buoyant's allotment worth MORE than was paid is a gain distributed and put
+// back into units. It is realised; the rest ties to the Holdings page's own
+// unrealised P&L for the fund — a second path to one figure.
+console.log("\n── a distribution reinvested ──");
+{
+  const withReinvest = G.filter((g) => {
+    const ins = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === g.accountId && m.direction === "in");
+    return ins.some((m) => m.amount != null && m.invested != null && m.invested > m.amount);
+  });
+  ok("the book carries a reinvested distribution (LOAD-BEARING)", withReinvest.length > 0,
+    withReinvest.map((g) => g.accountId).join(", "));
+  for (const g of withReinvest) {
+    const ins = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === g.accountId && m.direction === "in");
+    const reinvested = ins.reduce((s, m) => s + Math.max(0, (m.invested ?? 0) - (m.amount ?? 0)), 0);
+    ok(`${g.accountId}: nothing else came back`, g.redemption === 0);
+    near(`${g.accountId}: realised is the distribution reinvested`, g.realised, reinvested);
+    const own = BOOK_POSITIONS.filter((p) => p.accountId === g.accountId);
+    const holdingsUnrealised = own.reduce((s, p) => s + p.marketValue - (p.costBasis ?? NaN), 0);
+    near(`${g.accountId}: unrealised = the holdings' own unrealised P&L`, g.unrealised, holdingsUnrealised);
+    ok(`${g.accountId}: …and it is NOT value less the cash paid`, Math.abs((g.unrealised ?? NaN) - ((g.value ?? NaN) - g.paidIn)) > 1);
+  }
+}
+
 // ── 7. A PMS MANDATE — the split ties to the Holdings page ─────────────────
 console.log("\n── PMS mandates ──");
 {
