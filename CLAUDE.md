@@ -21101,6 +21101,30 @@ with nothing else. That is the load sensitivity Stage 10cc records for
 `monitor-txn-out`, on two more of the same walks; it is recorded here rather than
 called a flake, and the counts above come from the sweep that ran alone.
 
+**VERIFIED ON THE TREE MERGED WITH #92** (main at `f55b19b`), which is the tree
+that ships and the one the note above points to. #92 fixed both of main's
+standing failures, so this time nothing is excused: `build` · `tsc` ·
+`test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant 42,
+classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+140 — 2 not checked, 0 blocked) · `test:family` (47 suites, main's 46 plus
+`heldThrough`; 2,494 checks, 0 failed; the four not checked are main's: three
+managers' bridges with no performance history on their capital's own date, and
+the fund-NAV basis gate) · `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY · `check:family` **89/0** ·
+`check:pages` **254 combinations clean**, which is main's 246 plus this change's
+four routes in both themes. Its ten abstentions are all main's (six KPI-tile
+lines across the Morning CIO routes, two Private Market cost lines, #79's
+redeemed private account, the not-found drill-down's crumb), and none is on this
+change's four routes. The sweep ran alone, on a build whose files are
+byte-identical to a fresh build of the committed head, and CI (`build`) and
+Cloudflare Pages are green on that head.
+
+**AND THE BUG HARNESS RAN ON TWO MERGED TREES, NOT ONLY BEFORE THEM.** On the
+tree merged with #87 and #89, and again on the tree merged with #90, the control
+came back clean and all eighteen cases fired their own checks. #92 changed none
+of the files the harness patches beyond a stage letter in a comment, so the full
+sweep above is that run's control on the tree that ships.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
