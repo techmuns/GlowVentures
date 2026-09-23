@@ -43,6 +43,7 @@ import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCH
 import {
   trancheTable, trancheKey, trancheCoverage,
   contributionsAreComplete, capitalRollup, capitalTotals,
+  recordShortfall,
 } from "@/lib/tranches";
 import type { Position } from "@/lib/types";
 
@@ -243,17 +244,30 @@ eq("every position unit-tied → accepted with no inception date",
 // loses its return — never the other way round, which would put a return on a
 // cost the statements do not claim is complete.
 const gateGroups = capitalRollup(gateMoves,
-  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2024-01-01" }],
+  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2024-01-01", asOf: "2026-07-31", capitalRecordTo: "2026-07-31" }],
   gatePos, {});
 eq("a refused group publishes no return", gateGroups[0].returnPct, null);
 eq("...and no gain either", gateGroups[0].gain, null);
 ok("...but keeps what it DID pay in", gateGroups[0].paidIn === 1e7);
 ok("...and names why the return is absent", !!gateGroups[0].incompleteReason);
 const okGroups = capitalRollup(gateMoves,
-  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01" }],
+  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01", asOf: "2026-07-31", capitalRecordTo: "2026-07-31" }],
   gatePos, {});
 ok("an accepted group does publish one", okGroups[0].returnPct !== null);
 eq("...with no reason attached", okGroups[0].incompleteReason, null);
+// AND THE OTHER END: A RECORD THAT STOPS BEFORE THE VALUE'S DATE PUBLISHES NO
+// RETURN. Green Lantern 510861's dated record is a quarterly report ending 30
+// June against holdings struck 27 July; a return on it divides a July value by
+// June capital. `recordShortfall` is the one definition, read here and by the
+// capital model, so the card and the Holdings table cannot disagree about it.
+const shortGroups = capitalRollup(gateMoves,
+  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01", asOf: "2026-07-31", capitalRecordTo: "2026-06-30" }],
+  gatePos, {});
+eq("a record ending before the value's date publishes no return", shortGroups[0].returnPct, null);
+ok("...and says the record stops short, naming both dates",
+  /ends 2026-06-30/.test(shortGroups[0].incompleteReason ?? "") && /2026-07-31/.test(shortGroups[0].incompleteReason ?? ""));
+eq("recordShortfall: reaching the date is no shortfall", recordShortfall({ asOf: "2026-07-31", capitalRecordTo: "2026-07-31" }), null);
+ok("recordShortfall: no record date is a shortfall", recordShortfall({ asOf: "2026-07-31", capitalRecordTo: null }) !== null);
 /**
  * `capitalTotals` NO LONGER COUNTS THE MEASURABLE ROWS, and this asserts the
  * removal rather than deleting the case with the field.

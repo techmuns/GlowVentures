@@ -238,6 +238,27 @@ export type CapitalGroup = {
 export type CapitalSide = "all" | "in" | "out";
 
 /**
+ * DOES THE DATED RECORD REACH THE DATE THE VALUE IS STRUCK ON?
+ *
+ * The other end of the same question `contributionsAreComplete` asks about the
+ * start. A return compares the capital with a value, and the value is struck on
+ * the account's own statement date; a record that stops before that date has
+ * not seen what moved in between, so a return on it divides a value by capital
+ * drawn at a different moment. Green Lantern 510861 is the case: its dated
+ * record is a quarterly investor report ending 30 June, and its holdings are
+ * struck on 27 July — ₹6,350 of withdrawals in between are in no dated row.
+ *
+ * ONE DEFINITION, read by the Transactions card's rows and by the capital model
+ * (`src/lib/capital.ts`), so the two cannot disagree about which accounts'
+ * dated records are whole. Null where the record reaches; otherwise the reason.
+ */
+export function recordShortfall(a: { asOf?: string | null; capitalRecordTo?: string | null } | undefined): string | null {
+  if (!a?.asOf) return "the account carries no statement date for its value, so there is nothing for the record to reach";
+  if (a.capitalRecordTo && a.capitalRecordTo >= a.asOf) return null;
+  return `this dated record ends ${a.capitalRecordTo ?? "before the account's statement date"}, before the ${a.asOf} statement its value is struck on, so what moved in between is not in it — the return on the capital the manager's own statement prints is on the Holdings table`;
+}
+
+/**
  * IS THE CONTRIBUTION HISTORY THE WHOLE OF WHAT WAS PAID IN?
  *
  * A return needs the denominator to be complete, and "the statement listed some
@@ -280,7 +301,7 @@ export function contributionsAreComplete(
  */
 export function capitalRollup(
   moves: CapitalMove[],
-  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null }[],
+  accounts: { accountId: string; provider: string; accountNo: string; strategy: string | null; owner: string; inceptionDate?: string | null; asOf?: string | null; capitalRecordTo?: string | null }[],
   positions: Position[],
   index: Record<string, PositionTranches>,
   side: CapitalSide = "all",
@@ -313,7 +334,10 @@ export function capitalRollup(
     const net = sideFiltered ? null : paidIn - tookOut;
     const value = positions.filter((p) => p.accountId === accountId).reduce((s, p) => s + p.marketValue, 0);
     const dates = ms.map((m) => m.date).sort();
-    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate);
+    // BOTH ENDS: the record must reach back to inception AND forward to the date
+    // the value beside it is struck on (`recordShortfall`).
+    const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate)
+      ?? recordShortfall(a);
     const measurable = !sideFiltered && net !== null && net > 0 && !incompleteReason;
     out.push({
       accountId,

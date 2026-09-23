@@ -8,7 +8,8 @@
 // family's holdings had been measured at zero.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Portfolio, Position } from "@/lib/types";
-import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET, currentHoldings } from "@/lib/analytics";
+import { buildCapitalModel, type CapitalModel } from "@/lib/capital";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
@@ -21,7 +22,7 @@ import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
   BOOK_ACCOUNT_CASH_FLOWS, BOOK_ENTITY_CASH_FLOWS,
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
-  BOOK_COMMITMENTS,
+  BOOK_COMMITMENTS, BOOK_CAPITAL_MOVES, BOOK_ACCOUNT_BRIDGES, BOOK_POSITION_TRANCHES,
 } from "@/data/glowData";
 
 // Re-export so components can keep importing these from the context module.
@@ -125,6 +126,22 @@ type Ctx = {
    * find a different number, with nothing on screen to explain why.
    */
   statementPortfolio: Portfolio | null;
+  /**
+   * THE CAPITAL BEHIND EACH INVESTMENT — what the family put into every account
+   * whose statements publish it, and what any set of positions has returned on
+   * it. Built once, on the book as it is shown (`portfolio`, current holdings),
+   * so every surface that prints an Invested figure or a return beside a whole
+   * account reads ONE answer. See `src/lib/capital.ts` for the rule and why the
+   * cost of the units held is the wrong basis for an investment's return.
+   */
+  capital: CapitalModel;
+  /**
+   * The same model on `statementPortfolio` — for a page that must tie to the
+   * PDF, where a value that drifted with the market would give a return no
+   * statement supports. Capital itself never moves with a price (§6); only the
+   * value it is compared with does.
+   */
+  statementCapital: CapitalModel;
   /** Which basis `portfolio` is currently on. */
   basis: Basis;
   /** No statements ingested yet — pages show an empty state rather than zeros. */
@@ -376,6 +393,21 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   const bookIsEmpty = useMemo(() => isEmptyBook(portfolio), [portfolio]);
 
+  // THE UNIVERSE IS WHAT THE SURFACES DRAW FROM. The whole-account rule compares
+  // a set's value against the account's own value over this universe, so it has
+  // to be the CURRENT HOLDINGS every table filters its rows from — a set that
+  // dropped a ₹54 speck could otherwise never carry a whole account.
+  const capital = useMemo(() => buildCapitalModel({
+    accounts: BOOK_ACCOUNTS, capitalMoves: BOOK_CAPITAL_MOVES, bridges: BOOK_ACCOUNT_BRIDGES,
+    commitments: BOOK_COMMITMENTS, tranches: BOOK_POSITION_TRANCHES,
+    positions: currentHoldings(portfolio?.positions ?? []),
+  }), [portfolio]);
+  const statementCapital = useMemo(() => buildCapitalModel({
+    accounts: BOOK_ACCOUNTS, capitalMoves: BOOK_CAPITAL_MOVES, bridges: BOOK_ACCOUNT_BRIDGES,
+    commitments: BOOK_COMMITMENTS, tranches: BOOK_POSITION_TRANCHES,
+    positions: currentHoldings(basePortfolio?.positions ?? []),
+  }), [basePortfolio]);
+
   // Counted by security, not by position row: the same holding is often held by
   // several accounts, and "53 not live" against a 149-row table reads as wrong.
   //
@@ -422,11 +454,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const quoteFeeds = useMemo(() => quoteFeedNames(quotes), [quotes]);
   const value = useMemo<Ctx>(
     () => ({
-      portfolio, consolidated, statementPortfolio: basePortfolio, basis,
+      portfolio, consolidated, statementPortfolio: basePortfolio, capital, statementCapital, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
       quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
     }),
-    [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
+    [portfolio, consolidated, basePortfolio, capital, statementCapital, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
      clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;

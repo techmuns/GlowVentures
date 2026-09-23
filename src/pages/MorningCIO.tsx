@@ -187,7 +187,7 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
 };
 
 export function MorningCIO() {
-  const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency, capital } = usePortfolio();
   /**
    * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
    * every other view in this app, and for the reason the Portfolio Monitor's
@@ -253,9 +253,26 @@ export function MorningCIO() {
     // book-wide cost as zero — it would understate the basis and overstate the
     // return on everything else. The positions it SKIPS are counted, because a
     // total that covers 303 of 309 positions has to say so on its own tile.
-    const bookCost = sumOrNull(p.map((x) => x.costBasis));
-    const bookPnL = sumOrNull(p.map((x) => x.unrealizedPnL));
-    const noCost = p.filter((x) => x.costBasis == null);
+    /**
+     * ── ON THE CAPITAL PUT IN, WHERE A WHOLE INVESTMENT PUBLISHES IT ──────────
+     *
+     * *"According to the client the return on this AIF is a lot higher than what
+     *  we are showing … check it for all other investments as well."* This was
+     * the cost of the units held, summed — right for a share in a demat, wrong
+     * for an investment: a class switch, a manager's trading and a fund's payout
+     * all reset the cost of what is held, so the return on it drifts from what
+     * the family's money has done. `capital.behind` stands each WHOLE account
+     * on the capital its own statements publish and everything else on the cost
+     * of its units — the one rule the Portfolio Monitor's rows and totals read,
+     * so this tile and that footer cannot disagree. See `src/lib/capital.ts`.
+     */
+    const bookBasis = capital.behind(p);
+    const bookCost = bookBasis.invested;
+    const bookPnL = bookBasis.gain;
+    const onCapAcc = new Set(bookBasis.onCapital.map((a) => a.accountId));
+    // NO BASIS AT ALL: no cost reported, and not inside a whole account the
+    // capital covers. Those are what the Invested figure leaves out.
+    const noCost = p.filter((x) => x.costBasis == null && !onCapAcc.has(x.accountId));
     const noCostMV = sum(noCost.map((x) => x.marketValue));
 
     const pm = portfolio.privateMarkets;
@@ -358,8 +375,7 @@ export function MorningCIO() {
      * not lost: it keeps the Consolidated return tile, which states the fraction
      * of the book it covers on its face.
      */
-    const costedMV = sum(p.filter((x) => x.costBasis != null).map((x) => x.marketValue))
-      + (privateCount ? privateCurrent : 0);
+    const costedMV = bookBasis.value + (privateCount ? privateCurrent : 0);
     const costCoversBook = totalValue > 0 && Math.abs(costedMV - totalValue) <= totalValue * 0.005;
     const footerPct = costCoversBook ? gainPct : null;
     // ── THE SIDES OF THE BOOK, in order, each with its own reason ──
@@ -382,16 +398,21 @@ export function MorningCIO() {
       return a ? !isDirect(a) : true;   // unattributed defaults to managed, not direct
     };
     const eqGroup = (rows: typeof p) => {
-      const cost = sumOrNull(rows.map((x) => x.costBasis));
+      // ON THE SAME BASIS AS THE TILE ABOVE AND THE MONITOR'S CATEGORY TOTALS:
+      // the capital put into each whole investment in the bucket, the cost of
+      // the units for everything else.
+      const b = capital.behind(rows);
+      const onCap = new Set(b.onCapital.map((a) => a.accountId));
+      const cost = b.invested;
       const mv = sum(rows.map((x) => x.marketValue));
-      const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
+      const pnl = b.gain;
       // WHICH ROWS THE COST SIDE ACTUALLY COVERS. `sumOrNull` skips a position
       // whose statement reports no cost rather than entering it as zero, which
       // is right and leaves Invested covering a narrower set than Current in the
       // same row. Counting the skipped ones is the other half of that rule: the
       // row can then say so instead of inviting a reader to divide one printed
       // cell by another and land somewhere neither figure claims.
-      const noCost = rows.filter((x) => x.costBasis == null);
+      const noCost = rows.filter((x) => x.costBasis == null && !onCap.has(x.accountId));
       const withoutCostMV = sum(noCost.map((x) => x.marketValue));
       // …AND WHAT THAT SET IS WORTH. `cost` is struck over the holdings that
       // report one; `mv` is struck over all of them. Every ratio between the two
@@ -399,7 +420,7 @@ export function MorningCIO() {
       // side of both, or it divides one set of holdings by another and prints a
       // number neither column claims. This is the same figure `costedMV` is for
       // the whole book, one level down.
-      const costedMV = sum(rows.filter((x) => x.costBasis != null).map((x) => x.marketValue));
+      const costedMV = b.value;
       /**
        * A RETURN IS STRUCK ONLY WHERE THE COST SIDE COVERS THE ROW.
        *
@@ -828,7 +849,7 @@ export function MorningCIO() {
       largestName, largestKey: largest?.[0] ?? "", largestBucket, largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
     };
-  }, [portfolio, convertFromBase, today]);
+  }, [portfolio, convertFromBase, today, capital]);
 
   if (!portfolio || !model) return null;
   const m = model;
@@ -1036,7 +1057,7 @@ export function MorningCIO() {
             count of those positions belongs on the tile, not in a tooltip. */}
         <Kpi label="Capital invested"
           href={drilldownHref("invested")}
-          hrefTitle="Open the holdings whose statement reports a cost, and the arithmetic struck over them — with the ones that report none, and sit outside this figure, a toggle away on the same page."
+          hrefTitle="What the family has in the book: the capital put into each whole investment — a mandate, a fund folio — as its own statements publish it, and the cost of the units for every other holding. Open the holdings behind it, with the ones that report no cost at all, and sit outside this figure, a toggle away on the same page."
           value={fmtFromBase(m.totalInvested, { compact: true })}
           /* NO SUB-LINE — both halves of what this said are on the page the
              tile opens: its own total is the covered value against the book,
@@ -1103,7 +1124,7 @@ export function MorningCIO() {
             and each states its own scope. */}
         <Kpi label="Consolidated return"
           href={drilldownHref("invested")}
-          hrefTitle="Open the holdings this return is struck over — the ones whose statement reports a cost"
+          hrefTitle="The book's gain on what is invested in it — the capital put into each whole investment, the cost of the units for the rest — cumulative, not annualised. Open the holdings it is struck over."
           value={m.gainPct == null
             ? <AbsentValue />
             : <span className={changeColor(m.gainPct)}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</span>}

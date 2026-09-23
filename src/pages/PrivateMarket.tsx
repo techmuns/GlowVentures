@@ -182,7 +182,7 @@ const HOLDING_VIEWS = [
 ] as const;
 
 export function PrivateMarket() {
-  const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
+  const { statementPortfolio: portfolio, fmtFromBase, statementCapital } = usePortfolio();
   const [q, setQ] = useState("");
   /**
    * WHICH FUND ROWS ARE OPEN. Component state rather than the URL: it is a
@@ -239,7 +239,9 @@ export function PrivateMarket() {
     const scope = privateScope(currentHoldings(portfolio.positions), portfolio.accounts);
     const commitments = portfolio.commitments ?? [];
 
-    const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
+    // ON THE STATEMENT BASIS, like everything on this page — `statementCapital`
+    // is the capital model over the book the live feed never touches.
+    const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows, statementCapital);
     const folios = folioRows(scope.rows, accIdx);
     /**
      * THE FOLIOS BEHIND EACH FUND, keyed on the row's own `securityKey`.
@@ -328,7 +330,7 @@ export function PrivateMarket() {
       ).length,
       owned: new Set(portfolio.positions.map((p) => p.accountId)),
     };
-  }, [portfolio]);
+  }, [portfolio, statementCapital]);
 
   if (!portfolio || !m) return null;
 

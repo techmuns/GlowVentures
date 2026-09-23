@@ -70,7 +70,7 @@
  * figure for tax and the wrong one for a return, and both stay true.
  */
 import type { Account, AccountBridge, CapitalMove, Commitment, Position, PositionTranches } from "./types";
-import { contributionsAreComplete } from "./tranches";
+import { contributionsAreComplete, recordShortfall } from "./tranches";
 import { moneyWeightedReturn, pooledXirr, type MoneyWeighted } from "./bucketXirr";
 import { costCoversSet } from "./analytics";
 import type { DatedFlow } from "./xirr";
@@ -131,7 +131,7 @@ export function accountCapital(input: {
   //     that value (Green Lantern 510861: a quarterly report ending 30 Jun
   //     against holdings struck 27 Jul). It falls to the statement instead.
   const moves = input.moves.filter((m) => m.accountId === account.accountId && m.date <= asOf);
-  const reachesAsOf = !!account.capitalRecordTo && account.capitalRecordTo >= asOf;
+  const reachesAsOf = recordShortfall(account) === null;
   if (moves.length && reachesAsOf && moves.every((m) => isNum(m.amount))
       && contributionsAreComplete(account.accountId, moves, positions, tranches, account.inceptionDate) === null) {
     const ins = moves.filter((m) => m.direction === "in");
@@ -206,8 +206,8 @@ export type InvestedBehind = {
   value: number;
   gain: number | null;
   returnPct: number | null;
-  /** Whole accounts measured on their capital. */
-  onCapital: { accountId: string; capital: AccountCapital; value: number }[];
+  /** Whole accounts measured on their capital, with how many positions each carries here. */
+  onCapital: { accountId: string; capital: AccountCapital; value: number; count: number }[];
   /** Everything measured on the cost of its units. */
   onCost: { count: number; value: number; cost: number };
   /** Positions with no basis at all — in no figure above. */
@@ -224,8 +224,29 @@ export type InvestedBehind = {
   xirrWhy: string | null;
   /** Dated payments in behind the XIRR. The family's rule routes more than one to XIRR. */
   payments: number;
+  /** Dated payments OUT behind the XIRR — withdrawals, redemptions paid. */
+  paymentsOut: number;
   /** The first dated payment behind the set, where every part is dated. */
   since: string | null;
+  /**
+   * EVERY RUPEE IN THIS SET IS ON A DATED RECORD — whole accounts only, each
+   * with its payments dated. The one condition a money-weighted return needs.
+   */
+  dated: boolean;
+  /**
+   * The date the family first put money into this set: the first dated payment,
+   * or the inception each statement prints. Null the moment any part is on the
+   * cost of its units or states no start — `sumOrNull` applied to a date.
+   */
+  openedOn: string | null;
+  /** The latest date the capital behind this set is struck at. */
+  closes: string | null;
+  /**
+   * What this set's return is struck on, in a reader's words — the first clause
+   * of every hover on a figure measured here. Null where nothing is on capital,
+   * which is the one case where the cost of the units is the only basis there is.
+   */
+  basisNote: string | null;
 };
 
 export type CapitalModel = {
@@ -233,8 +254,23 @@ export type CapitalModel = {
   of: (accountId: string) => AccountCapital | null;
   /** The account's own current value, over the universe the model was built on. */
   valueOf: (accountId: string) => number;
-  /** What the family has in a set of positions, and what it has returned. */
-  behind: (set: readonly Position[]) => InvestedBehind;
+  /**
+   * One WHOLE account, measured over the universe's own positions for it — for a
+   * page about one account, which must not re-derive "the whole account" from a
+   * set it filtered differently (a ₹54 speck the universe dropped would leave
+   * the page's set one position larger than the account and off its capital).
+   */
+  ofAccount: (accountId: string) => InvestedBehind;
+  /**
+   * What the family has in a set of positions, and what it has returned.
+   *
+   * `unitOf` names the ROW each position is drawn in, where the set is a total
+   * over rows — a section, a footer. An account then stands on its capital only
+   * where ONE row carries it whole, because the rows are what the total must tie
+   * to: an account split across two rows is on cost in both, and a total that
+   * put it back on capital would add up to something its own rows do not.
+   */
+  behind: (set: readonly Position[], unitOf?: (p: Position) => string | undefined) => InvestedBehind;
 };
 
 /**
@@ -267,9 +303,20 @@ export function buildCapitalModel(book: {
     if (c) capital.set(account.accountId, c);
   }
   const accountValue = new Map<string, number>();
-  for (const p of book.positions) accountValue.set(p.accountId, (accountValue.get(p.accountId) ?? 0) + p.marketValue);
+  const accountRows = new Map<string, Position[]>();
+  // THE UNIVERSE BY IDENTITY. A surface may hand in a set drawn from the raw
+  // book — a closed row, a ₹54 speck the universe dropped — and the whole-account
+  // test must compare like with like: the set's part that IS in the universe
+  // against the account's value over it. The speck still counts in the set's
+  // value; it just cannot stop an account being whole.
+  const universe = new Set<Position>(book.positions);
+  for (const p of book.positions) {
+    accountValue.set(p.accountId, (accountValue.get(p.accountId) ?? 0) + p.marketValue);
+    if (!accountRows.has(p.accountId)) accountRows.set(p.accountId, []);
+    accountRows.get(p.accountId)!.push(p);
+  }
 
-  const behind = (set: readonly Position[]): InvestedBehind => {
+  const behind = (set: readonly Position[], unitOf?: (p: Position) => string | undefined): InvestedBehind => {
     const byAccount = new Map<string, Position[]>();
     for (const p of set) {
       if (!byAccount.has(p.accountId)) byAccount.set(p.accountId, []);
@@ -280,11 +327,12 @@ export function buildCapitalModel(book: {
     const bare: Position[] = [];
     for (const [accountId, ps] of byAccount) {
       const cap = capital.get(accountId);
-      const inSet = ps.reduce((t, p) => t + p.marketValue, 0);
+      const inSet = ps.filter((p) => universe.has(p)).reduce((t, p) => t + p.marketValue, 0);
       // WHOLE, OR NOT AT ALL. Half a rupee is float noise on a sum; anything
       // more is a position of this account the set does not carry.
-      if (cap && Math.abs(inSet - (accountValue.get(accountId) ?? 0)) <= 0.5) {
-        onCapital.push({ accountId, capital: cap, value: inSet });
+      const oneRow = !unitOf || new Set(ps.map(unitOf)).size === 1;
+      if (cap && oneRow && Math.abs(inSet - (accountValue.get(accountId) ?? 0)) <= 0.5) {
+        onCapital.push({ accountId, capital: cap, value: ps.reduce((t, p) => t + p.marketValue, 0), count: ps.length });
         continue;
       }
       for (const p of ps) (noCost(p) ? bare : costed).push(p);
@@ -305,6 +353,7 @@ export function buildCapitalModel(book: {
     let xirr: MoneyWeighted | null = null;
     let xirrWhy: string | null = null;
     let payments = 0;
+    let paymentsOut = 0;
     let since: string | null = null;
     const undatedCap = onCapital.filter((x) => !x.capital.flows);
     if (!onCapital.length) {
@@ -319,9 +368,21 @@ export function buildCapitalModel(book: {
       const last = Math.max(...parts.map((p) => p.asOf.getTime()));
       xirr = moneyWeightedReturn(pooledXirr(parts), Math.round((last - first) / 864e5));
       payments = onCapital.reduce((t, x) => t + (x.capital.payments ?? 0), 0);
+      paymentsOut = parts.reduce((t, p) => t + p.flows.filter((f) => f.amount > 0).length, 0);
       since = new Date(first).toISOString().slice(0, 10);
       if (xirr.pct === null) xirrWhy = "these payments and this value do not solve to a rate";
     }
+    const dated = onCapital.length > 0 && !costed.length && !bare.length && !undatedCap.length;
+    const starts = onCapital.map((x) => x.capital.since);
+    const openedOn = onCapital.length && !costed.length && !bare.length && starts.every((d): d is string => !!d)
+      ? [...starts].sort()[0] : null;
+    const closes = onCapital.length ? onCapital.map((x) => x.capital.asOf).sort().at(-1) ?? null : null;
+    const sources = [...new Set(onCapital.map((x) => x.capital.source))];
+    const onWhat = sources.length === 1 ? CAPITAL_SOURCE_LABEL[sources[0]] : "each account's own published capital";
+    const basisNote = !onCapital.length ? null
+      : costed.length || bare.length
+        ? `On the capital the family put into ${onCapital.length === 1 ? "one whole account" : `${onCapital.length} whole accounts`} here (${onWhat}), and on the cost of the units held for the rest, which sit inside accounts this set does not carry whole.`
+        : `On the capital the family put in — ${onWhat} — not on the cost of the units held today, which a class switch, a manager's trading or a fund's payout resets.`;
 
     return {
       invested, value, gain,
@@ -330,13 +391,49 @@ export function buildCapitalModel(book: {
       onCost: { count: costed.length, value: costValue, cost },
       noBasis: { count: bare.length, value: bareValue },
       covers: costCoversSet(value + bareValue, bareValue),
-      xirr, xirrWhy, payments, since,
+      xirr, xirrWhy, payments, paymentsOut, since, dated, openedOn, closes, basisNote,
     };
   };
 
   return {
     of: (accountId) => capital.get(accountId) ?? null,
     valueOf: (accountId) => accountValue.get(accountId) ?? 0,
+    ofAccount: (accountId) => behind(accountRows.get(accountId) ?? []),
     behind,
   };
+}
+
+// ── IN A READER'S WORDS ──────────────────────────────────────────────────────
+
+/**
+ * The hover behind an Invested figure struck on capital: what the family put
+ * in, which document says so, and — where it differs — the cost of the units it
+ * replaced as the basis. Takes the page's own money formatter so every figure
+ * prints in the reader's display currency; a helper that formatted money itself
+ * would print rupees on a page showing dollars.
+ */
+export function describeCapital(
+  c: InvestedBehind,
+  money: (n: number) => string,
+  unitCost?: number | null,
+): string {
+  const lines = c.onCapital.map(({ capital: k }) => {
+    const flow = k.paidIn !== null
+      ? `${money(k.paidIn)} paid in less ${money(k.tookOut ?? 0)} taken out`
+      : `${money(k.net)} net`;
+    const when = k.payments
+      ? `, over ${k.payments} dated payment${k.payments === 1 ? "" : "s"}${k.since ? ` from ${k.since}` : ""}`
+      : k.since ? `, since ${k.since}` : "";
+    return `${flow} — ${CAPITAL_SOURCE_LABEL[k.source]}${when}, as of ${k.asOf}`;
+  });
+  const head = c.onCapital.length === 1
+    ? `Capital put in: ${lines[0]}.`
+    : `Capital put in across ${c.onCapital.length} accounts: ${lines.join("; ")}.`;
+  const cost = c.onCost.count
+    ? ` Plus ${money(c.onCost.cost)}, the cost of ${c.onCost.count} holding${c.onCost.count === 1 ? "" : "s"} held in accounts this figure does not carry whole.`
+    : "";
+  const units = typeof unitCost === "number" && Number.isFinite(unitCost) && Math.abs(unitCost - (c.invested ?? 0)) >= 1
+    ? ` The units held today cost ${money(unitCost)} — a tax figure, reset by every class switch, sale and payout, which is why no return here is struck on it.`
+    : "";
+  return head + cost + units;
 }

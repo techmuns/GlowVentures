@@ -14,7 +14,7 @@ import {
   byEntity, byCustodian, bucketBy, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
   isCompanyShare, isFundVehicle, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
-  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
+  DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET, onCapitalBasis,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
 import { companySectorIndex } from "@/lib/lookthrough";
@@ -34,7 +34,8 @@ const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "t
 const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as const;
 import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
 import { Auditable } from "@/components/Auditable";
-import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
+import { pnlFormula, returnFormula, weightFormula, capitalPnlFormula, capitalReturnFormula } from "@/lib/auditFormulas";
+import type { InvestedBehind } from "@/lib/capital";
 
 /**
  * Sections in reading order, mirroring Portfolio Monitor's: what the entity
@@ -88,7 +89,7 @@ const ALL_ENTITIES = "All";
 const WEIGHT_OF = "the whole consolidated book — every account and every asset class, each dedupeGroup counted once";
 
 export function FamilyEntities() {
-  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase, capital } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
   const entityView = useTableView("family-entities", ENTITY_COLS);
@@ -172,7 +173,22 @@ export function FamilyEntities() {
   // Owner and custodian are separate reads of the account registry: one entity
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.
-  const entities = byEntity(p, portfolio.accounts);
+  /**
+   * ── AN ENTITY IS A SET OF WHOLE INVESTMENTS, SO ITS RETURN IS ON CAPITAL ──
+   *
+   * Every account belongs to exactly one member, so a member's rows carry each
+   * of their accounts whole — and the P&L and Return here are struck on the
+   * capital they put into each investment that publishes it (a mandate, a fund
+   * folio), and on the cost of the units for the rest. On cost alone a member
+   * whose manager realised a loss, or whose fund switched class, read a return
+   * nothing the family earned. See `src/lib/capital.ts`.
+   */
+  const entities = byEntity(p, portfolio.accounts).map((e) => {
+    const b = capital.behind(p.filter((x) => ownerOf(accIdx, x) === e.key));
+    return onCapitalBasis(b)
+      ? { ...e, cost: b.invested, pnl: b.gain, returnPct: b.covers ? b.returnPct : null, capital: b as InvestedBehind | null }
+      : { ...e, capital: null as InvestedBehind | null };
+  });
   // The table's own order; the default is `byEntity`'s (largest first).
   const entityRows = sortRows(entities, entityView.sort, {
     entity: (e) => e.key,
@@ -515,10 +531,18 @@ export function FamilyEntities() {
    * is derived here, so it follows the book rather than this note.
    */
   const visMV = sum(holdings.map((h) => h.marketValue));
-  const visCost = sumOrNull(holdings.map((h) => h.costBasis));
-  const visPnL = sumOrNull(holdings.map((h) => h.unrealizedPnL));
+  /**
+   * A HOLDING THAT IS ITS ACCOUNT'S WHOLE VALUE IS AN INVESTMENT — Ajay's Buoyant
+   * folio, a Sanshi folio — and its return is on the capital put in; a share
+   * inside a mandate keeps the cost of its units. The footer stands an account
+   * on capital only where ONE row carries it, so it ties to the rows above.
+   */
+  const rowCap = (h: Position) => { const c = capital.behind([h]); return onCapitalBasis(c) ? c : null; };
+  const visBasis = capital.behind(holdings, (h) => h.securityKey + "@" + h.accountId);
+  const visCost = onCapitalBasis(visBasis) ? visBasis.invested : sumOrNull(holdings.map((h) => h.costBasis));
+  const visPnL = onCapitalBasis(visBasis) ? visBasis.gain : sumOrNull(holdings.map((h) => h.unrealizedPnL));
   const visRet = visCost !== null && visPnL !== null && visCost > 0 ? (visPnL / visCost) * 100 : null;
-  const visNoCostRows = holdings.filter((h) => h.costBasis === null || h.costBasis === undefined);
+  const visNoCostRows = holdings.filter((h) => (h.costBasis === null || h.costBasis === undefined) && !rowCap(h));
   const visNoCost = visNoCostRows.length;
   const visNoCostMV = sum(visNoCostRows.map((h) => h.marketValue));
   const filtered = holdings.length !== selRows.length;
@@ -536,7 +560,9 @@ export function FamilyEntities() {
      * three places it groups, `analytics.isPriced`), and it is what the footer's
      * own `visNoCost` counts, so the row and the total now name the same set.
      */
-    const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
+    const cap = rowCap(h);
+    const noCost = !cap && (!!h.costUnavailable || h.costBasis === null || h.costBasis === undefined);
+    const ret = cap ? (cap.covers ? cap.returnPct : null) : h.returnPct;
     return (
       <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
@@ -575,7 +601,10 @@ export function FamilyEntities() {
             : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
-        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(ret)}`} data-fe-basis={cap ? "capital" : "cost"}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" />
+          : cap && cap.invested !== null
+          ? <Auditable formula={capitalReturnFormula(cap.value, cap.invested, ret, cap.basisNote ?? "", money)}>{fmtPct(ret, { sign: true })}</Auditable>
+          : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </Tr>
     );
   };
@@ -661,8 +690,9 @@ export function FamilyEntities() {
                     <SortHeader col="nav" view={entityView}>NAV</SortHeader>
                     <SortHeader col="weight" view={entityView}>Weight</SortHeader>
                     <SortHeader col="positions" view={entityView}>Positions</SortHeader>
-                    <SortHeader col="pnl" view={entityView}>Unreal. P&L</SortHeader>
-                    <SortHeader col="return" view={entityView} title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</SortHeader>
+                    <SortHeader col="pnl" view={entityView}
+                      title="The gain on what the member has invested: on the capital put into each whole investment — realised and unrealised together — and on the cost of the units for the rest.">P&L</SortHeader>
+                    <SortHeader col="return" view={entityView} title="Cumulative return on what is invested — the capital put into each whole investment, the cost of the units for the rest (holding-period, not annualized)">Return</SortHeader>
                     <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
                     <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
                     {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
@@ -706,8 +736,12 @@ export function FamilyEntities() {
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
-                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={e.capital && e.cost !== null && e.pnl !== null
+                          ? capitalPnlFormula(e.capital.value, e.cost, e.pnl, e.capital.basisNote ?? "", money)
+                          : pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={e.capital && e.cost !== null
+                          ? capitalReturnFormula(e.capital.value, e.cost, e.returnPct, e.capital.basisNote ?? "", money)
+                          : returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />

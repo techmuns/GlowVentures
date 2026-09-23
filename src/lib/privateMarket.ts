@@ -38,6 +38,7 @@
 // account that holds NOTHING, so it has no position to read a class off. That is
 // `unvaluedAccounts`, and it is scoped to `AIF` deliberately.
 import type { Account, Commitment, Position } from "./types";
+import type { CapitalModel, InvestedBehind } from "./capital";
 import {
   sum, sumOrNull, dedupedPositions, isPrivateClass, marketSides,
   type MarketSideRow,
@@ -144,6 +145,8 @@ export type FundRow = {
   costedMV: number;
   /** Non-null only where the cost side covers essentially the whole row. */
   returnPct: number | null;
+  /** Where the row is on the capital put in rather than the cost of its units. */
+  capital: InvestedBehind | null;
 };
 
 /**
@@ -154,7 +157,16 @@ export type FundRow = {
  * no caller can quietly get the deduped count back: an optional parameter that
  * changes a figure is the trap this book has paid for before.
  */
-export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRows: Position[]): FundRow[] {
+export function fundRollup(
+  dedupedRows: Position[], accIdx: AccountIndex, rawRows: Position[],
+  /**
+   * The capital model on the page's own basis. Where a fund's rows carry whole
+   * accounts whose capital is published, its Invested and Gain are on that
+   * capital — the money the family put in — rather than on the cost of the
+   * units, which a payout or a class switch resets. See `src/lib/capital.ts`.
+   */
+  capital?: CapitalModel,
+): FundRow[] {
   const groups = new Map<string, Position[]>();
   for (const p of dedupedRows) {
     const g = groups.get(p.securityKey) ?? [];
@@ -165,10 +177,12 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
   for (const p of rawRows) statements.set(p.securityKey, (statements.get(p.securityKey) ?? 0) + 1);
   return [...groups.values()]
     .map((g) => {
-      const cost = sumOrNull(g.map((p) => p.costBasis));
+      const b = capital ? capital.behind(g) : null;
+      const onCap = b && b.onCapital.length > 0 ? b : null;
+      const cost = onCap ? onCap.invested : sumOrNull(g.map((p) => p.costBasis));
       const mv = sum(g.map((p) => p.marketValue));
-      const pnl = sumOrNull(g.map((p) => p.unrealizedPnL));
-      const costedMV = sum(g.filter((p) => p.costBasis != null).map((p) => p.marketValue));
+      const pnl = onCap ? onCap.gain : sumOrNull(g.map((p) => p.unrealizedPnL));
+      const costedMV = onCap ? onCap.value : sum(g.filter((p) => p.costBasis != null).map((p) => p.marketValue));
       return {
         securityKey: g[0].securityKey,
         security: g[0].security,
@@ -184,6 +198,7 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
           cost != null && cost > 0 && pnl != null && mv > 0 && costedMV >= mv * COST_COVERAGE_MIN
             ? (pnl / cost) * 100
             : null,
+        capital: onCap,
       };
     })
     .sort((a, b) => b.mv - a.mv);

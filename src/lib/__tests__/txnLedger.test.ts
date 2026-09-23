@@ -44,7 +44,7 @@ const near = (name: string, a: number | null, b: number | null, tol = 0.01) =>
 const acct = (o: Partial<Account>): Account => ({
   accountId: "gl", provider: "Green Lantern", accountNo: "510861", owner: "Ajay Jaisinghani",
   ownerId: "ajay", strategy: "GLC Growth Fund", engagement: "PMS", providerEngagement: null,
-  members: [], asOf: "2026-07-27", inceptionDate: "2025-01-16", custodian: null,
+  members: [], asOf: "2026-07-27", inceptionDate: "2025-01-16", capitalRecordTo: "2026-07-27", custodian: null,
   noPositionsReason: null, ...o,
 } as Account);
 const txn = (o: Partial<Txn>): Txn => ({

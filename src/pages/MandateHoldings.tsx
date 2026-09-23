@@ -9,7 +9,8 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, onCapitalBasis } from "@/lib/analytics";
+import { describeCapital } from "@/lib/capital";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
@@ -196,7 +197,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, capital } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -228,6 +229,22 @@ export function MandateHoldings() {
   const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   const noCost = rows.filter((r) => r.costBasis === null).length;
+  /**
+   * ── THE MANDATE IS AN INVESTMENT, AND ITS TILES ARE ON THE CAPITAL PUT IN ──
+   *
+   * The table below lists holdings, and each keeps the cost of its units — that
+   * is what the manager bought them for. The TILES are about the mandate, and a
+   * mandate's return is what the family's money has done: a manager who sold at
+   * a loss, charged fees or paid out dividends has changed it in ways the cost
+   * of what is held today cannot see (Carnelian read +24.98% on cost against
+   * +19.93% on the ₹33 Cr put in). `src/lib/capital.ts` publishes it where the
+   * statements do, and the Invested tile names the units' cost beside it so the
+   * two figures on this page reconcile.
+   */
+  const acap = useMemo(() => {
+    const c = capital.ofAccount(accountId);
+    return onCapitalBasis(c) && c.onCost.count === 0 && c.noBasis.count === 0 ? c : null;
+  }, [capital, accountId]);
   /**
    * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
    * whole of what this figure is. It is NOT the manager's printed total, which
@@ -614,9 +631,11 @@ export function MandateHoldings() {
           sub={`${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
           icon={<Wallet className="h-4 w-4" />} />
         <Kpi label="Invested"
-          value={cost === null ? <AbsentValue /> : money(cost)}
-          sub={<span title={fundedWhy}>
-            {cost === null
+          value={acap ? money(acap.invested) : cost === null ? <AbsentValue /> : money(cost)}
+          sub={<span title={acap ? `${describeCapital(acap, (n) => money(n), cost)} ${fundedWhy ?? ""}`.trim() : fundedWhy}>
+            {acap
+              ? <span>capital put in{cost !== null ? ` · the units held cost ${money(cost)}` : ""}</span>
+              : cost === null
               ? <span className="text-slate-500">no row on this statement reports a cost</span>
               : noCost
                 ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
@@ -629,10 +648,20 @@ export function MandateHoldings() {
             </span>
           </span>}
           icon={<Coins className="h-4 w-4" />} />
-        <Kpi label="Unrealised P&L"
-          value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
-          delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on cost"}
+        {/* On capital the gain includes everything the manager realised, the
+            dividends and the fees — so it is "P&L", not "Unrealised P&L", and
+            the money-weighted annual rate rides beside it where every payment
+            is dated. */}
+        <Kpi label={acap ? "P&L" : "Unrealised P&L"}
+          value={acap
+            ? <span className={changeColor(acap.gain)}>{money(acap.gain, true)}</span>
+            : pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
+          delta={acap ? (acap.covers ? acap.returnPct : null) : ret}
+          sub={acap
+            ? <span title={acap.basisNote ?? undefined} data-mandate-xirr={acap.dated && acap.xirr?.annualised ? acap.xirr.pct ?? undefined : undefined}>
+                on the capital put in{acap.dated && acap.xirr?.annualised && acap.xirr.pct !== null ? ` · XIRR ${fmtPct(acap.xirr.pct, { sign: true })} a year` : " · not annualised"}
+              </span>
+            : pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on cost"}
           icon={<TrendingUp className="h-4 w-4" />} />
         <Kpi label="Holdings" value={fmtNum(rows.length)}
           sub={`in one mandate · ${MANDATE_BUCKET}`}

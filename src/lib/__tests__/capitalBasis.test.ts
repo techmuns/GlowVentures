@@ -31,8 +31,11 @@ import {
   BOOK_ACCOUNTS, BOOK_ACCOUNT_BRIDGES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS,
   BOOK_POSITIONS, BOOK_POSITION_TRANCHES,
 } from "@/data/glowData";
-import { accountCapital, buildCapitalModel } from "@/lib/capital";
-import { currentHoldings, dedupedPositions } from "@/lib/analytics";
+import { accountCapital, buildCapitalModel, describeCapital } from "@/lib/capital";
+import { currentHoldings, dedupedPositions, measuredReturn, onCapitalBasis, type ReturnInput } from "@/lib/analytics";
+import { GROUP_AXES, groupKeyFor } from "@/lib/groupAxis";
+import { accountIndex } from "@/lib/accounts";
+import type { Position } from "@/lib/types";
 
 let pass = 0, fail = 0;
 const ok = (label: string, cond: boolean, detail = "") => {
@@ -240,6 +243,144 @@ const ANKITA = "buoyant-capital-103472";
     ok(`${a.accountId}: capital stands on the account's own date`, c.asOf === a.asOf, `${c.asOf} vs ${a.asOf}`);
     ok(`${a.accountId}: capital is positive`, c.net > 0, String(c.net));
   }
+}
+
+// ── 8. Every measure, on a row that IS a whole investment ───────────────────
+//
+// `measuredReturn` is the ONE methodology every return column reads, and a row
+// carrying `capital` is struck on the capital put in. The family's own rule —
+// several dated payments → XIRR; one payment a year or more ago → CAGR;
+// otherwise the holding-period return — asserted against the real book, with
+// the printed IRR as the witness on the dated case.
+{
+  const row = (set: Position[]): ReturnInput => {
+    const c = model.behind(set);
+    return { returnPct: c.covers ? c.returnPct : null, heldSince: null, assetClass: set[0]?.assetClass, capital: c };
+  };
+  const AS = "2026-08-13";
+  const aj = row(own(AJAY));
+  const auto = measuredReturn(aj, "auto", AS);
+  ok("auto on a folio paid into ten times is its XIRR — the family's multiple-tranche rule",
+    auto.shown && auto.tag === "XIRR" && Math.abs(auto.pct - 15.30) < 0.01, JSON.stringify(auto));
+  const hpr = measuredReturn(aj, "absolute", AS);
+  ok("HPR on that folio is the return on the capital put in", hpr.shown && Math.abs(hpr.pct - 7.17) < 0.01, JSON.stringify(hpr));
+  ok("…and its note says what it is struck on", hpr.shown && /capital the family put in/.test(hpr.note ?? ""), hpr.shown ? hpr.note ?? "" : "");
+  const cagr = measuredReturn(aj, "cagr", AS);
+  ok("the CAGR column shows the money-weighted rate, tagged XIRR — money that went in on ten dates has no single start",
+    cagr.shown && cagr.tag === "XIRR" && Math.abs(cagr.pct - 15.30) < 0.01, JSON.stringify(cagr));
+  const x = measuredReturn(aj, "xirr", AS);
+  ok("the XIRR column is no longer absent for a whole investment with dated payments", x.shown && x.tag === "XIRR", JSON.stringify(x));
+  const ytd = measuredReturn(aj, "ytd", AS);
+  ok("YTD stays absent for an investment funded before the year began", !ytd.shown && /1 January/.test(ytd.shown ? "" : ytd.reason));
+
+  // A capital published only as a TOTAL dates nothing: no annual rate at all.
+  const gl = row(own("green-lantern-capital-llp-510861"));
+  const glAuto = measuredReturn(gl, "auto", AS);
+  ok("auto on a statement-sourced mandate is its HPR on capital, marked not annualised",
+    glAuto.shown && glAuto.tag === "HPR" && /Not annualised/.test(glAuto.note ?? ""), JSON.stringify(glAuto));
+  const glX = measuredReturn(gl, "xirr", AS);
+  ok("…and its XIRR is refused, naming the total since inception", !glX.shown && /total since inception/.test(glX.shown ? "" : glX.reason),
+    JSON.stringify(glX));
+  const glC = measuredReturn(gl, "cagr", AS);
+  ok("…and so is its CAGR — annualising a total would assume every rupee went in on day one", !glC.shown, JSON.stringify(glC));
+
+  // ONE payment in, nothing out: the money-weighted rate IS the CAGR, and the
+  // cell says CAGR. Found in the book rather than typed, so the next drop picks
+  // its own — and a book with none says so rather than passing over nothing.
+  const single = BOOK_ACCOUNTS.map((a) => ({ a, c: model.behind(own(a.accountId)) }))
+    .find(({ c }) => onCapitalBasis(c) && c.dated && c.payments === 1 && c.paymentsOut === 0 && !!c.xirr?.annualised);
+  if (single) {
+    const r = measuredReturn(row(own(single.a.accountId)), "auto", AS);
+    const days = single.c.xirr!.windowDays!;
+    const byHand = (Math.pow(1 + (single.c.returnPct as number) / 100, 365 / days) - 1) * 100;
+    ok(`${single.a.accountId}: one payment a year ago is tagged CAGR`, r.shown && r.tag === "CAGR", JSON.stringify(r));
+    ok(`${single.a.accountId}: …and equals the HPR compounded by hand`, r.shown && Math.abs(r.pct - byHand) < 0.01,
+      `${r.shown ? r.pct.toFixed(4) : "—"} vs ${byHand.toFixed(4)}`);
+  } else {
+    console.log("  NOT CHECKED  no single-payment dated investment a year old in this book — exercised synthetically below");
+  }
+  // …and synthetically, so the CAGR branch is checked on every run whatever the
+  // book holds: one payment on 1 Jan 2025, valued 1.21x on 31 Jul 2026.
+  {
+    const acc = { ...BOOK_ACCOUNTS[0], accountId: "synth-one", asOf: "2026-07-31", capitalRecordTo: "2026-07-31", inceptionDate: "2025-01-01" };
+    const pos = { ...own(AJAY)[0], accountId: "synth-one", marketValue: 1.21e7, costBasis: 1.1e7 } as Position;
+    const m1 = buildCapitalModel({
+      accounts: [acc], capitalMoves: [{ accountId: "synth-one", date: "2025-01-01", direction: "in", amount: 1e7 } as never],
+      bridges: {}, commitments: [], tranches: {}, positions: [pos],
+    });
+    const b1 = m1.behind([pos]);
+    const r1 = measuredReturn({ returnPct: b1.returnPct, heldSince: null, assetClass: "AIF", capital: b1 }, "auto", "2026-07-31");
+    const days = Math.round((Date.parse("2026-07-31") - Date.parse("2025-01-01")) / 864e5);
+    const byHand = (Math.pow(1.21, 365 / days) - 1) * 100;
+    ok("one payment a year or more ago: auto is tagged CAGR", r1.shown && r1.tag === "CAGR", JSON.stringify(r1));
+    ok("…and equals the 21% compounded over its own window by hand", r1.shown && Math.abs(r1.pct - byHand) < 0.01,
+      `${r1.shown ? r1.pct.toFixed(4) : "—"} vs ${byHand.toFixed(4)}`);
+  }
+
+  // THE GUARD, on capital: dated, but under a year — the total return stands.
+  // THE SAME OBJECT in the universe and in the set: the model compares a set
+  // with its universe BY IDENTITY, so a copy would (correctly) not be whole.
+  const synthPos = { ...own(AJAY)[0], accountId: "synth", marketValue: 2.2e7, costBasis: 2.1e7 } as Position;
+  const synth = buildCapitalModel({
+    accounts: [{ ...BOOK_ACCOUNTS[0], accountId: "synth", asOf: "2026-07-31", capitalRecordTo: "2026-07-31", inceptionDate: "2026-02-01" }],
+    capitalMoves: [
+      { accountId: "synth", date: "2026-02-01", direction: "in", amount: 1e7 } as never,
+      { accountId: "synth", date: "2026-05-01", direction: "in", amount: 1e7 } as never,
+    ],
+    bridges: {}, commitments: [], tranches: {},
+    positions: [synthPos],
+  });
+  const sp = synth.behind([synthPos]);
+  ok("a COPY of a universe position is not the account — the model compares by identity",
+    !onCapitalBasis(synth.behind([{ ...synthPos }])));
+  ok("a synthetic sub-year investment is on its dated capital", onCapitalBasis(sp) && sp.dated, JSON.stringify({ dated: sp.dated, on: sp.onCapital.length }));
+  const sr: ReturnInput = { returnPct: sp.returnPct, heldSince: null, assetClass: "AIF", capital: sp };
+  const sa = measuredReturn(sr, "auto", "2026-07-31");
+  ok("…auto shows the total return on capital, tagged HPR, never an annual rate over 180 days",
+    sa.shown && sa.tag === "HPR" && Math.abs(sa.pct - 10) < 1e-9, JSON.stringify(sa));
+  const sx = measuredReturn(sr, "xirr", "2026-07-31");
+  ok("…and the XIRR column falls back to it too, tagged HPR", sx.shown && sx.tag === "HPR", JSON.stringify(sx));
+}
+
+// ── 9. A total stands an account on capital only where ONE row carries it ───
+{
+  const mandate = own("carnelian-asset-management-and-advisors-pvt-ltd-3517383");
+  const whole = model.behind(mandate, () => "one-row");
+  ok("one row carrying the whole mandate: on capital", whole.onCapital.length === 1);
+  const split = model.behind(mandate, (p) => (p.assetClass === "Cash" ? "cash-row" : "share-rows"));
+  ok("the same positions split across two rows: on cost, as each row is", split.onCapital.length === 0,
+    JSON.stringify(split.onCapital.map((x) => x.accountId)));
+}
+
+// ── 10. No capital account splits across the sections of any axis ──────────
+//
+// The section totals on the Holdings table add to its footer BY CONSTRUCTION
+// only while each whole investment sits in ONE section — otherwise the footer
+// could stand it on capital and its sections on cost. Asserted on all three
+// axes over the generated book, so the drop that first splits one fails here.
+{
+  const idx = accountIndex(BOOK_ACCOUNTS);
+  let checked = 0;
+  for (const axis of GROUP_AXES) {
+    for (const a of BOOK_ACCOUNTS) {
+      if (!model.of(a.accountId)) continue;
+      const ps = own(a.accountId).filter((p) => p.marketValue !== 0);
+      if (!ps.length) continue;
+      const keys = new Set(ps.map((p) => groupKeyFor(axis, idx, p)));
+      checked++;
+      ok(`${a.accountId} sits in one ${axis} section`, keys.size === 1, [...keys].join(" | "));
+    }
+  }
+  ok("the section rule has capital accounts to check", checked > 10, String(checked));
+}
+
+// ── 11. The hover names the source, the dates and the cost it replaced ─────
+{
+  const b = model.behind(own(AJAY));
+  const words = describeCapital(b, (n) => `₹${(n / 1e7).toFixed(2)} Cr`, 475353990.9);
+  ok("the Invested hover names paid in and taken out", /paid in less .* taken out/.test(words), words);
+  ok("…and the dated source and its count", /dated/.test(words) && /10 dated payments|dated payment/.test(words), words);
+  ok("…and the cost of the units it replaced", /units held today cost ₹47\.54 Cr/.test(words), words);
 }
 
 console.log(`  ${pass} passed, ${fail} failed`);

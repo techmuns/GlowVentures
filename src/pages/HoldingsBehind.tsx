@@ -8,13 +8,14 @@ import { PageNav } from "@/components/PageNav";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE, onCapitalBasis } from "@/lib/analytics";
 import {
   aifSectionOf, aifCategoryOf, aifCategoryWhy, isAifHolding, aifSectionOrd,
   unvaluedAifFolios, AIF_UNSTATED_SECTION, PRIVATE_EQUITY_SECTION,
 } from "@/lib/aifCategory";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { describeCapital, type CapitalModel, type InvestedBehind } from "@/lib/capital";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -110,6 +111,13 @@ type Group = {
   withoutCost: number;
   /** Market value of the rows a cost DOES cover, so a ratio divides one set. */
   costedMV: number;
+  /**
+   * Where the row carries WHOLE investments — a mandate, a fund folio — the
+   * capital put into them, and then `cost`/`pnl` above are on it. See
+   * `src/lib/capital.ts`: a return on an investment is struck on the money the
+   * family put in, not on the cost of the units held today.
+   */
+  capital: InvestedBehind | null;
 };
 
 function groupRows(
@@ -117,6 +125,8 @@ function groupRows(
   accIdx: ReturnType<typeof accountIndex>,
   /** Every row the BOOK holds, for the whole-mandate test. */
   allRows: Position[],
+  /** The capital model the page's figures are struck on. */
+  capital?: CapitalModel,
 ): Group[] {
   // WHICH MANDATES THIS SET HOLDS ENTIRELY — counted against the book, never
   // against the set, or every set would trivially "hold all" of what it has.
@@ -144,6 +154,8 @@ function groupRows(
     .map(([key, group]) => {
       const kind = key.startsWith("M:") ? "mandate" as const : "security" as const;
       const acc = accIdx.get(group[0].accountId);
+      const b = capital ? capital.behind(group) : null;
+      const onCap = b && onCapitalBasis(b) ? b : null;
       return {
         key,
         kind,
@@ -155,10 +167,11 @@ function groupRows(
           : stockHref(group[0].securityKey),
         rows: group,
         mv: sum(group.map((x) => x.marketValue)),
-        cost: sumOrNull(group.map((x) => x.costBasis)),
-        pnl: sumOrNull(group.map((x) => x.unrealizedPnL)),
-        withoutCost: group.filter((x) => x.costBasis == null).length,
-        costedMV: sum(group.filter((x) => x.costBasis != null).map((x) => x.marketValue)),
+        cost: onCap ? onCap.invested : sumOrNull(group.map((x) => x.costBasis)),
+        pnl: onCap ? onCap.gain : sumOrNull(group.map((x) => x.unrealizedPnL)),
+        withoutCost: onCap ? onCap.noBasis.count : group.filter((x) => x.costBasis == null).length,
+        costedMV: onCap ? onCap.value : sum(group.filter((x) => x.costBasis != null).map((x) => x.marketValue)),
+        capital: onCap,
       };
     })
     .sort((a, b) => b.mv - a.mv);
@@ -168,7 +181,7 @@ function groupRows(
 const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "pnl", "return"] as const;
 
 export function HoldingsBehind() {
-  const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, fmtFromBase, capital } = usePortfolio();
   const [params] = useSearchParams();
   const [q, setQ] = useState("");
   /** Which grouped rows are expanded to their statement lines. */
@@ -310,7 +323,7 @@ export function HoldingsBehind() {
    * `rows`; the filter narrows what is drawn, not what a row means.
    */
   const groups = sortRows(
-    groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions),
+    groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions, capital),
     view.sort,
     {
       unit: (g) => g.label,
@@ -657,7 +670,8 @@ export function HoldingsBehind() {
                       <SortHeader col="invested" view={view}>Invested</SortHeader>
                       <SortHeader col="value" view={view}>Value</SortHeader>
                       <SortHeader col="weight" view={view}>Weight</SortHeader>
-                      <SortHeader col="pnl" view={view}>Unreal. P&amp;L</SortHeader>
+                      <SortHeader col="pnl" view={view}
+                        title="On a row that is a whole investment — a mandate, a fund folio — the gain on the capital put in, realised and unrealised together. On a holding, the unrealised gain on the cost of its units.">P&amp;L</SortHeader>
                       <SortHeader col="return" view={view}>Return</SortHeader>
                     </Tr>
                   </thead>
@@ -800,7 +814,9 @@ export function HoldingsBehind() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-4 py-2.5 text-right mono text-slate-400">
+                            <td className="px-4 py-2.5 text-right mono text-slate-400"
+                              data-hb-capital={g.capital ? g.capital.onCapital.map((x) => x.capital.source).join(" ") : undefined}
+                              title={g.capital ? describeCapital(g.capital, (n) => money(n), sumOrNull(g.rows.map((x) => x.costBasis))) : undefined}>
                               {g.cost == null
                                 ? <AbsentCell reason={g.kind === "mandate"
                                     ? `No row on the ${providerOf(accIdx, g.rows[0])} statement for this mandate reports a cost.`
@@ -813,7 +829,8 @@ export function HoldingsBehind() {
                             <td className="px-4 py-2.5 text-right mono text-slate-400">
                               {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
                             </td>
-                            <td className={`px-4 py-2.5 text-right mono ${g.pnl == null ? "" : changeColor(g.pnl)}`}>
+                            <td className={`px-4 py-2.5 text-right mono ${g.pnl == null ? "" : changeColor(g.pnl)}`}
+                              title={g.capital ? "The gain on the capital put in — realised and unrealised together, since the capital is what left the family's account." : undefined}>
                               {g.pnl == null ? <AbsentCell reason="Needs a cost these statements do not report." /> : money(g.pnl, true)}
                             </td>
                             <td className={`px-4 py-2.5 text-right mono ${r.pct == null ? "" : changeColor(r.pct)}`}>

@@ -63,6 +63,27 @@ export const returnFormula = (
   worked: `= (${m(mv)} − ${orDash(cost, (c) => m(c))}) ÷ ${orDash(cost, (c) => m(c))} × 100 = ${orDash(retPct, pct)}`,
 });
 
+/**
+ * THE SAME TWO FIGURES ON THE CAPITAL PUT IN — for a row that is a whole
+ * investment (see `src/lib/capital.ts`). Named apart from `pnlFormula` because
+ * they are a different measurement: this gain includes what was realised,
+ * received and paid out along the way, where the unrealised gain on the units
+ * held includes none of it.
+ */
+export const capitalPnlFormula = (value: number, invested: number, gain: number, basis: string, m: Money): FormulaDef => ({
+  title: "P&L on the capital put in",
+  excel: "= Market value − Capital put in",
+  plain: `${basis} Everything the investment has made is in it — what is still held and what was realised, received and paid out along the way — because the capital is what left the family's account.`,
+  worked: `= ${m(value)} − ${m(invested)} = ${m(gain, true)}`,
+});
+
+export const capitalReturnFormula = (value: number, invested: number, retPct: number | null | undefined, basis: string, m: Money): FormulaDef => ({
+  title: "Return on the capital put in",
+  excel: "= (Market value − Capital put in) ÷ Capital put in × 100",
+  plain: `${basis} Not annualised — the money-weighted annual rate is under XIRR where every payment is dated.`,
+  worked: `= (${m(value)} − ${m(invested)}) ÷ ${m(invested)} × 100 = ${orDash(retPct, pct)}`,
+});
+
 // Net total return — the private book's one money-multiple. TVPI once a holding
 // has returned cash, MOIC while it hasn't; the popover names whichever applies
 // so the figure stays auditable against the workbook either way.

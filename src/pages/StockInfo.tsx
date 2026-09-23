@@ -7,7 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
-  measuredReturn,
+  measuredReturn, onCapitalBasis, type ReturnInput,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
@@ -16,6 +16,7 @@ import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/f
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { fundNavFor } from "@/lib/fundNavs";
 import type { Position } from "@/lib/types";
+import { describeCapital, type InvestedBehind } from "@/lib/capital";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
 import { symbolFor } from "@/lib/quotes";
@@ -54,13 +55,19 @@ import { useTableView, sortRows } from "@/lib/tableView";
  * every row of every name would say that 371 times. The Return column's own
  * picker on the Portfolio Monitor states it once, per its own rule.
  */
-function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
+function ReturnCells({ p, asOf }: { p: ReturnInput; asOf: string }) {
   const hpr = measuredReturn(p, "absolute", asOf);
   const cagr = measuredReturn(p, "cagr", asOf);
   // Only where the guard actually annualised. `cagr` falls back to the
   // holding-period figure under a year and tags it HPR — printing that as a
   // second line would show one number twice under two names.
-  const annual = cagr.shown && cagr.tag === "CAGR" ? cagr : null;
+  //
+  // ON A WHOLE INVESTMENT THE ANNUAL RATE IS MONEY-WEIGHTED. Money paid in on
+  // several dates has no single start to compound from, so `measuredReturn`
+  // returns the XIRR there and tags it so — which is the family's own rule
+  // ("an XIRR when there are multiple tranches") and the figure Buoyant's own
+  // statement prints as its IRR.
+  const annual = cagr.shown && (cagr.tag === "CAGR" || cagr.tag === "XIRR") ? cagr : null;
   return (
     <>
       <span className="whitespace-nowrap">
@@ -70,8 +77,8 @@ function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
           : <AbsentCell reason={hpr.reason} />}
       </span>
       {annual && (
-        <div className="whitespace-nowrap">
-          <span className="ret-tag mr-0.5">CAGR</span>
+        <div className="whitespace-nowrap" data-annual-tag={annual.tag}>
+          <span className="ret-tag mr-0.5">{annual.tag}</span>
           <span className={changeColor(annual.pct)} title={annual.note}>{fmtPct(annual.pct, { sign: true, decimals: 1 })}</span>
         </div>
       )}
@@ -105,7 +112,7 @@ export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
   // else, so an ISIN route would leave most holdings unreachable.
   const { securityKey = "" } = useParams();
-  const { portfolio, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
+  const { portfolio, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, capital } = usePortfolio();
   const [led, setLed] = useState<StockLedger | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;
@@ -121,6 +128,41 @@ export function StockInfo() {
   // value, quantity, cost and P&L. `dedupedPositions` collapses only the
   // dedupeGroup rows — a name held by several different accounts still sums all.
   const drows = useMemo(() => dedupedPositions(rows), [rows]);
+  /**
+   * ── WHERE A ROW IS A WHOLE INVESTMENT, ITS FIGURES ARE ON CAPITAL ─────────
+   *
+   * *"According to the client the return on this AIF is a lot higher than what
+   *  we are showing."* This page printed Buoyant Class A4 at +6.2% — the gain on
+   * the cost of the A4 units — while the family had paid ₹70.85 Cr into the two
+   * folios and they are worth ₹76.99 Cr, and each folio's own statement prints
+   * an IRR of 15.30% and 9.76%. A class switch is a redemption and a
+   * re-allotment, so the A4 units' cost already contains the gain made on A1.
+   *
+   * So a row whose account holds nothing else is struck on the capital put into
+   * that account (`src/lib/capital.ts`), and a row that is one share of a
+   * mandate keeps the cost of its units: the family funded the account, not the
+   * share. The per-unit Avg cost stays the units' cost either way — that is a
+   * fact about the units and it is still what the tax card needs.
+   */
+  const rowCapital = useMemo(() => {
+    const m = new Map<Position, InvestedBehind>();
+    for (const r of rows) {
+      const c = capital.behind([r]);
+      if (onCapitalBasis(c)) m.set(r, c);
+    }
+    return m;
+  }, [rows, capital]);
+  const totalCapital = useMemo(() => {
+    const c = capital.behind(drows);
+    return onCapitalBasis(c) ? c : null;
+  }, [drows, capital]);
+  /** A row's figures on the basis it is measured on — capital where whole, cost otherwise. */
+  const onBasis = (r: Position): ReturnInput & { invested: number | null; pnl: number | null } => {
+    const c = rowCapital.get(r);
+    return c
+      ? { invested: c.invested, pnl: c.gain, returnPct: c.covers ? c.returnPct : null, heldSince: null, assetClass: r.assetClass, capital: c }
+      : { invested: r.costBasis, pnl: r.unrealizedPnL, returnPct: r.returnPct, heldSince: r.heldSince, assetClass: r.assetClass, costNA: !!r.costUnavailable || r.costBasis === null };
+  };
   // Denominator for this security's weight — the whole consolidated book (each
   // dedupeGroup once). This is "% of book", not "% of listed book": the stock
   // page shows any holding, AIF units included, and those are not listed.
@@ -312,14 +354,23 @@ export function StockInfo() {
     // PRIMITIVE here (§4b) and deriving it would publish a figure the document
     // does not. An absent mark sorts LAST either way rather than as a zero.
     cmp: (r) => r.currentPrice,
-    invested: (r) => r.costBasis,
+    invested: (r) => onBasis(r).invested,
     current: (r) => r.marketValue,
-    pnl: (r) => r.unrealizedPnL,
-    return: (r) => r.returnPct,
+    pnl: (r) => onBasis(r).pnl,
+    return: (r) => onBasis(r).returnPct,
     basis: (r) => (r.stCostBasis === null && r.ltCostBasis === null ? null : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"),
   });
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
   const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
+  // THE FOOTER AND THE P&L TILE ON THE ROWS' OWN BASIS — the capital put into
+  // each whole account, the cost of the units for the rest — so the Total ties
+  // to the rows above it. `cost` and `avgCost` stay the units' own: they are
+  // what the Avg cost column and the tax card are about.
+  const totInvested = totalCapital ? totalCapital.invested : cost;
+  const totPnl = totalCapital ? totalCapital.gain : pnl;
+  const totRet = totalCapital ? (totalCapital.covers ? totalCapital.returnPct : null) : ret;
+  /** Every row is a whole investment on its capital — then nothing here is realised separately. */
+  const allOnCapital = !!totalCapital && totalCapital.onCost.count === 0 && totalCapital.noBasis.count === 0;
   /**
    * WHY THERE IS NO COST — the question the reader actually opened this page with.
    *
@@ -606,23 +657,35 @@ export function StockInfo() {
             is correct on 60 of this book's positions and it is not the whole
             answer: "invested —" and "on cost" told a reader nothing about
             whether the figure was missing or the page was broken. */}
+        {/* THE AVG COST IS THE UNITS' OWN, and where the P&L beside it is on the
+            capital put in, its caption says "units cost" — the two differ by
+            whatever a class switch or a payout folded into the units' cost, and
+            one screen must not print two figures under one word. */}
         <Kpi label="Avg cost"
           value={avgCost === null ? <AbsentValue /> : <span className="mono">{price(avgCost)}</span>}
-          sub={cost === null ? <span className="text-slate-500">{costWhy}</span> : `invested ${money(cost)}`}
+          sub={cost === null ? <span className="text-slate-500">{costWhy}</span> : totalCapital ? `units cost ${money(cost)}` : `invested ${money(cost)}`}
           icon={<Coins className="h-4 w-4" />} />
-        <Kpi label="Unrealised P&L"
-          value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
-          delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span> : "on cost"}
+        <Kpi label={totalCapital ? "P&L" : "Unrealised P&L"}
+          value={totPnl === null ? <AbsentValue /> : <span className={changeColor(totPnl)}>{fmtFromBase(totPnl, { compact: true, sign: true })}</span>}
+          delta={totRet}
+          sub={totPnl === null ? <span className="text-slate-500">{costWhy}</span>
+            : totalCapital ? <span title={describeCapital(totalCapital, (n) => money(n), cost)}>on {money(totInvested)} put in</span>
+            : "on cost"}
           icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
             name's sells. Null is not zero: the sells may be real and what they
             realised simply never reported. */}
+        {/* A WHOLE INVESTMENT'S REALISED GAIN IS ALREADY IN THE P&L BESIDE IT —
+            the class switch, the redemptions, the payouts — because that P&L is
+            struck on the capital put in. Printing it here too would count it
+            twice for a reader who adds two tiles. Capital Gains keeps the lots. */}
         <Kpi label="Realised P&L"
-          value={led === undefined ? "…" : led?.realizedProfit == null
+          value={allOnCapital ? <AbsentValue /> : led === undefined ? "…" : led?.realizedProfit == null
             ? <AbsentValue />
             : <span className={changeColor(led.realizedProfit)}>{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</span>}
-          sub={led === undefined ? "booked on exits" : led?.realizedProfit == null
+          sub={allOnCapital
+            ? <span className="text-slate-500">already inside P&amp;L — measured on the capital put in</span>
+            : led === undefined ? "booked on exits" : led?.realizedProfit == null
             ? <span className="text-slate-500">no capital gain statement covers this name</span>
             : "booked on exits"}
           icon={<Activity className="h-4 w-4" />} />
@@ -670,11 +733,13 @@ export function StockInfo() {
                     <SortHeader col="avgCost" view={posView}>Avg cost</SortHeader>
                     <SortHeader col="cmp" view={posView}
                       title="The per-unit mark this account's own statement prints, on its own report date — not a live quote and not market value divided by quantity. Where two statements report one holding they need not agree: a later statement carries a later price, and two rows of one scheme on one date that disagree are a discrepancy this book reports rather than averages.">CMP</SortHeader>
-                    <SortHeader col="invested" view={posView}>Invested</SortHeader>
+                    <SortHeader col="invested" view={posView}
+                      title="Where the account holds nothing but this, the capital the family put into it, as its own statements publish it. Where this is one holding of several in the account, the cost of its units.">Invested</SortHeader>
                     <SortHeader col="current" view={posView}>Current</SortHeader>
-                    <SortHeader col="pnl" view={posView}>Unreal. P&L</SortHeader>
+                    <SortHeader col="pnl" view={posView}
+                      title="On a whole investment, the gain on the capital put in — realised and unrealised together. On one holding of a larger account, the unrealised gain on the cost of its units.">P&L</SortHeader>
                     <SortHeader col="return" view={posView}
-                      title="HPR is the holding-period return — the total on cost from purchase to this statement's date, not annualised. CAGR appears beside it only where a lot register reports the purchase date and the holding is at least a year old; a shorter window is never compounded onto a year. A money-weighted XIRR is not shown per holding at all: it needs every cash flow for this name and these statements cover the current period only — the per-account XIRR is on the Performance page.">Return</SortHeader>
+                      title="HPR is the holding-period return — the total since the money went in, not annualised: on the capital put in where the account holds nothing but this, on the cost of the units otherwise. Beside it, the annual rate where one can be struck: an XIRR where the money went in on several dated payments, a CAGR where a single purchase date is on file and the holding is at least a year old. A shorter window is never compounded onto a year.">Return</SortHeader>
                     <SortHeader col="basis" view={posView}>Basis</SortHeader>
                   </Tr>
                 </thead>
@@ -740,9 +805,16 @@ export function StockInfo() {
                               {price(r.currentPrice)}
                             </span>}
                       </td>
-                      <td className="px-4 py-2.5 text-right mono text-slate-400">{money(r.costBasis)}</td>
+                      <td className="px-4 py-2.5 text-right mono text-slate-400"
+                        data-capital-source={rowCapital.get(r)?.onCapital.map((x) => x.capital.source).join(" ")}
+                        title={rowCapital.get(r) ? describeCapital(rowCapital.get(r)!, (n) => money(n), r.costBasis) : undefined}>
+                        {money(onBasis(r).invested)}
+                      </td>
                       <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
-                      <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
+                      <td className={`px-4 py-2.5 text-right mono ${changeColor(onBasis(r).pnl)}`}
+                        title={rowCapital.get(r) ? "The gain on the capital put into this account — realised and unrealised together, since the capital is what left the family's account." : undefined}>
+                        {money(onBasis(r).pnl, true)}
+                      </td>
                       {/*
                         *"Where will I get to see holding period return? From the
                         date of my purchase till today. Where is it — that's the
@@ -757,7 +829,7 @@ export function StockInfo() {
                         inside it, and is not re-implemented here.
                       */}
                       <td className="px-4 py-2.5 text-right mono" data-stock-return>
-                        <ReturnCells p={r} asOf={portfolio.asOf} />
+                        <ReturnCells p={onBasis(r)} asOf={portfolio.asOf} />
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>
@@ -791,13 +863,16 @@ export function StockInfo() {
                             : cmp}
                         </td>
                       ),
-                      invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>,
+                      invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300"
+                        title={totalCapital ? describeCapital(totalCapital, (n) => money(n), cost) : undefined}>{money(totInvested)}</td>,
                       current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
-                      pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
+                      pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(totPnl)}`}>{money(totPnl, true)}</td>,
                       return: (
-                        <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
-                          title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
-                          <span className="ret-tag mr-0.5">HPR</span>{fmtPct(ret, { sign: true, decimals: 1 })}
+                        <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(totRet)}`}
+                          title={totalCapital
+                            ? "The holding-period return across every row above, on what is invested in them — the capital put into each whole account, the cost of the units for the rest — not annualised. The money-weighted annual rate is beside it where every payment behind these rows is dated."
+                            : "The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over."}>
+                          <ReturnCells p={{ returnPct: totRet, heldSince: null, assetClass: drows[0]?.assetClass, capital: totalCapital }} asOf={portfolio.asOf} />
                         </td>
                       ),
                     }} />
