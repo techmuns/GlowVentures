@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VERIFY THE ALL SECURITIES CHANGE'S CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR.
 #
-# Stage 10cf: *"Make this view as All Securities and make it first in portfolio
+# Stage 10cg: *"Make this view as All Securities and make it first in portfolio
 # monitor and default open and put the all holding and all entities selectors to
 # the right end of after return selector."* `check:pages` holds the default, the
 # filter row's order and right end, the pick-list's panel, the picked-fund line,

@@ -215,6 +215,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   `carriedCostOf` / `carriedCostNote` are the ONE place a cost carried through a
   fund's class switch is described on screen, read by the Portfolio Monitor and
   the company page alike — see Stage 10bv.
+  `recordShortfall` is the rule that a capital RECORD must reach the date its
+  value is struck on (`Account.capitalRecordTo`) — see Stage 10cf.
+- `src/lib/datedCapital.ts` + `src/lib/useDatedCapital.ts` — WHICH ROWS OF A
+  HOLDINGS TABLE ARE WHOLE ACCOUNTS, and the money-weighted rate over them. It
+  defines nothing of its own: the accounts, their dated flows and the value they
+  close on are `capitalRollup`'s, so a folio's XIRR on the Portfolio Monitor and
+  the company page is its XIRR on the Transactions card by construction. A
+  holding inside an account has no cash flows and gets none. See Stage 10cf.
 - `scripts/lib/classSwitch.mjs` — WHAT A FUND'S CLASS SWITCH DOES TO THE FAMILY'S
   COST. Buoyant moved both folios from Class A1 into A4 and restated the units'
   cost at the switch-day NAV; this carries each dated contribution through the
@@ -6350,7 +6358,7 @@ the change that silently moves the default, and the page would render perfectly
 while showing the family a table they asked to keep.
 
 *(THE MONITOR'S DEFAULT HAS SINCE MOVED, AT THE FAMILY'S REQUEST — see Stage
-10cf. `/monitor` opens on All Securities and this table is
+10cg. `/monitor` opens on All Securities and this table is
 `/monitor?group=category`; Morning CIO's allocation card still opens on
 Category. The rule above is why the move is asserted rather than assumed.)*
 
@@ -19693,7 +19701,196 @@ and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
 
-### Stage 10cf — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
+### Stage 10cf — A ROW THAT IS WHOLE ACCOUNTS CARRIES THE MONEY-WEIGHTED RETURN ITS PAYMENTS SUPPORT
+
+*"According to the client the return [on] all this AIF is a lot higher than what
+we are showing on the dashboard. So please check if we are missing anything and
+in case there is any calculation mistake … check it for all other investments as
+well."* — sent with a screenshot of Buoyant Opportunities Strategy Class A4's
+company page. Then, on the merge: *"#78, #74, #76, #77 — merge all of these PRs
+to main."*
+
+**THIS IS #78, AND MOST OF WHAT IT BUILT HAD ALREADY LANDED ANOTHER WAY BY THE
+TIME IT WAS MERGED.** It was written as Stage 10bx while other PRs were open, and
+its answer to the client had two halves:
+
+1. **Every return struck on the capital the family put in**, not on the cost of
+   the units held today — a new `src/lib/capital.ts` read by every surface that
+   prints an Invested, a P&L or a return.
+2. **A money-weighted return wherever a row IS an account** whose every payment
+   is dated — the XIRR the Monitor's column had never carried, and the figure
+   Buoyant's own fact sheet prints.
+
+**THE FIRST HALF IS SUPERSEDED AND WAS NOT PORTED.** Stage 10ca (#80) made every
+return FIFO — `(unrealised + realised) ÷ (cost held + cost of units sold)`, with a
+whole PMS mandate struck on its capital since inception, which is #78's own
+figure for a mandate by construction — and Stage 10cd (#77) put the family's own
+dated capital record on the Transactions card with its own purchase, redemption
+and appreciation. Porting a third basis beside those two would have given one
+account three returns on three pages. So `capital.ts`, its suite, the net-capital
+Invested and P&L on the Monitor, Morning CIO, `/holdings`, Family & Entities,
+Private Market and Return & Drawdown, the Excel sheet's capital columns and the
+chat context's capital fields are **not** on main, and are recorded here rather
+than deleted from memory. Buoyant's cost half had landed a third way, through
+Stage 10bv's carried cost.
+
+**THE SECOND HALF IS NEW, AND IT IS WHAT LANDED** — rebuilt on main's own
+machinery rather than on `capital.ts`:
+
+- **`Account.capitalRecordTo` and `recordShortfall`** (`build-book`,
+  `tranches.ts`). A capital RECORD must reach the date the value beside it is
+  struck on, as well as reach back to inception. Green Lantern 510861's record
+  comes from a quarterly report ending **30 June** against holdings struck **27
+  July**, so the withdrawals between the two are in its value and not in its
+  record. `capitalRollup` now refuses that account's appreciation and return with
+  the reason — on the Transactions card and on the mandate page too, which had
+  been striking one over the gap. It is the ONLY account it moves.
+- **`src/lib/datedCapital.ts`** — which rows of a holdings table ARE whole
+  accounts, and the pooled rate over them. It adds no definition of its own: the
+  accounts, their flows and the value they close on are `capitalRollup`'s, the
+  construction the Transactions card already strikes each account's XIRR from.
+  So a folio's XIRR on the Monitor is its XIRR on the Transactions card **by
+  construction**, and the suite asserts it to the millionth on all eight accounts
+  funded more than a year ago.
+- **The whole-account rule.** An account's record describes the whole account,
+  so it stands behind a row only where the row carries every holding of it that
+  carries money — a mandate row, a fund's row over its folios, a statement line
+  that is the whole folio. A share of a mandate keeps the per-holding refusal.
+  Buoyant prints a **₹0 Cash** line beside its units; counted, both folios would
+  be "split" and lose a rate the whole of their money supports, so a ₹0 line with
+  no cost carries nothing — and a ₹0 line WITH a cost (a write-off) still splits.
+- **The Portfolio Monitor's XIRR column** shows the pooled rate on those rows,
+  each account closing on its own statement's value and date, and the reason on
+  every other row. Its header counts RATES (`N money-weighted of M`), because a
+  row funded under a year ago shows its holding-period return, tagged HPR, and is
+  not one.
+- **The family's own rule on `auto`** — *"an XIRR when there are multiple
+  tranches"* (Stage 10af): several dated payments → XIRR, one payment a year or
+  more ago → CAGR, under a year → the holding-period return, tagged. The CAGR
+  column refuses a several-payment row and points at XIRR, exactly as the
+  Transactions card refuses the same account. **HPR is untouched everywhere** —
+  still FIFO's figure on every row.
+- **The company page** prints XIRR as a third line under a statement row that is
+  the whole account — **15.30% and 9.76%** on Buoyant's two folios, the IRR
+  Buoyant's own fact sheet prints for each, reproduced to the printed decimal
+  from the dated deposits. Under a year it prints none.
+
+**ON THE DEFAULT VIEW, SIX ROWS NOW SHOW XIRR WHERE THEY SHOWED A CUMULATIVE
+RETURN** — Buoyant, Sanshi, Neo Infra and Baring, and SVAN's two mandates, each
+funded over several dated payments more than a year ago. The cumulative figure
+has not gone: it is the HPR column, unchanged. For the two mandates it is FIFO's
+return on their capital (13.56% and 12.73%), so Stage 10ca's check that every
+mandate row's Return is FIFO's now expects XIRR on exactly those two, re-solved
+from the book, and FIFO on the other eight — and requires the FIFO half to have a
+subject, so a build that sent every mandate to XIRR cannot pass by never checking
+FIFO.
+
+| Row on the Monitor | Accounts | Measure on `auto` | |
+| --- | ---: | --- | ---: |
+| Buoyant Opportunities Strategy — Class A4 | 2 | XIRR, pooled | 12.11% |
+| Sanshi Fund-I (both classes, clubbed) | 5 | XIRR, pooled | 42.31% |
+| Neo Infra Income Opportunities | 1 | XIRR | 16.68% |
+| Baring Private Equity India Fund 6 | 1 | XIRR | −6.42% |
+| SVAN 8710067 · 8710090 | 1 each | XIRR | 9.07% · 8.60% |
+| Transition Venture Capital Fund I | 1 | HPR — 165 days | +128.61% |
+| Green Lantern 510861 | 1 | FIFO, as before — no rate | record ends 30 Jun |
+
+#### The checks, and two that could no longer see what they were for
+
+`datedCapital.test.ts` (in `test:family`) anchors the rate OUTSIDE the code: the
+IRR Buoyant's fact sheet prints, read out of the committed `pages.json`. It holds
+`recordShortfall` load-bearing — the same record with its reach stated as met
+WOULD be rated, so nothing else is refusing Green Lantern — and the two paths,
+the whole-account rule and every branch of the methodology on constructed
+capital. `tranches.test.ts` and `capitalRecord.test.ts` had synthetic record
+accounts with no `capitalRecordTo`; their fixtures now state a record that
+reaches their value, and the refusal side is asserted on the real book.
+
+`check:pages` restates both halves off `glowData.ts` in **`DATED_CAPITAL_BOOK`**
+— which accounts are rated, which rows are whole, and the pooled rate by
+BISECTION, never importing `datedCapital.ts`. The Monitor's XIRR route asserts
+the rate stands only on whole dated rows and re-solves; that every row the book
+says is whole carries its accounts (the converse, which is what catches the ₹0
+line splitting Buoyant); and the header's count. Every company page asserts its
+XIRR line exactly where the book says, and **`stock-capital`** walks Buoyant's.
+The return cell carries `data-capital`, `data-capital-accounts` and
+`data-row-keys` for this; the ctx literal needed no new key.
+
+- **The CAGR sort check read the whole column as one list** — true while every
+  CAGR figure sat in Direct Equity. Rows rank within their section (Stage 10bh),
+  and Transition Venture's figure is in AIF, so it failed a correctly sorted
+  table. It ranks per section now.
+- **"No return of 100% p.a." scanned every percentage in a row**, and read
+  Transition Venture's +128.61% — tagged HPR, money in for 165 days — as the
+  extrapolation regressing. It is struck on the untagged cells, the annual ones.
+
+**SIX BUGS REINTRODUCED, EACH FIRING ITS OWN CHECK** (`scripts/dev/dated-capital-bug.py`,
+committed so the next verification is one command): the ₹0 line splitting an
+account fires three (the converse and both company-page claims); the record-reach
+rule dropped fires two (Green Lantern rated, and marked dated where the book says
+undated); a rate closed on the wrong value fires both re-solves; the company
+page's XIRR line dropped fires two; a row holding PART of an account given its
+rate fires the converse; and the multiple-tranche rule dropped from `auto` fires
+the FIFO mandate-row check on SVAN's two rows. The pass ran twice: first on the
+port before it was merged, after a no-patch control came back clean, and again
+with the committed harness on the merged tree. Both runs gave the same six
+results, and each time the files were restored and the tree rebuilt after the
+last case. On the merged tree the full sweep below is the control, and it was
+clean on every route these cases walk.
+
+#### Merged with main
+
+**THE LETTER.** #78 wrote this as Stage 10bx. While it waited, main took 10bx
+(#79), 10by (#81), 10bz (#83), 10ca (#80), 10cb (#82), 10cc (#76), 10cd (#77) and
+10ce (#74), so it is **10cf** — checked against main's tip at the moment of
+merging, and no line on main names 10cf. The code comments this port adds name
+10cf; none of #78's own `10bx` references came across, because the files that
+carried them did not.
+
+**THE MECHANICS.** The branch's own history is kept — main came in as a merge
+commit, never a rewrite — and that commit's TREE is main's plus this port: every
+file #78 changed that is not re-implemented here was taken as main has it.
+`src/lib/capital.ts`, `capitalBasis.test.ts` and `scripts/dev/capital-bug.sh` are
+therefore gone, and so is every edit #78 made to the eleven surfaces the
+net-capital basis touched. #78 had already given its ingest half up to #75's
+reader, so of the ingest and generation code only `build-book`'s one field moved.
+
+**THE `ctx` LITERAL NEEDED NO NEW KEY.** The `returnCells` and `posTable` probes
+gained fields; nothing else in the sweep's shared context moved.
+
+**THE GENERATED BOOK WAS REGENERATED RATHER THAN SPLICED.** `glowData.ts` is main's
+book plus `capitalRecordTo` on every account — a date on the 14 that publish a
+dated record, null on the other 37 — and `BOOK_SUMMARY` does not move by a rupee.
+`docs/BOOK-REPORT.md` is byte-identical.
+
+**VERIFIED ON THE MERGED TREE** (main at `c1bfddd` plus this port): `build` ·
+`tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant
+42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+140 — 2 not checked, 0 blocked) · `test:family` (46 suites, 2,466 checks, 0
+failed) · `build-book` byte-identical · `check:family` **84/2** · `check:pages`
+**246 combinations, 3 with a finding**. That is main's 244 plus `stock-capital` in
+both themes, and it reconciles only because the sweep was re-run.
+
+**EVERY ONE OF THOSE FAILURES IS MAIN'S, AND EACH WAS SHOWN TO BE ON `c1bfddd`
+ALONE BEFORE THIS MERGED.** The two `check:family` failures are the Extras-menu
+checks: #84 added a fifth page and the check still counts four. The three
+`check:pages` findings are the Private Market routes, 8 invariants in all, and the
+identical 8 fail on main's own build. #72's fund-return re-expression still
+computes HPR as value against cost where #80 made it FIFO. Stage 10ce named both
+and left them, and so does this. The 10 invariants not checked are all
+pre-existing claims with no subject on this book (six KPI-tile lines across the
+Morning CIO routes, three Private Market lines, one crumb on the not-found
+drill-down); none is this stage's.
+
+**AND THE DEFAULT VIEW MOVES, MEASURED ON BOTH BUILDS.** The Monitor's `auto`
+Return reads XIRR where it read HPR: Buoyant +8.65% → 12.11% (both folios pooled),
+Sanshi +29.84% → 42.31%, Neo Infra +13.83% → 16.68%, Baring −6.95% → −6.42%, SVAN
++13.56% · +12.73% → 9.07% · 8.60%. The HPR and Absolute columns read exactly what
+they did. SVAN's figure falls because a cumulative return over almost two years
+became an annual rate. Buoyant's rises because 75% of its ₹70.86 Cr went in
+during the last year, so an annual rate is above the 790-day cumulative figure.
+
+### Stage 10cg — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
 
 *"Make this view as All Securities and make it first in portfolio monitor and
 default open and put the all holding and all entities selectors to the right
@@ -19824,8 +20021,8 @@ not a correct one**, and this file says so for the letter; it is equally true
 of a route whose address means something else after the merge.
 
 **THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT MERGE TIME.** Main's headings
-run to `10ce` and no prose names a later one, so this is `10cf`; the merged
-file differs from main's stage letters by `10cf` alone.
+ran to `10ce` and no prose named a later one, so this section took `10cf` —
+and lost it an hour later, below.
 
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
@@ -19837,6 +20034,45 @@ the check still counts as four. `check:pages` over **all 38 Portfolio Monitor
 routes on the merged tree: 38 clean, 0 invariant failures, 0 abstentions**,
 and the seven routes the last fixes touch clean again after them, with the one
 evidenced Morning CIO abstention (every KPI tile on this book carries a figure).
+
+#### …and a second time: #78 took `10cf`
+
+**#78 — XIRR where a row is a whole account on a dated record — landed while
+this PR waited for the family's go-ahead, and took `10cf`.** Main keeps it;
+this section is **`10cg`**. The two sections were inserted at the same place,
+so git marked the conflict — the case that announces itself — and it was
+resolved by placing main's section first.
+
+**EVERY LINE NAMING `10cf` WAS PLACED BEFORE ANY MOVED**, against both sides'
+own copies of its file. Nine are this change's: seven moved — the note under
+Stage 10z, two check-script comments, the bug harness's header and the three
+"in full" link comments — with this section's heading, and the two in its own
+merge note were reworded, because they record the letter it held then.
+Twenty-three are #78's and stayed: its heading, its merge note and two pointers
+in this file, twelve check-script comments, its bug harness, three test
+comments and `datedCapital.ts`.
+
+**ONLY THIS FILE CONFLICTED, SO THE TWO THAT DID NOT WERE READ.**
+`PortfolioMonitor.tsx` carries #78's XIRR column beside this change's default,
+row and picked-fund line, and its diff against main is this change's alone. The
+`ctx` literal is main's 92 keys and this change's 4 — 96, none duplicated, each
+declared; #78 added no key, it widened two probes (`posTable.stockReturns` and
+`returnCells`).
+
+**AND #78's MONITOR CHECKS READ THE CATEGORY TABLE, WHICH IS WHY THEY STILL RUN
+WHERE THEY WERE WRITTEN.** Its mandate-XIRR check on `monitor`, its XIRR column
+on `monitor-xirr`, its CAGR partition on `monitor-cagr` and its per-section sort
+on `monitor-ret-sort` read mandate rows or section buckets. On main those routes
+name no `?group=`, which there means Category; here that would be All
+Securities, where no mandate is a row — and the mandate check FAILS on no rows
+rather than abstaining. All four already name `?group=category` since this
+change, so none of #78's checks had to move.
+
+`build` · `tsc` · `test:ingest` (the same eleven suites, golden 140 passed, 2 not
+checked, 0 blocked) · `test:family` exit 0, #78's `datedCapital.test.ts` among
+them · `npm run build-book` byte-identical, and equal to main's own copies —
+neither side moves the book. The page sweep and the bug pass are being re-run
+on this tree, and their results replace this sentence when they finish.
 
 ### Stage 10k — News & Announcements: REMOVED
 
