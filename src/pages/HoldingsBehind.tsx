@@ -15,6 +15,7 @@ import {
 } from "@/lib/aifCategory";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { fifoBasisNote, fifoTotals, investedBasisNote, investedWithCapital, type FifoOptions, type FifoTotals } from "@/lib/fifo";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -105,6 +106,15 @@ type Group = {
   rows: Position[];
   mv: number;
   cost: number | null;
+  /**
+   * WHAT THE INVESTED CELL PRINTS. The cost of the rows held, except that a
+   * WHOLE mandate enters at the capital paid into it — what its FIFO return is
+   * divided by, which is the figure Morning CIO's allocation row this page
+   * opens from prints too (`investedWithCapital`). `capital` carries the two
+   * bases for the cell's hover; null on a row with no whole mandate in it.
+   */
+  invested: number | null;
+  capital: FifoTotals | null;
   pnl: number | null;
   /** How many of `rows` report no cost — a return is refused where any do. */
   withoutCost: number;
@@ -117,6 +127,8 @@ function groupRows(
   accIdx: ReturnType<typeof accountIndex>,
   /** Every row the BOOK holds, for the whole-mandate test. */
   allRows: Position[],
+  /** The same FIFO options the page's returns use, so a mandate's Invested and its Return share one basis. */
+  fifoOpts: FifoOptions,
 ): Group[] {
   // WHICH MANDATES THIS SET HOLDS ENTIRELY — counted against the book, never
   // against the set, or every set would trivially "hold all" of what it has.
@@ -156,6 +168,14 @@ function groupRows(
         rows: group,
         mv: sum(group.map((x) => x.marketValue)),
         cost: sumOrNull(group.map((x) => x.costBasis)),
+        ...(() => {
+          const cost = sumOrNull(group.map((x) => x.costBasis));
+          if (kind !== "mandate") return { invested: cost, capital: null };
+          const f = fifoTotals(group, fifoOpts);
+          return f.wholeMandates.length
+            ? { invested: investedWithCapital(cost, f), capital: f }
+            : { invested: cost, capital: null };
+        })(),
         pnl: sumOrNull(group.map((x) => x.unrealizedPnL)),
         withoutCost: group.filter((x) => x.costBasis == null).length,
         costedMV: sum(group.filter((x) => x.costBasis != null).map((x) => x.marketValue)),
@@ -272,7 +292,21 @@ export function HoldingsBehind() {
   const noCost = rows.filter((r) => r.costBasis == null);
   const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
-  const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
+  /**
+   * FIFO, AGAINST THE BOOK THE SET WAS DRAWN FROM — what "every holding of a
+   * mandate" is measured against, so a bucket holding whole mandates strikes
+   * them on their capital exactly as Morning CIO's allocation row does.
+   */
+  const fifoOpts = { accounts: accIdx, universe: d.deduped ? consolidated : portfolio.positions };
+  const ret = coveredReturn(rows, fifoOpts);
+  /**
+   * THE SET'S INVESTED, ON THE FOOTER'S BASIS AND MORNING CIO'S: the cost of
+   * what is held, except that a whole mandate enters at the capital paid into
+   * it (`investedWithCapital`). The headline, the Share of invested column and
+   * the tile this page opens from all divide by this one figure, so none of
+   * them can be struck on the cost of shares while another is on capital.
+   */
+  const invested = investedWithCapital(cost, ret.fifo);
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**
@@ -305,8 +339,8 @@ export function HoldingsBehind() {
     : sum(portfolio.positions.map((x) => x.marketValue));
   const shareOfBook = bookMV > 0 ? (mv / bookMV) * 100 : null;
   const weight = (v: number) => (mv > 0 ? `${((v / mv) * 100).toFixed(1)}%` : null);
-  /** A row's share of the capital invested in this set — over the rows that report a cost. */
-  const costShare = (c: number | null) => (c != null && cost != null && cost > 0 ? `${((c / cost) * 100).toFixed(1)}%` : null);
+  /** A row's share of the capital invested in this set — its Invested over the set's. */
+  const costShare = (c: number | null) => (c != null && invested != null && invested > 0 ? `${((c / invested) * 100).toFixed(1)}%` : null);
 
   const term = q.trim().toLowerCase();
   const match = (r: Position) =>
@@ -322,19 +356,19 @@ export function HoldingsBehind() {
    * `rows`; the filter narrows what is drawn, not what a row means.
    */
   const groups = sortRows(
-    groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions),
+    groupRows(shown, accIdx, d.deduped ? consolidated : portfolio.positions, fifoOpts),
     view.sort,
     {
       unit: (g) => g.label,
       heldIn: (g) => [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))].join(", "),
-      invested: (g) => g.cost,
+      invested: (g) => g.invested,
       value: (g) => g.mv,
       // Weight is this row's value over the set's, so it orders as Value does.
       weight: (g) => g.mv,
       // …and the invested share is its cost over the set's, so it orders as Invested does.
-      costShare: (g) => g.cost,
+      costShare: (g) => g.invested,
       pnl: (g) => g.pnl,
-      return: (g) => coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV).pct,
+      return: (g) => coveredReturn(g.rows, fifoOpts).pct,
     },
   );
   /**
@@ -582,19 +616,24 @@ export function HoldingsBehind() {
               than the value above it and a reader subtracting the two would
               otherwise land on a figure neither describes. */}
           {!d.absent && (
-            <div className="mt-1.5 text-[12.5px] text-slate-300" data-hb-invested={cost ?? ""}
+            <div className="mt-1.5 text-[12.5px] text-slate-300" data-hb-invested={invested ?? ""}
                  data-hb-invested-of={rows.length - noCost.length}>
-              {cost == null ? (
+              {invested == null ? (
                 <span title="No statement in this set reports a cost basis, so there is no capital invested to show — absent, not zero.">
                   Invested <span className="text-slate-500">{DASH}</span>
                 </span>
               ) : (
                 <>
-                  Invested <span className="mono font-semibold text-slate-100">{money(cost)}</span>
-                  {pnl != null && (
-                    <> · gain <span className={`mono ${changeColor(pnl)}`}>{money(pnl, true)}</span>
+                  <span title={investedBasisNote(ret.fifo, (n) => money(n)) || undefined}>
+                    Invested <span className="mono font-semibold text-slate-100">{money(invested)}</span>
+                  </span>
+                  {/* THE GAIN IS FIFO'S, the figure the return beside it divides:
+                      unrealised on what is held plus what was realised on units
+                      sold. The unrealised half alone is the footer's own column. */}
+                  {ret.fifo.gain != null && (
+                    <span title={fifoBasisNote(ret.fifo, (n) => money(n)) || undefined}> · gain <span className={`mono ${changeColor(ret.fifo.gain)}`}>{money(ret.fifo.gain, true)}</span>
                       {ret.pct != null && <span className={`mono ${changeColor(ret.pct)}`}> ({fmtPct(ret.pct, { sign: true, decimals: 1 })})</span>}
-                    </>
+                    </span>
                   )}
                   {noCost.length > 0 && (
                     <span className="text-slate-500"
@@ -763,7 +802,7 @@ export function HoldingsBehind() {
                           }} />
                       );
                       const g = item.group;
-                      const r = coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV);
+                      const r = coveredReturn(g.rows, fifoOpts);
                       const w = weight(g.mv);
                       const entities = [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))];
                       const accounts = [...new Set(g.rows.map((x) => x.accountId))];
@@ -874,14 +913,17 @@ export function HoldingsBehind() {
                                     : accounts.length === 1
                                       ? `No cost on the ${providerOf(accIdx, g.rows[0])} statement for this holding — a depository reports what is held, never what it was paid for. Absent, not zero.`
                                       : `None of the ${accounts.length} statements carrying this name reports a cost for it — a depository reports what is held, never what it was paid for. Absent, not zero.`} />
-                                : money(g.cost)}
+                                : g.capital
+                                  ? <span title={investedBasisNote(g.capital, (n) => money(n))} data-invested-capital={g.invested ?? undefined}
+                                      data-invested-cost-held={g.cost}>{money(g.invested)}</span>
+                                  : money(g.cost)}
                             </td>
                             <td className="px-4 py-2.5 text-right mono text-slate-200">{money(g.mv)}</td>
                             <td className="px-4 py-2.5 text-right mono text-slate-400">
                               {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
                             </td>
                             <td className="px-4 py-2.5 text-right mono text-slate-400" data-hb-cost-share>
-                              {costShare(g.cost) ?? <AbsentCell reason={g.cost == null
+                              {costShare(g.invested) ?? <AbsentCell reason={g.invested == null
                                 ? "No statement reports what this holding cost, so it has no share of the capital invested — absent, not zero."
                                 : "No holding in this set reports a cost, so there is no invested total to take a share of."} />}
                             </td>
@@ -926,7 +968,9 @@ export function HoldingsBehind() {
                                   row down. The quantity is the Value cell's hover. */}
                               <td className="px-4 py-1.5 text-right mono text-slate-500">{weight(x.marketValue) ?? DASH}</td>
                               <td className="px-4 py-1.5 text-right mono text-slate-500">
-                                {costShare(x.costBasis) ?? <AbsentCell reason="No cost on this statement line, so it has no share of the capital invested." />}
+                                {g.capital
+                                  ? <AbsentCell reason="This mandate enters Invested at the capital paid into it, and a mandate's capital is not divided among its shares — so a single share has no part of it to show." />
+                                  : costShare(x.costBasis) ?? <AbsentCell reason="No cost on this statement line, so it has no share of the capital invested." />}
                               </td>
                               <td className={`px-4 py-1.5 text-right mono ${x.unrealizedPnL == null ? "" : changeColor(x.unrealizedPnL)}`}>
                                 {x.unrealizedPnL == null ? <AbsentCell reason="Needs a cost this statement does not report." /> : money(x.unrealizedPnL, true)}
@@ -947,9 +991,16 @@ export function HoldingsBehind() {
                   <Foot view={view} label={`${fmtNum(groups.length)} ${groups.length === 1 ? unitWord : unitWord + "s"}`}
                     hidden={hidden} money={money}
                     mv={sum(groups.map((g) => g.mv))}
-                    cost={sumOrNull(groups.map((g) => g.cost))}
+                    cost={sumOrNull(groups.map((g) => g.invested))}
+                    capitalNote={(() => {
+                      const f = groups.filter((g) => g.capital).map((g) => g.capital!);
+                      if (!f.length) return "";
+                      const paid = sum(f.map((x) => x.wholeContributed)), held = sum(f.map((x) => x.wholeCostHeld));
+                      return `${f.length} whole mandate${f.length === 1 ? " enters" : "s enter"} at the capital paid in, ${money(paid)} — what ${f.length === 1 ? "its" : "their"} return is divided by — where the cost of the shares ${f.length === 1 ? "it holds" : "they hold"} now is ${money(held)}; this total is the sum of the Invested cells above it`;
+                    })()}
                     pnl={sumOrNull(groups.map((g) => g.pnl))}
                     withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))}
+                    ret={coveredReturn(groups.flatMap((g) => g.rows), fifoOpts)}
                     holdings={rows.length} noCost={noCost.length}
                     closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
                 </table>
@@ -1133,19 +1184,23 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible }: {
+function Foot({ view, label, hidden, mv, cost, capitalNote, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible, ret }: {
   /** THE LABEL'S SPAN IS A FUNCTION OF THE ORDER, not the literal `cols={2}`
       this took: with a column dragged, a fixed span would put every total one
       cell out and a reader would find the value under the weight's heading. */
   view: TableView; label: string; hidden: number;
   mv: number; cost: number | null; pnl: number | null; withoutCostMV: number;
+  /** Where whole mandates entered Invested at their capital paid in, what that means; empty otherwise. */
+  capitalNote: string;
   money: (n: number | null | undefined, sign?: boolean) => string;
   /** The SET's own counts, for the coverage the Invested tile used to state. */
   holdings: number; noCost: number;
   /** ...and the rows this table does not draw at all. */
   closedExcluded: number; negligible: { count: number; value: number };
+  /** The footer's return, FIFO over the rows it totals — struck by the caller. */
+  ret: ReturnType<typeof coveredReturn>;
 }) {
-  const r = coveredReturn(mv, cost, pnl, withoutCostMV);
+  const r = ret;
   /**
    * WHAT THE COST SIDE COVERS, WORDED ONCE AND USED BY BOTH CELLS THAT NEED IT.
    *
@@ -1187,7 +1242,8 @@ function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
         invested: <td key="invested" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-cost
             title={cost == null
               ? "No statement in this set reports a cost — absent, not zero. A depository reports what is held, never what it was paid for, and a ₹0 here would report the whole market value as profit."
-              : coverage || "Every holding in this set reports a cost."}>
+              : [capitalNote, coverage || "Every holding in this set reports a cost."].filter(Boolean).join(" · ")}
+            data-invested-capital={capitalNote ? cost ?? undefined : undefined}>
           {cost == null ? DASH : money(cost)}
         </td>,
         value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100" data-hb-foot-mv>{money(mv)}</td>,
@@ -1198,7 +1254,7 @@ function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
         costShare: <td key="costShare" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-cost-share
             title={cost == null
               ? "No statement in this set reports a cost, so there is no invested total to share out — absent, not zero."
-              : `Share of the ${money(cost)} invested — each row's cost over the set's, so the column adds to 100%. ${coverage}`.trim()}>
+              : `Share of the ${money(cost)} invested — each row's Invested over the set's, so the column adds to 100%. ${coverage}`.trim()}>
           {cost == null || cost <= 0 ? DASH : "100%"}
         </td>,
         pnl: <td key="pnl" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
@@ -1212,7 +1268,7 @@ function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
               ? cost == null
                 ? "No statement in this set reports a cost, so there is nothing to strike a return against."
                 : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
-              : `Total to date · cumulative, not annualised. ${coverage || "Every holding in this set reports a cost."}`}>
+              : `Total to date · cumulative, not annualised. ${fifoBasisNote(r.fifo, (n) => money(n))}. ${coverage || "Every holding in this set reports a cost."}`}>
           {r.pct == null ? DASH : fmtPct(r.pct, { sign: true, decimals: 1 })}
         </td>,
         }} />

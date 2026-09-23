@@ -39,6 +39,7 @@ import {
 import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
 import { useEnteredCalls, headlineCall, todayIso } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
+import { fifoTotals, positionFifoReturn } from "@/lib/fifo";
 
 /**
  * WHICH FOUR TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
@@ -242,7 +243,8 @@ const folioFigures = (f: BookFolio): RowFigures => ({
   units: f.units,
   cost: f.cost,
   value: f.value,
-  returnPct: f.cost != null && f.cost > 0 && f.pnl != null ? (f.pnl / f.cost) * 100 : null,
+  // The folio's own FIFO return — a redeemed unit's gain and cost stay in it.
+  returnPct: f.position && f.cost != null && f.cost > 0 && f.pnl != null ? positionFifoReturn(f.position) : null,
   asOf: f.asOf ? [f.asOf] : [],
 });
 
@@ -384,6 +386,10 @@ export function PrivateMarket() {
     const privCost = sumOrNull(funds.map((f) => f.cost));
     const privPnL = sumOrNull(funds.map((f) => f.pnl));
     const costedRows = scope.dedupedRows.filter((p) => p.costBasis != null);
+    // FIFO over the holdings that report a cost — the same aggregator every
+    // other return on the dashboard is struck with, so a redemption's realised
+    // gain stays in the private book's return rather than leaving it.
+    const privFifo = fifoTotals(costedRows);
     const costedMV = sum(funds.map((f) => f.costedMV));
     const bookMV = consolidatedMarketValue(portfolio.positions);
     // RAW — every statement as printed. Never the same number, by design.
@@ -402,7 +408,7 @@ export function PrivateMarket() {
     return {
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history,
-      privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
+      privMV, privCost, privPnL, privFifo, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
       dates,
@@ -494,7 +500,7 @@ export function PrivateMarket() {
    * Called and Paid in must not be subtracted — are ALSO printed under the
    * table, which is where a reader doing that arithmetic already is.
    */
-  const retPct = m.privCost != null && m.privCost > 0 && m.privPnL != null ? (m.privPnL / m.privCost) * 100 : null;
+  const retPct = m.privFifo.returnPct;
   const share = (a: number, b: number, decimals: number) => (b > 0 ? fmtPct((a / b) * 100, { decimals }) : DASH);
   const absentLine = (why: string) => <span className="text-slate-500">{why}</span>;
   const tileMetrics: TileMetric[] = [
@@ -513,7 +519,7 @@ export function PrivateMarket() {
     {
       id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
       value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
-      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} on cost`,
+      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} return · FIFO`,
       detail: m.privCost != null && m.privCost > 0
         ? `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
         : "No statement here reports a cost to measure a gain against.",

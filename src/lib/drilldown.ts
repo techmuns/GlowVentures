@@ -26,7 +26,8 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
+import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
+import { fifoTotals, type FifoOptions } from "./fifo";
 import { MARKET_SIDE_UNPLACED } from "./aifCategory";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
@@ -676,12 +677,15 @@ function ownerLabel(accIdx: ReturnType<typeof accountIndex>, p: Position): strin
  * printed `−0.0% over 2 of 24` for Mutual Fund on a page whose own tile
  * correctly showed a dash. Two figures for one set, one click apart.
  */
-export function coveredReturn(mv: number, cost: number | null, pnl: number | null, withoutCostMV: number) {
-  const covers = mv > 0 && withoutCostMV <= mv * 0.005;
-  return {
-    covers,
-    pct: covers && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
-  };
+export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) {
+  const mv = set.reduce((a, p) => a + p.marketValue, 0);
+  const withoutCostMV = set.filter((p) => p.costBasis == null || p.costUnavailable).reduce((a, p) => a + p.marketValue, 0);
+  const covers = costCoversSet(mv, withoutCostMV);
+  // FIFO, through the one aggregator every other return on the dashboard uses:
+  // the realised gain on units already sold stays in the return, and a whole
+  // mandate is struck on its capital since inception.
+  const fifo = fifoTotals(set, opts);
+  return { covers, pct: covers ? fifo.returnPct : null, fifo };
 }
 
 /**

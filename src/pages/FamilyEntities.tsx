@@ -17,6 +17,7 @@ import {
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
+import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
 import { UNCLASSIFIED } from "@/lib/sectors";
@@ -172,7 +173,20 @@ export function FamilyEntities() {
   // Owner and custodian are separate reads of the account registry: one entity
   // can hold through several platforms, and one platform can serve several
   // entities, so neither is derivable from the other.
-  const entities = byEntity(p, portfolio.accounts);
+  /**
+   * EACH ENTITY'S RETURN IS FIFO, AND A WHOLE MANDATE IS STRUCK ON ITS CAPITAL.
+   * `byEntity` rolls up every holding with no account registry, so it cannot
+   * see that an entity holds the whole of a PMS mandate — and an entity's
+   * mandates carry most of its realised gains. Over the holdings that report a
+   * cost, which is the set this column has always been struck on.
+   */
+  const entities = byEntity(p, portfolio.accounts).map((e) => {
+    const fifo = fifoTotals(
+      p.filter((x) => ownerOf(accIdx, x) === e.key && x.costBasis != null && !x.costUnavailable),
+      { accounts: accIdx, universe: p },
+    );
+    return { ...e, returnPct: fifo.returnPct, fifo };
+  });
   // The table's own order; the default is `byEntity`'s (largest first).
   const entityRows = sortRows(entities, entityView.sort, {
     entity: (e) => e.key,
@@ -517,7 +531,9 @@ export function FamilyEntities() {
   const visMV = sum(holdings.map((h) => h.marketValue));
   const visCost = sumOrNull(holdings.map((h) => h.costBasis));
   const visPnL = sumOrNull(holdings.map((h) => h.unrealizedPnL));
-  const visRet = visCost !== null && visPnL !== null && visCost > 0 ? (visPnL / visCost) * 100 : null;
+  const visRet = visCost !== null && visPnL !== null && visCost > 0
+    ? fifoTotals(holdings.filter((h) => h.costBasis != null && !h.costUnavailable), { accounts: accIdx, universe: p }).returnPct
+    : null;
   const visNoCostRows = holdings.filter((h) => h.costBasis === null || h.costBasis === undefined);
   const visNoCost = visNoCostRows.length;
   const visNoCostMV = sum(visNoCostRows.map((h) => h.marketValue));
@@ -575,7 +591,7 @@ export function FamilyEntities() {
             : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
-        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
+        <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
       </Tr>
     );
   };
@@ -707,7 +723,7 @@ export function FamilyEntities() {
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
                         <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money)}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
+                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed })}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />

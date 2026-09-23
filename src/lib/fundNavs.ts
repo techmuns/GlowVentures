@@ -47,6 +47,7 @@
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
 import type { Position } from "./types";
+import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export { FUND_NAV_AS_OF };
 export type { FundNav };
@@ -90,7 +91,10 @@ export function applyFundNavs(positions: Position[]): Position[] {
       currentPrice: e.nav,
       marketValue,
       unrealizedPnL,
-      returnPct: costNA || unrealizedPnL === null ? p.returnPct : (unrealizedPnL / (cost as number)) * 100,
+      // FIFO's one return: a live price moves the unrealised half and nothing
+      // else, so the realised gain on units already sold stays in it (§6).
+      returnPct: costNA || unrealizedPnL === null ? p.returnPct
+        : fifoReturnPct(marketValue, cost as number, p.realizedPnL, p.costOfUnitsSold),
       navPriced: true,
       navDate: e.date,
       // INTRADAY FIELDS UNTOUCHED — see the header. A NAV is not a day move.
