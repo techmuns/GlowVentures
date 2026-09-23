@@ -22294,9 +22294,67 @@ the COUNTS stay. Two things it had to get right that the long version got wrong:
   clock**, because fifteen minutes cannot be waited out: the first send is
   refused, NOT asked again inside ten minutes, and sent BY THE TIMER once the
   other side is up — the one path a dashboard left open all day depends on.
-- `scripts/dev/alerts-bug.sh` reintroduces the alert bugs and 19 sender bugs
-  (`CASES=SENDER` for those alone), each through the layer that should catch it,
-  restoring by copy on a trap and rebuilding on the way out. @@BUGPASS@@
+- `scripts/dev/alerts-bug.sh` reintroduces 24 alert bugs and 23 sender bugs
+  (`CASES=SENDER` for the sender's alone), each through the layers that can see
+  it, restoring by copy on a trap and rebuilding on the way out. It runs in a
+  separate `git worktree` with its own preview (`BASE=`): the pass takes about
+  an hour, and for all of it the files it patches carry a bug.
+
+**ALL 47 FIRE THEIR OWN CHECKS**, on the tree merged with #85, after a no-patch
+control that came back clean:
+
+| # | Bug put back | Fires |
+| --- | --- | --- |
+| 1 | the Buy level never fires — the old check left it out | 6 page checks on 3 routes · 4 `priceAlerts` checks |
+| 2 | an alert with no live price is checked against the statement mark | 7 page checks on 3 routes · 11 `priceAlerts` checks |
+| 3 | a Stop loss fires on the way UP | 5 page checks on 2 routes · 4 `priceAlerts` checks |
+| 4 | the distance still to go is struck against the level, not the price now | 1 page check on 1 route · 2 `priceAlerts` checks |
+| 5 | fired alerts sort nearest-first instead of furthest past | 1 page check on 1 route · 1 `priceAlerts` check |
+| 6 | an alert on a sold holding loses the name saved with it | 1 page check on 2 routes · 1 `priceAlerts` check |
+| 7 | a fired alert carries no bell | 1 page check on 2 routes |
+| 8 | every row is tinted, fired or not | 1 page check on 2 routes |
+| 9 | the pencil opens the holding's page but not its alert boxes | 1 page check on 2 routes · 1 `check:family` row |
+| 10 | the note under the table says live prices whatever the feed did | 1 page check on 1 route |
+| 11 | the empty tab draws an empty table instead of saying there are no alerts | 1 page check on 1 route · 1 `check:family` row |
+| 12 | the badge counts every alert, not the ones that have fired | 2 page checks on 3 routes |
+| 13 | a quiet day shows a 0 badge | 1 page check on 1 route |
+| 14 | the badge shows only while the alerts tab is already open | 1 page check on 1 route |
+| 15 | All alerts is added FIRST, moving the default panel | 7 page checks on 5 routes |
+| 16 | a save tells nobody — the boxes and the tab go stale | 6 `check:family` rows · 2 `priceAlerts` checks |
+| 17 | a saved name alone keeps an empty entry alive | 1 `check:family` row · 1 `priceAlerts` check |
+| 18 | a typed 'abc' is read as blank and erases the level | 1 `check:family` row · 2 `priceAlerts` checks |
+| 19 | the Target box writes to the Alert above field | 3 `check:family` rows |
+| 20 | one click on the cross removes the alert | 1 `check:family` row |
+| 21 | More never opens by itself, hiding what was typed under it | 1 `check:family` row |
+| 22 | the New alert finder offers holdings an alert can never be checked on | 1 `check:family` row |
+| 23 | SENDER: every level goes as a SET, overwriting another device's newer one | 1 page check on 2 routes · 7 `researchLevels` checks |
+| 24 | SENDER: a note typed under an old level turns it into a SET | 2 `researchLevels` checks |
+| 25 | SENDER: the first send records no seeds | 5 `researchLevels` checks |
+| 26 | SENDER: the ISIN is not sent, so the other side cannot check its price | 1 page check on 2 routes · 1 `check:family` row · 3 `researchLevels` checks |
+| 27 | SENDER: the book's ISIN is preferred to the instrument the symbol IS | 1 `researchLevels` check |
+| 28 | SENDER: a holding with no NSE symbol is sent under its own slug | 4 page checks on 2 routes · 1 `check:family` row · 8 `researchLevels` checks |
+| 29 | SENDER: a level the other side reads as a typo sinks the whole batch | 3 `researchLevels` checks |
+| 30 | SENDER: the other side's batch size is ignored | 2 `researchLevels` checks |
+| 31 | SENDER: another device's levels answering a seed are read as ours — saved | 4 `researchLevels` checks |
+| 32 | SENDER: what already arrived is sent again every time | 6 `researchLevels` checks |
+| 33 | SENDER: removing the last level never clears it there, so it goes on alerting | 1 `check:family` row · 2 `researchLevels` checks |
+| 34 | SENDER: a level still on its way reads SENT | 1 `check:family` row · 2 `researchLevels` checks |
+| 35 | SENDER: the other side not deployed yet reads as an outage | 1 page check on 1 route · 2 `check:family` rows · 2 `researchLevels` checks |
+| 36 | SENDER: the send carries this dashboard's cookies to another site | 1 page check on 1 route · 1 `researchLevels` check |
+| 37 | SENDER: a refusal is asked again at once instead of in fifteen minutes | 1 `check:family` row · 2 `researchLevels` checks |
+| 38 | SENDER: a failed send is never tried again on its timer | 1 `check:family` row |
+| 39 | SENDER: a browser coming back online does not send what was waiting | 1 `check:family` row |
+| 40 | SENDER: the footer says every company was sent, whatever arrived | 1 page check on 1 route · 1 `researchLevels` check |
+| 41 | SENDER: the footer's hover sentences are put back on screen | #90's note guard, on 2 routes |
+| 42 | SENDER: the reasons never drop to the hover, so a bad day runs past one line | 2 `researchLevels` checks |
+| 43 | SENDER: a level kept here as too high is said to have no NSE symbol | 2 `researchLevels` checks |
+| 44 | a company held only inside funds is said to be not held in this book | 1 page check on 1 route |
+| 45 | SENDER: a holding this dashboard has no symbol for is said to have none | 1 `researchLevels` check |
+| 46 | the price line's hover is dropped, taking its reasons with it | 1 page check on 2 routes |
+| 47 | SENDER: nothing is ever sent — the sender is not mounted | 5 page checks on 2 routes · 9 `check:family` rows |
+
+Case 41 is ONE check, #90's note guard, firing on both routes it runs on. The
+guard prints each route's own measured line, so the run lists it twice.
 
 #### Merged with main, and one check main itself was failing
 
@@ -22379,6 +22437,47 @@ and 1 in `Kpi.tsx`. This change's 26 code comments and 3 lines here moved.
 - **The ADD TILE card sits on the KPI strip above all four Morning CIO panels,
   All alerts included**, so the alerts routes were walked again rather than
   assumed — see below.
+
+#### …and a fifth time: #86 took `10cm`, and a count of headings could not see it
+
+#86 is the Portfolio Monitor opening on All Securities, first in its axis
+control. It landed while this change's final checks were running, and took
+`10cm`. **Both files then carried exactly ONE `10cm` heading, so comparing how
+many times each letter appears found nothing.** Only the TITLES differ. That is
+the rule Stage 10ce's fourth collision taught — compare headings, not letter
+counts — and this time it was the only thing that could have caught it. Git
+marked the conflict in this file only because both sections were inserted after
+`10cl`. Main keeps `10cm` and comes first, and this section is **`10cn`**.
+
+Every line naming `10cm` was placed by whether main's own copy of its file
+carries it:
+
+- #86's 9 stay: 5 lines here, and 4 code comments (two in the checker, one in
+  its own harness and one in `MandateHoldings.tsx`).
+- This change's 26 code comments and its lines here moved.
+- One line of this section's history keeps `10cm`, because it records the
+  letter it held then.
+
+What else the merge touched:
+
+- **The `ctx` literal conflicted and is the union**: #86's `holdingsDropdown`,
+  `pickedFund`, `filterRow` and `monitorInFull` beside `alertsTab` and
+  `researchPosts`, 103 keys, none duplicated, every one naming a declared
+  identifier.
+- **`searchIndex.ts` merged without a marker, and was read.** #86 renamed the
+  security view "All Securities" and added "Holdings by category"; this change
+  adds "All alerts". They are different entries, and both are kept.
+- **`check-family-inputs.mjs` merged without a marker too.** #86's rows are a
+  Monitor block that runs before this change's blocks, and each of this change's
+  blocks opens its own address, so none of them starts on #86's page.
+- **#86 changes none of the 11 files the alerts bug harness patches.** It does
+  change the two checkers the harness runs, so both diffs were read. Its page
+  checks are on the Portfolio Monitor's routes and one mandate page. Its walk
+  code reads the Monitor's own controls. Its `check:family` rows are a Monitor
+  block of their own. Not one line of either diff names an alert, a price level
+  or Glow Central Research. None of the checks the harness fires moved, so its
+  pass on the tree merged with #85 still stands. The full checks on this tree
+  are its control — the treatment Stage 10cl gave #88.
 
 @@VERIFY@@
 
