@@ -208,9 +208,23 @@ export type CapitalGroup = {
   /** What the account is worth today, from the book. */
   value: number;
   /**
-   * Gain and return against `net` — published ONLY where the contribution
-   * history provably reaches inception, because a return against a PARTIAL
-   * record of what was paid in overstates itself by everything it missed.
+   * GAIN AND RETURN, FIFO AT THE LEVEL OF THE FAMILY'S OWN CAPITAL.
+   *
+   *   gain   = value today + taken out − paid in
+   *   return = gain ÷ paid in
+   *
+   * The family bought units of this account with every payment in and sold
+   * some with every payment out. However those units are matched, the cost of
+   * the ones still held plus the cost of the ones already sold is what was
+   * paid in — so FIFO's return is the whole gain over the whole of it, and the
+   * matching only decides how that gain splits between realised and
+   * unrealised. It used to be struck against the NET, which is not a cost at
+   * all: 3P paid ₹31.06 Cr back against ₹28.50 Cr in, its net went negative,
+   * and the one account whose gain was entirely REALISED showed no return.
+   *
+   * Published ONLY where the contribution history provably reaches inception,
+   * because a return against a PARTIAL record of what was paid in overstates
+   * itself by everything it missed.
    */
   gain: number | null;
   returnPct: number | null;
@@ -314,7 +328,7 @@ export function capitalRollup(
     const value = positions.filter((p) => p.accountId === accountId).reduce((s, p) => s + p.marketValue, 0);
     const dates = ms.map((m) => m.date).sort();
     const incompleteReason = contributionsAreComplete(accountId, all, positions, index, a?.inceptionDate);
-    const measurable = !sideFiltered && net !== null && net > 0 && !incompleteReason;
+    const measurable = !sideFiltered && net !== null && paidIn > 0 && !incompleteReason;
     out.push({
       accountId,
       label: a?.strategy || a?.provider || accountId,
@@ -334,7 +348,7 @@ export function capitalRollup(
       staggered: ins.length > 1,
       value,
       gain: measurable ? value - net! : null,
-      returnPct: measurable ? ((value - net!) / net!) * 100 : null,
+      returnPct: measurable ? ((value - net!) / paidIn) * 100 : null,
       incompleteReason,
       sideFiltered,
     });

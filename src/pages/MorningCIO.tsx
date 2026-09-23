@@ -34,6 +34,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { fifoTotals } from "@/lib/fifo";
 import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -335,9 +336,22 @@ export function MorningCIO() {
     // plus the fund model's markup where one exists. Adding `portfolio.privateValue
     // − 0` on top — the AIF value against a fund model that reports no cost — is
     // what put embedded gain at 99.8% of invested, almost the whole NAV.
-    const embeddedGain = sumOrNull([bookPnL, privateCount ? privateGain : null]);
-    const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
-      ? (embeddedGain / totalInvested) * 100
+    /**
+     * ── FIFO, OVER THE HOLDINGS THAT REPORT A COST ─────────────────────────
+     *
+     * This was `Σ unrealised ÷ Σ cost of what is still held`, which leaves out
+     * every gain already realised on units sold — the mandates' above all,
+     * whose managers sell their winners. `fifoTotals` adds the realised half
+     * back and strikes each WHOLE mandate on its capital since inception, over
+     * the same costed set the tile has always covered (the page it opens is
+     * `?of=invested`, the holdings reporting a cost).
+     */
+    const bookFifo = fifoTotals(p.filter((x) => x.costBasis != null && !x.costUnavailable),
+      { accounts: portfolio.accounts, universe: p });
+    const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateGain : null]);
+    const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
+    const gainPct = deployedCapital !== null && embeddedGain !== null && deployedCapital > 0
+      ? (embeddedGain / deployedCapital) * 100
       : null;
     /**
      * AND THE FOOTER CELL ONLY EXISTS WHERE ITS TWO COLUMNS COVER THE SAME BOOK.
@@ -426,13 +440,17 @@ export function MorningCIO() {
        * for the category a reader is comparing them on.
        */
       const costCoversRow = costCoversSet(mv, withoutCostMV);
+      // FIFO over the row's own holdings — realised on units sold stays in the
+      // return, and a whole mandate is struck on its capital (`fifoTotals`).
+      const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
       return {
         count: rows.length, cost, mv, pnl,
         withoutCost: noCost.length,
         withoutCostMV,
         costedMV,
         costCoversRow,
-        ret: costCoversRow && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        fifo,
+        ret: costCoversRow ? fifo.returnPct : null,
       };
     };
     /**

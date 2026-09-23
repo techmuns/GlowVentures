@@ -15,6 +15,7 @@ import {
 } from "@/lib/aifCategory";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
 import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { fifoBasisNote } from "@/lib/fifo";
 import { stockHref } from "@/lib/auditFormulas";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
@@ -262,7 +263,13 @@ export function HoldingsBehind() {
   const noCost = rows.filter((r) => r.costBasis == null);
   const costedMV = sum(rows.filter((r) => r.costBasis != null).map((r) => r.marketValue));
   const withoutCostMV = sum(noCost.map((r) => r.marketValue));
-  const ret = coveredReturn(mv, cost, pnl, withoutCostMV);
+  /**
+   * FIFO, AGAINST THE BOOK THE SET WAS DRAWN FROM — what "every holding of a
+   * mandate" is measured against, so a bucket holding whole mandates strikes
+   * them on their capital exactly as Morning CIO's allocation row does.
+   */
+  const fifoOpts = { accounts: accIdx, universe: d.deduped ? consolidated : portfolio.positions };
+  const ret = coveredReturn(rows, fifoOpts);
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**
@@ -320,7 +327,7 @@ export function HoldingsBehind() {
       // Weight is this row's value over the set's, so it orders as Value does.
       weight: (g) => g.mv,
       pnl: (g) => g.pnl,
-      return: (g) => coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV).pct,
+      return: (g) => coveredReturn(g.rows, fifoOpts).pct,
     },
   );
   /**
@@ -692,7 +699,7 @@ export function HoldingsBehind() {
                           }} />
                       );
                       const g = item.group;
-                      const r = coveredReturn(g.mv, g.cost, g.pnl, g.mv - g.costedMV);
+                      const r = coveredReturn(g.rows, fifoOpts);
                       const w = weight(g.mv);
                       const entities = [...new Set(g.rows.map((x) => ownerOf(accIdx, x)))];
                       const accounts = [...new Set(g.rows.map((x) => x.accountId))];
@@ -865,6 +872,7 @@ export function HoldingsBehind() {
                     cost={sumOrNull(groups.map((g) => g.cost))}
                     pnl={sumOrNull(groups.map((g) => g.pnl))}
                     withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))}
+                    ret={coveredReturn(groups.flatMap((g) => g.rows), fifoOpts)}
                     holdings={rows.length} noCost={noCost.length}
                     closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
                 </table>
@@ -1048,7 +1056,7 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible }: {
+function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible, ret }: {
   /** THE LABEL'S SPAN IS A FUNCTION OF THE ORDER, not the literal `cols={2}`
       this took: with a column dragged, a fixed span would put every total one
       cell out and a reader would find the value under the weight's heading. */
@@ -1059,8 +1067,10 @@ function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
   holdings: number; noCost: number;
   /** ...and the rows this table does not draw at all. */
   closedExcluded: number; negligible: { count: number; value: number };
+  /** The footer's return, FIFO over the rows it totals — struck by the caller. */
+  ret: ReturnType<typeof coveredReturn>;
 }) {
-  const r = coveredReturn(mv, cost, pnl, withoutCostMV);
+  const r = ret;
   /**
    * WHAT THE COST SIDE COVERS, WORDED ONCE AND USED BY BOTH CELLS THAT NEED IT.
    *
@@ -1121,7 +1131,7 @@ function Foot({ view, label, hidden, mv, cost, pnl, withoutCostMV, money, holdin
               ? cost == null
                 ? "No statement in this set reports a cost, so there is nothing to strike a return against."
                 : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
-              : `Total to date · cumulative, not annualised. ${coverage || "Every holding in this set reports a cost."}`}>
+              : `Total to date · cumulative, not annualised. ${fifoBasisNote(r.fifo, (n) => money(n))}. ${coverage || "Every holding in this set reports a cost."}`}>
           {r.pct == null ? DASH : fmtPct(r.pct, { sign: true, decimals: 1 })}
         </td>,
         }} />

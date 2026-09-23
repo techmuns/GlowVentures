@@ -306,6 +306,7 @@ export function SectorComposition() {
         weight: tot > 0 ? v.mv / tot : 0,
         cost: null as number | null, pnl: null as number | null,
         returnPct: null as number | null, withoutCost: v.count,
+        realised: 0, deployed: null as number | null,
       }))
       .sort((a, b) => b.mv - a.mv);
   }, [consolidatedView, entries]);
@@ -862,7 +863,7 @@ export function SectorComposition() {
                           {consolidatedView
                             ? <AbsentCell reason="This view's value is the shares the statements report plus a DERIVED share of what the funds disclose, and no document reports a cost for the second. A return struck over it would divide a part-measured gain by a cost covering part of its own numerator. Direct Equity is measured end to end and carries one." />
                             : liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                            : <Auditable formula={{ title: "Sector return", excel: "= Σ P&L ÷ Σ Cost × 100", plain: "The value-weighted average return of every holding in this sector — combined gain or loss against combined cost.", worked: `= ${money(s.pnl)} ÷ ${money(s.cost)} × 100 = ${fmtPct(s.returnPct, { sign: true })}`,  }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
+                            : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100", plain: "Everything the holdings in this sector have produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of them.", worked: `= (${money(s.pnl)} + ${money(s.realised)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}`,  }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
                         </td>
                         <td className="px-4 py-2.5 text-left text-[12px] text-slate-400"><span className="block max-w-[170px] truncate" title={topHolding[s.key]}>{topHolding[s.key]}</span></td>
                       </Tr>
@@ -948,7 +949,7 @@ export function SectorComposition() {
                                         <td className={`px-3 py-1.5 text-right mono ${h.costUnavailable ? "text-slate-500" : changeColor(h.returnPct)}`} title={h.live && !h.costUnavailable ? LIVE_CELL : undefined}>
                                           {h.costUnavailable ? "—"
                                             : h.live ? fmtPct(h.returnPct, { sign: true })
-                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                            : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                         </td>
                                       </Tr>
                                     ))}
