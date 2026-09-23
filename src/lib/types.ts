@@ -292,6 +292,17 @@ export type Position = {
   // never set `live` and never fills the intraday fields.
   navPriced?: boolean;
   navDate?: string;           // AMFI's own publication date for that NAV
+  /**
+   * WHERE THE QUANTITY CAME FROM, when it is not a holding statement.
+   *
+   * Set only on a position the LIVE portfolio values from a depository's own
+   * closing balance — an account that sent a TRANSACTION statement and no
+   * holding one (`Account.transactionsOnly`), whose cash-equivalent funds are
+   * valued at AMFI's published NAV. `asOf` is that statement's closing date and
+   * `source` its docKey. Such a position has no statement mark at all, so it is
+   * never in `statementPortfolio`, and a page says so wherever it shows one.
+   */
+  depositoryUnits?: { asOf: string | null; source: string | null };
 };
 
 /**

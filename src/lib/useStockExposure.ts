@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BOOK_POLYCAB } from "@/data/glowData";
 import { currentHoldings, isCompanyShare, isFundVehicle } from "@/lib/analytics";
 import { loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { isArbitrageFund } from "@/lib/fundNavs";
 import type { Position } from "@/lib/types";
 
 /**
@@ -46,6 +47,14 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
     const m = new Map<string, HeldFund>();
     for (const p of currentHoldings(consolidated)) {
       if (!isFundVehicle(p)) continue;
+      /**
+       * AN ARBITRAGE FUND IS CASH, AND IT IS NOT LOOKED THROUGH. Its disclosure
+       * is a book of long shares hedged by short futures, so reading it as the
+       * family's exposure to those companies would print stock they do not
+       * carry — the net is cash, which is how the family asked it be counted.
+       * A liquid fund's paper is real, unhedged credit exposure and stays in.
+       */
+      if (isArbitrageFund(p)) continue;
       const e = m.get(p.securityKey)
         ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
       e.marketValue += p.marketValue;

@@ -354,6 +354,17 @@ export function FamilyEntities() {
     ? unvaluedHoldingsOf(scope, portfolio.accounts, portfolio.positions, portfolio.commitments ?? [])
     : [];
   /**
+   * AND THE ACCOUNTS THAT ARE ONLY PARTLY VALUED. An account that sent a
+   * transaction statement and no holding statement has its cash-equivalent
+   * funds valued at AMFI's NAV on the live basis, so it now carries positions
+   * and `unvaluedHoldingsOf` no longer lists it — while the rest of what it
+   * holds is still valued nowhere. Dropping it from this card would say the
+   * family's whole demat is in the table above; its own note says what is not.
+   */
+  const partlyValued = selected
+    ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
+    : [];
+  /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
    * A GICS sector is a property of a COMPANY. An AIF folio, a mutual-fund scheme
@@ -1018,13 +1029,25 @@ export function FamilyEntities() {
               *
               * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
               * says so: it is what was PAID, never what the stake is worth. */}
-          {unvalued.length > 0 && (
+          {(unvalued.length > 0 || partlyValued.length > 0) && (
             <Card className="mt-5" title={`${scope} — held, and not valued here`}
-              subtitle={<>{unvalued.length === 1 ? "One account" : `${unvalued.length} accounts`} {scope} holds
-                {unvalued.length === 1 ? " reports" : " report"} a holding that no statement in this book puts a
-                value on, so {unvalued.length === 1 ? "it stands" : "they stand"} in no table above. What each one
+              subtitle={<>{unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} {scope} holds
+                {unvalued.length + partlyValued.length === 1 ? " reports" : " report"} holdings that no statement in this book puts a
+                value on, so they stand in no table above{partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. What each one
                 holds, and why it carries no figure:</>}>
-              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length}>
+              <ul className="space-y-3 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}>
+                {partlyValued.map((a) => (
+                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-slate-300">
+                        {a.provider}
+                        <span className="text-slate-500"> · {a.accountNo}</span>
+                      </span>
+                      <span className="text-[11px] text-amber-400/80 whitespace-nowrap">partly valued</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{a.partialValuation}</p>
+                  </li>
+                ))}
                 {unvalued.map((u) => (
                   <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
                     <div className="flex items-baseline justify-between gap-3">
@@ -1050,6 +1073,8 @@ export function FamilyEntities() {
               <p className="mt-4 border-t border-dashed border-ink-700 pt-3 text-[11px] leading-relaxed text-slate-500">
                 None of these figures is in the {money(selMV)} above. A contribution is what was paid into a fund,
                 not what the holding is worth, and adding the two would report a valuation nobody struck.
+                {partlyValued.length > 0 && <> The cash-equivalent funds a partly valued account&rsquo;s note names ARE
+                  in that figure, valued at AMFI&rsquo;s NAV; the rest of the account is not.</>}
               </p>
             </Card>
           )}

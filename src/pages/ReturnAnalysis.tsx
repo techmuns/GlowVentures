@@ -16,7 +16,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
-import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel } from "@/lib/analytics";
+import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel, readerClassOf } from "@/lib/analytics";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
@@ -133,7 +133,9 @@ export function ReturnAnalysis() {
     const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean }>();
     for (const x of priced) {
       const byClass = isFundVehicle(x) || isPrivateClass(x);
-      const secKey = byClass ? x.assetClass : x.sector;
+      // The READER'S class: a liquid or arbitrage fund is Cash here as on every
+      // other page, never the wrapper its statement typed it as.
+      const secKey = byClass ? readerClassOf(x) : x.sector;
       const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass };
       e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
       bySector.set(secKey, e);
@@ -148,7 +150,7 @@ export function ReturnAnalysis() {
     // sides, because a caption naming "Mutual Fund" over a row headed something
     // else would satisfy a reader and fail the reader's arithmetic.
     const wrapperClasses = [...new Set(
-      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(x.assetClass)),
+      priced.filter((x) => isFundVehicle(x) || isPrivateClass(x)).map((x) => bucketLabel(readerClassOf(x))),
     )].sort();
     const sectors = [...bySector.entries()]
       .map(([sector, e]) => ({

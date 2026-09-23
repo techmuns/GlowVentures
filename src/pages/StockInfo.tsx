@@ -10,11 +10,11 @@ import {
   measuredReturn,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
-import { fundNavFor } from "@/lib/fundNavs";
+import { fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import type { Position } from "@/lib/types";
 
 import { loadStockLedger, type StockLedger } from "@/lib/ledger";
@@ -285,6 +285,16 @@ export function StockInfo() {
   const NOT_A_COMPANY_LABEL: Record<string, string> = {
     "Mutual Fund": "a mutual fund", ETF: "an ETF", AIF: "an AIF folio", Cash: "a cash line",
   };
+  /**
+   * A LIQUID OR ARBITRAGE FUND IS CASH ON THIS PAGE TOO. The family's rule is
+   * that such a fund is classified as nothing but cash, so the sentence below
+   * says Cash rather than the wrapper its statement typed it as — and an
+   * arbitrage fund is not looked through at all: its disclosed long shares are
+   * hedged by short futures, and reading them as exposure would print stock the
+   * family does not carry.
+   */
+  const cashFund = fundVehicle && rows.every((r) => isCashEquivalent(r));
+  const arbitrage = rows.some((r) => isArbitrageFund(r));
   const sector = rows[0]?.sector;
   const providerSector = rows[0]?.providerSector;
   const isin = rows[0]?.isin;
@@ -541,7 +551,10 @@ export function StockInfo() {
                 : navMark
                 ? `NAV · AMFI's published figure for ${navMark.scheme}, ${navMark.date}${
                     navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on the day`
-                  } — a fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote`
+                  } — a fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote${
+                    rows.some((r) => r.depositoryUnits)
+                      ? "; some units here are a depository's own closing balance, on an account that sent no holding statement, and no statement marks them"
+                      : ""}`
                 : live
                 ? `CMP · live${sym ? ` · ${sym}` : ""}`
                 : (() => {
@@ -734,7 +747,11 @@ export function StockInfo() {
                       <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
                         {r.currentPrice === null
                           ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
-                          : <span title={r.navPriced
+                          : <span title={r.depositoryUnits
+                              /* NO STATEMENT MARKS THESE UNITS, so the sentence that
+                                 says a NAV "replaces" one would be false here. */
+                              ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement marks these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
+                              : r.navPriced
                               ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
                               : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
                               {price(r.currentPrice)}
@@ -932,15 +949,18 @@ export function StockInfo() {
           this fund". The card below still refuses the COMPANY research (a fund
           has no PE and no concall) and now also states, for a fund with no
           resolved disclosure, that this is why there is no list. */}
-      {fundVehicle && rows.length > 0 && canHaveLookthrough(rows[0]) && (
+      {fundVehicle && rows.length > 0 && canHaveLookthrough(rows[0]) && !arbitrage && (
         <FundLookthrough securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf} />
       )}
 
       {notACompany ? (
-        <Card className="mt-5" title={`Company research — not applicable to ${NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
-          <p className="text-[12.5px] leading-relaxed text-slate-400">
-            This holding is <span className="font-medium text-slate-300">{assetClassLabel(assetClass)}</span>
-            {fundVehicle
+        <Card className="mt-5" title={`Company research — not applicable to ${cashFund ? "a cash-equivalent fund" : NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
+          <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-class={cashFund ? "Cash" : assetClass ?? ""}>
+            This holding is <span className="font-medium text-slate-300">{cashFund ? "Cash" : assetClassLabel(assetClass)}</span>
+            {cashFund
+              ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund, which the family counts as cash and nothing
+                  else; one line standing for a portfolio the manager assembles, not a share in a company.</>
+              : fundVehicle
               ? <> — one line standing for a portfolio the manager assembles, not a share in a company.</>
               : <> — a balance, not a share in a company.</>} So there is no price history, no PE, no balance sheet,
             no concall and no insider filing for it, and the five panels that carry those for a company are absent
@@ -950,7 +970,12 @@ export function StockInfo() {
             <>
               <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
                 The companies inside it are the manager's holdings, not this book's — no statement issued to this family
-                names them. {canHaveLookthrough(rows[0])
+                names them. {arbitrage
+                  ? <>An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately
+                    not drawn here: that portfolio is long shares hedged by short futures, so reading it as the
+                    family&rsquo;s exposure to those companies would print stock they do not carry. Its value is
+                    counted whole, as cash.</>
+                  : canHaveLookthrough(rows[0])
                   ? <>A MUTUAL FUND scheme nonetheless discloses its portfolio monthly, and where that disclosure
                     resolves it is shown above under its own heading. It is the AMC's document, not this family's, so
                     the fund&rsquo;s value still stays whole here and in every total rather than being spread across the
