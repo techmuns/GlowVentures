@@ -16524,6 +16524,20 @@ that is gone by design). `tilePickerChecks` is one factory run by both strips.
 deploy with nothing else to do. Until it is, every choice is kept in the browser
 and the picker says so.
 
+#### The verification
+
+`build` · `tsc` · `test:ingest` (every suite, #75's two new ones included) ·
+`test:family` (a new `tileSets.test.ts`, 48 checks) · `check:family` **86/0** ·
+`check:pages` **212 combinations clean** on the twice-merged tree, with eight
+evidenced abstentions across four PRE-EXISTING claims — every KPI tile on this
+book carries a figure (four Morning CIO routes), no row on `stock-qty` carries a
+pledge, every private holding reports a cost (two routes), and the not-found
+drill-down points at nothing on Morning CIO by design. **None of them is this
+change's**: the one it briefly added — the crumb on the retired `?of=invested`
+address — was turned into an assertion against the address it now resolves to.
+The count is measured on the merged tree and was never adjusted: this branch's
+own runs read 202 and 206 against bases that have since moved.
+
 #### The bug pass, and the harness that runs it
 
 `scripts/dev/kpi-tile-bug.mjs` — committed so the next session's verification is
