@@ -16558,7 +16558,7 @@ rebuild on the way out, after a no-patch control that came back clean.
 | 1 | a key renders under whichever spelling its statement printed | 3 suite checks, and "no two options are one company written two ways" on both search lists |
 | 2 | the search list offers a fund's spelling of a company the book holds | 2 checks on the security search list |
 | 3 | no listing ISIN for a company whose statements print none | 3 suite checks, 2 on the security list |
-| 4 | the issuer seed switched off | **the security search list only — see below** |
+| 4 | the issuer seed switched off | 1 on the security search list — **and, on the first run, no suite at all; 4 suite checks since. See below** |
 | 5 | an issuer row keeps its instrument's coupon and maturity | 11 suite checks, 3 on the instruments route, 1 on the security list |
 | 6 | treasury bills and `GOI` not read as the Government of India | 6 suite checks |
 | 7 | a filer's lowercase slip reaches the screen | 3 suite checks, 1 on the security list |
@@ -16605,6 +16605,11 @@ one only it can reach. Both comments are corrected. A measurement over a superse
 is a different measurement, which is exactly the suite's own defect, committed a
 second time while diagnosing it.
 
+Re-run with `CASES=4` on the fixed tree, the case now fails **four suite checks**
+— City Union Bank's two CDs standing apart on the real store, and three in the
+constructed case — beside the security search list's one, after a control that
+came back clean on both.
+
 **THE PARTITION CARRIES THE FLOOR AS A TERM.** On today's funds, the four
 mutual-fund rows under the ₹1,000 floor (₹208.24) and the five redeemed at ₹0
 fall in no bucket, so the five buckets alone came to ₹208.24 short of
@@ -16639,12 +16644,13 @@ to"*), and main moved twice while it waited.
   no-ops — #75's new Buoyant rows carry no key this change's aliases move.
 
 `build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
-`test:family` 37 suites · `check:family` **86/0** · `check:pages` **208
-combinations clean** on the tree merged with #73, with seven evidenced
-abstentions — four on the Morning CIO panels (every KPI tile carries a figure),
-two on Private Market (every private holding reports a cost) and one on the
-not-found drill-down. The twice-merged tree is being swept again rather than
-having that count adjusted by arithmetic.
+`test:family` 37 suites · `check:family` **86/0** · `check:pages` **214
+combinations clean** on the twice-merged tree, with seven evidenced abstentions —
+four on the Morning CIO panels (every KPI tile carries a figure), two on Private
+Market (every private holding reports a cost) and one on the not-found
+drill-down — none of them this change's own. It was 208 on the tree merged with
+#73; #75 brings three routes and this branch four, so 206 + 8 = 214, which
+reconciles only because the sweep was run again rather than the count adjusted.
 
 ### Stage 10k — News & Announcements: REMOVED
 
