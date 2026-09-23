@@ -5217,6 +5217,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-dated-section={sec.key} data-dated-label={r.label}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-mine-row={cap ? r.accountId : undefined}
+                          data-mine-windowed={cap?.windowed ? "" : undefined}
                           data-mine-contributions={cap ? cap.contributions : undefined}
                           data-mine-withdrawals={cap ? cap.withdrawals : undefined}
                           data-mine-section={cap ? sec.key : undefined}
@@ -5546,6 +5547,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   data-foot-contributions={totals.contributions} data-foot-withdrawals={totals.withdrawals}
                   data-foot-trades={totals.trades} data-foot-sells={totals.sells}
                   data-foot-realised-of={totals.realizedOf}
+                  data-foot-realised={totals.realized ?? undefined}
+                  data-foot-bought={totals.bought ?? undefined}
                   className="px-3 py-2.5 text-slate-200"
                   labelTitle={`${totals.accounts} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls. The other ${accountsReg.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`}
                   label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts} of {accountsReg.length} accounts</>}

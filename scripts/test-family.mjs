@@ -50,6 +50,7 @@ const SUITES = [
   ["dated capital", "src/lib/__tests__/datedCapital.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
   ["clubbed figures", "src/lib/__tests__/clubbedFigures.test.ts"],
+  ["ledger joins", "src/lib/__tests__/ledgerJoins.test.ts"],
   ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["held through", "src/lib/__tests__/heldThrough.test.ts"],

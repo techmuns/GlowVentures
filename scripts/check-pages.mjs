@@ -1905,6 +1905,89 @@ const AIF_BOOK = (() => {
  * denominator it passed while reading "15 of 15" — a check that could not fail,
  * found by reintroducing exactly the bug it exists for.
  */
+/**
+ * ── THE DATED RECORD'S JOINS, RE-EXPRESSED OFF THE BOOK AND THE ARCHIVE ─────
+ *
+ * A-05, A-07 and A-08. Never imported from `ledger.ts` or `tranches.ts` — a
+ * check that calls the helper it is checking agrees with it by construction.
+ *
+ *   cgTotal     the capital-gain statements' own realised total, as the BOOK
+ *               carries it (`BOOK_CAPITAL_GAINS`, built by `build-book`'s
+ *               `datedRowsAcross` — a different path from the runtime ledger);
+ *   ownOnly     securities whose every transaction-statement row is a fund's
+ *               own allotment the dated capital record already carries (same
+ *               account, security, date, amount within ₹1) — none of them may
+ *               be drawn as a manager's trade;
+ *   window      a fiscal-year preset that cuts one account's record, and the
+ *               accounts it cuts — each must withhold its gain and return.
+ */
+const LEDGER_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const cg = bookArray(src, "BOOK_CAPITAL_GAINS");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (![cg, moves, accounts].every(Array.isArray)) return null;
+    const cgTotal = cg.reduce((t, e) => t + (Number(e.realisedST) || 0) + (Number(e.realisedLT) || 0), 0);
+    const idOf = new Map(accounts.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
+    const keyed = moves.filter((m) => m.securityKey);
+    const root = new URL("../public/audit/", import.meta.url);
+    const manifest = JSON.parse(readFileSync(new URL("manifest.json", root), "utf8"));
+    const rowsBySec = new Map();
+    for (const d of manifest.filter((m) => m.reportType === "transaction-statement")) {
+      const id = idOf.get(`${d.provider}|${d.accountNo}`);
+      const doc = JSON.parse(readFileSync(new URL(`${d.docKey}/document.json`, root), "utf8"));
+      for (const t of doc.transactions ?? []) {
+        if (!t.date || !t.securityKey) continue;
+        const a = t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
+        const dir = t.side === "sell" ? "out" : "in";
+        const own = a !== null && keyed.some((m) => m.accountId === id && m.securityKey === t.securityKey
+          && m.date === t.date && m.direction === dir && Math.abs((m.invested ?? m.amount ?? NaN) - a) <= 1);
+        const e = rowsBySec.get(t.securityKey) ?? { rows: 0, own: 0 };
+        e.rows += 1; if (own) e.own += 1;
+        rowsBySec.set(t.securityKey, e);
+      }
+    }
+    const ownOnly = [...rowsBySec].filter(([, e]) => e.own > 0 && e.own === e.rows).map(([k]) => k);
+    // The Indian fiscal year a date falls in, by its starting year.
+    const fyOf = (d) => { const y = Number(d.slice(0, 4)), m = Number(d.slice(5, 7)); return m >= 4 ? y : y - 1; };
+    const byAcct = new Map();
+    for (const m of moves) byAcct.set(m.accountId, [...(byAcct.get(m.accountId) ?? []), m]);
+    // THE WINDOW IS CHOSEN SO BOTH DIRECTIONS HAVE A SUBJECT: a fiscal year that
+    // CUTS some account's record (its gain must be withheld) AND holds some
+    // other account's WHOLE record (its gain must not be). A window with only
+    // the first would leave "an account wholly inside keeps its own" abstaining
+    // alone. Ranked by that, then by how many accounts it exercises, then the
+    // latest year — every term read off `BOOK_CAPITAL_MOVES`, so the next drop
+    // picks its own.
+    const fys = [...new Set(moves.map((m) => fyOf(m.date)))];
+    const windows = fys.map((fy) => {
+      const from = `${fy}-04-01`, to = `${fy + 1}-03-31`;
+      const cut = [...byAcct].filter(([, ms]) => ms.some((m) => m.date >= from && m.date <= to)
+        && ms.some((m) => m.date < from || m.date > to)).map(([id]) => id);
+      const inside = [...byAcct].filter(([, ms]) => ms.every((m) => m.date >= from && m.date <= to)).map(([id]) => id);
+      return { preset: `fy:${fy}`, fy, from, to, cut, inside };
+    }).filter((w) => w.cut.length > 0)
+      .sort((a, b) => Number(b.inside.length > 0) - Number(a.inside.length > 0)
+        || (b.cut.length + b.inside.length) - (a.cut.length + a.inside.length) || b.fy - a.fy);
+    const window = windows[0] ?? null;
+    // ACCOUNTS WITH A DATED CAPITAL RECORD AND NO POSITION ROW AT ALL — no
+    // statement values anything they hold, so their row must carry no value
+    // (A-06). Struck on the book, never on what the page drew.
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const valued = new Set(positions.map((p) => p.accountId));
+    // Every account the Transactions card draws a capital row for: a dated
+  // record, or — where there is none — a drawdown fund's dated calls, which
+  // main's Stage 10cd reads onto the same table (re-expressed here, never
+  // imported from `tranches.ts`).
+  const withCalls = (bookArray(src, "BOOK_COMMITMENTS") ?? [])
+    .filter((c) => !byAcct.has(c.accountId) && (c.calls ?? []).some((k) => k.date && k.amount > 0))
+    .map((c) => c.accountId);
+  const unvalued = [...new Set([...byAcct.keys(), ...withCalls])].filter((id) => !valued.has(id));
+    return { cgTotal, ownOnly, window, unvalued };
+  } catch { return null; }
+})();
+
 const CAPITAL_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -4500,6 +4583,9 @@ const ROUTES = [
    * plainly has sections.
    */
   ["monitor-txn-secaxis", "/monitor?group=security"],
+  // A FISCAL-YEAR PRESET THAT CUTS AN ACCOUNT'S RECORD (A-07) — chosen off the
+  // book in `LEDGER_BOOK.window`, selected by the preset's own value.
+  ["monitor-txn-window", "/monitor"],
   /**
    * ── THE RETURN METHODOLOGY, ON THE TRANSACTIONS TABLE TOO ────────────────
    *
@@ -12258,6 +12344,87 @@ const INVARIANTS = {
         && d.rows === tbl.rows.length && trades === d.trades;
     }],
     /**
+     * ── THE REALISED TOTAL IS THE STATEMENTS' OWN (A-08) ──────────────────────
+     *
+     * A capital gain statement and a transaction statement spell one sale two
+     * ways — Green Lantern's lots print `Axis Liquid Fund - Direct Plan - Growth`
+     * where the same account's tape prints `… - Growth Option` — and joined on
+     * the security key alone 19 lots and ₹8,65,685.59 reached no sale: this
+     * footer read +₹1.24 Cr against the statements' own +₹1.32 Cr, with nothing
+     * on screen saying a lot had been left out.
+     *
+     * THE EXPECTATION IS THE BOOK'S, NOT THE LEDGER'S. `BOOK_CAPITAL_GAINS` is
+     * built by `build-book`'s `datedRowsAcross`, a different path over the same
+     * archive from the runtime ledger that draws this footer — so the two
+     * agreeing to the paisa is a reconciliation, not a figure compared with its
+     * own copy. A footer carrying no realised figure is a FAILURE: this book has
+     * capital-gain lots, so an absent total means the join dropped all of them.
+     */
+    ["the realised total is the capital-gain statements' own, to the paisa (A-08)", (t, ctx) => {
+      const d = ctx.datedTable?.footData;
+      if (!LEDGER_BOOK || !d || d.realised === null || !Number.isFinite(d.realised)) return false;
+      return Math.round(d.realised * 100) === Math.round(LEDGER_BOOK.cgTotal * 100);
+    }],
+    /**
+     * ── A FUND'S OWN SUBSCRIPTION IS THE FAMILY'S CAPITAL, NEVER A TRADE (A-05) ─
+     *
+     * Buoyant's transaction statement prints the family's own Class A4
+     * subscriptions — the same rows, date and rupee amount its capital register
+     * prints — so the tape drew them as a MANAGER buying the fund's own units,
+     * and "Bought" counted ₹35 Cr the family paid in a second time, beside the
+     * very Capital-in column that already carries it.
+     *
+     * `ownOnly` is struck on the ARCHIVE — the transaction-statement rows whose
+     * account, security, date, direction and amount (within ₹1) the dated
+     * capital record also prints — never on the ledger's own flag. A security
+     * whose every tape row is such an allotment must not stand as a trades row.
+     */
+    ["a fund's own subscription is the family's capital, never a manager's trade (A-05)", (t, ctx) => {
+      const tbl = ctx.datedTable;
+      if (!LEDGER_BOOK || !tbl?.rows?.length) return false;
+      if (!LEDGER_BOOK.ownOnly.length) return { notChecked: "no security in this book is traded only through its own allotments" };
+      return !tbl.rows.some((r) => r.trades
+        && LEDGER_BOOK.ownOnly.some((k) => (r.key ?? "").endsWith(`sec:${k}`)));
+    }],
+    /**
+     * WITH NO DATE FILTER, NO ROW WITHHOLDS A GAIN FOR A WINDOW. The other half of
+     * the window check on `monitor-txn-window`: a build that marked every row
+     * windowed would satisfy that route and withhold every gain on the default
+     * view, which is the one the family opens.
+     */
+    /**
+     * ── AN ACCOUNT NO STATEMENT VALUES IS UNVALUED, NOT WORTH ₹0 (A-06) ──────
+     *
+     * India SME's and Sky Capital's folios print the capital drawn and the
+     * units it bought and no NAV anywhere, so the account carries no position.
+     * Summed over nothing its Value today read ₹0 and the gain struck against
+     * it was every rupee paid in — a −100% return on money a fund has simply
+     * not valued, which is the most damaging figure a capital table can print.
+     * Struck on the book's own list (`LEDGER_BOOK.unvalued`), and the reason
+     * must be the one the account carries.
+     */
+    ["an account no statement values shows no value, appreciation or return — never ₹0 (A-06)", (t, ctx) => {
+      if (!LEDGER_BOOK) return false;
+      if (!LEDGER_BOOK.unvalued.length) return { notChecked: "every account with a dated capital record carries a position in this book" };
+      const tbl = ctx.datedTable;
+      if (!tbl?.rows?.length) return false;
+      const col = (re) => tbl.head.findIndex((h) => re.test(h));
+      const vi = col(/^value today\b/i), ui = col(/^unrealised\b/i);
+      if (vi < 0 || ui < 0) return false;
+      return LEDGER_BOOK.unvalued.every((id) => {
+        const r = tbl.rows.find((x) => x.capital && x.accountId === id);
+        const m = (ctx.mineRows ?? []).find((x) => x.accountId === id);
+        return !!r && !!m && r.cells[vi] === "—" && r.cells[ui] === "—"
+          && r.titles.some((x) => /no statement values this account/i.test(x))
+          && m.returns.length > 0 && m.returns.every((x) => x.pct == null);
+      });
+    }],
+    ["with no date filter, no row withholds its gain for a window (A-07)", (t, ctx) => {
+      const rows = ctx.datedTable?.rows ?? [];
+      if (!rows.length) return false;
+      return rows.every((r) => !r.windowed);
+    }],
+    /**
      * ── A MANDATE IS ONE ROW, IN ONE SECTION ───────────────────────────────
      *
      * Added because the DEFECT this found on the rendered page — an unstated
@@ -12826,6 +12993,63 @@ const INVARIANTS = {
       }],
   ],
 
+  /**
+   * ── A DATE WINDOW MUST NOT PRICE A PART OF A RECORD AS THE WHOLE (A-07) ────
+   *
+   * The Transactions card's date filter narrowed an account's contributions to
+   * the window and then struck Gain and Return as `value today − what was paid
+   * in the window` — against a value the WHOLE record bought. Measured on Neo
+   * Infra 9039920536, a fiscal-year window printed +19.82% where the account's
+   * own record reads +13.83%: a real figure over the wrong denominator, and a
+   * reader comparing two years reads a return that never happened.
+   *
+   * A gain over a window needs the account's value on the window's first day,
+   * which no statement in this book reports. Main's Stage 10cd rule withholds
+   * appreciation and every return under ANY date filter — an account wholly
+   * inside the window too, because its value today is struck after the window
+   * closes — and says why; these checks hold the page to that. The window is DERIVED from the book (`LEDGER_BOOK.window`)
+   * — the fiscal year of the latest movement of the account whose record spans
+   * the most years — so the next drop picks its own, and `cut` / `inside` are
+   * struck on `BOOK_CAPITAL_MOVES` rather than on the rows the page drew.
+   */
+  "monitor-txn-window": [
+    ...txnMergedCore(),
+    ["the window really narrowed the table to one fiscal year", (t, ctx) => {
+      const w = LEDGER_BOOK?.window;
+      if (!LEDGER_BOOK) return false;
+      if (!w) return { notChecked: "no account's dated record spans two fiscal years" };
+      const rows = ctx.datedTable?.rows ?? [];
+      if (!rows.length) return false;
+      return rows.every((r) => (!r.first || r.first >= w.from) && (!r.last || r.last <= w.to))
+        && rows.some((r) => r.capital);
+    }],
+    ["under the window every capital row withholds its return, and says why (A-07)", (t, ctx) => {
+      const w = LEDGER_BOOK?.window;
+      if (!LEDGER_BOOK) return false;
+      if (!w) return { notChecked: "no account's dated record spans two fiscal years" };
+      const tbl = ctx.datedTable, mine = ctx.mineRows ?? [];
+      if (!tbl?.rows?.length || !mine.length) return false;
+      const ids = [...w.cut, ...w.inside];
+      return ids.length > 0 && ids.every((id) => {
+        const r = tbl.rows.find((x) => x.capital && x.accountId === id);
+        const m = mine.find((x) => x.accountId === id);
+        return !!r && r.windowed && !!m && m.returns.length > 0
+          && m.returns.every((x) => x.pct == null && /dates are filtered to part of this account's record/i.test(x.reason ?? ""));
+      });
+    }],
+    ["…including an account wholly inside the window — its value today is struck after the window closes", (t, ctx) => {
+      const w = LEDGER_BOOK?.window;
+      if (!LEDGER_BOOK) return false;
+      if (!w) return { notChecked: "no account's dated record spans two fiscal years" };
+      if (!w.inside.length) return { notChecked: "no account's whole record falls inside the derived window" };
+      const mine = ctx.mineRows ?? [];
+      if (!mine.length) return false;
+      return w.inside.every((id) => {
+        const m = mine.find((x) => x.accountId === id);
+        return !!m && m.returns.every((x) => x.pct == null);
+      });
+    }],
+  ],
   "monitor-txn-returns": [
     ...txnMergedChecks(),
     ...CAPITAL_RETURN_CHECKS,
@@ -23352,6 +23576,8 @@ for (const theme of THEMES) {
       if (name === "monitor-axis-crossback") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+        // Wait for the tape itself, not a clock — see the note on the main walk below.
+        await page.waitForSelector("[data-dated-table] tr[data-dated-total]", { timeout: 45000 }).catch(() => {});
         // Pick a real section on the Transactions side — whichever the control
         // offers first after "All", read off the DOM so the walk does not go
         // stale when the next drop moves the book. It is a TAB now, clicked,
@@ -23366,6 +23592,7 @@ for (const theme of THEMES) {
         || name === "monitor-txn-drill" || name === "monitor-txn-direct"
         || name === "monitor-txn-in" || name === "monitor-txn-out"
         || name === "monitor-txn-basket" || name === "monitor-txn-secaxis"
+        || name === "monitor-txn-window"
         || name === "monitor-txn-returns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
@@ -23377,6 +23604,21 @@ for (const theme of THEMES) {
         // Waiting for the table cannot make a check pass that should fail — a
         // table that never draws still fails them all, as before.
         await page.locator("[data-dated-table]").first().waitFor({ timeout: 20000 }).catch(() => {});
+        /**
+         * WAIT FOR THE TAPE, NOT FOR A CLOCK. The dated record is fetched from
+         * the audit archive at runtime — well over a hundred documents — and a
+         * route opens in a fresh browser context, so the fetch is cold every
+         * time. 1.2 s after the click it had often not arrived: measured, the
+         * drill-down walk found NO row in the page and clicked nothing, and the
+         * side-filter walks clicked a control that was not there yet, so the
+         * light pass failed seven invariants on these routes while the warm
+         * dark pass, the same code, expanded all 143 lines. A walk that acts
+         * before the page has loaded reports the page as broken. The table's
+         * footer is drawn only once both records are in, so it is the handle;
+         * a table that never loads still reaches the invariants, which then
+         * fail on what they find.
+         */
+        await page.waitForSelector("[data-dated-table] tr[data-dated-total]", { timeout: 45000 }).catch(() => {});
         /**
          * THERE IS NO RECORD TOGGLE TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
@@ -23421,6 +23663,10 @@ for (const theme of THEMES) {
           // display name and may be reworded, the key is what the filter tests.
           const tab = page.locator('[data-section-filter] [data-section-tab="Direct Equity"]').first();
           if (await tab.count()) { await tab.click(); await page.waitForTimeout(900); }
+        }
+        if (name === "monitor-txn-window" && LEDGER_BOOK?.window) {
+          const sel = page.locator(`select:has(option[value="${LEDGER_BOOK.window.preset}"])`).first();
+          if (await sel.count()) { await sel.selectOption(LEDGER_BOOK.window.preset); await page.waitForTimeout(900); }
         }
         // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL. It carried two
         // vocabularies until the family settled it on Buys/Sells, and a walk
@@ -25332,7 +25578,10 @@ for (const theme of THEMES) {
             first: tr.getAttribute("data-dated-first") ?? "",
             last: tr.getAttribute("data-dated-last") ?? "",
             capital: tr.hasAttribute("data-mine-row"),
+            accountId: tr.getAttribute("data-mine-row"),
             trades: tr.hasAttribute("data-trades"),
+            windowed: tr.hasAttribute("data-mine-windowed"),
+            titles: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? ""),
             cells: cells(tr),
           })),
           foot: foot ? cells(foot) : null,
@@ -25363,6 +25612,8 @@ for (const theme of THEMES) {
             trades: Number(foot.getAttribute("data-foot-trades")),
             sells: Number(foot.getAttribute("data-foot-sells")),
             realisedOf: Number(foot.getAttribute("data-foot-realised-of")),
+            realised: foot.hasAttribute("data-foot-realised") ? Number(foot.getAttribute("data-foot-realised")) : null,
+            bought: foot.hasAttribute("data-foot-bought") ? Number(foot.getAttribute("data-foot-bought")) : null,
           } : null,
         };
       });
