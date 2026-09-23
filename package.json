@@ -31,7 +31,8 @@
     "replay:movements": "node scripts/replay-demat-movements.mjs",
     "replay:flows": "node scripts/replay-fund-flows.mjs",
     "build-polycab": "node scripts/build-polycab-live.mjs",
-    "build-fund-navs": "node scripts/build-fund-navs.mjs"
+    "build-fund-navs": "node scripts/build-fund-navs.mjs",
+    "build-upstox-instruments": "node scripts/build-upstox-instruments.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

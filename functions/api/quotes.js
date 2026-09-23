@@ -1,6 +1,14 @@
-// Cloudflare Pages Function — server-side proxy for the muns batch stock-quote API.
+// Cloudflare Pages Function — server-side proxy for live stock quotes.
 //
-// Holds MUNS_TOKEN in the Pages environment (context.env) so the token is NEVER
+// ── UPSTOX FIRST, muns AS THE FALLBACK ──────────────────────────────────────
+// Where an Upstox token is set (`UPSTOX_ACCESS_TOKEN`, or `UPSTOX_TOKEN`), every
+// symbol with an instrument in `shared/upstoxInstruments.mjs` is priced from
+// Upstox's full market quote in ONE call; muns prices only what Upstox did not.
+// The response shape is unchanged, so nothing downstream had to move. Each quote
+// says which feed priced it (`source`), and `GET /api/quotes?check=1` answers
+// "is the Upstox token working?" in a sentence. See shared/upstoxQuotes.mjs.
+//
+// Holds both tokens in the Pages environment (context.env) so neither is EVER
 // exposed to the browser. Gated by the site password too: functions/_middleware.js
 // runs on /api/* as well, so only a signed-in user ever reaches this endpoint.
 //
@@ -29,8 +37,10 @@
 // entry (see shared/edgeBundleCache.js): 1 read + 4 fetches + 1 write = 6.
 
 import { bundleCache, ageS } from "../../shared/edgeBundleCache.js";
+import { upstoxToken, fetchUpstoxQuotes, UPSTOX_TOKEN_VARS } from "../../shared/upstoxQuotes.mjs";
+import { UPSTOX_INSTRUMENTS, UPSTOX_INSTRUMENT_COVERAGE } from "../../shared/upstoxInstruments.mjs";
 
-const VERSION = "quotes-fn/4";
+const VERSION = "quotes-fn/5";
 const UPSTREAM = "https://fastapi.muns.io/stock-data/batch";
 const COUNTRY = "INDIA";
 const CHUNK = 32;               // upstream caps at 80; 32 is where timeouts stop
@@ -116,6 +126,8 @@ function shapeQuote(item) {
     marketCap: num(f["Market Cap"]),
     volume: num(f["Last Volume"]),
     yearChangePct: num(f["Yearly Change (%)"]),
+    tradedAt: null,
+    source: "muns",
   };
 }
 
@@ -198,19 +210,86 @@ async function mapLimit(items, limit, fn) {
   return out;
 }
 
+/**
+ * `GET /api/quotes?check=1` — IS THE UPSTOX TOKEN WORKING, IN ONE SENTENCE.
+ *
+ * *"I have added the token and also done the deployment again please check."*
+ * A token in the Cloudflare environment cannot be read from anywhere else, and
+ * "the page shows prices" does not say which feed priced them. So this makes one
+ * small live call and answers in words: which variable the token was found
+ * under, whether Upstox accepted it, and three sample prices. It is behind the
+ * same site password as every other route, it spends ONE Upstox call, and it
+ * never returns the token or any part of it.
+ */
+async function upstoxCheck(env) {
+  const up = upstoxToken(env);
+  const has = (n) => !!(env && typeof env[n] === "string" && env[n].trim());
+  const base = {
+    version: VERSION,
+    deployment: (env && (env.CF_PAGES_COMMIT_SHA || env.CF_PAGES_BRANCH)) || null,
+    configured: Object.fromEntries([...UPSTOX_TOKEN_VARS, "MUNS_TOKEN"].map((n) => [n, has(n)])),
+    tokenVariable: up ? up.name : null,
+    instrumentsMapped: UPSTOX_INSTRUMENT_COVERAGE.mapped,
+    symbolsTheDashboardAsksFor: UPSTOX_INSTRUMENT_COVERAGE.asked,
+    notMapped: UPSTOX_INSTRUMENT_COVERAGE.unmapped,
+    checkedAt: new Date().toISOString(),
+  };
+  if (!up) {
+    return {
+      ok: false,
+      verdict: `No Upstox token is set on this deployment. Add it in Cloudflare Pages → Settings → Variables and Secrets as a Secret named ${UPSTOX_TOKEN_VARS[0]} (Production and Preview), then redeploy.`,
+      ...base,
+    };
+  }
+  const sample = Object.keys(UPSTOX_INSTRUMENTS).slice(0, 3);
+  const r = await fetchUpstoxQuotes(sample, up.token);
+  const call = r.calls[0] || null;
+  const priced = Object.entries(r.quotes);
+  const status = call ? call.status : null;
+  const verdict = priced.length
+    ? `Upstox is working. The token in ${up.name} was accepted and priced ${priced.length} of ${sample.length} test stocks, so live prices on this dashboard now come from Upstox.`
+    : status === 401 || status === 403
+      ? `Upstox REFUSED the token in ${up.name} (HTTP ${status}${call.errorCode ? `, ${call.errorCode}` : ""}). Usual causes: it is the daily login token, which expires at 3:30 AM; it was not copied in full; or it has been regenerated since. Use the one-year Analytics Token, and update it in all three dashboards together.`
+      : status === 429
+        ? `Upstox is rate-limiting this token (HTTP 429). The token is shared with two other dashboards; this usually clears within a minute.`
+        : status == null
+          ? `Upstox did not answer (${call ? call.errorCode : "no call made"}). The token could not be tested; try again shortly.`
+          : `Upstox answered HTTP ${status} but priced none of the test stocks${call.errorCode ? ` (${call.errorCode})` : ""}.`;
+  return {
+    ok: priced.length > 0,
+    verdict,
+    ...base,
+    upstox: {
+      httpStatus: status,
+      errorCode: call ? call.errorCode : null,
+      errorMessage: call ? call.errorMessage : null,
+      durationMs: call ? call.durationMs : null,
+      sample: priced.map(([symbol, q]) => ({ symbol, price: q.price, prevClose: q.prevClose, tradedAt: q.tradedAt })),
+      refused: r.refused,
+    },
+  };
+}
+
 export async function onRequest(context) {
   const startedAt = Date.now();
   const { request, env } = context;
+  if (request.method === "GET" && new URL(request.url).searchParams.has("check")) {
+    return json(await upstoxCheck(env));
+  }
   if (request.method !== "POST") return json({ ok: false, failureCode: "METHOD_NOT_ALLOWED" }, 405);
 
   const token = env && env.MUNS_TOKEN;
+  const up = upstoxToken(env);
   const meta = {
     version: VERSION,
     deployment: (env && (env.CF_PAGES_COMMIT_SHA || env.CF_PAGES_BRANCH)) || null,
     colo: (request.cf && request.cf.colo) || null,
     tokenPresent: !!token,
+    // The NAME the Upstox token was found under, never any part of its value.
+    upstoxTokenPresent: !!up,
+    upstoxTokenVariable: up ? up.name : null,
   };
-  if (!token) {
+  if (!token && !up) {
     return json({ ok: false, failureCode: "NOT_CONFIGURED", quotes: {}, fresh: 0, stale: 0, missing: [], errors: [], ...meta });
   }
 
@@ -250,29 +329,59 @@ export async function onRequest(context) {
   // 1. One cache read for every symbol at once. Each entry keeps its own
   //    timestamp, so per-symbol freshness still works.
   const bundle = probe ? {} : await cache.read();
-  let needed = [];
-  let pending = [];
+  // Everything that needs a fetch this round, in the order it should go:
+  // THE CALLER'S PRIORITY FIRST, then never-seen, then the most stale.
+  let candidates;
   if (probe || refresh) {
-    const ordered = probe ? symbols : [...symbols].sort(first);
-    needed = ordered.slice(0, probe ? ordered.length : MAX_FETCH_PER_REQUEST);
-    pending = ordered.slice(needed.length);
+    candidates = probe ? [...symbols] : [...symbols].sort(first);
   } else {
-    const candidates = [];
+    const stalest = [];
     for (const sym of symbols) {
       const age = ageS(bundle, sym, now);
       if (age < FRESH_S) quotes[sym] = { ...bundle[sym].v, ageS: Math.round(age) };
-      else candidates.push({ sym, age });
+      else stalest.push({ sym, age });
     }
-    // THE CALLER'S PRIORITY FIRST, then never-seen, then the most stale — so the
-    // screen the reader is looking at completes in one round and the rest of the
-    // book fills in behind it and then refreshes in rotation.
-    candidates.sort((a, b) => first(a.sym, b.sym) || b.age - a.age);
-    needed = candidates.slice(0, MAX_FETCH_PER_REQUEST).map((c) => c.sym);
-    pending = candidates.slice(MAX_FETCH_PER_REQUEST).map((c) => c.sym);
+    stalest.sort((a, b) => first(a.sym, b.sym) || b.age - a.age);
+    candidates = stalest.map((c) => c.sym);
+  }
+
+  // 2a. UPSTOX FIRST — every candidate it has an instrument for, in ONE call.
+  //     Upstox answers up to 500 instruments per request, so where it is
+  //     configured the whole book lands in the first round and nothing is left
+  //     to defer. See shared/upstoxQuotes.mjs for the identity gate and why the
+  //     previous close is `last_price − net_change`.
+  let fetched = 0;
+  let upstox = null;
+  if (up && candidates.length) {
+    const r = await fetchUpstoxQuotes(candidates, up.token);
+    const at = Date.now();
+    for (const [sym, q] of Object.entries(r.quotes)) {
+      quotes[sym] = { ...q, ageS: 0 };
+      bundle[sym] = { v: q, at };
+      fetched++;
+    }
+    upstox = {
+      asked: candidates.length,
+      priced: Object.keys(r.quotes).length,
+      unmapped: r.unmapped,
+      refused: r.refused,
+      notReturned: r.notReturned,
+      calls: r.calls,
+    };
+  }
+
+  // 2b. muns for WHATEVER UPSTOX DID NOT PRICE — the unmapped symbols, and the
+  //     whole ask if Upstox is unset or failed. Capped per request exactly as
+  //     before, because the muns upstream prices a bounded slice per call.
+  const remaining = candidates.filter((s) => !quotes[s]);
+  let needed = [];
+  let pending = [];
+  if (token) {
+    needed = probe ? remaining : remaining.slice(0, MAX_FETCH_PER_REQUEST);
+    pending = remaining.slice(needed.length);
   }
   const pendingSet = new Set(pending);
 
-  // 2. Fetch the rest.
   const chunkDiags = [];
   let upstreamStatus = null;   // stays null unless a real HTTP response arrives
   if (needed.length) {
@@ -284,7 +393,6 @@ export async function onRequest(context) {
       ({ c, i }) => fetchChunk(i, c, token),
     );
     const at = Date.now();
-    let fetched = 0;
     for (const r of results) {
       chunkDiags.push(r.d);
       if (upstreamStatus == null && r.d.status != null) upstreamStatus = r.d.status;
@@ -297,9 +405,12 @@ export async function onRequest(context) {
         fetched++;
       }
     }
-    // One write for the whole book, and only when there is something new.
-    if (!probe && fetched) await cache.write(bundle);
   }
+  // One write for the whole book, and only when there is something new.
+  if (!probe && fetched) await cache.write(bundle);
+
+  const upstoxStatus = upstox ? (upstox.calls.find((c) => c.status != null) || {}).status ?? null : null;
+  if (upstreamStatus == null) upstreamStatus = upstoxStatus;
 
   // 3. Last-good fallback for anything this round dropped, so a name doesn't
   //    flicker out of "live" on one bad round.
@@ -324,24 +435,52 @@ export async function onRequest(context) {
   const fresh = symbols.length - stale - missing.length - pending.length;
   const chunksFailed = chunkDiags.filter((d) => !d.fetchCompleted || d.status !== 200).length;
   const chunksSucceeded = chunkDiags.length - chunksFailed;
-  const errors = chunkDiags
-    .filter((d) => d.errorMessage || (d.status != null && d.status !== 200))
-    .map((d) => ({
-      chunk: d.chunk, status: d.status, durationMs: d.durationMs,
-      errorName: d.errorName, errorMessage: d.errorMessage, aborted: d.aborted, abortReason: d.abortReason,
-      bodyPreview: d.bodyPreview,
-    }));
+  // Upstox's errors go FIRST: the page reads `errors[0]` as the reason, and a
+  // refused token is the one a reader can act on.
+  const errors = [
+    ...(upstox ? upstox.calls : [])
+      .filter((c) => c.errorCode || (c.status != null && c.status !== 200))
+      .map((c) => ({
+        source: "upstox", chunk: null, status: c.status, durationMs: c.durationMs,
+        errorName: c.errorCode, errorMessage: c.errorMessage,
+        aborted: c.errorCode === "TIMEOUT", abortReason: null, bodyPreview: null,
+      })),
+    ...chunkDiags
+      .filter((d) => d.errorMessage || (d.status != null && d.status !== 200))
+      .map((d) => ({
+        source: "muns", chunk: d.chunk, status: d.status, durationMs: d.durationMs,
+        errorName: d.errorName, errorMessage: d.errorMessage, aborted: d.aborted, abortReason: d.abortReason,
+        bodyPreview: d.bodyPreview,
+      })),
+  ];
   if (cacheTally.firstError) errors.push({ chunk: null, ...cacheTally.firstError });
 
   // Resolving nothing is a failure, not a success with an empty payload. The
   // first version returned ok:true here, which is why the UI confidently
   // rendered "Live" over a book that had no live prices in it at all.
   const nothingResolved = fresh === 0 && stale === 0 && missing.length > 0;
-  const noResponseAtAll = chunkDiags.length > 0 && chunkDiags.every((d) => d.status == null);
+  const upstoxRefused = !!upstox && upstox.calls.some((c) => c.status === 401 || c.status === 403);
+  const attempts = chunkDiags.length + (upstox ? upstox.calls.length : 0);
+  const noResponseAtAll = attempts > 0
+    && chunkDiags.every((d) => d.status == null)
+    && (!upstox || upstox.calls.every((c) => c.status == null));
+  // A REFUSED TOKEN IS NOT AN OUTAGE. It is the one failure a reader can fix
+  // (the token expired, was mistyped or was regenerated), so it gets its own
+  // code rather than reading as "the data service is down".
   const failureCode = !nothingResolved ? null
+    : upstoxRefused ? "UPSTOX_UNAUTHORIZED"
     : noResponseAtAll ? "UPSTREAM_NO_RESPONSE"
     : upstreamStatus != null ? "UPSTREAM_ERROR"
     : "NO_QUOTES";
+  if (failureCode === "UPSTOX_UNAUTHORIZED") upstreamStatus = upstoxStatus;
+
+  // Which feed priced what, counted over the quotes returned — including those
+  // served from the edge cache, which carry the source they were fetched from.
+  const sources = {};
+  for (const q of Object.values(quotes)) {
+    const s = (q && q.source) || "unknown";
+    sources[s] = (sources[s] || 0) + 1;
+  }
 
   return json({
     ok: !nothingResolved,
@@ -349,9 +488,11 @@ export async function onRequest(context) {
     upstreamStatus,
     asOf: new Date().toISOString(),
     quotes, fresh, stale, missing, pending,
+    sources,
     errors,
     symbolsReceived: Array.isArray(payload.symbols) ? payload.symbols.length : 0,
     symbolsAccepted: symbols.length,
+    upstox,
     chunksAttempted: chunkDiags.length,
     chunksSucceeded,
     chunksFailed,

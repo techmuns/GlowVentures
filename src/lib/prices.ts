@@ -31,7 +31,29 @@ export type PriceHistory = {
 export type PriceError = { ok: false; reason: string; symbol?: string };
 export type PriceResult = PriceHistory | PriceError;
 
-export async function fetchPriceHistory(symbol: string): Promise<PriceResult> {
+/**
+ * ONE REQUEST PER SYMBOL PER PAGE LOAD, SHARED BY EVERY CARD THAT ASKS.
+ *
+ * The company page reads a symbol's history twice — the returns table, and the
+ * trading-range card's 52-week range where the quote feed carried none (an
+ * Upstox quote never does). Both get the same promise, so the two can never
+ * show ranges from two different fetches. A FAILED answer is not kept, so the
+ * next caller retries rather than inheriting an outage.
+ */
+const inflight = new Map<string, Promise<PriceResult>>();
+
+export function fetchPriceHistory(symbol: string): Promise<PriceResult> {
+  const hit = inflight.get(symbol);
+  if (hit) return hit;
+  const p = loadPriceHistory(symbol).then((r) => {
+    if (!r.ok) inflight.delete(symbol);
+    return r;
+  });
+  inflight.set(symbol, p);
+  return p;
+}
+
+async function loadPriceHistory(symbol: string): Promise<PriceResult> {
   try {
     const r = await fetch(`/api/prices?symbol=${encodeURIComponent(symbol)}`);
     if (!r.ok) return { ok: false, reason: `http_${r.status}`, symbol };
