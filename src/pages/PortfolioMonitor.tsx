@@ -2632,8 +2632,14 @@ export function PortfolioMonitor() {
             <FileSpreadsheet className="h-4 w-4" /> {exporting ? "Exporting…" : "Export Excel"}
           </button>
         } />
-      <div className="mb-3 text-xs text-slate-500">
-        Individual-share HPR / CAGR exclude separate dividend income. <Link to="/corporate-actions" className="text-champagne-400 hover:underline">View dividend-inclusive returns & share adjustments</Link>
+      {/* THE LINK STAYS AND ITS SENTENCE IS ITS HOVER (Stage 10cp): what the
+          returns below leave out is one hover away, on the way to where they
+          are added back. */}
+      <div className="mb-3 text-xs">
+        <Link to="/corporate-actions" className="text-champagne-400 hover:underline"
+          title="Individual-share HPR / CAGR here exclude separate dividend income. The Corporate actions page adds the dividends declared and the share adjustments.">
+          Dividend-inclusive returns &amp; share adjustments →
+        </Link>
       </div>
       {/*
         ONE CHROME ROW, JUST FILTERS. The filters, the view toggle and the two
@@ -4323,18 +4329,17 @@ function TxnSectionHead({ axis, sectionKey, count, values, colSpan, money }: {
       data-subtotal-bought={values.find((v) => v.noun === "bought")?.value ?? ""}>
       <td colSpan={colSpan} className="px-3 py-1.5">
         <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
-          {sectionKey === TXN_UNSECTIONED ? sectionKey : groupLabelFor(axis)(sectionKey)}
+          {/* THE HEADING NAMES THE CAUSE ("Not classified by the statement");
+              the sentence behind it is its hover (Stage 10cp). */}
+          {sectionKey === TXN_UNSECTIONED
+            ? <span title={TXN_UNSECTIONED_WHY} data-txn-unsectioned-why>{sectionKey}</span>
+            : groupLabelFor(axis)(sectionKey)}
           <span className="font-normal normal-case tracking-normal text-slate-500">
             · {count}{values.map((v) => ` · ${money(v.value)} ${v.noun}`).join("")}
           </span>
           {sectionKey === UNCLASSIFIED && (
             <span className="font-normal normal-case tracking-normal text-amber-400/80" title={UNCLASSIFIED_WHY}>
               · the family&rsquo;s review does not list these, so no {axis === "basket" ? "basket" : "asset class"} is stated
-            </span>
-          )}
-          {sectionKey === TXN_UNSECTIONED && (
-            <span className="font-normal normal-case tracking-normal text-amber-400/80" title={TXN_UNSECTIONED_WHY}>
-              · nothing in this book says what {axis === "category" ? "kind of thing" : "class"} these are
             </span>
           )}
         </span>
@@ -4942,12 +4947,13 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
         </span>
       </div>
 
-      {/* SHORT, AND BOTH CLAIMS LOAD-BEARING. The family have trimmed the grey
-          block under a table more than once; what cannot go is what the ROW IS
-          and that the two money blocks are NEVER ADDED, because one table makes
-          adding them a one-line edit. */}
-      <Card pad={false} title="Transactions"
-        subtitle="Committed, Purchase and Redemption: the family's own money. Trades: their managers' dealing inside. Never added."
+      {/* BOTH CLAIMS LOAD-BEARING, AND BOTH IN THE TITLE'S HOVER (Stage 10cp).
+          What the ROW IS and that the two money blocks are NEVER ADDED were the
+          line under the title; the family asked for those lines to go, so they
+          ride on the title, and each block's own headings say which it is. */}
+      <Card pad={false}
+        title={<span data-card-title-hint
+          title="Committed, Purchase and Redemption: the family's own money. Trades: their managers' dealing inside the accounts. The two are never added.">Transactions</span>}
         className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
           <SortableTable className="min-w-full text-sm" data-dated-table

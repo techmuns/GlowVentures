@@ -102,9 +102,11 @@ export function ResearchPanel({ ticker, name }: { ticker: string | null; name: s
   // that can't be priced live. Say which one, rather than showing an empty panel.
   if (!ticker) {
     return (
-      <Card className="mt-5" title="Company research" subtitle={`${name} has no NSE symbol mapped, so its financials, ratios, estimates, filings and insider deals aren't available.`}>
-        <p className="text-[12.5px] leading-relaxed text-slate-500">
-          The research endpoints are keyed by NSE ticker. This is the same set of holdings — ETFs, warrants and unlisted names — that stay on their workbook mark rather than a live price.
+      <Card className="mt-5" title="Company research">
+        {/* ONE LINE, THE REST ITS HOVER (Stage 10cp). */}
+        <p className="text-[12.5px] leading-relaxed text-slate-500"
+          title={`${name} has no NSE symbol mapped, so its financials, ratios, estimates, filings and insider deals aren't available. The research endpoints are keyed by NSE ticker; this is the same set of holdings — ETFs, warrants and unlisted names — that stay on their workbook mark rather than a live price.`}>
+          No NSE symbol mapped — no research to show
         </p>
       </Card>
     );

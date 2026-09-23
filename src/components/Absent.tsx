@@ -41,17 +41,27 @@ export function absentTile(reason: string, hint?: string) {
  * `what` names the thing that is missing; `needs` names the document or field
  * that would fill it. Both are required — "no data" on its own tells a reader
  * nothing about whether to go and find something.
+ *
+ * `needs` IS THE BOX'S HOVER, NOT A PARAGRAPH IN IT (Stage 10cp). *"We have
+ * such random one-liners, two-liners, and footnotes everywhere across the
+ * product … no one is genuinely reading them."* It ran to 400-odd characters
+ * under the headline on the Capital Gains planner, the drawdown card and the
+ * NAV card; the headline — what is missing — stays on the face, which is the
+ * half an absence must never lose, and what would fill it is one hover away,
+ * where `AbsentCell` already keeps its reason. `data-absent-needs` carries it
+ * so the sweep can read it where it went, and counts the old paragraph gone.
  */
 export function AbsentSection({ what, needs, children }: {
   what: string;
   needs: string;
   children?: ReactNode;
 }) {
+  const hover = needs.replace(/\s+/g, " ").trim();
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center">
+    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-ink-600/70 px-6 py-10 text-center"
+      title={hover} data-absent-needs={hover}>
       <Info className="h-5 w-5 text-slate-600" />
       <div className="text-sm font-medium text-slate-300">{what}</div>
-      <p className="max-w-xl text-xs leading-relaxed text-slate-500">{needs}</p>
       {children}
     </div>
   );

@@ -641,8 +641,7 @@ export function HoldingsBehind() {
           {!d.absent && depositoryRows.length > 0 && (
             <div className="mt-0.5 text-[10.5px] text-amber-400/80" data-hb-depository={depositoryRows.length}
                  title={depositoryNote ?? undefined}>
-              {depositoryRows.length === 1 ? "1 holding is" : `${fmtNum(depositoryRows.length)} holdings are`} valued
-              from depository units at AMFI&rsquo;s NAV, not a statement mark
+              {depositoryRows.length === 1 ? "1 holding" : `${fmtNum(depositoryRows.length)} holdings`} at AMFI&rsquo;s NAV
             </div>
           )}
           {/* ── AND THE CAPITAL INVESTED IN IT, BESIDE WHAT IT IS WORTH ────────

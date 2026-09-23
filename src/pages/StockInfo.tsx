@@ -1039,9 +1039,9 @@ export function StockInfo() {
         <td colSpan={posView.order.length} className="whitespace-normal px-4 py-2 text-[11px] text-slate-500" title={why}>
           {fl.lines.length === 0
             ? <>None of the {fl.covered} fund holdings this book can read discloses it</>
-            : <>Read across {fl.covered} of your {fl.considered} fund holdings</>}
-          {fl.aif.length > 0 && <span data-held-aif={fl.aif.length}> · {fl.aif.length} AIF holding{fl.aif.length === 1 ? "" : "s"} ({money(aifValue)}) file no portfolio, so not known</span>}
-          {fl.unread.length > 0 && <> · {fl.unread.length} other fund{fl.unread.length === 1 ? "" : "s"} could not be read</>}
+            : <>Read across {fl.covered} of {fl.considered} fund holdings</>}
+          {fl.aif.length > 0 && <span data-held-aif={fl.aif.length}> · {fl.aif.length} AIF holding{fl.aif.length === 1 ? "" : "s"} ({money(aifValue)}) not known</span>}
+          {fl.unread.length > 0 && <> · {fl.unread.length} not read</>}
         </td>
       </tr>
     );
@@ -1670,8 +1670,9 @@ export function StockInfo() {
             {fundOnly && led != null && led.txns.length === 0 && (
               <Card className="mt-5" title="Transactions">
                 <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-activity="funds-only"
-                  title="The transaction history, the tax split and the quantity account are all records of the family's own accounts. A company held only inside a fund is bought and sold by the fund, and the fund's own trades are not reported to this family.">
-                  No statement issued to this family records a buy or a sell of {name}: it is held only inside your funds, so there is no lot, cost or tax split of your own to show.
+                  title={`No statement issued to this family records a buy or a sell of ${name}, so there is no lot, cost or tax split of your own to show. The transaction history, the tax split and the quantity account are all records of the family's own accounts; a company held only inside a fund is bought and sold by the fund, and the fund's own trades are not reported to this family.`}>
+                  {/* ONE LINE, THE REASON ITS HOVER (Stage 10cp). */}
+                  Held only inside your funds — no buy or sell of your own
                 </p>
               </Card>
             )}
@@ -1699,7 +1700,7 @@ export function StockInfo() {
                     say so rather than drawing an empty bar that reads as "all
                     short-term". */}
                 {ltPct === null ? (
-                  <p className="mt-2.5 text-[11px] text-slate-500">Long-term / short-term split {DASH} no lot dates on the statements for this holding.</p>
+                  <p className="mt-2.5 text-[11px] text-slate-500">Long-term / short-term split <AbsentCell reason="No lot dates on the statements for this holding." /></p>
                 ) : (
                   <>
                     <div className="mt-3 flex h-2.5 overflow-hidden rounded-full border border-ink-700">
@@ -1801,9 +1802,10 @@ export function StockInfo() {
             {researchHeld ? (
               researchAbsent ? (
                 <Card className="mt-5" title="Price history & returns">
-                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research="funds-only">
-                    Price history is looked up by the company&rsquo;s NSE symbol. {name} is held only inside your funds, so
-                    none of your statements names it and no symbol has been looked up for it. It is not a feed being down.
+                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research="funds-only"
+                    title={`Price history is looked up by the company's NSE symbol. ${name} is held only inside your funds, so none of your statements names it and no symbol has been looked up for it. It is not a feed being down.`}>
+                    {/* ONE LINE, THE REASON ITS HOVER (Stage 10cp). */}
+                    No price history — held only inside your funds
                   </p>
                 </Card>
               ) : resolvingNote
@@ -1817,7 +1819,9 @@ export function StockInfo() {
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
                 <AbsentSection
-                  what={`No market price for ${notACompanyLabel}`}
+                  what={assetClass === "Cash"
+                    ? "No market price — a cash line is a balance"
+                    : `No market price — ${notACompanyLabel} publishes no daily NAV`}
                   needs={assetClass === "Cash"
                     ? "A cash line is a balance, not a priced security, so there is no price history to chart and no returns series to measure. Its value is the one its statement prints, on the Position tab."
                     : "An AIF folio is not traded on an exchange and publishes no daily NAV — its manager strikes a NAV and the statement prints it. So there is no price history to chart and no returns series to measure here; the value and the date it was struck are on the Position tab."} />
@@ -1831,10 +1835,10 @@ export function StockInfo() {
             {researchHeld ? (
               researchAbsent ? (
                 <Card className="mt-5" title="Company research">
-                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research="funds-only">
-                    Research is looked up by the company&rsquo;s NSE symbol. {name} is held only inside your funds, so none of
-                    your statements names it and no symbol has been looked up for it — which is why its ratios, financials
-                    and filings are not shown here. It is not a feed being down.
+                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research="funds-only"
+                    title={`Research is looked up by the company's NSE symbol. ${name} is held only inside your funds, so none of your statements names it and no symbol has been looked up for it — which is why its ratios, financials and filings are not shown here. It is not a feed being down.`}>
+                    {/* ONE LINE, THE REASON ITS HOVER (Stage 10cp). */}
+                    No research — held only inside your funds
                   </p>
                 </Card>
               ) : resolvingNote
@@ -1863,35 +1867,30 @@ export function StockInfo() {
                     screen. The hover lists what is absent WITHOUT "price history":
                     on these tabs a mutual fund's NAV history is on Price & returns. */}
                 <Card className="mt-5" title={`Company research — not applicable to ${cashFund ? "a cash-equivalent fund" : notACompanyLabel}`}>
+                  {/* ONE LINE: WHAT THE HOLDING IS (Stage 10cp). Why company research
+                      does not apply, and — for a fund — why no list of its companies
+                      is drawn, are the line's hover; the card's title already says
+                      the research is not applicable, which is the decided absence a
+                      reader must not take for a broken feed. */}
                   <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research-na={fundVehicle ? "fund" : "balance"}
                     data-stock-class={cashFund ? "Cash" : assetClass ?? ""}
-                    title={`So there is no PE, no balance sheet, no concall and no insider filing for it, and the panels that carry those for a company are absent here by decision rather than by a feed being down.${fundVehicle ? " A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : ""}`}>
+                    title={[
+                      "Company research does not apply, so there is no PE, no balance sheet, no concall and no insider filing for it, and the panels that carry those for a company are absent here by decision rather than by a feed being down.",
+                      fundVehicle ? "A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : "",
+                      !fundVehicle ? ""
+                        : arbitrage
+                        ? "What it holds is not drawn: an arbitrage fund discloses its portfolio monthly like any mutual fund, and that portfolio is long shares hedged by short futures, so reading it as the family's exposure to those companies would print stock they do not carry. Its value counts whole, as cash."
+                        : lookThroughHoldings
+                        ? "Where the AMC's own monthly disclosure resolves, what the scheme holds is shown above. It is the AMC's document, not this family's, so the fund's value still stays whole here and in every total."
+                        : "An AIF publishes no such disclosure, so no list of its companies can be shown: SEBI requires a monthly portfolio from a mutual fund and not from a Category II or III alternative fund, so there is no scheme document to join to this folio, and the fund's value stays whole.",
+                    ].filter(Boolean).join(" ")}>
                     This holding is <span className="font-medium text-slate-300">{cashFund ? "Cash" : assetClassLabel(assetClass)}</span>
                     {cashFund
-                      ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund the family counts as cash, not a share in a company</>
+                      ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund the family counts as cash</>
                       : fundVehicle
-                      ? <> — one line standing for a portfolio the manager assembles, not a share in a company</>
-                      : <> — a balance, not a share in a company</>}, so company research does not apply.
+                      ? <> — one line for a manager&rsquo;s portfolio, not a company</>
+                      : <> — a balance, not a company</>}
                   </p>
-                  {fundVehicle && (
-                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
-                      title={arbitrage
-                        ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately not drawn here: that portfolio is long shares hedged by short futures, so reading it as the family's exposure to those companies would print stock they do not carry."
-                        : lookThroughHoldings
-                        ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. A mutual fund scheme discloses its portfolio monthly; it is the AMC's document, not this family's, so the fund's value still stays whole here and in every total."
-                        : "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. SEBI requires a monthly portfolio from a mutual fund and not from a Category II or III alternative fund, so there is no scheme document to join to this folio, and the fund's value stays whole."}>
-                      {arbitrage
-                        ? <>What it holds is not drawn: long shares hedged by short futures are not the family&rsquo;s stock. Its value counts whole, as cash.</>
-                        : lookThroughHoldings
-                        /* CONDITIONAL, because it is not always true: a scheme
-                           that resolves no disclosure (Liquid BeES) or discloses
-                           no portfolio (the metal ETFs) is shown above as exactly
-                           that, and an unconditional "is shown above" would
-                           contradict the card it points at. */
-                        ? <>Where the AMC&rsquo;s own monthly disclosure resolves, what the scheme holds is shown above.</>
-                        : <>An AIF publishes no such disclosure, so no list of its companies can be shown.</>}
-                    </p>
-                  )}
                 </Card>
               </>
             )}

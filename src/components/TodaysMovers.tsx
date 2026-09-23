@@ -374,12 +374,15 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
              data-testid="movers-loading" data-movers-landed={landed} data-movers-needed={model.scopeSymbols.length}>
           <Loader2 className="h-5 w-5 animate-spin text-slate-600" />
           <div className="text-sm font-medium text-slate-300">Fetching prices…</div>
-          <p className="max-w-xl text-xs leading-relaxed text-slate-500">
-            The day&rsquo;s move needs a live price and the previous close behind it. Every figure on this card — the
-            move, the ranking, the comparison against the index — is struck over the whole scope, so it is shown once
-            the scope has landed in full rather than redrawn as each name arrives.
-            {model.scopeSymbols.length > 0 && ` ${landed} of ${model.scopeSymbols.length} names have landed so far.`}
-          </p>
+          {/* ONE LINE, THE COUNT — the reason the card waits is its hover. *"its
+              obvious from the table what it is"*: a spinner that says how far
+              along it is needs no paragraph under it. */}
+          {model.scopeSymbols.length > 0 && (
+            <p className="text-xs text-slate-500" data-movers-progress
+              title="The day’s move needs a live price and the previous close behind it. Every figure on this card — the move, the ranking, the comparison against the index — is struck over the whole scope, so it is shown once the scope has landed in full rather than redrawn as each name arrives.">
+              {landed} of {model.scopeSymbols.length} names have landed so far
+            </p>
+          )}
         </div>
       ) : model.rows.length === 0 ? (
         /* THE CAUSE PICKS THE HEADLINE, and there are three of them here rather
@@ -390,8 +393,13 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
            the second into the third would send a reader looking for a quote-feed
            fix for a mutual fund, which is the confidently-wrong diagnosis this
            book keeps naming. */
+        /* AND SINCE `needs` IS THE HOVER (Stage 10cp), THE FEED'S FAILURE IS
+           IN THE HEADLINE ITSELF — a reader must not have to hover to learn the
+           service is down rather than the book being short of a symbol. */
         <AbsentSection
-          what={`No ${SCOPE.noun} holding carries a day change right now`}
+          what={quotesStatus === "unavailable"
+            ? `No ${SCOPE.noun} move today — the quote feed did not respond`
+            : `No ${SCOPE.noun} holding carries a day change right now`}
           needs={quotesStatus === "unavailable"
             ? "A day change needs a live price AND the previous close behind it, and the quote feed did not respond. Every holding is showing its statement mark; nothing has been substituted. The top bar names the failure."
             : `A day change needs a live price and a previous close. ${model.unpriceable} of the ${model.distinct} securities in this scope resolve to no NSE symbol and can never have one. Shares a discretionary manager picked are not counted here — ${model.excludedRows.length ? "they are named below the lists" : "this card covers what the family holds directly"}.`} />
@@ -410,7 +418,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               {/* THE COVERAGE IS ON THE TILE, NOT IN A TOOLTIP. This percentage is
                   struck over the priced subset and a reader will compare it with
                   an index; the scope has to be visible at the same glance. */}
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage">
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="movers-coverage"
+                title={`The move is struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.pricedNames} of ${model.distinct} ${SCOPE.noun} names — the rest carry no live quote and are not counted either way.`}>
                 {/* THE VALUE THIS PERCENTAGE COVERS, BESIDE THE VALUE IT DOES
                     NOT. A name count alone hides how much of a scope a figure
                     stands on: the mutual-fund tab prices ONE of 20 schemes and
@@ -420,9 +429,11 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                     a percentage printed at 22px. `scopeValue` was already
                     computed for this and rendered nowhere, which is this book's
                     most-repeated defect. */}
-                on {fmtFromBase(model.movedValue, { compact: true })} of the {fmtFromBase(model.scopeValue, { compact: true })} held,
-                across {model.pricedNames} of {model.distinct} {SCOPE.noun} names — the rest carry no live quote and are
-                not counted either way{clock ? ` · quotes ${clock}` : ""}
+                {/* THE FACE IS THE TWO FIGURES; WHY THE REST ARE NOT COUNTED IS
+                    THE HOVER — the family asked for the lines that explain the
+                    card to go, and a count is not an explanation. */}
+                {fmtFromBase(model.movedValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
+                {" "}· {model.pricedNames} of {model.distinct} names{clock ? ` · ${clock}` : ""}
               </p>
             </div>
 
@@ -431,8 +442,8 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               {!indices && indexState === "loading" ? (
                 <p className="mt-2 text-[11.5px] text-slate-500">Fetching index levels…</p>
               ) : !indices ? (
-                <p className="mt-2 text-[11.5px] text-slate-500">
-                  Index levels unavailable — the feed did not respond. Nothing has been substituted for a level.
+                <p className="mt-2 text-[11.5px] text-slate-500" title="Nothing has been substituted for a level.">
+                  Index levels unavailable — the feed did not respond
                 </p>
               ) : (
                 <div className="mt-2 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4">
@@ -463,11 +474,10 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
                      it the book would be the caption-that-widens failure the
                      Capital invested tile already cost this page once — so the
                      subject is the scope's own, and it moves with the tab. */
-                  <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index">
+                  <p className="mt-3 border-t border-ink-700 pt-2 text-[11.5px] text-slate-400" data-testid="movers-vs-index"
+                    title={`Struck on ${fmtFromBase(model.movedValue, { compact: true })} of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a return over any longer window.`}>
                     {SCOPE.subject} {SCOPE.verb} <strong className={changeColor(gap)}>{fmtPct(gap, { sign: true })}</strong> against the
-                    Nifty 500 today, on {fmtFromBase(model.movedValue, { compact: true })} of
-                    the {fmtFromBase(portfolio.totalValue, { compact: true })} book. Both are one session, and neither is a
-                    return over any longer window.
+                    Nifty 500 today
                   </p>
                 );
               })()}
@@ -493,8 +503,9 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               Rendered from the book, so a drop with no PMS-held quotes prints
               nothing here rather than a sentence about an empty set. */}
           {model.excludedRows.length > 0 && (
-            <p className="mt-3 text-[11px] text-slate-500" data-testid="movers-excluded">
-              {SCOPE.subject} only. Also moved today and not counted here:{" "}
+            <p className="mt-3 text-[11px] text-slate-500" data-testid="movers-excluded"
+              title={`${SCOPE.subject} only — these also moved today and are in none of the figures above.`}>
+              Not counted:{" "}
               {model.excludedRows.map((e, i) => (
                 <span key={e.label}>
                   {i > 0 ? " · " : ""}{e.names} {e.label} {fmtFromBase(e.mv, { compact: true })}
@@ -530,9 +541,9 @@ function MoverList({ title, tone, rows, total, fmt, rank, noun }: {
           : <Pill tone={tone}>{fmt(total, { compact: true, sign: true })}</Pill>}
       </div>
       {rows.length === 0 ? (
-        <p className="mt-3 text-[11.5px] text-slate-500">
-          No priced {noun} holding moved this way today — a measurement over the names the feed prices, not a
-          statement about the whole book.
+        <p className="mt-3 text-[11.5px] text-slate-500"
+          title="A measurement over the names the feed prices, not a statement about the whole book.">
+          No priced {noun} holding moved this way today
         </p>
       ) : (
         <table className="mt-3 w-full text-[12px]">

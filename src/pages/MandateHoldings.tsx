@@ -353,23 +353,26 @@ export function MandateHoldings() {
                   data-backed rollup. A fund folio reports ONE line. Drawing an
                   empty holdings table here would read as a feed that failed. */}
               {/* TWO SHORT LINES, the reasoning in their hovers — the family
-                  asked for the notes around the tables to go. */}
+                  asked for the notes around the tables to go (Stage 10ci), and
+                  then for every explainer line (Stage 10cp), so each is a few
+                  words now. The account is in the line above the card. */}
               <p className="text-[12.5px] leading-relaxed text-slate-400"
-                title="Buying into it is one purchase of a manager's portfolio — the family owns units of the fund, not the companies the fund owns.">
-                <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is a fund
-                folio, not a discretionary mandate, so there is no constituent list to show here.
+                title={`${account.provider} ${account.accountNo} is a fund folio, not a discretionary mandate. Buying into it is one purchase of a manager's portfolio — the family owns units of the fund, not the companies the fund owns.`}>
+                A fund folio — no constituent list to show here
               </p>
               <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
                 title="Showing them would need the scheme's own portfolio disclosure joined to this folio, and no statement in this drop carries one for it. So the folio's value stays whole, in its own row, rather than being spread across sectors it was never reported against.">
-                The companies inside it are <span className="font-medium text-slate-300">not reported to this book</span>.
+                Its companies are <span className="font-medium text-slate-300">not reported to this book</span>
               </p>
               {account.noPositionsReason && (
-                <p className="mt-2 text-[12px] leading-relaxed text-slate-500">
-                  This account also contributes no valued position: {account.noPositionsReason}.
+                <p className="mt-2 text-[12px] leading-relaxed text-slate-500" title={account.noPositionsReason}>
+                  No valued position in the book
                 </p>
               )}
+              {/* A LIST OF HOLDINGS, NOT AN EXPLANATION — the one line here the
+                  no-explainer sweep excuses, because it is the folio's content. */}
               {rows.length > 0 && (
-                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
+                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400" data-prose-ok="holdings">
                   What the statement does carry — {rows.length === 1 ? "one line" : `${rows.length} lines`}, {money(mv)} in
                   all:{" "}
                   {rows.map((r, i) => (
@@ -395,11 +398,9 @@ export function MandateHoldings() {
                   reappearing on the page built to answer it. The buckets below
                   are `holdingBucket` on this account's own engagement, which is
                   the same call the holdings tables group by. */}
-              <p className="text-[12.5px] leading-relaxed text-slate-400">
-                <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is the
-                family's own account — nothing in it is chosen by a discretionary manager, so there is no mandate to
-                open here.
-                {ownBuckets.length > 0 ? " What it holds is filed on the holdings tables by what each row IS:" : ""}
+              <p className="text-[12.5px] leading-relaxed text-slate-400"
+                title={`${account.provider} ${account.accountNo} is the family's own account — nothing in it is chosen by a discretionary manager, so there is no mandate to open here.${ownBuckets.length > 0 ? " What it holds is filed on the holdings tables by what each row IS, below." : ""}`}>
+                The family&rsquo;s own account — no mandate to open
               </p>
               {ownBuckets.length > 0 ? (
                 <ul className="mt-2 grid gap-1 text-[12.5px] text-slate-400">
@@ -411,10 +412,9 @@ export function MandateHoldings() {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                  {account.noPositionsReason
-                    ? <>This account carries no valued position in the book: {account.noPositionsReason}.</>
-                    : <>This account carries no valued position in the book, so there is no bucket to name for it.</>}
+                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400"
+                  title={account.noPositionsReason ?? "So there is no bucket to name for it."}>
+                  No valued position in the book
                 </p>
               )}
               {ownDirectEquity ? (
@@ -430,11 +430,9 @@ export function MandateHoldings() {
               ) : null}
             </>
           ) : (
-            <p className="text-[12.5px] leading-relaxed text-slate-400">
-              No statement for <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span>{" "}
-              states how the account is run, so this book cannot say whether a manager chooses its holdings. An
-              engagement is read off each statement's own wording and is never defaulted — guessing one here would
-              assert a relationship nobody documented.
+            <p className="text-[12.5px] leading-relaxed text-slate-400"
+              title={`No statement for ${account.provider} ${account.accountNo} states how the account is run, so this book cannot say whether a manager chooses its holdings. An engagement is read off each statement's own wording and is never defaulted — guessing one here would assert a relationship nobody documented.`}>
+              No statement says how this account is run
             </p>
           )}
           <p className="mt-4 text-[12px] text-slate-500">
@@ -692,9 +690,7 @@ export function MandateHoldings() {
 
       <Card className="mt-5" pad={false}
         title="What the manager holds"
-        subtitle={<span title="Every constituent of this mandate — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.">
-          As {account.provider} printed it on {fmtDate(account.asOf)} · weight is within this mandate
-        </span>}
+        subtitle={`As ${account.provider} printed it on ${fmtDate(account.asOf)}. Every constituent of this mandate — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.`}
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
           suggestions={rows.map((r) => r.security)} />}>
         <div className="overflow-x-auto">
@@ -935,9 +931,7 @@ function CapitalIn({ account }: { account: Account }) {
   return (
     <Card className="mt-5" pad={false}
       title={title}
-      subtitle={<span title={`Every dated movement ${account.provider} reports on account ${account.accountNo}, as its own statement types them. These are the family's payments into the account — what the manager then bought with the money is a different record.`}>
-        The family&rsquo;s own payments in and out, as the statement types them
-      </span>}
+      subtitle={`The family's own payments in and out, as the statement types them. Every dated movement ${account.provider} reports on account ${account.accountNo}; what the manager then bought with the money is a different record.`}
       right={
         <span className="pill" data-capital-how={group.staggered ? "staggered" : "lumpsum"}>
           {group.staggered

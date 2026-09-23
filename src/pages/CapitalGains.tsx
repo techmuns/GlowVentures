@@ -15,6 +15,8 @@ import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent
 import { sumFormula } from "@/lib/auditFormulas";
 import { BOOK_REALISED_BY_CLASS } from "@/data/glowData";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
+import { TreeSectionCell, TREE_ROW } from "@/components/TreeTable";
+import { Pill } from "@/components/Pill";
 import { useTableView, sortRows } from "@/lib/tableView";
 
 // Capital Gains & Tax — honest about two holes.
@@ -72,6 +74,9 @@ export function CapitalGains() {
   // different measurements with nothing on screen to say which.
   const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
   const [harvestQ, setHarvestQ] = useState("");
+  // The "no capital gain statement" band opens here; above the early return,
+  // as every hook must be.
+  const [missingOpen, setMissingOpen] = useState(false);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const p = portfolio?.positions ?? [];
@@ -295,6 +300,14 @@ export function CapitalGains() {
     realST: (c) => (c.absent ? null : c.realisedST),
     realLT: (c) => (c.absent ? null : c.realisedLT),
   });
+  // THE ACCOUNTS WITH NO STATEMENT ARE ONE CLOSED BAND, NOT A ROW EACH (Stage
+  // 10cp). Forty-four rows each read "— no capital gain statement issued for
+  // this account in this drop" under seven that carry a figure; the family's
+  // own standard for missing data is "a hidden drop down clearly marked"
+  // (Stage 10bx), so they are named — one click in — and never mixed into the
+  // rows a reader is scanning for figures.
+  const acctReported = acctRowsShown.filter((c) => !c.absent);
+  const acctMissing = acctRowsShown.filter((c) => c.absent);
 
   return (
     <div>
@@ -453,18 +466,8 @@ export function CapitalGains() {
               </Tr>
             </thead>
             <tbody className="divide-y divide-ink-700/70">
-              {/* AN ACCOUNT THAT REPORTS NOTHING IS ONE CELL, NOT SIX, so that
-                  row cannot be permuted like the others — `<Tr>` refuses a cell
-                  count that does not match the columns, deliberately. It stays a
-                  plain row and its span is `order.length - 1`, which is
-                  order-independent because the first column never moves. */}
-              {acctRowsShown.map((c) => (c.absent ? (
-                  <tr key={c.entity} className="hover:bg-ink-700/40">
-                    <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
-                    <td className="px-4 py-2.5 text-[11.5px] text-slate-500" colSpan={acctView.order.length - 1}>{DASH} {c.absent}</td>
-                  </tr>
-                ) : (
-                <Tr view={acctView} key={c.entity} className="hover:bg-ink-700/40">
+              {acctReported.map((c) => (
+                <Tr view={acctView} key={c.entity} className="hover:bg-ink-700/40" data-cg-account={c.entity}>
                   <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
                   <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
                   <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
@@ -477,7 +480,28 @@ export function CapitalGains() {
                   <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
                   <td className="px-4 py-2.5 text-right mono"><AbsentCell reason="needs lot acquisition dates" /></td>
                 </Tr>
-              )))}
+              ))}
+              {acctMissing.length > 0 && (
+                <tr className={TREE_ROW.section} data-cg-missing={acctMissing.length}>
+                  <TreeSectionCell colSpan={acctView.order.length}
+                    title={`No capital gain statement · ${acctMissing.length} ${acctMissing.length === 1 ? "account" : "accounts"}`}
+                    marker={<Pill tone="warn" className="whitespace-nowrap">missing data</Pill>}
+                    hint={`${acctMissing.length === 1 ? "This account publishes" : `These ${acctMissing.length} accounts publish`} no capital gain statement in this drop, so ${acctMissing.length === 1 ? "it carries" : "they carry"} no realised figure — excluded from the total, never counted as zero.`}
+                    open={missingOpen} onToggle={() => setMissingOpen((o) => !o)}
+                    toggleData={{ "data-cg-missing-toggle": missingOpen ? "open" : "closed" }} />
+                </tr>
+              )}
+              {/* AN ACCOUNT THAT REPORTS NOTHING IS ONE CELL, NOT SIX, so that
+                  row cannot be permuted like the others — `<Tr>` refuses a cell
+                  count that does not match the columns, deliberately. Its span
+                  is `order.length - 1`, which is order-independent because the
+                  first column never moves; the reason is the dash's hover. */}
+              {missingOpen && acctMissing.map((c) => (
+                <tr key={c.entity} className={TREE_ROW.child} data-cg-missing-row={c.entity}>
+                  <td className="px-4 py-1.5 pl-11 text-slate-300">{c.entity}</td>
+                  <td className="px-4 py-1.5 text-slate-500" colSpan={acctView.order.length - 1}><AbsentCell reason={c.absent ?? undefined} /></td>
+                </tr>
+              ))}
             </tbody>
             <tfoot className="border-t border-ink-700 font-semibold">
               <TrFoot view={acctView} className="px-4 py-2.5 text-slate-200"
@@ -510,11 +534,9 @@ export function CapitalGains() {
             : "Deferring a short-term winner past one year moves its gain from 20% to 12.5%"}>
           {holdCandidates.length === 0 ? (
             <AbsentSection
-              what={datedLots.length
-                ? `No short-term winner left to defer on the ${datedAccounts.length === 1 ? "one account" : `${datedAccounts.length} accounts`} that publish lot dates`
-                : "No lot acquisition dates in this book"}
+              what={datedLots.length ? "No short-term winner to defer" : "No lot acquisition dates in this book"}
               needs={datedLots.length
-                ? `The planner covers ${datedLots.length} position(s) on ${datedAccounts.join(", ")} — the only
+                ? `Nothing left to defer on the ${datedAccounts.length === 1 ? "one account" : `${datedAccounts.length} accounts`} that publish lot dates. The planner covers ${datedLots.length} position(s) on ${datedAccounts.join(", ")} — the only
                   account(s) here whose broker publishes a LOT REGISTER with dated acquisitions. None of them is
                   currently a short-term holding at a gain, so there is nothing to defer. The other
                   ${(portfolio.accounts.length - datedAccounts.length)} accounts issue a CAPITAL REGISTER, which
@@ -609,7 +631,10 @@ export function CapitalGains() {
       {/* ONE LINE, the detail in its hover — the family asked for the notes
           around the tables to go. "Illustrative" and "not tax advice" stay on
           screen, because a tax figure read without them is read as advice. */}
-      <p className="mt-4 text-[11px] text-slate-500"
+      {/* `data-prose-ok`: the one caveat kept on screen for the harm its
+          absence could do — a tax figure read without it is read as advice
+          (Stage 10ci) — and so the one line the no-explainer sweep excuses. */}
+      <p className="mt-4 text-[11px] text-slate-500" data-prose-ok="tax caveat"
         title="Current Indian equity rates (STCG 20% u/s 111A, LTCG 12.5% u/s 112A). They do not apply the ₹1.25L LTCG exemption, do not net losses across heads or years, and exclude surcharge and cess. This page is on a statement basis so every figure ties to the source PDF: realised figures are as each manager's capital gain statement reports them, each over its own window, and unrealised figures are at the statement mark — the live feed does not move them here.">
         Tax figures are <span className="font-medium text-slate-400">illustrative</span> · statement basis · not tax advice
       </p>

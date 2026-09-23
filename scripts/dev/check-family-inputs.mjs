@@ -854,8 +854,14 @@ if (await watched.count()) {
         && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
+    // …ON ITS FACE, IN THE TITLE ("in no total"), and the sentence naming the
+    // figure it is not in is the title's hover — the family asked for the line
+    // under every card title to go (Stage 10cp), and a `title` is not in the
+    // page text, so it is read where it went.
+    const cardHints = await page.$$eval("[data-card-title-hint]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...and the card says none of it is in the value above",
-      /None of these figures is in the/i.test(text));
+      /held, not valued, in no total/i.test(text)
+        && cardHints.some((h) => /None of these figures is in the/i.test(h)));
   }
 }
 

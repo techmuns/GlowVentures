@@ -160,13 +160,16 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
     <div data-fund-lookthrough={part}>
     <Card className="mt-5"
       title={PART_TITLE[part]}
-      /* ONE SHORT LINE (main's Stage 10ci): the scheme, and that none of this
-         is the family's own statement — the fence a reader must not miss. Each
-         half's own document — AMFI's daily NAV for the first, the AMC's monthly
-         disclosure for the second — is the hover. */
-      subtitle={<span title={`${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : `${p.amc ? `${p.amc}'s` : "The AMC's"} own monthly disclosure`} — published figures about the scheme, not a statement issued to this family.`}>
-        {p.amfiSchemeName ?? p.scheme ?? name} — not a statement issued to this family</span>}
-      right={<Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>}>
+      // NO LINE UNDER THE TITLE (Stage 10cp). The scheme and each half's own
+      // document — AMFI's daily NAV for the first, the AMC's monthly disclosure
+      // for the second — are the title's hover. The FENCE, that none of this is
+      // the family's own statement, stays on the card's face as a pill beside
+      // the match: it is the one thing on this card a reader must not miss.
+      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name} — ${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : `${p.amc ? `${p.amc}'s` : "the AMC's"} own monthly disclosure`}: published figures about the scheme, not a statement issued to this family.`}
+      right={<div className="flex flex-wrap items-center justify-end gap-1.5">
+        <Pill>not a statement issued to this family</Pill>
+        <Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>
+      </div>}>
 
       {part === "nav" && (<>
       {/* ── NAV, its daily change, and the plan ──────────────────────────── */}
@@ -369,8 +372,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       {rows.length > 0 && (
       <p className="mt-3 text-[11.5px] text-slate-500"
         title={`The fund's own value — ${money(holdingValue)} — is what the book carries, and it already stands for everything above; counting both would count the same money twice. The look-through column is this holding's value times the scheme's published weight, so it is an estimate of exposure rather than a position the family can sell. The disclosed weights add to ${weight.toFixed(1)}% of the scheme${p.coveragePct != null ? ` — the AMC states its own coverage at ${p.coveragePct.toFixed(1)}%` : ""}; the rest is what a monthly filing rounds and the cash it does not itemise.`}>
-        <span className="font-medium text-slate-400">None of this is in any total on this site</span> — the fund&rsquo;s
-        own value already stands for it.
+        <span className="font-medium text-slate-400">None of this is in any total on this site</span>
       </p>
       )}
       </>)}

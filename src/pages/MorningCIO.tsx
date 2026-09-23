@@ -1639,7 +1639,9 @@ export function MorningCIO() {
           </Card>
 
           <div className="grid gap-5 content-start lg:col-span-1">
-            <Card title="Capital deployment" subtitle="Private-market funds: commitments &amp; uncalled capital">
+            {/* WHAT THE CARD COVERS IS ITS TITLE'S HOVER (Stage 10cp) — the line
+                under the title restated it, and the family asked for those to go. */}
+            <Card title={<span title="Private-market funds: commitments & uncalled capital — the same capital accounts the Private Market page counts." data-card-title-hint>Capital deployment</span>}>
               {hasCommitments ? (
                 <>
                   {/*

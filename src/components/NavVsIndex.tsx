@@ -572,16 +572,20 @@ export function NavVsIndex() {
           Told "could not be fetched", a reader waits for a service that is up;
           told what answered, they know the symbol is what needs changing. */}
       {indexState === "mismatch" && (
+        /* ONE LINE — WHAT IS MISSING AND WHAT ANSWERED; the reasoning is its
+           hover (Stage 10cp). What answered stays on the face, because it is
+           the fact that says the symbol, not the service, needs changing. */
         <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400"
-          data-testid="nav-bench-mismatch">
-          {benchmarkMismatchReason(bench, reportedName)} The book&rsquo;s own series is unaffected and is shown alone.
+          data-testid="nav-bench-mismatch"
+          title={`${benchmarkMismatchReason(bench, reportedName)} The book’s own series is unaffected and is shown alone.`}>
+          No {bench.label} line — {reportedName ? <>the price service answered for &ldquo;{reportedName}&rdquo;</> : "the price service did not say which instrument it answered for"}
         </p>
       )}
       {indexState === "down" && (
-        <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400">
-          The {bench.label} history could not be fetched, so no comparison line is drawn — the book&rsquo;s own series is
-          unaffected and is shown alone. The price service runs as a server-side function on the deployed site and is not
-          available in local preview.
+        <p className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11.5px] text-amber-400"
+          data-testid="nav-bench-down"
+          title="No comparison line is drawn — the book’s own series is unaffected and is shown alone. The price service runs as a server-side function on the deployed site and is not available in local preview.">
+          The {bench.label} history could not be fetched
         </p>
       )}
 
@@ -612,18 +616,16 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
           publish none" is two, and they send a reader to two different places —
           a next monthly statement, or a fund that values the folio at all. A
           reader who never opens the details still gets both. */}
-      <summary className="cursor-pointer text-[11.5px] text-slate-400">
-        The <strong className="text-slate-300">{cov.single.length + cov.unvalued.length} accounts</strong> that cannot supply a
-        series — {fmt(sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })} ·{" "}
-        {cov.single.length} publish exactly one dated valuation, {cov.unvalued.length} publish no valuation at all — named
+      <summary className="cursor-pointer text-[11.5px] text-slate-400"
+        title={`The ${cov.single.length + cov.unvalued.length} accounts that cannot supply a series: ${cov.single.length} publish exactly one dated valuation, ${cov.unvalued.length} publish no valuation at all. Open to see each one named.`}>
+        Not in the series: <strong className="text-slate-300">{cov.single.length + cov.unvalued.length} accounts</strong>
+        {" "}· {fmt(sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })}
       </summary>
       <div className="mt-3 grid gap-4 md:grid-cols-2">
         <div>
-          <div className="label-xs">{cov.single.length} publish exactly one dated valuation</div>
-          <p className="mt-1 text-[11px] text-slate-500">
-            A level, never a change. Carrying them into the series as a flat line would drag its return towards a figure
-            nothing measured. The next reissue of any of these statements gives each a second point.
-          </p>
+          <div className="label-xs" title="A level, never a change. Carrying them into the series as a flat line would drag its return towards a figure nothing measured. The next reissue of any of these statements gives each a second point.">
+            {cov.single.length} publish exactly one dated valuation
+          </div>
           <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-single-list">
             {[...cov.single].sort((a, b) => b.bookValue - a.bookValue).map((s) => (
               <li key={s.accountId} className="flex justify-between gap-3">
@@ -634,12 +636,9 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
           </ul>
         </div>
         <div>
-          <div className="label-xs">{cov.unvalued.length} publish no valuation at all</div>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Sky Capital&rsquo;s angel folios, India SME&rsquo;s Fund II, 360 ONE&rsquo;s income-only folios, the redeemed and
-            transaction-only demats. They carry units, drawdowns or nothing, and no statement puts a NAV on them — which is
-            why they contribute nothing to the book&rsquo;s own total either.
-          </p>
+          <div className="label-xs" title="Sky Capital’s angel folios, India SME’s Fund II, 360 ONE’s income-only folios, the redeemed and transaction-only demats. They carry units, drawdowns or nothing, and no statement puts a NAV on them — which is why they contribute nothing to the book’s own total either.">
+            {cov.unvalued.length} publish no valuation at all
+          </div>
           <ul className="mt-2 space-y-1 text-[11px] text-slate-400" data-testid="nav-unvalued-list">
             {/* A DASH, NOT `₹0`. These accounts contribute nothing to the book
                 because NO STATEMENT VALUES THEM — an absent measurement, not a
@@ -659,11 +658,10 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
           </ul>
         </div>
       </div>
-      <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500">
-        The three lists account for every account in the book. Their values sum to{" "}
-        {fmt(sum(cov.covered.map((c) => c.bookValue)) + sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })},
-        which is ABOVE the current value of holdings by the value two members both report — a per-account sum does not dedupe and a
-        consolidated one does.
+      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp). */}
+      <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500"
+        title="The three lists account for every account in the book. Their sum is ABOVE the current value of holdings by the value two members both report — a per-account sum does not dedupe and a consolidated one does.">
+        All three lists · {fmt(sum(cov.covered.map((c) => c.bookValue)) + sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })}
       </p>
     </details>
   );

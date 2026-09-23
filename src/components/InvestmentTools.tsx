@@ -55,7 +55,7 @@ const PLAN_FIELDS: {
   label: string; hint: string; placeholder: string; suggest?: readonly string[];
 }[] = [
   { key: "targetWeightPct", label: "Target weight %", placeholder: "not set",
-    hint: "Our intended share of the book for this name. 0 is a real instruction — hold none. Blank means nobody has decided." },
+    hint: "Our intended share of the book for this name. 0 is a real instruction — hold none. Blank means nobody has decided, and records nothing: a gap measured against a target nobody set would be an instruction to sell that nobody gave." },
   { key: "fairValueRefYear", label: "FV reference year", placeholder: "e.g. FY28E",
     hint: "The period the fair value above is struck for. A fair value with no horizon is not comparable to another name's." },
   { key: "valuationMethod", label: "Valuation method", placeholder: "e.g. DCF",
@@ -111,7 +111,7 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
     <Card
       className="mt-5"
       title="Investment tools"
-      subtitle={<>Our own view on {name} — a target, a fair value, the levels we would act at. These are judgements, not statement figures, and they are stored in this browser only.</>}
+      subtitle={`Our own view on ${name} — a target, a fair value, the levels we would act at. These are judgements, not statement figures, and they are stored in this browser only.`}
       right={
         <button
           type="button"
@@ -168,8 +168,10 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
           look for a column that does not exist. The fields are stored exactly as
           before and this panel is where they are read. */}
       <div className="mt-4 border-t border-ink-700/70 pt-3">
+        {/* ONE WORD (Stage 10cp) — each field's own label says what it is, and
+            its hover what it means. */}
         <p className="label-xs mb-2 text-slate-500">
-          Plan — your target weight, the year your fair value refers to, and how you valued it
+          Plan
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {PLAN_FIELDS.map((f) => (
@@ -194,10 +196,9 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
             </label>
           ))}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-          A target weight of <span className="mono text-slate-400">0</span> is recorded as a decision — hold none of this.
-          Leaving it blank records nothing: a gap measured against a target nobody set would be an instruction to sell that nobody gave.
-        </p>
+        {/* THE "0 MEANS HOLD NONE · BLANK MEANS UNDECIDED" LINE IS GONE (Stage
+            10cp): it is the Target weight label's own hover, which already said
+            it. */}
       </div>
 
       <label className="mt-3 block">
