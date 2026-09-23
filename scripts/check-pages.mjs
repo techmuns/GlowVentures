@@ -21064,6 +21064,59 @@ for (const theme of THEMES) {
         }
       }
       /**
+       * ── GLOW CENTRAL RESEARCH'S LOOK, ON EVERY ROUTE (Stage 10ca) ─────────
+       *
+       * *"look how good the font is and the ui is of glow-central research -
+       * colours white etc - can you make this dashboard also with right color
+       * pallet and fonts."* Four claims, and not one of them is in the page's
+       * words — a page renders identical text in any face and on any colour — so
+       * they are read off COMPUTED STYLE, on every page the sweep walks, in the
+       * light theme the family looked at. The declared font stack is what is
+       * asserted: this sweep cannot fetch a web font, so it names the face the
+       * page ASKS for, which is the part a regression would change.
+       *
+       * A figure that could be absent is skipped rather than abstained on: a
+       * page with no `.mono` cell or no active nav entry (a company page, a
+       * drill-down) has nothing for that claim to be about.
+       */
+      if (!FAST && theme === "light" && width === WIDTHS[0]) {
+        const look = await page.evaluate(() => {
+          const cs = (el) => (el ? getComputedStyle(el) : null);
+          const first = (f) => (f ?? "").split(",")[0].replace(/["']/g, "").trim();
+          const h1 = cs(document.querySelector("main h1"));
+          const fig = cs(document.querySelector("main .mono"));
+          const aside = cs(document.querySelector("aside.app-sidebar"));
+          const top = cs(document.querySelector("header.app-topbar"));
+          const active = cs(document.querySelector('aside [data-nav-entry][aria-current="page"]'));
+          return {
+            body: first(getComputedStyle(document.body).fontFamily),
+            h1: h1 ? first(h1.fontFamily) : null,
+            fig: fig ? { face: first(fig.fontFamily), digits: fig.fontVariantNumeric } : null,
+            aside: aside ? aside.backgroundColor : null,
+            top: top ? top.backgroundColor : null,
+            active: active ? { color: active.color, bg: active.backgroundColor } : null,
+          };
+        });
+        if (look.body !== "Inter") invariants.push(`the page reads in Inter, as Glow Central Research does — the body asks for ${look.body || "nothing"}`);
+        if (look.h1 && look.h1 !== "Plus Jakarta Sans") invariants.push(`the page title is set in Plus Jakarta Sans — it asks for ${look.h1}`);
+        if (look.fig && (look.fig.face !== "Inter" || !/tabular-nums/.test(look.fig.digits))) {
+          invariants.push(`a figure is Inter with tabular digits, not a monospace — a .mono cell asks for ${look.fig.face} (${look.fig.digits})`);
+        }
+        // THE CHROME IS WHITE. The nav and the top bar were the page's own
+        // ivory, so the whole screen was one flat tone; "colours white" is the
+        // family's own word for what they wanted instead.
+        const white = (c) => /^rgba?\(255, 255, 255(, (0\.[7-9]\d*|1))?\)$/.test(c ?? "");
+        if (!white(look.aside) || !white(look.top)) {
+          invariants.push(`the nav and the top bar are white — the nav is ${look.aside ?? "missing"}, the top bar ${look.top ?? "missing"}`);
+        }
+        // WHERE YOU ARE IS GOLD: gold type on a pale-gold wash, GCR's active
+        // tab. Ink on it rather than white, for the reason at the top of the
+        // light block in index.css.
+        if (look.active && (look.active.color !== "rgb(125, 95, 22)" || look.active.bg !== "rgb(247, 239, 219)")) {
+          invariants.push(`the nav entry you are on is marked in gold — it is ${look.active.color} on ${look.active.bg}`);
+        }
+      }
+      /**
        * ── THE SELECTABLE TILE STRIP ─────────────────────────────────────────
        *
        * *"make it 4 and give the user a dropdown list to select what they want

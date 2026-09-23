@@ -211,7 +211,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
           <div className="label-xs" data-testid="navmovers-asof">
             Published NAV &middot; {model.newestNavDate}
           </div>
-          <div className={`mt-2 text-[22px] font-semibold tabular ${changeColor(model.move)}`}>
+          <div className={`mt-2 font-display text-[22px] font-bold tabular ${changeColor(model.move)}`}>
             {fmtFromBase(model.move, { compact: true, sign: true })}
           </div>
           <div className={`mt-0.5 text-[13px] font-semibold tabular ${changeColor(model.changePct)}`}>

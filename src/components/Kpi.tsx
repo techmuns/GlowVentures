@@ -50,7 +50,7 @@ export function Kpi({ label, value, sub, delta, icon, href, hrefTitle }: {
     <div className={`card relative p-4${href ? " kpi-btn" : ""}`}>
       {href && (
         <Link to={href} title={hrefTitle} aria-label={`${label} — open the holdings behind it`}
-          className="absolute inset-0 z-0 rounded-xl ring-focus" />
+          className="absolute inset-0 z-0 rounded-2xl ring-focus" />
       )}
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-2">
         <div className="label-xs">
@@ -69,7 +69,7 @@ export function Kpi({ label, value, sub, delta, icon, href, hrefTitle }: {
       {/* `pointer-events-none` on every wrapper lets a click anywhere fall
           through to the anchor beneath — there is nothing interactive left in
           here to protect, now that the figure no longer opens a popover. */}
-      <div className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap text-[19px] font-semibold tracking-tight text-slate-100 tabular">{value}</div>
+      <div className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap font-display text-[19px] font-bold tracking-tight text-slate-100 tabular">{value}</div>
       <div className="pointer-events-none relative z-10 mt-1.5 flex items-center gap-2 text-[11px]">
         {typeof delta === "number" && (
           <span className={`mono ${delta > 0 ? "text-gain" : delta < 0 ? "text-loss" : "text-slate-400"}`}>

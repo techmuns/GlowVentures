@@ -464,7 +464,7 @@ export function StockInfo() {
       <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* WHERE THIS HOLDING IS FILED, which for everything that is not a
                 mandate-held share is still exactly its asset class — a fund's
@@ -520,7 +520,7 @@ export function StockInfo() {
             {/* ONE FIGURE OR NONE — never one statement's mark standing for
                 the rest. See `cmpMarks` for what the split is and why the
                 cell refuses it rather than picking. */}
-            <div className="mono text-2xl font-semibold text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
+            <div className="font-display text-2xl font-bold tabular text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
               {cmp ?? <AbsentValue />}
             </div>
             {/* WHY THIS IS THREE STATES AND NOT TWO.

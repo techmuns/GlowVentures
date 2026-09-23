@@ -100,15 +100,37 @@ html, body, #root { height: 100%; }
   #root { zoom: var(--app-zoom); }
 }
 
+/*
+ * TYPE — Glow Central Research's, at the family's request: *"look how good the
+ * font is and the ui is of glow-central research … make this dashboard also
+ * with right color pallet and fonts."*
+ *
+ * Inter for reading, in its ordinary shapes (the single-storey `a` and the
+ * open digits this file used to switch on are gone, because GCR uses neither),
+ * and Plus Jakarta Sans for titles and headline figures (`font-display`).
+ *
+ * FIGURES ARE INTER NOW, NOT A MONOSPACE. `.mono` keeps its name — it is on
+ * four hundred cells, and what it promises is that a column of figures lines
+ * up, which tabular digits do exactly as well — but a table set in JetBrains
+ * Mono read as a terminal rather than as a statement. Every digit still has one
+ * width, so no column moves as a number changes.
+ */
 body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  font-feature-settings: "cv11", "ss01", "ss03";
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 .tabular { font-variant-numeric: tabular-nums; }
-.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+/* WHERE INTER CANNOT LOAD, A FIGURE FALLS BACK TO A MONOSPACE — the face these
+   columns were set in until now, and so exactly the widths every table here was
+   fitted to. A proportional fallback is wider per digit (DejaVu Sans: 0.64em
+   against the monospace's 0.60em) and pushed the company page's position table
+   16px past its card. With Inter loaded — every real reader — that table fits,
+   measured; the page check cannot fetch a web font, so this is also what it
+   measures, which keeps it measuring the WIDER of the two. */
+.mono { font-family: "Inter", ui-monospace, "DejaVu Sans Mono", monospace; font-variant-numeric: tabular-nums; }
+.font-display { letter-spacing: -0.01em; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -123,13 +145,13 @@ body {
 }
 
 @layer components {
-  .card { @apply rounded-xl border border-ink-700 bg-ink-800 shadow-card; }
+  .card { @apply rounded-2xl border border-ink-700 bg-ink-800 shadow-card; }
   .card-pad { @apply card p-5; }
-  .label-xs { @apply text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500; }
-  .h-section { @apply text-sm font-semibold text-slate-200; }
+  .label-xs { @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500; }
+  .h-section { @apply font-display text-sm font-bold text-slate-100; }
   .divider { @apply border-t border-ink-700; }
   .ring-focus { @apply focus:outline-none focus:ring-2 focus:ring-champagne-500/40; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium ring-focus transition-colors; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium ring-focus transition-colors; }
   .btn-primary { @apply btn bg-champagne-500 text-ink-950 hover:bg-champagne-400; }
   .btn-ghost { @apply btn border border-ink-600 bg-transparent text-slate-200 hover:bg-ink-700/60; }
   .pill { @apply inline-flex items-center gap-1 rounded-full border border-ink-600 bg-ink-700/60 px-2 py-0.5 text-[11px] font-medium text-slate-300; }
@@ -215,6 +237,13 @@ body {
    ------------------------------------------------------------------------- */
 html:not(.dark) { color-scheme: light; }
 html:not(.dark) body { background: #f4f2ec; color: #1a1830; }
+/* A label a reader scans for — a column heading, a tile's name — in the ink
+   GCR sets its table headings in, a step darker than the grey that made every
+   heading on this dashboard read as a footnote. Placed BEFORE the slate text
+   remaps below on purpose: a label that also carries a colour class (an active
+   sort heading, a gold note) keeps that class's colour, because the remap comes
+   later at the same specificity. */
+html:not(.dark) .label-xs { color: #55516b; }
 
 /* Chassis backgrounds */
 html:not(.dark) .bg-ink-950 { background-color: #f4f2ec; }
@@ -400,26 +429,34 @@ html:not(.dark) .text-amber-300\/90 { color: #a1610a; }
 html:not(.dark) .text-amber-200 { color: #92560a; }
 html:not(.dark) .text-emerald-200 { color: #05614a; }
 
+/* A white card lifted off the ivory by a shadow too soft to read as an edge —
+   GCR's own two layers. NEITHER LAYER MAY BE A HARD OFFSET (`0 Npx 0 0`, N ≥ 2):
+   that shape is what makes a KPI tile read as a button, and `check:pages` fails
+   any card carrying it that opens nothing. Both layers here are blurred. */
 html:not(.dark) .card {
   background-color: #ffffff;
   border-color: #e4ddcd;
   color: #1a1830;
-  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.6) inset, 0 1px 3px 0 rgba(60, 55, 100, 0.07);
+  box-shadow: 0 1px 2px 0 rgba(26, 24, 48, 0.04), 0 2px 8px 0 rgba(26, 24, 48, 0.035);
 }
-html:not(.dark) .btn-ghost { border-color: #d8d3c4; color: #26233d; background-color: transparent; }
-html:not(.dark) .btn-ghost:hover { background-color: rgba(216, 211, 196, 0.35); }
+html:not(.dark) .btn-ghost { border-color: #e4ddcd; color: #26233d; background-color: #ffffff; }
+html:not(.dark) .btn-ghost:hover { background-color: #faf8f1; border-color: #d8d3c4; }
 /* WHITE ON GOLD FAILS AA. #ffffff on #b8923c is 2.9:1 — under the 4.5:1 floor,
    and under even the 3:1 large-text allowance. The dark theme already puts INK
    on champagne (`bg-champagne-500 text-ink-950`); light mode had inverted it for
    no reason. Ink on the same gold is 5.4:1 and matches the dark theme's
    treatment, so the primary button reads the same way in both. */
-html:not(.dark) .btn-primary { background-color: #b8923c; color: #1a1830; }
-html:not(.dark) .btn-primary:hover { background-color: #c3a962; color: #1a1830; }
+html:not(.dark) .btn-primary { background-color: #c3a962; background-image: linear-gradient(135deg, #c3a962 0%, #d9c48f 100%); color: #1a1830; font-weight: 600; }
+html:not(.dark) .btn-primary:hover { background-color: #d9c48f; background-image: linear-gradient(135deg, #cdb26c 0%, #e2cf9d 100%); color: #1a1830; }
 html:not(.dark) .pill { border-color: #d8d3c4; background-color: rgba(255, 255, 255, 0.6); color: #3d3a52; }
+/* The page is GCR's: ivory, warmed at the top by two faint gold glows, and no
+   grid. The graph-paper pattern was the other half of why the light theme read
+   as a spreadsheet; the dark theme keeps its grid. */
 html:not(.dark) .bg-grid {
   background-image:
-    linear-gradient(rgba(60, 55, 100, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(60, 55, 100, 0.05) 1px, transparent 1px);
+    radial-gradient(at 0% 0%, rgba(217, 196, 143, 0.16) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 220, 174, 0.24) 0, transparent 50%);
+  background-size: auto;
 }
 html:not(.dark) input[type="text"], html:not(.dark) input[type="search"],
 html:not(.dark) input[type="file"], html:not(.dark) input[type="number"],
@@ -428,6 +465,73 @@ html:not(.dark) select, html:not(.dark) textarea {
 }
 html:not(.dark) ::-webkit-scrollbar-thumb { background: rgba(60, 55, 100, 0.22); }
 html:not(.dark) ::-webkit-scrollbar-thumb:hover { background: rgba(60, 55, 100, 0.4); }
+
+/* ---------------------------------------------------------------------------
+   GLOW CENTRAL RESEARCH'S LOOK, ON THE LIGHT THEME — Stage 10ca.
+
+   *"look how good the font is and the ui is of glow-central research - colours
+   white etc - can you make this dashboard also with right color pallet and
+   fonts please i think right now its too monotonous and dull"*
+
+   The palette is GCR's own (`scripts/glow-palette.cjs` in that repo): ivory
+   page, WHITE surfaces, navy ink, gold for what is active. What made this
+   dashboard dull was that the chrome, the page and the cards were three shades
+   of one beige; now the chrome is white and the gold means "you are here".
+
+   ONE RULE HOLDS THROUGHOUT: nothing on the light theme is a dark fill or
+   white text. GCR prints white on a gold or green button; `check:pages`
+   rejects exactly that on this page, because pale text is how a missing remap
+   looks. So an active control is gold with INK on it (7:1), and Export Excel is
+   a green tint with deep-green type rather than a green slab with white.
+   ------------------------------------------------------------------------- */
+
+/* The chrome is white. The nav and the top bar were the page colour, so the
+   whole screen was one flat tone with the cards the only thing standing out. */
+html:not(.dark) aside.app-sidebar {
+  background-color: #ffffff;
+  border-right-color: #e4ddcd;
+  box-shadow: 6px 0 24px -18px rgba(26, 24, 48, 0.18);
+}
+html:not(.dark) header.app-topbar {
+  background-color: rgba(255, 255, 255, 0.82);
+  border-bottom-color: #e4ddcd;
+}
+
+/* Where you are: GCR's active tab — a pale gold wash, gold type, and a gold
+   rule on the edge the eye enters from. */
+html:not(.dark) a.nav-active {
+  background-color: #f7efdb;
+  color: #7d5f16;
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 #c3a962;
+}
+
+/* Every active pill and toggle — Holdings / Transactions, the axis, a tab —
+   is GCR's gold gradient, with ink on it. */
+html:not(.dark) .bg-champagne-500 {
+  background-color: #c3a962;
+  background-image: linear-gradient(135deg, #c3a962 0%, #d9c48f 100%);
+}
+html:not(.dark) .hover\:bg-champagne-400:hover { background-image: none; background-color: #ecdcae; }
+
+/* Table headings sit on GCR's cream band. Written with `:where()` so the rule
+   carries the specificity of a bare `th` — any class on a heading cell (the
+   drag-over highlight, a sticky column's own surface) still wins. */
+:where(html:not(.dark) thead) th { background-color: #faf8f1; }
+
+/* EXPORT EXCEL IS GREEN, AS GCR'S IS — as a tint with deep-green type, for the
+   reason at the top of this block. #045f45 on #e8f3ee is 6.8:1. */
+.btn-excel {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  border-radius: 0.5rem; border: 1px solid rgba(16, 185, 129, 0.35);
+  background-color: rgba(16, 185, 129, 0.12); color: #6ee7b7;
+  padding: 0.5rem 0.75rem; font-size: 0.875rem; font-weight: 600;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.btn-excel:hover { background-color: rgba(16, 185, 129, 0.2); }
+.btn-excel:disabled { opacity: 0.6; }
+html:not(.dark) .btn-excel { background-color: #e8f3ee; border-color: #a9d3c0; color: #045f45; }
+html:not(.dark) .btn-excel:hover { background-color: #d3e8de; border-color: #6bb99b; }
 
 /* ---------------------------------------------------------------------------
    PREVIEW — illustrative placeholder figures (see src/components/Preview.tsx).
