@@ -72,10 +72,23 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import {
   BSE_API, BSE_SCRIP, NSE_SYMBOL, BROWSER_HEADERS,
   parseCorporateActions, parseQuote, parseIdentity, mergePaymentDates,
-  parseTickertapeHoldings, parseScreenerPromoter, pageIdentity, quarterEndIso, quarterLabel,
+  parseTickertapeHoldings, parseScreenerPromoter, pageIdentity,
+  sessionPhase, settledQuote, mergePromoterQuarters,
 } from "../shared/polycabSources.mjs";
 
 const CHECK = process.argv.includes("--check");
+/**
+ * `--offline` FETCHES NOTHING. It re-renders `src/data/polycabLive.ts` and
+ * `docs/POLYCAB-LIVE.md` from the COMMITTED store, through the same `render` and
+ * `renderReport` a networked run uses — a faithful partial replay rather than a
+ * refresh, on the terms `rekey:archive` and `replay:calls` set: it moves no
+ * fetched figure, keeps `retrievedAt` and the last run's own notes exactly as
+ * they were, and `--offline --check` writes nothing and is the control run,
+ * which must be a no-op against an unchanged renderer. It is how a change to
+ * what the store SAYS about its figures lands on a machine that cannot reach
+ * the exchange.
+ */
+const OFFLINE = process.argv.includes("--offline");
 const BOOK = "src/data/glowData.ts";
 const OUT = "src/data/polycabLive.ts";
 const REPORT = "docs/POLYCAB-LIVE.md";
@@ -83,6 +96,20 @@ const TIMEOUT_MS = 30000;
 
 const SCREENER_URL = `https://www.screener.in/company/${NSE_SYMBOL}/consolidated/`;
 const TICKERTAPE_URL = "https://www.tickertape.in/stocks/polycab-india-POLC";
+
+/**
+ * THE SOURCES — this file's own constants, never fetched, which is why the
+ * offline re-render may restate them.
+ */
+const SOURCES = [
+  {
+    name: "BSE (exchange)",
+    url: `https://www.bseindia.com/stock-share-price/polycab-india-ltd/${NSE_SYMBOL.toLowerCase()}/${BSE_SCRIP}/`,
+    carries: "identity, last traded price, the full corporate-action record",
+  },
+  { name: "Tickertape", url: TICKERTAPE_URL, carries: "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN" },
+  { name: "Screener", url: SCREENER_URL, carries: "promoter holding, per quarter — the second witness" },
+];
 
 const notes = [];
 const note = (severity, rule, detail) => notes.push({ severity, rule, detail });
@@ -125,7 +152,62 @@ function stored() {
   try { return JSON.parse(src.slice(s + 2, e + 2)); } catch { return null; }
 }
 
+/**
+ * WHAT A STORE WRITTEN BY AN EARLIER VERSION OF THIS FILE CAN SAY ABOUT ITSELF.
+ *
+ * Only fields its OWN record establishes are added, and no fetched figure moves:
+ *
+ *   sources          this file's constants, never fetched — restated as they stand.
+ *   quote.fetchedAt  the quote's fetch time. A run that fetched the quote records
+ *                    no quote failure in its notes, and `retrievedAt` moves only
+ *                    when a figure moved — so where the stored notes record no
+ *                    quote failure, the stored quote IS the exchange's answer as
+ *                    fetched at `retrievedAt` (the earliest time it was seen).
+ *                    Where they do record one, nothing dates it: null, and the
+ *                    page shows the price undated rather than guessed.
+ *   holdingRefused   false on every quarter that PUBLISHES a holding — a figure
+ *                    that was published was not refused. A null holding is only
+ *                    marked where the stored agreement shows no disagreement.
+ */
+function migrate(prev) {
+  const out = { ...prev, sources: SOURCES };
+  if (out.quote && out.quote.fetchedAt === undefined) {
+    const failed = (prev.notes ?? []).some((n) => n.rule === "quote" && n.severity === "fail");
+    out.quote = { ...out.quote, fetchedAt: failed ? null : prev.retrievedAt };
+  }
+  if (Array.isArray(out.promoterQuarters)) {
+    out.promoterQuarters = out.promoterQuarters.map((q) => (q.holdingRefused !== undefined ? q : {
+      ...q,
+      holdingRefused: q.holdingPct !== null ? false : (out.promoterAgreement?.disagreed === 0 ? false : null),
+    }));
+  }
+  return out;
+}
+
+/**
+ * THE OFFLINE RE-RENDER. Everything `render` and `renderReport` print comes from
+ * the stored record; nothing is fetched, so nothing the exchange said can move.
+ */
+function offline() {
+  const prev = stored();
+  if (!prev) {
+    console.error(`${OUT} carries no POLYCAB_LIVE record to re-render — run a networked build first.`);
+    process.exit(1);
+  }
+  const out = migrate(prev);
+  const text = render(out);
+  const report = renderReport(out);
+  const sameOut = existsSync(OUT) && readFileSync(OUT, "utf8") === text;
+  const sameReport = existsSync(REPORT) && readFileSync(REPORT, "utf8") === report;
+  const verdict = sameOut && sameReport ? "No change." : "WOULD REWRITE " + [!sameOut && OUT, !sameReport && REPORT].filter(Boolean).join(" and ");
+  if (CHECK) { console.log(`--offline --check: nothing fetched. ${verdict}`); process.exit(0); }
+  if (!sameOut) writeFileSync(OUT, text);
+  if (!sameReport) writeFileSync(REPORT, report);
+  console.log(`--offline: nothing fetched. ${sameOut && sameReport ? "Nothing moved — nothing written." : "Wrote " + [!sameOut && OUT, !sameReport && REPORT].filter(Boolean).join(" and ")}`);
+}
+
 async function main() {
+  if (OFFLINE) return offline();
   const fenced = ringFenced();
   if (!fenced?.length) {
     console.error(`${BOOK} carries no BOOK_POLYCAB holding — nothing to describe. Run build-book first.`);
@@ -154,22 +236,45 @@ async function main() {
   }
 
   // ── THE QUOTE. Only where identity held. ─────────────────────────────────
+  /**
+   * THE QUOTE CARRIES THE TIME IT WAS FETCHED, because nothing else dates it.
+   * `getScripHeaderData` prints a last-traded price and no session date, so a
+   * stored price with no fetch time is a figure nobody can place — the page
+   * showed it beside a statement dated six months earlier with no date of its
+   * own, and a kept stale quote would have sat under a newer refresh date.
+   *
+   * AND ONLY A SETTLED SESSION IS STORED. The workflow runs after the close so
+   * the stored price is a close; a run started by hand DURING the session
+   * (09:00–16:00 IST on a weekday) would otherwise commit an intraday price the
+   * page then called "the last settled close" — which one early run did. Where a
+   * settled close is already stored, a mid-session run keeps it; where none is,
+   * the intraday price is stored WITH its fetch time, and the page labels it as
+   * possibly intraday rather than as a close.
+   */
   let quote = null;
   if (identity) {
     try {
-      quote = parseQuote(await get(`${BSE_API}/getScripHeaderData/w?Debtflag=&scripcode=${BSE_SCRIP}&seriesid=`));
-      if (!quote) throw new Error("no last-traded price in the response");
+      const fresh = parseQuote(await get(`${BSE_API}/getScripHeaderData/w?Debtflag=&scripcode=${BSE_SCRIP}&seriesid=`));
+      const fetchedAt = new Date().toISOString();
+      if (!fresh) throw new Error("no last-traded price in the response");
       // The derived change against the exchange's own printed one — a
       // `printed.*` CHECK, never a source (§4). A mismatch beyond the printing
       // precision means the two ends came from different sessions, which is the
       // defect `/api/indices` already cost this repo once.
-      if (quote.change !== null && quote.printedChange !== null && Math.abs(quote.change - quote.printedChange) > 0.05) {
-        note("warn", "quote-change", `derived change ${quote.change.toFixed(2)} against the exchange's printed ${quote.printedChange.toFixed(2)}`);
+      if (fresh.change !== null && fresh.printedChange !== null && Math.abs(fresh.change - fresh.printedChange) > 0.05) {
+        note("warn", "quote-change", `derived change ${fresh.change.toFixed(2)} against the exchange's printed ${fresh.printedChange.toFixed(2)}`);
       }
+      const pick = settledQuote(fresh, fetchedAt, prev?.quote ?? null);
+      quote = pick.quote;
+      if (pick.note) note(pick.note.severity, "quote", pick.note.text);
     } catch (e) {
       note("fail", "quote", `the live quote did not refresh — ${e.message}`);
       quote = prev?.quote ?? null;
-      if (quote) note("info", "quote", "the stored quote is kept; it carries its own session date.");
+      if (quote) {
+        note("info", "quote", quote.fetchedAt
+          ? `the stored quote is kept; it carries the time it was fetched (${quote.fetchedAt}), which the page shows.`
+          : "the stored quote is kept; it records no fetch time, so the page shows it undated.");
+      }
     }
   } else if (prev?.quote) quote = prev.quote;
 
@@ -228,7 +333,12 @@ async function main() {
    * THE HOLDING SURVIVES ON EITHER SOURCE ALONE. Requiring both would mean one
    * aggregator having a bad morning blanks a figure the other is still serving —
    * the "never empty a series you could not fetch" rule, one level up. What
-   * requires both is AGREEMENT where both answer.
+   * requires both is AGREEMENT where both answer. So a quarter ONE source
+   * carries is published unchecked, `witnesses` says so on every row, and the
+   * page's caption states how many quarters are which rather than claiming two
+   * witnesses for all of them (it did, over six quarters only Screener carries).
+   * The join itself is `mergePromoterQuarters`, in the shared file, so the test
+   * exercises the code this builder runs.
    *
    * THE PLEDGE HAS ONE WITNESS, and the store says so rather than implying two.
    * Screener prints no pledge row for this scrip — measured, and measured on two
@@ -238,34 +348,12 @@ async function main() {
    * source is gated on the ISIN rather than on the weaker scrip-code tier.
    */
   let quarters = null, promoterAgreement = null;
-  const byIso = new Map();
-  for (const q of tickertape ?? []) {
-    byIso.set(q.asOf, { asOf: q.asOf, quarter: quarterLabel(q.asOf), holdingPct: q.holdingPct, pledgePct: q.pledgePct, pledgeSource: q.pledgePct === null ? null : "tickertape" });
-  }
-  for (const q of screener ?? []) {
-    const iso = quarterEndIso(q.quarter);
-    if (!iso) continue;
-    const e = byIso.get(iso);
-    if (!e) { byIso.set(iso, { asOf: iso, quarter: q.quarter, holdingPct: q.holdingPct, pledgePct: null, pledgeSource: null }); continue; }
-    e.screenerHoldingPct = q.holdingPct;
-  }
-  if (byIso.size) {
-    const rows = [...byIso.values()].sort((a, b) => b.asOf.localeCompare(a.asOf));
-    const disagreed = [];
-    let compared = 0;
-    for (const r of rows) {
-      const other = r.screenerHoldingPct;
-      if (other !== undefined && other !== null && r.holdingPct !== null) {
-        compared++;
-        if (Math.abs(other - r.holdingPct) > 0.05) { disagreed.push(`${r.quarter}: ${r.holdingPct} vs ${other}`); r.holdingPct = null; }
-      }
-      r.witnesses = (r.holdingPct === null ? 0 : 1) + (other !== undefined && other !== null ? 1 : 0);
-      delete r.screenerHoldingPct;
-    }
-    quarters = rows;
-    promoterAgreement = { compared, disagreed: disagreed.length };
-    if (disagreed.length) note("fail", "promoter-disagreement", `two sources disagree and NEITHER figure is published for: ${disagreed.join("; ")}`);
-    else if (compared) note("info", "promoter-agreement", `${compared} quarter(s) carried by both witnesses; all agree within 0.05pp.`);
+  const merged = mergePromoterQuarters(tickertape, screener);
+  if (merged) {
+    quarters = merged.quarters;
+    promoterAgreement = { compared: merged.compared, disagreed: merged.disagreed.length };
+    if (merged.disagreed.length) note("fail", "promoter-disagreement", `two sources disagree and NEITHER figure is published for: ${merged.disagreed.join("; ")}`);
+    else if (merged.compared) note("info", "promoter-agreement", `${merged.compared} quarter(s) carried by both witnesses; all agree within 0.05pp.`);
     else note("warn", "promoter-agreement", "only one witness answered; the holding is published unchecked against a second.");
   } else if (prev?.promoterQuarters) {
     quarters = prev.promoterQuarters;
@@ -281,11 +369,15 @@ async function main() {
    * not a history: this book cannot show what was held ON an ex-date, only what
    * was held on the statement's own date.
    *
-   * So the entitlement is DERIVED and says so, it carries the statement date it
-   * was struck on, and every row carries `heldOnExDateReported: false` — because
-   * the one thing that would make it a measurement is the one thing no document
-   * here supplies. It is never summed into income, and the page never calls it
-   * "received".
+   * So the entitlement is DERIVED and says so. It is not written into this
+   * store at all: `entitlements()` in `src/lib/polycabLive.ts` strikes it at
+   * render time from the book's share count and the statement's own date, and
+   * sets `balanceReportedOnExDate` only where a statement is dated ON the
+   * ex-date — which none is, so every row is marked, BEFORE the statement as
+   * much as after it. (This note used to promise a `heldOnExDateReported` field
+   * on every row; no such field was ever written, and the page marked only the
+   * ex-dates after the statement.) It is never summed into income, and the page
+   * never calls it "received".
    */
   const shares = bookShares > 0 ? bookShares : null;
 
@@ -300,19 +392,24 @@ async function main() {
     actionsComplete,
     promoterQuarters: quarters,
     promoterAgreement,
-    sources: [
-      { name: "BSE (exchange)", url: `https://www.bseindia.com/stock-share-price/polycab-india-ltd/${NSE_SYMBOL.toLowerCase()}/${BSE_SCRIP}/`, carries: "identity, last traded price, the full corporate-action record" },
-      { name: "Tickertape", url: TICKERTAPE_URL, carries: "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN" },
-      { name: "Screener", url: SCREENER_URL, carries: "promoter holding, per quarter — the second witness" },
-    ],
+    sources: SOURCES,
     notes,
     retrievedAt,
   };
 
   // ── IDEMPOTENCY. Compare everything BUT the timestamps. ──────────────────
-  const fingerprint = (o) => o && JSON.stringify({ ...o, retrievedAt: null, notes: null });
+  // The quote's `fetchedAt` is a timestamp too: re-fetching the same close on a
+  // Saturday is not a figure moving. Where nothing moved, the stored quote keeps
+  // the time it was FIRST fetched — the one nearest the session it closed.
+  const fingerprint = (o) => o && JSON.stringify({
+    ...o, retrievedAt: null, notes: null,
+    quote: o.quote ? { ...o.quote, fetchedAt: null } : o.quote,
+  });
   const unchanged = prev && fingerprint(prev) === fingerprint(out);
-  if (unchanged) out.retrievedAt = prev.retrievedAt;
+  if (unchanged) {
+    out.retrievedAt = prev.retrievedAt;
+    if (prev.quote?.fetchedAt) out.quote = prev.quote;
+  }
 
   const text = render(out, unchanged ? prev : out);
   const report = renderReport(out);
@@ -347,8 +444,12 @@ function render(o) {
 //   • Everything from BSE is published only where the ISIN the exchange echoes
 //     equals the ISIN \`BOOK_POLYCAB\` carries. A wrong scrip code answers with a
 //     complete, correct table about another company.
-//   • The promoter HOLDING has two independent witnesses and a disagreement
-//     publishes neither. The promoter PLEDGE has one, and says so.
+//   • The promoter HOLDING is compared across two sources wherever both carry a
+//     quarter, and a disagreement publishes neither; a quarter only one source
+//     carries is published on that one, and \`witnesses\` says which kind every
+//     quarter is. The promoter PLEDGE has one source, and says so.
+//   • The stored quote carries \`fetchedAt\`. BSE's header quote prints no
+//     session date, so the time it was fetched is what dates the price.
 //
 // NOTHING HERE IS IN ANY BOOK TOTAL. It is company-level and public; the
 // family's own holding, its cost and its value stay in \`BOOK_POLYCAB\`, and the
@@ -374,13 +475,16 @@ export interface PolycabQuarter {
   quarter: string | null;
   /** The quarter END the disclosure is struck at, ISO. */
   asOf: string;
-  /** Null where the two witnesses disagreed — a REFUSAL, not a gap. */
+  /** Null where the two witnesses disagreed (\`holdingRefused\`) or none carried one. */
   holdingPct: number | null;
+  /** Tickertape's "Promoter Holding Pledged": the pledged part of the group's OWN holding. */
   pledgePct: number | null;
   /** Which source carried the pledge, or null where none did. */
   pledgeSource: string | null;
-  /** How many independent sources carried the holding for this quarter. */
+  /** How many independent sources carried the holding for this quarter, counted before any refusal. */
   witnesses: number;
+  /** True only where both sources carried the quarter and disagreed; null where a stored record cannot say. */
+  holdingRefused?: boolean | null;
 }
 
 export interface PolycabQuote {
@@ -393,6 +497,8 @@ export interface PolycabQuote {
   changePct: number | null;
   printedChange: number | null;
   printedChangePct: number | null;
+  /** When the quote was fetched, ISO. The only date the exchange's header quote gives. */
+  fetchedAt?: string | null;
 }
 
 export interface PolycabLive {

@@ -71,6 +71,32 @@ export interface ParsedQuote {
 /** Null where the response carries no last-traded price — never a zero. */
 export declare function parseQuote(hdr: unknown): ParsedQuote | null;
 
+/**
+ * Where a fetch fell against BSE's trading day, in India time. `inSession` is
+ * a weekday 09:00–16:00 IST; exchange holidays are not known, so a holiday
+ * fetch inside those hours reads `inSession` and the page says the price MAY
+ * be intraday. Null where the timestamp does not parse.
+ */
+export declare function sessionPhase(iso: unknown): {
+  inSession: boolean;
+  weekday: boolean;
+  /** The India-time calendar date of the fetch, `YYYY-MM-DD`. */
+  istDate: string;
+  /** The India-time clock time of the fetch, `HH:MM`. */
+  istTime: string;
+} | null;
+
+/**
+ * Which quote the daily store keeps: a fetch made during trading hours keeps a
+ * settled close already stored; with none stored it is kept WITH its fetch time
+ * and a warning. Never returns a quote without `fetchedAt`.
+ */
+export declare function settledQuote<Q extends object>(
+  fresh: Q,
+  fetchedAt: string,
+  prevQuote: (Q & { fetchedAt?: string | null }) | null,
+): { quote: Q & { fetchedAt?: string | null }; note: { severity: "info" | "warn"; text: string } | null };
+
 /** Null unless the response carries a well-formed ISIN. */
 export declare function parseIdentity(h: unknown): {
   isin: string;
@@ -108,6 +134,26 @@ export declare function pageIdentity(html: unknown, bookIsin?: string | null): "
 
 /** `Jun 2026` → `2026-06-30`. */
 export declare function quarterEndIso(q: unknown): string | null;
+
+export interface MergedPromoterQuarter {
+  asOf: string;
+  quarter: string | null;
+  /** Null where the two witnesses disagreed (`holdingRefused`) or none carried one. */
+  holdingPct: number | null;
+  pledgePct: number | null;
+  pledgeSource: string | null;
+  /** How many sources CARRIED a holding figure — counted before any refusal. */
+  witnesses: number;
+  /** True only where both carried the quarter and disagreed beyond 0.05pp. */
+  holdingRefused: boolean;
+}
+
+/** The two promoter witnesses, joined on the quarter end, newest first. Null where neither answered. */
+export declare function mergePromoterQuarters(tickertape: unknown, screener: unknown): {
+  quarters: MergedPromoterQuarter[];
+  compared: number;
+  disagreed: string[];
+} | null;
 
 /** `2026-06-30` → `Jun 2026`. */
 export declare function quarterLabel(iso: unknown): string | null;

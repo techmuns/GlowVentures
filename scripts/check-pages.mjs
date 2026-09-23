@@ -4153,9 +4153,63 @@ const FENCED = (() => {
       // every cost cell to be the dash WITH ITS REASON for exactly as long as
       // it stays 0, rather than assuming the page is right about the book.
       costed: fenced.filter((p) => typeof p.costBasis === "number").length,
+      // Each fenced row's balance and the date ITS statement reports it on. The
+      // entitlement's `*`, the As-of column and the block at CMP are struck
+      // against these, so they come off the book here rather than off the page.
+      balances: fenced.map((p) => ({
+        accountId: p.accountId,
+        shares: Number.isFinite(p.quantity) ? p.quantity : null,
+        asOf: byId.get(p.accountId)?.asOf ?? null,
+      })),
     };
   } catch { return null; }
 })();
+
+/**
+ * WHAT THE FENCED DEMAT'S OWN STATEMENT PRINTS, read out of the audit archive —
+ * the document the page's statement columns come from, and the only witness to
+ * the claim the page makes about it: whether it prints a balance type per row
+ * (the "Account Description" column, where a pre-IPO lock-in and a pending demat
+ * are named). Found through the manifest on the fenced accounts' own ids and
+ * dates, never a typed document key.
+ */
+const POLYCAB_STATEMENT_BOOK = (() => {
+  try {
+    if (!FENCED) return null;
+    const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const out = [];
+    for (const b of FENCED.balances) {
+      if (!b.asOf) continue;
+      const doc = manifest.find((m) => m.reportType === "holdings" && m.asOf === b.asOf && String(m.docKey).startsWith(`${b.accountId}-`));
+      if (!doc) continue;
+      const pages = JSON.parse(readFileSync(new URL(`../public/audit/${doc.docKey}/pages.json`, import.meta.url), "utf8"));
+      const text = (pages.pages ?? []).map((p) => p.text ?? "").join("\n");
+      out.push({
+        accountId: b.accountId, asOf: b.asOf,
+        // The header prints the column over two lines: "Account" above, "Description" below.
+        balanceTypeColumn: /\bAccount\s*\n[^\n]*\bBalance\b[^\n]*\n\s*Description\b/.test(text),
+        lockInRows: (text.match(/IPO Shares\//g) ?? []).length,
+      });
+    }
+    return out.length ? out : null;
+  } catch { return null; }
+})();
+
+/**
+ * WHERE A FETCH FELL AGAINST BSE'S DAY, IN INDIA TIME — re-expressed here rather
+ * than imported from `shared/polycabSources.mjs`, for the reason every `*_BOOK`
+ * in this file is: a check that calls the helper it is checking agrees with it
+ * by construction. IST is UTC+5:30 with no daylight saving; the session is a
+ * weekday 09:00–16:00.
+ */
+const istPhase = (iso) => {
+  const t = Date.parse(String(iso ?? ""));
+  if (!Number.isFinite(t)) return null;
+  const d = new Date(t + 5.5 * 3600e3);
+  const mins = d.getUTCHours() * 60 + d.getUTCMinutes();
+  const weekday = d.getUTCDay() >= 1 && d.getUTCDay() <= 5;
+  return { inSession: weekday && mins >= 540 && mins < 960, istDate: d.toISOString().slice(0, 10), istTime: d.toISOString().slice(11, 16) };
+};
 
 /**
  * THE COMPANY-LEVEL RECORD BEHIND THE RING-FENCED HOLDING — derived, not typed.
@@ -4200,6 +4254,8 @@ const POLYCAB_LIVE_BOOK = (() => {
       // reads — never typed, because the builder decides which sources carried
       // a figure on a given run.
       sources: Array.isArray(d.sources) ? d.sources.map((x) => String(x.name ?? "")).filter(Boolean) : [],
+      // Every action, for the per-row payment-date reason.
+      actions,
       retrievedAt: String(d.retrievedAt ?? ""),
     };
   } catch { return null; }
@@ -17140,7 +17196,7 @@ const INVARIANTS = {
       if (!d) return { notChecked: "the DOM probe did not run" };
       if (!d.holdingRows.length) return false;
       return d.holdingRows.every((r) => r.pledge === "—"
-          && /no pledge, lock-in or freeze column/i.test(r.pledgeTitle ?? "")
+          && /prints no pledge column/i.test(r.pledgeTitle ?? "")
           && /group figure[\s\S]{0,20}not a statement about this account/i.test(r.pledgeTitle ?? ""))
         && /this demat/i.test(d.noteOf?.pledge ?? "");
     }],
@@ -17157,6 +17213,73 @@ const INVARIANTS = {
       if (!d.holdingRows.length) return false;
       return d.holdingRows.every((r) => /₹\s*[\d,]/.test(r.price ?? ""))
         && /last close|live/i.test(d.noteOf?.price ?? "");
+    }],
+    /**
+     * ── THE PRICE, THE DAY MOVE AND THE BLOCK AT CMP SAY WHEN THEY ARE FROM ──
+     *
+     * The row read "As of 31 Mar 2026 … CMP ₹8,354 (last close · BSE) · Day
+     * −0.25% · Market value at CMP ₹11,613 Cr": a price with no date of its own
+     * beside a statement six months older, and "last close" asserted whatever
+     * time the price was fetched. Struck on the store's own `fetchedAt`, with the
+     * trading session RE-EXPRESSED here (`istPhase`), so a note that named the
+     * wrong session — a mid-session price called a close — fails as surely as
+     * one that named no date.
+     */
+    ["the market price names its basis and the India-time day it was fetched, struck on the store's own fetch time", (_t, ctx) => {
+      const q = POLYCAB_LIVE_BOOK?.quote;
+      if (!q) return { notChecked: "the store carries no quote to fall back to" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const note = d.noteOf?.price ?? "", why = d.noteTitleOf?.price ?? "";
+      const ph = istPhase(q.fetchedAt);
+      if (!ph) return /undated/i.test(note) && /no fetch time/i.test(why);
+      return (ph.inSession ? /intraday/i : /last close/i).test(note)
+        && dmyRe(ph.istDate).test(note)
+        && why.includes(`${ph.istTime} IST`)
+        && (ph.inSession ? /DURING trading hours/.test(why) : /outside trading hours/i.test(why));
+    }],
+    ["the day move names the session it belongs to, and says it need not be today", (_t, ctx) => {
+      const q = POLYCAB_LIVE_BOOK?.quote;
+      if (!q) return { notChecked: "the store carries no quote to fall back to" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const t = d.dayTitle ?? "";
+      const ph = istPhase(q.fetchedAt);
+      return /need not be today/i.test(t) && (!ph || dmyRe(ph.istDate).test(t));
+    }],
+    ["the block at CMP names the statement's date under its heading, and both dates — and the gap — in its hover", (_t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const q = POLYCAB_LIVE_BOOK?.quote;
+      if (!q) return { notChecked: "the store carries no quote to fall back to" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const note = d.noteOf?.marketValue ?? "", why = d.noteTitleOf?.marketValue ?? "";
+      const dates = [...new Set(FENCED.balances.map((b) => b.asOf).filter(Boolean))].sort();
+      const ph = istPhase(q.fetchedAt);
+      if (dates.length !== 1) return /statement shares × CMP/.test(note) && dates.length > 0 && dates.every((x) => dmyRe(x).test(why));
+      if (!dmyRe(dates[0]).test(note) || !dmyRe(dates[0]).test(why)) return false;
+      if (!ph) return true;
+      const gap = Math.round(Math.abs(Date.parse(`${ph.istDate}T00:00:00Z`) - Date.parse(`${dates[0]}T00:00:00Z`)) / 86400e3);
+      return dmyRe(ph.istDate).test(why) && why.includes(`${gap.toLocaleString("en-IN")} days apart`);
+    }],
+    /**
+     * THIS DEMAT'S PLEDGE REASON MAY NOT DENY WHAT THE STATEMENT PRINTS. It said
+     * the statement "prints no pledge, lock-in or freeze column" — and the
+     * statement prints a balance type on every row, its "Account Description",
+     * which names a pre-IPO lock-in on three of its rows. Struck on the
+     * statement's own header and rows in the audit archive.
+     */
+    ["this demat's pledge reason does not deny the balance-type column the statement prints", (_t, ctx) => {
+      if (!POLYCAB_STATEMENT_BOOK) return { notChecked: "the fenced demat's statement is not in the audit archive" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (!POLYCAB_STATEMENT_BOOK.some((s) => s.balanceTypeColumn)) {
+        return { notChecked: "the fenced statement prints no balance-type column, so there is nothing a reason could deny" };
+      }
+      const titles = [...d.holdingRows.map((r) => r.pledgeTitle ?? ""), d.noteTitleOf?.pledge ?? ""];
+      return d.holdingRows.length > 0 && titles.every((t) =>
+        !/no[^.;—]{0,40}lock-in/i.test(t) && !/freeze column/i.test(t)
+        && /balance type/i.test(t) && /Account Description/i.test(t));
     }],
   ],
   /**
@@ -17239,6 +17362,61 @@ const INVARIANTS = {
       if (!want.length) return { notChecked: "every declared action carries a record date" };
       return want.every((d) => dmyRe(d.bookClosureFrom).test(t));
     }],
+    /**
+     * ── THE ENTITLEMENT'S `*` IS TWO-SIDED ───────────────────────────────────
+     *
+     * It marked only the ex-dates AFTER the statement, as if a snapshot dated 31
+     * Mar 2026 reported the balance on every earlier ex-date back to 2019. It
+     * reports the balance on the one date it is dated on. So a cell is unmarked
+     * only where some statement in this book is dated ON its ex-date — derived
+     * here from the book's own accounts — and every other cell carries the `*`,
+     * says the balance is NOT reported, and says which side of the statement its
+     * ex-date falls on.
+     */
+    ["every entitlement is marked unless a statement reports the balance ON its ex-date — before the statement as much as after it", (_t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK || !FENCED) return { notChecked: "no committed Polycab record or ring-fenced holding to reconcile against" };
+      const cells = ctx?.polycabDom?.entitlements;
+      if (!cells) return { notChecked: "the DOM probe did not run" };
+      const want = POLYCAB_LIVE_BOOK.dividends.filter((x) => x.exDate && typeof x.amountPerShare === "number");
+      if (!want.length) return { notChecked: "the store carries no dividend with a declared amount" };
+      const dates = [...new Set(FENCED.balances.map((b) => b.asOf).filter(Boolean))].sort();
+      if (!dates.length) return false;
+      return want.every((x) => {
+        const c = cells.find((e) => e.exDate === x.exDate);
+        if (!c) return false;
+        // Re-expressed: the balance ON the ex-date is reported only where EVERY
+        // statement behind the share count is dated on that day.
+        const reported = FENCED.balances.length > 0 && FENCED.balances.every((bal) => bal.asOf === x.exDate);
+        if (c.reported !== String(reported)) return false;
+        if (reported) return !/\*\s*$/.test(c.text ?? "");
+        const t = c.title ?? "";
+        const side = dates.length === 1 ? (x.exDate < dates[0] ? /before the statement date/ : /after the statement date/) : /not dated/;
+        return /\*\s*$/.test(c.text ?? "") && /NOT reported/.test(t) && side.test(t) && /never a figure for cash received/i.test(t);
+      });
+    }],
+    /**
+     * A DASHED PAYMENT DATE GIVES THE REASON ITS OWN POSITION IMPLIES. One reason
+     * for every dash — "the record covers only its most recent actions" — was
+     * false of 9 Jul 2024, whose neighbours on both sides carry a date. Derived
+     * from the store's own dated rows: a dash older than all of them is outside
+     * what the record reaches; one inside the span is a row it covered without a
+     * date for this ex-date.
+     */
+    ["each dashed payment date gives the reason its own position in the record implies", (_t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+      const cells = ctx?.polycabDom?.paids;
+      if (!cells) return { notChecked: "the DOM probe did not run" };
+      const dashed = POLYCAB_LIVE_BOOK.dividends.filter((x) => !x.paymentDate && x.exDate);
+      if (!dashed.length) return { notChecked: "every declared dividend carries a payment date" };
+      const dated = POLYCAB_LIVE_BOOK.actions.filter((x) => x.paymentDate && x.exDate).map((x) => x.exDate).sort();
+      return dashed.every((x) => {
+        const c = cells.find((e) => e.exDate === x.exDate);
+        if (!c || c.text !== "—") return false;
+        const t = c.title ?? "";
+        if (!dated.length) return /carried no date for any action/.test(t);
+        return x.exDate < dated[0] ? /older than any it dates/.test(t) : (/covers this period/.test(t) && !/older than any it dates/.test(t));
+      });
+    }],
     POLYCAB_SOURCES_CHECK,
   ],
   /**
@@ -17287,6 +17465,41 @@ const INVARIANTS = {
         && /group/i.test(n.groupPledge ?? "") && /not this demat/i.test(n.groupPledge ?? "")
         && /not a statement about the family[’']s own demat/i.test(ctx?.polycabDom?.cardSub ?? "")
         && !/not a statement about the family[’']s own demat/i.test(t);
+    }],
+    /**
+     * ── WHAT EACH PERCENTAGE IS A PERCENTAGE OF, AND HOW MANY CARRIED IT ────
+     *
+     * "Carried by two independent sources" was the holding's caption over twelve
+     * quarters of which six are carried by one, and neither heading said what
+     * its percentage was OF — the holding is of all Polycab's shares, the pledge
+     * of the group's own holding, and the parser could fill the pledge from a
+     * field on the other basis. The counts come off the store's `witnesses`.
+     */
+    ["the holding's caption counts its witnesses off the store, and never claims two for every quarter", (_t, ctx) => {
+      const qs = POLYCAB_LIVE_BOOK?.quarters;
+      if (!qs?.length) return { notChecked: "the store carries no promoter quarter" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const why = d.noteTitleOf?.groupHolding ?? "";
+      const both = qs.filter((q) => q.witnesses >= 2).length, one = qs.filter((q) => q.witnesses === 1).length;
+      return why.includes(`${both.toLocaleString("en-IN")} of these ${qs.length.toLocaleString("en-IN")} quarters are carried by both`)
+        && why.includes(`(${one.toLocaleString("en-IN")} here)`)
+        && (one === 0 || !/(?:carried by|from) two independent sources/i.test(why));
+    }],
+    ["every quarter's Sources cell is the store's own witness count", (_t, ctx) => {
+      const qs = POLYCAB_LIVE_BOOK?.quarters;
+      if (!qs?.length) return { notChecked: "the store carries no promoter quarter" };
+      const rows = ctx?.polycabDom?.quarterCells;
+      if (!rows) return { notChecked: "the DOM probe did not run" };
+      return qs.every((q) => rows.find((r) => r.asOf === q.asOf)?.sources === String(q.witnesses));
+    }],
+    ["each percentage says what it is a percentage of, and the pledge names its one source's field", (_t, ctx) => {
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const n = d.noteOf ?? {}, h = d.noteTitleOf ?? {};
+      return /% of all shares/i.test(n.groupHolding ?? "") && /share of all of Polycab/i.test(h.groupHolding ?? "")
+        && /% of group holding/i.test(n.groupPledge ?? "") && /Promoter Holding Pledged/.test(h.groupPledge ?? "")
+        && /own holding/i.test(h.groupPledge ?? "");
     }],
     POLYCAB_SOURCES_CHECK,
   ],
@@ -35227,9 +35440,34 @@ for (const theme of THEMES) {
           noteOf: {
             price: txt('main [data-polycab-table="holding"] th[data-col="price"] [data-col-note]'),
             pledge: txt('main [data-polycab-table="holding"] th[data-col="pledge"] [data-col-note]'),
+            marketValue: txt('main [data-polycab-table="holding"] th[data-col="marketValue"] [data-col-note]'),
             groupHolding: txt('main [data-polycab-table="promoter"] th[data-col="holding"] [data-col-note]'),
             groupPledge: txt('main [data-polycab-table="promoter"] th[data-col="pledge"] [data-col-note]'),
           },
+          /* THE REASON UNDER EACH HEADING — the note's own `title`, which is not in
+             `innerText`, so a basis a reader hovers for is read where it lives. */
+          noteTitleOf: Object.fromEntries([
+            ["price", "holding", "price"], ["marketValue", "holding", "marketValue"],
+            ["pledge", "holding", "pledge"], ["groupHolding", "promoter", "holding"], ["groupPledge", "promoter", "pledge"],
+          ].map(([k, table, col]) => [k,
+            document.querySelector(`main [data-polycab-table="${table}"] th[data-col="${col}"] [data-col-note]`)?.getAttribute("title") ?? null])),
+          dayTitle: document.querySelector('main [data-polycab-table="holding"] th[data-col="day"]')?.getAttribute("title") ?? null,
+          /* PER DIVIDEND ROW, keyed on the row's own ex-date handle. */
+          entitlements: [...document.querySelectorAll("main [data-polycab-dividend-row]")].map((tr) => ({
+            exDate: tr.getAttribute("data-ex-date"),
+            text: cellOf(tr, "entitlement")?.innerText.trim() ?? null,
+            reported: cellOf(tr, "entitlement")?.getAttribute("data-reported") ?? null,
+            title: tipOf(cellOf(tr, "entitlement")),
+          })),
+          paids: [...document.querySelectorAll("main [data-polycab-dividend-row]")].map((tr) => ({
+            exDate: tr.getAttribute("data-ex-date"),
+            text: cellOf(tr, "paid")?.innerText.trim() ?? null,
+            title: tipOf(cellOf(tr, "paid")),
+          })),
+          quarterCells: [...document.querySelectorAll("main [data-polycab-quarter-row]")].map((tr) => ({
+            asOf: tr.getAttribute("data-polycab-quarter-row"),
+            sources: cellOf(tr, "sources")?.innerText.trim() ?? null,
+          })),
           sources: txt("main [data-polycab-sources]"),
           shareActionsText: txt("main [data-polycab-share-actions]"),
           // The sentence is the card title's HOVER since Stage 10cp.
