@@ -2196,6 +2196,10 @@ export function PortfolioMonitor() {
       + `${filed ? `${filed} ` : ""}filing${f.sourceKind === "amc" ? " (the AMC's own)" : f.sourceKind ? " (via an aggregator)" : ""}`
       + ` puts ${fmtPct(f.pctAum)} of it in this issuer, so your share is ${money(f.value)}.`
       + (f.via === "name" ? " The filing printed no ISIN for it, so it was matched on this book's own name for the company." : "")
+      // AN ABSENCE STILL NAMES ITS CAUSE, in the hover that already explains
+      // the line: the box these lines replaced said each of these in words.
+      + (filed ? "" : " This scheme's disclosure carries no as-of date.")
+      + (classes.length ? "" : " No filing here declared this line's asset class.")
       + " It is no part of the book's NAV — the fund's own value already counts it.";
     const rows: ReactNode[] = [childRow(key, "fund", 1, {
       title: <StockLink securityKey={f.fundKey} name={f.fundName} />,
@@ -2220,7 +2224,7 @@ export function PortfolioMonitor() {
         sub: <>{x.assetClass ?? <AbsentCell reason="this filing declared no asset class for the line" />}{x.rating ? ` · ${x.rating}` : ""}{x.isin ? ` · ${x.isin}` : ""}</>,
         last: j === f.instruments.length - 1, ancestorLast: last,
       }, {
-        viaFunds: <span title={`${fmtPct(x.pctAum)} of the fund, as filed — your share ${money(x.value)}.`}>{fmtFromBase(x.value, { compact: true })}</span>,
+        viaFunds: <span title={`${fmtPct(x.pctAum)} of the fund, as filed — your share ${money(x.value)}.${x.isin ? "" : " This filing carried no ISIN for the line."}`}>{fmtFromBase(x.value, { compact: true })}</span>,
       }, {
         "data-fund-instrument": f.fundKey, "data-fund-instrument-class": x.assetClass ?? "", "data-fund-instrument-value": x.value,
       })));
@@ -2260,6 +2264,33 @@ export function PortfolioMonitor() {
   const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
     : r.venues ? (r.venues.length > 0 || fundLinesOf(r).length > 0)
     : !!trancheInfo.get(r.key);
+  /**
+   * THE ROUTE SPLIT, IN THE CHEVRON'S HOVER (Stage 10cg).
+   *
+   *   "Then I drill down, then you tell me direct you hold X Cr through direct
+   *    equity, and then you hold another Y crores through these five funds."
+   *
+   * That was the sentence leading an opened row, and the family then asked for
+   * the sentences inside the tables to go. Each line under the row names its
+   * own route and share, but a SUBTOTAL per route was on screen nowhere else,
+   * so it rides in the hover of the control that opens the lines. It is struck,
+   * as the sentence was, over the statements AS PRINTED. Where two accounts
+   * report one holding it names the overlap, because the subtotals then add to
+   * more than the row.
+   */
+  const routeSplitOf = (r: Row): string => {
+    const vs = r.venues ?? [];
+    if (vs.length < 2) return "";
+    const by = [...vs.reduce((acc, v) => {
+      const e = acc.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
+      e.mv += v.marketValue; e.n += 1;
+      return acc.set(v.route, e);
+    }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
+    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${g.route}${g.n === 1 || g.route === ROUTE_LABEL.unknown ? "" : "s"}`);
+    const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+    const gap = sum(vs.map((v) => v.marketValue)) - r.marketValue;
+    return `: ${joined}${gap >= 1 ? `, as the statements print it, of which ${money(gap)} is one holding reported twice` : ""}`;
+  };
   const toggleLabelFor = (r: Row, open: boolean) => {
     if (r.mandate) return open ? "Hide the shares inside this mandate" : "List the shares inside this mandate";
     const n = trancheInfo.get(r.key)?.count ?? 0;
@@ -2271,8 +2302,8 @@ export function PortfolioMonitor() {
     // would read "held through 0", which is a measurement of nothing rather
     // than the honest statement that this is a fund look-through.
     if (r.venues.length === 0) return open ? "Hide the funds that hold it" : `No statement in this book reports it — held inside ${viaFunds}; show which`;
-    return open ? "Hide how this name is held"
-      : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"}${viaFunds ? ` and inside ${viaFunds}` : ""} — show which${n ? `, and the ${n} dated contributions behind them` : ""}`;
+    return open ? `Hide how this name is held${routeSplitOf(r)}`
+      : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"}${routeSplitOf(r)}${viaFunds ? `, and inside ${viaFunds}` : ""} — show which${n ? `, and the ${n} dated contributions behind them` : ""}`;
   };
   const NO_COST_LINE = "this account's statement reports no cost for the holding — a depository holds the shares and did not buy them";
   const dayCell = (live: boolean, pct: number | null) => (live && pct != null

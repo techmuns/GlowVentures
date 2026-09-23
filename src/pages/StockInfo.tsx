@@ -1033,7 +1033,12 @@ export function StockInfo() {
               {arbitrage
                 ? <>What it holds is not drawn: long shares hedged by short futures are not the family&rsquo;s stock. Its value counts whole, as cash.</>
                 : canHaveLookthrough(rows[0])
-                ? <>What the scheme holds is shown above, from the AMC&rsquo;s own monthly disclosure.</>
+                /* CONDITIONAL, because it is not always true: a scheme that
+                   resolves no disclosure (Liquid BeES) or discloses no portfolio
+                   (the metal ETFs) is shown above as exactly that, and an
+                   unconditional "is shown above" would contradict the card it
+                   points at. */
+                ? <>Where the AMC&rsquo;s own monthly disclosure resolves, what the scheme holds is shown above.</>
                 : <>An AIF publishes no such disclosure, so no list of its companies can be shown.</>}
             </p>
           )}

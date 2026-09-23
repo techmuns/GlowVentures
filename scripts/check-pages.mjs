@@ -18611,6 +18611,32 @@ const INVARIANTS = {
   ],
   "monitor-category-drill": [
     [...AXIS_EXPANSION[0]],
+    /**
+     * THE ROUTE SUBTOTALS ARE THE CHEVRON'S HOVER (Stage 10cg). They were the
+     * sentence that led the opened row — *"direct you hold X Cr through direct
+     * equity, and another Y crores through these five funds"* — and the family
+     * then asked for the sentences inside the tables to go. Each line names its
+     * own route; the SUBTOTAL per route is nowhere else, so it is held here to
+     * the lines it sums, each part within its own printed precision, and to
+     * naming the overlap exactly where the row has one.
+     */
+    ["the chevron's hover names the route subtotals, which add to the lines, and the overlap", (t, ctx) => {
+      const d = ctx?.axisDrill;
+      if (!d) return AXIS_VENUE_BOOK?.pairs ? false : { notChecked: "no clubbed row was opened on this run" };
+      const tip = (ctx.titles ?? []).find((x) => /^Hide how this name is held/.test(x ?? ""));
+      if (!tip) return false;
+      const parts = [...tip.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s+through /g)];
+      if (!parts.length) return false;
+      // Half of the last printed decimal of each part, in crore: the page's own
+      // printing precision reproduced, never a tolerance widened to fit.
+      const half = (s, u) => crU(String(0.5 * 10 ** -((s.split(".")[1] ?? "").length)), u);
+      const sumParts = parts.reduce((a, m) => a + crU(m[1], m[2]), 0);
+      const bound = parts.reduce((a, m) => a + half(m[1], m[2]), 0);
+      const sumLines = d.lines.reduce((a, l) => a + l.mv, 0) / 1e7;
+      if (!(Math.abs(sumParts - sumLines) <= bound + 1e-9)) return false;
+      const twice = /reported twice/.test(tip);
+      return d.overlap ? twice : !twice;
+    }],
     ["the row a reader clicks really opens", (t, ctx) => {
       const d = ctx?.axisDrill;
       if (!d) return AXIS_VENUE_BOOK?.pairs ? false : { notChecked: "no clubbed row was opened on this run" };
@@ -19497,6 +19523,18 @@ const INVARIANTS = {
   ],
   stock: [
     ...stockLayoutChecks(),
+    /**
+     * THE RESEARCH POINTER IS ONE LINE, AND WHAT IT DROPPED IS ITS HOVER
+     * (Stage 10cg). It was a 511-character paragraph under the insider-trades
+     * table — and it sits OUTSIDE any card, where the `tableNotes` guard does
+     * not look, so it is asserted here by name. Both halves: the line a reader
+     * sees, and the market-cap sentence a reader who hovers still finds.
+     */
+    ["the research pointer under the insider table is one line, and its detail is its hover", (t, ctx) => {
+      if (!/Financials, ratios, shareholding, street estimates, documents & concalls are live above/.test(t)) return false;
+      if (/not repeated here as standalone figures/.test(t)) return false;
+      return (ctx?.titles ?? []).some((x) => /not repeated here as standalone figures/.test(x) && /price feed does not return them/.test(x));
+    }],
     // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
     //
     // Macro Research and Economy & Macro were the most visible readers of
@@ -24728,6 +24766,14 @@ for (const theme of THEMES) {
         for (const f of foldsOnArrival ?? []) {
           if (f.open) invariants.push(`the "${f.id}" fold is closed on arrival — a fold that opens itself is the paragraph back`);
         }
+      }
+      // THE FUND NOTICE NEVER SAYS "SHOWN ABOVE" UNCONDITIONALLY (Stage 10cg). On
+      // a scheme that resolves no disclosure (Liquid BeES) or discloses no
+      // portfolio (the metal ETFs) the card above says the opposite, so the line
+      // carries its condition — the one main's longer wording had.
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && /\/stock\//.test(page.url())
+        && /What the scheme holds is shown above/.test(mainText)) {
+        invariants.push("a fund page says what the scheme holds is shown above only where its disclosure resolves");
       }
       // ANY VIEW OF THE POLYCAB PAGE, not only the param-free one: the page grew
       // a `?view=` toggle, and `/\/polycab$/` would have fired the ring-fence
