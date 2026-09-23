@@ -46,7 +46,20 @@ ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund
 WANT="${CASES:-}"
 N=0
 
-sweep() { THEMES=light ONLY=$ROUTES node scripts/check-pages.mjs 2>&1 | grep -E 'INVARIANT FAILED|^✗' | sed 's/^/   /'; }
+# A SWEEP THAT DID NOT RUN IS NOT A CLEAN ONE. check-pages ends every walk it
+# completes with a tally line; a run that printed none never launched its browser
+# or died on the way. Measured once: a TMPDIR too long for Chromium's singleton
+# socket (a Unix socket path is capped near 108 bytes) failed every launch, and
+# this function — reading only for failure lines — reported three bugs as having
+# fired nothing. That is NOT A RESULT, and it says so and why.
+sweep() {
+  local raw; raw=$(THEMES=light ONLY=$ROUTES node scripts/check-pages.mjs 2>&1)
+  if ! grep -qE 'route/theme/width combinations (clean|have a finding)' <<<"$raw"; then
+    echo "   NOT A RESULT — the sweep did not run: $(grep -m1 -vE '^[[:space:]]*$|node:internal|triggerUncaught|^[[:space:]]*\^' <<<"$raw" | cut -c1-160)"
+    return
+  fi
+  grep -E 'INVARIANT FAILED|^✗' <<<"$raw" | sed 's/^/   /'
+}
 
 run_case() {
   local name="$1"; shift
