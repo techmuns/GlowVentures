@@ -195,13 +195,18 @@ const deduped = dedupedPositions(BOOK_POSITIONS);
     ok(`${name} is not a private-market holding`,
       !scope.dedupedRows.some((p) => p.security.toLowerCase().includes(name.toLowerCase())));
   }
-  // ...AND THEY ARE NAMED as being elsewhere, with a value. Dropping a row and
-  // saying nothing is the same defect as showing a ₹0 one.
-  ok("the funds shown elsewhere are named", note.listedFunds.count > 0 && note.listedFunds.mv > 0);
-  for (const name of ["Sanshi", "Buoyant", "Carnelian"]) {
-    ok(`${name} is named as shown elsewhere`,
-      note.listedFunds.securities.some((sName) => sName.toLowerCase().includes(name.toLowerCase())));
-  }
+  // ...AND THE PAGE STILL SAYS WHICH SIDE IT IS. The card that named these
+  // three funds one by one went at the family's request ("these kind of
+  // placeholders are not relevant"); what a reader cannot do without is the
+  // LISTED side's value beside the private one, so the funds that left are
+  // visibly somewhere. It is the sides line, and its listed term must hold them.
+  const listed = note.sides.find((x) => x.key === "listed");
+  const cat3 = sum(dedupedPositions(currentHoldings(BOOK_POSITIONS))
+    .filter((p) => p.assetClass === "AIF" && p.marketSide === "listed").map((p) => p.marketValue));
+  ok("the listed side the page states holds the Category III funds that left it",
+    !!listed && cat3 > 0 && listed.value >= cat3, `listed ${listed?.value}, Category III ${cat3}`);
+  ok("the scope note no longer carries the removed card's fund lists",
+    !("listedFunds" in note) && !("unplaced" in note));
   // THE WHOLE DOUBLE COUNT IS STILL ON THIS PAGE, which is the page's own
   // central arithmetic and the one thing a rescope could have taken away.
   ok("both duplicated holdings are still in the private scope",

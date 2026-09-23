@@ -11,7 +11,7 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs, depositoryCashHoldings, partialValuationNotes } from "@/lib/fundNavs";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
@@ -168,6 +168,8 @@ type Ctx = {
   quotesAsOf: string | null;   // when the feed was pulled
   livePriced: number;          // holdings carrying a live price
   notLive: number;             // holdings still on their statement mark
+  /** The feeds pricing what is on screen — "Upstox", "muns" — primary first. */
+  quoteFeeds: string[];
   /**
    * Securities with NO NSE symbol at all — cash balances, receivables and the
    * liquid-fund sweep. These can never go live however well the feed is running,
@@ -445,14 +447,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // response that never mentioned it.
   const quotesPending = useMemo(() => new Set(quotes?.pending ?? []), [quotes]);
   const pendingFor = useCallback((symbols: readonly string[]) => pendingAmong(quotes, symbols), [quotes]);
+  const quoteFeeds = useMemo(() => quoteFeedNames(quotes), [quotes]);
   const value = useMemo<Ctx>(
     () => ({
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
-      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, unpriceable, quotesPending, pendingFor, refreshQuotes,
+      quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, unpriceable, quotesPending, pendingFor, refreshQuotes],
+     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 }
