@@ -26,8 +26,10 @@
  *   AIF (14 names)   → Sanshi and Buoyant are the family's EQUITY; Baring PE,
  *                      Transition Venture and 360 ONE Special Opportunities are
  *                      ALTERNATE; Neo Infra is DEBT.
- *   Mutual Fund (20) → Helios Flexi Cap is EQUITY; the arbitrage funds are DEBT;
- *                      ABSL and ICICI Liquid are CASH.
+ *   Mutual Fund (20) → Helios Flexi Cap is EQUITY; ABSL and ICICI Liquid are
+ *                      CASH; the review files its arbitrage funds as DEBT, and
+ *                      the family have since overruled that — arbitrage is CASH
+ *                      (see `cashByInstruction` below).
  *   ETF (3)          → DSP Gold and DSP Silver are ALTERNATE; Liquid BeES is CASH.
  *
  * Only two are safe, and they are safe by definition rather than by luck: a
@@ -130,6 +132,7 @@
  * is the same standing `shared/sectors.mjs` has: a committed map, nothing inferred.
  */
 import type { Position } from "./types";
+import { isCashEquivalent } from "./analytics";
 
 export type FamilyBasket =
   | "Stable Growth" | "Entrepreneurial Growth" | "Thematic & Tactical" | "Liquidity";
@@ -439,12 +442,49 @@ const classByDerivation = (p: Classifiable): FamilyAssetClass | null =>
 export type Resolved<T> = { value: T; source: TaxonomySource; reviewProduct: string | null };
 
 /**
+ * ── CASH ON THE FAMILY'S OWN AXES TOO, BECAUSE THEY SAID "EVERYWHERE" ──────
+ *
+ *   "Wherever we have cash as asset class or category … arbitrage funds are
+ *    nothing but basically cash … need not be classified into any other
+ *    category except for cash."
+ *
+ * Their review files its arbitrage funds on the DEBT sheet, which is why this
+ * is a RULE and not a map entry: a map entry reading Cash would cite a workbook
+ * row that says Debt, and `familyTaxonomy.test.ts` would rightly fail it as a
+ * citation nobody can follow. So the family's instruction is applied here and
+ * tagged `rule`, and the page can say how much of its Cash was placed that way
+ * rather than presenting it as the review's answer.
+ *
+ * ON THE BASKET AXIS "CASH" IS LIQUIDITY. There is no Cash basket; the family's
+ * four are Stable Growth, Entrepreneurial Growth, Thematic & Tactical and
+ * Liquidity, and their own workbook files EVERY cash equivalent it names — the
+ * four liquid funds, Liquid BeES and all four arbitrage funds — on its Liquid
+ * sheet, with no counterexample. That is the evidence that licenses this as a
+ * rule, the same standing the direct-stock rule has below.
+ *
+ * NEVER INSIDE A MANDATE. A liquid sleeve a PMS holds belongs to the mandate
+ * product, whose row has to tie to its own statement — the order
+ * `holdingBucket` keeps on the category axis, kept here for the same reason.
+ *
+ * WHERE THE REVIEW ALREADY SAYS CASH, THE REVIEW IS THE SOURCE. The liquid
+ * funds are on its Cash sheet by name, so they keep `review`; only a cash
+ * equivalent the review files elsewhere, or does not name, is `rule`.
+ */
+const cashByInstruction = (p: Classifiable, isMandate: boolean): boolean =>
+  !isMandate && isCashEquivalent(p);
+
+/**
  * WHICH BASKET, AND ON WHOSE AUTHORITY. `null` where nobody has said — which is
  * a section on screen with its reason, never a holding quietly dropped from the
  * table or swept into whichever basket happens to be first.
  */
 export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<FamilyBasket> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
+  if (cashByInstruction(p, isMandate)) {
+    return hit?.basket === "Liquidity"
+      ? { value: "Liquidity", source: "review", reviewProduct: hit.reviewProduct }
+      : { value: "Liquidity", source: "rule", reviewProduct: hit?.reviewProduct ?? null };
+  }
   if (hit) return { value: hit.basket, source: "review", reviewProduct: hit.reviewProduct };
   // A mandate is never rule-filled: see `basketByRule`.
   const byRule = isMandate ? null : basketByRule(p);
@@ -454,6 +494,11 @@ export function familyBasket(p: Classifiable, isMandate: boolean): Resolved<Fami
 /** The family's asset class, same contract. */
 export function familyAssetClass(p: Classifiable, isMandate: boolean): Resolved<FamilyAssetClass> | null {
   const hit = FAMILY_TAXONOMY[productKeyOf(p, isMandate)];
+  if (cashByInstruction(p, isMandate)) {
+    return hit?.assetClass === "Cash"
+      ? { value: "Cash", source: "review", reviewProduct: hit.reviewProduct }
+      : { value: "Cash", source: "rule", reviewProduct: hit?.reviewProduct ?? null };
+  }
   if (hit) return { value: hit.assetClass, source: "review", reviewProduct: hit.reviewProduct };
   const derived = classByDerivation(p);
   return derived ? { value: derived, source: "derived", reviewProduct: null } : null;

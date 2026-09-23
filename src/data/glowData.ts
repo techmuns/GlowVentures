@@ -459,7 +459,8 @@ export const BOOK_ACCOUNTS: Account[] = [
     "asOf": "2026-07-31",
     "inceptionDate": null,
     "custodian": "Motilal Oswal Financial Services (demat)",
-    "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian"
+    "noPositionsReason": "no HOLDING statement for this account is in the drop — only its demat-transactions statement(s). The tape's closing balances are in the archive as quantities at 2026-07-31 and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian",
+    "transactionsOnly": true
   },
   {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",

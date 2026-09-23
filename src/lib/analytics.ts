@@ -579,29 +579,49 @@ export const UNROUTED_EQUITY_BUCKET = "Equity — how it is held is not stated";
  * on a shared HOUSE, and a section heading looks equally authoritative whichever
  * rows sit under it.
  *
- * ── ARBITRAGE IS IN THE RULE AND NOT YET IN THE BOOK, WHICH IS TWO FACTS ────
+ * ── ARBITRAGE IS CASH, EVERYWHERE, AND THE FAMILY HAS NOW SAID SO TWICE ────
  *
- * The family named arbitrage in the same breath as liquid, and their review
- * carries ₹41.08 Cr of it — four funds, the largest ₹30.99 Cr. Two things about
- * that are worth stating rather than glossing:
+ *   "Wherever we have cash as asset class or category — arbitrage funds or
+ *    holdings into that cash as well, because arbitrage funds are nothing but
+ *    basically cash. Implement this everywhere on the dashboard. Whenever,
+ *    wherever we have cash as a line item, we need to show arbitrage funds
+ *    inside it. Arbitrage funds need not be classified into any other category
+ *    except for cash."  (23 Sep 2026)
  *
- *   • It is the ONE place this departs from their workbook. That workbook lists
- *     all four on its DEBT sheet — which is why `familyTaxonomy.ts` files them
- *     as Debt on the family's own asset-class axis, and that stays. It also
- *     codes every one of them basket `Liquid`, so the workbook was already half
- *     of this way. The instruction above is the family overruling their own
- *     sheet placement for the category axis, which is theirs to do.
- *   • NOT ONE OF THEM IS IN THIS BOOK. Searched over every position: no holding
- *     carries an arbitrage name, so this map has no arbitrage entry today and
- *     the screen shows none. Saying "arbitrage now shows in cash" would be a
- *     claim about a row that does not exist.
+ * This block used to record arbitrage as "in the rule and not yet in the book":
+ * the family named it beside liquid, their review carries four arbitrage funds,
+ * and no POSITION carried one, so this map had no arbitrage entry and the
+ * screen showed none. The second half was true of the positions and it was not
+ * the whole truth. Three arbitrage funds ARE held — Motilal Oswal, Kotak and
+ * Bandhan, on Ajay's main demat 1201090012539150 — and the only document that
+ * says so is that account's TRANSACTION statement, which prints closing units
+ * and no rate. The book carries them as quantities (`BOOK_SHARE_MOVEMENTS`) and
+ * the dashboard now values them at AMFI's published NAV — `fundNavs.ts`, where
+ * the reasoning and the gates live. They are keyed below on the depository's
+ * own securityKey, because that is the key those holdings carry.
  *
- * That second point is exactly how a typed list goes stale in silence, so it is
- * not left to a future reader to notice: `cashEquivalentCandidates` below finds
- * what this map does not name, and `familyTaxonomy.test.ts` FAILS on the first
- * drop that brings one. The detector REPORTS and never DECIDES — check (c)'s
- * "flagged, never deduped", one axis over — because a rule that moved money on
- * the strength of a name is the failure the paragraph above refuses.
+ * ── HOW EACH ARBITRAGE ENTRY IS KNOWN TO BE ONE — BY IDENTIFIER, NOT BY NAME ─
+ *
+ * AMFI files every scheme under SEBI's own category, and `build-fund-navs`
+ * records it against the ISIN. Each entry below is `Hybrid Scheme - Arbitrage
+ * Fund` in that file; `familyTaxonomy.test.ts` asserts it, and asserts the
+ * converse too — any scheme the dashboard carries that AMFI files as a liquid or
+ * arbitrage fund must be in this map, or the suite fails and names it. That is
+ * a stronger net than the name pattern below, which cannot see a depository's
+ * clipping of a name.
+ *
+ * ── AND IT OVERRULES THE FAMILY'S OWN WORKBOOK, ON PURPOSE ─────────────────
+ *
+ * Their review lists its arbitrage funds on the DEBT sheet, and codes every one
+ * basket `Liquid`. "Need not be classified into any other category except for
+ * cash" is the family overruling their own sheet, on every axis — category,
+ * their own asset class, and the basket axis's cash, which is Liquidity. That is
+ * theirs to do, and `familyTaxonomy.ts` files it as their RULE rather than as
+ * the review, so the page can say which.
+ *
+ * The detector below still REPORTS and never DECIDES — check (c)'s "flagged,
+ * never deduped", one axis over — because a rule that moved money on the
+ * strength of a name is the failure the committed list exists to refuse.
  */
 export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
   "absl-liqf-d-growth": "Aditya Birla SL Liquid Fund-Direct (G) — Cash sheet",
@@ -618,6 +638,22 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
    * find it missing.
    */
   "axis-liquid-fund-direct-plan-growth-option": "Axis Liquid Fund - Direct Plan - Growth Option — Cash sheet",
+  /**
+   * THE ARBITRAGE FUNDS — the family's instruction of 23 Sep 2026, each one an
+   * `Arbitrage Fund` in AMFI's own SEBI categorisation against its ISIN.
+   * Motilal Oswal's is the holding their 30 June review carries (Debt tab,
+   * Liquid basket), and its own transaction rows record the same 16,308,407.445
+   * units the depository credited on 21 May. The review's Kotak line is that
+   * scheme's REGULAR plan, 642,940 units bought in May 2025 — a different
+   * holding from these Direct-plan units, which the depository credited on
+   * 3 July 2026 with Bandhan's, after the review was drawn.
+   */
+  "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth":
+    "Motilal Oswal Arbitrage Fund - Direct Growth (INF247L01ED1) — AMFI: Hybrid Scheme - Arbitrage Fund; the review's Debt tab, overruled by the family's instruction",
+  "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth":
+    "Kotak Arbitrage Fund - Direct Growth (INF174K01LC6) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
+  "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth":
+    "Bandhan Arbitrage Fund - Direct Growth (INF194K01Y60) — AMFI: Hybrid Scheme - Arbitrage Fund; the family's instruction",
 };
 
 /**
@@ -629,6 +665,24 @@ export const CASH_EQUIVALENT_KEYS: Readonly<Record<string, string>> = {
  */
 export const isCashEquivalent = (p: { securityKey?: string }) =>
   p.securityKey != null && Object.prototype.hasOwnProperty.call(CASH_EQUIVALENT_KEYS, p.securityKey);
+
+/**
+ * THE CLASS A READER IS SHOWN FOR A HOLDING.
+ *
+ * `assetClass` stays what the ISSUING DOCUMENT called the instrument — §5, and
+ * the archive goes on describing the statements. This is the class a PAGE
+ * prints wherever a holding's class is a line a reader reads: every cash
+ * equivalent is `Cash`, never the wrapper its statement typed it as. One place,
+ * because "arbitrage need not be classified into any other category except for
+ * cash" is a claim about every surface at once, and a second copy of it on one
+ * page is how one page ends up disagreeing with the rest.
+ *
+ * It is for DISPLAY and for grouping what a page shows. What a holding IS for
+ * logic — whether it is a fund with a disclosure to look through, which side of
+ * the listed/private split it sits on — still reads `assetClass`.
+ */
+export const readerClassOf = (p: { assetClass: string; securityKey?: string }): string =>
+  isCashEquivalent(p) ? "Cash" : p.assetClass;
 
 /**
  * WHAT THE MAP DOES NOT NAME, SO THE NEXT DROP CANNOT LAND SILENTLY.
@@ -810,9 +864,12 @@ export function excludedClasses(positions: Position[], keep: (p: Position) => bo
   const m = new Map<string, { mv: number; count: number }>();
   for (const p of positions) {
     if (keep(p)) continue;
-    const e = m.get(p.assetClass) ?? { mv: 0, count: 0 };
+    // THE READER'S CLASS, so a liquid or arbitrage fund left out of a company
+    // view is named under Cash — the one category the family allows it.
+    const k = readerClassOf(p);
+    const e = m.get(k) ?? { mv: 0, count: 0 };
     e.mv += p.marketValue; e.count += 1;
-    m.set(p.assetClass, e);
+    m.set(k, e);
   }
   return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
 }
