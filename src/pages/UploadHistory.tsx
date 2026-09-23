@@ -69,7 +69,8 @@ export function UploadHistory() {
     <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow="Admin" title="Snapshot History"
         subtitle={nav.length
-          ? `Dated portfolio valuations, one point per date on which a covered account restated — over the ${covered} of ${accounts} accounts that publish more than one. Every other account is held at its latest mark, and Morning CIO names the ones that cannot supply a series at all.`
+          ? <span title="One point per date on which a covered account restated. Every other account is held at its latest mark, and Morning CIO names the ones that cannot supply a series at all.">
+              Dated valuations over the {covered} of {accounts} accounts that publish more than one</span>
           : "Dated portfolio valuations from the accounts that publish more than one."}
         right={<Pill tone="info">{nav.length} dated points</Pill>} />
       {/* An empty table is still a table: header row, column names, and nothing
@@ -155,12 +156,9 @@ export function UploadHistory() {
         /* THE REASON FOR A ₹0 IS UNDER THE TABLE, NOT ONLY IN A HOVER. §2 keeps
            a computed zero and requires its cause on screen; seven per-row
            sentences would be unreadable, so the column's rule is stated once. */
-        <p className="mt-3 text-[11.5px] leading-relaxed text-slate-500">
-          <strong className="text-slate-400">₹0 under Capital in is measured</strong> — no subscription or withdrawal
-          reached a covered account in that interval, so the whole change beside it is a change in value. Where capital
-          did move, that much of the change is money added rather than earned, and Morning CIO&rsquo;s NAV chart nets it
-          out before comparing the book against the Nifty 500. Four covered accounts publish no dated capital record at
-          all; they are named there too.
+        <p className="mt-3 text-[11.5px] text-slate-500"
+          title="No subscription or withdrawal reached a covered account in that interval, so the whole change beside it is a change in value. Where capital did move, that much of the change is money added rather than earned, and Morning CIO's NAV chart nets it out before comparing the book against the Nifty 500. Four covered accounts publish no dated capital record at all; they are named there too.">
+          <strong className="text-slate-400">₹0 under Capital in is measured</strong> — no money came in or went out in that interval.
         </p>
       )}
       <Card className="mt-5" title="Current consolidated snapshot">

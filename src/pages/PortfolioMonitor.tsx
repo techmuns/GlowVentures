@@ -7,8 +7,8 @@ import { MultiSelectFilter } from "@/components/MultiSelectFilter";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
-import { FundExposure } from "@/components/FundExposure";
 import { useStockExposure } from "@/lib/useStockExposure";
+import type { FundExposureRow } from "@/lib/lookthrough";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
@@ -71,8 +71,8 @@ import { useDatedCapital } from "@/lib/useDatedCapital";
 // than one the caller can name once. The Weight cell builds its own FormulaDef
 // for that, and a future session that gives `weightFormula` a way to express a
 // filtered denominator should collapse the two.
-import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
-import { DematElsewhere } from "@/components/QuantityMovement";
+import { pnlFormula, returnFormula, stockHref } from "@/lib/auditFormulas";
+import { notHeldNote } from "@/components/QuantityMovement";
 import { movementsFor } from "@/lib/shareMovements";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -938,7 +938,8 @@ export function PortfolioMonitor() {
    * The pick-list offers every holding on every axis — a reader searches the
    * book, not the view — but on All Securities only a COMPANY SHARE is a row: a
    * fund is one purchase of somebody else's portfolio, and its money is in the
-   * fold under the table (Stage 10aj). So picking "Sanshi Fund-I" there drew an
+   * five-bucket partition in the Total exposure footer's hover (Stage 10aj, and
+   * Stage 10ci, which moved it there). So picking "Sanshi Fund-I" there drew an
    * empty table over a footer of ₹0 — a family who KNOW they hold it being told
    * nothing matched, which is the BSE search's defect one control over.
    *
@@ -1816,13 +1817,6 @@ export function PortfolioMonitor() {
   // dually-reported holding; name the gap so the footer (consolidated) reads true.
   const dupGap = !consolidate && rawMV - totMV > 1 ? rawMV - totMV : 0;
   /**
-   * THE SECURITY AXIS'S OWN TWO FIGURES, both DERIVED from the rows on screen so
-   * the caption cannot go stale: how many names are genuinely clubbed across more
-   * than one account, and how much of the table is a fund whose constituents this
-   * book does not carry. Zero on every other axis, where the caption is not drawn.
-   */
-  const clubbedCount = useMemo(() => rows.filter((r) => (r.venues?.length ?? 0) > 1).length, [rows]);
-  /**
    * ── WHAT THE STOCK AXIS COVERS, AND WHAT IT CANNOT — A PARTITION ──────────
    *
    * The rows on this axis are companies, so the footer no longer describes the
@@ -1925,6 +1919,49 @@ export function PortfolioMonitor() {
    * table states it: a reader who adds a column and lands somewhere else must
    * be told why, not left to discover it.
    */
+  /**
+   * THE DERIVED COLUMNS' HEADER HOVER, WITH WHAT THE LOOK-THROUGH COULD READ.
+   * The coverage sentence was the second paragraph of the look-through card
+   * inside every opened row; the card is rows now, and a claim about a column
+   * belongs on the column. Both derived headers carry the same words.
+   */
+  /**
+   * ── THE AIF FUNDS THE LOOK-THROUGH CANNOT SEE INTO, NAMED ONE PER FUND ────
+   *
+   *   "According to the client, Kaynes Technologies Limited is also a holding
+   *    in Vikas Khemani Fund."
+   *
+   * That fund is the Carnelian Bharat Amritkaal Fund — an AIF — and an AIF's
+   * statement reports units and a NAV and never what it owns, so a holding
+   * inside it is real to the family and unmeasurable here. A sentence that only
+   * COUNTED the AIFs left a reader who knows the fund holds Kaynes unable to
+   * tell whether this page had looked, so each fund is NAMED, once per fund
+   * rather than once per unit class. On main that was a paragraph inside every
+   * opened company; here it is one line of the table that opens into one line
+   * per fund (`aifOpaqueRows`), and the list is the derived columns' header
+   * hover too. Empty wherever the look-through has not answered.
+   */
+  const aifOpaque = (() => {
+    if (exposure.status !== "ok") return [];
+    const by = new Map<string, { name: string; key: string; value: number }>();
+    for (const sk of exposure.skipped) {
+      if (!/^an AIF files/.test(sk.reason)) continue;
+      const name = splitFundClass(sk.fundName)?.fund ?? sk.fundName;
+      const e = by.get(name) ?? { name, key: sk.fundKey, value: 0 };
+      e.value += sk.marketValue;
+      by.set(name, e);
+    }
+    return [...by.values()].sort((a, b) => b.value - a.value);
+  })();
+  const derivedNote = (() => {
+    if (exposure.status !== "ok") return DERIVED_NOTE;
+    const other = exposure.skipped.filter((sk) => !/^an AIF files/.test(sk.reason));
+    return `${DERIVED_NOTE} Read from the monthly filings of ${exposure.covered} of your ${exposure.considered} fund holdings.`
+      + (other.length ? ` Not read: ${other.map((sk) => sk.fundName).join(", ")}.` : "")
+      + (aifOpaque.length
+        ? ` Nothing held inside your ${aifOpaque.length} AIF fund${aifOpaque.length === 1 ? "" : "s"} (${fmtFromBase(sum(aifOpaque.map((f) => f.value)), { compact: true })}) is visible here — ${aifOpaque.map((f) => f.name).join(" · ")}: an AIF reports units and a NAV, never the companies it owns.`
+        : "");
+  })();
   const weightScope = [entity !== "All" ? entity : null, sector !== "All" ? sector : null, bucket !== "All" ? groupLabelFor(groupAxis)(bucket) : null].filter(Boolean).join(" · ");
   const weightPlain = `How big this holding is as a share of ${weightScope ? `the ${weightScope} book` : "the whole book — every account and every asset class"}: ${weightCount} positions, with a holding reported under two members counted once. The company pick-list narrows the rows above, never this denominator.`;
   const weightGap = weightBase - totMV > 1 ? weightBase - totMV : 0;
@@ -2052,42 +2089,21 @@ export function PortfolioMonitor() {
   /** One child row: the tree cell, then the figures in their own columns. */
   const childRow = (key: string, kind: string, depth: 1 | 2, name: {
     title: ReactNode; sub?: ReactNode; last?: boolean; ancestorLast?: boolean;
+    /** A line that opens rows of its own — a fund line into its instruments. */
+    toggle?: { open: boolean; label: string };
   }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
-    <Tr view={holdView} key={key} className={adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}
+    <Tr view={holdView} key={key}
+      className={`${adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}${name.toggle ? " cursor-pointer" : ""}`}
+      {...(name.toggle ? rowToggle(() => toggleRow(key)) : {})}
       data-tree-child={kind} {...data}>
       <TreeNameCell depth={depth} density="dense" className="min-w-[16rem]"
-        title={name.title} sub={name.sub} last={name.last} ancestorLast={name.ancestorLast} />
+        title={name.title} sub={name.sub} last={name.last} ancestorLast={name.ancestorLast}
+        {...(name.toggle ? {
+          open: name.toggle.open, onToggle: () => toggleRow(key), toggleLabel: name.toggle.label,
+          toggleData: { "data-child-toggle": key },
+        } : {})} />
       {childTds(cells)}
     </Tr>
-  );
-  /**
-   * A FULL-WIDTH LINE INSIDE THE TREE — a sentence, or the look-through card —
-   * drawn with the same guide so it reads as part of what the row opened into
-   * rather than as a new block under the table.
-   */
-  const treeLine = (key: string, kind: string, last: boolean, body: ReactNode, data: Record<string, string> = {}) => (
-    <tr key={key} className={TREE_ROW_DENSE.child} data-tree-child={kind} {...data}>
-      <td colSpan={COL_COUNT} className="relative py-1.5 pl-[2.35rem] pr-3">
-        <span aria-hidden className={`absolute left-[1rem] top-0 border-l border-ink-600 ${last ? "h-3" : "bottom-0"}`} />
-        {body}
-      </td>
-    </tr>
-  );
-  /**
-   * A SENTENCE AMONG THE CONTRIBUTIONS, at the depth of the rows it explains —
-   * full width, with the guides a row at that depth carries, so it reads as part
-   * of the tree rather than as a caption under it.
-   */
-  const treeNote = (key: string, depth: 1 | 2, ancestorLast: boolean, body: ReactNode) => (
-    <tr key={key} className={TREE_ROW_DENSE.child} data-tree-child="note">
-      <td colSpan={COL_COUNT} className={`relative py-1 pr-3 ${depth === 2 ? "pl-[3.5rem]" : "pl-[2.35rem]"}`}>
-        {depth === 2 && !ancestorLast && (
-          <span aria-hidden className="absolute left-[1rem] top-0 bottom-0 border-l border-ink-600" />
-        )}
-        <span aria-hidden className={`absolute ${depth === 2 ? "left-[2.15rem]" : "left-[1rem]"} top-0 bottom-0 border-l border-ink-600`} />
-        {body}
-      </td>
-    </tr>
   );
   /**
    * THE DATED CONTRIBUTIONS BEHIND ONE STATEMENT — each its own units at the
@@ -2098,24 +2114,16 @@ export function PortfolioMonitor() {
    * construction rather than by a footer printed beside them.
    */
   const trancheRows = (parentKey: string, folioKey: string, cls: string | null, assetClass: string,
-    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean, withNote: boolean) => {
+    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean) => {
     const rows: ReactNode[] = [];
     /*
-     * WHAT A ROW MARKED "SWITCHED" IS, said once above the rows it explains.
-     * Buoyant bought some of these units as Class A1 and moved them into A4; a
-     * row of the tree cannot carry the old panel's lead paragraph, so the
-     * sentence is a line of the tree itself, above that line's contributions.
+     * NO SENTENCE ABOVE A SWITCHED CONTRIBUTION. It used to explain, once per
+     * table, what "switched" means; the family asked for the notes inside the
+     * table to go (*"no one is reading these kind of notes"*), and every word of
+     * it is already in the hover on the row's own "switched A1 → A4" label and
+     * on its entry NAV (`switchedRowNote`): the units and NAV it was bought at,
+     * the class it moved into, and that what was paid and when is unchanged.
      */
-    if (withNote && t.rows.some((x) => x.move.carriedFrom)) {
-      rows.push(treeNote(`${folioKey}#switch-note`, depth, ancestorLast, (
-        <p className="max-w-[52rem] text-[11px] leading-relaxed text-slate-400">
-          A contribution <span className="text-slate-300">marked switched</span> was bought in an earlier unit class
-          and moved into this one by the fund: its units and entry NAV are restated in this class at the
-          fund&rsquo;s own switch ratio, and its hover gives the NAV it was bought at. The amount and the date
-          are the statement&rsquo;s.
-        </p>
-      )));
-    }
     t.rows.forEach((x, i) => {
       const cf = x.move.carriedFrom;
       // WHAT WAS PAID, where the fund's own charges on the day make it differ
@@ -2185,20 +2193,162 @@ export function PortfolioMonitor() {
   const acct = (no: string) => (no.length > 10
     ? <span title={`Account ${no}`}>a/c …{no.slice(-6)}</span>
     : <>a/c {no}</>);
+  /**
+   * ── WHAT THE FAMILY'S FUNDS HOLD OF THIS ISSUER, AS ROWS ─────────────────
+   *
+   *   *"When an entity is dropped down, they're literally seeing what is the
+   *    entity and which accounts are held in. So the dropdown is good. It's
+   *    just that I have issues with the extreme verbatim and verbose footnotes
+   *    that you have put, which make the whole table ugly."*
+   *
+   * The look-through used to be a CARD inside the opened row: two paragraphs
+   * of prose and a table of its own inside one cell — the box the family
+   * pointed at. It is lines of this table now, in this table's columns, like
+   * the accounts above them: one line per fund, its derived share under
+   * `Via funds` (the column headed "derived", which is the only column such a
+   * figure may sit in), and a fund that filed several instruments of the
+   * issuer opens into them. Nothing the card SAID was lost with its prose:
+   * the derived fence is on both derived columns' headers, the coverage and
+   * the AIF block are the Via funds header's hover and the Total exposure
+   * footer's, each line's arithmetic is its own value's hover, and "none of
+   * your funds holds this" is the row's own Via funds cell and its reason.
+   *
+   * The store is asked on the SECURITY axis alone — `useStockExposure` stays
+   * `loading` on the three allocation axes — so everywhere else a row has no
+   * fund lines, exactly as it had no card.
+   */
+  const fundLinesOf = (r: Row): FundExposureRow[] => {
+    if (!r.venues || !r.securityKey || !canLookThrough(r) || exposure.status !== "ok") return [];
+    return [...(exposure.byKey.get(r.securityKey)?.rows ?? [])].sort((a, b) => b.value - a.value);
+  };
+  /**
+   * ONE FUND'S SHARE OF THIS ISSUER — a line of the table, and the
+   * instruments it filed as lines under it where there is more than one.
+   *
+   * The fund's name opens its own page; the second line says what the fund
+   * filed the issuer as and how many instruments; the derived rupee sits under
+   * Via funds with its arithmetic in the hover (your holding of the fund × the
+   * share of the fund its filing puts in this issuer); and its share of the
+   * book sits under Weight, so the lines add to the row in both columns.
+   */
+  const fundLineRows = (r: Row, f: FundExposureRow, last: boolean): ReactNode[] => {
+    const key = `${r.key}>fund:${f.fundKey}`;
+    const many = f.instruments.length > 1;
+    const open = many && expanded.has(key);
+    const classes = [...new Set(f.instruments.map((x) => x.assetClass).filter((c): c is string => !!c))];
+    const filed = f.holdingsAsOf ? fmtDate(f.holdingsAsOf) : null;
+    const how = `DERIVED, not a position: you hold ${money(f.holdingValue)} of this fund and its `
+      + `${filed ? `${filed} ` : ""}filing${f.sourceKind === "amc" ? " (the AMC's own)" : f.sourceKind ? " (via an aggregator)" : ""}`
+      + ` puts ${fmtPct(f.pctAum)} of it in this issuer, so your share is ${money(f.value)}.`
+      + (f.via === "name" ? " The filing printed no ISIN for it, so it was matched on this book's own name for the company." : "")
+      // AN ABSENCE STILL NAMES ITS CAUSE, in the hover that already explains
+      // the line: the box these lines replaced said each of these in words.
+      + (filed ? "" : " This scheme's disclosure carries no as-of date.")
+      + (classes.length ? "" : " No filing here declared this line's asset class.")
+      + " It is no part of the book's NAV — the fund's own value already counts it.";
+    const rows: ReactNode[] = [childRow(key, "fund", 1, {
+      title: <StockLink securityKey={f.fundKey} name={f.fundName} />,
+      sub: <>via fund{classes.length ? <> · {classes.join(" + ")}</> : null}{many ? <> · {f.instruments.length} instruments</> : null}</>,
+      last,
+      ...(many ? { toggle: { open, label: open ? "Hide the instruments" : `${f.instruments.length} instruments of this issuer in the fund — show each` } } : {}),
+    }, {
+      viaFunds: <span title={how}>{fmtFromBase(f.value, { compact: true })}</span>,
+      weight: pctOfBook(f.value),
+    }, {
+      "data-fund-line": f.fundKey, "data-fund-line-via": f.via, "data-fund-line-value": f.value,
+      "data-fund-line-held": f.holdingValue, "data-fund-line-pct": f.pctAum,
+      "data-fund-line-instruments": f.instruments.length, "data-fund-line-classes": classes.join(","),
+      "data-fund-line-asof": f.holdingsAsOf ?? "",
+    })];
+    if (open) {
+      f.instruments.forEach((x, j) => rows.push(childRow(`${key}>${x.isin ?? x.name}#${j}`, "instrument", 2, {
+        title: x.name,
+        // A SECTOR ON A SHARE AND A CREDIT RATING ON A BOND — the AMC files
+        // both in one column and they are not the same fact, so the class and
+        // the rating are two words here, never one printed as the other.
+        sub: <>{x.assetClass ?? <AbsentCell reason="this filing declared no asset class for the line" />}{x.rating ? ` · ${x.rating}` : ""}{x.isin ? ` · ${x.isin}` : ""}</>,
+        last: j === f.instruments.length - 1, ancestorLast: last,
+      }, {
+        viaFunds: <span title={`${fmtPct(x.pctAum)} of the fund, as filed — your share ${money(x.value)}.${x.isin ? "" : " This filing carried no ISIN for the line."}`}>{fmtFromBase(x.value, { compact: true })}</span>,
+      }, {
+        "data-fund-instrument": f.fundKey, "data-fund-instrument-class": x.assetClass ?? "", "data-fund-instrument-value": x.value,
+      })));
+    }
+    return rows;
+  };
+  /** Whether this row's fund look-through has answered — the gate the fund lines and the AIF line share. */
+  const lookedThrough = (r: Row) => !!r.venues && !!r.securityKey && canLookThrough(r) && exposure.status === "ok";
+  /**
+   * THE AIFs, AS ONE LINE OF THE TABLE — "Inside your N AIF funds · not
+   * visible" — that opens into one line per fund, each linking to its own
+   * page. Its Via funds cell is an absence with its reason, never a figure:
+   * nothing this book can read says how much of this issuer any of them holds.
+   */
+  const aifOpaqueRows = (r: Row): ReactNode[] => {
+    const key = `${r.key}>aifs`;
+    const open = expanded.has(key);
+    const n = aifOpaque.length;
+    const rows: ReactNode[] = [childRow(key, "aif-opaque", 1, {
+      title: `Inside your ${n} AIF fund${n === 1 ? "" : "s"}`,
+      sub: "not visible — an AIF publishes no holdings",
+      last: true,
+      toggle: { open, label: open ? "Hide the AIF funds" : `Name the ${n} AIF fund${n === 1 ? "" : "s"} this cannot see into` },
+    }, {
+      viaFunds: <AbsentCell reason="an AIF reports units and a NAV, never the companies it owns, so no share of this issuer inside it can be struck" />,
+    }, { "data-fund-exposure-aifs": n })];
+    if (open) {
+      aifOpaque.forEach((f, j) => rows.push(childRow(`${key}>${f.key}`, "aif-opaque-fund", 2, {
+        title: <StockLink securityKey={f.key} name={f.name} />,
+        sub: `AIF · ${money(f.value)} held`,
+        last: j === n - 1, ancestorLast: true,
+      }, {}, { "data-fund-opaque": f.name })));
+    }
+    return rows;
+  };
   /** Can this row open at all? A chevron that opens nothing is worse than none. */
   const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
-    : r.venues ? (r.venues.length > 0 || canLookThrough(r))
+    : r.venues ? (r.venues.length > 0 || fundLinesOf(r).length > 0)
     : !!trancheInfo.get(r.key);
+  /**
+   * THE ROUTE SPLIT, IN THE CHEVRON'S HOVER (Stage 10cg).
+   *
+   *   "Then I drill down, then you tell me direct you hold X Cr through direct
+   *    equity, and then you hold another Y crores through these five funds."
+   *
+   * That was the sentence leading an opened row, and the family then asked for
+   * the sentences inside the tables to go. Each line under the row names its
+   * own route and share, but a SUBTOTAL per route was on screen nowhere else,
+   * so it rides in the hover of the control that opens the lines. It is struck,
+   * as the sentence was, over the statements AS PRINTED. Where two accounts
+   * report one holding it names the overlap, because the subtotals then add to
+   * more than the row.
+   */
+  const routeSplitOf = (r: Row): string => {
+    const vs = r.venues ?? [];
+    if (vs.length < 2) return "";
+    const by = [...vs.reduce((acc, v) => {
+      const e = acc.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
+      e.mv += v.marketValue; e.n += 1;
+      return acc.set(v.route, e);
+    }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
+    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${g.route}${g.n === 1 || g.route === ROUTE_LABEL.unknown ? "" : "s"}`);
+    const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+    const gap = sum(vs.map((v) => v.marketValue)) - r.marketValue;
+    return `: ${joined}${gap >= 1 ? `, as the statements print it, of which ${money(gap)} is one holding reported twice` : ""}`;
+  };
   const toggleLabelFor = (r: Row, open: boolean) => {
     if (r.mandate) return open ? "Hide the shares inside this mandate" : "List the shares inside this mandate";
     const n = trancheInfo.get(r.key)?.count ?? 0;
     if (!r.venues) return open ? "Hide the contributions" : `Bought over ${n} dated contribution${n === 1 ? "" : "s"} — show each one's own units, entry NAV and return`;
     if (r.fundClasses.length) return open ? "Hide this fund's unit classes" : `One fund, ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}) — show each`;
+    const nf = fundLinesOf(r).length;
+    const viaFunds = nf ? `${nf} fund${nf === 1 ? "" : "s"}` : "";
     // A DERIVED-ONLY ROW HAS NO ACCOUNT TO NAME, so a label counting accounts
     // would read "held through 0", which is a measurement of nothing rather
     // than the honest statement that this is a fund look-through.
-    if (r.venues.length === 0) return open ? "Hide what your funds hold of this issuer" : "No statement in this book reports it — show what your funds hold of it";
-    return open ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which${n ? `, and the ${n} dated contributions behind them` : ""}`;
+    if (r.venues.length === 0) return open ? "Hide the funds that hold it" : `No statement in this book reports it — held inside ${viaFunds}; show which`;
+    return open ? `Hide how this name is held${routeSplitOf(r)}`
+      : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"}${routeSplitOf(r)}${viaFunds ? `, and inside ${viaFunds}` : ""} — show which${n ? `, and the ${n} dated contributions behind them` : ""}`;
   };
   const NO_COST_LINE = "this account's statement reports no cost for the holding — a depository holds the shares and did not buy them";
   const dayCell = (live: boolean, pct: number | null) => (live && pct != null
@@ -2248,110 +2398,48 @@ export function PortfolioMonitor() {
     // BY ENTITY: the row IS one statement, so its contributions hang from it.
     if (!r.venues) {
       if (info?.direct) {
-        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false, true));
+        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false));
       }
       return out;
     }
     const vs = r.venues;
+    const funds = fundLinesOf(r);
     /*
-     * THE LOOK-THROUGH IS A ROW ONLY ONCE IT HAS SOMETHING TO SAY. On the
-     * three allocation axes the store is never asked (`useStockExposure` is
-     * disabled there and stays `loading`), and while it IS loading the card
-     * renders nothing — so drawn regardless, it was an empty row under every
-     * company a reader opened, a blank line in the tree that reads as a
-     * figure that failed to arrive.
+     * NO SENTENCE LEADS THE LINES ANY MORE. *"no one is reading these kind of
+     * notes … When an entity is dropped down, they're literally seeing what is
+     * the entity and which accounts are held in."* Everything the lead spelled
+     * out is on the lines themselves: each line's second line names its route
+     * (own account, manager's mandate, fund vehicle) and its share of the
+     * holding, the Counted once row below them names and subtracts a holding
+     * two accounts both report, and the weight it restated is the row's own
+     * cell. A company no statement reports opens straight into the funds that
+     * hold it, and its own cells already say why there is no account.
      */
-    const lookThrough = canLookThrough(r) && exposure.status !== "loading";
-    /**
-     * A ROW NO STATEMENT REPORTS — the family's own case: an issuer they hold
-     * only inside a fund. There is no account to list, so what it opens into is
-     * the look-through itself, led by the sentence that says why there is no
-     * line above it.
-     */
-    if (vs.length === 0) {
-      out.push(treeLine(`${r.key}>lead`, "lead", !lookThrough, (
-        <p className="text-[11px] leading-relaxed text-slate-400">
-          <span className="font-medium text-slate-300">{r.security}</span> —
-          {" "}<span className="font-medium text-slate-200">no statement in this book reports this
-          issuer</span>, so there is no account, no quantity and no cost for it. Every figure on this
-          row is the family&rsquo;s share of what their funds disclose.
-        </p>
-      )));
-      if (lookThrough) {
-        out.push(treeLine(`${r.key}>lookthrough`, "lookthrough", true,
-          <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />));
-      }
-      return out;
-    }
     const printed = sum(vs.map((v) => v.marketValue));
     const gap = printed - r.marketValue;
     const overlap = gap > 1;
     /*
      * AN ACCOUNT WHOSE DEPOSITORY STATEMENT CARRIES THIS NAME AND HOLDS NONE OF
-     * IT is not a line above — it holds nothing to put in these columns — and it
-     * is the account a reader opens this row to find: "is this in Ajay's account
-     * too?". It gets a line of its own, naming the two balances its statement
-     * printed; no figure on the row moves. A row ONLY where there is such an
-     * account (an empty line in the tree reads as a figure that failed to
-     * arrive), and never under a clubbed fund, whose classes are the lines and
-     * whose units in a demat are the depository's copy of what the fund reports.
+     * IT is not a holding — it has nothing to put in the money columns — and it
+     * is the account a reader opens this row to find: "is this in Ajay's
+     * account too?". It is a LINE OF THIS TABLE like every other one here (it
+     * was a full-width box on main; the family asked for the boxes inside an
+     * opened row to become rows): its Qty is the balance its own statement
+     * printed at the close, and its second line says what that means. Never
+     * under a clubbed fund, whose classes are the lines and whose units in a
+     * demat are the depository's copy of what the fund reports.
      */
     const elsewhere = r.fundClasses.length > 0 ? []
       : movementsFor(r.securityKey).filter((w) => !vs.some((v) => v.accountId === w.accountId));
-    const soldElsewhere = elsewhere.length > 0;
-    /**
-     * THE ROUTE SPLIT, IN WORDS, FIRST.
-     *
-     *   "Then I drill down, then you tell me direct you hold X Cr through
-     *    direct equity, and then you hold another Y crores through these five
-     *    funds."
-     *
-     * A sentence about ROUTES rather than accounts, so it leads the lines rather
-     * than being left to be assembled by eye. Struck over the statements AS
-     * PRINTED — and where that is not the figure at the head of the same
-     * sentence (a holding two accounts both report), the sentence says so
-     * rather than leaving two figures for one holding a clause apart.
-     */
-    const byRoute = [...vs.reduce((acc, v) => {
-      const e = acc.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
-      e.mv += v.marketValue; e.n += 1;
-      return acc.set(v.route, e);
-    }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
-    // THE SENTENCE ONLY WHERE IT SAYS SOMETHING THE LINES DO NOT: a split
-    // across more than one statement, or an overlap. Over a single line it
-    // restates the row it opened from, word for word.
-    if (vs.length > 1 || overlap) out.push(treeLine(`${r.key}>lead`, "lead", false, (
-      <p className="text-[11px] leading-relaxed text-slate-400">
-        <span className="font-medium text-slate-300">{r.security}</span> —
-        {" "}<span className="font-medium text-slate-200">{money(r.marketValue)}</span>, {(r.weight * 100).toFixed(2)}% of the book, held{" "}
-        {byRoute.map((g, i) => (
-          <span key={g.route}>
-            {i > 0 && (i === byRoute.length - 1 ? " and " : ", ")}
-            <span className="font-medium text-slate-200">{money(g.mv)}</span> through{" "}
-            {g.n === 1 ? "" : `${g.n} `}{g.route}{g.n === 1 ? "" : "s"}
-          </span>
-        ))}
-        {overlap && (
-          <> as the statements print it, of which{" "}
-            <span className="font-medium text-slate-200">{money(gap)}</span> is the same holding
-            reported twice</>
-        )}.
-      </p>
-    ), { "data-venue-lead": "" }));
-    /**
-     * ONE LINE PER STATEMENT THAT REPORTS THIS NAME — every line AS PRINTED,
-     * because a per-account figure never dedupes (§"consolidated counts once,
-     * per-account does not"). Its own units, cost, mark, value and return, in
-     * the columns the row above prints its own; the route, the account and its
-     * share of the holding under its name. On a clubbed fund the line IS a
-     * unit class, named and linked as one — which is where the row's absent
-     * Qty, Avg cost and CMP finally have their figures.
-     */
-    let switchNoted = false;
+    // WHAT FOLLOWS THE STATEMENT LINES — the accounts that sold it out, the
+    // funds that hold it, and the AIFs nothing can be seen inside — decides
+    // which line closes the tree guide.
+    const opaque = lookedThrough(r) && aifOpaque.length > 0;
+    const tail = elsewhere.length > 0 || funds.length > 0 || opaque;
     vs.forEach((v, i) => {
       const fk = venueKeyOf(v);
       const t = info?.byVenue.get(fk) ?? null;
-      const lastLine = i === vs.length - 1 && !overlap && !soldElsewhere && !lookThrough;
+      const lastLine = i === vs.length - 1 && !overlap && !tail;
       const vehicle = v.isMandate
         ? <Link to={`/mandate/${encodeURIComponent(v.accountId)}`} title={`Account ${v.accountNo} — open the mandate drill-down`}
             className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
@@ -2414,10 +2502,7 @@ export function PortfolioMonitor() {
         "data-venue-account": v.accountId, "data-venue-key": v.securityKey, "data-venue-mv": v.marketValue,
         ...(t ? { "data-folio-tranches": t.rows.length } : {}),
       }));
-      if (t) {
-        out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine, !switchNoted));
-        if (t.rows.some((x) => x.move.carriedFrom)) switchNoted = true;
-      }
+      if (t) out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine));
     });
     /**
      * COUNTED ONCE — the line that makes the lines add to the row. A holding
@@ -2434,7 +2519,7 @@ export function PortfolioMonitor() {
       out.push(childRow(`${r.key}>overlap`, "overlap", 1, {
         title: <span className="text-amber-400">Counted once</span>,
         sub: `one holding reported under ${vs.length === 2 ? "two" : vs.length} accounts`,
-        last: !soldElsewhere && !lookThrough,
+        last: !tail,
       }, {
         qty: printedQty !== null && r.quantity !== null && printedQty - r.quantity > 0.0005
           ? minus(`−${fmtNum(printedQty - r.quantity)}`) : undefined,
@@ -2449,23 +2534,35 @@ export function PortfolioMonitor() {
       }, true));
     }
     /**
-     * …AND WHAT THE FAMILY'S FUNDS HOLD OF THIS NAME, last and fenced. It is a
-     * DERIVED figure — the AMC disclosed what the fund holds and this is the
-     * family's units' share of it — so it is never a row in these columns, where
-     * it would sit under Market value beside measured lines and read as one of
-     * them. It stays the card it has always been, drawn inside the tree so it
-     * reads as part of what this row opened into. See `canLookThrough` for why
-     * its gate is the issuer rather than the asset class.
+     * …AND THE FUNDS THAT HOLD THIS ISSUER, last — one line per fund, its
+     * derived share under `Via funds` and nowhere else, so a derived rupee can
+     * never sit under Direct + PMS beside the measured lines and read as one of
+     * them. A fund that filed several instruments of the issuer opens into
+     * them (see `fundLinesOf`).
      */
-    if (soldElsewhere) {
-      out.push(treeLine(`${r.key}>elsewhere`, "elsewhere", !lookThrough,
-        <DematElsewhere movements={elsewhere} securityKey={r.securityKey}
-          held={new Set(vs.map((v) => v.accountId))} accounts={portfolio?.accounts ?? []} />));
-    }
-    if (lookThrough) {
-      out.push(treeLine(`${r.key}>lookthrough`, "lookthrough", true,
-        <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />));
-    }
+    elsewhere.forEach((w, j) => {
+      const a = accIdx.get(w.accountId);
+      const who = ownerOfAccount(w.accountId);
+      const n = notHeldNote(w, a);
+      const closing = w.closing ?? 0;
+      const from = w.periodFrom ? fmtDate(w.periodFrom) : "the window's opening";
+      const to = w.periodTo ? fmtDate(w.periodTo) : "its close";
+      out.push(childRow(`${r.key}>elsewhere:${w.accountId}`, "elsewhere", 1, {
+        title: who,
+        // WHAT THE TWO BALANCES MEAN, in the words a reader acts on — "sold out
+        // in this window" — and the link to the company's own page, where the
+        // dated quantity account for this demat is. Why is the hover.
+        sub: <>{a ? <>{a.provider} · {acct(a.accountNo)} · </> : null}<Link to={stockHref(r.securityKey)} title={n.why}
+            className="text-amber-400/90 underline decoration-dotted decoration-amber-500/40 underline-offset-[3px] hover:text-champagne-400">
+            {n.label.toLowerCase()}</Link></>,
+        last: j === elsewhere.length - 1 && funds.length === 0 && !opaque,
+      }, {
+        qty: <span title={`${w.opening == null ? "No opening balance printed" : `${fmtNum(w.opening)} on ${from}`}, ${closing === 0 ? "nil" : fmtNum(closing)} on ${to} — the balances this account's own depository statement printed.`}>{fmtNum(closing)}</span>,
+        entity: who,
+      }, { "data-demat-elsewhere-row": w.accountId, "data-closing": w.closing ?? "" }));
+    });
+    funds.forEach((f, i) => out.push(...fundLineRows(r, f, i === funds.length - 1 && !opaque)));
+    if (opaque) out.push(...aifOpaqueRows(r));
     return out;
   };
   /**
@@ -2734,7 +2831,12 @@ export function PortfolioMonitor() {
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">
-            <table className="min-w-full text-xs" data-monitor-table="holdings">
+            {/* `data-lookthrough` says whether the fund look-through has answered,
+                so a check can wait for the store to settle without reading prose —
+                the card that used to carry its three states is rows now. Present
+                on the security axis only, the one axis the store is asked on. */}
+            <table className="min-w-full text-xs" data-monitor-table="holdings"
+              data-lookthrough={bySecurity ? exposure.status : undefined}>
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdView} className="border-b border-ink-700">
                   <SortHeader col="security" view={holdView} align="left" pad="px-2 py-1.5">Security</SortHeader>
@@ -2774,8 +2876,8 @@ export function PortfolioMonitor() {
                       is wholly derived; `Total exposure` is the measured half
                       plus it, so it is marked as INCLUDING derived rather than
                       as being it. */}
-                  {bySecurity && <SortHeader col="viaFunds" view={holdView} pad="px-2 py-1.5" note="derived" noteTitle={DERIVED_NOTE}>Via funds</SortHeader>}
-                  {bySecurity && <SortHeader col="totalExposure" view={holdView} pad="px-2 py-1.5" note="incl. derived" noteTitle={DERIVED_NOTE}>Total exposure</SortHeader>}
+                  {bySecurity && <SortHeader col="viaFunds" view={holdView} pad="px-2 py-1.5" note="derived" noteTitle={derivedNote}>Via funds</SortHeader>}
+                  {bySecurity && <SortHeader col="totalExposure" view={holdView} pad="px-2 py-1.5" note="incl. derived" noteTitle={derivedNote}>Total exposure</SortHeader>}
                   <SortHeader col="weight" view={holdView} pad="px-2 py-1.5">Weight</SortHeader>
                   <SortHeader col="pnl" view={holdView} pad="px-2 py-1.5">Unreal. P&L</SortHeader>
                   <SortHeader col="realised" view={holdView} pad="px-2 py-1.5">Realised P&L</SortHeader>
@@ -2917,7 +3019,14 @@ export function PortfolioMonitor() {
                                 </span></>
                               );
                             })()}
-                            {grp.collapsed > 0 && (
+                            {/* A RUPEE OR MORE, NEVER FLOAT DUST. The rows and the
+                                subtotal are summed along two paths, and the
+                                published NAVs carry four decimals, so on a section
+                                with no duplicate at all the two differ by a few
+                                paise — which rendered "₹0 reported twice, counted
+                                once" over Mutual Fund: a claim about a duplicate
+                                that does not exist, printed as a figure. */}
+                            {grp.collapsed >= 1 && (
                               <>{" "}<span title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
                                 · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
                               </span></>
@@ -3657,13 +3766,21 @@ export function PortfolioMonitor() {
                         area (`sticky`) — centred over the whole table, the
                         button that fixes it sat past the visible edge. */}
                     <td colSpan={COL_COUNT} className={`px-3 ${rows.length === 0 ? "py-10" : "py-3"}`}>
-                      <div className="sticky left-3 max-w-[44rem] text-sm leading-relaxed text-slate-400">
+                      {/* ONE SHORT LINE, THE REST IN THE HOVER — the rule every
+                          table note follows since Stage 10ci, which caps a cell
+                          at 180 characters. The old sentence ran to 182 with
+                          Sanshi's name in it. What stays on screen is what a
+                          reader acts on: which holding, why it is not a row, and
+                          the one click that shows it. */}
+                      <div className="sticky left-3 max-w-[44rem] text-sm leading-relaxed text-slate-400"
+                        title={"All Securities has one row per company, whichever vehicle holds it: the family's own demat, a manager's mandate, or a fund that discloses it. "
+                          + "A holding that is not a share in a company (a fund, an ETF, a bond, cash) is a row on Category instead, where every holding is one."}>
                         <span className="text-slate-200">
                           {pickedNotRows.length === 1 ? pickedNotRows[0]
                             : `${pickedNotRows.length} of the holdings you picked`}
                         </span>
                         {" "}{pickedNotRows.length === 1 ? "is not a company share, so it is not a row" : "are not company shares, so they are not rows"} on
-                        All Securities, which lists companies whichever vehicle holds them.{" "}
+                        All Securities.{" "}
                         <button type="button" data-show-on-category onClick={() => setGroupAxis("category")}
                           className="font-medium text-champagne-400 hover:underline ring-focus">
                           Show {pickedNotRows.length === 1 ? "it" : "them"} on Category
@@ -3698,9 +3815,12 @@ export function PortfolioMonitor() {
                   */}
                 <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
-                  labelTitle={smallDropped.count > 0
+                  labelTitle={(smallDropped.count > 0
                         ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total, which is what this figure and every total beside it leave out. Nothing is missing: the book still carries them and the statements still report them.`
-                        : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`}
+                        : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`)
+                    + (dupGap > 0
+                        ? ` The rows above are each member's statement as printed, so they add to ${money(rawMV)}; this total counts a holding two members both report once, at ${money(totMV)} — a ${money(dupGap)} overlap.`
+                        : "")}
                   label={<>Total · {rows.length} rows</>}
                   cells={{
                     invested: (
@@ -3915,8 +4035,8 @@ export function PortfolioMonitor() {
                 `Via funds` footer renders an AbsentCell naming exactly those two
                 causes, and the Total exposure footer's own hover names them too.
               • Via funds and Total exposure are DERIVED and no part of NAV: on
-                the `Via funds` column header, which is what it is about, and on
-                every opened row in `FundExposure`.
+                the `Via funds` column header, which is what it is about, and in
+                the hover on every fund line's own derived figure.
               • THE FIVE-BUCKET PARTITION — what this table covers and where the
                 rest of the book is — was stated NOWHERE ELSE, and it is the one
                 claim that matters, because a table covering under a third of the
@@ -3936,82 +4056,23 @@ export function PortfolioMonitor() {
             `check:pages` asserts the removals AND that each moved fact is still
             reachable, because neither implies the other.
           */}
-          {bySecurity && (
-            <details data-stock-coverage className="mt-2 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2">
-              {/*
-                *"remove the highlighted text from the dashboard ui"* — the grey
-                paragraph that stood here. Audited line by line before anything
-                went, because most of it carried a FIGURE:
+          {/*
+            THE FOLD THAT STOOD HERE ON THE SECURITY AXIS IS GONE TOO —
+            *"no one is reading these kind of notes that you have put in across
+            tables."* It was a one-line summary opening onto a paragraph, and
+            every figure in it was already on the table's own footer:
 
-                  · "One row per company, ranked by total exposure" — chrome. The
-                    table is one row per company and sorts on that column.
-                  · "A FUND IS NOT A STOCK and is no longer a row" — chrome. No
-                    fund is in the table to contradict it.
-                  · the DERIVED fence — load-bearing, and it must not hide behind
-                    a fold or a hover: it moved UP, onto the two column headers
-                    it is about, where it is on screen whatever this is set to.
-                  · the coverage, the five buckets, the AIF block and the clubbed
-                    count — load-bearing, each asserted by `check:pages` against
-                    a figure derived from `glowData.ts`, and the partition is the
-                    claim a reader acts on. They are inside the fold.
-                  · the loading / unreachable states — load-bearing, and they are
-                    in the SUMMARY: a reader must not have to open anything to
-                    learn that the figures beside them cover half the question.
+              · the share of the book this table covers — the Weight footer,
+                on the face of the table;
+              · the five-bucket partition, the AIF block and the split-name
+                warning — the Total exposure footer's hover, word for word;
+              · the look-through still loading or not answering — the Via
+                funds cells and footer, each an AbsentCell naming the cause;
+              · the derived fence — both derived columns' headers.
 
-                A COLLAPSED ONE-LINER IS NOT A WALL OF PROSE, and it is the form
-                this book already uses for "the rest are NAMED" (see the excluded
-                accounts on the NAV card). What the family objected to was seven
-                lines of grey under their table; what they must not lose is a
-                table that quietly reads as the whole of their money.
-              */}
-              <summary className="cursor-pointer list-none text-[11px] leading-relaxed text-slate-500 marker:content-['']">
-                <span className="text-slate-400">{"\u25B8"} </span>
-                {exposure.status === "loading" ? (
-                  <span className="text-champagne-400/80">The fund look-through is still loading — the columns
-                    below cover the directly-reported half only.</span>
-                ) : exposure.status === "unreachable" ? (
-                  <span className="text-amber-400/80">The fund look-through store did not answer, so the columns
-                    below cover the directly-reported half only. That is a fact about the fetch, not about the
-                    book.</span>
-                ) : (
-                  <>This table covers <span className="font-medium text-slate-400">{money(stockCoverage.total)} of
-                    the {money(stockCoverage.nav)} book</span> — what the rest of it sits in</>
-                )}
-              </summary>
-              {exposure.status === "ok" && (
-                <p className="mt-2 border-t border-dashed border-ink-700 pt-2 text-[11px] leading-relaxed text-slate-500">
-                  That is {money(stockCoverage.measured)} the statements report directly,
-                  and {money(stockCoverage.derived)} DERIVED from what {stockCoverage.covered} of
-                  your {stockCoverage.considered} fund holdings disclose. A name is clubbed across every account
-                  that holds it — the family&rsquo;s own demat and a manager&rsquo;s mandate alike, because both
-                  report the share itself
-                  {clubbedCount > 0 && <>; {clubbedCount} of {rows.length} rows here are held through more than
-                    one account</>}. The rest of the book is not stocks this table can
-                  see: {money(stockCoverage.opaque)} sits inside vehicles that publish no holdings at all
-                  {stockCoverage.aifCount > 0 && <> ({stockCoverage.aifCount} AIF folio{stockCoverage.aifCount === 1 ? "" : "s"},
-                    {" "}{money(stockCoverage.aifValue)} — an AIF files no portfolio disclosure that joins to a folio
-                    this family holds, so no future statement fills it)</>}
-                  , {money(stockCoverage.unaccounted)} is the part of a disclosed fund that NO LINE in the filing
-                  accounted for — its cash sleeve, a gold or silver ETF&rsquo;s metal, and the disclosure&rsquo;s own
-                  rounding — and {money(stockCoverage.cash)} is cash: the book&rsquo;s own cash rows and the
-                  arbitrage funds the family counts as cash, which are not looked through because their long shares
-                  are hedged by short futures. A scheme&rsquo;s DEBT is no
-                  longer in that remainder: the store reads each AMC&rsquo;s whole monthly filing, so its bonds, NCDs
-                  and commercial paper are inside the derived figure above. Every figure in the Via funds and Total
-                  exposure columns is derived and is no part of the book&rsquo;s NAV: the fund&rsquo;s own value
-                  already stands for it there.
-                  {stockCoverage.splitNames.count > 0 && (
-                    <> {" "}<span className="text-amber-400/80">{stockCoverage.splitNames.count === 1 ? "One company" : `${stockCoverage.splitNames.count} companies`} stands
-                      here as {stockCoverage.splitNames.count === 1 ? "two rows" : "more than one row"} ({money(stockCoverage.splitNames.value)}): one issuer CLIPS
-                      its name where another spells it out, and the book keys a holding on the name its own statement
-                      printed. Their ISINs say they are one security — which is the evidence, and it is also the only
-                      thing that could supply the name neither statement prints in full. Joining them on screen would
-                      hide that from the reconciler, so it is said here instead — the fix belongs in the extractor.</span></>
-                  )}
-                </p>
-              )}
-            </details>
-          )}
+            `check:pages` asserts the fold is gone AND that each of those is
+            still where this lists it, because neither implies the other.
+          */}
           {/* The tranche-coverage note ("N of M rows open their Invested figure…")
               was removed from the holdings table at the family's request, a
               declutter. The chevrons it summarised still render — an Invested cell
@@ -4072,14 +4133,12 @@ export function PortfolioMonitor() {
             asserts the paragraphs are gone AND that the header carries the count,
             because neither implies the other.
           */}
-          {dupGap > 0 && (
-            <p className="border-t border-dashed border-ink-700 px-2 py-2 text-[11px] leading-relaxed text-slate-500">
-              The rows above show each member's statement as printed. Two holdings are reported under two members,
-              so the visible rows sum to {money(rawMV)} while the family total counts each once at {money(totMV)}
-              (a {money(dupGap)} overlap). Switch to <span className="font-medium text-slate-400">By security</span> to
-              see them consolidated.
-            </p>
-          )}
+          {/* THE BY-ENTITY OVERLAP PARAGRAPH IS GONE — *"no one is reading these
+              kind of notes"*. What it said is on the figures it was about: each
+              section heading names the value "reported twice, counted once"
+              beside its own subtotal, and the footer's label hover gives the
+              whole-table arithmetic (the rows as printed against the total that
+              counts each holding once). */}
         </Card>
       ) : (
         <TransactionsView selected={selected} sector={sector} entity={entity} sectorByKey={sectorByKey}
@@ -4888,7 +4947,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           and that the two money blocks are NEVER ADDED, because one table makes
           adding them a one-line edit. */}
       <Card pad={false} title="Transactions"
-        subtitle="One row per mandate, fund or security, sectioned the way the holdings are. Committed, Purchase, Redemption and the appreciation on them are the family's own money; the Trades columns are what their managers dealt inside those accounts. The two are never added."
+        subtitle="Committed, Purchase and Redemption: the family's own money. Trades: their managers' dealing inside. Never added."
         className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 overflow-auto">
           <SortableTable className="min-w-full text-sm" data-dated-table
@@ -4934,7 +4993,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   title="The date each purchase carries on the statement that reports it — the movement's own date, never the statement's report date. A single date means the account was funded once; a range spans the first payment to the last.">Purchased on</SortHeader>
                 {/* ── THE TRADES BLOCK: what a manager dealt inside ─────────── */}
                 <SortHeader col="trades" view={dv} pad="px-3 py-2.5"
-                  title="Dated buys and sells the transaction statements report inside this row. Never the family's own payments, which are the How-it-went-in column.">Trades</SortHeader>
+                  title="Dated buys and sells the transaction statements report inside this row. Never the family's own payments, which are the How-it-went-in column. Demat movements carry no price or counterparty on their statements, so they are not trades and are not here — which is why the family's own-account dealing reads narrower than it is.">Trades</SortHeader>
                 <SortHeader col="bought" view={dv} pad="px-3 py-2.5"
                   title="What was spent buying securities inside this row, over the trades that report a settled amount. This is money moving about INSIDE an account and is not added to Purchase.">Bought</SortHeader>
                 <SortHeader col="sold" view={dv} pad="px-3 py-2.5"
@@ -5217,11 +5276,14 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                             <td colSpan={COLS} className="px-3 pb-3 pt-1">
                               {cap && (
                                 <>
-                                  <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                                    <span className="font-medium text-slate-400">What the family bought and redeemed</span> — every dated
-                                    movement {cap.provider} reports on account {cap.accountNo}, as its statement types them
-                                    {cap.source === "calls" ? ", from the fund's own dated capital calls" : ""}
-                                    {cap.committed != null && <> · committed <span className="mono text-slate-400">{money(cap.committed)}</span>{cap.undrawn != null && <>, <span className="mono text-slate-400">{money(cap.undrawn)}</span> still to call</>}</>}.
+                                  {/* A LABEL, NOT A SENTENCE — *"no one is reading these kind
+                                      of notes"*. What the rows are is the Type column's own
+                                      hover and this label's; which account, and what was
+                                      committed and is still to call, stay on screen. */}
+                                  <p className="mb-1.5 text-[11px] font-medium text-slate-400"
+                                    title={`Every dated movement ${cap.provider} reports on account ${cap.accountNo}, as its statement types them${cap.source === "calls" ? ", from the fund's own dated capital calls" : ""}.`}>
+                                    What the family bought and redeemed <span className="font-normal text-slate-500">· {cap.provider} · a/c {cap.accountNo}
+                                      {cap.committed != null && <> · committed <span className="mono text-slate-400">{money(cap.committed)}</span>{cap.undrawn != null && <>, <span className="mono text-slate-400">{money(cap.undrawn)}</span> still to call</>}</>}</span>
                                   </p>
                                   <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
                                     <SortableTable className="min-w-full text-[12px]"
@@ -5288,10 +5350,11 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                               )}
                               {trd && (
                                 <>
-                                  <p className={`mb-1.5 text-[11px] leading-relaxed text-slate-500 ${cap ? "mt-3" : ""}`}>
-                                    <span className="font-medium text-slate-400">What was dealt inside</span> — one line per security,
-                                    opening into the dated trades themselves. These are never added to the capital
-                                    movements {cap ? "above" : "the family made"}: a trade moves money about inside an account.
+                                  {/* A LABEL TOO. That a trade is never added to the capital
+                                      movements is the Bought column's own hover, on the figure
+                                      it is about. */}
+                                  <p className={`mb-1.5 text-[11px] font-medium text-slate-400 ${cap ? "mt-3" : ""}`}>
+                                    Trades inside the account
                                   </p>
                                   <DealtInside group={trd} rowKey={r.key} open={openInstrument}
                                     toggle={(k) => toggle(setOpenInstrument, k)} sort={sort} money={money} />
@@ -5444,11 +5507,11 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
           of a dozen names reads as a MEASUREMENT of how little this family
           trades its own book, which is not what the corpus says.
         */}
-        <div className="border-t border-ink-700/60 px-3 py-2 text-[11px] text-slate-500">
-          Trades come from each manager&rsquo;s transaction statement. Demat movements carry no price or counterparty on
-          their statements, so they are not trades and are not here — which is why the family&rsquo;s own-account dealing
-          reads narrower than it is.
-        </div>
+        {/* THE LINE THAT STOOD HERE IS THE TRADES HEADER'S HOVER NOW — *"no one
+            is reading these kind of notes that you have put in across tables."*
+            It is still load-bearing (without it a Direct Equity section of a
+            dozen names reads as a family that barely trades), so it moved onto
+            the column it explains rather than going. */}
       </Card>
     </div>
   );

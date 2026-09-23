@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # VERIFY THE ALL SECURITIES CHANGE'S CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR.
 #
-# Stage 10ci: *"Make this view as All Securities and make it first in portfolio
+# Stage 10cj: *"Make this view as All Securities and make it first in portfolio
 # monitor and default open and put the all holding and all entities selectors to
 # the right end of after return selector."* `check:pages` holds the default, the
 # filter row's order and right end, the pick-list's panel, the picked-fund line,
-# the empty footer and the three "in full" links; `check:family` drives the axis
-# control. A check nobody has watched fail is a check nobody knows can fail, so
+# the empty footer and the "in full" link; `check:family` drives the axis
+# control. (There were three such links until Stage 10ci took two of their
+# sentences away.) A check nobody has watched fail is a check nobody knows can fail, so
 # each bug below is applied on its own, rebuilt, swept, and restored.
 #
 # THE RESTORE IS BY COPY AND ON A TRAP, and it REBUILDS on the way out:
@@ -154,3 +155,15 @@ run_case "a mandate page's 'carries this account in full' opens All Securities" 
 # ── 12 ── the line promises Category for a CLOSED fund too, which Category does not draw
 run_case "a closed fund picked on All Securities is promised on Category" nofamily \
   sub src/pages/PortfolioMonitor.tsx 'for (const p of currentHoldings(positions)) {' 'for (const p of positions) {'
+
+# ── 13 ── the line keeps its words and loses its hover — the half of the reason
+# that moved there when every table note became one short line (Stage 10ci)
+run_case "the picked-fund line loses its hover" nofamily \
+  sub src/pages/PortfolioMonitor.tsx '                        title={"All Securities has one row per company' \
+    '                        data-x={"All Securities has one row per company'
+
+# ── 14 ── the long sentence back — 182 characters with Sanshi's name, past the
+# 180 a table cell may hold since Stage 10ci
+run_case "the picked-fund line grows back past one short line" nofamily \
+  sub src/pages/PortfolioMonitor.tsx '                        All Securities.{" "}' \
+    '                        All Securities, which lists companies whichever vehicle holds them.{" "}'

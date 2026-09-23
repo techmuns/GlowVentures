@@ -110,6 +110,15 @@ type HoldingsSource = DocTotals & {
 
 const fin = (n: unknown): number | null => (typeof n === "number" && Number.isFinite(n) ? n : null);
 
+/**
+ * The FIRST CLAUSE of a reason — what stays on screen under the capital table,
+ * with the whole sentence as its hover. These reasons are written clause-first
+ * ("the fund's statement prints no distribution line, so what has come back…"),
+ * so cutting at the first "; ", ", so " or " — " keeps the cause and drops the
+ * consequence. Display only: the reason itself is never shortened.
+ */
+const firstClause = (s: string) => s.split(/; |, so | — /)[0];
+
 function useHoldingsSource(account: Account | undefined): HoldingsSource {
   const [rows, setRows] = useState<ManifestRow[] | null | undefined>(undefined);
   useEffect(() => {
@@ -343,16 +352,16 @@ export function MandateHoldings() {
                   reports every underlying share, so rolling one up is a real,
                   data-backed rollup. A fund folio reports ONE line. Drawing an
                   empty holdings table here would read as a feed that failed. */}
-              <p className="text-[12.5px] leading-relaxed text-slate-400">
+              {/* TWO SHORT LINES, the reasoning in their hovers — the family
+                  asked for the notes around the tables to go. */}
+              <p className="text-[12.5px] leading-relaxed text-slate-400"
+                title="Buying into it is one purchase of a manager's portfolio — the family owns units of the fund, not the companies the fund owns.">
                 <span className="font-medium text-slate-300">{account.provider} {account.accountNo}</span> is a fund
-                folio, not a discretionary mandate. Buying into it is ONE purchase of a manager's portfolio — the family
-                owns units of the fund, not the companies the fund owns — so there is no constituent list to show here.
+                folio, not a discretionary mandate, so there is no constituent list to show here.
               </p>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                The companies inside it are the manager's holdings and are <span className="font-medium text-slate-300">not
-                reported to this book</span>. Showing them would need the scheme's own portfolio disclosure joined to
-                this folio, and no statement in this drop carries one for it. So the folio's value stays whole, in its
-                own row, rather than being spread across sectors it was never reported against.
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
+                title="Showing them would need the scheme's own portfolio disclosure joined to this folio, and no statement in this drop carries one for it. So the folio's value stays whole, in its own row, rather than being spread across sectors it was never reported against.">
+                The companies inside it are <span className="font-medium text-slate-300">not reported to this book</span>.
               </p>
               {account.noPositionsReason && (
                 <p className="mt-2 text-[12px] leading-relaxed text-slate-500">
@@ -409,16 +418,14 @@ export function MandateHoldings() {
                 </p>
               )}
               {ownDirectEquity ? (
-                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
-                  The {DIRECT_EQUITY_BUCKET} rows are shares the family bought in this account, which is exactly what
-                  that heading means on the holdings tables. Any fund unit or ETF listed beside them stays under its
-                  own class: buying one is a single purchase of a manager's portfolio, not of the companies inside it.
+                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400"
+                  title="That is exactly what the heading means on the holdings tables. Any fund unit or ETF listed beside them stays under its own class: buying one is a single purchase of a manager's portfolio, not of the companies inside it.">
+                  The {DIRECT_EQUITY_BUCKET} rows are shares the family bought in this account.
                 </p>
               ) : rows.length > 0 ? (
-                <p className="mt-3 text-[12.5px] leading-relaxed text-slate-400">
-                  None of it is {DIRECT_EQUITY_BUCKET}: no row on this statement is a company share, so that heading
-                  does not cover this account at all. Each row sits under its own class above, which is where the
-                  holdings tables carry it.
+                <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400"
+                  title="Each row sits under its own class above, which is where the holdings tables carry it.">
+                  None of it is {DIRECT_EQUITY_BUCKET}: no row on this statement is a company share.
                 </p>
               ) : null}
             </>
@@ -431,7 +438,7 @@ export function MandateHoldings() {
             </p>
           )}
           <p className="mt-4 text-[12px] text-slate-500">
-            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10ci, where a fund is not. */}
+            {/* `?group=category`, because "carries … in full" is true of the Category view, where every holding is a row — not of All Securities, the Monitor's default since Stage 10cj, where a fund is not. */}
             <Link to="/monitor?group=category" data-monitor-in-full className="text-champagne-400 hover:underline">Portfolio Monitor</Link> carries this
             account in full.
           </p>
@@ -685,7 +692,9 @@ export function MandateHoldings() {
 
       <Card className="mt-5" pad={false}
         title="What the manager holds"
-        subtitle={`Every constituent of this mandate as ${account.provider} printed it on ${fmtDate(account.asOf)} — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.`}
+        subtitle={<span title="Every constituent of this mandate — the shares the manager chose and the cash it is holding back. Weight is within this mandate, not within the book.">
+          As {account.provider} printed it on {fmtDate(account.asOf)} · weight is within this mandate
+        </span>}
         right={<SearchInput value={q} onChange={setQ} placeholder="Filter by name or ISIN…" className="w-56"
           suggestions={rows.map((r) => r.security)} />}>
         <div className="overflow-x-auto">
@@ -772,89 +781,61 @@ export function MandateHoldings() {
             </tfoot>
           </table>
         </div>
-        <div className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
+        {/* ONE LINE UNDER THE TABLE, and the paragraph that stood here is its
+            hover. *"no one is reading these kind of … notes that you have put in
+            across tables."* What stays on screen is the tie-out a reader can
+            check — the statement total, and why the Total differs from it on
+            live basis — and a derived total that does NOT match, because that is
+            a defect rather than a basis. The rest (the manager's own printed
+            total and the basis between them, the archive's state, why every ₹0
+            is measured) is the hover on the figure it explains. */}
+        <div className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500">
           {hidden > 0 && (
-            <>Showing {shown.length} of {rows.length} rows — {hidden} hidden by the filter. The Total is the whole
-              mandate either way, because it is the figure that must tie to the statement.{" "}</>
+            <span title="The Total is the whole mandate either way, because it is the figure that must tie to the statement.">
+              Showing {shown.length} of {rows.length} rows · {hidden} hidden by the filter{stmtMV !== null ? " · " : ""}
+            </span>
           )}
           {stmtMV !== null && (
-            <>
-              {money(stmtMV)} is <span className="text-slate-400">this account's own statement total, on the basis
-              this book derives</span> — the sum of every row above{basis === "LIVE" ? " at its statement mark" : ""},
-              and not a figure copied from the statement's own total line. That is why the rows add to it, and it is
-              what makes this page checkable against the source document.
+            <span title={[
+              `This is the sum of every row above${basis === "LIVE" ? " at its statement mark" : ""}, on the basis this book derives, and not a figure copied from the statement's own total line — which is why the rows add to it, and what makes this page checkable against the source document.`,
+              // THE MANAGER'S OWN PRINTED TOTAL, BESIDE IT AND NOT INSTEAD OF
+              // IT. This sentence used to attribute the figure above to the
+              // manager, and a reader who followed the link to check found a
+              // larger number with nothing explaining it.
+              printedGap !== null
+                ? Math.abs(printedGap) < 1
+                  ? `That document prints ${full(printedTotal)} as this account's portfolio total, which is the same figure to the rupee.`
+                  : `That document prints ${full(printedTotal)} as this account's portfolio total — ${full(Math.abs(printedGap))} ${printedGap > 0 ? "higher" : "lower"}${gapIsAccrual
+                    ? ", because the manager totals an income-inclusive basis: the accrued income that document's rows carry in a column of their own is folded into that figure and not into this one. Reproduced from that same accrued column to the rupee, not assumed."
+                    : ". What separates the two bases is not derivable from that document here, so this page does not name it — the extraction reconciliation is where that difference is classified."}`
+                : "",
+              source.docLoading ? "The manager's own printed total is still being read from the archive." : "",
+              source.docUnreadable ? "The archive answered with the manifest but not with that document, so the manager's own printed total is not shown here — the figure is the book's sum of the rows above either way." : "",
+              !source.docLoading && !source.docUnreadable && !!source.docKey && printedTotal === null
+                ? "That document prints no portfolio total of its own, so there is nothing on it to check this sum against but the rows, which are the rows above." : "",
+              source.docKey === null ? "The archive did not respond, so the manager's own printed total could not be read." : "",
+              source.docKey === "" ? "No holdings document for this account is in the archive manifest." : "",
+              (zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0)
+                ? `Every ₹0 above is a measured figure and keeps its zero: ${[
+                    zeroPnlCash.length > 0 ? `${zeroPnlCash.length} ${zeroPnlCash.length === 1 ? "row carries" : "rows carry"} no unrealised P&L because a cash balance has none — the arithmetic, not a missing number` : "",
+                    zeroPnlHeld.length > 0 ? `${zeroPnlHeld.length} ${zeroPnlHeld.length === 1 ? "holding is" : "holdings are"} marked exactly at cost (${zeroPnlHeld.map((r) => r.security).join(", ")}), so ${zeroPnlHeld.length === 1 ? "its gain is" : "their gains are"} a computed zero — not a cash line and not a missing cost` : "",
+                    zeroValue.length > 0 ? `${zeroValue.length} ${zeroValue.length === 1 ? "row is" : "rows are"} worth nothing on the statement (${zeroValue.map((r) => r.security).join(", ")}), so ${zeroValue.length === 1 ? "its" : "their"} weight is a true 0.0%` : "",
+                  ].filter(Boolean).join(", ")}. A figure this book does not carry renders as an em dash instead, never as a zero.`
+                : "",
+            ].filter(Boolean).join(" ")}>
+              {money(stmtMV)} is this account's own statement total
+              {(zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) && <> · every ₹0 above is measured</>}
               {basis === "LIVE" && Math.abs(mv - stmtMV) >= 1 && (
-                <> The Total shown is {money(mv)} because live prices are applied; the statement figure is unchanged.</>
+                <> · The Total shown is {money(mv)} because live prices are applied; the statement figure is unchanged</>
               )}
-              {/* THE MANAGER'S OWN PRINTED TOTAL, BESIDE IT AND NOT INSTEAD OF
-                  IT. This sentence used to attribute the figure above to the
-                  manager, and a reader who followed the link to check found a
-                  larger number with nothing explaining it. */}
-              {printedGap !== null && (
-                Math.abs(printedGap) < 1 ? (
-                  <> That document prints <span className="text-slate-400">{full(printedTotal)}</span> as this
-                    account's portfolio total, which is the same figure to the rupee.</>
-                ) : (
-                  <> That document prints <span className="text-slate-400">{full(printedTotal)}</span> as this
-                    account's portfolio total — {full(Math.abs(printedGap))}{" "}
-                    {printedGap > 0 ? "higher" : "lower"}
-                    {gapIsAccrual
-                      ? <>, because the manager totals an income-inclusive basis: the accrued income that document's
-                        rows carry in a column of their own is folded into that figure and not into this one.
-                        Reproduced from that same accrued column to the rupee, not assumed.</>
-                      : <>. What separates the two bases is not derivable from that document here, so this page does
-                        not name it — the extraction reconciliation is where that difference is classified.</>}
-                  </>
-                )
-              )}
-              {source.docLoading && (
-                <> The manager's own printed total is still being read from the archive.</>
-              )}
-              {source.docUnreadable && (
-                <> The archive answered with the manifest but not with that document, so the manager's own printed
-                  total is not shown here — the figure above is the book's sum of the rows above either way.</>
-              )}
-              {!source.docLoading && !source.docUnreadable && !!source.docKey && printedTotal === null && (
-                <> That document prints no portfolio total of its own, so there is nothing on it to check this sum
-                  against but the rows, which are the rows above.</>
-              )}
-              {derivedGap !== null && Math.abs(derivedGap) >= 1 && (
-                <> That document's own derived total is {full(source.derivedTotal)}, which this sum does not match:
-                  the book carries {full(stmtMV)} for this account, {full(Math.abs(derivedGap))} apart. The rows above
-                  are the book's, and that difference is a defect rather than a basis.</>
-              )}
-              {source.docKey === null && (
-                <> The archive did not respond, so that link opens the archive index with this account's number already
-                  in the search box rather than naming a document it could not confirm.</>
-              )}
-              {source.docKey === "" && (
-                <> No holdings document for this account is in the archive manifest, so that link opens the archive
-                  index with this account's number already in the search box.</>
-              )}
-            </>
+            </span>
           )}
-          {(zeroValue.length > 0 || zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) && (
-            <>
-              {" "}Every ₹0 above is a measured figure and keeps its zero:{" "}
-              {zeroPnlCash.length > 0 && (
-                <>{zeroPnlCash.length} {zeroPnlCash.length === 1 ? "row carries" : "rows carry"} no unrealised
-                  P&amp;L because a cash balance has none — the arithmetic, not a missing number</>
-              )}
-              {zeroPnlHeld.length > 0 && (
-                <>{zeroPnlCash.length > 0 ? ", " : ""}{zeroPnlHeld.length}{" "}
-                  {zeroPnlHeld.length === 1 ? "holding is" : "holdings are"} marked exactly at cost
-                  ({zeroPnlHeld.map((r) => r.security).join(", ")}), so{" "}
-                  {zeroPnlHeld.length === 1 ? "its gain is" : "their gains are"} a computed zero — not a cash line
-                  and not a missing cost</>
-              )}
-              {zeroValue.length > 0 && (
-                <>{(zeroPnlCash.length > 0 || zeroPnlHeld.length > 0) ? ", and " : ""}{zeroValue.length}{" "}
-                  {zeroValue.length === 1 ? "row is" : "rows are"} worth nothing on the statement
-                  ({zeroValue.map((r) => r.security).join(", ")}), so {zeroValue.length === 1 ? "its" : "their"} weight
-                  is a true 0.0%</>
-              )}
-              . A figure this book does not carry renders as an em dash instead, never as a zero.
-            </>
+          {stmtMV !== null && derivedGap !== null && Math.abs(derivedGap) >= 1 && (
+            <div className="mt-1 text-amber-400/90">
+              That document&rsquo;s own derived total is {full(source.derivedTotal)}, which this sum does not match — the book
+              carries {full(stmtMV)} for this account, {full(Math.abs(derivedGap))} apart, and that difference is a defect
+              rather than a basis.
+            </div>
           )}
         </div>
       </Card>
@@ -954,7 +935,9 @@ function CapitalIn({ account }: { account: Account }) {
   return (
     <Card className="mt-5" pad={false}
       title={title}
-      subtitle={`Every dated movement ${account.provider} reports on account ${account.accountNo}, as its own statement types them. These are the FAMILY'S payments into the mandate — what the manager then bought with the money is a different record, above.`}
+      subtitle={<span title={`Every dated movement ${account.provider} reports on account ${account.accountNo}, as its own statement types them. These are the family's payments into the account — what the manager then bought with the money is a different record.`}>
+        The family&rsquo;s own payments in and out, as the statement types them
+      </span>}
       right={
         <span className="pill" data-capital-how={group.staggered ? "staggered" : "lumpsum"}>
           {group.staggered
@@ -1044,27 +1027,38 @@ function CapitalIn({ account }: { account: Account }) {
         record is exactly that. So it states the identity the Transactions table
         states, and both returns, each labelled, from the one `capitalReturn`.
       */}
+      {/* TWO SHORT LINES — the money, then the returns. It was one run-on line
+          of up to 206 characters with every reason spelt out in it, the wall of
+          text the family asked to be rid of (Stage 10ci). A reason keeps its
+          first clause on screen, because an absent figure names its cause, and
+          the whole sentence is that clause's hover. */}
       <div className="border-t border-ink-700 px-4 py-2.5 text-[12px] leading-relaxed text-slate-400" data-capital-summary={account.accountId}>
-        <>Purchase <span className="mono text-slate-200">{money(group.paidIn)}</span>
+        <div>Purchase <span className="mono text-slate-200">{money(group.paidIn)}</span>
           {group.redemption != null && group.redemption > 0 && <>, redemption <span className="mono text-slate-200">{money(group.redemption)}</span></>}
           {group.value != null && <>, worth <span className="mono text-slate-200">{money(group.value)}</span> today</>}
           {group.appreciation != null
             ? <> — appreciation <span className={`mono ${changeColor(group.appreciation)}`}>{fmtFromBase(group.appreciation, { compact: true, sign: true })}</span>
                 {group.realised != null && group.unrealised != null && <>{" "}(<span className="mono">{fmtFromBase(group.realised, { compact: true, sign: true })}</span> realised,{" "}
-                  <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.{" "}
-                {(() => {
-                  const hpr = capitalReturn(group, "absolute");
-                  const xirr = capitalReturn(group, "xirr");
-                  return (<>
-                    {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
-                    {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
-                    {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500"> — the money has been in under a year, so no annual rate is struck</span>}
-                    {!xirr.shown && <span className="text-slate-500"> — no XIRR: {xirr.reason}</span>}.
-                  </>);
-                })()}
-              </>
-            : <span className="text-slate-500"> — no appreciation or return is struck: {group.appreciationReason ?? "this account's reported capital does not support one"}.</span>}
-        </>
+                  <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.</>
+            : <> — no appreciation or return is struck.</>}
+        </div>
+        {group.appreciation != null
+          ? (() => {
+              const hpr = capitalReturn(group, "absolute");
+              const xirr = capitalReturn(group, "xirr");
+              return (
+                <div>
+                  {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
+                  {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
+                  {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500" title={xirr.note}> — in under a year, so no annual rate is struck</span>}
+                  {!xirr.shown && <span className="text-slate-500" title={xirr.reason}> · no XIRR: {firstClause(xirr.reason)}</span>}.
+                </div>
+              );
+            })()
+          : (() => {
+              const why = group.appreciationReason ?? "this account's reported capital does not support one";
+              return <div className="text-slate-500" title={why}>Why: {firstClause(why)}.</div>;
+            })()}
       </div>
     </Card>
   );
@@ -1215,11 +1209,9 @@ function ManagerTrades({ account }: { account: Account }) {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            {instruments.length} {instruments.length === 1 ? "line" : "lines"} over the period this account&rsquo;s
-            statements cover, collapsed from {mine.length} dated rows — expand one for the days behind it. These are
-            the MANAGER&rsquo;S decisions inside a mandate the family funded; the family&rsquo;s own capital into it
-            is on the Transactions card, in its Capital in and out table.
+          <p className="mt-2 text-[11px] text-slate-500"
+            title="Over the period this account's statements cover. These are the manager's decisions inside a mandate the family funded; the family's own capital into it is on the Transactions card.">
+            {instruments.length} {instruments.length === 1 ? "line" : "lines"} from {mine.length} dated rows — open one for its days
           </p>
         </>
       )}
