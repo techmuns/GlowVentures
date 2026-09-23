@@ -403,7 +403,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   same list. What the family has been TOLD is coming, never a statement figure:
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
-  says saving is not switched on — never an empty column. See Stage 10bs.
+  says saving is not switched on — never an empty column. See Stage 10bs, and
+  Stage 10cf: every cell names that cause in a word ("Not set up") and opens an
+  editor giving the one-time Cloudflare steps (`SWITCH_ON_STEPS`) — the same one
+  step that switches on the shared tile layouts below.
 - `src/lib/fundReturns.ts` — WHICH RETURN A PRIVATE FUND SHOWS, AND WHY. Each
   fund row's dated record (every call and every payout off its own capital
   account, over the row's own deduped folios) and `fundMeasuredReturn`, which
@@ -427,6 +430,8 @@ cash holding's genuinely-zero return both match, and both are correct.
   page paints from and the whole memory where the store is not connected.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
   made here the store never confirmed, then the shared layout. See Stage 10cb.
+  A tile is ADDED from the strip's own last cell, the ADD TILE card, and saved
+  the same way — see Stage 10cf.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -12225,6 +12230,11 @@ the one's that they want to see. Also add a small + button on the last 4th KPI
 tile so the user can also increase the no. of KPI tile and add a new one on the
 page as per their requirement."*
 
+***THE `+` IS A TILE OF ITS OWN SINCE Stage 10cf*** — *"a big empty tile with
+bold written: ADD TILE"*, in the grid cell where the next tile will land, on
+both strips, and clicking it offers the metrics not on screen rather than
+appending the first of them. Everything else in this passage is unchanged.
+
 `src/components/SelectableTiles.tsx`. Private Market's twelve fixed tiles become
 **four slots out of an eighteen-metric catalogue** — value, cost, P&L, uncalled,
 committed, called, paid, due now, unvalued, distributions, realised, multiple,
@@ -15568,6 +15578,11 @@ dashboard → Storage & Databases → KV → create a namespace → the Pages pr
 Settings → Bindings → add a KV namespace binding named **`GLOW_STORE`** (for
 Production and Preview) → redeploy. Until that is done every cell reads "Saving
 is not switched on yet" and nothing offers to save.
+
+***IT DID NOT READ THAT — see Stage 10cf.*** Each cell was an em dash with that
+sentence in its HOVER and nothing to click, and the family read the column as
+*"empty right now"*. Each cell says "Not set up" now and opens the editor, which
+gives the reason and these steps, in Cloudflare's current menu names.
 
 **WHAT IT CANNOT DO YET, STATED RATHER THAN PAPERED OVER.** The column is on the
 FUND table, and a fund is a row there only if some statement values it. India
