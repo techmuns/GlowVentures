@@ -6324,8 +6324,8 @@ const CIO_TILES_SAVED = [
     try { v = JSON.parse(w.otherLocal); } catch { return false; }
     return v?.synced === true && Array.isArray(v.ids) && v.ids.join(",") === (w.here ?? []).join(",");
   }],
-  ["the picker says the choice is saved for everyone", (t, ctx) =>
-    /saved for everyone/i.test(ctx?.tileSaved?.savedWhere ?? "")],
+  ["the picker says the choice is saved for everyone — before the pick and after the save answers", (t, ctx) =>
+    /saved for everyone/i.test(ctx?.tileSaved?.savedWhere ?? "") && /saved for everyone/i.test(ctx?.tileSaved?.savedAfter ?? "")],
 ];
 
 const CIO_SHARED = [
@@ -16268,7 +16268,7 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
    * wrapping fix produced on a tile a fifth of the strip wide). Both are
    * measured on the text itself.
    */
-  ["no tile heading is cut off or split mid-word", (t, ctx) => {
+  ["no tile heading is cut off or split, mid-word or with room to spare", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st?.slots) return false;
     return headingsWhole(st);
@@ -16587,6 +16587,13 @@ for (const theme of THEMES) {
             await page.waitForTimeout(400);
             TILE_SAVED.picked = pick;
             TILE_SAVED.here = await page.$eval("main [data-tile-strip]", (e) => (e.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+            // ...AND WHAT THE PICKER SAYS ONCE THE SAVE HAS ANSWERED. Read before
+            // the pick, the sentence reports only that the store was READ; a save
+            // the store refused must turn it into "saved in this browser", and
+            // only a reopened menu shows that.
+            await page.click('[data-tile-select="0"]').catch(() => {});
+            TILE_SAVED.savedAfter = await page.$eval("[data-tile-saved-where]", (e) => (e.textContent ?? "").trim()).catch(() => null);
+            await page.keyboard.press("Escape").catch(() => {});
             const other = await browser.newContext({ viewport: { width, height: 1000 } });
             await installTileStore(other, tileStore, []);
             const op = await other.newPage();
