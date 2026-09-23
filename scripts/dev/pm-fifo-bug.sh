@@ -126,10 +126,11 @@ run_case 7 family "Extras holds the five pages out of order" \
     '  { to: "/ledger", label: "Ledger Insights", icon: Calculator, group: EXTRAS },
   { to: "/corporate-actions", label: "Corporate actions & dividends", icon: Receipt, group: EXTRAS },'
 
-# ── 8 ── THE ORIGINAL DEFECT, IN THE CHECKER: its re-derivation back on the cost
-# held, against the page as it is. The five that failed on main must fail again,
-# and the new proof must fail with them — a check that cannot tell the two
-# bases apart could not have caught cases 1 and 3.
+# ── 8 ── THE ORIGINAL DEFECT, IN THE CHECKER: its HPR re-derivation back on the
+# cost held, against the page as it is. The HPR check must fail again, and the
+# new proof with it — a checker that cannot tell the two bases apart could not
+# catch cases 1 and 3, and had the page drifted back with it every HPR check
+# would have agreed. (The calls identity is case 2's, from the page's side.)
 run_case 8 pages "the sweep's HPR re-derivation back on value against the cost held" \
   sub scripts/check-pages.mjs \
     'const hpr = deployed != null && deployed > 0 && costCoversAll ? ((mv - cost + realised) / deployed) * 100 : null;' \
