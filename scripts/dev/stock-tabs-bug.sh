@@ -42,7 +42,10 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research
+# Every stock route, because every one asserts the same tab layout. The last,
+# stock-funds-only-targets, is Stage 10co's: the alert card's own reason on a
+# company held only inside funds, on the My targets tab that draws it.
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research,stock-funds-only-targets
 WANT="${CASES:-}"
 N=0
 
