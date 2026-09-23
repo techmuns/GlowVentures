@@ -13923,16 +13923,14 @@ const INVARIANTS = {
       const total = cells.reduce((a, b) => a + b, 0);
       return footCell(ctx, "costShare") === "100%" && Math.abs(total - 100) <= Math.max(0.5, cells.length * 0.05);
     }],
-    /**
-     * A TILE THAT OPENS NOTHING STAYS FLAT. The other half of Morning CIO's
-     * raised-tile claim, struck where the flat tiles are: this page's four
-     * summary tiles carry no href, so a stylesheet that raised every `.card`
-     * would pass the strip's check and fail here.
+    /*
+     * A TILE THAT OPENS NOTHING STAYS FLAT used to be asserted here, on this
+     * page's four summary tiles. Those went at Stage 10bd, and every card left
+     * on this page contains a link — so a stylesheet raising every card swept
+     * clean. The claim is asserted on EVERY route now, in both themes, beside
+     * the look checks in the walk ("a raised card is a button"), and a link
+     * must COVER the card to count (Stage 10cg).
      */
-    ["its own summary tiles are not dressed as buttons", (t, ctx) => {
-      if (!ctx?.metrics?.flatCards) return { notChecked: "no card geometry was captured on this run" };
-      return ctx.metrics.flatCards.raisedWithoutLink === 0;
-    }],
     /**
      * ── THE ARITHMETIC LANDED HERE ───────────────────────────────────────────
      *
@@ -24063,11 +24061,28 @@ for (const theme of THEMES) {
          * measured on every card on whatever page is being walked. A stylesheet
          * that raised `.card` outright would satisfy the strip's check and turn
          * every panel in the app into a button that does nothing.
+         *
+         * "A BUTTON" IS A LINK THAT COVERS THE CARD, not one somewhere inside
+         * it. A KPI tile's anchor is a stretched overlay (`Kpi.tsx`): the whole
+         * card is the target. A table card whose ROWS link to a company page is
+         * not a button, and raised it presses under the pointer and does
+         * nothing where the pointer is. Counting any `a[href]` inside let every
+         * such card through, and `/holdings` — the one route this was asserted
+         * on — has had no card WITHOUT a link since its four summary tiles went
+         * (Stage 10bd). So a stylesheet raising every card swept clean: found by
+         * reintroducing exactly that (Stage 10cg).
          */
         const raised = (el) => /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(el).boxShadow);
+        const coveredByLink = (c) => {
+          const R = c.getBoundingClientRect();
+          return [...c.querySelectorAll("a[href]")].some((a) => {
+            const r = a.getBoundingClientRect();
+            return r.width >= R.width * 0.9 && r.height >= R.height * 0.9;
+          });
+        };
         const cards = [...document.querySelectorAll("main .card")];
         const flatCards = {
-          raisedWithoutLink: cards.filter((c) => raised(c) && !c.querySelector("a[href]")).length,
+          raisedWithoutLink: cards.filter((c) => raised(c) && !coveredByLink(c)).length,
           total: cards.length,
         };
         return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
@@ -24186,6 +24201,71 @@ for (const theme of THEMES) {
             }
           }
         }
+      }
+      /**
+       * ── GLOW CENTRAL RESEARCH'S LOOK, ON EVERY ROUTE (Stage 10cg) ─────────
+       *
+       * *"look how good the font is and the ui is of glow-central research -
+       * colours white etc - can you make this dashboard also with right color
+       * pallet and fonts."* Five claims, and not one of them is in the page's
+       * words — a page renders identical text in any face and on any colour — so
+       * they are read off COMPUTED STYLE, on every page the sweep walks, in the
+       * light theme the family looked at. The declared font stack is what is
+       * asserted: this sweep cannot fetch a web font, so it names the face the
+       * page ASKS for, which is the part a regression would change.
+       *
+       * A figure that could be absent is skipped rather than abstained on: a
+       * page with no `.mono` cell or no active nav entry (a company page, a
+       * drill-down) has nothing for that claim to be about.
+       */
+      if (!FAST && theme === "light" && width === WIDTHS[0]) {
+        const look = await page.evaluate(() => {
+          const cs = (el) => (el ? getComputedStyle(el) : null);
+          const first = (f) => (f ?? "").split(",")[0].replace(/["']/g, "").trim();
+          const h1 = cs(document.querySelector("main h1"));
+          const fig = cs(document.querySelector("main .mono"));
+          const aside = cs(document.querySelector("aside.app-sidebar"));
+          const top = cs(document.querySelector("header.app-topbar"));
+          const active = cs(document.querySelector('aside [data-nav-entry][aria-current="page"]'));
+          return {
+            body: first(getComputedStyle(document.body).fontFamily),
+            h1: h1 ? first(h1.fontFamily) : null,
+            fig: fig ? { face: first(fig.fontFamily), digits: fig.fontVariantNumeric } : null,
+            aside: aside ? aside.backgroundColor : null,
+            top: top ? top.backgroundColor : null,
+            active: active ? { color: active.color, bg: active.backgroundColor } : null,
+          };
+        });
+        if (look.body !== "Inter") invariants.push(`the page reads in Inter, as Glow Central Research does — the body asks for ${look.body || "nothing"}`);
+        if (look.h1 && look.h1 !== "Plus Jakarta Sans") invariants.push(`the page title is set in Plus Jakarta Sans — it asks for ${look.h1}`);
+        if (look.fig && (look.fig.face !== "Inter" || !/tabular-nums/.test(look.fig.digits))) {
+          invariants.push(`a figure is Inter with tabular digits, not a monospace — a .mono cell asks for ${look.fig.face} (${look.fig.digits})`);
+        }
+        // THE CHROME IS WHITE. The nav and the top bar were the page's own
+        // ivory, so the whole screen was one flat tone; "colours white" is the
+        // family's own word for what they wanted instead.
+        const white = (c) => /^rgba?\(255, 255, 255(, (0\.[7-9]\d*|1))?\)$/.test(c ?? "");
+        if (!white(look.aside) || !white(look.top)) {
+          invariants.push(`the nav and the top bar are white — the nav is ${look.aside ?? "missing"}, the top bar ${look.top ?? "missing"}`);
+        }
+        // WHERE YOU ARE IS GOLD: gold type on a pale-gold wash, GCR's active
+        // tab. Ink on it rather than white, for the reason at the top of the
+        // light block in index.css.
+        if (look.active && (look.active.color !== "rgb(125, 95, 22)" || look.active.bg !== "rgb(247, 239, 219)")) {
+          invariants.push(`the nav entry you are on is marked in gold — it is ${look.active.color} on ${look.active.bg}`);
+        }
+      }
+      /**
+       * A RAISED CARD MUST BE A BUTTON — ON EVERY ROUTE, IN BOTH THEMES.
+       *
+       * The probe above measures every card on every page, and this claim was
+       * only ever ASSERTED on `/holdings`, where every card left contains a
+       * link. Both themes, because each has its own raised rule in `index.css`
+       * and a restyle of one does not touch the other. The other half — a KPI
+       * tile that opens something IS raised — stays on Morning CIO's strip.
+       */
+      if (metrics?.flatCards && metrics.flatCards.raisedWithoutLink > 0) {
+        invariants.push(`a raised card is a button — ${metrics.flatCards.raisedWithoutLink} of ${metrics.flatCards.total} cards on this page carry a hard offset and no link covering them`);
       }
       /**
        * ── THE SELECTABLE TILE STRIP ─────────────────────────────────────────
