@@ -34,6 +34,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { capitalScope, distributionOf } from "@/lib/privateMarket";
@@ -354,7 +355,17 @@ export function MorningCIO() {
     // must never be added again, because bookPnL already holds the AIF's gain.
     const privateInvested = st.invested + peF.drawn + preF.drawn + unlF.drawn + debtF.drawn;
     const privateCurrent = st.fairValue + peF.currentValue + preF.currentValue + unlF.currentValue + debtF.currentValue;
-    const totalInvested = sumOrNull([bookCost, privateCount ? privateInvested : null]);
+    /**
+     * CAPITAL INVESTED IS THE SUM OF THE ALLOCATION ROWS' INVESTED, and each
+     * WHOLE PMS mandate enters those rows at the capital the family paid into
+     * it rather than the cost of the shares it holds now — what its FIFO return
+     * is divided by (`investedWithCapital`). Struck over EVERY holding, exactly
+     * as the rows are, so the tile, the footer and the rows are one sum; the
+     * cost of the mandates' shares is in the footer's hover.
+     */
+    const bookWhole = fifoTotals(p, { accounts: portfolio.accounts, universe: p });
+    const bookInvested = investedWithCapital(bookCost, bookWhole);
+    const totalInvested = sumOrNull([bookInvested, privateCount ? privateInvested : null]);
     const privateGain = privateCurrent - privateInvested;
     // Cash returned by holdings still in the book (startups distribute nothing).
     const privateDistributed = peF.distributed + preF.distributed + unlF.distributed + debtF.distributed;
@@ -364,9 +375,22 @@ export function MorningCIO() {
     // plus the fund model's markup where one exists. Adding `portfolio.privateValue
     // − 0` on top — the AIF value against a fund model that reports no cost — is
     // what put embedded gain at 99.8% of invested, almost the whole NAV.
-    const embeddedGain = sumOrNull([bookPnL, privateCount ? privateGain : null]);
-    const gainPct = totalInvested !== null && embeddedGain !== null && totalInvested > 0
-      ? (embeddedGain / totalInvested) * 100
+    /**
+     * ── FIFO, OVER THE HOLDINGS THAT REPORT A COST ─────────────────────────
+     *
+     * This was `Σ unrealised ÷ Σ cost of what is still held`, which leaves out
+     * every gain already realised on units sold — the mandates' above all,
+     * whose managers sell their winners. `fifoTotals` adds the realised half
+     * back and strikes each WHOLE mandate on its capital since inception, over
+     * the same costed set the tile has always covered (the page it opens is
+     * `?of=invested`, the holdings reporting a cost).
+     */
+    const bookFifo = fifoTotals(p.filter((x) => x.costBasis != null && !x.costUnavailable),
+      { accounts: portfolio.accounts, universe: p });
+    const embeddedGain = sumOrNull([bookFifo.gain, privateCount ? privateGain : null]);
+    const deployedCapital = sumOrNull([bookFifo.deployed, privateCount ? privateInvested : null]);
+    const gainPct = deployedCapital !== null && embeddedGain !== null && deployedCapital > 0
+      ? (embeddedGain / deployedCapital) * 100
       : null;
     /**
      * AND THE FOOTER CELL ONLY EXISTS WHERE ITS TWO COLUMNS COVER THE SAME BOOK.
@@ -455,13 +479,26 @@ export function MorningCIO() {
        * for the category a reader is comparing them on.
        */
       const costCoversRow = costCoversSet(mv, withoutCostMV);
+      // FIFO over the row's own holdings — realised on units sold stays in the
+      // return, and a whole mandate is struck on its capital (`fifoTotals`).
+      const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
       return {
         count: rows.length, cost, mv, pnl,
         withoutCost: noCost.length,
         withoutCostMV,
         costedMV,
         costCoversRow,
-        ret: costCoversRow && cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        fifo,
+        /**
+         * *"Invested shows what FIFO divides by: ₹121.7 Cr paid into the PMS
+         * mandates, with ₹124.6 Cr (cost of shares held) in the hover."* A
+         * whole mandate's return is struck on its capital, so beside the cost
+         * of its surviving shares the row's Return does not follow from its
+         * Invested and Current. Each whole mandate enters at what was paid in;
+         * everything else stays at the cost of what is held.
+         */
+        invested: investedWithCapital(cost, fifo),
+        ret: costCoversRow ? fifo.returnPct : null,
       };
     };
     /**
@@ -631,6 +668,14 @@ export function MorningCIO() {
       /** …and what they are worth, so the row can say what stands behind no cost. */
       withoutCostMV: number;
       /**
+       * WHY INVESTED IS NOT THE COST OF WHAT IS HELD, where it is not — a row
+       * holding WHOLE mandates prints their capital paid in, which is what its
+       * return divides by, and names the cost of their shares beside it
+       * (`investedBasisNote`, worded at render time in the reader's currency).
+       * Null on every row that is not a position bucket.
+       */
+      investedFifo: FifoTotals | null;
+      /**
        * Value in this section placed by the family's STATED RULE rather than
        * named product by product in their review. Zero on the category axis,
        * which asks nothing of them. A section filled entirely by a rule and one
@@ -657,7 +702,7 @@ export function MorningCIO() {
     const fundBucket = (
       key: string, color: string, count: number, f: ReturnType<typeof fundTotals>, x: XirrResult, sheet: PrivateSheet,
     ): Bucket => ({
-      key, color, count, invested: f.drawn, current: f.currentValue, distributed: f.distributed,
+      key, color, count, invested: f.drawn, current: f.currentValue, distributed: f.distributed, investedFifo: null,
       kind: netMultipleKind(f.distributed), fromPositions: false,
       metric: netMultiple(f.drawn, f.currentValue, f.distributed),
       // A fund's drawn capital covers the whole of it, so the multiple's
@@ -687,7 +732,8 @@ export function MorningCIO() {
        */
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
       return {
-        key, color: sectionColor(axis, key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
+        key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv, kind: "MOIC",
+        investedFifo: g.fifo,
         fromPositions: true, ruleMV, unplaced: key === UNCLASSIFIED,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
@@ -695,7 +741,7 @@ export function MorningCIO() {
         // ₹12,446.1 Cr over the ₹1.22 Cr that 9 of its 38 holdings report, and
         // renders "MOIC 10240.51×". Nothing in the book multiplied by ten
         // thousand; two different sets of holdings were divided by each other.
-        metric: g.cost !== null && g.cost > 0 ? g.costedMV / g.cost : null,
+        metric: g.invested !== null && g.invested > 0 ? g.costedMV / g.invested : null,
         retPct: g.ret, distributed: 0, xirr: null, xirrBasis: "ledger", xirrNote: null, sheet: null,
         withoutCost: g.withoutCost, withoutCostMV: g.withoutCostMV, costedMV: g.costedMV,
       };
@@ -729,7 +775,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -837,7 +883,7 @@ export function MorningCIO() {
     const navGrowth = navFirst && navLast && navFirst.nav > 0 ? (navLast.nav / navFirst.nav - 1) * 100 : null;
 
     return {
-      p, bookMV, bookCost, bookPnL, noCostCount: noCost.length, noCostMV, smallDropped,
+      p, bookMV, bookCost, bookWhole, bookPnL, noCostCount: noCost.length, noCostMV, smallDropped,
       accountCount: portfolio.accounts.length,
       ownerCount: new Set(portfolio.accounts.map((a) => a.owner)).size,
       totalValue, accrued, accruedCount, privateCurrent, privateInvested, totalInvested, embeddedGain, gainPct,
@@ -1402,7 +1448,9 @@ export function MorningCIO() {
                             </span>
                           )}
                         </td>
-                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap">{money(b.invested)}</td>
+                        <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap"
+                          title={(b.investedFifo && investedBasisNote(b.investedFifo, (n) => money(n))) || undefined}
+                          data-invested-capital={b.investedFifo?.wholeMandates.length ? b.invested ?? undefined : undefined}>{money(b.invested)}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
                         <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>
@@ -1416,7 +1464,9 @@ export function MorningCIO() {
                           className="transition-colors hover:text-champagne-400">Total</Link>
                       }
                       cells={{
-                      invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap">{money(m.totalInvested)}</td>,
+                      invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap"
+                        title={investedBasisNote(m.bookWhole, (n) => money(n)) || undefined}
+                        data-invested-capital={m.bookWhole.wholeMandates.length ? m.totalInvested ?? undefined : undefined}>{money(m.totalInvested)}</td>,
                       current: <td key="current" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>,
                       /* THE TOTAL IS ON THE SAME BASIS AS THE ROWS ABOVE IT.
                           This cell used to carry the MONEY-WEIGHTED whole-book

@@ -3619,6 +3619,9 @@ const ROUTES = [
   // publish none, so the plain `mandate` walk would assert the absence branch
   // and never see the table. Resolved from the book, like the fund one above.
   ["mandate-funded", () => (FUNDED_MANDATE ? `/mandate/${encodeURIComponent(FUNDED_MANDATE.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
+  // `FIFO_BOOK`. Derived from the book, never typed.
+  ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
    *
@@ -4791,6 +4794,66 @@ const FUNDED_MANDATE = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── A WHOLE MANDATE'S RETURN IS FIFO'S TOTAL, STRUCK ON ITS CAPITAL ──────────
+ *
+ * *"Everything in the returns part … need to be accounted for using the
+ * methodology of FIFO … the returns that we are showing on the dashboard are
+ * completely off."*
+ *
+ * A mandate row used to read `Σ unrealised ÷ Σ cost of the shares still held`,
+ * which leaves out every gain on a share the manager already sold. Whole, a
+ * mandate needs no matching: whatever the lots, cost held plus cost sold is what
+ * was paid in, so FIFO's total is `(value + withdrawn − contributed) ÷
+ * contributed`. Re-derived here from `glowData.ts` — the account's own
+ * `capital` against its current holdings' values — rather than imported from
+ * `src/lib/fifo.ts`, on the terms `isMandateHeld` is: a check that imports the
+ * helper it is checking agrees with it by construction.
+ *
+ * `worst` is the mandate where the two figures differ MOST, which is the one the
+ * `mandate-fifo` route walks: a page that went back to the survivors-only
+ * figure is widest open there, and the next drop picks its own.
+ */
+const FIFO_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const small = smallKeysOf(positions);
+    const current = positions.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey));
+    const byAccountNo = new Map();
+    // What each mandate's capital record says the family PAID IN — read off the
+    // account, never off `fifoTotals`, so a page printing a whole mandate's
+    // Invested at its capital is checked against the book rather than a copy.
+    const contributedOf = new Map();
+    let worst = null;
+    for (const a of accounts) {
+      if (a.engagement !== "PMS" || !a.capital || !(a.capital.contributed > 0)) continue;
+      const held = current.filter((p) => p.accountId === a.accountId);
+      if (!held.length) continue;
+      contributedOf.set(a.accountId, a.capital.contributed);
+      const mv = held.reduce((x, p) => x + p.marketValue, 0);
+      const capitalRet = ((mv + a.capital.withdrawn - a.capital.contributed) / a.capital.contributed) * 100;
+      const costed = held.filter((p) => typeof p.costBasis === "number" && !p.costUnavailable);
+      const cost = costed.reduce((x, p) => x + p.costBasis, 0);
+      const survivors = cost > 0 ? (costed.reduce((x, p) => x + p.marketValue - p.costBasis, 0) / cost) * 100 : null;
+      const row = { accountId: a.accountId, accountNo: a.accountNo, capitalRet, survivors, contributed: a.capital.contributed, costHeld: cost };
+      byAccountNo.set(String(a.accountNo), row);
+      if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
+    }
+    return { byAccountNo, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/** The first signed percentage in a cell, and half of its last printed decimal. */
+const pctIn = (text) => {
+  const m = /([+\u2212-]?)(\d[\d,]*)(?:\.(\d+))?%/.exec(text ?? "");
+  if (!m) return null;
+  const v = Number(`${m[2].replace(/,/g, "")}${m[3] ? `.${m[3]}` : ""}`) * (m[1] === "" || m[1] === "+" ? 1 : -1);
+  return { v, tie: 0.5 * 10 ** -(m[3]?.length ?? 0) + 1e-9 };
+};
+
 const MOCK_INDICES = [
   ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50", 24000],
   ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500", 23000],
@@ -5562,7 +5625,13 @@ const CATEGORY_TOTALS = [
     let asserted = 0;
     for (const r of ctx.categoryTotals.rows) {
       const mv = moneyCell(r.text[COL.mv]);
-      const cost = moneyCell(r.text[COL.invested]);
+      // THE COVERAGE IS A FACT ABOUT THE COST OF WHAT IS HELD. A category holding
+      // whole mandates prints their CAPITAL PAID IN as Invested — what its FIFO
+      // return divides by — so `value − (invested + unrealised)` there is the
+      // realised half less withdrawals, not uncosted value. The cell carries the
+      // cost held beside the printed figure, and the coverage is struck on that.
+      const held = r.costHeld?.[COL.invested];
+      const cost = held != null ? held / 1e7 : moneyCell(r.text[COL.invested]);
       const pnl = moneyCell(r.text[COL.pnl]);
       const ret = pctCell(r.text[COL.ret]);
       if (!Number.isFinite(mv)) return false;
@@ -5596,6 +5665,36 @@ const CATEGORY_TOTALS = [
    * and innerText cannot see it — the same blindness that left the cost-reason
    * invariant on /holdings reading text that never contained it.
    */
+  /**
+   * ── A WHOLE MANDATE'S INVESTED IS WHAT ITS RETURN DIVIDES BY ─────────────
+   *
+   * *"Invested shows what FIFO divides by: ₹121.7 Cr paid into the PMS
+   * mandates, with ₹124.6 Cr (cost of shares held) in the hover."* The PMS
+   * category read Invested ₹124.6 Cr, Market value ₹138.7 Cr and Return +14.0%
+   * — each right, and a reader dividing the first two got 11.4%. So a category
+   * whose Invested is capital-based must (a) print the capital figure it carries,
+   * (b) carry a DIFFERENT cost-held figure beside it (or the swap did nothing),
+   * (c) name both in its hover, and (d) show a return that follows from its own
+   * Invested and Market value — within what was withdrawn, which on this book is
+   * ₹9 L across ten mandates, so 0.5pp is the page's own precision with room.
+   * And at least one category must be capital-based, or this checks nothing.
+   */
+  ["a category holding whole mandates prints their capital paid in, and its return follows from its own columns", (t, ctx) => {
+    const gate = needTotals(ctx);
+    if (gate) return gate;
+    const rows = ctx.categoryTotals.rows.filter((r) => r.capital?.[COL.invested] != null);
+    if (!rows.length) return false;
+    return rows.every((r) => {
+      const cap = r.capital[COL.invested] / 1e7, held = r.costHeld[COL.invested];
+      const inv = moneyCell(r.text[COL.invested]), mv = moneyCell(r.text[COL.mv]), ret = pctCell(r.text[COL.ret]);
+      if (!Number.isFinite(inv) || !Number.isFinite(mv) || held == null) return false;
+      if (Math.abs(inv - cap) > 0.051) return false;
+      if (Math.abs(held / 1e7 - cap) < 0.1) return false;
+      if (!/capital paid in/i.test(r.title[COL.invested]) || !/cost of the shares/i.test(r.title[COL.invested])) return false;
+      if (ret === null) return true;           // a refused return has nothing to tie
+      return Number.isFinite(ret) && Math.abs(ret - ((mv - inv) / inv) * 100) <= 0.5;
+    });
+  }],
   ["every metric a category cannot total renders a dash with a reason", (t, ctx) => {
     const gate = needTotals(ctx);
     if (gate) return gate;
@@ -10547,14 +10646,23 @@ const INVARIANTS = {
         // four decimals. The attribute is invested ÷ units, so two members
         // allotted at one printed NAV differ in the last float bits, and an
         // exact key finds no pair.
+        //
+        // ON THE HOLDING-PERIOD RETURN, for the reason the monotonicity check
+        // above already records: a CAGR shrinks with the years held, so two
+        // contributions at one entry NAV bought on DIFFERENT dates print
+        // different annual rates while earning exactly the same. Sanshi's pair
+        // was bought on one day and hid that; Neo Infra's six drawdowns at a
+        // ₹100 face value span 2023 to 2026 and do not — every one reads HPR
+        // 14.23% and three of them print CAGR 4.69%, 4.78% and 5.45%. The claim
+        // was always about what the money EARNED.
         if (p.tranches.some((x) => !Number.isFinite(x.nav))) return false;
         const by = new Map();
         for (const x of p.tranches) {
           const k = `${x.cls}|${Math.round(x.nav * 1e4)}`;
-          (by.get(k) ?? by.set(k, []).get(k)).push(x.ret);
+          (by.get(k) ?? by.set(k, []).get(k)).push(x.hpr);
         }
         const shared = [...by.values()].filter((v) => v.length > 1);
-        return shared.length > 0 && shared.every((v) => v.every((r) => r !== null && Math.abs(r - v[0]) < 0.02));
+        return shared.length > 0 && shared.every((v) => v.every((r) => r !== null && Number.isFinite(r) && Math.abs(r - v[0]) < 0.02));
       }],
   ],
   /**
@@ -11505,6 +11613,43 @@ const INVARIANTS = {
    */
   "holdings-row": [
     ...DRILLDOWN_CHROME_GONE,
+    /**
+     * ── A WHOLE MANDATE'S INVESTED IS WHAT WAS PAID INTO IT ────────────────
+     *
+     * *"Invested shows what FIFO divides by … on Morning CIO's allocation
+     * table, the holdings page that row opens, and the Portfolio Monitor's PMS
+     * rows."* So on the PMS bucket every mandate row prints the capital its own
+     * account record says was contributed — checked against `BOOK_ACCOUNTS`,
+     * never against `fifoTotals`, which is the code under test — names the cost
+     * of its shares beside it, and the footer is those rows' own sum. On every
+     * other bucket no row may claim a capital basis at all: a mandate is only
+     * ever inside the PMS one on the category axis.
+     */
+    ["a whole mandate's Invested is the capital paid into it, and the footer adds the rows'", (t, ctx) => {
+      const hb = ctx.hbCapital;
+      if (!hb) return notChecked("the drill-down's rows were not captured on this run");
+      const key = bucketKeyOf(ctx);
+      if (!key) return notChecked("Morning CIO drew no allocation link for this slot");
+      if (key !== MANDATE_BUCKET) return hb.cells.length === 0;
+      const book = FIFO_BOOK?.contributedOf;
+      if (!book?.size) return false;
+      if (hb.cells.length !== book.size || hb.cells.length !== hb.rowCount) return false;
+      const rowsOk = hb.cells.every((c) => {
+        const paid = book.get(c.accountId);
+        const printed = moneyCell(c.text);
+        return paid != null && c.capital != null && Math.abs(c.capital - paid) <= 1
+          && Number.isFinite(printed) && Math.abs(printed - paid / 1e7) <= 0.051
+          && c.costHeld != null && /capital paid in/i.test(c.title) && /cost of the shares/i.test(c.title);
+      });
+      const paidTotal = [...book.values()].reduce((a, b) => a + b, 0);
+      const footOk = hb.foot?.capital != null && Math.abs(hb.foot.capital - paidTotal) <= hb.cells.length
+        && /capital paid in/i.test(hb.foot.title)
+        && Math.abs(moneyCell(hb.foot.text) - paidTotal / 1e7) <= 0.051;
+      // AND THE SWAP DID SOMETHING: the cost of the shares held differs from
+      // what was paid in, or this passes on a page that printed cost all along.
+      const heldTotal = hb.cells.reduce((a, c) => a + c.costHeld, 0);
+      return rowsOk && footOk && Math.abs(heldTotal - paidTotal) > 1e6;
+    }],
     /* THE "says which figure it stands behind" HALF WENT WITH THE PILL ROW,
        and is asserted as an absence in `DRILLDOWN_CHROME_GONE`. What is left is
        the half the page still answers: the address resolved, and the heading is
@@ -14493,6 +14638,45 @@ const INVARIANTS = {
 
   monitor: [
     /**
+     * ── EVERY MANDATE ROW READS ITS FIFO RETURN, ON ITS OWN CAPITAL ──────────
+     *
+     * Struck per row against `FIFO_BOOK`, which re-derives the figure from the
+     * account's capital and its holdings' values. Checked on the ROW's Return
+     * cell, read at its own column, to the precision it prints. Every mandate
+     * the book carries a capital record for must be checked — a table that
+     * silently stopped drawing mandate rows would otherwise pass over nothing.
+     */
+    ["every mandate row's Return is FIFO's, struck on the mandate's own capital since inception", (t, ctx) => {
+      if (!FIFO_BOOK) return false;
+      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
+      if (!rows.length) return false;
+      return rows.length === FIFO_BOOK.byAccountNo.size && rows.every((r) => {
+        const want = FIFO_BOOK.byAccountNo.get(String(r.accountNo)).capitalRet;
+        const got = pctIn(r.cells?.[COL.ret]);
+        return got !== null && Math.abs(got.v - want) <= got.tie;
+      });
+    }],
+    /**
+     * ── …AND ITS INVESTED IS THE CAPITAL THAT RETURN IS DIVIDED BY ───────────
+     *
+     * A mandate row printed the cost of its surviving shares beside a return
+     * struck on the capital paid in, so the two columns a reader divides gave a
+     * different answer from the third. Each row's Invested is its account's own
+     * `capital.contributed` now, read off `BOOK_ACCOUNTS` rather than off the
+     * code under test, to the precision the cell prints — and the book's cost
+     * held must differ materially for at least one, or the swap did nothing.
+     */
+    ["every mandate row's Invested is the capital paid into it, which its Return divides by", (t, ctx) => {
+      if (!FIFO_BOOK) return false;
+      const rows = (ctx.mandateRows ?? []).filter((r) => FIFO_BOOK.byAccountNo.has(String(r.accountNo)));
+      if (!rows.length || rows.length !== FIFO_BOOK.byAccountNo.size) return false;
+      const book = rows.map((r) => FIFO_BOOK.byAccountNo.get(String(r.accountNo)));
+      return rows.every((r, i) => {
+        const got = moneyCell(r.cells?.[COL.invested]);
+        return Number.isFinite(got) && Math.abs(got - book[i].contributed / 1e7) <= 0.051;
+      }) && book.some((b) => Math.abs(b.costHeld - b.contributed) > 1e6);
+    }],
+    /**
      * ── AN INVESTED FIGURE CARRIED THROUGH A CLASS SWITCH SAYS SO ────────────
      *
      * *"The user does not believe this data."* Buoyant's row read ₹72.5 Cr, the
@@ -17333,6 +17517,32 @@ const INVARIANTS = {
    * resolved on every run — the worst case for a panel that truncates or blends,
    * and the one where a page drawing "1 payment" over four is visible.
    */
+  /**
+   * ── THE MANDATE PAGE'S RETURN IS FIFO'S, AND IT IS NOT THE OLD FIGURE ──────
+   *
+   * The route is the mandate where the two differ most (`FIFO_BOOK.worst`), so
+   * a tile that went back to unrealised ÷ cost of the survivors fails here by
+   * the widest margin the book offers. Both halves are asserted: the tile equals
+   * the capital-based figure, and it is materially NOT the survivors-only one —
+   * a tile that happened to agree with both would be checking nothing.
+   */
+  "mandate-fifo": [
+    ["the route resolves to a real mandate, not the not-found state",
+      (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ["the Return · FIFO tile is the mandate's own capital return", (t) => {
+      const w = FIFO_BOOK?.worst;
+      if (!w) return false;
+      const m = /RETURN · FIFO\s+([+\u2212-]?\d[\d,]*(?:\.\d+)?%)/i.exec(t);
+      const got = m ? pctIn(m[1]) : null;
+      return got !== null && Math.abs(got.v - w.capitalRet) <= got.tie;
+    }],
+    ["…and the survivors-only figure it replaced is materially different (load-bearing)", () => {
+      const w = FIFO_BOOK?.worst;
+      return !!w && w.survivors !== null && Math.abs(w.capitalRet - w.survivors) > 1;
+    }],
+    ["the tile names what it is struck over — capital paid in since inception", (t) =>
+      /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
+  ],
   "mandate-funded": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
@@ -19549,6 +19759,31 @@ for (const theme of THEMES) {
         skipped: document.querySelector("[data-testid='navmovers-skipped']")?.innerText ?? null,
         loading: !!document.querySelector("[data-testid='navmovers-loading']"),
       }));
+      /**
+       * THE /holdings ROWS WHOSE INVESTED IS A MANDATE'S CAPITAL PAID IN — what
+       * each prints, the two bases it carries, the mandate it opens, and the
+       * footer's own. A whole mandate enters at what was paid into it (its FIFO
+       * return's denominator); the cost of its shares is the other attribute.
+       */
+      const hbCapital = FAST ? null : await page.evaluate(() => {
+        const num = (el, a) => { const v = el ? Number(el.getAttribute(a)) : NaN; return Number.isFinite(v) ? v : null; };
+        const rows = [...document.querySelectorAll("main tbody tr[data-hb-key]")];
+        const foot = document.querySelector("main [data-hb-foot-cost]");
+        return {
+          rowCount: rows.length,
+          cells: rows.map((tr) => {
+            const el = tr.querySelector("[data-invested-capital]");
+            if (!el) return null;
+            const href = tr.querySelector('a[href^="/mandate/"]')?.getAttribute("href") ?? "";
+            return {
+              accountId: decodeURIComponent(href.replace(/^\/mandate\//, "")),
+              capital: num(el, "data-invested-capital"), costHeld: num(el, "data-invested-cost-held"),
+              text: (el.innerText ?? "").trim(), title: el.getAttribute("title") ?? "",
+            };
+          }).filter(Boolean),
+          foot: foot ? { capital: num(foot, "data-invested-capital"), text: (foot.innerText ?? "").trim(), title: foot.getAttribute("title") ?? "" } : null,
+        };
+      });
       const hbRedeemed = FAST ? null : await page.evaluate(() => ({
         // The marker the closed rows used to carry; it must now never appear.
         marked: [...document.querySelectorAll("[data-hb-redeemed]")].map((e) => e.getAttribute("data-hb-redeemed")),
@@ -19963,13 +20198,26 @@ for (const theme of THEMES) {
          * is the only basis on which the comparison means anything.
          */
         const byColumn = (tr) => {
-          const text = [], title = [];
+          const text = [], title = [], capital = [], costHeld = [];
+          // A WHOLE MANDATE'S INVESTED IS ITS CAPITAL PAID IN, and the cell
+          // carries both bases as attributes — the printed figure and the cost
+          // of the shares held — so a check can strike each identity on the
+          // basis it holds on rather than on whichever the cell happens to print.
+          const attr = (td, a) => {
+            const el = td.hasAttribute(a) ? td : td.querySelector(`[${a}]`);
+            const v = el ? Number(el.getAttribute(a)) : NaN;
+            return Number.isFinite(v) ? v : null;
+          };
           for (const td of tr.cells) {
             const t = (td.innerText ?? "").replace(/\s+/g, " ").trim();
             const h = td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? "";
-            for (let i = 0; i < (td.colSpan || 1); i++) { text.push(i === 0 ? t : ""); title.push(i === 0 ? h : ""); }
+            const c = attr(td, "data-invested-capital"), k = attr(td, "data-invested-cost-held");
+            for (let i = 0; i < (td.colSpan || 1); i++) {
+              text.push(i === 0 ? t : ""); title.push(i === 0 ? h : "");
+              capital.push(i === 0 ? c : null); costHeld.push(i === 0 ? k : null);
+            }
           }
-          return { text, title };
+          return { text, title, capital, costHeld };
         };
         const foot = document.querySelector("tfoot tr[data-footer-total]");
         return {
@@ -21676,7 +21924,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

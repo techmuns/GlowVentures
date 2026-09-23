@@ -68,6 +68,7 @@ import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import { COST_COVERAGE_MIN, unvaluedAccounts, type UnvaluedKind } from "./privateMarket";
 import type { SchemeCall } from "./capitalCalls";
+import { fifoTotals } from "./fifo";
 
 export type BookSectionId = "private" | "unvalued";
 export type BookGrouping = "fund" | "owner";
@@ -389,9 +390,14 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     costedValue,
     holdings: held.length,
     costed: held.filter((f) => f.cost != null).length,
+    // FIFO, through the one aggregator every other return on the dashboard is
+    // struck with (`fifoTotals`): the gain on units a fund has already redeemed
+    // stays in the return and what those units cost stays in its denominator —
+    // Neo Infra's capital redemption above all. Over the same held set, behind
+    // the same coverage gate.
     returnPct: cost != null && cost > 0 && pnl != null && value != null && value > 0
       && costedValue >= value * COST_COVERAGE_MIN
-      ? (pnl / cost) * 100 : null,
+      ? fifoTotals(held.map((f) => f.position!)).returnPct : null,
     asOf: [...new Set(folios.map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
     ties: ties.length ? ties.every(Boolean) : null,
   };

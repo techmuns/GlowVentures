@@ -1,0 +1,58 @@
+// Types for shared/fifo.mjs — the one FIFO lot engine, shared by `build-book`
+// and the browser. See the long note there.
+
+export declare const UNIT_TIE: number;
+
+export type FifoEvent =
+  | { date: string; kind: "buy"; units: number; amount: number; cls?: string | null; label?: string | null }
+  | { date: string; kind: "sell"; units: number; amount: number; cls?: string | null }
+  | { date: string; kind: "switch"; units: number; unitsIn: number; from?: string | null; to?: string | null };
+
+export type FifoLot = {
+  cls: string | null; date: string; units: number; cost: number; origin: string;
+  /** The units this lot was bought as, in its CURRENT class — more than `units` where some were sold. */
+  unitsBought: number;
+  /** The purchase's own wording, as the record printed it. */
+  label: string | null;
+  /** The class a switch carried this lot out of, or null where it was bought here. */
+  carriedFrom: string | null;
+};
+export type FifoMatch = {
+  cls: string | null; buyDate: string; sellDate: string;
+  units: number; cost: number; proceeds: number; gain: number;
+};
+
+export type FifoLedger = {
+  lots: FifoLot[];
+  realised: FifoMatch[];
+  shortfalls: { date: string; cls: string | null; units: number }[];
+  unitsHeld: number;
+  costHeld: number;
+  costSold: number;
+  proceeds: number;
+  realisedGain: number;
+};
+
+export declare function fifoLedger(events: FifoEvent[], opts?: { tie?: number }): FifoLedger;
+export declare function fifoForClass(ledger: FifoLedger, cls: string | null): Omit<FifoLedger, "shortfalls">;
+
+/**
+ * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
+ * percent. Null wherever the cost is unknown or not positive — never 0.
+ */
+export declare function fifoReturnPct(
+  marketValue: number,
+  costHeld: number | null | undefined,
+  realised: number | null | undefined,
+  costSold: number | null | undefined,
+): number | null;
+
+/**
+ * FIFO over a fund's own dated unit record (the archive's cash flows). Null
+ * where nothing was sold or switched; `{ ledger: null, reason }` where the
+ * record could not be run.
+ */
+export declare function fifoFromCashFlows(cashFlows: readonly {
+  date?: string | null; kind?: string | null; securityKey?: string | null; security?: string | null;
+  units?: number | null; amount?: number | null; netAmount?: number | null; description?: string | null;
+}[] | null | undefined): { ledger: FifoLedger | null; reason: string | null } | null;
