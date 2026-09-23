@@ -3674,6 +3674,8 @@ const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew 
  * one.
  */
 const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
+/** Routes that walk a RETIRED address, mapped to the live one it resolves to. */
+const CRUMB_ALIAS = { "holdings-invested-legacy": () => drilldownPath("book#costed") };
 /**
  * EVERY METRIC THE PRIVATE MARKET'S TILE PICKER OFFERS, read out of its own
  * menu on the first walk. It is both the catalogue the picker is checked
@@ -19297,12 +19299,18 @@ for (const theme of THEMES) {
            * own figure, where the crumb has room to spell it out).
            */
           if (/^holdings-/.test(name) && leaf?.text) {
-            const want = CRUMB_PUBLISHERS.get(path);
+            // A RETIRED ADDRESS IS HELD TO THE FIGURE IT NOW OPENS. Morning CIO
+            // no longer links `?of=invested` — Capital invested is a facet of the
+            // value page since Stage 10bv — so the pairing is struck against the
+            // address the legacy one resolves to, rather than abstaining on a
+            // link that is gone by design.
+            const crumbPath = CRUMB_ALIAS[name]?.() ?? path;
+            const want = CRUMB_PUBLISHERS.get(crumbPath);
             const norm = (x) => String(x).toLowerCase().replace(/[.·]/g, "").replace(/\s+/g, " ").trim();
             const L = norm(leaf.text);
-            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${path}`);
+            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${crumbPath}`);
             else if (!want.some((w) => { const W = norm(w); return W && (L.includes(W) || W.includes(L)); })) {
-              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${path} are ${want.map((w) => `"${w}"`).join(", ")}`);
+              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${crumbPath} are ${want.map((w) => `"${w}"`).join(", ")}`);
             }
           }
         }
