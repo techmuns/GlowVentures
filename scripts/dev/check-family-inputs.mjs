@@ -757,6 +757,13 @@ const watched = page.locator('a[href^="/stock/"]').first();
 if (await watched.count()) {
   await watched.click();
   await page.waitForTimeout(1200);
+  // THE PANEL IS ON ITS OWN TAB NOW. The position page became five tabs with no
+  // long scroll, and the family's own judgements are "My targets" — so the walk
+  // opens that tab the way a reader does, by its KEY rather than its label. A
+  // missing tab is a finding: the panel then has no way to be reached at all.
+  const targetsTab = page.locator('[data-stock-tab-key="targets"]');
+  check("a company page offers the My targets tab", (await targetsTab.count()) === 1);
+  if (await targetsTab.count()) { await targetsTab.click(); await page.waitForTimeout(600); }
   text = await page.locator("body").innerText();
   check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
   check("...with the judgement fields the watchlist store holds",

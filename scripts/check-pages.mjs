@@ -3654,6 +3654,58 @@ const CAGR_KEY = (() => {
 })();
 
 /**
+ * THE HOLDING WHOSE FIFO RETURN IS NOT ITS UNREALISED GAIN OVER ITS COST —
+ * derived, never typed.
+ *
+ * Stage 10ca made every return FIFO: the gain on units already sold stays in
+ * the return and their cost stays in what it is struck on. On a holding that
+ * sold nothing the two formulas give one number, so a return tile there cannot
+ * say which formula drew it. This picks the current company share whose every
+ * row reports a cost and none is reported twice (no `dedupeGroup`), where the
+ * two figures PRINT differently and differ most — the worst case by
+ * construction, so the next drop picks its own — and keeps both, so the check
+ * can require the FIFO one AND refuse the other.
+ *
+ * RE-EXPRESSED HERE, never imported from `src/lib/fifo.ts`: a check that calls
+ * the helper it is checking agrees with it by construction. The position page
+ * hands `fifoTotals` no accounts, so it strikes no mandate whole, and its sum
+ * is holding by holding — which is what this is.
+ */
+const FIFO_STOCK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const num = (x) => typeof x === "number" && Number.isFinite(x);
+    const byKey = new Map();
+    for (const p of positions) {
+      if (!byKey.has(p.securityKey)) byKey.set(p.securityKey, []);
+      byKey.get(p.securityKey).push(p);
+    }
+    // The tile prints `▲ 32.3%` — the sign as an arrow, one decimal — so two
+    // figures a reader could not tell apart are one figure here.
+    const shown = (x) => `${x > 0 ? "▲" : x < 0 ? "▼" : "■"}${Math.abs(x).toFixed(1)}`;
+    let best = null;
+    for (const [key, rows] of byKey) {
+      if (!rows.every((r) => r.assetClass === "Equity" && !r.dedupeGroup && num(r.costBasis) && !r.costUnavailable)) continue;
+      if (!rows.some((r) => Number(r.quantity) > 0)) continue;
+      let gain = 0, deployed = 0, unrealised = 0, cost = 0;
+      for (const r of rows) {
+        gain += r.marketValue - r.costBasis + (num(r.realizedPnL) ? r.realizedPnL : 0);
+        deployed += r.costBasis + (num(r.costOfUnitsSold) ? r.costOfUnitsSold : 0);
+        unrealised += r.marketValue - r.costBasis;
+        cost += r.costBasis;
+      }
+      if (!(deployed > 0) || !(cost > 0)) continue;
+      const fifo = (gain / deployed) * 100, held = (unrealised / cost) * 100;
+      if (shown(fifo) === shown(held)) continue;
+      const gap = Math.abs(fifo - held);
+      if (!best || gap > best.gap) best = { key, gap, fifoShown: shown(fifo), heldShown: shown(held) };
+    }
+    return best;
+  } catch { return null; }
+})();
+
+/**
  * The rupee figures in a rendered string, as NUMBERS.
  *
  * COMPARED NUMERICALLY AND NEVER AS DIGIT STRINGS, which the first draft of
@@ -3699,16 +3751,20 @@ const CMP_BOOK = (() => {
       if (!by.has(p.securityKey)) by.set(p.securityKey, []);
       by.get(p.securityKey).push(p);
     }
-    const split = [], unmarked = [];
+    const split = [], unmarked = [], agreed = [];
     for (const [key, ps] of by) {
       const marks = [...new Set(ps.map((x) => x.currentPrice)
         .filter((v) => typeof v === "number" && Number.isFinite(v)).map(show))];
       const mv = ps.reduce((a, x) => a + (Number(x.marketValue) || 0), 0);
       if (marks.length > 1) split.push({ key, marks, mv });
       if (marks.length === 0) unmarked.push({ key, mv });
+      // Several statements, every one marked, all rendering as ONE figure.
+      if (ps.length > 1 && marks.length === 1
+        && ps.every((x) => typeof x.currentPrice === "number")) agreed.push({ key, mark: marks[0], mv });
     }
     split.sort((a, b) => b.mv - a.mv);
     unmarked.sort((a, b) => b.mv - a.mv);
+    agreed.sort((a, b) => b.mv - a.mv);
     /**
      * THE LARGEST HOLDING THE PUBLISHED NAV PRICES.
      *
@@ -3755,8 +3811,10 @@ const CMP_BOOK = (() => {
       splitMarks: split[0]?.marks ?? [],
       splitCount: split.length,
       unmarkedKey: unmarked[0]?.key ?? null,
+      agreedKey: agreed[0]?.key ?? null,
+      agreedMark: agreed[0]?.mark ?? null,
     };
-  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, navKey: null, navNav: null, navDate: null }; }
+  } catch { return { splitKey: null, splitMarks: [], splitCount: 0, unmarkedKey: null, navKey: null, navNav: null, navDate: null, agreedKey: null, agreedMark: null }; }
 })();
 
 const CIO_BUCKET_HREFS = [];
@@ -3980,6 +4038,38 @@ const MF_KEY = (() => {
       by.set(p.securityKey, (by.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
     }
     return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  } catch { return null; }
+})();
+
+/**
+ * THE HOLDING HELD THROUGH THE MOST DISCRETIONARY MANDATES — derived, never typed.
+ *
+ * The line under a position's name links each mandate it sits in, and a cash
+ * sleeve sits in every one of this book's mandates: ten links under the name was
+ * a five-line wall above the figures. Past two it is a count, and every mandate
+ * is still one click away from its own row. This is the holding that exercises
+ * the count, so the next drop picks its own. `isMandateHeld` is re-expressed as
+ * `engagement === "PMS"` rather than imported, on the terms `AXIS_VENUE_BOOK`
+ * gives above. `cash` says whether every row is a cash line, which decides
+ * whether the no-sector and no-P&L claims have a subject.
+ */
+const MANY_MANDATES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const eng = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const by = new Map();
+    for (const p of positions) {
+      if (!by.has(p.securityKey)) by.set(p.securityKey, []);
+      by.get(p.securityKey).push(p);
+    }
+    const best = [...by.entries()]
+      .map(([key, ps]) => ({ key, ps, count: new Set(ps.filter((p) => eng.get(p.accountId) === "PMS").map((p) => p.accountId)).size }))
+      .filter((x) => x.count > 2)
+      .sort((a, b) => b.count - a.count || b.ps.length - a.ps.length)[0];
+    return best ? { key: best.key, count: best.count, cash: best.ps.every((p) => p.assetClass === "Cash") } : null;
   } catch { return null; }
 })();
 
@@ -4739,17 +4829,46 @@ const ROUTES = [
   // is asserted in `check-family-inputs.mjs`, alongside the half that would
   // break silently: that Exposure & IPS still reaches the store both pages
   // wrote to.
-  ["stock", "/stock/aditya-birla-capital"],   // one company page — returns table, tools, research
+  /**
+   * ── ONE COMPANY PAGE, WALKED ON EVERY ONE OF ITS FIVE TABS ─────────────────
+   *
+   * *"make top sub tabs like we have done for others and not have a long page
+   * I have to scroll… one clean template for all."* The position page draws ONE
+   * tab's content at a time, so a claim about the price card, the research card
+   * or the family's targets has no subject on the default tab — each tab is its
+   * own address (`?tab=`) and is walked as its own route, the treatment Morning
+   * CIO's panels and the private book's views already get. `stockTabChecks` is
+   * spread into every one of them, so a tab strip that works here and vanishes
+   * on a fund's page fails by name.
+   */
+  ["stock", "/stock/aditya-birla-capital"],   // Position — the account table
+  ["stock-activity", "/stock/aditya-birla-capital?tab=activity"],
+  ["stock-market", "/stock/aditya-birla-capital?tab=market"],
+  ["stock-research", "/stock/aditya-birla-capital?tab=research"],
+  ["stock-targets", "/stock/aditya-birla-capital?tab=targets"],
   ["corporate-actions", "/corporate-actions"],
   // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
   // has no price history, no PE, no filings and no insider trades, so the five
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
-  ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e?tab=research"],
+  // ...and its Price & returns tab, where an AIF has no price to chart and says
+  // so once — never a returns table rendering a failed feed under a fund's name.
+  ["stock-fund-market", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e?tab=market"],
   // THE LARGEST ARBITRAGE FUND THE FAMILY HOLDS, derived from the book and
   // AMFI's category store — a typed key would keep "passing" on a not-found page.
   ["stock-arbitrage", () => (CASH_INSTRUCTION_BOOK?.largestArb
     ? `/stock/${encodeURIComponent(CASH_INSTRUCTION_BOOK.largestArb)}` : "/stock/none-resolved-from-the-book")],
+  // …AND THE SAME FUND'S RESEARCH TAB, where the sentence stating its class and
+  // the refusal to look through a hedged book both live now that the page draws
+  // one tab at a time. Its default tab carries the mark and its caption.
+  ["stock-arbitrage-research", () => (CASH_INSTRUCTION_BOOK?.largestArb
+    ? `/stock/${encodeURIComponent(CASH_INSTRUCTION_BOOK.largestArb)}?tab=research` : "/stock/none-resolved-from-the-book?tab=research")],
+  // …AND ITS PRICE TAB, which keeps the scheme's own NAV half: the reason for
+  // not looking through a hedged book is about what the fund HOLDS, and says
+  // nothing against the fund's own published price (see `lookThroughHoldings`).
+  ["stock-arbitrage-market", () => (CASH_INSTRUCTION_BOOK?.largestArb
+    ? `/stock/${encodeURIComponent(CASH_INSTRUCTION_BOOK.largestArb)}?tab=market` : "/stock/none-resolved-from-the-book?tab=market")],
   /**
    * ...AND ONE MUTUAL FUND, WHICH NOW HAS A LOOK-THROUGH THE AIF ABOVE CANNOT.
    *
@@ -4759,7 +4878,11 @@ const ROUTES = [
    * A build that showed one fund's holdings under the other's name would pass
    * either check alone.
    */
-  ["stock-mf-lookthrough", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}` : "/stock/no-mutual-fund-in-the-book")],
+  ["stock-mf-lookthrough", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}?tab=market` : "/stock/no-mutual-fund-in-the-book?tab=market")],
+  // THE SCHEME CARD IS TWO HALVES ON TWO TABS: its NAV and returns are the
+  // fund's PRICE (Price & returns) and its disclosed holdings are what a reader
+  // researches it for (Research). Each half is walked where it is drawn.
+  ["stock-mf-holdings", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}?tab=research` : "/stock/no-mutual-fund-in-the-book?tab=research")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -4780,20 +4903,23 @@ const ROUTES = [
    * the page must say the holding did not move rather than showing nothing and
    * must not invent an opening balance for it. Neither state implies the other.
    */
-  ["stock-qty", () => (QTY_BOOK?.tableKey ? `/stock/${encodeURIComponent(QTY_BOOK.tableKey)}` : "/stock/no-demat-window-in-the-book")],
-  ["stock-unmoved", () => (QTY_BOOK?.unmovedKey ? `/stock/${encodeURIComponent(QTY_BOOK.unmovedKey)}` : "/stock/no-unmoved-demat-holding-in-the-book")],
+  // ON THE TRANSACTIONS TAB, where the quantity account is drawn now.
+  ["stock-qty", () => (QTY_BOOK?.tableKey ? `/stock/${encodeURIComponent(QTY_BOOK.tableKey)}?tab=activity` : "/stock/no-demat-window-in-the-book?tab=activity")],
+  ["stock-unmoved", () => (QTY_BOOK?.unmovedKey ? `/stock/${encodeURIComponent(QTY_BOOK.unmovedKey)}?tab=activity` : "/stock/no-unmoved-demat-holding-in-the-book?tab=activity")],
   /**
    * ...AND ONE WHOSE WINDOW CARRIES A PLEDGE. The exclusion — counted, and in
    * none of the four columns — is only load-bearing where a row exercises it,
    * and the worst-case route above happens not to. Walked as its own route so
    * the claim is a FAILURE when it regresses rather than an abstention.
    */
-  ["stock-pledge", () => (QTY_BOOK?.pledgeKey ? `/stock/${encodeURIComponent(QTY_BOOK.pledgeKey)}` : "/stock/no-pledged-demat-holding-in-the-book")],
+  ["stock-pledge", () => (QTY_BOOK?.pledgeKey ? `/stock/${encodeURIComponent(QTY_BOOK.pledgeKey)}?tab=activity` : "/stock/no-pledged-demat-holding-in-the-book?tab=activity")],
   /**
    * ...AND A COMPANY ONE ACCOUNT SOLD OUT OF WHILE ANOTHER STILL HOLDS IT —
    * the family's Kaynes, on the company's own page (see `SOLD_ELSEWHERE`).
    */
-  ["stock-sold-elsewhere", () => (SOLD_ELSEWHERE ? `/stock/${encodeURIComponent(SOLD_ELSEWHERE.key)}` : "/stock/no-company-sold-out-of-one-account")],
+  // ON THE TRANSACTIONS TAB, because the quantity account it reads is drawn
+  // there since the position page became tabs — like `stock-qty` beside it.
+  ["stock-sold-elsewhere", () => (SOLD_ELSEWHERE ? `/stock/${encodeURIComponent(SOLD_ELSEWHERE.key)}?tab=activity` : "/stock/no-company-sold-out-of-one-account?tab=activity")],
   /**
    * ...AND THE ONE HOLDING WHOSE PURCHASE DATE LICENSES AN ANNUAL RATE. The
    * family asked for the holding-period return AND the annualised one, and the
@@ -4801,6 +4927,10 @@ const ROUTES = [
    * date exists to compound over.
    */
   ["stock-cagr", () => (CAGR_KEY ? `/stock/${encodeURIComponent(CAGR_KEY)}` : "/stock/no-dated-holding-in-the-book")],
+  // ...and the holding whose FIFO return is NOT its unrealised gain over its
+  // cost (`FIFO_STOCK`) — the one place a return struck on the survivors alone
+  // prints a different figure from FIFO's (Stage 10ca).
+  ["stock-fifo", () => (FIFO_STOCK ? `/stock/${encodeURIComponent(FIFO_STOCK.key)}` : "/stock/no-holding-with-units-sold-in-the-book")],
   // The holding whose statements mark it at figures the page renders
   // differently — where the headline must refuse rather than print one of
   // them. Derived (`CMP_BOOK`), so the next drop picks its own worst case; an
@@ -4817,6 +4947,15 @@ const ROUTES = [
   // that renames the class moves the route with it.
   ["stock-capital", () => (DATED_CAPITAL_BOOK?.buoyantKey ? `/stock/${encodeURIComponent(DATED_CAPITAL_BOOK.buoyantKey)}` : "/stock/no-investment-on-dated-capital-in-the-book")],
   ["stock-cmp-split", () => (CMP_BOOK.splitKey ? `/stock/${encodeURIComponent(CMP_BOOK.splitKey)}` : "/stock/no-holding-marked-two-ways-in-the-book")],
+  // ...and the largest holding SEVERAL statements report at ONE agreed mark —
+  // the only place the Total row's own mark has a subject, since a holding one
+  // account reports draws no Total row at all (a total of one row is the row).
+  ["stock-cmp-agree", () => (CMP_BOOK.agreedKey ? `/stock/${encodeURIComponent(CMP_BOOK.agreedKey)}` : "/stock/no-holding-several-statements-mark-alike-in-the-book")],
+  // ...and the holding the most mandates hold, where the line under the name
+  // must collapse to a count rather than list every mandate (`MANY_MANDATES`).
+  ["stock-mandates-many", () => (MANY_MANDATES ? `/stock/${encodeURIComponent(MANY_MANDATES.key)}` : "/stock/no-holding-in-three-mandates-in-the-book")],
+  // ...and its Price & returns tab — a cash line has no price to chart.
+  ["stock-cash-market", () => (MANY_MANDATES?.cash ? `/stock/${encodeURIComponent(MANY_MANDATES.key)}?tab=market` : "/stock/no-cash-line-in-the-book?tab=market")],
   // ...and one marked at a TOTAL VALUE, where there is no per-unit mark to show
   // at all. A different absence from the one above and it must not borrow its
   // wording: a reader told the statements disagree would go looking for a
@@ -4837,6 +4976,13 @@ const ROUTES = [
   // used to call "Position closed · fully exited". The Monitor's stock axis
   // links every one of these here — 466 on the book this was measured on.
   ["stock-funds-only", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}` : "/stock/no-company-held-only-inside-funds")],
+  // ...AND ITS OTHER TABS, each at its own address, because only the active
+  // tab's content is in the DOM: the Transactions tab has no lot of the
+  // family's own to split, and Price & returns and Research each say once why a
+  // company no statement names has no symbol looked up.
+  ["stock-funds-only-activity", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=activity` : "/stock/no-company-held-only-inside-funds?tab=activity")],
+  ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
+  ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
   ["capital-gains", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
@@ -5442,6 +5588,8 @@ const CALL_FIXTURE = (() => {
 const CALL_POSTS = [];
 /** What the interaction on `private-market-calls` did, or the error it hit. */
 let CALL_WALK = null;
+/** The Research card's sub-tabs, clicked in turn — see `stock-research`. */
+let RESEARCH_WALK = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -7920,11 +8068,21 @@ const stockLayoutChecks = () => [
    * catches any column added to the markup but not to the declared list, or the
    * other way round, on every table this runs against.
    */
-  ["the footer spans exactly the columns the header declares",
+  /**
+   * ...AND IT IS DRAWN ONLY WHERE THERE IS SOMETHING TO ADD UP. A holding one
+   * account reports has one row, and a Total of one row is the row again — the
+   * tiles above already carry the same four figures — so it draws no footer, the
+   * Polycab table's rule for the same reason. Where there ARE rows to add, the
+   * footer must span exactly the header's columns; asserting the span on a
+   * one-row table would demand a footer the page is right not to draw.
+   */
+  ["the footer is drawn only over several rows, and then spans exactly the columns the header declares",
     (t, ctx) => {
-      const want = (ctx.posTable?.heads ?? []).length;
-      const got = ctx.posTable?.footSpan ?? null;
-      return want > 0 && got === want;
+      const pt = ctx.posTable;
+      if (!pt) return false;
+      if (pt.bodyRows <= 1) return pt.hasFoot === false;
+      const want = (pt.heads ?? []).length;
+      return want > 0 && pt.footSpan === want;
     }],
     ["every mark on the table is the one the book carries for that statement",
     (t, ctx) => {
@@ -7961,13 +8119,16 @@ const stockLayoutChecks = () => [
   ["a CAGR never replaces the holding-period return, it stands beside it",
     (t, ctx) => !!ctx.posTable && ctx.posTable.returns.every((r) => !/CAGR/.test(r) || /HPR/.test(r))],
   /**
-   * TAX IS A CLICK. The card is still there and its figures are unchanged; what
-   * moved is that it no longer holds a third of the row the table needed. Both
-   * halves are asserted — the toggle exists, and it is CLOSED on arrival —
-   * because a details element that renders open has moved nothing.
+   * TAX IS A CLICK — ONE TAB AWAY NOW, NOT A FOLD. *"And then tax maybe just
+   * make it a click."* It was a folded card under this table; the page is tabs
+   * now and the card is on Transactions, beside the dated buys its purchase
+   * dates come from. Both halves are asserted: it is NOT drawn on this tab, and
+   * the tab that carries it is offered — a card removed from here and drawn
+   * nowhere would pass the first alone.
    */
-  ["the tax basis is behind a click and starts closed",
-    (t, ctx) => !!ctx.posTable && ctx.posTable.taxToggles === 1 && ctx.posTable.taxOpen === false],
+  ["the tax card is a click away — not on this tab, on the Transactions tab",
+    (t, ctx) => !!ctx.stockPage && ctx.stockPage.tax.length === 0
+      && ctx.stockPage.tabs.some((x) => x.key === "activity")],
   /**
    * ── XIRR ON A ROW THAT IS A WHOLE ACCOUNT, AND ON NO OTHER ──────────────
    *
@@ -8004,6 +8165,105 @@ const stockLayoutChecks = () => [
       }
       return true;
     }],
+];
+
+/**
+ * ── THE SAME FIVE TABS ON EVERY HOLDING, AND THE PAGE DOES NOT SCROLL ──────
+ *
+ * *"When I come inside a portfolio position it's an unbelievably bad UI
+ * experience — please fix it all by making top sub tabs like we have done for
+ * others and not having a long page I have to scroll, and remove what is not
+ * necessary and consolidate what can be consolidated so it's one clean template
+ * for all."*
+ *
+ * Spread into EVERY stock route — a company's, a mutual fund's, an AIF folio's,
+ * a cash line's — because "one template for all" is exactly the claim a check
+ * written on one holding cannot make. `expected` is the tab the route's address
+ * asks for.
+ *
+ * NOT ONE OF THESE CAN BE STRUCK ON PROSE: the page renders the same words
+ * whether the research card is on its own tab or under the price chart on one
+ * long page. So each reads the control, the panel's own handles or a bounding
+ * box. A missing probe is a FAILURE — this header is on every holding.
+ */
+const STOCK_TAB_ORDER = ["position", "activity", "market", "research", "targets"];
+const stockTabChecks = (expected, { fundsOnly = false } = {}) => [
+  ["the page offers the same five tabs, in the same order, on every holding",
+    (t, ctx) => !!ctx.stockPage && ctx.stockPage.tabs.map((x) => x.key).join() === STOCK_TAB_ORDER.join()],
+  [`this address opens the ${expected} tab, and only that tab is lit`,
+    (t, ctx) => {
+      const lit = (ctx.stockPage?.tabs ?? []).filter((x) => x.active).map((x) => x.key);
+      return lit.length === 1 && lit[0] === expected;
+    }],
+  /**
+   * ONE TAB'S CONTENT IS IN THE DOM, NEVER TWO. A build that drew every tab and
+   * hid the rest would still be the long page — every figure right and every
+   * card present — and only a count of the sections can see it.
+   */
+  ["exactly one tab's content is drawn, and it is the lit one",
+    (t, ctx) => !!ctx.stockPage && ctx.stockPage.panel === expected
+      && ctx.stockPage.sections.length === 1 && ctx.stockPage.sections[0] === expected],
+  /**
+   * THE PAGE ITSELF DOES NOT SCROLL — the ask, measured. The panel is allowed
+   * to scroll inside itself, and is not asserted not to: a tab whose content is
+   * taller than the window must still be able to reach it, and a page that fits
+   * by hiding a figure is worse than the scroll it replaced.
+   */
+  ["the page itself does not scroll — the name, the tabs and the tiles stay put",
+    (t, ctx) => !!ctx.stockPage && ctx.stockPage.docScroll <= 1
+      && ctx.stockPage.mainScroll !== null && ctx.stockPage.mainScroll <= 1],
+  // THE TILES ARE THE SAME ON EVERY TAB, and they sit ABOVE the panel — a
+  // panel drawn over them, or a strip that scrolled off, satisfies both of the
+  // scroll checks above.
+  //
+  // …EXCEPT ON A COMPANY HELD ONLY INSIDE FUNDS, which has no quantity, cost
+  // or mark of the family's own: six dashes over a page whose whole answer is
+  // the fund lines would read as a holding that is missing rather than one held
+  // another way (main's #88). The route says which it walks, off `HELD_BOOK`,
+  // so a company page that lost its strip cannot pass as a fund-only one.
+  fundsOnly
+    ? ["a company held only inside funds draws no strip of the family's own figures, on every tab",
+        (t, ctx) => {
+          const g = ctx.stockPage;
+          return !!g && !g.strip && g.stripTiles === 0 && !!g.panelBox && ctx.heldTable?.avgTile === false;
+        }]
+    : ["the six tiles are on every tab, above the panel and inside the window",
+        (t, ctx) => {
+          const g = ctx.stockPage;
+          return !!g && g.stripTiles === 6 && !!g.strip && !!g.panelBox
+            && g.strip.bottom <= g.viewportH + 1 && g.panelBox.top >= g.strip.bottom - 1;
+        }],
+  /**
+   * THE TABS SIT AT THE RIGHT-HAND END OF THE NAME'S LINE, as on Morning CIO —
+   * which is geometry, so it is checked on geometry: on the title's line, to its
+   * right, and ending where the headline row ends.
+   */
+  ["the tabs sit at the right-hand end of the name's own line",
+    (t, ctx) => {
+      const g = ctx.stockPage;
+      if (!g?.title || !g.tabList || !g.headline) return false;
+      const overlap = Math.min(g.title.bottom, g.tabList.bottom) - Math.max(g.title.top, g.tabList.top);
+      return overlap > 0 && g.tabList.left > g.title.right && Math.abs(g.tabList.right - g.headline.right) <= 2;
+    }],
+];
+
+/**
+ * ── THE TRANSACTIONS TAB: WHAT MOVED, THE PURCHASE DATES AND THE TAX SPLIT ──
+ *
+ * The tax card and the dated record are drawn HERE and the account table is
+ * not — so a claim about either must be walked on this tab, and the account
+ * table's own claims (`stockLayoutChecks`) must not be, or they fail on a table
+ * that is correctly absent.
+ */
+const stockActivityChecks = () => [
+  ["the holding-period and tax card is on this tab, each figure a value or a dash that says why",
+    (t, ctx) => {
+      const tax = ctx.stockPage?.tax ?? [];
+      return tax.length === 5 && tax.every((c) => c.label !== "" && c.value !== ""
+        && (!/^[—-]$/.test(c.value) || (!!c.reason && c.reason.length > 10)));
+    }],
+  ["the dated transaction record is on this tab", (t) => /Transaction history/i.test(t)],
+  ["the account table is not drawn on this tab — it is the Position tab's", (t, ctx) => ctx.posTable === null],
 ];
 
 /**
@@ -10867,12 +11127,34 @@ const heldChecks = (which, tab) => [
     }],
   ["the table fits its card, whichever tab is open",
     (t, ctx) => ctx.heldTable?.overflow != null && ctx.heldTable.overflow <= 1],
-  ["every footer row spans exactly the columns the header declares",
+  /**
+   * ONE RULE FOR EVERY FOOTER LINE: DRAWN ONLY WHERE IT ADDS UP TWO OR MORE
+   * LINES. A total of one line is the line again (the Polycab table's rule,
+   * and the position page's since it became tabs), so the measured total needs
+   * two statement rows, the derived total two fund lines, and the exposure line
+   * one of each. The expected set is derived from `HELD_BOOK`, per tab, so a
+   * footer drawn over one line fails here as surely as one that went missing.
+   */
+  ["the footer draws exactly the totals this tab has two or more lines to add up, each spanning the header's columns",
     (t, ctx) => {
-      const h = ctx.heldTable;
-      return !!h && h.feet.length > 0 && h.heads.length > 0 && h.feet.every((f) => f.span === h.heads.length);
+      const h = ctx.heldTable, c = heldCompany(which);
+      if (!h || !c || !h.heads.length) return false;
+      const want = heldFeetWanted(c, tab);
+      return JSON.stringify(h.feet.map((f) => f.kind)) === JSON.stringify(want)
+        && h.feet.every((f) => f.span === h.heads.length);
     }],
 ];
+/** Which footer lines a tab draws, off the book — see the claim above. */
+const heldFeetWanted = (c, tab) => {
+  const route = HELD_TAB_KEYS[tab];
+  if (tab === "all") return [
+    c.whole.rows > 1 && "measured",
+    c.fundLines > 1 && "derived",
+    c.whole.rows >= 1 && c.fundLines >= 1 && "exposure",
+  ].filter(Boolean);
+  if (route === "fund") return c.fundLines > 1 ? ["derived"] : [];
+  return (c.routes[route]?.rows ?? 0) > 1 ? ["measured"] : [];
+};
 /** The All tab: every route as a section, the fund lines derived, three footers. */
 const heldAllChecks = () => [
   ["every route the book reports is a band, in the order a reader asks — own accounts, managers, funds",
@@ -10921,17 +11203,22 @@ const heldAllChecks = () => [
     (t, ctx) => {
       const h = ctx.heldTable, c = heldCompany("both");
       if (!h || !c) return false;
-      const kinds = h.feet.map((f) => f.kind);
-      if (JSON.stringify(kinds) !== JSON.stringify(["measured", "derived", "exposure"])) return false;
-      const [m, d, x] = h.feet;
-      return heldNear(m.value, c.whole.mv) && heldNear(d.value, c.derived) && heldNear(x.value, c.whole.mv + c.derived)
-        && /derived/i.test(d.text) && /incl\. derived/i.test(x.text) && !/derived/i.test(m.text);
+      const want = heldFeetWanted(c, "all");
+      if (JSON.stringify(h.feet.map((f) => f.kind)) !== JSON.stringify(want) || !want.includes("exposure")) return false;
+      const by = Object.fromEntries(h.feet.map((f) => [f.kind, f]));
+      const m = by.measured, d = by.derived, x = by.exposure;
+      return (!m || (heldNear(m.value, c.whole.mv) && !/derived/i.test(m.text)))
+        && (!d || (heldNear(d.value, c.derived) && /derived/i.test(d.text)))
+        && heldNear(x.value, c.whole.mv + c.derived) && /incl\. derived/i.test(x.text);
     }],
   ["the footer's average cost and FIFO return are over the units that report a cost — never cost ÷ every unit — and the row says which units",
     (t, ctx) => {
       const h = ctx.heldTable, c = heldCompany("both");
       if (!h || !c) return false;
       const m = h.feet.find((f) => f.kind === "measured");
+      // A company one statement reports draws no measured total — the footer
+      // claim above holds it to that — so there is no average to strike here.
+      if (c.whole.rows <= 1) return m ? false : { notChecked: "the book reports this company on one statement, so no measured total is drawn" };
       if (!m) return false;
       const w = c.whole;
       if (w.avg === null) return m.avg === null;
@@ -13022,6 +13309,7 @@ const INVARIANTS = {
    * say its basis — each against `CARRIED_BOOK`.
    */
   "stock-carried": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["the book carries a holding whose cost was carried through a class switch",
       () => !!CARRIED_BOOK && CARRIED_BOOK.rows.length > 0],
@@ -13925,9 +14213,19 @@ const INVARIANTS = {
    * the FIGURES and the labels the page renders, never on the card merely being
    * present.
    */
+  /**
+   * THE SCHEME CARD IS TWO HALVES ON TWO TABS NOW. Its NAV, the NAV's move and
+   * the scheme's own returns are the fund's PRICE, on Price & returns; what the
+   * scheme holds is what a reader researches it for, on Research. Each half is
+   * walked on the tab that draws it, and each route asserts it draws ITS half
+   * and not the other — a build that put both back on one tab is the long page.
+   */
   "stock-mf-lookthrough": [
-    ["it renders the scheme card, naming the scheme and its AMC", (t) =>
-      /The scheme — NAV, returns and what it holds/i.test(t) && /matched on (ISIN|name)/i.test(t)],
+    ...stockTabChecks("market"),
+    ["it renders the scheme's NAV card, naming the scheme and its AMC", (t) =>
+      /The scheme — NAV and returns/i.test(t) && /matched on (ISIN|name)/i.test(t)],
+    ["this tab draws the scheme's price half, not its holdings",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.lookthrough.join() === "nav"],
     /**
      * THE PROVENANCE IS ON THE CARD. These are the only figures on this site
      * that are not the family's own — a reader who takes them for statement
@@ -13942,11 +14240,17 @@ const INVARIANTS = {
      * one. The change must name the PREVIOUS NAV AND ITS DATE — a fund does not
      * publish on a non-business day, so "since yesterday" would be wrong across
      * a weekend.
+     *
+     * ANCHORED ON THE CARD. The strip above it carries a tile headed NAV on a
+     * fund's page too, so a search for the first "NAV" line reads the tile.
      */
     ["the NAV, its change and the previous NAV's own date all render", (t) => {
-      const i = t.search(/^NAV$/mi);
+      const c = t.search(/The scheme — NAV and returns/i);
+      if (c < 0) return false;
+      const rest = t.slice(c);
+      const i = rest.search(/^NAV$/mi);
       if (i < 0) return false;
-      const block = t.slice(i, i + 320);
+      const block = rest.slice(i, i + 320);
       return /\d+\.\d{2,4}/.test(block)
         && /[+-]\d+\.\d\d%/.test(block)
         && /since [\d,.]+ on \d{1,2} \w{3,} \d{4}/i.test(block);
@@ -13972,6 +14276,19 @@ const INVARIANTS = {
       const windows = (block.match(/\d{1,2} \w{3,} \d{4}\s*→\s*\d{1,2} \w{3,} \d{4}/g) ?? []).length;
       return periods > 0 && windows === periods;
     }],
+  ],
+  "stock-mf-holdings": [
+    ...stockTabChecks("research"),
+    ["it renders the scheme's holdings card, naming the scheme and its AMC", (t) =>
+      /What the scheme holds/i.test(t) && /matched on (ISIN|name)/i.test(t)],
+    ["this tab draws the scheme's holdings, not its price half",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.lookthrough.join() === "holdings"],
+    // ...and says once, beside it, that the COMPANY research does not apply —
+    // the holdings are the manager's, not a share the family owns.
+    ["...and states once that company research does not apply to a fund",
+      (t, ctx) => ctx.stockPage?.researchNA === "fund" && (ctx.stockPage?.research ?? []).length === 0],
+    ["it says the figures are AMFI's and the AMC's, not this family's statement", (t) =>
+      /not a statement issued to this family/i.test(t)],
     // WHICH DOCUMENT THE HOLDINGS CAME FROM. The AMC's own filing and a third
     // party's copy of it are different things and the card names which.
     ["the holdings name the document they came from", (t) =>
@@ -14013,8 +14330,13 @@ const INVARIANTS = {
       (t) => !/invested\s*—/.test(t)],
     // The other two tiles on the same strip already did this; asserted here so a
     // future edit cannot fix one pair by breaking the other.
-    ["realised P&L and change today still state their own reasons",
-      (t) => /no capital gain statement covers this name/i.test(t) && /no live quote|price feed/i.test(t)],
+    // "Change today" is folded into the price tile, so its reason is that
+    // tile's own line — read off its handle rather than off the page text.
+    ["realised P&L and the price tile still state their own reasons",
+      (t, ctx) => /no capital gain statement covers this name/i.test(t)
+        && /no live quote|price feed|no NSE symbol|fetching live price|total value, not a price per unit|AMFI NAV|NAV on the statement|do not agree/i
+          .test(ctx.stockMark?.caption ?? "")],
+    ...stockTabChecks("position"),
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
@@ -20024,6 +20346,8 @@ const INVARIANTS = {
    * shown as sold — not as a holding, and not as a quantity nobody printed.
    */
   "stock-sold-elsewhere": [
+    ...stockTabChecks("activity"),
+    ...stockActivityChecks(),
     ["the account that sold this company out is on its quantity table, marked sold out, from the opening it printed", (t, ctx) => {
       if (!SOLD_ELSEWHERE) return { notChecked: "no company in this book was sold out of one account while another holds it" };
       const r = (ctx.qtyTable?.rows ?? []).find((x) => x.account === SOLD_ELSEWHERE.accountId);
@@ -20066,7 +20390,8 @@ const INVARIANTS = {
   "monitor-security-picklist": pickListChecks("the security axis", true),
   "stock-qty": [
     ...qtyChecks(() => QTY_BOOK?.tableKey),
-    ...stockLayoutChecks(),
+    ...stockTabChecks("activity"),
+    ...stockActivityChecks(),
     // A ROUTE THAT RESOLVED NOTHING MUST NOT PASS. With no window in the book
     // the route lands on a page with no table, which has no console error, no
     // overflow and no stray zero — it would satisfy every generic check while
@@ -20095,14 +20420,16 @@ const INVARIANTS = {
    */
   "stock-pledge": [
     ...qtyChecks(() => QTY_BOOK?.pledgeKey),
-    ...stockLayoutChecks(),
+    ...stockTabChecks("activity"),
+    ...stockActivityChecks(),
     ["this page really does exercise a pledge, so the exclusion is not vacuous",
       (t, ctx) => !!ctx.qtyTable && ctx.qtyTable.rows.some((r) => (r.pledge ?? 0) > 0)],
     ["the book carries a pledged demat holding to walk at all",
       () => !!QTY_BOOK?.pledgeKey],
   ],
   "stock-unmoved": [
-    ...stockLayoutChecks(),
+    ...stockTabChecks("activity"),
+    ...stockActivityChecks(),
     ["a holding whose statement prints no block says so, and names the accounts",
       (t, ctx) => !!ctx.qtyTable?.unmoved
         && /prints no dated block for it/i.test(ctx.qtyTable.unmoved)
@@ -20140,6 +20467,7 @@ const INVARIANTS = {
    * The last check states the premise so the pair can never pass over nothing.
    */
   "stock-cmp-split": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["the headline refuses to print one statement's mark as the holding's",
       (t, ctx) => ctx.stockMark?.state === "split" && /—/.test(ctx.stockMark.value)
@@ -20195,6 +20523,7 @@ const INVARIANTS = {
    * cannot go stale when the daily workflow moves a NAV.
    */
   "stock-cmp-nav": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["the price shown is the published NAV, not the statement's own mark",
       (t, ctx) => {
@@ -20222,6 +20551,7 @@ const INVARIANTS = {
       () => !!CMP_BOOK.navKey && CMP_BOOK.navNav != null],
   ],
   "stock-cmp-unmarked": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["the headline prints an absence, never a zero, for a holding with no mark",
       (t, ctx) => ctx.stockMark?.state === "none" && /—/.test(ctx.stockMark.value)
@@ -20233,6 +20563,7 @@ const INVARIANTS = {
       () => !!CMP_BOOK.unmarkedKey],
   ],
   "stock-cagr": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["a holding held over a year shows its CAGR beside the holding-period return",
       (t, ctx) => !!ctx.posTable
@@ -20261,6 +20592,7 @@ const INVARIANTS = {
    * the page, on every Buoyant folio, beside the HPR and never instead of it.
    */
   "stock-capital": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ["the book carries the investment the client pointed at, on a dated record",
       () => !!DATED_CAPITAL_BOOK?.buoyantKey && DATED_CAPITAL_BOOK.buoyant.some((id) => DATED_CAPITAL_BOOK.rated.has(id))],
@@ -20276,19 +20608,13 @@ const INVARIANTS = {
       (t, ctx) => /XIRR appears only on a row that is a WHOLE account/.test(ctx.posTable?.returnTitle ?? "")],
   ],
   stock: [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
-    /**
-     * THE RESEARCH POINTER IS ONE LINE, AND WHAT IT DROPPED IS ITS HOVER
-     * (Stage 10cg). It was a 511-character paragraph under the insider-trades
-     * table — and it sits OUTSIDE any card, where the `tableNotes` guard does
-     * not look, so it is asserted here by name. Both halves: the line a reader
-     * sees, and the market-cap sentence a reader who hovers still finds.
-     */
-    ["the research pointer under the insider table is one line, and its detail is its hover", (t, ctx) => {
-      if (!/Financials, ratios, shareholding, street estimates, documents & concalls are live above/.test(t)) return false;
-      if (/not repeated here as standalone figures/.test(t)) return false;
-      return (ctx?.titles ?? []).some((x) => /not repeated here as standalone figures/.test(x) && /price feed does not return them/.test(x));
-    }],
+    // #84 PUT ITS DIVIDEND-INCLUSIVE CARD UNDER THE ACCOUNT TABLE on the old
+    // single page. It lives on Price & returns now (asserted on `stock-market`),
+    // and a copy left here as well would be the same card on two tabs.
+    ["the dividend-inclusive return card is on the Price & returns tab, not this one",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.corporate === 0],
     // ── AND THIS IS NOW THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────
     //
     // Macro Research and Economy & Macro were the most visible readers of
@@ -20327,15 +20653,22 @@ const INVARIANTS = {
         const head = rupees(ctx.stockMark.value);
         return marks.length === 1 && head.length === 1 && sameMark(head[0], marks[0]);
       }],
-    ["...and the Total row carries it too, rather than a dash",
-      (t, ctx) => typeof ctx.posTable?.footCmp === "string"
-        && !/—/.test(ctx.posTable.footCmp) && rupees(ctx.posTable.footCmp).length === 1],
-    ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
-    ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
-    // A COMPANY keeps every panel. This is the other half of `stock-fund` below:
-    // suppressing the research block on an asset class must not creep into the
-    // pages it belongs on.
-    ["a company page still carries its research panels", (t) => !/not applicable to/i.test(t)],
+    // ...AND ONE ACCOUNT'S HOLDING DRAWS NO TOTAL ROW AT ALL, because the row is
+    // its own total. Where several statements agree on a mark the Total row
+    // carries it, and that is asserted where it has a subject: `stock-cmp-agree`.
+    ["a holding one account reports draws no Total row — the row is its own total",
+      (t, ctx) => !!ctx.posTable && ctx.posTable.bodyRows === 1 && ctx.posTable.hasFoot === false],
+    /**
+     * THE LINE UNDER THE NAME IS ONE LINE, AND IT LINKS THE MANDATE. The price
+     * card, the research card and the rest moved to their own tabs, so the
+     * claims about them are walked there (`stock-market`, `stock-research`);
+     * what is left on this tab is the holding itself.
+     */
+    ["the mandate line under the name is one line and links each mandate",
+      (t, ctx) => {
+        const m = ctx.stockPage?.mandates;
+        return !!m && m.count >= 1 && m.count <= 2 && m.links === m.count && m.height <= m.lineHeight * 1.6;
+      }],
     /**
      * WHO CHOSE THE POSITION, ON THE PAGE THAT NAMES IT.
      *
@@ -20685,6 +21018,217 @@ const INVARIANTS = {
         && !/Dated dealing on this account/i.test(t)
         && !/No dealing is reported for this account/i.test(t)],
   ],
+  /**
+   * ── THE OTHER FOUR TABS OF ONE COMPANY PAGE ────────────────────────────────
+   *
+   * The Position tab is `stock` above; these are the same company on each of
+   * its other tabs, because a claim about the price card, the research card or
+   * the family's own targets has no subject until its tab is open.
+   */
+  "stock-activity": [
+    ...stockTabChecks("activity"),
+    ...stockActivityChecks(),
+  ],
+  "stock-market": [
+    ...stockTabChecks("market"),
+    // ── AND THIS IS THE CHECK THAT KEEPS `series.ts` ALIVE ──────────────────
+    //
+    // `ReturnsTable` draws this card with `Point`, `SeriesMeta`, `HORIZON_COLS`,
+    // `RANGES`, `fmtLevel`, `fmtReturn` and `rebase`, so the card rendering here
+    // is the assertion that those modules survived the removal of the macro
+    // pages. `/api/prices` does not answer in this harness, so the card resolves
+    // to its named absence and the chart never mounts — `SeriesChart` is held up
+    // by the build instead, which is why the gate is build AND sweep.
+    ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
+    ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
+    /**
+     * THE TRADING RANGE CARD IS GONE, AND WHAT IT CARRIED IS NOT. It printed the
+     * 52-week high and low — two columns of the returns table on this very tab,
+     * struck from the same daily closes since Upstox became the quote feed — so
+     * it was one pair of figures printed twice. Asserted absent so it does not
+     * come back as a second card beside the table that already answers it.
+     */
+    ["the separate Trading range card is gone — the returns table carries the 52-week range",
+      (t) => !/Trading range/i.test(t)],
+    // A COMPANY's price tab is its price, never the decided absence a fund's is.
+    ["a company's price tab is its price card, not a decided absence",
+      (t, ctx) => !/not applicable to/i.test(t) && !!ctx.stockPage && ctx.stockPage.panelCards >= 1],
+    /**
+     * …AND THE DIVIDEND-INCLUSIVE RETURN SITS UNDER IT, AND NOWHERE ELSE. The
+     * returns table is headed "excludes dividends" and #84's card is the other
+     * half of that sentence — each statement's window with the gross dividends
+     * declared in it — so the two are this tab's two cards, and nothing else is.
+     * Counted on the card's own table handle: a page that dropped it renders
+     * every other figure here correctly, and one that stacked a third card back
+     * under it is the long page this tab exists to end.
+     */
+    ["...with the dividend-inclusive return card beneath it, and no third card",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.corporate === 1 && ctx.stockPage.panelCards === 2],
+  ],
+  /**
+   * ── ONE RESEARCH CARD, SEVEN SUB-TABS ─────────────────────────────────────
+   *
+   * The page carried the research card, a separate Ratio analysis card, a
+   * Trading range card, an Insider & bulk deals card and a paragraph describing
+   * the cards above it, one under another. They are one card now: Financials,
+   * Cash flow, Ratios, Street estimates, Documents, Concalls, Insider deals.
+   */
+  "stock-research": [
+    ...stockTabChecks("research"),
+    ["the research card offers its seven sub-tabs, in order, opening on Financials",
+      (t, ctx) => {
+        const r = ctx.stockPage?.research ?? [];
+        return r.map((x) => x.key).join() === "financials,statements,ratios,estimates,documents,concalls,insider"
+          && r.filter((x) => x.active).map((x) => x.key).join() === "financials";
+      }],
+    // ONE CARD — the stand-alone ones did not come back beside it.
+    ["the tab draws ONE research card, and the old stand-alone cards are gone",
+      (t, ctx) => ctx.stockPage?.panelCards === 1
+        && !/Trading range|Insider & bulk deals/i.test(t) && !/^Ratio analysis$/mi.test(t)],
+    // MAIN'S RESEARCH POINTER (its Stage 10ci) HAS NO SUBJECT ON THIS TAB. It
+    // pointed from the old page's stand-alone cards back "above" to the research
+    // panel; every panel it named is a sub-tab of the one card this tab draws,
+    // so the line and its "live above" claim stay gone rather than shortened.
+    ["...and the old pointer back up the page stays gone — every panel it named is a sub-tab here",
+      (t) => !/are live above/i.test(t)],
+    // A COMPANY keeps its research. The other half of `stock-fund`: suppressing
+    // the research card on an asset class must not creep into a company's page.
+    ["a company page still carries its research", (t) => !/not applicable to/i.test(t) && /Company research/i.test(t)],
+    /**
+     * EACH SUB-TAB OPENS ITS OWN PANEL, AND ONLY ITS OWN. Clicked in turn by the
+     * walk; a lit sub-tab that draws nothing, or draws the other's panel too,
+     * fails here — and a MISSING walk is a failure, since this is the one route
+     * that makes it.
+     */
+    ["Ratios and Insider deals each open inside the card, one panel at a time",
+      () => {
+        const w = RESEARCH_WALK ?? [];
+        const at = (k) => w.find((x) => x.key === k);
+        const ratios = at("ratios"), insider = at("insider"), fin = at("financials");
+        return !!ratios && !!insider && !!fin
+          && ratios.active && ratios.ratio && ratios.insider === null
+          && insider.active && !insider.ratio && insider.insider !== null
+          && fin.active && !fin.ratio && fin.insider === null;
+      }],
+  ],
+  /**
+   * ── THE FAMILY'S OWN JUDGEMENTS ARE A TAB OF THEIR OWN ────────────────────
+   *
+   * And the caption that pointed a reader at "Portfolio Monitor's plan view" is
+   * gone: that view was REMOVED at the family's request, and a sentence sending
+   * a reader to a column that does not exist is the absence-against-a-stale-
+   * premise failure, run the other way.
+   */
+  "stock-targets": [
+    ...stockTabChecks("targets"),
+    ["the family's own target price, fair value and valuation method are this tab",
+      (t) => /investment tools/i.test(t) && /target price/i.test(t) && /fair value/i.test(t) && /valuation method/i.test(t)],
+    ["no sentence points at a Portfolio Monitor view that no longer exists", (t) => !/plan view/i.test(t)],
+  ],
+  /**
+   * ── THE RETURN IS FIFO: THE GAIN ON UNITS ALREADY SOLD STAYS IN IT ────────
+   *
+   * Stage 10ca. The Unrealised P&L tile's return and the Total row's HPR are
+   * the holding's FIFO return — unrealised plus realised, over the cost of what
+   * is held plus the cost of what was sold. On a holding that sold nothing
+   * that is the same number as unrealised over cost, so no other stock route
+   * can tell the two formulas apart. This one walks the holding where they
+   * differ most (`FIFO_STOCK`, derived from the book) and requires the FIFO
+   * figure AND refuses the other. Found because the position page's own bug
+   * pass put the survivors-only formula back and every route stayed green.
+   */
+  "stock-fifo": [
+    ...stockTabChecks("position"),
+    ...stockLayoutChecks(),
+    ["the book carries a company share whose FIFO return is not its unrealised gain over its cost", () => !!FIFO_STOCK],
+    ["the Unrealised P&L tile's return is FIFO's — the gain on units already sold included — never unrealised over the cost held",
+      (t, ctx) => {
+        const tile = (ctx.stockPage?.tiles ?? []).find((x) => /unrealised p&l/i.test(x.label));
+        const m = /([▲▼■])\s*(\d+(?:\.\d+)?)%/.exec(tile?.sub ?? "");
+        const got = m ? `${m[1]}${m[2]}` : null;
+        return !!FIFO_STOCK && got === FIFO_STOCK.fifoShown && got !== FIFO_STOCK.heldShown;
+      }],
+    ["...and so is the Total row's HPR, where two accounts draw one",
+      (t, ctx) => {
+        const f = ctx.posTable?.footReturn;
+        if (f == null) return { notChecked: "the holding is in one account, so no Total row is drawn" };
+        const m = /([+\-−]?)(\d+(?:\.\d+)?)%/.exec(f);
+        if (!m || !FIFO_STOCK) return false;
+        const sign = m[1] === "-" || m[1] === "−" ? "▼" : Number(m[2]) === 0 ? "■" : "▲";
+        return `${sign}${m[2]}` === FIFO_STOCK.fifoShown;
+      }],
+  ],
+  /**
+   * ── SEVERAL STATEMENTS, ONE MARK: THE TOTAL ROW CARRIES IT ────────────────
+   *
+   * `stock-cmp-split` asserts the Total row refuses a blended mark. The other
+   * direction needs a holding several statements report at ONE mark — a Total
+   * that refused there too would swallow the figure — and since a one-account
+   * holding draws no Total row at all, this is the route where the claim has a
+   * subject. Derived (`CMP_BOOK.agreedKey`), largest by value.
+   */
+  "stock-cmp-agree": [
+    ...stockTabChecks("position"),
+    ...stockLayoutChecks(),
+    ["the Total row prints the one mark every statement agrees on",
+      (t, ctx) => {
+        const f = ctx.posTable?.footCmp;
+        const want = rupees(CMP_BOOK.agreedMark ?? "")[0];
+        return typeof f === "string" && !/—/.test(f) && rupees(f).length === 1
+          && want !== undefined && sameMark(rupees(f)[0], want);
+      }],
+    ["...and so does the price tile",
+      (t, ctx) => {
+        const head = rupees(ctx.stockMark?.value ?? "");
+        const want = rupees(CMP_BOOK.agreedMark ?? "")[0];
+        return ctx.stockMark?.state === "one" && head.length === 1 && want !== undefined && sameMark(head[0], want);
+      }],
+    ["the book carries a holding several statements mark alike", () => !!CMP_BOOK.agreedKey],
+  ],
+  /**
+   * ── A HOLDING TEN MANDATES HOLD: THE LINE IS A COUNT, NOT A WALL ──────────
+   *
+   * The cash sleeve sits in every one of this book's mandates, and listing a
+   * link to each under the name was a five-line paragraph above the figures.
+   * Past two it is a count — and every mandate is still one click away, from
+   * its own row, which is asserted against the book so the count cannot be
+   * satisfied by a table that lost its links.
+   */
+  "stock-mandates-many": [
+    ...stockTabChecks("position"),
+    ...stockLayoutChecks(),
+    ["the book carries a holding three or more mandates hold", () => !!MANY_MANDATES],
+    ["the line under the name counts the mandates, links none, and stays one line",
+      (t, ctx) => {
+        const m = ctx.stockPage?.mandates;
+        return !!m && !!MANY_MANDATES && m.count === MANY_MANDATES.count && m.links === 0
+          && m.height <= m.lineHeight * 1.6;
+      }],
+    ["...and every one of those mandates is linked from its own row",
+      (t, ctx) => !!MANY_MANDATES
+        && new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h))).size === MANY_MANDATES.count],
+    /**
+     * A CASH LINE HAS NO SECTOR, AND ITS P&L SAYS WHY IT IS FLAT. Its statement
+     * files it under a "Cash" heading, and that word printed as a sector pill
+     * beside the Cash bucket claimed a GICS sector nobody assigned. And a
+     * computed ₹0 keeps its zero with the reason IN the tile (§2).
+     */
+    ["a cash line carries no sector chip",
+      (t, ctx) => (MANY_MANDATES?.cash ? ctx.stockPage?.sector === null
+        : { notChecked: "the holding the most mandates hold is not a cash line on this book" })],
+    ["...and its P&L tile says a balance carries none",
+      (t, ctx) => {
+        if (!MANY_MANDATES?.cash) return { notChecked: "the holding the most mandates hold is not a cash line on this book" };
+        const tile = (ctx.stockPage?.tiles ?? []).find((x) => /unrealised/i.test(x.label));
+        return !!tile && /a balance/i.test(tile.sub);
+      }],
+  ],
+  "stock-cash-market": [
+    ...stockTabChecks("market"),
+    ["a cash line's price tab says there is no market price, and why",
+      (t) => /not applicable to a cash line/i.test(t) && /a balance, not a priced security/i.test(t)],
+    ["the book carries a cash line held through three or more mandates", () => !!MANY_MANDATES?.cash],
+  ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
   // holding — an AIF folio's quantity, cost, entities and ledger belong on a page
   // of their own — but the company research underneath does not apply, and five
@@ -20692,11 +21236,13 @@ const INVARIANTS = {
   // decided absence. Asserted on the page, because the reason a card is empty is
   // the only thing separating "the feed is down" from "this can never be filled".
   "stock-held": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ...heldChecks("both", "all"),
     ...heldAllChecks(),
   ],
   "stock-held-managers": [
+    ...stockTabChecks("position"),
     ...stockLayoutChecks(),
     ...heldChecks("both", "managers"),
     ["the PMS managers tab draws the managers' statement rows and nothing else",
@@ -20706,16 +21252,19 @@ const INVARIANTS = {
         return h.measured.length === c.routes.manager.rows && h.measured.every((m) => m.route === "manager")
           && h.funds.length === 0 && h.bands.length === 0;
       }],
-    ["…and its one footer totals those rows, with the return they carry",
+    ["…and its footer totals those rows, with the return they carry — where there are two to add",
       (t, ctx) => {
         const h = ctx.heldTable, r = heldCompany("both")?.routes.manager;
-        if (!h || !r || h.feet.length !== 1 || h.feet[0].kind !== "measured") return false;
+        if (!h || !r) return false;
+        if (r.rows <= 1) return h.feet.length === 0;
+        if (h.feet.length !== 1 || h.feet[0].kind !== "measured") return false;
         const f = h.feet[0];
         return heldNear(f.value, r.mv) && heldNear(f.avg, r.avg, 0.01) && /PMS managers/.test(f.text)
           && (r.fifoRet === null ? f.ret === null : heldNear(f.ret, r.fifoRet, 0.01));
       }],
   ],
   "stock-held-funds": [
+    ...stockTabChecks("position"),
     ...heldChecks("both", "funds"),
     ["the Mutual funds tab draws the fund lines and nothing the family holds itself",
       (t, ctx) => {
@@ -20724,16 +21273,19 @@ const INVARIANTS = {
         return h.measured.length === 0 && h.bands.length === 0 && h.funds.length === c.fundLines
           && heldNear(h.funds.reduce((a, f) => a + f.value, 0), c.derived);
       }],
-    ["…and its one footer is the derived total, labelled derived",
+    ["…and its footer is the derived total, labelled derived — where there are two lines to add",
       (t, ctx) => {
         const h = ctx.heldTable, c = heldCompany("both");
-        return !!h && !!c && h.feet.length === 1 && h.feet[0].kind === "derived" && heldNear(h.feet[0].value, c.derived)
+        if (!h || !c) return false;
+        if (c.fundLines <= 1) return h.feet.length === 0;
+        return h.feet.length === 1 && h.feet[0].kind === "derived" && heldNear(h.feet[0].value, c.derived)
           && /derived/i.test(h.feet[0].text);
       }],
     ["the funds that disclose nothing are still named on this tab",
       (t, ctx) => ctx.heldTable?.aif === HELD_BOOK?.aifCount && HELD_BOOK?.aifCount != null],
   ],
   "stock-funds-only": [
+    ...stockTabChecks("position", { fundsOnly: true }),
     ...heldChecks("fundsOnly", "all"),
     /**
      * THE PAGE THIS FIXES. With no statement row it read "Position closed ·
@@ -20743,22 +21295,68 @@ const INVARIANTS = {
      */
     ["a company held only inside funds says so, and never that the position is closed",
       (t, ctx) => ctx.heldTable?.pill === "funds-only" && !/Position closed/i.test(t) && !/fully exited/i.test(t)],
-    ["its table is the fund lines, and their one footer is the derived total",
+    ["its table is the fund lines, and their footer is the derived total — where there are two to add",
       (t, ctx) => {
         const h = ctx.heldTable, c = heldCompany("fundsOnly");
         if (!h || !c) return false;
-        return h.measured.length === 0 && h.funds.length === c.fundLines && h.funds.length > 0
-          && h.feet.length === 1 && h.feet[0].kind === "derived" && heldNear(h.feet[0].value, c.derived);
+        if (h.measured.length !== 0 || h.funds.length !== c.fundLines || h.funds.length === 0) return false;
+        if (c.fundLines <= 1) return h.feet.length === 0;
+        return h.feet.length === 1 && h.feet[0].kind === "derived" && heldNear(h.feet[0].value, c.derived);
       }],
-    ["no card of the family's own figures stands over a holding they do not own directly",
-      (t, ctx) => ctx.heldTable?.taxToggles === 0 && ctx.heldTable?.avgTile === false],
-    ["research that needs a symbol says once why it is absent, instead of four empty panels",
-      (t, ctx) => ctx.heldTable?.research === "funds-only" && !/No price history for this security/i.test(t)],
+    /* The "no card of the family's own figures" claim is the fund-only form of
+       `stockTabChecks`' strip claim, spread into all four of this company's
+       routes; the tax split's absence is asserted on the Transactions tab, where
+       a company share draws it. And the research claim moved to the two tabs
+       that draw research, where it can fail. */
+  ],
+  "stock-funds-only-activity": [
+    ...stockTabChecks("activity", { fundsOnly: true }),
+    /**
+     * NOTHING OF THE FAMILY'S OWN TO SPLIT. Every figure the tax card carries
+     * — cost, purchase dates, dividends — is about the family's own lots, and a
+     * company held only inside funds has none; and the Transactions tab says so
+     * ONCE, or draws the dated record where the family's own accounts did trade
+     * it (a name sold out of a demat that a fund still holds). Exactly one of
+     * the two: a tab drawing both contradicts itself, and one drawing neither is
+     * an empty panel.
+     */
+    ["the tax split of the family's own lots is not drawn over a company they hold only through funds",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.tax.length === 0],
+    ["the tab either says no statement records a buy or sell of the family's own, or draws the dated record — never both, never neither",
+      (t, ctx) => {
+        const g = ctx.stockPage;
+        if (!g) return false;
+        const said = g.activity === "funds-only" && /held only inside your funds/i.test(t);
+        const record = /Transaction history/i.test(t);
+        return said !== record;
+      }],
+    ["the account table is not drawn on this tab — it is the Position tab's", (t, ctx) => ctx.posTable === null],
+  ],
+  "stock-funds-only-market": [
+    ...stockTabChecks("market", { fundsOnly: true }),
+    // RESEARCH THAT NEEDS A SYMBOL SAYS ONCE WHY IT IS ABSENT. A company no
+    // statement names has had no NSE symbol looked up, so there is no price
+    // history to chart — and an empty chart frame reads as a feed that failed.
+    ["a company held only inside funds says once why no price history is drawn — and draws no empty chart instead",
+      (t, ctx) => ctx.heldTable?.research === "funds-only" && /Price history is looked up by/i.test(t)
+        && /held only inside your funds/i.test(t) && !/No price history for this security/i.test(t)
+        && ctx.stockPage?.corporate === 0],
+  ],
+  "stock-funds-only-research": [
+    ...stockTabChecks("research", { fundsOnly: true }),
+    ["a company held only inside funds says once why its research is absent, instead of seven empty panels",
+      (t, ctx) => ctx.heldTable?.research === "funds-only" && /Research is looked up by/i.test(t)
+        && /not a feed being down/i.test(t) && (ctx.stockPage?.research ?? []).length === 0],
   ],
   "stock-fund": [
+    ...stockTabChecks("research"),
     ["a fund page states the company research does not apply", (t) => /not applicable to/i.test(t)],
-    ["...and does not render the five company panels",
-      (t) => !/Ratio analysis|Street estimates|Annual reports|52-week range|Insider trades/i.test(t)],
+    // Struck on the research card's own sub-tab control as well as on the old
+    // card titles: the company panels are sub-tabs of one card now, and a fund
+    // that grew that card back would carry the control whatever it rendered.
+    ["...and does not render the company research card or any of its panels",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.research.length === 0
+        && !/Ratio analysis|Street estimates|Annual reports|52-week range|Insider trades/i.test(t)],
     // A fund's `sector` is "Unclassified" in the model, which is true and reads
     // on screen as a sector nobody assigned rather than a property it lacks.
     ["a fund's missing sector is explained, not shown as Unclassified",
@@ -20772,16 +21370,32 @@ const INVARIANTS = {
      * constituent table here could only have filled it from some other scheme,
      * which is the fabrication the look-through store must not enable.
      */
-    ["an AIF renders no look-through table", (t) => !/What this fund holds/i.test(t)],
+    ["an AIF renders no look-through table",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.lookthrough.length === 0 && ctx.stockPage.researchNA === "fund"],
     ["...and says why: an AIF publishes no monthly portfolio disclosure", (t, ctx) =>
       /publishes no such disclosure/i.test(t)
       && (ctx?.titles ?? []).some((x) => /Category II or III/i.test(x))],
+  ],
+  /**
+   * AN AIF'S PRICE TAB STATES ITS ABSENCE ONCE. No exchange price, no daily NAV,
+   * so no chart and no returns series — and a returns table rendering a failed
+   * feed under a fund's name would read as a broken feed rather than a decided
+   * absence. One card, naming why.
+   */
+  "stock-fund-market": [
+    ...stockTabChecks("market"),
+    ["an AIF folio's price tab says there is no market price, and why",
+      (t) => /not applicable to an AIF folio/i.test(t) && /publishes no daily NAV/i.test(t)],
+    ["...in one card, with no returns table and no scheme look-through",
+      (t, ctx) => !!ctx.stockPage && ctx.stockPage.panelCards === 1 && ctx.stockPage.lookthrough.length === 0
+        && !/daily closes from/i.test(t)],
   ],
   // The AIF drill-down for a holding reported under two members. "AIF holdings
   // must be shown inside the respective AIF page drill down" — so every
   // statement carrying this name has a row here, and the page's own count of
   // them must agree with the rows it renders.
   "stock-aif-dual": [
+    ...stockTabChecks("position"),
     // THE COUNT AGAINST THE ROWS, not against a literal — this book's entity
     // count for this folio is a generated figure and a copy of it here would be
     // a second source for it. The bug was exactly this disagreement: a pill
@@ -20802,11 +21416,10 @@ const INVARIANTS = {
     // A holding its statement marks at a TOTAL value has no per-unit price. This
     // headline read "₹0" for exactly that reason (`currentPrice ?? 0`), which is
     // a figure produced by a default over a ₹1.47 Cr position.
-    ["no fabricated zero price in the CMP headline", (t) => {
-      const lines = t.split("\n");
-      const i = lines.findIndex((l) => /^CMP\s*·/.test(l.trim()));
-      return i > 0 && !/^₹0(\.00)?$/.test(lines[i - 1].trim());
-    }],
+    // Read off the price tile's own handle — it is headed NAV on a fund and CMP
+    // on a company, so its LABEL is not a stable anchor.
+    ["no fabricated zero price in the price tile",
+      (t, ctx) => !!ctx.stockMark && !/^₹\s*0(\.0+)?$/.test(ctx.stockMark.value.trim())],
   ],
   // Contribution attribution buckets COMPANY SHARES by GICS sector and every fund
   // wrapper under its own asset class. Bucketing only the PRIVATE classes that
@@ -20895,16 +21508,20 @@ const INVARIANTS = {
         /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.why));
     }],
   ],
+  /**
+   * THE ARBITRAGE FUND, ON THE TWO TABS ITS CLAIMS ARE DRAWN ON.
+   *
+   * Its mark and the sentence naming where that mark comes from are on the
+   * Position tab (the per-row CMP hover) and on the price tile, which is on every
+   * tab. The sentence stating its class and the refusal to look through a hedged
+   * book are on the Research tab — `stock-arbitrage-research`, below. Split in
+   * two because the page draws one tab at a time, so a claim left on the tab
+   * that does not draw its subject would report NOT CHECKED over a page that had
+   * lost it.
+   */
   "stock-arbitrage": [
-    ["an arbitrage fund's own page says it is Cash — an arbitrage fund the family counts as cash", (t, ctx) => {
-      const d = ctx?.cashDom;
-      if (!d) return { notChecked: "the probe did not run" };
-      return d.stockClass === "Cash" && /arbitrage fund/i.test(d.stockClassText ?? "")
-        && /counts as cash/i.test(d.stockClassText ?? "");
-    }],
-    ["...and draws no look-through: a hedged book of long shares is not this family's stock", (t) =>
-      !/The scheme — NAV, returns and what it holds/.test(t)],
-    ["...and its mark names the depository and AMFI, because no statement priced it", (t, ctx) =>
+    ...stockTabChecks("position"),
+    ["an arbitrage fund's mark names the depository and AMFI, because no statement priced it", (t, ctx) =>
       (ctx?.titles ?? []).some((x) => /depository/i.test(x) && /AMFI/.test(x))],
     /**
      * THE HEADLINE CAPTION NAMES THE SOURCE OF THE FIGURE ABOVE IT. There is no
@@ -20923,6 +21540,48 @@ const INVARIANTS = {
       const e = key ? (fundNavStore() ?? []).find((x) => x.securityKey === key) : null;
       if (!e?.date) return false;
       return /AMFI/.test(cap) && cap.includes(e.date) && !/statement mark/i.test(cap);
+    }],
+  ],
+  "stock-arbitrage-research": [
+    ...stockTabChecks("research"),
+    ["an arbitrage fund's own page says it is Cash — an arbitrage fund the family counts as cash", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      return d.stockClass === "Cash" && /arbitrage fund/i.test(d.stockClassText ?? "")
+        && /counts as cash/i.test(d.stockClassText ?? "");
+    }],
+    /**
+     * …AND DRAWS NO LOOK-THROUGH. Struck on the fund card's own handle rather than
+     * on its title: the card became two halves with two titles when the page
+     * became tabs, so the old title-match would pass by matching nothing. The
+     * scheme's PRICE half belongs to the Price & returns tab and is legitimate
+     * there — the refusal is about what the fund HOLDS — so this tab must draw
+     * neither half, and the one it would draw is the holdings.
+     */
+    ["...and draws no look-through: a hedged book of long shares is not this family's stock", (t, ctx) =>
+      !!ctx.stockPage && ctx.stockPage.lookthrough.length === 0 && ctx.stockPage.researchNA === "fund"],
+  ],
+  /**
+   * THE ARBITRAGE FUND'S PRICE TAB — the one place this page departs from what
+   * #74 drew. On the single page the scheme card was one card, NAV and holdings
+   * together, so hiding the holdings hid the NAV with them. On two tabs only the
+   * half the reason is about goes. And the fund store was never given these
+   * units (they reach the book at runtime, off a depository's closing balance),
+   * so the half that stays must say the store has no entry for it — never that
+   * the store's report names it, which it does not.
+   */
+  "stock-arbitrage-market": [
+    ...stockTabChecks("market"),
+    ["an arbitrage fund's price tab draws the scheme's price half and never its holdings", (t, ctx) =>
+      !!ctx.stockPage && ctx.stockPage.lookthrough.join() === "nav"],
+    ["...and a scheme the fund store never saw is not said to be named in the store's report", (t) => {
+      const key = CASH_INSTRUCTION_BOOK?.largestArb;
+      if (!key) return false;
+      let idx = null;
+      try { idx = JSON.parse(readFileSync(new URL("../public/lookthrough/index.json", import.meta.url), "utf8")); } catch { return false; }
+      const unseen = !idx?.schemes?.[key] && !(idx?.unresolved ?? []).some((u) => u.securityKey === key);
+      if (!unseen) return { notChecked: "the fund store carries or names this scheme, so its own report applies" };
+      return /has no entry for this holding/i.test(t) && !/FUND-LOOKTHROUGH\.md names every one/.test(t);
     }],
   ],
   performance: [
@@ -22082,6 +22741,32 @@ for (const theme of THEMES) {
       // as missing when it is really a race.
       if (name === "family-entity") {
         await page.waitForSelector('[data-fe-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      /**
+       * THE RESEARCH CARD'S SUB-TABS, CLICKED THE WAY A READER DOES.
+       *
+       * Ratios and Insider deals were two stand-alone cards below the research
+       * card on one long page; they are two of its sub-tabs now. A sub-tab that
+       * lights and draws nothing renders a card every text check reads as fine,
+       * so each is clicked and the panel it opened is read by its own handle —
+       * and the other's handle must be gone, or two panels share one tab.
+       * Financials last, so the probes below read the card as it opens.
+       */
+      if (name === "stock-research") {
+        RESEARCH_WALK = [];
+        await page.waitForSelector("[data-research-tab]", { timeout: 15000 }).catch(() => {});
+        for (const k of ["ratios", "insider", "financials"]) {
+          const b = page.locator(`[data-research-tab="${k}"]`);
+          if (!(await b.count())) { RESEARCH_WALK.push({ key: k, missing: true }); continue; }
+          await b.first().click();
+          await page.waitForTimeout(500);
+          RESEARCH_WALK.push(await page.evaluate((key) => ({
+            key,
+            active: document.querySelector(`[data-research-tab="${key}"]`)?.getAttribute("aria-selected") === "true",
+            ratio: !!document.querySelector("[data-ratio-table]"),
+            insider: document.querySelector("[data-insider-deals]")?.getAttribute("data-insider-deals") ?? null,
+          }), k));
+        }
       }
       /**
        * THE PRIVATE BOOK, EVERY ROW OPEN — through the table's own Expand all,
@@ -24599,13 +25284,20 @@ for (const theme of THEMES) {
             // title list, so the reason asserted is the one on THIS column.
             reason: e.querySelector("[title]")?.getAttribute("title") ?? null })),
           // The footer's TOTAL width, so a footer that lost a cell is visible
-          // even when the cell it lost still reads as a plausible figure.
-          footSpan: [...(t.querySelector("tfoot tr")?.children ?? [])]
+          // even when the cell it lost still reads as a plausible figure. Read
+          // off the MEASURED total — the table's own "Total" over the
+          // statement rows. Since main's #88 the same footer can carry a
+          // derived line and a Total exposure line under it, and those are not
+          // the total these claims are about.
+          footSpan: [...(t.querySelector('tfoot tr[data-held-foot="measured"]')?.children ?? [])]
             .reduce((a, c) => a + Number(c.getAttribute("colspan") || 1), 0),
+          // The footer's HPR cell — the same FIFO figure the Unrealised P&L
+          // tile's return prints, struck over every row above.
+          footReturn: (t.querySelector("tfoot [data-stock-foot-return]")?.innerText ?? null)?.replace(/\s+/g, " ").trim() ?? null,
           footCmp: (() => {
             const i = [...t.querySelectorAll("thead th")].findIndex((h) => /^CMP$/i.test(h.innerText.trim()));
             if (i < 0) return null;
-            const cells = [...(t.querySelector("tfoot tr")?.children ?? [])];
+            const cells = [...(t.querySelector('tfoot tr[data-held-foot="measured"]')?.children ?? [])];
             // The footer's label spans several columns, so a cell is located by
             // ACCUMULATED colSpan and never by its index — `lib/table.mjs`'s own
             // rule, which this footer's label span has already broken once.
@@ -24617,8 +25309,89 @@ for (const theme of THEMES) {
             }
             return null;
           })(),
-          taxOpen: [...document.querySelectorAll("details")].some((d) => d.querySelector("[data-tax-toggle]") && d.open),
-          taxToggles: document.querySelectorAll("[data-tax-toggle]").length,
+          // THE TOTAL ROW IS DRAWN ONLY WHERE THERE ARE ROWS TO ADD UP — a
+          // total of one row is the row again, and the tiles above already
+          // carry the same figures — so the footer claims need the row count.
+          bodyRows: t.querySelectorAll("tr[data-account-row]").length,
+          hasFoot: !!t.querySelector('tfoot tr[data-held-foot="measured"]'),
+        };
+      });
+      /**
+       * ── THE POSITION PAGE'S FIVE TABS, READ OFF THE CONTROL AND THE PANEL ──
+       *
+       * *"making top sub tabs like we have done for others and not having a long
+       * page I have to scroll… one clean template for all."* Every claim here is
+       * about WHERE things are and WHICH of them is drawn, so each is struck on
+       * a structural handle (`data-stock-tab-key`, `data-stock-panel`,
+       * `data-stock-section`) or on a bounding box — never on the tab LABELS,
+       * which a redesign is free to reword, and never on page text, which reads
+       * the same whether the Research card is on its own tab or under the price
+       * chart on one long page.
+       */
+      if (!FAST && await page.$("[data-stock-resolving]"))
+        await page.waitForFunction(() => !document.querySelector("[data-stock-resolving]"), null, { timeout: 8000 }).catch(() => {});
+      const stockPage = FAST ? null : await page.evaluate(() => {
+        const head = document.querySelector("[data-stock-head]");
+        if (!head) return null;
+        const box = (el) => {
+          if (!el) return null;
+          const b = el.getBoundingClientRect();
+          return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, height: b.height };
+        };
+        const de = document.documentElement, m = document.querySelector("main");
+        const strip = document.querySelector("[data-stock-strip]");
+        const panel = document.querySelector("[data-stock-panel]");
+        const mandates = head.querySelector("[data-stock-mandates]");
+        return {
+          tabs: [...document.querySelectorAll("[data-stock-tab-key]")].map((b) => ({
+            key: b.getAttribute("data-stock-tab-key"), active: b.getAttribute("aria-selected") === "true" })),
+          panel: panel?.getAttribute("data-stock-panel") ?? null,
+          sections: [...document.querySelectorAll("[data-stock-section]")].map((x) => x.getAttribute("data-stock-section")),
+          // Cards drawn INSIDE the panel — the tiles are outside it, so this is
+          // what a tab put on screen, and a restored stand-alone card is a count.
+          // TOP-LEVEL cards only: a card nested inside another is part of it.
+          panelCards: panel ? [...panel.querySelectorAll(".card")].filter((c) => !c.parentElement?.closest(".card")).length : 0,
+          docScroll: de.scrollHeight - de.clientHeight,
+          mainScroll: m ? m.scrollHeight - m.clientHeight : null,
+          viewportH: window.innerHeight,
+          title: box(head.querySelector("h1")),
+          headline: box(head.querySelector("[data-stock-headline]")),
+          tabList: box(head.querySelector("[data-stock-tabs]")),
+          strip: box(strip),
+          stripTiles: strip ? strip.children.length : 0,
+          panelBox: box(panel),
+          // Each tax figure with the reason its dash carries — a `title` is not
+          // in `innerText`, and a bare dash is the one thing that may not render.
+          tax: [...document.querySelectorAll("[data-stock-tax] > div")].map((d) => ({
+            label: d.querySelector(".label-xs")?.innerText.replace(/\s+/g, " ").trim() ?? "",
+            value: (d.lastElementChild?.innerText ?? "").replace(/\s+/g, " ").trim(),
+            reason: d.querySelector("[title]")?.getAttribute("title") ?? null })),
+          research: [...document.querySelectorAll("[data-research-tab]")].map((b) => ({
+            key: b.getAttribute("data-research-tab"), active: b.getAttribute("aria-selected") === "true" })),
+          lookthrough: [...document.querySelectorAll("[data-fund-lookthrough]")].map((e) => e.getAttribute("data-fund-lookthrough")),
+          // The dividend-inclusive return card (#84's), counted where the panel
+          // draws it — it belongs to the Price & returns tab, under the returns
+          // table headed "excludes dividends".
+          corporate: panel ? panel.querySelectorAll("[data-corporate-return-table]").length : 0,
+          researchNA: document.querySelector("[data-stock-research-na]")?.getAttribute("data-stock-research-na") ?? null,
+          // A COMPANY HELD ONLY INSIDE FUNDS (main's #88): the one line the
+          // Transactions tab draws instead of a tax split and a dated record,
+          // and whether the page is still reading the funds' filings.
+          activity: document.querySelector("[data-stock-activity]")?.getAttribute("data-stock-activity") ?? null,
+          resolving: !!document.querySelector("[data-stock-resolving]"),
+          mandates: mandates ? {
+            count: Number(mandates.getAttribute("data-stock-mandates")),
+            links: mandates.querySelectorAll('a[href^="/mandate/"]').length,
+            height: mandates.getBoundingClientRect().height,
+            lineHeight: parseFloat(getComputedStyle(mandates).lineHeight) || 18,
+          } : null,
+          sector: document.querySelector("[data-stock-sector]")?.getAttribute("data-stock-sector") ?? null,
+          // THE FIGURES ON THE STRIP, so an absent tile can be told from a ₹0.
+          tiles: strip ? [...strip.children].map((c) => ({
+            label: c.querySelector(".label-xs")?.innerText.replace(/\s+/g, " ").trim() ?? "",
+            value: c.querySelector(".tabular")?.innerText.replace(/\s+/g, " ").trim() ?? "",
+            sub: (c.lastElementChild?.innerText ?? "").replace(/\s+/g, " ").trim(),
+          })) : [],
         };
       });
       /**
@@ -26192,7 +26965,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url() , tableNotes, foldsOnArrival }); }
+          try { r = test(text, {hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull}); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

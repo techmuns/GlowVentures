@@ -24,7 +24,7 @@
 // classification the whole GAP rests on.
 //
 // Market cap is different, and only after a measurement settled it. The quote
-// feed returns a `marketCap` per symbol, and `CompanyResearchPreview` carried a
+// feed returns a `marketCap` per symbol, and `CompanyResearchPreview` (since removed) carried a
 // note saying a rupee figure could not be shown because that field's UNIT was
 // unverified and "a value here could be wrong by a factor of a crore". Probed
 // against the deployed API on 2026-08-11, it is RUPEES:

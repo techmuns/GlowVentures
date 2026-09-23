@@ -160,15 +160,16 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
         ))}
       </div>
 
-      {/* THE PLAN FIELDS. Separated by a rule and their own caption because they
-          are read by a different screen — Portfolio Monitor's plan view — and a
-          reader typing here should know where the figure surfaces. */}
+      {/* THE PLAN FIELDS, separated by a rule because they are a plan rather than
+          a price level. Their caption used to say they fill "the Target weight,
+          Pending to invest, FV ref year and Valuation method columns on Portfolio
+          Monitor's plan view" — a view the family asked to be REMOVED (the
+          PublicDashboardView note in CLAUDE.md), so the sentence sent a reader to
+          look for a column that does not exist. The fields are stored exactly as
+          before and this panel is where they are read. */}
       <div className="mt-4 border-t border-ink-700/70 pt-3">
         <p className="label-xs mb-2 text-slate-500">
-          Plan — these fill the <span className="text-slate-400">Target weight</span>,{" "}
-          <span className="text-slate-400">Pending to invest</span>,{" "}
-          <span className="text-slate-400">FV ref year</span> and{" "}
-          <span className="text-slate-400">Valuation method</span> columns on Portfolio Monitor's plan view.
+          Plan — your target weight, the year your fair value refers to, and how you valued it
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {PLAN_FIELDS.map((f) => (
@@ -195,8 +196,7 @@ export function InvestmentTools({ securityKey, name, price, priceIsLive }: {
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
           A target weight of <span className="mono text-slate-400">0</span> is recorded as a decision — hold none of this.
-          Leaving it blank records nothing, and the pending-to-invest column stays <span className="text-slate-400">—</span>:
-          a gap measured against a target nobody set would be an instruction to sell that nobody gave.
+          Leaving it blank records nothing: a gap measured against a target nobody set would be an instruction to sell that nobody gave.
         </p>
       </div>
 

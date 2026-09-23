@@ -191,8 +191,13 @@ type Index = {
 export type LookthroughState =
   | { status: "loading" }
   | { status: "unreachable" }
-  /** The store answered and carries no look-through for this holding. */
-  | { status: "none"; reason: string | null }
+  /**
+   * The store answered and carries no look-through for this holding. `unseen`
+   * is true where the store does not NAME it either — neither matched nor among
+   * the holdings it could not match — so it was not among the holdings the
+   * store was built from, and no report of the store's says anything about it.
+   */
+  | { status: "none"; reason: string | null; unseen: boolean }
   | { status: "ok"; match: SchemeMatch; portfolio: FundPortfolio };
 
 const base = () => `${import.meta.env.BASE_URL}lookthrough`;
@@ -222,7 +227,7 @@ export async function loadLookthrough(securityKey: string): Promise<LookthroughS
   const match = idx.schemes?.[securityKey];
   if (!match) {
     const miss = idx.unresolved?.find((u) => u.securityKey === securityKey);
-    return { status: "none", reason: miss?.reason ?? null };
+    return { status: "none", reason: miss?.reason ?? null, unseen: !miss };
   }
   try {
     const r = await fetch(`${base()}/${match.schemecode}.json`, { cache: "no-store" });
