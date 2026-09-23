@@ -17441,13 +17441,16 @@ figure, and it IS value less the cash paid.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 42 + 44 + 30 + 29 + 22 + 140
 (2 not checked, 0 blocked) · `test:family` · `check:family` **86/0** ·
-`check:pages` **212 combinations clean, 0 invariant failures**, MEASURED ON THE
-TREE MERGED WITH #72 — #72's own 210 plus the two combinations
-`monitor-txn-returns` walks, the only route this change adds. (It read 202 on the
-tree merged with #70 and #73, and 208 with #75; each step reconciles only because
-each was re-run.) The eight NOT CHECKED lines were read out of `report.json` BY
-NAME and every one is pre-existing: the absent-KPI-tile claim on the four Morning
-CIO routes, the cost-less fund row on the two Private Market fund routes, the
+`check:pages` **218 combinations clean, 0 invariant failures**, MEASURED ON THE
+TREE MERGED WITH #79 — #79's own three new routes (`monitor-open-all`,
+`monitor-section-closed`, `private-market-transactions`) plus the two
+combinations `monitor-txn-returns` walks, the only route this change adds. (It
+read 202 on the tree merged with #70 and #73, 208 with #75 and 212 with #72; each
+step reconciles only because each was re-run.) The nine NOT CHECKED lines were
+read out of `report.json` BY NAME and every one is pre-existing: the absent-KPI-tile
+claim on the four Morning CIO routes, the cost-less fund row on the two Private
+Market fund routes, #79's own redeemed-to-nil claim on `private-market-folios`
+(no private account in this book is redeemed to nil — Stage 10bx records it), the
 crumb on `holdings-unknown` and the pledge on `stock-qty`. **Not one of this
 change's own checks abstains.** `npm run build-book` regenerates `glowData.ts`
 and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control on the merged tree,
@@ -17547,7 +17550,14 @@ Expand-all control beside it; this change renders the picker on BOTH views, whic
 is the family's own request (*"add the same to the transactions page as well"*).
 Both stand: the picker renders on both, and Expand all stays on Holdings, where
 the tree rows it opens are. The Transactions table is not a TreeTable in #79 and
-is untouched by it; its checks are re-run below rather than assumed.
+is untouched by it; its checks were re-run rather than assumed.
+
+**AND THE REST WAS CHECKED BY HAND, BECAUSE A CLEAN SIDE OF A MERGE IS WHEN TO.**
+The `ctx` literal is 85 keys, the exact union less #79's own deliberate removal of
+`schemeCalls`, every key naming a declaration. The stage headings differ from
+main's tip by `10bz` alone, with main's ten historical duplicates unchanged.
+`npm run build-book` regenerates both generated files to the same md5 as before
+the merge, and the full sweep is the 218 above.
 
 ### Stage 10k — News & Announcements: REMOVED
 
