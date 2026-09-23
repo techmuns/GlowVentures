@@ -17274,9 +17274,10 @@ asserts both rules; its load-bearing case requires funds a statement typed as a
 mutual fund, or it would pass on the rows a PMS statement already files under
 Cash. `check:pages` types "arbitrage" into the rendered box and requires every
 arbitrage fund the book carries, each chipped Cash, read off the chip's own
-`data-search-chip` node. Reintroducing the wrapper chip fails the suite (naming
-all seven funds) and the rendered check alike; dropping the marker fails its own
-case.
+`data-search-chip` node — and types the partly valued account's own number and
+requires its entry to lead with the marker. Reintroducing the wrapper chip fails
+the suite (naming all seven funds) and the rendered check alike, and so does
+dropping the marker.
 
 #### Fifteen bugs reintroduced, and two were not results the first time
 

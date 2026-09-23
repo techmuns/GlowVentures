@@ -4806,10 +4806,13 @@ const CASH_INSTRUCTION_BOOK = (() => {
       const a = accounts.find((x) => x.accountId === partialAccounts[0]);
       return a?.ownerId ?? null;
     })();
+    // The number a reader would type to reach that account — its own, as the
+    // statement prints it — for the top bar's search.
+    const partialAccountNo = accounts.find((x) => x.accountId === partialAccounts[0])?.accountNo ?? null;
     return {
       arb: [...arb], liquid: [...liquid], arbMV, largestArb,
       depositoryCount: depository.length, depositoryMV: depository.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
-      partialAccounts, partialOwner,
+      partialAccounts, partialOwner, partialAccountNo,
     };
   } catch { return null; }
 })();
@@ -10860,6 +10863,20 @@ const INVARIANTS = {
       const want = new Set(arb.map((k) => `/stock/${encodeURIComponent(k)}`));
       const hit = (SEARCH.results.cash?.rows ?? []).filter((r) => r.kind === "holding" && want.has(r.href));
       return hit.length === want.size && hit.every((r) => r.chip === "Cash");
+    }],
+    /**
+     * …AND AN ACCOUNT VALUED IN PART SAYS SO, BEFORE ITS FIGURE. The same
+     * valuation reaches five holdings of a demat whose statement carries
+     * fourteen more, and "5 holdings · ₹63.7 Cr" read on its own is the whole
+     * account. Typed as the account number the statement prints, derived from
+     * the book; a missing account is the premise failing, never an abstention.
+     */
+    ["the partly valued account's search entry says so before its figure", () => {
+      if (!SEARCH) return false;
+      const no = CASH_INSTRUCTION_BOOK?.partialAccountNo;
+      if (!no) return false;
+      const row = (SEARCH.results.partial?.rows ?? []).find((r) => r.kind === "account");
+      return !!row && /^[^·]+ · partly valued · /.test(row.detail);
     }],
   ],
   chat: [
@@ -17797,6 +17814,8 @@ for (const theme of THEMES) {
             // THE FAMILY'S OWN WORD for the funds they asked to see as cash
             // (Stage 10bx). Which rows it must reach is derived from the book.
             cash: CASH_INSTRUCTION_BOOK?.arb?.length ? "arbitrage" : undefined,
+            // …and the account some of whose holdings that valuation reaches.
+            partial: CASH_INSTRUCTION_BOOK?.partialAccountNo ?? undefined,
           };
           const results = {};
           for (const [k, q] of Object.entries(queries)) if (q) results[k] = await run(q);
