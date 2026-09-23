@@ -20505,16 +20505,32 @@ routes, then the largest, so the walk moved from ICICI Bank to SBI by itself —
 and SBI's table was the one too wide for its card. A check keyed on a typed company name would have gone on
 walking ICICI Bank and never seen it.
 
-**THE STAGE LETTER WAS CHECKED AGAINST MAIN'S TIP AT THE MOMENT OF MERGING —
-AND AT THE MOMENT OF PUSHING, WHICH IS THE ONE THAT MATTERED.** This section was
-written as `10cf` against main at 10ce. Before the push, main was fetched again:
-#78 had landed in the meantime and taken `10cf` itself, in a section at the same
-place in the file, so git marked the conflict — the safer of its two failure
-modes. Main's keeps `10cf`; this is `10cg`, placed after it. Every `10cf` line
-was classified by whether main's own copy of the file carries it: the three this
-branch wrote moved, and #78's own — its heading, two Layout bullets and the
-lines inside its section — stayed. The headings duplicated in the merged file are exactly main's ten
-historical ones, and none is new.
+**THE STAGE LETTER WAS CHECKED AGAINST MAIN'S TIP AT EVERY MERGE, AND IT MOVED
+TWICE.** This section was written as `10cf` against main at 10ce. Before the
+first push, main was fetched again: #78 had landed in the meantime and taken
+`10cf` itself, in a section at the same place in the file, so git marked the
+conflict — the safer of its two failure modes — and this became `10cg`. Then,
+while the pull request waited for the family's go-ahead, #87 took `10cg`
+(Glow Central Research's fonts and colours) and #89 took `10ch` (the Portfolio
+Monitor's master-table notes), so this is **`10ci`**, after both. Each time,
+every line naming the colliding letter was classified by whether main's own copy
+of the file carries it. At `10cf` the three this branch wrote moved, and #78's
+own — its heading, two Layout bullets and the lines inside its section — stayed.
+At `10cg` this branch's two pointers here and its harness's header moved, and
+main's stayed: #87's heading, #87's own letter note, #89's note naming the
+letters it stepped over, and the six places main's code names #87's stage. The
+headings duplicated in the merged file are exactly main's ten historical ones,
+and none is new.
+
+**#87 FIXED THE SAME CELL, FOR A SECOND REASON.** Its new faces reached this
+table too: where Inter cannot load, the fallback face's semibold headings run
+wider, so #87 let the Managed-by cell wrap — the cell this branch had already let
+wrap because State Bank of India's table ran 54px past its card. Git could not
+merge the two, because #87 edited the inline row map this branch replaced with
+`measuredRow`. The resolution keeps `measuredRow`, which wraps that cell inside
+its 12rem floor, and carries #87's reason into its comment. #87's page-title
+and headline-mark faces merged cleanly, and so did both PRs' changes to
+`check-pages.mjs`: the probe literal is still main's 92 keys plus `heldTable`.
 
 **#78 ALSO CHANGED THE SAME TABLE.** It put an XIRR line in each row's Return
 cell where the row is a whole account on a dated record (`useDatedCapital`,
