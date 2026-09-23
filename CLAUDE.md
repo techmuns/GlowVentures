@@ -250,6 +250,12 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/indices.ts` — the four live NSE index levels (`/api/indices`), and the
   one place `NIFTY_500_SYMBOL` is named so the strip and the NAV chart cannot
   disagree about which index "Nifty 500" means.
+- `src/lib/benchmarks.ts` — WHICH INDEX THE NAV CHART IS SET AGAINST. Seven
+  benchmarks, each fetched through the same `/api/prices` call the Nifty 500
+  line has always used, and each checked by the NAME the upstream reports
+  before a close is drawn (`benchmarkIdentity`) — a symbol that looks right
+  answers 200 for a different index. `?bench=` picks one; the Nifty 500 is first
+  and therefore param-free. See Stage 10bv.
 - `src/lib/ledger.ts` — the DATED record, read from `public/audit/` at runtime (see below).
 - `src/lib/schemeLabel.ts` — WHAT A MUTUAL-FUND SCHEME IS CALLED ON SCREEN. The
   AMC's own published name, joined to this book BY ISIN through
@@ -3032,8 +3038,11 @@ violate any of them.**
    unrealised P&L and return on cost — and nothing else. Never quantity, cost
    basis, realised gains, dividends, fees or a dated cash flow. Every
    consolidated figure carried a `<BasisPill>` until Stage 10ao, when the family
-   asked for it off Morning CIO and off the `/holdings` drill-down, and Stage
-   10ap, when they asked for it off Private Market too.
+   asked for it off Morning CIO and off the `/holdings` drill-down, Stage
+   10ap, when they asked for it off Private Market too, and Stage 10bv, off
+   Sector Composition. That last one reads the LIVE book and always has — it
+   was never a page a reader checks against a PDF — so what it lost is the
+   label and the as-of skew, not a guarantee.
 
    **THE HALF THAT IS A CORRECTNESS GUARANTEE IS UNCHANGED AND IS NOT
    NEGOTIABLE, and it is the SOURCE rather than the label** — Capital Gains,
@@ -3156,8 +3165,8 @@ violate any of them.**
 - Pages that must RECONCILE to a source document read `statementPortfolio`, and
   the three that a reader checks against a PDF carrying quotable rows also SAY so
   with a `<BasisPill statement>` — Capital Gains, Data Audit, Ledger Insights.
-  Morning CIO and `/holdings` lost theirs at Stage 10ao and Private Market at
-  Stage 10ap, all at the family's request; those are the places this file's own
+  Morning CIO and `/holdings` lost theirs at Stage 10ao, Private Market at
+  Stage 10ap and Sector Composition at Stage 10bv, all at the family's request; those are the places this file's own
   §6 has been narrowed rather than upheld, and what each costs is recorded there
   rather than softened here. **The source never moved on any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never

@@ -139,6 +139,61 @@ function sliceBetween(text, from, to) {
  */
 const navHead = (ctx) => ctx?.navChart?.head ?? null;
 
+/**
+ * ── THE NAV CARD'S BASIS, WHICH IS THE TITLE'S HOVER NOW ────────────────────
+ *
+ * *"remove the highlighted texts from the dashboard UI"* — pointed at the
+ * card's one-line basis AND at the four headline pills (Book, the benchmark,
+ * the not-proven disclosure and the window under them). Every figure those
+ * carried was re-homed to the hover on the card's title, which names the
+ * comparison; the invariants that read them moved with them rather than being
+ * softened into something the bare header satisfies. `navHead` is still read,
+ * by the check that asserts the header carries none of it any more.
+ *
+ * A `title` is not in `innerText`, which is why this reads the attribute off
+ * the probe rather than a slice of the page text.
+ */
+const navBasis = (ctx) => ctx?.navChart?.basis ?? null;
+
+/**
+ * A card that is ON SCREEN but carries no basis hover has lost it — a finding,
+ * not an abstention. Only a pass on which the NAV card was not drawn at all
+ * abstains, exactly as `navHead`'s callers always did.
+ */
+const navBasisMissing = (ctx) =>
+  ctx?.navChart ? false : notChecked("the NAV card was not on screen on this run");
+
+/** The book's own return, as the hover's first sentence states it. */
+const NAV_BOOK_RET = /the book ([+-]\d+\.\d+)% net of capital flows/;
+
+const reEsc = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * ── THE BENCHMARKS, RE-EXPRESSED HERE RATHER THAN IMPORTED ─────────────────
+ *
+ * `src/lib/benchmarks.ts` is the catalogue the card draws; this is the same
+ * list written a second time, so a control that dropped, renamed or reordered
+ * one fails by name instead of agreeing with the module it renders by
+ * construction. The fourth field is the name the LIVE upstream reported for
+ * each symbol when it was measured on 2026-09-23, which is what the fixture
+ * answers with — the identity check is exercised against the real spellings.
+ */
+const BENCH_FIXTURE = [
+  ["nifty-500", "Nifty 500", "^CRSLDX", "NIFTY 500"],
+  ["nifty-50", "Nifty 50", "^NSEI", "NIFTY 50"],
+  ["nifty-next-50", "Nifty Next 50", "^NSMIDCP", "NIFTY NEXT 50"],
+  ["nifty-midcap-150", "Midcap 150", "NIFTYMIDCAP150.NS", "NIFTY MIDCAP 150"],
+  ["nifty-smallcap-250", "Smallcap 250", "NIFTYSMLCAP250.NS", "NIFTY SMLCAP 250"],
+  ["sensex", "Sensex", "^BSESN", "S&P BSE SENSEX"],
+  ["bse-500", "BSE 500", "BSE-500.BO", "S&P BSE 500 INDEX"],
+];
+/** The benchmark a route's own address asked for — the first when it names none. */
+const wantedBench = (ctx) => {
+  const key = /[?&]bench=([a-z0-9-]+)/.exec(ctx?.path ?? "")?.[1];
+  return BENCH_FIXTURE.find((b) => b[0] === key) ?? BENCH_FIXTURE[0];
+};
+const wantedBenchLabel = (ctx) => wantedBench(ctx)[1];
+
 function bookArray(src, name) {
   const i = src.indexOf(`export const ${name}`);
   if (i < 0) return null;
@@ -877,12 +932,33 @@ function sectorLayoutChecks(expected) {
  * Compare is a TAB, so neither its picker nor its table is drawn here.
  */
 const SECTOR_TABLE_TAB = [
+  /*
+   * THE SECTOR COUNT IS THE DONUT'S WEDGES NOW. It was read off the header's
+   * "N sectors" pill until the family asked for the header pills to go — and
+   * read off the page text it would have come back NaN and failed a page that
+   * removed the pill exactly as asked. The wedges are a second rendering of the
+   * same sectors, drawn by the chart rather than the table, so the claim is
+   * unchanged: the table beside the donut carries every sector the donut draws.
+   */
   ["the legend beside the donut stays removed — every row of it is a row of the table beside it", (t, ctx) => {
     const L = ctx?.sectorLayout;
     if (!L) return false;
-    const n = Number(/(\d+)\s+sectors?\b/i.exec(t)?.[1]);
+    const n = L.wedges;
     return L.leftLists === 0 && L.table && L.hasPartition
       && Number.isFinite(n) && n > 0 && L.tableRows.length === n;
+  }],
+  /*
+   * …AND THE HEADER CARRIES NO PILLS. *"remove the highlighted texts from the
+   * dashboard UI"* — the basis pill, its "N accounts behind" companion and the
+   * "N sectors" count. Struck on the header's own node, because "sectors"
+   * appears legitimately all over this page and a page-wide match would report
+   * the pill present while it was gone, or gone while it was back.
+   */
+  ["the header's basis and sector-count pills stay removed", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (!L || L.headerText == null) return false;
+    return !/accounts behind/i.test(L.headerText) && !/\bLIVE\b/.test(L.headerText)
+      && !/\bSTATEMENT\b/.test(L.headerText) && !/\d+\s+sectors?\b/i.test(L.headerText);
   }],
   ["Compare is a tab, so neither its picker nor its table is drawn on this one", (t, ctx) => {
     const L = ctx?.sectorLayout;
@@ -2737,6 +2813,13 @@ const ROUTES = [
    * abstention rather than a failure and reads as a clean run.
    */
   ["cio-nav-live", "/cio?tab=nav"],
+  /**
+   * ...AND AGAINST ANOTHER BENCHMARK, and against one the price service answers
+   * as the WRONG index. The second is the identity gate on a page; see
+   * `NAV_BENCH_WRONG`.
+   */
+  ["cio-nav-bench", "/cio?tab=nav&bench=sensex"],
+  ["cio-nav-bench-wrong", "/cio?tab=nav&bench=nifty-next-50"],
   // ...ON THE ALLOCATION PANEL, because that is where the table is drawn now.
   // A `?alloc=` with no `?tab=` would land on the movers panel and walk a page
   // with no allocation table on it at all.
@@ -4392,7 +4475,7 @@ async function installCallStoreOff(page) {
   }));
 }
 
-async function installLiveMocks(page) {
+async function installLiveMocks(page, opts = {}) {
   QUOTE_PRIORITY = null;
   await page.route("**/api/quotes", async (route) => {
     let want = [], sentPriority = null;
@@ -4445,25 +4528,66 @@ async function installLiveMocks(page) {
       body: JSON.stringify({ ok: true, source: "fixture", fetchedAt: "2026-08-13T10:00:00.000Z", resolved: indices.length, requested: indices.length, indices }),
     });
   });
+  /**
+   * ── EVERY BENCHMARK, ON ITS OWN RAMP AND UNDER ITS OWN NAME ────────────────
+   *
+   * The fixture used to answer every symbol as the Nifty 500. With a benchmark
+   * control on the card that would let a build fetch the WRONG symbol and still
+   * draw a correct-looking line, so it now ECHOES the symbol asked for, answers
+   * under the name the live upstream reported for it (`BENCH_FIXTURE`), and
+   * gives each its own slope — the Nifty 500 keeps `PRICE_SLOPE`, so nothing
+   * the existing checks read moves. `PRICE_REQUESTS` records what was asked,
+   * which is the claim a line cannot make about itself.
+   *
+   * `opts.wrongName` answers a symbol under a DIFFERENT index's name — trap 2 in
+   * `indices.js`, reproduced — so the identity gate is exercised on a page.
+   */
+  PRICE_REQUESTS = [];
   await page.route("**/api/prices*", async (route) => {
+    const symbol = new URL(route.request().url()).searchParams.get("symbol") ?? "";
+    PRICE_REQUESTS.push(symbol);
+    const slope = benchSlope(symbol);
     const t = [], v = [];
     const start = Date.UTC(2026, 0, 1);
     const today = new Date().toISOString().slice(0, 10);
     for (let n = 0; n < 400; n++) {
       const d = new Date(start + n * 86400000).toISOString().slice(0, 10);
       if (d >= today) break;                       // settled sessions only, as the real Function does
-      t.push(d); v.push(Math.round(1000 * (1 + PRICE_SLOPE * n) * 10000) / 10000);
+      t.push(d); v.push(Math.round(1000 * (1 + slope * n) * 10000) / 10000);
     }
+    const name = opts.wrongName?.[symbol] ?? BENCH_FIXTURE.find((b) => b[2] === symbol)?.[3] ?? null;
     await route.fulfill({
       contentType: "application/json",
       body: JSON.stringify({
-        ok: true, source: "fixture", symbol: "^CRSLDX", currency: "INR", exchange: "NSE",
+        ok: true, source: "fixture", symbol, currency: "INR", exchange: "NSE",
+        name, longName: name, shortName: name,
         first: t[0], last: t.at(-1), count: t.length, last_value: v.at(-1),
         returns: {}, spans: {}, high52: null, low52: null, t, v,
       }),
     });
   });
 }
+
+/** What the fixture's `/api/prices` was asked for on this page, in order. */
+let PRICE_REQUESTS = [];
+/**
+ * Each benchmark's own daily slope — the Nifty 500 exactly `PRICE_SLOPE`, the
+ * rest steeper by their place in the catalogue, so two benchmarks can never
+ * draw the same line and a return struck on the wrong one fails.
+ */
+const benchSlope = (symbol) => {
+  const i = BENCH_FIXTURE.findIndex((b) => b[2] === symbol);
+  return i <= 0 ? PRICE_SLOPE : PRICE_SLOPE * (1 + 0.5 * i);
+};
+/**
+ * The fixture's return between two dates, in closed form — the value the hover
+ * must print for a benchmark, derived here rather than read off the page.
+ */
+const benchFixtureReturn = (symbol, from, to) => {
+  const n = (d) => Math.round((Date.parse(`${d}T00:00:00Z`) - Date.UTC(2026, 0, 1)) / 86400000);
+  const lvl = (d) => Math.round(1000 * (1 + benchSlope(symbol) * n(d)) * 10000) / 10000;
+  return (lvl(to) / lvl(from) - 1) * 100;
+};
 
 /**
  * ── A MISSING TOGGLE IS A FINDING, NOT AN ABSTENTION ────────────────────────
@@ -5168,8 +5292,13 @@ const NAV_MOVERS = [
     if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
     if (!NAV_MOVERS_BOOK.spansDates) return { notChecked: "every priced scheme published on the same day" };
     const older = nm.rows.filter((r) => r.date && r.date !== NAV_MOVERS_BOOK.newestNavDate);
-    // The book says some row is older; the page must draw it AND say so.
-    return older.length > 0 && /do not share one date/i.test(nm.basis ?? "");
+    // The book says some row is older; the page must draw it AND say so — on
+    // the ROW, where a reader looks at it, and in the tile's hover, which is
+    // where the basis panel's sentence went. Both, because the row note is
+    // what a reader sees and the hover is the only place the SPAN is stated.
+    return older.length > 0
+      && older.every((r) => r.note.includes(`NAV ${r.date}`))
+      && /do not share one date/i.test(nm.basis ?? "");
   }],
   /**
    * THE CARD STATES THAT IT IS NOT THE CARD ABOVE. Two movers cards on one
@@ -5179,6 +5308,22 @@ const NAV_MOVERS = [
   ["it states its basis and that the two cards are never added together", (t, ctx) => {
     const b = ctx?.navMovers?.basis ?? "";
     return /published NAV/i.test(b) && /never added together/i.test(b) && /derived/i.test(b);
+  }],
+  /**
+   * ── …AND THE PANEL THAT USED TO SAY SO STAYS GONE ─────────────────────────
+   *
+   * *"remove the highlighted texts from the dashboard UI"* — pointed at the
+   * "What this measures" panel beside the tile. Its sentences are the tile's
+   * HOVER now, which the two checks either side of this one read. A removal
+   * and a re-homing are two claims and neither implies the other: a build that
+   * restored the panel satisfies every check reading the hover, and one that
+   * dropped the hover satisfies this. Struck on the panel's own handle AND on
+   * its heading, because `label-xs` uppercases and a redesign may drop either.
+   */
+  ["the 'What this measures' panel stays removed — its claims are the tile's hover", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading) return false;
+    return nm.basisPanel === false && !/what this measures/i.test(t) && !!nm.basis;
   }],
   /**
    * ── THE AGGREGATE TIES TO ITS OWN COLUMNS ────────────────────────────────
@@ -6962,8 +7107,8 @@ const CIO_NAV = [
      * fails by name rather than merely drawing a shorter line nobody measures.
      */
     ["the NAV card covers the whole measured span, not only the complete panel", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      const head = navBasis(ctx);
+      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
       if (!NAV_SERIES_BOOK.panelCompleteFrom || NAV_SERIES_BOOK.panelCompleteFrom === NAV_SERIES_BOOK.seriesFrom) {
         return notChecked("this book's panel is complete at the series' first point");
       }
@@ -6998,9 +7143,10 @@ const CIO_NAV = [
      * equality check written only one way round.
      */
     ["the book's return is chained over each link's own accounts, not over the growing panel", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
-      const m = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      const head = navBasis(ctx);
+      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
+      // THE BOOK'S FIGURE IS THE HOVER'S FIRST SENTENCE since the Book pill went.
+      const m = NAV_BOOK_RET.exec(head);
       if (!m) return false;
       const shown = Number(m[1]);
       // The pill prints one decimal, so the bound is that precision reproduced.
@@ -7069,10 +7215,12 @@ const CIO_NAV = [
    */
   ["the NAV card renders a dated series with its date range and its coverage",
     (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      return /Portfolio NAV vs Nifty 500/.test(t)
-        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(t)
+      const head = navBasis(ctx);
+      if (head == null) return navBasisMissing(ctx);
+      // The TITLE names the benchmark this address asked for; the date range
+      // and the coverage are its hover since the basis line was removed.
+      return new RegExp(`Portfolio NAV vs ${reEsc(wantedBenchLabel(ctx))}`).test(t)
+        && /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head)
         && /\d+ of \d+ accounts/.test(head);
     }],
   /**
@@ -7097,9 +7245,9 @@ const CIO_NAV = [
        * Read from the TWO PLACES rather than from one line, which is the
        * stronger claim: a build that lost either half now fails.
        */
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+      const head = navBasis(ctx);
+      if (head == null) return navBasisMissing(ctx);
+      const book = NAV_BOOK_RET.exec(head);
       /**
        * THE HOVER CARRIES BOTH ENDS AND NAMES ITS OWN WINDOW.
        *
@@ -7204,8 +7352,8 @@ const CIO_NAV = [
     // paragraph that was nowhere else — is checked on `cio-live`, where a feed
     // exists to produce it.
     (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const head = navBasis(ctx);
+      if (head == null) return navBasisMissing(ctx);
       return /\d+ dated points, \d{4}-\d{2}-\d{2} → \d{4}-\d{2}-\d{2}/.test(head);
     }],
   /**
@@ -7218,8 +7366,8 @@ const CIO_NAV = [
    */
   ["the NAV card states what its axis is rebased to",
     (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
+      const head = navBasis(ctx);
+      if (head == null) return navBasisMissing(ctx);
       return /rebased to 100 at \d{4}-\d{2}-\d{2}/.test(head);
     }],
   /**
@@ -7248,18 +7396,32 @@ const CIO_NAV = [
     if (!why) return false;
     return /counts a holding two accounts both report once/i.test(why);
   }],
-  ["the NAV subtitle is a basis line rather than a paragraph", (t, ctx) => {
+  /**
+   * ── …AND THEN THE BASIS LINE AND THE HEADLINE PILLS WENT TOO ──────────────
+   *
+   * *"remove the highlighted texts from the dashboard UI"* — pointed at the
+   * one-line basis that the round above left, AND at the four headline pills:
+   * Book, the benchmark, the not-proven disclosure and the window under them.
+   * Every figure they carried is the title's hover now, and each is asserted
+   * there by the checks above and below. This asserts the removal, struck on
+   * the header's OWN NODE: a `title` is not in `innerText`, so the hover can
+   * never satisfy or trip it, and a pill that came back would render exactly
+   * there.
+   *
+   * The benchmark control IS in the header now, so a benchmark's NAME there
+   * is correct; what must not be there is a RETURN beside one.
+   */
+  ["the NAV card's header carries no basis line and no headline pills", (t, ctx) => {
     const head = navHead(ctx);
     if (head == null) return notChecked("the NAV card’s header was not on screen on this run");
-    /**
-     * STRUCK ON WHAT THE PARAGRAPH ALONE PRINTED, never on the window, the
-     * coverage or the rebase — all three stayed, at one line, and each is
-     * asserted at its new address above. A check that banned those would fail
-     * the card for keeping the facts nobody asked it to lose.
-     */
-    return !/that publish more than ones+dated valuation/i.test(head)
-      && !/Each point holds every account at its most recent mark/i.test(head)
-      && !/The panel grows from/i.test(head);
+    return !/dated points/i.test(head)
+      && !/\d+ of \d+ accounts/.test(head)
+      && !/rebased to 100/i.test(head)
+      && !/\bBook\s*[+-]\d/.test(head)
+      && !/[A-Za-z0-9]\s*[+-]\d+\.\d+%/.test(head)
+      && !/not proven/i.test(head)
+      && !/\bover \d{4}-\d{2}-\d{2}/i.test(head)
+      && !ctx?.navChart?.unprovenPill;
   }],
     ["the NAV card's explanatory paragraphs stay removed",
     (t) => !/Both lines are rebased to 100 at/.test(t)
@@ -7291,11 +7453,18 @@ const CIO_NAV = [
        * accounts behind it is a number a reader cannot act on, and a hover with
        * no pill is a disclosure nobody will find.
        */
-      const head = navHead(ctx);
-      if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-      const pill = /₹[\d,.]+\s*(?:Cr|L|K)?\s+not proven/.test(head);
-      const why = (ctx?.titles ?? []).find((x) => /Not proven to be performance:/.test(x)) ?? "";
-      return pill
+      /*
+       * AND RE-HOMED A SECOND TIME. The amber pill went with the rest of the
+       * headline at the family's request; the value and the accounts are one
+       * paragraph of the title's hover now. Both halves are still required,
+       * read off THAT PARAGRAPH alone — the hover carries other em dashes and
+       * other `·`s, and a name pattern struck across the whole of it would be
+       * satisfied by a sentence about something else.
+       */
+      const head = navBasis(ctx);
+      if (head == null) return navBasisMissing(ctx);
+      const why = head.split(/\n\n/).find((x) => /^Not proven to be performance:/.test(x)) ?? "";
+      return /^Not proven to be performance: ₹[\d,.]+\s*(?:Cr|L|K)? of the move\./.test(why)
         && /publish no dated capital record/.test(why)
         // …and it NAMES them. A sentence that said "4 accounts" and listed none
         // would satisfy every word above while telling a reader nothing.
@@ -7319,8 +7488,10 @@ const CIO_NAV = [
        * failed a page that was correct. Two figures of the same SHAPE describing
        * different sets is exactly what a page-wide regex cannot tell apart.
        */
-      const card = navHead(ctx);
-      if (card == null) return notChecked("the NAV card's header was not on screen on this run");
+      // THE COVERAGE IS THE TITLE'S HOVER since the basis line went — still the
+      // card's own statement, and still distinct from the XIRR tile's.
+      const card = navBasis(ctx);
+      if (card == null) return navBasisMissing(ctx);
       const cov = /(\d+) of (\d+) accounts/.exec(card);
       const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
       const parts = /(\d+) publish exactly one dated valuation/.exec(t);
@@ -7477,6 +7648,132 @@ const CIO_TAB_CONTROL = [
 ];
 
 /**
+ * ── THE BENCHMARK CONTROL ───────────────────────────────────────────────────
+ *
+ * *"Allow us to select different benchmarks to compare the portfolio returns
+ * with and make sure that the benchmark returns are live just like the Nifty
+ * 500 benchmark."*
+ *
+ * NONE OF THIS CAN BE STRUCK ON PROSE. A card that ignored `?bench=` renders a
+ * perfectly good Nifty 500 chart under whatever title it likes; one that
+ * fetched the Nifty 500 and LABELLED it the Sensex renders a correct-looking
+ * line; one whose identity gate was deleted draws the wrong index with no
+ * warning. So the claims are struck on the control's keys, on what the chart
+ * declares about its own line, on what the price service was ASKED for, and on
+ * a return derived here in closed form from the fixture's own ramp.
+ */
+const NAV_BENCH = [
+  ["the NAV card offers every benchmark, in order, with the one this address asked for active", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    const want = wantedBench(ctx);
+    // A MISSING CONTROL IS A FINDING. The family asked for it by name.
+    return c.bench.length === BENCH_FIXTURE.length
+      && c.bench.every((b, i) => b.key === BENCH_FIXTURE[i][0] && b.symbol === BENCH_FIXTURE[i][2] && b.label === BENCH_FIXTURE[i][1])
+      && c.bench.filter((b) => b.active).length === 1
+      && c.bench.find((b) => b.active)?.key === want[0]
+      && c.benchKey === want[0]
+      && c.titleText === `Portfolio NAV vs ${want[1]}`;
+  }],
+  /**
+   * THE TAB NAMES THE INDEX ITS PANEL DRAWS. A tab still reading "NAV vs
+   * Nifty 500" over a chart of the Sensex is a label not describing its panel,
+   * which is the caption failure this page has already paid for twice.
+   */
+  ["Morning CIO's third tab names the benchmark its panel draws", (t, ctx) => {
+    const tabs = ctx?.cioTabs;
+    if (tabs == null) return notChecked("the tab probe did not run on this pass");
+    return tabs.find((x) => x.key === "nav")?.label === `NAV vs ${wantedBenchLabel(ctx)}`;
+  }],
+  /**
+   * EVERY OPTION SAYS WHERE ITS LINE COMES FROM, AND WHAT KIND OF INDEX IT IS.
+   * The managers' own reports compare against total-return indices; these are
+   * price indices, and a reader setting the book against one must be told —
+   * on every option, not only the one that happens to be active.
+   */
+  ["every benchmark's hover says it is live, checked by name, and a price index", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    return c.bench.length > 0 && c.bench.every((b) =>
+      /same live price service as the Nifty 500 line/i.test(b.title)
+      && /checked by the name the service reports/i.test(b.title)
+      && /a price index/i.test(b.title));
+  }],
+];
+
+/** …and with no price service at all, the card SAYS so rather than drawing a blank. */
+const NAV_BENCH_OFFLINE = [
+  ["with no price service the chart says the benchmark could not be fetched", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    return c.benchState === "down"
+      && new RegExp(`The ${reEsc(wantedBenchLabel(ctx))} history could not be fetched`).test(t);
+  }],
+];
+
+/** On a route whose price service answers, the line is the benchmark's OWN. */
+const NAV_BENCH_LIVE = [
+  /**
+   * THE CHART ASKED FOR THIS BENCHMARK, AND ONLY THIS ONE. A line cannot say
+   * which symbol it was fetched as — only the request can — so this is the
+   * claim that catches a control wired to nothing, or a card that fetches the
+   * Nifty 500 whatever is selected and relabels it.
+   */
+  ["the chart asked the price service for this benchmark's own symbol, and no other", (t, ctx) => {
+    const reqs = ctx?.priceRequests;
+    if (reqs == null) return notChecked("no price requests were captured on this run");
+    const want = wantedBench(ctx)[2];
+    return reqs.includes(want)
+      && BENCH_FIXTURE.every((b) => b[2] === want || !reqs.includes(b[2]));
+  }],
+  /**
+   * AND THE RETURN IS THAT SERIES' OWN, derived here in closed form from the
+   * fixture's ramp over the window the hover names — every benchmark has its
+   * own slope, so a return struck on the wrong series cannot match.
+   */
+  ["the benchmark's return over the book's window is its own series', to the printed digit", (t, ctx) => {
+    const head = navBasis(ctx);
+    if (head == null) return navBasisMissing(ctx);
+    const want = wantedBench(ctx);
+    const win = /Over the book's own window, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2}):/.exec(head);
+    const got = new RegExp(String.raw`${reEsc(want[1])} ([+-]\d+\.\d+)% over the same dates`).exec(head);
+    if (!win || !got) return false;
+    const expect = benchFixtureReturn(want[2], win[1], win[2]);
+    // The hover prints two decimals, so the bound is that precision reproduced.
+    if (Math.abs(Number(got[1]) - expect) > 0.0051) return false;
+    // …and on any benchmark but the default, it must NOT be the Nifty 500's —
+    // or this check would pass a card that fetched the default and relabelled it.
+    if (want[2] === BENCH_FIXTURE[0][2]) return true;
+    return Math.abs(Number(got[1]) - benchFixtureReturn(BENCH_FIXTURE[0][2], win[1], win[2])) > 0.02;
+  }],
+];
+
+/**
+ * ── A BENCHMARK THAT ANSWERS AS A DIFFERENT INDEX DRAWS NOTHING ────────────
+ *
+ * Trap 2 in `functions/api/indices.js`, reproduced: the fixture answers
+ * `^NSMIDCP` under the name "NIFTY MIDCAP 50". A card with no identity gate
+ * draws a clean, correct-looking line about the wrong market; this card must
+ * draw the book alone, say what answered, and state no comparison figure.
+ */
+const NAV_BENCH_WRONG = [
+  ["a benchmark answered for the wrong index draws no line and says what answered", (t, ctx) => {
+    const c = ctx?.navChart;
+    if (!c) return notChecked("the NAV card was not on screen on this run");
+    const want = wantedBench(ctx);
+    const reqs = ctx?.priceRequests ?? [];
+    const head = navBasis(ctx) ?? "";
+    return reqs.includes(want[2])
+      && c.benchState === "mismatch"
+      // The book's two curves, and not a third: the index line has no points.
+      && c.pathLen.filter((n) => n > 20).length === 2
+      && /NIFTY MIDCAP 50/.test(c.mismatch ?? "") && (c.mismatch ?? "").includes(want[1])
+      && !/over the same dates/.test(head)
+      && new RegExp(`No ${reEsc(want[1])} line is drawn`).test(head);
+  }],
+];
+
+/**
  * ── THE NAV PANEL WITH A PRICE FEED ──────────────────────────────────────────
  *
  * These five stood in `cio-live` and read the Nifty 500 line, which only exists
@@ -7526,18 +7823,26 @@ const CIO_LIVE_NAV = [
         // THE BOOK'S OWN WINDOW, OFF THE SUBTITLE. It was read out of the
         // paragraph block ("statement dates over A → B") until that block was
         // removed; the subtitle has always carried the same pair.
-        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navHead(ctx) ?? "");
+        // …and off the title's hover since the subtitle itself was removed.
+        const book = /dated points, (\d{4}-\d{2}-\d{2}) → (\d{4}-\d{2}-\d{2})/.exec(navBasis(ctx) ?? "");
         if (!book) return false;
         // The window really is wider than the book's own — otherwise the band's
         // absence would be correct and this check would be asserting nothing.
         return note[1] < book[1] && ctx.navChart.band >= 1;
       }],
     /** And with a price history in hand the NAV card draws the comparison. */
-    ["the NAV card draws the Nifty 500 line and states its return",
+    ["the NAV card draws the benchmark's line and states its return",
       (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        return new RegExp(String.raw`Nifty 500\s*\n?\s*[+-]\d+\.\d+%`).test(head);
+        // The benchmark THIS ADDRESS asked for, off the title's hover — the pill
+        // that printed it went at the family's request. The line must be drawn
+        // too: a return with no curve behind it is a figure about a chart that
+        // is not there.
+        const head = navBasis(ctx);
+        if (head == null) return navBasisMissing(ctx);
+        const label = reEsc(wantedBenchLabel(ctx));
+        return new RegExp(String.raw`${label} [+-]\d+\.\d+% over the same dates`).test(head)
+          && ctx.navChart.benchState === "ok" && ctx.navChart.lines >= 3
+          && ctx.navChart.legend.some((x) => x === wantedBenchLabel(ctx));
       }],
     /**
      * ...AND THE SELECTED PERIOD'S OWN INDEX RETURN SITS WITH THE PERIOD.
@@ -7554,7 +7859,7 @@ const CIO_LIVE_NAV = [
         const head = navHead(ctx);
         if (head == null) return notChecked("the NAV card's header was not on screen on this run");
         const note = ctx.navChart.rangeNote ?? "";
-        if (!/Nifty 500 alone over this period\s*[+-]\d+\.\d+%/.test(note)) return false;
+        if (!new RegExp(String.raw`${reEsc(wantedBenchLabel(ctx))} alone over this period\s*[+-]\d+\.\d+%`).test(note)) return false;
         return !/alone over this period/.test(head);
       }],
     /**
@@ -7566,10 +7871,10 @@ const CIO_LIVE_NAV = [
      */
     ["the headline compares the flow-adjusted book against the index, not the raw NAV",
       (t, ctx) => {
-        const head = navHead(ctx);
-        if (head == null) return notChecked("the NAV card's header was not on screen on this run");
-        const book = /Book\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
-        const idx = /Nifty 500\s*\n?\s*([+-]\d+\.\d+)%/.exec(head);
+        const head = navBasis(ctx);
+        if (head == null) return navBasisMissing(ctx);
+        const book = NAV_BOOK_RET.exec(head);
+        const idx = new RegExp(String.raw`${reEsc(wantedBenchLabel(ctx))} ([+-]\d+\.\d+)% over the same dates`).exec(head);
         if (!book || !idx) return false;
         /**
          * THE RAW NAV IS ON THE TOGGLE'S HOVER, AND IT NAMES BOTH ENDS.
@@ -9927,7 +10232,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE],
   /**
    * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
    *
@@ -12203,7 +12508,10 @@ const INVARIANTS = {
      */
     ["it draws sectors rather than one Unclassified wedge", (t, ctx) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
-      const n = Number(/(\d+)\s+sectors?/i.exec(t)?.[1]);
+      // THE DONUT'S WEDGES, since the header's "N sectors" pill was removed at
+      // the family's request — read off the page text it would come back NaN
+      // and fail a page that removed the pill exactly as asked.
+      const n = ctx?.sectorLayout?.wedges;
       if (!Number.isFinite(n)) return false;
       if (SECTOR_VIEW_BOOK.directWithBookSector > 0) return n >= 2;
       /*
@@ -12405,7 +12713,8 @@ const INVARIANTS = {
     ["the picker lists every sector the donut draws, largest first, and opens on the four largest it can place", (t, ctx) => {
       const L = ctx?.sectorLayout;
       if (!L) return false;
-      const n = Number(/(\d+)\s+sectors?\b/i.exec(t)?.[1]);
+      // The donut's own wedges — the header pill that printed this count is gone.
+      const n = L.wedges;
       if (!Number.isFinite(n) || n === 0 || L.picks.length !== n) return false;
       // LARGEST FIRST, read off each pick's own printed weight — so "the four
       // largest" below is the page's own ordering shown to be one, rather than
@@ -12769,7 +13078,15 @@ const INVARIANTS = {
         return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
       }],
   ],
-  "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV],
+  "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
+  /**
+   * THE SAME PANEL SET AGAINST ANOTHER BENCHMARK, reached by URL like every
+   * other view — and every claim the Nifty 500 route makes about its line is
+   * made here about the Sensex's, because `CIO_LIVE_NAV` reads the benchmark
+   * off the address rather than a literal.
+   */
+  "cio-nav-bench": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
+  "cio-nav-bench-wrong": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...NAV_BENCH, ...NAV_BENCH_WRONG],
 
   /**
    * ── THE FOUR CONSTITUENT-TAB BLOCKS ARE STILL GONE ─────────────────────────
@@ -14862,9 +15179,29 @@ const INVARIANTS = {
      * no GICS sector, so folding one in invents a slice. Struck on the FIGURE the
      * caption carries, not on the sentence around it.
      */
+    /*
+     * ── RE-HOMED: THE PARAGRAPH UNDER THE CHART IS THE SUBTITLE'S HOVER ──────
+     *
+     * *"remove the highlighted texts from the dashboard UI"* pointed at the
+     * paragraph under the sector mix. The excluded value it carried is the
+     * subtitle's hover now, so the claim is read off `ctx.titles` — a `title` is
+     * not in `innerText`, and a check on the page text would fail a page that
+     * moved the figure exactly as asked. The claim itself is unchanged: the
+     * excluded money is NAMED WITH A VALUE, never just counted.
+     */
     ["the sector mix names what it excluded, with a value",
-      (t) => new RegExp(CR + String.raw`[^\n]{0,120}?excluded rather than folded in`, "i").test(t)
-        || new RegExp(String.raw`excluded rather than folded in[^\n]{0,200}?` + CR, "i").test(t)],
+      (t, ctx) => (ctx?.titles ?? []).some((x) => new RegExp(CR + String.raw`[^\n]{0,120}?excluded rather than folded in`, "i").test(x)
+        && /Held via column/i.test(x))],
+    /*
+     * …AND THE PARAGRAPH ITSELF STAYS GONE. A removal and a re-homing are two
+     * claims: a build that restored the paragraph satisfies the hover check
+     * above, and one that dropped the hover satisfies this. Struck on phrases
+     * only that paragraph printed on screen.
+     */
+    ["the paragraph under the sector mix stays removed — its figures are the subtitle's hover",
+      (t) => !/Both routes count here/i.test(t)
+        && !/excluded rather than folded in/i.test(t)
+        && !/a fund holds many and no statement in this book prints a sector for a\s+folio/i.test(t)],
 
     /**
      * ── THE SECTORS ARE SECTOR COMPOSITION'S, AND UNCLASSIFIED IS NOT THE TOP ─
@@ -15798,8 +16135,8 @@ const INVARIANTS = {
       !/No valuation series in this book/i.test(t)
       && !/two points are not a trajectory/i.test(t)],
     ["and the dated series is drawn here, over the whole measured span", (t, ctx) => {
-      const head = navHead(ctx);
-      if (head == null || !NAV_SERIES_BOOK) return notChecked("the NAV card's header was not on screen on this run");
+      const head = navBasis(ctx);
+      if (head == null || !NAV_SERIES_BOOK) return navBasisMissing(ctx);
       return head.includes(NAV_SERIES_BOOK.seriesFrom) && head.includes(NAV_SERIES_BOOK.seriesTo)
         && new RegExp(`${NAV_SERIES_BOOK.seriesPoints} dated points`).test(head);
     }],
@@ -16151,7 +16488,9 @@ for (const theme of THEMES) {
       // scope tabs are only meaningful with a feed behind them: unfulfilled,
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
-      if (name === "cio-live" || name === "cio-nav-live") await installLiveMocks(page);
+      PRICE_REQUESTS = [];
+      if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
+      if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "private-market-calls") await installCallStore(page);
       if (name === "private-market-calls-off") await installCallStoreOff(page);
       if (name === "cio-filling") await installFillingQuotes(page);
@@ -16811,7 +17150,7 @@ for (const theme of THEMES) {
        * Opened here, on these routes only: opening every `<details>` on every
        * route would change the text other invariants read.
        */
-      if (name === "cio-nav" || name === "cio-nav-live") {
+      if (name === "cio-nav" || name === "cio-nav-live" || name === "cio-nav-bench") {
         await page.$$eval("main details", (ds) => ds.forEach((d) => { d.open = true; }));
         await page.waitForTimeout(200);
       }
@@ -17343,6 +17682,26 @@ for (const theme of THEMES) {
           // as an element because every text boundary tried here turned out to
           // be something the page is free to print; see `navHead`.
           head: (card?.firstElementChild?.innerText ?? "").trim(),
+          // THE BASIS, THE COMPARISON AND THE DISCLOSURE — the title's hover
+          // since the subtitle and the headline pills were removed. A `title`
+          // is not in `innerText`, so it is read as the attribute.
+          basis: card?.querySelector('[data-testid="nav-basis"]')?.getAttribute("title") ?? null,
+          titleText: (card?.querySelector('[data-testid="nav-basis"]')?.textContent ?? "").trim(),
+          // The removed not-proven pill's own handle, so its ABSENCE is asserted
+          // rather than inferred from the header's wording.
+          unprovenPill: !!card?.querySelector('[data-testid="nav-unproven"]'),
+          // THE BENCHMARK CONTROL, off its keys rather than its labels, and the
+          // state the chart itself declares for the line it asked for.
+          bench: [...(card?.querySelectorAll("[data-bench]") ?? [])].map((b) => ({
+            key: b.getAttribute("data-bench"),
+            symbol: b.getAttribute("data-bench-symbol"),
+            label: (b.textContent ?? "").trim(),
+            active: b.getAttribute("aria-selected") === "true",
+            title: b.getAttribute("title") ?? "",
+          })),
+          benchState: el.getAttribute("data-bench-state"),
+          benchKey: el.getAttribute("data-bench-key"),
+          mismatch: (card?.querySelector('[data-testid="nav-bench-mismatch"]')?.textContent ?? null),
         };
       });
       /**
@@ -17471,6 +17830,9 @@ for (const theme of THEMES) {
           pct: Number(tr.getAttribute("data-navmover-pct")),
           keys: Number(tr.getAttribute("data-navmover-keys")),
           date: tr.getAttribute("data-navmover-date"),
+          // The row's own second line — where a row struck on an OLDER day than
+          // the heading says so. Read off its handle, not out of the cell text.
+          note: (tr.querySelector("[data-scheme-note]")?.textContent ?? "").trim(),
         })),
         // The RANKING control's offer and its live choice, off the attribute
         // rather than the button labels — "By % move" is exactly the prose a
@@ -17491,7 +17853,12 @@ for (const theme of THEMES) {
         })(),
         asOf: document.querySelector("[data-testid='navmovers-asof']")?.innerText ?? null,
         coverage: document.querySelector("[data-testid='navmovers-coverage']")?.innerText ?? null,
-        basis: document.querySelector("[data-testid='navmovers-basis']")?.innerText ?? null,
+        // THE BASIS IS THE TILE'S HOVER since the "What this measures" panel was
+        // removed at the family's request. Read off the attribute, because a
+        // `title` is not in `innerText` — and the panel's own handle is read too,
+        // so its ABSENCE can be asserted rather than assumed.
+        basis: document.querySelector("[data-testid='navmovers-tile']")?.getAttribute("title") ?? null,
+        basisPanel: !!document.querySelector("[data-testid='navmovers-basis']"),
         skipped: document.querySelector("[data-testid='navmovers-skipped']")?.innerText ?? null,
         loading: !!document.querySelector("[data-testid='navmovers-loading']"),
       }));
@@ -18559,6 +18926,13 @@ for (const theme of THEMES) {
             key: b.getAttribute("data-sector-pick"), on: b.getAttribute("aria-pressed") === "true",
             text: (b.innerText ?? "").replace(/\s+/g, " ").trim() })),
           hasPartition: !!document.querySelector("main [data-sector-partition]"),
+          // One wedge per sector the donut draws — the count the removed header
+          // pill used to print, taken from the chart rather than the table.
+          wedges: document.querySelectorAll("main [data-sector-left] .recharts-pie-sector").length,
+          // THE PAGE HEADER'S OWN TEXT — the row holding the title, the tabs and
+          // whatever sits at its right-hand end. `h1`'s header container is its
+          // grandparent (PageHeader wraps the title and the tabs in one div).
+          headerText: (h1?.parentElement?.parentElement?.innerText ?? null),
           table: !!document.querySelector("main [data-sector-table]"),
           tableRows: [...document.querySelectorAll("main [data-sector-row]")].map((r) => r.getAttribute("data-sector-row")),
           // EACH ROW'S RETURN CELL, read by its column id rather than its
@@ -19448,7 +19822,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
             capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow}); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);

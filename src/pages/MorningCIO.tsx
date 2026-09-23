@@ -38,6 +38,7 @@ import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
+import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
 import { CHART_COLORS } from "@/lib/chartTheme";
 
@@ -199,6 +200,15 @@ export function MorningCIO() {
   // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
   // why the choice lives in the URL.
   const [tab, setTab] = useViewParam(CIO_TABS, {}, "tab");
+  /**
+   * THE THIRD TAB NAMES THE BENCHMARK THE CHART BEHIND IT DRAWS. The NAV card
+   * lets the reader pick one (`?bench=`, read by `NavVsIndex` off the same
+   * param), and a tab still reading "Nifty 500" over a chart of the Sensex is a
+   * label not describing its panel. The default is unchanged, so the tab reads
+   * exactly what it always did until a reader picks another.
+   */
+  const [benchKey] = useViewParam(BENCHMARKS, {}, "bench");
+  const navTabLabel = `NAV vs ${benchmarkByKey(benchKey).label}`;
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -993,7 +1003,7 @@ export function MorningCIO() {
                     ? "bg-champagne-500 text-ink-950 shadow-glow"
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
-                {v.label}
+                {v.key === "nav" ? navTabLabel : v.label}
               </button>
             ))}
           </div>

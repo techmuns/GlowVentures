@@ -435,13 +435,34 @@ export function FamilyEntities() {
   const sleeveNoteText = selSleeve.length === 0 ? ""
     : ` Of that, ${sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is grouped`
       + ` as its own statement totals it, cash sleeve included, so that value is counted in the ${MANDATE_BUCKET} section.`;
-  const sleeveNote = selSleeve.length === 0 ? null : (
-    <>
-      {" "}Of that, {sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is
-      grouped as its own statement totals it, cash sleeve included, so that value is counted in the{" "}
-      <span className="text-slate-400">{MANDATE_BUCKET}</span> section.
-    </>
-  );
+  /**
+   * WHAT THE SECTOR MIX LEAVES OUT, AND WHY — the paragraph that stood under
+   * the chart, as the subtitle's hover. *"remove the highlighted texts from the
+   * dashboard UI"* pointed at that paragraph, and every claim in it was audited
+   * before it went:
+   *
+   *   · the mandate-chosen share of these companies, and that the Held via
+   *     column says which route chose each name — the figure had no second home;
+   *   · what is excluded from the chart, per class with its value — the
+   *     subtitle states the company-share count and value, so the complement is
+   *     implied, but the per-class split had no second home;
+   *   · why a fund has no sector, and where a mandate's cash sleeve went — no
+   *     second home.
+   *
+   * So they are the hover on the subtitle whose count they qualify. A hover is
+   * weaker than a caption and that is recorded rather than glossed; what is
+   * unchanged is that each is derived from this entity's own positions and that
+   * `check:pages` still reads the excluded value, at its new address.
+   */
+  const excludedCount = selExcluded.reduce((n, c) => n + c.count, 0);
+  const sectorMixWhy = [
+    selMandateShares.length > 0
+      ? `Both routes count here: ${money(selMandateSharesMV)} of these shares were chosen by a discretionary manager and have a sector exactly like the ones ${scope} bought directly. Which of the two chose a name is in the Held via column below.`
+      : "",
+    selExcluded.length > 0
+      ? `${money(selExcludedMV)} across ${excludedCount} position${excludedCount === 1 ? "" : "s"} is excluded rather than folded in — ${classList(selExcluded)}. A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a folio, so every wrapper would land in one false "Unclassified" slice and bury the sectors this chart exists to show. All of them are in the holdings table below.${sleeveNoteText}`
+      : "Every one of this entity's positions is a share in a company, so nothing is excluded from the chart.",
+  ].filter(Boolean).join("\n\n");
   const holdings = (() => {
     if (!selected) return [];
     const rows = [...selRows].sort((a, b) => b.marketValue - a.marketValue);
@@ -794,8 +815,8 @@ export function FamilyEntities() {
             subtitle={selShares.length === 0
               ? <>No company shares — this entity holds fund vehicles and cash only{" · "}{selRows.length} position{selRows.length === 1 ? "" : "s"}{" · "}
                 {fmtFromBase(selMV, { compact: true })} NAV</>
-              : <>Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
-                {fmtFromBase(selMV, { compact: true })} NAV</>}>
+              : <span data-fe-sector-why title={sectorMixWhy} className="cursor-help">Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
+                {fmtFromBase(selMV, { compact: true })} NAV</span>}>
             {selShares.length === 0
               ? <AbsentSection what={`${scope} holds no shares in a company`}
                   needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${classList(selExcluded)}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />
@@ -866,20 +887,6 @@ export function FamilyEntities() {
                 )}
               </div>
             )}
-            {/* When there are no company shares at all the AbsentSection above has
-                already named every class, so this would only say it twice. */}
-            {selShares.length > 0 && <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              {selMandateShares.length > 0 && <>Both routes count here: {money(selMandateSharesMV)} of these shares were chosen by a
-                discretionary manager and have a sector exactly like the ones {scope} bought directly. Which of the two chose a
-                name is in the <span className="text-slate-400">Held via</span> column below.{" "}</>}
-              {selExcluded.length > 0
-                ? <>{money(selExcludedMV)} across {selExcluded.reduce((n, c) => n + c.count, 0)} position
-                  {selExcluded.reduce((n, c) => n + c.count, 0) === 1 ? "" : "s"} is excluded rather than folded in — {classList(selExcluded)}.
-                  A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a
-                  folio, so every wrapper would land in one false “Unclassified” slice and bury the sectors this chart exists to show.
-                  All of them are in the holdings table below.{sleeveNote}</>
-                : <>Every one of this entity&rsquo;s positions is a share in a company, so nothing is excluded from the chart above.</>}
-            </p>}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
             subtitle={<>Grouped by how each holding came to be held — what {scope} chose directly, what a discretionary manager chose
