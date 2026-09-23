@@ -15922,8 +15922,8 @@ Five gates, each a wrong row avoided:
 5. **No book position of the same ISIN and the same units**, or one holding is
    counted twice.
 
-**THE LIVE BOOK READS ₹777.03 Cr on today's NAVs, ₹63.74 Cr of it the
-depository's cash** — ₹713.29 Cr without it.
+**THE LIVE BOOK READS ₹777.03 Cr on the NAVs committed with this change
+(22 Sep 2026), ₹63.74 Cr of it the depository's cash** — ₹713.29 Cr without it.
 Statement-basis pages do not move: Private Market, Capital Gains, Data Audit and
 Ledger Insights still read `statementPortfolio`, and `/holdings`' own
 statement-basis line names the depository rows as the part of its figure no
@@ -16014,7 +16014,7 @@ fails the suite by name instead of sitting under Mutual Fund.
 **The same demat holds five mutual funds AMFI prices that are NOT cash** —
 Bandhan Large & Mid Cap ₹31.93 Cr, ICICI Equity Savings ₹23.44 Cr, ICICI India
 Opportunities ₹18.98 Cr, Kotak Multicap ₹9.05 Cr, Kotak Large & Midcap
-₹1.37 Cr, **₹84.8 Cr at today's NAV** — plus eight company shares and one AIF.
+₹1.37 Cr, **₹84.8 Cr at the 22 Sep NAV** — plus eight company shares and one AIF.
 The family asked for arbitrage to be cash, not for this account to be valued, so
 the cash gate refuses them and `fundNavs.test.ts` asserts it. They are worth
 naming because **they are the depository-clipped funds behind Stage 10ak's
