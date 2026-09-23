@@ -414,7 +414,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   nothing here reaches `glowData.ts`, and no entered amount is ever added into
   Called, Paid in or Still to call. Until the binding is connected the column
   says saving is not switched on — never an empty column. See Stage 10bs, and
-  Stage 10ci: every cell names that cause in a word ("Not set up") and opens an
+  Stage 10cj: every cell names that cause in a word ("Not set up") and opens an
   editor giving the one-time Cloudflare steps (`SWITCH_ON_STEPS`) — the same one
   step that switches on the shared tile layouts below.
 - `src/lib/fundReturns.ts` — WHICH RETURN A PRIVATE FUND SHOWS, AND WHY. Each
@@ -441,7 +441,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
   made here the store never confirmed, then the shared layout. See Stage 10cb.
   A tile is ADDED from the strip's own last cell, the ADD TILE card, and saved
-  the same way — see Stage 10ci.
+  the same way — see Stage 10cj.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -8083,6 +8083,11 @@ discriminated union whose loading variant carries none of `covered`,
 does not compile. That is the stronger guard, and the invariant below is the
 runtime backstop for a state the type cannot see.
 
+*(`FundExposure.tsx` has since been deleted: at Stage 10ci its box became rows
+of the Portfolio Monitor's own table. The rule above is unchanged. While the
+disclosures load, the row draws no fund lines, and its Via funds cell names the
+fetch rather than saying anything about the holding.)*
+
 #### `npm run test:family` gained the suite the server change needed
 
 `quotesFunction.test.ts` — **nine checks against a stubbed upstream**, because
@@ -12240,7 +12245,7 @@ the one's that they want to see. Also add a small + button on the last 4th KPI
 tile so the user can also increase the no. of KPI tile and add a new one on the
 page as per their requirement."*
 
-***THE `+` IS A TILE OF ITS OWN SINCE Stage 10ci*** — *"a big empty tile with
+***THE `+` IS A TILE OF ITS OWN SINCE Stage 10cj*** — *"a big empty tile with
 bold written: ADD TILE"*, in the grid cell where the next tile will land, on
 both strips, and clicking it offers the metrics not on screen rather than
 appending the first of them. Everything else in this passage is unchanged.
@@ -15589,7 +15594,7 @@ Settings → Bindings → add a KV namespace binding named **`GLOW_STORE`** (for
 Production and Preview) → redeploy. Until that is done every cell reads "Saving
 is not switched on yet" and nothing offers to save.
 
-***IT DID NOT READ THAT — see Stage 10ci.*** Each cell was an em dash with that
+***IT DID NOT READ THAT — see Stage 10cj.*** Each cell was an em dash with that
 sentence in its HOVER and nothing to click, and the family read the column as
 *"empty right now"*. Each cell says "Not set up" now and opens the editor, which
 gives the reason and these steps, in Cloudflare's current menu names.
@@ -18367,6 +18372,8 @@ publishes no holdings statement still closes above nil), and the Portfolio
 Monitor's row expansion names the account, its opening and its nil closing, with
 a link to the company page — `DematElsewhere`, which renders only where a row's
 own venues do not already carry that account.
+*(`DematElsewhere` has since gone: at Stage 10ci the account is a ROW of the
+same table, in the table's own columns, carrying the same handles.)*
 
 **AND THE FAMILY'S OWN REVIEW DISAGREES, WHICH IS STATED RATHER THAN RESOLVED.**
 The consolidated review dated 30 June 2026 carries 21,175 Kaynes shares under
@@ -20338,7 +20345,343 @@ landed — and the sentence in Stage 10bx now names it and says why.
 **216 combinations clean** on the tree #79 merged, with nine evidenced abstentions across five claims, none of them this stage's own · `npm run build-book` byte-identical — a table's layout is not
 part of the book.
 
-### Stage 10ci — AN ADD TILE CARD, AND A CAPITAL CALL COLUMN THAT SAYS WHY IT CANNOT SAVE
+### Stage 10ci — THE NOTES AROUND EVERY TABLE: ONE SHORT LINE, AND THE REST IN A HOVER
+
+*"no one is reading these kind of A cliff of notes that you have put in across
+tables. When an entity is dropped down, they're literally seeing what is the
+entity and which accounts are held in. So the dropdown is good."* · *"It's just
+that I have issues with the extreme verbatim and verbose footnotes that you have
+put, which make the whole table ugly."*
+
+The family said what to keep and what to remove. The rows a table opens into
+stay. The sentences around them go. This is the same audit this file has run
+seven times (Stages 10aa, 10ai, 10ap, 10bd, 10be, 10bl, 10by). Every claim was
+checked for a second home first. Claims with no other home moved onto the
+figure they describe. The rest were deleted, and each move is asserted where
+the claim now lives.
+
+#### 1. The Portfolio Monitor: the opened row keeps its lines and loses its sentences
+
+- **The lead sentence is gone.** It spelled out the route split, e.g. "held ₹X
+  through direct equity and ₹Y through five funds". Each line's second line
+  already names its route and its share of the holding. The **Counted once** row
+  names and subtracts a holding two accounts both report. The per-route
+  subtotals the sentence added up are the hover on the row's chevron (§3).
+- **The note explaining "switched" is gone.** The same words are the hover on
+  the row's own `switched A1 → A4` label and on its entry NAV
+  (`switchedRowNote`).
+- **The "Held inside your funds" box is rows now.** It was two paragraphs and a
+  table drawn inside a cell. That is the shape Stage 10bx's standard forbids,
+  because a table inside a cell sizes its own columns and nothing lines up.
+  - Each fund that holds the issuer is a line of the same table. Its derived
+    share sits under **Via funds** and nowhere else.
+  - A fund that filed several instruments of the issuer opens into them.
+    `TreeNameCell` gained a chevron on a CHILD row for this.
+  - Each line's arithmetic is its own value's hover: your holding of the fund ×
+    the share its filing puts in this issuer.
+  - `FundExposure.tsx` is deleted, not left uncalled.
+  - While the disclosures load, the row draws no fund lines, and its Via funds
+    cell names the fetch rather than saying anything about the holding. That is
+    Stage 10an's rule, kept by the rows.
+- **Under the table, three paragraphs are gone:**
+  - the security axis's coverage fold (the five-bucket partition, the AIF block
+    and the split-name warning);
+  - the by-entity overlap paragraph;
+  - the transactions footnote.
+
+  Each figure they carried is in the hover of the footer cell or column header
+  it describes.
+
+**A HOVER IS WEAKER THAN A CAPTION**, and that trade is recorded rather than
+glossed. A reader scanning does not hover. What makes the trade affordable
+differs by claim, and is stated per claim:
+
+- **The DERIVED fence stays visible.** It is the word `derived` under both
+  derived column headers (Stage 10aq).
+- **A measured value's absence stays visible.** It is an `AbsentCell` with its
+  reason, in its column.
+- **Only the explanation moved into a hover.**
+
+**AND ONE FLOAT-DUST LINE WAS FIXED ALONG THE WAY.** A section heading read
+"₹0 reported twice, counted once" over Mutual Fund, a section with no duplicate.
+The rows and the subtotal are summed along two paths, and published NAVs carry
+four decimals, so the two differed by a few paise. The heading now prints the
+overlap only at a rupee or more. Main found and fixed the same defect
+independently (`NO_PHANTOM_DUPLICATE`), and both are kept.
+
+#### 2. Every other table: one short line on screen
+
+| Page | What stays on screen | What moved |
+| --- | --- | --- |
+| Private Market | the Counted once rows (`one holding on N statements`); the unvalued band's "paid in is in no value total"; the total row's account count | the sides line and the public-market clause went inside the one collapsed **How the totals are worked out** line, on every tab; the long sentences went to hovers |
+| `/holdings` | the headline figure, its counts and its dedupe basis; one line saying how many holdings are valued from depository units at AMFI's NAV | the two paragraphs went into the headline figure's hover: the blend of report dates, and the statement-basis total. Why those depository units carry no statement mark is that line's hover |
+| Company page | the quantity identity as one line; the fund notice as two short lines; the look-through fence; the duplicate note; the research pointer as one line | the pledge exclusion, "no price, amount or gain", the Category II/III reasoning and the research pointer's market-cap sentence, each in its line's hover |
+| Mandate page | its statement total and "every ₹0 above is measured" | the tie-out reasoning; a derived-total mismatch still prints in amber |
+| Family & Entities | the unvalued card's subtitle, and each account's line, including "partly valued — only its cash-equivalent funds" | each account's reason is its name's hover (`data-unvalued-reason`); the footnote went |
+| Capital Gains | "Tax figures are illustrative · statement basis · not tax advice" | an **815-character** paragraph that sat inside one table cell is that cell's hover |
+| Performance, Returns, History, Upload | one short line each | the reasoning, in hovers |
+
+**"Illustrative" and "not tax advice" stay on screen**, because a tax figure read
+without them is read as advice. That is the one place this change kept a caveat
+visible for the harm its absence could do rather than for its figure.
+
+#### 3. The guard, which is what keeps this from creeping back
+
+`check:pages` gained a `tableNotes` probe and a global check on every route
+(first theme and width). The check covers every card that holds a table:
+
+- its subtitle is at most **120** characters;
+- the text under its tables is at most **two lines of 150**;
+- no single cell holds more than **180** characters.
+
+A table that declares `data-table-static` is exempt from the cell bound, since
+its cells are an upstream document's own. A cell holding a form or a table of
+its own is a panel rather than a note, and is not measured. The capital-call
+editor is one.
+
+- **"UNDER THE TABLE" IS STRUCK ON GEOMETRY, NOT ON DOM ORDER.** A line counts
+  only if it sits below every table in the card, each table's bottom clipped by
+  any scroll box it sits in. The first draft used DOM order, and it read
+  Today's movers wrong. That card puts gainers and losers side by side, so on a
+  day when nothing fell, the losers list's own heading and empty state came
+  after the gainers table in the DOM and were counted as notes under it.
+- **The two folds this change relies on must be closed on arrival.** They are
+  Private Market's "How the totals are worked out" and the AIF drill-down's
+  valued-by-no-statement dropdown. A fold that opens itself is the paragraph
+  back with a chevron on it. `foldsOnArrival` reads both before the walk
+  touches either.
+
+**ON ITS FIRST FULL RUN THE GUARD FIRED ON CARDS THIS CHANGE HAD NOT
+TOUCHED**, ten findings across the routes. Each cause was fixed rather than
+exempted:
+
+- **The NAV movers card had a 206-character line.** It now reads
+  `Every scheme is listed · a move of 2% or more in one published day is
+  chipped drastic`. How the list is ranked is the hover.
+- **The allocation card's family axes had one paragraph of 385 characters.**
+  It is now two lines:
+  - whose taxonomy it is, plus the value their direct-stock rule placed;
+  - the value their cash instruction placed.
+
+  The second line keeps `data-cash-rule-mv`, which its check reads to the
+  rupee.
+- **The fund card on a holding's page had a 168-character subtitle.** It now
+  reads `<scheme> — not a statement issued to this family`, and where the
+  figures come from is the hover. A scheme that discloses no portfolio (the
+  metal ETFs) no longer draws the holdings' date pills or the look-through
+  fence over an absence. The absence box now says so in one sentence.
+
+The same run found one collision between two checks:
+
+- **Private Market's Transactions tab failed its own removal check.** The
+  moved fold said "the floor of what can still be called", which matched the
+  heading of the removed calls card. The sentence reads "the floor of what the
+  funds can still call" now. **Two checks were pulling on one phrase**, and
+  the one that holds the fold's claim moved with it.
+
+**AND EVERY REMOVED SENTENCE WAS AUDITED ONCE MORE, BY A SECOND READER.** A
+separate read of the whole diff split each removed block into its claims and
+looked for each claim in the new files. Most survived in a hover, a fold or a
+shorter line, or were already stated elsewhere on the page. It found one line
+that had become FALSE and three facts with no second home, and all four are
+fixed:
+
+- **The company page's fund notice** read "What the scheme holds is shown
+  above" on every fund. That is false on Liquid BeES (no scheme resolves) and
+  on the DSP gold and silver ETFs (no portfolio disclosed), where the card above
+  says the opposite. Main's longer wording carried a condition, *"where that
+  disclosure resolves"*, and the one-liner had dropped it. It carries it again.
+  `check:pages` asserts the unconditional form never renders on a company page.
+- **The route subtotals.** The opened row's lead sentence read *"₹X through
+  direct equity and ₹Y through 2 PMS mandates"*, which was the family's own
+  Stage 10ah ask. Each line names its own route, but a SUBTOTAL per route was
+  on screen nowhere else.
+  - It is now the hover on the row's chevron, open or shut.
+  - It is summed over the statements as printed, and names the overlap where
+    two accounts report one holding.
+  - `monitor-category-drill` holds it to the lines it sums, within their
+    printed precision, and to naming the overlap exactly where the row has one.
+- **Three absences on the fund lines** rendered nothing where the old box said
+  why: a disclosure with no date, a line no filing classed, and an instrument
+  with no ISIN. Each names its cause in the line's own hover.
+- **One sentence of the Capital Gains cell note** had been lost in the move to
+  its hover. It is back.
+
+**IT ALSO FOUND A PARAGRAPH THE GUARD CANNOT SEE.** The guard measures inside a
+card, and the company page's research pointer sits OUTSIDE one, directly under
+the insider-trades table: 511 characters. It is one line now, with its
+market-cap sentence in the hover, and `stock` asserts both by name. A probe of
+every page for prose outside a card found no other: the remaining long lines
+are a row of entity buttons, the audit page's document chips, and two captions
+in the company page's header.
+
+#### 4. Merged with main three times, and the first merge brought two features this change had removed the place for
+
+Nine commits landed on main while this branch was open: #74, #76, #77, #80,
+#81, #82, #83, #84 and a Polycab refresh. Eight files conflicted. The rule for
+each was the same: **main's features are kept, and this branch's removals are
+kept on top of them.**
+
+- **#76 NAMED THE AIFs INSIDE THE BOX THIS BRANCH TURNED INTO ROWS.** The
+  client asked: *"Kaynes Technologies Limited is also a holding in Vikas
+  Khemani Fund"*. That fund is Carnelian Bharat Amritkaal, an AIF, and an AIF
+  reports units and a NAV and never what it owns.
+  - Main's answer was to list every AIF fund in a paragraph inside every opened
+    company. The list is 474 characters over ten funds.
+  - Here it is one row of the table, **"Inside your N AIF funds · not
+    visible"**. Its Via funds cell is an absence with its reason.
+  - That row opens into one row per fund, each linking to the fund's own page,
+    so the answer to *"is my Carnelian fund in this?"* is one click away. The
+    derived column's header hover names the funds too.
+  - `aifOpaque` clubs the funds by `splitFundClass`, as #76 did.
+  - `check:pages` opens the row on `monitor-sold-elsewhere`. It asserts the
+    count and the names as a SET of keys, so a list that drops the client's
+    fund fails by name.
+- **#76 ALSO ADDED A FULL-WIDTH LINE FOR THE ACCOUNT THAT SOLD A NAME OUT.**
+  That line was Ajay's demat and its 16,300 Kaynes shares.
+  - Here it is a row in the table's own columns. Its Qty is the nil the
+    statement printed at the close, and its second line says **sold out in this
+    window**, linked to the company page.
+  - `DematElsewhere` is deleted and `notHeldNote` is kept.
+  - Main's two checks read the same handles (`data-demat-elsewhere-row`,
+    `data-closing`) and pass unchanged.
+  - A full-width box inside an opened row is exactly what this branch's own
+    check forbids (`fullWidth === 0`), so the resolution could not keep it.
+- **#74's new notes are each kept as one short line**, with the sentence in a
+  hover:
+  - the partly valued demat on Family & Entities;
+  - the holdings valued from depository units on `/holdings`;
+  - the cash-fund wording on the company page.
+
+  Each check that read the sentence as page text now reads the visible line and
+  its hover together, and requires both halves: what the line says on screen,
+  and what the sentence in its hover says. A line that dropped either fails.
+- **#84's corporate-action returns card arrived with a 268-character formula
+  under its table**, and the guard caught it on the merged tree. It now reads
+  `Total return adds the dividends declared in the window · no portfolio total,
+  as accounts open on different dates`, with the formula in its hover. Why
+  there is no total stays on screen: an absent total a reader is not told about
+  reads as one that was forgotten. **Its evidence cell was the second finding**:
+  a row's open questions were joined into one sentence, and three of them came
+  to 232 characters in one cell. The cell shows the first question and how many
+  more there are, and all of them are its hover.
+- **#77 rewrote the mandate page's capital summary and the Transactions
+  columns.** Both are taken whole, and the branch's shortening of the old "Net
+  invested" line had no subject left. **Main's own summary line was then the
+  guard's last finding**, on `mandate-funded` and `mandate-fund`: one run-on
+  line of purchase, redemption, worth, appreciation and both returns, up to 206
+  characters, with every reason spelt out in it. It is two lines now, the money
+  and then the returns. A reason keeps its first clause on screen (an absent
+  figure names its cause) and the whole sentence is that clause's hover.
+- **#77 asked for the unvalued AIF folios as a dropdown.** Main's `<details>`
+  is kept, with the paragraph inside it moved to the summary's hover. The walk
+  no longer opens that fold, because main's check asserts it is shut on arrival
+  and its summary already carries the count, the categories and the drawn
+  total. The check now also requires that, wherever the summary mentions
+  drawn money, it says that money is in no total.
+
+**THE `ctx` LITERAL CONFLICTED AND WAS RESOLVED AS A UNION, EXCEPT FOR ONE KEY
+DROPPED DELIBERATELY.** `fundExposure` read the box this branch deleted, and
+its probe is gone. `fundLines` carries its two fields (`aifs`, `aifNames`),
+struck on the new rows. Every key was then confirmed to name a declaration.
+`scripts/dev/names-bug.sh` (#76's harness) snapshotted the deleted
+`FundExposure.tsx`, which would have failed the harness before its first case.
+Its AIF case now truncates the new rows instead.
+
+**THEN #78 LANDED WHILE THIS WAS BEING VERIFIED, AND MERGED CLEAN.** That is the
+case this file warns is the dangerous one, so it was checked by hand:
+
+- **What it adds draws no note.** It is Stage 10cf's money-weighted return where
+  a row is whole accounts. On the Monitor that is data on each return cell; on a
+  company page it is an XIRR line under the return. There was nothing for this
+  change to shorten.
+- **The `ctx` literal came through as a union.** 94 keys, none duplicated, every
+  one naming a declaration. The one key main has and this branch lacks is
+  `fundExposure`, dropped on purpose above.
+- **No check reads the deleted box**, and `build-book` regenerates
+  `glowData.ts` byte-identically.
+- **It took this section's letter.** See below.
+
+**AND #87 AND #89 LANDED WHILE THIS WAS STILL BEING VERIFIED.**
+
+- **#87 moves the app to Glow Central Research's fonts and colours.** Its only
+  conflict with this branch was the `/holdings` headline figure: this branch had
+  moved two sentences into that figure's hover, and #87 changed its font. Both
+  are kept. Every heading and figure #87 restyled on the pages this branch also
+  edits was checked by hand after the merge, and each carries #87's classes.
+- **#89 is notes and one check label.** It records the Portfolio Monitor's
+  master table from #79 as Stage 10ch, and repoints Stage 10bx's *"the Portfolio
+  Monitor's stage is `10by`"* at it.
+- **The `ctx` literal came through as a union again**: 94 keys, none
+  duplicated, every one declared.
+
+**THE LETTER, AND A CLAIM THAT CAME OUT.** This section was drafted as `10cf`,
+the letter after main's newest (`10ce`). #78 merged under `10cf`, and #87 and
+#89 took `10cg` and `10ch`, so this is `10ci`. The stage headings were compared
+against main's tip before pushing, and differ from main's by `10ci` alone.
+
+An earlier draft also called this "the Portfolio Monitor's stage" and edited
+Stage 10bx's pointer to name it. #89 shows that the reservation was for #79's
+master table, not for this change, so the claim and the edit both came out. A
+pointer names the work it was written for; the next free letter does not
+inherit it.
+
+**AND ONE CHECKER BUG ON MAIN WAS MEASURED, NOT FIXED HERE.** Stage 10cf records
+eight Private Market invariants failing on main's own build: #72's re-expression
+of each fund's return still gates the dated calls against a cost basis that #80
+made FIFO. This branch was walked against pristine main (`c1bfddd`) on
+`private-market` and `private-market-returns`, and the same invariants fail
+there. Stages 10ce and 10cf each recorded it and left it, and so does this one:
+the fix is to the checker, and it belongs in its own change.
+
+#### Verification
+
+Every result below is from the tree that ships: this branch merged with #87
+and #89 (main `4148c1a`).
+
+- `tsc` · `build` · `build-book` regenerates `glowData.ts` and
+  `docs/BOOK-REPORT.md` byte-identically.
+- `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant 42,
+  classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+  140; 2 not checked, 0 blocked) · `test:family` (0 failed).
+- `check:family` **85/2**. The two failures are main's own Extras-menu count,
+  which Stage 10cf records: #84 added a fifth page and the check still counts
+  four.
+- `check:pages` **246 combinations, 3 with a finding, and the new guard passes
+  on every route.** The three are the Private Market routes, and their 8 failing
+  checks fail the same way on main: the fund-return check Stage 10cf records.
+  The 10 checks marked not checked are main's too, each with nothing to check on
+  this book: 6 KPI-tile lines across the Morning CIO routes, 2 Private Market
+  cost lines, 1 redeemed private account, and the not-found drill-down's crumb.
+  246 is main's own count, because this change adds no route and removes none.
+
+**EVERY DEFECT THIS CHANGE GUARDS AGAINST WAS PUT BACK, ONE AT A TIME.** Each ran
+in a scratch worktree with its own server, and the files were restored from git
+and checked clean before the next case. A no-patch control ran first. Each
+defect fired its own check:
+
+| Defect put back | Fires |
+| --- | --- |
+| a 239-character paragraph under the Tax-loss harvesting table | the guard |
+| a cell showing its 396-character reasoning on screen | the guard |
+| Private Market's working fold open on arrival | 3: the guard, the fold check, the collapsed-line check |
+| the AIF row naming one of its ten funds | the AIF-names check |
+| `/holdings`' depository line without its hover | the depository check |
+| a partly valued account without its note | the partly-valued check |
+| the research pointer back to a paragraph | the research-pointer check |
+| the research pointer without its hover | the research-pointer check |
+| the route split dropped from the chevron | the route-subtotal check |
+| route subtotals that do not add to the lines | the route-subtotal check |
+| the overlap left out of the hover | the route-subtotal check |
+| the fund notice unconditional again | the fund-notice check, on both fund routes |
+
+The last batch's control found one more guard finding, on main's #84 card, and
+that is fixed (§4). A full sweep on the tree merged with #78 found the other
+three: #84's evidence cell and #77's capital summary on two routes. All three
+are fixed (§4), and a targeted sweep of those routes is clean. Each was found by
+the guard firing, which is the same demonstration as a defect put back.
+
+### Stage 10cj — AN ADD TILE CARD, AND A CAPITAL CALL COLUMN THAT SAYS WHY IT CANNOT SAVE
 
 *"Add another tile. It should be a big empty tile with bold written: ADD TILE.
 When I click on the ADD TILE button, I should be able to choose what I want to
@@ -20621,7 +20964,7 @@ carries it, never by a bulk replace: this change's 4 pointers in this file, 14
 comments in `check-pages.mjs`, the harness's header and one comment in
 `Kpi.tsx` moved; #78's 6 lines here and 12 comments there stayed.
 
-**AND THEN #87 AND #89 TOOK `10cg` AND `10ch`, SO THIS IS `10ci`** — while the
+**AND THEN #87 AND #89 TOOK `10cg` AND `10ch`, SO THIS WAS `10ci`** — while the
 pass above was running on the tree merged with #78, and caught the same way, by
 the letters rather than by a marker. The same placement moved this change's
 lines and left theirs: 3 lines here, 3 comments in `check-pages.mjs`, and one
@@ -20644,6 +20987,26 @@ every route from both (118, among them `private-market-calls-signedout` and the
 byte-identically.
 Main's tip still carries the stale FIFO lines in `PM_RETURN_BOOK`, so section
 3's fix is still this change's to make.
+
+**AND THEN #90 TOOK `10ci`, SO THIS IS `10cj`.** It landed while this PR waited
+for the go-ahead to merge. Both sections sat at the same place, so git marked
+the conflict this time. Main's keeps `10ci`; this section follows it. Every line
+naming `10ci` was placed by which side's own copy of its file carries it: 21
+were this change's and moved with the heading (4 pointers in this file, 14
+comments in `check-pages.mjs`, 2 in the bug harness, 1 in `Kpi.tsx`); main's
+7 stayed; and one line of this section's history keeps `10ci`, because it
+records the letter it held then. Two conflicts in `check-pages.mjs`, both unions:
+
+- **The walk.** #90's two probes (`tableNotes`, `foldsOnArrival`) and this
+  change's store-off walk were inserted at one spot under one shared `/**`.
+  #90's run first, because they read the page as it arrives and this walk opens
+  an editor; each got its own comment opener.
+- **The `ctx` literal.** #90's `fundLines`, `tableNotes` and `foldsOnArrival`
+  beside this change's `tileAdd` and `callOff`. #90 deleted `FundExposure.tsx`
+  and the `fundExposure` probe with it, so that key stays out: 96 keys, none
+  duplicated, every one declared.
+
+#90 did not touch the tile strip, the Capital Call cells or their store.
 
 ### Stage 10k — News & Announcements: REMOVED
 
