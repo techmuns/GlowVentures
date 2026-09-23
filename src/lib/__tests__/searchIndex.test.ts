@@ -117,6 +117,12 @@ console.log("── people, pages and mandates ──");
 console.log("── the words people use ──");
 {
   ok("'transactions' opens the Transactions tab", top("transactions")?.href === "/monitor?show=transactions");
+  ok("'compare sectors' opens Sector Composition's Compare tab", top("compare sectors")?.href === "/sectors?view=compare",
+    top("compare sectors")?.label);
+  ok("'polycab dividend' opens Polycab's corporate actions tab", top("polycab dividend")?.href === "/polycab?view=actions",
+    top("polycab dividend")?.label);
+  ok("'direct equity' still opens the Direct Equity holdings, not the sector tab",
+    top("direct equity")?.kind === "category", `${top("direct equity")?.kind}:${top("direct equity")?.label}`);
   ok("'uncalled' opens the Private Market page", top("uncalled")?.href === "/private-market");
   ok("'dry powder' reaches uncalled capital", top("dry powder")?.id === "fig:uncalled");
   ok("'tax' opens Capital Gains", top("tax")?.href === "/capital-gains");
@@ -137,8 +143,15 @@ console.log("── the ring-fence ──");
   const isins = new Set(BOOK_POLYCAB.map((p) => p.isin).filter(Boolean));
   ok("the ring-fenced holding is in no entry",
     !index.some((e) => [...keys].some((k) => e.id.includes(k) || e.href.includes(k)) || e.codes.some((c) => isins.has(c))));
+  // THE PAGE FIRST, THEN ONLY ITS OWN TABS. Every hit must open the Polycab
+  // page itself — a holding, an account or a figure anywhere else is the leak
+  // the fence exists to stop — and there must be at least one hit, so an empty
+  // result cannot pass as a fence that held.
   const hits = searchEntries(index, "polycab", 10).map((h) => h.entry);
-  ok("'polycab' finds the Polycab page and nothing else", hits.length === 1 && hits[0].href === "/polycab",
+  const ownPage = (e: (typeof hits)[number]) =>
+    (e.kind === "page" || e.kind === "view") && (e.href === "/polycab" || e.href.startsWith("/polycab?"));
+  ok("'polycab' finds the Polycab page first, and nothing outside it",
+    hits.length > 0 && hits[0].kind === "page" && hits[0].href === "/polycab" && hits.every(ownPage),
     hits.map((e) => `${e.kind}:${e.label}`).join(", "));
 }
 

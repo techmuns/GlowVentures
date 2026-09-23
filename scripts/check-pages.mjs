@@ -9894,6 +9894,12 @@ const INVARIANTS = {
     }]),
     ["a page's name opens the page", () => SEARCH?.results?.page?.rows?.[0]?.href === "/private-market"],
     ["a tab's name opens the page on that tab", () => SEARCH?.results?.tab?.rows?.[0]?.href === "/monitor?show=transactions"],
+    // A TAB ANOTHER PAGE ADDED IS A TAB TOO. Sector Composition's Compare tab
+    // arrived after the index was written; "any tab" is the family's own word.
+    ["…and so does a tab on another page (Sector Composition's Compare)", () =>
+      SEARCH?.results?.tab2?.rows?.[0]?.href === "/sectors?view=compare"],
+    ["…and Enter lands on that page with that tab selected", () =>
+      SEARCH?.tabLanded?.path === "/sectors" && SEARCH.tabLanded.selected === "compare"],
     ["a figure's word opens the page that shows and explains it", () => SEARCH?.results?.figure?.rows?.[0]?.href === "/private-market"],
     /**
      * A QUESTION GOES TO MUNS FIRST, and a place goes to the place: the Ask row
@@ -9913,15 +9919,18 @@ const INVARIANTS = {
     }],
     /**
      * THE RING-FENCE HOLDS IN THE SEARCH. "polycab" finds the PAGE the nav
-     * already carries on every screen — and no holding, account or figure,
-     * because the index is built from positions the promoter block was spliced
-     * out of at the book layer.
+     * already carries on every screen first, then only that page's own tabs —
+     * and no holding, account or figure, because the index is built from
+     * positions the promoter block was spliced out of at the book layer. Every
+     * row must open the Polycab page itself; one that opens anywhere else is
+     * the leak.
      */
-    ["'polycab' finds only the Polycab page — no holding, account or figure", () => {
+    ["'polycab' finds the Polycab page first and nothing outside it — no holding, account or figure", () => {
       const r = SEARCH?.results?.fenced?.rows ?? [];
       if (!SEARCH) return false;
       const real = r.filter((x) => x.kind !== "ask");
-      return real.length === 1 && real[0].href === "/polycab" && real[0].kind === "page";
+      return real.length > 0 && real[0].href === "/polycab" && real[0].kind === "page"
+        && real.every((x) => (x.kind === "page" || x.kind === "view") && (x.href === "/polycab" || x.href.startsWith("/polycab?")));
     }],
     ["every result says what it is and where it goes, and a holding says what it is worth", () => {
       if (!SEARCH) return false;
@@ -16745,7 +16754,7 @@ for (const theme of THEMES) {
           const B = SEARCH_BOOK ?? {};
           const queries = {
             holding: B.holding?.word, isin: B.isin?.isin, mandate: B.mandate?.accountNo, owner: B.owner?.name,
-            sector: B.sector?.name, page: "private market", tab: "transactions", figure: "uncalled",
+            sector: B.sector?.name, page: "private market", tab: "transactions", tab2: "compare sectors", figure: "uncalled",
             question: "how much of the book is in AIFs?", nothing: "zzqqxx qqzz", fenced: "polycab",
           };
           const results = {};
@@ -16782,7 +16791,28 @@ for (const theme of THEMES) {
             else await page.keyboard.press("Escape");
             await page.waitForTimeout(500);
           }
-          SEARCH = { slashFocus, results, geometry, entered };
+          // …AND A TAB'S NAME LANDS ON THAT TAB, SELECTED. The href claim above
+          // cannot see a page that renamed its tab key: `useViewParam` falls
+          // back to the first tab, so a stale address opens the right PAGE on
+          // the wrong tab and every figure on it renders perfectly. So the walk
+          // follows the address and reads which tab the page itself selected.
+          let tabLanded = null;
+          await input.fill(queries.tab2);
+          await page.waitForTimeout(200);
+          const beforeTab = page.url();
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(900);
+          if (page.url() !== beforeTab) {
+            const u = new URL(page.url());
+            tabLanded = await page.evaluate(() => {
+              const sel = document.querySelector('[role="tab"][aria-selected="true"][data-sector-view]');
+              return { selected: sel?.getAttribute("data-sector-view") ?? null };
+            });
+            tabLanded.path = u.pathname;
+            await page.goBack({ waitUntil: "load" }).catch(() => {});
+            await page.waitForTimeout(500);
+          } else await page.keyboard.press("Escape");
+          SEARCH = { slashFocus, results, geometry, entered, tabLanded };
         }
       }
       if (name === "chat") {

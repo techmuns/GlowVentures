@@ -32,9 +32,10 @@
 //
 // This module reads `portfolio.positions`, which `build-book` has already
 // spliced the promoter holding out of, and never `BOOK_POLYCAB`. So "polycab"
-// finds the Polycab PAGE — the nav entry every page already carries — and no
-// holding row, no figure and no account. `/stock/polycab-india` would forward
-// to that page anyway (App.tsx); the search simply never offers it.
+// finds the Polycab PAGE — the nav entry every page already carries — then
+// that page's own two other tabs, and no holding row, no figure and no
+// account. `/stock/polycab-india` would forward to that page anyway (App.tsx);
+// the search simply never offers it.
 //
 // ── THE MATCH IS DETERMINISTIC AND EXPLAINABLE ──────────────────────────────
 //
@@ -280,6 +281,20 @@ const VIEWS: { id: string; label: string; href: string; words: string[]; detail:
     detail: "Private Market · each member's private holdings, as their own statements print them" },
   { id: "view:pm-returns", label: "Private fund returns", href: "/private-market?ret=absolute,xirr", words: ["fund returns", "private returns", "fund xirr", "hpr"],
     detail: "Private Market · each fund's holding-period return beside its money-weighted XIRR" },
+  // SECTOR COMPOSITION'S AND POLYCAB'S OWN TABS. Consolidated and Holding are
+  // each page's default, so the page entry already opens them.
+  { id: "view:sectors-direct", label: "Direct Equity by sector", href: "/sectors?view=direct",
+    words: ["direct equity sectors", "direct sectors", "sectors of direct equity", "own shares by sector"],
+    detail: "Sector Composition · the sectors of the shares the family bought themselves" },
+  { id: "view:sectors-compare", label: "Compare sectors", href: "/sectors?view=compare",
+    words: ["sector comparison", "sectors side by side", "compare sector"],
+    detail: "Sector Composition · up to four sectors side by side, on both sets at once" },
+  { id: "view:polycab-actions", label: "Polycab corporate actions", href: "/polycab?view=actions",
+    words: ["polycab dividend", "polycab dividends", "polycab bonus", "polycab split"],
+    detail: "Polycab · every dividend, bonus and split the company has declared, from the exchange's record" },
+  { id: "view:polycab-promoter", label: "Polycab promoter group", href: "/polycab?view=promoter",
+    words: ["polycab promoter", "polycab pledge", "promoter pledge", "promoter group"],
+    detail: "Polycab · the promoter group's disclosed holding and pledge, quarter by quarter" },
 ];
 
 /** Figures — each opens the page that shows it WITH its own explanation. */

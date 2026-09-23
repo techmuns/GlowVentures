@@ -16079,7 +16079,7 @@ customer: what all they can type."* The top bar's slot held a button that opened
 the Muns chat. It is a search over everything the book and the app carry now,
 and Muns is still one keystroke away.
 
-**ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 325
+**ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 329
 entries on this book, each with the address that opens it:
 
 | Kind | | Opens |
@@ -16089,7 +16089,7 @@ entries on this book, each with the address that opens it:
 | mandate | 10 | `/mandate/:accountId` |
 | member | 6 | `/family?entity=` |
 | page | 12 | every nav entry, with the words a reader would type for it |
-| view | 10 | a TAB — Transactions, the security axis, Morning CIO's panels, the NAV movers |
+| view | 14 | a TAB — Transactions, the security axis, Morning CIO's panels, the NAV movers, Sector Composition's and Polycab's own tabs |
 | category · basket · asset class | 19 | that section's holdings drill-down |
 | sector | 10 | the Monitor's security axis narrowed to it |
 | figure | 10 | the page that shows AND explains it — uncalled capital, dry powder, the XIRR |
@@ -16109,8 +16109,10 @@ makes it a link.
 
 **THE RING-FENCE HOLDS IN THE SEARCH.** The index is built from positions the
 promoter block was spliced out of at the book layer, so "polycab" finds the
-Polycab PAGE the nav already carries and nothing else — asserted in the suite on
-keys and ISIN, and on the rendered page.
+Polycab PAGE the nav already carries first, then that page's own two other tabs,
+and nothing else — asserted in the suite on keys and ISIN, and on the rendered
+page: every row must open the Polycab page itself, and a row opening anywhere
+else is the leak.
 
 **A SECOND LINE ON EVERY RESULT, DERIVED FROM THE BOOK**: a holding's value and
 its share of the book through the same `fmtFromBase` every page uses, so a result
@@ -16187,7 +16189,7 @@ held; main keeps it and this section moved to `10bt` — and, one merge later, t
   check reads the tile where main put it and compares it with `CAPITAL_BOOK`.
 
 `build` · `tsc` · `test:ingest` (a new `payouts.test.mjs`, 29 cases) ·
-`test:family` (33 suites) · `check:family` **86/0** · `check:pages` **196
+`test:family` (every suite) · `check:family` **86/0** · `check:pages` **196
 combinations clean, 0 invariant failures** — main's own 192 plus the two routes
 this change adds, across both themes — with the same eight evidenced abstentions
 across the same four pre-existing claims Stage 10bs records and none of this
@@ -16224,6 +16226,54 @@ result was then checked rather than trusted: **83 keys, none duplicated, every
 one naming something declared in the file.** Nothing else overlapped: #70
 touches `Polycab.tsx`, `SectorComposition.tsx` and `polycabLive.ts`, which this
 branch does not, and neither side touched a generated book file.
+
+**AND THE MERGE MADE ONE OF THIS BRANCH'S CLAIMS FALSE, WHICH NO CONFLICT
+MARKER COULD SHOW.** The search box promises "any tab" in the family's own
+words, and #70 added tabs: Compare sectors, and Polycab's Corporate actions and
+Promoter group. Sector Composition's Direct Equity tab had been there since
+Stage 10aq and the index had missed it too. All four are views in the index now
+(329 entries, 14 views), so "compare sectors" opens the Compare tab and
+"polycab dividend" opens Polycab's Corporate actions table.
+
+**THAT MOVED THE RING-FENCE CHECK, AND THE CLAIM WAS RESTATED RATHER THAN
+LOOSENED.** "polycab" used to find exactly one result, the Polycab page. It now
+finds the page first and then that page's own two other tabs. Both the suite
+and the page check hold every row to opening the Polycab page itself, with the
+page first and at least one row. A holding, an account or a figure opening
+anywhere else would still fail, and an empty result cannot pass as a fence that
+held. The suite also asserts "direct equity" still opens the Direct Equity
+holdings rather than the new sector tab, because a view that outranked the
+category there would send the most common query to the wrong page.
+
+**FIVE BUGS WERE PUT BACK FOR THE FOUR TABS, AND EACH FIRED ITS OWN CHECK.**
+Four are in the suite: the Compare tab taken out of the index (the Compare
+check); a Polycab tab pointed at the ring-fenced holding's own address (three
+checks — the Polycab dividend query, the no-entry check on the holding's key,
+and the ring-fence); a Polycab tab pointed at another page (the ring-fence);
+and the sector tab renamed and boosted until it outranked the category (the
+Direct Equity check). **Two of those patches did not create their bug the first
+time** — one renamed only the entry's id, so the tab still worked, and one
+renamed only the label, so the category still won by two points — and each was
+rewritten until it did, because a patch that changes nothing gives a clean run
+that proves nothing. The fifth is in the browser: the search navigating with
+the query string dropped, which lands on the right PAGE and the wrong TAB. It
+fired the new *"Enter lands on that page with that tab selected"* check and
+nothing else. The older Enter check opens a holding, whose address has no query
+to lose, so without the new check this bug could not be seen.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, capitalCalls 30, payouts 29, hdfcOwner 22, golden 140 — 2 not checked, 0
+blocked) · `test:family` **34 suites, 1,778 checks, 0 failed** · `check:family`
+**86/0** · `check:pages` **202 combinations clean, 0 invariant failures** —
+main's own 198 plus this change's two routes across both themes — with the same
+eight evidenced abstentions across the same four pre-existing claims and none of
+this change's own. The search route was walked again on its own after the tab
+check was added, and is clean. MEASURED ON THE MERGED TREE: this branch's
+previous figure, 196, was struck against a base #70 has since moved, and 198 + 4
+reconciles only because the sweep was run again. `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` **byte-identically**, and
+`npm run replay:calls -- --check` is a no-op (28 replayed, 0 would change, 0
+refused).
 
 ### Stage 10k — News & Announcements: REMOVED
 
