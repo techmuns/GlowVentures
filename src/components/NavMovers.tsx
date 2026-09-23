@@ -248,7 +248,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
             Published NAV &middot; {model.newestNavDate}
           </div>
           <div className="mt-2 flex items-baseline gap-3">
-            <span className={`text-[22px] font-semibold tabular ${changeColor(model.move)}`}>
+            <span className={`font-display text-[22px] font-bold tabular ${changeColor(model.move)}`}>
               {fmtFromBase(model.move, { compact: true, sign: true })}
             </span>
             <span className={`text-[13px] font-semibold tabular ${changeColor(model.changePct)}`}>

@@ -391,7 +391,7 @@ function AddTile({ spare, onPick, savedWhere }: {
       <button type="button" data-tile-add aria-haspopup="listbox" aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         title={`Add a tile — choose one of the ${spare.length} figure${spare.length === 1 ? "" : "s"} not on screen`}
-        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-600 text-slate-400 ring-focus transition-colors hover:border-champagne-500/70 hover:bg-ink-700/30 hover:text-champagne-400">
+        className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-ink-600 text-slate-400 ring-focus transition-colors hover:border-champagne-500/70 hover:bg-ink-700/30 hover:text-champagne-400">
         <Plus className="h-5 w-5" aria-hidden />
         <span data-tile-add-label className="text-sm font-bold uppercase tracking-[0.14em]">Add tile</span>
       </button>

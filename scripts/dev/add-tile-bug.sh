@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VERIFY STAGE 10cg's CHECKS BY REINTRODUCING EACH BUG.
+# VERIFY STAGE 10ci's CHECKS BY REINTRODUCING EACH BUG.
 #
 # *"Add another tile. It should be a big empty tile with bold written: ADD TILE.
 # When I click on the ADD TILE button, I should be able to choose what I want to
@@ -22,7 +22,7 @@
 # build that fails as NOT A RESULT rather than as a clean run. Needs a
 # `vite preview` on :4173, like `check:pages` — or on the address `BASE=` names,
 # which is how it runs in a `git worktree` of its own while the working copy
-# stays clean (Stage 10cg). `CASES=3,7` runs a subset.
+# stays clean (Stage 10ci). `CASES=3,7` runs a subset.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -174,9 +174,9 @@ EOF
 run_case "the card is styled as a figure tile (a .card)" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed'
+old='className="flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'className="card flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed'))
+open(p,'w').write(s.replace(old,'className="card flex h-full w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed'))
 EOF
 
 # 8 ── the card stays when every metric is on screen, opening an empty menu

@@ -1904,7 +1904,7 @@ const PM_RETURN_BOOK = (() => {
      * shows its XIRR, and both checks below failed on main for as long as nobody
      * walked this route after the FIFO change. An absent field adds nothing: a
      * position that sold nothing carries a measured zero or no record, and
-     * neither moves the arithmetic. (Stage 10cg.)
+     * neither moves the arithmetic. (Stage 10ci.)
      */
     const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     /** ACT/365 IRR by bisection, in percent; null where the flows do not bracket a root. */
@@ -4056,7 +4056,7 @@ const ROUTES = [
   ["private-market-calls", "/private-market"],
   ["private-market-calls-off", "/private-market"],
   /**
-   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10cg. The editor shows the
+   * …AND A READER WHO HAS BEEN SIGNED OUT — Stage 10ci. The editor shows the
    * one-time Cloudflare steps for a store nobody has connected, and ONLY then:
    * a signed-out reader is told to sign in, never handed set-up steps for a
    * store that works. The two routes are the two sides of that one rule.
@@ -5108,7 +5108,7 @@ const CIO_TILE_OPTIONS = [];
 const TILE_MENU = new Map();
 const TILE_PICK = new Map();
 /**
- * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10cg. Its
+ * WHAT THE ADD TILE CARD DID WHEN IT WAS USED, PER ROUTE — Stage 10ci. Its
  * menu, the metric picked (the LAST one offered, so a card that ignores the
  * choice and appends the first spare metric fails), the strip read back after,
  * and the page opened again.
@@ -8124,9 +8124,9 @@ const PM_FIT_CHECK = ["the table fits its card at this width — no column is cu
  * to call. The header's hover is where the reason the column exists lives.
  *
  * RUN WITH THE SECTIONS CLOSED AND WITH EVERY ROW OPEN. Closed, only the
- * private funds are drawn; open, so are the funds no statement values and
- * the Other AIFs' capital accounts — and those are the rows this column was
- * missing when it shipped on a table of valued funds only.
+ * private funds are drawn; open, so are the funds no statement values — and
+ * those are the rows this column was missing when it shipped on a table of
+ * valued funds only.
  */
 const PM_CALL_COLUMN_CHECK = ["the table carries a Capital call column, one cell on every fund row and on no other", (t, ctx) => {
   const pv = ctx?.pmView;
@@ -8427,7 +8427,7 @@ const CIO_TILE_PICKER = [
   }],
   /**
    * ...AND THE ADD TILE CARD TAKES THE STRIP'S NEXT COLUMN, NOT A ROW OF ITS
-   * OWN — Stage 10cg. This page does not scroll (Stage 10bj): a second row of
+   * OWN — Stage 10ci. This page does not scroll (Stage 10bj): a second row of
    * KPI tiles takes its height from the panel under it. So the card is counted
    * in `--kpi-cols`, and wherever the strip has fewer than six tiles it sits on
    * the tiles' own row. Every claim above passes with the card on a row by
@@ -13371,7 +13371,7 @@ const INVARIANTS = {
     }],
     /**
      * ...AND THE ADD TILE CARD, ALONE ON THE NEXT ROW, IS STILL THE SIZE OF A
-     * TILE — Stage 10cg. Six tiles fill Morning CIO's six columns, so this is the
+     * TILE — Stage 10ci. Six tiles fill Morning CIO's six columns, so this is the
      * one state in which its card sits on a row by itself; `auto-rows-fr` is what
      * keeps that row as tall as the tiles' rather than as short as two words.
      */
@@ -13991,16 +13991,14 @@ const INVARIANTS = {
       const total = cells.reduce((a, b) => a + b, 0);
       return footCell(ctx, "costShare") === "100%" && Math.abs(total - 100) <= Math.max(0.5, cells.length * 0.05);
     }],
-    /**
-     * A TILE THAT OPENS NOTHING STAYS FLAT. The other half of Morning CIO's
-     * raised-tile claim, struck where the flat tiles are: this page's four
-     * summary tiles carry no href, so a stylesheet that raised every `.card`
-     * would pass the strip's check and fail here.
+    /*
+     * A TILE THAT OPENS NOTHING STAYS FLAT used to be asserted here, on this
+     * page's four summary tiles. Those went at Stage 10bd, and every card left
+     * on this page contains a link — so a stylesheet raising every card swept
+     * clean. The claim is asserted on EVERY route now, in both themes, beside
+     * the look checks in the walk ("a raised card is a button"), and a link
+     * must COVER the card to count (Stage 10cg).
      */
-    ["its own summary tiles are not dressed as buttons", (t, ctx) => {
-      if (!ctx?.metrics?.flatCards) return { notChecked: "no card geometry was captured on this run" };
-      return ctx.metrics.flatCards.raisedWithoutLink === 0;
-    }],
     /**
      * ── THE ARITHMETIC LANDED HERE ───────────────────────────────────────────
      *
@@ -14742,15 +14740,16 @@ const INVARIANTS = {
    *    transactions tab in the same table view"*, and of the accounts nothing
    *    values, *"this needs to be like a hidden drop down clearly marked"*.
    *
-   * Five cards became one table with three tabs, and three sections inside the
-   * first two: the private funds (open), the private accounts nothing values
-   * (closed, marked "missing data") and the AIFs that are not private market
-   * (closed, marked). A fund row opens into its folios IN THE SAME COLUMNS —
+   * Five cards became one table with three tabs, and two sections inside the
+   * first two: the private funds (open) and the private accounts nothing values
+   * (closed, marked "missing data"). A third — the AIFs that are not private
+   * market, closed and marked — went when the family placed their funds
+   * themselves (Stage 10bx). A fund row opens into its folios IN THE SAME COLUMNS —
    * the family's other complaint, that the old panels were tables inside cells
    * whose columns lined up with nothing above them.
    *
    * EVERY CLAIM ABOUT THE TABLE IS STRUCK ON ITS STRUCTURE — the section bands,
-   * the rows, the "Counted once" lines and the two totals each carry their own
+   * the rows, the "Counted once" lines and the one total each carry their own
    * handle, and `pmView` reads every cell by the column its header names. The
    * page renders the same words whether a section is open or closed, whether a
    * folio sits under its fund or in a table of its own, and whether the totals
@@ -14965,17 +14964,19 @@ const INVARIANTS = {
      *    clearly marked."*
      *
      * Three claims, and a build that got any one wrong renders every figure
-     * correctly: the private section opens, the two marked sections do not, and
+     * correctly: the private section opens, the missing-data section does not, and
      * no fund row is open until a reader opens it. A CLOSED BAND THAT STILL
      * DREW ITS ROWS IS NOT CLOSED, so the rows are counted by section.
      */
-    ["the private funds open, the two marked sections closed, and no fund row open until a reader opens it", (t, ctx) => {
+    ["the private funds open, the missing-data section closed, and no fund row open until a reader opens it", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return { notChecked: "the private-view probe did not run" };
       const sec = Object.fromEntries(pv.sections.map((s) => [s.id, s]));
       if (!sec.private) return false;
       return sec.private.open
-        && ["unvalued", "elsewhere"].filter((id) => sec[id]).every((id) => !sec[id].open)
+        // Present or not is the missing-data check's claim; this one is that it
+        // arrives CLOSED.
+        && (!sec.unvalued || !sec.unvalued.open)
         && pv.children.length === 0 && pv.overlaps.length === 0
         && pv.toggles.length > 0 && pv.toggles.every((x) => !x.open)
         && pv.groups.length > 0 && pv.groups.every((g) => g.section === "private");
@@ -15279,7 +15280,7 @@ const INVARIANTS = {
         && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
     }],
     /**
-     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10cg.
+     * …AND EACH CELL IS A BUTTON THAT NAMES THE CAUSE — Stage 10ci.
      *
      * *"We need to keep the ability for the customer to add a date in this
      *  Capital Call column, which is empty right now."* It was a column of em
@@ -15729,7 +15730,7 @@ const INVARIANTS = {
         && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
     }],
     /**
-     * ── STAGE 10cg: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
+     * ── STAGE 10ci: "NOT SET UP", ON EVERY CELL, AND A CLICK SAYS WHAT TO DO ──
      *
      * The state production is in until the KV binding exists. Every cell is a
      * button reading "Not set up", the header note says it once, and clicking
@@ -15754,7 +15755,7 @@ const INVARIANTS = {
     }],
   ],
   /**
-   * ── A SIGNED-OUT READER — Stage 10cg ────────────────────────────────────────
+   * ── A SIGNED-OUT READER — Stage 10ci ────────────────────────────────────────
    *
    * The other side of the set-up steps' rule: they belong to a store nobody has
    * connected, and a reader whom the edge gate signed out is told to sign in —
@@ -20265,7 +20266,7 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
     return /saved in this browser only/i.test(pick.savedWhere ?? "") && /not running here/i.test(pick.savedWhere ?? "");
   }],
   /**
-   * ── THE ADD TILE CARD — Stage 10cg ───────────────────────────────────────
+   * ── THE ADD TILE CARD — Stage 10ci ───────────────────────────────────────
    *
    * *"Add another tile. It should be a big empty tile with bold written: ADD
    * TILE. When I click on the ADD TILE button, I should be able to choose what
@@ -20380,7 +20381,7 @@ const TILE_PICKER_CHECKS = tilePickerChecks({
       return st.slots === menu.length && menu.every((id) => st.ids.includes(id));
     }],
     /**
-     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10cg. A
+     * …AND WITH NOTHING LEFT TO ADD, THERE IS NO ADD TILE CARD — Stage 10ci. A
      * card that opened an empty menu would be the control that looks live and
      * does nothing, and this is the one route where the whole catalogue is up.
      */
@@ -21293,7 +21294,7 @@ for (const theme of THEMES) {
         await page.waitForTimeout(300);
       }
       /**
-       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10cg ──────────────────────
+       * ── A STORE THAT CANNOT SAVE, CLICKED — Stage 10ci ──────────────────────
        *
        * *"They should be able to simply click, select the date, and save it."*
        * The cells were em dashes nothing could click; they name their cause and
@@ -23345,7 +23346,7 @@ for (const theme of THEMES) {
               more: el?.hasAttribute("data-call-more") ? Number(el.getAttribute("data-call-more")) : null,
               text: txt(td),
               // A cell that cannot save carries its whole reason in a title, and
-              // names its cause in a word on screen — Stage 10cg.
+              // names its cause in a word on screen — Stage 10ci.
               reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
               tag: el?.tagName?.toLowerCase() ?? null,
               cause: el?.getAttribute("data-pm-call-cause") ?? null,
@@ -24299,11 +24300,28 @@ for (const theme of THEMES) {
          * measured on every card on whatever page is being walked. A stylesheet
          * that raised `.card` outright would satisfy the strip's check and turn
          * every panel in the app into a button that does nothing.
+         *
+         * "A BUTTON" IS A LINK THAT COVERS THE CARD, not one somewhere inside
+         * it. A KPI tile's anchor is a stretched overlay (`Kpi.tsx`): the whole
+         * card is the target. A table card whose ROWS link to a company page is
+         * not a button, and raised it presses under the pointer and does
+         * nothing where the pointer is. Counting any `a[href]` inside let every
+         * such card through, and `/holdings` — the one route this was asserted
+         * on — has had no card WITHOUT a link since its four summary tiles went
+         * (Stage 10bd). So a stylesheet raising every card swept clean: found by
+         * reintroducing exactly that (Stage 10cg).
          */
         const raised = (el) => /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(el).boxShadow);
+        const coveredByLink = (c) => {
+          const R = c.getBoundingClientRect();
+          return [...c.querySelectorAll("a[href]")].some((a) => {
+            const r = a.getBoundingClientRect();
+            return r.width >= R.width * 0.9 && r.height >= R.height * 0.9;
+          });
+        };
         const cards = [...document.querySelectorAll("main .card")];
         const flatCards = {
-          raisedWithoutLink: cards.filter((c) => raised(c) && !c.querySelector("a[href]")).length,
+          raisedWithoutLink: cards.filter((c) => raised(c) && !coveredByLink(c)).length,
           total: cards.length,
         };
         return { rowsInView: inView, firstRowTop: firstTop, viewportH: vh, flatCards };
@@ -24424,6 +24442,71 @@ for (const theme of THEMES) {
         }
       }
       /**
+       * ── GLOW CENTRAL RESEARCH'S LOOK, ON EVERY ROUTE (Stage 10cg) ─────────
+       *
+       * *"look how good the font is and the ui is of glow-central research -
+       * colours white etc - can you make this dashboard also with right color
+       * pallet and fonts."* Five claims, and not one of them is in the page's
+       * words — a page renders identical text in any face and on any colour — so
+       * they are read off COMPUTED STYLE, on every page the sweep walks, in the
+       * light theme the family looked at. The declared font stack is what is
+       * asserted: this sweep cannot fetch a web font, so it names the face the
+       * page ASKS for, which is the part a regression would change.
+       *
+       * A figure that could be absent is skipped rather than abstained on: a
+       * page with no `.mono` cell or no active nav entry (a company page, a
+       * drill-down) has nothing for that claim to be about.
+       */
+      if (!FAST && theme === "light" && width === WIDTHS[0]) {
+        const look = await page.evaluate(() => {
+          const cs = (el) => (el ? getComputedStyle(el) : null);
+          const first = (f) => (f ?? "").split(",")[0].replace(/["']/g, "").trim();
+          const h1 = cs(document.querySelector("main h1"));
+          const fig = cs(document.querySelector("main .mono"));
+          const aside = cs(document.querySelector("aside.app-sidebar"));
+          const top = cs(document.querySelector("header.app-topbar"));
+          const active = cs(document.querySelector('aside [data-nav-entry][aria-current="page"]'));
+          return {
+            body: first(getComputedStyle(document.body).fontFamily),
+            h1: h1 ? first(h1.fontFamily) : null,
+            fig: fig ? { face: first(fig.fontFamily), digits: fig.fontVariantNumeric } : null,
+            aside: aside ? aside.backgroundColor : null,
+            top: top ? top.backgroundColor : null,
+            active: active ? { color: active.color, bg: active.backgroundColor } : null,
+          };
+        });
+        if (look.body !== "Inter") invariants.push(`the page reads in Inter, as Glow Central Research does — the body asks for ${look.body || "nothing"}`);
+        if (look.h1 && look.h1 !== "Plus Jakarta Sans") invariants.push(`the page title is set in Plus Jakarta Sans — it asks for ${look.h1}`);
+        if (look.fig && (look.fig.face !== "Inter" || !/tabular-nums/.test(look.fig.digits))) {
+          invariants.push(`a figure is Inter with tabular digits, not a monospace — a .mono cell asks for ${look.fig.face} (${look.fig.digits})`);
+        }
+        // THE CHROME IS WHITE. The nav and the top bar were the page's own
+        // ivory, so the whole screen was one flat tone; "colours white" is the
+        // family's own word for what they wanted instead.
+        const white = (c) => /^rgba?\(255, 255, 255(, (0\.[7-9]\d*|1))?\)$/.test(c ?? "");
+        if (!white(look.aside) || !white(look.top)) {
+          invariants.push(`the nav and the top bar are white — the nav is ${look.aside ?? "missing"}, the top bar ${look.top ?? "missing"}`);
+        }
+        // WHERE YOU ARE IS GOLD: gold type on a pale-gold wash, GCR's active
+        // tab. Ink on it rather than white, for the reason at the top of the
+        // light block in index.css.
+        if (look.active && (look.active.color !== "rgb(125, 95, 22)" || look.active.bg !== "rgb(247, 239, 219)")) {
+          invariants.push(`the nav entry you are on is marked in gold — it is ${look.active.color} on ${look.active.bg}`);
+        }
+      }
+      /**
+       * A RAISED CARD MUST BE A BUTTON — ON EVERY ROUTE, IN BOTH THEMES.
+       *
+       * The probe above measures every card on every page, and this claim was
+       * only ever ASSERTED on `/holdings`, where every card left contains a
+       * link. Both themes, because each has its own raised rule in `index.css`
+       * and a restyle of one does not touch the other. The other half — a KPI
+       * tile that opens something IS raised — stays on Morning CIO's strip.
+       */
+      if (metrics?.flatCards && metrics.flatCards.raisedWithoutLink > 0) {
+        invariants.push(`a raised card is a button — ${metrics.flatCards.raisedWithoutLink} of ${metrics.flatCards.total} cards on this page carry a hard offset and no link covering them`);
+      }
+      /**
        * ── THE SELECTABLE TILE STRIP ─────────────────────────────────────────
        *
        * *"make it 4 and give the user a dropdown list to select what they want
@@ -24439,7 +24522,7 @@ for (const theme of THEMES) {
         const adds = [...strip.querySelectorAll("[data-tile-add]")];
         const cards = [...strip.querySelectorAll(".card")];
         /**
-         * THE ADD TILE CARD — Stage 10cg. *"a big empty tile with bold written:
+         * THE ADD TILE CARD — Stage 10ci. *"a big empty tile with bold written:
          * ADD TILE."* Every word of that is geometry or style — big, empty,
          * bold, and where it sits — so it is MEASURED: its box against the last
          * tile's, its label's computed weight, its border, and whether it is
@@ -24675,7 +24758,7 @@ for (const theme of THEMES) {
         } catch { /* a strip with no picker is a finding below, not a crash here */ }
       }
       /**
-       * ── …AND THE ADD TILE CARD, USED — Stage 10cg ───────────────────────────
+       * ── …AND THE ADD TILE CARD, USED — Stage 10ci ───────────────────────────
        *
        * *"When I click on the ADD TILE button, I should be able to choose what
        * I want to see in that tile."* The walk opens the card's menu, reads what

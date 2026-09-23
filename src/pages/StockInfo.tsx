@@ -500,7 +500,7 @@ export function StockInfo() {
       <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* WHERE THIS HOLDING IS FILED, which for everything that is not a
                 mandate-held share is still exactly its asset class — a fund's
@@ -556,7 +556,7 @@ export function StockInfo() {
             {/* ONE FIGURE OR NONE — never one statement's mark standing for
                 the rest. See `cmpMarks` for what the split is and why the
                 cell refuses it rather than picking. */}
-            <div className="mono text-2xl font-semibold text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
+            <div className="font-display text-2xl font-bold tabular text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
               {cmp ?? <AbsentValue />}
             </div>
             {/* WHY THIS IS THREE STATES AND NOT TWO.
@@ -748,7 +748,13 @@ export function StockInfo() {
                        which is a fact about the fixture rather than the page. */
                     <Tr view={posView} key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
-                      <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                      {/* THE ONE CELL THAT MAY WRAP, and only when the table would
+                          not otherwise fit. Where it fits nothing changes; where a
+                          wider face is drawn — the fallback when Inter cannot
+                          load, whose semibold headings run wider — this sub-line
+                          gives up the width rather than pushing Basis behind a
+                          sideways scroll (Stage 10cg). */}
+                      <td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
                         <div>{providerOf(accIdx, r)}</div>
                         {/* The route reads as a phrase — "via manager's mandate"
                             — because the column header no longer supplies the

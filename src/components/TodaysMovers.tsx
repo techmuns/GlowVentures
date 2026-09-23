@@ -401,7 +401,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4">
               <div className="label-xs">{SCOPE.label} &middot; today</div>
-              <div className={`mt-2 text-[22px] font-semibold tabular ${changeColor(model.dayChange)}`}>
+              <div className={`mt-2 font-display text-[22px] font-bold tabular ${changeColor(model.dayChange)}`}>
                 {fmtFromBase(model.dayChange, { compact: true, sign: true })}
               </div>
               <div className={`mt-0.5 text-[13px] font-semibold tabular ${changeColor(model.dayPct)}`}>
