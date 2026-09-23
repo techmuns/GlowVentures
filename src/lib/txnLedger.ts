@@ -32,7 +32,7 @@
  * So the row is one row and the COLUMNS stay in two blocks that are never
  * added — Committed / Purchase / Redemption / Realised / Unrealised, and
  * Bought / Sold / P&L on sales — each summed down its own column into its own
- * footer cell. (It was Capital in / out / Net invested until Stage 10ca: a net
+ * footer cell. (It was Capital in / out / Net invested until Stage 10cd: a net
  * that subtracted a redemption CARRYING appreciation from what was paid in, so
  * 3P read −₹2.56 Cr of "net invested" and every return struck on it was wrong.) A cell whose row
  * has no half to fill it renders `AbsentCell` with the reason, which is this

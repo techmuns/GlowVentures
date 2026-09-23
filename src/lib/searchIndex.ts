@@ -59,6 +59,7 @@ import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
+import { printedSpellings } from "./securityLabel";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -260,6 +261,7 @@ const PAGE_WORDS: Record<string, string[]> = {
   "/capital-gains": ["tax", "capital gains", "realised", "realized", "ltcg", "stcg", "gains"],
   "/performance": ["performance", "returns", "nav history", "benchmark"],
   "/returns": ["drawdown", "return analysis", "risk"],
+  "/corporate-actions": ["corporate actions", "stock split", "bonus", "dividend adjustment", "dividend-inclusive return", "entitlements", "total return"],
   "/ledger": ["ledger", "dividends", "dividend", "income", "lots", "realised by trade"],
   "/audit": ["audit", "statements", "documents", "source", "pdf", "archive", "extraction"],
   "/history": ["upload history", "history", "uploads"],
@@ -310,10 +312,10 @@ const FIGURES: { id: string; label: string; href: string; words: string[]; detai
   { id: "fig:book", label: "Current Value of Holdings", href: drilldownHref("book"),
     words: ["current value", "value", "nav", "net asset value", "total", "worth", "portfolio value", "aum", "net worth"],
     detail: "Every holding in the book, counted once, with each figure's basis" },
-  { id: "fig:invested", label: "Capital invested", href: drilldownHref("invested"),
+  { id: "fig:invested", label: "Capital invested", href: drilldownHref("book", undefined, "costed"),
     words: ["invested", "cost", "amount invested", "capital invested", "cost basis"],
-    detail: "The holdings that report a cost, and the return struck on it" },
-  { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("invested", undefined, "no-cost"),
+    detail: "Current Value of Holdings, on the holdings that report a cost — and the return struck on it" },
+  { id: "fig:no-cost", label: "Holdings with no cost reported", href: drilldownHref("book", undefined, "no-cost"),
     words: ["no cost", "missing cost", "cost not reported"],
     detail: "The positions whose statement prints a value and no cost — and why" },
   { id: "fig:xirr", label: "Money-weighted return (XIRR)", href: drilldownHref("measured"),
@@ -386,7 +388,11 @@ export function buildSearchIndex(input: {
       // A redeemed fund's money is on the Transactions tab, where its
       // redemption is — its holding page would show a measured nil and little else.
       href: closed ? "/monitor?show=transactions" : `/stock/${encodeURIComponent(key)}`,
-      names: [head.security, key.replace(/-/g, " ")],
+      // EVERY SPELLING A STATEMENT PRINTED, not only the one shown. The row is
+      // named once, but a reader types whichever name they know: the depository
+      // prints State Bank of India as `SBI`, and with the two keys joined the
+      // label alone left "sbi" finding nothing.
+      names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
       codes: [head.isin, head.symbol].filter((c): c is string => !!c),
       keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),

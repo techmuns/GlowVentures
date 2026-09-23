@@ -1,0 +1,85 @@
+{
+ "name": "transactions",
+ "rows": [
+  [
+   "date",
+   "class",
+   "description",
+   "kind",
+   "amount",
+   "net",
+   "units",
+   "balanceUnits"
+  ],
+  [
+   "2023-10-04",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Initial Contribution",
+   "contribution",
+   2500000,
+   2500000,
+   25000,
+   ""
+  ],
+  [
+   "2023-10-24",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "First Drawdown",
+   "contribution",
+   7500000,
+   7500000,
+   75000,
+   ""
+  ],
+  [
+   "2024-02-26",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Second Drawdown",
+   "contribution",
+   10000000,
+   10000000,
+   100000,
+   ""
+  ],
+  [
+   "2025-09-25",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Third Drawdown",
+   "contribution",
+   7500000,
+   7500000,
+   75000,
+   ""
+  ],
+  [
+   "2026-01-05",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Capital Redemption",
+   "withdrawal",
+   -1416280,
+   "",
+   -14162.8,
+   ""
+  ],
+  [
+   "2026-02-05",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Fourth Drawdown",
+   "contribution",
+   7500000,
+   7500000,
+   75000,
+   ""
+  ],
+  [
+   "2026-04-22",
+   "Neo Infra Income Opportunities Fund I — Class A5",
+   "Fifth Drawdown",
+   "contribution",
+   15000000,
+   15000000,
+   150000,
+   ""
+  ]
+ ]
+}

@@ -108,9 +108,17 @@ for (const k of keys) {
   const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF);
   if (!t) { ok(`a table is built for ${k}`, false); continue; }
 
-  // Half of the last decimal a unit count is printed to.
-  near(`units tie to quantity — ${tr.securityKey.slice(0, 28)} ${tr.accountId.slice(-8)}`, t.units, p.quantity, 0.0005);
-  near(`value ties to market value — ${tr.accountId.slice(-8)}`, t.value, p.marketValue, 1);
+  // Half of the last decimal the position's unit count is PRINTED to. Neo
+  // Infra's statement prints its balance as 4,85,837 — whole units — while its
+  // own dated record carries 4,85,837.2 after the capital redemption, so the
+  // tie is the printed precision reproduced, never a tolerance widened to fit.
+  const dp = String(p.quantity).split(".")[1]?.length ?? 0;
+  const tie = Math.max(0.0005, 0.5 * 10 ** -dp);
+  near(`units tie to quantity — ${tr.securityKey.slice(0, 28)} ${tr.accountId.slice(-8)}`, t.units, p.quantity, tie);
+  // …and the value follows the units: the residual units at the position's own
+  // per-unit mark, or a rupee, whichever is larger.
+  near(`value ties to market value — ${tr.accountId.slice(-8)}`, t.value, p.marketValue,
+    Math.max(1, tie * (p.marketValue / p.quantity)));
   if (p.costBasis != null) near(`invested ties to cost basis — ${tr.accountId.slice(-8)}`, t.invested, p.costBasis, 0.01);
 }
 ok("at least one position was bought over several dates", multiTranche > 0, `${multiTranche} of ${keys.length}`);

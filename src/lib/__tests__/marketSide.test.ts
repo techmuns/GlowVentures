@@ -168,7 +168,7 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     const rows = deduped.filter((p) => re.test(p.security));
     ok(`${re.source} is on the ${side} side`, rows.length > 0 && rows.every((p) => p.marketSide === side),
       rows.map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
-    // NO STATEMENT prints its category. Since Stage 10ca the read carries the
+    // NO STATEMENT prints its category. Since Stage 10cd the read carries the
     // category the family DECLARED (Category II, `DECLARED_AIF_CATEGORY`), so
     // the claim is struck on the read's SOURCE — never a printed field — and
     // the side above is their placing, which that category does not decide.

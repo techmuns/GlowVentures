@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
+import { ChevronRight, Wallet, Coins, TrendingUp, Layers, Percent } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -16,6 +16,7 @@ import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
+import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
@@ -232,8 +233,22 @@ export function MandateHoldings() {
   // drags the return towards a number nobody measured.
   const cost = sumOrNull(rows.map((r) => r.costBasis));
   const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
-  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   const noCost = rows.filter((r) => r.costBasis === null).length;
+  /**
+   * THE MANDATE'S RETURN, FIFO — and on the WHOLE mandate that is its capital.
+   *
+   * This read `unrealised ÷ cost of the shares held`, which leaves out every
+   * gain the manager has already taken: V.E.C 128004 read 8.42% on its
+   * surviving shares where its own since-inception record — ₹1.05 Cr realised,
+   * ₹50.5 L unrealised, income less fees, on ₹5 Cr paid in — says 30.10%.
+   * `fifoTotals` over every holding of the account, measured against the same
+   * account's own rows, strikes it on the capital the statement states.
+   */
+  const fifo = useMemo(
+    () => fifoTotals(rows, { accounts: portfolio?.accounts ?? [], universe: rows }),
+    [rows, portfolio],
+  );
+  const ret = fifo.returnPct;
   /**
    * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
    * whole of what this figure is. It is NOT the manager's printed total, which
@@ -614,7 +629,7 @@ export function MandateHoldings() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label="Market value"
           value={money(mv)}
           sub={`${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
@@ -637,9 +652,21 @@ export function MandateHoldings() {
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
-          delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on cost"}
+          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on the shares held now"}
           icon={<TrendingUp className="h-4 w-4" />} />
+        {/* FIFO'S RETURN, IN A TILE OF ITS OWN — never as the P&L tile's
+            delta, where it read as unrealised ÷ cost and left out every gain
+            the manager had already taken. */}
+        <Kpi label="Return · FIFO"
+          value={ret === null ? <AbsentValue /> : <span className={changeColor(ret)} data-mandate-fifo-return={ret}>{fmtPct(ret, { sign: true })}</span>}
+          sub={ret === null
+            ? <span className="text-slate-500">no cost or capital on this statement to measure against</span>
+            : <span title={fifoBasisNote(fifo, (n) => money(n))}>
+                {fifo.wholeMandates.length && account?.capital
+                  ? <>realised {money(fifo.realised, true)} · on {money(account.capital.contributed)} paid in since {fmtDate(account.capital.from)}</>
+                  : <>realised {money(fifo.realised ?? 0, true)} · on {money(fifo.deployed)} deployed</>}
+              </span>}
+          icon={<Percent className="h-4 w-4" />} />
         <Kpi label="Holdings" value={fmtNum(rows.length)}
           sub={`in one mandate · ${MANDATE_BUCKET}`}
           icon={<Layers className="h-4 w-4" />} />

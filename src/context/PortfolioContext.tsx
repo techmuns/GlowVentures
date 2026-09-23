@@ -11,11 +11,12 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
+import { fetchQuotes, symbolsFor, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
 import { applyFundNavs } from "@/lib/fundNavs";
+import { applyCorporateActionQuotes, fetchCorporateActions, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
-import { holdingLabel } from "@/lib/schemeLabel";
+import { labelledAccounts, labelledPositions } from "@/lib/securityLabel";
 import { readDisplayCurrency, writeDisplayCurrency } from "@/lib/storage";
 import {
   BOOK_SUMMARY, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_NAV_HISTORY, BOOK_CAPITAL_GAINS,
@@ -38,7 +39,14 @@ function defaultPortfolio(): Portfolio {
     listedValue: BOOK_SUMMARY.listedValue,
     privateValue: BOOK_SUMMARY.privateValue,
     unplacedValue: BOOK_SUMMARY.unplacedValue,
-    accounts: BOOK_ACCOUNTS,
+    // A MANDATE'S NAME IS ITS STRATEGY, and four statements print theirs in
+    // capitals — `CARNELIAN BESPOKE PORTFOLIO`, `GROWTH`, `SVAN INVESTMENT
+    // MANAGERS LLP - VELOCITY`, `GREEN LANTERN CAPITAL LLP - GLC GROWTH FUND` —
+    // so every mandate row, drill-down title and capital line shouted them. Cased
+    // HERE, once, through the same rules as a security's name, because the
+    // registry is read on a dozen pages and a per-page fix is a dozen chances to
+    // miss one. The registry in `glowData.ts` keeps what the statement printed.
+    accounts: labelledAccounts(BOOK_ACCOUNTS),
     // Standardise the mixed-case provider spellings once, at the source, so every
     // page (tables, dropdowns, the news/announcement holding tags) shows them the
     // same way. The securityKey is derived upstream from the raw name, so tidying
@@ -50,7 +58,12 @@ function defaultPortfolio(): Portfolio {
     // word. It is reached from `src/data/schemeNames.json`, which was joined to
     // this book BY ISIN — see `src/lib/schemeLabel.ts`. Nothing downstream may
     // re-derive a key from this string, and nothing does.
-    positions: BOOK_POSITIONS.map((p) => ({ ...p, security: holdingLabel(p.securityKey, p.security) })),
+    //
+    // `securityLabel` (through `labelledPositions`) is that plus ONE NAME PER KEY: a security two statements
+    // spell differently (`ICICI Bank Ltd.` / `ICICI BANK-EQ`) takes one of the
+    // spellings they printed, so it is one option in a pick-list and one name
+    // in every table — see `src/lib/securityLabel.ts` for the rule.
+    positions: labelledPositions(BOOK_POSITIONS),
     navHistory: BOOK_NAV_HISTORY,
     capitalGains: BOOK_CAPITAL_GAINS,
     // Dated external capital movements per account — the money-weighted-return
@@ -181,6 +194,9 @@ type Ctx = {
   /** Which of these symbols the feed has still to answer for. */
   pendingFor: (symbols: readonly string[]) => string[];
   refreshQuotes: () => void;
+  corporateActions: ActionFeed | null;
+  corporateActionsStatus: "loading" | "current" | "saved" | "unavailable";
+  corporateActionReturns: Map<string, ActionReturn>;
 };
 
 const PortfolioContext = createContext<Ctx | null>(null);
@@ -224,6 +240,31 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // The book as ingested. Live prices are layered on top in `portfolio` below,
   // so the statement figures stay available and unmutated underneath.
   const [basePortfolio, setPortfolio] = useState<Portfolio | null>(() => defaultPortfolio());
+  const [corporateActions, setCorporateActions] = useState<ActionFeed | null>(null);
+  const [corporateActionsStatus, setCorporateActionsStatus] = useState<Ctx["corporateActionsStatus"]>("loading");
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: number;
+    let held: ActionFeed | null = null;
+    const accept = (next: ActionFeed) => {
+      if (controller.signal.aborted || held && Date.parse(next.capturedAt) < Date.parse(held.capturedAt)) return;
+      held = next;
+      setCorporateActions(next);
+    };
+    const tick = async () => {
+      const latest = await fetchCorporateActions(symbolsFor(BOOK_POSITIONS), BOOK_POSITIONS.flatMap((p) => p.isin ? [p.isin] : []), controller.signal);
+      if (controller.signal.aborted) return;
+      if (latest) accept(latest.feed);
+      setCorporateActionsStatus(latest && !latest.retained ? "current" : held ? "saved" : "unavailable");
+      timer = window.setTimeout(tick, 15 * 60_000);
+    };
+    savedCorporateActions(controller.signal).then((saved) => {
+      if (controller.signal.aborted) return;
+      if (saved) { accept(saved); setCorporateActionsStatus((s) => s === "current" ? s : "saved"); }
+    });
+    void tick();
+    return () => { controller.abort(); window.clearTimeout(timer); };
+  }, []);
   const [displayCurrency, setCcy] = useState<DisplayCurrency>(() => readDisplayCurrency() ?? "INR");
   // Live daily USD→INR rate (₹ per $1), fetched once on load; falls back to a
   // static rate so conversions never block on the network.
@@ -325,10 +366,15 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // BASIS DISCIPLINE. Only PRICE-DERIVED fields move — market value, day change,
   // unrealised P&L and the return on cost. Quantity, cost basis, realised gains,
   // dividends, fees and every dated cash flow come from the statements and are
-  // never touched here, because no live price is evidence about any of them.
+  // never changed by a price. The independent corporate-action layer can adjust
+  // projected share quantity/average cost from an explicit post-statement ratio;
+  // total cost and the statement book remain untouched. Entitlements stay outside NAV.
   // `basePortfolio` is kept intact alongside and handed out as
   // `statementPortfolio`, so a page that must reconcile has the printed figures
   // available rather than having to un-mix them.
+  const corporateActionLayer = useMemo(() => applyCorporateActionQuotes(
+    basePortfolio?.positions ?? [], basePortfolio?.accounts ?? [], quotes, corporateActions,
+  ), [basePortfolio, quotes, corporateActions]);
   const portfolio = useMemo<Portfolio | null>(() => {
     if (!basePortfolio) return null;
     /**
@@ -344,7 +390,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // `applyQuotes` with a null feed marks every row not-live and changes
     // nothing else, so ONE path serves both cases and the no-feed run is no
     // longer an early return that skipped the NAVs.
-    const positions = applyFundNavs(applyQuotes(basePortfolio.positions, quotes));
+    const positions = applyFundNavs(corporateActionLayer.positions);
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
@@ -367,7 +413,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       ...basePortfolio, positions, listedValue, privateValue, unplacedValue,
       totalValue: listedValue + privateValue + unplacedValue,
     };
-  }, [basePortfolio, quotes]);
+  }, [basePortfolio, corporateActionLayer]);
 
   const consolidated = useMemo(
     () => dedupedPositions(portfolio?.positions ?? []),
@@ -425,9 +471,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       portfolio, consolidated, statementPortfolio: basePortfolio, basis,
       bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase, clearPortfolio, inrPerUsd, fxAsOf, fxIsLive,
       quotesStatus, quotesAsOf: quotes?.asOf ?? null, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
+      corporateActions, corporateActionsStatus, corporateActionReturns: corporateActionLayer.returns,
     }),
     [portfolio, consolidated, basePortfolio, basis, bookIsEmpty, displayCurrency, setDisplayCurrency, convertFromBase, fmtFromBase,
-     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes],
+     clearPortfolio, inrPerUsd, fxAsOf, fxIsLive, quotesStatus, quotes, livePriced, notLive, quoteFeeds, unpriceable, quotesPending, pendingFor, refreshQuotes,
+     corporateActions, corporateActionsStatus, corporateActionLayer],
   );
   return <PortfolioContext.Provider value={value}>{children}</PortfolioContext.Provider>;
 }

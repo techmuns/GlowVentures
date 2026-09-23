@@ -48,6 +48,8 @@ import {
 import { xirrPct } from "./bucketXirr";
 import type { DatedFlow } from "./xirr";
 import { sortRows, type TxnSort } from "./txnSort";
+import { securityLabel } from "./securityLabel";
+import { fifoReturnPct } from "../../shared/fifo.mjs";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { fmtDate } from "./format";
 
@@ -140,6 +142,11 @@ export function trancheTable(
   const rows: TrancheRow[] = [];
   let positionUnits = 0, positionValue = 0;
   let positionCost: number | null = 0;
+  // What the units already SOLD out of these positions realised, and what they
+  // cost — FIFO's other half. The rows are the lots still held, so without this
+  // the footer would be a return on the survivors, which is the defect the
+  // whole book was moved to FIFO to end.
+  let realised = 0, costSold = 0;
   for (const p of positions) {
     const tr = index[trancheKey(p.accountId, p.securityKey)];
     if (!tr || !tr.moves.length) return null;
@@ -166,6 +173,8 @@ export function trancheTable(
     }
     positionUnits += p.quantity;
     positionValue += p.marketValue;
+    realised += typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL) ? p.realizedPnL : 0;
+    costSold += typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
     positionCost = positionCost === null || p.costBasis === null ? null : positionCost + p.costBasis;
   }
   if (!rows.length) return null;
@@ -176,7 +185,9 @@ export function trancheTable(
   const value = rows.reduce((a, r) => a + r.value, 0);
   return {
     rows, units, invested, value,
-    returnPct: invested > 0 ? ((value - invested) / invested) * 100 : 0,
+    // The position's own FIFO return: every lot still held, plus what the lots
+    // already sold realised, over every rupee that bought a unit.
+    returnPct: fifoReturnPct(value, invested, realised, costSold) ?? 0,
     positionUnits, positionValue, positionCost,
   };
 }
@@ -492,7 +503,7 @@ export function capitalMovesWithCalls(
       });
     }
     /**
-     * ── AND THE FUND'S OWN DATED PAYOUTS, AS REDEMPTIONS (Stage 10ca) ──────
+     * ── AND THE FUND'S OWN DATED PAYOUTS, AS REDEMPTIONS (Stage 10cd) ──────
      *
      * Stage 10bw read every payout Neo Infra and Baring print — income,
      * principal and equalisation, each dated and each reconciled against the
@@ -744,7 +755,17 @@ export function capitalRollup(
       // every row on its oldest payment — a list ordered one way containing
       // lists ordered the other, which is the ordering complaint one level
       // down. `date` is the only field a movement has, and `sortRows` reads it.
-      moves: sortRows(ms.map((m) => ({ ...m })), sort, (m) => m.amount ?? null),
+      //
+      // AND EACH MOVEMENT NAMES ITS SECURITY THE WAY EVERY OTHER TABLE DOES. The
+      // record carries the spelling its statement printed — Sanshi's reads
+      // `(Open Ended AIF CAT-III)` — while the holdings table beside it was
+      // printing the same class through the title-caser, so one fund had two
+      // names on one page. A movement that names no security keeps its null:
+      // a name the record did not print is not supplied for it.
+      moves: sortRows(ms.map((m) => ({
+        ...m,
+        security: m.securityKey && m.security != null ? securityLabel(m.securityKey, m.security) : m.security,
+      })), sort, (m) => m.amount ?? null),
       source,
       contributions: ins.length,
       withdrawals: outs.length,
