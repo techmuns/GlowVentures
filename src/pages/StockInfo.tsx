@@ -85,7 +85,7 @@ function ReturnCells({ p, valuedAt, capital }: { p: Position; valuedAt: string |
   // holding-period figure under a year and tags it HPR — printing that as a
   // second line would show one number twice under two names.
   const annual = cagr.shown && cagr.tag === "CAGR" ? cagr : null;
-  const xirr = capital?.dated ? measuredReturn({ ...p, capital }, "xirr", asOf) : null;
+  const xirr = capital?.dated ? measuredReturn({ ...at, capital }, "xirr", valuedAt ?? "") : null;
   const money = xirr && xirr.shown && xirr.tag === "XIRR" ? xirr : null;
   return (
     <>
