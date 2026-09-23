@@ -156,12 +156,28 @@ const TRANSACTION_COLUMNS = {
   settleDate:  [/^(settlement\s*date|sett?\s*date)/],
   security:    [/^(security|scrip|stock)/],
   exchange:    [/^(exchg|exchange)/],
-  quantity:    [/^(quantity|qty|units?(?!\s*cost))/],
+  // `units?` must not swallow "Unit Price": that is the PRICE column, and a
+  // quantity alias matching its first word binds the count to the per-unit
+  // figure whenever the real Quantity column has been taken by something else —
+  // which is what happened on Buoyant's statement once the blank Exchange
+  // column's label had taken it (see `overlapOnly` below). Refused here, a
+  // quantity that cannot be placed goes unmatched, `require` drops the table,
+  // and the document says so, rather than publishing a NAV as a unit count.
+  quantity:    [/^(quantity|qty|units?(?!\s*(cost|price)))/],
   unitPrice:   [/^(unit\s*price|rate|price)/],
   brokerage:   [/^(brkg|brokerage)/],
   stt:         [/^stt/],
   settlement:  [/^(settlement\s*amount|net\s*amount|amount)/],
 };
+
+/**
+ * The transaction statement's EXCHANGE column is blank wherever the row is not
+ * an exchange trade — a fund's own unit allotment has no venue. A label over a
+ * column the body leaves empty must bind to NOTHING, never to its nearest
+ * neighbour. `lib/table.mjs` explains the mechanism; this is the one field on
+ * this table that needs it.
+ */
+const TRANSACTION_OVERLAP_ONLY = ["exchange"];
 
 /** STATEMENT OF CAPITAL GAIN/LOSS — realised lots, split ST/LT by the manager. */
 const CAPITAL_GAIN_COLUMNS = {
@@ -828,8 +844,22 @@ const cellDate = (v) => {
  * grouping row, and nothing at all on a subtotal. A row is a TRADE only when it
  * carries a trade date — the one field a heading or a subtotal never has.
  */
+/**
+ * A section heading naming a FUND'S OWN UNITS — "Mutual Funds - AIF Category
+ * III", which is how this reporting system heads Buoyant's allotments in its own
+ * folio. The statement names the class; it is read rather than left to a guess.
+ */
+const fundUnitsSection = (section) => /\baif\b|alternative\s+investment/i.test(section ?? "");
+/** Decimal places a figure is PRINTED to, read off its own cell — never assumed. */
+const printedDecimals = (v) => {
+  const m = /\.(\d+)\s*$/.exec(clean(v));
+  return m ? m[1].length : null;
+};
+
 function readTransactions(pages, source, warnings) {
-  const t = readAcrossPages(pages, TRANSACTION_COLUMNS, { minFields: 6, require: ["security", "quantity"] });
+  const t = readAcrossPages(pages, TRANSACTION_COLUMNS, {
+    minFields: 6, require: ["security", "quantity"], overlapOnly: TRANSACTION_OVERLAP_ONLY,
+  });
   if (!t) return null;
   if (t.missing?.length) warn(warnings, "columns-not-matched", t.missing.join(", "));
 
@@ -856,13 +886,25 @@ function readTransactions(pages, source, warnings) {
       exchange: clean(r.fields.exchange) || null,
       // The section names the instrument type ("Shares - Listed"); a PMS holds
       // ordinary listed equity, so anything else is left unclassified rather
-      // than forced into a class this reader cannot verify.
-      assetClass: /shares|equit/i.test(section ?? "") ? "Equity" : null,
+      // than forced into a class this reader cannot verify. The one other
+      // section this reporting system prints is "Mutual Funds - AIF Category
+      // III" — a fund's own units in its own folio — and there the statement
+      // NAMES the class.
+      assetClass: /shares|equit/i.test(section ?? "") ? "Equity"
+        : fundUnitsSection(section) ? "AIF" : null,
       quantity: parseNum(r.fields.quantity),
       unitPrice: parseNum(r.fields.unitPrice),
       brokerageRate: parseNum(r.fields.brokerage),
       stt: parseNum(r.fields.stt),
       settlementAmount: parseNum(r.fields.settlement),
+      // A FUND ALLOTS UNITS AGAINST CASH AT ITS UNROUNDED NAV, so units x the
+      // PRINTED NAV reproduces the cash only to that NAV's printed precision:
+      // Buoyant's 17,96,901.615 Class A4 units x a printed 139.1284 is
+      // 25,00,00,046.65 against the 25,00,00,000.00 paid, and the exact NAV
+      // (139.128374…) rounds to the printed one. The precision is read off the
+      // cell. A house trade on this same statement settles on its printed rate
+      // and stays held to the rupee — only a fund's own allotment carries one.
+      ratePrecision: fundUnitsSection(section) ? printedDecimals(r.fields.unitPrice) : null,
       source,
     }));
   }
@@ -1209,6 +1251,43 @@ function readFlows(pages, source, window) {
     // above finds nothing. Fall back to the items.
     return seen ?? findByItemLabel(pages, re);
   };
+  /**
+   * EVERY printed portfolio value, in document order, each with its own label.
+   *
+   * The performance SUMMARY prints two — "Market Value as of 01/04/2026" above
+   * and "as of 10/08/2026" below — and they are the window's two endpoints. The
+   * performance APPRAISAL prints ONE, "Portfolio Value On 10/08/2026", because
+   * its window runs since inception and a since-inception window has no opening
+   * value to print: nothing was invested before inception, and its own lines
+   * add to the closing from nil (Carnelian: net capital 32,96,46,665 − realised
+   * 69,83,811.82 + unrealised 7,90,22,713.85 + income 35,33,336.10 − fees
+   * 98,81,286.28 + accrued 62,750 = 39,54,00,366.85, the printed closing).
+   *
+   * Taking "the first occurrence" as the opening read that ONE line as both
+   * ends — ₹188 Cr of openings across nine since-inception bridges, each equal
+   * to its own closing, which made every one of them sum to twice its value.
+   * So the opening is the first of TWO DIFFERENTLY-LABELLED values, and null
+   * where the statement printed only the closing. The item-label fallback for
+   * the appraisal's two-column layout finds one value at most, so it can only
+   * ever supply a closing.
+   */
+  const portfolioValues = () => {
+    const re = /^(portfolio value on|market value as of)/;
+    const hits = [];
+    for (const page of pages) {
+      for (let n = 1; ; n++) {
+        const hit = findLabelledNumber(page, re, { occurrence: n });
+        if (!hit) break;
+        hits.push(hit);
+      }
+    }
+    if (hits.length) return hits;
+    const v = findByItemLabel(pages, re);
+    return v === null ? [] : [{ value: v, label: null }];
+  };
+  const pv = portfolioValues();
+  const labelOf = (h) => String(h?.label ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const twoEnds = pv.length >= 2 && labelOf(pv[0]) && labelOf(pv[0]) !== labelOf(pv.at(-1));
   const f = makeFlows({
     netCapitalInOut: find(/^(capital in out|net capital in out|net capital)/),
     realized: find(/^(realized gain|realised gain)/),
@@ -1220,16 +1299,19 @@ function readFlows(pages, source, window) {
     // stays null, because the report does not split it.
     expenses: find(/^expenses/),
     fees: find(/^fees/),
+    // Both reports print these two, and the closing Portfolio Value includes the
+    // accrual: a bridge struck without it misses by exactly that amount.
+    accruedIncome: find(/^accrued income/),
+    gainPriorToTakeover: find(/^gain prior to take ?over/),
     // The LAST occurrence: the performance summary opens with "Market Value as of
     // 01/04/2026" and closes with "Market Value as of 10/07/2026". Corpus is the
     // closing figure, and taking the first made it the opening one — which then
     // "disagreed" with every other report by a whole period's return.
-    corpus: find(/^(portfolio value on|market value as of)/, true),
-    // …and the FIRST occurrence, which is the opening value. The performance
-    // summary prints "Market Value as of 01/04/2026" above and "as of
-    // 10/07/2026" below; both endpoints are needed to compute a return over the
-    // window, and neither can be inferred from the other.
-    openingCorpus: find(/^(portfolio value on|market value as of)/),
+    corpus: pv.length ? pv.at(-1).value : null,
+    // …and the FIRST of two, which is the opening value — only where the report
+    // prints both endpoints. See `portfolioValues`: a since-inception appraisal
+    // prints one, and its opening is null, never its own closing copied back.
+    openingCorpus: twoEnds ? pv[0].value : null,
     ...window,
     source,
   });

@@ -56,7 +56,7 @@ function normWithMap(raw) {
  * fonts here are near-monospace at these sizes, and the result only has to be
  * good enough to pick the nearest column, not to be exact.
  */
-function mapHeaderToColumns(headerRows, columns, fieldAliases) {
+function mapHeaderToColumns(headerRows, columns, fieldAliases, overlapOnly = new Set()) {
   const fields = Object.keys(fieldAliases);
   const taken = new Set();
   const out = {};
@@ -176,9 +176,43 @@ function mapHeaderToColumns(headerRows, columns, fieldAliases) {
     || (b.combined ? 1 : 0) - (a.combined ? 1 : 0)
     || fields.indexOf(a.field) - fields.indexOf(b.field)
     || a.index - b.index);
+
+  /**
+   * A FIELD WHOSE COLUMN A STATEMENT MAY LEAVE BLANK BINDS ONLY WHERE ITS OWN
+   * LABEL SITS OVER A MEASURED COLUMN. Opt-in, per caller (`findTable`'s
+   * `overlapOnly`), and a no-op for every caller that does not pass it.
+   *
+   * Columns are measured from the BODY, so a column the body leaves empty on
+   * every row is not measured at all, and its label has nothing under it. Both
+   * ways this module otherwise places a label then GUESS: the nearest-centre
+   * fallback in `columnFor`, and the per-column join in (2), which folds a label
+   * into whichever column it is nearest. Buoyant's transaction statement is the
+   * case: its `Exchg` column is blank for the fund's own units, so `Exchg` fell
+   * to the nearest column — the quantity figures — joined `Quantity` there as
+   * "Exchg Quantity", and bound `exchange` to the unit count. Every figure after
+   * it moved one column left: 17,96,901.615 units archived as the exchange, the
+   * NAV 139.1284 as the quantity, and no unit price at all.
+   *
+   * So a field listed here takes only a claim from its OWN label span, and only
+   * a column that span actually overlaps. Where nothing is under the label the
+   * field goes unmatched and is reported as such — which is the truth: the
+   * statement printed nothing there. It is opt-in rather than the default
+   * because a wrapped or offset label is exactly what the guess is FOR, and
+   * every other table in this corpus relies on it.
+   */
+  const overlapFor = (x0, x1) => {
+    let best = null, bestOverlap = 0;
+    for (const c of columns) {
+      const ov = Math.min(x1, c.x1) - Math.max(x0, c.x0);
+      if (ov > bestOverlap) { bestOverlap = ov; best = c.index; }
+    }
+    return best;
+  };
   for (const c of claims) {
     if (c.field in out) continue;
-    const col = columnFor(c.x0, c.x1);
+    const measuredOnly = overlapOnly.has(c.field);
+    if (measuredOnly && c.combined) continue;
+    const col = measuredOnly ? overlapFor(c.x0, c.x1) : columnFor(c.x0, c.x1);
     if (col === null || taken.has(col)) continue;
     out[c.field] = col;
     taken.add(col);
@@ -368,7 +402,8 @@ export function findTable(pageGrid, fieldAliases, opts = {}) {
       if (split) grid = regrid(slice, { ...opts, measureFrom, columns: split });
       if (grid.rows.length <= headerRows - 1) continue;
 
-      const columns = mapHeaderToColumns(slice.slice(0, headerRows), grid.columns, fieldAliases);
+      const columns = mapHeaderToColumns(slice.slice(0, headerRows), grid.columns, fieldAliases,
+        new Set(opts.overlapOnly ?? []));
       const mapped = Object.keys(columns).length;
       if (mapped < minFields) continue;
       if (!best || mapped > best.mapped) {

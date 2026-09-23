@@ -377,6 +377,9 @@ export function makeReturnSeries(input) {
 }
 
 /** Account-level capital and P&L flows for the period. */
+/** A flow line only some readers read: present iff the reader passed it. */
+const optionalFlow = (input, key) => (key in input ? { [key]: num(input[key]) } : {});
+
 export function makeFlows(input = {}) {
   return {
     contribution: num(input.contribution),
@@ -387,6 +390,32 @@ export function makeFlows(input = {}) {
     income: num(input.income),
     expenses: num(input.expenses),
     fees: num(input.fees),
+    /**
+     * THE BRIDGE LINES ONLY SOME REPORTS PRINT — and without which their value
+     * bridge does not add up. Each is a primitive the statement prints and is
+     * null where a reader looked for it and the statement did not print it.
+     *
+     *   accruedIncome        "Accrued Income" — the performance summary and the
+     *                        performance appraisal both print it, and their
+     *                        closing Portfolio Value includes it (Carnelian
+     *                        10/08/2026: the appraisal's parts reach
+     *                        395,400,366.85 only with its 62,750.00).
+     *   changeInAccruals     "Change in accruals" — the SEBI PMS investor report.
+     *   otherExpenses        "9. Other expenses" — the same report, beside
+     *                        "8. Expenses at actual", which is `expenses`.
+     *   gainPriorToTakeover  "Gain Prior to Take-over" — printed 0.00 on every
+     *                        statement here, and carried because a zero the
+     *                        statement prints is a measurement.
+     *
+     * ONLY A READER THAT READS THE LINE SETS THE KEY. Absent means this reader
+     * never looks for it; null means it looked and the statement printed none.
+     * That keeps every document from every other reader byte-identical to what
+     * it was, rather than growing four nulls that say nothing.
+     */
+    ...optionalFlow(input, "accruedIncome"),
+    ...optionalFlow(input, "changeInAccruals"),
+    ...optionalFlow(input, "otherExpenses"),
+    ...optionalFlow(input, "gainPriorToTakeover"),
     profit: num(input.profit),
     /** Portfolio value at the END of the window. */
     corpus: num(input.corpus),

@@ -14,9 +14,9 @@
     "derivedMaterial": 0,
     "derivedExplained": 350,
     "derivedRounding": 320,
-    "datedChecks": 1881,
+    "datedChecks": 1883,
     "datedMaterial": 2,
-    "datedExplained": 127,
+    "datedExplained": 129,
     "datedRounding": 60,
     "crossReportDeltas": 18,
     "suspectedDuplicates": 3,
@@ -830,7 +830,7 @@
         "docKey": "buoyant-capital-103473-2026-07-31-transaction-statement",
         "sourcePath": "source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf",
         "reasons": [
-          "columns-not-matched: unitPrice",
+          "columns-not-matched: exchange",
           "transaction-side-unknown: 2026-06-01 · \"Security in\"",
           "transaction-side-unknown: 2026-06-01 · \"Security out\""
         ]
@@ -21637,6 +21637,36 @@
       "matches": false,
       "severity": "rounding",
       "cause": null
+    },
+    {
+      "docKey": "buoyant-capital-103473-2026-07-31-transaction-statement",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "asOf": "2026-07-31",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-04-01 buy BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A1 [BOUYA388]",
+      "derived": 100058863.84,
+      "printed": 100058861.66,
+      "delta": 2.18,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 4dp, so a derived settlement can only agree to ±35.87 on 7,17,459.678 units"
+    },
+    {
+      "docKey": "buoyant-capital-103473-2026-07-31-transaction-statement",
+      "provider": "Buoyant Capital",
+      "accountNo": "103473",
+      "asOf": "2026-07-31",
+      "reportType": "transaction-statement",
+      "check": "transaction settlement",
+      "row": "2026-06-01 buy BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 [BOUYA388]",
+      "derived": 250000046.65,
+      "printed": 250000000,
+      "delta": 46.65,
+      "matches": false,
+      "severity": "explained",
+      "cause": "settlement is struck on an unrounded rate; the report prints its rates to 4dp, so a derived settlement can only agree to ±89.85 on 17,96,901.615 units"
     },
     {
       "docKey": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-08-10-transaction-statement",

@@ -68,9 +68,11 @@
   "income": 1054402.6,
   "expenses": null,
   "fees": 1668156.01,
+  "accruedIncome": 130580,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 114959353.99,
-  "openingCorpus": 114959353.99,
+  "openingCorpus": null,
   "periodFrom": "2025-01-16",
   "periodTo": "2026-07-09",
   "source": "green-lantern-capital-llp-510861-2026-07-09-performance-history"

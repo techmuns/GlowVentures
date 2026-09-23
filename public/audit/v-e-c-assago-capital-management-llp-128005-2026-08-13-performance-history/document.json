@@ -86,9 +86,11 @@
   "income": 306899.3,
   "expenses": null,
   "fees": 1356763.53,
+  "accruedIncome": 278128,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 203157767.58,
-  "openingCorpus": 203157767.58,
+  "openingCorpus": null,
   "periodFrom": "2025-07-30",
   "periodTo": "2026-08-13",
   "source": "v-e-c-assago-capital-management-llp-128005-2026-08-13-performance-history"
