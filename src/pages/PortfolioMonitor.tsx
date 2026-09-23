@@ -35,7 +35,7 @@ import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } fro
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
-import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
+import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
 // three; see the header of `groupAxis.ts` for why they cannot be a local
 // definition on either screen — and for why the FOURTH one, SECURITY, is this
@@ -311,13 +311,15 @@ type Row = {
    * WHO SAID THIS ROW BELONGS IN ITS SECTION, on the two family axes.
    * `"review"` — named product by product in the family's consolidated review.
    * `"rule"` — placed by their stated rule for direct stocks.
+   * `"cash-rule"` — placed by their instruction that arbitrage and liquid
+   *   funds are cash, where the review files one elsewhere or does not name it.
    * `"derived"` — our own asset class already answered it beyond doubt.
    * `null` — nobody has, and the row sits under `UNCLASSIFIED`.
    * Always `"review"`-equivalent on the category axis, which is derived from
    * the book itself and asks nothing of the family; the field is only read on
    * the other two.
    */
-  groupSource: "review" | "rule" | "derived" | null;
+  groupSource: TaxonomySource | null;
   /** Set on `kind === "mandate"` and nowhere else. */
   mandate?: MandateInfo;
   /**
@@ -1607,7 +1609,18 @@ export function PortfolioMonitor() {
         // The gap between the rows ON SCREEN and the subtotal above them, which
         // is what the note claims — derived from the printed figure rather than
         // accumulated beside it, so the two cannot drift.
-        const collapsed = raw - subtotal;
+        //
+        // AND A GAP UNDER A RUPEE IS NOT A HOLDING REPORTED TWICE. `raw` sums the
+        // ROWS and `subtotal` the POSITIONS, so the two add the same numbers in a
+        // different order, and once published NAVs put unrounded values on the
+        // rows the difference is a floating-point residue of a few millionths of
+        // a rupee. `> 0` read that as a duplicate and printed "₹0 reported twice,
+        // counted once" over the Mutual Fund and Thematic & Tactical headings — a
+        // sentence asserting a double count that does not exist, beside a figure
+        // that rounds to nothing. The footer's own gap (`dupGap`) has always
+        // required more than a rupee; this is the same bound.
+        const gap = raw - subtotal;
+        const collapsed = gap > 1 ? gap : 0;
         // HOW MANY HOLDINGS THE SECTION STANDS FOR, which is not how many rows it
         // draws: a mandate row stands for every share inside it, so the PMS
         // heading counts 281 across 10 rows. Counting rows there would report the
@@ -1639,15 +1652,24 @@ export function PortfolioMonitor() {
          * value larger than the subtotal beside it would be a contradiction a
          * reader could see, and this is what stops it arising.
          */
+        /**
+         * …AND BY WHICH OF THEIR TWO RULES. The direct-stock rule and the cash
+         * instruction are separate sources (`TaxonomySource`), so they are
+         * summed apart and printed apart: one sentence about "all the direct
+         * stocks" over a Liquidity basket full of arbitrage funds would name
+         * the wrong rule beside the largest figure in the section.
+         */
         const ruleSeen = new Set<string>();
         let ruleMV = 0;
+        let cashRuleMV = 0;
         for (const r of rs) {
-          if (r.groupSource !== "rule") continue;
+          if (r.groupSource !== "rule" && r.groupSource !== "cash-rule") continue;
           if (r.dedupeGroup) { if (ruleSeen.has(r.dedupeGroup)) continue; ruleSeen.add(r.dedupeGroup); }
-          ruleMV += r.marketValue;
+          if (r.groupSource === "rule") ruleMV += r.marketValue;
+          else cashRuleMV += r.marketValue;
         }
         return {
-          key, rows: rs, subtotal, collapsed, holdings, ruleMV,
+          key, rows: rs, subtotal, collapsed, holdings, ruleMV, cashRuleMV,
           day, dayBase, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
@@ -2178,7 +2200,8 @@ export function PortfolioMonitor() {
                         depend on prose a redesign is free to reword.
                       */
                       <tr className="bg-ink-900/50" data-section={grp.key} data-axis={groupAxis}
-                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}>
+                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}
+                        data-cash-rule-mv={grp.cashRuleMV}>
                         <td colSpan={COL_COUNT} className="px-2 py-1.5">
                           <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                             {groupLabelFor(groupAxis)(grp.key)}
@@ -2260,6 +2283,21 @@ export function PortfolioMonitor() {
                               <span className="font-normal normal-case tracking-normal text-slate-500"
                                 title={`The family's review names most of this section product by product. ${fmtFromBase(grp.ruleMV, { compact: true })} of it is placed here by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.`}>
                                 · {fmtFromBase(grp.ruleMV, { compact: true })} by the family's stated rule, not named individually
+                              </span>
+                            )}
+                            {/*
+                              THE CASH INSTRUCTION IS A DIFFERENT RULE AND SAYS
+                              SO. Their review files its arbitrage funds on the
+                              DEBT sheet; the family have since said arbitrage is
+                              cash "and need not be classified into any other
+                              category". So those funds sit here on the family's
+                              word rather than the review's, and the heading
+                              names which word — never the direct-stock rule's.
+                            */}
+                            {grp.cashRuleMV > 0 && (
+                              <span className="font-normal normal-case tracking-normal text-slate-500"
+                                title={`${fmtFromBase(grp.cashRuleMV, { compact: true })} of this section is here by the family's instruction that arbitrage and liquid funds are cash — "arbitrage funds need not be classified into any other category except for cash". Their consolidated review (30 June 2026) files its arbitrage funds on its Debt tab, or does not name the holding at all; the instruction overrules it. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, never by its name.`}>
+                                · {fmtFromBase(grp.cashRuleMV, { compact: true })} counted as cash by the family&rsquo;s instruction
                               </span>
                             )}
                           </span>

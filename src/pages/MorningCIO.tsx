@@ -610,6 +610,13 @@ export function MorningCIO() {
        */
       ruleMV: number;
       /**
+       * …and the value placed by their OTHER rule — the instruction that
+       * arbitrage and liquid funds are cash. Kept apart from `ruleMV` because
+       * the two are different rules and the paragraph under the table names
+       * each one; see `TaxonomySource`.
+       */
+      cashRuleMV: number;
+      /**
        * TRUE where the family's review places this row nowhere — the
        * unclassified section, and any fund-of-funds row on a family axis. The
        * row says so rather than sitting under a heading that would read as a
@@ -640,7 +647,7 @@ export function MorningCIO() {
       // is no such thing as a drawdown with no call behind it.
       withoutCost: 0, withoutCostMV: 0,
       // The family's review classifies products and names none of these.
-      ruleMV: 0, unplaced: false,
+      ruleMV: 0, cashRuleMV: 0, unplaced: false,
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
@@ -657,9 +664,10 @@ export function MorningCIO() {
        * it. Zero on the category axis, which asks nothing of the family.
        */
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
+      const cashRuleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "cash-rule").map((x) => x.marketValue));
       return {
         key, color: sectionColor(axis, key, i), count: g.count, invested: g.cost, current: g.mv, kind: "MOIC",
-        fromPositions: true, ruleMV, unplaced: key === UNCLASSIFIED,
+        fromPositions: true, ruleMV, cashRuleMV, unplaced: key === UNCLASSIFIED,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
         // cost `sumOrNull` struck on part of it — which on Direct Equity is
@@ -700,7 +708,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -865,6 +873,7 @@ export function MorningCIO() {
    * paid for twice.
    */
   const ruleMV = sections.reduce((a, b) => a + b.ruleMV, 0);
+  const cashRuleMV = sections.reduce((a, b) => a + b.cashRuleMV, 0);
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
@@ -1453,6 +1462,18 @@ export function MorningCIO() {
                         &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
                         review does not name those holdings individually.
                       </>
+                    )}
+                    {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
+                        arbitrage funds as Debt; the family have said arbitrage is
+                        cash, so those funds are placed by that instruction — and a
+                        sentence crediting them to the direct-stock rule above
+                        would be about the wrong rule. */}
+                    {cashRuleMV > 0 && (
+                      <span data-testid="alloc-cash-rule" data-cash-rule-mv={cashRuleMV}>
+                        {" "}{money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their instruction
+                        that arbitrage and liquid funds are cash &mdash; their review files its arbitrage funds as Debt,
+                        and the instruction overrules it.
+                      </span>
                     )}
                   </p>
                 )}
