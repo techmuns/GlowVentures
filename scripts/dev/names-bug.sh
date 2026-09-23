@@ -65,10 +65,18 @@ suites() {
 }
 
 # run_case NAME MODE — MODE is sweep | suite | both | book (rebuild the book first)
+#
+# CASES=4,9 runs only those cases, numbered in the order they appear below — so
+# one case can be re-checked after its test is fixed without paying a build and
+# a sweep for every other case. The control always runs: a single case is not a
+# result without the baseline it is read against.
+CASE_NO=0
 run_case() {
   local name="$1" mode="$2"; shift 2
+  CASE_NO=$((CASE_NO + 1))
+  if [ -n "${CASES:-}" ] && [[ ",${CASES}," != *",${CASE_NO},"* ]]; then return; fi
   echo ""
-  echo "════════ BUG ($mode): $name"
+  echo "════════ BUG $CASE_NO ($mode): $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; put_back; return; fi
   if [ "$mode" = book ]; then
     if ! npm run build-book >/dev/null 2>&1; then echo "   NOT A RESULT — the book did not build"; put_back; return; fi

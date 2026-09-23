@@ -36,7 +36,7 @@ import type { Position } from "./types";
 import { securityKeyOf } from "./securityKey";
 import { resolveSector, UNCLASSIFIED } from "./sectors";
 import { displayFiledName, stripFilingMarks } from "./format";
-import { isCompanyShare } from "./analytics";
+import { currentHoldings, isCompanyShare, isFundVehicle } from "./analytics";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
@@ -435,6 +435,39 @@ export function bookIsinBridge(positions: readonly Position[]): {
     fromListing++;
   }
   return { index, fromListing, refused };
+}
+
+/**
+ * THE FUNDS THE LOOK-THROUGH READS — the ones the family holds TODAY, clubbed.
+ *
+ * Struck over the DEDUPED set, so a fund two members' statements both report is
+ * one vehicle at the value the book carries for both: this feeds a DERIVED
+ * exposure, and a fund counted twice would double the share derived from it.
+ * Clubbed on `securityKey`, so one scheme held by three members is one vehicle
+ * with one disclosure. And CURRENT holdings only: a scheme redeemed to nil is
+ * not a fund this family holds, and must not count in "N of your M funds".
+ *
+ * ONE DEFINITION, SHARED WITH THE SUITE — the reason `bookIsinBridge` is shared
+ * too. The suite used to take every fund vehicle the book ever carried, and
+ * that is not a smaller set of the same joins, it is a DIFFERENT join. The
+ * issuer prefix a line is filed under is decided over every filing loaded, a
+ * ₹0 fund's included — and HDFC Small Cap, redeemed to nil in folio 16180583,
+ * files City Union's SHARE. So in the suite City Union's certificates of
+ * deposit joined the book's company by that share's ISIN, while the page, which
+ * never loads a redeemed fund, needed the issuer seed to make the same join.
+ * The bug pass switched the seed off: the page offered `City Union Bank Ltd.`
+ * as a second company and failed, and the suite passed.
+ */
+export function heldFundVehicles(consolidated: readonly Position[]): HeldFund[] {
+  const m = new Map<string, HeldFund>();
+  for (const p of currentHoldings(consolidated)) {
+    if (!isFundVehicle(p)) continue;
+    const e = m.get(p.securityKey)
+      ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
+    e.marketValue += p.marketValue;
+    m.set(p.securityKey, e);
+  }
+  return [...m.values()];
 }
 
 /** Whether a holding could ever have a look-through — mirrors the ingest. */

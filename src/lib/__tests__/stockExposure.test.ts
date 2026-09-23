@@ -39,8 +39,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { BOOK_POSITIONS, BOOK_POLYCAB, BOOK_SUMMARY } from "@/data/glowData";
-import { dedupedPositions, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
-import { bookIsinBridge, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type HeldFund, type StockExposureState } from "@/lib/lookthrough";
+import { NEGLIGIBLE_VALUE_FLOOR, dedupedPositions, droppedHoldings, isCompanyShare, isFundVehicle, sum } from "@/lib/analytics";
+import { bookIsinBridge, heldFundVehicles, issuerKeyOf, issuerNameOf, issuerOf, loadStockExposure, type StockExposureState } from "@/lib/lookthrough";
 import { securityKeyOf } from "@/lib/securityKey";
 import { securityLabel } from "@/lib/securityLabel";
 import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
@@ -81,17 +81,18 @@ const STORE = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures
 
 const ded = dedupedPositions(BOOK_POSITIONS);
 const stocks = ded.filter(isCompanyShare);
-const vehicles = (() => {
-  const m = new Map<string, HeldFund>();
-  for (const p of ded) {
-    if (!isFundVehicle(p)) continue;
-    const e = m.get(p.securityKey)
-      ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
-    e.marketValue += p.marketValue;
-    m.set(p.securityKey, e);
-  }
-  return [...m.values()];
-})();
+/**
+ * THE SAME FUNDS THE PAGE LOADS — `heldFundVehicles`, shared with
+ * `useStockExposure` for the reason `bookIsinBridge` is below. This used to be
+ * every fund vehicle in the deduped book, redeemed ones included, and that is a
+ * different JOIN rather than a larger set of the same one: a redeemed fund's
+ * filing is still read when the issuer prefixes are decided, and HDFC Small Cap
+ * — redeemed to nil — files City Union's share. So here City Union's
+ * certificates of deposit joined the book's company by that share's ISIN, while
+ * the page, which loads today's funds only, needed the issuer seed. The bug pass
+ * switched the seed off and the page failed while this suite passed.
+ */
+const vehicles = heldFundVehicles(ded);
 /**
  * THE SAME INDEX THE PAGE BUILDS — `bookIsinBridge` is shared with
  * `useStockExposure` precisely so this suite cannot exercise a join the screen
@@ -115,7 +116,17 @@ const ex = state;
 console.log("\n── the partition: every rupee of the book in exactly one bucket ──");
 const measured = sum(stocks.map((p) => p.marketValue));
 const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
-const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash;
+/**
+ * THE ₹1,000 FLOOR, AS A TERM OF ITS OWN. The funds are today's holdings
+ * (`heldFundVehicles`), so the fund rows `currentHoldings` leaves out are in no
+ * bucket above: the redeemed ones at a measured ₹0, and the specks under the
+ * floor. Stated rather than absorbed into the tolerance — the treatment
+ * `negligibleFloor.test.ts` gives the same rows — and bounded below, so a floor
+ * that grew into a policy on real money fails instead of reconciling.
+ */
+const floorOut = droppedHoldings(ded.filter(isFundVehicle));
+const floored = sum([...floorOut.closed, ...floorOut.negligible].map((p) => p.marketValue));
+const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + cash + floored;
 /**
  * THE STRONGEST ASSERTION HERE. The stock axis draws a table covering less than
  * half the book, so a reader is owed a statement of where the rest is — and that
@@ -126,7 +137,11 @@ const buckets = measured + ex.total + ex.skippedValue + ex.unaccountedValue + ca
  */
 near("the five buckets rebuild the book's own NAV, to the rupee", buckets, BOOK_SUMMARY.totalValue, 1);
 console.log(`     measured ${CR(measured)} + derived ${CR(ex.total)} + opaque ${CR(ex.skippedValue)}`
-  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} = ${CR(buckets)}`);
+  + ` + unaccounted ${CR(ex.unaccountedValue)} + cash ${CR(cash)} + under the floor ₹${floored.toFixed(2)} = ${CR(buckets)}`);
+ok("...where the floor's term is specks and redeemed nils, never money",
+  floorOut.closed.every((p) => p.marketValue === 0)
+    && floored < NEGLIGIBLE_VALUE_FLOOR * new Set(floorOut.negligible.map((p) => p.securityKey)).size,
+  `₹${floored.toFixed(2)} across ${floorOut.negligible.length} speck row(s) and ${floorOut.closed.length} redeemed`);
 ok("...and the table covers less than the book, which is why the statement is owed",
   measured + ex.total < BOOK_SUMMARY.totalValue * 0.75,
   `${CR(measured + ex.total)} of ${CR(BOOK_SUMMARY.totalValue)}`);
@@ -332,10 +347,20 @@ for (const e of ex.byKey.values()) {
 ok("no fund row stands apart from a company the book holds", apart.length === 0,
   apart.length ? apart.slice(0, 3).join("; ") : `${[...ex.byKey.keys()].filter((k) => bookCompanyKeys.has(k)).length} book companies carry a fund row`);
 /**
- * LOAD-BEARING: an issuer the family reaches ONLY through its debt, and holds
- * as a share. Karur Vysya's certificates of deposit are `INE036D16…` and the
- * book's share `INE036D01028`; no fund here files the share, so without the
- * issuer seed those CDs were a row of their own under a maturity date.
+ * An issuer the family reaches ONLY through its debt, and holds as a share.
+ * Karur Vysya's certificates of deposit are `INE036D16…` and the book's share
+ * `INE036D01028`; no fund here files the share, so those CDs were a row of their
+ * own under a maturity date.
+ *
+ * THIS IS NOT THE ISSUER SEED'S TEST, and it cannot be. Karur Vysya and Punjab
+ * National Bank are reached by the seed AND by their NAME, now that
+ * `issuerNameOf` takes the maturity off and `KEY_ALIASES` gives the book the
+ * full name's key — so with the seed switched off this stays green on them.
+ * The one issuer on this book only the seed can reach is City Union: held under
+ * the depository's clipped `CITY UNION -EQ RE1/`, its CDs filed as `City Union
+ * Bank Ltd.`. Switched off, that is caught by the check above — its CDs are
+ * issued by a book company and stand apart from it — and, independently of this
+ * store, by the constructed case in `securityNames.test.ts`, section 5.
  */
 const debtOnlyBook = [...ex.byKey.values()].filter((e) => bookCompanyKeys.has(e.key)
   && e.rows.every((r) => r.instruments.every((i) => !!i.isin && !isinToBookKey.has(i.isin))));

@@ -17,12 +17,15 @@
 //
 // Anchored on the GENERATED book and the committed symbol map, never on a
 // fixture, so a new drop that brings a new spelling is checked by this suite
-// without anyone adding a case for it.
+// without anyone adding a case for it. The one exception is section 5, which is
+// CONSTRUCTED because the real case it mirrors lasts only as long as one month's
+// fund filings — and it says so, and states the premise that makes the
+// construction necessary.
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
 import { displayFiledName, displaySecurity, stripFilingMarks } from "@/lib/format";
 import { securityKeyOf } from "@/lib/securityKey";
 import { labelVariants, securityLabel } from "@/lib/securityLabel";
-import { issuerKeyOf, issuerNameOf } from "@/lib/lookthrough";
+import { issuerKeyOf, issuerNameOf, loadStockExposure, type HeldFund } from "@/lib/lookthrough";
 import NSE_SYMBOLS from "@/data/nseSymbols.json";
 
 let fails = 0;
@@ -135,5 +138,92 @@ eq("...with or without the word SDL", issuerKeyOf("7.48% Madhya Pradesh MAT 0110
   issuerKeyOf("State Government of Madhya Pradesh"));
 ok("`Government Securities` names no government and is not assigned one",
   issuerKeyOf("Government Securities") !== "government-of-india");
+
+console.log("\n── 5. a company's paper joins the company the book holds (constructed) ──");
+/**
+ * THE ISSUER SEED, ON A CONSTRUCTED STORE, BECAUSE THE REAL CASE MOVES MONTHLY.
+ *
+ * `loadStockExposure` files a fund's line under the BOOK's company three ways:
+ * the line's own ISIN is one the book carries; its ISIN's issuer prefix is one
+ * the book's own company ISINs carry (the SEED); or the issuer's NAME keys the
+ * same as the book's company. The seed is the backstop for the one case the
+ * name tier cannot bridge: a depository that CLIPS the company's name, and a
+ * fund that files only its debt, under the name written out.
+ *
+ * This book has exactly one such issuer today. It holds City Union under the
+ * depository's `CITY UNION -EQ RE1/`, which keys as `city-union`, and two of
+ * the funds it holds file City Union's certificates of deposit as `City Union
+ * Bank Ltd.`, which keys as `city-union-bank`; of the six prefixes the seed
+ * decides for the funds the page loads, it is the only one the name tier cannot
+ * reach. `stockExposure.test.ts` asserts it on the real store — but that case
+ * exists only while a fund the family holds files City Union's paper and none
+ * files its share, and both of those move with every monthly filing. So the
+ * same shape is constructed here, and the store is served from memory: this
+ * suite fetches nothing else.
+ *
+ * AND THE FIRST MEASUREMENT OF THIS WAS WRONG, which is worth keeping. It read
+ * every scheme file in the store, not the ones the page loads, and one of those
+ * — a fund redeemed to nil — files City Union's SHARE; so it reported that the
+ * seed decided three prefixes, all of which the name tier also reached. The
+ * rendered page disagreed, and the page was right.
+ */
+const CONSTRUCTED_STORE: Record<string, unknown> = {
+  "index.json": {
+    source: {},
+    schemes: {
+      "constructed-liquid-fund": {
+        schemecode: "CONSTRUCTED-1", scheme: "Constructed Liquid Fund", plan: "Direct", isin: null,
+        matchedVia: "isin", navDate: null, holdingsAsOf: "2026-08-31", holdingsSource: "amc",
+      },
+    },
+    unresolved: [],
+  },
+  "CONSTRUCTED-1.json": {
+    schemecode: "CONSTRUCTED-1", scheme: "Constructed Liquid Fund", amfiSchemeName: null, amc: null,
+    plan: "Direct", option: "Growth", classification: null, isin: null,
+    nav: { value: null, date: null, prev: null, prevDate: null, changePct: null },
+    returns: {}, returnsAsOf: null, fundAumCr: null, holdingsAsOf: "2026-08-31",
+    holdingsSource: { kind: "amc", url: null }, section: "Whole portfolio", coveragePct: null, allocation: null,
+    holdings: [{
+      name: "City Union Bank Ltd. (15/06/2027) **", pctAum: 2.5, shares: null, isin: "INE491A16AB1",
+      assetClass: "Debt", sector: null, rating: "CARE A1+", marketValueCr: 12.3,
+    }],
+    counts: { holdings: 1, byClass: { Debt: 1 } },
+  },
+};
+(globalThis as { fetch?: unknown }).fetch = async (u: unknown) => {
+  const hit = CONSTRUCTED_STORE[String(u).split("/").pop() ?? ""];
+  return { ok: hit != null, json: async () => hit ?? null };
+};
+// `import.meta.env` is Vite's, and this runs in node.
+(import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
+
+const cdLine = "City Union Bank Ltd. (15/06/2027) **";
+const funds: HeldFund[] = [{ securityKey: "constructed-liquid-fund", name: "Constructed Liquid Fund", marketValue: 1e8, assetClass: "Mutual Fund" }];
+// THE PREMISE, stated so the case cannot pass by the name tier: the book's key
+// and the filer's name must key apart, or this would test nothing the real book
+// does not already test.
+ok("the case needs the seed: the depository's key and the filer's name key apart",
+  securityKeyOf("CITY UNION -EQ RE1/") !== issuerKeyOf(cdLine),
+  `${securityKeyOf("CITY UNION -EQ RE1/")} vs ${issuerKeyOf(cdLine)}`);
+
+const seeded = await loadStockExposure(funds, new Map([["INE491A01021", "city-union"]]));
+const seededKeys = seeded.status === "ok" ? [...seeded.byKey.keys()] : [];
+eq("the certificate of deposit joins the company the book holds, by the prefix of its ISIN", seededKeys, ["city-union"]);
+const cdRow = seeded.status === "ok" ? seeded.byKey.get("city-union") : undefined;
+eq("...named as its filer names the ISSUER, not as the instrument",
+  cdRow?.name ?? null, "City Union Bank Ltd.");
+ok("...while the instrument under it keeps its maturity",
+  cdRow?.rows[0]?.instruments[0]?.name === "City Union Bank Ltd. (15/06/2027)", cdRow?.rows[0]?.instruments[0]?.name ?? "");
+/**
+ * AND IT REFUSES A PREFIX THE BOOK NAMES TWICE. Two book companies on one
+ * issuer prefix, both equity series, is not a question the seed can answer —
+ * guessing would file one company's debt under the other. So the line falls to
+ * the name tier and stands as its filer named it.
+ */
+const refused = await loadStockExposure(funds,
+  new Map([["INE491A01021", "city-union"], ["INE491A01039", "city-union-class-b"]]));
+eq("a prefix two book companies share seeds neither", refused.status === "ok" ? [...refused.byKey.keys()] : [],
+  [issuerKeyOf(cdLine)]);
 
 process.exit(fails ? 1 : 0);
