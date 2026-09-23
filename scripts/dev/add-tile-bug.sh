@@ -20,7 +20,9 @@
 # Same three rules as `nav-bench-bug.sh` and `sectors-bug.sh`: restore by COPY on
 # a trap, rebuild on the way out, and report a patch that does not apply or a
 # build that fails as NOT A RESULT rather than as a clean run. Needs a
-# `vite preview` on :4173, like `check:pages`. `CASES=3,7` runs a subset.
+# `vite preview` on :4173, like `check:pages` — or on the address `BASE=` names,
+# which is how it runs in a `git worktree` of its own while the working copy
+# stays clean (Stage 10cg). `CASES=3,7` runs a subset.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
