@@ -95,7 +95,12 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
       </table>
       {!rows.length && <div className="p-5"><AbsentCell reason="No listed-equity holdings match this selection" /></div>}
     </div>
-    <p className="border-t border-ink-700 px-4 py-3 text-[11px] text-slate-500">Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value.
-      No portfolio total is shown: accounts have different opening dates. Fund distributions remain in their fund-specific return model.</p>
+    {/* ONE LINE, the formula in its hover — it was a 268-character note under
+        the table, and the family asked for the notes around the tables to go
+        (Stage 10cg). Why there is no total stays on screen: an absent total a
+        reader is not told about reads as one that was forgotten. */}
+    <p className="border-t border-ink-700 px-4 py-3 text-[11px] text-slate-500"
+      title="Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value. Fund distributions remain in their fund-specific return model.">
+      Total return adds the dividends declared in the window · no portfolio total, as accounts open on different dates</p>
   </Card>;
 }
