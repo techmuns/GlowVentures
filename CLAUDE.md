@@ -16060,6 +16060,40 @@ a figure struck by the institution that holds it — and `reviewGaps.test.ts`
 flips to saying so rather than passing over a sentence that has quietly become
 false.
 
+#### 8. Merged twice, and the second round brought BOTH predicted conflicts
+
+Held open at the family's request (*"do not merge until it tell you to"*), and
+main moved twice while it waited — #70 and #71, then #70 again as `8bcd2c8`.
+
+**THE FIRST MERGE WAS CLEAN, WHICH IS EXACTLY WHEN TO CHECK BY HAND**, and all
+three were: the `ctx` literal auto-merged and was PROVED a mechanical union
+rather than trusted (35 keys, nothing dropped from either side, nothing
+invented); the ten duplicated stage letters were byte-identical to main's own
+pre-existing ten, so none was introduced; and every generated file was
+re-derived byte-identically.
+
+**THE SECOND BROUGHT THE IDENTICAL PAIR THIS FILE HAS NOW RECORDED TWELVE
+TIMES**, and it is also what was blocking CI: `mergeable_state: "dirty"`, and
+GitHub cannot build `refs/pull/N/merge` on a conflicted PR, so the workflow
+never fired at all. The five runs GitHub showed for this branch were the
+PREVIOUS PR's, on a branch name reused — which reads as CI having passed until
+the head SHAs are compared.
+
+- **The `ctx` literal conflicted**, this time as a FRAGMENT of a two-line
+  literal rather than the whole of it, so a naive split on `{`…`}` throws. Split
+  on the continuation up to `})`, unioned, and each of the 37 keys then
+  confirmed to resolve to a declaration in the merged file — because a key
+  naming a probe that no longer exists throws inside every check and is reported
+  as a broken matcher on every route, not as a clean page. **Mine is
+  `absentName`; main's two are `sectorLayout` and `shortWindow`.**
+- **And the stage letter collided TEXTUALLY rather than silently**, because both
+  sides inserted at the same anchor — the one failure mode that announces
+  itself. Main's `10bt` merged first and keeps it; this section is `10bu`.
+  **Every one of the nine `10bt` references in the file is main's** — they name
+  Polycab-as-one-table and Sector Composition's two halves — and this section
+  references no letter at all, so none moved. Checked one at a time rather than
+  swept.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
