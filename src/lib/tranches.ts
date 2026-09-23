@@ -43,6 +43,7 @@
 import type { CapitalMove, Position, PositionTranches } from "./types";
 import { holdingReturn, type HoldingReturn, type ReturnMode } from "./analytics";
 import { sortRows, type TxnSort } from "./txnSort";
+import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export type TrancheRow = {
   move: CapitalMove;
@@ -127,6 +128,11 @@ export function trancheTable(
   const rows: TrancheRow[] = [];
   let positionUnits = 0, positionValue = 0;
   let positionCost: number | null = 0;
+  // What the units already SOLD out of these positions realised, and what they
+  // cost — FIFO's other half. The rows are the lots still held, so without this
+  // the footer would be a return on the survivors, which is the defect the
+  // whole book was moved to FIFO to end.
+  let realised = 0, costSold = 0;
   for (const p of positions) {
     const tr = index[trancheKey(p.accountId, p.securityKey)];
     if (!tr || !tr.moves.length) return null;
@@ -153,6 +159,8 @@ export function trancheTable(
     }
     positionUnits += p.quantity;
     positionValue += p.marketValue;
+    realised += typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL) ? p.realizedPnL : 0;
+    costSold += typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0;
     positionCost = positionCost === null || p.costBasis === null ? null : positionCost + p.costBasis;
   }
   if (!rows.length) return null;
@@ -163,7 +171,9 @@ export function trancheTable(
   const value = rows.reduce((a, r) => a + r.value, 0);
   return {
     rows, units, invested, value,
-    returnPct: invested > 0 ? ((value - invested) / invested) * 100 : 0,
+    // The position's own FIFO return: every lot still held, plus what the lots
+    // already sold realised, over every rupee that bought a unit.
+    returnPct: fifoReturnPct(value, invested, realised, costSold) ?? 0,
     positionUnits, positionValue, positionCost,
   };
 }
