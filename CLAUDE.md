@@ -21971,7 +21971,21 @@ Morning CIO, and none of its checks walks a `/monitor` address. The files this
 change's bug harness patches are unchanged by it, so the bug pass on the #92
 tree stands. The full sweep below is its control on the tree that ships.
 
-RESULTS_M7
+Every result here is from the tree that ships, this change merged with #85
+(main `80bc896`), and was run again there rather than carried across:
+
+- `build` and `tsc` pass.
+- `test:ingest` passes: the same eleven suites, golden 140 passed, 2 not
+  checked, 0 blocked.
+- `test:family` exits 0, with #88's and #85's suites among those it runs.
+- `npm run build-book` regenerates the book byte-identically, and the result
+  equals main's own copies.
+- `check:family` is **92 passed, 0 failed**.
+- `check:pages` is **258 combinations clean**, with no finding. That is main's
+  routes plus this change's one new route across both themes, measured rather
+  than added up. The 10 NOT CHECKED lines are main's evidenced abstentions
+  across four claims, and none is this change's.
+- CI (`build`) and the Cloudflare preview pass on the pushed merge.
 
 ### Stage 10k — News & Announcements: REMOVED
 
