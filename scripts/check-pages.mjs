@@ -64,11 +64,15 @@ const PUBLISHERS = [
   // allocation rows are what resolve every holdings drill-down's address, and
   // both moved behind `?tab=allocation` when the page was split into panels.
   ["cio-allocation", (n) => n.startsWith("holdings-")],
-  // The cost-less set is a FACET of the Capital invested page, so its address is
-  // drawn by that page's toggle and by nothing else. `ONLY=holdings-nocost`
-  // without it would walk a not-found page and report NOT CHECKED — a filter
-  // that silently stops checking, which is what this list exists to prevent.
-  ["holdings-invested", (n) => n === "holdings-nocost"],
+  // The cost-less set is a FACET of the Current Value of Holdings page — where
+  // Capital invested now lives — so its address is drawn by that page's toggle
+  // and by nothing else. `ONLY=holdings-nocost` without it would walk a
+  // not-found page and report NOT CHECKED — a filter that silently stops
+  // checking, which is what this list exists to prevent.
+  ["holdings-book", (n) => n === "holdings-nocost"],
+  // The dense strip's address is built from what Morning CIO's own picker
+  // offers, so `cio` has to be walked first or the route has nothing to open.
+  ["cio", (n) => n === "cio-tiles-dense"],
 ];
 const walked = (name) =>
   !ONLY.length
@@ -3240,6 +3244,30 @@ const ROUTES = [
    * cards that draw them — so `PUBLISHERS` names it rather than `cio`.
    */
   ["cio-allocation", "/cio?tab=allocation"],
+  /**
+   * ── THE STRIP'S CHOICE, SAVED FOR EVERYONE ───────────────────────────────
+   *
+   * One context picks a tile with a shared store answering; a second context,
+   * with NO storage of its own, opens the page against the same store. The
+   * family's words were "next time when we come on the dashboard it should be
+   * in the same format" — and "next time" includes another laptop, a phone and
+   * a cleared browser, none of which `localStorage` survives.
+   */
+  ["cio-tiles-saved", "/cio"],
+  /**
+   * THE NARROWEST STRIP THIS PAGE CAN DRAW, AND THE LONGEST LABELS IN IT.
+   * The heading defects the family photographed only bite where a label is too
+   * long for its tile, and the default five are not: measured, main's own
+   * truncating picker renders every one of them whole at five tiles and cuts
+   * "Current Value of Holdings" to 127px of the ~167px it needs at six. So this
+   * route opens the MAXIMUM tile count on the six longest labels Morning CIO's
+   * picker offers — read off the picker, never typed, so a renamed metric moves
+   * the worst case with it.
+   */
+  ["cio-tiles-dense", () => {
+    const six = [...CIO_TILE_OPTIONS].sort((a, b) => b.label.length - a.label.length).slice(0, 6).map((o) => o.id);
+    return six.length === 6 ? `/cio?tiles=${six.join(",")}` : "/cio?tiles=no-catalogue-captured-from-the-picker";
+  }],
   ["cio-nav", "/cio?tab=nav"],
   /**
    * ...AND THE NAV PANEL WITH THE LIVE LAYER FULFILLED, which is the only place
@@ -3701,8 +3729,18 @@ const ROUTES = [
   // FIRST now, because the cost-less set is reachable only from the toggle it
   // draws — an address that comes from the page under test rather than from a
   // literal here, like every other drill-down in this sweep.
-  ["holdings-invested", () => drilldownPath("invested") ?? "/holdings?of=none-resolved-from-cio"],
-  ["holdings-nocost", () => drilldownPath("invested#no-cost") ?? "/holdings?of=none-resolved-from-invested"],
+  // CAPITAL INVESTED IS A FACET OF THE VALUE PAGE NOW. Its address is the one
+  // the Consolidated return tile draws, and the cost-less half's is the one the
+  // value page's own toggle draws — neither is typed here.
+  ["holdings-invested", () => drilldownPath("book#costed") ?? "/holdings?of=none-resolved-from-cio"],
+  ["holdings-nocost", () => drilldownPath("book#no-cost") ?? "/holdings?of=none-resolved-from-book"],
+  /**
+   * ...AND THE OLD ADDRESS STILL LANDS ON THE SAME ROWS. `?of=invested` was a
+   * live page; a bookmark to it must open the costed facet of the value page,
+   * not the not-found page. Typed, deliberately: it is the one address this
+   * sweep must NOT take from the page, because nothing on the page draws it.
+   */
+  ["holdings-invested-legacy", "/holdings?of=invested"],
   // ...AND AN ADDRESS THAT NAMES NOTHING. A drill-down that silently falls back
   // to "everything" would answer a question it was not asked with a figure that
   // looks like the one the reader clicked, which is worse than saying so.
@@ -3844,7 +3882,12 @@ const ROUTES = [
 // real function sends before its store is connected — ON PURPOSE, because that
 // is the state it asserts. What the column does with each answer is checked on
 // its own routes, which is where a real fault in it would show.
-const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab|capital-calls)|ERR_CONNECTION_RESET|Failed to load resource/;
+//
+// `tile-sets` joins on the same terms: the shared store behind every KPI strip's
+// saved layout. With no Function the strips keep the choice in the browser and
+// say so inside the picker; `private-market-tiles-saved` fulfils it with a store
+// of its own, which is where the saving is actually checked.
+const ENVIRONMENT_NOISE = /fonts\.googleapis\.com|\/api\/(news|quotes|fx|announcements|insider|research|ratios|prices|indices|chat|polycab|capital-calls|tile-sets)|ERR_CONNECTION_RESET|Failed to load resource/;
 
 const ZEROISH = /(?:₹|Rs\.?\s?)0(?:\.00)?(?![\d.,])|\b0\.00\s?%|(?<![\d.])\b0\s?%/g;
 
@@ -4307,14 +4350,50 @@ const CIO_DRILLDOWNS = new Map();   // scope id (+key) -> href, as the CIO drew 
  * one.
  */
 const CRUMB_PUBLISHERS = new Map(); // /holdings?... -> labels that open it
+/** Routes that walk a RETIRED address, mapped to the live one it resolves to. */
+const CRUMB_ALIAS = { "holdings-invested-legacy": () => drilldownPath("book#costed") };
 /**
  * EVERY METRIC THE PRIVATE MARKET'S TILE PICKER OFFERS, read out of its own
  * menu on the first walk. It is both the catalogue the picker is checked
  * against and the address of the all-tiles route, so neither is typed here.
  */
 const PM_TILE_IDS = [];
-let TILE_MENU = null;
-let TILE_PICK = null;
+/** Morning CIO's picker, id and label, read off its open menu on the `cio` walk. */
+const CIO_TILE_OPTIONS = [];
+/**
+ * WHAT EACH STRIP'S PICKER OFFERED AND WHAT A PICK DID, PER ROUTE. Morning CIO
+ * and Private Market each carry a strip now, and one global would let the
+ * second route's walk answer for the first.
+ */
+const TILE_MENU = new Map();
+const TILE_PICK = new Map();
+/** The routes whose strip is picked from on the walk — never one a pick would spoil. */
+const PICK_WALK = new Set(["private-market", "private-market-tiles", "cio"]);
+/**
+ * ── THE SHARED LAYOUT STORE, FAKED FOR THE WALK THAT ASSERTS IT ────────────
+ *
+ * *"make sure that it is being saved and next time when we come on the
+ * dashboard it should be in the same format."* `/api/tile-sets` is a Pages
+ * Function over Cloudflare KV and `vite preview` runs neither, so the plain walk
+ * sees the store as unavailable — and the strip keeps the choice in the browser,
+ * which the pick walk checks. `cio-tiles-saved` fulfils it from an in-memory
+ * store that applies each save exactly as the real function does, and then
+ * opens the page in a SECOND browser context with no storage of its own: the
+ * other device, the cleared browser. What that context draws is the claim.
+ */
+let TILE_SAVED = null;
+async function installTileStore(context, store, posts) {
+  await context.route("**/api/tile-sets", async (route) => {
+    const req = route.request();
+    if (req.method() === "POST") {
+      let body = null;
+      try { body = JSON.parse(req.postData() ?? ""); } catch { body = null; }
+      posts.push({ body, contentType: req.headers()["content-type"] ?? "" });
+      if (body?.page && Array.isArray(body.ids)) store[body.page] = { ids: body.ids, updatedAt: new Date().toISOString() };
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, sets: store }) });
+  });
+}
 /**
  * ── THE CAPITAL-CALL STORE, FAKED FOR THE WALK THAT ASSERTS IT ─────────────
  *
@@ -4481,7 +4560,7 @@ const drilldownTotal = (t) => money2cr(
  * `null` where the page drew no table at all (an absent scope, the unknown
  * address), which every caller treats as an abstention rather than a pass.
  */
-const FOOT_COL = { invested: 2, value: 3, weight: 4, pnl: 5, ret: 6 };
+const FOOT_COL = { invested: 2, value: 3, weight: 4, costShare: 5, pnl: 6, ret: 7 };
 const footCell = (ctx, which) => ctx?.footerCells?.[FOOT_COL[which]] ?? null;
 /**
  * HOW MANY ROWS THE GROUPED TABLE DREW, off its own footer.
@@ -7313,6 +7392,84 @@ const PM_RETURN_ROUTE_CHECKS = [
 /** The tile count the first Morning CIO route saw, so the other two are held to it. */
 let CIO_TILE_COUNT = 0;
 
+/**
+ * ── THE MORNING CIO STRIP IS THE READER'S TO ARRANGE ────────────────────────
+ *
+ * *"we need to make sure that the KPI tiles on morning CIO page are also
+ * editable just like they are in the private market page. We should be able to
+ * select different metrics and also add or remove number of KPI tiles."* The
+ * same claims the Private Market strip is held to, from the same factory, so the
+ * two strips cannot drift into two different ideas of what "editable" means —
+ * run on `cio` alone, the route the pick walk performs a pick on.
+ */
+const CIO_TILE_PICKER = [
+  ...tilePickerChecks({
+    defaults: ["value", "mwr", "return", "uncalled", "distributions"],
+    mustOffer: ["value", "mwr", "return", "uncalled", "distributions", "invested", "gain", "committed",
+      "positions", "names", "top-10", "cross-held", "winners", "losers", "accrued"],
+    minMenu: 15,
+  }),
+  /**
+   * ...AND A PICKER ON A CLICKABLE TILE DOES NOT NAVIGATE. The whole card is a
+   * link (Stage 10v); the picker, remove and add sit above it. A build that left
+   * them under the overlay would open the drill-down on every attempt to change a
+   * tile — the pick walk would then read the strip off the wrong page and the
+   * check above fails, so this one names the other half: each tile still has
+   * exactly its own controls and one destination.
+   */
+  ["every tile carries its own picker and remove control, and still one destination", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    return ctx.kpiTiles.length > 0 && ctx.kpiTiles.every((x) => x.controls >= 2 && x.links.length <= 1);
+  }],
+];
+
+/**
+ * ── SAVED FOR EVERYONE, AND OPENED ON ANOTHER DEVICE ────────────────────────
+ *
+ * The walk is `cio-tiles-saved` (see the harness): a pick in one context, the
+ * same address in a second context with no storage of its own. A strip that
+ * saved only to the browser passes every check on `cio` and fails here, and
+ * one that saved and never read back fails the second claim.
+ *
+ * A WALK THAT DID NOT HAPPEN IS A FINDING. Every claim below returns false when
+ * the walk captured nothing, because a strip with no picker, or a store the page
+ * never called, must not read as a clean run.
+ */
+const CIO_TILES_SAVED = [
+  ["a pick is sent to the shared store as the page and its metric ids, nothing more", (t, ctx) => {
+    const w = ctx?.tileSaved;
+    if (!w?.picked) return false;
+    const post = w.posts.find((x) => x.body?.page === "cio");
+    if (!post) return false;
+    return /application\/json/i.test(post.contentType)
+      && Object.keys(post.body).sort().join(",") === "ids,page"
+      && post.body.ids[0] === w.picked
+      && post.body.ids.join(",") === (w.here ?? []).join(",");
+  }],
+  ["another device opens on the layout the first one saved", (t, ctx) => {
+    const w = ctx?.tileSaved;
+    if (!w?.picked || !w.otherDevice) return false;
+    return w.otherDevice.saved === "shared"
+      && w.otherDevice.ids.join(",") === (w.here ?? []).join(",");
+  }],
+  /**
+   * ...AND KEEPS IT AS ITS OWN COPY, CONFIRMED, so its next visit paints the
+   * saved layout before the store has even answered — rather than opening on
+   * the default tiles and jumping. Confirmed matters: an unconfirmed copy is
+   * what the strip PUSHES, and a device that pushed back what it had just been
+   * told would be one save behind forever.
+   */
+  ["...and keeps a confirmed copy for its next paint", (t, ctx) => {
+    const w = ctx?.tileSaved;
+    if (!w?.otherLocal) return false;
+    let v = null;
+    try { v = JSON.parse(w.otherLocal); } catch { return false; }
+    return v?.synced === true && Array.isArray(v.ids) && v.ids.join(",") === (w.here ?? []).join(",");
+  }],
+  ["the picker says the choice is saved for everyone — before the pick and after the save answers", (t, ctx) =>
+    /saved for everyone/i.test(ctx?.tileSaved?.savedWhere ?? "") && /saved for everyone/i.test(ctx?.tileSaved?.savedAfter ?? "")],
+];
+
 const CIO_SHARED = [
     /**
      * ── THE REGISTER'S SENTINEL DERIVED, SO ITS ABSENCE CHECK MEANS SOMETHING ─
@@ -7381,11 +7538,18 @@ const CIO_SHARED = [
    * check is struck on the tiles that DO have a figure — and a drop that empties
    * one gets its reason back rather than an unexplained dash.
    */
+  /**
+   * ONE MORE LINE IS ALLOWED, AND ONLY IF IT IS A SECOND FIGURE. *"Make a single
+   * KPI tile and show the invested capital."* Current Value of Holdings carries
+   * the capital invested beneath what it is worth — a figure struck from the
+   * book, marked `data-kpi-second` so it is told from a caption by what it is
+   * rather than by its words. A caption a redesign reintroduces still fails.
+   */
   ["a KPI tile with a figure carries no caption under it", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const withFigures = ctx.kpiTiles.filter((x) => !x.absent);
     if (!withFigures.length) return notChecked("no KPI tile on this run carries a figure");
-    return withFigures.every((x) => x.lines <= 2);
+    return withFigures.every((x) => x.lines <= 2 + (x.second ? 1 : 0));
   }],
   ["...and a tile with no figure still names why", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
@@ -7428,12 +7592,33 @@ const CIO_SHARED = [
    * the feature — so the destinations are asserted too, by the figure they
    * belong to rather than by a count.
    */
-  ["the NAV, Capital invested and money-weighted tiles each open their own set", (t, ctx) => {
+  ["the value, consolidated-return and money-weighted tiles each open their own set", (t, ctx) => {
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const at = (re) => ctx.kpiTiles.find((x) => re.test(x.label))?.links?.[0] ?? "";
-    return /of=book\b/.test(at(/current value of holdings/i))
-      && /of=invested\b/.test(at(/capital invested/i))
+    return at(/current value of holdings/i) === "/holdings?of=book"
+      && /of=book&facet=costed\b/.test(at(/consolidated return/i))
       && /of=measured\b/.test(at(/money-weighted|xirr/i));
+  }],
+  /**
+   * ── CURRENT VALUE AND CAPITAL INVESTED ARE ONE TILE AND ONE PAGE ─────────
+   *
+   * *"Capital invested and current value of holdings can be a single KPI tile
+   * rather than being two separate KPI tiles and opening two separate pages.
+   * Make a single KPI tile and show the invested capital."*
+   *
+   * THREE CLAIMS, NONE IMPLYING ANOTHER: the value tile carries the invested
+   * figure as its second line; no tile of the default strip is Capital invested
+   * on its own; and nothing on the strip opens the old Capital invested page —
+   * `?of=invested` still RESOLVES, deliberately, so a bookmark keeps working,
+   * which is exactly why its absence from the strip has to be asserted.
+   */
+  ["Current Value of Holdings carries the capital invested, as one tile", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const value = ctx.kpiTiles.find((x) => x.slot === "value");
+    if (!value) return false;
+    return /^Invested ₹[\d,.]+\s*(?:Cr|L|K)?$/.test(value.second ?? "")
+      && !ctx.kpiTiles.some((x) => /^capital invested$/i.test(x.label))
+      && ctx.kpiTiles.every((x) => x.links.every((h) => !/[?&]of=invested\b/.test(h)));
   }],
   /**
    * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
@@ -7590,9 +7775,10 @@ const CIO_SHARED = [
       // is summed over. Each entry is [what the reader clicks, where it goes].
       const tiles = [
         [/^current value of holdings$/i, "/holdings?of=book"],
-        [/^capital invested$/i, "/holdings?of=invested"],
         [/^(money-weighted return|xirr \(annualised\))$/i, "/holdings?of=measured"],
-        [/^consolidated return$/i, "/holdings?of=invested"],
+        // Capital invested is part of the value tile's page now, so the return
+        // struck on it opens that page on the holdings that report a cost.
+        [/^consolidated return$/i, "/holdings?of=book&facet=costed"],
       ];
       return tiles.every(([label, href]) =>
         ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === href));
@@ -11599,9 +11785,27 @@ const INVARIANTS = {
   ],
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
-  cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS],
+  cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE],
+  "cio-tiles-saved": CIO_TILES_SAVED,
+  "cio-tiles-dense": [
+    /**
+     * THE ROUTE REALLY OPENED THE DENSE STRIP. Without this a renamed metric or
+     * an unread picker leaves the address naming ids the page does not know,
+     * the strip falls back to its default five, and the heading check below
+     * passes on exactly the width where it has nothing to catch.
+     */
+    ["it draws six tiles, the most the strip allows", (t, ctx) => {
+      if (CIO_TILE_OPTIONS.length < 6) return false;
+      return ctx?.tileStrip?.slots === 6;
+    }],
+    ["no tile heading is cut off, split mid-word, or wrapped with room to spare", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st?.slots) return false;
+      return headingsWhole(st);
+    }],
+  ],
   /**
    * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
    *
@@ -12080,9 +12284,13 @@ const INVARIANTS = {
       if (g !== null) return g;
       if (!SIDE_BOOK) return notChecked("the book's own sides could not be derived");
       const want = SIDE_BOOK.sides;   // "Listed", "Private", "Not placed"
-      return ctx.facets.length === want.length + 1
+      // THE SIDE GROUP ONLY. The cost split that came over from the Capital
+      // invested page is a second partition on the same toggle, behind a
+      // divider, and has its own check below.
+      const sides = ctx.facets.filter((f) => f.group === "side");
+      return sides.length === want.length
         && /whole book|every holding|all holdings/i.test(ctx.facets[0].label)
-        && want.every((k) => ctx.facets.some((f) => new RegExp(`^${esc(k)}`, "i").test(f.label)));
+        && want.every((k) => sides.some((f) => new RegExp(`^${esc(k)}`, "i").test(f.label)));
     }],
     /**
      * ...AND IT OPENS ON THE WHOLE BOOK. A toggle defaulting to a half would
@@ -12106,10 +12314,59 @@ const INVARIANTS = {
     ["the toggle's own counts partition the book", (t, ctx) => {
       const g = facetsOr(ctx, BOOK_HAS_BOTH_HALVES(), "this book reports only one of the two halves, so there is nothing to toggle between");
       if (g !== null) return g;
-      const [whole, ...halves] = ctx.facets;
+      const [whole] = ctx.facets;
       if (!whole || !Number.isFinite(whole.rows)) return false;
-      return halves.every((f) => Number.isFinite(f.rows))
-        && halves.reduce((a, f) => a + f.rows, 0) === whole.rows;
+      /**
+       * EACH GROUP PARTITIONS THE BOOK ON ITS OWN. The sides and the cost split
+       * are two partitions of one set on one toggle; summing every chip would
+       * count each holding twice and "pass" only on a page that had lost one of
+       * the two. So each is held to the whole separately — and the divider is
+       * what tells a reader the same thing.
+       */
+      const sums = ["side", "cost"].map((g) => ctx.facets.filter((f) => f.group === g));
+      return sums.every((grp) => grp.every((f) => Number.isFinite(f.rows))
+        && (grp.length === 0 || grp.reduce((a, f) => a + f.rows, 0) === whole.rows));
+    }],
+    /**
+     * ── AND THE CAPITAL INVESTED IS PART OF THIS PAGE NOW ───────────────────
+     *
+     * *"inside that page keep the current value of holdings view and add the
+     * columns and data regarding the invested capital that we were showing as a
+     * separate page."* Three things came over, and each is asserted on its own:
+     * the cost split as two facets, the invested figure beside the value, and a
+     * Share of invested column beside Weight.
+     */
+    ["the holdings that report a cost, and the ones that do not, are two facets here", (t, ctx) => {
+      const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
+      if (g !== null) return g;
+      const cost = ctx.facets.filter((f) => f.group === "cost");
+      return cost.length === 2
+        && cost.some((f) => /^cost reported/i.test(f.label) && /facet=costed\b/.test(f.href))
+        && cost.some((f) => /^no cost reported/i.test(f.label) && /facet=no-cost\b/.test(f.href));
+    }],
+    ["the capital invested stands beside the value, and it is the Morning CIO tile's", (t) => {
+      const tile = CIO_FIGURES.get("invested");
+      const here = money2cr(/^Invested (₹[\d,.]+\s*(?:Cr|L|K)?)/m.exec(t)?.[1]);
+      if (!Number.isFinite(tile)) return notChecked("Morning CIO's value tile carried no invested figure on this run");
+      // Two aggregation paths — Morning CIO's `totalInvested` over its own
+      // current holdings, and this page's `investedWithCapital` over its rows,
+      // each swapping a whole mandate's cost for its capital paid in (Stage
+      // 10ca) — at the page's own printing precision, one decimal of a crore each.
+      return Number.isFinite(here) && Math.abs(here - tile) <= 0.1;
+    }],
+    /**
+     * ...AND EVERY ROW'S SHARE OF THE CAPITAL INVESTED, which adds to the
+     * footer's 100%. Summed off the rendered cells rather than trusted from the
+     * footer: a footer printing "100%" over a column that adds to 60 is the
+     * tautology this file keeps finding, a figure compared with its own copy.
+     * The bound is the page's own rounding — a tenth of a point per row.
+     */
+    ["the Share of invested column adds to the footer's 100%", (t, ctx) => {
+      if (!ctx?.footerCells) return false;
+      const cells = (ctx.hbCostShares ?? []).map((x) => Number(String(x).replace(/%$/, ""))).filter(Number.isFinite);
+      if (!cells.length) return false;
+      const total = cells.reduce((a, b) => a + b, 0);
+      return footCell(ctx, "costShare") === "100%" && Math.abs(total - 100) <= Math.max(0.5, cells.length * 0.05);
     }],
     /*
      * A TILE THAT OPENS NOTHING STAYS FLAT used to be asserted here, on this
@@ -12653,10 +12910,18 @@ const INVARIANTS = {
      */
     ["the return here states its basis", (t, ctx) =>
       (ctx?.titles ?? []).some((x) => /cumulative, not annualised/i.test(x))],
+    /**
+     * IT LANDS ON THE COSTED SET — which is now a facet of the Current Value of
+     * Holdings page rather than a page of its own. The return tile opens it and
+     * `?of=invested` resolves to it, so the active chip must be the cost one: a
+     * landing on the whole book would put the holdings that report NO cost under
+     * a figure struck on cost.
+     */
     ["it opens on the holdings that report a cost", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
-      return ctx.facets[0]?.active === true && /reports a cost/i.test(ctx.facets[0].label);
+      const on = ctx.facets.filter((f) => f.active);
+      return on.length === 1 && on[0].group === "cost" && /^cost reported/i.test(on[0].label);
     }],
     /**
      * ...AND THE COST-LESS SET IS A TOGGLE HERE. This is the assertion the
@@ -12667,7 +12932,7 @@ const INVARIANTS = {
     ["the holdings reporting no cost are one click away, with their count", (t, ctx) => {
       const g = facetsOr(ctx, TILE_NAMES_COSTLESS(), "every holding in this book reports a cost, so there is nothing to toggle between");
       if (g !== null) return g;
-      const none = ctx.facets.find((f) => /reports none/i.test(f.label));
+      const none = ctx.facets.find((f) => /^no cost reported/i.test(f.label));
       if (!none) return notChecked("every holding in this book reports a cost, so there is no second facet");
       return /facet=no-cost/.test(none.href) && Number.isFinite(none.rows) && none.rows > 0;
     }],
@@ -12687,8 +12952,9 @@ const INVARIANTS = {
       if (g !== null) return g;
       const pos = CIO_FIGURES.get("positions");
       if (!Number.isFinite(pos)) return notChecked("Morning CIO's Positions count did not parse on this run");
-      return ctx.facets.every((f) => Number.isFinite(f.rows))
-        && ctx.facets.reduce((a, f) => a + f.rows, 0) === pos;
+      const cost = ctx.facets.filter((f) => f.group === "cost");
+      return cost.length === 2 && cost.every((f) => Number.isFinite(f.rows))
+        && cost.reduce((a, f) => a + f.rows, 0) === pos;
     }],
   ],
   /**
@@ -12699,6 +12965,27 @@ const INVARIANTS = {
    * WHICH, and the answer decides whether they chase a custodian for a cost
    * statement or accept a permanent absence.
    */
+  /**
+   * ── THE OLD CAPITAL INVESTED ADDRESS STILL OPENS THE SAME ROWS ────────────
+   *
+   * A bookmark to a page that has been folded into another must land on the
+   * rows it used to show, not on "nothing named to open". Both claims, because
+   * either alone passes on the wrong page: the costed chip is the one lit, and
+   * the rows are worth what the tile's own address shows.
+   */
+  "holdings-invested-legacy": [
+    ["the old address opens the value page on the holdings that report a cost", (t, ctx) => {
+      if (!ctx?.facets) return false;
+      const on = ctx.facets.filter((f) => f.active);
+      return on.length === 1 && on[0].group === "cost" && /^cost reported/i.test(on[0].label)
+        && /Every holding in the book\s*·\s*Cost reported/i.test(t);
+    }],
+    ["...on exactly the rows the Consolidated return tile opens", (t) => {
+      const tile = DRILLDOWN_TOTALS.get("holdings-invested"), here = drilldownTotal(t);
+      if (!Number.isFinite(tile)) return notChecked("the costed facet's total was not captured on this run");
+      return Number.isFinite(here) && here === tile;
+    }],
+  ],
   "holdings-nocost": [
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
@@ -12885,14 +13172,35 @@ const INVARIANTS = {
      * every one of the brevity claims — so the hover is required too, and the
      * claims further down read their figures out of it.
      */
-    ["every tile is a label, a figure and one short line", (t, ctx) => {
+    /**
+     * AT MOST ONE SHORT LINE — AND NONE WHERE IT WOULD ONLY REPEAT THE LABEL.
+     *
+     * *"make sure these sub-texts are shorter and direct so that the user can
+     * actually read them. If it is irrelevant then remove them."* So a line is
+     * no longer required on every tile: it is allowed to be absent, and where
+     * it is present it is one line of at most 40 characters at 13px or larger —
+     * the size a reader can actually read, which 12px in the palest grey was
+     * not. The detail every tile carries in its hover is still required.
+     */
+    ["every tile is a label, a figure and at most one short, legible line", (t, ctx) => {
       const st = ctx?.tileStrip;
       if (!st?.slots) return false;
-      const subs = Object.values(st.subs ?? {});
+      const subs = Object.values(st.subs ?? {}).filter(Boolean);
       return st.hints === 0
-        && subs.length === st.slots
-        && subs.every((x) => !!x && x.text.length > 0 && x.text.length <= 40 && x.lines === 1 && x.px >= 12)
+        && subs.every((x) => x.text.length > 0 && x.text.length <= 40 && x.lines === 1 && x.px >= 13)
         && Object.values(st.details ?? {}).filter((d) => d.trim().length > 0).length === st.slots;
+    }],
+    /**
+     * ...AND THE LINES THAT ONLY RESTATED THEIR OWN HEADING ARE GONE. "Capital
+     * invested — Cost of these holdings", "Funds — Distinct funds held" and
+     * "Folios — Statement lines" said nothing the label does not. Struck on the
+     * tiles this route actually draws, so it runs on the default strip for the
+     * first and on the full one for all three.
+     */
+    ["no tile's line merely repeats its heading", (t, ctx) => {
+      const st = ctx?.tileStrip;
+      if (!st?.slots) return false;
+      return ["cost", "funds", "folios"].filter((id) => st.ids.includes(id)).every((id) => !st.subs?.[id]);
     }],
     /**
      * ...AND NO LABEL IS CUT OFF. "PRIVATE MARKET VAL…" and "STILL TO CALL
@@ -17878,73 +18186,119 @@ const FULL_STRIP_ONLY = new Set([
  * a CONTROL — the strip renders the identical figures whether a reader can
  * change them or not — so none of them can be struck on the page's words.
  */
-const TILE_PICKER_CHECKS = [
+// A FUNCTION DECLARATION so it is hoisted: Morning CIO's block uses it far
+// above this line, and a `const` would be in its temporal dead zone there.
+function tilePickerChecks({ defaults, mustOffer, minMenu }) {
+  return [
   /**
-   * THE DEFAULT IS THE ROW THIS PAGE ALWAYS SHOWED, and a default is the one
-   * change that moves in silence: the strip renders perfectly on any four
+   * THE DEFAULT IS THE ROW THIS PAGE LEADS WITH, and a default is the one
+   * change that moves in silence: the strip renders perfectly on any set of
    * metrics, so nothing else here could tell. Named rather than derived,
-   * because which four a reader sees first is a product decision and not a
+   * because which tiles a reader sees first is a product decision and not a
    * figure the book produces.
    */
-  ["the strip opens on four tiles, and on the four this page always led with", (t, ctx) => {
+  [`the strip opens on the ${defaults.length} tiles this page leads with`, (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st) return false;
-    const want = ["value", "cost", "pnl", "uncalled"];
-    return st.ids.length === want.length && want.every((id, i) => st.ids[i] === id);
+    return st.ids.length === defaults.length && defaults.every((id, i) => st.ids[i] === id);
   }],
   /**
-   * ...AND EVERY SLOT OFFERS THE WHOLE CATALOGUE, the two ABSENT metrics
+   * ...AND EVERY SLOT OFFERS THE WHOLE CATALOGUE, the absent metrics
    * included. A picker that offered only what this book can measure would
-   * quietly drop the two facts a reader of a private book most needs told —
-   * that no capital gain statement covers a private account, and that a TVPI
-   * cannot be struck while most of these funds print no distribution line —
-   * and the family asked for every metric they might want to see.
+   * quietly drop the facts a reader most needs told, and the family asked for
+   * every metric they might want to see.
    */
-  ["each tile's picker offers every metric, the two absent ones included", (t, ctx) => {
+  ["each tile's picker offers every metric, the absent ones included", (t, ctx) => {
     const menu = ctx?.tileMenu;
     const st = ctx?.tileStrip;
     if (!menu?.length || !st) return false;
-    return menu.length >= 12
-      && ["value", "cost", "pnl", "uncalled", "realised", "multiple"].every((id) => menu.includes(id))
+    return menu.length >= minMenu
+      && mustOffer.every((id) => menu.includes(id))
       // One picker per slot, or a tile a reader cannot change is a tile they
       // are stuck with.
       && st.pickers === st.slots && st.slots > 0
       /**
        * ...AND EVERY ID THE STRIP CLAIMS IS ACTUALLY DRAWN. A set saved against
        * an older catalogue can name a metric this build does not have, and a
-       * slot that skipped it would leave the strip claiming four tiles while
-       * rendering three — an unexplained gap rather than the em dash with a
-       * reason this book requires. Unknown ids are dropped from the SET, so
-       * these three counts move together or something was silently swallowed.
+       * slot that skipped it would leave the strip claiming more tiles than it
+       * renders. Unknown ids are dropped from the SET, so these three counts
+       * move together or something was silently swallowed.
        */
       && st.slots === st.ids.length && st.cards === st.slots;
   }],
   /**
-   * ...AND THE `+` IS ON THE LAST TILE, WHICH IS WHERE THE FAMILY PUT IT.
-   * "Somewhere on the strip" is a different and weaker claim, and every slot
-   * must also be removable — otherwise a metric added by mistake is permanent.
+   * ...AND CHOOSING A METRIC CHANGES THE TILE, AND THE NEXT VISIT OPENS ON IT.
+   *
+   * *"make sure that it is being saved and next time when we come on the
+   * dashboard it should be in the same format as it was after we changed it."*
+   * Every claim above is satisfied by a picker wired to nothing, and a picker
+   * that changed the tile for one page view and forgot it satisfies this one's
+   * first half. So the walk opens the page AGAIN with no `?tiles=` in the
+   * address and reads what it draws.
+   *
+   * AND THE CHOICE DOES NOT REWRITE THE ADDRESS. It used to: the set went into
+   * `?tiles=`, and an address carrying an older set outranks the saved one —
+   * so a reader who later went Back, or reloaded a stale tab, saw a layout they
+   * had already changed. A saved layout is what a reader comes back to.
    */
-  /**
-   * ...AND CHOOSING A METRIC ACTUALLY CHANGES THE TILE, AND THE ADDRESS WITH
-   * IT. Every claim above is satisfied by a picker wired to nothing, which is
-   * the control-that-looks-alive failure this repo keeps naming. The walk picks
-   * the metric slot 0 is not showing and reads the strip back.
-   */
-  ["picking a metric changes that tile and moves the address with it", (t, ctx) => {
+  ["picking a metric changes that tile, and the next visit opens on it", (t, ctx) => {
     const pick = ctx?.tilePick;
     if (!pick) return false;
     return pick.ids[0] === pick.picked
       && pick.ids[0] !== pick.before
-      // The chosen set is in the URL, so it is a link somebody can send and a
-      // state the browser's own Back button walks.
-      && new URLSearchParams(pick.search).get("tiles") === pick.ids.join(",");
+      && new URLSearchParams(pick.search).get("tiles") == null
+      && pick.revisit.length === pick.ids.length
+      && pick.revisit.every((id, i) => id === pick.ids[i]);
+  }],
+  /**
+   * ...AND THE MENU SAYS WHERE IT WENT. With no shared store running here the
+   * choice is kept in this browser, and a reader who switches device is owed
+   * that sentence before they find out the hard way. Struck on the CAUSE, which
+   * picks the sentence: a store that is not connected and a store that is not
+   * running send a reader to different places.
+   */
+  ["the picker says the choice is kept in this browser when no shared store answers", (t, ctx) => {
+    const pick = ctx?.tilePick;
+    if (!pick) return false;
+    return /saved in this browser only/i.test(pick.savedWhere ?? "") && /not running here/i.test(pick.savedWhere ?? "");
   }],
   ["the + sits on the last tile only, and every tile can be removed", (t, ctx) => {
     const st = ctx?.tileStrip;
     if (!st) return false;
     return st.adds === 1 && st.addOnLast && st.removes === st.slots;
   }],
+  /**
+   * ...AND EVERY HEADING IS SHOWN WHOLE.
+   *
+   * *"the headings of the KPI tiles is not being shown completely."* Two ways a
+   * heading fails, and neither is visible to a text check: cut with an
+   * ellipsis ("COMMITT…" beside an empty third of the header), and split
+   * mid-word across two lines ("DISTRIBUTION / S", which is what the first
+   * wrapping fix produced on a tile a fifth of the strip wide). Both are
+   * measured on the text itself.
+   */
+  ["no tile heading is cut off or split, mid-word or with room to spare", (t, ctx) => {
+    const st = ctx?.tileStrip;
+    if (!st?.slots) return false;
+    return headingsWhole(st);
+  }],
 ];
+}
+
+/**
+ * THE THREE WAYS A TILE HEADING FAILS, as one predicate, so the default strips
+ * and the dense one cannot hold a heading to two different standards: cut or
+ * overflowing its box, split mid-word, or wrapped with room to spare. Each is a probe field and an empty list is the only pass — a probe
+ * that stopped reporting a field is a failure, never a clean strip.
+ */
+function headingsWhole(st) {
+  return ["clipped", "brokenWords", "needlessWrap"].every((k) => Array.isArray(st?.[k]) && st[k].length === 0);
+}
+const TILE_PICKER_CHECKS = tilePickerChecks({
+  defaults: ["value", "cost", "pnl", "uncalled"],
+  mustOffer: ["value", "cost", "pnl", "uncalled", "realised", "multiple"],
+  minMenu: 12,
+});
 
 /**
  * THE SPLIT, APPLIED. `private-market-tiles` runs every private-market claim
@@ -17954,7 +18308,8 @@ const TILE_PICKER_CHECKS = [
 {
   const all = INVARIANTS["private-market"];
   INVARIANTS["private-market"] = [...all.filter(([d]) => !FULL_STRIP_ONLY.has(d)), ...TILE_PICKER_CHECKS];
-  INVARIANTS["private-market-tiles"] = [...all, ...TILE_PICKER_CHECKS.slice(1, 3),
+  INVARIANTS["private-market-tiles"] = [...all,
+    ...TILE_PICKER_CHECKS.filter(([d]) => /offers every metric|next visit opens on it|cut off or split/.test(d)),
     /**
      * ...AND ON THIS ROUTE THE WHOLE CATALOGUE IS ON SCREEN, which is what
      * makes the six abstention-free. Without this the route could resolve to a
@@ -18163,6 +18518,8 @@ for (const theme of THEMES) {
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       if (name === "private-market-calls") await installCallStore(page);
+      const tileStore = {}, tilePosts = [];
+      if (name === "cio-tiles-saved") await installTileStore(ctx, tileStore, tilePosts);
       if (name === "private-market-calls-off") await installCallStoreOff(page);
       if (name === "cio-filling") await installFillingQuotes(page);
       if (name === "cio-loading") await installStalledFeeds(page);
@@ -18216,6 +18573,52 @@ for (const theme of THEMES) {
           // spelling reports "no claim on screen" whether or not one is there.
           body: /\bNo\b[^\n]{0,80}?carries a day change/i.test(document.body.innerText),
         }));
+      }
+      if (name === "cio-tiles-saved") {
+        /**
+         * PICK ON ONE DEVICE, OPEN ON ANOTHER.
+         *
+         * The pick is the metric slot 0 is NOT showing, chosen off the menu the
+         * page drew. Then a SECOND context — no `localStorage`, no cookies of the
+         * first — opens the same address against the same store, and what IT
+         * draws is the claim. A strip that saved only to the browser passes
+         * every other check in this file and fails here.
+         */
+        TILE_SAVED = { posts: tilePosts };
+        try {
+          await page.waitForSelector("main [data-tile-strip]", { timeout: 15000 });
+          await page.waitForFunction(() => document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-saved") === "shared", null, { timeout: 10000 }).catch(() => {});
+          const ids0 = await page.$eval("main [data-tile-strip]", (e) => (e.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+          await page.click('[data-tile-select="0"]');
+          TILE_SAVED.savedWhere = await page.$eval("[data-tile-saved-where]", (e) => (e.textContent ?? "").trim()).catch(() => null);
+          const opts = await page.$$eval("[data-tile-option]", (els) => els.map((e) => e.getAttribute("data-tile-option") ?? ""));
+          const pick = opts.find((id) => !ids0.includes(id));
+          if (pick) {
+            await page.click(`[data-tile-option="${pick}"]`);
+            await page.waitForTimeout(400);
+            TILE_SAVED.picked = pick;
+            TILE_SAVED.here = await page.$eval("main [data-tile-strip]", (e) => (e.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+            // ...AND WHAT THE PICKER SAYS ONCE THE SAVE HAS ANSWERED. Read before
+            // the pick, the sentence reports only that the store was READ; a save
+            // the store refused must turn it into "saved in this browser", and
+            // only a reopened menu shows that.
+            await page.click('[data-tile-select="0"]').catch(() => {});
+            TILE_SAVED.savedAfter = await page.$eval("[data-tile-saved-where]", (e) => (e.textContent ?? "").trim()).catch(() => null);
+            await page.keyboard.press("Escape").catch(() => {});
+            const other = await browser.newContext({ viewport: { width, height: 1000 } });
+            await installTileStore(other, tileStore, []);
+            const op = await other.newPage();
+            await op.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+            await op.goto(`${BASE}${path}`, { waitUntil: "networkidle", timeout: 45000 });
+            await op.waitForFunction(() => document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-saved") === "shared", null, { timeout: 10000 }).catch(() => {});
+            TILE_SAVED.otherDevice = await op.$eval("main [data-tile-strip]", (e) => ({
+              ids: (e.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
+              saved: e.getAttribute("data-tile-saved") ?? "",
+            })).catch(() => null);
+            TILE_SAVED.otherLocal = await op.evaluate(() => { try { return window.localStorage.getItem("glow:cioTiles:v1"); } catch { return null; } });
+            await other.close();
+          }
+        } catch (e) { TILE_SAVED.error = String(e?.message ?? e); }
       }
       if (name === "search") {
         /**
@@ -19232,7 +19635,18 @@ for (const theme of THEMES) {
         if (!strip) return null;
         return [...strip.querySelectorAll(".card")].map((c) => ({
           label: (c.querySelector(".label-xs")?.textContent ?? "").trim(),
+          // WHICH METRIC THE READER PUT IN THIS SLOT, off the strip's own
+          // handle — the label is the tile's words and a picker can show any.
+          slot: c.closest("[data-tile-slot]")?.getAttribute("data-tile-slot") ?? "",
           links: [...c.querySelectorAll("a[href]")].map((a) => a.getAttribute("href") ?? ""),
+          // THE SECOND FIGURE, where a tile carries one — the capital invested
+          // under Current Value of Holdings. A figure, not a caption, and told
+          // apart from one by its own handle rather than by its words.
+          second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+          // THE TILE'S OWN CONTROLS — the metric picker, remove and add. Counted
+          // apart from every other button, because the claim below is that
+          // nothing ELSE in a tile is a control: a popover trigger once was.
+          controls: c.querySelectorAll("[data-tile-select],[data-tile-remove],[data-tile-add]").length,
           /**
            * ── THE TWO THINGS `innerText` CANNOT SEE ───────────────────────
            *
@@ -19245,8 +19659,9 @@ for (const theme of THEMES) {
           underlined: [...c.querySelectorAll("*")].filter((e) =>
             (e.textContent ?? "").trim()
             && getComputedStyle(e).textDecorationLine.includes("underline")).length,
-          // A popover trigger is a <button>; nothing else in a tile is one.
-          buttons: c.querySelectorAll("button").length,
+          // A popover trigger is a <button>; nothing in a tile but its own
+          // controls may be one.
+          buttons: c.querySelectorAll("button:not([data-tile-select]):not([data-tile-remove]):not([data-tile-add])").length,
           /**
            * RAISED = the shadow carries a HARD OFFSET LAYER (a `0 Npx 0` with
            * N ≥ 2) — the tile's own thickness, which a flat card has no
@@ -19307,6 +19722,11 @@ for (const theme of THEMES) {
           rows: Number(((a.textContent ?? "").match(/([\d,]+)\s*$/)?.[1] ?? "").replace(/,/g, "")),
           href: a.getAttribute("href") ?? "",
           active: a.getAttribute("aria-current") === "true",
+          // WHICH PARTITION THE CHIP BELONGS TO — the sides of the book, or the
+          // cost split that came over from the Capital invested page. Each
+          // group partitions the page on its own; summed together they would
+          // count every holding twice.
+          group: a.getAttribute("data-facet-group") ?? "",
           // THE FACET'S NOTE, which was a paragraph under the toggle until the
           // family asked for it. It is the chip's `title` now, so the reason a
           // half exists is still reachable — and only the CONTROL can say so.
@@ -19757,6 +20177,11 @@ for (const theme of THEMES) {
         skipped: document.querySelector("[data-testid='navmovers-skipped']")?.innerText ?? null,
         loading: !!document.querySelector("[data-testid='navmovers-loading']"),
       }));
+      // EACH ROW'S SHARE OF THE CAPITAL INVESTED, as the page prints it — the
+      // column that came over with the Capital invested page. Read off its own
+      // handle so the sum is struck on the rows rather than on the footer.
+      const hbCostShares = FAST ? null : await page.evaluate(() =>
+        [...document.querySelectorAll("tbody td[data-hb-cost-share]")].map((td) => (td.innerText ?? "").trim()));
       /**
        * THE /holdings ROWS WHOSE INVESTED IS A MANDATE'S CAPITAL PAID IN — what
        * each prints, the two bases it carries, the mandate it opens, and the
@@ -21379,7 +21804,11 @@ for (const theme of THEMES) {
         for (const r of cioAllocationRows(text)) CIO_ALLOCATION.set(r.label, r);
         const grab = (label, re) => { const v = money2cr(re.exec(text)?.[1]); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
         grab("nav", new RegExp(String.raw`CURRENT VALUE OF HOLDINGS\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
-        grab("invested", new RegExp(String.raw`CAPITAL INVESTED\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        // THE VALUE TILE'S SECOND FIGURE — Capital invested is not a tile of its
+        // own any more. Case-SENSITIVE on purpose: the allocation table's
+        // "INVESTED" column head is the same word in capitals, and it is never
+        // followed by a rupee figure.
+        grab("invested", new RegExp(String.raw`\bInvested (₹[\d,.]+\s*(?:Cr|L|K)?)`));
         grab("no-cost", new RegExp(String.raw`positions? worth (₹[\d,.]+\s*(?:Cr|L|K)?) carry no cost`, "i"));
         grab("measured", new RegExp(String.raw`\d+ of \d+ accounts\s*·\s*(₹[\d,.]+\s*(?:Cr|L|K)?) of `, "i"));
         const counts = /Positions\s*\n?\s*([\d,]+)[\s\S]{0,40}?Distinct names\s*\n?\s*([\d,]+)/i.exec(text);
@@ -21690,12 +22119,18 @@ for (const theme of THEMES) {
            * own figure, where the crumb has room to spell it out).
            */
           if (/^holdings-/.test(name) && leaf?.text) {
-            const want = CRUMB_PUBLISHERS.get(path);
+            // A RETIRED ADDRESS IS HELD TO THE FIGURE IT NOW OPENS. Morning CIO
+            // no longer links `?of=invested` — Capital invested is a facet of the
+            // value page since Stage 10bx — so the pairing is struck against the
+            // address the legacy one resolves to, rather than abstaining on a
+            // link that is gone by design.
+            const crumbPath = CRUMB_ALIAS[name]?.() ?? path;
+            const want = CRUMB_PUBLISHERS.get(crumbPath);
             const norm = (x) => String(x).toLowerCase().replace(/[.·]/g, "").replace(/\s+/g, " ").trim();
             const L = norm(leaf.text);
-            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${path}`);
+            if (!want?.length) notCheckedHere.push(`the crumb names the figure this page opened from — nothing captured on Morning CIO points at ${crumbPath}`);
             else if (!want.some((w) => { const W = norm(w); return W && (L.includes(W) || W.includes(L)); })) {
-              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${path} are ${want.map((w) => `"${w}"`).join(", ")}`);
+              invariants.push(`the crumb names the figure this page opened from — it reads "${leaf.text}" where Morning CIO's own labels for ${crumbPath} are ${want.map((w) => `"${w}"`).join(", ")}`);
             }
           }
         }
@@ -21827,6 +22262,82 @@ for (const theme of THEMES) {
           clipped: [...strip.querySelectorAll("[data-tile-select] span")]
             .filter((el) => el.scrollWidth > el.clientWidth + 1)
             .map((el) => (el.textContent ?? "").trim()),
+          /**
+           * ...AND NO WORD SPLIT ACROSS TWO LINES. "DISTRIBUTION / S" is not an
+           * ellipsis and not an overflow — every character is on screen and the
+           * box contains them — so the clipping test above cannot see it. Each
+           * word of each label is measured on its own: a word that paints as
+           * more than one line box has been broken mid-word.
+           */
+          brokenWords: [...strip.querySelectorAll("[data-tile-select] span")].flatMap((el) => {
+            const node = el.firstChild;
+            if (!node || node.nodeType !== 3) return [];
+            const text = node.textContent ?? "";
+            const out = [];
+            const re = /\S+/g;
+            let w;
+            while ((w = re.exec(text))) {
+              const r = document.createRange();
+              r.setStart(node, w.index);
+              r.setEnd(node, w.index + w[0].length);
+              const lines = new Set([...r.getClientRects()].map((x) => Math.round(x.top)));
+              if (lines.size > 1) out.push(w[0]);
+            }
+            return out;
+          }),
+          /**
+           * ...NOR WRAPS WITH ROOM TO SPARE — the other way a heading sized from
+           * its own text goes wrong, and the one the two tests above are blind
+           * to: every word whole, nothing overflowing, and still on two lines
+           * beside empty space. Measured
+           * against the TILE, never against the label's own boxes: the defect
+           * the family photographed was a label CONTAINER sized to its content,
+           * and under `--app-zoom` Chromium measures such a box short of its own
+           * text — so on a five-tile strip "UNCALLED CAPITAL" wrapped in 101px
+           * of a 122px tile and "DISTRIBUTIONS" split mid-word. Every box inside
+           * the label shrinks with the bug and would agree with it; the header
+           * ROW does not. So the available edge is the row's own right edge, up
+           * to whatever sits beside the label in it (the icon, the controls).
+           */
+          ...(() => {
+            const edgeOf = (btn) => {
+              const card = btn.closest(".card");
+              if (!card) return null;
+              let row = btn;
+              while (row.parentElement && row.parentElement !== card) row = row.parentElement;
+              let box = btn;
+              while (box.parentElement && box.parentElement !== row) box = box.parentElement;
+              const gap = parseFloat(getComputedStyle(row).columnGap) || 0;
+              const beside = box.nextElementSibling;
+              return beside ? beside.getBoundingClientRect().left - gap : row.getBoundingClientRect().right;
+            };
+            const btns = [...strip.querySelectorAll("[data-tile-select]")];
+            return {
+              needlessWrap: btns.flatMap((btn) => {
+                const el = btn.querySelector("span"), node = el?.firstChild, edge = edgeOf(btn);
+                if (!el || edge == null || !node || node.nodeType !== 3) return [];
+                const text = node.textContent ?? "", words = [], re = /\S+/g;
+                let w;
+                while ((w = re.exec(text))) {
+                  const r = document.createRange();
+                  r.setStart(node, w.index);
+                  r.setEnd(node, w.index + w[0].length);
+                  const rect = r.getBoundingClientRect();
+                  words.push({ top: Math.round(rect.top), right: rect.right, width: rect.width });
+                }
+                const tops = [...new Set(words.map((x) => x.top))].sort((x, y) => x - y);
+                if (tops.length < 2) return [];
+                const line1 = words.filter((x) => x.top === tops[0]), next = words.find((x) => x.top === tops[1]);
+                // What the chevron and the button's own padding take after the text.
+                const tail = btn.getBoundingClientRect().right - el.getBoundingClientRect().right;
+                const room = edge - tail - Math.max(...line1.map((x) => x.right));
+                return room >= next.width + parseFloat(getComputedStyle(el).fontSize) * 0.5 ? [(el.textContent ?? "").trim()] : [];
+              }),
+            };
+          })(),
+          // Where the strip says a choice is kept: `shared`, `local` or
+          // `loading`, off the strip's own handle.
+          saved: strip.getAttribute("data-tile-saved") ?? "",
           slots: strip.querySelectorAll("[data-tile-slot]").length,
           cards: cards.length,
           pickers: strip.querySelectorAll("[data-tile-select]").length,
@@ -21849,25 +22360,32 @@ for (const theme of THEMES) {
        * typed list would be a second source for the catalogue and would go
        * stale silently the first time a metric was added.
        */
-      if (!FAST && /^private-market/.test(name) && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.pickers) {
+      if (!FAST && PICK_WALK.has(name) && theme === THEMES[0] && width === WIDTHS[0] && tileStrip?.pickers) {
         try {
           await page.click('[data-tile-select="0"]');
           const opts = await page.$$eval("[data-tile-option]", (els) => els.map((e) => e.getAttribute("data-tile-option") ?? ""));
+          // WHERE THE MENU SAYS THE CHOICE GOES — read while it is open, since
+          // it renders nothing while closed.
+          const savedWhere = await page.$eval("[data-tile-saved-where]", (e) => (e.textContent ?? "").trim()).catch(() => null);
           if (opts.length) {
-            TILE_MENU = opts;
-            if (!PM_TILE_IDS.length) PM_TILE_IDS.push(...opts);
+            TILE_MENU.set(name, opts);
+            if (/^private-market/.test(name) && !PM_TILE_IDS.length) PM_TILE_IDS.push(...opts);
+            if (name === "cio" && !CIO_TILE_OPTIONS.length) {
+              CIO_TILE_OPTIONS.push(...await page.$$eval("[data-tile-option]", (els) => els.map((e) =>
+                ({ id: e.getAttribute("data-tile-option") ?? "", label: (e.textContent ?? "").trim() }))));
+            }
           }
           /**
-           * ...AND PICKING ONE ACTUALLY CHANGES THE TILE.
+           * ...AND PICKING ONE ACTUALLY CHANGES THE TILE — AND IS STILL THERE
+           * ON THE NEXT VISIT.
            *
            * Every other claim here is about a control EXISTING, and a picker
-           * wired to nothing satisfies all of them — the strip renders, the
-           * menu opens, the `+` is in the right corner, and choosing does
-           * nothing. So the interaction is performed: pick the metric this slot
-           * is NOT showing, and read back both what the strip now holds and
-           * whether the address moved with it. The address is the half a reader
-           * could not otherwise see, and it is what makes a chosen set a link
-           * rather than a preference locked to one browser.
+           * wired to nothing satisfies all of them. So the interaction is
+           * performed: pick the metric this slot is NOT showing, read the strip
+           * back, then OPEN THE PAGE AGAIN with no `?tiles=` in the address —
+           * which is the family's "next time when we come on the dashboard".
+           * With no shared store running here, this is the browser's own memory
+           * being checked; `cio-tiles-saved` checks the shared one.
            *
            * A FRESH CONTEXT PER ROUTE means this cannot leak: the choice is
            * written to `localStorage`, and the next route's page has none.
@@ -21876,12 +22394,16 @@ for (const theme of THEMES) {
           const pick = opts.find((id) => id !== before);
           if (pick) {
             await page.click(`[data-tile-option="${pick}"]`);
-            TILE_PICK = await page.evaluate(() => ({
+            await page.waitForTimeout(300);
+            const walk = await page.evaluate(() => ({
               ids: (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean),
               search: location.search,
             }));
-            TILE_PICK.before = before;
-            TILE_PICK.picked = pick;
+            const bare = (() => { const u = new URL(BASE + path); u.searchParams.delete("tiles"); return u.pathname + u.search; })();
+            await page.goto(BASE + bare, { waitUntil: "networkidle" });
+            const revisit = await page.evaluate(() =>
+              (document.querySelector("main [data-tile-strip]")?.getAttribute("data-tile-strip") ?? "").split(",").filter(Boolean));
+            TILE_PICK.set(name, { ...walk, before, picked: pick, revisit, savedWhere });
             // Back to the state this route was walked in, so the screenshot and
             // anything read after here see the page as addressed.
             await page.evaluate(() => { try { window.localStorage.clear(); } catch { /* private mode */ } });
@@ -22004,8 +22526,8 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, priceRequests: [...PRICE_REQUESTS], attrib, tableRows, mandateRows, closedNote, hbRedeemed, hbCapital, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
