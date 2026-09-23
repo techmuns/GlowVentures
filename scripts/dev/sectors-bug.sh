@@ -192,12 +192,20 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'const returnPct = cost !== null && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;'))
 EOF
 
-# 14 ── the grid's row stops being bounded, so both halves grow with their content
+# 14 ── the two halves stop being capped, so they grow with their content
+#
+# NOT the grid's `minmax(0,1fr)` row, which was this case's first draft and
+# produced a CLEAN run for a reason worth recording: it did not create the bug.
+# An `auto` row over items with `min-height: 0` only grows into the free space a
+# definite-height grid has, so the page still fit at 480px — measured, main
+# scroll 0. The cards' own `max-h-full` is what caps each half; without it both
+# grow to their content — measured, main scrolls 261px on /sectors and 383px on
+# Compare at 480px, and 0 at the sweep's 1000px, where no other check can see it.
 run_case "the two halves grow with their content, so the page scrolls on a short window" py <<'EOF'
 import sys
 p='src/pages/SectorComposition.tsx'; s=open(p).read()
-old=' lg:grid-rows-[minmax(0,1fr)]'
-if s.count(old)!=1: sys.exit(1)
+old=' lg:max-h-full'
+if s.count(old)!=3: sys.exit(1)
 open(p,'w').write(s.replace(old,''))
 EOF
 

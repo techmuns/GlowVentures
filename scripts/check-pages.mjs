@@ -18265,10 +18265,11 @@ for (const theme of THEMES) {
           // "right of the title and overlapping its line", and the bug pass
           // proved that blind: moved into the header's SUBTITLE slot, the tabs
           // did not wrap below the title at all — a `w-full max-w-2xl` item fits
-          // beside the pills on a wide header — and landed at the far right of
-          // the row, 900px from the title, satisfying every clause. The gap is
-          // the header's own `gap-x-2.5` plus rounding; 32px is room for that
-          // and for nothing else.
+          // beside the crumb and the title on a wide header — and landed at the
+          // far right of the row, MEASURED 489px from the title and still on its
+          // line, satisfying every clause. Where they belong the gap measures
+          // 9px, the header's own `gap-x-2.5`; 32px is room for that and for
+          // nothing else.
           tabsBesideTitle: !!(h1 && tabs) && (() => {
             const a = h1.getBoundingClientRect(), b = tabs.getBoundingClientRect();
             return b.left >= a.right - 1 && b.left - a.right <= 32 && b.top < a.bottom && b.bottom > a.top;

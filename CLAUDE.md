@@ -15746,6 +15746,100 @@ breakdown" and the footer's opening words — a footer that went at Stage 10ap, 
 had been reading the whole rest of the page ever since; it reads each row's own
 `data-cell="return"` now.
 
+#### Two review findings — one valid, one not reproducible and still worth a check
+
+**THE CARD CALLED THE RECORD "WHOLE SINCE LISTING" WHETHER OR NOT IT WAS.** Valid.
+The subtitle of the corporate-actions card was a constant. The builder has a
+supported path — the exchange's identity not established — that keeps the stored
+actions with `actionsComplete: false`, and on it the subtitle called a possibly
+truncated list complete while the bonus/split line beneath it correctly refused
+to. Both now read the same flag (`usePolycabLive().complete`); the incomplete
+wording says the latest refresh could not confirm the record is whole.
+`check:pages` asserts it against the committed store in BOTH directions, off the
+subtitle's own `data-polycab-card-sub` node. **The incomplete branch is one this
+book never renders**, so it was exercised once on purpose: the store flipped to
+incomplete with the page untouched sweeps CLEAN, which is what says the check
+accepts the right wording rather than merely rejecting the wrong one.
+
+**"THE CARD IS NOT HEIGHT-CONSTRAINED, SO `<main>` SCROLLS" — MEASURED AND NOT
+REPRODUCIBLE, AND THE CHECKS COULD NOT HAVE SAID SO.** The card is a flex child of
+the page's `flex h-full flex-col` root with `min-h-0` and the default
+`flex-shrink: 1`, so it does shrink. At a 1500×480 window the page does not scroll
+on any of the six addresses, and the table's own scroller inside the card holds
+the rest: 141px on the corporate actions, 268px on the promoter quarters, 223,
+114 and 238px on the three Sector Composition tabs. The holding table (one row)
+fits.
+
+What the finding exposed is real anyway: **at the sweep's 1000px every one of
+these tables fits whole**, so "the page does not scroll" could not tell a card
+that shrinks and scrolls inside itself from one that simply grew with its content.
+`SHORT_WINDOW` measures the same page at `SHORT_H` (480px) and restores the
+viewport before the invariants and the screenshot: the page must not scroll, no
+card may spill past its own box, and a table that does not fit must be held by an
+on-screen scroller inside its card. It checks that the window really WAS short,
+because a resize that silently did nothing would measure the 1000px page again and
+pass by asserting nothing.
+
+#### The bug-reintroduction pass, and the two cases that came back CLEAN
+
+Polycab: **22 cases, every one fires.** 20 fire a sweep invariant and 2 only the
+suite — the pledge defaulting to 0 and the store's ISIN diverging — both invisible
+on screen by construction, as Stage 10bk records. Case 21 (the subtitle claimed on
+an incomplete record) fires the subtitle check; case 22 (the card set to
+`flex-none`, the reviewer's shape) fires the short-window check on the two tables
+that do not fit, and correctly NOT on the holding table, which fits either way.
+
+Sector Composition: **14 cases, every one fires — two of them only after a second
+look, for two different reasons.**
+
+- **CASE 11 WAS A CHECK THAT COULD NOT FAIL.** The tabs moved into the header's
+  SUBTITLE slot came back clean: the check asked only "to the right of the title
+  and on its line", and a `w-full max-w-2xl` subtitle fits beside the crumb and the
+  title on a wide header, so the tabs landed at the far right of the row — measured
+  **489px** from the title, still on its line — and satisfied every clause. The
+  check requires ADJACENCY now (≤32px; where the tabs belong the gap measures 9px,
+  the header's own `gap-x-2.5`) and fires on all three tabs. The comment beside it
+  first said 900px, a figure nobody had measured; it says 489px because that is
+  what the measurement says.
+- **CASE 14 WAS A PATCH THAT DID NOT CREATE THE BUG.** Its first draft removed the
+  grid's `minmax(0,1fr)` row and swept clean — not because the check was blind but
+  because nothing changed: an `auto` row over items with `min-height: 0` only grows
+  into the free space a definite-height grid has, so the page still fit at 480px
+  (measured, main scroll 0). The cards' own `max-h-full` is the cap; without it
+  both halves grow — measured, main scrolls 261px on `/sectors` and 383px on
+  Compare at 480px, and 0 at 1000px, where no other check can see it — and the new
+  check fires on all three tabs. **A reintroduction that does not reintroduce the
+  bug is a clean run that proves nothing**, and only a measurement of the patched
+  page tells it apart from a blind check.
+
+Both harnesses take `CASES=` now, so one case is re-run alone rather than paying a
+build and a sweep for every case to re-check one.
+
+#### Merged with main, and the letter collided again
+
+**#71 took `10bs` while this branch held it.** Main merged first and keeps it; this
+section is `10bt`. Fourteen lines named `10bs` outside the two sections and each
+was classified by whether it exists verbatim on main: six were this branch's (the
+Polycab page paragraph, Stage 10bq's pledge claim, the six-invariants paragraph,
+Stage 10bk's two cards, Stage 10at's donut and Stage 10aq's legend) and moved;
+eight were main's and were left alone. The stage headings then differ from main's
+by `10bt` alone, with main's ten historical duplicates unchanged.
+
+**THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS**, so it was
+read rather than trusted: 81 keys, none duplicated, the exact union of both sides
+— the two this branch adds (`sectorLayout`, `shortWindow`) beside main's, and main
+added none. No generated file was touched by either side, and `npm run
+build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically
+on the merged tree.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` · `check:family` **86/0** · `check:pages` **198 combinations
+clean** on the merged tree, with the eight evidenced abstentions main's own sweep
+carries and **not one of this change's own**. This branch's pre-merge sweep was
+194 — its three routes (`polycab-dividends`, `polycab-promoter`,
+`sectors-compare`) across both themes on top of its base — and #71 adds two
+(`private-market-calls`, `private-market-calls-off`), so 198 reconciles; it is
+recorded because it was measured again, not because it adds up.
 
 ### Stage 10k — News & Announcements: REMOVED
 
