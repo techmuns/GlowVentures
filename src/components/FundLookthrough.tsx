@@ -5,7 +5,7 @@ import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtDate, fmtNum, fmtPct, changeColor } from "@/lib/format";
+import { fmtDate, fmtNum, fmtPct, changeColor, displayFiledName } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -81,7 +81,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
   const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
   const view = useTableView("fund-lookthrough", FL_COLS);
 
-  const rows = useMemo(() => pf?.holdings ?? [], [pf]);
+  // THE AMC'S OWN SPELLING, CASED FOR DISPLAY. HDFC files some lines entirely in
+  // capitals (`KAYNES TECHNOLOGY INDIA LIMITED`); a name the filer cased is kept
+  // as filed and only an all-capitals one is title-cased — see
+  // `displayFiledName`. Nothing is re-keyed from it: this table joins nothing.
+  const rows = useMemo(() => (pf?.holdings ?? []).map((h) => ({ ...h, name: displayFiledName(h.name) })), [pf]);
   const term = q.trim().toLowerCase();
   // A DEBT ROW IS FOUND BY ITS RATING AND ITS CLASS, not only by a sector it
   // does not have — the two columns a bond actually fills.
@@ -135,7 +139,14 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         <Card className="mt-5" title={PART_TITLE[part]}>
         <AbsentSection
           what={`No scheme resolves for ${name}`}
-          needs={`${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
+          needs={state.unseen
+            /* A HOLDING THE STORE WAS NEVER GIVEN is not one it failed to match,
+               and saying its report "names every one" would send a reader to a
+               document that does not mention it. The depository's arbitrage
+               units reach the book only at runtime, off an account that sent no
+               holding statement, which is why the store was built without them. */
+            ? "The fund store has no entry for this holding — it is neither matched to a scheme nor named among the ones that could not be — so it was not among the holdings the store was built from. Nothing is shown rather than another fund's NAV or holdings."
+            : `${state.reason ?? "This holding is not matched to a scheme in the fund store."} A scheme is matched on its ISIN, and only failing that on a normalised name; anything matching nothing — or more than one — is left unresolved rather than shown against a nearest guess, because the NAV and the companies listed would then be some other fund's. docs/FUND-LOOKTHROUGH.md names every one.`} />
         </Card>
       </div>
     );

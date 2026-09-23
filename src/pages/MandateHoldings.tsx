@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronRight, Wallet, Coins, TrendingUp, Layers } from "lucide-react";
+import { ChevronRight, Wallet, Coins, TrendingUp, Layers, Percent } from "lucide-react";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
@@ -9,14 +9,15 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
 import { rollup, acctKey } from "@/lib/txnRollup";
-import { capitalRollup } from "@/lib/tranches";
-import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
+import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
+import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
+import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -192,6 +193,12 @@ function bucketsOf(rows: Position[], engagement: string | null | undefined) {
  */
 const MANDATE_COLS = ["security", "sector", "qty", "avgCost", "invested", "cmp", "mv", "weight", "pnl"] as const;
 const CAPITAL_COLS = ["date", "type", "in", "out", "units", "security"] as const;
+/**
+ * The family's own dated record AND the drawdown funds' own dated calls — the
+ * same list the Transactions table reads, so a fund's page and that table
+ * cannot disagree about what was paid in and when. See `capitalMovesWithCalls`.
+ */
+const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"] as const;
 
 export function MandateHoldings() {
@@ -226,8 +233,22 @@ export function MandateHoldings() {
   // drags the return towards a number nobody measured.
   const cost = sumOrNull(rows.map((r) => r.costBasis));
   const pnl = sumOrNull(rows.map((r) => r.unrealizedPnL));
-  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
   const noCost = rows.filter((r) => r.costBasis === null).length;
+  /**
+   * THE MANDATE'S RETURN, FIFO — and on the WHOLE mandate that is its capital.
+   *
+   * This read `unrealised ÷ cost of the shares held`, which leaves out every
+   * gain the manager has already taken: V.E.C 128004 read 8.42% on its
+   * surviving shares where its own since-inception record — ₹1.05 Cr realised,
+   * ₹50.5 L unrealised, income less fees, on ₹5 Cr paid in — says 30.10%.
+   * `fifoTotals` over every holding of the account, measured against the same
+   * account's own rows, strikes it on the capital the statement states.
+   */
+  const fifo = useMemo(
+    () => fifoTotals(rows, { accounts: portfolio?.accounts ?? [], universe: rows }),
+    [rows, portfolio],
+  );
+  const ret = fifo.returnPct;
   /**
    * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
    * whole of what this figure is. It is NOT the manager's printed total, which
@@ -483,7 +504,7 @@ export function MandateHoldings() {
    * the cost figure as though the two were one measurement. The full record is
    * the card below.
    */
-  const firstContribution = BOOK_CAPITAL_MOVES
+  const firstContribution = CAPITAL_RECORD
     .filter((m) => m.accountId === account.accountId && m.direction === "in")
     .map((m) => m.date).sort()[0] ?? null;
   const fundedNote = firstContribution
@@ -497,7 +518,17 @@ export function MandateHoldings() {
       : `No statement in this drop dates what was paid into this account, or when it opened.`;
 
   const shares = rows.filter((r) => r.assetClass === "Equity");
-  const sleeve = rows.filter((r) => r.assetClass === "Cash");
+  /**
+   * THE CASH SLEEVE IS CASH BY THE FAMILY'S DEFINITION, not by the wrapper a
+   * statement typed. A liquid or arbitrage fund a manager parks the sleeve in is
+   * cash — "arbitrage funds need not be classified into any other category
+   * except for cash" — so it counts here as a cash line, exactly as the
+   * holdings tables' Cash section counts one held outside a mandate. On this
+   * book every such row inside a mandate is already typed `Cash` by its own
+   * statement, so nothing on screen moves; the rule is what keeps the next
+   * manager's arbitrage sleeve from being counted as "other".
+   */
+  const sleeve = rows.filter((r) => readerClassOf(r) === "Cash");
   const other = rows.length - shares.length - sleeve.length;
   /**
    * MEASURED ZEROS, NAMED ON SCREEN RATHER THAN IN A TOOLTIP.
@@ -556,7 +587,7 @@ export function MandateHoldings() {
   // would rank a holding whose statement prints no cost among the cheapest.
   const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
     security: (r) => r.security,
-    sector: (r) => (r.assetClass === "Cash" ? null : r.sector),
+    sector: (r) => (readerClassOf(r) === "Cash" ? null : r.sector),
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
     invested: (r) => r.costBasis,
@@ -608,7 +639,7 @@ export function MandateHoldings() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label="Market value"
           value={money(mv)}
           sub={`${shares.length} company shares · ${sleeve.length} cash ${sleeve.length === 1 ? "line" : "lines"}${other ? ` · ${other} other` : ""}`}
@@ -631,9 +662,21 @@ export function MandateHoldings() {
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{money(pnl, true)}</span>}
-          delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on cost"}
+          sub={pnl === null ? <span className="text-slate-500">needs a cost this statement does not print</span> : "on the shares held now"}
           icon={<TrendingUp className="h-4 w-4" />} />
+        {/* FIFO'S RETURN, IN A TILE OF ITS OWN — never as the P&L tile's
+            delta, where it read as unrealised ÷ cost and left out every gain
+            the manager had already taken. */}
+        <Kpi label="Return · FIFO"
+          value={ret === null ? <AbsentValue /> : <span className={changeColor(ret)} data-mandate-fifo-return={ret}>{fmtPct(ret, { sign: true })}</span>}
+          sub={ret === null
+            ? <span className="text-slate-500">no cost or capital on this statement to measure against</span>
+            : <span title={fifoBasisNote(fifo, (n) => money(n))}>
+                {fifo.wholeMandates.length && account?.capital
+                  ? <>realised {money(fifo.realised, true)} · on {money(account.capital.contributed)} paid in since {fmtDate(account.capital.from)}</>
+                  : <>realised {money(fifo.realised ?? 0, true)} · on {money(fifo.deployed)} deployed</>}
+              </span>}
+          icon={<Percent className="h-4 w-4" />} />
         <Kpi label="Holdings" value={fmtNum(rows.length)}
           sub={`in one mandate · ${MANDATE_BUCKET}`}
           icon={<Layers className="h-4 w-4" />} />
@@ -661,7 +704,10 @@ export function MandateHoldings() {
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {sorted.map((r) => {
-                const isCash = r.assetClass === "Cash";
+                const isCash = readerClassOf(r) === "Cash";
+                // A BALANCE and a cash-equivalent FUND are both cash and are not
+                // the same thing: the fund carries units, a NAV and a gain.
+                const isBalance = r.assetClass === "Cash";
                 return (
                   <Tr view={holdingsView} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
@@ -670,14 +716,18 @@ export function MandateHoldings() {
                       </Link>
                       {isCash && (
                         <span className="ml-2 text-[10.5px] text-slate-500"
-                          title="The manager's cash sleeve. It is part of what this mandate is worth, which is why the total below ties to the statement.">
+                          title={isBalance
+                            ? "The manager's cash sleeve. It is part of what this mandate is worth, which is why the total below ties to the statement."
+                            : "The manager's cash sleeve, parked in a liquid or arbitrage fund — which the family counts as cash and nothing else. It is part of what this mandate is worth, which is why the total below ties to the statement."}>
                           cash sleeve
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-[12px] text-slate-400">
                       {isCash
-                        ? <span className="text-slate-500" title="A balance, not a share in a company — no sector applies.">—</span>
+                        ? <span className="text-slate-500" title={isBalance
+                            ? "A balance, not a share in a company — no sector applies."
+                            : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
                         : r.sector}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
@@ -868,9 +918,11 @@ function CapitalIn({ account }: { account: Account }) {
   const money = (n: number | null | undefined) => fmtFromBase(n, { compact: true });
 
   const group = useMemo(() => {
-    const mine = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === account.accountId);
+    const mine = CAPITAL_RECORD.filter((m) => m.accountId === account.accountId);
     if (!mine.length) return null;
-    return capitalRollup(mine, [account], portfolio?.positions ?? [], BOOK_POSITION_TRANCHES, "all")[0] ?? null;
+    return capitalRollup(mine, [account], portfolio?.positions ?? [], BOOK_POSITION_TRANCHES, "all", "recent", {
+      commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION,
+    })[0] ?? null;
   }, [account, portfolio?.positions]);
 
   const title = "What the family put in";
@@ -881,7 +933,7 @@ function CapitalIn({ account }: { account: Account }) {
   const capitalRows = sortRows(group?.moves ?? [], capitalView.sort, {
     date: (m) => m.date,
     type: (m) => m.label,
-    in: (m) => (m.direction === "in" ? (m.invested ?? m.amount) : null),
+    in: (m) => (m.direction === "in" ? m.amount : null),
     out: (m) => (m.direction === "out" ? m.amount : null),
     units: (m) => m.units,
     security: (m) => m.security,
@@ -916,8 +968,10 @@ function CapitalIn({ account }: { account: Account }) {
               <SortHeader col="date" view={capitalView} align="left">Invested on</SortHeader>
               <SortHeader col="type" view={capitalView} align="left"
                 title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</SortHeader>
-              <SortHeader col="in" view={capitalView}>Paid in</SortHeader>
-              <SortHeader col="out" view={capitalView}>Taken out</SortHeader>
+              <SortHeader col="in" view={capitalView}
+                title="What the family paid, gross, as the statement prints it — the fund's own charges came out of it before units were bought, and where the statement prints what bought units it is in this cell's hover.">Purchase</SortHeader>
+              <SortHeader col="out" view={capitalView}
+                title="What came back out to the family — principal and appreciation together, which is why it is never subtracted from Purchase.">Redemption</SortHeader>
               <SortHeader col="units" view={capitalView}>Units</SortHeader>
               <SortHeader col="security" view={capitalView} align="left">Security bought</SortHeader>
             </Tr>
@@ -927,15 +981,23 @@ function CapitalIn({ account }: { account: Account }) {
               <Tr view={capitalView} key={`${m.date}-${i}`} data-capital-move={account.accountId} className="hover:bg-ink-700/40">
                 <td className="px-4 py-2 mono text-slate-200">{fmtDate(m.date)}</td>
                 <td className="px-4 py-2 text-slate-400">{m.label}</td>
-                <td className="px-4 py-2 text-right mono text-emerald-400/90">
+                {/* THE GROSS PURCHASE, SO THE ROWS ADD TO THE FOOTER. This cell
+                    printed `invested` — net of the fund's stamp duty — while the
+                    footer beneath it summed the gross, so the column never added
+                    to its own total. The net rides in the hover. */}
+                <td className="px-4 py-2 text-right mono text-emerald-400/90"
+                  title={m.direction === "in" && m.invested != null && m.amount != null && m.invested !== m.amount
+                    ? `${money(m.invested)} bought units after the fund's own charges on the day.` : undefined}>
                   {m.direction === "in"
                     ? (m.amount === null
                       ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
-                      : money(m.invested ?? m.amount))
+                      : money(m.amount))
                     : ""}
                 </td>
                 <td className="px-4 py-2 text-right mono text-rose-400/90">
-                  {m.direction === "out" ? money(m.amount ?? 0) : ""}
+                  {m.direction === "out" ? (m.amount === null
+                    ? <AbsentCell reason="this statement prints no amount for that redemption" />
+                    : money(m.amount)) : ""}
                 </td>
                 <td className="px-4 py-2 text-right mono text-slate-400">
                   {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
@@ -958,9 +1020,11 @@ function CapitalIn({ account }: { account: Account }) {
                 in: <td key="in" className="px-4 py-2 text-right mono font-medium text-slate-100">{money(group.paidIn)}</td>,
                 out: (
                   <td key="out" className="px-4 py-2 text-right mono font-medium text-slate-300">
-                    {group.withdrawals === 0
-                      ? <AbsentCell reason="no statement for this account reports money coming back out" />
-                      : money(group.tookOut)}
+                    {group.redemption === null
+                      ? <AbsentCell reason="the fund's statement prints no distribution line, so what has come back to the family is not stated" />
+                      : group.redemption === 0
+                        ? <span title="Nothing has come back out of this account — a computed zero, not a missing figure.">{money(0)}</span>
+                        : money(group.redemption)}
                   </td>
                 ),
               }} />
@@ -968,32 +1032,38 @@ function CapitalIn({ account }: { account: Account }) {
         </table>
       </div>
       {/*
-        THE RETURN THE SECOND HALF OF THE ASK IS ABOUT, AND ITS GATE.
+        WHAT IT MADE, AND ON WHAT — never on "net invested".
 
-        A return against a PARTIAL record of what was paid in overstates itself
-        by everything it missed, so `contributionsAreComplete` — inside
-        `capitalRollup` — publishes one only where the documents establish that
-        the list reaches inception. Where it cannot, the reason is printed here
-        rather than the figure being quietly withheld or, worse, struck anyway.
+        This line used to read "Net invested X against Y today", and net invested
+        was purchase less redemption: a redemption is principal PLUS appreciation,
+        so every rupee of gain that came back was subtracted from the principal
+        and the return struck on it grew by the same amount. It also said a
+        money-weighted rate "needs a valuation on each of those dates", which is
+        false — an XIRR needs each dated flow and ONE closing value, and this
+        record is exactly that. So it states the identity the Transactions table
+        states, and both returns, each labelled, from the one `capitalReturn`.
       */}
-      <div className="border-t border-ink-700 px-4 py-2.5 text-[12px] leading-relaxed text-slate-400">
-        {group.returnPct === null || group.gain === null ? (
-          <>Net invested {money(group.net)} against {money(group.value)} today.{" "}
-            <span className="text-slate-500">
-              No return is struck on it: {group.incompleteReason ?? "this account's reported capital does not support one"}.
-            </span></>
-        ) : (
-          <>Net invested <span className="mono text-slate-200">{money(group.net)}</span> against{" "}
-            <span className="mono text-slate-200">{money(group.value)}</span> today —{" "}
-            <span className={`mono ${changeColor(group.gain)}`}>{money(group.gain)}</span>,{" "}
-            <span className={`mono ${changeColor(group.returnPct)}`}>{fmtPct(group.returnPct)}</span>{" "}
-            <span className="text-slate-500">
-              held over the whole record above. It is a holding-period return on what was paid in, NOT annualised
-              and NOT money-weighted: each payment above has been at work for a different length of time, and a rate
-              that weighted them by when they landed needs a valuation on each of those dates, which no statement
-              here carries.
-            </span></>
-        )}
+      <div className="border-t border-ink-700 px-4 py-2.5 text-[12px] leading-relaxed text-slate-400" data-capital-summary={account.accountId}>
+        <>Purchase <span className="mono text-slate-200">{money(group.paidIn)}</span>
+          {group.redemption != null && group.redemption > 0 && <>, redemption <span className="mono text-slate-200">{money(group.redemption)}</span></>}
+          {group.value != null && <>, worth <span className="mono text-slate-200">{money(group.value)}</span> today</>}
+          {group.appreciation != null
+            ? <> — appreciation <span className={`mono ${changeColor(group.appreciation)}`}>{fmtFromBase(group.appreciation, { compact: true, sign: true })}</span>
+                {group.realised != null && group.unrealised != null && <>{" "}(<span className="mono">{fmtFromBase(group.realised, { compact: true, sign: true })}</span> realised,{" "}
+                  <span className="mono">{fmtFromBase(group.unrealised, { compact: true, sign: true })}</span> unrealised)</>}.{" "}
+                {(() => {
+                  const hpr = capitalReturn(group, "absolute");
+                  const xirr = capitalReturn(group, "xirr");
+                  return (<>
+                    {hpr.shown && <><span className={`mono ${changeColor(hpr.pct)}`}>{fmtPct(hpr.pct, { sign: true })}</span> <span className="ret-tag">HPR</span> on what was paid</>}
+                    {xirr.shown && xirr.tag === "XIRR" && <>, <span className={`mono ${changeColor(xirr.pct)}`}>{fmtPct(xirr.pct, { sign: true })}</span> <span className="ret-tag">XIRR</span> money-weighted over every dated flow</>}
+                    {xirr.shown && xirr.tag !== "XIRR" && <span className="text-slate-500"> — the money has been in under a year, so no annual rate is struck</span>}
+                    {!xirr.shown && <span className="text-slate-500"> — no XIRR: {xirr.reason}</span>}.
+                  </>);
+                })()}
+              </>
+            : <span className="text-slate-500"> — no appreciation or return is struck: {group.appreciationReason ?? "this account's reported capital does not support one"}.</span>}
+        </>
       </div>
     </Card>
   );

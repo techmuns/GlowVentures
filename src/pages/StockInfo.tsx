@@ -10,11 +10,12 @@ import {
   measuredReturn,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
-  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
+  MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
+import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
-import { fundNavFor } from "@/lib/fundNavs";
+import { fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
@@ -30,6 +31,7 @@ import { UNCLASSIFIED } from "@/lib/sectors";
 import { ReturnsTable } from "@/components/ReturnsTable";
 import { InvestmentTools } from "@/components/InvestmentTools";
 import { QuantityMovement } from "@/components/QuantityMovement";
+import { CorporateActionReturns } from "@/components/CorporateActionReturns";
 import { PageNav } from "@/components/PageNav";
 import { useViewParam } from "@/components/ViewToggle";
 import { movementsFor, unmovedAccountsFor } from "@/lib/shareMovements";
@@ -403,10 +405,29 @@ export function StockInfo() {
     : "held";
   const notACompany = rows.length > 0 && rows.every((r) => isFundVehicle(r) || r.assetClass === "Cash");
   const fundVehicle = rows.length > 0 && rows.every(isFundVehicle);
+  /**
+   * A LIQUID OR ARBITRAGE FUND IS CASH ON THIS PAGE TOO. The family's rule is
+   * that such a fund is classified as nothing but cash, so the Research tab says
+   * Cash rather than the wrapper its statement typed it as — and an arbitrage
+   * fund is not looked through at all: its disclosed long shares are hedged by
+   * short futures, and reading them as exposure would print stock the family
+   * does not carry.
+   */
+  const cashFund = fundVehicle && rows.every((r) => isCashEquivalent(r));
+  const arbitrage = rows.some((r) => isArbitrageFund(r));
   // A mutual fund or an ETF discloses its portfolio monthly and has a published
   // NAV; an AIF does neither. The one test, so the two tabs a scheme fills and
   // the note that refers to them cannot disagree about which schemes they are.
   const schemeHalves = fundVehicle && canHaveLookthrough(rows[0]);
+  /**
+   * AN ARBITRAGE FUND KEEPS ITS PRICE HALF AND LOSES ITS HOLDINGS HALF. The
+   * reason it is not looked through is about what it HOLDS — long shares
+   * hedged by short futures — and says nothing against the scheme's own
+   * published NAV and returns, which are a statement about the fund rather than
+   * about anything inside it. When the two halves were one card the whole card
+   * had to go; on two tabs only the half the reason is about does.
+   */
+  const lookThroughHoldings = schemeHalves && !arbitrage;
   const notACompanyLabel = NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding";
   const providerSector = rows.find((r) => r.providerSector)?.providerSector ?? null;
   const isin = rows[0]?.isin;
@@ -440,7 +461,13 @@ export function StockInfo() {
     return: (r) => r.returnPct,
   });
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
-  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
+  /**
+   * FIFO — the realised gain on units of this holding already sold stays in
+   * its return (`fifoTotals`), over the rows that report a cost, which is the
+   * set Invested beside it is struck on.
+   */
+  const fifo = fifoTotals(drows.filter((r) => r.costBasis != null && !r.costUnavailable));
+  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null;
   /**
    * WHY THERE IS NO COST — the question the reader actually opened this page with.
    *
@@ -594,7 +621,13 @@ export function StockInfo() {
     : navMark
     ? {
         line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on its day`}`,
-        tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.`,
+        tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.${
+          // NO STATEMENT PRICES A DEPOSITORY'S OWN CLOSING UNITS, so the tip
+          // says whose count they are rather than implying a statement mark
+          // that the NAV replaced.
+          rows.some((r) => r.depositoryUnits)
+            ? ` ${rows.every((r) => r.depositoryUnits) ? "These units are" : "Some units here are"} a depository's own closing balance, on an account that sent no holding statement, so no statement prices them.`
+            : ""}`,
       }
     : live
     ? {
@@ -816,7 +849,9 @@ export function StockInfo() {
             // (Measured: the book's cash rows net to ₹0.11 of paise rounding
             // between the printed cost and value, so "no P&L" would overstate it.)
             : rows.every((r) => r.assetClass === "Cash") ? "a balance — its cost and value are one amount"
-            : "on cost"}
+            // FIFO — the realised gain on units already sold stays in the
+            // return beside it, and the hover says over what.
+            : <span title={fifoBasisNote(fifo, (n) => money(n))}>return · FIFO{fifo.realised ? ` · incl. ${money(fifo.realised, true)} realised` : ""}</span>}
           icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
             name's sells. Null is not zero: the sells may be real and what they
@@ -926,7 +961,11 @@ export function StockInfo() {
                           <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
                             {r.currentPrice === null
                               ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
-                              : <span title={r.navPriced
+                              : <span title={r.depositoryUnits
+                                  /* NO STATEMENT MARKS THESE UNITS, so the sentence that
+                                     says a NAV "replaces" one would be false here. */
+                                  ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
+                                  : r.navPriced
                                   ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
                                   : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
                                   {price(r.currentPrice)}
@@ -982,7 +1021,7 @@ export function StockInfo() {
                           pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
                           return: (
                             <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
-                              title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
+                              title={`The holding-period return across every row above, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(fifo, (n) => money(n))}`}>
                               <span className="ret-tag mr-0.5">HPR</span>{ret === null ? <AbsentCell reason={costWhy} /> : fmtPct(ret, { sign: true, decimals: 1 })}
                             </td>
                           ),
@@ -1058,7 +1097,8 @@ export function StockInfo() {
             {/* OPENING, PLUS, MINUS, CLOSING — read off the depository statement,
                 which prints all four. Above the tape deliberately: the family
                 asked for the quantity account first and the dated rows second. */}
-            <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts} />
+            <QuantityMovement movements={moves} unmoved={unmoved} accounts={portfolio.accounts}
+              held={new Set(rows.map((p) => p.accountId))} />
 
             <Card className="mt-5" title="Transaction history" subtitle='Every dated buy & sell from the ledger — the "Transaction Info" drill-down' pad={false}
               right={led && led.txns.length ? <Pill>{led.txns.length} rows · {led.txns.filter((t) => t.side === "Sell").length} sells</Pill> : undefined}>
@@ -1125,8 +1165,18 @@ export function StockInfo() {
                 returns table carries the 52-week high and low as two of its own
                 columns, which is why the separate Trading range card that printed
                 the same two figures is gone. */}
+            {/* …AND, UNDER THE PRICE RETURNS, THE RETURN THAT INCLUDES DIVIDENDS.
+                The returns table is headed "excludes dividends"; this card is the
+                other half of that sentence — each statement's window with the
+                gross dividends declared in it and any split or bonus applied — so
+                the two sit together, where a reader comparing a price return with
+                a total return already is. It draws nothing for a holding that is
+                not a company share. */}
             {!notACompany ? (
-              <ReturnsTable ticker={sym} name={name} />
+              <>
+                <ReturnsTable ticker={sym} name={name} />
+                <CorporateActionReturns securityKey={securityKey} />
+              </>
             ) : schemeHalves ? (
               <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
             ) : (
@@ -1150,18 +1200,33 @@ export function StockInfo() {
                 {/* WHAT THE FUND HOLDS — the look-through, where a disclosure
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
-                {schemeHalves && (
+                {lookThroughHoldings && (
                   <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no
                     balance sheet, no concall and no insider filing — absent
                     because of what the holding IS, never because a feed is down,
-                    and said once rather than as five empty panels. */}
-                <Card className="mt-5" title={`Company research — not applicable to ${notACompanyLabel}`}>
-                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research-na={fundVehicle ? "fund" : "balance"}>
+                    and said once rather than as five empty panels.
+
+                    `data-stock-class` is the class a READER is told, which for a
+                    liquid or arbitrage fund is Cash whatever wrapper its statement
+                    typed it as — the family's instruction. */}
+                <Card className="mt-5" title={`Company research — not applicable to ${cashFund ? "a cash-equivalent fund" : notACompanyLabel}`}>
+                  <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-research-na={fundVehicle ? "fund" : "balance"}
+                    data-stock-class={cashFund ? "Cash" : assetClass ?? ""}>
                     {fundVehicle
-                      ? <>This is {notACompanyLabel} — one line standing for a portfolio its manager assembles, not a share
-                        in a company — so there is no PE, balance sheet, concall or insider filing for it. {schemeHalves
+                      ? <>{cashFund
+                          ? <>This holding is <span className="font-medium text-slate-300">Cash</span> — {arbitrage ? "an arbitrage" : "a liquid"} fund,
+                            which the family counts as cash and nothing else; one line standing for a portfolio its manager
+                            assembles, not a share in a company — so there is no PE, balance sheet, concall or insider filing for it.</>
+                          : <>This is {notACompanyLabel} — one line standing for a portfolio its manager assembles, not a share
+                            in a company — so there is no PE, balance sheet, concall or insider filing for it.</>}{" "}
+                        {arbitrage
+                          ? <>An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately
+                            not drawn here: that portfolio is long shares hedged by short futures, so reading it as the
+                            family&rsquo;s exposure to those companies would print stock they do not carry. Its value is
+                            counted whole, as cash.</>
+                          : lookThroughHoldings
                           ? <>What the scheme holds is shown above, from the AMC&rsquo;s own monthly disclosure; the
                             fund&rsquo;s value stays whole in every total.</>
                           : <>An AIF publishes no monthly portfolio (SEBI requires one from a mutual fund, not from a

@@ -28,7 +28,7 @@ restore() {
 trap 'restore; rm -rf "$SNAP"' EXIT
 
 # `stock-cmp-derived` was retired at Stage 10bn; `stock-cmp-agree` carries the
-# Total-row claim since the position page became tabs (Stage 10cb), because the
+# Total-row claim since the position page became tabs (Stage 10cf), because the
 # `stock` holding is held in ONE account and draws no Total row.
 ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-cmp-agree,stock-cmp-nav,stock-fund"
 run() {

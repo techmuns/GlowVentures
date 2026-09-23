@@ -28,6 +28,7 @@ FILES=(
   "src/pages/StockInfo.tsx"
   "src/components/ResearchPanel.tsx"
   "src/components/InvestmentTools.tsx"
+  "src/components/FundLookthrough.tsx"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -41,7 +42,7 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market
 WANT="${CASES:-}"
 N=0
 
@@ -232,9 +233,87 @@ run_case "an AIF folio's price tab draws a returns table instead of stating its 
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '            {!notACompany ? (\n              <ReturnsTable ticker={sym} name={name} />'
+old = '            {!notACompany ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />'
 if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, '            {(!notACompany || fundVehicle) && !schemeHalves ? (\n              <ReturnsTable ticker={sym} name={name} />', 1))
+open(p, "w", encoding="utf-8").write(s.replace(old, '            {(!notACompany || fundVehicle) && !schemeHalves ? (\n              <>\n                <ReturnsTable ticker={sym} name={name} />', 1))
+PY
+
+# ── THE MERGE WITH #74, #80 AND #84 ─────────────────────────────────────────
+# Each case below is a decision the merge made about where main's additions
+# land on a page that draws one tab at a time.
+
+run_case "the dividend-inclusive card moved back under the account table" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '                <CorporateActionReturns securityKey={securityKey} />\n'
+pos = '          <div data-stock-section="position">\n'
+if old not in s or pos not in s: sys.exit(1)
+s = s.replace(old, "", 1).replace(pos, pos + '            <CorporateActionReturns securityKey={securityKey} />\n', 1)
+open(p, "w", encoding="utf-8").write(s)
+PY
+
+run_case "the dividend-inclusive card drawn on the Position tab as well" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+pos = '          <div data-stock-section="position">\n'
+if pos not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(pos, pos + '            <CorporateActionReturns securityKey={securityKey} />\n', 1))
+PY
+
+run_case "an arbitrage fund's hedged holdings drawn on its Research tab" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '                {lookThroughHoldings && (\n'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '                {schemeHalves && (\n', 1))
+PY
+
+run_case "an arbitrage fund's own NAV half hidden with its holdings" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '            ) : schemeHalves ? (\n              <FundLookthrough part="nav"'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '            ) : lookThroughHoldings ? (\n              <FundLookthrough part="nav"', 1))
+PY
+
+run_case "a scheme the fund store never saw is told the store's report names it" py <<'PY'
+import sys
+p = "src/components/FundLookthrough.tsx"
+s = open(p, encoding="utf-8").read()
+old = '          needs={state.unseen\n'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '          needs={state.reason === "__never__"\n', 1))
+PY
+
+run_case "the Research tab stops telling a reader an arbitrage fund is cash" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'data-stock-class={cashFund ? "Cash" : assetClass ?? ""}'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, 'data-stock-class={assetClass ?? ""}', 1))
+PY
+
+run_case "the quantity account stops marking the account that sold out" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '\n              held={new Set(rows.map((p) => p.accountId))} />'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, ' />', 1))
+PY
+
+run_case "the position's return back to the survivors-only figure, not FIFO" py <<'PY'
+import sys
+p = "src/pages/StockInfo.tsx"
+s = open(p, encoding="utf-8").read()
+old = '  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null;'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;', 1))
 PY
 
 echo ""

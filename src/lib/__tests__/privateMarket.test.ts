@@ -78,6 +78,15 @@ console.log("\n── the private set ──");
 eq("raw private rows", scope.rows.length, 6);
 eq("deduped private rows", scope.dedupedRows.length, 4);
 eq("accounts in scope", scope.accounts.length, 15);
+// THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
+// that decides their AIF drill-down section and nothing else: which SIDE of the
+// book a fund is on is the family's own placing, which outranks any category.
+// Delphi invests in listed equity, so it is off this page though Category II —
+// the Founders Fund's case exactly — and Neo Infra is on it.
+ok("Neo Infra, declared Category II and placed private by the family, is on this page",
+  scope.rows.some((p) => p.securityKey === "neo-infra-income-opportunities-fund-i-class-a5"));
+ok("…and Delphi, declared Category II but placed listed by the family, is not",
+  !scope.rows.some((p) => p.securityKey === "motilal-oswal-wealth-delphi-equity-fund"));
 // EVERY ROW IS ON THE PRIVATE SIDE, which is now what `isPrivateClass` means —
 // read from the SEBI category rather than from the asset class. The class test
 // this replaced would pass on a page carrying every Category III folio, which
@@ -104,8 +113,13 @@ const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
 eq("distinct funds", funds.length, 4);
 near("fund rollup value ties to the deduped total", sum(funds.map((f) => f.mv)), dedupedMV);
 const costedFunds = funds.filter((f) => f.cost != null);
-near("cost", sumOrNull(funds.map((f) => f.cost)), 87616647);
-near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 18538189.9);
+// COST IS WHAT THE UNITS STILL HELD COST, under FIFO (Stage 10ca): Neo Infra
+// redeemed 14,162.8 units at their ₹14,16,280 cost, so its ₹5 Cr drawn is
+// ₹4,85,83,720 held — the ₹87,616,647 this read before, less that — and the
+// unrealised gain rises by the same amount. Every rupee drawn is still in the
+// return, as the cost of units sold (`fundReturns.test.ts` §4).
+near("cost", sumOrNull(funds.map((f) => f.cost)), 87616647 - 1416280);
+near("unrealised P&L", sumOrNull(funds.map((f) => f.pnl)), 18538189.9 + 1416280);
 // DERIVED, NOT TYPED. The coverage count is a fact about which holdings are
 // private, and that is exactly what changed — a literal here went stale once
 // already. What a `?? 0` would do is put a figure on rows that report none,
