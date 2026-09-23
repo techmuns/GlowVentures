@@ -17186,10 +17186,10 @@ movement columns" is checked on that route rather than excused. `stock-pledge`
 now walks Insolation Energy rather than Kaynes, because the first pledged held
 name in window order changed; both assert the same claim.
 
-#### Merged with main twice, and the letter moved twice
+#### Merged with main three times, and the letter moved three times
 
 This branch was held at the family's request (*"do not merge until i tell you
-to"*), and main moved twice while it waited.
+to"*), and main moved three times while it waited.
 
 - **#70 and #73 landed first** and took `10bt` and `10bu`, so this section became
   `10bv`. The probe list unioned to 85 keys, and #73's generated `reviewGaps.ts`
@@ -17204,6 +17204,37 @@ to"*), and main moved twice while it waited.
   byte, `reconcile:review` reproduces its two outputs, and `rekey:archive`,
   `replay:flows`, `replay:movements`, `replay:calls` and `replay:owners` are all
   no-ops — #75's new Buoyant rows carry no key this change's aliases move.
+- **Then #72 landed and took `10bw`**, and this section is `10bx`. Fourteen
+  `10bw` lines are #72's and stay; this branch's four moved. Two conflicts, each
+  a union: the sweep's imports, and the probe list — the exact union at 87 keys.
+  The generated files re-derive byte for byte and every replay is a no-op, as
+  before.
+
+#### #72's search bar, checked against the family's own complaint
+
+#72 put a search box in the top bar — the search the family is most likely to
+type into — so the complaint was re-run against it rather than assumed to hold.
+It builds its list from the page's own holdings (`portfolio.positions`), so it
+inherits one row per company and one name per row from this change. Measured on
+the rendered list: "kaynes", "karur", "state bank" and "crompton" each find ONE
+holding, named as every other page names it.
+
+**IT FOUND THE ONE THING THE JOIN COST.** Typing "sbi" found nothing. The
+depository prints State Bank of India as `SBI`, which is what people type; before
+the join that spelling was a row of its own, and after it the row carried only
+the canonical name. `printedSpellings(key)` in `securityLabel.ts` hands the
+search every spelling the statements printed, so a row is FOUND by any of them
+and SHOWN under one. With it removed, `searchIndex.test.ts` names three spellings
+that stop finding their company — `SBI`, `The Karur Vys`, `Arvind Fashions
+Limited` — and the sweep's search walk fails on the variant it derives (`SBI`).
+
+**AND #72's SUITE HAD THE EXPOSURE SUITE'S GAP.** It built its index from the raw
+statements while the page builds it from `PortfolioContext`'s names — a company
+under whichever spelling its first row printed, a mandate in its manager's
+capitals. `labelledPositions` and `labelledAccounts` are now the one naming step,
+applied at `PortfolioContext` and by the suite: the treatment `heldFundVehicles`
+got for the same defect an hour earlier, which is the argument for looking for a
+defect's second copy the moment the first is found.
 
 `build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
 `test:family` 37 suites · `check:family` **86/0** · `check:pages` **214
