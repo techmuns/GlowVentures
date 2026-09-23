@@ -8446,10 +8446,18 @@ const INVARIANTS = {
       const a = ctx.absentName?.byName;
       if (!a) return { notChecked: "the holdings search was not driven" };
       const g = REVIEW_GAP_BOOK;
-      // The search really did find no option — otherwise the note is being
-      // asserted over a populated list and means nothing.
-      if (a.options !== 0) return `“${g.name}” matched ${a.options} option(s); the empty state was never reached`;
-      if (!a.note) return `“${g.name}” returns no explanation — the reader sees only "No holdings match"`;
+      /**
+       * BOOLEANS, DELIBERATELY. The harness reads any truthy return as a PASS
+       * (`else if (!r) invariants.push(desc)`), so a returned DESCRIPTION of
+       * the failure is how a check comes to be unable to fail. This one
+       * returned two of them, and the bug pass is what found it: removing
+       * `emptyNote` from the Monitor — the original defect, exactly — left
+       * this invariant GREEN and only its two neighbours spoke.
+       */
+      // The search really did find no option — a gap name that MATCHES one is
+      // a gap the book carries, which is a failure and not an abstention.
+      if (a.options !== 0) return false;
+      if (!a.note) return false;
       // The three things a reader acts on: WHICH name, WHY it is absent, and
       // WHAT would close it. Struck on the gap list's own sentences, so a note
       // that drifted from the report fails here rather than reading plausibly.
@@ -8500,6 +8508,17 @@ const INVARIANTS = {
        * that MATCHES something must get the list and nothing else.
        */
       if (a.options === 0) return { notChecked: `“${a.q}” matched nothing, so this cannot be tested` };
+      return a.note === null;
+    }],
+    ["…and neither is a search that names nothing at all", (t, ctx) => {
+      const a = ctx.absentName?.typo;
+      if (!a) return { notChecked: "the nonsense search was not driven" };
+      // Both halves of the premise, or this asserts nothing: the list must be
+      // empty (so the empty state IS reached and `emptyNote` IS called) and no
+      // gap may answer it (so there is nothing legitimate to say).
+      if (a.options !== 0 || a.named.length) {
+        return { notChecked: "the derived nonsense string matched something on this book" };
+      }
       return a.note === null;
     }],
   ],
@@ -15794,6 +15813,22 @@ for (const theme of THEMES) {
           byName: await read(REVIEW_GAP_BOOK.name),
           byAlias: REVIEW_GAP_BOOK.alias ? await read(REVIEW_GAP_BOOK.alias) : null,
           held: heldWord ? { q: heldWord, ...(await read(heldWord)) } : null,
+          /**
+           * AND A STRING THAT IS NOT A NAME — the case that actually catches a
+           * note rendering whatever was typed.
+           *
+           * `held` cannot: a query that MATCHES options never reaches the empty
+           * state, so `emptyNote` is not called at all and the note is absent
+           * whether or not the component guards itself. Measured — dropping the
+           * guard produced a completely clean sweep. What is needed is a query
+           * that empties the list AND names no gap, which is the state a typo
+           * puts a reader in.
+           *
+           * Derived by reversing a real name rather than typed, so it is a
+           * string this book cannot contain rather than a literal somebody
+           * chose; the invariant abstains if it ever matches something.
+           */
+          typo: await read([...REVIEW_GAP_BOOK.name].reverse().join("")),
         };
         /**
          * AND THE NOTE IS LEFT ON SCREEN, which is not tidiness.

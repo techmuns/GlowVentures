@@ -89,7 +89,7 @@ run_gen_case() {
 # halves printed "SUITE clean" — a check that can only ever report a pass.
 run_suite_body() {
   local out rc
-  out=$(node scripts/test-family.mjs 2>&1); rc=$?
+  out=$(node scripts/test-family.mjs 2>&1 | tr -d "\000"); rc=${PIPESTATUS[0]}
   if [ $rc -eq 0 ]; then
     echo "   SUITE CLEAN — THE BUG DID NOT FIRE"
   else
