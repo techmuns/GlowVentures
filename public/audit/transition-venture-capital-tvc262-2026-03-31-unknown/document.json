@@ -141,7 +141,8 @@
     "label": "Purchase",
     "amount": 7500000
    }
-  ]
+  ],
+  "payouts": []
  },
  "capitalAccount": [
   {

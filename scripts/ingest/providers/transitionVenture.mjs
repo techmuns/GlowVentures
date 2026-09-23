@@ -68,6 +68,34 @@ const NAV_DETAIL = new RegExp(
   "g",
 );
 
+/**
+ * WHAT THIS FUND HAS PAID BACK — a measured nil, or nothing claimed at all.
+ *
+ * The statement's `Summary of Capital Distributions` prints `Gross
+ * Distribution` beside `Net Distribution` and `TDS`, and on every issue in this
+ * corpus all three are 0.00 with no distribution row in the transaction table.
+ * That is a MEASURED nil, so the payout record is an empty list — the one case
+ * where `[]` may be said, because the statement says it.
+ *
+ * A non-zero Gross Distribution is a layout this reader has never seen: its
+ * rows' sign, basis and columns are unmeasured, so they are not read on a
+ * guess. The record is `null` and the warning says why — a payout table
+ * inferred from a layout nobody has checked is the fabrication the calls' own
+ * gate exists to prevent.
+ *
+ * Exported because `replay:calls` runs the same function over the committed
+ * text, which is what keeps the replay a replay rather than a second reader.
+ */
+export function payoutsFrom(flat, cashFlows, warnFn) {
+  const gross = labelled(flat, "Gross Distribution");
+  if (gross === null) return null;
+  const rows = (cashFlows ?? []).filter((c) => c.kind === "distribution");
+  if (gross === 0 && rows.length === 0) return [];
+  warnFn?.("payouts-unread",
+    `the statement prints a Gross Distribution of ${gross} and ${rows.length} distribution row(s); this layout's distribution rows have never been measured, so no payout is carried`);
+  return null;
+}
+
 export function extract({ grid, meta }) {
   const warnings = [];
   const source = meta.docKey;
@@ -199,6 +227,7 @@ export function extract({ grid, meta }) {
     commitment: {
       total: commitment, contributed, undrawn, distributed,
       called: contributed, paid: contributed,
+      payouts: payoutsFrom(flat, cashFlows, (code, detail) => warn(warnings, code, detail)),
       calls: (() => {
         const rows = cashFlows.filter((c) => c.kind === "contribution" && c.date && typeof c.amount === "number");
         if (!rows.length || contributed == null) return [];

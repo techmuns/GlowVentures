@@ -746,6 +746,131 @@ function callsIfTheyTie(calls, total, what, warn) {
  */
 const callRows = (text, re, map) => [...text.matchAll(re)].map(map);
 
+// ── WHAT THE FUND PAID BACK — DATED, AND ONLY WHERE IT TIES ─────────────────
+//
+//   "Just like you have this return methodology in portfolio monitor we need to
+//    have it in private market table as well."
+//
+// A money-weighted return is every cash flow at the date it happened, and the
+// dated calls above are only HALF of them. Neo Infra has paid the family
+// ₹35.32 L of income and returned ₹14.16 L of principal, plus ₹8.69 L of
+// equalisation; Baring made a distribution and paid a compensating
+// contribution — every one of them DATED on the statement, gross and TDS and
+// net, and read by nothing until the Private Market table was asked which
+// return it shows. An XIRR struck on the calls alone would report Neo Infra's
+// cash coming back as a loss, and would look exactly like a correct one.
+//
+// THE SAME LICENCE AS THE CALLS, KIND BY KIND. A payout table reaches the book
+// only where its rows reproduce the total the SAME statement prints for them —
+// income against income, principal against principal, equalisation against
+// equalisation — and a row whose own gross − TDS is not its net is a misread,
+// which refuses the whole table. Anything short of that is `null`, NEVER an
+// empty list: `[]` says the fund paid nothing, and that is a measurement only a
+// statement printing a nil may make.
+//
+// GROSS IS THE AMOUNT. The funds value themselves PRE-TAX (Baring's statement
+// says so in as many words), so the cash leaving them is counted on the same
+// basis: TDS is the family's own tax withheld at source and credited back to
+// them, not a cost of the investment. Both are carried, so a reader who wants
+// the cash that reached the bank has it.
+
+/**
+ * One cash movement FROM the fund TO the family, as the statement prints it.
+ *
+ *   income        a distribution of income or gains
+ *   capital       principal returned — a redemption of units at their cost
+ *   equalisation  a compensating payment from later investors in a later close,
+ *                 which the fund passes to the earlier ones outside its NAV
+ *
+ * `gross` carries a SIGN only for equalisation, whose column the statements
+ * head "(paid)/received": a negative figure there is money the family paid.
+ */
+const payoutRowReads = (r) =>
+  !!r.date && isNumLocal(r.gross)
+  && (r.net == null || Math.abs(Math.abs(r.gross) - (r.tds ?? 0) - Math.abs(r.net)) <= 1);
+
+/**
+ * Dated payouts, published only where each kind reproduces its own printed total.
+ *
+ * @param rows    {date,kind,label,gross,tds,net}[] read off the statement
+ * @param totals  { kind, total, what }[] — one entry per kind the statement can
+ *                print. A kind with rows and no printed total is refused unless
+ *                `rowsWitness` says every row's own gross − TDS = net is the
+ *                only check that table offers (it prints no total at all).
+ */
+function payoutsIfTheyTie(rows, totals, warn) {
+  const misread = rows.filter((r) => !payoutRowReads(r));
+  if (misread.length) {
+    warn?.("payouts-row-misread",
+      `${misread.length} payout row(s) do not reconcile gross − TDS = net on their own figures (${misread.map((r) => `${r.date} ${r.label}`).join("; ")}); no payout is carried`);
+    return null;
+  }
+  const declared = new Set(totals.map((t) => t.kind));
+  const stray = rows.filter((r) => !declared.has(r.kind));
+  if (stray.length) {
+    warn?.("payouts-unchecked", `${stray.length} payout row(s) of a kind this statement prints no total for; no payout is carried`);
+    return null;
+  }
+  for (const t of totals) {
+    const mine = rows.filter((r) => r.kind === t.kind);
+    if (t.total == null) {
+      if (!mine.length) continue;
+      if (t.rowsWitness && mine.every((r) => r.tds != null && r.net != null)) continue;
+      warn?.("payouts-unchecked",
+        `${mine.length} dated ${t.kind} payout(s) were read and this statement prints no ${t.what} to reconcile them against; no payout is carried`);
+      return null;
+    }
+    const sum = Math.round(mine.reduce((s, r) => s + r.gross, 0) * 100) / 100;
+    const delta = Math.round((sum - t.total) * 100) / 100;
+    if (Math.abs(delta) <= 1) continue;
+    // ONE ROW THE SUMMARY DOES NOT COUNT IS EXPLAINED, NOT MATERIAL — the
+    // reconciliation report's own distinction. The gate exists to stop a
+    // schedule SHORT a payment, which understates what the family received.
+    // Rows that EXCEED the printed total by exactly one row's gross, and by no
+    // other row's, are the statement's summary omitting a payment its own
+    // dated table prints: the row is carried, marked, and named. Short of the
+    // total, or over it by anything else, still refuses. A row read twice
+    // offers TWO candidates of the same gross, so it cannot slip through here.
+    const culprits = delta > 1 ? mine.filter((r) => Math.abs(r.gross - delta) <= 1) : [];
+    if (culprits.length === 1) {
+      culprits[0].inPrintedTotal = false;
+      warn?.("payouts-row-not-in-printed-total",
+        `the ${t.kind} rows sum to ${sum} against a printed ${t.what} of ${t.total}; the ${delta} difference is exactly one dated row — ${culprits[0].date} ${culprits[0].label}, gross ${culprits[0].gross}, TDS ${culprits[0].tds ?? "—"}, net ${culprits[0].net ?? "—"} — which the statement's own total does not count. It is carried and marked, not dropped`);
+      continue;
+    }
+    warn?.("payouts-do-not-tie",
+      `${mine.length} dated ${t.kind} payout(s) sum to ${sum} against a printed ${t.what} of ${t.total}; no payout is carried, because a schedule short a payment reads on screen exactly like a complete one`);
+    return null;
+  }
+  return [...rows]
+    .map((r) => ({ ...r, inPrintedTotal: r.inPrintedTotal ?? true }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * `54555490` — three small figures the text layer ran together: gross 545,
+ * TDS 55, net 490. Neo Infra's `Distribution on Other Income` rows print
+ * amounts small enough that the columns touch, and the spaces are simply not
+ * in the text.
+ *
+ * Split ONLY where EXACTLY ONE cut satisfies gross − TDS = net. Zero cuts, or
+ * several, is a misread and the row is refused — and even a unique cut still
+ * has to survive the printed income total, which is what licenses it.
+ */
+export function splitRunTogetherTriple(digits) {
+  if (!/^\d{3,}$/.test(digits)) return null;
+  const found = [];
+  for (let i = 1; i < digits.length - 1; i++) {
+    for (let j = i + 1; j < digits.length; j++) {
+      const parts = [digits.slice(0, i), digits.slice(i, j), digits.slice(j)];
+      if (parts.some((x) => x.length > 1 && x[0] === "0")) continue;
+      const [g, t, net] = parts.map(Number);
+      if (t < g && g - t === net) found.push({ gross: g, tds: t, net });
+    }
+  }
+  return found.length === 1 ? found[0] : null;
+}
+
 const LAYOUTS = [
   {
     key: "buoyant",
@@ -1202,6 +1327,7 @@ const LAYOUTS = [
           callRows(text, /(\d{2}-[A-Za-z]{3}-\d{2})\s+((?:Initial|First|Second|Third|Fourth|Fifth|Sixth|Seventh|Eighth|Ninth|Tenth)\s+(?:Contribution|Drawdown))\s+[\d,]+\.\d{2}\s+([\d,]+)/g,
             (m) => ({ date: toIso(m[1]), label: m[2], amount: n(m[3]) })),
           paid, "Gross Capital Contribution", warn),
+        payouts: neoPayouts(text, warn),
       };
     },
     verify: (text, holdings, warn) => {
@@ -1284,6 +1410,7 @@ const LAYOUTS = [
         callRows(text, /DRAWDOWN\s+(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+\d{2}\/\d{2}\/\d{4}\s+[\d,]+\s+[\d.,]+\s+([\d,]+)/g,
           (m) => ({ date: toIso(m[2]), label: `Drawdown ${m[1]}`, amount: n(m[3]) })),
         n((/Capital Call B\s+([\d,]+)/i.exec(text) ?? [])[1]), "Capital Call B", warn),
+      payouts: baringPayouts(text, warn),
     }),
     /** The statement's own algebra: A − B + E = G, with B = C where nothing is pending. */
     verify: (text, holdings, warn) => {
@@ -1578,6 +1705,134 @@ const NEO_ROWS = {
   pending: neoTrio("Pending Drawdown", "Total Payout", "Units"),
   undrawn: neoTrio("Undrawn Commitment", "Net Equalisation", "Face Value"),
 };
+
+/**
+ * NEO INFRA'S PAYOUTS — three dated tables, three printed totals.
+ *
+ *   `13-Jun-24 Distribution of Interest Income - - 1,20,149 12,015 1,08,134`
+ *   `05-Jan-26 Capital Redemption -14,162.80 -14,16,280 - - -`
+ *   `30-Aug-24 Equalization amount (paid)/received 1,86,952 18,695 1,68,257`
+ *
+ * reconciled against `Income Payout (Gross)`, `Principal Payout` and `Net
+ * Equalisation` in the summary grid — and the grid's own `Total Payout` must be
+ * the first two added, which is the statement checking itself before this
+ * reader checks it.
+ *
+ * TWO THINGS THIS DOES NOT DO, deliberately. It does not drop the payouts dated
+ * after the valuation date (the 9 July distribution sits on a statement whose
+ * value is struck on 30 June): the record is the statement's, and WHICH flows a
+ * return may count against which valuation is the return's question, answered
+ * where the return is struck. And it does not net the principal off the cost:
+ * the book's cost is the gross contribution the statement prints.
+ */
+function neoPayouts(text, warn) {
+  const at = (re, i) => { const m = re.exec(text); return m ? n(m[i]) : null; };
+  const rows = [];
+  const INCOME = /(\d{2}-[A-Za-z]{3}-\d{2}) ((?:Short|Long) [Tt]erm [Cc]apital [Gg]ain|Distribution (?:of|on) (?:Interest|Other) Income) - - ([^\n]+)/g;
+  for (const m of text.matchAll(INCOME)) {
+    const figures = m[3].trim().split(" ");
+    let row = null;
+    if (figures.length === 3) {
+      row = { gross: n(figures[0]), tds: figures[1] === "-" ? null : n(figures[1]), net: n(figures[2]) };
+    } else if (figures.length === 1) {
+      row = splitRunTogetherTriple(figures[0].replace(/,/g, ""));
+    }
+    rows.push({ date: toIso(m[1]), kind: "income", label: m[2], ...(row ?? { gross: null, tds: null, net: null }) });
+  }
+  for (const m of text.matchAll(/(\d{2}-[A-Za-z]{3}-\d{2}) Capital Redemption (-?[\d,]+\.\d+) (-?[\d,]+) - - -/g)) {
+    const amount = n(m[3]);
+    rows.push({ date: toIso(m[1]), kind: "capital", label: "Capital Redemption",
+      gross: amount == null ? null : Math.abs(amount), tds: null, net: amount == null ? null : Math.abs(amount) });
+  }
+  for (const m of text.matchAll(/(\d{2}-[A-Za-z]{3}-\d{2}) Equalization amount \(paid\)\/received (-?[\d,]+) (-?[\d,]+|-) (-?[\d,]+)/g)) {
+    rows.push({ date: toIso(m[1]), kind: "equalisation", label: "Equalisation received",
+      gross: n(m[2]), tds: m[3] === "-" ? null : n(m[3]), net: n(m[4]) });
+  }
+  const income = at(NEO_ROWS.contribution, 2);
+  const principal = at(NEO_ROWS.capital, 2);
+  const total = at(NEO_ROWS.pending, 2);
+  const equalisation = at(NEO_ROWS.undrawn, 2);
+  // THE STATEMENT'S OWN IDENTITY FIRST. If the grid's three figures disagree
+  // with each other, no row can be reconciled against them.
+  if (income != null && principal != null && total != null && Math.abs(income + principal - total) > 1) {
+    warn?.("payouts-summary-does-not-tie",
+      `the summary grid prints Income Payout ${income} and Principal Payout ${principal} against a Total Payout of ${total}; no payout is carried`);
+    return null;
+  }
+  if (income == null && principal == null && equalisation == null) return null;
+  return payoutsIfTheyTie(rows, [
+    { kind: "income", total: income, what: "Income Payout (Gross)" },
+    { kind: "capital", total: principal, what: "Principal Payout" },
+    { kind: "equalisation", total: equalisation, what: "Net Equalisation" },
+  ], warn);
+}
+
+/**
+ * BARING'S PAYOUTS — a distribution printed NET per row and GROSS only in
+ * total, plus a compensating contribution printed in full.
+ *
+ *   `Less: Distribution (E) 37,252` · `Capital Distribution (Redemption) -`
+ *   `Income Distribution 27,616` · `TDS 9,636`
+ *   `Net Distribution STCG FY2025-26 31/03/2026 27,321`
+ *   `Net Distribution Dividend FY2025-26 31/03/2026 295`
+ *   `Compensating contribution 30/09/2025 18,909 1,891 17,018`  (NOT PART OF NAV)
+ *
+ * THE GROSS OF A DISTRIBUTION IS NOT PRINTED PER ROW, so it is never
+ * apportioned across rows. Where every dated distribution row falls on ONE date
+ * the statement's own totals ARE that date's gross, TDS and net, and they are
+ * carried as one dated payout; rows spanning several dates would need a split
+ * the statement does not print, and refuse. Every identity is the statement's:
+ * E = redemption + income + TDS, and the net rows add to the income line.
+ *
+ * The compensating contribution's table prints no total. Its row prints gross,
+ * TDS and net, and that row reconciling on its own figures is the only witness
+ * the table offers — so it is accepted on exactly that, and says so.
+ */
+function baringPayouts(text, warn) {
+  const figure = (re) => { const m = re.exec(text); return m ? n(m[1]) : null; };
+  const E = figure(/Less: Distribution \(E\) ([\d,]+)/i);
+  if (E == null) return null;
+  const incomeNet = figure(/\nIncome Distribution ([\d,]+)/);
+  const tds = figure(/\nTDS ([\d,]+)/);
+  const redemptionRaw = (/Capital Distribution \(Redemption\) (-|[\d,]+)/i.exec(text) ?? [])[1];
+  // A DASH IN AN IDENTITY IS WHAT THE IDENTITY SAYS IT IS. E = redemption +
+  // income + TDS, so the redemption line is E less the two printed beside it —
+  // and the dash is accepted only where that remainder is nil.
+  const redemption = redemptionRaw === "-" ? 0 : n(redemptionRaw);
+  if (incomeNet == null || tds == null || redemption == null || Math.abs(redemption + incomeNet + tds - E) > 1) {
+    warn?.("payouts-summary-does-not-tie",
+      `the NAV summary prints Distribution (E) ${E} against redemption ${redemptionRaw ?? "—"}, income ${incomeNet ?? "—"} and TDS ${tds ?? "—"}; no payout is carried`);
+    return null;
+  }
+  const rows = [];
+  const dated = [...text.matchAll(/Net Distribution (.+?) (\d{2}\/\d{2}\/\d{4}) ([\d,]+)/g)]
+    .map((m) => ({ label: `Net Distribution ${m[1].trim()}`, date: toIso(m[2]), net: n(m[3]) }));
+  if (redemption > 0) {
+    warn?.("payouts-unchecked", `the statement prints a capital redemption of ${redemption} and no dated row this reader recognises for it; no payout is carried`);
+    return null;
+  }
+  if (dated.length) {
+    const dates = [...new Set(dated.map((d) => d.date))];
+    const netSum = Math.round(dated.reduce((t, d) => t + (d.net ?? 0), 0) * 100) / 100;
+    if (dates.length !== 1 || !dates[0] || Math.abs(netSum - incomeNet) > 1) {
+      warn?.("payouts-do-not-tie",
+        `${dated.length} dated net distribution(s) over ${dates.length} date(s) sum to ${netSum} against a printed Income Distribution of ${incomeNet}; the gross per date is not printed and is not apportioned, so no payout is carried`);
+      return null;
+    }
+    rows.push({ date: dates[0], kind: "income", label: dated.map((d) => d.label).join(" · "), gross: incomeNet + tds, tds, net: incomeNet });
+  } else if (E > 0) {
+    warn?.("payouts-unchecked", `the statement prints a distribution of ${E} and no dated row for it; no payout is carried`);
+    return null;
+  }
+  for (const m of text.matchAll(/Compensating contribution (\d{2}\/\d{2}\/\d{4}) ([\d,]+) ([\d,]+) ([\d,]+)/gi)) {
+    rows.push({ date: toIso(m[1]), kind: "equalisation", label: "Compensating contribution",
+      gross: n(m[2]), tds: n(m[3]), net: n(m[4]) });
+  }
+  return payoutsIfTheyTie(rows, [
+    { kind: "income", total: E - redemption, what: "Distribution (E)" },
+    { kind: "equalisation", total: null, what: "compensating-contribution total", rowsWitness: true },
+  ], warn);
+}
 
 /**
  * One UNIT ALLOTMENT line: scheme, class, series, ISIN, face value, units, date.

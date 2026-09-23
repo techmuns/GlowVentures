@@ -37,6 +37,22 @@
 // The one place engagement IS the right key is the opposite question — an
 // account that holds NOTHING, so it has no position to read a class off. That is
 // `unvaluedAccounts`, and it is scoped to `AIF` deliberately.
+//
+// ── AND THE CAPITAL ACCOUNTS ARE SCOPED THE SAME WAY NOW ────────────────────
+//
+//   "private market fund needs to be here in private market only" — sent with
+//    the family's own classification of all fifteen capital accounts.
+//
+// This file used to say the capital-account cards were DELIBERATELY not scoped,
+// because a drawdown structure is how an account funds itself and not where it
+// invests. That reasoning was right about the structure, and the family agree
+// with it word for word — which is exactly why it does not put a public-market
+// fund on a private-market page. Carnelian Bharat Amritkaal, Motilal Oswal
+// Delphi Equity and both Founders Fund folios call capital against a
+// commitment and invest in listed equity: ₹55 Cr of the ₹97.7 Cr register. So
+// `capitalScope` places each capital account by what its FUND invests in, on
+// the same rule that places its holding (`fundMarketSideOf`), and the page
+// NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
 import {
   sum, sumOrNull, dedupedPositions, isPrivateClass, marketSides,
@@ -44,6 +60,24 @@ import {
 } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { fifoTotals } from "./fifo";
+import {
+  fundMarketSideOf, fundMarketSideBasis,
+  type AifCategory, type MarketSide, type MarketSideBasis,
+} from "./aifCategory";
+
+/**
+ * THE SIDE OF THE FUND AN ACCOUNT HOLDS, read off the account alone — for an
+ * account with no position to read `marketSide` from. India SME and Sky
+ * Capital publish no NAV, 360 ONE Alternates' folios carry only income, and
+ * each still has to land on one side of the page or the other.
+ *
+ * The account's own strategy names the fund where it prints one (360 ONE
+ * Alternates: `360 ONE Special Opportunities Fund - Series 8`); otherwise the
+ * provider IS the fund for a single-scheme account. `fundMarketSideOf` also
+ * reads the account's engagement wording, which is where the SEBI category is.
+ */
+export const accountFundSide = (a: Account): MarketSide | null =>
+  fundMarketSideOf(a.strategy ?? a.provider, a);
 
 /**
  * How much of a row set's market value must carry a cost before a return is
@@ -73,8 +107,19 @@ export function privateScope(positions: Position[], accounts: Account[]): Privat
   const rows = positions.filter(isPrivateClass);
   const dedupedRows = dedupedPositions(positions).filter(isPrivateClass);
   const held = new Set(rows.map((p) => p.accountId));
+  const holdsAnything = new Set(positions.map((p) => p.accountId));
+  /**
+   * AN AIF ACCOUNT HOLDING NOTHING IS IN SCOPE ONLY IF ITS FUND IS PRIVATE.
+   *
+   * It used to be every such account, which quietly counted two that are not:
+   * 3P's folio (Category III, every class redeemed — so it holds nothing among
+   * CURRENT holdings) and Motilal Oswal's Hedged Equity strategy (redeemed to
+   * nil, no category printed). Neither is a private-market fund, and both
+   * inflated the "N of this page's M private accounts" the tiles print.
+   */
   const inScope = accounts.filter(
-    (a) => held.has(a.accountId) || (a.engagement === "AIF" && !positions.some((p) => p.accountId === a.accountId)),
+    (a) => held.has(a.accountId)
+      || (a.engagement === "AIF" && !holdsAnything.has(a.accountId) && accountFundSide(a) === "private"),
   );
   return {
     rows,
@@ -114,6 +159,42 @@ export function pageScopeNote(positions: Position[]): PageScopeNote {
     sides: marketSides(deduped),
     bookMV: sum(deduped.map((p) => p.marketValue)),
   };
+}
+
+/**
+ * ── WHICH CAPITAL ACCOUNTS BELONG ON A PRIVATE-MARKET PAGE ──────────────────
+ *
+ * A capital account is placed by what its FUND invests in, through the same
+ * `fundMarketSideOf` that places the fund's holding — so a fund's holding and
+ * its capital account cannot land on different sides of the page.
+ * `marketSide.test.ts` asserts that on every capital account whose fund also
+ * reports a holding.
+ *
+ * THE ONES LEFT OUT ARE RETURNED, NOT DROPPED. They are real commitments the
+ * family signed; the page names each with what it committed, what has been
+ * called and what is left, because a reader who knows they committed ₹30 Cr to
+ * Founders and cannot find it here learns that the dashboard lost it.
+ */
+export type CapitalElsewhere = {
+  commitment: Commitment;
+  side: MarketSide | null;
+  basis: MarketSideBasis;
+  invests: string | null;
+};
+
+export function capitalScope(commitments: Commitment[], accounts: Account[]): {
+  onPage: Commitment[];
+  elsewhere: CapitalElsewhere[];
+} {
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const onPage: Commitment[] = [];
+  const elsewhere: CapitalElsewhere[] = [];
+  for (const c of commitments) {
+    const b = fundMarketSideBasis(c.name, acc.get(c.accountId));
+    if (b.side === "private") onPage.push(c);
+    else elsewhere.push({ commitment: c, side: b.side, basis: b.basis, invests: b.decision?.invests ?? null });
+  }
+  return { onPage, elsewhere };
 }
 
 export type FundRow = {
@@ -284,19 +365,45 @@ export type CommitmentTotals = {
  * `?? 0` would do the same. They are skipped, and the caption says 13 of 15.
  */
 export function commitmentTotals(commitments: Commitment[]): CommitmentTotals {
-  const of = (k: "committed" | "drawn" | "undrawn" | "distributed") =>
+  const of = (k: "committed" | "drawn" | "undrawn") =>
     commitments.filter((c) => c[k] != null).length;
   return {
     committed: sumOrNull(commitments.map((c) => c.committed)),
     drawn: sumOrNull(commitments.map((c) => c.drawn)),
     undrawn: sumOrNull(commitments.map((c) => c.undrawn)),
-    distributed: sumOrNull(commitments.map((c) => c.distributed)),
+    distributed: sumOrNull(commitments.map(distributionOf)),
     committedOf: of("committed"),
     drawnOf: of("drawn"),
     undrawnOf: of("undrawn"),
-    distributedOf: of("distributed"),
+    distributedOf: commitments.filter((c) => distributionOf(c) != null).length,
     count: commitments.length,
   };
+}
+
+/**
+ * ONE FUND'S DISTRIBUTION TOTAL — what its statement prints as distributed.
+ *
+ * `distributed` where the reader captured the summary figure. Baring's reader
+ * never did, although its statement prints one — `Less: Distribution (E)` in
+ * the NAV summary — and that page always said the fund printed "no
+ * distribution line", which was false. Since the payout reader (Stage 10bw)
+ * reconciles Baring's dated distribution against exactly that E, the income
+ * and principal it carries ARE that printed total, so this reads them there.
+ *
+ * Equalisation is NOT a distribution and is not counted here: the statements
+ * print it apart from the distribution total (Neo Infra's `Net Equalisation`
+ * beside its `Total Payout`, Baring's compensating contribution "NOT PART OF
+ * NAV"). The money-weighted return counts it, because it is cash the family
+ * received; a distribution total does not, because the fund does not call it
+ * one.
+ *
+ * NULL where neither is carried — never 0, which would report a fund that has
+ * returned nothing on the strength of a figure this book does not hold.
+ */
+export function distributionOf(c: Commitment): number | null {
+  if (c.distributed != null) return c.distributed;
+  if (c.payouts == null) return null;
+  return c.payouts.filter((p) => p.kind !== "equalisation").reduce((t, p) => t + p.gross, 0);
 }
 
 /**
@@ -307,6 +414,13 @@ export type UnvaluedKind = "no-nav" | "income-only" | "redeemed" | "other";
 
 export type UnvaluedAccount = {
   account: Account;
+  /**
+   * WHAT THE ACCOUNT'S FUND INVESTS IN — `accountFundSide`, since an account
+   * holding nothing has no position to read a side off. The Private Market page
+   * lists only the private ones: Motilal Oswal's Hedged Equity strategy is an
+   * AIF holding nothing too, and it is not a private-market fund.
+   */
+  side: MarketSide | null;
   kind: UnvaluedKind;
   /** The book's own reason string, rendered verbatim. Never re-worded here. */
   reason: string | null;
@@ -342,6 +456,7 @@ export function unvaluedAccounts(
     .filter((a) => a.engagement === "AIF" && !held.has(a.accountId))
     .map((a) => ({
       account: a,
+      side: accountFundSide(a),
       kind: kindOf(a.noPositionsReason),
       reason: a.noPositionsReason ?? null,
       drawn: byAccount.get(a.accountId)?.drawn ?? null,

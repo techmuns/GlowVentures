@@ -4,6 +4,7 @@ import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
 import { MunsChat } from "@/components/MunsChat";
+import { SmartSearch } from "@/components/SmartSearch";
 
 const THEME_KEY = "glow:theme";
 
@@ -110,13 +111,27 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
+    // `z-40`, NOT `z-10`. `backdrop-blur` makes this header a stacking context,
+    // so the search list's own `z-50` counts only INSIDE it — and the page's KPI
+    // tiles lift their label and figure to `z-10` later in the document, which
+    // at an equal z-index paints over the whole header, list and all. Measured
+    // on Morning CIO: "Current value of holdings" and its figure drew through
+    // every search list. `<main>` scrolls in its own box below this, so nothing
+    // else ever overlaps the header; the Muns dialog is portalled to `#root` at
+    // `z-50` and still covers it.
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
       {/* THE SEARCH BOX WAS A CONTROL THAT SEARCHED NOTHING — an `<input>` with
           no value, no onChange and no handler, sitting in the most prominent
           slot on the app. The Muns chat takes its place: same slot, and it does
           something. Nothing was lost, which is why this is a replacement rather
           than a removal to be asserted. */}
-      <MunsChat />
+      {/* THE SEARCH, AND MUNS BESIDE IT. The slot is a real search now — over
+          every holding, fund, mandate, member, account, page and tab — and a
+          question typed into it goes to Muns from the list's own last row. */}
+      <div className="flex min-w-0 max-w-3xl flex-1 items-center gap-2">
+        <SmartSearch />
+        <MunsChat />
+      </div>
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden items-center gap-2 text-xs md:flex"><QuoteStatus /></div>
         <CurrencySwitch />
