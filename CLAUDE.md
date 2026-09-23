@@ -22479,7 +22479,37 @@ What else the merge touched:
   pass on the tree merged with #85 still stands. The full checks on this tree
   are its control — the treatment Stage 10cl gave #88.
 
-@@VERIFY@@
+#### The verification
+
+Every result below is from the tree that ships: this change merged with #86
+(main `d72c5a4`), and each was run again there rather than carried across.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (49 suites,
+2,670 checks, 0 failed — `priceAlerts.test.ts` and `researchLevels.test.ts`
+among them; its four NOT CHECKED lines are main's: three managers' bridges with
+no performance history on their capital's own date, and the fund-NAV basis
+gate) · `check:family` **123/0**, which is #86's own 92 plus this change's 31 ·
+`check:pages` **266 combinations clean, 0 invariant failures** · `npm run
+build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY:
+a price level is the family's own input and never reaches the book. CI (`build`)
+and Cloudflare Pages are green on the final commit.
+
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cm records 258 combinations
+clean on main. This change adds four routes — `cio-alerts`, `cio-alerts-nofeed`,
+`cio-alerts-empty` and `cio-alerts-badge` — each walked in both themes, which
+makes 266. The fourteen invariants not checked were read out of the log by
+route, and all fourteen are main's claims:
+
+- **ten KPI-tile lines** (every tile on this book carries a figure). Main's
+  sweep carries six, one per Morning CIO route. This change adds four Morning
+  CIO routes and the same claim runs on each, so there are ten.
+- **two Private Market cost lines** (every private holding reports a cost);
+- **one redeemed-account line** on `private-market-folios`;
+- **one crumb** on `holdings-unknown`.
+
+None of this change's own checks abstains.
 
 ### Stage 10k — News & Announcements: REMOVED
 
