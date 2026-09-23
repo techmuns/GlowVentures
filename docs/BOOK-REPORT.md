@@ -116,9 +116,9 @@ Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated
 
 ## The family's own dated investments
 
-**26** dated contribution(s) totalling **2,21,50,00,000** and **95** withdrawal(s) totalling **31,08,68,739.02**, across **11 of 51** account(s).
+**36** dated contribution(s) totalling **2,92,35,00,000** and **95** withdrawal(s) totalling **31,08,68,739.02**, across **13 of 51** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 40 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 38 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
 A per-contribution breakdown is published for **7** position(s), of which **2** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 

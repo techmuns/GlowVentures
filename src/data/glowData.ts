@@ -17433,6 +17433,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b1"
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "date": "2024-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 20000000,
+    "invested": 20000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2024-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 35000000,
+    "invested": 35000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2024-08-14",
     "direction": "in",
@@ -17563,6 +17585,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-02-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 100000000,
+    "invested": 100000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
   {
     "accountId": "svan-investment-managers-llp-8710067",
@@ -17818,6 +17851,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b1"
   },
   {
+    "accountId": "buoyant-capital-103473",
+    "date": "2025-07-16",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 25000000,
+    "invested": 25000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-07-24",
     "direction": "out",
@@ -17860,6 +17904,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-08-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 25000000,
+    "invested": 25000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
   {
     "accountId": "green-lantern-capital-llp-510861",
@@ -18335,6 +18390,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": "3p-india-equity-fund-1-class-b2"
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "date": "2025-11-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2025-11-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 50000000,
+    "invested": 50000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2025-11-11",
     "direction": "out",
@@ -18478,6 +18555,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "buoyant-capital-103472",
+    "date": "2026-01-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 53500000,
+    "invested": 53500000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
+  },
+  {
     "accountId": "svan-investment-managers-llp-8710067",
     "date": "2026-02-10",
     "direction": "out",
@@ -18599,6 +18687,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "buoyant-capital-103473",
+    "date": "2026-04-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 100000000,
+    "invested": 100000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A1",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a1"
+  },
+  {
     "accountId": "green-lantern-capital-llp-510861",
     "date": "2026-04-02",
     "direction": "out",
@@ -18619,6 +18718,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "units": null,
     "security": null,
     "securityKey": null
+  },
+  {
+    "accountId": "buoyant-capital-103473",
+    "date": "2026-06-01",
+    "direction": "in",
+    "label": "Cash Deposits",
+    "amount": 250000000,
+    "invested": 250000000,
+    "units": null,
+    "security": "Buoyant Opportunities Strategy — Category III — Class A4",
+    "securityKey": "buoyant-opportunities-strategy-category-iii-class-a4"
   },
   {
     "accountId": "green-lantern-capital-llp-510861",
