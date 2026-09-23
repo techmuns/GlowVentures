@@ -1184,6 +1184,20 @@ export function HoldingsBehind() {
           <span className="mono text-slate-400">{full(statementValue(statementPortfolio.positions, rows))}</span>.
           Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a
           realised gain or a dated cash flow.
+          {/* A ROW NO STATEMENT MARKS IS NOT IN THAT FIGURE, and a reader holding
+              the PDF has to be told why the two differ by more than price drift. */}
+          {rows.some((r) => r.depositoryUnits) && (() => {
+            const dep = rows.filter((r) => r.depositoryUnits);
+            return (
+              <span data-hb-depository={dep.length}>
+                {" "}{dep.length === 1 ? "One holding here carries" : `${dep.length} holdings here carry`} no statement
+                mark at all — {dep.length === 1 ? "it is" : "they are"} a depository&rsquo;s own closing units on an
+                account that sent a transaction statement and no holding statement, valued only at AMFI&rsquo;s
+                published NAV ({full(sum(dep.map((r) => r.marketValue)))}) — so {dep.length === 1 ? "it is" : "they are"} not
+                in that figure.
+              </span>
+            );
+          })()}
         </p>
       )}
     </div>

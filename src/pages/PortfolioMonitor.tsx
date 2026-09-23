@@ -19,6 +19,7 @@ import {
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
+import { isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
@@ -36,7 +37,7 @@ import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } fro
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
 import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
-import { UNCLASSIFIED, UNCLASSIFIED_WHY } from "@/lib/familyTaxonomy";
+import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
 // three; see the header of `groupAxis.ts` for why they cannot be a local
 // definition on either screen — and for why the FOURTH one, SECURITY, is this
@@ -135,6 +136,12 @@ type Venue = {
   positions: Position[];
   avgCost: number | null; currentPrice: number | null;
   navPriced: boolean; navDate?: string;
+  /**
+   * The closing date of a depository's own balance, where this line's units
+   * come from an account that sent a transaction statement and no holding
+   * statement — so the NAV beside it replaced no statement mark at all.
+   */
+  depositoryAsOf: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
   investedOn: { first: string; last: string; payments: number } | null;
@@ -247,6 +254,12 @@ type Row = {
   /** The price above is AMFI's published NAV, not the statement's mark. */
   navPriced?: boolean; navDate?: string;
   /**
+   * The closing date of a depository's own balance, where some of this row's
+   * units come from an account that sent a transaction statement and no holding
+   * statement — so no statement marks them at all (`fundNavs.ts`).
+   */
+  depositoryAsOf?: string | null;
+  /**
    * THE UNIT CLASSES THIS ROW CLUBS, on a row that clubs more than one.
    *
    * *"3P Class A B1 B2, all of that should be shown as a single line item as
@@ -341,13 +354,15 @@ type Row = {
    * WHO SAID THIS ROW BELONGS IN ITS SECTION, on the two family axes.
    * `"review"` — named product by product in the family's consolidated review.
    * `"rule"` — placed by their stated rule for direct stocks.
+   * `"cash-rule"` — placed by their instruction that arbitrage and liquid
+   *   funds are cash, where the review files one elsewhere or does not name it.
    * `"derived"` — our own asset class already answered it beyond doubt.
    * `null` — nobody has, and the row sits under `UNCLASSIFIED`.
    * Always `"review"`-equivalent on the category axis, which is derived from
    * the book itself and asks nothing of the family; the field is only read on
    * the other two.
    */
-  groupSource: "review" | "rule" | "derived" | null;
+  groupSource: TaxonomySource | null;
   /**
    * ── THE ROW'S FIFO TOTALS, AND ITS REALISED GAIN ─────────────────────────
    *
@@ -1264,6 +1279,7 @@ export function PortfolioMonitor() {
           avgCost: perUnit && !costNA && qty > 0 ? (cost as number) / qty : null,
           currentPrice: perUnit ? ps[0].currentPrice : null,
           navPriced: perUnit && !!ps[0].navPriced, navDate: ps[0].navDate,
+          depositoryAsOf: ps.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           // FIFO over the row's own deduped holdings: the realised gain on
           // units already sold stays in the return (`fifoTotals`).
@@ -1327,6 +1343,7 @@ export function PortfolioMonitor() {
         key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         navPriced: !!p.navPriced, navDate: p.navDate,
+        depositoryAsOf: p.depositoryUnits?.asOf ?? null,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         realised: p.realizedPnL ?? null,
@@ -1612,7 +1629,18 @@ export function PortfolioMonitor() {
         // The gap between the rows ON SCREEN and the subtotal above them, which
         // is what the note claims — derived from the printed figure rather than
         // accumulated beside it, so the two cannot drift.
-        const collapsed = raw - subtotal;
+        //
+        // AND A GAP UNDER A RUPEE IS NOT A HOLDING REPORTED TWICE. `raw` sums the
+        // ROWS and `subtotal` the POSITIONS, so the two add the same numbers in a
+        // different order, and once published NAVs put unrounded values on the
+        // rows the difference is a floating-point residue of a few millionths of
+        // a rupee. `> 0` read that as a duplicate and printed "₹0 reported twice,
+        // counted once" over the Mutual Fund and Thematic & Tactical headings — a
+        // sentence asserting a double count that does not exist, beside a figure
+        // that rounds to nothing. The footer's own gap (`dupGap`) has always
+        // required more than a rupee; this is the same bound.
+        const gap = raw - subtotal;
+        const collapsed = gap > 1 ? gap : 0;
         // HOW MANY HOLDINGS THE SECTION STANDS FOR, which is not how many rows it
         // draws: a mandate row stands for every share inside it, so the PMS
         // heading counts 281 across 10 rows. Counting rows there would report the
@@ -1644,15 +1672,24 @@ export function PortfolioMonitor() {
          * value larger than the subtotal beside it would be a contradiction a
          * reader could see, and this is what stops it arising.
          */
+        /**
+         * …AND BY WHICH OF THEIR TWO RULES. The direct-stock rule and the cash
+         * instruction are separate sources (`TaxonomySource`), so they are
+         * summed apart and printed apart: one sentence about "all the direct
+         * stocks" over a Liquidity basket full of arbitrage funds would name
+         * the wrong rule beside the largest figure in the section.
+         */
         const ruleSeen = new Set<string>();
         let ruleMV = 0;
+        let cashRuleMV = 0;
         for (const r of rs) {
-          if (r.groupSource !== "rule") continue;
+          if (r.groupSource !== "rule" && r.groupSource !== "cash-rule") continue;
           if (r.dedupeGroup) { if (ruleSeen.has(r.dedupeGroup)) continue; ruleSeen.add(r.dedupeGroup); }
-          ruleMV += r.marketValue;
+          if (r.groupSource === "rule") ruleMV += r.marketValue;
+          else cashRuleMV += r.marketValue;
         }
         return {
-          key, rows: rs, subtotal, collapsed, holdings, ruleMV,
+          key, rows: rs, subtotal, collapsed, holdings, ruleMV, cashRuleMV,
           day, dayBase, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
@@ -1725,7 +1762,9 @@ export function PortfolioMonitor() {
    *   opaque     inside vehicles that publish nothing this book can join
    *   nonEquity  inside a disclosed fund and not equity — its cash and debt
    *              sleeves, a gold or silver ETF's metal, the disclosure's rounding
-   *   cash       the book's own cash rows
+   *   cash       the book's own cash rows, and the arbitrage funds the family
+ *              counts as cash — which are not looked through, because their
+ *              disclosed long shares are hedged and would read as exposure
    *
    * `opaque` is the one that matters most and it is almost entirely the AIF
    * block: half this book by value, and no drop of the current statements can
@@ -1739,7 +1778,9 @@ export function PortfolioMonitor() {
     const held = currentHoldings(consolidated);
     const stocks = held.filter(isCompanyShare);
     const measured = sum(stocks.map((p) => p.marketValue));
-    const cash = sum(held.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
+    // The arbitrage funds are here and NOT in the look-through — see
+    // `useStockExposure`. Liquid funds stay looked through: their paper is real.
+    const cash = sum(held.filter((p) => p.assetClass === "Cash" || isArbitrageFund(p)).map((p) => p.marketValue));
     const nav = sum(held.map((p) => p.marketValue));
     const ex = exposure.status === "ok" ? exposure : null;
     const derived = ex?.total ?? 0;
@@ -2275,6 +2316,12 @@ export function PortfolioMonitor() {
               <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                 title={v.navPriced
                   ? `AMFI's published NAV for this scheme, as of ${v.navDate}.`
+                    // A DEPOSITORY LINE IS NOT A STATEMENT MARK REPLACED, and
+                    // says so on the one line it is: no statement priced these
+                    // units at all (Stage 10ce).
+                    + (v.depositoryAsOf
+                      ? ` These units are a depository's own closing balance of ${v.depositoryAsOf}, on an account that sent a transaction statement and no holding statement — no statement priced them.`
+                      : "")
                   : `No live price — the mark from this statement as of ${portfolio.asOf}.`}>◦</span>
             )}</>,
         day: dayCell(v.live, v.dayChangePct),
@@ -2711,6 +2758,7 @@ export function PortfolioMonitor() {
                       */
                       <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
                         data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}
+                        data-cash-rule-mv={grp.cashRuleMV}
                         data-section-open={secOpen ? "open" : "closed"}
                         {...rowToggle(() => toggleSection(secKey))}>
                         <TreeSectionCell density="dense" colSpan={COL_COUNT}
@@ -2744,11 +2792,22 @@ export function PortfolioMonitor() {
                               than asserting coverage — a section with no
                               re-bucketed row says nothing at all.
                             */}
-                            {grp.key === "Cash" && grp.rows.some((r) => isCashEquivalent(r)) && (
-                              <>{" "}<span title={`Cash is liquid and arbitrage — the family's own instruction, corroborated by the Cash sheet of their consolidated review (30 June 2026), which lists each of these by name. The issuing documents type them Mutual Fund or ETF, and that is what the archive still records: this is the CATEGORY axis answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`}>
-                                · includes {grp.rows.filter((r) => isCashEquivalent(r)).length} liquid {grp.rows.filter((r) => isCashEquivalent(r)).length === 1 ? "holding" : "holdings"} the statements type as a fund
-                              </span></>
-                            )}
+                            {grp.key === "Cash" && grp.rows.some((r) => isCashEquivalent(r)) && (() => {
+                              const eq = grp.rows.filter((r) => isCashEquivalent(r));
+                              const arb = eq.filter((r) => isArbitrageFund(r)).length;
+                              const liq = eq.length - arb;
+                              const fromDepository = eq.filter((r) => r.depositoryAsOf).length;
+                              const parts = [liq ? `${liq} liquid` : null, arb ? `${arb} arbitrage` : null].filter(Boolean).join(" and ");
+                              return (
+                                <>{" "}<span data-cash-includes={`${liq}/${arb}`}
+                                  title={`Cash is liquid and arbitrage — the family's own instruction, which they have given twice: arbitrage funds "need not be classified into any other category except for cash". The liquid funds are named on the Cash sheet of their consolidated review (30 June 2026); its arbitrage funds are on its Debt tab, and the family's instruction overrules that. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, not by its name. The issuing documents type these Mutual Fund or ETF, and that is what the archive still records: this is the dashboard answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`
+                                    + (fromDepository
+                                      ? ` ${fromDepository} of these ${fromDepository === 1 ? "is" : "are"} valued from a depository's own closing units at AMFI's published NAV: the account sent a transaction statement and no holding statement, so no statement marks them.`
+                                      : "")}>
+                                  · includes {parts} {eq.length === 1 ? "fund" : "funds"} the family counts as cash
+                                </span></>
+                              );
+                            })()}
                             {grp.collapsed > 0 && (
                               <>{" "}<span title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
                                 · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
@@ -2780,6 +2839,20 @@ export function PortfolioMonitor() {
                             {grp.ruleMV > 0 && (
                               <>{" "}<span title={`The family's review names most of this section product by product. ${fmtFromBase(grp.ruleMV, { compact: true })} of it is placed here by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.`}>
                                 · {fmtFromBase(grp.ruleMV, { compact: true })} by the family's stated rule, not named individually
+                              </span></>
+                            )}
+                            {/*
+                              THE CASH INSTRUCTION IS A DIFFERENT RULE AND SAYS
+                              SO. Their review files its arbitrage funds on the
+                              DEBT sheet; the family have since said arbitrage is
+                              cash "and need not be classified into any other
+                              category". So those funds sit here on the family's
+                              word rather than the review's, and the heading
+                              names which word — never the direct-stock rule's.
+                            */}
+                            {grp.cashRuleMV > 0 && (
+                              <>{" "}<span title={`${fmtFromBase(grp.cashRuleMV, { compact: true })} of this section is here by the family's instruction that arbitrage and liquid funds are cash — "arbitrage funds need not be classified into any other category except for cash". Their consolidated review (30 June 2026) files its arbitrage funds on its Debt tab, or does not name the holding at all; the instruction overrules it. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, never by its name.`}>
+                                · {fmtFromBase(grp.cashRuleMV, { compact: true })} counted as cash by the family&rsquo;s instruction
                               </span></>
                             )}
                           </>} />
@@ -3258,6 +3331,9 @@ export function PortfolioMonitor() {
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={r.navPriced
                                     ? `AMFI's published NAV for this scheme, as of ${r.navDate}. A fund resolves no NSE trading symbol so it can never carry an intraday quote; this is the industry's own daily figure, refreshed every day, and it is NEWER than the statement mark it replaced.`
+                                      + (r.depositoryAsOf
+                                        ? ` Some of these units carry no statement mark at all: they are a depository's own closing balance of ${r.depositoryAsOf}, on an account that sent a transaction statement and no holding statement, valued at this NAV.`
+                                        : "")
                                     : `No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
@@ -3560,7 +3636,7 @@ export function PortfolioMonitor() {
                             + (stockCoverage.aifCount > 0
                                 ? ` (${stockCoverage.aifCount} AIF folio${stockCoverage.aifCount === 1 ? "" : "s"}, ${money(stockCoverage.aifValue)} — an AIF files no portfolio disclosure that joins to a folio this family holds, so no future statement fills it)`
                                 : "")
-                            + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding — and ${money(stockCoverage.cash)} is the book's own cash.`
+                            + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding — and ${money(stockCoverage.cash)} is cash: the book's own cash rows and the arbitrage funds the family counts as cash, which are not looked through because their long shares are hedged.`
                             + (stockCoverage.splitNames.count > 0
                                 ? ` ${stockCoverage.splitNames.count === 1 ? "One company stands here as two rows" : `${stockCoverage.splitNames.count} companies stand here as more than one row each`} (${money(stockCoverage.splitNames.value)}): one issuer clips its name where another spells it out, their ISINs say they are one security, and the fix belongs in the extractor — docs/BOOK-REPORT.md names them.`
                                 : "")}>
@@ -3767,7 +3843,9 @@ export function PortfolioMonitor() {
                     this family holds, so no future statement fills it)</>}
                   , {money(stockCoverage.unaccounted)} is the part of a disclosed fund that NO LINE in the filing
                   accounted for — its cash sleeve, a gold or silver ETF&rsquo;s metal, and the disclosure&rsquo;s own
-                  rounding — and {money(stockCoverage.cash)} is the book&rsquo;s own cash. A scheme&rsquo;s DEBT is no
+                  rounding — and {money(stockCoverage.cash)} is cash: the book&rsquo;s own cash rows and the
+                  arbitrage funds the family counts as cash, which are not looked through because their long shares
+                  are hedged by short futures. A scheme&rsquo;s DEBT is no
                   longer in that remainder: the store reads each AMC&rsquo;s whole monthly filing, so its bonds, NCDs
                   and commercial paper are inside the derived figure above. Every figure in the Via funds and Total
                   exposure columns is derived and is no part of the book&rsquo;s NAV: the fund&rsquo;s own value
@@ -3956,6 +4034,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       // fund is the class's NAV the row above has to leave absent.
       currentPrice: xs[0].currentPrice ?? null,
       navPriced: !!xs[0].navPriced, navDate: xs[0].navDate,
+      depositoryAsOf: xs.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
       live: xs.every((x) => x.live),
       dayChangePct: xs[0].dayChangePct ?? null,
       heldSince: xs.every((x) => x.heldSince)

@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf } from "@/lib/analytics";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
@@ -518,7 +518,17 @@ export function MandateHoldings() {
       : `No statement in this drop dates what was paid into this account, or when it opened.`;
 
   const shares = rows.filter((r) => r.assetClass === "Equity");
-  const sleeve = rows.filter((r) => r.assetClass === "Cash");
+  /**
+   * THE CASH SLEEVE IS CASH BY THE FAMILY'S DEFINITION, not by the wrapper a
+   * statement typed. A liquid or arbitrage fund a manager parks the sleeve in is
+   * cash — "arbitrage funds need not be classified into any other category
+   * except for cash" — so it counts here as a cash line, exactly as the
+   * holdings tables' Cash section counts one held outside a mandate. On this
+   * book every such row inside a mandate is already typed `Cash` by its own
+   * statement, so nothing on screen moves; the rule is what keeps the next
+   * manager's arbitrage sleeve from being counted as "other".
+   */
+  const sleeve = rows.filter((r) => readerClassOf(r) === "Cash");
   const other = rows.length - shares.length - sleeve.length;
   /**
    * MEASURED ZEROS, NAMED ON SCREEN RATHER THAN IN A TOOLTIP.
@@ -577,7 +587,7 @@ export function MandateHoldings() {
   // would rank a holding whose statement prints no cost among the cheapest.
   const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
     security: (r) => r.security,
-    sector: (r) => (r.assetClass === "Cash" ? null : r.sector),
+    sector: (r) => (readerClassOf(r) === "Cash" ? null : r.sector),
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
     invested: (r) => r.costBasis,
@@ -694,7 +704,10 @@ export function MandateHoldings() {
             </thead>
             <tbody className="divide-y divide-ink-700/60">
               {sorted.map((r) => {
-                const isCash = r.assetClass === "Cash";
+                const isCash = readerClassOf(r) === "Cash";
+                // A BALANCE and a cash-equivalent FUND are both cash and are not
+                // the same thing: the fund carries units, a NAV and a gain.
+                const isBalance = r.assetClass === "Cash";
                 return (
                   <Tr view={holdingsView} key={`${r.securityKey}-${r.assetClass}`} className="hover:bg-ink-700/40">
                     <td className="px-4 py-2.5">
@@ -703,14 +716,18 @@ export function MandateHoldings() {
                       </Link>
                       {isCash && (
                         <span className="ml-2 text-[10.5px] text-slate-500"
-                          title="The manager's cash sleeve. It is part of what this mandate is worth, which is why the total below ties to the statement.">
+                          title={isBalance
+                            ? "The manager's cash sleeve. It is part of what this mandate is worth, which is why the total below ties to the statement."
+                            : "The manager's cash sleeve, parked in a liquid or arbitrage fund — which the family counts as cash and nothing else. It is part of what this mandate is worth, which is why the total below ties to the statement."}>
                           cash sleeve
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-[12px] text-slate-400">
                       {isCash
-                        ? <span className="text-slate-500" title="A balance, not a share in a company — no sector applies.">—</span>
+                        ? <span className="text-slate-500" title={isBalance
+                            ? "A balance, not a share in a company — no sector applies."
+                            : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
                         : r.sector}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>

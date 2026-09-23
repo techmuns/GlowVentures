@@ -202,8 +202,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   which return LISTED, PRIVATE and NOT-PLACED and never derive one from the
   others; `holdingBucket`, the ONE place that decides
   which section a holding sits in on a holdings table — including
-  `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund or
-  liquid ETF is cash whatever wrapper its statement typed it as. See Stage 10av.
+  `CASH_EQUIVALENT_KEYS`, the family's own instruction that a liquid fund, a
+  liquid ETF or an ARBITRAGE fund is cash whatever wrapper its statement typed
+  it as, and `readerClassOf`, the class a page NAMES a holding under by the same
+  rule. See Stage 10av, and Stage 10ce for arbitrage.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's Purchase / Redemption / appreciation
   columns and the per-contribution breakdown a holdings row opens into. See Stage
@@ -375,7 +377,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   makes a current fund value reach every page rather than needing a per-page
   edit. It moves only what a price may move (§6) and deliberately never sets
   `live`: a quote is intraday and a NAV is struck once after the close, and the
-  two must never be added. See Stage 10bn.
+  two must never be added. See Stage 10bn. `depositoryCashHoldings` is its
+  second job: the arbitrage and liquid funds a depository reports on an account
+  that sent no holding statement, valued at `units × published NAV` on the LIVE
+  basis only, behind one switch (`VALUE_DEPOSITORY_CASH_UNITS`). See Stage 10ce.
 - `src/lib/format.ts` — currency / percent / number formatting; `fmtFromBase` (via `PortfolioContext`) is the standard money formatter.
 - `src/components/*` — shared UI (`Card`, `StatTile`, `SelectableTiles`, `SearchInput`, `Pill`, `BasisPill`, `Auditable`, `Absent`, …). Reuse these rather than re-styling tables inline.
 - `src/context/PortfolioContext.tsx` — loads the book, holds display-currency state, detects the empty book.
@@ -9486,6 +9491,13 @@ never fire on it, because a set called "the cash equivalents in this book" that
 omitted a liquid fund BECAUSE one document typed it correctly cannot be checked
 against the review at all.
 
+***BOTH HALVES OF THE NEXT PARAGRAPH HAVE SINCE CHANGED — see Stage 10ce.***
+Three arbitrage funds ARE held — as a depository's closing balances on Ajay's
+transaction-only demat, which is why no search over POSITIONS found one — and
+the map carries them now, valued at AMFI's NAV on the live basis. The paragraph
+stays in the order it was learnt, because "searched over every position" was a
+true measurement of the wrong set.
+
 **ARBITRAGE IS IN THE RULE AND NOT IN THE BOOK, WHICH IS TWO FACTS.** The
 family's review carries ₹41.08 Cr of it across four funds, the largest ₹30.99 Cr
 — and **not one is in this book**, searched over every position. So the map has
@@ -16108,6 +16120,13 @@ hand-checked abbreviation table this file already names as the remedy. **Three
 real answers withheld rather than one false one published**, stated rather than
 glossed.
 
+***IT WITHHOLDS 10 OF THE 44 SINCE Stage 10ce*** — the two more are review lines
+the LIVE book now values from a depository's own balance (Motilal Oswal
+Arbitrage and HDFC Liquid), which no name tier can see because those rows are
+not in `BOOK_POSITIONS`. They are joined by ISIN through a hand-checked table,
+each licensed by the review's own purchase matching a depository credit unit for
+unit, and the tier is keyed on what the live book actually carries.
+
 **AND IT IMMEDIATELY BROKE A CHECK OF MY OWN, which is the same lesson one level
 down.** The fuzzy-tier suite check carried `"vedanta"` as its anti-vacuity probe
 — *the probes must actually find gaps, or the check passes by matching nothing*
@@ -19123,6 +19142,552 @@ The ten NOT CHECKED lines are main's evidenced abstentions, as on #76. `build` �
 `test:family` 0 failed · `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` byte for byte on the final tree.
 
+### Stage 10ce — ARBITRAGE IS CASH, AND THE CASH NO HOLDING STATEMENT REPORTS
+
+*"Wherever we have cash as asset class or category. Arbitrage funds or holdings
+into that cash as well, because arbitrage funds are nothing but basically cash.
+Implement this everywhere on the dashboard. Whenever, wherever we have cash as a
+line item, we need to show arbitrage funds inside it. Arbitrage funds need not be
+classified into any other category except for cash."*
+
+#### The rule was half-written already, and the other half had no row to land on
+
+Stage 10av put arbitrage **"in the rule and not in the book"**: its
+`CASH_EQUIVALENT_KEYS` carried the liquid funds only, because no arbitrage fund
+is a POSITION. That is still true of `glowData.ts`. What was not true is "not in
+the book". Measured over `BOOK_SHARE_MOVEMENTS`, three arbitrage funds sit on
+**Ajay's main demat 1201090012539150** — the account this file already calls
+*"the largest remaining gap"*, which sent a TRANSACTION statement and no holding
+statement — as depository closing balances that walked to their printed totals.
+
+So a classification change alone would have moved nothing on screen: a rule
+over rows that do not exist. **This is the tenth absence in this file recorded
+against a premise nobody rechecked**, and once again the answer was on a
+statement this pipeline had already read.
+
+| On the depository, 31 Jul 2026 | Units | AMFI NAV, 22 Sep 2026 | Value |
+| --- | ---: | ---: | ---: |
+| Motilal Oswal Arbitrage Fund — Direct Growth | 2,80,67,435.434 | ₹11.2834 | ₹31.67 Cr |
+| Kotak Arbitrage Fund — Direct Growth | 41,65,239.582 | ₹43.2772 | ₹18.03 Cr |
+| Bandhan Arbitrage Fund — Direct Growth | 33,71,575.697 | ₹37.8551 | ₹12.76 Cr |
+| HDFC Liquid Fund — Direct Growth | 2,282.178 | ₹5,587.7545 | ₹1.28 Cr |
+| Nippon India ETF Liquid BeES | 49.071 | ₹1,000.00 | ₹49,071 |
+| | | | **₹63.74 Cr** |
+
+#### So the LIVE book values them, and only the live book
+
+`depositoryCashHoldings` in `src/lib/fundNavs.ts` turns those balances into
+positions at `units × AMFI's published NAV`, and `PortfolioContext` appends them
+beside `applyQuotes` and `applyFundNavs`. **`glowData.ts` gains exactly one
+field** — `transactionsOnly: true` on that account — and regenerates
+byte-identically otherwise; `statementPortfolio` never sees a row. A fetched
+price may not enter the book (§7), and these rows have no statement mark at all:
+their value IS the published NAV, which is precisely the live overlay's job.
+
+Five gates, each a wrong row avoided:
+
+1. **The account sent a transaction statement and no holding statement, and
+   carries no position of its own.** `build-book` derives the flag from the
+   ARCHIVE — a transaction document and no holdings document — rather than from
+   "an account with no positions". That second test is what the first draft
+   used, and it also admits demat 37359311, whose holding statement IS in the
+   drop and reported only the AIF units `dropDepositoryDuplicates` removes
+   because the funds report them themselves. Nothing there is a cash
+   equivalent, so no figure moved — which is exactly when a wrong gate goes
+   unnoticed. Where a holding statement exists it is the authority, and the
+   same account's transaction tape is not a second one. Exactly one account
+   qualifies.
+2. **The block walked from its printed opening to its printed closing**
+   (`reason === null`) and closes with units.
+3. **AMFI publishes a NAV the builder cleared for value.** `build-fund-navs`
+   now joins a depository-only ISIN too, and records SEBI's category verbatim.
+   An ETF from a depository is NOT cleared: its units and its NAV can be on
+   different bases (DSP Gold's ten-fold break), and a depository balance carries
+   no statement mark for the factor-of-two gate to test. Liquid BeES reaches the
+   table only because the book carries its ISIN and the gate ran on the book's
+   own marks.
+4. **A cash equivalent by the committed map.** The other fourteen holdings on
+   that demat are not valued — see the last section.
+5. **No book position of the same ISIN and the same units**, or one holding is
+   counted twice.
+
+**THE LIVE BOOK READS ₹777.03 Cr on the NAVs committed with this change
+(22 Sep 2026), ₹63.74 Cr of it the depository's cash** — ₹713.29 Cr without it.
+Statement-basis pages do not move: Private Market, Capital Gains, Data Audit and
+Ledger Insights still read `statementPortfolio`, and `/holdings`' own
+statement-basis line names the depository rows as the part of its figure no
+statement marks.
+
+**ONE SWITCH.** `VALUE_DEPOSITORY_CASH_UNITS` in `fundNavs.ts`. Set it false and
+every row goes, everywhere, and the account falls back to its generated reason.
+
+#### The unit basis has a witness, because the basis gate cannot run
+
+The builder's factor-of-two gate compares a published NAV against a STATEMENT
+MARK, and a depository balance has none — so the one failure that could make
+these rows wrong by ten times went unchecked by the gate written for it. A
+document nobody in this join controls is asked instead: **the family's own
+review records buying 1,63,08,407.445 units of Motilal Oswal Arbitrage at
+₹11.0367 on 20 May 2026, and the depository credits exactly those units the
+next day** (settlement, `PAYOUT-CR`). One purchase, two independent documents,
+three decimals — and ₹11.0367 is on the scale AMFI publishes today, ₹11.2834.
+`fundNavs.test.ts` asserts it rather than this paragraph.
+
+#### An account valued in part says so
+
+`partialValuationNotes`: the LIVE copy of the account drops its generated
+`noPositionsReason` — "values nothing" stopped being true the moment one row
+existed — and carries `partialValuation` instead: five cash-equivalent funds
+valued, from what, at which dates, and **fourteen other holdings on the same
+statement not valued**. Performance prints a `partial` marker beside the
+account's figure; Family & Entities lists it as *partly valued* under "held, and
+not valued here". A figure for SOME of an account's holdings names the rest.
+
+#### Cash on every axis, and what each one moved
+
+| Surface | Where arbitrage lands |
+| --- | --- |
+| Category (`holdingBucket`) | **Cash** — ₹14.2 Cr → **₹78 Cr**, 8 holdings: *includes 4 liquid and 3 arbitrage funds the family counts as cash* |
+| Family asset class | **Cash** — their review files arbitrage on its DEBT tab; the instruction overrules it |
+| Family basket | **Liquidity** — ₹28.5 Cr → **₹92.2 Cr**. There is no Cash basket, and their workbook files every cash equivalent it names on its Liquid sheet |
+| Security axis | in the partition's **cash**, and **not looked through** — an arbitrage fund's disclosure is long shares hedged by short futures, and reading it as stock would print exposure nobody carries. A liquid fund's paper is real credit exposure and keeps its look-through |
+| A class named on screen (`readerClassOf`) | Sector Composition's *Not a company share*, Return & Drawdown's wrapper rows, Data Refresh, Family & Entities, and each result's chip in the top bar's search (#72's) |
+| The fund's own page | *"This holding is Cash — an arbitrage fund, which the family counts as cash and nothing else"*, and no look-through card |
+| A mandate's own page | a liquid or arbitrage fund inside a mandate counts in its **cash sleeve**. No row on this book moves — every one is already typed `Cash` by its statement — and the rule is what keeps the next manager's arbitrage sleeve from reading as "other" |
+
+Morning CIO's allocation and the Excel export read `holdingBucket` and the
+family taxonomy, so they follow with no edit of their own. The chat context
+gains a block naming the depository-valued rows, so the assistant is told where
+₹63.74 Cr of the family's cash comes from rather than finding it unexplained.
+**`CASH_EQUIVALENT_KEYS` is still the one list**, now eight keys, each cited —
+the three new ones to AMFI's category and the family's instruction.
+
+#### The cash instruction is its own rule, and the headings name which
+
+`TaxonomySource` gains **`cash-rule`**. Folded into the direct-stock `rule`, the
+Liquidity heading read **"₹62.5 Cr by the family's stated rule, not named
+individually"**, with a hover explaining that "all the direct stocks" belong to
+Thematic & Tactical — a sentence about the wrong rule, under the wrong basket,
+attached to the largest figure in the section. Both headings now print it apart
+(*"₹62.5 Cr counted as cash by the family's instruction"*), and Morning CIO's
+allocation note says it in its own sentence. **Where the review already says
+Cash — the liquid funds, on its Cash sheet by name — the review keeps the
+source**: an instruction that claimed them would misattribute them the other way.
+
+#### Arbitrage is identified by AMFI's category, never by a name
+
+`build-fund-navs` records each scheme's SEBI heading (`Hybrid Scheme - Arbitrage
+Fund`) and `isArbitrageFund` reads it by key or ISIN. `familyTaxonomy.test.ts`
+gains a SECOND detector that reads no name at all — every scheme AMFI files as
+Liquid or Arbitrage must be in the cash map — and the name detector now reads the
+depository's balances too, so a cash fund arriving on a transaction-only demat
+fails the suite by name instead of sitting under Mutual Fund.
+
+#### Two defects found on the way, neither in the ask
+
+- **"₹0 reported twice, counted once"** sat over the Monitor's Mutual Fund and
+  Thematic & Tactical headings **on main**. `collapsed = raw − subtotal` sums the
+  same numbers in two orders, and once published NAVs put unrounded values on
+  the rows the residue is a few millionths of a rupee, which `> 0` read as a
+  duplicate. The heading now needs more than a rupee — the bound the footer's own
+  `dupGap` has always used — and `NO_PHANTOM_DUPLICATE` asserts it, because the
+  zero scan reports a ₹0 as a lead and never as a finding.
+- **The closed-position checks struck on the wrong set.** `FUND_CLASS_BOOK`'s own
+  comment says *"a key is CLOSED only where every position under it is at nil"*,
+  and three checks read `closedKeys` — every key with ANY nil row. The two
+  coincided until HDFC Liquid: redeemed to nil in the HDFC folio, held on the
+  demat. They read `redeemedKeys` now, which is that comment made true.
+
+#### What it deliberately does not do
+
+**The same demat holds five mutual funds AMFI prices that are NOT cash** —
+Bandhan Large & Mid Cap ₹31.93 Cr, ICICI Equity Savings ₹23.44 Cr, ICICI India
+Opportunities ₹18.98 Cr, Kotak Multicap ₹9.05 Cr, Kotak Large & Midcap
+₹1.37 Cr, **₹84.8 Cr at the 22 Sep NAV** — plus eight company shares and one AIF.
+The family asked for arbitrage to be cash, not for this account to be valued, so
+the cash gate refuses them and `fundNavs.test.ts` asserts it. They are worth
+naming because **they are the depository-clipped funds behind Stage 10ak's
+Stable Growth gap against the review**; widening the gate is one line, and it was
+offered rather than taken.
+
+The review also carries two Invesco arbitrage lines and a Kotak Equity
+Arbitrage REGULAR-plan line (6,42,940.095 units — not the Direct plan the
+depository reports). **No statement in the drop carries any of them**, so they
+are not here.
+
+#### Checked
+
+`check:pages` gains `stock-arbitrage` (the largest arbitrage fund's own page,
+derived from the book and AMFI's store) and `family-partial` (the member whose
+demat is partly valued). The checker's model of the book carries the depository
+rows too — **re-expressed, never imported**, the five gates written a second time
+off the committed data — because every partition check reconciles against a
+rendered figure and the page renders them. Invariants: every arbitrage fund is a
+row under Cash (category, asset class) and Liquidity (basket) and under nothing
+else; the Cash heading's own liquid/arbitrage count; the family-axis headings
+credit the arbitrage value to the cash instruction **to the rupee** and never to
+the direct-stock rule; Morning CIO's allocation note does the same; `/holdings`
+names the depository rows under its statement-basis line; Performance and Family
+& Entities mark the partial account; Sector Composition files arbitrage under
+Cash; the fund's page says Cash and draws no look-through.
+
+**THE BOOK'S PREMISE IS A FAILURE, NEVER AN ABSTENTION.** Every one of those
+reads `CASH_INSTRUCTION_BOOK`, and a derivation that finds no arbitrage in the
+live book has lost its input — reporting NOT CHECKED there would let the whole
+feature be deleted behind a clean sweep.
+
+#### The full sweep found two routes the targeted runs never walked
+
+The routes this change touches were walked and clean before the PR opened. The
+FULL sweep on the branch then came back **2 of 196 combinations with a finding**
+— `stock-mf-lookthrough` (eight invariants) and `stock-cmp-nav` (one) — and
+neither was a misplaced arbitrage fund. Both routes pick their subject as "the
+largest" of something in the checker's model of the book, and **that model had
+just grown by five rows**:
+
+- **`MF_KEY`, the mutual fund whose look-through is walked**, became Motilal
+  Oswal Arbitrage — a page that is RIGHT to draw no scheme card, which is what
+  `stock-arbitrage` asserts. Eight failures against a correct page. An arbitrage
+  fund is no candidate now, and the comment says why.
+- **`CMP_BOOK.navKey`, the largest holding the published NAV prices**, became a
+  depository row — which has no statement mark for the NAV to replace, so the
+  route had stopped walking the overlay it exists for. It keeps a
+  statement-marked holding; the depository rows have their own route.
+
+Both walk Helios Flexi Cap again, the subject main's sweep walks, confirmed off
+`report.json` rather than assumed. **A change to the checker's model of the book
+moves the subject of every derivation that picks "the largest"**, so a targeted
+run over the routes a change touches cannot establish that nothing else moved;
+the full sweep is the only thing that can.
+
+**AND ONE OF THE TWO WAS ALSO A WORDING DEFECT ON THE PAGE.** The arbitrage
+page's headline caption said the units are a depository's balance "and no
+statement marks them" — and `stock-cmp-nav`'s guard against a NAV wearing the
+statement-mark label is `/statement mark/i`, which reads that negation as the
+label. The check was right to be strict and the sentence was needlessly close to
+the label, so the SENTENCE moved: "no statement prices them", and the row hover
+beside it likewise. The arbitrage page now asserts the caption names AMFI's NAV
+and the store's own date for that scheme, and never a statement mark — the claim
+`stock-cmp-nav` makes, struck on the one kind of holding that route no longer
+walks. A missing headline there is a FINDING: the route's subject is a holding
+with a price.
+
+#### Merged with main five times, and a letter collided every time
+
+**#70 — Polycab as one table, Sector Composition in two halves — took `10bt`**,
+and git marked that conflict because both sections sat at the same place. This
+section became `10bu`. **#73 — "a search that finds nothing says why" — then
+took `10bu` while this branch was being verified**, and that time the two
+sections sat in DIFFERENT places, so CLAUDE.md merged with no marker and no
+warning and left two sections under one letter. It was caught the way Stage
+10bl's merge note says it must be — by comparing main's stage letters against
+the branch's at merge time — because nothing GitHub reports could have shown it:
+its mergeability check sees text conflicts, and this was not one. **#75 —
+Buoyant's cost as paid — then took `10bv`**, found the same way, on the fetch
+made to confirm main's tip before pushing this section's own record. **#72 —
+fund returns by measure, the family's own fund split and the top bar's search —
+then took `10bw` while the final sweep was running.** **#79 — Private Market and
+the Portfolio Monitor as one master table each — then took `10bx` while this
+section's own results were being written up**, and its text reserves `10by` for
+the Portfolio Monitor's stage, which it has not written yet. Main keeps all five
+letters and the one it reserved; this section is **`10bz`**.
+
+**THE FOURTH COLLISION WAS INVISIBLE TO THE CHECK AS IT HAD BEEN RUN.** Counting
+each letter on the two sides found no difference at all: main carried one
+`10bw` and so did the branch, so the two lists were identical while the sections
+they named were not. Git marked this one, because both sections followed
+`10bv`, but a comparison that cannot see a same-letter pair would have passed a
+silent one. It was found by listing the headings main ADDED since the branch's
+base, which names the title as well as the letter — **compare headings, not
+letter counts.**
+
+Each round classified every line naming the moving letter against the two
+sides' own copies of this file: this branch's cross-references (the
+`CASH_EQUIVALENT_KEYS` and `fundNavs.ts` Layout bullets, Stage 10av's "both halves
+have since changed" note, the `build-fund-navs` Build entry and, from the third
+round, #73's withholding note) moved with the heading; main's own headings and
+merge notes stayed. On the fourth round `10bw` named 23 lines and 8 were this
+branch's — and nine of main's 15 sit OUTSIDE its own section, in Layout, the
+data-model preamble, Stages 10m, 10s and 10bp and the Build list, so a bulk
+rename would have made #72's fund-split and payout references cite this one.
+On the fifth round `10bx` named 14 lines: 8 were this branch's and moved, and 6
+are #79's — its heading, its merge note, the `TreeTable.tsx`, `privateBook.ts`
+and `fundReturns.ts` Layout bullets, and the "CLOSED AT" note under Stage 10bs —
+and stayed. The stage headings then differ from main's by `10bz` alone, with the
+ten historical duplicates unchanged.
+
+**THE `ctx` LITERAL CONFLICTED ALL FIVE TIMES** — main's `sectorLayout` and
+`shortWindow`, then its `absentName`, then its `costCarried`, then its
+`pmReturn`, then its `treeState`, beside this branch's `cashDom` — and each was
+resolved as a union the script had to PROVE: 86 keys, none duplicated, every
+one naming a declared identifier. On the fifth the union was NOT everything
+either side carried: #79 removed the probe that declared `schemeCalls` with the
+table it read, so that key would have thrown inside every check on every route
+and is dropped rather than kept.
+
+**#75 AND #72 BOTH CHANGED THE GENERATED BOOK, WHICH THIS BRANCH CHANGES TOO**,
+and a generated file is never hand-merged. `glowData.ts` and
+`docs/BOOK-REPORT.md` were REGENERATED by `build-book` from the merged archive
+and the merged builder each time, and the result differs from main's own by
+exactly this branch's two additions: the `transactionsOnly` flag — the one line
+this change adds to the book — and the share-movements note that says why a
+window with no position is empty. On the fourth merge git's textual merge
+happened to equal the regenerated file byte for byte, which is not a reason to
+skip the step: only regenerating could have said so. #79 did not touch the
+generated book, and the control was run on its merge anyway: byte-identical.
+
+**#70'S NEW SECTOR PAGE STILL CARRIES THE CARD THIS BRANCH'S CHECK READS.** It
+rebuilt Sector Composition around `<Figure>` cards, and "the excluded card files
+the arbitrage funds under Cash, never under Mutual Fund" reads the "Not a company
+share" figure by the same text layout main's own reconstruction check reads —
+both pass on the merged tree, which is the only place that could be settled.
+
+#### …and #73 would have contradicted this change on screen
+
+#73 answers a search that finds nothing with the family's review: *"on the
+consolidated review · no statement reports it … this book publishes no value or
+quantity for it until a statement arrives"*. Its gap list names **Motilal Oswal
+Arbitrage Fund Direct (G)** (₹31.80 Cr on the review) and **HDFC Liquid Fund
+-Direct(G)** (₹1.26 Cr) — both of which this change values from the depository's
+own balance. Neither branch was wrong on its own terms: the reconciler that
+generates that list reads `glowData.ts`, and these rows are LIVE-only, so they
+are not in it. **Together they would have printed "no value or quantity" on a
+page whose table values the holding** — on a narrowed drill-down, or on the
+Monitor when a reader types the review's own spelling, which empties the list
+because no option carries its "(G)".
+
+`claimableGaps` withholds a gap the live book values from a depository balance,
+joined BY ISIN through a hand-checked table (`REVIEW_LINE_ISINS`), never by a
+name — the depository prints the AMC's name in front of the scheme's, so no name
+tier reaches it. It is keyed on what `depositoryCashHoldings` actually carries,
+so switching that valuation off brings the sentence back, true again. Each entry
+is licensed by the same kind of witness as the unit basis: **the review's own
+purchase of that exact line is a credit the depository makes to that ISIN, unit
+for unit** — 1,63,08,407.445 Motilal Oswal Arbitrage units on 20/21 May, and
+HDFC Liquid's 2,282.178 on 5 June, the balance the review's Cash tab prints.
+
+`reviewGaps.test.ts` asserts each entry names a gap and a live row, that the tier
+is LOAD-BEARING (the name tier alone would have claimed each line absent), and
+the witness itself. `check:pages` types the review's spelling into the Monitor
+and asserts the note does not claim it, with that name derived by the same
+witness join rather than read from the table, which would agree by construction.
+
+**AND THE FIRST DRAFT OF THAT CHECK COULD NOT FAIL.** The checker's `bookArray`
+already appends its re-expressed depository rows, so running them through the
+gates again found the account carrying positions and yielded nothing — and the
+invariant ABSTAINED with "the live book values no depository balance", because
+its guard read the same broken count. The rows are read off the checker's book
+now, and the premise is struck on `CASH_INSTRUCTION_BOOK`, a separate
+derivation: **a guard read off the same computation as the thing it guards
+abstains exactly when that computation breaks.** Removing the tier then fails the
+check by name, which is the only evidence it can.
+
+#### …and #72's search box named an arbitrage fund a mutual fund
+
+#72 put a search box in the top bar that finds any holding, account, member or
+page, and it is built from the LIVE portfolio — so it finds the depository's
+cash-equivalent funds this change values, which no statement-basis surface
+carries. Two things it printed about them were wrong, and neither was wrong on
+#72's own terms, which is why only the merge could show them:
+
+- **Each result's chip named the WRAPPER.** It read `head.assetClass`, so the
+  three arbitrage funds and four liquid ones chipped "Mutual fund" beside a
+  detail line reading "Cash" — the funds named twice, two ways, on the one
+  surface where a reader types the family's own word for them. It reads
+  `readerClassOf` now, the class every other page names a holding under.
+- **The transaction-only demat read as a whole account.** Its entry said
+  "5 holdings · ₹63.7 Cr" — a figure for SOME of the account's holdings standing
+  where a reader takes it for all of them, since the statement carries fourteen
+  more that nothing values. It leads with **partly valued** now, before the
+  figure, because that line is truncated to one row.
+
+`withPartialValuation` in `fundNavs.ts` is the live copy of the account registry
+`PortfolioContext` builds, extracted so a suite builds the same one rather than a
+copy of it. `searchIndex.test.ts` builds the index over the LIVE rows —
+everything else in it builds from `BOOK_POSITIONS`, which never holds them — and
+asserts both rules; its load-bearing case requires funds a statement typed as a
+mutual fund, or it would pass on the rows a PMS statement already files under
+Cash. `check:pages` types "arbitrage" into the rendered box and requires every
+arbitrage fund the book carries, each chipped Cash, read off the chip's own
+`data-search-chip` node — and types the partly valued account's own number and
+requires its entry to lead with the marker. Reintroducing the wrapper chip fails
+the suite (naming all seven funds) and the rendered check alike, and so does
+dropping the marker.
+
+#### …and #79 made every statement a line of the table, so the depository's lines say what they are
+
+#79 turned the Portfolio Monitor's holdings table into a tree (`TreeTable.tsx`):
+a holding opens into ONE LINE PER STATEMENT, in the table's own columns, each
+with its own mark and its own hover, and a section heading is a band whose
+quiet line is `TreeSectionCell`'s `sub`. Two things this change draws had to
+land on that new shape rather than on the one they were written for:
+
+- **The cash notes moved into the band's line, unchanged.** "Includes 4 liquid
+  and 3 arbitrage funds the family counts as cash" on the Cash heading, and
+  "₹62.5 Cr counted as cash by the family's instruction" on the family axes'
+  Cash and Liquidity headings, are the same words with the same handles
+  (`data-cash-includes`, and `data-cash-rule-mv` on the band's `<tr>`), so every
+  check that reads them reads them where they now are.
+- **A depository line now says what it is.** A depository row is one of those
+  statement lines, and #79 gave every line the hover *"AMFI's published NAV for
+  this scheme, as of …"* — true, and silent about the one thing a reader needs:
+  that NAV replaced NO statement mark, because the account sent a transaction
+  statement and no holding statement. The parent row already said so; the line
+  it opens into is the more precise place, so the line says it too, from the
+  same `depositoryUnits.asOf` the parent reads.
+
+`check:pages` holds it on `monitor-open-all` — #79's own route, every row open —
+in both directions: every line the checker's own re-expression of the
+depository rows names must carry the sentence, and no other line may, because a
+statement-marked line wearing it is the same false provenance run the other
+way. An empty set there is a FINDING, never an abstention: it would mean the
+checker's book lost the rows the claim is about.
+
+#### Seventeen bugs reintroduced, and two were not results the first time
+
+Each case was applied alone in a separate worktree on its own port, rebuilt and
+swept over the routes it touches (light theme, where the invariants run), with
+the files restored from a snapshot, VERIFIED byte for byte, and the tree rebuilt
+on the way out. The unpatched control ran first and came back clean, and seven
+cases also ran the unit suites. **The whole pass — the control and all seventeen
+cases — was run again on the tree merged with #72**, because #72 edited three of
+the files it patches (`analytics.ts`, `MorningCIO.tsx`, `PortfolioMonitor.tsx`),
+added the one the two new cases patch (`searchIndex.ts`) and changed the checker
+every case runs. The table is that run.
+
+| Bug put back | Fires |
+| --- | --- |
+| the three arbitrage keys removed from `CASH_EQUIVALENT_KEYS` | **11 invariants across 7 routes** — every axis, both headings, the allocation card, the fund's own page and the search box — **and 10 FAIL lines in three suites**, the name detector naming all three depository balances by the names they print |
+| the switch off, so the live book carries no depository cash | **26 invariants on all 14 routes the pass walks, and 16 FAIL lines in four suites** — which is also the measured reach of the switch. The checker's copy of these rows deliberately does not read it, so turning the valuation off fails the sweep by name on every surface the rows reach, rather than leaving a stale model agreeing with a changed page |
+| the cash instruction folded back into the direct-stock rule | 5 invariants on 4 routes, and 3 suite lines naming each fund `rule/rule` |
+| arbitrage looked through on the security axis | the partition: the five buckets stop rebuilding NAV |
+| the arbitrage fund's page draws a look-through card | its no-look-through check |
+| Performance drops the `partial` marker | its own check on `performance` |
+| `/holdings` stops naming the depository rows | its own check — and, on the first run, one check on a page it does not render; see below |
+| Morning CIO drops the cash-instruction sentence | both family-axis allocation routes |
+| a sub-rupee gap read as a duplicate again | `NO_PHANTOM_DUPLICATE`, on three routes |
+| Family & Entities drops the partly valued account | its own check |
+| a class named on screen back to the wrapper | the sector card's Cash check — **and no suite**: `excludedClasses` is asserted on the page alone, which is recorded rather than papered over |
+| the partition's cash leaves out the arbitrage funds | the partition |
+| the Cash heading stops counting arbitrage | its own count, on two routes |
+| a depository row loses its NAV caption | the new caption check on `stock-arbitrage` |
+| the review-gap tier removed | the new review-gap check on `monitor-absent-name`, and 2 lines in the review-gap suite |
+| the search chip names the wrapper again | the rendered chip check on `search`, and a suite line naming all seven cash-equivalent funds by the wrapper they were given |
+| the search drops the partly valued marker | the rendered marker check on `search`, and its suite line (`0 entries vs 1 accounts`) |
+
+Every case carried exactly one NOT CHECKED — the pre-existing KPI-tile claim on
+`cio-allocation` — so no bug turned a finding into an abstention. **Two patches
+first came back NOT A RESULT**, and the harness saying so is the point: setting
+the switch to the literal `false` narrowed its type until a comparison in
+`fundNavs.test.ts` stopped compiling, and deleting the `partial` condition removed
+the narrowing its own hover depended on. Both were rewritten to keep their types.
+
+**AND ONE CASE FIRED A CHECK ITS PATCH CANNOT REACH, ONCE.** Hiding `/holdings`'
+depository line also failed *"a company held only inside a fund renders its
+measured cells absent, never zero"* on the security-axis Monitor — a page that
+does not render `HoldingsBehind`, which only `App.tsx` imports. Run again alone,
+the case fired its own check and nothing else. Eleven more walks of that page —
+three quiet, eight with every core saturated by busy loops — passed that check
+every time, with all 547 fund-only rows present and all 547 of their reasons
+read. **So the cause is NOT ESTABLISHED, and it is recorded rather than called a
+flake.** The one mechanism the walk's own order suggests — it reads the page's
+`title`s before its rows, so rows landing between the two reads would leave their
+reasons unread — is what the loaded walks were run to reproduce, and they did
+not. The first failure happened while the full sweep ran a second browser on the
+same machine, which the busy loops do not imitate; and one quiet walk read 701
+more `title`s than the other ten, so the page is not always in the same state
+when it is read. That is a lead for whoever next touches the walk, not a cause.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 42 + 44 + 30 + 29 + 22 + 140
+(2 not checked, 0 blocked) · `test:family` **38 suites, 0 failed** (new cases in
+`familyTaxonomy.test.ts`, `fundNavs.test.ts`, `reviewGaps.test.ts` and
+`searchIndex.test.ts`; the one NOT CHECKED is the fund-NAV basis gate's, which
+predates this change) · `check:family` **86/0** · CI (`build`) and Cloudflare
+Pages green on the pushed merge · `check:pages` **214 combinations clean, 0
+invariant failures**, with the eight evidenced abstentions main's own sweep
+carries and not one of this change's — four from the KPI-tile claim spread across
+Morning CIO's panels, two from every private holding reporting a cost, the
+not-found crumb and the pledge claim on `stock-qty` — read out of the log BY
+NAME.
+
+**MEASURED ON THE TREE MERGED WITH #72, AND IT RECONCILES ONLY BECAUSE IT WAS
+RE-RUN.** Main's own sweep is 210 — Stage 10bw's figure — and this change's two
+routes (`family-partial`, `stock-arbitrage`) across both themes make 214. This
+section's earlier figures were each true of their own base and of no other: 196
+before any merge, which failed two of them, and 204 on the tree merged with #73.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, and `npm run reconcile:review` regenerates #73's
+`reviewGaps.ts` and `docs/REVIEW-RECONCILIATION.md` byte-identically too — the
+gap list is unchanged; what changed is which of its lines a search may claim.
+
+#### …and a sixth time, when the go-ahead came for four PRs at once
+
+*"#78, #74, #76, #77 — merge all of these PRs to main."* By then main had taken
+FIVE more letters while this branch waited: **#83** (Ask Muns off the top bar)
+took `10bz`, **#80** (every return FIFO) `10ca`, **#82** (the KPI tile
+layouts) `10cb`, and — merged first in this same round, being the smaller two —
+**#76** `10cc` and **#77** `10cd`. Main keeps all five; this section is
+**`10ce`**. The eleven code comments that named this section by its earlier
+letters (`10bv`, `10bx`, `10bz`) point at `10ce` now, and the stage headings
+differ from main's by `10ce` alone, with main's ten historical duplicates
+unchanged — compared as HEADINGS, which is the check the fourth collision above
+taught.
+
+**#76 AND #77 LANDED AS SQUASH MERGES, AND THAT CHANGES HOW A BRANCH CATCHES
+UP.** This branch had already merged both PRs' heads, so main's tree after their
+squashes was a tree this branch contained — but a squash shares no history with
+the commits it replaced, so merging main directly conflicted against the OLD
+base on every file those PRs touched. The fix was structural rather than a
+second resolution: merge #77's final head first (its tree IS main's), confirm
+main's tree and that head's are byte-identical, then record main with
+`git merge -s ours`. Resolving the same hunks twice would have been two chances
+to resolve them differently.
+
+**THE CONFLICTS THAT WERE REAL**, each resolved against the tree #76 and #77
+land as:
+
+- **`build-book`'s share-movement join keeps both halves.** #76 files a window
+  whose ISIN names one book company under that company; this branch splits an
+  unjoined window into nil closes, units still held on a transaction-only
+  account, and rows deliberately not carried. #76's note said its bridged
+  windows sit in an account that no longer holds the security — **7 of the 10
+  still hold units**, measured, so the note says both.
+- **`PortfolioContext`** sends the statement's rows through #84's
+  corporate-action layer and this branch's depository cash rows through the
+  quote overlay, then both through the published NAV, as before.
+- **The arbitrage look-through exclusion moved into #76's `heldFundVehicles`**,
+  so the page and the suite read one definition of which funds are looked
+  through rather than two.
+- **A depository cash row the book also carries takes #76's one name per key**
+  (`securityLabel`) rather than a second spelling of the same fund.
+- `types.ts`, `fundNavs.ts`, Morning CIO, the Portfolio Monitor and Return
+  Analysis are unions: #80's FIFO fields and capital basis beside this branch's
+  cash-rule sources.
+- **The `ctx` literal is a union of 92 keys**, none duplicated, each naming a
+  declared probe.
+
+**THE GENERATED FILES WERE REGENERATED, NOT MERGED.** `build-book` over the
+merged archive and builder reproduces `glowData.ts` and `docs/BOOK-REPORT.md`,
+and `BOOK_SUMMARY` does not move by a rupee: this change moves cash between
+sections and values a depository's cash, and neither is a new holding.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0 ·
+`check:family` **84/2** · `check:pages` **244 combinations, 3 with a finding**.
+
+**EVERY ONE OF THOSE FIVE FAILURES IS MAIN'S, AND WAS SHOWN TO BE BEFORE THIS
+MERGED.** The two `check:family` failures are the Extras-menu checks, which fail
+identically on main because #84 added a fifth page (`/corporate-actions`) to a
+dropdown the check still counts as four. The three `check:pages` findings are
+the three Private Market routes, failing the identical invariants on main's own
+run — the fund-return re-expression in the checker (#72's) still strikes HPR as
+value against cost, where #80 made every HPR FIFO. Neither was introduced here
+and neither is fixed here: a merge that also rewrote two other stages' checks
+would be a change nobody asked for, and the two are named here and in the PR so
+they are not mistaken for this branch's.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
@@ -20157,7 +20722,10 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   publishes the previous business day), committing only when a NAV moved.
   Idempotent; `-- --check` writes nothing. A scheme whose units are not on the
   same basis as its NAV carries the NAV and does NOT value the holding — see
-  Stage 10bn. Nothing it writes reaches `glowData.ts`.
+  Stage 10bn. Nothing it writes reaches `glowData.ts`. It records each
+  scheme's SEBI CATEGORY verbatim — which is how an arbitrage fund is known —
+  and also prices a fund a depository reports on a transaction-only account,
+  never an ETF there (no mark to test its basis against). See Stage 10ce.
 - `npm run build-upstox-instruments` refreshes `shared/upstoxInstruments.mjs`
   and `docs/UPSTOX-INSTRUMENTS.md` — which Upstox instrument each NSE symbol the
   dashboard asks about IS, from Upstox's own public instrument list (keyless),

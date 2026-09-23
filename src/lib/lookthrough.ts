@@ -37,6 +37,7 @@ import { securityKeyOf } from "./securityKey";
 import { resolveSector, UNCLASSIFIED } from "./sectors";
 import { displayFiledName, stripFilingMarks } from "./format";
 import { currentHoldings, isCompanyShare, isFundVehicle } from "./analytics";
+import { isArbitrageFund } from "./fundNavs";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
@@ -462,6 +463,14 @@ export function heldFundVehicles(consolidated: readonly Position[]): HeldFund[] 
   const m = new Map<string, HeldFund>();
   for (const p of currentHoldings(consolidated)) {
     if (!isFundVehicle(p)) continue;
+    /**
+     * AN ARBITRAGE FUND IS CASH, AND IT IS NOT LOOKED THROUGH. Its disclosure
+     * is a book of long shares hedged by short futures, so reading it as the
+     * family's exposure to those companies would print stock they do not
+     * carry — the net is cash, which is how the family asked it be counted.
+     * A liquid fund's paper is real, unhedged credit exposure and stays in.
+     */
+    if (isArbitrageFund(p)) continue;
     const e = m.get(p.securityKey)
       ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
     e.marketValue += p.marketValue;

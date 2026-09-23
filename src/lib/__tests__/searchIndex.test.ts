@@ -18,7 +18,8 @@
 //
 // Every expectation is derived from `glowData.ts` on the run.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB } from "@/data/glowData";
-import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, sum } from "@/lib/analytics";
+import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
+import { depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
 import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
@@ -192,6 +193,43 @@ console.log("── the categories partition the book, as the allocation table d
       rows.every((e) => parseDrilldown(new URLSearchParams(e.href.split("?")[1]))?.key != null));
   }
   ok("the book carries a total to partition", total > 0);
+}
+
+console.log("── on the LIVE book: a cash equivalent is named Cash, and a partly valued account says so ──");
+{
+  /**
+   * The top bar searches what the PAGE is handed — the live portfolio, which
+   * carries the cash-equivalent funds a depository reports on an account that
+   * sent no holding statement (Stage 10ce). Everything above builds from
+   * `BOOK_POSITIONS`, which never holds those rows, so it cannot see either
+   * rule below. The registry is the one `PortfolioContext` builds, through the
+   * same helper, rather than a copy of it.
+   */
+  const dep = depositoryCashHoldings();
+  const livePositions = [...BOOK_POSITIONS, ...dep];
+  const liveAccounts = withPartialValuation(BOOK_ACCOUNTS, partialValuationNotes(dep));
+  const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money });
+  // A missing premise is a FAILURE, never an abstention: an empty set would
+  // let every assertion below pass by asserting nothing.
+  ok("the live book carries depository-valued cash equivalents to search", dep.length > 0, `${dep.length} rows`);
+  ok("…and every one of them is findable", dep.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
+    dep.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
+  const cashEntries = live.filter((e) => e.kind === "holding" && isCashEquivalent({ securityKey: e.id.slice("holding:".length) }));
+  const misnamed = cashEntries.filter((e) => e.chip !== "Cash");
+  ok("every liquid and arbitrage fund chips as Cash, never as its wrapper", cashEntries.length > 0 && misnamed.length === 0,
+    misnamed.map((e) => `${e.label} → ${e.chip}`).join("; "));
+  // LOAD-BEARING: the check must cover funds whose statement typed a WRAPPER,
+  // or it passes on the rows a PMS statement already filed under Cash.
+  const wrapped = cashEntries.filter((e) => livePositions.some((p) => `holding:${p.securityKey}` === e.id && p.assetClass !== "Cash"));
+  ok("…including funds a statement typed as a mutual fund or an ETF", wrapped.length > 0, `${wrapped.length} entries`);
+  const partial = liveAccounts.filter((a) => a.partialValuation);
+  ok("the live registry carries a partly valued account", partial.length > 0);
+  const saysPartial = live.filter((e) => e.kind === "account" && /^[^·]+ · partly valued · /.test(e.detail));
+  ok("…and exactly those accounts read \"partly valued\", before their figure",
+    saysPartial.length === partial.length && partial.every((a) => saysPartial.some((e) => e.id === `account:${a.accountId}`)),
+    `${saysPartial.length} entries vs ${partial.length} accounts`);
+  ok("on the statement basis no account is called partly valued",
+    !index.some((e) => e.kind === "account" && /partly valued/.test(e.detail)));
 }
 
 console.log("── the matching tiers ──");

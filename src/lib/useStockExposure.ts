@@ -49,6 +49,9 @@ export function useStockExposure(consolidated: Position[], enabled: boolean): St
   // the two cannot load different funds — which they did, and which hid a join
   // only the page depended on.
   const heldVehicles = useMemo<HeldFund[]>(() => heldFundVehicles(consolidated), [consolidated]);
+  //
+  // AND AN ARBITRAGE FUND IS NOT A VEHICLE TO LOOK THROUGH — that rule lives in
+  // `heldFundVehicles` too, so the suite and this page cannot disagree on it.
 
   /**
    * ISIN → THE BOOK'S OWN KEY, which is the only tier that can join a

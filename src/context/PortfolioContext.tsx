@@ -11,8 +11,8 @@ import type { Portfolio, Position } from "@/lib/types";
 import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
-import { fetchQuotes, symbolsFor, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
-import { applyFundNavs } from "@/lib/fundNavs";
+import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
+import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { applyCorporateActionQuotes, fetchCorporateActions, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
@@ -24,6 +24,15 @@ import {
   BOOK_PE_FUNDS, BOOK_PREIPO_FUNDS, BOOK_UNLISTED_COMPANIES, BOOK_DEBT_FUNDS, BOOK_CLOSED_FUNDS, BOOK_STARTUPS,
   BOOK_COMMITMENTS,
 } from "@/data/glowData";
+
+/**
+ * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS — computed once, because
+ * every input is committed data. See `depositoryCashHoldings`: the arbitrage and
+ * liquid funds on an account that sent only a transaction statement, valued at
+ * the depository's closing units × AMFI's published NAV. LIVE portfolio only.
+ */
+const DEPOSITORY_CASH = depositoryCashHoldings();
+const DEPOSITORY_NOTES = partialValuationNotes(DEPOSITORY_CASH);
 
 // Re-export so components can keep importing these from the context module.
 export { SUPPORTED_DISPLAY_CURRENCIES } from "@/lib/fx";
@@ -390,7 +399,26 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // `applyQuotes` with a null feed marks every row not-live and changes
     // nothing else, so ONE path serves both cases and the no-feed run is no
     // longer an early return that skipped the NAVs.
-    const positions = applyFundNavs(corporateActionLayer.positions);
+    /**
+     * AND THE DEPOSITORY'S CASH JOINS HERE, NEVER IN `basePortfolio`.
+     *
+     * Those rows have no statement mark at all — their value IS the published
+     * NAV — so they belong to the live book alone, and `statementPortfolio`
+     * stays exactly what the PDFs print. They go through the same two overlays
+     * as every other row, so a liquid ETF the quote feed prices intraday is
+     * priced here the way its siblings on the other demats are.
+     */
+    // The statement's own rows come through the corporate-action layer, which
+    // prices them; the depository's cash rows are funds, which that layer would
+    // only price the same way, so they take the quote overlay directly.
+    const positions = applyFundNavs([...corporateActionLayer.positions, ...applyQuotes(DEPOSITORY_CASH, quotes)]);
+    /**
+     * AN ACCOUNT SOME OF WHOSE HOLDINGS ARE NOW VALUED NO LONGER "VALUES NOTHING".
+     * Its generated `noPositionsReason` is true of the statement basis and false
+     * of this one, so the live copy carries `partialValuation` instead — what is
+     * valued, from what, and how many holdings on the same statement are not.
+     */
+    const accounts = withPartialValuation(basePortfolio.accounts, DEPOSITORY_NOTES);
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
@@ -410,10 +438,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const { listed: listedValue, private: privateValue, unplaced: unplacedValue } =
       publicPrivateSplit(positions);
     return {
-      ...basePortfolio, positions, listedValue, privateValue, unplacedValue,
+      ...basePortfolio, positions, accounts, listedValue, privateValue, unplacedValue,
       totalValue: listedValue + privateValue + unplacedValue,
     };
-  }, [basePortfolio, corporateActionLayer]);
+  }, [basePortfolio, corporateActionLayer, quotes]);
 
   const consolidated = useMemo(
     () => dedupedPositions(portfolio?.positions ?? []),

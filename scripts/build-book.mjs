@@ -1153,8 +1153,21 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
   // back into the book through a side door, attributed to a holder this book
   // has said it cannot establish.
   const known = new Set(accounts.map((a) => a.accountId));
+  /**
+   * WHICH ACCOUNTS SENT A HOLDING STATEMENT. A window the book carries no
+   * position for means three different things, and the note below used to
+   * call all of them "securities the account no longer holds" — true of a
+   * zero close and FALSE of the rest. Measured: 19 windows on Ajay's main demat
+   * close with units still held, on an account that sent only this
+   * transaction statement, so the tape's closing balance is the only record of
+   * the holding. Told those were exits, a reader stops looking for them.
+   */
+  const withHoldingsDoc = new Set(docs
+    .filter((d) => d.reportType === "holdings" && d.accountNo && d.provider)
+    .map((d) => accountIdOf(d.provider, d.accountNo)));
 
   let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0, bridged = 0, ambiguous = 0, collided = 0, overwritten = 0, fundCopy = 0;
+  let exited = 0, heldNoHoldings = 0, notCarried = 0, bridgedHeld = 0;
   for (const d of docs) {
     if (d.reportType !== "demat-transactions") continue;
     // The SLUG a position carries, never `acctKey`'s grouping key — those are
@@ -1175,6 +1188,12 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
       let key = byAcctIsin.get(`${accountId}|${row.isin}`);
       if (key) joined += 1;
       else {
+        // WHAT A WINDOW WITH NO POSITION IN ITS OWN ACCOUNT IS — counted apart,
+        // because "the account no longer holds it" is true of a nil close and
+        // false of a balance on an account that sent no holding statement.
+        if (!(row.quantity > 0)) exited += 1;
+        else if (withHoldingsDoc.has(accountId)) notCarried += 1;
+        else heldNoHoldings += 1;
         const across = row.isin ? keysByIsin.get(row.isin) : undefined;
         if (row.isin && aifIsins.has(row.isin)) fundCopy += 1;
         else if (across?.size === 1) {
@@ -1184,7 +1203,7 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
           // instruments printed as one — the older issue of a split share, say —
           // so the second keeps its own name rather than replacing the first.
           if (out[`${accountId}|${bookKey}`]) collided += 1;
-          else { key = bookKey; bridged += 1; }
+          else { key = bookKey; bridged += 1; if (row.quantity > 0) bridgedHeld += 1; }
         } else if ((across?.size ?? 0) > 1) ambiguous += 1;
       }
       key ??= own;
@@ -1218,10 +1237,10 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
     }
   }
   if (blocks) {
-    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; the rest are securities the account no longer holds. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+    notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; ${exited} close at nil, securities the account sold out of during the window; ${heldNoHoldings} close with units still held on an account that sent no holding statement, so the tape's closing balance is the only record of them; ${notCarried} sit on an account whose own holding statement is in the drop and are deliberately not carried as positions — a fund reporting its own units, or a row with no mark. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
     // PRINTED EVEN AT ZERO: a join that only speaks when it fires is
     // indistinguishable, on a quiet drop, from one that was deleted.
-    notes.push(`share movements: ${bridged} window(s) in an account that no longer holds the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them; ${ambiguous} ISIN(s) the book files under two keys keep the statement's own name rather than picking one; ${fundCopy} window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; ${collided} block(s) would have landed on a key their account already filed and keep their own name instead; ${overwritten} window(s) were overwritten by a second block under one key.`);
+    notes.push(`share movements: ${bridged} window(s) in an account that carries no position for the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them (${bridged - bridgedHeld} close at nil; ${bridgedHeld} close with units still held on an account that sent no holding statement); ${ambiguous} ISIN(s) the book files under two keys keep the statement's own name rather than picking one; ${fundCopy} window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; ${collided} block(s) would have landed on a key their account already filed and keep their own name instead; ${overwritten} window(s) were overwritten by a second block under one key.`);
   }
   return out;
 }
@@ -2284,6 +2303,16 @@ function build(docs) {
           : allIssues.some((d) => /transaction/i.test(d.reportType ?? ""))
           ? `no HOLDING statement for this account is in the drop — only its ${[...new Set(allIssues.map((d) => d.reportType))].sort().join(", ")} statement(s). The tape's closing balances are in the archive as quantities at ${allIssues.map((d) => d.asOf).filter(Boolean).sort().pop() ?? "its own date"} and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
+        /**
+         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values a
+         * cash-equivalent fund on such an account from the depository's own
+         * closing balance and AMFI's published NAV, and it must find those
+         * accounts structurally — a rule that matched the prose above would stop
+         * matching the first time somebody reworded it. It is set on exactly the
+         * case the sentence describes: no holding statement in the drop, and a
+         * transaction statement that is.
+         */
+        if (!holdingsDoc && allIssues.some((d) => /transaction/i.test(d.reportType ?? ""))) acct.transactionsOnly = true;
       }
     }
 
