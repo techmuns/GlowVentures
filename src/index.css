@@ -50,6 +50,15 @@ html.dark {
 html, body, #root { height: 100%; }
 
 /*
+ * A DRAGGED COLUMN LIFTS WHOLE — see `src/lib/columnDrag.ts`. While the copy is
+ * carried, the column it came from dims IN PLACE, so a reader can see the gap it
+ * left; and the whole page shows the grabbing hand and selects no text. Opacity
+ * only, so it reads on both themes and needs no light-mode remap.
+ */
+[data-col-lifted] { opacity: 0.22; transition: opacity 120ms ease-out; }
+html.col-dragging, html.col-dragging * { cursor: grabbing !important; user-select: none !important; }
+
+/*
  * THE DEFAULT VIEW IS THE ZOOMED-OUT ONE.
  *
  * The family kept pressing Ctrl+- on this dashboard and said the result "becomes

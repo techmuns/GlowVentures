@@ -1,6 +1,7 @@
-import { Children, ReactNode, isValidElement, useState } from "react";
+import { Children, ReactNode, isValidElement } from "react";
 import { ChevronUp, ChevronDown, ChevronsUpDown, GripVertical } from "lucide-react";
 import { useTableView, type TableView } from "@/lib/tableView";
+import { pressColumn } from "@/lib/columnDrag";
 
 /**
  * ── ONE HEADER CELL FOR EVERY TABLE IN THE APP ──────────────────────────────
@@ -15,13 +16,18 @@ import { useTableView, type TableView } from "@/lib/tableView";
  * DRAG while refusing the click, because a heading that looks clickable and
  * sorts nothing is the control-that-looks-alive failure this repo keeps naming.
  *
- * ── THE DRAG IS HTML5's OWN, AND THE ARROW KEYS ARE THE OTHER HALF ──────────
+ * ── THE DRAG LIFTS THE WHOLE COLUMN, AND THE ARROW KEYS ARE THE OTHER HALF ─
+ *
+ * *"it should lift up the whole column instead of just lifting up the header"*
+ * — so the drag is a pointer gesture (`src/lib/columnDrag.ts`) that carries a
+ * copy of the column as it stands on screen, heading and cells together, rather
+ * than HTML5's own drag, which can only carry a picture of the heading.
  *
  * A pointer drag is unreachable by keyboard, so a focused heading also moves
  * one place on ← and →. That is not a nicety on a dashboard of fifty tables: a
  * feature only a mouse can reach is a feature half the readers do not have.
  */
-export function SortHeader({ col, view, children, align = "right", title, pad = "px-4 py-2", sortable = true, className = "", colSpan, note, noteTitle }: {
+export function SortHeader({ col, view, children, align = "right", title, pad = "px-4 py-2", sortable = true, className = "", colSpan, note, noteTitle, coverage }: {
   /** The column's id, as declared in `useTableView`. */
   col: string;
   view: TableView;
@@ -44,8 +50,21 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
    */
   note?: string;
   noteTitle?: string;
+  /**
+   * HOW MANY OF THE COLUMN'S ROWS IT ANSWERS — "4 of 4", "2 money-weighted of
+   * 4" — kept OFF the screen. It rides at the front of the heading's hover and
+   * on `data-col-coverage`, never as a line under the label.
+   *
+   *   *"Why do i need all this garbage written … its obvious from the table what
+   *    it is."*
+   *
+   * A cell the column cannot answer already shows a dash that says why, and a
+   * cell showing a different measure carries its own tag, so the count under
+   * the heading repeated what the column's own cells say. It is still one hover
+   * away for a reader who wants the tally.
+   */
+  coverage?: string;
 }) {
-  const [over, setOver] = useState(false);
   const active = view.sort?.col === col;
   const dir = view.sort?.dir;
   const Icon = active ? (dir === "asc" ? ChevronUp : ChevronDown) : ChevronsUpDown;
@@ -58,21 +77,15 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
       data-col={col}
       data-col-sort={active ? dir : undefined}
       data-col-movable={movable ? "" : undefined}
+      data-col-coverage={coverage}
       aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
-      title={title ?? (sortable
-        ? `Sort by this column${movable ? " · drag the handle, or focus it and press ← or →, to move it" : ""}`
-        : movable ? "Drag the handle, or focus it and press ← or →, to move this column" : undefined)}
-      draggable={movable}
-      onDragStart={movable ? (e) => { e.dataTransfer.setData("text/plain", col); e.dataTransfer.effectAllowed = "move"; } : undefined}
-      onDragOver={movable ? (e) => { e.preventDefault(); setOver(true); } : undefined}
-      onDragLeave={movable ? () => setOver(false) : undefined}
-      onDrop={movable ? (e) => {
-        e.preventDefault(); setOver(false);
-        const from = e.dataTransfer.getData("text/plain");
-        if (from && from !== col) view.move(from, col);
-      } : undefined}
+      title={[coverage, title ?? (sortable
+        ? `Sort by this column${movable ? " · drag it, or focus the handle and press ← or →, to move it" : ""}`
+        : movable ? "Drag this column, or focus the handle and press ← or →, to move it" : undefined)]
+        .filter(Boolean).join(" · ") || undefined}
+      onPointerDown={movable ? (e) => pressColumn(e, col, view) : undefined}
       className={`label-xs select-none ${pad} font-medium ${alignCls} ${active ? "text-slate-300" : ""} ${
-        over ? "bg-champagne-500/15" : ""} ${className}`}>
+        movable ? "cursor-grab" : ""} ${className}`}>
       {/* ── NOT ONE FLEX BOX IN THIS CELL, AND THAT IS LOAD-BEARING ─────────
           `innerText` blockifies the CHILDREN of a flex container, so an
           `inline-flex` heading put its icon and its label on separate lines —
@@ -115,7 +128,7 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
               if (e.key === "ArrowLeft") { e.preventDefault(); view.nudge(col, -1); }
               if (e.key === "ArrowRight") { e.preventDefault(); view.nudge(col, 1); }
             }}
-            className="ml-1 cursor-grab rounded align-middle text-slate-700 ring-focus transition-colors hover:text-slate-400">
+            className="ml-1 cursor-grab touch-none rounded align-middle text-slate-700 ring-focus transition-colors hover:text-slate-400">
             <GripVertical className="inline-block h-3 w-3 align-[-1px]" />
           </button>
         )}

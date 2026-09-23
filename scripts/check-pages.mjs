@@ -145,7 +145,7 @@ function sliceBetween(text, from, to) {
  */
 const navHead = (ctx) => ctx?.navChart?.head ?? null;
 
-function bookArray(src, name) {
+function bookArray(src, name, { statement = false } = {}) {
   const i = src.indexOf(`export const ${name}`);
   if (i < 0) return null;
   const start = src.indexOf("= [", i);
@@ -154,8 +154,11 @@ function bookArray(src, name) {
   if (end < 0) return null;
   let out;
   try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
-  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER.
-  return name === "BOOK_POSITIONS" ? withPublishedNavs(out) : out;
+  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — except for
+  // a page that reads `statementPortfolio` by design (§6: Private Market,
+  // Capital Gains, Ledger Insights, Data Audit), which asks for the book as the
+  // statements print it. Two bases, and a check must name the one its page is on.
+  return name === "BOOK_POSITIONS" && !statement ? withPublishedNavs(out) : out;
 }
 
 /**
@@ -1269,6 +1272,36 @@ const SIDE_BOOK = (() => {
        */
       privateCosted: current(on("private")).filter((p) => p.costBasis != null).length,
       privateUncosted: current(on("private")).filter((p) => p.costBasis == null).length,
+      /**
+       * THE NEWEST DATE A PRIVATE HOLDING IS MARKED AT, and the book's own
+       * newest. The "Marks span" line that printed the first went at the
+       * family's request; each fund row's As of cell prints it now, and PM-7
+       * holds the newest of those to this — and to never being the book's
+       * newest where that is later than every private mark. Struck over EVERY
+       * current private statement row rather than the deduped set, because a
+       * fund row's As of spans all of its folios: 360 ONE's two CRNs are marked
+       * a month apart and the row prints both dates.
+       */
+      privateAsOfMax: [...new Set(current(positions.filter((p) => sideOf(p) === "private"))
+        .map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort().at(-1) ?? null,
+      bookAsOfMax: [...new Set(accounts.map((a) => a.asOf).filter(Boolean))].sort().at(-1) ?? null,
+      /**
+       * THE WHOLE BOOK ON THE STATEMENT BASIS. Private Market reads
+       * `statementPortfolio` (§6), so its "of the ₹X book" is the book as the
+       * statements print it, while `totalMV` above is the book with the
+       * published NAVs laid over it, which is what every LIVE-basis page
+       * renders. A check that set the one against the other would fail a
+       * correct page by exactly the NAV overlay.
+       */
+      statementTotalMV: (() => {
+        const raw = bookArray(src, "BOOK_POSITIONS", { statement: true }) ?? [];
+        const seenS = new Set();
+        return val(raw.filter((p) => {
+          if (!p.dedupeGroup) return true;
+          if (seenS.has(p.dedupeGroup)) return false;
+          seenS.add(p.dedupeGroup); return true;
+        }));
+      })(),
     };
   } catch { return null; }
 })();
@@ -1848,31 +1881,13 @@ const FUND_ACCOUNT_ID = (() => {
 })();
 
 /**
- * THE NEWEST DATE ANY PRIVATE HOLDING IS ACTUALLY MARKED AT.
- *
- * Derived, never typed: the Private Market page's own claim is that it does NOT
- * print the book's newest date over marks that are older than it, and both dates
- * move with every drop. A literal here would be a second source for a generated
- * figure — the mistake that made three earlier invariants fail against pages
- * computing correctly.
- *
- * Today the book closes 2026-08-13 and the newest private mark is 2026-07-31.
+ * The asset classes the OLD listed/private rule treated as private. Read only by
+ * `BOOK_HALVES` below, whose gate asks whether the book has both kinds at all —
+ * a question both rules answer the same way on this book. The side a holding is
+ * on is decided by `SIDE_BOOK` (the family's placing, then the paperwork), and
+ * the newest private mark PM-7 holds the page to is `SIDE_BOOK.privateAsOfMax`.
  */
 const PRIVATE_CLASSES = new Set(["AIF", "Unlisted", "Structured Product"]);
-const PRIV_ASOF_MAX = (() => {
-  try {
-    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const accounts = bookArray(src, "BOOK_ACCOUNTS");
-    const positions = bookArray(src, "BOOK_POSITIONS");
-    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
-    const ids = new Set(positions.filter((p) => PRIVATE_CLASSES.has(p.assetClass)).map((p) => p.accountId));
-    for (const a of accounts) if (a.engagement === "AIF") ids.add(a.accountId);
-    const dates = [...ids]
-      .map((id) => accounts.find((a) => a.accountId === id)?.asOf)
-      .filter(Boolean).sort();
-    return dates.at(-1) ?? null;
-  } catch { return null; }
-})();
 
 /**
  * The ring-fenced security's own key, READ FROM THE BOOK rather than typed.
@@ -4161,7 +4176,7 @@ let AXIS_DRILL = null;
  * cleared the sort would still reorder the columns, and comparing only the
  * first and last states would call that a working move.
  */
-const ARRANGE = { before: null, desc: null, sorted: null, moved: null };
+const ARRANGE = { before: null, desc: null, sorted: null, moved: null, lift: null, dropped: null, escape: null, back: null };
 /**
  * WHAT THE HOLDINGS SEARCH SAYS WHEN IT FINDS NOTHING — read off the control
  * the family used, on `monitor-absent-name` only, `null` everywhere else.
@@ -6541,26 +6556,113 @@ const qtyChecks = (keyOf) => [
  * same regression.
  */
 /**
- * THE SIDES LINE — which side of the book this page is, and the sides add to
- * the total. On every tab, because it is a claim about the page rather than
- * about one of its tables.
+ * ── THE SIDES LINE STAYS GONE ───────────────────────────────────────────────
+ *
+ *   *"Why do i need all this garbage written please remove its obvious from the
+ *    table what it is."*
+ *
+ * It listed every side of the book and their total under the table ("This page
+ * is the private side of the book: Listed ₹… · Private ₹… · Total ₹…"). It
+ * INVERTS rather than being deleted: the share of the book this page is sits on
+ * the Market value tile, which PM-2 holds to the book's own private side and
+ * whole statement-basis NAV, and every side with its own drill-down is on
+ * Morning CIO's Concentration card. Struck on the line's opening words, on its
+ * listing shape AND on its handle, so a rewording that kept it fails too.
  */
-const PRIVATE_SIDES_CHECK = (t) => {
-  if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
-  const line = /This page is the private side of the book:([^\n]*)/i.exec(t);
-  if (!line) return false;
-  /**
-   * EVERY SIDE THE BOOK HAS, in the line, and their total beside them. Two
-   * hard-coded terms stopped adding to the total printed after them the moment
-   * a third side existed, which is the contradiction a reader finds by adding —
-   * so this counts the terms against the book rather than matching the words.
-   */
-  if (!SIDE_BOOK.sides.every((k) => new RegExp(esc(k), "i").test(line[1]))) return false;
-  const figs = [...line[1].matchAll(/₹([\d,.]+)\s*(Cr|L|K)?/g)].map((m) => crU(m[1], m[2]));
-  if (figs.length !== SIDE_BOOK.sides.length + 1) return false;
-  const parts = figs.slice(0, -1).reduce((a, b) => a + b, 0);
-  return Math.abs(parts - figs.at(-1)) <= 0.05 * figs.length;
-};
+const PRIVATE_SIDES_GONE = ["the 'private side of the book' line stays removed", (t, ctx) =>
+  !/This page is the private side of the book/i.test(t)
+  && !/Listed\s*₹[\d,.]+\s*(?:Cr|L|K)?\s*·\s*Private\s*₹/i.test(t)
+  && (ctx?.pmView?.working ?? 1) === 0];
+
+/**
+ * ── NO EXPLAINER TEXT ANYWHERE ON THE PAGE ─────────────────────────────────
+ *
+ *   *"Why do i need all this garbage written please remove its obvious from
+ *    the table what it is … The customer is literally looking at the table
+ *    and seeing the values inside it."*
+ *
+ * STRUCK ON STRUCTURE, NOT ON WORDING, because a rewording that kept the
+ * paragraph is exactly how this comes back. Three claims:
+ *
+ *  - no card carries a subtitle (`data-card-subtitle`, which `Card` emits);
+ *  - no visible text block outside a table runs past a tile's one line, and
+ *    no table cell reads as a sentence — see the `prose` probe for the bounds;
+ *  - the three handles the removed blocks carried — the "How the capital
+ *    totals are worked out" drop-down, the sides line, and the line under the
+ *    total's label — are gone, and so are the sentences that stood there.
+ *
+ * WHAT THEY SAID IS NOT GONE, AND EACH IS ASSERTED WHERE IT LIVES NOW — the
+ * hover on the figure it qualifies (PM-4, PM-4b, PM-4c, PM-4g, the clause
+ * naming the public-market capital accounts, the header counts). A removal is
+ * verified by asserting it happened; a re-homing by asserting the new home.
+ * Neither implies the other.
+ */
+const PM_NO_PROSE = ["no card carries a subtitle, a footnote or an explainer line", (t, ctx) => {
+  const pr = ctx?.prose;
+  if (!pr) return { notChecked: "the prose probe did not run" };
+  const gone = [
+    /One row per fund, each holding counted once\. Click a row/i,
+    /One row per family member, each statement exactly as printed/i,
+    /What the funds can still ask for, and every capital call they have made/i,
+    /Each fund is valued on its own statement's date/i,
+    /Marks span/i,
+    /How the capital totals are worked out/i,
+    /Still to call is summed exactly as each fund prints it/i,
+    /This is every private-market capital account in the book/i,
+    /the row above counts it once/i,
+    /what the capital tiles add to/i,
+    /reproduce the total its own statement prints/i,
+    /folios · each (?:holding counted once|statement as printed)/i,
+    /paid in (?:here )?is in no value total/i,
+  ];
+  return pr.subtitles.length === 0 && pr.blocks.length === 0 && pr.cells.length === 0
+    && (ctx?.pmView?.working ?? 1) === 0
+    && gone.every((re) => !re.test(t));
+}];
+
+/**
+ * ── A BAND KEEPS ITS COUNTS ON ITS FACE AND ITS BASIS IN ITS HOVER ──────────
+ *
+ * The band's quiet line read "4 funds · 6 folios · each holding counted once"
+ * and, on the missing-data band, "…the statements carry no value, so ₹X paid in
+ * is in no value total". The counts are data and stayed; the basis and the
+ * reason are sentences and went to the band's hover. BOTH HALVES are asserted:
+ * a band that dropped the sentence altogether satisfies the absence alone, and
+ * the ₹ figure the hover names must be the band's own Paid in, so a hover that
+ * went stale against its row cannot pass.
+ */
+const PM_BAND_HINTS = (grouping) => ["each band keeps its counts on its face and says its basis in its hover", (t, ctx) => {
+  const pv = ctx?.pmView;
+  if (!pv) return { notChecked: "the private-view probe did not run" };
+  const priv = pv.sections.find((x) => x.id === "private");
+  if (!priv) return false;
+  const basis = grouping === "owners" ? /each statement as printed/i : /each holding counted once/i;
+  if (!basis.test(priv.hint ?? "") || basis.test(priv.text)
+    || !/\d+ (?:funds?|members?) · \d+ folios/i.test(priv.text)) return false;
+  const unv = pv.sections.find((x) => x.id === "unvalued");
+  if (!unv) return UNVALUED_BOOK?.accounts ? false : true;
+  const paid = pmMoney(unv.cells?.paid?.text);
+  const said = crU(...(/the\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*paid in here is in no value total/i.exec(unv.hint ?? "") ?? []).slice(1));
+  return pmClose(said, paid) && !/in no value total/i.test(unv.text);
+}];
+
+/**
+ * ── THE "COUNTED ONCE" LINE SAYS WHAT IT DOES IN ITS HOVER ─────────────────
+ *
+ * Its sentence ("the same holding is reported on 2 statements; the row above
+ * counts it once") was the line under its name; the name and the figures stay
+ * and the sentence is the hover. PM-1 and PM-6 hold its FIGURES to the book;
+ * this holds the words to their new home and asserts them gone from the face.
+ */
+const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover, not on its face", (t, ctx) => {
+  const pv = ctx?.pmView;
+  if (!pv) return { notChecked: "the private-view probe did not run" };
+  if (!PM_FOLIO_BOOK?.dup?.length) return { notChecked: "no private holding in this book is reported twice" };
+  const ov = pv.overlaps ?? [];
+  if (!ov.length) return false;
+  return ov.every((o) => /counts (?:it|each) once/i.test(o.hint ?? "") && !/counts (?:it|each) once/i.test(o.text));
+}];
+
 
 /**
  * ── A FUND THAT IS NOT PRIVATE MARKET IS NOT A ROW OF THIS TABLE ─────────────
@@ -6689,12 +6791,22 @@ const PRIVATE_SCOPE_CHECKS = [
     if (!CAPITAL_BOOK.elsewhereCount) return c == null;
     if (!c) return false;
     const cr = crU(...(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*committed/i.exec(c.text) ?? []).slice(1));
+    /**
+     * THE CLAUSE IS THE COMMITTED TOTAL'S HOVER NOW — the line that printed it
+     * under the table went at the family's request (*"its obvious from the
+     * table what it is"*). So it must be in that hover, beside the figure the
+     * accounts are left out of, and no longer in the page's own text.
+     */
+    const committed = pv.totals.find((x) => x.key === "private")?.cells?.committed?.title ?? "";
     return CAPITAL_BOOK.elsewhereNames.every((n) => c.text.toLowerCase().includes(n.toLowerCase()))
       && Number.isFinite(cr) && Math.abs(cr - CAPITAL_BOOK.elsewhereCommittedCr) <= 0.06
       && /counted nowhere on this page/i.test(c.text)
-      && /the family class (that fund|those funds) as investing in listed equity/i.test(c.text) === CAPITAL_BOOK.elsewhereFamilyListed;
+      && /the family class (that fund|those funds) as investing in listed equity/i.test(c.text) === CAPITAL_BOOK.elsewhereFamilyListed
+      && c.text.length > 20 && committed.includes(c.text)
+      && !/counted nowhere on this page/i.test(t);
   }],
-  ["the page states which side of the book it is, and the sides add to the total", PRIVATE_SIDES_CHECK],
+  PRIVATE_SIDES_GONE,
+  PM_NO_PROSE,
 ];
 
 /**
@@ -7025,9 +7137,18 @@ const PM_RETURN_ROUTE_CHECKS = [
     if (!pr) return false;
     for (const [m, label, word] of [["cagr", "CAGR", "annualised"], ["xirr", "XIRR", "money-weighted"]]) {
       const h = head.find((x) => x.label.toUpperCase().startsWith(label));
-      if (!h?.note) return false;
+      /**
+       * THE COUNT IS THE HEADING'S HOVER NOW, not a line under it. *"its obvious
+       * from the table what it is"* — the family asked for the lines under the
+       * headings to go, so the count rides on `data-col-coverage` and leads the
+       * heading's own hover, and the visible note must be GONE. Both halves,
+       * because a heading that dropped the count altogether satisfies the
+       * absence alone.
+       */
+      if (!h || h.note != null || !h.coverage) return false;
       const on = pr.rows.filter((r) => r.cells.some((c) => c.measure === m && c.shown && c.tag == null)).length;
-      if (h.note !== `${on} ${word} of ${pr.rows.length}`) return false;
+      if (h.coverage !== `${on} ${word} of ${pr.rows.length}`) return false;
+      if (!(h.title ?? "").startsWith(h.coverage)) return false;
     }
     return true;
   }],
@@ -9907,6 +10028,77 @@ const INVARIANTS = {
       if (!tv.length) return { notChecked: "no table declared its columns on this route" };
       return tv.every((x) => x.firstFixed && x.movable === x.headCells - 1);
     }],
+    /**
+     * ── THE DRAG LIFTS THE WHOLE COLUMN ─────────────────────────────────────
+     *
+     * *"it should lift up the whole column instead of just lifting up the
+     * header."* Read MID-AIR, because that is the only moment the claim is
+     * about. A walk that captured nothing is a FINDING here, not an
+     * abstention: this route draws the table on every build.
+     *
+     *   - exactly ONE copy, of the column that was pressed, headed with that
+     *     column's own heading;
+     *   - carrying every cell of it a reader can see — counted off the table
+     *     by grid position, so a copy of the heading alone (HTML5's picture,
+     *     which is what this replaced) carries none and fails;
+     *   - the column it came from dimmed in place, every cell of it and
+     *     nothing else;
+     *   - the copy under the pointer, and the bar at the edge it will land on.
+     */
+    ["dragging a heading lifts the whole column, not just its heading", (t, ctx) => {
+      const L = ctx.arrange?.lift;
+      if (!L) return false;
+      return L.ghosts === 1 && L.ghostCol === "weight"
+        && !!L.head && L.ghostHead?.toLowerCase() === L.head.toLowerCase()
+        && L.visible >= 3 && L.ghostCells === L.visible
+        && L.lifted === L.columnCells && L.liftedAnywhere === L.lifted
+        && L.dragging === true
+        && L.marker != null && L.targetLeft != null && Math.abs(L.marker - L.targetLeft) <= 3
+        && L.ghostCx != null && Math.abs(L.ghostCx - L.pointerX) <= 20;
+    }],
+    /**
+     * …AND IT LANDS WHERE IT WAS DROPPED, WITH NOTHING LEFT BEHIND. The column
+     * sits right before the one the bar was on, every other column keeps its
+     * order, the rows keep the sort they were arranged under, and the copy,
+     * the bar and the dimming are all gone.
+     */
+    ["…and lands where it was dropped, with nothing left behind", (t, ctx) => {
+      const D = ctx.arrange?.dropped, M = ctx.arrange?.moved;
+      if (!D || !M?.cols?.length) return false;
+      const i = D.cols.indexOf("weight");
+      return i > 0 && D.cols[i + 1] === "cmp"
+        && D.cols.filter((c) => c !== "weight").join() === M.cols.filter((c) => c !== "weight").join()
+        && D.ghosts === 0 && D.marker == null && D.liftedAnywhere === 0 && !D.dragging
+        && D.rows.length === M.rows.length && D.rows.every((k, j) => M.rows[j] === k)
+        && D.aria === "none";
+    }],
+    /**
+     * ESCAPE PUTS IT BACK. The mid-air capture proves the drag really began —
+     * without it a gesture that never lifted anything would pass the rest.
+     */
+    ["Escape cancels a drag and leaves nothing on the page", (t, ctx) => {
+      const E = ctx.arrange?.escape;
+      if (!E?.before || !E.mid || !E.cancelled || !E.after) return false;
+      return E.mid.ghosts === 1 && E.mid.lifted > 0
+        && E.cancelled.ghosts === 0 && E.cancelled.liftedAnywhere === 0 && E.cancelled.marker == null && !E.cancelled.dragging
+        && E.after.cols.join() === E.before.cols.join()
+        && E.after.aria === E.before.aria && E.after.ghosts === 0;
+    }],
+    /**
+     * A DRAG THAT COMES HOME DOES NOT SORT. Pressed on the heading's own sort
+     * button, carried off and brought back, the release is a click on that
+     * button — and a column a reader only meant to pick up must not come back
+     * sorted. The rows and the order are both held to what they were.
+     */
+    ["a drag that ends back on its own heading does not sort it", (t, ctx) => {
+      const B = ctx.arrange?.back;
+      if (!B?.before || !B.mid || !B.after) return false;
+      return B.mid.ghosts === 1
+        && B.after.aria === B.before.aria
+        && B.after.cols.join() === B.before.cols.join()
+        && B.after.rows.length === B.before.rows.length && B.after.rows.every((k, j) => B.before.rows[j] === k)
+        && B.after.ghosts === 0;
+    }],
   ],
 
   "monitor-tranche": [
@@ -12474,9 +12666,17 @@ const INVARIANTS = {
         // misreading that costs money.
         && /never added to a value/i.test(detail) && /not an asset/i.test(detail);
     }],
-    ["…and how it is arrived at is still on the page, one click under the table", (t) =>
-      /summed exactly as each fund prints it/i.test(t)
-      && /never derived from committed − called/i.test(t)],
+    /*
+     * THE DROP-DOWN UNDER THE TABLE WENT, at the family's request ("its obvious
+     * from the table what it is"); what it said is the hover on the very total
+     * it explains, and that is where this reads it.
+     */
+    ["…and how it is arrived at is the hover on the Still to call total", (t, ctx) => {
+      const u = ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled;
+      if (!u) return false;
+      return /summed exactly as each fund prints it/i.test(u.title ?? "")
+        && /never derived from committed − called/i.test(u.title ?? "");
+    }],
     ["the distributions tile says what it is, and the two things a reader would get wrong", (t, ctx) => {
       const tile = ctx?.tileStrip?.texts?.distributed;
       const detail = ctx?.tileStrip?.details?.distributed;
@@ -12505,10 +12705,14 @@ const INVARIANTS = {
      * valid subtraction. Struck against the BOOK's own per-account answer in
      * both directions: the warning is present exactly when the sets differ.
      */
-    ["the two tiles a reader would subtract say not to — exactly where they cover different sets", (t) => {
+    ["the two figures a reader would subtract say not to — exactly where they cover different sets", (t, ctx) => {
       if (!CAPITAL_BOOK) return false;
-      const warned = /must never be subtracted|must not be subtracted/i.test(t);
-      return warned === !CAPITAL_BOOK.calledPaidSameSet;
+      const called = ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.called;
+      if (!called) return false;
+      // On the Called TOTAL's hover, where a reader doing that subtraction is —
+      // and no longer in the page's own text, which carried it in a paragraph.
+      return /must not be subtracted/i.test(called.title ?? "") === !CAPITAL_BOOK.calledPaidSameSet
+        && !/must (?:not|never) be subtracted/i.test(t);
     }],
     /**
      * ── AND THE PARAGRAPHS THEMSELVES STAY GONE ──────────────────────────────
@@ -12577,6 +12781,7 @@ const INVARIANTS = {
 
     ...pmViewChecks("funds"),
     ...PM_TABLE_CHECKS,
+    PM_BAND_HINTS("funds"),
     /**
      * ── THE DEFAULT IS THE PRIVATE FUNDS, AND THE MISSING DATA IS FOLDED ────
      *
@@ -12675,17 +12880,23 @@ const INVARIANTS = {
      * "N% of the ₹X Cr book", the claim is about this page's own
      * consistency, which is what it was always for.
      */
-    ["the private tile is the book's private side, and the sides total the NAV", (t, ctx) => {
-      const nav = cr(new RegExp(String.raw`of the ` + CR + String.raw`\s+book`, "i").exec(t)?.[1]);
-      // THE TILE'S OWN TEXT, not the page: its label is "Market value" now, and
-      // the words "market value" are free to appear anywhere else on a page.
-      const priv = cr(new RegExp(String.raw`^MARKET VALUE\s*` + CR, "i").exec(ctx?.tileStrip?.texts?.value ?? "")?.[1]);
-      const line = /This page is the private side of the book:([^\n]*)/i.exec(t);
-      if (![nav, priv].every(Number.isFinite) || !line) return false;
-      const said = crU(...(new RegExp(String.raw`Private\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(line[1]) ?? []).slice(1));
-      const total = crU(...([...line[1].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].at(-1) ?? []).slice(1));
-      if (![said, total].every(Number.isFinite)) return false;
-      return Math.abs(priv - said) <= 0.15 && Math.abs(total - nav) <= 0.15;
+    /*
+     * ...AND THE LINE THAT STATED THE SIDES IS GONE, at the family's request,
+     * so the tile is held to the BOOK rather than to a sentence: its figure is
+     * the book's own private side and its "of the ₹X book" is the book's own
+     * consolidated total on the STATEMENT basis this page reads (see
+     * `statementTotalMV`) — two figures `SIDE_BOOK` derives off `glowData.ts`
+     * by a path this page does not take. Both are on the tile a reader sees.
+     */
+    ["the private tile is the book's private side, and its share is of the whole book", (t, ctx) => {
+      const text = ctx?.tileStrip?.texts?.value ?? "";
+      const priv = cr(new RegExp(String.raw`^MARKET VALUE\s*` + CR, "i").exec(text)?.[1]);
+      const nav = cr(new RegExp(String.raw`of the ` + CR + String.raw`\s+book`, "i").exec(text)?.[1]);
+      if (![nav, priv].every(Number.isFinite) || !SIDE_BOOK) return false;
+      // THE BOUND IS THE PRINTING PRECISION, NOT A FRACTION OF THE NAV. Every
+      // figure prints to one decimal in Cr.
+      return Math.abs(priv - SIDE_BOOK.privateMV / 1e7) <= 0.15
+        && Math.abs(nav - SIDE_BOOK.statementTotalMV / 1e7) <= 0.15;
     }],
     // PM-3. Invested and Unrealised are struck over the rows that HAVE a cost, so
     // they add to the COSTED market value and not to the whole private book. The
@@ -12731,8 +12942,11 @@ const INVARIANTS = {
       const tile = pmMoney(ctx?.tileStrip?.texts?.uncalled);
       const total = pv.totals.find((x) => x.key === "private");
       const cell = total?.cells?.uncalled;
-      const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*over\s*the\s*(\d+) accounts`, "i").exec(t);
+      // THE WORKING IS THE HOVER ON THE TOTAL IT PROVES — the drop-down that
+      // carried it under the table went at the family's request.
+      const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*over\s*the\s*(\d+) accounts`, "i").exec(cell?.title ?? "");
       if (!Number.isFinite(tile) || !cell || !said || !Number.isFinite(total?.capitalAccounts)) return false;
+      if (/summed exactly as each fund prints it/i.test(t)) return false;
       // No caveat under the figure means it covers every account the row holds.
       const [have, of] = cell.covered
         ? String(cell.covered).split("/").map(Number)
@@ -12752,8 +12966,10 @@ const INVARIANTS = {
     // contradiction a reader who subtracts would find in ten seconds.
     ["committed − called reproduces the printed uncalled figure, on one matched set", (t, ctx) => {
       const tile = pmMoney(ctx?.tileStrip?.texts?.uncalled);
-      const m = new RegExp(String.raw`The same figure the other way:\s*committed\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*less\s*called\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*is\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t);
-      if (!Number.isFinite(tile) || !m) return false;
+      // The second path, in the hover on the Still to call total it proves.
+      const hover = ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.title ?? "";
+      const m = new RegExp(String.raw`The same figure the other way:\s*committed\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*less\s*called\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*is\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(hover);
+      if (!Number.isFinite(tile) || !m || /The same figure the other way/i.test(t)) return false;
       const [c, cd, u] = [crU(m[1], m[2]), crU(m[3], m[4]), crU(m[5], m[6])];
       return Math.abs(c - cd - u) <= 0.15 && Math.abs(u - tile) <= 0.6;
     }],
@@ -12784,7 +13000,11 @@ const INVARIANTS = {
       if (/of this page['\u2019]s \d+ private accounts/i.test(tile + " " + shown)) return false;
       return Number(m[1]) > 0
         && /so this is a floor/i.test(tile)
-        && /floor of what can still be called, never the ceiling/i.test(t);
+        // …and on the Still to call TOTAL's hover, where the drop-down that
+        // said it under the table went — and no longer in the page's text.
+        && /floor of what can still be called, never the ceiling/i.test(
+          ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.title ?? "")
+        && !/floor of what can still be called/i.test(t);
     }],
     /**
      * ...AND THE TWO COUNTS PARTITION RATHER THAN CROSSING. The page prints
@@ -12839,16 +13059,25 @@ const INVARIANTS = {
      * says it does not carry must equal the tile's own capital-account total.
      * Two independent renderings, so neither can drift alone.
      */
-    ["the card's own account sentence ties to the tile's capital-account count", (t, ctx) => {
+    /*
+     * THE SENTENCE IS THE STILL TO CALL TOTAL'S HOVER NOW, and the clause
+     * naming the public-market capital accounts the Committed total's — the
+     * drop-down and the line under the table that printed them went at the
+     * family's request. Read there, and asserted gone from the page.
+     */
+    ["the uncalled total's own account sentence ties to the tile's capital-account count", (t, ctx) => {
       const tile = ctx?.tileStrip?.details?.uncalled;
       if (!tile) return { notChecked: "the uncalled tile is not on this strip" };
       if (!CAPITAL_BOOK) return false;
+      const pv = ctx?.pmView;
+      const hover = pv?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.title ?? "";
+      if (/send a\s+capital-account statement/i.test(t)) return false;
       const total = /across (\d+) (?:private-market )?capital accounts/i.exec(tile);
-      const sent = /(\d+) of this page['\u2019]s (\d+) private accounts send a\s+capital-account statement/i.exec(t);
+      const sent = /(\d+) of this page['\u2019]s (\d+) private accounts send a\s+capital-account statement/i.exec(hover);
       if (!total || !sent) return false;
       // …AND THE PUBLIC-MARKET CAPITAL ACCOUNTS ARE NAMED BESIDE IT, never
       // folded into its count — present exactly when the book has some.
-      const more = /(\d+) more capital accounts? belongs? to\s+public-market funds/i.exec(t);
+      const more = /(\d+) more capital accounts? belongs? to\s+public-market funds/i.exec(pv?.capElsewhere?.text ?? "");
       const moreOk = CAPITAL_BOOK.elsewhereCount > 0
         ? !!more && Number(more[1]) === CAPITAL_BOOK.elsewhereCount
         : !more;
@@ -12895,7 +13124,10 @@ const INVARIANTS = {
       const pv = ctx?.pmView;
       if (!pv?.callCells?.length) return false;
       return pv.callCells.every((c) => c.state === "unavailable" && (c.reason ?? "").length > 20 && !/₹/.test(c.text))
-        && pv.callHead?.note === "not available" && (pv.callHead?.noteTitle ?? "").length > 20;
+        // The header says so ONCE, in its own hover — the "not available" line
+        // under its label went with the other heading notes.
+        && pv.callHead?.note == null
+        && (/Not available:\s*(.+)$/s.exec(pv.callHead?.title ?? "")?.[1] ?? "").length > 20;
     }],
     // PM-4e. DUE NOW IS A MEASUREMENT, and its coverage must be said. It is
     // the only genuinely-due figure in this book, it is a MEASURED zero on this
@@ -12945,7 +13177,9 @@ const INVARIANTS = {
       const different = !CAPITAL_BOOK.calledPaidSameSet;
       return Number(called[1]) === CAPITAL_BOOK.calledOf && Number(called[2]) === CAPITAL_BOOK.count
         && Number(paid[1]) === CAPITAL_BOOK.paidOf && Number(paid[2]) === CAPITAL_BOOK.count
-        && /must not be subtracted from each other/i.test(t) === different
+        // On the Called TOTAL's hover, where a reader doing that subtraction is.
+        && /must not be subtracted from each other/i.test(
+          ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.called?.title ?? "") === different
         && /must never be subtracted/i.test(st.details?.called ?? "") === different;
     }],
     /**
@@ -12972,12 +13206,38 @@ const INVARIANTS = {
         && pmClose(pmMoney(priv.cells.value?.text), value);
     }],
     // PM-7 — the newest private mark rendered is the newest one the book carries.
-    ["the newest private mark rendered is the newest one the book carries", (t) => {
-      if (!PRIV_ASOF_MAX) return false;
-      const want = new Date(`${PRIV_ASOF_MAX}T00:00:00Z`)
-        .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
-        .replace(/^0/, "");
-      return new RegExp(String.raw`Marks span[^\n]*?${want.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i").test(t);
+    ["the newest private mark rendered is the newest one the book carries", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return { notChecked: "the private-view probe did not run" };
+      // The harness could not read the book: a failure, not a skip.
+      if (!SIDE_BOOK?.privateAsOfMax || !SIDE_BOOK?.bookAsOfMax) return false;
+      /**
+       * EACH FUND ROW PRINTS ITS OWN STATEMENTS' DATES, and the newest of them
+       * across the private funds is the book's own newest private mark. The
+       * "Marks span … → …" line above the table said this once for the page
+       * and went at the family's request; the As of column says it per row,
+       * which is the stronger claim. Each cell is held to the dates its own row
+       * carries (`data-as-of`, its folios' statements), and the book's newest
+       * date must not stand in any cell where it is later than every private
+       * mark — which is the forward-dating this check exists for.
+       */
+      const rows = pv.groups.filter((g) => g.section === "private" && g.kind === "fund");
+      if (!rows.length) return false;
+      const newest = rows.flatMap((r) => r.asOfDates ?? []).sort().at(-1);
+      const later = SIDE_BOOK.bookAsOfMax > SIDE_BOOK.privateAsOfMax;
+      // A RANGE WITHIN ONE YEAR PRINTS ITS FIRST DATE WITHOUT THE YEAR ("30 Jun
+      // → 31 Jul 2026"), so the first date is matched on day and month with
+      // the year optional, and the last in full.
+      const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept?", "Oct", "Nov", "Dec"];
+      const dm = (iso) => {
+        const [y, mo, d] = String(iso).split("-").map(Number);
+        return new RegExp(String.raw`(?<!\d)${d}\s+${MON[mo - 1]}(?:\s+${y})?(?!\d)`);
+      };
+      return newest === SIDE_BOOK.privateAsOfMax
+        && rows.every((r) => (r.asOfDates ?? []).length > 0
+          && dm(r.asOfDates[0]).test(r.cells?.asOf?.text ?? "") && dmyRe(r.asOfDates.at(-1)).test(r.cells?.asOf?.text ?? ""))
+        && (!later || rows.every((r) => !dmyRe(SIDE_BOOK.bookAsOfMax).test(r.cells?.asOf?.text ?? "")))
+        && !/Marks span/i.test(t);
     }],
     /**
      * PM-8 — A FUND WHOSE STATEMENT REPORTS NO COST SHOWS NO RETURN. Struck on
@@ -13019,6 +13279,7 @@ const INVARIANTS = {
     ...PRIVATE_SCOPE_CHECKS,
     ...PM_EXPANDED_CHECKS,
     PM_CALL_COLUMN_CHECK,
+    PM_OVERLAP_HINT,
     /**
      * EVERY FUND OPENS ONTO THE FOLIOS THE BOOK CARRIES FOR IT.
      *
@@ -13138,6 +13399,8 @@ const INVARIANTS = {
     ...PM_TABLE_CHECKS,
     ...PRIVATE_SCOPE_CHECKS,
     ...PM_EXPANDED_CHECKS,
+    PM_BAND_HINTS("owners"),
+    PM_OVERLAP_HINT,
     /**
      * BY OWNER THE FUND LEVEL IS THE MEMBER'S LINE, SO THAT IS WHERE THE CALL
      * CELL IS. A member row is not a fund — a call is made by a fund on the
@@ -13242,7 +13505,8 @@ const INVARIANTS = {
       if (!amounts.length || amounts.some((a) => !Number.isFinite(a)) || !Number.isFinite(foot)) return false;
       return newestFirst && pmClose(amounts.reduce((a, b) => a + b, 0), foot);
     }],
-    ["the page states which side of the book it is, and the sides add to the total", PRIVATE_SIDES_CHECK],
+    PRIVATE_SIDES_GONE,
+    PM_NO_PROSE,
   ],
   /**
    * ── THE CAPITAL-CALL COLUMN, AGAINST A STORE ──────────────────────────────
@@ -13313,9 +13577,11 @@ const INVARIANTS = {
      */
     ["an entered call is never added into a statement figure", (t, ctx) => {
       const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
-      const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(t);
-      if (!Number.isFinite(tile) || !said || !CAPITAL_BOOK) return false;
-      return Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6 && Math.abs(crU(said[1], said[2]) - CAPITAL_BOOK.uncalledCr) <= 0.6;
+      // THE MASTER TABLE'S OWN STILL TO CALL TOTAL — the working line that
+      // printed it went at the family's request, and the total is the figure.
+      const foot = pmMoney(ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.text);
+      if (!Number.isFinite(tile) || !Number.isFinite(foot) || !CAPITAL_BOOK) return false;
+      return Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6 && Math.abs(foot - CAPITAL_BOOK.uncalledCr) <= 0.6;
     }],
   ],
   /**
@@ -13330,7 +13596,7 @@ const INVARIANTS = {
       const pv = ctx?.pmView;
       if (!pv?.callCells?.length) return false;
       return pv.callCells.every((c) => c.state === "unavailable" && /not switched on yet/i.test(c.reason ?? "") && !/₹/.test(c.text))
-        && /not switched on yet/i.test(pv.callHead?.noteTitle ?? "");
+        && /not switched on yet/i.test(pv.callHead?.title ?? "") && pv.callHead?.note == null;
     }],
   ],
   /**
@@ -18228,17 +18494,12 @@ for (const theme of THEMES) {
         } catch (e) { CALL_WALK.error = String(e?.message ?? e).slice(0, 200); }
         await page.waitForTimeout(300);
       }
-      /**
-       * …AND THE WORKING LINE UNDER THE TABLE, OPENED. It is a collapsed
-       * `<details>` at the family's request — fewer explanations on this page —
-       * and a collapsed `<details>` is not in `innerText`, so the claims about
-       * how the capital totals are worked out would otherwise have no subject.
-       * Opened on these routes only, and only that one element.
+      /*
+       * THE "HOW THE CAPITAL TOTALS ARE WORKED OUT" DROP-DOWN WAS OPENED HERE,
+       * and it is gone at the family's request: the working is the hover on the
+       * totals it explains, which `pmView` reads, and the drop-down's handle is
+       * counted as absent there (`working`).
        */
-      if (/^private-market/.test(name)) {
-        await page.$$eval("main details[data-pm-working]", (ds) => ds.forEach((d) => { d.open = true; }));
-        await page.waitForTimeout(150);
-      }
       // THE CONTRIBUTION HISTORY, OPENED. Picks the row offering the MOST
       // contributions rather than the first, so a regression that truncates a
       // breakdown cannot be satisfied by a single-tranche row that has nothing
@@ -18471,6 +18732,141 @@ for (const theme of THEMES) {
             rows: [...t.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
           };
         });
+        /**
+         * ── THE MOUSE DRAG LIFTS THE WHOLE COLUMN ─────────────────────────────
+         *
+         * *"it should lift up the whole column instead of just lifting up the
+         * header."* The keyboard moves above say where a column GOES; this says
+         * what a reader SEES while carrying it, which no snapshot taken after
+         * the drop can — the copy only exists while the pointer is down. So the
+         * walk presses, carries, and reads the page mid-air.
+         *
+         * Three gestures, each a way a drag goes wrong quietly:
+         *   - a real drag, read mid-air and again after the drop;
+         *   - a drag cancelled with Escape — nothing may move, nothing may stay;
+         *   - a drag that comes back to the heading it began on, whose release
+         *     is a CLICK on that heading's sort button and must not sort it.
+         *
+         * `liftSnap` finds the column's cells by GRID POSITION — the rule the
+         * drag itself uses, re-expressed here rather than imported, so a drag
+         * that copied the wrong cells cannot agree with its own check.
+         */
+        const liftSnap = (col, target) => page.evaluate(([col, target]) => {
+          const table = document.querySelector("main table");
+          const th = table?.querySelector(`thead tr:last-child [data-col='${col}']`);
+          if (!table || !th) return null;
+          const startOf = (cell) => { let x = 0; for (const c of cell.parentElement.cells) { if (c === cell) return x; x += c.colSpan || 1; } return -1; };
+          const start = startOf(th), span = th.colSpan || 1;
+          const cells = [];
+          for (const row of table.rows) {
+            let x = 0;
+            for (const c of row.cells) {
+              const n = c.colSpan || 1;
+              if (x === start) { if (n === span) cells.push(c); break; }
+              if (x + n > start) break;
+              x += n;
+            }
+          }
+          // What a reader can see of the column: below its heading, inside
+          // every clipping ancestor.
+          let top = 0, bottom = innerHeight;
+          for (let e = table.parentElement; e; e = e.parentElement) {
+            const cs = getComputedStyle(e);
+            if (/(auto|scroll|hidden|clip)/.test(`${cs.overflowX} ${cs.overflowY}`)) {
+              const r = e.getBoundingClientRect(); top = Math.max(top, r.top); bottom = Math.min(bottom, r.bottom);
+            }
+          }
+          const thr = th.getBoundingClientRect();
+          bottom = Math.min(bottom, table.getBoundingClientRect().bottom);
+          const seen = cells.filter((c) => { if (c === th) return false; const r = c.getBoundingClientRect(); return r.bottom > thr.bottom && r.top < bottom; });
+          const ghosts = [...document.querySelectorAll("[data-col-ghost]")];
+          const g = ghosts[0] ?? null;
+          const gr = g?.getBoundingClientRect();
+          const marker = document.querySelector("[data-col-drop-marker]");
+          const markerOn = !!marker && getComputedStyle(marker).display !== "none";
+          const clean = (el) => (el?.innerText ?? "").replace(/\s+/g, " ").trim();
+          return {
+            ghosts: ghosts.length,
+            ghostCol: g?.getAttribute("data-col-ghost") ?? null,
+            ghostCells: g ? g.querySelectorAll("[data-col-ghost-cell]:not([data-col-ghost-head])").length : 0,
+            ghostHead: g ? clean(g.querySelector("[data-col-ghost-head]")) : null,
+            ghostCx: gr ? gr.left + gr.width / 2 : null,
+            head: clean(th),
+            visible: seen.length,
+            columnCells: cells.length,
+            lifted: table.querySelectorAll("[data-col-lifted]").length,
+            liftedAnywhere: document.querySelectorAll("[data-col-lifted]").length,
+            marker: markerOn ? marker.getBoundingClientRect().left + 1.5 : null,
+            targetLeft: target ? table.querySelector(`thead tr:last-child [data-col='${target}']`)?.getBoundingClientRect().left ?? null : null,
+            dragging: document.documentElement.classList.contains("col-dragging"),
+            cols: [...table.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")),
+            rows: [...table.querySelectorAll("tbody tr[data-security-key]")].map((r) => r.getAttribute("data-security-key")),
+            aria: th.getAttribute("aria-sort"),
+          };
+        }, [col, target ?? null]);
+        const boxOf = async (sel) => {
+          const l = page.locator(sel).first();
+          if (!(await l.count())) return null;
+          await l.scrollIntoViewIfNeeded();
+          const b = await l.boundingBox();
+          return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2, left: b.x } : null;
+        };
+        const headSel = (c) => `main table thead tr:last-child th[data-col='${c}']`;
+        // 1. A REAL DRAG — Weight carried left to land just before CMP.
+        {
+          const from = await boxOf(headSel("weight"));
+          const to = await boxOf(headSel("cmp"));
+          if (from && to) {
+            const x = to.left + 6;
+            await page.mouse.move(from.x, from.y);
+            await page.mouse.down();
+            await page.mouse.move(from.x - 12, from.y, { steps: 3 });
+            await page.mouse.move(x, from.y, { steps: 12 });
+            await page.waitForTimeout(150);
+            ARRANGE.lift = { ...(await liftSnap("weight", "cmp")), pointerX: x };
+            await page.mouse.up();
+            await page.waitForTimeout(450);
+            ARRANGE.dropped = await liftSnap("weight", null);
+          }
+        }
+        // 2. ESCAPE — Day lifted, carried, and let go of by the keyboard.
+        {
+          const at = await boxOf(headSel("day"));
+          if (at) {
+            const before = await liftSnap("day", null);
+            await page.mouse.move(at.x, at.y);
+            await page.mouse.down();
+            await page.mouse.move(at.x + 60, at.y, { steps: 6 });
+            await page.waitForTimeout(120);
+            const mid = await liftSnap("day", null);
+            await page.keyboard.press("Escape");
+            await page.waitForTimeout(120);
+            const cancelled = await liftSnap("day", null);
+            await page.mouse.up();
+            await page.waitForTimeout(350);
+            ARRANGE.escape = { before, mid, cancelled, after: await liftSnap("day", null) };
+          }
+        }
+        // 3. BACK HOME — pressed on Unreal. P&L's own sort button, carried away
+        //    and brought back. The release is a click on that button.
+        {
+          const btn = page.locator("main table thead tr:last-child [data-col-button='pnl']").first();
+          let b = null;
+          if (await btn.count()) { await btn.scrollIntoViewIfNeeded(); b = await btn.boundingBox(); }
+          if (b) {
+            const x = b.x + b.width / 2, y = b.y + b.height / 2;
+            const before = await liftSnap("pnl", null);
+            await page.mouse.move(x, y);
+            await page.mouse.down();
+            await page.mouse.move(x - 70, y, { steps: 6 });
+            await page.waitForTimeout(120);
+            const mid = await liftSnap("pnl", null);
+            await page.mouse.move(x, y, { steps: 6 });
+            await page.mouse.up();
+            await page.waitForTimeout(450);
+            ARRANGE.back = { before, mid, after: await liftSnap("pnl", null) };
+          }
+        }
       }
       if (name === "monitor-axis-switch") {
         // THE SECTION FILTER IS A ROW OF TABS, clicked by the first one after
@@ -19943,10 +20339,14 @@ for (const theme of THEMES) {
           fit: wrap ? { scroll: wrap.scrollWidth, client: wrap.clientWidth, viewport: window.innerWidth } : null,
           sections: rows("tr[data-pm-section]").map((e) => ({
             id: e.getAttribute("data-pm-section"), open: e.getAttribute("data-pm-section-open") === "true",
+            // The band's own sentence, in its first cell's hover.
+            hint: e.querySelector("td")?.getAttribute("title") ?? null,
             funds: num(e, "data-pm-section-funds"), folios: num(e, "data-pm-section-folios"),
             marker: txt(e.querySelector("[data-pm-marker]")) || null, text: txt(e), ...cellsOf(e) })),
           groups: rows("tr[data-pm-group]").map((e) => ({
             key: e.getAttribute("data-pm-group"), kind: e.getAttribute("data-pm-kind"),
+            // The row's own statement dates, ISO, as its As of cell carries them.
+            asOfDates: (e.querySelector("td[data-col-cell='asOf']")?.getAttribute("data-as-of") ?? "").split(" ").filter(Boolean),
             section: e.getAttribute("data-pm-row-section"), folios: num(e, "data-pm-folios"),
             value: e.getAttribute("data-pm-value"),
             costAbsent: e.hasAttribute("data-pm-cost-absent"), returnAbsent: e.hasAttribute("data-pm-return-absent"),
@@ -19963,6 +20363,7 @@ for (const theme of THEMES) {
             text: txt(e), ...cellsOf(e) })),
           overlaps: rows("tr[data-pm-overlap]").map((e) => ({
             key: e.getAttribute("data-pm-overlap"), printed: num(e, "data-printed"),
+            hint: e.querySelector("td")?.getAttribute("title") ?? null,
             consolidated: num(e, "data-consolidated"), overlap: num(e, "data-overlap"),
             text: txt(e), ...cellsOf(e) })),
           totals: rows("tr[data-pm-total]").map((e) => ({
@@ -19991,13 +20392,19 @@ for (const theme of THEMES) {
            * defect, and neither is visible to a text match over a page that
            * names every fund somewhere.
            */
+          // THE CLAUSE IS THE COMMITTED TOTAL'S HOVER NOW, so its words ride on
+          // their own attribute beside the ids — the line under the table that
+          // printed them went at the family's request.
           capElsewhere: (() => {
             const el = document.querySelector("main [data-pm-cap-elsewhere]");
             return el ? {
               ids: (el.getAttribute("data-pm-cap-elsewhere") ?? "").split(" ").filter(Boolean),
-              text: txt(el),
+              text: (el.getAttribute("data-pm-cap-elsewhere-text") ?? "").replace(/\s+/g, " ").trim(),
             } : null;
           })(),
+          // THE REMOVED BLOCKS' OWN HANDLES — the drop-down, the sides line and
+          // the line under the total's label — so their absence is counted.
+          working: document.querySelectorAll("main [data-pm-working], main [data-pm-sides], main [data-pm-total-sub]").length,
           /**
            * ── THE CAPITAL-CALL COLUMN, READ STRUCTURALLY ──────────────────────
            *
@@ -20071,6 +20478,59 @@ for (const theme of THEMES) {
             text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
             titles: titles(td),
           })),
+        };
+      });
+      /**
+       * ── EXPLAINER TEXT, COUNTED RATHER THAN MATCHED ─────────────────────────
+       *
+       *   *"Why do i need all this garbage written please remove its obvious from
+       *    the table what it is … We have such random one-liners, two-liners, and
+       *    footnotes everywhere across the product. Please go hunt and remove all
+       *    of this."*
+       *
+       * Structural facts, none of which a regex over the page text can
+       * establish, because it can only look for the sentences somebody thought
+       * to write down:
+       *
+       *   subtitles — every card subtitle on the page (`data-card-subtitle`, the
+       *               handle `Card` renders on the line under a card's title);
+       *   blocks    — every VISIBLE leaf text block outside a table (a block
+       *               element holding only inline content) whose text runs past
+       *               60 characters;
+       *   cells     — every visible leaf block INSIDE a table past 120.
+       *
+       * `[data-prose-ok]` is the escape for a block that is DATA rather than
+       * explanation — a document's own title, an absent state's reason — and it
+       * has to be declared at the element, where a reviewer sees it.
+       */
+      const prose = FAST ? null : await page.evaluate(() => {
+        const main = document.querySelector("main");
+        if (!main) return null;
+        const BLOCK = new Set(["DIV", "P", "LI", "TD", "TH", "SECTION", "ARTICLE", "UL", "OL", "TABLE", "TR", "TBODY",
+          "THEAD", "TFOOT", "H1", "H2", "H3", "H4", "H5", "H6", "DL", "DT", "DD", "FORM", "HEADER", "FOOTER", "NAV",
+          "ASIDE", "DETAILS", "SUMMARY", "BLOCKQUOTE", "PRE", "FIGURE", "FIGCAPTION"]);
+        const visible = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+        const clean = (el) => (el.innerText ?? "").replace(/\s+/g, " ").trim();
+        const blocks = [];
+        const cells = [];
+        for (const el of main.querySelectorAll("*")) {
+          if (!BLOCK.has(el.tagName) || !visible(el) || el.closest("[data-prose-ok]")) continue;
+          if ([...el.querySelectorAll("*")].some((d) => BLOCK.has(d.tagName))) continue;
+          const text = clean(el);
+          /**
+           * TWO BOUNDS, BECAUSE A CELL AND A PARAGRAPH ARE DIFFERENT THINGS. A
+           * fund's own name runs to 70-odd characters and is not prose; a
+           * sentence per row is. Outside a table, nothing on a cleaned page is
+           * longer than a tile's one line, so 60 is well clear of every figure
+           * and label and well under the shortest removed footnote.
+           */
+          if (el.closest("table")) { if (text.length > 120) cells.push(text.slice(0, 160)); }
+          else if (text.length > 60) blocks.push(text.slice(0, 160));
+        }
+        return {
+          subtitles: [...main.querySelectorAll("[data-card-subtitle]")].filter(visible).map(clean),
+          blocks,
+          cells,
         };
       });
       /**
@@ -20653,6 +21113,10 @@ for (const theme of THEMES) {
             headIndex: i, label,
             note: note ? (note.innerText ?? "").replace(/\s+/g, " ").trim() : null,
             noteTitle: note?.getAttribute("title") ?? null,
+            // THE COUNT KEPT OFF THE SCREEN — `SortHeader`'s `coverage`, which
+            // leads the heading's hover and rides on `data-col-coverage`.
+            coverage: th.getAttribute("data-col-coverage"),
+            title: th.getAttribute("title") ?? "",
           });
         });
         return out;
@@ -21303,7 +21767,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, prose, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

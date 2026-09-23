@@ -166,11 +166,18 @@ export function TreeChevron({ open, onToggle, label, density = "regular", ...dat
  * continuing past it to the parent's next sibling, which stops where that
  * parent was the last of its kind (`ancestorLast`), exactly as a └ does.
  */
-export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, toggleData, last, ancestorLast, density = "regular", className = "" }: {
+export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLabel, toggleData, last, ancestorLast, density = "regular", className = "" }: {
   depth: 0 | 1 | 2;
   title: ReactNode;
   /** A second, quieter line: what the row is, never a figure another column holds. */
   sub?: ReactNode;
+  /**
+   * THE SENTENCE A READER MAY WANT, IN THE CELL'S HOVER — never a line of its
+   * own. *"Why do i need all this garbage written please remove its obvious from
+   * the table what it is."* A row's name and its short `sub` say what it is; why
+   * it is there, or how it adds up, is one hover away.
+   */
+  hint?: string;
   open?: boolean;
   onToggle?: () => void;
   toggleLabel?: string;
@@ -186,7 +193,7 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
   if (depth >= 1) {
     const d = depth === 2 ? 1 : 0;
     return (
-      <td className={`relative ${g.child[d]} ${className}`}>
+      <td className={`relative ${g.child[d]} ${className}`} title={hint}>
         {depth === 2 && !ancestorLast && (
           <span aria-hidden className={`absolute ${g.guide[0]} top-0 bottom-0 border-l border-ink-600`} />
         )}
@@ -202,7 +209,7 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
   const gap = density === "dense" ? "gap-1.5" : "gap-2";
   const hole = density === "dense" ? "h-4 w-4" : "h-5 w-5";
   return (
-    <td className={`${g.parent} ${className}`}>
+    <td className={`${g.parent} ${className}`} title={hint}>
       <div className={`flex items-start ${gap}`}>
         {onToggle
           ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />
@@ -220,10 +227,12 @@ export function TreeNameCell({ depth, title, sub, open, onToggle, toggleLabel, t
  * THE FIRST CELL OF A SECTION BAND: a chevron where the section can close, the
  * heading, a marker chip saying what kind of section it is, and one quiet line.
  */
-export function TreeSectionCell({ title, marker, sub, open, onToggle, toggleData, colSpan, density = "regular" }: {
+export function TreeSectionCell({ title, marker, sub, hint, open, onToggle, toggleData, colSpan, density = "regular" }: {
   title: ReactNode;
   marker?: ReactNode;
   sub?: ReactNode;
+  /** The section's sentence, in the band's hover — see `TreeNameCell`'s `hint`. */
+  hint?: string;
   open?: boolean;
   onToggle?: () => void;
   toggleData?: Record<`data-${string}`, string | number | undefined>;
@@ -236,7 +245,7 @@ export function TreeSectionCell({ title, marker, sub, open, onToggle, toggleData
   density?: TreeDensity;
 }) {
   return (
-    <td className={density === "dense" ? TREE_CELL_DENSE.section : TREE_CELL.section} colSpan={colSpan}>
+    <td className={density === "dense" ? TREE_CELL_DENSE.section : TREE_CELL.section} colSpan={colSpan} title={hint}>
       <div className={`flex items-start ${density === "dense" ? "gap-1.5" : "gap-2"}`}>
         {onToggle
           ? <TreeChevron density={density} open={!!open} onToggle={onToggle} label={open ? "Hide this section" : "Show this section"} {...(toggleData ?? {})} />

@@ -24,7 +24,7 @@ import {
 } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  pageScopeNote, capitalScope,
+  capitalScope,
 } from "@/lib/privateMarket";
 import {
   fundDatedRecords, fundMeasuredReturn, fundReturnColumnMeta, pooledFundXirr,
@@ -177,28 +177,36 @@ const CALL_COLS = ["date", "fund", "owner", "label", "amount"] as const;
 // these rows even on the live portfolio, and `check:pages` asserts that premise.
 
 /**
- * THE THREE TABS OF THE ONE CARD. Each carries its own title and subtitle,
- * because By fund and By owner are on different BASES (counted once, and as
- * printed) and one caption over both would describe neither.
+ * THE THREE TABS OF THE ONE CARD. Each carries its own title, because By fund
+ * and By owner are on different BASES (counted once, and as printed) and one
+ * title over both would describe neither.
+ *
+ * ── AND NO SUBTITLE ──────────────────────────────────────────────────────────
+ *
+ *   *"Why do i need all this garbage written please remove its obvious from the
+ *    table what it is … The customer is literally looking at the table and
+ *    seeing the values inside it."*
+ *
+ * Each tab had a sentence under the card title saying what the table shows.
+ * The title says it, the table shows it, and the basis each is on is the tab's
+ * own hover and the total row's — so the sentence went, and `check:pages`
+ * asserts no card on this page carries one.
  */
 const BOOK_VIEWS = [
   {
     key: "funds", label: "By fund",
     title: "One row per fund, each holding counted once. Click a row for its folios.",
     cardTitle: "Private market — every fund",
-    cardSub: "One row per fund, each holding counted once. Click a row to see each family member's folio in the same columns.",
   },
   {
     key: "owners", label: "By owner",
     title: "One row per family member, each statement as printed. Click a row for their folios.",
     cardTitle: "Private market — by family member",
-    cardSub: "One row per family member, each statement exactly as printed. Click a row to see their folios.",
   },
   {
     key: "transactions", label: "Transactions",
     title: "What can still be called, and every capital call the funds have made.",
     cardTitle: "Private market — capital calls",
-    cardSub: "What the funds can still ask for, and every capital call they have made, newest first.",
   },
 ] as const;
 
@@ -395,18 +403,12 @@ export function PrivateMarket() {
       commitments, accIdx, schemes,
     });
 
-    // The as-of spread is derived from the accounts IN SCOPE. `portfolio.asOf` is
-    // the book's newest date and NO private holding here is marked at it.
-    const dates = [...new Set(scope.accounts.map((a) => a.asOf).filter(Boolean))].sort();
-
     return {
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history,
       privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
-      dates,
-      scopeNote: pageScopeNote(current),
       /**
        * THE CAPITAL ACCOUNTS OF PUBLIC-MARKET FUNDS — left out of every figure
        * on this page and named, in one clause, under the table.
@@ -861,12 +863,20 @@ export function PrivateMarket() {
      * rows are genuinely unvalued and a ₹0 total would claim they were nil too.
      */
     nil?: string;
+    /**
+     * A HOVER PER COLUMN — how a figure is arrived at, on the figure itself.
+     * *"Why do i need all this garbage written please remove its obvious from
+     * the table what it is."* The working that stood in a drop-down and a line
+     * under this table is the hover on the total it explains now, which is
+     * where a reader who asks "how is this calculated?" already is.
+     */
+    titles?: Partial<Record<string, string>>;
   }): Cells => {
     const p = pad(k);
     const t = tone(k);
     const holdingRow = k === "group" || k === "folio";
     const td = (col: string, body: ReactNode, extra = "") => (
-      <td key={col} data-col-cell={col} className={`${p} whitespace-nowrap text-right mono ${t} ${extra}`}>{body}</td>
+      <td key={col} data-col-cell={col} title={ctx.titles?.[col]} className={`${p} whitespace-nowrap text-right mono ${t} ${extra}`}>{body}</td>
     );
     const absent = (col: string, why: string) => td(col, <AbsentCell reason={why} />);
     const cap = (col: string, v: number | null | undefined, why: string, of?: [number, number]) =>
@@ -1101,9 +1111,9 @@ export function PrivateMarket() {
       data-pm-overlap={key} data-printed={Math.round(o.printed)} data-consolidated={Math.round(o.consolidated)} data-overlap={Math.round(o.value)}>
       <TreeNameCell depth={1} last
         title={<span className="text-amber-400">Counted once</span>}
-        sub={grouping === "fund"
-          ? `the same holding is reported on ${statements} statements; the row above counts it once`
-          : `${statements} statements report 2 holdings twice between them; the total counts each once`} />
+        hint={grouping === "fund"
+          ? `The same holding is reported on ${statements} statements; the row above counts it once, and this line takes the overlap out so the folios add to the row.`
+          : `${statements} statements report the same holdings twice between them; the total counts each once, and this line takes the overlap out.`} />
       {inOrder({
         units: <td key="units" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.units != null ? `−${fmtNum(o.units, 3)}` : ""}</td>,
         cost: <td key="cost" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.cost != null ? `−${money(o.cost)}` : ""}</td>,
@@ -1126,16 +1136,23 @@ export function PrivateMarket() {
       s.groups.filter(groupMatches).map((g) => ({ ...g, ret: groupRet(g) })),
       bookView.sort, nameAcc as Record<string, Accessor<BookGroup & { ret: (m: ReturnMeasure) => MeasuredReturn }>>);
     const noun = grouping === "fund" ? (s.groups.length === 1 ? "fund" : "funds") : (s.groups.length === 1 ? "member" : "members");
-    const sub = id === "private"
-      ? `${s.groups.length} ${noun} · ${s.folios} folios · ${grouping === "fund" ? "each holding counted once" : "each statement as printed"}`
-      : `${s.groups.length} ${noun} · ${s.folios} folios · the statements carry no value, so ${money(s.paid)} paid in is in no value total`;
+    // COUNTS ON THE FACE, THE BASIS IN THE HOVER. *"its obvious from the table
+    // what it is"* — the band said which basis it is on and why the missing-data
+    // section adds to no value in a line of its own; both ride on the band's
+    // hover now, and the band keeps its counts, which are data.
+    const sub = `${s.groups.length} ${noun} · ${s.folios} folios`;
+    const hint = id === "private"
+      ? (grouping === "fund"
+        ? "Each holding counted once. Where two statements report one holding, the fund row counts it once and its folios show both, with a Counted once line so they add to the row."
+        : "Each statement as printed. A holding two members' statements both report is on both of their rows, and the Counted once line at the foot of this section takes the overlap out.")
+      : `The statements carry no value, so the ${money(s.paid)} paid in here is in no value total on this page — missing data, never a zero.`;
     return (
       <Fragment key={id}>
         <Tr view={bookView} className={`${TREE_ROW.section} ${id === "private" ? "" : "cursor-pointer"}`}
           {...(id === "private" ? {} : rowToggle(() => sections.toggle(id)))}
           data-pm-section={id} data-pm-section-funds={s.groups.length} data-pm-section-folios={s.folios}
           data-pm-section-open={open ? "true" : "false"}>
-          <TreeSectionCell title={title} marker={copy.marker && <span data-pm-marker={id}>{copy.marker}</span>} sub={sub}
+          <TreeSectionCell title={title} marker={copy.marker && <span data-pm-marker={id}>{copy.marker}</span>} sub={sub} hint={hint}
             open={open} onToggle={() => sections.toggle(id)}
             toggleData={{ "data-pm-section-toggle": id }} />
           {inOrder(figureCells({ ...s, ret: aggRet(s.groups.flatMap((g) => g.folios), grouping === "fund", "section") }, "section", {
@@ -1160,16 +1177,83 @@ export function PrivateMarket() {
    * account" are the same set. Drawn with `TrFoot` so its label span follows the
    * reader's column order.
    */
-  const totalRow = (fig: BookFigures, label: ReactNode) => (
+  const totalRow = (fig: BookFigures, label: ReactNode, extra: {
+    labelTitle?: string;
+    titles?: Partial<Record<string, string>>;
+    attrs?: Record<`data-${string}`, string | undefined>;
+  } = {}) => (
     <TrFoot view={bookView} key="private" data-pm-total="private" data-pm-capital-accounts={fig.capitalAccounts}
+      {...(extra.attrs ?? {})}
       className={`${TREE_ROW.total} border-t-2 border-ink-600 ${TREE_CELL.parent} font-semibold text-slate-200`}
-      label={label}
+      label={label} labelTitle={extra.labelTitle}
       cells={figureCells({ ...fig, ret: aggRet(book.folios, true, "total") }, "total", {
         noCapital: fig.capitalAccounts === 0 ? "no capital account on this page" : undefined,
         noValue: "no value",
         weight: 100,
+        titles: extra.titles,
       }) as Record<string, ReactNode>} />
   );
+
+  /**
+   * ── THE WORKING, ON THE TOTAL IT EXPLAINS ─────────────────────────────────
+   *
+   *   *"Why do i need all this garbage written please remove its obvious from
+   *    the table what it is … We have such random one-liners, two-liners, and
+   *    footnotes everywhere across the product."*
+   *
+   * A drop-down under this table ("How the capital totals are worked out") and
+   * a line beneath it ("This page is the private side of the book…") carried
+   * the arithmetic behind the capital totals and a clause naming the capital
+   * accounts this page leaves out. Both went. What they said that a reader can
+   * act on is the HOVER ON THE TOTAL IT QUALIFIES — the client's own question
+   * was *"how are you calculating this uncalled capital of 16 crores?"*, and
+   * the place a reader asks it is the figure. The sides of the book line went
+   * without a new home: the Market value tile states this page's share of the
+   * whole book, and Morning CIO's Concentration card prints every side.
+   *
+   * THE PUBLIC-MARKET FUNDS' CAPITAL ACCOUNTS ARE STILL NAMED, NEVER DROPPED —
+   * in the Committed total's hover, beside the figure they are left out of,
+   * and on the total row's own handles so the sweep can hold them to the book.
+   * Every clause is conditioned on what is true of these accounts rather than
+   * of this book's four (Stage 10bw).
+   */
+  const capElsewhereClause = (() => {
+    const els = m.capElsewhere;
+    if (!els.length) return null;
+    const n = els.length;
+    const one = n === 1;
+    const listed = els.every((x) => x.side === "listed");
+    const byFamily = listed && els.every((x) => x.basis === "family");
+    const held = els.every((x) => m.owned.has(x.commitment.accountId));
+    return `${n} more capital account${one ? " belongs" : "s belong"} to `
+      + `${listed ? "public-market funds" : "funds this page does not place on the private side"} — `
+      + `${[...new Set(els.map((x) => x.commitment.name))].join(", ")}, `
+      + `${money(sumOrNull(els.map((x) => x.commitment.committed)))} committed — and ${one ? "is" : "are"} counted nowhere on this page`
+      + (byFamily ? `: the family class ${one ? "that fund" : "those funds"} as investing in listed equity` : "")
+      + (held ? `, and ${one ? "its holding is" : "their holdings are"} in the Portfolio Monitor’s AIF section` : "")
+      + ".";
+  })();
+  const capCount = book.privateTotal.capitalAccounts;
+  const capTitles: Partial<Record<string, string>> = {
+    committed: [
+      `Promised across the ${capCount} private-market capital account${capCount === 1 ? "" : "s"} on this page.`,
+      capElsewhereClause,
+    ].filter(Boolean).join(" "),
+    // WHETHER CALLED AND PAID IN MAY BE SET AGAINST EACH OTHER IS MEASURED PER
+    // ACCOUNT (Stage 10bw): where the two cover different accounts the hover on
+    // the Called total says not to subtract them, and where they cover one set
+    // it says they may — a warning about a valid subtraction would be false.
+    called: m.calledPaidSameSet
+      ? `Asked for by the funds so far, over the ${m.cc.calledOf} accounts that print a called line — the same accounts Paid in covers.`
+      : `Called and Paid in cover different accounts and must not be subtracted from each other: the ${m.cc.count - m.cc.calledOf} account${m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first ${m.cc.count - m.cc.calledOf === 1 ? "is" : "are"} present in the second.`,
+    uncalled: [
+      `Summed exactly as each fund prints it — ${money(m.cc.uncalled)} over the ${m.cc.uncalledOf} accounts that print the line — and never derived from committed − called, because a fund that prints no uncalled figure has not said it has nothing left to call.`,
+      m.cc.called != null && m.cc.committedWhereCalled != null
+        ? `The same figure the other way: committed ${money(m.cc.committedWhereCalled)} less called ${money(m.cc.called)} is ${money(m.cc.committedWhereCalled - m.cc.called)}, both struck over the same ${m.cc.calledOf} accounts.`
+        : null,
+      `${m.cc.count - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what can still be called, never the ceiling.`,
+    ].filter(Boolean).join(" "),
+  };
 
   // ── THE TRANSACTIONS TAB ─────────────────────────────────────────────────────
   const callsShown = sortRows(
@@ -1203,15 +1287,11 @@ export function PrivateMarket() {
     <div>
       <PageHeader eyebrow="Daily" title="Private Market" />
 
-      {/* THE DATE SPREAD, DERIVED — never `portfolio.asOf`, which is newer than
-          every mark on this page. */}
-      {m.dates.length > 0 && (
-        <p className="mb-4 text-[11.5px] text-slate-500">
-          Marks span <span className="text-slate-300">{fmtDate(m.dates[0])}</span>
-          {m.dates.length > 1 && <> → <span className="text-slate-300">{fmtDate(m.dates[m.dates.length - 1])}</span></>}
-          . Each fund is valued on its own statement's date, shown on every row below.
-        </p>
-      )}
+      {/* THE "MARKS SPAN" LINE IS GONE, at the family's request (*"its obvious
+          from the table what it is"*). Every row's As of cell carries its own
+          statement's date — never `portfolio.asOf`, which is newer than every
+          mark on this page — and `check:pages` holds the newest of them to the
+          book's own newest private mark. */}
 
       <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
 
@@ -1220,7 +1300,7 @@ export function PrivateMarket() {
           ways, in the same columns; the third is the dated record. See the note
           at the top of this file for what each section holds and why two of
           them start closed. */}
-      <Card className="mt-5" pad={false} title={active.cardTitle} subtitle={active.cardSub}
+      <Card className="mt-5" pad={false} title={active.cardTitle}
         right={
           <div className="flex flex-wrap items-center justify-end gap-2">
             {tabs}
@@ -1248,49 +1328,58 @@ export function PrivateMarket() {
               <thead className="border-b border-ink-700">
                 <Tr view={bookView}>
                   <SortHeader col="name" view={bookView} align="left" className="min-w-[15rem]">{grouping === "fund" ? "Fund" : "Family member"}</SortHeader>
-                  <SortHeader col="committed" view={bookView} pad="px-2 py-2" note="promised"
-                    title="What the family signed up to invest, whether or not the fund has asked for it yet.">Committed</SortHeader>
-                  <SortHeader col="called" view={bookView} pad="px-2 py-2" note="asked for"
-                    title="What the fund has demanded so far, off the line its own statement labels.">Called</SortHeader>
-                  <SortHeader col="paid" view={bookView} pad="px-2 py-2" note="cash sent"
-                    title="Cash that has actually left the family's bank for this fund — its capital account.">Paid in</SortHeader>
-                  <SortHeader col="uncalled" view={bookView} pad="px-2 py-2" note="not yet asked"
-                    title="Promised and not yet asked for, exactly as the fund prints it — never worked out as committed − called. A bill that can arrive any day, never added to a value.">Still to<br />call</SortHeader>
+                  {/* ── THE LABELS ALONE, THE MEANING IN THE HOVER ─────────────────
+                      Each heading carried a word under it — "promised", "asked
+                      for", "cash sent". The family asked for the lines that say
+                      what the table is to go (*"its obvious from the table what
+                      it is"*), and every one of those words is the first thing
+                      its heading's own hover already says. */}
+                  <SortHeader col="committed" view={bookView} pad="px-2 py-2"
+                    title="Promised: what the family signed up to invest, whether or not the fund has asked for it yet.">Committed</SortHeader>
+                  <SortHeader col="called" view={bookView} pad="px-2 py-2"
+                    title="Asked for: what the fund has demanded so far, off the line its own statement labels.">Called</SortHeader>
+                  <SortHeader col="paid" view={bookView} pad="px-2 py-2"
+                    title="Cash sent: what has actually left the family's bank for this fund — its capital account.">Paid in</SortHeader>
+                  <SortHeader col="uncalled" view={bookView} pad="px-2 py-2"
+                    title="Not yet asked for: promised and not yet called, exactly as the fund prints it — never worked out as committed − called. A bill that can arrive any day, never added to a value.">Still to<br />call</SortHeader>
                   <SortHeader col="units" view={bookView} pad="px-2 py-2">Units</SortHeader>
-                  <SortHeader col="cost" view={bookView} pad="px-2 py-2" note="of units held"
-                    title="What the units held cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
-                  <SortHeader col="value" view={bookView} pad="px-2 py-2" note="fund's mark"
-                    title="What the holding is worth on the fund's own statement date.">Value</SortHeader>
+                  <SortHeader col="cost" view={bookView} pad="px-2 py-2"
+                    title="Of the units held: what they cost, off the holding statement — a different document from the capital account's Paid in.">Cost</SortHeader>
+                  <SortHeader col="value" view={bookView} pad="px-2 py-2"
+                    title="The fund's own mark: what the holding is worth on the fund's own statement date.">Value</SortHeader>
                   {/* ONE HEADING PER PICKED MEASURE, each a `SortHeader` like its
-                      neighbours. The note is the count of FUNDS the measure
-                      answers and the hover the reason the rest do not, both
-                      struck on the SAME resolved cells the fund rows draw — so
-                      the count and the dashes cannot describe different sets.
-                      `auto` gets neither: it resolves per row, and every cell's
-                      own tag says which return it is. */}
+                      neighbours. The count of FUNDS the measure answers and the
+                      reason the rest do not are the heading's HOVER — the count
+                      rides on `data-col-coverage` rather than as a line under the
+                      label — both struck on the SAME resolved cells the fund rows
+                      draw, so the count and the dashes cannot describe different
+                      sets. `auto` gets neither: it resolves per row, and every
+                      cell's own tag says which return it is. */}
                   {returnMeasures.map((measure) => {
                     const def = returnMeasureDef(measure);
                     const auto = measure === "auto";
                     const meta = fundReturnColumnMeta(measure, fundCells(measure), PM_RETURN_HINTS[measure] ?? def.hint);
                     return (
                       <SortHeader key={measure} col={returnColId(measure)} view={bookView} pad="px-2 py-2"
-                        title={auto ? PM_RETURN_HINTS.auto : undefined}
-                        note={meta?.note} noteTitle={meta?.title}>
+                        title={auto ? PM_RETURN_HINTS.auto : meta?.title}
+                        coverage={meta?.note}>
                         {auto ? "Return" : def.tag}
                       </SortHeader>
                     );
                   })}
-                  <SortHeader col="weight" view={bookView} pad="px-2 py-2" note="of private"
-                    title="The row's value as a share of the private market value — the same denominator on every row.">Weight</SortHeader>
+                  <SortHeader col="weight" view={bookView} pad="px-2 py-2"
+                    title="Of the private book: the row's value as a share of the private market value — the same denominator on every row.">Weight</SortHeader>
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
                   {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
                       is where the reason it exists lives — no fund publishes a
                       forward schedule — and while the store cannot be read the
-                      header says so once, rather than every row repeating it. */}
+                      hover says why, once, while every cell says it is not
+                      available. The "you enter" line under the label went with
+                      the other heading notes; the cells' own Add is the cue. */}
                   <SortHeader col="call" view={bookView} pad="px-2 py-2" align="left"
-                    title={CALL_COLUMN_TITLE}
-                    note={entered.state.status === "unavailable" ? "not available" : "you enter"}
-                    noteTitle={entered.state.status === "unavailable" ? entered.state.reason : undefined}>Capital<br />call</SortHeader>
+                    title={entered.state.status === "unavailable"
+                      ? `${CALL_COLUMN_TITLE} · Not available: ${entered.state.reason}`
+                      : CALL_COLUMN_TITLE}>Capital<br />call</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">
@@ -1298,12 +1387,17 @@ export function PrivateMarket() {
                 {renderSection("unvalued")}
               </tbody>
               <tfoot>
-                {totalRow(book.privateTotal, <div>
-                  <div>Private market total</div>
-                  <div className="text-[11px] font-normal text-slate-500" data-pm-total-sub>
-                    each holding counted once · {book.privateTotal.capitalAccounts} capital {book.privateTotal.capitalAccounts === 1 ? "account" : "accounts"} — what the capital tiles add to
-                  </div>
-                </div>)}
+                {totalRow(book.privateTotal, "Private market total", {
+                  labelTitle: `Each holding counted once, and the ${capCount} capital account${capCount === 1 ? "" : "s"} on this page — what the capital tiles add to.`,
+                  titles: capTitles,
+                  // THE ACCOUNTS ONLY NAMED, on the row whose Committed total
+                  // names them — the ids, and the clause itself, so the sweep
+                  // reads what the hover says rather than a paragraph.
+                  attrs: m.capElsewhere.length ? {
+                    "data-pm-cap-elsewhere": m.capElsewhere.map((x) => x.commitment.accountId).join(" "),
+                    "data-pm-cap-elsewhere-text": capElsewhereClause ?? undefined,
+                  } : undefined,
+                })}
               </tfoot>
             </table>
           </div>
@@ -1335,7 +1429,8 @@ export function PrivateMarket() {
                     upcoming calls, and they are the Capital call column now. */}
                 <tr className={TREE_ROW.section} data-pm-call-section="history">
                   <TreeSectionCell colSpan={callView.order.length} title="Every capital call made"
-                    sub={`${m.history.length} calls, newest first — each fund's rows reproduce the total its own statement prints, or none of them are shown`} />
+                    sub={`${m.history.length} calls`}
+                    hint="A fund's calls are listed only where they reproduce the total its own statement prints — otherwise none of that fund's are shown." />
                 </tr>
                 {callsShown.map((c, i) => (
                   <Tr view={callView} key={`${c.accountId}-${c.date}-${i}`} className="hover:bg-ink-700/40" data-call-row={c.date}>
@@ -1358,104 +1453,13 @@ export function PrivateMarket() {
           </div>
         )}
 
-        {/* HOW THE CAPITAL TOTALS ARE WORKED OUT — one click away rather than a
-            wall of prose under the table. The family asked twice for fewer
-            explanations on this page; the arithmetic is still here for the
-            reader who asks "how are you calculating this?". */}
-        {view !== "transactions" && (
-          <details className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11.5px] leading-relaxed text-slate-500" data-pm-working>
-            <summary className="cursor-pointer select-none text-slate-400 hover:text-slate-200">How the capital totals are worked out</summary>
-            <ul className="mt-2 list-disc space-y-1.5 pl-5">
-              <li>
-                <span className="text-slate-300">Still to call is summed exactly as each fund prints it</span> — {money(m.cc.uncalled)} over
-                the {m.cc.uncalledOf} accounts that print the line — and never derived from committed − called, because a fund
-                that prints no uncalled figure has not said it has nothing left to call. The ✓ beside a figure means that
-                statement&rsquo;s own committed − called reproduces it to the rupee.
-              </li>
-              {m.cc.called != null && m.cc.committedWhereCalled != null && (
-                <li>
-                  <span className="text-slate-300">The same figure the other way:</span> committed {money(m.cc.committedWhereCalled)} less
-                  called {money(m.cc.called)} is {money(m.cc.committedWhereCalled - m.cc.called)}, both struck over the same {m.cc.calledOf} accounts.
-                </li>
-              )}
-              {/* WHETHER CALLED AND PAID IN MAY BE SET AGAINST EACH OTHER IS
-                  MEASURED PER ACCOUNT (Stage 10bw). On the whole register they
-                  could not — one fund printed a contribution and no called line —
-                  and the warning was true. Scoped to private-market funds every
-                  account prints both, and a warning that the two cover different
-                  sets would be false. */}
-              {!m.calledPaidSameSet && (
-                <li data-pm-subtract-warning>
-                  <span className="text-slate-300">Called and Paid in cover different accounts and must not be subtracted from each other:</span> the
-                  {" "}{m.cc.count - m.cc.calledOf} account{m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first
-                  {m.cc.count - m.cc.calledOf === 1 ? " is" : " are"} present in the second.
-                </li>
-              )}
-              <li>
-                <span className="text-slate-300">This is every private-market capital account in the book and not every commitment the family has.</span>{" "}
-                {m.cc.count - m.capOutside} of this page&rsquo;s {m.scope.accounts.length} private accounts send a
-                capital-account statement; a commitment behind any other is invisible here, and the family&rsquo;s own
-                investment register names funds with no statement in this book at all. So {money(m.cc.uncalled)} is the floor
-                of what can still be called, never the ceiling.
-              </li>
-              <li>
-                <span className="text-slate-300">No fund in this book publishes a forward drawdown schedule</span>, so
-                nothing here says when the {money(m.cc.uncalled)} will be called — the Transactions tab lists every call
-                made so far, dated, and a call a fund has announced is entered in the Capital call column, where it
-                stays the family&rsquo;s figure and is never added into Called, Paid in or Still to call.
-              </li>
-              <li>
-                Where two statements report one holding, the fund row counts it once and its folios show both, with a
-                {" "}<span className="text-amber-400">Counted once</span> line so the folios add to the row.
-              </li>
-            </ul>
-          </details>
-        )}
-
-        {/* WHICH SIDE OF THE BOOK THIS PAGE IS — on every tab, because it is a
-            claim about the page rather than about one of its tables. */}
-        {(m.scopeNote.sides.length > 1 || m.capElsewhere.length > 0) && (
-          <p className="border-t border-dashed border-ink-700 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500" data-pm-sides>
-            {m.scopeNote.sides.length > 1 && (
-              <>This page is the private side of the book:{" "}
-                {m.scopeNote.sides.map((x) => `${x.label} ${money(x.value)}`).join(" · ")}
-                {" "}· Total {money(m.scopeNote.bookMV)}.</>
-            )}
-            {/* THE PUBLIC-MARKET FUNDS' CAPITAL ACCOUNTS, NAMED IN ONE CLAUSE — not a
-                card and not a section: the family asked for the card about funds
-                this page does not carry to go ("these kind of placeholders are not
-                relevant"), and then placed each fund themselves, so a public-market
-                fund has no row on a private-market page. A commitment they signed
-                must still not vanish without a word, so it is named HERE, visible on
-                every tab, with a handle the sweep holds to the book (Stage 10bw).
-                EVERY CLAUSE IS CONDITIONED ON WHAT IS TRUE OF THESE ACCOUNTS, not of
-                this book's four: "public-market" only where every one is placed on
-                the listed side, "the family class" only where it was the family's
-                word that placed each, and "in the Portfolio Monitor" only where each
-                one holds a valued row. */}
-            {m.capElsewhere.length > 0 && (() => {
-              const n = m.capElsewhere.length;
-              const one = n === 1;
-              const listed = m.capElsewhere.every((x) => x.side === "listed");
-              const byFamily = listed && m.capElsewhere.every((x) => x.basis === "family");
-              const held = m.capElsewhere.every((x) => m.owned.has(x.commitment.accountId));
-              return (
-                // ITS OWN LINE, so the sides line above stays a line of the sides
-                // and their total — the clause's ₹ figure beside them would read
-                // as a fourth side and stop the line adding up.
-                <span className="mt-1 block" data-pm-cap-elsewhere={m.capElsewhere.map((x) => x.commitment.accountId).join(" ")}>
-                  {n} more capital account{one ? " belongs" : "s belong"} to
-                  {" "}{listed ? "public-market funds" : "funds this page does not place on the private side"}
-                  {" "}— {[...new Set(m.capElsewhere.map((x) => x.commitment.name))].join(", ")},{" "}
-                  {money(sumOrNull(m.capElsewhere.map((x) => x.commitment.committed)))} committed — and{" "}
-                  {one ? "is" : "are"} counted nowhere on this page
-                  {byFamily ? <>: the family class {one ? "that fund" : "those funds"} as investing in listed equity</> : null}
-                  {held ? <>, and {one ? "its holding is" : "their holdings are"} in the Portfolio Monitor&rsquo;s AIF section</> : null}.
-                </span>
-              );
-            })()}
-          </p>
-        )}
+        {/* THE DROP-DOWN "How the capital totals are worked out" AND THE LINE
+            "This page is the private side of the book…" STOOD HERE, and both
+            went at the family's request: *"Why do i need all this garbage
+            written please remove its obvious from the table what it is."* The
+            working is the hover on the capital totals it explains (see
+            `capTitles`), and the capital accounts of public-market funds are
+            named in the Committed total's hover. */}
       </Card>
     </div>
   );

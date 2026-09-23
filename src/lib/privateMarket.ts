@@ -27,12 +27,12 @@
 //
 // Every AIF was private, so this page claimed the Category III folios — open-
 // ended funds trading listed securities, 84% of what it showed. They are on
-// the listed side now and this page does not carry them. `pageScopeNote` below
-// states every SIDE of the book with its value, so the page says which side it
-// is. It used to name the Category III funds one by one as well, in a card of
-// their own; the family asked for that card to go ("these kind of placeholders
-// are not relevant"), and the funds are in the Portfolio Monitor's AIF section
-// and under their own Category III heading in the AIF drill-down.
+// the listed side now and this page does not carry them. It used to name them
+// one by one in a card, and then list every side of the book in a line under
+// the fund table; the family asked for both to go ("these kind of placeholders
+// are not relevant", and later "its obvious from the table what it is"). The
+// funds are in the Portfolio Monitor's AIF section and under their own
+// Category III heading in the AIF drill-down.
 //
 // The one place engagement IS the right key is the opposite question — an
 // account that holds NOTHING, so it has no position to read a class off. That is
@@ -54,10 +54,7 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import {
-  sum, sumOrNull, dedupedPositions, isPrivateClass, marketSides,
-  type MarketSideRow,
-} from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import {
   fundMarketSideOf, fundMarketSideBasis,
@@ -128,37 +125,17 @@ export function privateScope(positions: Position[], accounts: Account[]): Privat
   };
 }
 
-/**
- * ── WHICH SIDE OF THE BOOK THIS PAGE IS ────────────────────────────────────
+/*
+ * ── `pageScopeNote` IS GONE, WITH THE LINE IT FED ──────────────────────────
  *
- * The private book is one side of a THREE-way split, so a page scoped to it
- * leaves out two other sides — and both are stated with their value, or the
- * page reads as the whole of the family's fund holdings.
- *
- * The figures RECONSTRUCT the consolidated book. That is the claim a reader
- * acts on and no single figure can make it alone, which is why this returns the
- * parts rather than a sentence.
- *
- * IT ALSO NAMED THE FUNDS ON THE OTHER TWO SIDES, one by one, for a card
- * headed "Funds this page does not carry". The family asked for that card to go
- * and the two lists went with it rather than being left computing the right
- * answer into no caller — the dead-code-that-looks-alive failure this repo keeps
- * naming. The sides survive, because the line under the fund table prints them.
+ * It returned the book's three sides for the "This page is the private side of
+ * the book" line under the fund table, and the family asked for that line to
+ * go: *"Why do i need all this garbage written … its obvious from the table
+ * what it is."* A helper computing the right answer into no caller is the
+ * dead-code-that-looks-alive failure this repo keeps naming, so it went with
+ * the line. The split itself is still `marketSides`, and Morning CIO's
+ * Concentration card still prints every side.
  */
-export type PageScopeNote = {
-  /** Every side of the book, in order, with its own reason. */
-  sides: MarketSideRow[];
-  /** The consolidated book these sides partition. */
-  bookMV: number;
-};
-
-export function pageScopeNote(positions: Position[]): PageScopeNote {
-  const deduped = dedupedPositions(positions);
-  return {
-    sides: marketSides(deduped),
-    bookMV: sum(deduped.map((p) => p.marketValue)),
-  };
-}
 
 /**
  * ── WHICH CAPITAL ACCOUNTS BELONG ON A PRIVATE-MARKET PAGE ──────────────────
