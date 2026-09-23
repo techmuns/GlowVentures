@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Card } from "@/components/Card";
 import { SearchInput } from "@/components/SearchInput";
-import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
+import { AbsentSection, AbsentCell, AbsentFromBook, DASH } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
@@ -705,6 +705,10 @@ export function HoldingsBehind() {
               <div className="px-5 pb-5 pt-4">
                 <AbsentSection what="Nothing matches that filter"
                   needs={`The set holds ${fmtNum(rows.length)} holdings; none of their names or ISINs contains "${q.trim()}". Clear the filter to see them all.`} />
+                {/* …unless the book knows WHY that name is nowhere: a review line no
+                    statement reports is absent on purpose, and saying so is the
+                    difference between a gap and an apparent defect. */}
+                <AbsentFromBook query={q} className="mx-auto mt-3 max-w-2xl" />
               </div>
             ) : (
               <div className="overflow-x-auto">
