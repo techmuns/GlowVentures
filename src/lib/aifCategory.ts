@@ -83,7 +83,9 @@ export const marketSideOf = (idx: AccountIndex, p: Position): MarketSide | null 
 //   `Baring Private Equity India Fund 6 — Class A1`
 //      engagement: `Category II AIF — drawdown private equity fund`
 //   `Transition Venture Capital Fund I — Class A1`
-//      engagement: `Category I/II AIF — drawdown`
+//      engagement: `drawdown fund — … the statement prints a blank SEBI
+//      registration line` (its reader used to hard-code `Category I/II`,
+//      which neither statement prints; the figure audit removed it)
 //
 // Both name the discipline in the FUND'S OWN NAME, which is the strongest
 // evidence available and is why the name is matched at all. Nothing is inferred

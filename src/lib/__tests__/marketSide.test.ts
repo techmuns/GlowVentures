@@ -154,17 +154,17 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   const dead = FAMILY_MARKET_SIDE.filter((d) => !hays.some((h) => d.match.test(h)));
   ok("every entry in the family's table matches a fund this book carries", dead.length === 0,
     dead.map((d) => d.fund).join(", "));
-  // THE CASE THE CATEGORY GOT WRONG, BY THE FAMILY'S OWN ACCOUNT: Founders Fund
-  // prints Category II and invests in listed equities. The family won, and the
-  // statement's category is still read (and still printed) underneath.
-  const founders = deduped.filter((p) => /motilal oswal founders fund/i.test(p.security));
-  ok("this book holds the Founders Fund", founders.length > 0);
-  ok("the Founders Fund is listed although it prints Category II",
-    founders.every((p) => p.marketSide === "listed"
-      && readAifCategory(p, idx.get(p.accountId)).category === CATEGORY_II),
-    founders.map((p) => `${p.marketSide}/${readAifCategory(p, idx.get(p.accountId)).category}`).join(", "));
-  // THE TWO THE STATEMENTS NEVER PLACED.
-  for (const [re, side] of [[/delphi equity fund/i, "listed"], [/neo infra income opportunities/i, "private"]] as const) {
+  // THE TWO THE STATEMENTS NEVER PLACED — no document in the archive prints a
+  // SEBI category for either, so the family's own table is the whole of what
+  // puts each on a side, and that is what is asserted.
+  //
+  // FOUNDERS USED TO BE HERE AS "THE CASE THE CATEGORY GOT WRONG" — "prints
+  // Category II and invests in listed equities". It never printed one: the
+  // "Category II AIF - drawdown…" string was written by its READER
+  // (`altFundStatements.mjs`), and no Founders statement, depository tape or
+  // other document names a category for it. So the family's placing never
+  // overruled the paperwork here; it filled a gap the reader had papered over.
+  for (const [re, side] of [[/motilal oswal founders fund/i, "listed"], [/delphi equity fund/i, "listed"]] as const) {
     const rows = deduped.filter((p) => re.test(p.security));
     ok(`${re.source} is on the ${side} side`, rows.length > 0 && rows.every((p) => p.marketSide === side),
       rows.map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
@@ -175,6 +175,26 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     ok(`${re.source} prints no category of its own — the family placed it`,
       rows.every((p) => readAifCategory(p, idx.get(p.accountId)).source !== "statement"),
       rows.map((p) => { const r = readAifCategory(p, idx.get(p.accountId)); return `${r.category}/${r.source}`; }).join(", "));
+  }
+  // NEO INFRA PRINTS ITS OWN CATEGORY, and this used to assert the opposite.
+  // Its manager block reads "AIF -Category-II No : IN/AIF2/22-23/1042", and the
+  // family's depository tape names the same units "…FUND-CAT II AIF-CLASS A5";
+  // the reader dropped the line, so the fund read "Category not stated" beside
+  // a statement that states it. Category II is private capital and the family
+  // place it private, so the two agree and its side does not move — what moved
+  // is that the category is now READ, from the engagement that quotes the line.
+  {
+    const rows = deduped.filter((p) => /neo infra income opportunities/i.test(p.security));
+    ok("this book holds Neo Infra", rows.length > 0);
+    ok("Neo Infra reads Category II off its own statement's registration line",
+      rows.every((p) => {
+        const r = readAifCategory(p, idx.get(p.accountId));
+        return r.category === CATEGORY_II && r.fromEngagement.includes(CATEGORY_II)
+          && /IN\/AIF2\//.test(idx.get(p.accountId)?.providerEngagement ?? "");
+      }),
+      rows.map((p) => `${readAifCategory(p, idx.get(p.accountId)).category} · ${idx.get(p.accountId)?.providerEngagement}`).join(" | "));
+    ok("…and the family's placing agrees with that category",
+      rows.every((p) => p.marketSide === "private" && familyEntries(p, idx.get(p.accountId)).length > 0));
   }
   // THE FIFTEEN CAPITAL ACCOUNTS SPLIT THE WAY THE FAMILY SAID: eleven private
   // (India SME ×3, Baring, Transition ×2, Neo Infra, Sky Capital ×4), four
@@ -264,15 +284,30 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   ok("CATEGORY III reads as Category III", categoriesNamedIn("BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III")[0] === CATEGORY_III);
   ok("Class A2 names no category", categoriesNamedIn("Sanshi Fund-I — Class A2").length === 0);
   ok("Series II names no category", categoriesNamedIn("Motilal Oswal Founders Fund Series II — Class G1").length === 0);
-  ok("Category I/II yields BOTH", categoriesNamedIn("Category I/II AIF — drawdown").length === 2);
-  // A holding whose text names two resolves to NEITHER side by the category —
-  // it reaches `private` here only because its own name says venture capital.
-  const amb = deduped.find((p) => readAifCategory(p, idx.get(p.accountId)).why === "ambiguous");
-  if (amb) {
-    ok("an ambiguous category is private only by the PE read",
-      readsAsPrivateEquity(amb, idx.get(amb.accountId)) && amb.marketSide === "private",
-      amb.security);
-  } else console.log("ok   (no ambiguous category in this drop)");
+  ok("Category I/II yields BOTH", categoriesNamedIn("Category I/II AIF").length === 2);
+  // A PHRASE NAMING TWO CATEGORIES PLACES A FUND ON NEITHER SIDE BY THE
+  // CATEGORY. No statement in this book prints one: the holding that used to
+  // reach this branch was Transition Venture, whose "Category I/II AIF —
+  // drawdown" was written by its READER and is gone (its statements print a
+  // blank `Sebi Reg. no.-`). So the rule is struck on constructed accounts —
+  // this branch used to print "ok (no ambiguous category in this drop)" and
+  // check nothing — and the book half is a count, printed either way.
+  {
+    const acct = { accountId: "x", providerEngagement: "Category I/II AIF — drawdown" } as never;
+    const at = (security: string) => marketSideOf(new Map([["x", acct]]) as never,
+      { accountId: "x", assetClass: "AIF", security } as never);
+    ok("an ambiguous category places a fund on neither side", at("Some Drawdown Fund I — Class A1") === null,
+      String(at("Some Drawdown Fund I — Class A1")));
+    ok("…and a fund naming its own discipline is private by that read alone",
+      at("Some Venture Capital Fund I — Class A1") === "private");
+    const amb = deduped.filter((p) => readAifCategory(p, idx.get(p.accountId)).why === "ambiguous");
+    console.log(`info ${amb.length} holding(s) in this drop print two categories${amb.length ? `: ${amb.map((p) => p.security).join("; ")}` : ""}`);
+    for (const p of amb) {
+      const acct2 = idx.get(p.accountId);
+      const placed = familyEntries(p, acct2).length > 0 || readsAsPrivateEquity(p, acct2);
+      ok(`${p.security.slice(0, 40)} is not placed by its ambiguous category`, placed ? p.marketSide !== null : p.marketSide === null);
+    }
+  }
 }
 
 // ── 6. THE FAMILY'S OWN REVIEW IS A SECOND WITNESS, AND IT AGREES ───────────
@@ -283,9 +318,11 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
 // book's side has a basis of its OWN (the family's placing, or the category the
 // statement prints), never the review's answer taken over.
 //
-// The family's placing closed the one disagreement this section used to report:
-// Motilal Oswal's Founders Fund, Category II by its statement and Equity by the
-// review, is listed now because the family said it invests in listed equities.
+// The one disagreement this section used to report was Motilal Oswal's Founders
+// Fund, "Category II by its statement and Equity by the review". Its statement
+// prints no category — the "Category II" was its reader's own string — so the
+// review was reading the fund correctly all along, and the family's placing
+// (listed: it invests in listed equities) is where its side comes from now.
 {
   let agree = 0; const differ: { p: typeof deduped[number]; line: string }[] = [];
   for (const p of deduped.filter((x) => x.assetClass === "AIF")) {

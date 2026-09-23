@@ -1902,6 +1902,12 @@ const AIF_BOOK = (() => {
      *
      * A chip is where this book states a classification, so it is held to the
      * book's own answer rather than to a shape.
+     *
+     * (Since the figure audit NO holding in this book reads an ambiguous
+     * category: Transition Venture's `Category I/II` was its reader's own
+     * invention, and neither statement prints one. The claim below still holds
+     * every chip to the book's answer; the `I/II` rule itself is asserted in
+     * `aifCategory.test.ts`, which does not need a live row to exercise it.)
      */
     const rowCats = new Map();
     /** The drawn rows whose category rests on the family's word, not a document. */
