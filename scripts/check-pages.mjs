@@ -10193,9 +10193,13 @@ const INVARIANTS = {
           && /allotment NAV the statement prints/.test(w.title) && /priced in the class held today/.test(w.title)
           && prices(w.title).some((v) => Math.abs(v - Number(w.nav)) <= 0.005 + 1e-9));
       }],
-    // THE SENTENCE THE OLD PANEL LED WITH is a line of the tree now, above the
-    // first statement line whose contributions carry the mark.
-    ["the tree says what a switched row is", (t) => /marked switched/i.test(t) && /switch ratio/i.test(t)],
+    // THE SENTENCE EXPLAINING "SWITCHED" IS GONE — *"no one is reading these
+    // kind of notes"*. What it said is the hover on every switched row's own
+    // label and entry NAV, which the check above holds to the book; this one
+    // asserts the sentence stays gone, because a removal is verified by
+    // asserting it happened.
+    ["no sentence among the rows explains what a switched row is — its own hover does",
+      (t) => !/marked switched/i.test(t) && !/switch ratio/i.test(t)],
     // THE COMBINED INVESTED IS WHAT WAS PAID. The old panel printed it as a
     // footer; in the tree it is the ROW's own Invested, which its statement
     // lines and their contributions add to. Compared at the one decimal the
@@ -10992,7 +10996,12 @@ const INVARIANTS = {
      * trade rather than of what this book can see.
      */
     ["...and says why it is narrow, rather than reading as a family that barely trades",
-      (t) => /Demat movements carry no price or counterparty/i.test(t) && /not trades/i.test(t)],
+      // ON THE TRADES COLUMN'S OWN HOVER since the line under the table went at
+      // the family's request — *"no one is reading these kind of notes"* — and
+      // asserted gone from the page as well, because a removal is verified by
+      // asserting it happened.
+      (t, ctx) => !/Demat movements carry no price or counterparty/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /Demat movements carry no price or counterparty/i.test(x) && /not trades/i.test(x))],
     /**
      * AND THE SHARED SECTION FILTER IS WHAT NARROWED IT — which is a stronger
      * claim than the tab it replaced could make: the SAME control the Holdings
@@ -14866,106 +14875,119 @@ const INVARIANTS = {
    * and that the fence is stated where a reader forms the belief.
    */
   "monitor-security-drill": [
-    ["the drill-down states the route split before the per-account table",
-      (t) => /held\s+₹[\d.,]+\s*(Cr|L|K)?\s+through/i.test(t)],
+    /**
+     * NO SENTENCE LEADS THE OPENED LINES, AND NO CARD SITS AMONG THEM.
+     *
+     *   *"no one is reading these kind of A cliff of notes that you have put in
+     *    across tables. When an entity is dropped down, they're literally seeing
+     *    what is the entity and which accounts are held in. So the dropdown is
+     *    good."*
+     *
+     * The route split the lead sentence spelled out is each line's own second
+     * line, and the look-through card is lines of the table. Both are asserted
+     * GONE, structurally as well as by their words: a row that opened into a
+     * full-width cell is a note inside the table whatever it says.
+     */
+    ["the opened row carries no lead sentence and no look-through card",
+      (t, ctx) => {
+        const fl = ctx?.fundLines;
+        if (!fl) return { notChecked: "the opened rows were not captured on this run" };
+        return !/held\s+₹[\d.,]+\s*(Cr|L|K)?\s+through/i.test(t)
+          && !/Held inside your funds/i.test(t)
+          && fl.boxes === 0 && fl.fullWidth === 0;
+      }],
     /**
      * THE DERIVED TOTAL IS REPRODUCED FROM THE TWO SOURCES INDEPENDENTLY — the
-     * book's own fund values times the store's own disclosed weights. A page
-     * that mis-joined, double-counted a scheme or dropped one lands elsewhere.
+     * book's own fund values times the store's own disclosed weights — and it is
+     * the fund LINES that must add to it now, one per fund, each carrying its own
+     * derived rupee. A page that mis-joined, double-counted a scheme or dropped
+     * one lands elsewhere.
      */
-    ["the fund look-through reproduces the book × disclosure arithmetic", (t, ctx) => {
-      const fe = ctx?.fundExposure;
+    ["the fund lines reproduce the book × disclosure arithmetic", (t, ctx) => {
+      const fl = ctx?.fundLines;
       if (!FUND_EXPOSURE) return { notChecked: "no name in this book is disclosed inside a fund this store covers" };
-      if (!fe) return { notChecked: "the look-through panel was not on screen on this run" };
-      if (fe.state === "loading") return { notChecked: "the store had not answered when the page was read" };
-      if (fe.state === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
-      if (fe.rows !== FUND_EXPOSURE.funds) return false;
-      const printed = moneyCell(fe.total);
-      // The page prints one decimal in Cr, so the bound is that rounding and
-      // nothing wider — a tolerance fitted to the figures would explain anything.
-      return Number.isFinite(printed) && Math.abs(printed - FUND_EXPOSURE.value / 1e7) <= 0.05;
+      if (!fl) return { notChecked: "the opened rows were not captured on this run" };
+      if (fl.status === "loading") return { notChecked: "the store had not answered when the page was read" };
+      if (fl.status === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
+      const mine = fl.lines.filter((l) => l.parent === FUND_EXPOSURE.key);
+      if (mine.length !== FUND_EXPOSURE.funds) return false;
+      const summed = mine.reduce((a, l) => a + l.value, 0);
+      // The handles carry the unrounded rupee, so the bound is a rupee per line.
+      return Math.abs(summed - FUND_EXPOSURE.value) <= mine.length;
     }],
     /**
      * ...AND IT IS NEVER ADDED TO THE HOLDING. The row's own market value is the
-     * book's; the look-through sits beside it. If the two were ever summed the
-     * page would state a figure no statement supports — the double count this
-     * whole store is fenced against.
+     * book's; the fund lines sit under Via funds beside it. If the two were ever
+     * summed the page would state a figure no statement supports — the double
+     * count this whole store is fenced against.
      */
     ["the derived figure is not summed into the row it opened from", (t, ctx) => {
       const rows = ctx?.tableRows;
-      const fe = ctx?.fundExposure;
-      if (!FUND_EXPOSURE || !fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      const fl = ctx?.fundLines;
+      if (!FUND_EXPOSURE || !fl || fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
       const row = rows?.find((r) => r.securityKey === FUND_EXPOSURE.key);
       if (!row) return { notChecked: "the walked row was not captured on this run" };
       const mv = moneyCell(row.cells?.[COL_STOCK.mv]);
-      const derived = moneyCell(fe.total);
+      const derived = fl.lines.filter((l) => l.parent === FUND_EXPOSURE.key).reduce((a, l) => a + l.value, 0) / 1e7;
       if (!Number.isFinite(mv) || !Number.isFinite(derived)) return false;
       const book = FUND_EXPOSURE.bookValue / 1e7;
       // THE ROW STILL PRINTS THE BOOK'S OWN FIGURE. Summing the look-through in
       // would land it at `book + derived`, and this book's derived share of the
       // walked name is large enough that the two cannot be confused.
       if (!(Math.abs(mv - book) <= 0.05)) return false;
-      // ...and the check can only bite while the two are actually distinguishable.
-      // `derived` is already in crore, as `moneyCell` returns it.
       if (!(derived > 0 ? Math.abs(book + derived - mv) > 0.05 : true)) return false;
       // AND THE COMBINED FIGURE IS THE ONE THAT CARRIES IT, in its own column
       // under its own heading. The family asked for the two added; what must
       // never happen is the MEASURED column quietly carrying a derived rupee.
       const exposure = moneyCell(row.cells?.[COL_STOCK.exposure]);
-      return Number.isFinite(exposure) && Math.abs(exposure - (book + derived)) <= 0.11;
+      if (!(Number.isFinite(exposure) && Math.abs(exposure - (book + derived)) <= 0.11)) return false;
+      // ...AND NO FUND LINE PUTS ITS RUPEE UNDER DIRECT + PMS. That column is the
+      // measured half; a derived figure there would read as a statement's.
+      return fl.lines.filter((l) => l.parent === FUND_EXPOSURE.key)
+        .every((l) => !/₹/.test(l.cells?.[COL_STOCK.mv] ?? "") && /₹/.test(l.cells?.[COL_STOCK.viaFunds] ?? ""));
     }],
-    ["...and it says it is derived, and not in the book's total",
+    /**
+     * ...AND EACH LINE SAYS IT IS DERIVED, AND NOT IN THE BOOK'S TOTAL — on the
+     * figure it qualifies, where a reader who wonders what the rupee is finds it.
+     * The card's paragraph said it once; the hover says it on every line.
+     */
+    ["...and every fund line's figure says it is derived, and not in the book's total",
       (t, ctx) => {
-        const fe = ctx?.fundExposure;
-        if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
-        return /DERIVED, not a position/i.test(fe.text)
-          && /no part of the book.s own NAV/i.test(fe.text);
+        const fl = ctx?.fundLines;
+        if (!fl || fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
+        const mine = fl.lines.filter((l) => l.parent === FUND_EXPOSURE?.key);
+        if (!mine.length) return false;
+        return mine.every((l) => /DERIVED, not a position/i.test(l.title ?? "")
+          && /no part of the book.s NAV/i.test(l.title ?? "")
+          && /of this fund/i.test(l.title ?? ""));
       }],
     /**
-     * ...AND NAMES WHAT IT CANNOT SEE — WHICH NO LONGER INCLUDES A SCHEME'S BONDS.
-     *
-     *   "the Look-through must cover bonds, NCDs and every instrument, not just
-     *    stocks."
-     *
-     * The store used to read each AMC's EQUITY SECTION and the card said so in
-     * as many words. It reads the whole monthly filing now, so the EQUITY ONLY
-     * sentence had to go — and a removal is verified by asserting it happened,
-     * because the card would look identical on a book whose funds happen to hold
-     * only shares. The AIF block is the absence that REMAINS, and it is about
-     * the instrument rather than the store: no drop of the current statements
-     * can ever fill it.
+     * ...AND THE COLUMN NAMES WHAT IT CANNOT SEE — WHICH NO LONGER INCLUDES A
+     * SCHEME'S BONDS. The coverage sentence was the card's second paragraph; it
+     * is the derived column's header hover now, which is where a claim about a
+     * column belongs. The AIF block is the absence that REMAINS, and it is about
+     * the instrument rather than the store.
      */
-    ["...and names the vehicles it cannot look through, without claiming to be equity-only", (t, ctx) => {
-      const fe = ctx?.fundExposure;
-      if (!fe || fe.state === "loading" || fe.state === "unreachable") return { notChecked: "the look-through did not answer on this run" };
-      return /AIF folio/i.test(fe.text)
-        && !/EQUITY ONLY/i.test(fe.text)
-        && !/debt and cash sleeves\s+are outside this store/i.test(fe.text)
-        && /whole monthly filing/i.test(fe.text)
-        && /NCDs/i.test(fe.text);
+    ["...and the derived column names the vehicles it cannot look through, without claiming to be equity-only", (t, ctx) => {
+      const fl = ctx?.fundLines;
+      if (!fl || fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      const via = (ctx?.colNotes ?? []).find((n) => /derived/i.test(n.text) && !/incl/i.test(n.text))?.title ?? "";
+      return /AIF folio/i.test(via)
+        && !/EQUITY ONLY/i.test(via)
+        && /monthly filings of \d+ of your \d+ fund holdings/i.test(via)
+        && /NCDs/i.test(via);
     }],
     /** Every match is EXACT — ISIN, or this book's own key. Never a fuzzy tier. */
-    ["every disclosed line was matched exactly, never by resemblance", (t, ctx) => {
-      const fe = ctx?.fundExposure;
-      if (!fe || fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
-      return fe.via.length > 0 && fe.via.every((v) => v === "isin" || v === "name");
+    ["every fund line was matched exactly, never by resemblance", (t, ctx) => {
+      const fl = ctx?.fundLines;
+      if (!fl || fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      return fl.lines.length > 0 && fl.lines.every((l) => l.via === "isin" || l.via === "name");
     }],
     /**
-     * ── THE TWO CAPTIONS THE FAMILY ASKED TO BE RID OF, ASSERTED GONE ─────────
-     *
-     * *"remove the highlighted texts from the dashboard UI completely."*
+     * ── THE CAPTIONS THE FAMILY ASKED TO BE RID OF, ASSERTED GONE ──────────────
      *
      * A removal is verified by asserting it happened, never by deleting a check
-     * alongside the feature. Both are struck on this one route because it is the
-     * route that opens the venue table AND the look-through card.
-     *
-     * THE LOAD-BEARING HALF OF THE SECOND IS NOT THE WORDS. A look-through still
-     * fetching must not print "none of the N funds discloses this name" — that is
-     * a claim about the holding made before a disclosure has been read, and a
-     * version that deleted the loading BRANCH rather than its markup would fall
-     * straight through to it, satisfy "the sentence is gone", and be exactly the
-     * defect. So the second half asserts the card that IS on screen came from a
-     * settled store, never from the loading one.
+     * alongside the feature.
      */
     ["the venue table's caption is gone",
       (t) => !/clubs them into one holding/i.test(t) && !/one statement as printed/i.test(t)],
@@ -15018,87 +15040,78 @@ const INVARIANTS = {
     }],
     /**
      * 2. AND IT SAYS HOW MUCH — the derived total, reproduced from the book's
-     * own fund values times the store's own disclosed weights. A build that kept
-     * ONE disclosed line per fund reports a twelfth of this on the walked name,
-     * which is why the pick is the most-instruments case rather than the largest.
+     * own fund values times the store's own disclosed weights, as the sum of the
+     * fund lines the row opened into. A build that kept ONE disclosed line per
+     * fund reports a twelfth of this on the walked name, which is why the pick is
+     * the most-instruments case rather than the largest.
      */
     ["...and says how much of it is held through the funds", (t, ctx) => {
-      const fe = ctx?.fundExposure;
+      const fl = ctx?.fundLines;
       if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
-      // A MISSING PANEL IS THE DEFECT, NOT A REASON TO ABSTAIN. Reintroducing
-      // the old `assetClass === "Equity"` gate — which is precisely what refused
-      // the family's own example — removes the card entirely, and all three of
-      // these checks reported NOT CHECKED over a clean sweep. `golden.mjs`'s
-      // rule: a suite that passes over no input claims confidence nobody earned.
-      if (!fe) return false;
-      if (fe.state === "loading") return { notChecked: "the store had not answered when the page was read" };
-      if (fe.state === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
-      const printed = moneyCell(fe.total);
-      if (!Number.isFinite(printed)) return false;
-      // The page prints to a fixed precision, so the bound is that rounding
-      // reproduced — never a tolerance fitted until the figure passes. This name
-      // is small, so the printed unit is lakhs and the bound scales with it.
-      const want = FUND_INSTRUMENTS.value / 1e7;
-      return Math.abs(printed - want) <= Math.max(0.005, want * 0.02)
-        && fe.rows === FUND_INSTRUMENTS.funds;
+      if (!fl) return { notChecked: "the opened rows were not captured on this run" };
+      if (fl.status === "loading") return { notChecked: "the store had not answered when the page was read" };
+      if (fl.status === "unreachable") return { notChecked: "the look-through store did not answer on this run" };
+      // NO FUND LINES IS THE DEFECT, NOT A REASON TO ABSTAIN. Reintroducing the
+      // old `assetClass === "Equity"` gate — which is precisely what refused the
+      // family's own example — draws no lines at all.
+      const mine = fl.lines.filter((l) => l.parent === FUND_INSTRUMENTS.key);
+      if (!mine.length) return false;
+      const summed = mine.reduce((a, l) => a + l.value, 0);
+      return Math.abs(summed - FUND_INSTRUMENTS.value) <= mine.length
+        && mine.length === FUND_INSTRUMENTS.funds;
     }],
     /**
      * 3. ...AND THROUGH WHICH FUND, WITH EVERY INSTRUMENT IT FILED.
      *
-     * The half a one-line-per-fund rule cannot express: HDFC Balanced Advantage
-     * files twelve separate LIC Housing NCDs at their own coupons, and a reader
-     * deciding what to do about news on the issuer needs to see whether they
-     * hold the equity, the paper, or both. Both the COUNT on the collapsed row
-     * and the LINES the expansion draws, because neither implies the other — a
-     * row can claim twelve and open onto one.
+     * Both the COUNT on the fund line and the LINES it opens into, because
+     * neither implies the other — a line can claim twelve and open onto one.
      */
     ["...and breaks that fund down into every instrument the AMC filed", (t, ctx) => {
-      const fe = ctx?.fundExposure;
+      const fl = ctx?.fundLines;
       if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
-      // A MISSING PANEL IS A FAILURE — see the sibling above.
-      if (!fe) return false;
-      if (fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
-      const most = Math.max(0, ...fe.instruments);
+      if (!fl) return false;
+      if (fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      const mine = fl.lines.filter((l) => l.parent === FUND_INSTRUMENTS.key);
+      const most = Math.max(0, ...mine.map((l) => l.instruments));
       if (most !== FUND_INSTRUMENTS.maxInFund) return false;
-      // ...and the expansion drew that many lines, for exactly one fund.
+      // ...and the fund line opened into that many lines, for exactly one fund.
       const byFund = new Map();
-      for (const l of fe.lines) byFund.set(l.fund, (byFund.get(l.fund) ?? 0) + 1);
+      for (const l of fl.instrumentLines) byFund.set(l.fund, (byFund.get(l.fund) ?? 0) + 1);
       const drawn = Math.max(0, ...byFund.values());
       return byFund.size === 1 && drawn === FUND_INSTRUMENTS.maxInFund;
     }],
     /**
      * 4. AND THE INSTRUMENTS ARE NOT ALL SHARES, which is the whole of "not just
-     * stocks". A line's class and its rating are two DIFFERENT facts the AMC
-     * files in one column — a sector on a share, a credit rating on a bond — so
-     * neither may be printed under the other's heading, and a debt line must
-     * carry a class that says so.
+     * stocks". A debt line must carry a class that says so, and the fund lines
+     * must say what the ISSUER is held as, so a reader who never opens the
+     * breakdown still knows it is not an equity holding.
      */
     ["...and the breakdown carries a non-equity instrument, named as one", (t, ctx) => {
-      const fe = ctx?.fundExposure;
+      const fl = ctx?.fundLines;
       if (!FUND_INSTRUMENTS) return { notChecked: "no fund in this store holds one issuer through several instruments" };
-      // A MISSING PANEL IS A FAILURE — see the sibling above.
-      if (!fe) return false;
-      if (fe.state !== "ok") return { notChecked: "the look-through did not answer on this run" };
+      if (!fl) return false;
+      if (fl.status !== "ok") return { notChecked: "the look-through did not answer on this run" };
       if (!FUND_INSTRUMENTS.classes.some((c) => c !== "Equity")) {
         return { notChecked: "every filing of the walked issuer is equity on this store" };
       }
-      if (!fe.lines.length) return false;
-      // The class cell is the second column of an instrument line.
-      const classes = fe.lines.map((l) => (l.cells?.[1] ?? ""));
-      return classes.some((c) => /debt/i.test(c))
-        // ...and the lead sentence says what the ISSUER is held as, so a reader
-        // who never opens the breakdown still knows it is not an equity holding.
-        && FUND_INSTRUMENTS.classes.every((c) => new RegExp(`\\b${c}\\b`, "i").test(fe.text));
+      if (!fl.instrumentLines.length) return false;
+      const mine = fl.lines.filter((l) => l.parent === FUND_INSTRUMENTS.key);
+      const said = new Set(mine.flatMap((l) => l.classes));
+      return fl.instrumentLines.some((l) => /debt/i.test(l.cls))
+        && FUND_INSTRUMENTS.classes.every((c) => said.has(c));
     }],
   ],
   "monitor-security-loading": [
     ["the look-through's loading line is gone",
       (t) => !/Checking which of your funds disclose this name/i.test(t)],
-    ["...and a store that has not answered draws no box at all, never the none-branch",
+    ["...and a store that has not answered draws no fund line, never the none-branch",
       (t, ctx) => {
-        const fe = ctx?.fundExposure;
-        if (fe) return false;                      // any box here came from an unanswered store
-        return !/discloses this name/i.test(t) && !/Held inside your funds/i.test(t);
+        const fl = ctx?.fundLines;
+        if (!fl) return { notChecked: "the opened rows were not captured on this run" };
+        // Any fund line here came from an unanswered store — and so would a
+        // "none of your funds" claim, which is about the holding.
+        return fl.status === "loading" && fl.lines.length === 0 && fl.boxes === 0
+          && !/discloses this (name|issuer)/i.test(t) && !/Held inside your funds/i.test(t);
       }],
   ],
   /**
@@ -15177,18 +15190,22 @@ const INVARIANTS = {
       const kept = (ctx?.titles ?? []).some((x) => /adds to (?:[\d.]+% and not to )?100%/i.test(x));
       return gone && kept;
     }],
-    ["the coverage paragraph is a one-line fold, not seven lines of prose", (t, ctx) => {
-      const cov = ctx?.stockCoverage?.fold;
-      // AN ABSENT FOLD IS THE DEFECT, NOT A REASON TO ABSTAIN. It renders
-      // unconditionally on this axis, so nothing but its deletion produces
-      // this state — and its deletion is exactly the regression to catch.
+    /**
+     * THE COVERAGE FOLD IS GONE, AND WHAT IT SAID IS ON THE FOOTER.
+     * *"no one is reading these kind of notes that you have put in across
+     * tables."* The fold's summary stated the share of the book this table
+     * covers, and its paragraph the partition; the Weight footer prints the
+     * first on the face of the table and the Total exposure footer's hover
+     * carries the second — which the checks below hold to the book figure by
+     * figure. This one asserts the fold is gone AND that the footer states the
+     * coverage, because neither implies the other.
+     */
+    ["the coverage fold is gone, and the footer states what the table covers", (t, ctx) => {
       if (!ctx?.stockCoverage) return { notChecked: "the coverage block was not captured on this run" };
-      if (!cov) return false;
-      // The chrome that carried no figure is gone …
-      return !/One row per company, ranked by total exposure/i.test(cov)
-        && !/A FUND IS NOT A STOCK/i.test(cov)
-        // … and the summary a reader sees without opening anything still states
-        // the one thing they act on: this table is not all of their money.
+      const cov = ctx.stockCoverage.exposure ?? "";
+      if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
+      return ctx.stockCoverage.fold === null
+        && !/what the rest of it sits in/i.test(t)
         && /covers ₹[\d,.]+\s*(Cr|L|K)? of the ₹[\d,.]+/i.test(cov);
     }],
     /**
@@ -16085,21 +16102,24 @@ const INVARIANTS = {
         && Math.abs(d.overlap.printed - d.overlap.once - d.overlap.gap) <= 1;
     }],
     /**
-     * AND WHERE THE ROW AND ITS LINES DIFFER, THE LEAD SAYS SO — not only the
-     * Counted once row under them. The walk opens the book's own overlap row,
-     * where the head of the sentence prints the row's figure and the route split
-     * in the SAME sentence adds to twice it; a reader stops at the first
-     * sentence, and two figures for one holding a clause apart is the
-     * contradiction this book's own footer rule names.
+     * NO SENTENCE LEADS THE LINES, AND THE OVERLAP IS NAMED WHERE IT IS
+     * SUBTRACTED. The lead used to restate the route split and, on a holding two
+     * accounts both report, name the overlap in words; the family asked for the
+     * notes inside the table to go. The Counted once row carries both halves of
+     * that claim — it NAMES a holding reported under two accounts and takes the
+     * difference out under Market value — so the claim is struck there, on the
+     * book's own overlap row, and the lead is asserted gone.
      */
-    ["an overlap is named in the lead, not only in the Counted once row", (t, ctx) => {
+    ["no lead sentence restates the lines, and an overlap is named on its Counted once row", (t, ctx) => {
       const d = ctx?.axisDrill;
       if (!d?.lines.length) return { notChecked: "no clubbed row was opened on this run" };
+      if (d.lead) return false;
       if (!d.overlap) {
         return AXIS_VENUE_BOOK?.overlapKey && d.key === AXIS_VENUE_BOOK.overlapKey
-          ? false : { notChecked: "the row opened on this run carries no overlap" };
+          ? false : true;
       }
-      return /as the statements print it, of which .* is the same holding reported twice/i.test(d.lead);
+      return /Counted once/i.test(d.overlap.cells?.[COL.name] ?? "")
+        && /reported under (two|\d+) accounts/i.test(d.overlap.cells?.[COL.name] ?? "");
     }],
     /**
      * ...AND EACH LINE'S SHARE OF THE HOLDING ADDS TO 100, struck on the share
@@ -17951,7 +17971,7 @@ for (const theme of THEMES) {
           // The stalled walk must NOT wait for a settled box — that is the state
           // it exists to never reach.
           if (name === "monitor-security-drill") {
-            await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
+            await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
           }
           await page.waitForTimeout(name === "monitor-security-loading" ? 1200 : 500);
         }
@@ -17979,23 +17999,29 @@ for (const theme of THEMES) {
         await page.waitForTimeout(400);
         const row = page.locator(`tr[data-security-key="${FUND_INSTRUMENTS.key}"] button`).first();
         if (await row.count()) {
+          await page.waitForSelector('[data-lookthrough="ok"], [data-lookthrough="unreachable"]', { timeout: 20000 }).catch(() => {});
           await row.click();
-          await page.waitForSelector('[data-fund-exposure="ok"], [data-fund-exposure="none"], [data-fund-exposure="unreachable"]', { timeout: 20000 }).catch(() => {});
           await page.waitForTimeout(500);
         }
-        // AND THE FUND ROW WITH THE MOST INSTRUMENTS, chosen from the DOM rather
+        // AND THE FUND LINE WITH THE MOST INSTRUMENTS, chosen from the DOM rather
         // than by name: a walk that expanded the first fund line would be
-        // satisfied by a one-instrument row that has nothing to break out — the
+        // satisfied by a one-instrument line that has nothing to break out — the
         // same blindness `data-days` already exists for on the transactions
-        // rollup, and the reason that trap is worth repeating here.
-        const toggles = page.locator("[data-fund-instruments-toggle]");
-        const n = await toggles.count();
-        let best = -1, bestN = -1;
-        for (let i = 0; i < n; i++) {
-          const c = Number(await toggles.nth(i).innerText().then((x) => x.trim().split(/\s/)[0])) || 0;
-          if (c > bestN) { bestN = c; best = i; }
+        // rollup, and the reason that trap is worth repeating here. The count
+        // is the line's own handle, never its prose.
+        const bestKey = await page.evaluate(() => {
+          let best = null, bestN = -1;
+          for (const tr of document.querySelectorAll('tr[data-tree-child="fund"]')) {
+            const n = Number(tr.getAttribute("data-fund-line-instruments")) || 0;
+            const toggle = tr.querySelector("[data-child-toggle]");
+            if (toggle && n > bestN) { bestN = n; best = toggle.getAttribute("data-child-toggle"); }
+          }
+          return best;
+        });
+        if (bestKey) {
+          await page.locator(`[data-child-toggle="${bestKey.replace(/"/g, '\\"')}"]`).first().click();
+          await page.waitForTimeout(500);
         }
-        if (best >= 0) { await toggles.nth(best).click(); await page.waitForTimeout(500); }
       }
       /**
        * THE CAGR COLUMN'S OWN SORT. Clicked by the column's LABEL inside the
@@ -19880,30 +19906,49 @@ for (const theme of THEMES) {
         return out;
       });
       /**
-       * THE FUND LOOK-THROUGH PANEL, off its own attributes. Its three states are
-       * distinct on purpose — loading, a store that did not answer, and a store
-       * that answered with nothing are three different facts, and only the last
-       * is a statement about the holding.
+       * THE FUND LOOK-THROUGH, AS ROWS OF THE TABLE — off their own handles.
+       *
+       * It used to be a card inside the opened row, with three states worded in
+       * prose; it is lines of the holdings table now, and the store's state is
+       * the table's own `data-lookthrough`. Each fund line is attached to the
+       * parent row it opened from, walked back over the tree's own children, so
+       * a line can never be credited to the wrong company. `boxes` counts any
+       * card that survived and `fullWidth` any opened row that is one cell across
+       * the table — a sentence where the lines should be, whatever it says.
        */
-      const fundExposure = FAST ? null : await page.evaluate(() => {
-        const box = document.querySelector("[data-fund-exposure]");
-        if (!box) return null;
+      const fundLines = FAST ? null : await page.evaluate(() => {
+        const tbl = document.querySelector("[data-lookthrough]");
+        if (!tbl) return null;
+        const parentOf = (tr) => {
+          let p = tr.previousElementSibling;
+          while (p && p.hasAttribute("data-tree-child")) p = p.previousElementSibling;
+          return p?.getAttribute("data-security-key") ?? null;
+        };
+        const cells = (tr) => [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim());
+        const num = (tr, a) => Number(tr.getAttribute(a));
         return {
-          state: box.getAttribute("data-fund-exposure"),
-          total: (document.querySelector("[data-fund-exposure-total]")?.textContent ?? "").trim(),
-          rows: [...document.querySelectorAll("[data-fund-exposure-row]")].length,
-          via: [...document.querySelectorAll("[data-fund-exposure-row]")].map((t) => t.getAttribute("data-fund-exposure-row")),
-          // ONE ROW PER FUND PER ISSUER, and how many instruments each stands
-          // for. A build that kept the old one-line-per-fund rule reports 1 on
-          // every row while every figure beside it is a twelfth of the truth.
-          instruments: [...document.querySelectorAll("[data-fund-exposure-row]")]
-            .map((t) => Number(t.getAttribute("data-fund-instruments")) || 0),
-          // The lines an expanded fund row broke out, keyed on that fund.
-          lines: [...document.querySelectorAll("[data-fund-instrument]")].map((tr) => ({
-            fund: tr.getAttribute("data-fund-instrument"),
-            cells: [...tr.cells].map((td) => (td.innerText ?? "").replace(/\s+/g, " ").trim()),
+          status: tbl.getAttribute("data-lookthrough"),
+          lines: [...tbl.querySelectorAll('tr[data-tree-child="fund"]')].map((tr) => ({
+            parent: parentOf(tr),
+            fund: tr.getAttribute("data-fund-line"),
+            via: tr.getAttribute("data-fund-line-via"),
+            value: num(tr, "data-fund-line-value"),
+            held: num(tr, "data-fund-line-held"),
+            pct: num(tr, "data-fund-line-pct"),
+            instruments: num(tr, "data-fund-line-instruments") || 0,
+            classes: (tr.getAttribute("data-fund-line-classes") || "").split(",").filter(Boolean),
+            title: tr.querySelector('span[title^="DERIVED"]')?.getAttribute("title") ?? null,
+            cells: cells(tr),
           })),
-          text: (box.innerText ?? "").replace(/\s+/g, " ").trim(),
+          instrumentLines: [...tbl.querySelectorAll('tr[data-tree-child="instrument"]')].map((tr) => ({
+            fund: tr.getAttribute("data-fund-instrument"),
+            cls: tr.getAttribute("data-fund-instrument-class") ?? "",
+            value: num(tr, "data-fund-instrument-value"),
+            cells: cells(tr),
+          })),
+          boxes: document.querySelectorAll("[data-fund-exposure]").length,
+          fullWidth: [...tbl.querySelectorAll("tbody tr[data-tree-child]")]
+            .filter((tr) => [...tr.cells].some((td) => td.colSpan > 1)).length,
         };
       });
       // THE STOCK AXIS'S COVERAGE STATEMENT, read off its own handle rather than
@@ -21364,7 +21409,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
