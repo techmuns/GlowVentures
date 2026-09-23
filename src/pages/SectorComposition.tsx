@@ -12,6 +12,7 @@ import {
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { useStockExposure } from "@/lib/useStockExposure";
+import { fifoTotals } from "@/lib/fifo";
 import { companyExposure, type CompanyExposure } from "@/lib/lookthrough";
 import { UNCLASSIFIED } from "@/lib/sectors";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
@@ -106,6 +107,11 @@ type SectorRow = {
   key: string; mv: number; count: number; weight: number;
   measured: number; derived: number;
   cost: number | null; pnl: number | null; returnPct: number | null;
+  /**
+   * FIFO's other half: what the units already sold realised, and the capital
+   * behind the return (cost held + cost of units sold). Null on Consolidated.
+   */
+  realised: number | null; deployed: number | null;
   /** Holdings behind the sector that report a cost, and how many there are. */
   costed: number; holdings: number;
   /**
@@ -156,7 +162,7 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       if (!withCost) {
         return {
           key, mv: v.mv, count: v.entries.length, weight: tot > 0 ? v.mv / tot : 0,
-          measured, derived, cost: null, pnl: null, returnPct: null,
+          measured, derived, cost: null, pnl: null, returnPct: null, realised: null, deployed: null,
           costed: 0, holdings: positions.length, uncostedMV: null, returnWhy: CONSOLIDATED_RETURN_WHY,
           top: byValue[0]?.name ?? null,
         };
@@ -166,11 +172,15 @@ function rollSectors(entries: CompanyExposure[], valueOf: (e: CompanyExposure) =
       const pnl = sumOrNull(costedRows.map((x) => x.unrealizedPnL));
       const uncostedMV = sum(positions.filter((x) => !costedRows.includes(x)).map((x) => x.marketValue));
       const covered = costCoversSet(v.mv, uncostedMV);
-      const returnPct = covered && cost !== null && cost > 0 && pnl !== null ? (pnl / cost) * 100 : null;
+      // FIFO: the unrealised gain on what is held AND the realised gain on units
+      // already sold, over every rupee that bought a unit — never the survivors
+      // alone. `fifoTotals` is the one place a set becomes a return.
+      const fifo = fifoTotals(positions);
+      const returnPct = covered && fifo.returnPct !== null ? fifo.returnPct : null;
       const topHolding = [...positions].sort((a, b) => b.marketValue - a.marketValue)[0]?.security ?? null;
       return {
         key, mv: v.mv, count: positions.length, weight: tot > 0 ? v.mv / tot : 0,
-        measured, derived, cost, pnl, returnPct,
+        measured, derived, cost, pnl, returnPct, realised: fifo.realised, deployed: fifo.deployed,
         costed: costedRows.length, holdings: positions.length, uncostedMV,
         returnWhy: returnPct !== null ? null
           : costedRows.length === 0
@@ -797,7 +807,7 @@ export function SectorComposition() {
                             {s.returnPct === null
                               ? <AbsentCell reason={s.returnWhy ?? CONSOLIDATED_RETURN_WHY} />
                               : liveBySector[s.key] ? fmtPct(s.returnPct, { sign: true })
-                              : <Auditable formula={{ title: "Sector return", excel: "= Σ P&L ÷ Σ Cost × 100", plain: "Every holding in this sector reports a cost, so this is their combined gain or loss against their combined cost.", worked: `= ${money(s.pnl)} ÷ ${money(s.cost)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
+                              : <Auditable formula={{ title: "Sector return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ (cost held + cost of units sold) × 100", plain: "Every holding in this sector reports a cost. This is everything they have produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of them.", worked: `= (${money(s.pnl)} + ${money(s.realised ?? 0)}) ÷ ${money(s.deployed)} × 100 = ${fmtPct(s.returnPct, { sign: true })}` }}>{fmtPct(s.returnPct, { sign: true })}</Auditable>}
                           </td>
                           <td className="px-3 py-2 text-left text-[12px] text-slate-400"><span className="block max-w-[170px] truncate" title={topHolding[s.key]}>{topHolding[s.key]}</span></td>
                         </Tr>
@@ -881,7 +891,7 @@ export function SectorComposition() {
                                               {h.costUnavailable || h.costBasis == null
                                                 ? <AbsentCell reason="this holding's statement reports no cost — a depository holds the shares, it did not buy them" />
                                                 : h.live ? fmtPct(h.returnPct, { sign: true })
-                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money)}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
+                                                : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}
                                             </td>
                                           </Tr>
                                         ))}
