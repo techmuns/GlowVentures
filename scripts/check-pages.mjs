@@ -1762,6 +1762,90 @@ const BIGGEST_TRANCHE = (() => {
 })();
 
 /**
+ * ── A COST CARRIED THROUGH A FUND'S CLASS SWITCH, READ OFF THE BOOK ─────────
+ *
+ * *"The user does not believe this data."* Buoyant moved both family folios
+ * from Class A1 into Class A4 and restated the units' cost at the switch-day
+ * NAV, so its statements print ₹72.5 Cr for what the family paid ₹70.9 Cr for.
+ * The book carries what was PAID through the switch and keeps the statement's
+ * figure beside it as `printedCostBasis`.
+ *
+ * Every expectation the pages are held to comes from here — RE-EXPRESSED off
+ * `glowData.ts` rather than imported from `src/lib/tranches.ts`, because a
+ * check that calls the helper it is checking agrees with it by construction.
+ * One entry per carried securityKey; `premiseClubbed` names any of them the
+ * Monitor would club into a multi-class row, because then its row sums keys this
+ * shape does not, and a check that silently compared the wrong sets would read
+ * as a pass.
+ */
+const CARRIED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    const m = /export const BOOK_POSITION_TRANCHES[^=]*=\s*(\{[\s\S]*?\n\});/.exec(src);
+    if (!Array.isArray(pos) || !m) return null;
+    const idx = JSON.parse(m[1]);
+    const keys = [...new Set(pos.filter((p) => p.costBasisSource === "carried-through-switch").map((p) => p.securityKey))];
+    const rows = keys.map((key) => {
+      const ps = pos.filter((p) => p.securityKey === key);
+      const moves = [];
+      let plain = 0;
+      for (const p of ps) {
+        for (const mv of idx[`${p.accountId}|${p.securityKey}`]?.moves ?? []) {
+          if (mv.carriedFrom) {
+            moves.push({ accountId: p.accountId, date: mv.date, on: mv.carriedFrom.switchedOn,
+              boughtNav: (mv.invested / mv.carriedFrom.units).toFixed(4) });
+          } else plain++;
+        }
+      }
+      return {
+        key,
+        // The ROW's figures, over every position under the key — the Monitor
+        // consolidates by security, and none of these is deduped (asserted).
+        paid: ps.reduce((a, p) => a + (p.costBasis ?? 0), 0),
+        printed: ps.reduce((a, p) => a + (p.printedCostBasis ?? p.costBasis ?? 0), 0),
+        deduped: ps.some((p) => p.dedupeGroup),
+        positions: ps.map((p) => ({ accountId: p.accountId, paid: p.costBasis, printed: p.printedCostBasis ?? null,
+          carried: p.costBasisSource === "carried-through-switch" })),
+        moves, plain,
+      };
+    });
+    return { keys: new Set(keys), rows };
+  } catch { return null; }
+})();
+
+/**
+ * THE HISTORY THAT CARRIES TWO PAYMENTS AT ONE ENTRY NAV — the subject of the
+ * "same NAV, same return" claim, which used to ride on whichever history was
+ * largest. It was Sanshi Class E's (two members at 109.4462 on one day) for as
+ * long as that was the largest; Buoyant's carried history is larger now and has
+ * no such pair, so the claim follows its own subject rather than a size.
+ *
+ * Keys carrying a `dedupeGroup` are skipped: one holding reported by two
+ * accounts has its tranches printed twice, and a "pair" made of a payment and
+ * its own duplicate is not two contributions.
+ */
+const SHARED_NAV_TRANCHE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    const m = /export const BOOK_POSITION_TRANCHES[^=]*=\s*(\{[\s\S]*?\n\});/.exec(src);
+    if (!Array.isArray(pos) || !m) return null;
+    const idx = JSON.parse(m[1]);
+    const byKey = new Map();
+    for (const v of Object.values(idx)) (byKey.get(v.securityKey) ?? byKey.set(v.securityKey, []).get(v.securityKey)).push(v);
+    for (const [key, entries] of byKey) {
+      if (pos.some((p) => p.securityKey === key && p.dedupeGroup)) continue;
+      const navs = entries.flatMap((e) => e.moves.filter((mv) => mv.units > 0 && mv.invested > 0)
+        .map((mv) => (mv.invested / mv.units).toFixed(4)));
+      const dup = navs.find((n, i) => navs.indexOf(n) !== i);
+      if (dup) return { key, nav: Number(dup) };
+    }
+    return { key: null, nav: null };
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY CONTRIBUTION ROWS THE WHOLE TABLE SHOULD OFFER, on the book's own
  * DEDUPED basis — the consolidated view counts each `dedupeGroup` once.
  *
@@ -2821,6 +2905,12 @@ const ROUTES = [
   // claim is that those tranches account for the row — which is only testable
   // once one is expanded.
   ["monitor-tranche", "/monitor"],
+  // ...AND THE HISTORY CARRIED THROUGH A FUND'S CLASS SWITCH — Buoyant's, whose
+  // earlier contributions were bought as Class A1 and are held as A4 — and the
+  // one carrying two payments at one entry NAV. Each opens the row the BOOK
+  // names (`CARRIED_BOOK`, `SHARED_NAV_TRANCHE`), never a row chosen by size.
+  ["monitor-tranche-switch", "/monitor"],
+  ["monitor-tranche-shared", "/monitor"],
   /**
    * ...AND THE HOLDINGS TABLE AFTER A READER HAS ARRANGED IT.
    *
@@ -3238,6 +3328,10 @@ const ROUTES = [
   // address that resolves nothing lands on a page with no table, which would
   // satisfy every generic check while asserting nothing, so the route's own
   // invariants FAIL rather than abstain when the book carries no such holding.
+  // THE COMPANY PAGE OF A HOLDING WHOSE COST WAS CARRIED THROUGH A CLASS SWITCH:
+  // the page a reader opens with the fund's own statement in hand, which prints
+  // a different cost. Derived (`CARRIED_BOOK`), so the next drop picks its own.
+  ["stock-carried", () => (CARRIED_BOOK?.rows[0] ? `/stock/${encodeURIComponent(CARRIED_BOOK.rows[0].key)}` : "/stock/no-cost-carried-through-a-switch-in-the-book")],
   ["stock-cmp-split", () => (CMP_BOOK.splitKey ? `/stock/${encodeURIComponent(CMP_BOOK.splitKey)}` : "/stock/no-holding-marked-two-ways-in-the-book")],
   // ...and one marked at a TOTAL VALUE, where there is no per-unit mark to show
   // at all. A different absence from the one above and it must not borrow its
@@ -9023,24 +9117,35 @@ const INVARIANTS = {
       if (!p) return false;
       // WITHIN ONE UNIT CLASS. Across two, each marked at its own NAV, the
       // claim is simply false — which is why the panel sections by class.
+      //
+      // AND ON THE HOLDING-PERIOD RETURN, NOT THE DISPLAYED ONE. This was struck
+      // on the printed figure, which is a CAGR on rows held a year or more and
+      // an HPR on the rest — and a CAGR shrinks with the years held, so an old
+      // cheap tranche can print below a young dear one while earning more.
+      // Sanshi's dates hid that; Buoyant's four-year history does not (a
+      // ₹117.30 entry prints CAGR 9.9% beside a ₹122.64 one at 10.9%). The
+      // claim was always about what the money EARNED, which is the HPR; the
+      // check below ties that attribute back to the printed HPR, so it cannot
+      // become a figure the page never shows.
       return p.sections.every((x) => {
-        if (x.navs.some((n) => n === null) || x.returns.some((r) => r === null)) return false;
-        const pairs = x.navs.map((n, i) => [n, x.returns[i]]).sort((a, b) => a[0] - b[0]);
+        if (x.navs.some((n) => n === null) || x.hprs.some((r) => r === null || !Number.isFinite(r))) return false;
+        const pairs = x.navs.map((n, i) => [n, x.hprs[i]]).sort((a, b) => a[0] - b[0]);
         return pairs.every(([, r], i) => i === 0 || r <= pairs[i - 1][1] + 1e-9);
       });
     }],
-    ["...and two contributions at the SAME entry NAV show the same return",
+    ["...and every row tagged HPR prints that same holding-period return",
       (t, ctx) => {
         const p = ctx.tranchePanel;
-        if (!p || p.navs.some((n) => n === null)) return false;
-        const by = new Map();
-        p.navs.forEach((n, i) => { (by.get(n) ?? by.set(n, []).get(n)).push(p.returns[i]); });
-        // Must actually exercise it: this book's Sanshi row has two members
-        // contributing at 109.4462 on one day, so a run with no repeated NAV
-        // means the panel changed under the check rather than that it passed.
-        const shared = [...by.values()].filter((v) => v.length > 1);
-        return shared.length > 0 && shared.every((v) => v.every((r) => Math.abs(r - v[0]) < 0.02));
+        if (!p) return false;
+        return p.sections.every((x) => x.tags.every((g, i) => g !== "HPR"
+          || (x.returns[i] !== null && x.hprs[i] !== null && Math.abs(x.returns[i] - x.hprs[i]) <= 0.006)))
+          && p.sections.some((x) => x.tags.includes("HPR"));
       }],
+    // "...and two contributions at the SAME entry NAV show the same return"
+    // MOVED to `monitor-tranche-shared`, which opens the history the book says
+    // carries such a pair. It rode here while the largest history was Sanshi's
+    // and had to fail the moment it was not — a claim about a pair belongs on
+    // the row that has one.
     ["and the entry NAVs really do differ across the tranches",
       (t, ctx) => ctx.tranchePanel !== null && new Set(ctx.tranchePanel.navs).size > 1],
 
@@ -9137,6 +9242,140 @@ const INVARIANTS = {
       (t) => !/rows open their Invested/.test(t)],
   ],
 
+  /**
+   * ── A HISTORY CARRIED THROUGH A FUND'S CLASS SWITCH ─────────────────────
+   *
+   * Buoyant's earlier contributions were bought as Class A1 and are held as
+   * A4, so their units and entry NAV are restated in A4 at the fund's own
+   * switch ratio. What each row must say is which rows those are, when they
+   * moved and the NAV they were BOUGHT at — the one the statement prints —
+   * and the panel's footer must add to what was PAID, never the statement's
+   * restated cost. Every expectation is `CARRIED_BOOK`'s.
+   */
+  "monitor-tranche-switch": [
+    ["the book carries a holding whose cost was carried through a class switch",
+      () => !!CARRIED_BOOK && CARRIED_BOOK.rows.length > 0],
+    // THE PREMISE THIS SHAPE STANDS ON, stated rather than assumed: a carried
+    // key clubbed into a multi-class row, or reported twice, sums positions the
+    // expectations below do not — so it fails here, by name, instead of making
+    // every check below compare the wrong sets.
+    ["...on a row that is neither clubbed with other classes nor reported twice",
+      () => !!CARRIED_BOOK && CARRIED_BOOK.rows.every((r) => !r.deduped && !FUND_CLASS_BOOK?.clubbedKeys.has(r.key))],
+    ["its contribution history opens",
+      (t, ctx) => !!ctx.tranchePanel && !!CARRIED_BOOK?.keys.has(ctx.tranchePanel.key)],
+    ["every contribution the book carried through a switch is marked, with the day it moved",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows.find((r) => r.key === ctx.tranchePanel?.key);
+        if (!row) return false;
+        const marked = ctx.tranchePanel.sections.flatMap((x) => x.switched).filter((w) => w.on);
+        const want = row.moves.map((m) => m.on).sort();
+        const got = marked.map((w) => w.on).sort();
+        return want.length > 0 && JSON.stringify(got) === JSON.stringify(want);
+      }],
+    ["...and nothing bought in the class it is held in carries the mark",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows.find((r) => r.key === ctx.tranchePanel?.key);
+        if (!row) return false;
+        const all = ctx.tranchePanel.sections.flatMap((x) => x.switched);
+        return all.filter((w) => !w.on).length === row.plain && row.plain > 0;
+      }],
+    // THE NAV IT WAS BOUGHT AT, which is the figure the fund's own statement
+    // prints — `carriedCost.test.ts` finds every one of them on the archived
+    // pages. Compared here as the 4-decimal strings the book derives, so a row
+    // that showed the restated A4 figure in its place fails.
+    ["...and each names the NAV it was bought at",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows.find((r) => r.key === ctx.tranchePanel?.key);
+        if (!row) return false;
+        const got = ctx.tranchePanel.sections.flatMap((x) => x.switched).filter((w) => w.on).map((w) => w.nav).sort();
+        return JSON.stringify(got) === JSON.stringify(row.moves.map((m) => m.boughtNav).sort());
+      }],
+    ["...and its hover says what it was bought as and what it is shown as",
+      (t, ctx) => {
+        const marked = (ctx.tranchePanel?.sections ?? []).flatMap((x) => x.switched).filter((w) => w.on);
+        // The NAV is parsed back out of the hover and compared at the two
+        // decimals the page prints it to, never matched as a formatted string:
+        // `fmtFromBase` drops a trailing zero (₹150.7, not ₹150.70), and a check
+        // that re-implemented the formatter would agree with it by construction.
+        const prices = (x) => [...String(x).matchAll(/₹\s*(\d[\d,]*(?:\.\d+)?)(?!\s*(?:Cr|L)\b)/g)].map((m) => cr(m[1]));
+        return marked.length > 0 && marked.every((w) => !!w.title
+          && /allotment NAV the statement prints/.test(w.title) && /priced in the class held today/.test(w.title)
+          && prices(w.title).some((v) => Math.abs(v - Number(w.nav)) <= 0.005 + 1e-9));
+      }],
+    ["the panel says what a switched row is", (t) => /marked switched/i.test(t) && /switch ratio/i.test(t)],
+    // THE FOOTER ADDS TO WHAT WAS PAID. Compared at the one decimal the footer
+    // prints, and asserted to DIFFER from the statement's restated figure at that
+    // precision — equal, the check could not tell the two apart.
+    ["the combined Invested is what was paid, not the statement's restated cost",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows.find((r) => r.key === ctx.tranchePanel?.key);
+        const m = /₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L)?/.exec(ctx.tranchePanel?.investedFooter ?? "");
+        if (!row || !m) return false;
+        const shown = crU(m[1], m[2]);
+        const paid = row.paid / 1e7, printed = row.printed / 1e7;
+        return Math.abs(shown - paid) <= 0.05 && Math.abs(shown - printed) > 0.05;
+      }],
+  ],
+  /**
+   * ...AND THE HISTORY WITH TWO PAYMENTS AT ONE ENTRY NAV, which is the only
+   * place the "same NAV, same return" claim has a subject. Moved here from
+   * `monitor-tranche` when the largest history stopped being the one with a pair.
+   */
+  "monitor-tranche-shared": [
+    ["the book carries two contributions at one entry NAV",
+      () => !!SHARED_NAV_TRANCHE?.key],
+    ["the history that carries them opens",
+      (t, ctx) => {
+        const want = SHARED_NAV_TRANCHE?.key;
+        if (!want || !ctx.tranchePanel) return false;
+        const keys = FUND_CLASS_BOOK?.multi.find((f) => f.keys.includes(want))?.keys ?? [want];
+        return keys.includes(ctx.tranchePanel.key);
+      }],
+    ["two contributions at the SAME entry NAV show the same return",
+      (t, ctx) => {
+        const p = ctx.tranchePanel;
+        if (!p) return false;
+        // Over every section: the pair lives in one class, and that class need
+        // not be the panel's largest.
+        const shared = [];
+        for (const x of p.sections) {
+          if (x.navs.some((n) => n === null)) return false;
+          const by = new Map();
+          x.navs.forEach((n, i) => { (by.get(n) ?? by.set(n, []).get(n)).push(x.returns[i]); });
+          shared.push(...[...by.values()].filter((v) => v.length > 1));
+        }
+        return shared.length > 0 && shared.every((v) => v.every((r) => r !== null && Math.abs(r - v[0]) < 0.02));
+      }],
+  ],
+  /**
+   * ── THE COMPANY PAGE OF A COST CARRIED THROUGH A SWITCH ─────────────────
+   *
+   * The page a reader opens with the fund's statement in hand, which prints a
+   * different cost. Every account row's Invested must be what that account
+   * PAID and must name the statement's own figure, and the Avg cost tile must
+   * say its basis — each against `CARRIED_BOOK`.
+   */
+  "stock-carried": [
+    ...stockLayoutChecks(),
+    ["the book carries a holding whose cost was carried through a class switch",
+      () => !!CARRIED_BOOK && CARRIED_BOOK.rows.length > 0],
+    ["every carried account row shows what that account paid, and names the statement's figure",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows[0];
+        const cells = ctx.costCarried?.cells ?? [];
+        const want = (row?.positions ?? []).filter((p) => p.carried);
+        return want.length > 0 && cells.length === want.length && want.every((w) => cells.some((c) =>
+          Math.abs(c.paid - w.paid) <= 1 && c.printed !== null && Math.abs(c.printed - w.printed) <= 1
+          && /PAID IN/.test(c.title ?? "") && /booked each move as a sale and a fresh purchase/.test(c.title ?? "")));
+      }],
+    ["the Avg cost tile says its cost is what was paid, across the switch",
+      (t, ctx) => {
+        const row = CARRIED_BOOK?.rows[0];
+        const tile = ctx.costCarried?.tile;
+        return !!row && !!tile && Math.abs(tile.paid - row.paid) <= 1
+          && /as paid, across a class switch/.test(tile.text) && /PAID IN/.test(tile.title ?? "");
+      }],
+  ],
   "monitor-txn-in": [
     ...txnMergedCore(),
   /**
@@ -12823,6 +13062,37 @@ const INVARIANTS = {
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
 
   monitor: [
+    /**
+     * ── AN INVESTED FIGURE CARRIED THROUGH A CLASS SWITCH SAYS SO ────────────
+     *
+     * *"The user does not believe this data."* Buoyant's row read ₹72.5 Cr, the
+     * cost its statements RESTATE at each class switch's NAV; the family paid
+     * ₹70.9 Cr. The row must now show what was paid AND name the statement's
+     * figure in the cell's own hover — the reader holding that statement sees
+     * ₹72.5 Cr on it, and a page that simply disagreed with it in silence is
+     * the thing they did not believe. Every figure is `CARRIED_BOOK`'s; the
+     * rendered one is compared at the one decimal it prints, and must DIFFER
+     * from the restated figure at that precision or the check could not tell
+     * the two apart.
+     */
+    ["a cost carried through a class switch shows what was PAID, and names the statement's figure",
+      (t, ctx) => {
+        if (!CARRIED_BOOK) return false;
+        const cells = ctx.costCarried?.cells ?? [];
+        if (!CARRIED_BOOK.rows.length) return cells.length === 0;
+        return cells.length === CARRIED_BOOK.rows.length && CARRIED_BOOK.rows.every((row) => cells.some((c) => {
+          const m = /₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L)?/.exec(c.text);
+          if (!m) return false;
+          const shown = crU(m[1], m[2]);
+          // The statement's figure is parsed back out of the hover, at the one
+          // decimal a compact crore prints to, rather than matched as a string
+          // the checker would have to format the way the page does.
+          const named = [...String(c.title ?? "").matchAll(/₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L)\b/g)].map((x) => crU(x[1], x[2]));
+          return Math.abs(c.paid - row.paid) <= 1 && c.printed !== null && Math.abs(c.printed - row.printed) <= 1
+            && Math.abs(shown - row.paid / 1e7) <= 0.05 && Math.abs(shown - row.printed / 1e7) > 0.05
+            && /PAID IN/.test(c.title ?? "") && named.some((v) => Math.abs(v - row.printed / 1e7) <= 0.05);
+        }));
+      }],
     /**
      * ── THE SCHEME IS CALLED WHAT THE AMC CALLS IT ───────────────────────────
      *
@@ -16587,15 +16857,36 @@ for (const theme of THEMES) {
       // breakdown cannot be satisfied by a single-tranche row that has nothing
       // to truncate — the same trap `data-days` already exists for on the
       // transactions drill-down.
-      if (name === "monitor-tranche") {
+      //
+      // ...AND THE ROW THE BOOK NAMES, NOT THE FIRST OF A TIE. Buoyant's carried
+      // history and Sanshi's clubbed row both offer ten contributions, and a walk
+      // that took the first maximum in DOM order opened Sanshi while
+      // `BIGGEST_TRANCHE` — keyed per class — named Buoyant: the check comparing
+      // the two failed a page that was right. So each tranche route opens the
+      // row holding the key the BOOK names for it, matched through the clubbed
+      // fund's keys where the row clubs several (its toggle carries whichever
+      // class sorted first). The largest history still falls back to the most
+      // contributions, which is what it opened before the book could name it; the
+      // other two do not, because a row the book names and the page does not
+      // offer is the defect, and opening a different row would hide it.
+      const TRANCHE_WALK = {
+        "monitor-tranche": BIGGEST_TRANCHE?.key ?? null,
+        "monitor-tranche-switch": CARRIED_BOOK?.rows[0]?.key ?? null,
+        "monitor-tranche-shared": SHARED_NAV_TRANCHE?.key ?? null,
+      };
+      if (name in TRANCHE_WALK) {
+        const want = TRANCHE_WALK[name];
+        const rowKeys = new Set(want ? (FUND_CLASS_BOOK?.multi.find((f) => f.keys.includes(want))?.keys ?? [want]) : []);
         const btns = page.locator("[data-tranche-toggle]");
         const n = await btns.count();
-        let best = -1, bestN = -1;
+        let pick = -1, best = -1, bestN = -1;
         for (let i = 0; i < n; i++) {
           const c = Number(await btns.nth(i).getAttribute("data-tranche-rows")) || 0;
+          if (pick < 0 && rowKeys.has(await btns.nth(i).getAttribute("data-tranche-toggle"))) pick = i;
           if (c > bestN) { bestN = c; best = i; }
         }
-        if (best >= 0) { await btns.nth(best).click(); await page.waitForTimeout(700); }
+        const at = pick >= 0 ? pick : name === "monitor-tranche" ? best : -1;
+        if (at >= 0) { await btns.nth(at).click(); await page.waitForTimeout(700); }
       }
       // monitor-cagr / monitor-ytd / monitor-xirr / monitor-returns-multi are
       // reached by the `?ret=` URL (see the route table), not by a click — the
@@ -17790,6 +18081,25 @@ for (const theme of THEMES) {
             const m = /(CAGR|HPR)/.exec(at(tr, "return") ?? "");
             return m ? m[1] : null;
           }),
+          // THE HOLDING-PERIOD RETURN, off the row's own attribute. The claim
+          // "cheaper entry, higher return" is true of THIS figure by construction
+          // (value = units × one NAV) and of the DISPLAYED one only while every
+          // row is on one basis: a CAGR shrinks with the years held, so an old
+          // cheap tranche annualised can print below a young dear one. Sanshi's
+          // dates happened to hide that; Buoyant's do not.
+          hprs: rows.map((tr) => {
+            const v = tr.getAttribute("data-tranche-hpr");
+            return v === null || v === "" ? null : Number(v);
+          }),
+          // A CONTRIBUTION CARRIED THROUGH A CLASS SWITCH, as the row marks it,
+          // and the hover that says what it was bought as.
+          switched: rows.map((tr) => ({
+            on: tr.getAttribute("data-tranche-switched"),
+            nav: tr.getAttribute("data-tranche-bought-nav"),
+            title: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title"))
+              .find((x) => /moved them into/.test(x ?? "")) ?? null,
+          })),
+          investedFooter: foot ? at(foot, "invested") : null,
           entities: spansEntities ? rows.map((tr) => at(tr, "entity")) : [],
           spansEntities,
         };
@@ -17814,6 +18124,27 @@ for (const theme of THEMES) {
           key,
         };
       });
+      /**
+       * EVERY INVESTED FIGURE CARRIED THROUGH A FUND'S CLASS SWITCH, page-wide:
+       * what the cell says was paid, the statement's own figure it names, the
+       * text a reader sees and the hover that explains the two. The hover lives
+       * on the button (or span) INSIDE the cell, so it is read from there — a
+       * `title` is not in `innerText`, which is the trap the cost-cell reasons
+       * already needed `ctx.titles` for.
+       */
+      const costCarried = FAST ? null : await page.evaluate(() => ({
+        cells: [...document.querySelectorAll("[data-cost-carried]")].map((el) => ({
+          paid: Number(el.getAttribute("data-cost-carried")),
+          printed: el.hasAttribute("data-cost-printed") ? Number(el.getAttribute("data-cost-printed")) : null,
+          text: (el.innerText ?? "").trim(),
+          title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+        })),
+        tile: (() => {
+          const el = document.querySelector("[data-stock-cost-carried]");
+          return el ? { paid: Number(el.getAttribute("data-stock-cost-carried")), text: (el.innerText ?? "").trim(),
+            title: el.getAttribute("title") } : null;
+        })(),
+      }));
       /**
        * ── THE PER-CATEGORY TOTALS ROW, READ OFF ITS CELLS ─────────────────────
        *
@@ -19449,7 +19780,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow}); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
