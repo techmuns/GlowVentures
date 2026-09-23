@@ -300,3 +300,21 @@ export function partialValuationNotes(
   }
   return notes;
 }
+
+/**
+ * THE LIVE COPY OF THE ACCOUNT REGISTRY — one definition, read by
+ * `PortfolioContext` and by any suite that builds what a page is handed. An
+ * account some of whose holdings are valued here no longer "values nothing":
+ * its generated `noPositionsReason` is true of the statement basis and false of
+ * this one, so it carries `partialValuation` instead. Every other account is
+ * returned as it is.
+ */
+export function withPartialValuation<A extends { accountId: string }>(
+  accounts: readonly A[],
+  notes: ReadonlyMap<string, string>,
+): A[] {
+  return accounts.map((a) => {
+    const note = notes.get(a.accountId);
+    return note ? { ...a, noPositionsReason: null, partialValuation: note } : a;
+  });
+}

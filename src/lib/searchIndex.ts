@@ -50,7 +50,7 @@ import type { Account, Position } from "./types";
 import { accountIndex, type AccountIndex } from "./accounts";
 import {
   currentHoldings, dedupedPositions, isMandateHeld, mandateLabel, bucketLabel,
-  isRedeemedToNil, negligibleKeys, sum,
+  isRedeemedToNil, negligibleKeys, readerClassOf, sum,
 } from "./analytics";
 import { groupKeyFor, groupLabelFor, GROUP_AXES } from "./groupAxis";
 import { AXIS_SCOPE, drilldownHref } from "./drilldown";
@@ -365,8 +365,13 @@ export function buildSearchIndex(input: {
     const accountsHolding = new Set(raw.map((p) => p.accountId)).size;
     const owners = [...new Set(raw.map((p) => idx.get(p.accountId)?.owner).filter(Boolean))] as string[];
     const bucket = groupKeyFor("category", idx, head);
-    const chip = head.assetClass === "Equity" ? "Stock"
-      : head.assetClass === "Mutual Fund" ? "Mutual fund" : head.assetClass;
+    // THE CLASS A READER IS SHOWN is `readerClassOf`'s, never the wrapper the
+    // statement typed: a liquid or arbitrage fund is Cash on every screen, at
+    // the family's instruction (Stage 10bx), and a chip reading "Mutual fund"
+    // beside a detail line reading "Cash" would name it twice, two ways.
+    const cls = readerClassOf(head);
+    const chip = cls === "Equity" ? "Stock"
+      : cls === "Mutual Fund" ? "Mutual fund" : cls;
     out.push({
       id: `holding:${key}`, kind: "holding", chip,
       label: head.security,
@@ -420,8 +425,13 @@ export function buildSearchIndex(input: {
     out.push({
       id: `account:${a.accountId}`, kind: "account", chip: "Account",
       label: `${a.provider} · ${a.accountNo}`,
+      // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
+      // basis a transaction-only demat values the cash-equivalent funds its
+      // depository reports and nothing else on that statement (Stage 10bx), so
+      // its total must not read as the account's — the words lead, because
+      // this line is truncated to one row.
       detail: `${a.owner} · ${allClosed ? "every holding redeemed — the money is on Transactions"
-        : rows.length ? `${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
+        : rows.length ? `${a.partialValuation ? "partly valued · " : ""}${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
         + (a.asOf ? ` · as of ${a.asOf}` : ""),
       href,
       names: [],

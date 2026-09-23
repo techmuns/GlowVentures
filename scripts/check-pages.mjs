@@ -10838,6 +10838,29 @@ const INVARIANTS = {
       if (!SEARCH || !SEARCH_BOOK?.holding) return notChecked("this book has no holding to type");
       return SEARCH.entered === SEARCH_BOOK.holding.href;
     }],
+    /**
+     * A CHIP BESIDE A RESULT IS A CLASSIFICATION, AND AN ARBITRAGE FUND HAS ONE.
+     *
+     *   "Arbitrage funds need not be classified into any other category except
+     *    for cash."
+     *
+     * The search index is built from the LIVE portfolio, which carries the
+     * arbitrage funds a depository reports on an account with no holding
+     * statement — so they are findable here and nowhere in `BOOK_POSITIONS`.
+     * Every one of them must be reached by the family's own word for them and
+     * chip as Cash, never as the wrapper a statement typed. The funds are
+     * DERIVED (`CASH_INSTRUCTION_BOOK`, off the book and AMFI's own category),
+     * and an empty set is the book's premise failing — a FAILURE, never an
+     * abstention, or the check would pass by asserting over nothing.
+     */
+    ["every arbitrage fund is found by the family's own word and chips as Cash", () => {
+      if (!SEARCH) return false;
+      const arb = CASH_INSTRUCTION_BOOK?.arb ?? [];
+      if (!arb.length) return false;
+      const want = new Set(arb.map((k) => `/stock/${encodeURIComponent(k)}`));
+      const hit = (SEARCH.results.cash?.rows ?? []).filter((r) => r.kind === "holding" && want.has(r.href));
+      return hit.length === want.size && hit.every((r) => r.chip === "Cash");
+    }],
   ],
   chat: [
     ["the panel opens where the search box was",
@@ -17744,6 +17767,10 @@ for (const theme of THEMES) {
                 href: e.getAttribute("data-search-href"),
                 text: (e.innerText ?? "").replace(/\s+/g, " ").trim(),
                 detail: (e.querySelector("[data-search-detail]")?.textContent ?? "").trim(),
+                // The chip is a CLASSIFICATION, so it is read off its own node:
+                // `textContent`, because the chip is `uppercase` and innerText
+                // would hand back the transformed text.
+                chip: (e.querySelector("[data-search-chip]")?.textContent ?? "").trim() || null,
               })),
               empty: !!document.querySelector("[data-search-empty]"),
               // The review-gap note's own node, so the claim is not struck on
@@ -17767,6 +17794,9 @@ for (const theme of THEMES) {
             // A NAME THE FAMILY HOLD AND NO STATEMENT REPORTS, in the review's
             // spelling and in theirs — derived from the generated gap list.
             gap: REVIEW_GAP_BOOK?.name, gapAlias: REVIEW_GAP_BOOK?.alias ?? undefined,
+            // THE FAMILY'S OWN WORD for the funds they asked to see as cash
+            // (Stage 10bx). Which rows it must reach is derived from the book.
+            cash: CASH_INSTRUCTION_BOOK?.arb?.length ? "arbitrage" : undefined,
           };
           const results = {};
           for (const [k, q] of Object.entries(queries)) if (q) results[k] = await run(q);

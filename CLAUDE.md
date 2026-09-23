@@ -17026,7 +17026,7 @@ not valued here". A figure for SOME of an account's holdings names the rest.
 | Family asset class | **Cash** — their review files arbitrage on its DEBT tab; the instruction overrules it |
 | Family basket | **Liquidity** — ₹28.5 Cr → **₹92.2 Cr**. There is no Cash basket, and their workbook files every cash equivalent it names on its Liquid sheet |
 | Security axis | in the partition's **cash**, and **not looked through** — an arbitrage fund's disclosure is long shares hedged by short futures, and reading it as stock would print exposure nobody carries. A liquid fund's paper is real credit exposure and keeps its look-through |
-| A class named on screen (`readerClassOf`) | Sector Composition's *Not a company share*, Return & Drawdown's wrapper rows, Data Refresh, Family & Entities |
+| A class named on screen (`readerClassOf`) | Sector Composition's *Not a company share*, Return & Drawdown's wrapper rows, Data Refresh, Family & Entities, and each result's chip in the top bar's search (#72's) |
 | The fund's own page | *"This holding is Cash — an arbitrage fund, which the family counts as cash and nothing else"*, and no look-through card |
 | A mandate's own page | a liquid or arbitrage fund inside a mandate counts in its **cash sleeve**. No row on this book moves — every one is already typed `Cash` by its statement — and the rule is what keeps the next manager's arbitrage sleeve from reading as "other" |
 
@@ -17246,6 +17246,37 @@ now, and the premise is struck on `CASH_INSTRUCTION_BOOK`, a separate
 derivation: **a guard read off the same computation as the thing it guards
 abstains exactly when that computation breaks.** Removing the tier then fails the
 check by name, which is the only evidence it can.
+
+#### …and #72's search box named an arbitrage fund a mutual fund
+
+#72 put a search box in the top bar that finds any holding, account, member or
+page, and it is built from the LIVE portfolio — so it finds the depository's
+cash-equivalent funds this change values, which no statement-basis surface
+carries. Two things it printed about them were wrong, and neither was wrong on
+#72's own terms, which is why only the merge could show them:
+
+- **Each result's chip named the WRAPPER.** It read `head.assetClass`, so the
+  three arbitrage funds and four liquid ones chipped "Mutual fund" beside a
+  detail line reading "Cash" — the funds named twice, two ways, on the one
+  surface where a reader types the family's own word for them. It reads
+  `readerClassOf` now, the class every other page names a holding under.
+- **The transaction-only demat read as a whole account.** Its entry said
+  "5 holdings · ₹63.7 Cr" — a figure for SOME of the account's holdings standing
+  where a reader takes it for all of them, since the statement carries fourteen
+  more that nothing values. It leads with **partly valued** now, before the
+  figure, because that line is truncated to one row.
+
+`withPartialValuation` in `fundNavs.ts` is the live copy of the account registry
+`PortfolioContext` builds, extracted so a suite builds the same one rather than a
+copy of it. `searchIndex.test.ts` builds the index over the LIVE rows —
+everything else in it builds from `BOOK_POSITIONS`, which never holds them — and
+asserts both rules; its load-bearing case requires funds a statement typed as a
+mutual fund, or it would pass on the rows a PMS statement already files under
+Cash. `check:pages` types "arbitrage" into the rendered box and requires every
+arbitrage fund the book carries, each chipped Cash, read off the chip's own
+`data-search-chip` node. Reintroducing the wrapper chip fails the suite (naming
+all seven funds) and the rendered check alike; dropping the marker fails its own
+case.
 
 #### Fifteen bugs reintroduced, and two were not results the first time
 

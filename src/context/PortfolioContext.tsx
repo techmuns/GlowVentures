@@ -12,7 +12,7 @@ import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCK
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes } from "@/lib/fundNavs";
+import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
 import { holdingLabel } from "@/lib/schemeLabel";
@@ -369,10 +369,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
      * of this one, so the live copy carries `partialValuation` instead — what is
      * valued, from what, and how many holdings on the same statement are not.
      */
-    const accounts = basePortfolio.accounts.map((a) => {
-      const note = DEPOSITORY_NOTES.get(a.accountId);
-      return note ? { ...a, noPositionsReason: null, partialValuation: note } : a;
-    });
+    const accounts = withPartialValuation(basePortfolio.accounts, DEPOSITORY_NOTES);
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF
