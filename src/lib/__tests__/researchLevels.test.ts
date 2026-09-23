@@ -1,7 +1,7 @@
 /**
  * ── THE FAMILY'S LEVELS, SENT TO GLOW CENTRAL RESEARCH ─────────────────────
  *
- * Stage 10cg. Three halves, and each is here because the other two cannot see it:
+ * Stage 10ck. Three halves, and each is here because the other two cannot see it:
  *
  *   1. THE RULES (`researchLevels.ts`) — what is sent, seed against set, what
  *      an answer means. Pure, so every rule is struck on constructed inputs.
@@ -19,10 +19,11 @@ import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import { applyFundNavs } from "../fundNavs";
 import { symbolFor, symbolForKey } from "../quotes";
 import {
-  EMPTY_SENT, LEVEL_NAMES, RESEARCH_BATCH, RESEARCH_ISIN_RE, RESEARCH_LEVELS_URL, RESEARCH_SYMBOL_RE,
-  applyOutcomes, batchesOf, failSentence, fingerprint, intentsFor, levelsOf, pruneSent, researchLevelsFrom,
-  retryDelayMs, statusFor, syncSummary, withSeeds,
-  type HeldCompany, type Intent, type Levels, type Outcome, type ResearchLevel, type Resolve, type SentState,
+  EMPTY_SENT, FOOTER_LINE_MAX, LEVEL_NAMES, RESEARCH_BATCH, RESEARCH_ISIN_RE, RESEARCH_LEVELS_URL, RESEARCH_NAME,
+  RESEARCH_SYMBOL_RE, applyOutcomes, batchesOf, failSentence, failShort, fingerprint, intentsFor, levelsOf,
+  pruneSent, researchLevelsFrom, retryDelayMs, statusFor, summaryLine, syncSummary, withSeeds,
+  type FailCode, type HeldCompany, type Intent, type Levels, type Outcome, type ResearchLevel, type Resolve,
+  type SentState, type SyncSummary,
 } from "../researchLevels";
 import { researchSnapshot, syncResearchLevels, type ResearchState } from "../researchSync";
 import { EMPTY_ENTRY, type WatchEntry, type Watchlist } from "../watchlist";
@@ -78,6 +79,9 @@ console.log("── what is sent ──");
     d.unsendable.some((u) => u.securityKey === "fund" && u.reason === "no-symbol" && /NSE symbol/.test(u.why)));
   ok("a level the receiving side would refuse as a typo is named here instead of sinking a batch",
     d.unsendable.some((u) => u.securityKey === "typo" && u.reason === "too-high"));
+  const dsum = syncSummary(d, EMPTY_SENT, null);
+  ok("...and the count under the table keeps it apart from the ones with no NSE symbol",
+    dsum.local === d.unsendable.length && dsum.tooHigh === 1, `local ${dsum.local}, too high ${dsum.tooHigh}`);
   ok("an entry with no level is not sent at all", !d.send.some((l) => l.securityKey === "noted") && !d.unsendable.some((u) => u.securityKey === "noted"));
   ok("a holding since sold with no symbol anywhere stays here too",
     d.unsendable.some((u) => u.securityKey === "sold" && u.name === "Sold Co Ltd"));
@@ -222,7 +226,7 @@ console.log("── what the card says ──");
   ok("a level changed since it was acknowledged is SENDING again, never still 'sent'", statusFor("abc", d, changed, null).kind === "sending");
 
   const sum = syncSummary(d, sent, { at: "t", ok: false, code: "unreachable", retryAt: null });
-  ok("the table's count is struck on what arrived", sum.companies === 2 && sum.sent === 1 && sum.waiting === 1 && sum.local === 1);
+  ok("the table's count is struck on what arrived", sum.companies === 2 && sum.sent === 1 && sum.waiting === 1 && sum.local === 1 && sum.tooHigh === 0);
   ok("...and names the one reason the rest have not", sum.code === "unreachable");
   ok("every failure is worded by its cause, and a refused address names the address",
     new Set((["offline", "unreachable", "not-ready", "not-allowed", "rate-limited", "invalid", "error"] as const).map((c) => failSentence(c))).size === 7
@@ -232,6 +236,64 @@ console.log("── what the card says ──");
     retryDelayMs("unreachable", 1) === 30_000 && retryDelayMs("unreachable", 2) === 60_000 && retryDelayMs("unreachable", 40) === 30 * 60_000);
   ok("a receiving side not switched on yet is asked again every fifteen minutes", retryDelayMs("not-ready", 9) === 15 * 60_000);
   ok("the receiving side's batch size is honoured", batchesOf(Array.from({ length: 81 }, (_, i) => i)).map((b) => b.length).join(",") === "40,40,1");
+}
+
+console.log("── the line under the All alerts table ──");
+{
+  // Main's rule for a note under a table (Stage 10ci): one short line, the
+  // reasoning in its hover. This line is COUNTED, so what it may never do is
+  // say "sent" for a count other than what arrived, or name a failure while a
+  // send is still in flight.
+  const CODES: FailCode[] = ["offline", "unreachable", "not-ready", "not-allowed", "rate-limited", "invalid", "error"];
+  const sum = (p: Partial<SyncSummary>): SyncSummary =>
+    ({ companies: 0, sent: 0, declined: 0, refused: 0, waiting: 0, code: null, local: 0, tooHigh: 0, ...p });
+
+  ok("nothing saved draws no line at all", summaryLine(sum({}), false) === null);
+
+  const plain = summaryLine(sum({ companies: 2, sent: 2, local: 3 }), false);
+  ok("the count on screen is what arrived, and the funds are named as staying here",
+    plain !== null && plain.text === `${RESEARCH_NAME}: 2 of 2 companies sent · 3 stay here (no NSE symbol)`, plain?.text);
+  ok("...one fund 'stays', never 'stay'",
+    /1 stays here/.test(summaryLine(sum({ companies: 1, sent: 1, local: 1 }), false)?.text ?? ""));
+  ok("...and one company is a company", /1 of 1 company sent/.test(summaryLine(sum({ companies: 1, sent: 1 }), false)?.text ?? ""));
+
+  const onlyFunds = summaryLine(sum({ local: 4 }), false);
+  ok("alerts on funds alone say the other dashboard follows listed shares, never '0 of 0 sent'",
+    onlyFunds !== null && /follows listed shares only/.test(onlyFunds.text) && !/0 of 0/.test(onlyFunds.text));
+
+  ok("every cause has its own short wording", new Set(CODES.map(failShort)).size === CODES.length);
+  ok("...and each short wording says what happens next, so 'not sent' never reads as the family's to fix",
+    CODES.every((c) => /retrying|automatically|once it is|when it is back|change a level|live dashboard/.test(failShort(c))));
+
+  for (const code of CODES) {
+    const line = summaryLine(sum({ companies: 3, sent: 1, waiting: 2, code, local: 2 }), false, "http://localhost:4173");
+    ok(`${code}: the line names the cause on screen, and the whole sentence in its hover`,
+      line !== null && line.text.includes(failShort(code)) && line.title.includes(failSentence(code, "http://localhost:4173"))
+      && line.text.length <= FOOTER_LINE_MAX, `${line?.text.length} chars`);
+  }
+  const busy = summaryLine(sum({ companies: 3, sent: 1, waiting: 2, code: "unreachable" }), true);
+  ok("while a send is in flight the rest read 'sending', and no earlier failure is named",
+    busy !== null && /2 sending/.test(busy.text) && !busy.text.includes(failShort("unreachable"))
+    && !busy.title.includes(failSentence("unreachable")));
+
+  // A bad day with every outcome at once: the reasons drop to the hover and the
+  // COUNTS stay — the line never grows past the rule to keep them.
+  const worst = summaryLine(sum({ companies: 999, sent: 111, waiting: 555, code: "not-ready", declined: 222, refused: 111, local: 999 }), false);
+  ok("the worst day still fits one short line", worst !== null && worst.text.length <= FOOTER_LINE_MAX, `${worst?.text.length} chars`);
+  ok("...by keeping every count on screen",
+    worst !== null && ["111 of 999 companies sent", "555 waiting", "222 held back", "111 refused", "999 stay here"].every((t) => worst.text.includes(t)));
+  ok("...and moving every reason to the hover",
+    worst !== null && !worst.text.includes(failShort("not-ready")) && worst.title.includes(failSentence("not-ready"))
+    && /another device/.test(worst.title) && /list of companies is full/.test(worst.title) && /no NSE symbol/.test(worst.title));
+  const high = summaryLine(sum({ companies: 1, sent: 1, local: 1, tooHigh: 1 }), false);
+  ok("a level kept here because it is too high never reads '(no NSE symbol)'",
+    high !== null && !/no NSE symbol/.test(high.text) && /too high/.test(high.text) && /typo/.test(high.title) && !/no NSE symbol/.test(high.title));
+  const mixed = summaryLine(sum({ companies: 1, sent: 1, local: 3, tooHigh: 1 }), false);
+  ok("...and where the two reasons are mixed the line names neither, and the hover names both",
+    mixed !== null && /3 stay here$/.test(mixed.text) && /no NSE symbol/.test(mixed.title) && /typo/.test(mixed.title));
+  const held = summaryLine(sum({ companies: 2, sent: 1, declined: 1 }), false);
+  ok("a held-back level is described in words true of BOTH ways it happens — set there, or removed there",
+    held !== null && /set there, or removed there/.test(held.title) && !/levels are there/.test(held.text));
 }
 
 // ── 2. A REAL SEND ───────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@
  * *"when the user puts target price inside the dashboard, it should
  * automatically also go to the Glow Central Research dashboard. When the target
  * price is met, it should show in All Alerts as an alert, and automatically come
- * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10cg)
+ * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10ck)
  *
  * Glow Central Research is a separate app on its own server, so a level kept in
  * this browser's `localStorage` can never reach it on its own. It keeps ONE
@@ -394,6 +394,8 @@ export type SyncSummary = {
   code: FailCode | null;
   /** Saved entries whose levels stay here: no NSE symbol, or a level the list would refuse. */
   local: number;
+  /** ...of which a level above ₹1 crore a share, which the list would read as a typo. */
+  tooHigh: number;
 };
 
 export function syncSummary(d: Derived, sent: SentState, attempt: Attempt | null): SyncSummary {
@@ -409,6 +411,7 @@ export function syncSummary(d: Derived, sent: SentState, attempt: Attempt | null
     companies: d.send.length, sent: ok, declined, refused, waiting,
     code: waiting > 0 && attempt && !attempt.ok ? attempt.code : null,
     local: d.unsendable.length,
+    tooHigh: d.unsendable.filter((u) => u.reason === "too-high").length,
   };
 }
 
@@ -423,6 +426,74 @@ export function failSentence(code: FailCode, origin = ""): string {
     case "invalid": return `${RESEARCH_NAME} could not read them — change a level to send them again`;
     default: return `${RESEARCH_NAME} could not save them — retrying automatically`;
   }
+}
+
+/**
+ * THE SAME CAUSE, SHORT ENOUGH FOR A LINE UNDER A TABLE. A note under a table is
+ * one short line (Stage 10ci), so the All alerts footer names the cause in a few
+ * words and carries `failSentence` in its hover. Each still says what happens
+ * next, because "not sent" alone reads as something the family has to fix.
+ */
+export function failShort(code: FailCode): string {
+  switch (code) {
+    case "offline": return "this browser is offline, they go when it is back";
+    case "unreachable": return "no answer, retrying automatically";
+    case "not-ready": return "not taking levels yet, they go automatically once it is";
+    case "not-allowed": return "it takes levels from the live dashboard only";
+    case "rate-limited": return "asked for a pause, retrying in a minute";
+    case "invalid": return "it could not read them, change a level to resend";
+    default: return "not saved there, retrying automatically";
+  }
+}
+
+/** The longest line a note under a table may be (Stage 10ci's guard). */
+export const FOOTER_LINE_MAX = 150;
+
+/**
+ * THE ALL ALERTS FOOTER'S SECOND LINE — what reached Glow Central Research,
+ * COUNTED — and its hover, which carries the sentences the line has no room for.
+ * Written out in full where that fits in one short line; where it does not (a
+ * bad day that has every kind of outcome at once) the reasons drop to the hover
+ * and only the counts stay. `null` where no level is saved at all.
+ */
+export function summaryLine(s: SyncSummary, busy: boolean, origin = ""): { text: string; title: string } | null {
+  if (s.companies === 0 && s.local === 0) return null;
+  const stay = (n: number) => `${n} ${n === 1 ? "stays" : "stay"} here`;
+  // Why they stay, on screen only where ONE reason covers them all: "(no NSE
+  // symbol)" over a level that stays because it is too high would be a caption
+  // claiming something of a count it is not true of.
+  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high to send)" : "";
+  const build = (full: boolean): string => {
+    if (s.companies === 0) {
+      return `${RESEARCH_NAME} follows listed shares only · ${stay(s.local)}${full ? stayWhy : ""}`;
+    }
+    const parts = [`${RESEARCH_NAME}: ${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`];
+    if (s.waiting > 0) {
+      parts.push(busy || !s.code ? `${s.waiting} sending` : `${s.waiting} waiting${full ? ` — ${failShort(s.code)}` : ""}`);
+    }
+    if (s.declined > 0) parts.push(`${s.declined} held back${full ? " — changed there from another device" : ""}`);
+    if (s.refused > 0) parts.push(`${s.refused} refused${full ? " — its list is full" : ""}`);
+    if (s.local > 0) parts.push(`${stay(s.local)}${full ? stayWhy : ""}`);
+    return parts.join(" · ");
+  };
+  const full = build(true);
+  const text = full.length <= FOOTER_LINE_MAX ? full : build(false);
+  const why: string[] = [
+    `Alerts on listed shares also go to ${RESEARCH_NAME}, which checks each level against its own live price`
+      + " and raises it in its All Alerts and AI Alerts when it is reached.",
+  ];
+  if (s.waiting > 0 && s.code && !busy) why.push(`Not sent yet: ${failSentence(s.code, origin)}.`);
+  if (s.declined > 0) {
+    why.push(`${s.declined} held back: ${RESEARCH_NAME} had already heard about ${s.declined === 1 ? "that company" : "those companies"}`
+      + " from another device — levels set there, or removed there. Change a level here to send these instead.");
+  }
+  if (s.refused > 0) why.push(`${s.refused} refused: ${RESEARCH_NAME}'s list of companies is full.`);
+  if (s.local > s.tooHigh) why.push("A fund or an AIF has no NSE symbol, so its alerts stay in this dashboard.");
+  if (s.tooHigh > 0) {
+    why.push(`${s.tooHigh} ${s.tooHigh === 1 ? "has a level" : "have levels"} above ₹1 crore a share, which ${RESEARCH_NAME}`
+      + " would read as a typo — it stays here until the level is corrected.");
+  }
+  return { text, title: why.join(" ") };
 }
 
 /**

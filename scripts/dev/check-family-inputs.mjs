@@ -91,7 +91,7 @@ const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-san
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cg) ──────────────────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10ck) ──────────────────────
  *
  * Every price level saved in this dashboard is also sent to Glow Central
  * Research. This suite types levels on real holdings, so without this the walk
@@ -244,16 +244,19 @@ check("...and the now-empty Setup group heading went with it",
   !groupOf("Setup") && !/(^|\n)\s*SETUP\s*(\n|$)/.test(text));
 
 // *"Move the following page buttons inside a drop down option ... labelled as
-//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups.
+//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups,
+// and since #84 a FIFTH: Corporate actions & dividends, which that change filed
+// under Extras beside Return & Drawdown. The family confirmed it stays there
+// (Stage 10cj). This list still said four through the seven changes that landed
+// after #84, and failed two rows on every run — a check that fails on a correct
+// page is read as noise, and the next real failure goes unread beside it. ONE
+// list, used by every row below, so the count cannot drift between them again.
+const EXTRAS_PAGES = ["/capital-gains", "/performance", "/returns", "/corporate-actions", "/ledger"];
 const extras = groupOf("Extras");
 check("Extras is a group, and the only collapsible one",
   !!extras && extras.collapsible && navGroups.filter((g) => g.collapsible).length === 1,
   `${navGroups.filter((g) => g.collapsible).length} collapsible`);
-// ...AND CORPORATE ACTIONS, which main's #84 added to Extras beside Performance
-// without updating this list — so the suite failed these two rows on main
-// itself. The four the family named keep their order around it.
-const EXTRAS_PAGES = ["/capital-gains", "/performance", "/returns", "/corporate-actions", "/ledger"];
-check("...holding exactly the four pages the family named, and Corporate actions, in order",
+check("...holding exactly the five pages it carries, in the order given",
   same(extras?.entries, EXTRAS_PAGES),
   extras?.entries.join(" · "));
 check("...and the emptied Tax and Analytics headings went with their entries",
@@ -262,8 +265,8 @@ check("...and the emptied Tax and Analytics headings went with their entries",
 check("...sitting above Admin, so Data Audit and Upload History still close the nav",
   navGroups.findIndex((g) => g.group === "Extras") >= 0
   && navGroups.findIndex((g) => g.group === "Extras") < navGroups.findIndex((g) => g.group === "Admin"));
-// IT IS A DROPDOWN: shut until asked, and none of the four clickable meanwhile.
-check("Extras starts collapsed, with none of its four pages reachable",
+// IT IS A DROPDOWN: shut until asked, and none of the five clickable meanwhile.
+check("Extras starts collapsed, with none of its five pages reachable",
   extras?.expanded === false && extras?.visible.length === 0,
   `${extras?.visible.length ?? "?"} visible`);
 
@@ -286,7 +289,7 @@ const clickExtras = async () => {
   navGroups = await readNav();
 };
 await clickExtras();
-check("clicking Extras reveals all its page buttons",
+check("clicking Extras reveals all five page buttons",
   hasExtrasToggle && same(groupOf("Extras")?.visible, EXTRAS_PAGES),
   hasExtrasToggle ? groupOf("Extras")?.visible.join(" · ") : "no Extras toggle to click");
 // ...AND IT IS A TOGGLE RATHER THAN A ONE-WAY REVEAL. Without this, a control
@@ -302,7 +305,7 @@ check("...and clicking it again puts them away",
 // nav, which reads as the page having left the app. It was just collapsed by
 // hand two lines up, so this also proves the ROUTE re-opens it rather than a
 // stored preference doing the work.
-for (const to of ["/capital-gains", "/performance", "/returns", "/ledger"]) {
+for (const to of EXTRAS_PAGES) {
   await page.goto(`${BASE}${to}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
   navGroups = await readNav();
@@ -756,9 +759,9 @@ check("...and names the mandates this book does carry",
 // the same reason `announcements.ts` stayed when `/news` went.
 //
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10cg — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10ck — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cg) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10ck) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -857,7 +860,7 @@ check("...and names the mandates this book does carry",
 
     // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
     // companies by their ticker — cannot take its levels. They stay here, the
-    // card says so in words, and NOTHING is sent (Stage 10cg).
+    // card says so in words, and NOTHING is sent (Stage 10ck).
     await page.waitForTimeout(1200);
     const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
       kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
@@ -974,7 +977,7 @@ check("...and names the mandates this book does carry",
   }
 }
 
-// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cg) ───
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10ck) ───
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."*
@@ -1087,7 +1090,7 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
-// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cg) ───
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10ck) ───
 //
 // Until Glow Central Research's route is deployed every send is refused as NOT
 // READY, and the sender asks again every fifteen minutes on its own — a
@@ -1214,15 +1217,24 @@ const RESEARCH_SHARE = (() => {
     // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
     // account numbers with no reason reads as a broken feed rather than as a
     // measured absence, which is this book's founding distinction.
+    // The reason is the account line's HOVER since the family asked for the
+    // notes around the tables to go — so it is read off the `title`, where a
+    // reader finds it, and never off the page text it left.
+    //
     // AN ACCOUNT THAT SENT ONLY A TRANSACTION STATEMENT IS PARTLY VALUED on the
     // live basis — its arbitrage and liquid funds at AMFI's NAV, the family's
     // cash — so its generated "values nothing" reason is replaced by a note
     // naming what is valued and what is not. Either sentence is a reason; what
     // must never happen is a listed account with neither.
+    const reasons = await page.$$eval("[data-unvalued-account] [data-unvalued-reason]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...each with its own reason",
-      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))
+      unvalued.every((a) => !a.noPositionsReason || reasons.some((r) => r.includes(a.noPositionsReason.slice(0, 60)))
         || (a.transactionsOnly === true && /partly valued/.test(text)
-          && text.includes("sent a transaction statement and no holding statement"))));
+          && reasons.some((r) => r.includes("sent a transaction statement and no holding statement")))),
+      `${reasons.length} reason(s) in hovers`);
+    check("...in a hover rather than as a paragraph under each line",
+      unvalued.every((a) => !a.noPositionsReason || !text.includes(a.noPositionsReason.slice(0, 60)))
+        && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
     check("...and the card says none of it is in the value above",

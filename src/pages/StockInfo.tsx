@@ -500,7 +500,7 @@ export function StockInfo() {
       <PageNav className="mb-2" trail={[{ label: "Portfolio Monitor", to: "/monitor" }, { label: name }]} />
       <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">{name}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-100">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {/* WHERE THIS HOLDING IS FILED, which for everything that is not a
                 mandate-held share is still exactly its asset class — a fund's
@@ -556,7 +556,7 @@ export function StockInfo() {
             {/* ONE FIGURE OR NONE — never one statement's mark standing for
                 the rest. See `cmpMarks` for what the split is and why the
                 cell refuses it rather than picking. */}
-            <div className="mono text-2xl font-semibold text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
+            <div className="font-display text-2xl font-bold tabular text-slate-100" data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>
               {cmp ?? <AbsentValue />}
             </div>
             {/* WHY THIS IS THREE STATES AND NOT TWO.
@@ -618,18 +618,24 @@ export function StockInfo() {
           no way to see WHAT ELSE that manager chose is half an answer. */}
       {mandates.length > 0 && (
         <p className="mb-4 text-[12.5px] leading-relaxed text-slate-400">
-          <span className="font-medium text-slate-300">Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}</span>
-          {/* THE NOUN IS DERIVED, NOT TYPED — see `mandateAllShares` above. This
-              sentence renders for every mandate-held row, and a mandate's bucket
-              takes its whole account, so "these shares" was printed over the
-              cash sleeve, the liquid sweep and a TDS receivable as well as over
-              Jammu & Kashmir Bank. A mixed set gets the neutral wording rather
-              than one of its classes speaking for the rest. */}
-          {mandateAllShares
-            ? " — the family owns these shares and the manager decides them: "
-            : mandateNoShares && mandateClass
-              ? ` — this is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose: `
-              : " — the family owns these holdings and the manager runs the accounts they sit in: "}
+          {/* ONE LINE: the route and the mandates it runs through, each a link.
+              The sentence that explained it is the hover on the first words —
+              the family asked for the notes around the tables to go, and the
+              fact a reader acts on is the link, not the prose. */}
+          <span className="font-medium text-slate-300"
+            /* THE NOUN IS DERIVED, NOT TYPED — see `mandateAllShares` above.
+               This renders for every mandate-held row, and a mandate's bucket
+               takes its whole account, so "these shares" was printed over the
+               cash sleeve, the liquid sweep and a TDS receivable as well as
+               over Jammu & Kashmir Bank. A mixed set gets the neutral wording
+               rather than one of its classes speaking for the rest. */
+            title={`${mandateAllShares
+              ? "The family owns these shares and the manager decides them."
+              : mandateNoShares && mandateClass
+                ? `This is ${mandateClass} the mandate ${mandates.length === 1 ? "account holds" : "accounts hold"}, not a share the manager chose.`
+                : "The family owns these holdings and the manager runs the accounts they sit in."} Every other holding in ${mandates.length === 1 ? "that mandate is on its" : "those mandates is on their"} own page.`}>
+            Held through {mandates.length === 1 ? "a discretionary mandate" : `${mandates.length} discretionary mandates`}:
+          </span>{" "}
           {mandates.map((m, i) => (
             <span key={m.accountId}>
               {i > 0 && ", "}
@@ -637,8 +643,6 @@ export function StockInfo() {
               <span className="text-slate-500">{m.label === m.provider ? "" : ` · ${m.provider}`} · {m.owner}</span>
             </span>
           ))}
-          {". Every other holding in "}{mandates.length === 1 ? "that mandate" : "those mandates"}{" is on "}
-          {mandates.length === 1 ? "its" : "their"}{" own page."}
         </p>
       )}
 
@@ -748,7 +752,13 @@ export function StockInfo() {
                        which is a fact about the fixture rather than the page. */
                     <Tr view={posView} key={r.accountId} data-account-row={r.accountId} className="hover:bg-ink-700/40">
                       <td className="px-4 py-2.5 font-medium text-slate-100">{ownerOf(accIdx, r)}</td>
-                      <td className="px-4 py-2.5 text-[12px] text-slate-400">
+                      {/* THE ONE CELL THAT MAY WRAP, and only when the table would
+                          not otherwise fit. Where it fits nothing changes; where a
+                          wider face is drawn — the fallback when Inter cannot
+                          load, whose semibold headings run wider — this sub-line
+                          gives up the width rather than pushing Basis behind a
+                          sideways scroll (Stage 10cg). */}
+                      <td className="whitespace-normal px-4 py-2.5 text-[12px] text-slate-400">
                         <div>{providerOf(accIdx, r)}</div>
                         {/* The route reads as a phrase — "via manager's mandate"
                             — because the column header no longer supplies the
@@ -877,11 +887,10 @@ export function StockInfo() {
                 line the two disagree by exactly the duplicate and a reader who
                 adds the column has found a contradiction. */}
             {dupCollapsed > 1 && (
-              <p className="border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-                The rows above add to {money(sum(rows.map((r) => r.marketValue)))}: this is ONE holding, reported on
-                each of the {held} statements listed. Both are shown as printed, and the Total counts it once —
-                {money(mv)}, the same basis as the current value of holdings. Which statement owns it is a question about the
-                family's affairs, not a parsing rule, so neither row is suppressed.
+              <p className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500"
+                title="Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings. Which statement owns it is a question about the family's affairs, not a parsing rule, so neither row is suppressed.">
+                One holding, reported on each of the {held} statements listed — the rows add to{" "}
+                {money(sum(rows.map((r) => r.marketValue)))}, the Total counts it once at {money(mv)}.
               </p>
             )}
           </Card>
@@ -946,11 +955,10 @@ export function StockInfo() {
             </div>
           ) : led.txns.length === 0 ? (
             <div className="grid h-32 place-items-center px-6 text-center text-[12.5px] leading-relaxed text-slate-500">
-              <span className="max-w-md">
+              <span className="max-w-md"
+                title="A holding bought before that window and untraded since carries no row here — the transaction statements are a period record, not a lot history.">
                 No transaction in this name over the window the statements cover
                 {led.periodFrom && led.periodTo ? <> ({fmtDate(led.periodFrom)} → {fmtDate(led.periodTo)})</> : null}.
-                A holding bought before that window and untraded since carries no row here — the transaction
-                statements are a period record, not a lot history.
               </span>
             </div>
           ) : (
@@ -1006,57 +1014,39 @@ export function StockInfo() {
 
       {notACompany ? (
         <Card className="mt-5" title={`Company research — not applicable to ${cashFund ? "a cash-equivalent fund" : NOT_A_COMPANY_LABEL[assetClass ?? ""] ?? "this holding"}`}>
-          <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-class={cashFund ? "Cash" : assetClass ?? ""}>
+          {/* TWO SHORT LINES, the reasoning in their hovers — the family asked
+              for the notes around the tables to go. What a reader must still see
+              is that this is a decided absence rather than a broken feed, what
+              the holding IS (a cash-equivalent fund is Cash, by the family's own
+              instruction), and why a fund shows no list of companies; all three
+              are on screen. */}
+          <p className="text-[12.5px] leading-relaxed text-slate-400" data-stock-class={cashFund ? "Cash" : assetClass ?? ""}
+            title={`So there is no price history, no PE, no balance sheet, no concall and no insider filing for it, and the five panels that carry those for a company are absent here by decision rather than by a feed being down.${fundVehicle ? " A mandate's constituents and a fund's are two different kinds of fact: under a mandate the family owns each share and the manager merely picks it, so every one is reported by name on a statement issued to this family. A fund unit is the opposite — the fund owns the companies, and what this family is told is only what the unit is worth." : ""}`}>
             This holding is <span className="font-medium text-slate-300">{cashFund ? "Cash" : assetClassLabel(assetClass)}</span>
             {cashFund
-              ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund, which the family counts as cash and nothing
-                  else; one line standing for a portfolio the manager assembles, not a share in a company.</>
+              ? <> — {arbitrage ? "an arbitrage" : "a liquid"} fund the family counts as cash, not a share in a company</>
               : fundVehicle
-              ? <> — one line standing for a portfolio the manager assembles, not a share in a company.</>
-              : <> — a balance, not a share in a company.</>} So there is no price history, no PE, no balance sheet,
-            no concall and no insider filing for it, and the five panels that carry those for a company are absent
-            here by decision rather than by a feed being down.
+              ? <> — one line standing for a portfolio the manager assembles, not a share in a company</>
+              : <> — a balance, not a share in a company</>}, so company research does not apply.
           </p>
           {fundVehicle && (
-            <>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                The companies inside it are the manager's holdings, not this book's — no statement issued to this family
-                names them. {arbitrage
-                  ? <>An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately
-                    not drawn here: that portfolio is long shares hedged by short futures, so reading it as the
-                    family&rsquo;s exposure to those companies would print stock they do not carry. Its value is
-                    counted whole, as cash.</>
-                  : canHaveLookthrough(rows[0])
-                  ? <>A MUTUAL FUND scheme nonetheless discloses its portfolio monthly, and where that disclosure
-                    resolves it is shown above under its own heading. It is the AMC's document, not this family's, so
-                    the fund&rsquo;s value still stays whole here and in every total rather than being spread across the
-                    sectors of companies the family does not directly own.</>
-                  : <>An AIF publishes no such disclosure — SEBI requires a monthly portfolio from a mutual fund and not
-                    from a Category II or III alternative fund — so there is no scheme document to join to this folio,
-                    and the fund&rsquo;s value stays whole.</>}
-              </p>
-              {/* WHY THIS HAS TO BE SAID HERE, AND SAID AS A CONTRAST.
-                  A reader who has just learnt that a share held through a PMS is
-                  listed inside that manager's drill-down will come to a fund
-                  expecting the same page and read its absence as something not
-                  built yet. The two look alike and are not: a PMS reports every
-                  share it holds because the FAMILY owns those shares — the
-                  manager only chose them — so the rollup is a real, documented
-                  one. A fund unit is one purchase of somebody else's portfolio,
-                  the fund owns the companies, and no statement here says which
-                  they are. So there is no list to render, and this is a decided,
-                  permanent absence rather than an empty table waiting on a feed. */}
-              <p className="mt-2 text-[12.5px] leading-relaxed text-slate-400">
-                <span className="font-medium text-slate-300">A mandate&rsquo;s constituents and a fund&rsquo;s are two
-                different kinds of fact, and the difference is worth keeping in view.</span> Under a mandate the family
-                owns each share and the manager merely picks it, so every one is reported BY NAME on a statement issued
-                to this family, and the mandate&rsquo;s own page carries all of them at the family&rsquo;s own cost and
-                value. A fund unit is the opposite: the fund owns the companies, and what this family is told is only
-                what the unit is worth. Anything shown above about what the scheme holds comes from the AMC&rsquo;s
-                public disclosure and carries no cost, no purchase date and no figure about this family except the one
-                derived from a published weight.
-              </p>
-            </>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-slate-400"
+              title={arbitrage
+                ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. An arbitrage fund discloses its portfolio monthly like any mutual fund, and it is deliberately not drawn here: that portfolio is long shares hedged by short futures, so reading it as the family's exposure to those companies would print stock they do not carry."
+                : canHaveLookthrough(rows[0])
+                ? "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. A mutual fund scheme discloses its portfolio monthly; it is the AMC's document, not this family's, so the fund's value still stays whole here and in every total."
+                : "The companies inside it are the manager's holdings, not this book's — no statement issued to this family names them. SEBI requires a monthly portfolio from a mutual fund and not from a Category II or III alternative fund, so there is no scheme document to join to this folio, and the fund's value stays whole."}>
+              {arbitrage
+                ? <>What it holds is not drawn: long shares hedged by short futures are not the family&rsquo;s stock. Its value counts whole, as cash.</>
+                : canHaveLookthrough(rows[0])
+                /* CONDITIONAL, because it is not always true: a scheme that
+                   resolves no disclosure (Liquid BeES) or discloses no portfolio
+                   (the metal ETFs) is shown above as exactly that, and an
+                   unconditional "is shown above" would contradict the card it
+                   points at. */
+                ? <>Where the AMC&rsquo;s own monthly disclosure resolves, what the scheme holds is shown above.</>
+                : <>An AIF publishes no such disclosure, so no list of its companies can be shown.</>}
+            </p>
           )}
         </Card>
       ) : (

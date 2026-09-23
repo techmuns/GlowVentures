@@ -1,9 +1,9 @@
 import { AlertTriangle, CheckCircle2, Info, Loader2 } from "lucide-react";
 import { fmtDateTime } from "@/lib/format";
-import { RESEARCH_NAME, failSentence, type SyncStatus } from "@/lib/researchLevels";
+import { RESEARCH_NAME, failSentence, summaryLine, type SyncStatus } from "@/lib/researchLevels";
 import { useResearchState, useResearchStatus, useResearchSummary } from "@/lib/useResearchSync";
 
-// ── WHERE A LEVEL WENT, IN ONE LINE (Stage 10cg) ─────────────────────────────
+// ── WHERE A LEVEL WENT, IN ONE LINE (Stage 10ck) ─────────────────────────────
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."* The sending is
@@ -69,26 +69,19 @@ export function ResearchStatusLine({ securityKey, updatedAt }: { securityKey: st
 
 /**
  * Under the All alerts table: how many companies' levels are in Glow Central
- * Research, counted rather than claimed, and the one reason any are not.
+ * Research, counted rather than claimed, and the one reason any are not. ONE
+ * short line (Stage 10ci's rule for a note under a table); the sentences it has
+ * no room for are its hover. `summaryLine` decides both.
  */
-export function ResearchSummaryText() {
+export function ResearchSummaryLine() {
   const s = useResearchSummary();
   const { busy } = useResearchState();
-  if (s.companies === 0 && s.local === 0) return null;
-  const parts: string[] = [];
-  if (s.companies > 0) {
-    parts.push(`${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`);
-    if (s.waiting > 0) {
-      parts.push(busy || !s.code ? `${s.waiting} sending` : `${s.waiting} not sent yet — ${failSentence(s.code, origin())}`);
-    }
-    if (s.declined > 0) parts.push(`${s.declined} held back because ${RESEARCH_NAME} already had levels from another device`);
-    if (s.refused > 0) parts.push(`${s.refused} refused because its list is full`);
-  }
-  if (s.local > 0) parts.push(`${s.local} ${s.local === 1 ? "stays" : "stay"} here only (no NSE symbol)`);
+  const line = summaryLine(s, busy, origin());
+  if (!line) return null;
   return (
-    <span data-research-summary data-sent={s.sent} data-companies={s.companies} data-waiting={s.waiting}
-      data-declined={s.declined} data-local={s.local} data-code={s.code ?? ""}>
-      {" "}Alerts on listed shares also go to {RESEARCH_NAME}, which alerts there when a level is reached: {parts.join(" · ")}.
-    </span>
+    <p data-research-summary data-sent={s.sent} data-companies={s.companies} data-waiting={s.waiting}
+      data-declined={s.declined} data-local={s.local} data-code={s.code ?? ""} title={line.title}>
+      {line.text}
+    </p>
   );
 }

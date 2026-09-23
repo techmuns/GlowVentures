@@ -2,7 +2,7 @@
  * ── SENDING THE FAMILY'S LEVELS TO GLOW CENTRAL RESEARCH ─────────────────────
  *
  * `researchLevels.ts` decides WHAT to send and what an answer means; this file
- * sends it, remembers what arrived, and tells every card. Stage 10cg.
+ * sends it, remembers what arrived, and tells every card. Stage 10ck.
  *
  * AUTOMATIC, WHEREVER THE LEVEL WAS TYPED. `ResearchLevelSync`
  * (`useResearchSync.ts`) is mounted once in the app shell, so a level saved on

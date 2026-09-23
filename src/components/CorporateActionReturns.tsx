@@ -73,7 +73,16 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
               <div className="mt-1 text-[10px] font-sans text-slate-500">Gross · receipt unconfirmed</div></td>,
             total: <td key="total" className="whitespace-nowrap px-4 py-3 mono font-semibold" data-dividend-total-return>{fmtPct(r?.totalReturnPct, { sign: true, decimals: 2 })}</td>,
             evidence: <td key="evidence" className="min-w-[230px] max-w-md px-4 py-3 text-slate-400">
-              {issues.length > 0 ? <p className="text-amber-400/90">{[...new Set(issues)].join(". ")}.</p> : <span>Calculated on carried statement holdings.</span>}
+              {/* The FIRST open question on screen and every one in the hover —
+                  joined, three of them ran to 232 characters in one cell, the
+                  wall of text the family asked to be rid of (Stage 10ci). */}
+              {issues.length > 0
+                ? (() => {
+                    const open = [...new Set(issues)];
+                    return <p className="text-amber-400/90" title={`${open.join(". ")}.`}>
+                      {open[0]}{open.length > 1 ? ` · +${open.length - 1} more` : ""}.</p>;
+                  })()
+                : <span>Calculated on carried statement holdings.</span>}
               {events.length > 0 && <details className="mt-2"><summary className="cursor-pointer text-champagne-400">{events.length} events · show sources</summary>
                 <ul className="mt-2 space-y-3">{events.map((l) => <li key={l.action.id}>
                   <div>{l.action.exDate ? fmtDate(l.action.exDate) : "Undated"} · {l.action.purpose}</div>
@@ -95,7 +104,12 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
       </table>
       {!rows.length && <div className="p-5"><AbsentCell reason="No listed-equity holdings match this selection" /></div>}
     </div>
-    <p className="border-t border-ink-700 px-4 py-3 text-[11px] text-slate-500">Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value.
-      No portfolio total is shown: accounts have different opening dates. Fund distributions remain in their fund-specific return model.</p>
+    {/* ONE LINE, the formula in its hover — it was a 268-character note under
+        the table, and the family asked for the notes around the tables to go
+        (Stage 10cg). Why there is no total stays on screen: an absent total a
+        reader is not told about reads as one that was forgotten. */}
+    <p className="border-t border-ink-700 px-4 py-3 text-[11px] text-slate-500"
+      title="Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value. Fund distributions remain in their fund-specific return model.">
+      Total return adds the dividends declared in the window · no portfolio total, as accounts open on different dates</p>
   </Card>;
 }

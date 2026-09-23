@@ -184,7 +184,7 @@ const CIO_TABS = [
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
-   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cg). *"in morning
+   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10ck). *"in morning
    * CIO can you make an ALL alerts tab where … whenever the alerts which have
    * been set are triggered they show simply."* It goes LAST so the three the
    * family arranged keep their places and the default stays the movers panel;
@@ -1634,31 +1634,30 @@ export function MorningCIO() {
                   line has nothing either, and a sentence about a rule that placed
                   no holding is chrome.
                 */}
+                {/* TWO SHORT LINES, the reasoning in their hovers — the family asked
+                    for the notes under the tables to go. Whose taxonomy this is,
+                    and the value each of their two rules placed, stay on screen:
+                    those are figures a reader acts on. */}
                 {allocAxis !== "category" && (
-                  <p className="mt-3 text-[11px] leading-relaxed text-slate-500" data-testid="alloc-taxonomy-source">
-                    Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
-                    product by product. No statement in the archive carries {GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"};
-                    nothing here is inferred from what the instrument is.
-                    {ruleMV > 0 && (
-                      <>
-                        {" "}{money(ruleMV)} of the {money(m.totalValue)} above is placed by their stated rule instead
-                        &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
-                        review does not name those holdings individually.
-                      </>
-                    )}
+                  <div className="mt-3 space-y-0.5 text-[11px] leading-relaxed text-slate-500">
+                    <p data-testid="alloc-taxonomy-source"
+                      title={`No statement in the archive carries ${GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"}; nothing here is inferred from what the instrument is.${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}`}>
+                      Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
+                      {ruleMV > 0 && <> · {money(ruleMV)} placed by their direct-stock rule</>}
+                    </p>
                     {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
                         arbitrage funds as Debt; the family have said arbitrage is
                         cash, so those funds are placed by that instruction — and a
-                        sentence crediting them to the direct-stock rule above
-                        would be about the wrong rule. */}
+                        line crediting them to the direct-stock rule above would be
+                        about the wrong rule. */}
                     {cashRuleMV > 0 && (
-                      <span data-testid="alloc-cash-rule" data-cash-rule-mv={cashRuleMV}>
-                        {" "}{money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their instruction
-                        that arbitrage and liquid funds are cash &mdash; their review files its arbitrage funds as Debt,
-                        and the instruction overrules it.
-                      </span>
+                      <p data-testid="alloc-cash-rule" data-cash-rule-mv={cashRuleMV}
+                        title="Their consolidated review files its arbitrage funds as Debt, and the family's instruction overrules it.">
+                        {money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their instruction
+                        that arbitrage and liquid funds are cash
+                      </p>
                     )}
-                  </p>
+                  </div>
                 )}
             </div>
           </Card>

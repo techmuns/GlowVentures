@@ -1,5 +1,5 @@
 /**
- * THE HOOKS AND THE ONE COMPONENT OVER `researchSync.ts` (Stage 10cg): one
+ * THE HOOKS AND THE ONE COMPONENT OVER `researchSync.ts` (Stage 10ck): one
  * derivation of what this browser sends, read by the sender and by every card
  * that says where a level went, so the two cannot disagree.
  */

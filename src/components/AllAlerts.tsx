@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { AbsentCell } from "@/components/Absent";
 import { AlertStatusText, KIND_TONE, KindPill, distanceText, priceSource } from "@/components/AlertBits";
-import { ResearchSummaryText } from "@/components/ResearchStatus";
+import { ResearchSummaryLine } from "@/components/ResearchStatus";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { currentHoldings } from "@/lib/analytics";
 import { fmtCurrency, fmtDateTime } from "@/lib/format";
@@ -90,10 +90,17 @@ export function AllAlerts() {
     setConfirming(null);
   };
 
+  // TWO SHORT LINES UNDER THE TABLE, and the reasoning in their hovers — a note
+  // under a table is one short line (Stage 10ci). The first says where the
+  // prices came from; the second (`ResearchSummaryLine`) what reached Glow
+  // Central Research.
   const feedLine = quotesStatus === "live"
-    ? `Live prices${quoteFeeds.length ? ` from ${quoteFeeds.join(" and ")}` : ""}${quotesAsOf ? `, updated ${fmtDateTime(quotesAsOf)}` : ""}. Funds are checked against their published NAV.`
-    : quotesStatus === "loading" ? "Fetching live prices…"
-      : "Live prices are not reaching the dashboard right now, so alerts on shares can't be checked. Funds are still checked against their published NAV.";
+    ? `Live prices${quoteFeeds.length ? ` from ${quoteFeeds.join(" and ")}` : ""}${quotesAsOf ? `, updated ${fmtDateTime(quotesAsOf)}` : ""} · funds on their published NAV · saved in this browser`
+    : quotesStatus === "loading" ? "Fetching live prices… · funds on their published NAV · saved in this browser"
+      : "Live prices are not reaching the dashboard, so share alerts can't be checked · funds still on their published NAV · saved in this browser";
+  const feedWhy = "A share's alert is checked against its live price, and a fund's against the NAV it publishes once a day."
+    + " A statement's own price is never used — it can be weeks old."
+    + " Alerts are saved in this browser, so another device keeps its own.";
 
   return (
     <Card pad={false} title="Your price alerts"
@@ -200,9 +207,10 @@ export function AllAlerts() {
           </table>
         </div>
       )}
-      <p data-alert-feed={quotesStatus} className="border-t border-ink-700/70 px-5 py-3 text-[11px] leading-relaxed text-slate-500">
-        {feedLine} Alerts are saved in this browser.<ResearchSummaryText />
-      </p>
+      <div className="space-y-0.5 border-t border-ink-700/70 px-5 py-3 text-[11px] leading-relaxed text-slate-500">
+        <p data-alert-feed={quotesStatus} title={feedWhy}>{feedLine}</p>
+        <ResearchSummaryLine />
+      </div>
     </Card>
   );
 }

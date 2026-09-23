@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VERIFY THE PRICE-ALERT CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR
-# (Stage 10cg).
+# (Stage 10ck).
 #
 # A check nobody has watched fail is a check nobody knows can fail. Each bug
 # below is applied on its own, rebuilt, run through the layer that should
@@ -314,9 +314,26 @@ run_case "SENDER: a failed send is never tried again on its timer" "family" \
 run_case "SENDER: a browser coming back online does not send what was waiting" "family" \
   patch $URS '    window.addEventListener("online", again);' '    window.addEventListener("offline", again);'
 
-run_case "SENDER: the footer says every company was sent, whatever arrived" "pages" \
-  patch $RST '    parts.push(`${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`);' \
-             '    parts.push(`${s.companies} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`);'
+# The count lives in `summaryLine` now (`researchLevels.ts`) — the footer's
+# words and its hover are decided there, and the component only draws them.
+run_case "SENDER: the footer says every company was sent, whatever arrived" "pages suite" \
+  patch $RL '    const parts = [`${RESEARCH_NAME}: ${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`];' \
+            '    const parts = [`${RESEARCH_NAME}: ${s.companies} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`];'
+
+# ── THE FOOTER AS ONE SHORT LINE (main's Stage 10ci rule) ───────────────────
+run_case "SENDER: the footer's hover sentences are put back on screen" "pages" \
+  patch $RST '      {line.text}' '      {line.text} {line.title}'
+
+run_case "SENDER: the reasons never drop to the hover, so a bad day runs past one line" "suite" \
+  patch $RL '  const text = full.length <= FOOTER_LINE_MAX ? full : build(false);' '  const text = full;'
+
+run_case "SENDER: a level kept here as too high is said to have no NSE symbol" "suite" \
+  patch $RL '  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high to send)" : "";' \
+            '  const stayWhy = " (no NSE symbol)";'
+
+run_case "the price line's hover is dropped, taking its reasons with it" "pages" \
+  patch $AA '        <p data-alert-feed={quotesStatus} title={feedWhy}>{feedLine}</p>' \
+            '        <p data-alert-feed={quotesStatus}>{feedLine}</p>'
 
 run_case "SENDER: nothing is ever sent — the sender is not mounted" "pages family" python3 - <<'PY2'
 import sys
