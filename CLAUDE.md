@@ -16698,7 +16698,8 @@ first came back NOT A RESULT**, and the harness saying so is the point: setting
 the switch to the literal `false` narrowed its type until a comparison in
 `fundNavs.test.ts` stopped compiling, and deleting the `partial` condition removed
 the narrowing its own hover depended on. Both were rewritten to keep their types
-and re-run on the final merged tree with the control and the review-gap case.
+and re-run on the tree merged with #73, beside the control and the review-gap
+case — and none of the three files they patch is one #75 went on to edit.
 
 `build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 22 + 140 (2 not checked,
 0 blocked) · `test:family` (new cases in `familyTaxonomy.test.ts`,
