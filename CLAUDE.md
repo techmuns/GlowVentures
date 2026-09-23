@@ -22037,7 +22037,7 @@ read the same way — which is the "one template" half of the ask.
 **THE HEADER AND THE SIX TILES ARE OUTSIDE THE PANEL, AND ONLY THE PANEL
 SCROLLS** — Morning CIO's construction (Stage 10bj), for its reason: what was asked
 is that the headline and the tiles stop moving. Measured after, on every one of
-22 walked stock routes: document scroll 0, `<main>` scroll 0. The panel is
+the 35 stock routes the sweep walks: document scroll 0, `<main>` scroll 0. The panel is
 allowed to scroll inside itself and is deliberately not asserted not to: a tab
 taller than the window must still reach its content. The fixed-height layout is
 `lg:` only — below it the page flows as a phone needs.
@@ -22165,35 +22165,70 @@ panel, and a missing tab is a finding — the panel then has no way to be reache
 
 #### The bug pass
 
-`scripts/dev/stock-tabs-bug.sh` puts seventeen bugs back one at a time, restoring
-by copy on a trap and rebuilding on the way out, after a no-patch control that
-came back clean. **All seventeen fire, and not one reported SWEEP CLEAN or NOT A
-RESULT:**
+`scripts/dev/stock-tabs-bug.sh` puts twenty-seven bugs back one at a time,
+restoring by copy on a trap and rebuilding on the way out, after a no-patch
+control that came back clean. It began at seventeen; each merge that moved a card
+or a claim onto this page added the cases for it. It was run whole twice. **On
+the tree merged with #87 and #89**, over the 27 stock routes walked then,
+twenty-six fired and one came back SWEEP CLEAN, which is a finding of its own
+(below). **On the tree merged with #88**, over the 35 stock routes walked now,
+the control was clean and all twenty-seven fired, none of them NOT A RESULT. The
+table is that second run.
 
 | Bug put back | Fires |
 | --- | --- |
-| every tab's content drawn at once — the long page back | "exactly one tab's content is drawn" on **all 22 routes**, with each tab's own absence claims beside it (the tax card, the account table, the one research card, a fund's two halves) |
-| the tabs beside the name rather than at the line's right-hand end | the geometry check, on all 22 |
-| the panel no longer scrolls inside itself, so the page scrolls | "the page itself does not scroll" on the three routes whose tab is taller than the window — see below |
-| the tabs reordered, so the page opens on Research | the order check on all 22, the lit-tab and one-section checks, and every Position-tab claim on the position routes |
-| a tile dropped from the strip | "the six tiles are on every tab" on all 22, and the price tile's reason |
-| the tax card drawn nowhere | the tax-card check on the four Transactions routes |
-| a tax figure's dash loses its reason | the same check — it is struck PER CELL, so a card of the right shape cannot pass for one that says why |
+| every tab's content drawn at once — the long page back | "exactly one tab's content is drawn" on **all 35 routes**, with each tab's own absence claims beside it (the tax card, the account table, the one research card, a fund's two halves, #84's card, an arbitrage fund's look-through) |
+| the tabs beside the name rather than at the line's right-hand end | the geometry check, on all 35 |
+| the panel no longer scrolls inside itself, so the page scrolls | "the page itself does not scroll" on the nine routes whose tab is taller than the window — see below |
+| the tabs reordered, so the page opens on Research | the order check on all 35, the lit-tab and one-section checks on 17, every Position-tab claim on the twelve position routes, and #88's route-tab claims on its four |
+| a tile dropped from the strip | "the six tiles are on every tab" on 31 routes, and the price tile's reason. The other four walk the company held only inside funds, whose page draws no tiles at all (#88) |
+| the tax card drawn nowhere | the tax-card check on the five Transactions routes that walk a holding of the family's own |
+| a tax figure's dash loses its reason | the same check, on all five — it is struck PER CELL, so a card of the right shape cannot pass for one that says why |
 | the Ratios sub-tab wired to nothing · the ratio panel under every sub-tab | the research walk, each |
 | the Trading range card back beside the returns table | two checks on `stock-market` |
 | every mandate listed under the name | the one-line mandate count on `stock-mandates-many` |
 | a cash line's sector chip back | "a cash line carries no sector chip" |
-| a Total row under a single account's row | the footer check on four routes, and the one-account claim on `stock` |
+| a Total row under a single account's row | the footer check on three routes, and the one-account claim on `stock` |
 | the plan-view sentence back on My targets | `stock-targets` |
-| a fund's holdings on its Price & returns tab too | "this tab draws the scheme's price half, not its holdings" |
+| a fund's holdings on its Price & returns tab too | "this tab draws the scheme's price half, not its holdings", on the mutual fund and on the arbitrage fund |
 | the price tile refusing a mark every statement agrees on | three checks on three routes |
 | an AIF folio's price tab drawing a returns table | "an AIF folio's price tab says there is no market price, and why" |
+| #84's dividend-inclusive card back under the account table | two checks: it is off Position, and it is gone from under the returns table |
+| #84's card on the Position tab as well | "the dividend-inclusive return card is on the Price & returns tab, not this one" |
+| an arbitrage fund's hedged holdings drawn on its Research tab | "…and draws no look-through: a hedged book of long shares is not this family's stock" |
+| an arbitrage fund's own NAV half hidden with its holdings | the price-half check and the unseen-scheme check, on `stock-arbitrage-market` |
+| a scheme the fund store never saw told the store's report names it | the unseen-scheme check |
+| the Research tab no longer says an arbitrage fund is Cash | "an arbitrage fund's own page says it is Cash" |
+| #76's quantity table stops marking the account that sold out | the sold-out check, on `stock-sold-elsewhere` |
+| **the return back to the survivors-only figure, not FIFO** | **nothing, on the #87 tree — see below**; the tile's FIFO check on `stock-fifo` since |
+| #78's XIRR line dropped from a whole folio's row | the XIRR check on three routes, and the folio check on `stock-capital` |
+| the page's name back in the reading face | #87's title check, on all 35 |
 
-**THE SCROLL CHECK FIRES ON THREE ROUTES, NOT TWENTY-TWO, AND THAT IS ITS SUBJECT
-RATHER THAN A GAP.** On the other nineteen the tab's content fits the window, so
-the page does not scroll with or without the inner scroller; the claim can only
-be broken where there is more content than room, and those three are where it
-was.
+**THE ONE THAT CAME BACK CLEAN FOUND A GAP IN THE CHECKS, NOT IN THE PAGE.** It
+puts back the return #80 replaced — the unrealised gain over the cost of what is
+still held — and no route noticed, because every stock route walked a holding
+that had sold nothing, where that formula and FIFO print the same number. A check
+on the tile could not tell which formula drew it. `stock-fifo` walks the holding
+where the two differ most (`FIFO_STOCK`, derived from the book: Bajaj Auto,
+**▲ 32.3%** against the **30.5%** the old formula prints) and requires both the
+Unrealised P&L tile's return and the Total row's HPR to be FIFO's — re-expressed
+in the checker from each position's `costBasis`, `realizedPnL` and
+`costOfUnitsSold`, never imported from `fifo.ts`, which is the code under test.
+The Total row's cell carries `data-stock-foot-return` for it. Re-run with
+`CASES=25` on that tree, the case fires both. **On the #88 tree it fires the
+tile's check alone**, and that is correct: #88's footer strikes its FIFO return
+in `measuredTotals` rather than taking the tile's figure, so the patch no longer
+reaches the Total row. The Total row's FIFO claim still runs on `stock-fifo`, and
+#88's own harness holds that footer to the units that report a cost.
+
+**THE SCROLL CHECK FIRES ON NINE ROUTES, NOT ALL OF THEM, AND THAT IS ITS SUBJECT
+RATHER THAN A GAP.** On the others the tab's content fits the window, so the page
+does not scroll with or without the inner scroller; the claim can only be broken
+where there is more content than room. It fired on four routes on the #87 tree,
+and on nine on the #88 tree: #88's route bands and fund lines made more Position
+tabs taller than the window. The nine are `stock`, `stock-mf-holdings`,
+`stock-qty`, `stock-cagr`, `stock-fifo`, `stock-mandates-many`, `stock-held`,
+`stock-held-funds` and `stock-funds-only`.
 
 **AND TWO OLDER HARNESSES PATCH THIS PAGE, SO BOTH WERE RE-CHECKED RATHER THAN
 TRUSTED.** `carried-cost-bug.sh` (Stage 10bv) finds both of its anchors in the
@@ -22210,9 +22245,12 @@ page draws, the NAV overlay making it so by construction — and case 9 (the til
 dating the mark to the first row rather than the marked one) has NO SUBJECT:
 measured, not one of 213 securities has an unmarked first row and a marked later
 one. Both are written down here rather than left to be rediscovered as a clean
-run that looks like a pass.
+run that looks like a pass. Re-run on the tree merged with #88, whose row
+function now draws the price cell it patches, the result is the same: the
+control is clean, the same eight cases fire, and cases 3 and 9 are clean for the
+same two reasons.
 
-#### Merged with main five times, and the letter is `10ck`
+#### Merged with main ten times, and the letter is `10cn`
 
 **#79 (Stage 10bx, one master table each) conflicted in `check-pages.mjs`**: a
 walk comment and the `ctx` literal. Resolved as a union — main's line plus this
@@ -22334,6 +22372,7 @@ fund-return invariants main's own Stage 10cc and 10ce notes record failing on
 main: #80 made a fund's HPR FIFO, and the sweep's re-expression (#72's) still
 strikes it as value against cost. Both are other stages' checks, named here so
 they are not mistaken for this branch's, and neither is rewritten by a merge.
+*(Both fixed at Stage 10cj, by #92 — see the seventh merge below.)*
 The ten NOT CHECKED lines are all main's evidenced abstentions: six Morning CIO
 routes (every KPI tile carries a figure), two Private Market fund routes (every
 private holding reports a cost), #79's redeemed private account (none is) and
@@ -22380,6 +22419,327 @@ and `glowData.ts`; `build-book` over the merged builder and archive reproduces
 `glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, and both equal main's —
 this change still touches nothing the book is built from.
 
+#### …and a fifth time: #87 and #89 took `10cg` and `10ch` while the #78 sweep ran
+
+**#87 — Glow Central Research's fonts and colours — and #89 — the Portfolio
+Monitor's own notes — landed while the full sweep on the #78 tree was still
+running**, and took `10cg` and `10ch`. That sweep finished clean on its own tree
+— 268 combinations, with only the three Private Market findings main carries —
+and was out of date the moment it finished, so it is recorded here as the
+measurement of a tree that never shipped rather than as this change's result.
+Main keeps both letters, and this section became **`10ci`** — until the sixth
+merge, below. Of the lines naming `10cg` after the merge, none is on both sides.
+Main's heading, its own letter note, #89's pointer to it and six of #87's code
+comments stay. This branch's nine pointers moved, with its comments in
+`check-corporate-actions.mjs` and `cmp-bug.sh`, and three lines of this
+section's own history are rewritten above.
+
+**#87 EDITED THE OLD SINGLE PAGE, THE THIRD PR IN A ROW TO DO SO**, so its three
+changes to it were re-applied to the tabbed page rather than merged:
+
+- **The name is in the display face.** #87 checks, on every route and by
+  computed style, that the page title asks for Plus Jakarta Sans. This page
+  draws its own `<h1>` rather than `PageHeader`'s, so the class had to be written
+  here — at `PageHeader`'s own `text-xl`, which this page already matched,
+  rather than the `text-2xl` #87 gave the old page's name. Without it, every
+  stock route fails #87's own title check.
+- **The price tile's figure is in the display face**, as #87 made the old page's
+  CMP headline: the `mono` class came off it, so it takes the tile's own face.
+  The Avg cost tile keeps `mono`, exactly as main's does.
+- **The Managed-by cell already wrapped here**, for its own reason — a mandate's
+  long strategy name — and with a width cap #87's version does not have. #87
+  reached the same cell for a second reason, the fallback face's wider headings,
+  and the cell's comment now names both.
+
+**MAIN'S LOOK HARNESS NEEDED ONE ANCHOR MOVED.** `scripts/dev/look-bug.sh` case 9
+patched that cell at the old page's class list, which this page's cell does not
+match, so it would have reported NOT A RESULT. It now patches the tabbed page's
+cell and also walks `stock-mandates-many` — the holding every mandate carries,
+whose account table prints V.E.C's long strategy name. Run whole on the tree
+merged with #87 and #89, the control was clean in both themes and all nine cases
+fired. Case 9 fires *the position table fits its card* on `stock-mandates-many`
+and not on `stock-carried`, whose table fits without the wrap now that the Basis
+column is gone.
+
+**AND THIS PAGE'S OWN HARNESS GAINED A CASE**, the twenty-seventh, because #87's
+harness patches `PageHeader` alone and nothing else would notice this page's name
+falling back to Inter. It fires on all 27 routes: *the page title is set in
+Plus Jakarta Sans — it asks for Inter*.
+
+The `ctx` literal did not change — #87 and #89 added no probe key — and is still
+93 keys, the exact union, none duplicated, every root declared. `build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, and both equal
+main's.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `check:family` **85/2** — main's two Extras-menu checks ·
+`check:pages` over **268 combinations** with **3 findings, none of them this
+change's**: the three Private Market routes, 8 invariants across the same five
+checks #87's own notes record failing on main. The ten NOT CHECKED lines are
+main's evidenced abstentions, and not one stock route fails or abstains. The
+count is the #78 tree's again, because #87 and #89 add no route; it matches
+only because the sweep was run again.
+
+#### …and a sixth time: #90 took `10ci`, and shortened the notes this page carries
+
+**#90 — the notes around every table cut to one short line, the rest in a hover
+— landed while the #87 tree's bug pass was running, and took `10ci`.** Main keeps
+it; this section became **`10cj`** — until the seventh merge, below. Of the lines
+naming `10ci` after the merge, eleven were this branch's and moved; main's two
+pointers (to `FundExposure` and `DematElsewhere`) stay. **Three code comments were
+missed** — in `check-corporate-actions.mjs`, `cmp-bug.sh` and `look-bug.sh` — and
+went on naming `10ci` for this section, which by then meant #90's, until the
+seventh merge's search found them.
+
+**#90 EDITED THE OLD SINGLE PAGE, THE FOURTH PR IN A ROW TO DO SO**, so its four
+shortenings were re-applied to the tabbed one:
+
+- the mandate line under the name stays one line, and its reasoning — who owns
+  the shares, who decides them, where the mandate's other holdings are — is that
+  line's hover;
+- a holding two statements both report says so in ONE line (*"One holding,
+  reported on each of the N statements listed — the rows add to ₹X, the Total
+  counts it once at ₹Y"*), the rest in its hover;
+- the empty transaction history keeps its first sentence and puts the rest in a
+  hover;
+- the Research tab's not-a-company card is two short lines, each with its hover.
+
+**AND ONE OF #90's OWN CHECKS CAUGHT A SENTENCE THIS BRANCH HAD WRITTEN.** The
+Research card said *"What the scheme holds is shown above"* on every fund — false
+on Liquid BeES and the metal ETFs, which have no disclosure to show, and exactly
+what #90's fund-notice check forbids. It is conditional now: an arbitrage fund
+says what it holds is not drawn and why; a scheme whose disclosure resolves says
+it is shown above; an AIF says it publishes no such disclosure. And the fund
+card's absence said the returns were "above", which on this page are a tab away,
+so it names the Price & returns tab.
+
+**#90's RESEARCH-POINTER CHECK HAD NO SUBJECT HERE, SO IT INVERTED.** It asserted
+the page's pointer to the research cards on `stock`; the pointer lived in
+`CompanyResearchPreview`, which this branch deleted, and every panel it pointed at
+is a sub-tab of the one research card. `stock-research` asserts it stays gone.
+
+**#90's GUARD HOLDS ON THE TABBED PAGE, AND WAS SHOWN TO BITE THERE.** On every
+route it checks that a table card's subtitle is short, that the text under its
+tables is at most two short lines, and that no cell carries a paragraph. Every
+stock route passes. Putting two long notes back fires it on `stock-aif-dual`
+(329 characters) and `stock-mf-holdings` (365).
+
+**THE `ctx` LITERAL** is main's 94 keys plus `stockPage` — 95, none duplicated,
+every one declared. `fundExposure` did not come across: #90 deleted the probe that
+declared it, with `FundExposure.tsx`.
+
+**AND THIS IS WHERE THE BUG PASS'S ONE GAP WAS CLOSED** — the survivors-only
+return (above), which `stock-fifo` now walks.
+
+#### …and a seventh time: #92 took `10cj`, and fixed the checks these notes kept naming
+
+**#92 — seven checks that had failed on a correct page — landed while the #90
+merge was being verified, and took `10cj`.** It was caught the way this file says
+to catch it: by fetching main before pushing and comparing its stage headings
+with this branch's. Git marked the conflict too, because both sections followed
+`10ci`. Main keeps `10cj`; this section became **`10ck`** — until the eighth
+merge, below. Of the lines naming `10cj`
+after the merge, none is on both sides: eleven are this branch's and moved, and
+every one #92 wrote stays — including its *"(Moved at / Both fixed at Stage
+10cj)"* notes in other stages' records. The three code comments the sixth merge
+missed moved with them.
+
+**#92 FIXED WHAT THIS SECTION'S MERGE NOTES HAD NAMED AS MAIN'S**: the three
+Private Market routes (the sweep's re-expression of a fund's return is FIFO now)
+and the two Extras-menu rows (Extras holds five pages). It touched no file of the
+position page. `check-family-inputs.mjs` auto-merged and was read by hand: #92's
+five-page Extras list and this branch's My targets walk are both there. The `ctx`
+literal auto-merged too and was checked the same way: 95 keys, the exact union —
+#92 added none — none duplicated, every one declared.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `build-book` byte-identical, equal to main's ·
+`check:family` **90/0** — the first run on this branch with no failure excused
+as main's · `check:pages` **270 combinations clean**: the #87 tree's 268 plus
+`stock-fifo` in both themes. The ten NOT CHECKED lines are all main's evidenced
+abstentions, and not one stock route fails or abstains.
+
+#### …and an eighth time: #88 took `10ck`, and gave the account table a tab per route
+
+**#88 — every way a company is held: Direct, PMS managers and Mutual funds as
+tabs, and the funds as line items — landed fourteen minutes after this branch's
+last push, while the PR waited on its checks, and took `10ck`.** Main keeps it;
+this section became **`10cl`** — until the ninth merge, below. Git marked the
+conflict, because both sections sat after `10cj`. Of the lines naming `10ck`
+after the merge, none is on both sides. This branch's nine pointers moved —
+Conventions, and Stages 10ap, 10ba, 10bm, 10bn, 10br, 10c, 10j and 10k — with
+its comments in `check-corporate-actions.mjs`, `cmp-bug.sh` and `look-bug.sh`.
+#88's heading, its own letter note, its Layout and Build pointers and the header
+of its harness stay. One note was added to #88's own section, saying its route
+tabs now sit inside this page's Position tab.
+
+**#88 EDITED THE OLD SINGLE PAGE, THE FIFTH PR IN A ROW TO DO SO, AND IT IS THE
+LARGEST.** It gave the account table a tab per route, drew the family's share
+inside each fund as a row, and gave a company held only inside funds a page of
+its own. Each was re-applied to the tabbed page rather than merged hunk by hunk:
+
+- **The route tabs belong to the Position tab.** All · Direct · PMS managers ·
+  Mutual funds (· Other accounts, where the book has one) sit in the account
+  table card's own header, at `?held=`, inside the page's five tabs at `?tab=`.
+  Two levels of tab, each an address, each checked where it is drawn.
+- **A fund line is a row of the account table**, DERIVED and never added into
+  the book's own figures — #88's model (`src/lib/heldThrough.ts`), taken whole.
+- **A company held only inside funds keeps the five tabs.** #88 hid the six
+  tiles on that page, because every one would be an absence about a holding the
+  family does not have in its own name, and that stays. The tabs do not go with
+  them: the template is the same five on every holding. Each tab with nothing of
+  the family's own says so once — Transactions, that no statement records a buy
+  or sell of theirs; Price & returns and Research, that both are looked up by an
+  NSE symbol, that none of the family's statements names this company, and that
+  *"it is not a feed being down"*.
+- **While the fund look-through loads, a short note replaces #88's blank**, so a
+  tab never opens empty and never says anything about the holding before the
+  funds' filings have been read (Stage 10an's rule).
+
+**AND ONE FOOTER RULE NOW COVERS THREE LINES.** This page drew a Total row only
+over two or more rows, because a total of one row is the row again. #88 added a
+derived total and a Total exposure line, and drew its measured total over any
+rows. The rule is one sentence in the code now: a footer line is drawn only
+where it adds up two or more lines — the measured total over two statement rows,
+the derived total over two fund lines, and the exposure line wherever both
+halves are present, since one of each is already two. #88's footer checks follow
+it (`heldFeetWanted`). On this book State Bank of India (five statement rows and
+many fund lines) and HDFC Bank (held only through funds) walk every branch.
+
+**#88's CHECKS FOLLOWED THEIR SUBJECTS TO THEIR TABS.** Its tax-card claim is
+struck on the funds-only company's Transactions tab, and its research claim on
+that company's Price & returns and Research tabs — three new routes,
+`stock-funds-only-activity`, `-market` and `-research`. `stockTabChecks` is
+spread into #88's four routes, so the sweep walks 35 stock routes, each held to
+the same six claims about the tabs; on a funds-only company the tile claim reads
+*no tile is drawn*. The account-table probe reads the measured footer by its own
+handle (`data-held-foot="measured"`), because the footer has up to three lines.
+
+**EVERY BUG HARNESS THAT PATCHES THIS PAGE WAS DRY-RUN BEFORE IT WAS TRUSTED.**
+Each patch was applied to a copy of the merged file first, and the ones whose
+anchor had moved would have reported NOT A RESULT:
+
+- `held-through-bug.sh` (#88's own): the tax-card case now patches the
+  Transactions tab's card. Its routes gained the three tab routes, and its sweep
+  now says NOT A RESULT when check-pages printed no tally line — the fix this
+  page's own harness gained after a sweep whose browser never launched read as
+  bugs that fired nothing.
+- `stock-tabs-bug.sh`: four anchors moved (the tax card's condition, the one
+  footer rule, the Price & returns branch, the return), and its routes gained
+  #88's seven.
+- `cmp-bug.sh`: the row's price cell is drawn by #88's row function now, and the
+  Total row's refusal by its footer, so four anchors moved.
+- `look-bug.sh` case 9: the fund lines use the same wrapping cell, so the class
+  matched twice; the anchor takes the comment above the statement row's cell.
+
+Three cases in other harnesses already fail to apply on main itself —
+`carried-cost-bug.sh` 5 and `names-bug.sh` 13 and 14, whose anchors #90's
+rewrites moved. They are named here rather than fixed in a merge.
+
+**THE `ctx` LITERAL** conflicted and is main's 95 keys (#88 added `heldTable`)
+plus `stockPage` — 96, none duplicated, every one declared. `build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, equal to
+main's: #88 touched nothing the book is built from.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed, #88's `heldThrough` suite among them · `build-book`
+byte-identical, equal to main's · `check:family` **90/0** · `check:pages` **284
+combinations clean**: #88's own 254 plus this branch's fifteen routes in both
+themes. The ten NOT CHECKED lines are main's, and not one stock route fails or
+abstains. The bug passes ran on this tree too, each after a clean control:
+`stock-tabs-bug.sh` all twenty-seven (the table above), #88's own
+`held-through-bug.sh` all eighteen, `cmp-bug.sh` the same eight of ten, and
+`look-bug.sh` case 9, `names-bug.sh` case 10 and the dated-capital XIRR case
+each fire. `carried-cost-bug.sh` fires fifteen of its sixteen; its case 5
+reports NOT A RESULT, the anchor named above as failing on main too.
+
+#### …and a ninth time: #85 took `10cl` while this section's bug pass was running
+
+**#85 — an ADD TILE card, and Capital Call cells that say why saving is off —
+landed while the bug pass on the #88 tree was running, and took `10cl`.** The
+stage headings were compared with main's before this was pushed, and git marked
+the conflict too, because both sections sat after `10ck`. Main keeps `10cl`;
+this section became **`10cm`** — until the tenth merge, below. Of the lines
+naming `10cl` after the merge, none is on both sides: this branch's eleven moved
+— the heading, nine pointers and the note in #88's section — with its comments
+in four harnesses (`check-corporate-actions.mjs`, `cmp-bug.sh`,
+`held-through-bug.sh` and `look-bug.sh`). #85's six lines here and its sixteen
+comments (13 in `check-pages.mjs`, 2 in its bug harness, 1 in `Kpi.tsx`) stay.
+
+**#85 TOUCHED NOTHING THE POSITION PAGE DRAWS.** Its code is the tile strip, the
+Capital Call cells and their store. Its edits to `Kpi.tsx`, which draws this
+page's tiles, and to `StatTile.tsx` are comments, and none of its checks reads a
+stock route. So the bug pass above ran on the #88 tree and was not run again;
+the full sweep is its control on the #85 tree — the same reasoning #85's own
+section records for #88.
+
+- **The `ctx` literal conflicted and was resolved as a union**: #85's `tileAdd`
+  and `callOff` beside this branch's `stockPage`. 98 keys, none duplicated,
+  every one declared.
+- **Neither side touched a generated file**, and `build-book` regenerates the
+  book byte-identically, equal to main's.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `check:family` **90/0** · `check:pages` **286
+combinations clean**: the #88 tree's 284 plus #85's one new route in both
+themes. Eleven lines were NOT CHECKED: main's ten, and one on
+`monitor-txn-direct` — *the unfiltered trades footer was not read on this pass*
+— which the next merge's note explains.
+
+#### …and a tenth time: #86 took `10cm` while the #85 tree was being checked
+
+**#86 — the Portfolio Monitor opens on All Securities, first in its axis
+control, with the holdings and entity selectors at the row's right end — landed
+five minutes after the #85 merge was pushed, while that tree's full sweep was
+running, and took `10cm`.** Git marked the conflict, because both sections sat
+after `10cl`. Main keeps `10cm`; this section is **`10cn`**. Of the lines naming
+`10cm` after the merge, none is on both sides: this branch's eleven moved — the
+heading, nine pointers and the note in #88's section — with its comments in the
+same four harnesses. #86's five lines here (its heading, three lines of its own
+letter note and its note under Stage 10z) and its four code comments (two in
+`check-pages.mjs`, one in its bug harness, one in `MandateHoldings.tsx`) stay.
+
+**#86 TOUCHED NOTHING THE POSITION PAGE DRAWS.** Its code is the Monitor, the
+axis list, the pick-list, the return picker, the search box and one link on the
+mandate page. None of those is a file this page's bug cases patch, and none of
+#86's new or changed checks is on a stock route. So, as with #85, the bug pass
+was not run again, and the full sweep is its control on the tree that ships.
+
+- **`check-family-inputs.mjs` merged without a marker and was read by hand.**
+  Against main it differs by this branch's My targets walk alone. That walk
+  reaches a company page by the first `/stock/` link on the Monitor, which is now
+  the All Securities view; it still lands on a holding and still opens My targets.
+- **The `ctx` literal conflicted and was resolved as a union**: #86's
+  `holdingsDropdown`, `pickedFund`, `filterRow` and `monitorInFull` beside this
+  branch's `stockPage`. 102 keys, none duplicated, every one declared.
+- **Neither side touched a generated file**, and `build-book` regenerates the
+  book byte-identically, equal to main's.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `build-book` byte-identical, equal to main's ·
+`check:family` **93/0**, #86 having added three rows · CI (`build`) and the
+Cloudflare preview pass on the pushed merge. `check:pages` walked **288
+combinations**: #86's own 258 plus this branch's fifteen routes in both themes.
+**286 were clean.** The other two, `monitor-txn-drill` (four checks) and
+`monitor-txn-in` (three), are the pair Stage 10ck records failing under load and
+passing alone; this sweep ran while both bug harnesses were building and
+sweeping on the same machine. Run alone once the harnesses had finished, both
+pass, and so does `monitor-txn-direct`, whose subset check — skipped on both
+loaded sweeps, *the unfiltered trades footer was not read on this pass* — runs.
+The ten other NOT CHECKED lines are main's evidenced abstentions, and not one
+stock route fails or abstains.
+
+**THE CAUSE IS MEASURED, AND IT IS IN THE WALK, NOT THE PAGE.** Opening the
+Transactions view fetches the dated record: 265 requests to the audit archive,
+made only when the view opens. On a quiet machine the last of them lands about
+3.0–3.2 s after the click, and the walk's read — a fixed 1.2 s after its click
+returns, which takes about 2.3 s — lands at 3.5–3.7 s and finds the table. Under
+the load the harnesses put on the machine, the table took 4.0–4.7 s to appear
+after the click, and the fixed wait ran out first: the read found no table, a
+control the walk meant to click was not drawn yet, and every claim after it read
+the view as it opens. Those walks are all on the Portfolio Monitor, and this
+branch changes none of them. The fix, waiting for the table rather than for a
+fixed time, is left for a separate change.
 
 ### Stage 10k — News & Announcements: REMOVED
 
