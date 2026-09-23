@@ -16772,6 +16772,125 @@ regenerates `glowData.ts` and `docs/BOOK-REPORT.md` **byte-identically**, and
 `npm run replay:calls -- --check` is a no-op (28 replayed, 0 would change, 0
 refused).
 
+#### …and a third time: #73 took `10bu`, and the collision was the silent kind
+
+**#73 — a search that finds nothing says why — landed while this branch waited,
+and took `10bu`.** This time the two sections sat in DIFFERENT parts of the
+file, so git merged them cleanly: two sections under one letter, no conflict
+marker, no warning. That is the case Stage 10bl records as the dangerous one,
+and it was caught the same way, by comparing main's stage letters against the
+branch's own before committing. Main's keeps `10bu`; this section moved to
+`10bv` — and, when #75 took that too, to **`10bw`** (see the next subsection).
+
+**FIFTEEN LINES NAMED `10bu` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** **Thirteen are this branch's.** Its heading and two lines of its own
+merge notes moved. A third was reworded to name no letter, because it records a
+measurement taken while the letter was `10bu`. Nine pointers moved too: four in
+**Layout** and the data model, one each under Stages 10m and 10s, two under
+Stage 10bp, and the `replay:calls` note under **Build**. **Two are main's**,
+both inside its own section, and stayed. The three code references this branch
+carries moved with it; main's code carries none.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND WAS RESOLVED AS A UNION** —
+this branch's `pmReturn` beside main's `absentName`. **84 keys, none
+duplicated, every one declared in the file.**
+
+**AND #73'S RULE REACHED A SEARCH IT HAD NOT SEEN.** It reads *"an empty search
+result is an absent measurement, and it owes the same sentence"*, and it wired
+three searches. The top-bar search in this branch is a fourth. It answered
+"BSE", "BSE Ltd." and "Bombay Stock Exchange" with *"Nothing in this book or on
+these pages matches"* — the defect #73 fixed, in the box a reader is most likely
+to type it into. It renders `AbsentFromBook` in its empty state now, **and only
+there.** This search is fuzzy where the other three filter by substring, so it
+answers some review names with a holding. "HDFC Balanced Advantage Fund" finds
+both plans the book holds, and a note beside them would deny a fund the book
+carries. Measured over the 36 claimable gaps: **six of their own names find a
+holding here and thirty reach the empty state.** Two of the six find a company
+by near miss (`IFB Inds.`, `Neuland Labs.`), so they were checked rather than
+assumed. The book's IFB and Neuland are SVAN's. The review's lines are held at
+Motilal Oswal, on a demat whose statement in this drop is a transaction tape
+only. So #73's note is right about them, and this search answers with the
+company the book does hold.
+
+**THE PAGE CHECK THEN FOUND AN OLDER BUG IN THE SAME LIST, AND IT WAS THIS
+BRANCH'S.** The screenshot of the note showed Morning CIO's *Current value of
+holdings* and *Capital invested* drawn THROUGH the list. The top bar is `z-10`
+and a stacking context (`backdrop-blur`), so the list's own `z-50` counts only
+inside it. The KPI tiles lift their label and figure to `z-10` later in the
+page, and at an equal z-index the later element wins. **This had been true of
+every list the search drew over Morning CIO since it shipped**, and *"the list
+paints over the page"* passed the whole time, for two reasons:
+
+- it probed ONE point 90px down, which on a short list lands above the tiles;
+- `elementFromPoint` skips anything `pointer-events: none`, and that is exactly
+  how those tiles draw their text.
+
+The probe now samples the whole list on a grid, with hit-testing forced on so
+paint order is what is measured. It runs on a short list, a tall one and the
+one carrying the note. Before the top bar moved to `z-40` it failed on all
+three, with 16 sample points covered on each and a KPI tile label named at every
+one it recorded; after, it passes.
+`<main>` scrolls in its own box below the bar, so nothing else overlaps it, and
+the Muns dialog is portalled to `#root` at `z-50` and still covers it.
+
+**FOUR BUGS WERE PUT BACK, AND EACH FIRED ITS OWN CHECK:**
+
+| Bug put back | Fires |
+| --- | --- |
+| the note removed | three page checks, and `reviewGaps.test.ts`'s wiring check |
+| the note drawn outside the empty state | the held-fund check alone — the one that stops the note denying a held fund |
+| a note drawn whatever was typed | four |
+| the top bar back at `z-10` | the paint check |
+
+This merge's own full sweep was stopped part-way: #75 landed while it ran, and
+a sweep of a tree about to change would have verified the wrong thing. The four
+bugs above were measured on this merge's tree; everything else was measured once,
+after the next merge — see below.
+
+#### …and a fourth time: #75 took `10bv`
+
+**#75 — Buoyant: show what the family paid, not the fund's switch-day
+restatement — landed while this branch's checks were running, and took
+`10bv`.** Both sections were inserted after #73's, so git marked the conflict
+this time. Main's keeps `10bv`; this section is **`10bw`**, after it. The stage
+headings were compared against main's tip: the merged file differs from main by
+`10bw` alone, and main's ten historical duplicates are unchanged.
+
+**EIGHTEEN LINES NAMED `10bv` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** **Twelve are this branch's** and moved: its heading, two lines of its
+merge notes and its nine outside pointers, with its four code references. **Six
+are main's** — four outside its section and two inside it — and stayed, with the
+one in #75's own bug harness.
+
+**THE `ctx` LITERAL CONFLICTED ON ONE LINE, AND WAS RESOLVED AS A UNION** —
+this branch's `pmReturn` beside #75's `costCarried`. **85 keys, none
+duplicated, every one declared in the file.**
+
+**TEN FILES OVERLAPPED AND EIGHT MERGED WITHOUT A MARKER**, which is when this
+file says to check by hand:
+
+- **The fund-statement reader** (`altFundStatements.mjs`) now carries this
+  branch's payout tables and #75's Buoyant capital flows. Both replays were run
+  on the merged archive — `replay:calls` over 28 commitment documents and
+  `replay:flows` over 33 fund statements — and **neither would change a byte**.
+  That is the merged reader reproducing both sides' output, not merely parsing.
+- **`glowData.ts` and `docs/BOOK-REPORT.md` were regenerated** from the merged
+  archive rather than trusted. The regeneration matched git's text merge byte
+  for byte, and a second run was identical.
+- **`build-book.mjs`, `types.ts`, the Portfolio Monitor and both test runners
+  kept both sides.** The ingest runner lists #75's `buoyant` and `classSwitch`
+  beside this branch's `capitalCalls` and `payouts`; the family runner lists
+  #75's `carriedCost` beside `fundReturns`, `searchIndex` and `reviewGaps`.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35,
+buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, golden
+140 — 2 not checked, 0 blocked) · `test:family` **37 suites, 1,891 checks, 0
+failed** · `npm run build-book` byte-identical and idempotent ·
+`replay:calls`, `replay:flows`, `replay:owners` and `replay:movements` each a
+no-op with `--check` · `reconcile:review -- --check` a no-op · CI (`build`) and
+Cloudflare Pages green on the pushed merge. MEASURED ON THE MERGED TREE. The
+full page sweep and `check:family` are recorded below once they finish.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
