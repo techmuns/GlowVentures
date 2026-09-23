@@ -21,10 +21,11 @@
 // held exactly. On this book that is 3 of 371 positions, and the assertions
 // below are written as RELATIONS against the generated book so they cannot go
 // stale when the next drop moves it.
-import { BOOK_POSITIONS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_SUMMARY, BOOK_ACCOUNTS } from "@/data/glowData";
 import {
   holdingReturn, returnModeCoverage, YEAR_DAYS, type Holdable,
   measuredReturn, returnCoverage, RETURN_MEASURES, isFixedIncome, type ReturnInput,
+  valueDateOf, commonValueDate, MIXED_VALUE_DATES, holdingYtd,
 } from "@/lib/analytics";
 
 let fails = 0;
@@ -286,6 +287,81 @@ ok("the book still carries a report date for the window to close against", !!BOO
   // XIRR and CALENDAR are absent on EVERY row — this book cannot strike either.
   ok("XIRR is absent on every position", returnCoverage(BOOK_POSITIONS, "xirr", ASOF).shown === 0);
   ok("calendar year is absent on every position", returnCoverage(BOOK_POSITIONS, "calendar", ASOF).shown === 0);
+}
+
+// ── 8. THE WINDOW ENDS AT THE VALUATION, NOT AT THE BOOK'S NEWEST DATE ──────
+//
+// Every caller passed `portfolio.asOf` as the window's end — the book's NEWEST
+// statement date, 29 Aug 2026, which is the date of two quantity-only trust
+// demats that value nothing. So Crompton's LKP holding, marked on its 31 Mar
+// statement, read CAGR −19.65% over 543 days where its own window is 392 days
+// and −26.14%. The window ends where the VALUE is struck: `valuedAt`.
+console.log("\n── 8. the window ends at the valuation ──");
+{
+  // Three hundred and sixty-four days to the valuation, four hundred to the
+  // fallback: the figure must NOT annualise, because the value was struck
+  // before the year was up.
+  const valuedAt = "2026-07-31";
+  const since = new Date(Date.parse(valuedAt) - (YEAR_DAYS - 1) * 86_400_000).toISOString().slice(0, 10);
+  const later = "2026-09-04";
+  const r = holdingReturn({ returnPct: 7.91, heldSince: since, valuedAt }, "cagr", later);
+  ok("364 days to the valuation is NOT annualised, whatever the fallback date says",
+     r.kind === "absolute" && r.pct === 7.91 && r.heldDays === YEAR_DAYS - 1,
+     r.kind === "absolute" ? `${r.heldDays} days` : r.kind);
+  const wrong = holdingReturn({ returnPct: 7.91, heldSince: since }, "cagr", later);
+  ok("...where closing on the fallback date alone WOULD have annualised it (load-bearing)", wrong.kind === "cagr");
+
+  // A row whose holdings are valued on different dates has no single window.
+  const mixed = holdingReturn({ returnPct: 12, heldSince: "2024-01-01", valuedAt: null }, "cagr", later);
+  ok("a row valued on different dates is not annualised, and says why",
+     mixed.kind === "absent" && mixed.reason === MIXED_VALUE_DATES);
+  ok("...while its holding-period figure still stands (it needs no window)",
+     holdingReturn({ returnPct: 12, heldSince: "2024-01-01", valuedAt: null }, "absolute", later).kind === "absolute");
+  const autoMixed = measuredReturn({ returnPct: 12, heldSince: "2024-01-01", valuedAt: null, assetClass: "Equity" }, "auto", later);
+  ok("auto on a mixed row shows the return on cost, tagged HPR, naming the reason",
+     autoMixed.shown && autoMixed.tag === "HPR" && autoMixed.pct === 12 && !!autoMixed.note && autoMixed.note.includes("different dates"));
+
+  // The year a YTD runs over is the valuation's.
+  ok("YTD takes its year from the valuation, not the fallback",
+     holdingYtd({ returnPct: 5, heldSince: "2025-06-01", valuedAt: "2025-12-31" }, "2026-02-01").kind === "since-open"
+     && holdingYtd({ returnPct: 5, heldSince: "2025-06-01" }, "2026-02-01").kind === "absent");
+
+  // valueDateOf: a live quote on its own IST day, a NAV on AMFI's date, else the statement's.
+  const nowMs = Date.parse("2026-09-22T20:00:00Z");          // 01:30 IST on 23 Sep
+  ok("a live value is dated on the exchange's calendar (IST), from the quote's own age",
+     valueDateOf({ live: true, quoteAgeS: 0 }, "2026-07-31", nowMs) === "2026-09-23"
+     && valueDateOf({ live: true, quoteAgeS: 3 * 3600 }, "2026-07-31", nowMs) === "2026-09-22");
+  ok("a published NAV is dated on AMFI's date",
+     valueDateOf({ navPriced: true, navDate: "2026-09-22" }, "2026-07-31", nowMs) === "2026-09-22");
+  ok("a statement mark is dated on its statement's date, never on the clock",
+     valueDateOf({}, "2026-07-31", nowMs) === "2026-07-31");
+  ok("one date across a set is that date; two dates are none; no dates are none",
+     commonValueDate(["2026-07-31", "2026-07-31"]) === "2026-07-31"
+     && commonValueDate(["2026-07-31", "2026-08-13"]) === null
+     && commonValueDate([]) === null && commonValueDate([null]) === null);
+
+  // THE BOOK'S OWN CASE, derived rather than typed: every position carrying a
+  // purchase date, measured to its OWN statement date. At least one must count
+  // a different number of days than the book's newest date would — or this
+  // section would pass against the window it replaced.
+  const asOfOf = (accountId: string) => BOOK_ACCOUNTS.find((a) => a.accountId === accountId)?.asOf ?? null;
+  const dated = BOOK_POSITIONS.filter((p) => p.heldSince && p.returnPct !== null);
+  let moved = 0;
+  for (const p of dated) {
+    const end = asOfOf(p.accountId)!;
+    const r = holdingReturn({ ...p, valuedAt: end }, "cagr", BOOK_SUMMARY.asOf);
+    const own = Math.round((Date.parse(end) - Date.parse(p.heldSince!)) / 86_400_000);
+    const book = Math.round((Date.parse(BOOK_SUMMARY.asOf) - Date.parse(p.heldSince!)) / 86_400_000);
+    if (own !== book) moved++;
+    ok(`${p.security} counts ${own} days to its own statement (${end})`,
+       r.kind !== "absent" && r.heldDays === own, r.kind !== "absent" ? `${r.heldDays}` : r.kind);
+    if (own >= YEAR_DAYS && r.kind === "cagr") {
+      const want = (Math.pow(1 + p.returnPct! / 100, YEAR_DAYS / own) - 1) * 100;
+      near(`${p.security} annualises over its own window`, r.pct, want, 0.005);
+    }
+  }
+  ok("some dated holding is valued before the book's newest date (load-bearing)", moved > 0,
+     `${moved} of ${dated.length}; newest date ${BOOK_SUMMARY.asOf}`);
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

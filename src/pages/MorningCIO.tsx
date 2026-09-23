@@ -12,7 +12,7 @@ import {
   holdingBucket, bucketLabel, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
   costCoversSet, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
 } from "@/lib/analytics";
-import { accountIndex, engagementOf, isDirect, ownerOf } from "@/lib/accounts";
+import { accountIndex, engagementOf, ownerOf } from "@/lib/accounts";
 /**
  * THE THREE AXES THE ALLOCATION TABLE CAN BE GROUPED ON, decided once for this
  * screen and the Portfolio Monitor alike — see the header of `groupAxis.ts`.
@@ -31,9 +31,9 @@ import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 /** The allocation table's columns, in the order its rows write their cells. */
 const ALLOC_COLS = ["section", "invested", "current", "return", "weight"] as const;
 import { useTableView, sortRows } from "@/lib/tableView";
-import { accountHasOpeningValue } from "@/lib/returns";
+import { measuredAccountsReturn } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
-import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
+import { xirrPct, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
@@ -203,7 +203,7 @@ const sectionColor = (axis: GroupAxis, key: string, i: number) => {
 };
 
 export function MorningCIO() {
-  const { consolidated, portfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { consolidated, portfolio, statementPortfolio, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
   /**
    * WHICH AXIS THE ALLOCATION CARD IS GROUPED ON. In the URL (`?alloc=`) like
    * every other view in this app, and for the reason the Portfolio Monitor's
@@ -438,15 +438,9 @@ export function MorningCIO() {
     const sides = marketSides(p);
 
     // The account registry, read for every question below that asks how an
-    // account is RUN — the allocation buckets, and the two sides the
-    // money-weighted return is measured over. `engagement` is what each
+    // account is RUN — the allocation buckets. `engagement` is what each
     // statement states outright; nothing here is pattern-matched out of a label.
     const accIdx = accountIndex(portfolio.accounts);
-    /** Run by an external manager — the side split the XIRR below is pooled on. */
-    const managedRow = (x: (typeof p)[number]) => {
-      const a = accIdx.get(x.accountId);
-      return a ? !isDirect(a) : true;   // unattributed defaults to managed, not direct
-    };
     const eqGroup = (rows: typeof p) => {
       const cost = sumOrNull(rows.map((x) => x.costBasis));
       const mv = sum(rows.map((x) => x.marketValue));
@@ -585,59 +579,19 @@ export function MorningCIO() {
     //      terminal flow with no opening stake behind it and returned 174.3%
     //      against 109.7% for the accounts that can be measured.
     //
-    //   2. THE TERMINAL DATE IS THE BOOK'S AS-OF, not `new Date()`. Closing
-    //      against today while /performance closes against the report date gave
-    //      the same figure two values (130.3% here, 174.3% there).
-    const asOfDate = new Date(portfolio.asOf);
-    // `accountHasOpeningValue`, not a copy of it: the drill-down this tile now
-    // opens lists the holdings of exactly the accounts this line selects, and
-    // two copies of the test are two chances for the coverage stated here and
-    // the set shown there to describe different accounts.
-    const hasOpening = (accountId: string) => accountHasOpeningValue(portfolio, accountId);
-    const sideOf = (a: (typeof portfolio.accounts)[number]) => {
-      const anyRow = p.find((x) => x.accountId === a.accountId);
-      return anyRow ? managedRow(anyRow) : !isDirect(a);
-    };
-    /** Flows and terminal market value for one side, measurable accounts only. */
-    const measured = (managed: boolean) => {
-      /**
-       * PER-ACCOUNT PARTS, each with its OWN as-of.
-       *
-       * These were pooled into one flow list and closed on one page-wide date.
-       * The accounts in this book do not share a report date, so that gave the
-       * ones valued earlier a stretch of flat performance they never had — and
-       * produced a different rate here from the one `/performance` showed for
-       * the same accounts. See `pooledXirr`.
-       */
-      const parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[] = [];
-      let mv = 0;
-      const excluded: string[] = [];
-      for (const a of portfolio.accounts) {
-        if (sideOf(a) !== managed) continue;
-        if (!hasOpening(a.accountId)) { excluded.push(a.accountNo); continue; }
-        // A PER-ACCOUNT TERMINAL VALUE READS `portfolio.positions`, NOT THE
-        // DEDUPED SET. `p` counts each dedupeGroup once, which is right for
-        // every book-wide figure on this page and wrong here: the account whose
-        // row lost the coin-toss would close against a market value smaller
-        // than the one its own statement prints, and its XIRR would be
-        // understated by exactly that holding. No account carrying a duplicate
-        // publishes an opening portfolio value in this drop, so nothing on
-        // screen moves — which is precisely why it had to be fixed before the
-        // rate went on a tile, rather than after a drop where it bites.
-        const accountMv = sum(portfolio.positions.filter((x) => x.accountId === a.accountId).map((x) => x.marketValue));
-        parts.push({
-          flows: (portfolio.accountCashFlows?.[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
-          terminalValue: accountMv,
-          asOf: new Date(a.asOf),
-        });
-        mv += accountMv;
-      }
-      return { parts, mv, excluded };
-    };
-    const listedXirr = (parts: { flows: { date: Date; amount: number }[]; terminalValue: number; asOf: Date }[]): number | null =>
-      pooledXirr(parts);
-    const directSide = measured(false), pmsSide = measured(true);
-    const xirrExcluded = [...directSide.excluded, ...pmsSide.excluded];
+    //   2. EACH ACCOUNT CLOSES ON ITS OWN STATEMENT DATE, ON ITS STATEMENT
+    //      VALUE, AND THE WINDOW ENDS AT THE LATEST OF THOSE DATES — never at
+    //      `portfolio.asOf` and never at `new Date()`. This ended the window on
+    //      `portfolio.asOf`, the book's newest date (29 Aug, two quantity-only
+    //      trust demats that value nothing), so the tile de-annualised over 150
+    //      days where the pool closes on 13 Aug — +30.1% here against +26.5% on
+    //      /performance for the same seven accounts. And it closed each account
+    //      on its LIVE value dated to its statement: the flows are complete only
+    //      to the statement date, so a price struck today does not belong there.
+    //
+    // Both rules live in `measuredAccountsReturn`, which /performance and the
+    // Family & Entities rows call too, so the three are one computation.
+    const mw = measuredAccountsReturn(statementPortfolio ?? portfolio, portfolio.accounts);
 
     const stX = startupXirr(pm.startups, today, null);
     const unlX = fundXirr(pm.unlistedCompanies, today);
@@ -824,28 +778,19 @@ export function MorningCIO() {
         .filter((f) => f.firstInvest && f.drawn > 0)
         .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
     ];
-    const listedParts = [...directSide.parts, ...pmsSide.parts];
-    const listedFlows = listedParts.flatMap((x) => x.flows);
-    const measuredMV = directSide.mv + pmsSide.mv;
-    const listedXirrPct = listedXirr(listedParts);
     // The book-wide rate adds the private flows to the SAME per-account parts,
-    // each still closing on its own as-of — not on one page-wide date.
-    const bookXirr = listedParts.length
-      ? xirrPct([
-        ...listedParts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
-        ...privateFlows,
-      ])
+    // each still closing on its own statement date. The window is the rate's
+    // own: its first flow to its last — which, with no private flows (this
+    // book carries none), is exactly `mw.windowDays`.
+    const bookFlows = [
+      ...mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
+      ...privateFlows,
+    ];
+    const bookXirr = mw.parts.length ? xirrPct(bookFlows) : null;
+    const flowTimes = bookFlows.map((f) => f.date.getTime());
+    const xirrWindowDays = mw.parts.length
+      ? Math.round((Math.max(...flowTimes) - Math.min(...flowTimes)) / 864e5)
       : null;
-    const xirrWindowStart = listedFlows.reduce<Date | null>((a, f) => (!a || f.date < a ? f.date : a), null);
-    const xirrWindowDays = xirrWindowStart
-      ? Math.round((asOfDate.getTime() - xirrWindowStart.getTime()) / 864e5)
-      : null;
-    // The family reads the headline as an ANNUAL return, so an XIRR annualised
-    // over a quarter (>100% p.a. in a strong quarter) misleads. De-annualise it
-    // to the money-weighted return actually earned over the window — the total to
-    // date, which is what these pages now show.
-    const listedTotalReturn = totalReturnFromXirr(listedXirrPct, xirrWindowDays);
-    const bookTotalReturn = totalReturnFromXirr(bookXirr, xirrWindowDays);
 
     // Concentration, consolidated on securityKey across accounts. ISIN cannot do
     // this here: the same company arrives from two platforms with two spellings
@@ -905,9 +850,9 @@ export function MorningCIO() {
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
-      buckets, bucketsByAxis, bookXirr, listedXirrPct, listedTotalReturn, bookTotalReturn,
-      measuredMV, xirrExcluded, xirrWindowDays,
-      xirrAccounts: listedParts.length,
+      buckets, bucketsByAxis,
+      // Where the pool closes — stated in the tile's hover beside the window.
+      mwLastClose: mw.lastClose,
       // THE ONE PLACE THE TILE'S FIGURE IS DECIDED. `moneyWeightedReturn`
       // refuses to annualise a window shorter than a year, so a strong quarter
       // can no longer reach the screen as a yearly rate — see the note on it.
@@ -916,7 +861,7 @@ export function MorningCIO() {
       largestName, largestKey: largest?.[0] ?? "", largestBucket, largestPct, winners, losers,
       navSeries, navFirst, navGrowth,
     };
-  }, [portfolio, convertFromBase, today]);
+  }, [portfolio, statementPortfolio, convertFromBase, today]);
 
   if (!portfolio || !model) return null;
   const m = model;
@@ -1024,7 +969,7 @@ export function MorningCIO() {
         m.bookMW.windowDays == null ? "" :
         m.bookMW.annualised
           ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
-          : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
+          : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS${m.mwLastClose ? `, TO ${m.mwLastClose}` : ""}, AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window — each account valued on its own statement, on the date that statement strikes it. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
       }`,
       value: pct1(m.bookMW.pct),
       sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value") : undefined,

@@ -7,7 +7,7 @@ import type { Account, Position } from "./types";
 import type { Txn } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, DASH } from "./format";
-import { holdingYtd } from "./analytics";
+import { holdingYtd, valueDateOf, commonValueDate } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import { fifoTotals } from "./fifo";
 import {
@@ -79,13 +79,13 @@ type HoldingRow = {
 function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
   const idx = accountIndex(accounts);
   /**
-   * THE BOOK'S OWN REPORT DATE, not `new Date()`. The year a "year to date"
-   * runs over is the one the FIGURES were struck in; reading today's date would
-   * roll the window over at midnight on a sheet whose marks are months old, and
-   * would make the same export answer differently on two days from one book.
-   * It is the newest account as-of, which is what `Portfolio.asOf` is (§3).
+   * THE DATE EACH ROW'S VALUE IS STRUCK, not `new Date()` and not the book's
+   * newest date. The year a "year to date" runs over is the one the FIGURES
+   * were struck in: a statement mark on its statement's date, a published NAV
+   * on AMFI's, a live quote on its own day (`valueDateOf`). `nowMs` only dates
+   * a live quote; a statement mark never reads the clock.
    */
-  const bookAsOf = accounts.reduce((a, x) => (x.asOf > a ? x.asOf : a), accounts[0]?.asOf ?? "");
+  const nowMs = Date.now();
   // CONSOLIDATED export: each dedupeGroup counts once, so the grand total is the
   // book's true NAV and a holding reported on two members' statements appears at
   // its real value rather than 2×. A raw sum exported more than the book holds.
@@ -178,8 +178,14 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
           const since = ps.every((x) => x.heldSince)
             ? ps.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), ps[0].heldSince!)
             : null;
-          const ret = costNA || (cost as number) <= 0 ? null : ((mv - (cost as number)) / (cost as number)) * 100;
-          const y = holdingYtd({ returnPct: ret, heldSince: since }, bookAsOf);
+          // The ROW'S OWN return, FIFO — the figure the Return column beside it
+          // prints and the one the tab's YTD cell is struck on — never a second
+          // formula (value − cost) that leaves out what was realised.
+          const ret = costNA || (cost as number) <= 0 ? null : fifoTotals(ps).returnPct;
+          // The year is the one the row's value is struck in (its common value
+          // date), never the book's newest date — see `valueDateOf`.
+          const valuedAt = commonValueDate(ps.map((x) => valueDateOf(x, idx.get(x.accountId)?.asOf, nowMs)));
+          const y = holdingYtd({ returnPct: ret, heldSince: since, valuedAt }, valuedAt ?? "");
           return y.kind === "since-open" ? y.pct : null;
         })(),
       });

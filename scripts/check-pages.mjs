@@ -5293,6 +5293,54 @@ const BOOK_HALVES = (() => {
   } catch { return null; }
 })();
 const BOOK_HAS_BOTH_HALVES = () => !!BOOK_HALVES && BOOK_HALVES.listed > 0 && BOOK_HALVES.private > 0;
+/**
+ * ── THE MONEY-WEIGHTED RETURN, RE-EXPRESSED OFF THE BOOK ─────────────────────
+ *
+ * Morning CIO's tile ended its window on the book's NEWEST date (29 Aug 2026,
+ * two quantity-only trust demats) and closed each account on its LIVE value
+ * dated to its statement: +30.1% over 150 days where the pool closes on 13 Aug
+ * — 134 days, +26.5%, the figure /performance and Family & Entities show — and
+ * +45.3% on live prices. Struck here by a second path: every account whose
+ * flows carry an opening portfolio value and whose STATEMENT holds a positive
+ * value, each closed on its own statement date, pooled, solved by bisection,
+ * and de-annualised over first flow → LATEST close. Read off the RAW statement
+ * rows — never `bookArray`'s NAV-overlaid ones — because the flows are complete
+ * only to the statement date.
+ */
+const MWR_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const raw = (name) => {
+      const i = src.indexOf(`export const ${name}`), a = src.indexOf("= [", i), b = src.indexOf("\n];", a);
+      return JSON.parse(src.slice(a + 2, b + 2));
+    };
+    const positions = raw("BOOK_POSITIONS"), accounts = raw("BOOK_ACCOUNTS");
+    const cf = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS") ?? {};
+    const DAY_MS = 86400000;
+    const flows = [];
+    let lastClose = "";
+    for (const a of accounts) {
+      const fl = cf[a.accountId] ?? [];
+      if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
+      const mv = positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
+      if (!(mv > 0)) continue;
+      for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });
+      flows.push({ t: Date.parse(`${a.asOf}T00:00:00Z`), amount: mv });
+      if (a.asOf > lastClose) lastClose = a.asOf;
+    }
+    if (!flows.length) return null;
+    const t0 = Math.min(...flows.map((f) => f.t)), t1 = Math.max(...flows.map((f) => f.t));
+    const npv = (r) => flows.reduce((s, f) => s + f.amount / Math.pow(1 + r, (f.t - t0) / (365 * DAY_MS)), 0);
+    let lo = -0.999, hi = 100;
+    if (npv(lo) * npv(hi) > 0) return null;
+    for (let i = 0; i < 300; i++) { const mid = (lo + hi) / 2; if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid; }
+    const annual = ((lo + hi) / 2) * 100;
+    const windowDays = Math.round((t1 - t0) / DAY_MS);
+    const toDate = windowDays >= 365 ? annual : ((1 + annual / 100) ** (windowDays / 365) - 1) * 100;
+    return { annual, windowDays, toDate, lastClose, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
+  } catch { return null; }
+})();
+
 const TILE_NAMES_COSTLESS = () => !!BOOK_HALVES && BOOK_HALVES.noCost > 0;
 
 /**
@@ -7729,6 +7777,33 @@ const CIO_SHARED = [
     // Anything else is the extrapolation this guard exists to refuse.
     return days >= 365 ? /genuine annual rate/i.test(hover) : /NOT ANNUALISED/.test(hover);
   }],
+  /**
+   * ...AND THE RATE AND ITS WINDOW ARE THE BOOK'S, ON STATEMENT VALUES, TO THE
+   * POOL'S OWN LAST CLOSE. Two claims the hover check above cannot see: it
+   * reads the window's words, not whether the window is the right one. Run on
+   * `cio` AND `cio-live`: the live walk prices every symbol at its mark x 1.10,
+   * so a tile that closed an account on its LIVE value dated to its statement
+   * reads a different rate there and fails — the half that only a live walk
+   * can reach.
+   */
+  ["the money-weighted tile is the statement-basis rate, de-annualised to the pool's last close", (t, ctx) => {
+    if (!MWR_BOOK) return { notChecked: "the book's opening-value accounts could not be read on this run" };
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    const tile = ctx.kpiTiles.find((x) => /^(money-weighted return|xirr \(annualised\))$/i.test(x.label));
+    if (!tile) return { notChecked: "the reader's strip does not show the money-weighted tile" };
+    const shown = Number(/([+\-−]?\d+(?:\.\d+)?)\s*%/.exec(tile.value ?? "")?.[1]?.replace("−", "-"));
+    const days = Number(/the window is (\d+) days/i.exec(tile.hover ?? "")?.[1]);
+    // The printed figure carries one decimal; half of it is the bound.
+    return Number.isFinite(shown) && Math.abs(shown - MWR_BOOK.toDate) <= 0.05 + 1e-9
+      && days === MWR_BOOK.windowDays
+      && (tile.hover ?? "").includes(MWR_BOOK.lastClose);
+  }],
+  // LOAD-BEARING: the book's newest date must lie after the pool's last close,
+  // or the claim above would pass against the window it replaced.
+  ["...and the book's newest date lies after that close, so the window rule is doing work", () => {
+    if (!MWR_BOOK) return { notChecked: "the book's opening-value accounts could not be read on this run" };
+    return MWR_BOOK.bookNewest > MWR_BOOK.lastClose;
+  }],
   /* AND THE CROSS-HELD FIGURE KEEPS THE DISTINCTION ITS DRILL-DOWN'S LEAD USED
      TO CARRY. Two members each owning some of a name is not the ₹3.17 Cr
      duplicate policy, and a reader who conflates them misreads this figure. */
@@ -7811,6 +7886,46 @@ const CIO_SHARED = [
     // tile beside it their value — and the tile here is asserted to open that
     // page, so the route from figure to explanation is checked end to end.
 ];
+/**
+ * ── WHERE A HOLDING'S RETURN WINDOW ENDS, RE-EXPRESSED OFF THE BOOK ──────────
+ *
+ * The date its value is struck: a published NAV on AMFI's date, else its
+ * account's own statement date — per holding, and ONE date for a row, or none.
+ * Read off `bookArray`'s positions, which carry the NAV overlay the pages
+ * render. Every Portfolio Monitor CAGR used to end on the book's NEWEST date,
+ * 29 Aug 2026: Crompton read −19.65% over 543 days where its own window is 392
+ * days and −26.14%.
+ */
+const VALUE_WINDOW_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const ai = src.indexOf("export const BOOK_ACCOUNTS"), aa = src.indexOf("= [", ai), ab = src.indexOf("\n];", aa);
+    const accounts = JSON.parse(src.slice(aa + 2, ab + 2));
+    const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    const byKey = new Map();
+    for (const p of positions) {
+      const d = p.navPriced && p.navDate ? p.navDate : asOf.get(p.accountId) ?? null;
+      const e = byKey.get(p.securityKey) ?? { dates: new Set(), since: [] };
+      e.dates.add(d);
+      if (p.heldSince) e.since.push(p.heldSince);
+      byKey.set(p.securityKey, e);
+    }
+    const endOf = (key) => { const e = byKey.get(key); return e && e.dates.size === 1 ? [...e.dates][0] : null; };
+    const newest = accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "");
+    // Dated holdings whose OWN window reaches a year — the rows the CAGR column
+    // must annualise, over their own window.
+    const yearOld = [...byKey.entries()].filter(([k, e]) => {
+      const end = endOf(k);
+      return end && e.since.length && e.since.every((x) => (Date.parse(end) - Date.parse(x)) / 86400000 >= 365);
+    }).map(([k]) => k);
+    return { endOf, newest, yearOld };
+  } catch { return null; }
+})();
+
+/** The two money-weighted checks, also run on the LIVE walk (see the first). */
+const CIO_MWR = CIO_SHARED.filter(([d]) =>
+  /money-weighted tile is the statement-basis rate|book's newest date lies after that close/.test(d));
 
 const CIO_MOVERS = [
   ["with no quote feed, Today's movers states the cause and prints no day change",
@@ -14730,6 +14845,7 @@ const INVARIANTS = {
     }],
   ],
   "cio-live": [
+    ...CIO_MWR,
     /**
      * THE SCOPE IS NAMED AS `priority`, WHICH IS A CLAIM ABOUT THE REQUEST.
      *
@@ -16394,6 +16510,27 @@ const INVARIANTS = {
    */
   "monitor-cagr": [
     ...RETURN_COLUMNS,
+    /**
+     * EVERY ANNUALISED CAGR ENDS ON ITS OWN VALUATION DATE. The cell carries the
+     * date its window ends (`data-return-valued-at`) and the note that states
+     * it; both must be the book's own date for that holding — never the book's
+     * newest date — and the day count in the note must be the one between the
+     * two dates it names.
+     */
+    ["every annualised CAGR ends on its holding's own valuation date, never the book's newest", (t, ctx) => {
+      const B = VALUE_WINDOW_BOOK;
+      if (!B) return { notChecked: "the book could not be read on this run" };
+      const cells = (ctx?.returnCells ?? []).filter((c) => c.measure === "cagr" && !c.tag && c.note && /Annualised over/.test(c.note));
+      // The book says some holding is a year old to its own valuation, so a
+      // column with nothing annualised is a finding, not an abstention.
+      if (!cells.length) return B.yearOld.length === 0 ? { notChecked: "no holding in this book is a year old to its own valuation" } : false;
+      return cells.every((c) => {
+        const end = B.endOf(c.key);
+        const m = /over the (\d+) days from (\d{4}-\d{2}-\d{2}), the oldest unit still held, to its valuation on (\d{4}-\d{2}-\d{2})/.exec(c.note);
+        return !!end && c.valuedAt === end && !!m && m[3] === end
+          && Number(m[1]) === Math.round((Date.parse(m[3]) - Date.parse(m[2])) / 86400000);
+      }) && cells.some((c) => B.endOf(c.key) !== B.newest);
+    }],
     // The picker is on CAGR, and the CAGR caption explains what it annualises.
     // The measure is on the URL and the cells, not a "Return p.a." header any more.
     ["the CAGR measure is selected", (t, ctx) => {
@@ -19658,6 +19795,11 @@ for (const theme of THEMES) {
           // under Current Value of Holdings. A figure, not a caption, and told
           // apart from one by its own handle rather than by its words.
           second: (c.querySelector("[data-kpi-second]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+          // THE TILE'S OWN FIGURE, off its own handle — what a value check
+          // reconciles against the book.
+          value: (c.querySelector("[data-kpi-value]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+          // Its hover, where the window and the basis of a rate are stated.
+          hover: [...c.querySelectorAll("a[title]")].map((a) => a.getAttribute("title") ?? "").join(" ") || null,
           // THE TILE'S OWN CONTROLS — the metric picker, remove and add. Counted
           // apart from every other button, because the claim below is that
           // nothing ELSE in a tile is a control: a popover trigger once was.
@@ -21693,6 +21835,10 @@ for (const theme of THEMES) {
             // still has to say for itself now that the header names the rest.
             tag: td.getAttribute("data-return-tag"),
             text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+            // Where this row's window ENDS, and what the figure says of it.
+            valuedAt: td.getAttribute("data-return-valued-at"),
+            note: td.getAttribute("data-return-note"),
+            key: td.closest("tr")?.getAttribute("data-security-key") ?? null,
           })));
       /**
        * ...AND WHAT EACH RETURN COLUMN'S HEADER SAYS. The coverage count the five

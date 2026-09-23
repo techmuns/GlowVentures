@@ -62,7 +62,15 @@ const near = (name: string, got: number | null, want: number, tol = 0.01) => {
   else console.log(`ok   ${name} = ${got}`);
 };
 
-const ASOF = "2026-08-29";
+// WHERE A TRANCHE'S WINDOW ENDS — the date its position's value is struck,
+// which for these statement positions is the ACCOUNT'S OWN statement date.
+// Re-expressed here off `BOOK_ACCOUNTS` rather than through `valueDateOf`, so
+// the suite does not agree with the helper by construction. It was the book's
+// newest date, 29 Aug 2026, for every row — two quantity-only trust demats —
+// and that is the defect this now guards against (see "the window ends at the
+// valuation" below).
+const VALUE_DATE = (x: Position) => BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)?.asOf ?? null;
+const BOOK_NEWEST = BOOK_ACCOUNTS.reduce((a, x) => (x.asOf > a ? x.asOf : a), "");
 // The family's own rule, and `holdingReturn`'s "cagr" mode IS that rule: a year
 // or more annualises, anything shorter stands as the absolute figure and is
 // labelled so. Never "absolute", which would refuse to annualise a tranche held
@@ -105,7 +113,7 @@ for (const k of keys) {
   const p = posOf(tr.accountId, tr.securityKey);
   if (!p) { ok(`position exists for ${k}`, false); continue; }
   if (tr.moves.length > 1) multiTranche++;
-  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF);
+  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE);
   if (!t) { ok(`a table is built for ${k}`, false); continue; }
 
   // Half of the last decimal the position's unit count is PRINTED to. Neo
@@ -132,7 +140,7 @@ const at = BOOK_POSITION_TRANCHES[ANKITA];
 if (!at) ok("the four-contribution folio is in the book", false);
 else {
   const p = posOf(at.accountId, at.securityKey)!;
-  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
+  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
   eq("it has four contributions", t.rows.length, 4);
   const first = t.rows[0], last = t.rows.at(-1)!;
   ok("the entry NAV rises across them", first.navAtEntry < last.navAtEntry,
@@ -147,8 +155,8 @@ else {
   // And the combined figure is BETWEEN them — a weighted mean of its own rows,
   // never outside the range of what it averages.
   ok("the combined return sits between the extremes",
-    t.returnPct <= first.returnPct && t.returnPct >= last.returnPct,
-    `combined ${t.returnPct.toFixed(2)}%`);
+    t.returnPct !== null && t.returnPct <= first.returnPct && t.returnPct >= last.returnPct,
+    `combined ${t.returnPct?.toFixed(2)}%`);
 }
 
 console.log("\n── the return goes through the book's one guard ──");
@@ -156,20 +164,46 @@ for (const k of keys) {
   const tr = BOOK_POSITION_TRANCHES[k];
   const p = posOf(tr.accountId, tr.securityKey);
   if (!p) continue;
-  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
+  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
+  const end = VALUE_DATE(p)!;
   for (const r of t.rows) {
-    const held = (new Date(ASOF).getTime() - new Date(r.date).getTime()) / 86400000;
+    const held = (new Date(end).getTime() - new Date(r.date).getTime()) / 86400000;
     // Under a year the absolute figure stands; a year or more annualises. Never
     // the other way round — that is Stage 10g(ii)'s +99.0%.
     const want = held >= 365 ? "cagr" : "absolute";
     ok(`${r.date} ${r.ret.kind === want ? "" : "MIS"}labelled ${r.ret.kind}`, r.ret.kind === want,
-      `${Math.round(held)} days held`);
+      `${Math.round(held)} days held to ${end}`);
+    // The window the figure states is the one to the valuation, to the day.
+    if (r.ret.kind !== "absent") {
+      ok(`${r.date} counts its days to ${end}, not to the book's newest date`, r.ret.heldDays === Math.round(held),
+        `${r.ret.heldDays} vs ${Math.round(held)}`);
+    }
+    eq(`${r.date} carries the date its value is struck at`, r.valuedAt, end);
   }
 }
+
+// LOAD-BEARING: the rule must CHANGE something on this book, or a suite asserting
+// it would pass just as happily against the window it replaced. A contribution
+// held under a year to its own valuation but a year or more to the book's newest
+// date is exactly the row the old window annualised — Buoyant's 364-day one.
+let crossedOnlyByBookDate = 0;
+for (const k of keys) {
+  const tr = BOOK_POSITION_TRANCHES[k];
+  const p = posOf(tr.accountId, tr.securityKey);
+  if (!p) continue;
+  const end = VALUE_DATE(p)!;
+  for (const m of tr.moves) {
+    const own = (Date.parse(end) - Date.parse(m.date)) / 864e5;
+    const book = (Date.parse(BOOK_NEWEST) - Date.parse(m.date)) / 864e5;
+    if (own < 365 && book >= 365) crossedOnlyByBookDate++;
+  }
+}
+ok("some contribution is under a year to its valuation and over it to the book's newest date",
+  crossedOnlyByBookDate > 0, `${crossedOnlyByBookDate} row(s), newest date ${BOOK_NEWEST}`);
 const allRows = keys.flatMap((k) => {
   const tr = BOOK_POSITION_TRANCHES[k];
   const p = posOf(tr.accountId, tr.securityKey);
-  return p ? (trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)?.rows ?? []) : [];
+  return p ? (trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)?.rows ?? []) : [];
 });
 // ANNUALISING A WINDOW LONGER THAN A YEAR MUST SHRINK THE FIGURE, and that is
 // the invariant rather than any ceiling on the rate itself. A first draft here
@@ -206,7 +240,7 @@ for (const k of keys) {
   const pagesPath = path.join(AUDIT, entry.docKey, "pages.json");
   if (!fs.existsSync(pagesPath)) continue;
   const raw = fs.readFileSync(pagesPath, "utf8");
-  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
+  const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
   for (const r of t.rows) {
     // A TRANCHE CARRIED THROUGH A FUND'S CLASS SWITCH is priced here in the
     // class held TODAY — invested ÷ the carried units — which no statement
@@ -301,17 +335,17 @@ ok("most of the book has none, and that is the honest state",
 
 console.log("\n── a holding with no breakdown yields nothing, never an empty table ──");
 const noneKey = BOOK_POSITIONS.find((p) => !BOOK_POSITION_TRANCHES[trancheKey(p.accountId, p.securityKey)])!;
-eq("no table for an unbroken-down holding", trancheTable([noneKey], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF), null);
-eq("no table for an empty set", trancheTable([], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF), null);
+eq("no table for an unbroken-down holding", trancheTable([noneKey], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE), null);
+eq("no table for an empty set", trancheTable([], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE), null);
 
 // ALL OR NOTHING ACROSS A CONSOLIDATED ROW. One constituent with a breakdown
 // and one without must yield nothing: a table covering half a row's Invested
 // would fall short of the cell it expands from, and the shortfall reads as a
 // return. Verified on a real pair rather than asserted.
 const withTr = posOf(BOOK_POSITION_TRANCHES[keys[0]].accountId, BOOK_POSITION_TRANCHES[keys[0]].securityKey)!;
-eq("a mixed set yields no table", trancheTable([withTr, noneKey], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF), null);
+eq("a mixed set yields no table", trancheTable([withTr, noneKey], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE), null);
 ok("...while the covered one alone still does",
-  trancheTable([withTr], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF) !== null);
+  trancheTable([withTr], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE) !== null);
 
 // AND A DEDUPE PAIR COUNTS ONCE. Transition Venture Fund I is reported under
 // both family trusts as one dedupeGroup, so a consolidated row prints 7,500
@@ -320,8 +354,8 @@ ok("...while the covered one alone still does",
 // set, and this asserts what the wrong set would have produced.
 const tvcs = BOOK_POSITIONS.filter((p) => p.securityKey === "transition-venture-capital-fund-i-class-a1");
 if (tvcs.length === 2) {
-  const both = trancheTable(tvcs, BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
-  const one = trancheTable([tvcs[0]], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF)!;
+  const both = trancheTable(tvcs, BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
+  const one = trancheTable([tvcs[0]], BOOK_POSITION_TRANCHES, TRANCHE_MODE, VALUE_DATE)!;
   near("both trusts' units are twice one trust's", both.units, one.units * 2, 0.0005);
   ok("so a consolidated row must be given the deduped set, never the securityKey",
     both.units !== one.units, `${both.units} vs ${one.units}`);

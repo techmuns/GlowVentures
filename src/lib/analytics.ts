@@ -1002,9 +1002,66 @@ export const daysBetween = (fromISO: string, toISO: string) =>
   Math.round((Date.parse(toISO) - Date.parse(fromISO)) / 86_400_000);
 
 /**
+ * THE DATE A POSITION'S VALUE IS STRUCK AT — which is where any window that
+ * annualises or dates its return must end.
+ *
+ * It used to be `portfolio.asOf`, the book's NEWEST statement date. On this
+ * book that is 29 Aug 2026, the date of two quantity-only trust demats that
+ * value nothing, so every return was annualised over days nobody measured:
+ * Crompton's LKP holding, marked on its 31 Mar statement, read CAGR −19.65%
+ * over 543 days where its own window is 392 days and −26.14%; a Buoyant
+ * contribution held 364 days to its 31 Jul valuation was annualised instead of
+ * shown as the holding-period return it is. The value behind a return is struck
+ * on ONE date — a live quote today, a published NAV on AMFI's date, a
+ * statement mark on its statement's date — and the window ends there.
+ *
+ * `nowMs` is passed in, never read here, so a page and its suite agree.
+ */
+export function valueDateOf(
+  p: { live?: boolean; navPriced?: boolean; navDate?: string; quoteAgeS?: number | null },
+  statementAsOf: string | null | undefined,
+  nowMs: number,
+): string | null {
+  if (p.live) {
+    // The quote's own moment — now less its age — on the EXCHANGE's calendar
+    // (IST, UTC+5:30), never the server's UTC one: at 03:00 IST the UTC date
+    // is still yesterday.
+    const at = nowMs - Math.max(0, p.quoteAgeS ?? 0) * 1000;
+    return new Date(at + 19_800_000).toISOString().slice(0, 10);
+  }
+  if (p.navPriced && p.navDate) return p.navDate;
+  return statementAsOf ?? null;
+}
+
+/**
+ * The ONE date a set of positions is valued at, or `null` where they differ —
+ * a row that clubs holdings marked on different dates has no single window to
+ * annualise over, and picking any one of the dates would credit the others with
+ * days they were not measured across.
+ */
+export function commonValueDate(dates: readonly (string | null | undefined)[]): string | null {
+  const set = new Set(dates);
+  if (set.size !== 1) return null;
+  const [d] = [...set];
+  return d ?? null;
+}
+
+/** Where a return's window ends: the row's own value date, else the fallback. */
+function windowEnd(p: { valuedAt?: string | null }, asOf: string): string | null {
+  return p.valuedAt === undefined ? asOf : p.valuedAt;
+}
+
+/** Why a row whose holdings are valued on different dates is not annualised. */
+export const MIXED_VALUE_DATES =
+  "the holdings behind this row are valued on different dates, so there is no single window to annualise over — "
+  + "open the row: each statement line carries its own return";
+
+/**
  * The return to render for one holding, on the mode the reader picked.
  *
- * `asOf` is the book's own report date, never `new Date()`: closing against
+ * The window runs from `heldSince` to the date the value was struck —
+ * `valuedAt` (see `valueDateOf`); `asOf` is only the fallback for a caller that
+ * does not carry one. Never `new Date()` for a statement mark: closing against
  * today on one page and the statement date on another gave the same
  * measurement two values once already (see the XIRR notes in CLAUDE.md).
  *
@@ -1014,16 +1071,25 @@ export const daysBetween = (fromISO: string, toISO: string) =>
  * where the holding's start is unknown it renders absent, because a rate over
  * an unknown window is not a weaker figure, it is not a figure.
  */
-export type Holdable = { returnPct: number | null; heldSince: string | null };
+export type Holdable = {
+  returnPct: number | null;
+  heldSince: string | null;
+  /** The date the value behind `returnPct` is struck at (`valueDateOf`); `null`
+   *  where the row's holdings are valued on different dates; omitted where the
+   *  caller has no value date and the fallback `asOf` stands. */
+  valuedAt?: string | null;
+};
 
 export function holdingReturn(p: Holdable, mode: ReturnMode, asOf: string): HoldingReturn {
   const pct = p.returnPct;
-  const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
+  const end = windowEnd(p, asOf);
+  const heldDays = p.heldSince && end ? daysBetween(p.heldSince, end) : null;
   if (pct === null || pct === undefined) {
     return { kind: "absent", reason: "no statement in this book reports a cost for this holding, so it has no return to strike" };
   }
   if (mode === "absolute") return { kind: "absolute", pct, heldDays };
 
+  if (p.heldSince && end === null) return { kind: "absent", reason: MIXED_VALUE_DATES };
   if (heldDays === null) {
     return {
       kind: "absent",
@@ -1095,7 +1161,8 @@ export type HoldingYtd =
  * midnight on a page showing figures struck in August.
  */
 export function holdingYtd(p: Holdable, asOf: string): HoldingYtd {
-  const yearStart = `${asOf.slice(0, 4)}-01-01`;
+  // The year is the one the VALUE is struck in, not the book's newest date.
+  const yearStart = `${(windowEnd(p, asOf) ?? asOf).slice(0, 4)}-01-01`;
   if (!p.heldSince) {
     return {
       kind: "absent",
@@ -1206,6 +1273,8 @@ export type ReturnInput = {
   heldSince: string | null;
   assetClass: string | null | undefined;
   costNA?: boolean;
+  /** See `Holdable.valuedAt`. */
+  valuedAt?: string | null;
 };
 
 export type MeasuredReturn =
@@ -1243,7 +1312,7 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     if (r.kind === "absent") return { shown: false, tag: "CAGR", reason: r.reason };
     if (r.kind === "cagr") {
       return { shown: true, pct: r.pct, tag: "CAGR",
-        note: `Annualised over the ${r.heldDays} days since ${r.since}, the oldest unit still held.` };
+        note: `Annualised over the ${r.heldDays} days from ${r.since}, the oldest unit still held, to its valuation on ${windowEnd(p, asOf)}.` };
     }
     // The guard fired: under a year, so the ABSOLUTE figure stands, marked.
     return { shown: true, pct: r.pct, tag: "HPR",
@@ -1270,7 +1339,8 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
 
   // ── auto: the methodology ──────────────────────────────────────────────────
   if (noCost) return { shown: false, tag: "AUTO", reason: NO_COST_RETURN };
-  const heldDays = p.heldSince ? daysBetween(p.heldSince, asOf) : null;
+  const end = windowEnd(p, asOf);
+  const heldDays = p.heldSince && end ? daysBetween(p.heldSince, end) : null;
   if (isFixedIncome(p.assetClass)) {
     // The rule routes fixed income to XIRR, which this book cannot strike per
     // holding — so the return on cost stands, tagged HPR, and the note names the
@@ -1288,9 +1358,11 @@ export function measuredReturn(p: ReturnInput, measure: ReturnMeasure, asOf: str
     // A total loss has no compound rate — fall through to the absolute figure.
   }
   return { shown: true, pct: p.returnPct as number, tag: "HPR",
-    note: heldDays === null
+    note: p.heldSince && end === null
+      ? `Total return on cost — ${MIXED_VALUE_DATES}.`
+      : heldDays === null
       ? "No purchase date on file, so this is the total return on cost; a holding a year or older is shown as CAGR once a date is known."
-      : `Held ${heldDays} days — under a year, so this is the total return on cost.` };
+      : `Held ${heldDays} days to its valuation on ${end} — under a year, so this is the total return on cost.` };
 }
 
 /**

@@ -117,7 +117,7 @@ export function Kpi({ label, labelText, value, second, sub, delta, icon, href, h
       {/* `pointer-events-none` on every wrapper lets a click anywhere fall
           through to the anchor beneath — there is nothing interactive left in
           here to protect, now that the figure no longer opens a popover. */}
-      <div className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap text-[19px] font-semibold tracking-tight text-slate-100 tabular">{value}</div>
+      <div data-kpi-value className="pointer-events-none relative z-10 mt-2.5 w-fit max-w-full whitespace-nowrap text-[19px] font-semibold tracking-tight text-slate-100 tabular">{value}</div>
       {second && (
         <div data-kpi-second className="pointer-events-none relative z-10 mt-1 whitespace-nowrap text-[12.5px] text-slate-300">{second}</div>
       )}

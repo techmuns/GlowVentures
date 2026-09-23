@@ -42,7 +42,7 @@ const near = (name: string, got: number | null | undefined, want: number, tol: n
   else console.log(`ok   ${name} = ${got}`);
 };
 
-const ASOF = "2026-08-29";
+// (The tranche windows end on each account's own statement date — see `trancheTable`.)
 const ROOT = process.env.GLOW_FIXTURES ? path.resolve(process.env.GLOW_FIXTURES, "../../../..") : process.cwd();
 const AUDIT = path.join(ROOT, "public", "audit");
 
@@ -79,7 +79,7 @@ for (const p of carried) {
   console.log(`\n── ${p.security} · ${tag} ──`);
   ok(`a per-contribution breakdown exists — ${tag}`, !!tr);
   if (!tr) continue;
-  const t = trancheTable([p], BOOK_POSITION_TRANCHES, "cagr", ASOF);
+  const t = trancheTable([p], BOOK_POSITION_TRANCHES, "cagr", (x) => BOOK_ACCOUNTS.find((a) => a.accountId === x.accountId)?.asOf ?? null);
   ok(`the breakdown builds — ${tag}`, !!t);
   if (!t) continue;
 

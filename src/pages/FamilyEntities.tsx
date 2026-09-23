@@ -89,7 +89,7 @@ const ALL_ENTITIES = "All";
 const WEIGHT_OF = "the whole consolidated book — every account and every asset class, each dedupeGroup counted once";
 
 export function FamilyEntities() {
-  const { portfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
   const [searchParams, setSearchParams] = useSearchParams();
   const [holdingsQ, setHoldingsQ] = useState("");
   const entityView = useTableView("family-entities", ENTITY_COLS);
@@ -196,7 +196,7 @@ export function FamilyEntities() {
     positions: (e) => e.count,
     pnl: (e) => e.pnl,
     return: (e) => e.returnPct,
-    toDate: (e) => ownerMeasuredReturn(portfolio, p, e.key).toDatePct,
+    toDate: (e) => ownerMeasuredReturn(statementPortfolio ?? portfolio, p, e.key).toDatePct,
     ytd: (e) => entityYtdPct(portfolio, e.key, e.mv),
   });
   // See ENTITY_PARAM above. Resolved against the entities THIS BOOK carries, so
@@ -724,10 +724,15 @@ export function FamilyEntities() {
                     // Money-weighted return over this owner's MEASURABLE accounts
                     // only — closing the whole entity MV against partial openings
                     // returned +147%/+353% here for real family members.
-                    const mwr = ownerMeasuredReturn(portfolio, p, e.key);
+                    const mwr = ownerMeasuredReturn(statementPortfolio ?? portfolio, p, e.key);
                     const xirrPct = mwr.toDatePct;
+                    // Stated on the STATEMENT basis the rate is struck on: the
+                    // flows are complete only to each account's statement date,
+                    // so its value there is what the rate closes against. Set
+                    // beside this row's live value it would be two measurements
+                    // in one sentence.
                     const coverNote = mwr.annPct == null ? undefined
-                      : `${fmtPct(mwr.annPct, { sign: true })} p.a. annualised. Covers ${money(mwr.measuredMV)} of ${money(e.mv)}${mwr.excluded.length ? ` — ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
+                      : `Money-weighted, over ${mwr.windowDays} days — not annualised; ${fmtPct(mwr.annPct, { sign: true })} p.a. if it were. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} worth ${money(mwr.measuredMV)} on their own statements, each closed on its statement date${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     return (
                       <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>

@@ -7,7 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
-  measuredReturn,
+  measuredReturn, valueDateOf,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
@@ -58,9 +58,12 @@ import { useTableView, sortRows } from "@/lib/tableView";
  * every row of every name would say that 371 times. The Return column's own
  * picker on the Portfolio Monitor states it once, per its own rule.
  */
-function ReturnCells({ p, asOf }: { p: Position; asOf: string }) {
-  const hpr = measuredReturn(p, "absolute", asOf);
-  const cagr = measuredReturn(p, "cagr", asOf);
+function ReturnCells({ p, valuedAt }: { p: Position; valuedAt: string | null }) {
+  // The window ends on the date THIS line's value is struck — its own
+  // statement, its NAV or its live quote — never the book's newest date.
+  const at = { ...p, valuedAt };
+  const hpr = measuredReturn(at, "absolute", valuedAt ?? "");
+  const cagr = measuredReturn(at, "cagr", valuedAt ?? "");
   // Only where the guard actually annualised. `cagr` falls back to the
   // holding-period figure under a year and tags it HPR — printing that as a
   // second line would show one number twice under two names.
@@ -130,6 +133,7 @@ export function StockInfo() {
   // page shows any holding, AIF units included, and those are not listed.
   const bookMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
+  const nowMs = useMemo(() => Date.now(), []);
   // The demat statements' own opening-to-closing quantity account for this
   // name, one row per account that issues a transaction statement.
   const moves = useMemo(() => movementsFor(securityKey), [securityKey]);
@@ -784,7 +788,7 @@ export function StockInfo() {
                         inside it, and is not re-implemented here.
                       */}
                       <td className="px-4 py-2.5 text-right mono" data-stock-return>
-                        <ReturnCells p={r} asOf={portfolio.asOf} />
+                        <ReturnCells p={r} valuedAt={valueDateOf(r, accIdx.get(r.accountId)?.asOf, nowMs)} />
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${(r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "bg-emerald-500/15 text-gain" : "bg-amber-500/15 text-amber-400"}`}>{r.stCostBasis === null && r.ltCostBasis === null ? DASH : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"}</span>

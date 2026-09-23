@@ -14,7 +14,7 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, returnMeasureDef,
+  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
@@ -115,6 +115,8 @@ type Venue = {
   isMandate: boolean;
   quantity: number; marketValue: number;
   costBasis: number | null; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
+  /** The date this line's value is struck at — where its return window ends. */
+  valuedAt: string | null;
   /** This venue's share of the name as PRINTED across the statements. */
   share: number;
   /**
@@ -149,6 +151,8 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** The date this share's value is struck at — where its return window ends. */
+  valuedAt: string | null;
   investedOn: { first: string; last: string; payments: number } | null;
 };
 /**
@@ -270,6 +274,12 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /**
+   * The ONE date this row's value is struck at (`commonValueDate`), where its
+   * return window ends; null where its holdings are valued on different dates,
+   * which refuses an annualised figure rather than picking one of the dates.
+   */
+  valuedAt: string | null;
   /**
    * ── WHEN THE MONEY WENT IN, AND DELIBERATELY NOT `heldSince` ───────────────
    *
@@ -773,6 +783,16 @@ export function PortfolioMonitor() {
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
   /**
+   * WHERE EVERY RETURN WINDOW ON THIS PAGE ENDS — the date the holding's value
+   * is struck: a live quote's own day, AMFI's NAV date, or the account's own
+   * statement date. It used to be `portfolio.asOf`, the book's NEWEST date
+   * (29 Aug 2026 — two quantity-only trust demats), so every CAGR here was
+   * annualised over days nobody measured: Crompton read −19.65% over 543 days
+   * where its own window is 392 days and −26.14%. See `valueDateOf`.
+   */
+  const nowMs = useMemo(() => Date.now(), []);
+  const valueDate = (x: Position) => valueDateOf(x, accIdx.get(x.accountId)?.asOf, nowMs);
+  /**
    * The canonical owner of an ACCOUNT, for surfaces that hold an accountId
    * rather than a position — the contribution history is one. Falls back to the
    * id rather than to a blank: an unnamed holder beside a real rupee figure is
@@ -1031,6 +1051,7 @@ export function PortfolioMonitor() {
         // in any one share, so it carries no per-contribution breakdown either.
         // That money is on the Transactions card, in Capital in and out.
         heldSince: null,
+        valuedAt: commonValueDate(ps.map(valueDate)),
         // NOR AN INVESTED-ON DATE, AND FOR THE SAME REASON ONE LEVEL UP. A
         // mandate is an ACCOUNT; the family funded it on dates the statements do
         // report, but those dates belong to the account and not to any share in
@@ -1089,6 +1110,7 @@ export function PortfolioMonitor() {
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
             dayChangePct: x.dayChangePct ?? null,
             heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]),
+            valuedAt: valueDate(x),
           })).sort((a, b) => b.marketValue - a.marketValue),
           accountMV: whole?.mv ?? mv, accountCount: whole?.count ?? ps.length,
         },
@@ -1235,6 +1257,9 @@ export function PortfolioMonitor() {
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
+          // The deduped set's ONE value date, or null where its lines are marked
+          // on different dates — that row refuses to annualise rather than pick.
+          valuedAt: commonValueDate(dps.map(valueDate)),
           // Struck over the DEDUPED set, like every other figure on this row: the
           // raw one reports Transition Venture Fund I twice and would count one
           // subscription as two payments.
@@ -1278,7 +1303,7 @@ export function PortfolioMonitor() {
            * Measured: 75 consolidated rows on a non-security axis, 12 held
            * through more than one account, 2 carrying that overlap.
            */
-          venues: venuesOf(ps, accIdx),
+          venues: venuesOf(ps, accIdx, valueDate),
           isin: ps.find((x) => x.isin)?.isin ?? null,
         };
       });
@@ -1295,6 +1320,7 @@ export function PortfolioMonitor() {
         fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
+        valuedAt: valueDate(p),
         investedOn: investedOnOf([p]),
         trancheSet: [p],
         live: !!p.live, dayChange: p.dayChange ?? 0, dayChangePct: p.dayChangePct ?? null,
@@ -1406,6 +1432,7 @@ export function PortfolioMonitor() {
             weight: weightBase > 0 ? e.total / weightBase : 0,
             costNA: true,
             heldSince: null,
+            valuedAt: null,
             // A DERIVED ROW HOLDS NO POSITION AT ALL — the family reach this
             // company through somebody else's portfolio, and no document reports
             // a quantity, a cost or a purchase date for it. Absent, like every
@@ -1644,17 +1671,17 @@ export function PortfolioMonitor() {
       let count = 0;
       if (r.venues) {
         for (const v of r.venues) {
-          const t = trancheTable(v.positions, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+          const t = trancheTable(v.positions, BOOK_POSITION_TRANCHES, "cagr", valueDate);
           if (t) { byVenue.set(`${v.securityKey}@${v.accountId}`, t); count += t.rows.length; }
         }
       } else if (r.trancheSet.length) {
-        direct = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+        direct = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", valueDate);
         count = direct?.rows.length ?? 0;
       }
       if (count) out.set(r.key, { byVenue, direct, count });
     }
     return out;
-  }, [rows, portfolio.asOf]);
+  }, [rows, accIdx, nowMs]);
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
   // FIFO over the footer's own COSTED positions — the same `fifoTotals` every
@@ -2006,7 +2033,7 @@ export function PortfolioMonitor() {
         // so it is the one place a CAGR is genuinely strikable — through the same
         // guard, so a four-month contribution still reads as its holding-period
         // return and says so.
-        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, assetClass, costNA: false }, measure),
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false }, measure),
       }, {
         "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
         // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
@@ -2084,7 +2111,7 @@ export function PortfolioMonitor() {
         mv: fmtFromBase(h.marketValue, { compact: true }),
         weight: pctOfBook(h.marketValue),
         pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
-        ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, assetClass: h.assetClass, costNA: h.costNA }, measure),
+        ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA }, measure),
         sector: h.sector,
       }, { "data-constituent": h.securityKey || h.security, "data-constituent-mv": h.marketValue })));
       return out;
@@ -2229,7 +2256,7 @@ export function PortfolioMonitor() {
         mv: fmtFromBase(v.marketValue, { compact: true }),
         weight: pctOfBook(v.marketValue),
         pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(v.unrealizedPnL),
-        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, assetClass: v.assetClass, costNA: v.costNA }, measure),
+        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA }, measure),
         entity: v.owner,
       }, {
         "data-venue": v.route, "data-venue-class": v.cls ?? "", "data-venue-share": v.share,
@@ -3339,6 +3366,8 @@ export function PortfolioMonitor() {
                           const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
                           return (
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              data-return-valued-at={r.valuedAt ?? undefined}
+                              data-return-note={res.shown ? res.note : undefined}
                               className="px-2 py-1.5 text-right mono whitespace-nowrap"
                               title={r.live && !r.costNA ? mixedBasisNote : undefined}>
                               {offMeasure && <span className="ret-tag mr-0.5">{res.tag}</span>}
@@ -3838,7 +3867,7 @@ function clubbedClassesOf(ps: Position[]): string[] {
   return cls.size > 1 ? [...cls].sort() : [];
 }
 
-function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
+function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position) => string | null): Venue[] {
   const m = new Map<string, Position[]>();
   /**
    * KEYED ON (SECURITY, ACCOUNT), NOT ON THE ACCOUNT ALONE.
@@ -3892,6 +3921,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       heldSince: xs.every((x) => x.heldSince)
         ? xs.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), xs[0].heldSince!)
         : null,
+      valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,
       investedOn: investedOnOf(xs),
     };
