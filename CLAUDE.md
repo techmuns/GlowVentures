@@ -17237,13 +17237,22 @@ got for the same defect an hour earlier, which is the argument for looking for a
 defect's second copy the moment the first is found.
 
 `build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
-`test:family` 37 suites · `check:family` **86/0** · `check:pages` **214
-combinations clean** on the twice-merged tree, with seven evidenced abstentions —
-four on the Morning CIO panels (every KPI tile carries a figure), two on Private
-Market (every private holding reports a cost) and one on the not-found
-drill-down — none of them this change's own. It was 208 on the tree merged with
-#73; #75 brings three routes and this branch four, so 206 + 8 = 214, which
-reconciles only because the sweep was run again rather than the count adjusted.
+`test:family` **38 suites, 1,963 checks, 0 failed** (one NOT CHECKED, and it is
+main's: no scheme in this book both resolves in AMFI's file and breaks the NAV
+basis gate) · `check:family` **86/0** · `check:pages` **218 combinations clean,
+0 invariant failures** on the thrice-merged tree (base `14cf81b`), with seven
+evidenced abstentions read out of `report.json` by route — four on the Morning
+CIO panels (every KPI tile carries a figure), two on Private Market (every
+private holding reports a cost) and one on the not-found drill-down — none of
+them this change's own. Main's own sweep carries eight; the eighth, the pledge
+claim on `stock-qty`, has a subject here (see above).
+
+The count went 208 (merged with #73) → 214 (with #75: its 206 plus the eight
+combinations this branch's four routes walk) → **218** (with #72: its 210 plus
+the same eight). Each step reconciles only because the sweep was run again rather
+than the count adjusted. On the same final tree `npm run build-book` regenerates
+`glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, and `rekey:archive`, the
+four `replay:*` passes and `reconcile:review` are all no-ops with `--check`.
 
 ### Stage 10k — News & Announcements: REMOVED
 
