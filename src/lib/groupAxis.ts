@@ -23,9 +23,12 @@
  *
  *   CATEGORY     — `holdingBucket`. What KIND of thing this is and who chose
  *                  it: Direct Equity, PMS mandates, AIF, Mutual Fund, ETF,
- *                  Cash. THE DEFAULT ON BOTH SCREENS, and unchanged — this is
- *                  where three rounds of the "Direct Equity" argument were
- *                  settled and it must not be relitigated through a new axis.
+ *                  Cash. The DEFAULT on Morning CIO and on the Monitor's
+ *                  Transactions table, and unchanged — this is where three
+ *                  rounds of the "Direct Equity" argument were settled and it
+ *                  must not be relitigated through a new axis. (The Monitor's
+ *                  HOLDINGS table opens on All Securities instead, at the
+ *                  family's request — see `MONITOR_GROUP_VIEWS`.)
  *   ASSET CLASS  — the family's Equity / Debt / Alternate / Cash. NOT our
  *                  `AssetClass`: theirs says what EXPOSURE a holding carries,
  *                  ours says what the instrument IS, and three of our five
@@ -149,10 +152,28 @@ export type MonitorAxis = GroupAxis | typeof SECURITY_AXIS;
  */
 export const SECURITY_SECTION = "All securities";
 
-/** The Portfolio Monitor's four segments. Morning CIO draws `GROUP_VIEWS` — three. */
+/**
+ * The Portfolio Monitor's four segments. Morning CIO draws `GROUP_VIEWS` — three.
+ *
+ * ── ALL SECURITIES IS FIRST, AND THEREFORE THE DEFAULT ──────────────────────
+ *
+ *   *"Make this view as All Securities and make it first in portfolio monitor
+ *    and default open."*
+ *
+ * `useViewParam` makes the FIRST view the param-free default, so the order of
+ * this array IS the default: `/monitor` opens on one row per security, and the
+ * category view the Monitor used to open on is `/monitor?group=category`. That
+ * is the same mechanism every other view in this app uses rather than a second
+ * convention, and it is why the label and the position are one change.
+ *
+ * WHAT DOES NOT MOVE: `GROUP_VIEWS` keeps Category first, so Morning CIO's
+ * allocation card still opens on Category, and the Monitor's own Transactions
+ * table — which cannot section on securities (`txnAxis`) — still lands on
+ * Category too. Only the Holdings table's opening view changed.
+ */
 export const MONITOR_GROUP_VIEWS: readonly { key: MonitorAxis; label: string; title: string }[] = [
+  { key: SECURITY_AXIS, label: "All Securities", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
   ...GROUP_VIEWS,
-  { key: SECURITY_AXIS, label: "Security", title: "One row per security, ranked by exposure — every holding of a name clubbed across every vehicle that holds it, whether the family bought it directly or a discretionary manager chose it. Open a row to see through what means it is held." },
 ];
 
 /**

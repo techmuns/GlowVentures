@@ -25,7 +25,7 @@
 // so the two cannot drift: `readReply` reading a 503 the function really built
 // is a stronger check than reading one this file typed.
 import { onRequest, isIsoDate, isCall, validateDraft, type KvLike } from "../../../functions/api/capital-calls.js";
-import { readReply, parseRupees, headlineCall, callsOf, todayIso, REASONS, type EnteredCall } from "../enteredCalls";
+import { readReply, parseRupees, headlineCall, callsOf, todayIso, REASONS, CAUSE_WORD, SWITCH_ON_STEPS, type EnteredCall } from "../enteredCalls";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -123,6 +123,34 @@ console.log("── an unconnected store says so, on every method ──");
   const r = await readReply(again);
   ok("the page reads that 503 as 'saving is not switched on', never as an empty list",
     r.ok === false && r.reason === REASONS.notConfigured);
+  // …AND NAMES IT BY CAUSE, which is what picks the word every cell shows and
+  // whether the editor shows the set-up steps.
+  ok("…with the cause the cells name it by", r.ok === false && r.cause === "not-configured" && CAUSE_WORD[r.cause] === "Not set up");
+}
+
+console.log("── the set-up steps name the binding the function actually reads ──");
+{
+  /**
+   * TWO COPIES OF ONE FACT. The editor tells whoever manages the site which
+   * binding to add, and the function reads one — so the name in the STEPS is
+   * taken out of their own words and handed to the function as the binding,
+   * and the function must then answer. A rename on either side alone fails
+   * here, rather than on the day somebody follows the steps and the column
+   * stays "Not set up".
+   */
+  const text = SWITCH_ON_STEPS.join(" ");
+  const named = /Variable name:\s*([A-Z0-9_]+)/.exec(text)?.[1] ?? null;
+  ok("the steps name one variable", named !== null, String(named));
+  if (named) {
+    const kv = memoryKv();
+    const res = await onRequest({ request: new Request(`${SITE}/api/capital-calls`), env: { [named]: kv } });
+    const body = await res.json() as Body;
+    ok("…and a binding under that name switches the store on", res.status === 200 && body.ok === true && Array.isArray(body.calls),
+      `${res.status} ${body.code ?? ""}`);
+  }
+  ok("the steps say to redeploy — a binding takes effect only on a new deployment", /redeploy/i.test(text));
+  ok("…and say where the namespace is created and where it is bound",
+    /Workers KV/.test(text) && /Settings → Bindings/.test(text) && /KV namespace/.test(text));
 }
 
 console.log("── a save is kept, visible at once, and one key per call ──");
@@ -269,9 +297,10 @@ console.log("── the page reads each failure by its CAUSE ──");
 {
   const html = (body: string) => new Response(body, { status: 200, headers: { "content-type": "text/html; charset=utf-8" } });
   const a = await readReply(html(`<form action="/__auth/login" method="post">`));
-  ok("the edge gate's login page reads as signed out", !a.ok && a.reason === REASONS.signedOut);
+  ok("the edge gate's login page reads as signed out", !a.ok && a.reason === REASONS.signedOut && a.cause === "signed-out");
   const b = await readReply(html(`<!doctype html><div id="root"></div>`));
-  ok("the app's own shell (no function running) reads as the store not running here", !b.ok && b.reason === REASONS.noFunction);
+  ok("the app's own shell (no function running) reads as the store not running here",
+    !b.ok && b.reason === REASONS.noFunction && b.cause === "no-function");
   const good = new Response(JSON.stringify({ ok: true, calls: [
     { id: "a1234567", fund: "f", fundName: "F", date: "2026-10-01", amount: 5, note: "", updatedAt: "" },
     { id: "b1234567", fund: "f", fundName: "F", date: "2026-10-01", amount: 0, note: "", updatedAt: "" },
@@ -280,9 +309,15 @@ console.log("── the page reads each failure by its CAUSE ──");
   ok("an ok answer is read, and a call with no positive amount is dropped", c.ok && c.calls.length === 1 && c.calls[0].id === "a1234567");
   const said = await readReply(new Response(JSON.stringify({ ok: false, code: "INVALID", message: "Give the date the call is due." }),
     { status: 400, headers: { "content-type": "application/json" } }));
-  ok("a refusal carries the store's own sentence", !said.ok && said.reason === "Give the date the call is due.");
+  ok("a refusal carries the store's own sentence", !said.ok && said.reason === "Give the date the call is due." && said.cause === "error");
   const bare = await readReply(new Response(JSON.stringify({ ok: false }), { status: 500, headers: { "content-type": "application/json" } }));
   ok("…and one with no sentence names its status rather than inventing a cause", !bare.ok && /HTTP 500/.test(bare.reason));
+  // EVERY CAUSE HAS ITS WORD, and none of them is the word for a working store.
+  // A cell reading "Add" while nothing can be saved is the control that looks
+  // live and does nothing.
+  const words = Object.values(CAUSE_WORD);
+  ok("every cause names itself in a word, and none of them offers to add",
+    words.length === 5 && words.every((w) => w.length > 0 && !/\badd\b/i.test(w)), words.join(" · "));
 }
 
 console.log("── what a person types is read as rupees, or refused ──");

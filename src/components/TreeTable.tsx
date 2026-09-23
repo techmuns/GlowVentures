@@ -192,6 +192,12 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
   const g = NAME_GEOMETRY[density];
   if (depth >= 1) {
     const d = depth === 2 ? 1 : 0;
+    const text = (
+      <div className="min-w-0">
+        <div className="text-slate-200">{title}</div>
+        {sub && <div className="mt-px text-[11px] leading-snug text-slate-500">{sub}</div>}
+      </div>
+    );
     return (
       <td className={`relative ${g.child[d]} ${className}`} title={hint}>
         {depth === 2 && !ancestorLast && (
@@ -199,10 +205,18 @@ export function TreeNameCell({ depth, title, sub, hint, open, onToggle, toggleLa
         )}
         <span aria-hidden className={`absolute ${g.guide[d]} top-0 border-l border-ink-600 ${last ? "h-1/2" : "bottom-0"}`} />
         <span aria-hidden className={`absolute ${g.guide[d]} top-1/2 w-3.5 border-t border-ink-600`} />
-        <div className="min-w-0">
-          <div className="text-slate-200">{title}</div>
-          {sub && <div className="mt-px text-[11px] leading-snug text-slate-500">{sub}</div>}
-        </div>
+        {/* A CHILD THAT OPENS ROWS OF ITS OWN carries the same chevron a parent
+            does, before its name — a fund line opening into the instruments it
+            filed. Only where there is something to open: a chevron that opens
+            nothing is worse than none. */}
+        {onToggle
+          ? (
+            <div className={`flex items-start ${density === "dense" ? "gap-1.5" : "gap-2"}`}>
+              <TreeChevron density={density} open={!!open} onToggle={onToggle} label={toggleLabel ?? (open ? "Close" : "Open")} {...(toggleData ?? {})} />
+              {text}
+            </div>
+          )
+          : text}
       </td>
     );
   }

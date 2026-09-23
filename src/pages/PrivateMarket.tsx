@@ -37,8 +37,9 @@ import {
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
 import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
-import { useEnteredCalls, headlineCall, todayIso } from "@/lib/enteredCalls";
+import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
+import { fifoTotals, positionFifoReturn } from "@/lib/fifo";
 
 /**
  * WHICH FOUR TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
@@ -250,12 +251,31 @@ const folioFigures = (f: BookFolio): RowFigures => ({
   units: f.units,
   cost: f.cost,
   value: f.value,
-  returnPct: f.cost != null && f.cost > 0 && f.pnl != null ? (f.pnl / f.cost) * 100 : null,
+  // The folio's own FIFO return — a redeemed unit's gain and cost stay in it.
+  returnPct: f.position && f.cost != null && f.cost > 0 && f.pnl != null ? positionFifoReturn(f.position) : null,
   asOf: f.asOf ? [f.asOf] : [],
 });
 
 /** A resolution with nothing to show — the fallback for a row that states no resolver. */
 const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is struck on this row" };
+
+/**
+ * WHAT A SET'S HPR COUNTS OF THE CASH PAID BACK — a member's row, a band, the
+ * total. The fund note's own rule (`fundMeasuredReturn`) over several funds:
+ * the figure is FIFO (`fifoTotals`), the gain on the units held plus the gain
+ * on units redeemed over the capital deployed in both, so the principal a fund
+ * returned by REDEEMING units is inside it — their cost in what was paid in,
+ * any gain on them in the gain. Income, equalisation and a distribution that
+ * redeemed no units are not units, and XIRR is what counts them.
+ *
+ * It read "cash the funds have paid back is not in it" until Stage 10cj — true
+ * before Stage 10ca and false after it of Neo Infra's ₹14.16 L principal, on
+ * the one cell that sums the whole private book.
+ */
+const aggHprNote = (held: BookFolio[]): string =>
+  held.some((f) => (f.position?.costOfUnitsSold ?? 0) > 0)
+    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over the capital paid in for both. The principal returned on redeemed units is in it; income, equalisation and any payout that redeemed no units are not — XIRR counts those."
+    : "FIFO, not annualised: the gain on the units held, over the capital paid in for them. Cash the funds have paid back is not in it — XIRR counts it.";
 
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
@@ -392,6 +412,10 @@ export function PrivateMarket() {
     const privCost = sumOrNull(funds.map((f) => f.cost));
     const privPnL = sumOrNull(funds.map((f) => f.pnl));
     const costedRows = scope.dedupedRows.filter((p) => p.costBasis != null);
+    // FIFO over the holdings that report a cost — the same aggregator every
+    // other return on the dashboard is struck with, so a redemption's realised
+    // gain stays in the private book's return rather than leaving it.
+    const privFifo = fifoTotals(costedRows);
     const costedMV = sum(funds.map((f) => f.costedMV));
     const bookMV = consolidatedMarketValue(portfolio.positions);
     // RAW — every statement as printed. Never the same number, by design.
@@ -406,7 +430,7 @@ export function PrivateMarket() {
     return {
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
       schemes, cc, history,
-      privMV, privCost, privPnL, costedMV, costedCount: costedRows.length, bookMV, rawMV,
+      privMV, privCost, privPnL, privFifo, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
       /**
@@ -482,13 +506,21 @@ export function PrivateMarket() {
    * "Cash sent to funds", "Cash paid back so far". An absent tile's line is its
    * REASON, in a few words, because an em dash must always name its cause.
    *
+   * AND A LINE THAT SAYS NOTHING THE LABEL DOES NOT IS REMOVED, NOT KEPT FOR
+   * SYMMETRY. *"make sure these sub-texts are shorter and direct so the user can
+   * actually read them. If it is irrelevant then remove them."* "Capital
+   * invested — Cost of these holdings", "Funds — Distinct funds held" and
+   * "Folios — Statement lines" each restated their own heading, so those three
+   * tiles are a label and a figure; every line that stays carries something the
+   * label does not (a share, a return, a definition, a reason).
+   *
    * WHAT A HOVER COSTS, stated rather than glossed: it is not read by someone
    * scanning. The two claims on this strip that a reader could be misled by
    * without it — that uncalled capital is a liability in no total, and that
    * Called and Paid in must not be subtracted — are ALSO printed under the
    * table, which is where a reader doing that arithmetic already is.
    */
-  const retPct = m.privCost != null && m.privCost > 0 && m.privPnL != null ? (m.privPnL / m.privCost) * 100 : null;
+  const retPct = m.privFifo.returnPct;
   const share = (a: number, b: number, decimals: number) => (b > 0 ? fmtPct((a / b) * 100, { decimals }) : DASH);
   const absentLine = (why: string) => <span className="text-slate-500">{why}</span>;
   const tileMetrics: TileMetric[] = [
@@ -502,13 +534,12 @@ export function PrivateMarket() {
     {
       id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       value: money(m.privCost),
-      sub: "Cost of these holdings",
       detail: `The cost these statements report · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
     },
     {
       id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
       value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
-      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} on cost`,
+      sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} return · FIFO`,
       detail: m.privCost != null && m.privCost > 0
         ? `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
         : "No statement here reports a cost to measure a gain against.",
@@ -612,13 +643,11 @@ export function PrivateMarket() {
     {
       id: "funds", label: "Funds", icon: <Handshake className="h-4 w-4" />,
       value: fmtNum(m.funds.length),
-      sub: "Distinct funds held",
       detail: "Each fund counted once however many members hold it.",
     },
     {
       id: "folios", label: "Folios", icon: <Layers className="h-4 w-4" />,
       value: fmtNum(m.folios.length),
-      sub: "Statement lines",
       detail: `One per statement line — ${m.folios.length - m.funds.length} more than the fund count, because a fund held in several folios is one fund row.`,
     },
     {
@@ -789,8 +818,7 @@ export function PrivateMarket() {
             ? "no cost is reported across these holdings, so there is no capital to strike a return against"
             : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another" };
         }
-        return { shown: true, pct: fig.returnPct, tag: "HPR",
-          note: "Current value against the capital paid in, not annualised. Cash the funds have paid back is not in it — XIRR counts it." };
+        return { shown: true, pct: fig.returnPct, tag: "HPR", note: aggHprNote(held) };
       }
       if (measure === "xirr") {
         // WHICH RECORDS THE RATE POOLS, carried whether or not it shows one: a
@@ -1251,7 +1279,7 @@ export function PrivateMarket() {
       m.cc.called != null && m.cc.committedWhereCalled != null
         ? `The same figure the other way: committed ${money(m.cc.committedWhereCalled)} less called ${money(m.cc.called)} is ${money(m.cc.committedWhereCalled - m.cc.called)}, both struck over the same ${m.cc.calledOf} accounts.`
         : null,
-      `${m.cc.count - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what can still be called, never the ceiling.`,
+      `${m.cc.count - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what the funds can still call, never the ceiling.`,
     ].filter(Boolean).join(" "),
   };
 
@@ -1293,7 +1321,7 @@ export function PrivateMarket() {
           mark on this page — and `check:pages` holds the newest of them to the
           book's own newest private mark. */}
 
-      <SelectableTiles storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
+      <SelectableTiles page="private-market" storageKey={PM_TILES_KEY} defaults={PM_DEFAULT_TILES} metrics={tileMetrics} />
 
       {/* ── THE ONE TABLE ────────────────────────────────────────────────────
           Three tabs of one card. The first two are the same folios grouped two
@@ -1372,14 +1400,14 @@ export function PrivateMarket() {
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
                   {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
                       is where the reason it exists lives — no fund publishes a
-                      forward schedule — and while the store cannot be read the
-                      hover says why, once, while every cell says it is not
-                      available. The "you enter" line under the label went with
-                      the other heading notes; the cells' own Add is the cue. */}
+                      forward schedule. While the store cannot be read the note
+                      under the heading names the cause, and every cell names it
+                      too, in a word, and opens the editor that says why: a
+                      column of dashes read as "nothing entered". */}
                   <SortHeader col="call" view={bookView} pad="px-2 py-2" align="left"
-                    title={entered.state.status === "unavailable"
-                      ? `${CALL_COLUMN_TITLE} · Not available: ${entered.state.reason}`
-                      : CALL_COLUMN_TITLE}>Capital<br />call</SortHeader>
+                    title={CALL_COLUMN_TITLE}
+                    note={entered.state.status === "unavailable" ? CAUSE_WORD[entered.state.cause].toLowerCase() : "you enter"}
+                    noteTitle={entered.state.status === "unavailable" ? entered.state.reason : undefined}>Capital<br />call</SortHeader>
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/60">

@@ -168,8 +168,13 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
     const rows = deduped.filter((p) => re.test(p.security));
     ok(`${re.source} is on the ${side} side`, rows.length > 0 && rows.every((p) => p.marketSide === side),
       rows.map((p) => `${p.security.slice(0, 30)}=${p.marketSide}`).join(", "));
+    // NO STATEMENT prints its category. Since Stage 10cd the read carries the
+    // category the family DECLARED (Category II, `DECLARED_AIF_CATEGORY`), so
+    // the claim is struck on the read's SOURCE — never a printed field — and
+    // the side above is their placing, which that category does not decide.
     ok(`${re.source} prints no category of its own — the family placed it`,
-      rows.every((p) => readAifCategory(p, idx.get(p.accountId)).category === null));
+      rows.every((p) => readAifCategory(p, idx.get(p.accountId)).source !== "statement"),
+      rows.map((p) => { const r = readAifCategory(p, idx.get(p.accountId)); return `${r.category}/${r.source}`; }).join(", "));
   }
   // THE FIFTEEN CAPITAL ACCOUNTS SPLIT THE WAY THE FAMILY SAID: eleven private
   // (India SME ×3, Baring, Transition ×2, Neo Infra, Sky Capital ×4), four

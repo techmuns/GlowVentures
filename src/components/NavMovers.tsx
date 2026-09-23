@@ -51,8 +51,9 @@ type Rank = "pct" | "impact";
  * standing beside Today's movers and became the second branch of it.
  *
  * NOTHING IT MEASURES MOVED. The title, the published-NAV date, the coverage
- * line, the basis paragraph, the derived rupee figure and every skipped-holding
- * reason are unchanged — which is the point, because the two branches are
+ * line, the basis (the tile's hover since the family asked for the panel that
+ * carried it to go), the derived rupee figure and every skipped-holding reason
+ * are unchanged — which is the point, because the two branches are
  * different measurements and the whole risk of putting them behind one control
  * is that they start to look like one. `DailyMovers.tsx` argues that at length.
  *
@@ -175,6 +176,19 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
     .map(([reason, names]) => ({ reason, names: [...names.values()] }));
   /** Distinct SECURITIES the store cannot price — the count the list shows. */
   const skippedNames = new Set(model.skipped.map((s) => s.securityKey)).size;
+  /**
+   * WHAT THIS MEASUREMENT IS — the panel that stood beside the tile, as the
+   * tile's own hover. Plain text, because a `title` renders no markup; the
+   * sentences are the panel's, so nothing a reader relied on was reworded.
+   */
+  const basisText = [
+    `Each scheme's own published NAV against the one before it — ${model.oldestNavDate === model.newestNavDate
+      ? `both struck ${model.newestNavDate}.`
+      : `struck between ${model.oldestNavDate} and ${model.newestNavDate}; a scheme does not publish on a non-business day, so the rows do not share one date.`}`,
+    "That is a different measurement from the Direct Equity branch of this card, which is a live intraday price against the previous session's close — the two are never added together.",
+    "The rupee figure is derived: the scheme's move applied to what this book values the holding at, whose mark is its own statement's.",
+    "AIF folios are not here — no alternative fund publishes a daily NAV.",
+  ].join("\n\n");
 
   return (
     <Card className="lg:col-span-3" title={title}
@@ -195,7 +209,31 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
         </div>
       }>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {/* ── THE TILE IS THE WHOLE ROW NOW, AND ITS BASIS IS ITS HOVER ──────────
+          *"remove the highlighted texts from the dashboard UI"* — pointed at the
+          "What this measures" panel that stood beside this tile.
+
+          Every claim in it was audited before it went, the method this file has
+          run on every removal:
+
+            · "each scheme's published NAV against the one before it" and the
+              span of dates — the heading carries the newest date, and every row
+              struck on an OLDER one says so on its own second line
+              (`SchemeNote`), so a reader is never misled about a row's day;
+            · "never added to the Direct Equity branch" — NO SECOND HOME, and
+              it is the load-bearing one: one control switching between two
+              measurements is exactly where a future edit would sum them;
+            · "the rupee figure is derived" — already the `₹ on holding`
+              column's own hover, and now the tile's too;
+            · "AIF folios are not here" — NO SECOND HOME.
+
+          The two without one go into this tile's HOVER with the rest, which is
+          weaker than a caption and is said here rather than glossed.
+          `check:pages` reads them there and asserts the panel stays gone. */}
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-2 rounded-xl border border-ink-700 bg-ink-900/60 p-4"
+           data-testid="navmovers-tile" title={basisText}
+           data-navmovers-move={model.move} data-navmovers-pct={model.changePct ?? ""}
+           data-navmovers-covered={model.coveredValue} data-navmovers-scope={model.scopeValue}>
         {/* THE TILE IS DATED, AND THE DATE IS THE HEADING RATHER THAN "TODAY". */}
         {/* THE FIGURES CARRY STRUCTURAL HANDLES.
             Reintroducing two bugs proved why: an aggregate struck as the
@@ -205,45 +243,28 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
             with itself — and neither defect changes a count or a date. They are
             reconciled against `NAV_MOVERS_BOOK` now, which derives the same four
             figures from the book and the store by a different path. */}
-        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4"
-             data-navmovers-move={model.move} data-navmovers-pct={model.changePct ?? ""}
-             data-navmovers-covered={model.coveredValue} data-navmovers-scope={model.scopeValue}>
+        <div>
           <div className="label-xs" data-testid="navmovers-asof">
             Published NAV &middot; {model.newestNavDate}
           </div>
-          <div className={`mt-2 text-[22px] font-semibold tabular ${changeColor(model.move)}`}>
-            {fmtFromBase(model.move, { compact: true, sign: true })}
+          <div className="mt-2 flex items-baseline gap-3">
+            <span className={`font-display text-[22px] font-bold tabular ${changeColor(model.move)}`}>
+              {fmtFromBase(model.move, { compact: true, sign: true })}
+            </span>
+            <span className={`text-[13px] font-semibold tabular ${changeColor(model.changePct)}`}>
+              {model.changePct == null ? DASH : fmtPct(model.changePct, { sign: true })}
+            </span>
           </div>
-          <div className={`mt-0.5 text-[13px] font-semibold tabular ${changeColor(model.changePct)}`}>
-            {model.changePct == null ? DASH : fmtPct(model.changePct, { sign: true })}
-          </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500" data-testid="navmovers-coverage">
-            on {fmtFromBase(model.coveredValue, { compact: true })} of the {fmtFromBase(model.scopeValue, { compact: true })} held,
-            across {model.rows.length} scheme{model.rows.length === 1 ? "" : "s"} behind {model.scopeNames} name{model.scopeNames === 1 ? "" : "s"}
-            {model.skipped.length > 0
-              ? ` — ${model.skipped.length} holding${model.skipped.length === 1 ? "" : "s"}${
-                  skippedNames === model.skipped.length ? "" : ` across ${skippedNames} name${skippedNames === 1 ? "" : "s"}`
-                } worth ${fmtFromBase(skippedValue, { compact: true })} resolve no scheme and are not counted either way`
-              : ""}
-          </p>
         </div>
-
-        {/* WHAT THIS MEASUREMENT IS, beside the figure rather than under the
-            table: a reader switching from the quote-fed branch needs to
-            know at a glance that the two are struck on different days and on
-            different kinds of price. */}
-        <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-4 sm:col-span-2">
-          <div className="label-xs">What this measures</div>
-          <p className="mt-2 text-[11.5px] leading-relaxed text-slate-400" data-testid="navmovers-basis">
-            Each scheme&rsquo;s own <strong>published NAV against the one before it</strong> — {model.oldestNavDate === model.newestNavDate
-              ? <>both struck {model.newestNavDate}</>
-              : <>struck between {model.oldestNavDate} and {model.newestNavDate}; a scheme does not publish on a non-business day, so the rows do not share one date</>}.
-            That is a different measurement from the Direct Equity branch of this card, which is a live intraday price
-            against the previous session&rsquo;s close — the two are never added together.
-            The rupee figure is <strong>derived</strong>: the scheme&rsquo;s move applied to what this book values the holding at, whose
-            mark is its own statement&rsquo;s. AIF folios are not here — no alternative fund publishes a daily NAV.
-          </p>
-        </div>
+        <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500 sm:text-right" data-testid="navmovers-coverage">
+          on {fmtFromBase(model.coveredValue, { compact: true })} of the {fmtFromBase(model.scopeValue, { compact: true })} held,
+          across {model.rows.length} scheme{model.rows.length === 1 ? "" : "s"} behind {model.scopeNames} name{model.scopeNames === 1 ? "" : "s"}
+          {model.skipped.length > 0
+            ? ` — ${model.skipped.length} holding${model.skipped.length === 1 ? "" : "s"}${
+                skippedNames === model.skipped.length ? "" : ` across ${skippedNames} name${skippedNames === 1 ? "" : "s"}`
+              } worth ${fmtFromBase(skippedValue, { compact: true })} resolve no scheme and are not counted either way`
+            : ""}
+        </p>
       </div>
 
       <div className="mt-4 overflow-x-auto">
@@ -308,10 +329,13 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
           ))}
         </div>
       )}
-      <p className="mt-1.5 text-[11px] text-slate-500" data-testid="navmovers-drastic-note">
-        Every scheme with a published move is listed, ranked by {rank === "pct" ? "the size of the move" : "its rupee effect"}; a
-        move of {DRASTIC_PCT}% or more in a single published day is chipped <em>drastic</em>. The chip labels a row and never
-        decides which rows are drawn.
+      {/* ONE LINE — the family asked for the notes under the tables to go. The
+          bound stays on screen because the chip is struck against it; how the
+          list is ranked and that the chip never decides which rows are drawn
+          are the hover. */}
+      <p className="mt-1.5 text-[11px] text-slate-500" data-testid="navmovers-drastic-note"
+        title={`Every scheme with a published move is listed, ranked by ${rank === "pct" ? "the size of the move" : "its rupee effect"}. The chip labels a row and never decides which rows are drawn.`}>
+        Every scheme is listed · a move of {DRASTIC_PCT}% or more in one published day is chipped <em>drastic</em>
       </p>
     </Card>
   );
@@ -336,5 +360,5 @@ function SchemeNote({ row, newest }: { row: NavMover; newest: string | null }) {
   // identifier needs no disclosure and a name match does.
   if (row.matchedVia !== "isin") bits.push(`scheme matched on ${row.matchedVia}, not an ISIN`);
   if (!bits.length) return null;
-  return <div className="text-[10.5px] text-slate-500">{bits.join(" · ")}</div>;
+  return <div className="text-[10.5px] text-slate-500" data-scheme-note>{bits.join(" · ")}</div>;
 }

@@ -84,7 +84,7 @@ export function SortHeader({ col, view, children, align = "right", title, pad = 
         : movable ? "Drag this column, or focus the handle and press ← or →, to move it" : undefined)]
         .filter(Boolean).join(" · ") || undefined}
       onPointerDown={movable ? (e) => pressColumn(e, col, view) : undefined}
-      className={`label-xs select-none ${pad} font-medium ${alignCls} ${active ? "text-slate-300" : ""} ${
+      className={`label-xs select-none ${pad} font-semibold ${alignCls} ${active ? "text-slate-300" : ""} ${
         movable ? "cursor-grab" : ""} ${className}`}>
       {/* ── NOT ONE FLEX BOX IN THIS CELL, AND THAT IS LOAD-BEARING ─────────
           `innerText` blockifies the CHILDREN of a flex container, so an

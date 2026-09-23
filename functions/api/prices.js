@@ -49,7 +49,10 @@ export async function onRequest(context) {
   const yahooSymbol = symbol.includes(".") || symbol.startsWith("^") ? symbol : symbol + suffix;
 
   const cache = caches.default;
-  const key = new Request(`${url.origin}/__cache/prices/v1/${encodeURIComponent(yahooSymbol)}`);
+  // v2: the body carries the instrument's NAME now (see below), and an entry
+  // cached under v1 would hand a benchmark a history with no name to check —
+  // which it correctly refuses, so a stale v1 hit would blank a working line.
+  const key = new Request(`${url.origin}/__cache/prices/v2/${encodeURIComponent(yahooSymbol)}`);
   const hit = await cache.match(key);
   if (hit) return hit;
 
@@ -107,6 +110,14 @@ export async function onRequest(context) {
     symbol: yahooSymbol,
     currency: res.meta?.currency ?? null,
     exchange: res.meta?.fullExchangeName ?? null,
+    // WHAT THE UPSTREAM CALLED IT, handed back verbatim. The NAV chart's
+    // benchmark control checks this against the name each index declares
+    // before drawing a close — trap 2 in `indices.js`: a symbol that looks
+    // right answers 200 with a well-formed figure for a different instrument.
+    // Reported, never corrected here; the caller decides what it will accept.
+    name: res.meta?.longName ?? res.meta?.shortName ?? null,
+    longName: res.meta?.longName ?? null,
+    shortName: res.meta?.shortName ?? null,
     first: points[0].t,
     last: points[points.length - 1].t,
     count: points.length,

@@ -133,7 +133,7 @@ run_case "private-market" "the second path leaves the hover" sub $P \
   '? `The same figure the other way: committed' '? `Committed'
 
 run_case "private-market" "the floor sentence leaves the hover" sub $P \
-  'is the floor of what can still be called, never the ceiling.' 'is what can still be called.'
+  'is the floor of what the funds can still call, never the ceiling.' 'is what the funds can still call.'
 
 run_case "private-market" "the account sentence leaves the hover" sub $P \
   '`${m.cc.count - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and ' \
@@ -156,9 +156,7 @@ run_case "private-market,private-market-tiles" "a fund row dated forward to the 
   ': r.asOf.length === 1 ? fmtDate(first)' ': r.asOf.length === 1 ? fmtDate("2026-08-29")'
 
 run_case "private-market,private-market-calls-off" "the call header stops saying why the store cannot be read" sub $P \
-  'title={entered.state.status === "unavailable"
-                      ? `${CALL_COLUMN_TITLE} · Not available: ${entered.state.reason}`
-                      : CALL_COLUMN_TITLE}' 'title={CALL_COLUMN_TITLE}'
+  'noteTitle={entered.state.status === "unavailable" ? entered.state.reason : undefined}' 'noteTitle={undefined}'
 
 run_case "private-market" "the private band's basis leaves its hover" sub $P \
   '"Each holding counted once. Where two statements' '"Where two statements'

@@ -17,7 +17,7 @@ import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
-import { embeddedReturnFormula } from "@/lib/auditFormulas";
+import { fifoTotals } from "@/lib/fifo";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
 
@@ -100,10 +100,15 @@ export function Performance() {
   const listedMV = consolidatedMarketValue(p);
   const listedCost = sumOrNull(priced.map((x) => x.costBasis));
   const listedPnL = sumOrNull(priced.map((x) => x.unrealizedPnL));
-  // Null, not 0: an embedded return needs a cost on both sides.
-  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0
-    ? (listedPnL / listedCost) * 100
-    : null;
+  /**
+   * FIFO — the same aggregator and the same costed set as Morning CIO's
+   * Consolidated return, so the two pages cannot print two figures for one
+   * book: unrealised on what is held plus realised on units already sold, over
+   * the capital that bought them, with each whole mandate struck on its
+   * capital since inception. Null, not 0, where no cost is reported.
+   */
+  const bookFifo = fifoTotals(priced.filter((x) => x.costBasis != null), { accounts, universe: consolidated });
+  const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0 ? bookFifo.returnPct : null;
   const mvOf = (accountId: string) =>
     sum(p.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
 
@@ -248,9 +253,14 @@ export function Performance() {
             : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once`}
           icon={<Layers className="h-4 w-4" />} />
 
-        <StatTile label="Embedded return"
-          value={<Auditable formula={embeddedReturnFormula(listedPnL, listedCost, embeddedRet, money)}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
-          sub={<>{money(listedPnL, true)} unrealised on cost</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
+        <StatTile label="Return · FIFO"
+          value={<Auditable formula={{
+            title: "Return (FIFO)",
+            excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100",
+            plain: "Everything the book has produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
+            worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}`,
+          }}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
+          sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
           <StatTile label="Money-weighted return (XIRR)"
@@ -261,7 +271,8 @@ export function Performance() {
           <StatTile label="Money-weighted return (to date)"
             value={<span className={(consolidatedTotalReturn ?? 0) >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
             sub={<>to date · {windowNote}</>}
-            hint={`${xirrMissing.length
+            hint={xirrMissing.length ? `Over ${measurable.length} of ${accounts.length} accounts · not annualised` : "Over every account · not annualised"}
+            title={`${xirrMissing.length
               ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
               : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}; the annualised XIRR${consolidatedXirr != null ? ` is ${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a.` : ""}, kept off the tile because a >100% annualised quarter reads as a sustained yearly rate.`}
             icon={<Percent className="h-4 w-4" />} />
@@ -344,10 +355,9 @@ export function Performance() {
               })}
               <tr className="border-t-2 border-ink-600">
                 <td className="px-3 py-2.5 font-semibold text-slate-200">Consolidated</td>
-                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}>
-                  {DASH} time-weighted returns cannot be consolidated across these accounts: the three managers
-                  publish different periods, against different benchmarks, from different inception dates. The
-                  money-weighted return above is the consolidated figure this book does support.
+                <td className="px-3 py-2.5 text-slate-500" colSpan={livePeriods.length + 1}
+                  title="Time-weighted returns cannot be consolidated across these accounts: the managers publish different periods, against different benchmarks, from different inception dates. The money-weighted return above is the consolidated figure this book does support.">
+                  {DASH} not consolidated — the managers publish different periods and benchmarks
                 </td>
               </tr>
             </tbody>
@@ -417,7 +427,7 @@ export function Performance() {
 
       {/* ── Money-weighted return, per account ── */}
       <Card className="mt-5" title="Money-weighted return to date, per account"
-        subtitle="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised">
+        subtitle={<span title="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised.">From each account&rsquo;s own dated capital movements · to date, not annualised</span>}>
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
@@ -439,6 +449,14 @@ export function Performance() {
                         measurement — see Account.noPositionsReason. */}
                     {x.account.noPositionsReason
                       ? <AbsentCell reason={x.account.noPositionsReason} />
+                      : x.account.partialValuation
+                      /* A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST.
+                         The depository's cash-equivalent units are valued on the
+                         live basis; the account's other holdings are not, and a
+                         bare total here would read as the whole account. */
+                      ? <span data-partial-valuation title={x.account.partialValuation}>
+                          {money(x.mv)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80">partial</span>
+                        </span>
                       : money(x.mv)}
                   </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>

@@ -132,7 +132,13 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
         note: `${cov.cagr} annualised of ${cov.total}`,
         title: `Annualised where a year can be measured — ${cov.cagr} of ${cov.total} rows.`
           + (cov.absolute > 0 ? ` ${cov.absolute} ${cov.absolute === 1 ? "row is" : "rows are"} held under a year and show their total return on cost instead, marked HPR, because annualising a part-year would state a rate for a year the holding has not seen.` : "")
-          + (cov.absent > 0 ? ` ${cov.absent} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
+          // A WHOLE ACCOUNT FUNDED OVER SEVERAL DATED PAYMENTS is refused here
+          // for a different reason from a holding with no date, and has its
+          // annual rate one column over — so it is counted apart rather than
+          // filed under "no purchase date", which would send a reader looking
+          // for a document the row does not need.
+          + (cov.staggered > 0 ? ` ${cov.staggered} ${cov.staggered === 1 ? "row is a whole account" : "rows are whole accounts"} funded over several dated payments: a single-start compound rate would treat every rupee as invested on the first date, so ${cov.staggered === 1 ? "its" : "their"} annual rate is in the XIRR column.` : "")
+          + (cov.absent - cov.staggered > 0 ? ` ${cov.absent - cov.staggered} report no purchase date the window could close over — the managed accounts publish a capital-account ledger rather than a lot register, and the depository holdings report no cost.` : ""),
       };
     case "ytd":
       return {
@@ -143,11 +149,21 @@ export function returnColumnMeta(measure: ReturnMeasure, cov: ReturnCoverage, as
               : "No row can be measured on this drop. ")
           + `The other ${cov.absent} were already held on 1 January, and a year-to-date figure needs their value on that date: the earliest statement in this book is dated after the year began, so there is no opening value to measure from. One holdings statement per account dated on or before 1 January fills it.`,
       };
-    case "xirr":
+    case "xirr": {
+      // THE COUNT IS OF RATES, not of cells shown: a whole account whose
+      // payments span under a year is SHOWN here as its holding-period return,
+      // tagged HPR, and calling that money-weighted would be the claim the
+      // guard exists to refuse.
+      const fallback = cov.shown - cov.xirr;
       return {
-        note: `${cov.shown} of ${cov.total}`,
-        title: `A money-weighted XIRR needs every cash flow for a holding — each tranche's date and amount — and the statements here cover the current period only, so it is absent on all ${cov.total} rows. The per-account money-weighted return is on Performance.`,
+        note: `${cov.xirr} money-weighted of ${cov.total}`,
+        title: (cov.xirr > 0
+          ? `A money-weighted XIRR on ${cov.xirr} of ${cov.total} rows — each a whole account, or a fund over its whole folios, whose every payment in and out is dated, solved over the same record the Transactions card uses.`
+          : `A money-weighted XIRR needs every dated payment behind a row, and no row here is a whole account with every payment on record.`)
+          + (fallback > 0 ? ` ${fallback} ${fallback === 1 ? "row is" : "rows are"} funded under a year ago and show ${fallback === 1 ? "its" : "their"} holding-period return instead, marked HPR, because annualising a part-year would state a rate for a year the money has not seen.` : "")
+          + (cov.absent > 0 ? ` The other ${cov.absent} are holdings inside an account, which have no cash flows of their own, or accounts whose payments are not all on record — each cell says which. The per-account money-weighted return, where one can be struck, is on Performance.` : ""),
       };
+    }
     case "calendar":
       return {
         note: `${cov.shown} of ${cov.total}`,

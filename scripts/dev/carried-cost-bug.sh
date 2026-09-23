@@ -191,8 +191,8 @@ run_page_case "the company page's per-account cell forgets its hover" py <<'PY'
 import sys
 p = "src/pages/StockInfo.tsx"
 s = open(p, encoding="utf-8").read()
-old = '''                          ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>'''
-new = '''                          ? <span>{money(r.costBasis)}</span>'''
+old = '''            ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>'''
+new = '''            ? <span>{money(r.costBasis)}</span>'''
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

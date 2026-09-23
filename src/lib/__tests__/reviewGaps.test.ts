@@ -26,10 +26,13 @@
 // Every expectation is derived from the generated module, from `glowData.ts`
 // and from the committed report on the run — never from a fixture, which would
 // prove only that two inventions agree.
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import path from "node:path";
+import XLSX from "xlsx";
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
-import { reviewGapsFor, claimableGaps } from "@/lib/reviewGaps";
+import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, valuedFromDepository } from "@/lib/reviewGaps";
+import { depositoryCashHoldings } from "@/lib/fundNavs";
 import { securityKeyOf } from "@/lib/securityKey";
 
 let fails = 0;
@@ -206,6 +209,79 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     reviewGapsFor("Onesource Specialty Pharma").length === 0);
   ok("…and BSE, which the book really does not hold, still is",
     reviewGapsFor("BSE").length === 1);
+}
+
+// ── 6c. …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE ──────────
+//
+// Stage 10ce values the cash-equivalent funds a depository reports on a demat
+// that sent a transaction statement and no holding statement — at AMFI's NAV,
+// on the LIVE basis only — so the name tier above, keyed on `BOOK_POSITIONS`,
+// cannot see them, and neither can a name rule: the depository prints the AMC's
+// name in front of the scheme's. `REVIEW_LINE_ISINS` joins two review lines to
+// those rows BY ISIN, by hand. Five claims per entry, and the last is what
+// licenses the join rather than a comment asserting it: the review's own
+// purchase of that exact line is a credit the depository makes to that ISIN,
+// unit for unit, within a settlement's days of the date the review prints.
+{
+  const live = depositoryCashHoldings();
+  ok("the depository-valued table has a subject", REVIEW_LINE_ISINS.size > 0, `${REVIEW_LINE_ISINS.size}`);
+
+  const flat = (k: string) => k.replace(/-/g, "");
+  const bookKeys = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+  const related = (name: string) => {
+    const k = securityKeyOf(name);
+    return !!k && bookKeys.some((bk) =>
+      bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+  };
+
+  // The review's own purchases, read the way `fundNavs.test.ts` reads them, and
+  // the depository's own dated credits, read from the archive document each live
+  // row names as its source — never from the review.
+  const REVIEW = path.join(process.cwd(), "source", "august-2026-d",
+    "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx");
+  type Buy = { product: string; date: string; units: number };
+  const buys: Buy[] = [];
+  if (existsSync(REVIEW)) {
+    const wb = XLSX.readFile(REVIEW);
+    const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
+    const rows = sheet
+      ? (XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, blankrows: false, defval: "" }) as unknown[][])
+      : [];
+    const excelDate = (n: number) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
+    for (const r of rows) {
+      const i = r.findIndex((c) => /^purchase$/i.test(String(c).trim()));
+      if (i < 1) continue;
+      const units = Number(r[i + 2]);
+      if (Number.isFinite(units) && units > 0) buys.push({ product: String(r[i - 1]), date: excelDate(Number(r[i + 1])), units });
+    }
+  }
+  ok("the family's review is on disk to witness the join", buys.length > 0, REVIEW);
+  type Credit = { isin: string; date: string; quantity: number };
+  const credits: Credit[] = [];
+  for (const src of new Set(live.map((p) => p.depositoryUnits?.source).filter(Boolean) as string[])) {
+    const f = path.join(process.cwd(), "public", "audit", src, "document.json");
+    if (!existsSync(f)) continue;
+    const doc = JSON.parse(readFileSync(f, "utf8")) as { transactions?: { isin?: string | null; date?: string; quantity?: number | null }[] };
+    for (const t of doc.transactions ?? [])
+      if (t.isin && t.date && typeof t.quantity === "number" && t.quantity > 0) credits.push({ isin: t.isin, date: t.date, quantity: t.quantity });
+  }
+  const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+
+  for (const [name, isin] of REVIEW_LINE_ISINS) {
+    const gap = REVIEW_GAPS.find((g) => g.name === name);
+    ok(`${name}: a line the gap list carries — an entry naming none is dead`, !!gap);
+    const row = live.find((p) => p.isin?.trim().toUpperCase() === isin);
+    ok(`${name}: the live book values ${isin} from a depository balance`, !!row && row.marketValue > 0);
+    ok(`${name}: a search for its own name is told nothing about it`,
+      !reviewGapsFor(name).some((g) => g.name === name) && (!gap || valuedFromDepository(gap)));
+    // LOAD-BEARING: without this tier the name tier would have claimed it, or
+    // the entry protects nothing and the check above passes over a no-op.
+    ok(`${name}: …and the name tier alone would have claimed it absent`, !related(name));
+    const tied = buys.filter((b) => b.product === name).find((b) =>
+      credits.some((c) => c.isin === isin && Math.abs(c.quantity - b.units) < 0.0005 && days(c.date, b.date) <= 5));
+    ok(`${name}: the review's own purchase is a depository credit to ${isin}, unit for unit`, !!tied,
+      tied ? `${tied.units} units on ${tied.date}` : "no purchase of this line ties to a credit");
+  }
 }
 
 // ── 7. EVERY SEARCH A READER CAN RUN OVER HOLDINGS IS WIRED TO IT ───────────

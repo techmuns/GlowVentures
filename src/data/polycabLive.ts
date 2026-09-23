@@ -82,15 +82,7 @@ export const POLYCAB_LIVE: PolycabLive = {
   "nseSymbol": "POLYCAB",
   "bookIsin": "INE455K01017",
   "bookShares": 13901229,
-  "identity": {
-    "isin": "INE455K01017",
-    "scripCode": "542652",
-    "securityId": "POLYCAB",
-    "faceValue": 10,
-    "industry": "Cables - Electricals",
-    "group": "A",
-    "index": "BSE 200"
-  },
+  "identity": null,
   "quote": {
     "ltp": 8354,
     "prevClose": 8375,
@@ -192,7 +184,7 @@ export const POLYCAB_LIVE: PolycabLive = {
       "paymentDate": null
     }
   ],
-  "actionsComplete": true,
+  "actionsComplete": false,
   "promoterQuarters": [
     {
       "asOf": "2026-06-30",
@@ -314,10 +306,15 @@ export const POLYCAB_LIVE: PolycabLive = {
   ],
   "notes": [
     {
+      "severity": "fail",
+      "rule": "identity",
+      "detail": "BSE identity refused — HTTP 403. Nothing from the exchange is published this run."
+    },
+    {
       "severity": "info",
       "rule": "promoter-agreement",
       "detail": "6 quarter(s) carried by both witnesses; all agree within 0.05pp."
     }
   ],
-  "retrievedAt": "2026-09-22T15:56:39.171Z"
+  "retrievedAt": "2026-09-23T15:46:09.211Z"
 };

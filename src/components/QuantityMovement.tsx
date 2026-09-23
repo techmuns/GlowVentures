@@ -39,6 +39,12 @@ import type { Account, ShareMovement } from "@/lib/types";
 
 /** The three decimals these statements print units at, reproduced. */
 const qty = (n: number | null | undefined) => (n == null ? DASH : fmtNum(n, 3));
+/**
+ * The same figure in a SENTENCE. Shares print as whole numbers and a fund's
+ * units keep the three decimals their statement prints — `16,300.000` in prose
+ * is a table's precision leaking into a sentence.
+ */
+const units = (n: number | null | undefined) => (n == null ? DASH : Number.isInteger(n) ? fmtNum(n) : fmtNum(n, 3));
 
 const NO_SPLIT = "this holding's dated rows do not walk its own printed opening balance to its own printed closing balance, so no in/out split is published for it — the two balances above are still the statement's own";
 
@@ -63,8 +69,42 @@ const T_PLEDGE = "A pledge, an unpledge or an early pay-in earmark moves units b
 /** The columns, in the order this table's rows write their cells. */
 const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] as const;
 
+/**
+ * ── AN ACCOUNT THAT HOLDS NONE OF IT STILL HAS A WINDOW, AND IT SAYS SO ─────
+ *
+ *   "According to the client, Kaynes … is also a holding of the family entity
+ *    Ajay's account."
+ *
+ * Ajay's main demat printed a Kaynes block — 16,300 shares on 1 April, nil on
+ * 31 July — and that block reached no page, because it was filed under a key
+ * nothing else carried (see `shareMovementsFrom` in `build-book.mjs`). It lands
+ * on this page now, beside the accounts that DO hold the name, and a row whose
+ * account carries no position here must not read like one of them: a nil
+ * closing is a sale, and a closing with no position is a holding this book
+ * cannot value because that account's only statement prints units and no rate.
+ * Both are stated on the row rather than left for the reader to infer from the
+ * Position table above not listing the account.
+ */
+export function notHeldNote(m: ShareMovement, account: Account | undefined): { label: string; why: string } {
+  if ((m.closing ?? 0) === 0) {
+    return {
+      label: "Sold out in this window",
+      why: `This account held ${units(m.opening)} at the window's opening and none at its close, so it is not a holding on this page. The dated rows are on its own depository statement.`,
+    };
+  }
+  return {
+    label: "Held, and not valued here",
+    why: account?.noPositionsReason
+      ?? "This account's statement prints the units and no rate, so the book carries no value for them and they are not in the holdings above.",
+  };
+}
+
 export function QuantityMovement(
-  { movements: raw, unmoved, accounts }: { movements: ShareMovement[]; unmoved: string[]; accounts: Account[] },
+  { movements: raw, unmoved, accounts, held }: {
+    movements: ShareMovement[]; unmoved: string[]; accounts: Account[];
+    /** The accounts holding a POSITION of this security — a window in any other is marked. */
+    held?: ReadonlySet<string>;
+  },
 ) {
   const view = useTableView("quantity-movement", QTY_COLS);
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
@@ -106,8 +146,8 @@ export function QuantityMovement(
     <Card className="mt-5" pad={false}
       title="Quantity through the year"
       subtitle={movements.length
-        ? "Opening balance, what came in, what went out, and what is left — every figure read off the depository statement, which prints all four"
-        : "What this holding's own depository statement says about its quantity over the window"}
+        ? "Opening, in, out and closing — as the depository statement prints them"
+        : "What this holding's depository statement says about its quantity"}
       right={window ? <Pill>{window}</Pill> : undefined}>
       {movements.length > 0 && (
       <div className="overflow-x-auto">
@@ -141,6 +181,14 @@ export function QuantityMovement(
                   <td className="px-4 py-2">
                     <div className="text-slate-200">{acc ? (acc.ownerId ? ownerDisplayName(acc.ownerId) : acc.owner) : m.accountId}</div>
                     <div className="text-[11px] text-slate-500">{acc ? `${acc.provider} · ${acc.accountNo}` : DASH}</div>
+                    {held && !held.has(m.accountId) && (() => {
+                      const n = notHeldNote(m, acc);
+                      return (
+                        <div className="text-[11px] text-amber-400/90" data-qty-not-held={(m.closing ?? 0) === 0 ? "sold-out" : "unvalued"} title={n.why}>
+                          {n.label}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-2 text-right mono text-slate-100" data-qty-opening={m.opening ?? ""}>{qty(m.opening)}</td>
                   <td className="px-4 py-2 text-right"><Move v={ties ? m.unitsIn : null} sign="+" zero={Z_IN} why={m.reason} /></td>
@@ -180,48 +228,50 @@ export function QuantityMovement(
         </table>
       </div>
       )}
-      <div className="space-y-1.5 border-t border-ink-700/60 px-4 py-2.5 text-[11px] leading-relaxed text-slate-500">
-        {/* The rows either add across or the split is not here at all, so this
-            says what a reader can check rather than asking them to trust it. */}
+      {/* ONE SHORT LINE UNDER THE TABLE, and the sentences that stood here are
+          its hovers. *"no one is reading these kind of … notes that you have put
+          in across tables."* Three paragraphs said: the identity the rows obey
+          and that a pledge is in none of its columns; that a holding with no
+          dated block was untouched; and that these are depository movements
+          rather than trades. Each is still on the page, on the words it
+          explains — weaker than a caption, and recorded as such. */}
+      <div className="border-t border-ink-700/60 px-4 py-2 text-[11px] text-slate-500">
         {movements.length > 0 && (
-        <p data-qty-identity>
-          Opening + units in − units out + corporate action = closing, on every row: these are the statement's own
-          printed balances with its own dated rows between them, and a holding whose rows do not reproduce its printed
-          closing carries no split at all. A <strong className="text-amber-300/90">pledge, unpledge or early pay-in earmark</strong> is counted and is in none
-          of those columns — it shifts units between this account's free and encumbered balances without any leaving it.
-          {" "}The figures come from {rowCount} dated {rowCount === 1 ? "row" : "rows"} the statement prints between the
-          two balances.
-          {/* A ROW MATCHING NO KNOWN PARTICULAR still counts, by its own balance
-              change — which is a weaker basis than a named event and must say
-              so. Zero on this corpus, and the sentence is what would speak up on
-              the drop that brings a particular this reader has never seen. */}
-          {unclassifiedRows > 0 && (
-            <> {unclassifiedRows} of {rowCount === 1 ? "it" : "them"} match no particular this reader knows, so
-            {" "}{unclassifiedRows === 1 ? "its" : "their"} direction came from the balance's own change rather than
-            from a named event — the units are the statement's, the classification is not.</>
-          )}
-        </p>
+          <span data-qty-identity title={[
+            "These are the statement's own printed balances with its own dated rows between them, and a holding whose rows do not reproduce its printed closing carries no split at all.",
+            "A pledge, unpledge or early pay-in earmark is counted and is in none of these columns — it shifts units between this account's free and encumbered balances without any leaving it.",
+            `The figures come from ${rowCount} dated ${rowCount === 1 ? "row" : "rows"} the statement prints between the two balances.`,
+            // A ROW MATCHING NO KNOWN PARTICULAR still counts, by its own balance
+            // change — which is a weaker basis than a named event and must say
+            // so. Zero on this corpus, and the sentence is what would speak up
+            // on the drop that brings a particular this reader has never seen.
+            unclassifiedRows > 0
+              ? `${unclassifiedRows} of ${rowCount === 1 ? "it" : "them"} match no particular this reader knows, so ${unclassifiedRows === 1 ? "its" : "their"} direction came from the balance's own change rather than from a named event — the units are the statement's, the classification is not.`
+              : "",
+          ].filter(Boolean).join(" ")}>
+            Opening + units in − units out + corporate action = closing
+          </span>
         )}
+        {movements.length > 0 && " · "}
+        {/* WHAT THIS IS NOT. Without it a reader takes "units in" for a
+            purchase, and a depository movement names no price, no
+            counterparty and no consideration. */}
+        <span data-qty-not-trades
+          title="A demat credit or debit carries units and nothing else, so no price, amount or gain is shown here. Only the accounts whose custodian issues a transaction statement appear.">
+          depository movements, not trades
+        </span>
         {/* A HOLDING WITH NO BLOCK IS THE STATEMENT SAYING IT DID NOT MOVE, and
             a reader who is shown nothing cannot tell that from a gap. No
             opening balance is invented for it: every figure in the table above
             is one the document printed, and `opening = closing` is not. */}
         {unmoved.length > 0 && (
-          <p data-qty-unmoved>
-            {unmoved.length === 1 ? "One account holds" : `${unmoved.length} accounts hold`} this name and its
-            transaction statement prints no dated block for it — {unmoved.map(acctLabel).join("; ")}. These statements
-            carry a block only for a security whose balance changed in the window, so this holding was untouched
-            through it.{movements.length > 0 ? " No opening balance is shown for those: every figure above is one the document printed, and one it did not would not be." : " No opening balance is shown for it, because this book does not have one — the statement printed none."}
-          </p>
+          <div className="mt-1" data-qty-unmoved
+            title={`These statements carry a block only for a security whose balance changed in the window, so this holding was untouched through it.${movements.length > 0 ? " No opening balance is shown for those: every figure above is one the document printed, and one it did not would not be." : " No opening balance is shown for it, because this book does not have one — the statement printed none."}`}>
+            {unmoved.map(acctLabel).join("; ")} · its transaction statement prints no dated block for it — untouched
+          </div>
         )}
-        <p>
-          {/* WHAT THIS IS NOT. Without this a reader takes "units in" for a
-              purchase, and a depository movement names no price, no
-              counterparty and no consideration. */}
-          These are depository movements, not trades — a demat credit or debit carries units and nothing else, so no
-          price, amount or gain is shown here. Only the accounts whose custodian issues a transaction statement appear.
-        </p>
       </div>
     </Card>
   );
 }
+

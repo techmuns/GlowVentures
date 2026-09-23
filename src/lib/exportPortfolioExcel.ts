@@ -9,6 +9,7 @@ import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, DASH } from "./format";
 import { holdingYtd } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
+import { fifoTotals } from "./fifo";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
   holdingBucket, bucketLabel, holdingRoute, ROUTE_LABEL,
@@ -160,7 +161,9 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
         // NULL, NEVER 0. The cell already rendered an em dash; the zero survived
         // in the model and was summed into the Total row below.
         pnl: costNA ? null : mv - (cost as number),
-        returnPct: costNA || (cost as number) <= 0 ? null : ((mv - (cost as number)) / (cost as number)) * 100,
+        // FIFO, through the same aggregator the tab uses — the realised gain on
+        // units already sold stays in the return.
+        returnPct: costNA || (cost as number) <= 0 ? null : fifoTotals(ps).returnPct,
         /**
          * The HOLDING's year to date, on the same rule as the tab.
          *

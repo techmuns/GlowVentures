@@ -42,7 +42,7 @@ import path from "node:path";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import {
   trancheTable, trancheKey, trancheCoverage,
-  contributionsAreComplete, capitalRollup, capitalTotals,
+  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn,
 } from "@/lib/tranches";
 import type { Position } from "@/lib/types";
 
@@ -108,9 +108,17 @@ for (const k of keys) {
   const t = trancheTable([p], BOOK_POSITION_TRANCHES, TRANCHE_MODE, ASOF);
   if (!t) { ok(`a table is built for ${k}`, false); continue; }
 
-  // Half of the last decimal a unit count is printed to.
-  near(`units tie to quantity — ${tr.securityKey.slice(0, 28)} ${tr.accountId.slice(-8)}`, t.units, p.quantity, 0.0005);
-  near(`value ties to market value — ${tr.accountId.slice(-8)}`, t.value, p.marketValue, 1);
+  // Half of the last decimal the position's unit count is PRINTED to. Neo
+  // Infra's statement prints its balance as 4,85,837 — whole units — while its
+  // own dated record carries 4,85,837.2 after the capital redemption, so the
+  // tie is the printed precision reproduced, never a tolerance widened to fit.
+  const dp = String(p.quantity).split(".")[1]?.length ?? 0;
+  const tie = Math.max(0.0005, 0.5 * 10 ** -dp);
+  near(`units tie to quantity — ${tr.securityKey.slice(0, 28)} ${tr.accountId.slice(-8)}`, t.units, p.quantity, tie);
+  // …and the value follows the units: the residual units at the position's own
+  // per-unit mark, or a rupee, whichever is larger.
+  near(`value ties to market value — ${tr.accountId.slice(-8)}`, t.value, p.marketValue,
+    Math.max(1, tie * (p.marketValue / p.quantity)));
   if (p.costBasis != null) near(`invested ties to cost basis — ${tr.accountId.slice(-8)}`, t.invested, p.costBasis, 0.01);
 }
 ok("at least one position was bought over several dates", multiTranche > 0, `${multiTranche} of ${keys.length}`);
@@ -259,14 +267,19 @@ eq("every position unit-tied → accepted with no inception date",
 const gateGroups = capitalRollup(gateMoves,
   [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2024-01-01" }],
   gatePos, {});
-eq("a refused group publishes no return", gateGroups[0].returnPct, null);
-eq("...and no gain either", gateGroups[0].gain, null);
+eq("a refused group publishes no return", capitalReturn(gateGroups[0], "auto").shown, false);
+eq("...and no appreciation either", gateGroups[0].appreciation, null);
 ok("...but keeps what it DID pay in", gateGroups[0].paidIn === 1e7);
 ok("...and names why the return is absent", !!gateGroups[0].incompleteReason);
+// A CAPITAL RECORD MUST ALSO REACH THE DATE ITS VALUE IS STRUCK ON (Stage
+// 10cf, `recordShortfall`), so the accepted fixture says so: its value is at
+// 2026-06-30 and its record runs to the same day. The refusal side of that rule
+// is asserted on the real book in `datedCapital.test.ts`.
 const okGroups = capitalRollup(gateMoves,
-  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01" }],
+  [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01",
+    asOf: "2026-06-30", capitalRecordTo: "2026-06-30" }],
   gatePos, {});
-ok("an accepted group does publish one", okGroups[0].returnPct !== null);
+ok("an accepted group does publish one", capitalReturn(okGroups[0], "absolute").shown);
 eq("...with no reason attached", okGroups[0].incompleteReason, null);
 /**
  * `capitalTotals` NO LONGER COUNTS THE MEASURABLE ROWS, and this asserts the

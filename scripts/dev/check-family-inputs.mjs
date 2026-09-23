@@ -198,13 +198,20 @@ check("...and the now-empty Setup group heading went with it",
   !groupOf("Setup") && !/(^|\n)\s*SETUP\s*(\n|$)/.test(text));
 
 // *"Move the following page buttons inside a drop down option ... labelled as
-//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups.
+//  'Extras'"* — the four that were the whole of the TAX and ANALYTICS groups,
+// and since #84 a FIFTH: Corporate actions & dividends, which that change filed
+// under Extras beside Return & Drawdown. The family confirmed it stays there
+// (Stage 10cj). This list still said four through the seven changes that landed
+// after #84, and failed two rows on every run — a check that fails on a correct
+// page is read as noise, and the next real failure goes unread beside it. ONE
+// list, used by every row below, so the count cannot drift between them again.
+const EXTRAS_PAGES = ["/capital-gains", "/performance", "/returns", "/corporate-actions", "/ledger"];
 const extras = groupOf("Extras");
 check("Extras is a group, and the only collapsible one",
   !!extras && extras.collapsible && navGroups.filter((g) => g.collapsible).length === 1,
   `${navGroups.filter((g) => g.collapsible).length} collapsible`);
-check("...holding exactly the four pages the family named, in the order given",
-  same(extras?.entries, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+check("...holding exactly the five pages it carries, in the order given",
+  same(extras?.entries, EXTRAS_PAGES),
   extras?.entries.join(" · "));
 check("...and the emptied Tax and Analytics headings went with their entries",
   !groupOf("Tax") && !groupOf("Analytics")
@@ -212,8 +219,8 @@ check("...and the emptied Tax and Analytics headings went with their entries",
 check("...sitting above Admin, so Data Audit and Upload History still close the nav",
   navGroups.findIndex((g) => g.group === "Extras") >= 0
   && navGroups.findIndex((g) => g.group === "Extras") < navGroups.findIndex((g) => g.group === "Admin"));
-// IT IS A DROPDOWN: shut until asked, and none of the four clickable meanwhile.
-check("Extras starts collapsed, with none of its four pages reachable",
+// IT IS A DROPDOWN: shut until asked, and none of the five clickable meanwhile.
+check("Extras starts collapsed, with none of its five pages reachable",
   extras?.expanded === false && extras?.visible.length === 0,
   `${extras?.visible.length ?? "?"} visible`);
 
@@ -236,8 +243,8 @@ const clickExtras = async () => {
   navGroups = await readNav();
 };
 await clickExtras();
-check("clicking Extras reveals all four page buttons",
-  hasExtrasToggle && same(groupOf("Extras")?.visible, ["/capital-gains", "/performance", "/returns", "/ledger"]),
+check("clicking Extras reveals all five page buttons",
+  hasExtrasToggle && same(groupOf("Extras")?.visible, EXTRAS_PAGES),
   hasExtrasToggle ? groupOf("Extras")?.visible.join(" · ") : "no Extras toggle to click");
 // ...AND IT IS A TOGGLE RATHER THAN A ONE-WAY REVEAL. Without this, a control
 // that ignored its own state and simply rendered open would pass the row above.
@@ -252,7 +259,7 @@ check("...and clicking it again puts them away",
 // nav, which reads as the page having left the app. It was just collapsed by
 // hand two lines up, so this also proves the ROUTE re-opens it rather than a
 // stored preference doing the work.
-for (const to of ["/capital-gains", "/performance", "/returns", "/ledger"]) {
+for (const to of EXTRAS_PAGES) {
   await page.goto(`${BASE}${to}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
   navGroups = await readNav();
@@ -607,6 +614,42 @@ check("the Transactions tab still renders", /transaction/i.test(text));
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 
+// ── THE MONITOR OPENS ON ALL SECURITIES, AND CATEGORY IS ONE CLICK AWAY ─────
+//
+//   *"Make this view as All Securities and make it first in portfolio monitor
+//    and default open."*
+//
+// Driven, because the claim is about what a click DOES: the default is
+// param-free like every other view in this app, so choosing Category must put
+// `?group=category` in the address and choosing All Securities must take it
+// away again. Read off the buttons' own keys, never their prose.
+{
+  const axes = await page.$$eval("[data-group-axis]", (bs) => bs.map((b) => ({
+    key: b.getAttribute("data-group-axis"), label: (b.textContent || "").trim(), on: b.getAttribute("aria-selected") === "true" })));
+  check("the Portfolio Monitor offers All Securities first, and opens on it",
+    axes[0]?.key === "security" && axes[0]?.label === "All Securities" && axes[0]?.on === true
+      && axes.filter((a) => a.on).length === 1 && !new URL(page.url()).searchParams.has("group"),
+    axes.map((a) => `${a.label}${a.on ? "*" : ""}`).join(" · "));
+  const cat = page.locator("button[data-group-axis='category']").first();
+  if (await cat.count()) { await cat.click(); await page.waitForTimeout(800); }
+  const catUrl = new URL(page.url());
+  check("…clicking Category puts ?group=category in the address and draws the section tabs",
+    catUrl.searchParams.get("group") === "category" && (await page.locator("[data-section-filter]").count()) > 0,
+    catUrl.search || "(no query)");
+  const all = page.locator("button[data-group-axis='security']").first();
+  if (await all.count()) { await all.click(); await page.waitForTimeout(800); }
+  const backUrl = new URL(page.url());
+  check("…and clicking All Securities takes the param away again",
+    backUrl.pathname === "/monitor" && !backUrl.searchParams.has("group"), backUrl.search || "(no query)");
+}
+
+// THE CATEGORY TABLE IS `?group=category` NOW. Everything below was written
+// against it — its section tabs, its mandate rows — and is reached by its own
+// address, so a failure in the clicks above cannot leave it walking a table
+// that has neither.
+await page.goto(`${BASE}/monitor?group=category`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+
 // Read the TABS off the DOM. The categories were a `<select>` until the family
 // asked for them as tabs — "give tabs to me to click and quickly reach instead
 // of a dropdown" — so each is a button carrying its section key, read by its
@@ -784,8 +827,24 @@ if (await watched.count()) {
     // EACH ONE SAYS WHAT IT HOLDS AND WHY IT CARRIES NO FIGURE — a list of
     // account numbers with no reason reads as a broken feed rather than as a
     // measured absence, which is this book's founding distinction.
+    // The reason is the account line's HOVER since the family asked for the
+    // notes around the tables to go — so it is read off the `title`, where a
+    // reader finds it, and never off the page text it left.
+    //
+    // AN ACCOUNT THAT SENT ONLY A TRANSACTION STATEMENT IS PARTLY VALUED on the
+    // live basis — its arbitrage and liquid funds at AMFI's NAV, the family's
+    // cash — so its generated "values nothing" reason is replaced by a note
+    // naming what is valued and what is not. Either sentence is a reason; what
+    // must never happen is a listed account with neither.
+    const reasons = await page.$$eval("[data-unvalued-account] [data-unvalued-reason]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...each with its own reason",
-      unvalued.every((a) => !a.noPositionsReason || text.includes(a.noPositionsReason.slice(0, 60))));
+      unvalued.every((a) => !a.noPositionsReason || reasons.some((r) => r.includes(a.noPositionsReason.slice(0, 60)))
+        || (a.transactionsOnly === true && /partly valued/.test(text)
+          && reasons.some((r) => r.includes("sent a transaction statement and no holding statement")))),
+      `${reasons.length} reason(s) in hovers`);
+    check("...in a hover rather than as a paragraph under each line",
+      unvalued.every((a) => !a.noPositionsReason || !text.includes(a.noPositionsReason.slice(0, 60)))
+        && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
     check("...and the card says none of it is in the value above",

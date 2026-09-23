@@ -71,6 +71,51 @@
  * truncate rule `rbi.mjs` and `iex.mjs` are built on. A first run therefore has
  * no day change and says so rather than reporting zero.
  *
+ * ── AND THE SCHEME'S SEBI CATEGORY, BECAUSE A NAME CANNOT SAY IT ──────────
+ *
+ * NAVAll is not a flat list. It is grouped under headings that carry the
+ * regulator's own classification of every scheme — `Open Ended Schemes(Hybrid
+ * Scheme - Arbitrage Fund)`, `(Debt Scheme - Liquid Fund)` — which is SEBI's
+ * 2017 categorisation, printed by the industry body against each scheme code.
+ * Every row inherits the heading above it, and both halves are recorded:
+ * `category` verbatim, and `sebiCategory`, the part after the first " - ".
+ *
+ * That is what lets a rule about a KIND of fund be checked by identifier rather
+ * than by resemblance. A depository clips `KOTAK ARBITRAGE FUND` to its column
+ * width as readily as it clips `BNDH L&MCF DP GR`, and a name pattern can only
+ * find the ones spelled out. The category is keyed on the ISIN like every other
+ * figure here, so a fund is an arbitrage fund because AMFI files it as one.
+ *
+ * ── UNITS A DEPOSITORY REPORTS AND NO STATEMENT VALUES ────────────────────
+ *
+ * One of this family's demat accounts sent a TRANSACTION statement and no
+ * holding statement, so the book carries its closing balances as dated unit
+ * counts (`BOOK_SHARE_MOVEMENTS`) and not one valued position. Those balances
+ * are the depository's own record of what the account holds, and each block
+ * already had to walk its own printed opening balance to its own printed
+ * closing one before the book would publish it.
+ *
+ * A fund among them is priced here too, so a reader can SEE what it is worth —
+ * but only from an account the book marks `transactionsOnly`: no holding
+ * statement in the drop, only a transaction one. NOT "an account with no
+ * positions", which was this script's first test and is wrong: Ajay's other
+ * demat 37359311 also carries no position, because its holding statement's two
+ * rows are AIF units the funds report themselves and were dropped as
+ * duplicates. Priced as depository units they would have counted Buoyant's
+ * units twice. An account that did send a holding statement has had every row
+ * it does not carry dropped ON PURPOSE, and pricing those would reverse a
+ * decision the book made and recorded. Whether a priced depository
+ * unit then VALUES anything is not this script's call — it is a price table —
+ * and the dashboard's own cash rule decides which of them it shows.
+ *
+ * THE BASIS CHECK NEEDS A DIFFERENT WITNESS HERE, because no statement marks
+ * these units at all. The share-count break the check exists for is an ETF's:
+ * an ETF's units split and the depository's count can straddle the date. An
+ * open-ended mutual fund's units do not split, and the depository holds the
+ * very units the fund's registrar records under the same ISIN. So a
+ * depository-only unit is priced for value only where its category is not an
+ * ETF, and an ETF with no mark anywhere in the book is refused with the reason.
+ *
  * Idempotent: nothing moved upstream means nothing written, so the daily
  * workflow commits on a real change and never on a timestamp. `--check` writes
  * nothing and is the control run.
@@ -112,6 +157,15 @@ function bookArray(src, name) {
   return m ? JSON.parse(m[1]) : null;
 }
 
+/** The same, for a generated OBJECT literal (`BOOK_SHARE_MOVEMENTS`). */
+function bookObject(src, name) {
+  const i = src.indexOf(`export const ${name}`);
+  if (i < 0) return null;
+  const a = src.indexOf("= {", i);
+  const b = a < 0 ? -1 : src.indexOf("\n};", a);
+  return a < 0 || b < 0 ? null : JSON.parse(src.slice(a + 2, b + 2));
+}
+
 // ── what the book holds, and which identifiers reach it ─────────────────────
 const glow = readFileSync(join(ROOT, "src/data/glowData.ts"), "utf8");
 const positions = bookArray(glow, "BOOK_POSITIONS") ?? die("no BOOK_POSITIONS");
@@ -132,10 +186,44 @@ if (existsSync(ltPath)) {
 const wanted = new Map();
 for (const p of positions) {
   const cur = wanted.get(p.securityKey) ?? {
-    key: p.securityKey, name: p.security, bookIsin: null, marks: [], assetClass: p.assetClass };
+    key: p.securityKey, name: p.security, bookIsin: null, marks: [], assetClass: p.assetClass, from: "book" };
   if (p.isin && !cur.bookIsin) cur.bookIsin = p.isin;
   if (typeof p.currentPrice === "number" && Number.isFinite(p.currentPrice)) cur.marks.push(p.currentPrice);
   wanted.set(p.securityKey, cur);
+}
+
+/**
+ * THE DEPOSITORY-ONLY FUND UNITS — see the header. Four conditions, each a
+ * reason a balance must NOT be priced as a holding:
+ *
+ *   - the account sent no holding statement (`transactionsOnly`, read off the
+ *     book's own registry), because an account that did had its other
+ *     depository rows dropped on purpose — and it carries no position either;
+ *   - the block reconciled — it walked its own printed balances (`reason` null);
+ *   - there is something left at the close (a zero closing is an exit);
+ *   - the ISIN is a FUND's (`INF…`). A share is priced by an exchange, not by AMFI.
+ *
+ * A security whose ISIN the book already reaches under its own key is priced
+ * there already and is not added twice; the dashboard finds the one entry by ISIN.
+ */
+const movements = bookObject(glow, "BOOK_SHARE_MOVEMENTS") ?? {};
+const accountsWithPositions = new Set(positions.map((p) => p.accountId));
+const transactionsOnly = new Set((bookArray(glow, "BOOK_ACCOUNTS") ?? [])
+  .filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+const reachedIsins = new Set([...wanted.values()].map((w) => w.bookIsin ?? ltIsin.get(w.key)).filter(Boolean));
+const depositoryOnly = Object.values(movements)
+  .filter((w) => transactionsOnly.has(w.accountId)
+    && !accountsWithPositions.has(w.accountId)
+    && w.reason == null
+    && typeof w.closing === "number" && w.closing > 0
+    && typeof w.isin === "string" && /^INF/.test(w.isin))
+  .sort((a, b) => a.securityKey.localeCompare(b.securityKey));
+for (const w of depositoryOnly) {
+  if (reachedIsins.has(w.isin) || wanted.has(w.securityKey)) continue;
+  reachedIsins.add(w.isin);
+  wanted.set(w.securityKey, {
+    key: w.securityKey, name: w.security, bookIsin: w.isin, marks: [], assetClass: null, from: "depository",
+  });
 }
 
 // ── the published file ──────────────────────────────────────────────────────
@@ -150,18 +238,35 @@ async function fetchNavAll() {
 }
 
 /** ISIN → the scheme's published record. Both ISIN columns are indexed. */
+/**
+ * `Open Ended Schemes(Hybrid Scheme - Arbitrage Fund)` → the text in the
+ * parentheses. Anchored on the three scheme TYPES NAVAll groups by, so an AMC's
+ * own name — `IL&FS Mutual Fund (IDF)` also carries parentheses — is never
+ * mistaken for a category. Measured on the file: 104 headings, all three types.
+ */
+const CATEGORY_HEADING = /^\s*(?:Open Ended|Close Ended|Interval Fund)[^(]*\((.*)\)\s*$/;
+/** `Hybrid Scheme - Arbitrage Fund` → `Arbitrage Fund`: SEBI's own category name. */
+const sebiOf = (c) => {
+  if (!c) return null;
+  const i = c.indexOf(" - ");
+  return (i < 0 ? c : c.slice(i + 3)).trim() || null;
+};
+
 function indexByIsin(text) {
   const by = new Map();
   let rows = 0;
+  let category = null;
   for (const line of text.split(/\r?\n/)) {
+    const head = CATEGORY_HEADING.exec(line);
+    if (head) { category = head[1].replace(/\s+/g, " ").trim(); continue; }
     const f = line.split(";");
-    if (f.length < 8) continue;                       // a section heading, not a row
+    if (f.length < 8) continue;                       // an AMC name or a blank, not a row
     const nav = Number(f[6]);
     const date = isoDate(f[7]);
     if (!Number.isFinite(nav) || !date) continue;     // "N.A." on a suspended scheme
     rows += 1;
     const rec = { schemecode: f[0].trim(), scheme: f[3].trim(), plan: f[4].trim(),
-      option: f[5].trim(), nav, date };
+      option: f[5].trim(), nav, date, category, sebiCategory: sebiOf(category) };
     for (const col of [f[1], f[2]]) {
       const isin = col?.trim();
       if (isin && isin !== "-") by.set(isin, rec);
@@ -198,8 +303,9 @@ function main() {
       if (!isin) continue;                            // not identifiable; silently not a fund we can reach
       const rec = by.get(isin);
       if (!rec) {
-        // Only worth naming where the book thinks this is a fund at all.
-        if (w.assetClass === "Mutual Fund" || w.assetClass === "ETF") {
+        // Only worth naming where the book thinks this is a fund at all — or
+        // where a depository reported units a reader would expect to see valued.
+        if (w.assetClass === "Mutual Fund" || w.assetClass === "ETF" || w.from === "depository") {
           skipped.push({ ...w, isin, why: `ISIN ${isin} is not in AMFI's published NAV file` });
         }
         continue;
@@ -213,13 +319,20 @@ function main() {
       const mark = w.marks.length ? w.marks.reduce((a, b) => Math.max(a, b), -Infinity) : null;
       const lo = w.marks.length ? w.marks.reduce((a, b) => Math.min(a, b), Infinity) : null;
       const ratios = w.marks.map((m) => rec.nav / m);
-      const usable = ratios.length === 0
-        ? false
-        : ratios.some((r) => r >= BASIS_MIN && r <= BASIS_MAX);
-      const why = ratios.length === 0
-        ? "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against"
-        : usable ? null
-        : `the published NAV of ${rec.nav} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
+      /**
+       * A DEPOSITORY-ONLY UNIT HAS NO MARK TO CHECK AGAINST, so its witness is
+       * the instrument: an open-ended mutual fund's units do not split, and the
+       * share-count break this check exists for is an ETF's. See the header.
+       */
+      const isEtf = /\bETFs?\b/i.test(rec.category ?? "");
+      const depositoryUsable = w.from === "depository" && ratios.length === 0 && rec.category != null && !isEtf;
+      const usable = depositoryUsable || (ratios.length > 0 && ratios.some((r) => r >= BASIS_MIN && r <= BASIS_MAX));
+      const why = usable ? null
+        : ratios.length === 0
+          ? (w.from === "depository"
+            ? `no statement marks these units and AMFI files the scheme as ${rec.category ? `"${rec.category}"` : "no category"}; an ETF's units can split, so without a mark there is nothing to show the depository's count and this NAV are the same unit`
+            : "no statement in this book marks this holding per unit, so there is nothing to check the NAV's basis against")
+          : `the published NAV of ${rec.nav} against this book's own mark of ${lo === mark ? mark : `${lo}–${mark}`} is a factor of ${(1 / Math.max(...ratios)).toFixed(1)}, which is a share-count break rather than market movement — the units and the NAV are not the same unit`;
 
       const before = prev.get(w.key);
       // The previous NAV is whatever THIS FILE held on an earlier date — the
@@ -234,10 +347,13 @@ function main() {
         security: w.name,
         isin,
         isinFrom: bookIsin ? "statement" : "look-through",
+        from: w.from,
         schemecode: rec.schemecode,
         scheme: rec.scheme,
         plan: rec.plan,
         option: rec.option,
+        category: rec.category,
+        sebiCategory: rec.sebiCategory,
         nav: rec.nav,
         date: rec.date,
         ...carry,
@@ -256,10 +372,20 @@ export interface FundNav {
   isin: string;
   /** Which tier supplied it: the family's own statement, or the look-through. */
   isinFrom: "statement" | "look-through";
+  /**
+   * What put this security in the table: a position the BOOK carries, or a
+   * balance a DEPOSITORY reports for an account that sent no holding statement.
+   * The second has no statement mark anywhere — see the builder's header.
+   */
+  from: "book" | "depository";
   schemecode: string;
   scheme: string;
   plan: string;
   option: string;
+  /** AMFI's heading for the scheme, verbatim — SEBI's category, e.g. "Hybrid Scheme - Arbitrage Fund". */
+  category: string | null;
+  /** The category name alone — the part after the first " - ", e.g. "Arbitrage Fund". */
+  sebiCategory: string | null;
   /** The NAV AMFI published, verbatim. */
   nav: number;
   /** Its own publication date — NOT the date the book's statements were drawn. */
@@ -304,9 +430,22 @@ ISIN** and never on a name. ${rows.toLocaleString("en-IN")} scheme rows read.
 
 ## Priced
 
-| Security | ISIN | via | NAV | Date | Day |
-| --- | --- | --- | ---: | --- | ---: |
-${usable.map((e) => `| ${e.security} | \`${e.isin}\` | ${e.isinFrom} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | |"}
+| Security | ISIN | via | SEBI category | NAV | Date | Day |
+| --- | --- | --- | --- | ---: | --- | ---: |
+${usable.filter((e) => e.from === "book").map((e) => `| ${e.security} | \`${e.isin}\` | ${e.isinFrom} | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} | ${e.changePct == null ? "—" : `${e.changePct >= 0 ? "+" : ""}${e.changePct.toFixed(2)}%`} |`).join("\n") || "| — | | | | | | |"}
+
+## Priced from a depository's own units
+
+These are balances a demat account's TRANSACTION statement reports at its close,
+for an account that sent no holding statement — so no statement marks them and
+the book carries none of them as a position. They are priced here so a reader
+can see what they are worth. Which of them the dashboard SHOWS is its own cash
+rule's decision (\`CASH_EQUIVALENT_KEYS\` in \`src/lib/analytics.ts\`), not this
+table's.
+
+| Security | ISIN | SEBI category | NAV | Date |
+| --- | --- | --- | ---: | --- |
+${usable.filter((e) => e.from === "depository").map((e) => `| ${e.security} | \`${e.isin}\` | ${e.sebiCategory ?? "—"} | ${e.nav} | ${e.date} |`).join("\n") || "| — | | | | |"}
 
 ## Resolved, and NOT used to value a holding
 

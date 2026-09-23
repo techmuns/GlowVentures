@@ -117,7 +117,7 @@ export function TopBar() {
     // on Morning CIO: "Current value of holdings" and its figure drew through
     // every search list. `<main>` scrolls in its own box below this, so nothing
     // else ever overlaps the header.
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
+    <header className="app-topbar sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-ink-700 bg-ink-900/85 px-6 backdrop-blur">
       {/* THE SEARCH BOX WAS A CONTROL THAT SEARCHED NOTHING — an `<input>` with
           no value, no onChange and no handler, sitting in the most prominent
           slot on the app. The Muns chat takes its place: same slot, and it does
