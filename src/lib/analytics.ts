@@ -903,6 +903,10 @@ export type Bucket = {
   count: number; returnPct: number | null; weight: number;
   /** How many of `count` positions reported no cost — the rest of the bucket is still real. */
   withoutCost: number;
+  /** FIFO: the realised gain on units already sold, over the costed holdings. */
+  realised: number;
+  /** FIFO: the capital behind `returnPct` — cost of units held plus cost of units sold. */
+  deployed: number | null;
 };
 
 /**
@@ -919,15 +923,25 @@ export type Bucket = {
  * in this book prints one.
  */
 export function bucketBy(positions: Position[], keyFn: (p: Position) => string): Bucket[] {
-  const m = new Map<string, { mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number }>();
+  const m = new Map<string, {
+    mv: number; costs: (number | null)[]; pnls: (number | null)[]; count: number; withoutCost: number;
+    realised: number; deployed: (number | null)[];
+  }>();
   for (const p of positions) {
     const k = keyFn(p);
-    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0 };
+    const c = m.get(k) ?? { mv: 0, costs: [], pnls: [], count: 0, withoutCost: 0, realised: 0, deployed: [] };
     c.mv += p.marketValue;
     c.costs.push(p.costBasis);
     c.pnls.push(p.unrealizedPnL);
     c.count += 1;
     if (p.costBasis === null || p.costBasis === undefined) c.withoutCost += 1;
+    // FIFO: the realised gain on units already sold, and what they cost. A
+    // holding with no cost contributes neither — it is not in the denominator
+    // either, so leaving its realised out keeps the two on one set.
+    if (typeof p.costBasis === "number" && Number.isFinite(p.costBasis)) {
+      if (typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL)) c.realised += p.realizedPnL;
+      c.deployed.push(p.costBasis + (typeof p.costOfUnitsSold === "number" && Number.isFinite(p.costOfUnitsSold) ? p.costOfUnitsSold : 0));
+    }
     m.set(k, c);
   }
   const total = [...m.values()].reduce((s, v) => s + v.mv, 0);
@@ -935,6 +949,7 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
     .map(([key, v]) => {
       const cost = sumOrNull(v.costs);
       const pnl = sumOrNull(v.pnls);
+      const deployed = sumOrNull(v.deployed);
       return {
         key,
         mv: v.mv,
@@ -942,9 +957,14 @@ export function bucketBy(positions: Position[], keyFn: (p: Position) => string):
         pnl,
         count: v.count,
         withoutCost: v.withoutCost,
-        // A return needs BOTH sides on the same basis. Null when either is
-        // absent — not 0, which reads as "this bucket broke even".
-        returnPct: cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null,
+        realised: v.realised,
+        deployed,
+        // FIFO's one return, summed before it is divided: (unrealised +
+        // realised) ÷ (cost held + cost sold). Null when either side is absent
+        // — not 0, which reads as "this bucket broke even". A caller that can
+        // see WHOLE mandates strikes them on their capital instead
+        // (`src/lib/fifo.ts`); this roll-up has no account registry to do so.
+        returnPct: deployed !== null && pnl !== null && deployed > 0 ? ((pnl + v.realised) / deployed) * 100 : null,
         weight: total > 0 ? v.mv / total : 0,
       };
     })
@@ -1206,7 +1226,7 @@ export const RETURN_MEASURES: ReturnMeasureDef[] = [
   // tag became "Holding Period Return" / "HPR", at the family's request; every
   // branch that prints the total return on cost is tagged "HPR" below.
   { key: "absolute", label: "Holding Period Return", tag: "HPR",
-    hint: "The total return on cost since the holding was bought, not annualised." },
+    hint: "FIFO return on deployed capital, not annualised. Individual-share returns exclude separately paid dividends; dividend-inclusive period returns are on Corporate actions & dividends." },
   { key: "cagr", label: "CAGR — annualised", tag: "CAGR",
     hint: "The return on cost annualised — struck only where a purchase date is on file and the holding is at least a year old; a shorter window stays the holding-period return." },
   { key: "xirr", label: "XIRR — money-weighted", tag: "XIRR",

@@ -147,6 +147,29 @@ export type Account = {
    * not, because a figure for SOME of an account's holdings must name the rest.
    */
   partialValuation?: string | null;
+  /**
+   * A PMS MANDATE'S CAPITAL, SINCE INCEPTION, AS AT THE HOLDINGS' OWN DATE —
+   * what the family paid in and took out, from a statement that states it over
+   * that window (or the account's own dated capital record where it starts at
+   * inception). `null` on a mandate no statement states it for; absent on every
+   * other engagement.
+   *
+   * It is what lets a WHOLE mandate carry FIFO's full answer: everything the
+   * account has earned is `value + withdrawn − contributed`, however its units
+   * were matched, where the positions alone carry only the realised gain their
+   * capital gain statement's window reports. See `src/lib/fifo.ts`.
+   */
+  capital?: AccountCapital | null;
+};
+
+export type AccountCapital = {
+  contributed: number;
+  withdrawn: number;
+  /** The window the figures cover — inception to the holdings' own date. */
+  from: string;
+  to: string;
+  /** The document that states it, or "capital-record" for the account's own dated movements. */
+  source: string;
 };
 
 // One current position: a security held within one account.
@@ -202,6 +225,26 @@ export type Position = {
    */
   costBasis: number | null;      // INR
   unrealizedPnL: number | null;  // INR
+  /**
+   * REALISED GAIN ON THE UNITS OF THIS HOLDING ALREADY SOLD, matched FIFO, and
+   * the cost of those units — the half of a return the book used to leave out.
+   *
+   * From the account's capital gain statement (every lot a FIFO match by the
+   * manager or broker who sold it) or, for a fund, its own unit record run
+   * through `shared/fifo.mjs`. NULL where no record could carry it; ZERO where
+   * one exists and this holding sold nothing in it. Only sales on or before the
+   * holding's own statement date: a later sale's units are still in this
+   * snapshot at their mark (`realizedLotsAfter` counts them).
+   */
+  realizedPnL?: number | null;
+  costOfUnitsSold?: number | null;
+  /** Capital-gain lots sold AFTER this holding's statement date — named, never added. */
+  realizedLotsAfter?: number;
+  /**
+   * (unrealised + realised) ÷ (cost of units held + cost of units sold), in
+   * percent — FIFO's one return, `fifoReturnPct`. Where nothing was sold it is
+   * unrealised ÷ cost.
+   */
   returnPct: number | null;
   /**
    * Where a cost basis came from another document — "opening-position" means the
@@ -214,8 +257,13 @@ export type Position = {
    * holding's own dated contributions, which account for every unit it holds.
    * The statement's figure stays beside it as `printedCostBasis`. See
    * `carryCostThroughSwitches` in `scripts/build-book.mjs`.
+   *
+   * "fifo" means units LEFT this holding — a redemption, a sale — and the cost
+   * is that of the units still held after the fund's own unit record was
+   * matched first-in, first-out (`shared/fifo.mjs`). The sold units' cost and
+   * gain are `costOfUnitsSold` and `realizedPnL`, never folded into the cost.
    */
-  costBasisSource?: "opening-position" | "carried-through-switch";
+  costBasisSource?: "opening-position" | "carried-through-switch" | "fifo";
   /**
    * The cost the statement's own cost column prints, kept ONLY where the book's
    * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never
@@ -626,6 +674,23 @@ export type CapitalMove = {
   security: string | null;
   securityKey: string | null;
   /**
+   * Set where this movement is one of a DRAWDOWN FUND's own dated capital calls
+   * (`Commitment.calls`) rather than a row of the family's capital record.
+   * Never emitted by the ingest — `capitalMovesWithCalls` adds these at display
+   * time for the funds whose statements publish calls and no capital record, so
+   * a reader can see which kind of document a purchase date came from.
+   */
+  fromCall?: true;
+  /**
+   * Set where this movement is one of a DRAWDOWN FUND's own dated PAYOUTS
+   * (`Commitment.payouts`) — what kind of money came back, in the fund's own
+   * typing. Principal (`capital`) is capital returned, not gain; income and
+   * equalisation are gain paid out. Added at display time beside `fromCall`,
+   * and only for a payout dated on or before the fund's own valuation: one
+   * dated after it is INSIDE that value and is never counted a second time.
+   */
+  payoutKind?: "income" | "capital" | "equalisation";
+  /**
    * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
    * into another of its classes. The move is then shown in the class it sits in
    * today — `units` converted at the switch's own printed ratio, `security` the
@@ -700,6 +765,13 @@ export type PositionTranches = {
   moves: CapitalMove[];
   /** Allotted units, which equal the position's own quantity — that is the gate. */
   units: number;
+  /**
+   * "fifo" where the tranches are the LOTS STILL HELD after the fund's own unit
+   * record was matched first-in, first-out — a partly redeemed contribution
+   * shows what is left of it, and a switched one appears in the class that
+   * holds its units now. Absent where the allotments are the tranches.
+   */
+  basis?: "fifo";
 };
 
 export type EntityCG = {

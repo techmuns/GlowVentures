@@ -213,7 +213,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
 
 // ── 6c. …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE ──────────
 //
-// Stage 10bv values the cash-equivalent funds a depository reports on a demat
+// Stage 10ce values the cash-equivalent funds a depository reports on a demat
 // that sent a transaction statement and no holding statement — at AMFI's NAV,
 // on the LIVE basis only — so the name tier above, keyed on `BOOK_POSITIONS`,
 // cannot see them, and neither can a name rule: the depository prints the AMC's

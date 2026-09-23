@@ -56,7 +56,7 @@ const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security
 /**
  * ── …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S OWN BALANCE ──────────
  *
- * Stage 10bv values the cash-equivalent funds a depository reports on an
+ * Stage 10ce values the cash-equivalent funds a depository reports on an
  * account that sent a transaction statement and no holding statement — at
  * units × AMFI's published NAV, on the LIVE basis only — so `BOOK_POSITIONS`
  * above never carries them, and the name tier cannot see them either: the

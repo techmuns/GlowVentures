@@ -17,6 +17,7 @@ const RA_SECTOR_COLS = ["sector", "pnl", "return", "contrib"] as const;
 const RA_ACCOUNT_COLS = ["account", "names", "cost", "pnl", "return", "best", "worst"] as const;
 const RA_CONTRIB_COLS = ["security", "pnl", "return", "contrib"] as const;
 import { sum, isPriced, unpriced, isPrivateClass, isFundVehicle, bucketLabel, readerClassOf } from "@/lib/analytics";
+import { fifoTotals } from "@/lib/fifo";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentSection, DASH } from "@/components/Absent";
 import { stockHref } from "@/lib/auditFormulas";
@@ -87,6 +88,19 @@ export function ReturnAnalysis() {
     const withoutCost = unpriced(consolidated);
     const cost = sum(priced.map((x) => x.costBasis));
     const pnl = sum(priced.map((x) => x.unrealizedPnL));
+    /**
+     * FIFO, HOLDING BY HOLDING — this page decomposes the return BY NAME, so
+     * every figure on it is struck from each holding's own FIFO fields: the
+     * unrealised gain on what is held and the realised gain on units already
+     * sold, over the cost of both. A whole mandate's income, fees and the sales
+     * before its capital-gain window belong to no name, so they are not here;
+     * Morning CIO and each mandate's own page strike a whole mandate on its
+     * capital. Summed before it is divided, so the names add to the total.
+     */
+    const realisedOf = (x: { realizedPnL?: number | null }) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+    const soldOf = (x: { costOfUnitsSold?: number | null }) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
+    const realised = sum(priced.map(realisedOf));
+    const deployed = cost + sum(priced.map(soldOf));
 
     // Distribution by VALUE, not by count: ten small losers and one large winner
     // is a different book from the reverse, and a count hides that.
@@ -99,8 +113,8 @@ export function ReturnAnalysis() {
     // TOTAL cost, so the parts add to the embedded return exactly.
     const contrib = priced
       .map((x) => ({
-        key: x.securityKey, security: x.security, pnl: x.unrealizedPnL, returnPct: x.returnPct,
-        contribPct: cost > 0 ? (x.unrealizedPnL / cost) * 100 : 0,
+        key: x.securityKey, security: x.security, pnl: x.unrealizedPnL + realisedOf(x), returnPct: x.returnPct,
+        contribPct: deployed > 0 ? ((x.unrealizedPnL + realisedOf(x)) / deployed) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
@@ -130,14 +144,15 @@ export function ReturnAnalysis() {
     // word — so this table cannot print a class name that Portfolio Monitor,
     // Morning CIO or Exposure & IPS have since relabelled. A sector is the
     // provider's own normalised taxonomy and is never passed through it.
-    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean }>();
+    const bySector = new Map<string, { pnl: number; cost: number; mv: number; isClass: boolean; deployed: number }>();
     for (const x of priced) {
       const byClass = isFundVehicle(x) || isPrivateClass(x);
       // The READER'S class: a liquid or arbitrage fund is Cash here as on every
       // other page, never the wrapper its statement typed it as.
       const secKey = byClass ? readerClassOf(x) : x.sector;
-      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass };
-      e.pnl += x.unrealizedPnL; e.cost += x.costBasis; e.mv += x.marketValue;
+      const e = bySector.get(secKey) ?? { pnl: 0, cost: 0, mv: 0, isClass: byClass, deployed: 0 };
+      e.pnl += x.unrealizedPnL + realisedOf(x); e.cost += x.costBasis; e.mv += x.marketValue;
+      e.deployed += x.costBasis + soldOf(x);
       bySector.set(secKey, e);
     }
     // The wrapper classes this table bucketed BY CLASS, derived from the same
@@ -156,8 +171,8 @@ export function ReturnAnalysis() {
       .map(([sector, e]) => ({
         sector, ...e,
         label: e.isClass ? bucketLabel(sector) : sector,
-        returnPct: e.cost > 0 ? (e.pnl / e.cost) * 100 : null,
-        contribPct: cost > 0 ? (e.pnl / cost) * 100 : 0,
+        returnPct: e.deployed > 0 ? (e.pnl / e.deployed) * 100 : null,
+        contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
@@ -186,13 +201,17 @@ export function ReturnAnalysis() {
       const measured = rows.length > 0;
       const c = sum(rows.map((x) => x.costBasis));
       const pl = sum(rows.map((x) => x.unrealizedPnL));
+      // PER ACCOUNT, and an account is exactly where a whole mandate's capital
+      // applies: FIFO through the one aggregator, struck on its capital since
+      // inception where the statements state it.
+      const acctFifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: portfolio.positions });
       const sorted = [...rows].sort((x, y) => y.returnPct - x.returnPct);
       return {
         account: a, names: rows.length, held,
         // Null, not zero, when nothing on this account carries a cost to sum.
         cost: measured ? c : null,
         pnl: measured ? pl : null,
-        returnPct: measured && c > 0 ? (pl / c) * 100 : null,
+        returnPct: measured && c > 0 ? acctFifo.returnPct : null,
         // Why the row is empty: the book's own reason where it has one, else the
         // fact that the account's holdings report no cost.
         absentReason: a.noPositionsReason
@@ -208,7 +227,8 @@ export function ReturnAnalysis() {
     const winners = priced.filter((x) => x.unrealizedPnL > 0);
     return {
       priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, byAccount, winners: winners.length,
-      embeddedRet: cost > 0 ? (pnl / cost) * 100 : null,
+      embeddedRet: deployed > 0 ? ((pnl + realised) / deployed) * 100 : null,
+      realised, deployed,
       hitRate: priced.length ? (winners.length / priced.length) * 100 : null,
       // Only across accounts that HAVE a return — an account without one is
       // named, never folded in as zero.
@@ -253,14 +273,16 @@ export function ReturnAnalysis() {
       <PageHeader eyebrow="Analytics" title="Return &amp; Drawdown"
         subtitle="Where the book's return comes from, name by name and sector by sector. Point-in-time, on the statements' own marks."
         right={<div className="flex items-center gap-2">
-          <BasisPill liveText="Live prices" hint="Returns are unrealised gain on cost, rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
+          <BasisPill liveText="Live prices" hint="Returns are FIFO — unrealised gain on what is held plus realised gain on units already sold, over the cost of both — rebuilt from live prices where a quote exists; cost basis is as the statements report it." />
           <Pill tone="info">{m.priced.length} priced positions</Pill>
         </div>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatTile label="Embedded return"
+        <StatTile label="Return · FIFO, by holding"
           value={<span className={changeColor(m.embeddedRet ?? 0)}>{fmtPct(m.embeddedRet ?? 0, { sign: true })}</span>}
-          sub={<>{money(m.pnl, true)} on {money(m.cost)} of cost</>} icon={<Percent className="h-4 w-4" />} />
+          sub={<>{money(m.pnl, true)} unrealised + {money(m.realised, true)} realised on {money(m.deployed)} deployed</>}
+          title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold, over the cost of both. A whole mandate's income, fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
+          icon={<Percent className="h-4 w-4" />} />
 
         <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
           sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
@@ -365,7 +387,7 @@ export function ReturnAnalysis() {
               <tfoot className="border-t-2 border-ink-600 font-semibold">
                 <TrFoot view={sectorView} className="px-2 py-2 text-slate-200" label={<>Total</>}
                   cells={{
-                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl)}`}>{money(m.pnl, true)}</td>,
+                    pnl: <td key="pnl" className={`px-2 py-2 text-right mono ${changeColor(m.pnl + m.realised)}`}>{money(m.pnl + m.realised, true)}</td>,
                     return: <td key="return" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 1 })}</td>,
                     contrib: <td key="contrib" className={`px-2 py-2 text-right mono ${changeColor(m.embeddedRet ?? 0)}`}>{fmtPct(m.embeddedRet ?? 0, { sign: true, decimals: 2 })}</td>,
                   }} />
