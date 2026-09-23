@@ -1942,6 +1942,16 @@ const REVIEW_GAP_BOOK = (() => {
     return {
       // Any one of them exercises the claim equally, so the list's own first.
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
+      /**
+       * …AND BOTH LISTS WHOLE, for the top bar's search (Stage 10bv). That
+       * search is FUZZY where the Monitor's pick-list is a substring filter, so
+       * which name reaches its empty state is something only the page can say:
+       * the walk tries these in order and keeps the first that does what the
+       * check needs. `claimable` is `reviewGapsFor`'s list re-expressed — a gap
+       * whose name keys to nothing is not claimable there either.
+       */
+      suppressedAll: gaps.filter((g) => related(g.name)).map((g) => g.name),
+      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name)).map((g) => g.name),
       count: gaps.length,
       name: withAlias.name,
       alias: withAlias.aliases?.[0] ?? null,
@@ -10106,6 +10116,69 @@ const INVARIANTS = {
       return n.empty === true && n.rows.length === 1 && n.rows[0].kind === "ask";
     }],
     /**
+     * ── …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — IN THE TOP BAR TOO ──────
+     *
+     * Stage 10bu's rule, on the fourth search a reader can run over holdings
+     * and the one they are most likely to type into: the family searched for
+     * BSE, which is theirs on their own consolidated review and on no statement
+     * in `source/`, and "nothing matches" on its own reads as the dashboard
+     * having lost it. The name is `REVIEW_GAP_BOOK`'s, derived from the
+     * generated gap list, so the next drop picks its own.
+     *
+     * BOOLEANS, like the Monitor's: a returned description reads as a PASS.
+     */
+    ["a search for a name no statement reports says why, in the top bar too", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g) return { notChecked: "this book carries no review line that no statement reports" };
+      const a = SEARCH?.results?.gap;
+      if (!a) return false;
+      // Nothing found — a gap name that finds a holding is a gap the book
+      // carries, which is a failure and not an abstention.
+      if (a.rows.some((x) => x.kind !== "ask") || a.empty !== true || !a.note) return false;
+      // Case-folded: `innerText` returns the TRANSFORMED text, and the note
+      // capitalises each sentence the report prints in lower case.
+      const note = a.note.toLowerCase();
+      return a.named.includes(g.name) && note.includes(g.why.toLowerCase()) && note.includes(g.ask.toLowerCase());
+    }],
+    ["…and the note names no figure, because the review is not a source", () => {
+      if (!REVIEW_GAP_BOOK) return { notChecked: "no review gap to search for" };
+      const a = SEARCH?.results?.gap;
+      if (!a?.note) return false;
+      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note) && /review/i.test(a.note);
+    }],
+    ["…and the family's own spelling of the name finds it too", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g?.alias) return { notChecked: "no gap in this book carries an alias" };
+      const a = SEARCH?.results?.gapAlias;
+      if (!a) return false;
+      // *"It is named either Bombay Stock Exchange or BSE."*
+      return !a.rows.some((x) => x.kind !== "ask") && !!a.note && a.named.includes(g.name);
+    }],
+    ["…and a search that names nothing gets the plain line and no note", () => {
+      const n = SEARCH?.results?.nothing;
+      if (!n) return false;
+      // Both halves of the premise: the empty state IS reached, and no review
+      // line answers it — so there is nothing legitimate to say.
+      if (n.rows.some((x) => x.kind !== "ask")) return { notChecked: "the nonsense string matched something" };
+      return n.empty === true && n.note === null && n.named.length === 0;
+    }],
+    ["…and a review name that finds a holding is answered by the holding, with no note beside it", () => {
+      if (!SEARCH) return false;
+      const a = SEARCH.gapWithHits;
+      if (!a) return { notChecked: "no review line's own name finds anything in this search" };
+      // THE CASE THE EMPTY-STATE RULE EXISTS FOR: the book holds this fund
+      // under another spelling, and a note beside the holding would deny it.
+      return a.note === null && a.named.length === 0;
+    }],
+    ["…and neither is a name the book may carry under a clipped spelling", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g?.suppressedAll?.length) return { notChecked: "no review line in this book is prefix-related to a held position" };
+      if (!SEARCH) return false;
+      const a = SEARCH.gapSuppressed;
+      if (!a) return { notChecked: "every such name finds a holding here, so the empty state is never reached" };
+      return a.empty === true && a.note === null;
+    }],
+    /**
      * THE RING-FENCE HOLDS IN THE SEARCH. "polycab" finds the PAGE the nav
      * already carries on every screen first, then only that page's own tabs —
      * and no holding, account or figure, because the index is built from
@@ -10127,10 +10200,14 @@ const INVARIANTS = {
       return rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)
         && rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => /₹[\d,.]+/.test(x.detail));
     }],
-    ["the list paints over the page, not under it", () => {
-      const g = SEARCH?.geometry;
-      if (!g) return false;
-      return g.onTop === true && g.w >= 320 && g.h >= 60;
+    ["the list paints over the page, not under it — a short list, a tall one and the one carrying the note", () => {
+      const g = SEARCH?.geometry, t = SEARCH?.geometryTall;
+      if (!g || !t) return false;
+      // The tall list must really BE taller, or the second probe proves nothing.
+      if (!(t.h > g.h)) return false;
+      const n = SEARCH?.geometryNote;
+      if (REVIEW_GAP_BOOK && !n) return false;
+      return [g, t, n].filter(Boolean).every((x) => x.onTop === true) && g.w >= 320 && g.h >= 60;
     }],
     ["Enter opens the first result", () => {
       if (!SEARCH || !SEARCH_BOOK?.holding) return notChecked("this book has no holding to type");
@@ -16931,6 +17008,11 @@ for (const theme of THEMES) {
                 detail: (e.querySelector("[data-search-detail]")?.textContent ?? "").trim(),
               })),
               empty: !!document.querySelector("[data-search-empty]"),
+              // The review-gap note's own node, so the claim is not struck on
+              // prose the component is free to reword.
+              note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
+              named: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-review-gap]")]
+                .map((n) => n.getAttribute("data-review-gap")),
             }));
           };
           // THE SHORTCUT FIRST: `/` from the page, with nothing focused, lands in
@@ -16944,20 +17026,57 @@ for (const theme of THEMES) {
             holding: B.holding?.word, isin: B.isin?.isin, mandate: B.mandate?.accountNo, owner: B.owner?.name,
             sector: B.sector?.name, page: "private market", tab: "transactions", tab2: "compare sectors", figure: "uncalled",
             question: "how much of the book is in AIFs?", nothing: "zzqqxx qqzz", fenced: "polycab",
+            // A NAME THE FAMILY HOLD AND NO STATEMENT REPORTS, in the review's
+            // spelling and in theirs — derived from the generated gap list.
+            gap: REVIEW_GAP_BOOK?.name, gapAlias: REVIEW_GAP_BOOK?.alias ?? undefined,
           };
           const results = {};
           for (const [k, q] of Object.entries(queries)) if (q) results[k] = await run(q);
           // THE LIST IS ON TOP OF THE PAGE — geometry, because not one word on
           // screen changes when a panel paints under the index strip or the main
           // column instead of over them.
-          await run(queries.holding ?? "private market");
-          const geometry = await page.evaluate(() => {
+          /**
+           * …ACROSS THE WHOLE LIST, AND WITH HIT-TESTING SWITCHED ON EVERYWHERE.
+           *
+           * The first version probed ONE point 90px down, which on a short list
+           * lands above everything the list covers — and `elementFromPoint`
+           * skips anything drawn `pointer-events: none`, which is exactly how a
+           * KPI tile lifts its label and figure above its own overlay anchor.
+           * Measured: with the top bar at `z-10` and those tiles' text at
+           * `z-10` later in the page, Morning CIO's figures painted THROUGH the
+           * list, and this check passed. So every element is made hit-testable
+           * for the length of the probe — paint order is what is measured — and
+           * the list is sampled on a grid, on a short list AND a tall one.
+           */
+          const paintsOnTop = () => page.evaluate(() => {
             const panel = document.querySelector("[data-testid='smart-search-panel']");
             if (!panel) return null;
             const r = panel.getBoundingClientRect();
-            const hit = document.elementFromPoint(r.left + r.width / 2, r.top + Math.min(r.height - 4, 90));
-            return { w: Math.round(r.width), h: Math.round(r.height), onTop: !!hit && panel.contains(hit) };
+            const st = document.createElement("style");
+            st.textContent = "* { pointer-events: auto !important; }";
+            document.head.appendChild(st);
+            let covered = 0, total = 0;
+            const through = [];
+            for (let y = r.top + 6; y < r.bottom - 6; y += 12) {
+              for (let i = 0; i <= 8; i++) {
+                const x = r.left + 8 + (i * (r.width - 16)) / 8;
+                total++;
+                const hit = document.elementFromPoint(x, y);
+                if (hit && !panel.contains(hit)) {
+                  covered++;
+                  if (through.length < 3) through.push((hit.innerText ?? hit.tagName).replace(/\s+/g, " ").trim().slice(0, 40));
+                }
+              }
+            }
+            st.remove();
+            return { w: Math.round(r.width), h: Math.round(r.height), onTop: covered === 0, covered, total, through };
           });
+          await run(queries.holding ?? "private market");
+          const geometry = await paintsOnTop();
+          // A TALL list — the family's surname answers every member and account.
+          const tallQ = (B.owner?.name ?? "").trim().split(/\s+/).at(-1) || "fund";
+          await run(tallQ);
+          const geometryTall = await paintsOnTop();
           // ENTER OPENS THE TOP RESULT — and then the walk comes back, so every
           // generic check on this route is still struck on the page it names.
           let entered = null;
@@ -17000,7 +17119,41 @@ for (const theme of THEMES) {
             await page.goBack({ waitUntil: "load" }).catch(() => {});
             await page.waitForTimeout(500);
           } else await page.keyboard.press("Escape");
-          SEARCH = { slashFocus, results, geometry, entered, tabLanded };
+          /**
+           * TWO MORE GAP CASES, EACH NEEDING A NAME THE PAGE ITSELF PICKS.
+           *
+           * The EMPTY-STATE rule is the whole of what keeps the note honest: a
+           * query that finds a holding is answered by that holding, and a note
+           * beside it could deny a position the book carries under another
+           * spelling. So the walk looks for a review line whose own name DOES
+           * find something here — measured, "HDFC Balanced Advantage Fund" finds
+           * both plans the book holds — and a name the book may carry under a
+           * clipped spelling whose search DOES reach the empty state, which is
+           * the only place the note could wrongly appear. Bounded, and each
+           * abstains by name if this book offers no such name.
+           */
+          let gapWithHits = null;
+          for (const nm of (REVIEW_GAP_BOOK?.claimable ?? []).slice(0, 40)) {
+            const r = await run(nm);
+            if (r.rows.some((x) => x.kind !== "ask")) { gapWithHits = { q: nm, ...r }; break; }
+          }
+          let gapSuppressed = null;
+          for (const nm of (REVIEW_GAP_BOOK?.suppressedAll ?? []).slice(0, 12)) {
+            const r = await run(nm);
+            if (!r.rows.some((x) => x.kind !== "ask")) { gapSuppressed = { q: nm, ...r }; break; }
+          }
+          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed };
+          // …and the list that carries the note, which is the one the family's
+          // own search opens: measured after the walk, when it is on screen.
+          /**
+           * AND THE NOTE IS LEFT ON SCREEN, as the Monitor walk leaves its own:
+           * the contrast sweep resolves computed colour on what is RENDERED, and
+           * this is the only place the note is drawn inside the top bar's list.
+           */
+          if (REVIEW_GAP_BOOK?.name) {
+            await run(REVIEW_GAP_BOOK.name);
+            SEARCH.geometryNote = await paintsOnTop();
+          }
         }
       }
       if (name === "chat") {

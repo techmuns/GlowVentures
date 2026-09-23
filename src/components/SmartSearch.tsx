@@ -4,6 +4,7 @@ import { Search, Sparkles, CornerDownLeft, Clock } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { buildSearchIndex, searchEntries, looksLikeQuestion, type SearchEntry, type SearchHit } from "@/lib/searchIndex";
 import { openMunsWith } from "@/components/MunsChat";
+import { AbsentFromBook } from "@/components/Absent";
 
 // ── THE SEARCH BOX IN THE TOP BAR ────────────────────────────────────────────
 //
@@ -192,6 +193,17 @@ export function SmartSearch() {
           {query && hits.length === 0 && (
             <div data-search-empty className="px-3 py-2 text-[12px] text-slate-400">
               Nothing in this book or on these pages matches &ldquo;{query}&rdquo;. Muns can still take the question.
+              {/* …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — the rule Stage 10bu
+                  set for every search over holdings, on the one in the top bar.
+                  The family searched for BSE: it is theirs on their own
+                  consolidated review and on no statement in `source/`, and
+                  "nothing matches" on its own reads as the dashboard having lost
+                  it. Only in the EMPTY state, as on the other three searches: a
+                  query that finds a holding is answered by that holding, and a
+                  note beside it could deny a position the book carries under
+                  another spelling. `AbsentFromBook` renders nothing when no
+                  review line answers, so a typo still gets the plain line. */}
+              <AbsentFromBook query={query} className="mt-2" />
             </div>
           )}
           {rows.map((row, i) => {
