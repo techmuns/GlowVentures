@@ -22109,6 +22109,14 @@ for (const theme of THEMES) {
         || name === "monitor-txn-returns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
+        // …AND WAIT FOR THE TABLE, NOT A FIXED PAUSE. The dated record is read
+        // from the audit archive at runtime, and on a loaded machine it landed
+        // after the 1.2s above: the side filter below was not in the DOM yet,
+        // its click was skipped, and `monitor-txn-out` failed four checks on a
+        // page that was right (one full sweep of 258, run beside a bug pass).
+        // Waiting for the table cannot make a check pass that should fail — a
+        // table that never draws still fails them all, as before.
+        await page.locator("[data-dated-table]").first().waitFor({ timeout: 20000 }).catch(() => {});
         /**
          * THERE IS NO RECORD TOGGLE TO CLICK ANY MORE, AND THAT IS THE CHANGE.
          *
@@ -22161,6 +22169,7 @@ for (const theme of THEMES) {
         const want = name === "monitor-txn-in" ? "in" : name === "monitor-txn-out" ? "out" : null;
         if (want) {
           const b = page.locator(`[data-side-option="${want}"]`).first();
+          await b.waitFor({ timeout: 10000 }).catch(() => {});
           if (await b.count()) { await b.click(); await page.waitForTimeout(900); }
         }
         // ...AND THE TAKEN-OUT SIDE OPENS ITS ROWS. The statement's own word for

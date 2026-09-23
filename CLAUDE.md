@@ -22015,8 +22015,8 @@ FURTHER ON ONE PAGE.** That change cut every table's notes to one short line and
 kept Private Market's working in one collapsed "How the totals are worked out"
 line. This one was asked to remove it all on Private Market first, so what 10ci
 left there as a short line is gone too, and what it put in the fold is the hover
-on the figure it explains. Every other page keeps 10ci's one short line; going
-further there is the next step, and the family's call.
+on the figure it explains. Every other page keeps 10ci's one short line for
+now; the family asked for the same cut there next, in the same sentence.
 
 #### 1. Private Market carries no explainer line
 
@@ -22186,7 +22186,42 @@ is `10cn`. The stage headings were compared against main's tip before merging.
 
 #### 5. Verification
 
-{{VERIFY}}
+**27 BUGS PUT BACK ONE AT A TIME, AND EVERY ONE FIRES ITS OWN CHECK.**
+`scripts/dev/pm-prose-bug.sh` restores by copy on a trap, verifies byte for byte
+and rebuilds on the way out, reports a patch that does not apply as NOT A RESULT
+rather than as clean, and runs a no-patch control first. Ten put a removed line
+or a stale hover back, eleven take a moved fact out of its hover, and six make
+the drag carry less than the whole column — the heading alone, the source not
+dimmed, Escape ignored, a drag brought home that sorts, the copy left behind
+after the drop, and the copy drawn at 100% over a zoomed table. `CASES=` re-runs
+chosen cases alone, the control always first.
+
+- **ONE CASE WAS NOT A RESULT ON THE MERGED TREE, AND THE HARNESS SAID SO.**
+  Main's `SelectableTiles` call gained a `page` prop, so the Marks-span case's
+  anchor matched nothing. Re-anchored, it fires two checks.
+- **AND READING THE CASES BACK FOUND ONE STALE HOVER.** The Transactions tab's
+  `title` still read *"What can still be called, and every capital call the
+  funds have made"* — eleven stages after Stage 10bs removed the windows it
+  named — and the check asserting their removal could not see it, because a
+  `title` is not in `innerText`. The tab reads *"Every capital call the funds
+  have made, newest first"* now, the check strikes the words on hovers as well,
+  and the 27th case puts the old hover back and fires it.
+
+**THE FULL SWEEP FOUND ONE FINDING, AND IT WAS THE WALK, NOT THE PAGE.** 258
+combinations; `monitor-txn-out` failed four checks on the one run taken beside
+the bug pass. The dated record is read from the audit archive at runtime, and on
+a loaded machine it landed after the walk's fixed 1.2s pause, so the Sells
+option was not in the DOM, its click was skipped and the page was checked
+unfiltered. The same route re-ran clean against both builds, and the walk now
+WAITS for the table and the option rather than pausing — which cannot make a
+check pass that should fail, since a table that never draws still fails them
+all. All nine transactions routes then ran clean.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **92/0** ·
+`check:pages` **258 combinations**, the one finding above and nothing else, with
+main's ten evidenced abstentions and none of this change's. `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically: a line
+removed from a page is not part of the book.
 
 ### Stage 10k — News & Announcements: REMOVED
 
