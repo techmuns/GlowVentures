@@ -553,7 +553,7 @@ export function StockInfo() {
                     navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on the day`
                   } — a fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote${
                     rows.some((r) => r.depositoryUnits)
-                      ? "; some units here are a depository's own closing balance, on an account that sent no holding statement, and no statement marks them"
+                      ? "; some units here are a depository's own closing balance, on an account that sent no holding statement, so no statement prices them"
                       : ""}`
                 : live
                 ? `CMP · live${sym ? ` · ${sym}` : ""}`
@@ -750,7 +750,7 @@ export function StockInfo() {
                           : <span title={r.depositoryUnits
                               /* NO STATEMENT MARKS THESE UNITS, so the sentence that
                                  says a NAV "replaces" one would be false here. */
-                              ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement marks these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
+                              ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
                               : r.navPriced
                               ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
                               : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>

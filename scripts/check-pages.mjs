@@ -2410,6 +2410,13 @@ const CMP_BOOK = (() => {
      * page can no longer see the distinction and that route would have passed
      * trivially. The claim moved to `fundNavs.test.ts`, where it is still true
      * of the book; the route was retired rather than left unable to fail.)
+     *
+     * A HOLDING NO STATEMENT MARKS IS NOT THIS ROUTE'S SUBJECT. The depository's
+     * arbitrage units are valued at the NAV and nothing else — there is no
+     * statement mark for the NAV to replace — so once the checker's book carried
+     * them, Motilal Oswal Arbitrage became the largest NAV-priced row and this
+     * route stopped walking the overlay it exists for. Those rows have their own
+     * route (`stock-arbitrage`); this one keeps a statement-marked holding.
      */
     let navKey = null, navRec = null;
     try {
@@ -2417,7 +2424,7 @@ const CMP_BOOK = (() => {
       const navs = (bookArray(nsrc, "BOOK_FUND_NAVS") ?? []).filter((e) => e.usableForValue);
       const byKey = new Map(navs.map((e) => [e.securityKey, e]));
       const best = positions
-        .filter((p) => byKey.has(p.securityKey) && Number(p.quantity) > 0)
+        .filter((p) => byKey.has(p.securityKey) && Number(p.quantity) > 0 && !p.depositoryUnits)
         .sort((a, b) => (Number(b.marketValue) || 0) - (Number(a.marketValue) || 0))[0];
       if (best) { navKey = best.securityKey; navRec = byKey.get(best.securityKey); }
     } catch { /* the store may not exist on a checkout that never ran the builder */ }
@@ -2616,6 +2623,14 @@ const BUCKET_SLOTS = [1, 2, 3, 4, 5, 6];
  * no mutual fund yields null and the route fails loudly rather than skipping.
  * Its expected look-through is not written here either: the invariants
  * reconstruct it from the figures the page itself renders.
+ *
+ * AN ARBITRAGE FUND IS NOT A CANDIDATE, because its page DELIBERATELY draws no
+ * look-through: the family counts it as cash, and its disclosure is long shares
+ * hedged by short futures, which read as stock would print exposure nobody
+ * carries (`stock-arbitrage` asserts that absence). Once the checker's book
+ * carried the depository's arbitrage units, the largest "Mutual Fund" became
+ * Motilal Oswal Arbitrage and this route walked a page that is RIGHT to have no
+ * scheme card — eight failures against a correct page.
  */
 const MF_KEY = (() => {
   try {
@@ -2624,7 +2639,7 @@ const MF_KEY = (() => {
     if (!Array.isArray(positions)) return null;
     const by = new Map();
     for (const p of positions) {
-      if (p.assetClass !== "Mutual Fund") continue;
+      if (p.assetClass !== "Mutual Fund" || isArbStore(p)) continue;
       by.set(p.securityKey, (by.get(p.securityKey) ?? 0) + (Number(p.marketValue) || 0));
     }
     return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
@@ -15958,6 +15973,24 @@ const INVARIANTS = {
       !/The scheme — NAV, returns and what it holds/.test(t)],
     ["...and its mark names the depository and AMFI, because no statement priced it", (t, ctx) =>
       (ctx?.titles ?? []).some((x) => /depository/i.test(x) && /AMFI/.test(x))],
+    /**
+     * THE HEADLINE CAPTION NAMES THE SOURCE OF THE FIGURE ABOVE IT. There is no
+     * statement mark here to fall back to, so a caption reading "CMP · statement
+     * mark" would date a NAV to a document that never priced these units — the
+     * `stock-cmp-nav` claim, struck on the one kind of holding that route no
+     * longer walks. The date is the store's own for this scheme, not a literal.
+     */
+    ["...and its headline caption names AMFI's NAV and its own date, never a statement mark", (t, ctx) => {
+      // FAST mode skips the probe; otherwise a missing headline is a FINDING —
+      // this route's subject is a holding with a price, so the mark must be there.
+      if (FAST) return { notChecked: "the headline probe does not run under FAST=1" };
+      const cap = ctx?.stockMark?.caption;
+      if (!cap) return false;
+      const key = CASH_INSTRUCTION_BOOK?.largestArb;
+      const e = key ? (fundNavStore() ?? []).find((x) => x.securityKey === key) : null;
+      if (!e?.date) return false;
+      return /AMFI/.test(cap) && cap.includes(e.date) && !/statement mark/i.test(cap);
+    }],
   ],
   performance: [
     /**
