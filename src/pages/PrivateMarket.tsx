@@ -251,6 +251,25 @@ const folioFigures = (f: BookFolio): RowFigures => ({
 /** A resolution with nothing to show — the fallback for a row that states no resolver. */
 const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is struck on this row" };
 
+/**
+ * WHAT A SET'S HPR COUNTS OF THE CASH PAID BACK — a member's row, a band, the
+ * total. The fund note's own rule (`fundMeasuredReturn`) over several funds:
+ * the figure is FIFO (`fifoTotals`), the gain on the units held plus the gain
+ * on units redeemed over the capital deployed in both, so the principal a fund
+ * returned by REDEEMING units is inside it — their cost in what was paid in,
+ * any gain on them in the gain. Income, equalisation
+ * and a distribution that redeemed no units are not units, and XIRR is what
+ * counts them.
+ *
+ * It read "cash the funds have paid back is not in it" until Stage 10ci — true
+ * before Stage 10ca and false after it of Neo Infra's ₹14.16 L principal, on
+ * the one cell that sums the whole private book.
+ */
+const aggHprNote = (held: BookFolio[]): string =>
+  held.some((f) => (f.position?.costOfUnitsSold ?? 0) > 0)
+    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over the capital paid in for both. The principal returned on redeemed units is in it; income, equalisation and any payout that redeemed no units are not — XIRR counts those."
+    : "FIFO, not annualised: the gain on the units held, over the capital paid in for them. Cash the funds have paid back is not in it — XIRR counts it.";
+
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
   label: (r: RowFigures & { label?: string }) => string | null,
@@ -798,8 +817,7 @@ export function PrivateMarket() {
             ? "no cost is reported across these holdings, so there is no capital to strike a return against"
             : "the cost reported here covers only part of this row's value, and a percentage across the two would divide one set of holdings by another" };
         }
-        return { shown: true, pct: fig.returnPct, tag: "HPR",
-          note: "Current value against the capital paid in, not annualised. Cash the funds have paid back is not in it — XIRR counts it." };
+        return { shown: true, pct: fig.returnPct, tag: "HPR", note: aggHprNote(held) };
       }
       if (measure === "xirr") {
         // WHICH RECORDS THE RATE POOLS, carried whether or not it shows one: a
