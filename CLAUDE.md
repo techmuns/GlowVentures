@@ -20961,7 +20961,7 @@ that partition.
 SO.** `tableNotes` caps every table cell at 180 characters, on every route. The
 picked-fund line is a cell of the holdings table, and with Sanshi's name in it
 the sentence ran to 182. It is one short line now: the holding, "is not a
-company share, so it is not a row on All Securities", and the button — 131
+company share, so it is not a row on All Securities", and the button — 130
 characters with Sanshi's name. What moved into the hover is what All Securities
 lists and where the holding IS a row. A new check holds the line to one short
 line and its hover to both of those halves, and the check that the line is gone
