@@ -274,7 +274,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   (a spelling the statement cased beats one this app had to title-case, then the
   longest, then the larger holding) and applied at `PortfolioContext`, so a
   company two statements spell two ways is one option and one row. Display
-  only. See Stage 10bz.
+  only. See Stage 10ca.
 - `shared/polycabSources.mjs` — WHAT THE EXCHANGE SAYS ABOUT THE RING-FENCED
   HOLDING, read once and imported by BOTH the daily builder
   (`scripts/build-polycab-live.mjs`) and the live edge function
@@ -381,7 +381,8 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/searchIndex.ts` + `src/components/SmartSearch.tsx` — THE SEARCH BOX
   IN THE TOP BAR. One index over every holding, mandate, account, member, page,
   tab, category, sector and headline figure the app has, each with the address
-  that opens it; a question goes to Muns. Built from the book on every render
+  that opens it. (A question went to Muns until the family paused the chat —
+  Stage 10bz.) Built from the book on every render
   and never from a hand-kept list, and the ring-fenced security is in none of
   it. See Stage 10bw.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
@@ -3754,10 +3755,12 @@ apart).
 from the dashboard and answer the client any queries. It should understand the
 context since the dashboard data will be available to it."*
 
-*(A REAL search box stands in that slot since Stage 10bw, with the chat as a
-compact "Ask Muns" button beside it and one keystroke from any search. The chat
-route's check still counts the DEAD box by its old placeholder, which the new one
-does not share.)*
+*(A REAL search box stands in that slot since Stage 10bw, and **the chat is
+PAUSED since Stage 10bz**: the family asked for "Ask Muns" off the top bar, so
+neither its button nor the search list's Ask row is drawn. Everything below is
+kept because the component is — it is what the chat must do again when it comes
+back. The chat route asserts the chat is ABSENT now, and still counts the DEAD
+box by its old placeholder, which the new one does not share.)*
 
 **WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
 box was an `<input>` with no `value`, no `onChange` and no handler, in the most
@@ -3919,7 +3922,9 @@ payload for a non-finite number, because a `?? 0` in the builder is the
 absent-vs-zero rule failing through a JSON field instead of a table cell.
 `check:pages` walks a `chat` route that opens the panel and asks one question:
 the label, the stated snapshot, the vanished search input, and the named
-failure. All verified by reintroducing their bug.
+failure. All verified by reintroducing their bug. *(Since Stage 10bz that route
+asserts the chat is absent instead; these are the claims it must make again the
+day the chat returns.)*
 
 **AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
@@ -16600,7 +16605,8 @@ the XIRR and not in that total.
 *"any equity, any fund, any position that I have taken, any tab … think as the
 customer: what all they can type."* The top bar's slot held a button that opened
 the Muns chat. It is a search over everything the book and the app carry now,
-and Muns is still one keystroke away.
+and Muns was still one keystroke away — until the family paused the chat, Ask
+row and all (Stage 10bz).
 
 **ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 329
 entries on this book, each with the address that opens it:
@@ -17191,7 +17197,67 @@ every one resolving to a declaration.
 finishes · `npm run build-book` byte-identical — a table's layout is not part of
 the book.
 
-### Stage 10bz — ONE COMPANY, ONE KEY, ONE NAME — AND THE WINDOW THAT HELD AJAY'S KAYNES
+### Stage 10bz — ASK MUNS IS OFF THE TOP BAR, AND THE CHAT IS PAUSED RATHER THAN DELETED
+
+*"Remove Ask muns from here, dont want this right now"* — sent with a screenshot
+of the "✦ Ask Muns" button beside the search box.
+
+**TWO DOORS LED TO THE CHAT, AND BOTH ARE GONE.** The button, and an "Ask Muns"
+row the search list appended to EVERY query — first where the query read as a
+question (`looksLikeQuestion`), last for everything else. The family pointed at
+the button; a row offering the same chat on every search is Muns in the top bar
+all the same, so it went with it. That is the one part of this change that goes
+past the screenshot, and it is said in the PR rather than decided silently.
+
+**"RIGHT NOW" IS WHY IT IS PAUSED, NOT DELETED** — the opposite of the
+`exportDeck.ts` call, and the difference is the family's own word for it.
+`MunsChat.tsx` is kept whole and says at its own definition that nothing renders
+it and how it comes back; `munsChat.ts`, `chatContext.ts` and
+`functions/api/chat.js` are untouched and still tested (`chatContext.test.ts`,
+`chatFunction.test.ts`); `looksLikeQuestion` keeps its test and names its missing
+caller. What went is the RENDERING — the button in `TopBar.tsx` and the row's
+code in `SmartSearch.tsx` — deleted rather than hidden behind a constant flag,
+because a branch pinned off is the dead-code-that-looks-alive failure this file
+keeps naming.
+
+**AND THE ROW HAD BEEN CARRYING SOMETHING ELSE.** The list opened only when it
+had rows, and the Ask row gave every query one — so the empty state, and Stage
+10bu's note saying why a name the family holds is on no statement (BSE), rode on
+it. Removing the row alone would have closed the list on exactly those queries
+and dropped both in silence. The list now opens on any query, and its empty line
+no longer offers Muns the question.
+
+**THE CHECKS INVERTED, NOT DELETED.** The `chat` route opened the panel and held
+five claims about it — the answer marked as generated, the snapshot and its
+limits, a scrim covering the viewport rather than the header, a panel sized for
+reading, a failure that names itself. None has a subject while the chat is
+paused; each is listed in Stage 10s for the day it returns. The route asserts the
+REMOVAL instead: the button gone by its handle AND by its words (a button put
+back under another test id still reads "Ask Muns"), no panel anywhere, the dead
+search box the chat first replaced still gone — and a walk that did not run fails
+rather than abstains. The `search` route asserts that no query offers Ask Muns (a
+question, a name, a page and a string nothing matches — by each row's kind and by
+the list's words), and that a query nothing matches still opens the list, says
+so, and offers nothing in its place.
+
+**`scripts/dev/ask-muns-bug.sh` reintroduces six bugs one at a time**, after a
+no-patch control came back clean — and every one fires its own check. The
+button put back fires the button claim; the same button under another test id
+fires it too, by its words. The search's Ask row put back fires the no-Ask claim
+and the nothing-matches claim, and the same row with no handle fires the no-Ask
+claim alone, by the list's words. A list that closes whenever it has no rows
+fires seven — the nothing-matches claim, every claim about Stage 10bu's BSE note
+(which rides on that empty state), and the check that the list paints over the
+page. An empty line that still offers Muns the question fires the
+nothing-matches claim alone.
+
+`build` · `tsc` · `test:family` · `check:family` **86/0** · `check:pages`
+**216 combinations clean** — the same count as before, because this change adds
+no route — with the same nine evidenced abstentions across the same five
+pre-existing claims, none of them this change's. `npm run build-book`
+regenerates the book byte-identically: nothing here touches the ingest.
+
+### Stage 10ca — ONE COMPANY, ONE KEY, ONE NAME — AND THE WINDOW THAT HELD AJAY'S KAYNES
 
 *"Open PR and do not merge until i tell you to. According to the client, Kaynes
 Technologies Limited is also a holding in Vikas Khemani Fund. And also a holding
@@ -17473,10 +17539,10 @@ movement columns" is checked on that route rather than excused. `stock-pledge`
 now walks Insolation Energy rather than Kaynes, because the first pledged held
 name in window order changed; both assert the same claim.
 
-#### Merged with main three times, and the letter moved three times
+#### Merged with main five times, and the letter moved five times
 
 This branch was held at the family's request (*"do not merge until i tell you
-to"*), and main moved three times while it waited.
+to"*), and main moved five times while it waited.
 
 - **#70 and #73 landed first** and took `10bt` and `10bu`, so this section became
   `10bv`. The probe list unioned to 85 keys, and #73's generated `reviewGaps.ts`
@@ -17496,6 +17562,42 @@ to"*), and main moved three times while it waited.
   a union: the sweep's imports, and the probe list — the exact union at 87 keys.
   The generated files re-derive byte for byte and every replay is a no-op, as
   before.
+- **Then #79 landed and took `10bx`.** Main's own `10bx` names `10by` as "the
+  Portfolio Monitor's stage", so this section skipped to `10bz` rather than make
+  that sentence point at a stage about something else. Thirteen lines named
+  `10bx` or `10by` after the merge, and each was placed before any moved: seven
+  are #79's and stay (its heading, four pointers, and the two lines of its own
+  letter note); six are this branch's — its heading and four pointers moved, and
+  one line of its merge history keeps `10bx`, because it records the letter this
+  section held then. Three conflicts, each a union:
+  - **The Portfolio Monitor.** #79 replaced a row's in-cell expansion with rows
+    of the same table (`TreeTable.tsx`), and this branch's line naming the
+    account that sold a name out was inside the old expansion. It is a tree line
+    now, drawn by `renderChildren` between the "Counted once" line and the fund
+    look-through — and, by the tree's own rule, only where there is such an
+    account, because an empty line in the tree reads as a figure that failed to
+    arrive. Its account number is shortened the way the tree prints one
+    (`a/c …539150`, the whole number in the hover).
+  - **The probe list**: main's, plus this branch's `dematElsewhere` and
+    `pickOptions`. #79 removed `schemeCalls` along with the scheme table it read,
+    so it stays out: 87 keys, none duplicated, every one declared.
+  - **This file**: main's `10bx` first, then this section after it.
+
+  `names-bug.sh`'s case 9 patched the old expansion's markup, so its anchor was
+  gone; it patches the tree's own line now.
+- **Then #83 landed and took `10bz`**, so this section is **`10ca`**. The two
+  sections sat at the same place in this file, so git marked the conflict this
+  time — the case that announces itself. Outside it, nine lines named `10bz`, and
+  each was placed before any moved: five are #83's and stay; four are this
+  branch's pointers and moved, and the heading moved with the resolution. Every
+  `10bz` in the code is #83's. This file was the only conflict. The page-check
+  script and `searchIndex.ts` merged without a marker, which is when to check by
+  hand: the probe list is the exact union at 87 keys (#83 added none), none
+  duplicated, every one declared; the two sides of `searchIndex.ts` do not
+  overlap (#83 changed comments, this branch adds `printedSpellings`); and #83's
+  claim that no search offers Ask Muns runs over every query the walk types,
+  this branch's `family` and `variant` included, because both sides extend one
+  capture.
 
 #### #72's search bar, checked against the family's own complaint
 
@@ -18478,7 +18580,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   version read top-level arrays only, and LKP's nested `positionsAsOf` opening
   rows kept the old key while their holding moved, which silently cost Crompton
   its ₹15,47,017.80 cost basis and its return on the next `build-book` (see
-  Stage 10bz). The gate refuses a half-moved archive for exactly that reason.
+  Stage 10ca). The gate refuses a half-moved archive for exactly that reason.
 - `npm run extract` re-extracts the audit archive and the reconciliation report.
   **It takes no options** — a stray argument is IGNORED, not rejected, so
   `extract.mjs --help` runs a full extraction. Without `GLOW_PDF_PASSWORDS` that
@@ -18531,9 +18633,9 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   the **share movements** (`shareMovements.test.ts`, Stage 10ba — the four
   printed figures must add across on every window, and the exclusion of a pledge
   is asserted as LOAD-BEARING: counting one must BREAK the identity that holds
-  without it; since Stage 10bz also that a window whose ISIN names one company
+  without it; since Stage 10ca also that a window whose ISIN names one company
   the book holds is keyed on that company, found by the ISIN and never by key),
-  the **security names** (`securityNames.test.ts`, Stage 10bz — no NSE symbol
+  the **security names** (`securityNames.test.ts`, Stage 10ca — no NSE symbol
   under two keys, one label per key and always one a statement printed, nothing
   shouted in capitals or left in lower case, and an instrument's coupon, maturity
   and footnote marks kept off its issuer's name),

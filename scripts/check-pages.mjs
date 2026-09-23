@@ -3268,9 +3268,11 @@ const ROUTES = [
   // with them held open: the figures must still be on screen from the stored
   // snapshot rather than the card starting over from nothing.
   ["cio-cached", "/cio"],
-  // ...AND THE MUNS CHAT PANEL, opened. It is the one surface in this app that
-  // renders text no statement produced, so what it SAYS ABOUT ITSELF is the
-  // invariant: an answer must never be mistakable for a measured figure.
+  // ...AND THE MUNS CHAT, WHICH IS NO LONGER THERE. The family paused it
+  // (Stage 10bz: *"Remove Ask muns from here, dont want this right now"*), so
+  // this route asserts the top bar offers it nowhere — the removal verified,
+  // never the test deleted with the feature. It opened the panel until then,
+  // and those claims are recorded in CLAUDE.md for the day it comes back.
   ["chat", "/cio"],
   /**
    * THE TOP BAR'S SEARCH, TYPED INTO. Every claim is about what a reader gets
@@ -11002,20 +11004,33 @@ const INVARIANTS = {
       SEARCH?.tabLanded?.path === "/sectors" && SEARCH.tabLanded.selected === "compare"],
     ["a figure's word opens the page that shows and explains it", () => SEARCH?.results?.figure?.rows?.[0]?.href === "/private-market"],
     /**
-     * A QUESTION GOES TO MUNS FIRST, and a place goes to the place: the Ask row
-     * is LAST for every query above and FIRST for this one. Asserted both ways,
-     * because a list that always led with Muns would bury every destination.
+     * …AND NO SEARCH OFFERS ASK MUNS — Stage 10bz. The list used to end every
+     * query in an "Ask Muns" row, first where the query read as a question, and
+     * the family asked for Muns off the top bar: a row on every search is Muns
+     * in the top bar all the same. Struck on EVERY query the walk typed — a
+     * question, a name, a page and a string nothing matches — by the row's own
+     * kind AND by the list's words, because a row put back under another handle
+     * would still read "Ask Muns" to the family. The three queries that matter
+     * most must have run, or the claim is struck over nothing.
      */
-    ["a question puts Ask Muns first, and a name puts it last", () => {
+    ["no search offers Ask Muns — not for a question, a name, or a query nothing matches", () => {
       if (!SEARCH) return false;
-      const q = SEARCH.results.question?.rows ?? [];
-      const h = SEARCH.results.holding?.rows ?? [];
-      return q[0]?.kind === "ask" && h.length > 1 && h.at(-1)?.kind === "ask" && h[0]?.kind !== "ask";
+      const r = SEARCH.results;
+      if (!r.question || !r.holding || !r.nothing) return false;
+      return Object.values(r).every((x) => (x.rows ?? []).every((row) => row.kind !== "ask")
+        && !/ask\s+muns/i.test(x.panelText ?? ""));
     }],
-    ["a query nothing matches says so, and still offers Muns", () => {
+    /**
+     * …AND A QUERY THAT FINDS NOTHING STILL OPENS THE LIST AND SAYS SO. The Ask
+     * row kept the list non-empty on every query, so the empty state — and the
+     * note naming why a holding is on no statement — rode on it. Without that
+     * row, a list that closes whenever it has no rows would drop both in
+     * silence, and "nothing matched" would read as the box not working.
+     */
+    ["a query nothing matches says so, and offers nothing in its place", () => {
       const n = SEARCH?.results?.nothing;
       if (!n) return false;
-      return n.empty === true && n.rows.length === 1 && n.rows[0].kind === "ask";
+      return n.empty === true && n.rows.length === 0 && !!n.emptyText && !/muns/i.test(n.emptyText);
     }],
     /**
      * ── …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — IN THE TOP BAR TOO ──────
@@ -11117,95 +11132,42 @@ const INVARIANTS = {
     }],
   ],
   chat: [
-    ["the panel opens where the search box was",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return CHAT.open === true;
-      }],
-
     /**
-     * ...AND THE DEAD SEARCH BOX IS GONE. It was an `<input>` with no value, no
-     * onChange and no handler — a control that searched nothing, in the most
-     * prominent slot on the app. Counted as an INPUT rather than matched as
-     * text, because its placeholder could legitimately appear in prose.
-     */
-    ["...and the control it replaced, which searched nothing, is gone",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return CHAT.searchInputs === 0;
-      }],
-
-    /**
-     * THE ANSWER IS MARKED AS GENERATED, IN WORDS. Not a badge to hover: a
-     * reader scanning this panel beside a dashboard of traced figures has to
-     * be able to see, without acting, that this text is a different kind of
-     * thing.
-     */
-    ["the panel states plainly that its output is generated, not a statement figure",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /AI ANSWER/i.test(CHAT.text) && /NOT A STATEMENT FIGURE/i.test(CHAT.text);
-      }],
-
-    /**
-     * ...AND SAYS WHAT IT WAS GIVEN AND WHAT IT CANNOT REACH. An assistant that
-     * looks omniscient invites questions it will answer by inventing; one that
-     * names its snapshot invites the questions it can actually answer.
-     */
-    ["...and names its snapshot, and the limits of it",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /snapshot of this dashboard/i.test(CHAT.intro)
-          && /does not carry/i.test(CHAT.intro)
-          && /cannot reach an account/i.test(CHAT.intro);
-      }],
-
-    /**
-     * THE SCRIM COVERS THE PAGE, NOT THE BAR IT WAS OPENED FROM.
+     * THE MUNS CHAT IS OFF THE TOP BAR — Stage 10bz.
      *
-     * `backdrop-filter` on an ancestor makes that ancestor the containing block
-     * for `position: fixed` descendants, and the top bar carries
-     * `backdrop-blur` — so `fixed inset-0` resolved against the HEADER and the
-     * overlay measured 1304x55. The dashboard underneath was never dimmed, and
-     * the reader saw a dialog mixed into the page. The fix is a portal out of
-     * the bar; this is the check that it stays out, and it can only be struck
-     * on geometry — not one rendered word changes when it regresses.
-     */
-    ["the overlay covers the viewport, not just the bar it was opened from",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        const { overlay, viewport } = CHAT;
-        if (!overlay) return false;
-        return overlay.w >= viewport.w - 2 && overlay.h >= viewport.h - 2;
-      }],
-
-    /**
-     * ...AND THE PANEL IS SIZED FOR READING. It was 672x614 on a 1500x900
-     * window — under half the width, with the dashboard legible all around it.
-     * Struck as a FRACTION of the viewport rather than in pixels, so the claim
-     * survives a different window and the `--app-zoom` scale.
-     */
-    ["...and the panel takes a majority of it, rather than floating in the middle of a live page",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        const { panelBox, viewport } = CHAT;
-        if (!panelBox) return false;
-        return panelBox.w / viewport.w >= 0.55 && panelBox.h / viewport.h >= 0.7;
-      }],
-
-    /**
-     * A FAILURE NAMES ITSELF RATHER THAN RENDERING AN EMPTY ANSWER.
+     *   *"Remove Ask muns from here, dont want this right now"*
      *
-     * This harness runs no Pages Function, so the ask 404s — and an empty
-     * assistant bubble there reads as the model having considered the question
-     * and had nothing. THE CAUSE PICKS THE HEADLINE: it must say the function
-     * is not available here, which is a fact about the deployment.
+     * The route used to open the panel and hold what it said about itself to
+     * the light: an answer marked as generated, a snapshot named with its
+     * limits, a scrim that covers the viewport rather than the header, a panel
+     * sized for reading, a failure that names itself. None of those has a
+     * subject while the chat is paused, and each is written down in CLAUDE.md
+     * to be turned back on with it. What this route asserts instead is the
+     * REMOVAL, from both ends — a removal is verified by asserting it happened.
+     *
+     * A WALK THAT DID NOT RUN IS A FINDING, NOT AN ABSTENTION: `CHAT` is read on
+     * this route alone, so a null here means the probe threw, and reporting that
+     * as "not checked" is how a check retires itself in silence.
      */
-    ["a failed ask names the failure instead of rendering an empty answer",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /server-side function/i.test(CHAT.text) && /not available in local preview/i.test(CHAT.text);
-      }],
+    ["the walk ran and found the top bar", () => !!CHAT && CHAT.header === true],
+    /**
+     * BY ITS HANDLE AND BY ITS WORDS. The handle alone passes a button put back
+     * under another test id, which would still read "Ask Muns" to the family;
+     * the words alone pass a trigger drawn as an icon. Either is the button
+     * they asked to have removed.
+     */
+    ["the Ask Muns button is gone from the top bar — by its handle and by its words", () =>
+      !!CHAT && CHAT.trigger === 0 && CHAT.askButtons === 0],
+    ["…and no Muns panel is drawn anywhere on the page", () => !!CHAT && CHAT.panel === 0],
+    /**
+     * ...AND THE DEAD SEARCH BOX STAYS GONE. It was an `<input>` with no value,
+     * no onChange and no handler — a control that searched nothing, in the most
+     * prominent slot on the app — and the chat was what first replaced it.
+     * Counted as an INPUT rather than matched as text, because its placeholder
+     * could legitimately appear in prose.
+     */
+    ["...and the control the chat first replaced, which searched nothing, is still gone", () =>
+      !!CHAT && CHAT.searchInputs === 0],
   ],
 
   /**
@@ -18108,6 +18070,10 @@ for (const theme of THEMES) {
                 detail: (e.querySelector("[data-search-detail]")?.textContent ?? "").trim(),
               })),
               empty: !!document.querySelector("[data-search-empty]"),
+              // The empty line's own words, and the whole list's: the Ask Muns
+              // claims are struck on WORDS as well as on each row's kind.
+              emptyText: document.querySelector("[data-search-empty]")?.innerText ?? null,
+              panelText: document.querySelector("[data-testid='smart-search-panel']")?.innerText ?? null,
               // The review-gap note's own node, so the claim is not struck on
               // prose the component is free to reword.
               note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
@@ -18260,52 +18226,25 @@ for (const theme of THEMES) {
         }
       }
       if (name === "chat") {
-        // Open the panel and ask one question. `/api/chat` is a Pages Function
-        // and `vite preview` runs none, so the ask lands on the FAILURE path —
-        // which is the branch worth walking anyway: a chat that cannot reach
-        // its API must say which failure it was, not render an empty answer
-        // that reads as the model having nothing to say.
-        const t = page.getByTestId("muns-chat-open");
-        if (await t.count()) { await t.click(); await page.waitForTimeout(400); }
-        // THE INTRO IS CAPTURED BEFORE THE ASK. Sending a question replaces the
-        // empty state with the conversation, so an invariant about what the
-        // panel says it was GIVEN has to be struck on the state that says it.
-        const intro = await page.evaluate(() =>
-          document.querySelector('[data-testid="muns-chat-panel"]')?.innerText ?? "");
-        const box = page.getByTestId("muns-chat-input");
-        if (await box.count()) {
-          await box.fill("What is the book worth?");
-          await page.keyboard.press("Enter");
-          await page.waitForTimeout(2500);
-        }
-        CHAT = await page.evaluate((introText) => {
-          const panel = document.querySelector('[data-testid="muns-chat-panel"]');
-          return {
-            open: !!panel,
-            intro: introText,
-            text: panel ? panel.innerText : "",
-            // The dead search box this replaced. Counted as an INPUT, because
-            // its placeholder text could legitimately appear in prose.
-            searchInputs: [...document.querySelectorAll("input")]
-              .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
-            // GEOMETRY, because the bug this catches is invisible in the text.
-            // `backdrop-filter` on an ancestor makes THAT ancestor the
-            // containing block for a `position: fixed` child — and the top bar
-            // the trigger lives in carries `backdrop-blur`. The overlay
-            // measured 1304x55, a scrim over the header strip alone, so the
-            // dashboard was never dimmed and the dialog read as part of the
-            // page. Nothing in the rendered words changes when that happens.
-            overlay: panel ? (() => {
-              const r = panel.parentElement.getBoundingClientRect();
-              return { w: Math.round(r.width), h: Math.round(r.height) };
-            })() : null,
-            panelBox: panel ? (() => {
-              const r = panel.getBoundingClientRect();
-              return { w: Math.round(r.width), h: Math.round(r.height) };
-            })() : null,
-            viewport: { w: window.innerWidth, h: window.innerHeight },
-          };
-        }, intro);
+        /**
+         * NOTHING TO OPEN, AND THAT IS THE CLAIM. The Muns chat is paused at the
+         * family's request (Stage 10bz), so the walk no longer clicks a trigger:
+         * it counts what the top bar offers. A button is matched by its HANDLE
+         * and, separately, by its WORDS inside the header — the second catches a
+         * trigger put back under another test id.
+         */
+        CHAT = await page.evaluate(() => ({
+          header: !!document.querySelector("header"),
+          trigger: document.querySelectorAll('[data-testid="muns-chat-open"]').length,
+          askButtons: [...document.querySelectorAll("header button, header a, header [role='button']")]
+            .filter((b) => /ask\s+muns/i.test((b.innerText || b.textContent || "") + " " + (b.getAttribute("title") || "")))
+            .length,
+          panel: document.querySelectorAll('[data-testid="muns-chat-panel"]').length,
+          // The dead search box the chat first replaced. Counted as an INPUT,
+          // because its placeholder text could legitimately appear in prose.
+          searchInputs: [...document.querySelectorAll("input")]
+            .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
+        }));
       }
       /**
        * EXPAND THE ONE NAME THE FUND LOOK-THROUGH HAS MOST TO SAY ABOUT.

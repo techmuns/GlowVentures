@@ -17,7 +17,10 @@
 //   a category, a basket, a side      → the holdings behind that allocation row
 //   a sector ("banks", "pharma")      → the holdings in it
 //   a figure ("uncalled", "XIRR")     → the page that shows and explains it
-//   a question                        → Muns, with the question already asked
+//
+// (A QUESTION used to go to Muns from the list's own last row. That row went
+// with the top bar's Ask Muns button at the family's request — Stage 10bz — and
+// `looksLikeQuestion` below is kept for the day it comes back.)
 //
 // ── EVERY ENTRY IS DERIVED FROM THE BOOK THE PAGE ALREADY HOLDS ─────────────
 //
@@ -216,6 +219,11 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
  * IS THIS A QUESTION RATHER THAN A PLACE? Then Muns goes first. A search for
  * "HDFC" wants the holding; "how much HDFC do I hold across funds?" wants an
  * answer, and the one surface that composes answers is the chat.
+ *
+ * NO CALLER SINCE Stage 10bz: the search list's Ask Muns row it ordered went
+ * with the top bar's button when the family paused the chat. Kept, and still
+ * asserted in `searchIndex.test.ts`, because the chat is paused rather than
+ * removed — see `MunsChat.tsx` for how both come back.
  */
 export function looksLikeQuestion(query: string): boolean {
   const q = query.trim().toLowerCase();
