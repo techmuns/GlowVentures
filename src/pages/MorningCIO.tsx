@@ -38,7 +38,8 @@ import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } f
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { capitalScope, distributionOf } from "@/lib/privateMarket";
-import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { BENCHMARKS, benchmarkByKey } from "@/lib/benchmarks";
 import { DailyMovers } from "@/components/DailyMovers";
@@ -442,9 +443,19 @@ export function MorningCIO() {
     // statement states outright; nothing here is pattern-matched out of a label.
     const accIdx = accountIndex(portfolio.accounts);
     const eqGroup = (rows: typeof p) => {
-      const cost = sumOrNull(rows.map((x) => x.costBasis));
+      /**
+       * COST AND ITS GAIN OVER ONE SET — and none over nothing (A-14). The Cash
+       * row holds two nil sleeves reporting a cost of ₹0 beside ₹14.2 Cr of
+       * liquid funds whose statements report none; `sumOrNull` over the cost
+       * was ₹0, and the row printed Invested ₹0 beside Current ₹14.2 Cr — a
+       * measured zero over the only part of the row worth nothing.
+       * `costedFigures` is the one test for that, shared with the Portfolio
+       * Monitor's section totals, which print the same buckets.
+       */
+      const cf = costedFigures(rows);
+      const cost = cf.cost;
       const mv = sum(rows.map((x) => x.marketValue));
-      const pnl = sumOrNull(rows.map((x) => x.unrealizedPnL));
+      const pnl = cf.unrealised;
       // WHICH ROWS THE COST SIDE ACTUALLY COVERS. `sumOrNull` skips a position
       // whose statement reports no cost rather than entering it as zero, which
       // is right and leaves Invested covering a narrower set than Current in the
@@ -491,6 +502,7 @@ export function MorningCIO() {
       const fifo = fifoTotals(rows, { accounts: portfolio.accounts, universe: p });
       return {
         count: rows.length, cost, mv, pnl,
+        vacuous: cf.vacuous,
         withoutCost: noCost.length,
         withoutCostMV,
         costedMV,
@@ -604,6 +616,8 @@ export function MorningCIO() {
       key: string; color: string; count: number;
       /** NULL where no statement in the bucket reports a cost — never 0, see Position.costBasis. */
       invested: number | null;
+      /** The bucket's only costed lines are nil balances beside uncosted value — `costedFigures` (A-14). */
+      vacuous?: boolean;
       current: number;
       kind: "MOIC" | "TVPI"; metric: number | null;   // money-multiple, for the popover
       retPct: number | null;                          // total return on cost, for the popover
@@ -700,7 +714,7 @@ export function MorningCIO() {
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
       return {
         key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv, kind: "MOIC",
-        investedFifo: g.fifo,
+        investedFifo: g.fifo, vacuous: g.vacuous,
         fromPositions: true, ruleMV, unplaced: key === UNCLASSIFIED,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
@@ -1123,7 +1137,9 @@ export function MorningCIO() {
        * the archive and already says so. A measured zero is not an absence; what
        * it lacks is capital to strike a return against.
        */
-      const why = b.invested == null
+      const why = b.vacuous
+        ? `${VACUOUS_COST_REASON.charAt(0).toUpperCase()}${VACUOUS_COST_REASON.slice(1)}, and a return on cost has nothing to divide.`
+        : b.invested == null
         ? `No statement reports what ${b.count === 1 ? "this holding" : "these holdings"} cost, so there is no return to strike — the cost is absent, not zero.`
         : b.withoutCost > 0
           ? `Invested covers ${b.count - b.withoutCost} of ${b.count} holdings here (${money(b.costedMV)} of the ${money(b.current)} beside it) and Current covers all of them — ${money(b.withoutCostMV)} reports no cost. A percentage across those two would divide one set of holdings by another, so it is not shown.`
@@ -1473,7 +1489,14 @@ export function MorningCIO() {
                         </td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap"
                           title={(b.investedFifo && investedBasisNote(b.investedFifo, (n) => money(n))) || undefined}
-                          data-invested-capital={b.investedFifo?.wholeMandates.length ? b.invested ?? undefined : undefined}>{money(b.invested)}</td>
+                          data-invested-capital={b.investedFifo?.wholeMandates.length ? b.invested ?? undefined : undefined}>
+                          {/* NEVER A BARE DASH (C-04), AND NEVER ₹0 OVER NOTHING (A-14). */}
+                          {b.invested === null
+                            ? <AbsentCell reason={b.vacuous ? VACUOUS_COST_REASON
+                              : b.fromPositions
+                              ? `no statement behind ${b.count === 1 ? "this holding" : "these holdings"} reports what ${b.count === 1 ? "it" : "they"} cost — a depository records what is held and never what was paid for it`
+                              : "no statement in this book reports a drawn amount for this structure"} />
+                            : money(b.invested)}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{money(b.current)}</td>
                         <td className="px-2 py-2.5 text-right whitespace-nowrap">{returnCell(b)}</td>
                         <td className="px-2 py-2.5 text-right mono text-slate-400">{m.totalValue > 0 ? `${((b.current / m.totalValue) * 100).toFixed(1)}%` : DASH}</td>

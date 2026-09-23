@@ -4231,6 +4231,92 @@ const TXN_SECTIONS = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── WHAT A CLUBBED ROW MAY STATE, DERIVED FROM THE BOOK (A-02, A-03, A-14) ───
+ *
+ * Re-expressed here rather than imported from `clubbedFigures.ts`: a check that
+ * calls the helper it is checking agrees with it by construction. Struck over
+ * the current, deduped holdings the pages draw, with the ₹1,000 floor applied.
+ *
+ * - `mixed` — the largest COMPANY SHARE held through a line that reports a cost
+ *   AND a line that does not (ICICI Bank on this book: 7,000 of 21,500 shares).
+ *   Its average cost must be cost ÷ COSTED units, its P&L costed value − cost.
+ * - `split` — the largest security whose lines, outside any mandate, print two
+ *   marks that differ to the paisa (DSP Gold ETF: ₹151.10 and ₹141.24). Its row
+ *   must print no price and name both.
+ * - `cashVacuous` — the Cash section's only costed lines are nil balances beside
+ *   value no statement costs, so its Invested must be absent, never ₹0.
+ *
+ * Null on any failure, so the checks FAIL rather than pass.
+ */
+const CLUBBED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts)) return null;
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+    const i = a.indexOf("export const CASH_EQUIVALENT_KEYS");
+    const end = i < 0 ? -1 : a.indexOf("\n};", i);
+    if (end < 0) return null;
+    const cashEq = new Set([...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]));
+    if (!cashEq.size) return null;
+    const small = smallKeysOf(positions);
+    const seen = new Set();
+    const ded = [];
+    for (const p of positions) {
+      if (["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && p.quantity === 0 && p.currentPrice != null) continue;
+      if (small.has(p.securityKey)) continue;
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      ded.push(p);
+    }
+    const sum = (xs) => xs.reduce((x, y) => x + y, 0);
+    const num = (v) => typeof v === "number" && Number.isFinite(v);
+    const costed = (p) => !p.costUnavailable && num(p.costBasis);
+    const group = (xs, keyOf) => {
+      const m = new Map();
+      for (const p of xs) { const k = keyOf(p); (m.get(k) ?? m.set(k, []).get(k)).push(p); }
+      return m;
+    };
+    let mixed = null;
+    for (const [key, ps] of group(ded.filter((p) => p.assetClass === "Equity"), (p) => p.securityKey)) {
+      const c = ps.filter(costed), u = ps.filter((p) => !costed(p));
+      if (!c.length || !u.length || !(sum(u.map((p) => p.marketValue)) > 0)) continue;
+      const cost = sum(c.map((p) => p.costBasis)), cq = sum(c.map((p) => p.quantity));
+      const q = sum(ps.map((p) => p.quantity)), mv = sum(ps.map((p) => p.marketValue));
+      const cv = sum(c.map((p) => p.marketValue));
+      if (!(cq > 0)) continue;
+      const cand = { key, cost, costedQty: cq, qty: q, mv, costedValue: cv, avg: cost / cq, oldAvg: cost / q, pnl: cv - cost, oldPnl: mv - cost };
+      if (!mixed || mv > mixed.mv) mixed = cand;
+    }
+    const bucket = (p) => {
+      const e = engagement.get(p.accountId);
+      if (e === "PMS") return MANDATE_BUCKET;
+      if (cashEq.has(p.securityKey)) return "Cash";
+      if (p.assetClass !== "Equity") return p.assetClass;
+      return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
+    };
+    let split = null;
+    for (const [, ps] of group(ded.filter((p) => engagement.get(p.accountId) !== "PMS"), (p) => bucket(p) + "|" + p.securityKey)) {
+      const marks = [...new Set(ps.map((p) => p.currentPrice).filter(num).map((v) => v.toFixed(2)))];
+      if (marks.length < 2) continue;
+      const mv = sum(ps.map((p) => p.marketValue));
+      if (!split || mv > split.mv) split = { key: ps[0].securityKey, bucket: bucket(ps[0]), marks: marks.map(Number), mv };
+    }
+    const cash = ded.filter((p) => bucket(p) === "Cash");
+    const cc = cash.filter(costed);
+    const cashVacuous = cc.length > 0 && sum(cc.map((p) => p.costBasis)) === 0 && sum(cc.map((p) => p.marketValue)) === 0
+      && sum(cash.filter((p) => !costed(p)).map((p) => p.marketValue)) !== 0;
+    return { mixed, split, cashVacuous };
+  } catch { return null; }
+})();
+/** A per-unit rupee figure as printed — "₹1,346.33" — or NaN. */
+const rupeesCell = (s) => {
+  const m = /₹([\d,]+(?:\.\d+)?)/.exec(String(s ?? ""));
+  return m ? Number(m[1].replace(/,/g, "")) : NaN;
+};
+
 const mandatesIn = (mandates, bucket) =>
   (mandates ?? []).filter((m) => bucket === undefined || m.bucket === bucket);
 /** A check needs its input: no rows captured is NOT CHECKED, never a pass. */
@@ -8018,6 +8104,23 @@ const CIO_MOVERS = [
 ];
 
 const CIO_ALLOC = [
+  /**
+   * ── NEVER ₹0 OVER NOTHING (A-14) ──────────────────────────────────────────
+   *
+   * The Cash row's only costed lines are two nil sleeves (₹0 value, ₹0 cost)
+   * beside ₹14.2 Cr of liquid funds whose statements report no cost, and it
+   * printed Invested ₹0 — a measured zero over the only part of the row worth
+   * nothing. Absent now, with the reason. Derived: `CLUBBED_BOOK.cashVacuous`.
+   */
+  ["the Cash row's Invested is absent with its reason, never ₹0 over holdings no statement costs (A-14)", (t, ctx) => {
+    const b = CLUBBED_BOOK;
+    if (!b) return false;
+    if (ctx.allocTable?.axis && ctx.allocTable.axis !== "category") return notChecked("the allocation table is on another axis on this route");
+    if (!b.cashVacuous) return notChecked("the Cash section in this book has no nil costed line beside uncosted value");
+    const row = (ctx.allocTable?.cells ?? []).find((c) => c.key === "Cash");
+    if (!row) return false;
+    return !/₹/.test(row.invested) && /nil balances/i.test(row.investedWhy);
+  }],
     ["allocation shows more than one asset class (AIF + MF/Cash)", (t) => /\bAIF\b/.test(t) && /(Mutual Fund|Cash)/.test(t)],
     /**
      * ── THE CONCENTRATION ROW NAMES EVERY SIDE THE BOOK HAS ─────────────────
@@ -15075,6 +15178,40 @@ const INVARIANTS = {
 
   monitor: [
     /**
+     * ── ONE MARK OR NONE (A-03) ──────────────────────────────────────────────
+     *
+     * DSP Gold ETF's two statements mark it at ₹151.10 and ₹141.24. The row
+     * printed the first over every unit, which read as a ₹21.15 Cr holding
+     * beside its own ₹19.98 Cr. Where the lines disagree the row has no single
+     * price: the cell is absent, and its reason names both marks.
+     */
+    /**
+     * ── NO SECTION TOTAL PRINTS ₹0 OVER WHAT NO STATEMENT COSTS (A-14) ───────
+     *
+     * The Cash section's totals row summed the two nil sleeves' ₹0 cost and
+     * printed Invested ₹0 and P&L ₹0 beside ₹14.2 Cr of liquid funds whose
+     * statements report no cost. Both cells are absent now, and say why.
+     */
+    ["the Cash section's Invested and P&L totals are absent with their reason, never ₹0 (A-14)", (t, ctx) => {
+      const b = CLUBBED_BOOK;
+      if (!b) return false;
+      if (!b.cashVacuous) return notChecked("the Cash section in this book has no nil costed line beside uncosted value");
+      if (!ctx.categoryTotals) return notChecked("no category totals captured on this run");
+      const row = ctx.categoryTotals.rows.find((r) => r.key === "Cash");
+      if (!row) return false;
+      return [COL.invested, COL.pnl].every((i) => !/₹/.test(row.text[i] ?? "") && /nil balances/i.test(row.title[i] ?? ""));
+    }],
+    ["a row whose statements disagree on a mark prints no price, and names both (A-03)", (t, ctx) => {
+      const b = CLUBBED_BOOK;
+      if (!b) return false;
+      if (!b.split) return notChecked("no security in this book is marked at two different prices outside a mandate");
+      const row = (ctx.tableRows ?? []).find((r) => r.securityKey === b.split.key);
+      if (!row) return false;
+      const cell = row.cells[COL.cmp] ?? "", why = row.cellTitles[COL.cmp] ?? "";
+      return !/₹/.test(cell) && /do not agree on a mark/i.test(why)
+        && b.split.marks.every((v) => why.includes(String(Math.floor(v))));
+    }],
+    /**
      * ── EVERY MANDATE ROW READS ITS FIFO RETURN, ON ITS OWN CAPITAL ──────────
      *
      * Struck per row against `FIFO_BOOK`, which re-derives the figure from the
@@ -16050,6 +16187,54 @@ const INVARIANTS = {
    * generated figure and would go stale on the next drop.
    */
   "monitor-security": [
+    /**
+     * ── A CLUBBED ROW'S COST FIGURES ARE STRUCK OVER ONE SET (A-02) ───────────
+     *
+     * ICICI Bank is held through 7,000 shares a PMS statement costs and 14,500 a
+     * depository does not. The row divided the costed shares' ₹94.2 L by all
+     * 21,500 (₹438.34 a share, where they cost ₹1,346.33) and set every share's
+     * value against that cost (+₹2.06 Cr, where the costed shares gained
+     * +₹5.98 L). Both expectations come from `CLUBBED_BOOK`, off the book.
+     */
+    ["a clubbed row's average cost is its costed units' cost over THOSE units, never over every unit (A-02)", (t, ctx) => {
+      const b = CLUBBED_BOOK;
+      if (!b) return false;
+      if (!b.mixed) return notChecked("no company share in this book is held through a costed line and an uncosted one");
+      const row = (ctx.tableRows ?? []).find((r) => r.securityKey === b.mixed.key);
+      if (!row) return false;
+      const shown = rupeesCell(row.cells[COL_STOCK.avgCost]);
+      return Math.abs(shown - b.mixed.avg) <= 0.01 && Math.abs(shown - b.mixed.oldAvg) > 1
+        && /reports? a cost/i.test(row.cellTitles[COL_STOCK.avgCost] ?? "");
+    }],
+    ["...and its P&L is the costed shares' value less their cost, with the uncosted part named (A-02)", (t, ctx) => {
+      const b = CLUBBED_BOOK;
+      if (!b) return false;
+      if (!b.mixed) return notChecked("no company share in this book is held through a costed line and an uncosted one");
+      const row = (ctx.tableRows ?? []).find((r) => r.securityKey === b.mixed.key);
+      if (!row) return false;
+      const shown = moneyCell(row.cells[COL_STOCK.pnl]);
+      return pmClose(shown, b.mixed.pnl / 1e7) && !pmClose(shown, b.mixed.oldPnl / 1e7)
+        && /reports? none/i.test(row.cellTitles[COL_STOCK.pnl] ?? "");
+    }],
+    /**
+     * THE P&L COLUMN TIES TO ITS OWN FOOTER. The rows once summed to ₹15.92 Cr
+     * under a ₹13.92 Cr footer — every row setting its whole value against a
+     * part of its cost while the footer summed each line's own gain. The bound
+     * is the page's printing precision reproduced: three significant figures,
+     * so each printed cell is within 0.5% of itself.
+     */
+    ["the P&L column adds to the footer beneath it (A-02)", (t, ctx) => {
+      const rows = ctx.tableRows;
+      const skip = needRows(rows);
+      if (skip) return skip;
+      const parts = rows.map((r) => moneyCell(r.cells[COL_STOCK.pnl])).filter((v) => v !== null);
+      if (!parts.length || parts.some((v) => !Number.isFinite(v))) return false;
+      const foot = moneyCell(ctx.footerCells?.[COL_STOCK.pnl]);
+      if (!Number.isFinite(foot)) return false;
+      const got = parts.reduce((x, y) => x + y, 0);
+      const bound = 0.005 * (parts.reduce((x, y) => x + Math.abs(y), 0) + Math.abs(foot)) + 1e-9;
+      return Math.abs(got - foot) <= bound;
+    }],
     /**
      * ── THE TWO GREY PARAGRAPHS ARE GONE, AND EVERY FIGURE IN THEM IS NOT ─────
      *
@@ -19930,6 +20115,9 @@ for (const theme of THEMES) {
             key: r.getAttribute("data-alloc-row"),
             current: (r.cells[2]?.innerText ?? "").trim(),
             weight: (r.cells[4]?.innerText ?? "").trim(),
+            // …and Invested with the reason an absent one carries (A-14).
+            invested: (r.cells[1]?.innerText ?? "").trim(),
+            investedWhy: r.cells[1]?.querySelector("[title]")?.getAttribute("title") ?? r.cells[1]?.getAttribute("title") ?? "",
           })),
           foot: (() => {
             const f = t.querySelector("tfoot tr");

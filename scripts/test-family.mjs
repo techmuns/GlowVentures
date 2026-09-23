@@ -47,6 +47,7 @@ const SUITES = [
   ["family taxonomy", "src/lib/__tests__/familyTaxonomy.test.ts"],
   ["capital tranches", "src/lib/__tests__/tranches.test.ts"],
   ["carried cost", "src/lib/__tests__/carriedCost.test.ts"],
+  ["clubbed figures", "src/lib/__tests__/clubbedFigures.test.ts"],
   ["FIFO returns", "src/lib/__tests__/fifo.test.ts"],
   ["stock exposure", "src/lib/__tests__/stockExposure.test.ts"],
   ["screener sectors", "src/lib/__tests__/screenerSectors.test.ts"],

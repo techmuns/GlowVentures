@@ -7,13 +7,14 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
-  measuredReturn, valueDateOf,
+  measuredReturn, valueDateOf, costCoversSet,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
+import { costedFigures } from "@/lib/clubbedFigures";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { fundNavFor } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
@@ -300,9 +301,17 @@ export function StockInfo() {
      one can be shown at all is a question about what the RENDERER can
      distinguish, so it cannot be answered before the renderer is defined. */
   const qty = sum(drows.map((r) => r.quantity));
-  const cost = sumOrNull(drows.map((r) => r.costBasis));
+  /**
+   * COST, ITS UNITS AND ITS GAIN OVER ONE SET (A-02) — `costedFigures`, the
+   * helper the Portfolio Monitor's row for this holding uses, so the two print
+   * one average cost. This was cost ÷ EVERY unit: ICICI Bank's 7,000 costed
+   * shares' ₹94.2 L over all 21,500 read ₹438.34 a share beside a P&L tile
+   * already struck on the 7,000 alone.
+   */
+  const cf = costedFigures(drows);
+  const cost = cf.cost;
   const mv = sum(drows.map((r) => r.marketValue));
-  const pnl = sumOrNull(drows.map((r) => r.unrealizedPnL));
+  const pnl = cf.unrealised;
   // Both stay NULL when no statement reported a cost for this name, so the
   // tiles render `—`. A zero average cost reads as shares acquired for nothing
   // and a zero return as break-even; neither was measured.
@@ -326,14 +335,21 @@ export function StockInfo() {
     return: (r) => r.returnPct,
     basis: (r) => (r.stCostBasis === null && r.ltCostBasis === null ? null : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"),
   });
-  const avgCost = cost !== null && qty > 0 ? cost / qty : null;
+  const avgCost = cf.avgCost;
+  /** What the cost figures cover, where it is not the whole holding. */
+  const partCost = cost !== null && !cf.complete
+    ? `${fmtNum(cf.costedUnits)} of ${fmtNum(qty)} units report a cost`
+    : "";
   /**
    * FIFO — the realised gain on units of this holding already sold stays in
    * its return (`fifoTotals`), over the rows that report a cost, which is the
    * set Invested beside it is struck on.
    */
   const fifo = fifoTotals(drows.filter((r) => r.costBasis != null && !r.costUnavailable));
-  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null;
+  // …AND THE RETURN ON THE MONITOR'S TERMS. Where the cost does not cover the
+  // holding, the Monitor refuses a return beside the whole value; so does this
+  // page, rather than print one figure on one screen and none on the other.
+  const ret = cost !== null && pnl !== null && cost > 0 && costCoversSet(mv, cf.uncosted.value) ? fifo.returnPct : null;
   /**
    * WHY THERE IS NO COST — the question the reader actually opened this page with.
    *
@@ -632,12 +648,14 @@ export function StockInfo() {
           value={avgCost === null ? <AbsentValue /> : <span className="mono">{price(avgCost)}</span>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
             : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
+            : partCost ? <span title={`Average cost is struck over the units whose statement reports a cost — never a costed line's cost over every unit. The other ${fmtNum(cf.uncosted.units)} units, ${money(cf.uncosted.value)}, are on statements that report none.`}>invested {money(cost)} &middot; {partCost}</span>
             : `invested ${money(cost)}`}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
           delta={ret}
           sub={pnl === null ? <span className="text-slate-500">{costWhy}</span>
+            : partCost ? <span title={`Struck over the ${fmtNum(cf.costedUnits)} units whose statement reports a cost (${money(cf.costedValue)} of the ${money(mv)} holding): their value less their cost. The other ${fmtNum(cf.uncosted.units)} report none, so no return is struck across the whole holding — a percentage over two different sets describes neither.`}>on the {partCost.replace(" report a cost", " that report a cost")}</span>
             : <span title={fifoBasisNote(fifo, (n) => money(n))}>return · FIFO{fifo.realised ? ` · incl. ${money(fifo.realised, true)} realised` : ""}</span>}
           icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
@@ -802,7 +820,7 @@ export function StockInfo() {
                     label={<>Total</>}
                     cells={{
                       qty: <td key="qty" className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(qty)}</td>,
-                      avgCost: <td key="avgCost" className="px-4 py-2.5 text-right mono text-slate-300">{price(avgCost)}</td>,
+                      avgCost: <td key="avgCost" className="px-4 py-2.5 text-right mono text-slate-300" data-stock-foot-avg={avgCost ?? undefined}>{avgCost === null ? <AbsentCell reason={costWhy} /> : partCost ? <span title={`over the ${partCost.replace(" report a cost", " that report a cost")}`}>{price(avgCost)}</span> : price(avgCost)}</td>,
                       /* A BLENDED AVG COST IS ARITHMETIC; A BLENDED MARK IS AN
                          INVENTION. The cell above is cost ÷ quantity, and both
                          of those ADD across statements. Prices do not: a
@@ -822,9 +840,9 @@ export function StockInfo() {
                             : cmp}
                         </td>
                       ),
-                      invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{money(cost)}</td>,
+                      invested: <td key="invested" className="px-4 py-2.5 text-right mono text-slate-300">{cost === null ? <AbsentCell reason={costWhy} /> : money(cost)}</td>,
                       current: <td key="current" className="px-4 py-2.5 text-right mono text-slate-100">{money(mv)}</td>,
-                      pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
+                      pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{pnl === null ? <AbsentCell reason={costWhy} /> : money(pnl, true)}</td>,
                       return: (
                         <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
                           title={`The holding-period return across every row above, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(fifo, (n) => money(n))}`}>

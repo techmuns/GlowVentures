@@ -140,7 +140,10 @@ export function buildDashboardContext(): ContextBlock[] {
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,
           strategy: a.strategy, engagement: a.engagement, asOf: a.asOf,
-          holdings: held.length, valueCr: cr(sum(held.map((p) => p.marketValue))),
+          // NULL WHERE THE ACCOUNT HOLDS NOTHING, never 0 (A-14): an account no
+          // statement values beside its `noPositionsReason` is an absence, and
+          // a model handed `0` reports the account as worth nothing.
+          holdings: held.length, valueCr: held.length ? cr(sum(held.map((p) => p.marketValue))) : null,
           noPositionsReason: a.noPositionsReason ?? null,
         };
       }).sort((x, y) => (y.valueCr ?? 0) - (x.valueCr ?? 0)).slice(0, TOP_ACCOUNTS),

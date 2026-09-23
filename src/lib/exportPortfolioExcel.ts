@@ -10,6 +10,7 @@ import { displaySecurity, fmtCr, DASH } from "./format";
 import { holdingYtd, valueDateOf, commonValueDate } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import { fifoTotals } from "./fifo";
+import { costedFigures, commonMark, markKey } from "./clubbedFigures";
 import {
   sumOrNull, dedupedPositions, consolidatedMarketValue,
   holdingBucket, bucketLabel, holdingRoute, ROUTE_LABEL,
@@ -46,6 +47,13 @@ type HoldingRow = {
    * different findings, so the note under the total counts them apart.
    */
   costNone: boolean;
+  /**
+   * The value of the lines inside a PARTLY costed row that report no cost —
+   * ICICI Bank's 14,500 depository shares beside 7,000 costed ones. Its P&L is
+   * struck over the costed lines alone (A-02), so the note under the total
+   * counts this beside the rows that report no cost at all.
+   */
+  uncostedValue: number;
   qty: number; avgCost: number | null; cmp: number | null; marketValue: number;
   weight: number | null; pnl: number | null; returnPct: number | null;
   /** The holding's own year to date, or null where the book cannot measure it. */
@@ -130,9 +138,17 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
       // `sumOrNull`, not a plain sum: a position whose statement reported no cost
       // must not contribute a zero here. It would drag the group's average cost
       // down and export a return nobody measured.
-      const cost = sumOrNull(ps.map((x) => x.costBasis));
+      // COST, ITS UNITS AND ITS GAIN OVER ONE SET — `costedFigures`, the same
+      // helper the tab's clubbed row uses (A-02), so the sheet and the screen
+      // cannot print two average costs for one holding. A position whose
+      // statement reported no cost contributes nothing, never a zero.
+      const cf = costedFigures(ps);
+      const cost = cf.cost;
       const qty = ps.reduce((s, x) => s + x.quantity, 0);
       const costNA = cost === null || (cost === 0 && mv > 0);
+      // ONE MARK OR NONE (A-03): where the statements disagree on a price no
+      // single figure covers every unit, and the sheet leaves it blank.
+      const mark = commonMark(ps, markKey);
       rows.push({
         security: ps[0].security, bucket, sector: ps[0].sector,
         // THE FAMILY'S OWN AXES, struck on the same position the bucket is and
@@ -152,15 +168,16 @@ function consolidate(positions: Position[], accounts: Account[]): HoldingRow[] {
         // instead of to one cause asserted over all of them.
         sources: [...new Set(ps.map((x) => providerOf(idx, x)))].sort().join(" + "),
         costNone: cost === null,
+        uncostedValue: cost === null ? 0 : cf.uncosted.value,
         // `cmp` is the per-unit mark and is genuinely absent for a holding whose
         // provider prints none (360 ONE marks its AIF at a Net Asset Value with no
         // NAV per unit). Kept null here and rendered as an em dash by the caller,
         // never as a zero price that would read as a measurement.
-        qty, avgCost: !costNA && qty > 0 ? (cost as number) / qty : null, cmp: ps[0].currentPrice ?? null,
+        qty, avgCost: !costNA ? cf.avgCost : null, cmp: mark.price,
         marketValue: mv, weight: totalMV > 0 ? (mv / totalMV) * 100 : null,
         // NULL, NEVER 0. The cell already rendered an em dash; the zero survived
         // in the model and was summed into the Total row below.
-        pnl: costNA ? null : mv - (cost as number),
+        pnl: costNA ? null : cf.unrealised,
         // FIFO, through the same aggregator the tab uses — the realised gain on
         // units already sold stays in the return.
         returnPct: costNA || (cost as number) <= 0 ? null : fifoTotals(ps).returnPct,
@@ -410,6 +427,10 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   const totPnL = sumOrNull(rows.map((h) => h.pnl));
   const unpricedRows = rows.length - priced.length;
   const unpricedMV = rows.reduce((s, h) => s + (h.pnl === null ? h.marketValue : 0), 0);
+  // …and the uncosted lines INSIDE rows that do carry a P&L, which that P&L
+  // is not struck over either.
+  const partRows = rows.filter((h) => h.pnl !== null && h.uncostedValue > 0);
+  const partMV = partRows.reduce((s, h) => s + h.uncostedValue, 0);
   /**
    * WHERE THE COST-LESS ROWS COME FROM, derived per row from the account behind
    * it. The note used to assert ONE cause for all of them — "a depository holds
@@ -465,7 +486,13 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
         ? ` — ${zeroCostRows} of them report a cost of zero against a positive market value, which would book`
           + ` the whole holding as profit`
         : ``)
-      + `. Whose statements they are: ${sourceList}. Market value covers all ${rows.length}.`;
+      + `. Whose statements they are: ${sourceList}.`
+      + (partRows.length > 0
+        ? ` ${partRows.length} more row${partRows.length === 1 ? " is" : "s are"} only partly costed, and ${fmtCr(partMV, 2)} of`
+          + ` ${partRows.length === 1 ? "its" : "their"} value is on statements that report no cost; ${partRows.length === 1 ? "its" : "their"}`
+          + ` average cost and P&L are struck over the costed units alone.`
+        : ``)
+      + ` Market value covers all ${rows.length}.`;
   note.font = { name: "Calibri", size: 9, italic: true, color: { argb: C.muted } };
   // WRAPPED, AND THE ROW MADE TALL ENOUGH TO SHOW IT. A merged cell CLIPS rather
   // than overflowing, so at `wrapText: false` and a fixed 16pt this sentence —

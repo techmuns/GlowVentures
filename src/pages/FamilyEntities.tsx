@@ -748,8 +748,28 @@ export function FamilyEntities() {
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
-                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${changeColor(e.pnl)}`}><Auditable formula={pnlFormula(e.mv, e.cost, e.pnl, money)}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable></td>
-                        <td className={`px-4 py-2.5 text-right mono ${changeColor(e.returnPct)}`}><Auditable formula={returnFormula(e.mv, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed })}>{fmtPct(e.returnPct, { sign: true })}</Auditable></td>
+                        {/* THE POPOVER IS STRUCK ON THE SET ITS FIGURE IS (A-02). The
+                            P&L and the return are over the holdings that report a
+                            cost; the popover set the entity's WHOLE value against
+                            that cost — "(₹349.4 − ₹254.3) ÷ ₹254.3 = +12.34%",
+                            arithmetic that gives 37.4%. `e.fifo` is struck over
+                            the costed holdings alone, so its value is the one the
+                            figure divides. */}
+                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${e.pnl == null ? "text-slate-500" : changeColor(e.pnl)}`} data-entity-pnl-costed-value={e.fifo.marketValue}>
+                          {e.pnl == null
+                            ? <AbsentCell reason="no statement behind this entity's holdings reports a cost, so there is no gain to strike — a depository records what is held and never what it was bought for" />
+                            : <Auditable formula={{
+                                ...pnlFormula(e.fifo.marketValue, e.cost, e.pnl, money),
+                                ...(e.withoutCost > 0 ? { plain: `What the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${e.withoutCost} report no cost and are in NAV only — never counted at zero.` } : {}),
+                              }}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable>}
+                        </td>
+                        <td className={`px-4 py-2.5 text-right mono ${e.returnPct == null ? "text-slate-500" : changeColor(e.returnPct)}`}>
+                          {e.returnPct == null
+                            ? <AbsentCell reason={e.cost == null
+                                ? "no statement behind this entity's holdings reports a cost, so there is no return to strike"
+                                : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide"} />
+                            : <Auditable formula={returnFormula(e.fifo.marketValue, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed })}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
+                        </td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
