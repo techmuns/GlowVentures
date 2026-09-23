@@ -18945,13 +18945,13 @@ and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control on the merged tree,
 and `replay:calls`, `replay:flows`, `replay:owners` and `replay:movements` are
 each a no-op with `--check`.
 
-#### Merged with main — and the letter moved SIX times before it held
+#### Merged with main — and the letter moved SEVEN times before it held
 
 This section was going to be `10bt`; **#70 and #73 landed on main while it was
 being verified and took `10bt` and `10bu`**, so it became `10bv`. The PR was then
 open and green when **#75 — Buoyant's carried cost — landed and took `10bv`
 too**, and the section became `10bw`; then **#72 took `10bw`** and it became
-`10bx`; then **#79 took `10bx`**, and **#83 took `10bz`** (the subsections below), so it is **`10ca`**. Every time it was caught the same way: the
+`10bx`; then **#79 took `10bx`**, and **#83 took `10bz`**, so it was `10ca` until **#80, #82 and #76 took `10ca`, `10cb` and `10cc`** (the subsections below), and it is **`10cd`**. Every time it was caught the same way: the
 letters on main's TIP compared against the branch's own at the moment of merging,
 not against the base the branch was cut from. Main keeps all three.
 
@@ -19063,6 +19063,65 @@ comments and five lines of this file are #83's and stayed.**
 and `check-pages.mjs`; the last auto-merged, so its `ctx` literal was read
 rather than trusted. #83 touches no generated file, and `build-book` was run as a
 control anyway.
+
+#### …and a seventh time: #80, #82 and #76 took `10ca`, `10cb` and `10cc`
+
+**The family released four PRs at once, and main had moved four times since this
+one's last merge.** #80 (FIFO everywhere) took `10ca` — the letter this section
+held — #82 (KPI tiles) took `10cb`, and #76 (one company, one name), merged first
+of the four, took `10cc`. So this section is **`10cd`**. Twenty code comments
+cited `10ca` for this change and moved; the four `10ca` comments in main's code
+are #80's and stayed. The page conflicts were each resolved by what the side
+meant: `MandateHoldings`' imports are the union, and the dated table on the
+Portfolio Monitor takes this change's columns beside #80's FIFO figures.
+
+**#80 GAVE NEO INFRA A CAPITAL RECORD, AND THAT DROPPED ITS PAYOUTS FROM THIS
+TABLE WITHOUT A CONFLICT MARKER.** FIFO needs Neo Infra's own unit record — its
+six drawdowns and the ₹14.16 L capital redemption — so #80 put it in
+`BOOK_CAPITAL_MOVES`. `capitalMovesWithCalls` added a fund's dated payouts only
+where the account had NO record, so the moment it had one, every payout it
+published left the card: its income and equalisation reached no column, its
+split was refused, and its XIRR fell out of step with the Private Market page's.
+Every file merged cleanly; the suite is what said so.
+
+A unit record lists what bought and redeemed UNITS and nothing else, so it cannot
+double a distribution. A recorded fund keeps its payouts now: the one payout its
+record already carries — the principal — is TYPED on the record's own row (same
+date, same amount) rather than added a second time; a principal the record does
+not show is left to the record, which is the authority on units; and a payout
+beside a record is not marked `fromCall`, because its purchases never came from a
+call list. Neo Infra reads redemption ₹51.04 L, realised ₹36.88 L, unrealised
+₹69.15 L — which is now the Holdings page's own FIFO unrealised P&L, where before
+#80 the two sat ₹14.16 L apart — and XIRR +16.68%, the Private Market page's to
+the digit. `capitalRecord.test.ts` holds a recorded fund to the same checks as a
+call-derived one (LOAD-BEARING: the book must carry both kinds) and ties Neo
+Infra's unrealised to the Holdings page's by the book's own positions.
+
+**AND THE SWEEP'S COPY OF THAT RULE HAD TO MOVE TOO.** `CAPITAL_RECORD_BOOK` in
+`check-pages.mjs` re-expresses the card's record off `glowData.ts`, and it still
+skipped a recorded account whole. So on the merged tree the counter beside the
+table, *"Purchase − Redemption + Realised + Unrealised = Value today"* and the
+XIRR re-solve all failed a page that was right — and once it carried the payouts,
+the payout-type split failed next, because it left out the principal typed on
+the record's row. It mirrors the page now: the typing rides on the record row,
+the split counts it, and a fund with any untyped payout must show its split
+refused, as the page does. A rule written twice has to be moved twice.
+
+**THE FULL SWEEP ON THE MERGED TREE** walked 240 combinations and found six:
+- `monitor-txns` (two) and `monitor-txn-returns` — the checker's copy of the rule
+  above; re-run clean with `monitor-txn-in`, `monitor-txn-out` and
+  `monitor-txn-basket`.
+- `monitor-open-all` — #76's full-width line, which that PR's final commit taught
+  the probe and this merge brought in; re-run clean with `monitor-sold-elsewhere`.
+- `private-market`, `private-market-tiles` and `private-market-returns` — **fail
+  on `main` too**, measured on a worktree at `6453c99`: #80 made a fund's HPR
+  FIFO and the sweep's re-expression still strikes it as value against cost.
+  Main's check to move, not this merge's.
+
+The ten NOT CHECKED lines are main's evidenced abstentions, as on #76. `build` ·
+`tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` 0 failed · `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` byte for byte on the final tree.
 
 ### Stage 10k — News & Announcements: REMOVED
 
