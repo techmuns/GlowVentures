@@ -20938,7 +20938,7 @@ picker, an amount and a note, saved for everyone — the store is shared, and a
 save shows for other readers within about a minute (KV is eventually
 consistent, Stage 10bs).
 
-#### 3. A stale checker, found on the way
+#### 3. A stale checker, found on the way — and fixed on main first
 
 Private Market invariants had failed on main since #80 — two on
 `private-market` itself, confirmed on a worktree at `f2f3f3e`, and eight across
@@ -20951,13 +20951,21 @@ both FIFO on the page — the HPR over the cost of units held plus units
 redeemed, and the calls against every rupee deployed — so Neo Infra, which
 redeemed 14,162.8 units at their cost, read as a GAP in the sweep while the
 page correctly showed XIRR +16.7% and HPR +13.8%. **The page was right and the
-checker was stale**, and #78's copy of it still is.
+checker was stale.**
 
-**IT IS THIS CHANGE'S TO FIX BECAUSE ITS OWN CLAIMS LIVE ON THOSE ROUTES.** The
+**THIS CHANGE FIXED IT BECAUSE ITS OWN CLAIMS LIVE ON THOSE ROUTES.** The
 Capital Call checks are struck on `private-market`, and a route already failing
 for an unrelated reason hides a real failure of this change's among its
-findings. The checker re-expresses FIFO now, per fund, per record and on the
-footer; two bugs below prove it bites, and on the merged tree all eight pass.
+findings.
+
+**AND #92 (STAGE 10cj) LANDED THE SAME FIX ON MAIN FIRST**, while this PR waited
+for the go-ahead to merge. Two fixes for one re-derivation would be two
+definitions of one figure, so the merge kept main's — `fifoOf`, the calls held
+to every rupee deployed, the footer on FIFO, and the `hprHeld` proof, which
+first asks whether the two bases differ on this book at all — and deleted this
+change's own helper rather than leaving it beside main's. What this change still
+carries of it is two harness cases, 21 and 22 below, and both fire against
+main's checker.
 
 #### The checks
 
@@ -21140,9 +21148,9 @@ look. On the final tree the invariants' `ctx` literal is the exact union of
 both sides — 94 keys, none duplicated, nothing lost — the route table carries
 every route from both (118, among them `private-market-calls-signedout` and the
 `stock-capital` route #78 added), and `build-book` regenerates the book
-byte-identically.
-Main's tip still carries the stale FIFO lines in `PM_RETURN_BOOK`, so section
-3's fix is still this change's to make.
+byte-identically. Main's tip then still carried the stale FIFO lines in
+`PM_RETURN_BOOK`, so section 3's fix was still this change's to make — until
+#92, below.
 
 **AND THEN #90 TOOK `10ci`, SO THIS WAS `10cj`.** It landed while this PR waited
 for the go-ahead to merge. Both sections sat at the same place, so git marked
