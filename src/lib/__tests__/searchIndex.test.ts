@@ -77,12 +77,22 @@ const topN = (q: string, n: number) => searchEntries(index, q, 10).slice(0, n).m
 console.log("── every holding is findable, once ──");
 {
   const small = negligibleKeys(BOOK_POSITIONS);
+  const FUNDS = new Set(["AIF", "Mutual Fund", "ETF"]);
   const rowsOf = (k: string) => consolidated.filter((p) => p.securityKey === k);
   const isClosed = (k: string) => rowsOf(k).every((p) => isRedeemedToNil(p));
+  // A BALANCE LINE — a measured ₹0 that is no redemption and no fund (SC-D3):
+  // re-expressed here, never read off the builder.
+  const balanceLine = (k: string) => !isClosed(k) && sum(rowsOf(k).map((p) => p.marketValue)) === 0
+    && rowsOf(k).every((p) => !FUNDS.has(p.assetClass));
   const keys = new Set(consolidated.filter((p) => !small.has(p.securityKey)).map((p) => p.securityKey));
+  const offered = [...keys].filter((k) => !balanceLine(k));
   const holdings = index.filter((e) => e.kind === "holding");
-  ok("one holding entry per security above the floor", holdings.length === keys.size, `${holdings.length} vs ${keys.size}`);
+  ok("one holding entry per security above the floor, a ₹0 balance line aside", holdings.length === offered.length,
+    `${holdings.length} vs ${offered.length}`);
   ok("no holding under the family's ₹1,000 floor is offered", [...small].every((k) => !index.some((e) => e.id === `holding:${k}`)));
+  const lines = [...keys].filter(balanceLine);
+  ok("…and no ₹0 balance line is offered as a holding, of which this book has some", lines.length > 0
+    && lines.every((k) => !index.some((e) => e.id === `holding:${k}`)), lines.join(", "));
   /**
    * A HELD position opens its own page. A REDEEMED one opens the Transactions
    * tab ONLY where the family's dated capital record carries money coming back
@@ -248,7 +258,7 @@ console.log("── a review's spelling of a held scheme finds the scheme (SC-B4
     top("direct equity")?.kind === "category");
 }
 
-console.log("── what a row says about its figure is true of the figure (SC-C2…C7) ──");
+console.log("── what a row says about its figure is true of the figure (SC-C2…C7, SC-D1…D3) ──");
 {
   const idx = accountIndex(BOOK_ACCOUNTS);
   const label = groupLabelFor("category");
@@ -307,6 +317,47 @@ console.log("── what a row says about its figure is true of the figure (SC-C
     `${allNav.length}: ${navWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
   ok("…and one on its statement's marks says so, with that date", allStmt.length > 0 && stmtWrong.length === 0,
     `${allStmt.length}: ${stmtWrong.map((r) => r.e!.detail).slice(0, 2).join("; ")}`);
+
+  // SC-D2 — an account's count is what the dashboard lists.
+  const small = negligibleKeys(BOOK_POSITIONS);
+  const countWrong = BOOK_ACCOUNTS.filter((a) => !isMandateHeld(a.engagement)).filter((a) => {
+    const n = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId && !small.has(p.securityKey) && !isRedeemedToNil(p)).length;
+    const e = index.find((x) => x.id === `account:${a.accountId}`);
+    const m = /· (\d+) holdings? ·/.exec(e?.detail ?? "");
+    return n > 0 ? !m || Number(m[1]) !== n : !!m;
+  }).map((a) => a.accountNo);
+  const specky = BOOK_ACCOUNTS.filter((a) => BOOK_POSITIONS.some((p) => p.accountId === a.accountId && small.has(p.securityKey)));
+  ok("an account's count leaves out the holdings under the ₹1,000 floor and the redeemed ones", countWrong.length === 0
+    && specky.length > 0, `wrong: ${countWrong.join(", ") || "none"} · accounts holding specks: ${specky.length}`);
+
+  // SC-D3 — a redeemed account and an unvalued one read apart.
+  const emptyAccts = BOOK_ACCOUNTS.filter((a) => !isMandateHeld(a.engagement)
+    && !BOOK_POSITIONS.some((p) => p.accountId === a.accountId));
+  const redeemedEmpty = emptyAccts.filter((a) => /redeemed/i.test(a.noPositionsReason ?? ""));
+  const unvaluedEmpty = emptyAccts.filter((a) => !/redeemed/i.test(a.noPositionsReason ?? ""));
+  const say = (a: typeof BOOK_ACCOUNTS[number]) => index.find((x) => x.id === `account:${a.accountId}`)?.detail ?? "";
+  ok("an account redeemed to a nil balance says it is a measured zero; one no statement values says that",
+    redeemedEmpty.length > 0 && unvaluedEmpty.length > 0
+      && redeemedEmpty.every((a) => /measured zero/.test(say(a)))
+      && unvaluedEmpty.every((a) => /no statement in this book values it/.test(say(a))),
+    `${redeemedEmpty.length} redeemed, ${unvaluedEmpty.length} unvalued`);
+
+  // SC-D3 — one ISIN under two keys: each row says it is one of two.
+  const twinRows = index.filter((e) => e.kind === "holding" && /rows for ISIN/.test(e.detail));
+  const isinKeys = new Map<string, Set<string>>();
+  for (const p of consolidated) {
+    const isin = (SCHEME_NAMES as Record<string, { isin: string }>)[p.securityKey]?.isin ?? p.isin;
+    if (isin && !small.has(p.securityKey)) isinKeys.set(isin, (isinKeys.get(isin) ?? new Set()).add(p.securityKey));
+  }
+  const twins = [...isinKeys].filter(([, ks]) => ks.size > 1).flatMap(([, ks]) => [...ks]);
+  ok("a scheme the statements name two ways says so on each of its rows",
+    twins.length > 0 && twins.every((k) => twinRows.some((e) => e.id === `holding:${k}`)), `${twins.length} rows`);
+
+  // SC-D1 — a share of the book never reads as nothing.
+  const zeroPct = index.filter((e) => /\b0\.00% of the book/.test(e.detail)).map((e) => e.label);
+  const tiny = index.filter((e) => e.kind === "holding" && !e.closed && e.weight > 0 && e.weight / sum(currentHoldings(consolidated).map((p) => p.marketValue)) < 0.0001);
+  ok("no row reads \"0.00% of the book\", and a holding under 0.01% says so", zeroPct.length === 0
+    && tiny.length > 0 && tiny.every((e) => /under 0\.01% of the book/.test(e.detail)), `${zeroPct.join(", ")} · ${tiny.length} tiny`);
 
   // SC-C6 — a figure result opens a page that SHOWS the figure.
   const fig = (id: string) => index.find((e) => e.id === id)?.href ?? "";
