@@ -3,7 +3,7 @@ import { fmtDateTime } from "@/lib/format";
 import { RESEARCH_NAME, failSentence, summaryLine, type SyncStatus } from "@/lib/researchLevels";
 import { useResearchState, useResearchStatus, useResearchSummary } from "@/lib/useResearchSync";
 
-// ── WHERE A LEVEL WENT, IN ONE LINE (Stage 10cm) ─────────────────────────────
+// ── WHERE A LEVEL WENT, IN ONE LINE (Stage 10cn) ─────────────────────────────
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."* The sending is

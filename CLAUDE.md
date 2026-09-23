@@ -455,7 +455,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   statement mark), which way each of the five kinds fires, and four states —
   reached, watching, checking, unchecked — of which only the first two are
   verdicts. The levels are the family's own, in `watchlist.ts`, per browser. See
-  Stage 10cm.
+  Stage 10cn.
 - `src/lib/researchLevels.ts` + `src/lib/researchSync.ts` +
   `src/lib/useResearchSync.ts` — EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW
   CENTRAL RESEARCH, which checks it against its own live price and raises it in
@@ -464,7 +464,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   how the All alerts footer words the count (`summaryLine`), all PURE; the second
   sends it and remembers what arrived (`glow:research-levels/v1`, never inside
   the store); the third is the one mount, in the app shell. A fund or an AIF has
-  no NSE symbol, so its levels stay here and its card says so. See Stage 10cm.
+  no NSE symbol, so its levels stay here and its card says so. See Stage 10cn.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -6386,6 +6386,11 @@ view in this app, so a slice is a link rather than an instruction. **The default
 is untouched and asserted to be** — two new axes beside an old one is exactly
 the change that silently moves the default, and the page would render perfectly
 while showing the family a table they asked to keep.
+
+*(THE MONITOR'S DEFAULT HAS SINCE MOVED, AT THE FAMILY'S REQUEST — see Stage
+10cm. `/monitor` opens on All Securities and this table is
+`/monitor?group=category`; Morning CIO's allocation card still opens on
+Category. The rule above is why the move is asserted rather than assumed.)*
 
 *(THE AXIS MACHINERY HAS SINCE MOVED to `src/lib/groupAxis.ts` — Morning CIO's
 allocation card groups on the same three at the family's request, and two copies
@@ -21535,7 +21540,470 @@ then.
 - **Neither side touched a generated file**, and `build-book` still regenerates
   the book byte-identically.
 
-### Stage 10cm — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
+### Stage 10cm — ALL SECURITIES IS THE MONITOR'S FIRST VIEW, AND THE TWO SELECTORS CLOSE THE ROW
+
+*"Make this view as All Securities and make it first in portfolio monitor and
+default open and put the all holding and all entities selectors to the right
+end of after return selector"*
+
+#### 1. The first segment IS the default — and only the Monitor's list moved
+
+`MONITOR_GROUP_VIEWS` in `groupAxis.ts` puts the security axis FIRST, labelled
+**All Securities**, and `useViewParam` makes a list's first view its
+param-free default — so moving the segment to the front is what makes
+`/monitor` open on one row per security, with no second convention. Category,
+which held that place since Stage 10z (*"Default view will remain the current
+one, category wise"*), is `/monitor?group=category` now. The KEY did not
+change, so `?group=security` still resolves and every bookmark and search
+result that named the axis still lands.
+
+**`GROUP_VIEWS` DID NOT MOVE, DELIBERATELY.** It is the list Morning CIO's
+allocation card and the Monitor's Transactions table read, and neither has a
+security axis — so Morning CIO still opens on Category, and a reader who opens
+`/monitor` and clicks Transactions lands on Category through the fallback
+Stage 10bg built. That fallback is the ORDINARY path now rather than an edge
+one, which is why the `txnAxis` and `setView` notes say so.
+
+#### 2. The row reads HOW the table is arranged, then WHICH rows are on it
+
+Axis → return picker → Expand all → **All holdings · All entities**. The last
+two sit in ONE `ml-auto` group, so where the row wraps they drop to the next
+line as a pair and stay right-aligned, instead of one of them starting a line
+on its own at the left. Measured at 1500px on the merged tree: the axis
+control spans 217–493, the return picker 499–662, and the pair 1072–1479,
+flush with the row's own right edge. Transactions carries the return picker
+too since Stage 10cd, so its row is axis → return → the same pair, which is
+exactly where the ask puts them.
+
+**THE PICK-LIST'S PANEL OPENS LEFTWARD NOW.** `MultiSelectFilter` takes
+`align="right"`. As the row's first control a panel anchored to its trigger's
+left edge opened into the row; at the right end the same 24rem panel would open
+past the page — the defect the return picker had once as the row's last
+control, fixed the same way. It opens 932–1268 at 1500px and stays inside the
+viewport at 1024 and 768.
+
+#### 3. Two defects the new default made common
+
+- **A PICKED FUND DREW AN EMPTY TABLE OVER A ₹0 FOOTER.** The pick-list offers
+  every holding on every axis — a reader searches the book, not the view — and
+  on All Securities only a company share is a row (Stage 10aj). Picking
+  `Sanshi Fund-I` there read *"No positions match your filters"* over
+  `₹0 ₹0 ₹0 0.0%`: a family who know they hold it being told nothing matched,
+  which is the BSE search's defect (Stage 10bu) one control over — and one
+  click from the page's front door once this is the default. The table now
+  names each picked holding that is not a row here, says why, and offers
+  **Show it on Category**, keeping the selection across the click. Picked
+  beside a company it sits under the company's row, so a fund is never dropped
+  from the table without a word.
+
+  **AND IT NAMES ONLY WHAT CATEGORY WOULD DRAW**, which the first draft did
+  not. The pick-list also offers a CLOSED position — 3P, redeemed to nil — and
+  a holding the reader's own entity or sector filter excludes, and Category
+  draws neither, so "Show it on Category" there was a promise of an empty
+  table. `pickedNotRows` runs the row build's own tests (`currentHoldings`,
+  then entity, then sector) and everything else keeps the generic line, which
+  names the reader's filters as the cause. Found by re-reading the memo against
+  the row build after the merge, not by a check — so a check was added.
+- **NO FOOTER IS DRAWN OVER NO ROWS.** A total of nothing is not a measured
+  zero (§2), and the line above it already says why the table is empty.
+
+#### 4. What else said "the Monitor" and meant Category
+
+Three sentences promise the Portfolio Monitor "carries … in full" — a fund's
+look-through card, a non-mandate account's page and a holdings drill-down. True
+of Category, where every holding is a row; false of All Securities, where a fund
+is not. Each link names `?group=category` and carries `data-monitor-in-full`.
+The breadcrumbs and the `/compare`, `/watchlist`, `/news` and `/data-bank`
+redirects still go to `/monitor`: they name the PAGE, not a slice of it.
+*(Two of the three sentences have since gone — Stage 10ci took the look-through
+card's and the drill-down's notes away — so one link is left, on the mandate
+page. See the fourth merge below.)*
+
+Search: the security view is labelled **All Securities** and answers "all
+securities"; **Holdings by category** is a view of its own ("category wise",
+"by category", "mandate wise") and one of the six starting points under an
+empty search box — the Category view lost its address-free door, so it gained a
+named one.
+
+#### 5. The checks, and where each claim is struck
+
+- **Sixteen routes that walk the category table name `?group=category`** in
+  their address — `monitor`, the tranche, arrange and return-measure routes,
+  the drill-downs, `monitor-entity` — because each was written against the
+  category table when it was the default. `monitor-security` walks the bare
+  `/monitor` and holds the DEFAULT: All Securities first under that name; the
+  bare address lit on it with no `?group=` asking for it; the table it opens is
+  the security table (no section headings, both derived columns); and the
+  opened pick-list anchored right and on screen. Three claims none of which
+  implies another — a relabelled button left last passes the first alone.
+- **`FILTER_ROW`** holds the row's ORDER by its children's handles and the
+  pair's right edge to the row's (±2px), on a Holdings route per axis kind and
+  on Transactions. None of it can be struck on text: the row prints the same
+  words whichever end the selectors sit at.
+- **`monitor-pick-fund`** first picks a CLOSED fund alone (`PICK_CLOSED_BOOK`,
+  derived from `glowData.ts`) and requires the generic line and no promise;
+  then the book's largest holding that is not a company share, then a company
+  beside it, then clicks through. **"…with the pick kept" is read off the
+  pick-list's own label**: a cleared pick would still draw the fund's row on
+  Category, where every holding is a row, so the row alone cannot tell a kept
+  selection from a lost one.
+- **`MONITOR_IN_FULL`** holds the three links — on `mandate-fund`,
+  `holdings-book` and `stock-mf-lookthrough` — off a `data-monitor-in-full`
+  handle, because the breadcrumb says "Portfolio Monitor" too and rightly opens
+  the page on whatever it opens on. A route drawing none has lost the sentence.
+  *(It runs on `mandate-fund` alone since the fourth merge below, where the one
+  sentence left is.)*
+- **`check:family`** drives the control: All Securities first and open at
+  `/monitor`, Category's click writes `?group=category` and draws the section
+  tabs, and All Securities' click takes the param away again.
+
+#### Merged with main — six PRs, and two things they assumed
+
+Six PRs and a daily data refresh landed while this was open — Stages 10by,
+10cb, 10cc, 10cd and 10ce, and the corporate-actions returns. Two files conflicted
+and both were unions: `PortfolioMonitor.tsx` keeps main's `labelByKey` beside
+this change's `pickedNotRows`, and `check-pages.mjs` keeps both sides' new
+blocks and the union of the `ctx` literal — 95 keys at the merge and 96
+with this change's last probe, none duplicated, each naming a declared variable.
+
+**TWO THINGS MAIN ADDED ASSUMED CATEGORY WAS THE DEFAULT, AND NEITHER
+CONFLICTED.** Stage 10cd put the return picker on Transactions, so that row is
+axis → return → the pair, and `FILTER_ROW` says so. And main's
+`monitor-picklist` read the search list "on the default axis" at the bare
+`/monitor` — which would now read All Securities' list twice and leave the
+category build unchecked — so it names `?group=category`. **A clean merge is
+not a correct one**, and this file says so for the letter; it is equally true
+of a route whose address means something else after the merge.
+
+**THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT MERGE TIME.** Main's headings
+ran to `10ce` and no prose named a later one, so this section took `10cf` —
+and lost it an hour later, below.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` exit 0 ·
+`npm run build-book` byte-identical, md5 unchanged — nothing here touches the
+ingest. `check:family` **87/2**, and the two are main's own: the Extras-menu
+checks Stage 10ce records, failing because #84 put a fifth page in a dropdown
+the check still counts as four. *(Fixed at Stage 10cj, with the Private Market
+checks the later notes below name.)* `check:pages` over **all 38 Portfolio Monitor
+routes on the merged tree: 38 clean, 0 invariant failures, 0 abstentions**,
+and the seven routes the last fixes touch clean again after them, with the one
+evidenced Morning CIO abstention (every KPI tile on this book carries a figure).
+
+#### …and a second time: #78 took `10cf`
+
+**#78 — XIRR where a row is a whole account on a dated record — landed while
+this PR waited for the family's go-ahead, and took `10cf`.** Main keeps it;
+this section became **`10cg`**. The two sections were inserted at the same place,
+so git marked the conflict — the case that announces itself — and it was
+resolved by placing main's section first.
+
+**EVERY LINE NAMING `10cf` WAS PLACED BEFORE ANY MOVED**, against both sides'
+own copies of its file. Nine are this change's: seven moved — the note under
+Stage 10z, two check-script comments, the bug harness's header and the three
+"in full" link comments — with this section's heading, and the two in its own
+merge note were reworded, because they record the letter it held then.
+Twenty-three are #78's and stayed: its heading, its merge note and two pointers
+in this file, twelve check-script comments, its bug harness, three test
+comments and `datedCapital.ts`.
+
+**ONLY THIS FILE CONFLICTED, SO THE TWO THAT DID NOT WERE READ.**
+`PortfolioMonitor.tsx` carries #78's XIRR column beside this change's default,
+row and picked-fund line, and its diff against main is this change's alone. The
+`ctx` literal is main's 92 keys and this change's 4 — 96, none duplicated, each
+declared; #78 added no key, it widened two probes (`posTable.stockReturns` and
+`returnCells`).
+
+**AND #78's MONITOR CHECKS READ THE CATEGORY TABLE, WHICH IS WHY THEY STILL RUN
+WHERE THEY WERE WRITTEN.** Its mandate-XIRR check on `monitor`, its XIRR column
+on `monitor-xirr`, its CAGR partition on `monitor-cagr` and its per-section sort
+on `monitor-ret-sort` read mandate rows or section buckets. On main those routes
+name no `?group=`, which there means Category; here that would be All
+Securities, where no mandate is a row — and the mandate check FAILS on no rows
+rather than abstaining. All four already name `?group=category` since this
+change, so none of #78's checks had to move.
+
+`build` · `tsc` · `test:ingest` (the same eleven suites, golden 140 passed, 2 not
+checked, 0 blocked) · `test:family` exit 0, #78's `datedCapital.test.ts` among
+them · `npm run build-book` byte-identical, and equal to main's own copies —
+neither side moves the book. `check:pages` **248 combinations, 3 with a
+finding, and all three are main's**: the Private Market routes, the same 8
+checks that fail on main's own build (#72's fund-return re-expression still
+strikes HPR as value against cost, where #80 made it FIFO). The 10 NOT CHECKED
+lines are main's pre-existing claims with no subject on this book. The bug pass
+did not finish on this tree before main moved again; it ran in full on the next
+one, below.
+
+#### …and a third time: #87 took `10cg`, and #89 `10ch`
+
+**#87 — Glow Central Research's fonts and colours — and #89 — the notes for
+the Portfolio Monitor's master table — landed while that sweep ran, and took
+`10cg` and `10ch`.** Main keeps both; this section became **`10ci`**. The letters
+were compared as HEADINGS against main's tip, and no prose on main names a
+letter after `10ch`. As at `10cf`, both sides had inserted at one place, so git
+marked the conflict, and main's two sections come first.
+
+**EIGHTEEN LINES NAMED `10cg` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED**, against both sides' own copies of its file. Eight are this change's:
+seven moved to `10ci` — the note under Stage 10z, two check-script comments, the
+bug harness's header and the three "in full" link comments — and the one in the
+merge note above was reworded, because it records the letter this section held
+then. Ten are main's and stayed: #87's heading and merge note, #89's line that
+main had taken every letter from `10bz` to `10cg`, three check-script comments,
+#87's bug harness, `Sidebar.tsx`, `index.css` and `StockInfo.tsx`. (The merge
+commit's message says eleven; ten is the count.)
+
+**ONLY THIS FILE CONFLICTED, AND THE THREE PAGES BOTH SIDES TOUCH WERE READ.**
+#87 set page titles and headline figures in its display face and gave Export
+Excel a class of its own; this change's lines in `PortfolioMonitor.tsx`,
+`MandateHoldings.tsx` and `HoldingsBehind.tsx` sit beside those edits
+untouched, and the merged tree's diff against main is this change's thirteen
+files alone. The `ctx` literal is main's 92 keys and this change's 4 — 96, none
+duplicated; #87 and #89 added none.
+
+**#87's TWO NEW CHECKS RUN ON EVERY ROUTE, THIS CHANGE'S INCLUDED, AND PASS
+THERE.** In the light theme the page reads in Inter, its title and figures in
+their own faces, the nav and top bar are white and the entry you are on is gold;
+in both themes a raised card must be covered by a link. No route in the sweep
+below reports either, and none reports a contrast finding.
+
+**THE FULL SWEEP FOUND FIVE ROUTES, AND NONE IS THIS CHANGE'S.** It ran while
+the bug pass was building and sweeping on the same four-core machine. Three are
+the Private Market routes: the identical 8 checks fail on main's own build at
+`4148c1a`, walked for this record rather than assumed. Two are Transactions
+routes — `monitor-txn-drill` (4 checks) and `monitor-txn-in` (3) — and those
+are TIMING. The walk clicks Transactions, waits a fixed 1.2 s, then clicks the
+next control and silently skips it if it is not drawn yet. Measured: once the
+click lands, the dated table takes 0.9–1.4 s to appear on a quiet machine, from
+main's old Category default as well, so that wait is marginal on main already
+(Stage 10cc saw `monitor-txn-out` fail the same way). Under four busy loops the
+two routes fail the same 7 checks on main's own build as on this one, twice
+each; with the machine quiet both pass on both builds. The defect is the fixed
+wait in main's walk, and it is left to a change of its own rather than widened
+into this one.
+
+What this change does move is how long the CLICK takes. From bare `/monitor`
+(All Securities, 565-odd rows and the fund look-through) the click waits
+2.5–3.2 s for the page to settle, against about 0.5 s from Category. The walk
+tolerates that, because a click waits for its target, and the window that
+matters — after the click — is the same from both.
+
+`build` · `tsc` · `test:ingest` (the same eleven suites, golden 140 passed, 2 not
+checked, 0 blocked) · `test:family` (2,466 checks, 0 failed; its four NOT CHECKED
+lines are main's own) · `npm run build-book` byte-identical, and equal to main's
+own copies · `check:family` **87/2**, the two being main's Extras-menu checks ·
+`check:pages` **248 combinations**, 5 with a finding and all five accounted for
+above, with main's 10 evidenced abstentions and none of this change's · **the
+bug pass: all 12 cases fire their own checks**, after a clean control
+(`scripts/dev/all-securities-bug.sh`, run on this tree in a worktree of its own).
+
+#### …and a fourth time: #90 took `10ci`
+
+**#90 — the notes around every table cut to one short line, with the rest in a
+hover — landed while that sweep and bug pass ran, and took `10ci`.** Main keeps
+it; this section became **`10cj`**. The headings were compared against main's tip:
+the merged file differs from main's by `10cj` alone, main's ten historical
+duplicates are unchanged, and no prose on main names a letter after `10ci`.
+Both sides had inserted at one place again, so git marked the conflict.
+
+**SEVENTEEN LINES NAMED `10ci` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED**, against both sides' own copies of its file. Seven are #90's and stayed:
+its heading, two lines of its merge note, its notes under Stage 10an and Stage
+10cc, and two code comments. Ten were this change's. Six moved to `10cj`: the
+heading, the note under Stage 10z, two check-script comments, the bug harness's
+header and the one "in full" link comment still standing. Two, in the third
+merge note above, stay as the record of the letter this section held then. The
+last two went with the sentences they sat in, below.
+
+**#90 TOOK AWAY TWO OF THE THREE "IN FULL" SENTENCES, AND THAT DECIDED TWO OF
+THE FOUR CONFLICTS.** The fund look-through card's sentence and the holdings
+drill-down's were notes around a table, and #90 removed both at the family's
+request. This change had only repointed their links, so both files were taken
+as main has them. The mandate page's sentence is not a table note and stays,
+still naming `?group=category`. So `MONITOR_IN_FULL` now runs on `mandate-fund`
+alone, where the sentence is. #90 also removed the security axis's coverage
+fold, which the picked-fund memo's comment named as where a fund's money is
+shown; the comment now names the Total exposure footer's hover, where #90 moved
+that partition.
+
+**AND #90's NEW GUARD CAUGHT THIS CHANGE'S OWN LINE, WITH NO CONFLICT TO SAY
+SO.** `tableNotes` caps every table cell at 180 characters, on every route. The
+picked-fund line is a cell of the holdings table, and with Sanshi's name in it
+the sentence ran to 182. It is one short line now: the holding, "is not a
+company share, so it is not a row on All Securities", and the button — 130
+characters with Sanshi's name. What moved into the hover is what All Securities
+lists and where the holding IS a row. A new check holds the line to one short
+line and its hover to both of those halves, and the check that the line is gone
+on Category now matches the plural wording as well as the singular. The bug
+harness gained two cases: the hover dropped, and the old sentence put back.
+
+**THE `ctx` LITERAL IS MAIN'S 94 KEYS AND THIS CHANGE'S 4 — 98, none
+duplicated, each declared.** #90 replaced `fundExposure` with `fundLines` and
+added `tableNotes` and `foldsOnArrival`. The one conflicting line kept main's
+side and added this change's four.
+
+Every result here is from the tree merged with #90 (main `1e0ab78`), run again
+there rather than carried across. `build` · `tsc` · `test:ingest` (the same
+eleven suites, golden 140 passed, 2 not checked, 0 blocked) · `test:family` exit
+0 · `npm run build-book` byte-identical, and equal to main's own copies ·
+`check:family` **88/2** — #90 added a row, and the two are still main's
+Extras-menu checks · `check:pages` **248 combinations, 3 with a finding**: the
+Private Market routes, main's own. The Transactions routes that failed on timing
+on the previous tree passed this time, on a quieter machine. The 10 NOT CHECKED
+lines are main's evidenced abstentions and none of this change's. The bug pass
+waited for the sweep, and main moved again before it could run; it ran on the
+next tree, below.
+
+#### …and a fifth time: #92 took `10cj`
+
+**#92 — seven checks that failed on a correct page — landed while that sweep
+ran, and took `10cj`.** Main keeps it; this section became **`10ck`**. The headings
+were compared against main's tip: the merged file differs from main's by `10ck`
+alone, main's ten historical duplicates are unchanged, and no prose on main
+names a letter after `10cj`. Both sides had inserted at one place again, so git
+marked the conflict.
+
+**TWENTY-TWO LINES NAMED `10cj` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED**, against both sides' own copies of its file. Thirteen are #92's and
+stayed: its heading and its merge note, six notes it left in earlier stages'
+sections to say where their failures were fixed, and five code comments. Nine
+were this change's. Six moved to `10ck`: the heading, the note under Stage 10z,
+two check-script comments, the bug harness's header and the "in full" link
+comment. The other three are in the fourth merge note above and stay as its
+record; one of them now says "this section became" where it said "is".
+
+**#92 FIXES THE FAILURES THIS SECTION HAS BEEN NAMING AS MAIN'S.** It moved the
+sweep's re-derivation of Private Market returns onto FIFO (the three routes'
+eight checks) and made `check:family`'s Extras list five pages (its two rows).
+So on this tree those runs should be clean, and a finding there would now be
+real rather than inherited.
+
+**ONLY THIS FILE CONFLICTED.** `check-pages.mjs`, `check-family-inputs.mjs` and
+`PrivateMarket.tsx` merged without a marker, which is when to check by hand. On
+each, the merged file's lines against this branch are exactly #92's own diff —
++91/−8, +15/−8 and +19/−2, measured line by line — plus this merge's two comment
+renames. The `ctx` literal is still 98 keys, the union of both sides: #92 added
+none. `check:family`'s Monitor checks and #92's Extras rows sit in different
+parts of that file, and both are there.
+
+Every result here is from the tree that ships, this change merged with #92
+(main `f55b19b`), run again there rather than carried across. `build` · `tsc` ·
+`test:ingest` (the same eleven suites, golden 140 passed, 2 not checked, 0
+blocked) · `test:family` exit 0 · `npm run build-book` byte-identical, and equal
+to main's own copies · `check:family` **92 passed, 0 failed** · `check:pages`
+**248 combinations clean**. That is the first sweep of this branch with no
+finding at all: the three Private Market routes that failed on every earlier
+tree pass, because the failures were main's and #92 fixed them. The 10 NOT
+CHECKED lines are main's evidenced abstentions across four claims, and none is
+this change's. The count is main's 246 plus this change's one new route across
+both themes. **The bug pass ran on this tree**
+(`scripts/dev/all-securities-bug.sh`, in a worktree of its own after the sweep
+had finished): a clean control on its eight route/theme combinations and
+`check:family` 92/0, then **all 14 cases fire their own checks**, including the
+two #90's cell limit added (the hover dropped, and the long sentence put back).
+
+#### …and a sixth time: #88 took `10ck`
+
+**#88, which gives the company page a tab per way a company is held, landed
+while this change's results were being written up. It took `10ck`.** Main keeps
+it, and this section became **`10cl`**. Its section and this one had both been
+inserted at the same place, so git marked the conflict. The headings were then
+compared against main's tip. The merged file differs from main's by `10cl`
+alone, main's ten historical duplicates are unchanged, and no prose on main
+names a letter after `10ck`.
+
+**FIFTEEN LINES NAMED `10ck` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** Each was checked against both sides' own copies of its file.
+
+- Six are #88's, and they stayed: its heading, its merge note, a pointer near
+  the top of this file, its `test:family` entry, and two code comments.
+- Nine were this change's.
+  - Six moved to `10cl`: the heading, the note under Stage 10z, two
+    check-script comments, the bug harness's header, and the "in full" link
+    comment.
+  - Three are in the fifth merge note above. They stay as that merge's record,
+    and one of them now reads "this section became".
+
+**THE CHECK SCRIPT CONFLICTED TWICE, AND BOTH WERE UNIONS.**
+
+- **The two new check blocks.** Both sides had added one at the same spot, and
+  the two blocks were halves of one construct. Stacking them would have left
+  #88's doc comment without its opener. So this change's block closes its array,
+  and #88's opens its own comment.
+- **The `ctx` literal.** It is now main's line plus this change's four keys: 99
+  keys in all, none duplicated, each declared.
+
+Measured line by line, the merged file carries every one of #88's +421/−1 lines.
+The only other changes are those two comment renames and the `ctx` line.
+
+**#88 CHANGED NOTHING THIS CHANGE TOUCHES.**
+
+- **The company page.** Its only link to the Monitor is the breadcrumb, which
+  names the page rather than a view.
+- **Its checks.** None of them walks a `/monitor` address.
+- **The bug harness.** The files it patches are unchanged by #88.
+
+So the bug pass above stands on this tree, and the full sweep below is its
+control. That is the reasoning #88's own record gives for #92's merge.
+
+On the tree merged with #88 (main `37c93ba`), `build`, `tsc`, `test:ingest`
+(golden 140 passed, 2 not checked, 0 blocked), `test:family` (#88's
+`heldThrough.test.ts` among the suites) and `check:family` **92/0** all passed,
+and `npm run build-book` was byte-identical. The full sweep had started when #85
+landed. It was stopped rather than finished, because that tree would not ship.
+
+#### …and a seventh time: #85 took `10cl`
+
+**#85 landed while that sweep ran.** It gives Private Market and Morning CIO an
+add-tile card, and makes the Capital Call cells say why saving is off. It took
+`10cl`, having itself collided with #88 first. Main keeps it, and this section is
+**`10cm`**. Git marked the conflict in this file, and #85's section comes first.
+The headings differ from main's tip by `10cm` alone, main's ten historical
+duplicates are unchanged, and no prose on main names a letter after `10cl`.
+
+**THIRTY-ONE LINES NAMED `10cl` AFTER THE MERGE, AND EACH WAS PLACED BEFORE ANY
+MOVED.** Each was checked against both sides' own copies of its file.
+
+- Twenty-two are #85's, and they stayed: its heading and merge note, four notes
+  it left in earlier sections, thirteen check-script comments, two in its bug
+  harness, and one in `Kpi.tsx`.
+- Nine were this change's.
+  - Six moved to `10cm`: the heading, the note under Stage 10z, two
+    check-script comments, the bug harness's header, and the "in full" link
+    comment.
+  - Three are in the sixth merge note above. They stay as that merge's record,
+    and one of them now reads "this section became".
+
+**THE CHECK SCRIPT CONFLICTED ON THE `ctx` LITERAL ONLY.** It is main's line plus
+this change's four keys: 101 keys in all (#85 added `tileAdd` and `callOff`), none
+duplicated, each declared. Measured line by line, the merged file carries every
+one of #85's +358/−7 lines. The only other changes are the two comment renames
+and the `ctx` line. #85's other ten files merged without a marker and are
+byte-identical to main's.
+
+**#85 CHANGED NOTHING THIS CHANGE TOUCHES.** Its pages are Private Market and
+Morning CIO, and none of its checks walks a `/monitor` address. The files this
+change's bug harness patches are unchanged by it, so the bug pass on the #92
+tree stands. The full sweep below is its control on the tree that ships.
+
+Every result here is from the tree that ships, this change merged with #85
+(main `80bc896`), and was run again there rather than carried across:
+
+- `build` and `tsc` pass.
+- `test:ingest` passes: the same eleven suites, golden 140 passed, 2 not
+  checked, 0 blocked.
+- `test:family` exits 0, with #88's and #85's suites among those it runs.
+- `npm run build-book` regenerates the book byte-identically, and the result
+  equals main's own copies.
+- `check:family` is **92 passed, 0 failed**.
+- `check:pages` is **258 combinations clean**, with no finding. That is main's
+  routes plus this change's one new route across both themes, measured rather
+  than added up. The 10 NOT CHECKED lines are main's evidenced abstentions
+  across four claims, and none is this change's.
+- CI (`build`) and the Cloudflare preview pass on the pushed merge.
+
+### Stage 10cn — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
 
 *"Does these alerts actually work, can you make this much simpler to fill in for
 the customer and also in morning CIO can you make an ALL alerts tab where in a
@@ -21549,11 +22017,12 @@ alert, and automatically come to the AI Alert section in the Glow Central
 Research dashboard."*
 
 (Written as `10bz`. While it waited, main took every letter from `10by` to
-`10cl` — its `10bz` is *"Ask Muns is off the top bar"*, its `10cg` is *"Glow
+`10cm` — its `10bz` is *"Ask Muns is off the top bar"*, its `10cg` is *"Glow
 Central Research's fonts and colours"*, its `10ck` is #88's company page, which
-landed the hour the family said to merge, and its `10cl` is #85's ADD TILE card,
-which landed while that merge was being verified — so this is **`10cm`**, the
-first free one. This work's own references moved with it each time, in code and here, and
+landed the hour the family said to merge, its `10cl` is #85's ADD TILE card,
+which landed while that merge was being verified, and its `10cm` is #86's All
+Securities view, which landed while this change's final checks were running —
+so this is **`10cn`**, the first free one. This work's own references moved with it each time, in code and here, and
 main's were counted against main's copy of each file and left alone. Some of
 main's `10cg` code comments describe Stage 10ci's work rather than the fonts —
 the research pointer in `CompanyResearchPreview.tsx`, the corporate-action card,
@@ -21897,7 +22366,7 @@ harness cases put the old words back, one on each side, and both fire.
 
 #85 — an ADD TILE card on both KPI strips, and Capital Call cells that say why
 saving is off — landed while the #88 merge was being verified, and took `10cl`.
-Main keeps it; this section is **`10cm`**. Of the lines naming `10cl`, 22 are
+Main keeps it, and this section became **`10cm`**. Of the lines naming `10cl`, 22 are
 #85's and stay: 6 lines here, 13 comments in the checker, 2 in its own harness
 and 1 in `Kpi.tsx`. This change's 26 code comments and 3 lines here moved.
 

@@ -91,7 +91,7 @@ const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-san
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cm) ──────────────────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cn) ──────────────────────
  *
  * Every price level saved in this dashboard is also sent to Glow Central
  * Research. This suite types levels on real holdings, so without this the walk
@@ -645,6 +645,42 @@ check("the Transactions tab still renders", /transaction/i.test(text));
 await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
 await page.waitForTimeout(900);
 
+// ── THE MONITOR OPENS ON ALL SECURITIES, AND CATEGORY IS ONE CLICK AWAY ─────
+//
+//   *"Make this view as All Securities and make it first in portfolio monitor
+//    and default open."*
+//
+// Driven, because the claim is about what a click DOES: the default is
+// param-free like every other view in this app, so choosing Category must put
+// `?group=category` in the address and choosing All Securities must take it
+// away again. Read off the buttons' own keys, never their prose.
+{
+  const axes = await page.$$eval("[data-group-axis]", (bs) => bs.map((b) => ({
+    key: b.getAttribute("data-group-axis"), label: (b.textContent || "").trim(), on: b.getAttribute("aria-selected") === "true" })));
+  check("the Portfolio Monitor offers All Securities first, and opens on it",
+    axes[0]?.key === "security" && axes[0]?.label === "All Securities" && axes[0]?.on === true
+      && axes.filter((a) => a.on).length === 1 && !new URL(page.url()).searchParams.has("group"),
+    axes.map((a) => `${a.label}${a.on ? "*" : ""}`).join(" · "));
+  const cat = page.locator("button[data-group-axis='category']").first();
+  if (await cat.count()) { await cat.click(); await page.waitForTimeout(800); }
+  const catUrl = new URL(page.url());
+  check("…clicking Category puts ?group=category in the address and draws the section tabs",
+    catUrl.searchParams.get("group") === "category" && (await page.locator("[data-section-filter]").count()) > 0,
+    catUrl.search || "(no query)");
+  const all = page.locator("button[data-group-axis='security']").first();
+  if (await all.count()) { await all.click(); await page.waitForTimeout(800); }
+  const backUrl = new URL(page.url());
+  check("…and clicking All Securities takes the param away again",
+    backUrl.pathname === "/monitor" && !backUrl.searchParams.has("group"), backUrl.search || "(no query)");
+}
+
+// THE CATEGORY TABLE IS `?group=category` NOW. Everything below was written
+// against it — its section tabs, its mandate rows — and is reached by its own
+// address, so a failure in the clicks above cannot leave it walking a table
+// that has neither.
+await page.goto(`${BASE}/monitor?group=category`, { waitUntil: "networkidle" });
+await page.waitForTimeout(900);
+
 // Read the TABS off the DOM. The categories were a `<select>` until the family
 // asked for them as tabs — "give tabs to me to click and quickly reach instead
 // of a dropdown" — so each is a button carrying its section key, read by its
@@ -759,9 +795,9 @@ check("...and names the mandates this book does carry",
 // the same reason `announcements.ts` stayed when `/news` went.
 //
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10cm — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10cn — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cm) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cn) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -860,7 +896,7 @@ check("...and names the mandates this book does carry",
 
     // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
     // companies by their ticker — cannot take its levels. They stay here, the
-    // card says so in words, and NOTHING is sent (Stage 10cm).
+    // card says so in words, and NOTHING is sent (Stage 10cn).
     await page.waitForTimeout(1200);
     const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
       kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
@@ -977,7 +1013,7 @@ check("...and names the mandates this book does carry",
   }
 }
 
-// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cm) ───
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cn) ───
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."*
@@ -1090,7 +1126,7 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
-// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cm) ───
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cn) ───
 //
 // Until Glow Central Research's route is deployed every send is refused as NOT
 // READY, and the sender asks again every fifteen minutes on its own — a

@@ -4,7 +4,7 @@
  * *"when the user puts target price inside the dashboard, it should
  * automatically also go to the Glow Central Research dashboard. When the target
  * price is met, it should show in All Alerts as an alert, and automatically come
- * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10cm)
+ * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10cn)
  *
  * Glow Central Research is a separate app on its own server, so a level kept in
  * this browser's `localStorage` can never reach it on its own. It keeps ONE

@@ -96,11 +96,14 @@ export function ReturnMeasureSelect({ measures, onChange, hints }: {
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {/* RIGHT-ALIGNED PANEL, so it can never extend past the trigger's right
-          edge into horizontal overflow. The picker is the last control on the
+          edge into horizontal overflow. The picker was the last control on the
           filter row, so a `left-0` panel opened rightward and ran off the page —
           the family had to scroll sideways to read it. Anchored to the right, its
           22rem width grows leftward into the row it already occupies, and the
-          `92vw` cap keeps it on screen at any width. */}
+          `92vw` cap keeps it on screen at any width. (On the Portfolio Monitor it
+          now sits after the axis control, with the two narrowing selectors at the
+          row's right end — the panel still opens over the axis control, which is
+          wider than the gap it needs.) */}
       {open && (
         <div className="absolute right-0 z-50 mt-1 w-[min(22rem,92vw)] overflow-hidden rounded-lg border border-ink-700 bg-ink-800 shadow-xl shadow-black/40" role="listbox" aria-multiselectable="true">
           <div className="border-b border-ink-700 px-3 py-1.5 text-[11px] text-slate-500">Pick the return to show. Each cell is labelled with it.</div>
