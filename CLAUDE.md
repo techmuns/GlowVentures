@@ -15989,6 +15989,13 @@ hand-checked abbreviation table this file already names as the remedy. **Three
 real answers withheld rather than one false one published**, stated rather than
 glossed.
 
+***IT WITHHOLDS 10 OF THE 44 SINCE Stage 10bv*** — the two more are review lines
+the LIVE book now values from a depository's own balance (Motilal Oswal
+Arbitrage and HDFC Liquid), which no name tier can see because those rows are
+not in `BOOK_POSITIONS`. They are joined by ISIN through a hand-checked table,
+each licensed by the review's own purchase matching a depository credit unit for
+unit, and the tier is keyed on what the live book actually carries.
+
 **AND IT IMMEDIATELY BROKE A CHECK OF MY OWN, which is the same lesson one level
 down.** The fuzzy-tier suite check carried `"vedanta"` as its anti-vacuity probe
 — *the probes must actually find gaps, or the check passes by matching nothing*
@@ -16299,6 +16306,168 @@ Cash; the fund's page says Cash and draws no look-through.
 reads `CASH_INSTRUCTION_BOOK`, and a derivation that finds no arbitrage in the
 live book has lost its input — reporting NOT CHECKED there would let the whole
 feature be deleted behind a clean sweep.
+
+#### The full sweep found two routes the targeted runs never walked
+
+The routes this change touches were walked and clean before the PR opened. The
+FULL sweep on the branch then came back **2 of 196 combinations with a finding**
+— `stock-mf-lookthrough` (eight invariants) and `stock-cmp-nav` (one) — and
+neither was a misplaced arbitrage fund. Both routes pick their subject as "the
+largest" of something in the checker's model of the book, and **that model had
+just grown by five rows**:
+
+- **`MF_KEY`, the mutual fund whose look-through is walked**, became Motilal
+  Oswal Arbitrage — a page that is RIGHT to draw no scheme card, which is what
+  `stock-arbitrage` asserts. Eight failures against a correct page. An arbitrage
+  fund is no candidate now, and the comment says why.
+- **`CMP_BOOK.navKey`, the largest holding the published NAV prices**, became a
+  depository row — which has no statement mark for the NAV to replace, so the
+  route had stopped walking the overlay it exists for. It keeps a
+  statement-marked holding; the depository rows have their own route.
+
+Both walk Helios Flexi Cap again, the subject main's sweep walks, confirmed off
+`report.json` rather than assumed. **A change to the checker's model of the book
+moves the subject of every derivation that picks "the largest"**, so a targeted
+run over the routes a change touches cannot establish that nothing else moved;
+the full sweep is the only thing that can.
+
+**AND ONE OF THE TWO WAS ALSO A WORDING DEFECT ON THE PAGE.** The arbitrage
+page's headline caption said the units are a depository's balance "and no
+statement marks them" — and `stock-cmp-nav`'s guard against a NAV wearing the
+statement-mark label is `/statement mark/i`, which reads that negation as the
+label. The check was right to be strict and the sentence was needlessly close to
+the label, so the SENTENCE moved: "no statement prices them", and the row hover
+beside it likewise. The arbitrage page now asserts the caption names AMFI's NAV
+and the store's own date for that scheme, and never a statement mark — the claim
+`stock-cmp-nav` makes, struck on the one kind of holding that route no longer
+walks. A missing headline there is a FINDING: the route's subject is a holding
+with a price.
+
+#### Merged with main twice, and the second collision was silent
+
+**#70 — Polycab as one table, Sector Composition in two halves — took `10bt`**,
+and git marked that conflict because both sections sat at the same place. This
+section became `10bu`. **#73 — "a search that finds nothing says why" — then
+took `10bu` while this branch was being verified**, and that time the two
+sections sat in DIFFERENT places, so CLAUDE.md merged with no marker and no
+warning and left two sections under one letter. It was caught the way Stage
+10bl's merge note says it must be — by comparing main's stage letters against
+the branch's at merge time — because nothing GitHub reports could have shown it:
+its mergeability check sees text conflicts, and this was not one. Main keeps
+both letters; this section is **`10bv`**.
+
+Each round classified every line naming the moving letter against the two
+sides' own copies of this file: four cross-references were this branch's each
+time (the `CASH_EQUIVALENT_KEYS` and `fundNavs.ts` Layout bullets, Stage 10av's
+"both halves have since changed" note and the `build-fund-navs` Build entry) and
+moved with the heading; main's own headings and merge notes stayed. The stage
+headings then differ from main's by `10bv` alone, with the ten historical
+duplicates unchanged.
+
+**THE `ctx` LITERAL CONFLICTED BOTH TIMES** — main's `sectorLayout` and
+`shortWindow`, then its `absentName`, beside this branch's `cashDom` — and each
+was resolved as a union the script had to PROVE: 84 keys, none duplicated, every
+one naming a declared identifier.
+
+**#70'S NEW SECTOR PAGE STILL CARRIES THE CARD THIS BRANCH'S CHECK READS.** It
+rebuilt Sector Composition around `<Figure>` cards, and "the excluded card files
+the arbitrage funds under Cash, never under Mutual Fund" reads the "Not a company
+share" figure by the same text layout main's own reconstruction check reads —
+both pass on the merged tree, which is the only place that could be settled.
+
+#### …and #73 would have contradicted this change on screen
+
+#73 answers a search that finds nothing with the family's review: *"on the
+consolidated review · no statement reports it … this book publishes no value or
+quantity for it until a statement arrives"*. Its gap list names **Motilal Oswal
+Arbitrage Fund Direct (G)** (₹31.80 Cr on the review) and **HDFC Liquid Fund
+-Direct(G)** (₹1.26 Cr) — both of which this change values from the depository's
+own balance. Neither branch was wrong on its own terms: the reconciler that
+generates that list reads `glowData.ts`, and these rows are LIVE-only, so they
+are not in it. **Together they would have printed "no value or quantity" on a
+page whose table values the holding** — on a narrowed drill-down, or on the
+Monitor when a reader types the review's own spelling, which empties the list
+because no option carries its "(G)".
+
+`claimableGaps` withholds a gap the live book values from a depository balance,
+joined BY ISIN through a hand-checked table (`REVIEW_LINE_ISINS`), never by a
+name — the depository prints the AMC's name in front of the scheme's, so no name
+tier reaches it. It is keyed on what `depositoryCashHoldings` actually carries,
+so switching that valuation off brings the sentence back, true again. Each entry
+is licensed by the same kind of witness as the unit basis: **the review's own
+purchase of that exact line is a credit the depository makes to that ISIN, unit
+for unit** — 1,63,08,407.445 Motilal Oswal Arbitrage units on 20/21 May, and
+HDFC Liquid's 2,282.178 on 5 June, the balance the review's Cash tab prints.
+
+`reviewGaps.test.ts` asserts each entry names a gap and a live row, that the tier
+is LOAD-BEARING (the name tier alone would have claimed each line absent), and
+the witness itself. `check:pages` types the review's spelling into the Monitor
+and asserts the note does not claim it, with that name derived by the same
+witness join rather than read from the table, which would agree by construction.
+
+**AND THE FIRST DRAFT OF THAT CHECK COULD NOT FAIL.** The checker's `bookArray`
+already appends its re-expressed depository rows, so running them through the
+gates again found the account carrying positions and yielded nothing — and the
+invariant ABSTAINED with "the live book values no depository balance", because
+its guard read the same broken count. The rows are read off the checker's book
+now, and the premise is struck on `CASH_INSTRUCTION_BOOK`, a separate
+derivation: **a guard read off the same computation as the thing it guards
+abstains exactly when that computation breaks.** Removing the tier then fails the
+check by name, which is the only evidence it can.
+
+#### Fifteen bugs reintroduced, and two were not results the first time
+
+Each case was applied alone in a separate worktree on its own port, rebuilt and
+swept over the routes it touches (light theme, where the invariants run), with
+the files restored from a snapshot, VERIFIED byte for byte, and the tree rebuilt
+on the way out. The unpatched control ran first and came back clean. Four cases
+also ran the unit suites.
+
+| Bug put back | Fires |
+| --- | --- |
+| the three arbitrage keys removed from `CASH_EQUIVALENT_KEYS` | **10 invariants across 6 routes** — every axis, both headings, the allocation card and the fund's own page — **and 8 FAIL lines in two suites**, the name detector naming all three depository balances by the names they print |
+| the switch off, so the live book carries no depository cash | **24 invariants across 13 routes and 14 FAIL lines in three suites** — which is also the measured reach of the switch. The checker's copy of these rows deliberately does not read it, so turning the valuation off fails the sweep by name on every surface the rows reach, rather than leaving a stale model agreeing with a changed page |
+| the cash instruction folded back into the direct-stock rule | 5 invariants on 4 routes, and 3 suite lines naming each fund `rule/rule` |
+| arbitrage looked through on the security axis | the partition: the five buckets stop rebuilding NAV |
+| the arbitrage fund's page draws a look-through card | its no-look-through check |
+| Performance drops the `partial` marker | its own check on `performance` |
+| `/holdings` stops naming the depository rows | its own check |
+| Morning CIO drops the cash-instruction sentence | both family-axis allocation routes |
+| a sub-rupee gap read as a duplicate again | `NO_PHANTOM_DUPLICATE`, on three routes |
+| Family & Entities drops the partly valued account | its own check |
+| a class named on screen back to the wrapper | the sector card's Cash check — **and no suite**: `excludedClasses` is asserted on the page alone, which is recorded rather than papered over |
+| the partition's cash leaves out the arbitrage funds | the partition |
+| the Cash heading stops counting arbitrage | its own count, on two routes |
+| a depository row loses its NAV caption | the new caption check on `stock-arbitrage` |
+| the review-gap tier removed | the new review-gap check on `monitor-absent-name`, and 2 lines in the review-gap suite |
+
+Every case carried exactly one NOT CHECKED — the pre-existing KPI-tile claim on
+`cio-allocation` — so no bug turned a finding into an abstention. **Two patches
+first came back NOT A RESULT**, and the harness saying so is the point: setting
+the switch to the literal `false` narrowed its type until a comparison in
+`fundNavs.test.ts` stopped compiling, and deleting the `partial` condition removed
+the narrowing its own hover depended on. Both were rewritten to keep their types
+and re-run on the final merged tree with the control and the review-gap case.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 30 + 22 + 140 (2 not checked,
+0 blocked) · `test:family` (new cases in `familyTaxonomy.test.ts`,
+`fundNavs.test.ts` and `reviewGaps.test.ts`) · `check:family` **86/0** ·
+`check:pages` **204 combinations clean, 0 invariant failures**, with the eight
+evidenced abstentions main's own sweep carries and not one of this change's —
+four from the KPI-tile claim spread across Morning CIO's panels, two from every
+private holding reporting a cost, the not-found crumb and the pledge claim on
+`stock-qty` — read out of the log BY NAME.
+
+**MEASURED ON THE TREE MERGED WITH #73, AND IT RECONCILES ONLY BECAUSE IT WAS
+RE-RUN.** Main's route table carries two fewer routes than this branch's, so
+main's own sweep is 200, and this change's two routes (`family-partial`,
+`stock-arbitrage`) across both themes make 204. This branch's pre-merge sweep
+was 196 and failed two of them.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+BYTE-IDENTICALLY, and `npm run reconcile:review` regenerates #73's
+`reviewGaps.ts` and `docs/REVIEW-RECONCILIATION.md` byte-identically too — the
+gap list is unchanged; what changed is which of its lines a search may claim.
 
 ### Stage 10k — News & Announcements: REMOVED
 
