@@ -27,17 +27,19 @@
 //
 // Every AIF was private, so this page claimed the Category III folios — open-
 // ended funds trading listed securities, 84% of what it showed. They are on
-// the listed side now and this page does not carry them. What it must NOT do is
-// drop them silently: `pageScopeNote` below names them with their value and
-// says where they are shown, because a reader who knows they hold Sanshi and
-// cannot find it here learns that the dashboard lost it.
+// the listed side now and this page does not carry them. `pageScopeNote` below
+// states every SIDE of the book with its value, so the page says which side it
+// is. It used to name the Category III funds one by one as well, in a card of
+// their own; the family asked for that card to go ("these kind of placeholders
+// are not relevant"), and the funds are in the Portfolio Monitor's AIF section
+// and under their own Category III heading in the AIF drill-down.
 //
 // The one place engagement IS the right key is the opposite question — an
 // account that holds NOTHING, so it has no position to read a class off. That is
 // `unvaluedAccounts`, and it is scoped to `AIF` deliberately.
 import type { Account, Commitment, Position } from "./types";
 import {
-  sum, sumOrNull, dedupedPositions, isPrivateClass, isUnplacedSide, marketSides,
+  sum, sumOrNull, dedupedPositions, isPrivateClass, marketSides,
   type MarketSideRow,
 } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
@@ -82,45 +84,34 @@ export function privateScope(positions: Position[], accounts: Account[]): Privat
 }
 
 /**
- * ── WHAT THIS PAGE DOES NOT CARRY, AND WHY ─────────────────────────────────
+ * ── WHICH SIDE OF THE BOOK THIS PAGE IS ────────────────────────────────────
  *
  * The private book is one side of a THREE-way split, so a page scoped to it
- * leaves out two other sides — and both have to be named with their value or
- * the page reads as the whole of the family's fund holdings.
+ * leaves out two other sides — and both are stated with their value, or the
+ * page reads as the whole of the family's fund holdings.
  *
- * The three figures RECONSTRUCT the consolidated book. That is the claim a
- * reader acts on and no single figure can make it alone, which is why this
- * returns the parts rather than a sentence.
+ * The figures RECONSTRUCT the consolidated book. That is the claim a reader
+ * acts on and no single figure can make it alone, which is why this returns the
+ * parts rather than a sentence.
+ *
+ * IT ALSO NAMED THE FUNDS ON THE OTHER TWO SIDES, one by one, for a card
+ * headed "Funds this page does not carry". The family asked for that card to go
+ * and the two lists went with it rather than being left computing the right
+ * answer into no caller — the dead-code-that-looks-alive failure this repo keeps
+ * naming. The sides survive, because the line under the fund table prints them.
  */
 export type PageScopeNote = {
   /** Every side of the book, in order, with its own reason. */
   sides: MarketSideRow[];
   /** The consolidated book these sides partition. */
   bookMV: number;
-  /**
-   * AIF HOLDINGS ON THE LISTED SIDE — the funds this page used to claim.
-   * Named, because they are the specific thing the family asked about.
-   */
-  listedFunds: { securities: string[]; mv: number; count: number };
-  /** Holdings no statement places on either side. */
-  unplaced: { securities: string[]; mv: number; count: number };
 };
 
 export function pageScopeNote(positions: Position[]): PageScopeNote {
   const deduped = dedupedPositions(positions);
-  const pick = (rows: Position[]) => ({
-    securities: [...new Set(rows.map((p) => p.security))].sort(),
-    mv: sum(rows.map((p) => p.marketValue)),
-    count: rows.length,
-  });
   return {
     sides: marketSides(deduped),
     bookMV: sum(deduped.map((p) => p.marketValue)),
-    // Scoped to AIF deliberately: a company share on the listed side is not
-    // something a reader would look for on a private-market page, and listing
-    // every listed holding here would bury the three funds that matter.
-    listedFunds: pick(deduped.filter((p) => p.assetClass === "AIF" && p.marketSide === "listed")),
-    unplaced: pick(deduped.filter(isUnplacedSide)),
   };
 }
 

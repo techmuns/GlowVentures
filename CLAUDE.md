@@ -203,13 +203,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   the same section its holdings sit in. `carriedCostOf` / `carriedCostNote` are
   the ONE place a cost carried through a fund's class switch is described on
   screen, read by the Portfolio Monitor and the company page alike — see Stage
-  10bs.
+  10bt.
 - `scripts/lib/classSwitch.mjs` — WHAT A FUND'S CLASS SWITCH DOES TO THE FAMILY'S
   COST. Buoyant moved both folios from Class A1 into A4 and restated the units'
   cost at the switch-day NAV; this carries each dated contribution through the
   switch at the fund's own unit ratio and sets the holding's cost to what was
   PAID, under two gates the statements supply. Used by `build-book` alone. See
-  Stage 10bs.
+  Stage 10bt.
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
@@ -331,10 +331,19 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/data/glowData.ts` also exports `BOOK_COMMITMENTS` — what the family has
   promised a drawdown fund, what it has CALLED, what has been PAID, what is
   called and still unpaid, and the fund's own DATED calls. Not a holding, and
-  never summed into NAV. `src/lib/capitalCalls.ts` is its timeline half: the
-  per-scheme rows, the coverage-aware totals and the 1/3/6-month windows — which
-  are empty on this corpus because no fund here publishes a forward schedule,
-  and say so rather than being projected. See Stage 10ay.
+  never summed into NAV. `src/lib/capitalCalls.ts` is its read half: the
+  per-scheme rows, the coverage-aware totals and the dated call history. The
+  1/3/6-month windows it used to carry are DELETED since Stage 10bs — no fund
+  here publishes a forward schedule, so they could only ever read "nothing
+  scheduled". See Stage 10ay.
+- `src/lib/enteredCalls.ts` + `src/components/EnteredCalls.tsx` +
+  `functions/api/capital-calls.js` — THE FAMILY'S OWN UPCOMING CAPITAL CALLS,
+  typed into the Private Market fund table's "Capital call" column and saved in
+  a shared Cloudflare KV store (binding `GLOW_STORE`) so every reader sees the
+  same list. What the family has been TOLD is coming, never a statement figure:
+  nothing here reaches `glowData.ts`, and no entered amount is ever added into
+  Called, Paid in or Still to call. Until the binding is connected the column
+  says saving is not switched on — never an empty column. See Stage 10bs.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -7156,7 +7165,7 @@ whose statements the tape reads. For the other six fund folios the card was an
 empty box under an empty page.
 
 ***"IT PUBLISHES NO DATED CAPITAL RECORD" WAS FALSE, AND IS CORRECTED AT STAGE
-10bs.*** Buoyant's account statement prints every Cash Deposit since inception
+10bt.*** Buoyant's account statement prints every Cash Deposit since inception
 and every allotment per class; the reader took the summary row above them and
 nothing else. Both folios are rows of the capital record now. The decision above
 does not change — the dealing card stays off the fund branch — only its premise
@@ -8177,7 +8186,9 @@ would satisfy this removal and take the guarantee with it.
 The subtitle counted funds, accounts and owners. **Two of the three were already
 printed** — the fund table's footer reads `Total · N funds` and the By-owner
 rollup ENUMERATES the owners, which is stronger than counting them. The ACCOUNTS
-count was nowhere else, so it moved onto the Private market value tile.
+count was nowhere else, so it moved onto the Private market value tile *(which
+reads "Market value" since Stage 10bs, with the count in its hover — the tiles
+are a figure and one short line now)*.
 
 #### 3. Sector Composition — eight claims, four of them already on the page
 
@@ -10223,7 +10234,8 @@ the subtraction carried the whole ₹10 Cr commitment of the fund that prints no
 called line. `committedWhereCalled` is the matched denominator, and PM-4b
 asserts the printed difference really is the difference AND is the tile.
 
-**`Drawn against no valuation` IS `Paid in, but never valued`** — the client's
+**`Drawn against no valuation` IS `Paid in, but never valued`** *(and just
+`Never valued` since Stage 10bs, with "Paid into funds with no NAV" under it)* — the client's
 third question, and the old label was jargon twice over: "drawn" is the fund's
 word for having taken the money, and "against no valuation" is a property of the
 STATEMENT rather than of the money. ₹18.2 Cr across 7 funds, unchanged in every
@@ -10284,6 +10296,14 @@ lines and loses none**. `BOOK_SUMMARY` and `docs/BOOK-REPORT.md` are
 byte-identical, which is what a purely additive change must look like.
 
 #### 5. The timeline, and the one thing it must not do
+
+***THE CARD HAS SINCE BEEN REMOVED, AT THE FAMILY'S REQUEST — see Stage 10bs.***
+Its three windows were permanently empty for exactly the reason below, and the
+family asked for the thing that could fill them instead: an editable Capital
+call column on the fund table, saved for everyone. Due now is a tile a reader
+can pick, the undated still-to-call is the default tile and the scheme table's
+footer, and the dated history below is its own card and unchanged. The
+reasoning is kept because it is why a forecast must still never be printed.
 
 **NOT ONE OF THE 265 DOCUMENTS IN THIS ARCHIVE PUBLISHES A FORWARD DRAWDOWN
 SCHEDULE.** Measured, not assumed: no commitment-period end date, no call notice
@@ -10549,6 +10569,10 @@ right side is not desirable. This 'held via' can actually hide… use that space
 for showing this column in entirety. And then tax maybe just make it a click."*
 
 #### 1. The capital-call timeline was already there, and it is verified rather than rebuilt
+
+*(Removed since at the family's request — see Stage 10bs. What this paragraph
+verified is where its figures went: Due now is a tile, the undated still-to-call
+is the default tile, and the family's own upcoming calls are a column.)*
 
 Stage 10ay shipped it about an hour before the request arrived, and its code
 comments quote the same words. Verified on the current build rather than assumed:
@@ -14249,7 +14273,11 @@ does not move by a rupee.
   and where they are shown, because dropping a row silently is the same defect
   as drawing a ₹0 one: a reader who knows they hold Sanshi and cannot find it
   learns the dashboard lost it. The three funds nothing places are named beside
-  them with the reason.
+  them with the reason. *(That card has since been REMOVED at the family's
+  request — "these kind of placeholders are not relevant" — see Stage 10bs. The
+  sides line under the fund table still states what the page is and what the
+  rest of the book is worth; the funds themselves are named where they are
+  shown, in the Portfolio Monitor and the AIF drill-down.)*
 - **THE CAPITAL-ACCOUNT CARDS ARE DELIBERATELY NOT SCOPED THIS WAY.** A drawdown
   structure is how an account FUNDS ITSELF, not where it invests, and one
   Category III fund here (Carnelian Amritkaal) has a real capital account with
@@ -15254,7 +15282,275 @@ Upstox's own documented sample; the sister dashboards call the same endpoint wit
 the same token in production; and `?check=1` is the first real call, one click
 away for the family.
 
-### Stage 10bs — BUOYANT'S COST WAS THE FUND'S RESTATEMENT, NOT WHAT THE FAMILY PAID
+### Stage 10bs — A TILE IS A FIGURE AND ONE LINE, AND THE CALLS THE FAMILY IS TOLD ABOUT GO IN THE TABLE
+
+*"the ui of this page is very ugly, First of all, these are action cards. They
+need to have the major figure and a very short description, not such long
+lines. No one will read this on the dashboard."* · *"Remove this, please. This
+is not relevant. These kind of placeholders are not relevant."* · *"remove this,
+it simply needs to be a editable coloumn in this table itself which people can
+add and edit capital call and save and it stays same for all. We are trying to
+see all views on master table itself instead of having such clutter."* · *"this
+dropdown needs to be as subcategories in portfolio monitor and you can just give
+tabs to me to click and quickly reach instead of a dropdown keep things clean."*
+
+Four asks, three on Private Market and one on the Portfolio Monitor. The first
+three are the same instruction the family has now given several times — *less
+on the screen* — and the third is the one with a new piece of machinery in it:
+**the first thing on this site that a reader types and every other reader sees.**
+
+#### 1. Eighteen tiles, each a label, a figure and one short line
+
+Every Private Market tile carried a paragraph — eleven of the eighteen had a
+`hint` of 200 to 900 characters under the figure. They are gone, and each tile
+is now what the family described: a short label, the figure, and ONE short line
+saying what the figure IS (`Promised, not yet called`, `Cash sent to funds`,
+`Cash paid back so far`). The labels shortened with them — `Private market
+value` → `Market value` (the page is already the private one), `Still to call
+(uncalled capital)` → `Still to call`, `Paid in, but never valued` → `Never
+valued`, `Net multiple (TVPI / DPI)` → `TVPI / DPI`, and so on.
+
+**THE DETAIL MOVED INTO THE TILE'S HOVER, AND A HOVER IS WEAKER THAN A CAPTION.**
+`StatTile` takes a `title` and `TileMetric` a `detail`, so the coverage counts
+and the working ride where they cost the tile nothing. Said plainly because it is
+true: a reader scanning does not hover. What makes the trade affordable is that
+the two claims a reader could actually be misled by without it — uncalled
+capital is a liability in NO total, and Called and Paid in must never be
+subtracted — are ALSO printed under the scheme table, where a reader doing that
+arithmetic already is, and `check:pages` asserts both places.
+
+**AN ABSENT TILE'S LINE IS ITS REASON**, in a few words (`No statement reports
+it`), because an em dash must always name its cause — the full reason and what
+would fill it is the hover.
+
+**AND A LABEL WAS BEING CUT OFF WITH A THIRD OF THE ROW EMPTY BESIDE IT.**
+"PRIVATE MARKET VAL…" and "STILL TO CALL (UNCALLED CAPIT…" were in the family's
+own screenshot. The label is a CONTROL (the tile picker's button) and, sized to
+its content, Chromium measured it short of its own text. The label div takes the
+free width now (`flex-1`) and the picker button is `inline-flex`, so a label is
+only ever cut when there is genuinely no room. `check:pages` measures it on the
+text's own box, because a clipped label renders the same characters.
+
+#### 2. "Funds this page does not carry" — removed, and nothing it carried was only there
+
+It named the Category III funds (Sanshi, Buoyant, Carnelian Amritkaal) and the
+three funds no statement places, with their values. Audited before it went:
+
+| What it said | Where it still is |
+| --- | --- |
+| this page is the private side, and what the rest of the book is worth | the sides line under the fund table, on every view |
+| the Category III funds and their value | the Portfolio Monitor's AIF section, and the AIF drill-down's own Category III heading |
+| the funds nothing places | the "Not placed" facet of that drill-down, with its reason |
+
+So what went is a card about funds that are NOT on this page — which is exactly
+the family's word for it, a placeholder. `pageScopeNote` lost the two fields the
+card alone read (`listedFunds`, `unplaced`) rather than keeping them computed
+into no caller.
+
+#### 3. The capital-call timeline — removed, and replaced by the thing that could fill it
+
+Five boxes, three of them permanently empty: no fund in this archive publishes a
+forward drawdown schedule (Stage 10ay measured it), so "next 1 / 3 / 6 months"
+could only ever read "nothing scheduled". Its two real figures were already
+elsewhere — **Due now** is a tile a reader can pick, and the undated **Still to
+call** is the default tile and the scheme table's own footer. `callWindows`,
+`CALL_WINDOWS`, `staleUncalled` and `staleRows` had no other caller and are
+DELETED, not left exported; `capitalCalls.test.ts` asserts they are gone rather
+than deleting its cases with them. The dated call history is its own card and is
+unchanged.
+
+**THE FORWARD-SCHEDULE ABSENCE DID NOT GO WITH THE CARD.** It lived in the
+timeline's footer; it is the hover on the Capital call COLUMN now, which is
+exactly where a reader wondering why calls are typed in rather than read looks.
+
+#### 4. The Capital call column — typed once, seen by everyone
+
+A column on the "Funds this family holds" table. Its cell shows the soonest call
+still to come — or, where every call entered is past, the latest, marked `past`
+— and how many more there are, and it is the button that opens an editor UNDER
+THE ROW: every call for the fund with its date, amount and note, each editable
+and deletable, and a form to add one. A row rather than a floating panel, because
+it cannot be clipped by the table's own horizontal scroll and it reads as
+belonging to the fund above it — "all views on the master table itself".
+
+**"IT STAYS SAME FOR ALL" RULES OUT `localStorage`**, which is where everything
+else a reader types on this site lives (a target price, a tile set, a thesis) as
+a per-browser convenience. So `functions/api/capital-calls.js` keeps the calls in
+**Cloudflare KV**, behind the same edge password gate as every `/api/*` route.
+Four decisions in it are load-bearing:
+
+- **ONE KEY PER CALL, CARRYING ITSELF AS METADATA.** One JSON document would be
+  read-modify-write, and KV has no transactions: two people saving at once would
+  each write back a copy missing the other's call, and nothing would say so. One
+  `list` returns every call with no read per key; two edits to the SAME call
+  resolve last-write-wins, which is the honest outcome for one row two people
+  changed.
+- **A SAVE IS VISIBLE AT ONCE TO WHOEVER MADE IT, AND A DELETE NEVER COMES
+  BACK.** KV's list is eventually consistent (about a minute), so every answer
+  applies the change to the list it returns itself.
+- **A WRITE MUST COME FROM THIS SITE'S OWN PAGE.** The session cookie is
+  `SameSite=None` so the dashboard works inside an iframe, which means a browser
+  WILL send it cross-site. A foreign `Origin`, a `sec-fetch-site: cross-site`, a
+  form post (which needs no CORS preflight) and a body larger than one call are
+  all refused.
+- **A DRAFT IT CANNOT KEEP IS REFUSED WHOLE, WITH ONE SENTENCE** the editor
+  prints as it is — a date that is not a real day, an amount of zero or three
+  zeros too many, an id the store never issued, a call too long for KV's 1 KB of
+  metadata. Never half-written, never cut.
+
+**AN ENTERED CALL IS NEVER A STATEMENT FIGURE.** It is what the family has been
+TOLD is coming — a drawdown notice, an email — which no document in `source/`
+prints. Nothing here reaches `glowData.ts`, and no entered amount is ever added
+into Called, Paid in or Still to call; `check:pages` asserts the Still to call
+tile and the scheme table's footer are still the book's figure after three
+writes. The column is champagne where a statement figure is not, and its header
+hover says all of this in words.
+
+**THE CAUSE PICKS THE SENTENCE, AND NONE OF THEM IS AN EMPTY COLUMN.** An empty
+column reads as "no calls are coming", which is the one thing a reader could act
+on wrongly. `readReply` names four different causes and each sends the reader
+somewhere different: the store not connected yet (503 `NOT_CONFIGURED` —
+somebody with the Cloudflare account has one binding to add), the reader signed
+out (the edge gate answers its login page), no server function at all (a local
+preview), or the store's own error sentence. A background refresh that fails
+keeps what was already on screen; only a FIRST load that fails says the store is
+unavailable.
+
+**IT NEEDS ONE SET-UP STEP, ONCE, AND UNTIL THEN IT SAYS SO.** Cloudflare
+dashboard → Storage & Databases → KV → create a namespace → the Pages project →
+Settings → Bindings → add a KV namespace binding named **`GLOW_STORE`** (for
+Production and Preview) → redeploy. Until that is done every cell reads "Saving
+is not switched on yet" and nothing offers to save.
+
+**WHAT IT CANNOT DO YET, STATED RATHER THAN PAPERED OVER.** The column is on the
+FUND table, and a fund is a row there only if some statement values it. India
+SME Investments Fund II (≈₹11.5 Cr of the ₹16 Cr still to call) and Sky
+Capital's four angel folios publish no NAV, so they are in the "never valued"
+card and not in the table — and a call cannot be entered against them. Adding
+them as rows would put unvalued funds into a table whose footer sums market
+value, which is a decision for the family rather than this change.
+
+#### 5. The Monitor's section dropdown is a row of tabs
+
+`All · Direct Equity · PMS mandates · ETF · Mutual Fund · AIF · Cash` on
+Category; the family's own asset classes or baskets on the other two axes, "All"
+first with the axis it spans (`All categories`) in its hover.
+
+**NOTHING ABOUT WHAT A SECTION IS HAS CHANGED.** They are the same `buckets` the
+select offered, in the same order, setting the same `bucket` state — built from
+the BOOK through `groupKeyFor` on both views, so the Holdings table and the
+Transactions table still narrow on one definition, and a switch of axis or view
+still clears it. It is a ROW OF ITS OWN, drawn lighter than the axis picker above
+it, because seven tabs beside four controls wrap the filter row on Category and
+more than that on Basket — and a control that jumps lines every time the axis
+changes is the clutter this replaces. Hidden on the Security axis, as the select
+was, because that axis files every holding in one section.
+
+**TWO CHECKS HAD TO MOVE, AND ONE WALK WAS SILENTLY BROKEN BY THE CHANGE.**
+`the section filter offers this axis's own options` matched the select's first
+option ("All baskets") in the page text; the tab reads "All", so the claim is
+struck on the tabs now (`sectionTabChecks`, run on all three axes): the tabs are
+exactly the sections the table draws, in its order, built by two different paths;
+the dropdown is gone; one row, one tab lit; and the All tab's hover names the
+axis. **And `monitor-axis-switch` picked its section with `select.nth(2)`** — a
+POSITION among the page's selects, which on the tab build points at nothing — so
+the route would have switched axis over an UNFILTERED table while its own claim
+("switching axis WITH A FILTER SET leaves the table populated") went on passing.
+It clicks a tab now, and a new check asserts the walk really did narrow to a
+section before it switched.
+
+#### The verification
+
+Nineteen bugs were put back one at a time, each rebuilt and swept on the routes
+it touches, with the files restored from an in-memory copy, VERIFIED byte for
+byte, and **rebuilt on the way out** — restoring the source alone leaves `dist/`
+at the bugged build for the next run to report under the wrong name. A patch that
+does not apply, or a build that fails, is reported as NOT A RESULT rather than as
+a clean sweep. Every one fires its own check:
+
+| Bug put back | Fires |
+| --- | --- |
+| a long description back under a tile | "every tile is a label, a figure and one short line" |
+| the hover detail dropped from every tile | 4 — the one-line check, and the three that read a coverage count or a definition out of the hover: the costed value, the accounts the private value spans, what uncalled capital is |
+| a long label in the old layout, which clipped | "no tile label is cut off" — struck on the text's own box, because a clipped label renders the same characters |
+| the "Funds this page does not carry" card restored | "…card stays removed" |
+| the capital-call timeline restored | "the timeline stays removed, and what it held is still on the page" |
+| the cell shows the LATEST call rather than the soonest to come | the cell check |
+| `Cr` read as a lakh | the rupees check **and** the cell check |
+| an edit sends no id, so it saves a duplicate | "an edit keeps the call's id and changes what was edited" |
+| a delete sends more than the id | "a delete sends the call's id and nothing else" |
+| an unreadable store drawn as "nothing entered" | both store-off checks, on two routes |
+| entered calls added into Still to call | "an entered call is never added into a statement figure" |
+| the column header's hover dropped | "the fund table carries a Capital call column, one cell per fund, saying what it is" |
+| the old dropdown put back beside the tabs | 3 — the dropdown is gone, one tab per section, the All tab's hover |
+| the tabs keep offering categories on every axis | the one-tab-per-section check on Asset class **and** Basket |
+| the All tab stops saying which axis it spans | that check on Category **and** Basket |
+| the tab row shown on the Security axis | "it draws no section headings and offers no section filter" |
+| switching axis keeps the section | "the filter went back to offering every basket" **and** "switching axis with a filter set leaves the table populated" |
+| the tabs wrap onto two lines | "one row of tabs, one of them lit" |
+| the tabs lose their key handle, so the walk cannot pick one | the new walk-really-narrowed check **and** the filter-back check |
+
+**TWO OF THE FIRST PATCHES WERE NOT A RESULT, AND THE HARNESS SAYING SO IS THE
+POINT.** Both hid a hover behind `undefined && …`, which TypeScript 5.6+ refuses
+as an always-falsy expression, so the build failed and nothing was swept. They
+were rewritten as plain removals and re-run; read as a clean sweep they would have
+reported two checks that were never exercised.
+
+**AND ONE ABSTENTION STANDS BESIDE A FAILURE, NEVER ALONE.** With the section kept
+across an axis switch, the stale key matches no basket and the table draws no
+headings, so "…the page really did move to the basket axis" reports NOT CHECKED —
+beside the two checks that fail on the same run. That is the shape this file
+requires of an abstention.
+
+`build` · `tsc` · `test:ingest` · `test:family` (a new `enteredCalls.test.ts`,
+the store against an in-memory KV that pages and can be made STALE, and the
+page's reading of the function's OWN responses so the two halves cannot drift) ·
+`check:family` **86/0** · `check:pages` **192 combinations clean, 0 invariant
+failures**, measured TWICE — on the tree merged with `7e02664` and again on the
+tree merged with #69 (`b1fde92`) — main's own 188 plus the four combinations this
+change's two new routes walk, with the same eight evidenced abstentions across
+four pre-existing claims both times and none of this change's own. `npm run
+build-book` regenerates
+`glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY: nothing here touches
+the ingest, and the one thing that stores data stores it outside the book.
+
+#### Merged with main, and the letter collided for the thirteenth time
+
+This section was `10br` while its full sweep ran on the tree merged with
+`7e02664`, and **#69 — live prices from Upstox — landed on main in that window
+and took `10br` too**. The two sections sat at the same place in the file, so
+this time git DID mark the conflict — the safer of its two failure modes, and
+the reason the letter check is run against main's tip at merge time rather than
+trusted to a clean merge. Main's merged first and **keeps `10br`**; this section
+is **`10bs`**.
+
+**THIRTEEN LINES NAMED `10br` AFTER THE MERGE, AND EACH WAS CLASSIFIED AGAINST
+THE TWO SIDES' OWN COPIES OF THIS FILE BEFORE ANY MOVED.** Nine are this
+branch's — its heading, the two Layout bullets for `BOOK_COMMITMENTS` and the
+call store, and the pointers under Stages 10ap, 10ay (twice), 10ba, 10bp and
+10j — and moved. Four are main's — its own heading, the Layout bullet for
+`shared/upstoxQuotes.mjs`, the Stage 7 note that `quotes` prices from Upstox
+first, and the `build-upstox-instruments` entry under **Build** — and were left
+alone. A bulk replace would have made the Upstox feed cite a page about capital
+calls.
+
+**AND NOTHING ELSE OVERLAPPED, WHICH WAS CHECKED RATHER THAN TRUSTED.**
+`scripts/test-family.mjs` auto-merged with both new suites present
+(`enteredCalls.test.ts` beside main's `upstoxQuotes.test.ts`); #69 does not
+touch `check-pages.mjs`, so the `ctx` literal had nothing to conflict on and the
+route table is unchanged; and neither side touched a generated book file, so
+`npm run build-book` was run as a control and regenerated `glowData.ts` and
+`docs/BOOK-REPORT.md` byte-identically.
+
+**AND THE SWEEP WAS RE-RUN ON THE MERGED TREE RATHER THAN CARRIED ACROSS.** It
+came back **192 combinations clean, 0 invariant failures**, with the same eight
+abstentions read out of `report.json` BY NAME — four on the Morning CIO panels
+(every KPI tile on this book carries a figure), two on Private Market (every
+private holding reports a cost), one on the not-found drill-down and one on
+`stock-qty` (no row there carries a pledge). The count did not move because #69
+adds no route, and it is recorded as the same only because it was measured again.
+
+### Stage 10bt — BUOYANT'S COST WAS THE FUND'S RESTATEMENT, NOT WHAT THE FAMILY PAID
 
 *"The user does not believe this data — can you please audit and check carefully
 if this is correct?"* — a screenshot of the Portfolio Monitor's Buoyant row:
@@ -15459,10 +15755,14 @@ base that count is a fact about. `npm run build-book` regenerates `glowData.ts`
 and `docs/BOOK-REPORT.md` byte-identically on the merged tree, and
 `npm run replay:flows -- --check` is a no-op.
 
-**AND THE LETTER COLLIDED AGAIN, FOR THE THIRTEENTH TIME.** This section was
-`10br` until #69 merged under the same letter while this branch was open; main
-keeps it and this is `10bs`. Caught by comparing main's stage letters against
-the branch's own before merging — the check this file says to run every time.
+**AND THE LETTER COLLIDED TWICE WHILE THIS BRANCH WAS OPEN.** It was written
+as `10br`; #69 merged under that letter, so it became `10bs`; #71 then merged
+under THAT one, so it is `10bt`. Main keeps both, as it always has. Each was
+caught the same way — comparing main's stage letters against the branch's own
+at the moment of merging, which is the check this file says to run every time —
+and the second is the case that check exists for: the branch had just been
+merged with main and was about to be pushed when main moved again, so a letter
+checked against the base it was last merged with would already have been stale.
 
 ### Stage 10k — News & Announcements: REMOVED
 
@@ -15609,6 +15909,8 @@ allocation slide. A label re-typed per screen is a label that disagrees with
 itself, and this one already had six places to disagree in.
 
 The class filter is `All categories` now, and its options carry the same labels.
+*(It is a row of TABS since Stage 10bs — "All" first, the axis it spans in its
+hover — and the labels are still the ones `assetClassLabel` chooses.)*
 
 **2. THE CLASS SUBTOTAL WAS NOT ON THE FOOTER'S BASIS.** Each section heading
 prints its own subtotal, summed from the rows it holds — and the footer counts
@@ -16380,7 +16682,7 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   archive and lands the dated record it now reads — Buoyant's Cash Deposits, its
   per-class allotments and redemptions, and the class switch — from each
   document's own `pages.json`, through the same `extract()` the extractor calls.
-  The SIXTH faithful partial replay, on the same three rules (see Stage 10bs): it
+  The SIXTH faithful partial replay, on the same three rules (see Stage 10bt): it
   only ever ADDS a dated record where none was archived and refuses a document
   that already carries one; its gate is struck on the ARCHIVE — the replayed
   holdings must reproduce the stored ones on security, quantity, printed cost and

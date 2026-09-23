@@ -27,6 +27,7 @@ const SUITES = [
   ["account XIRR", "src/lib/__tests__/accountXirr.test.ts"],
   ["private market", "src/lib/__tests__/privateMarket.test.ts"],
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
+  ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
   ["transaction sections", "src/lib/__tests__/txnAxis.test.ts"],

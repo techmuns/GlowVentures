@@ -18,44 +18,38 @@
 // schedule, and the tempting substitute — projecting the next call from the
 // observed cadence — is a forecast. A forecast rendered beside fifteen measured
 // figures reads as the sixteenth, which is this book's founding failure with a
-// date on it. `SCHEDULED_WINDOWS` therefore carries the windows and their
-// MEASURED emptiness, and the card names the document that would fill them.
+// date on it.
 //
-// What IS measurable, and is what the timeline actually shows:
+// ── AND THE WINDOWS ARE GONE, BECAUSE THE FAMILY ASKED ──────────────────────
+//
+// The page drew them — three boxes reading "nothing scheduled" beside a due-now
+// figure and the undated uncalled total — until the family called them what
+// they were: *"These kind of placeholders are not relevant … it simply needs to
+// be a editable coloumn in this table itself which people can add and edit
+// capital call and save and it stays same for all."* So the forward view is now
+// what the FAMILY knows and no statement says: the calls they have been told
+// are coming, entered on the fund table and saved for everyone
+// (`src/lib/enteredCalls.ts`). `callWindows` and `CALL_WINDOWS` went with the
+// card rather than being left exported and uncalled.
+//
+// What IS measurable, and is what the page still shows:
 //
 //   · DUE NOW — capital the fund has CALLED and not yet been PAID. Two layouts
 //     print it (`Pending Contribution D = B - C`, `Pending Drawdown`) and on
 //     this drop it is a MEASURED ZERO on the one account in scope, which is a
-//     different statement from "we do not know".
-//   · UNCALLED AND UNSCHEDULED — the ₹15.98 Cr, which can arrive on any day.
-//     It sits in its own bucket precisely because no window can claim it.
+//     different statement from "we do not know". A tile a reader can pick.
+//   · UNCALLED AND UNSCHEDULED — the ₹15.98 Cr, which can arrive on any day:
+//     the default "Still to call" tile and the scheme table's own footer.
 //   · THE CALL HISTORY — 52 dated calls across 15 capital accounts, each one
 //     reconciled by its reader against the total its own statement prints.
-//     That is the "timeline and dates and also the schemes" half, and it is the
-//     only part of a reader's forward view this corpus can honestly support.
 import type { Commitment, CapitalCall } from "./types";
 import { sumOrNull } from "./analytics";
-
-/** A window the family asked about, and what this book can put in it. */
-export type CallWindow = {
-  key: "1m" | "3m" | "6m";
-  label: string;
-  days: number;
-  /** Calls the FUNDS have scheduled into this window. Empty on this corpus, by measurement. */
-  scheduled: DatedCall[];
-};
 
 export type DatedCall = CapitalCall & {
   accountId: string;
   fund: string;
   owner: string | null;
 };
-
-export const CALL_WINDOWS: ReadonlyArray<Pick<CallWindow, "key" | "label" | "days">> = [
-  { key: "1m", label: "Next 1 month", days: 30 },
-  { key: "3m", label: "Next 3 months", days: 91 },
-  { key: "6m", label: "Next 6 months", days: 182 },
-];
 
 /** One drawdown fund's capital position, in the words its own statement uses. */
 export type SchemeCall = {
@@ -159,9 +153,6 @@ export type CallTotals = {
    */
   committedWhereCalled: number | null;
   count: number;
-  /** Uncalled capital sitting on a statement older than the newest one here. */
-  staleUncalled: number | null;
-  staleRows: SchemeCall[];
   callCount: number;
 };
 
@@ -177,7 +168,6 @@ export type CallTotals = {
  */
 export function callTotals(rows: SchemeCall[]): CallTotals {
   const of = (f: (r: SchemeCall) => number | null) => rows.filter((r) => f(r) != null).length;
-  const staleRows = rows.filter((r) => (r.staleDays ?? 0) > 31 && (r.uncalled ?? 0) > 0);
   return {
     dueNow: sumOrNull(rows.map((r) => r.pending)),
     dueNowOf: of((r) => r.pending),
@@ -192,8 +182,6 @@ export function callTotals(rows: SchemeCall[]): CallTotals {
     committed: rows.reduce((t, r) => t + r.committed, 0),
     committedWhereCalled: sumOrNull(rows.map((r) => (r.called == null ? null : r.committed))),
     count: rows.length,
-    staleUncalled: sumOrNull(staleRows.map((r) => r.uncalled)),
-    staleRows,
     callCount: rows.reduce((t, r) => t + r.calls.length, 0),
   };
 }
@@ -209,20 +197,4 @@ export function callHistory(rows: SchemeCall[]): DatedCall[] {
   return rows
     .flatMap((r) => r.calls.map((k) => ({ ...k, accountId: r.accountId, fund: r.fund, owner: r.owner })))
     .sort((a, b) => b.date.localeCompare(a.date));
-}
-
-/**
- * The forward windows, and what the funds have scheduled into them.
- *
- * `scheduled` is populated from calls dated AFTER `from` — which is how this
- * would work the day a fund issues a notice ahead of time, and is empty on this
- * corpus because none has. It is a filter over real data rather than a constant
- * empty array, so the card fills itself rather than needing to be rewritten.
- */
-export function callWindows(rows: SchemeCall[], from: string): CallWindow[] {
-  const all = callHistory(rows);
-  return CALL_WINDOWS.map((w) => {
-    const end = new Date(Date.parse(from) + w.days * 86_400_000).toISOString().slice(0, 10);
-    return { ...w, scheduled: all.filter((c) => c.date > from && c.date <= end) };
-  });
 }
