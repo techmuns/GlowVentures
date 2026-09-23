@@ -233,7 +233,7 @@ export function SmartSearch() {
                 data-search-href={e.href}
                 title={row.type === "hit" ? `Matched on: ${row.matched}` : undefined}
                 className={cls}>
-                <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded border border-ink-600 px-1.5 py-px text-[10px] uppercase tracking-wide text-slate-400">
+                <span data-search-chip className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded border border-ink-600 px-1.5 py-px text-[10px] uppercase tracking-wide text-slate-400">
                   {row.type === "recent" && <Clock className="h-3 w-3" aria-hidden />}
                   {e.chip}
                 </span>

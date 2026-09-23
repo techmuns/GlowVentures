@@ -95,7 +95,7 @@ export function ReturnsTable({ ticker, name }: {
 
   return (
     <Card className="mt-5"
-      title="Price history & returns"
+      title="Price history & returns · excludes dividends"
       subtitle={`${live.count.toLocaleString()} daily closes from ${live.first} · ${live.source} (${live.symbol})${live.exchange ? ` · ${live.exchange}` : ""}`}
       right={
         <div className="flex flex-wrap items-center gap-1">

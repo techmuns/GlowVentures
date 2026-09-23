@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# VERIFY STAGE 10cb's CHECKS BY REINTRODUCING EACH BUG.
+# VERIFY STAGE 10cf's CHECKS BY REINTRODUCING EACH BUG.
 #
 # *"Add another tile. It should be a big empty tile with bold written: ADD TILE.
 # When I click on the ADD TILE button, I should be able to choose what I want to
@@ -10,6 +10,12 @@
 # and how bold it is, what a click opens — and a page renders the same words
 # whether any of that works. So a check nobody has watched fail here may be
 # asserting nothing. Each bug is applied on its own, rebuilt, swept and restored.
+#
+# The card is on BOTH strips — Private Market's and Morning CIO's, which are one
+# component since Stage 10cb — so the tile cases walk both pages. Morning CIO's
+# route comes with `private-market-tiles`, whose address is read off the
+# Private Market picker on the walk before it, so the two are always swept
+# together.
 #
 # Same three rules as `nav-bench-bug.sh` and `sectors-bug.sh`: restore by COPY on
 # a trap, rebuild on the way out, and report a patch that does not apply or a
@@ -41,7 +47,7 @@ restore() {
 }
 trap restore EXIT
 
-TILES=private-market,private-market-tiles
+TILES=private-market,private-market-tiles,cio
 CALLS=private-market,private-market-calls-off,private-market-calls-signedout
 RETURNS=private-market,private-market-returns
 
@@ -101,7 +107,7 @@ py() { python3 - "$@"; }
 
 echo "════════ CONTROL: no patch — this must be CLEAN"
 if npm run build >/dev/null 2>&1; then
-  sweep "$TILES,private-market-calls-off,private-market-calls-signedout,private-market-returns"
+  sweep "$TILES,cio-tiles-dense,private-market-calls-off,private-market-calls-signedout,private-market-returns"
 else
   echo "   !! the UNPATCHED tree does not build — nothing below is a result"
 fi
@@ -112,7 +118,7 @@ fi
 run_case "the ADD TILE card is not drawn" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='      {ids.length < cap && spare.length > 0 && <AddTile spare={spare} onPick={add} />}'
+old='      {showAdd && <AddTile spare={spare} savedWhere={savedWhere} onPick={add} />}'
 if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,''))
 EOF
@@ -121,30 +127,39 @@ EOF
 run_case "the card appends the first spare metric whatever is picked" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='<AddTile spare={spare} onPick={add} />'
+old='<AddTile spare={spare} savedWhere={savedWhere} onPick={add} />'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'<AddTile spare={spare} onPick={() => add(spare[0].id)} />'))
+open(p,'w').write(s.replace(old,'<AddTile spare={spare} savedWhere={savedWhere} onPick={() => add(spare[0].id)} />'))
 EOF
 
 # 3 ── the menu offers every metric, the ones on screen included
 run_case "the menu offers metrics already on screen" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='<AddTile spare={spare} onPick={add} />'
+old='<AddTile spare={spare} savedWhere={savedWhere} onPick={add} />'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'<AddTile spare={metrics} onPick={add} />'))
+open(p,'w').write(s.replace(old,'<AddTile spare={metrics} savedWhere={savedWhere} onPick={add} />'))
 EOF
 
 # 4 ── the rows are sized to their content, so the card alone on a row is short
 run_case "the card is not the size of a tile (no equal rows)" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='className="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"'
+old='"grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4"'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"'))
+open(p,'w').write(s.replace(old,'"grid gap-4 sm:grid-cols-2 lg:grid-cols-4"'))
 EOF
 
-# 5 ── ADD TILE is not bold
+# 5 ── …and on Morning CIO, where six tiles put the card alone on the next row
+run_case "Morning CIO's card is not the size of a tile on a row of its own" "$TILES,cio-tiles-dense" py <<'EOF'
+import sys
+p='src/components/SelectableTiles.tsx'; s=open(p).read()
+old='"kpi-grid grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3"'
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,'"kpi-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-3"'))
+EOF
+
+# 6 ── ADD TILE is not bold
 run_case "the ADD TILE label is not bold" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
@@ -153,7 +168,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'className="text-sm font-medium uppercase tracking-[0.14em]">Add tile</span>'))
 EOF
 
-# 6 ── the card is drawn as one more figure tile
+# 7 ── the card is drawn as one more figure tile
 run_case "the card is styled as a figure tile (a .card)" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
@@ -162,25 +177,25 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'className="card flex h-full w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed'))
 EOF
 
-# 7 ── the card stays when every metric is on screen, opening an empty menu
+# 8 ── the card stays when every metric is on screen, opening an empty menu
 run_case "the card is drawn with nothing left to add" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='{ids.length < cap && spare.length > 0 && <AddTile'
+old='{showAdd && <AddTile'
 if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'{<AddTile'))
 EOF
 
-# 8 ── the menu paints under the fund table
+# 9 ── the menu paints under the fund table
 run_case "the menu is drawn under the page" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
-old='className="absolute inset-x-0 top-0 z-30 max-h-72'
+old='className="absolute inset-x-0 top-0 z-40 rounded-md'
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'className="absolute inset-x-0 top-0 -z-10 max-h-72'))
+open(p,'w').write(s.replace(old,'className="absolute inset-x-0 top-0 -z-10 rounded-md'))
 EOF
 
-# 9 ── Escape does not close it
+# 10 ── Escape does not close it
 run_case "Escape does not close the menu" "$TILES" py <<'EOF'
 import sys
 p='src/components/SelectableTiles.tsx'; s=open(p).read()
@@ -189,9 +204,29 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'if (e.key === "Escape-never") close();'))
 EOF
 
+# 11 ── Morning CIO's strip stops counting the card, so it takes a row of its own
+run_case "the card is not counted in Morning CIO's columns" "$TILES" py <<'EOF'
+import sys
+p='src/components/SelectableTiles.tsx'; s=open(p).read()
+old='Math.min(Math.max(ids.length + (showAdd ? 1 : 0), 1), 6)'
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,'Math.min(Math.max(ids.length, 1), 6)'))
+EOF
+
+# 12 ── the added tile is drawn and never saved — the next visit has lost it
+run_case "an added tile is shown but not saved" "$TILES" py <<'EOF'
+import sys
+p='src/components/SelectableTiles.tsx'; s=open(p).read()
+old="""    if (!byId.has(id) || ids.includes(id) || ids.length >= cap) return;
+    commit([...ids, id]);"""
+if s.count(old)!=1: sys.exit(1)
+open(p,'w').write(s.replace(old,"""    if (!byId.has(id) || ids.includes(id) || ids.length >= cap) return;
+    setLocal({ ids: [...ids, id], synced: false });"""))
+EOF
+
 # ── THE CAPITAL CALL CELLS ───────────────────────────────────────────────────
 
-# 10 ── the cell is an em dash nothing can click again — the defect reported
+# 13 ── the cell is an em dash nothing can click again — the defect reported
 run_case "an unsaveable cell is an unclickable dash again" "$CALLS" py <<'EOF'
 import sys
 p='src/components/EnteredCalls.tsx'; s=open(p).read()
@@ -205,7 +240,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'''      <span data-pm-call-state="unavailable" title={state.reason}>—</span>'''))
 EOF
 
-# 11 ── the cell offers "Add" though nothing can be saved
+# 14 ── the cell offers "Add" though nothing can be saved
 run_case "an unsaveable cell says Add" "$CALLS" py <<'EOF'
 import sys
 p='src/components/EnteredCalls.tsx'; s=open(p).read()
@@ -216,7 +251,7 @@ open(p,'w').write(s.replace(old,'''        className={`${cls} whitespace-nowrap 
         <Plus className="h-3 w-3" /> Add'''))
 EOF
 
-# 12 ── the set-up steps are shown whatever the cause
+# 15 ── the set-up steps are shown whatever the cause
 run_case "the Cloudflare steps are shown to a signed-out reader" "$CALLS" py <<'EOF'
 import sys
 p='src/components/EnteredCalls.tsx'; s=open(p).read()
@@ -225,7 +260,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'{state.status === "unavailable" && ('))
 EOF
 
-# 13 ── "Saved for everyone" is printed over an editor that saves nothing
+# 16 ── "Saved for everyone" is printed over an editor that saves nothing
 run_case "the editor says 'saved for everyone' while saving is off" "$CALLS" py <<'EOF'
 import sys
 p='src/components/EnteredCalls.tsx'; s=open(p).read()
@@ -234,7 +269,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'{<div className="text-[11px] text-slate-500">Saved for everyone'))
 EOF
 
-# 14 ── Save is live while the store cannot save
+# 17 ── Save is live while the store cannot save
 run_case "Save is not switched off with the store" "$CALLS" py <<'EOF'
 import sys
 p='src/components/EnteredCalls.tsx'; s=open(p).read()
@@ -243,7 +278,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'<button type="submit" disabled={busy} data-pm-call-save'))
 EOF
 
-# 15 ── the header note says "not available" whatever the cause
+# 18 ── the header note says "not available" whatever the cause
 run_case "the header note stops naming the cause" "$CALLS" py <<'EOF'
 import sys
 p='src/pages/PrivateMarket.tsx'; s=open(p).read()
@@ -252,7 +287,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'note={entered.state.status === "unavailable" ? "not available" : "you enter"}'))
 EOF
 
-# 16 ── the steps name a binding the function does not read
+# 19 ── the steps name a binding the function does not read
 run_suite_case "the set-up steps name another binding" py <<'EOF'
 import sys
 p='src/lib/enteredCalls.ts'; s=open(p).read()
@@ -261,7 +296,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'Variable name: GLOW_KV;'))
 EOF
 
-# 17 ── a store nobody connected reads as a generic error
+# 20 ── a store nobody connected reads as a generic error
 run_suite_case "NOT_CONFIGURED loses its cause" py <<'EOF'
 import sys
 p='src/lib/enteredCalls.ts'; s=open(p).read()
@@ -272,7 +307,7 @@ EOF
 
 # ── THE CHECKER'S FIFO EXPECTATION, PROVED TO BITE ───────────────────────────
 
-# 18 ── a fund row's HPR back to value ÷ cost held (the pre-FIFO figure)
+# 21 ── a fund row's HPR back to value ÷ cost held (the pre-FIFO figure)
 run_case "a fund's HPR is value against cost held again" "$RETURNS" py <<'EOF'
 import sys
 p='src/lib/privateBook.ts'; s=open(p).read()
@@ -281,7 +316,7 @@ if s.count(old)!=1: sys.exit(1)
 open(p,'w').write(s.replace(old,'      ? ((value - cost) / cost) * 100 : null,'))
 EOF
 
-# 19 ── a fund's dated calls held to the cost of the units still held
+# 22 ── a fund's dated calls held to the cost of the units still held
 run_case "a fund's calls must equal the cost held, not every rupee deployed" "$RETURNS" py <<'EOF'
 import sys
 p='src/lib/fundReturns.ts'; s=open(p).read()

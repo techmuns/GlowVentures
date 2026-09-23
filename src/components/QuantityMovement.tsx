@@ -27,6 +27,7 @@
  * nothing here is a buy or a sell and no amount is shown. The Transaction
  * history card below is the tape; this is the quantity account.
  */
+import { Link } from "react-router-dom";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentCell } from "@/components/Absent";
@@ -35,10 +36,17 @@ import { movementIdentityHolds } from "@/lib/shareMovements";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { ownerDisplayName } from "@/lib/owners";
+import { stockHref } from "@/lib/auditFormulas";
 import type { Account, ShareMovement } from "@/lib/types";
 
 /** The three decimals these statements print units at, reproduced. */
 const qty = (n: number | null | undefined) => (n == null ? DASH : fmtNum(n, 3));
+/**
+ * The same figure in a SENTENCE. Shares print as whole numbers and a fund's
+ * units keep the three decimals their statement prints — `16,300.000` in prose
+ * is a table's precision leaking into a sentence.
+ */
+const units = (n: number | null | undefined) => (n == null ? DASH : Number.isInteger(n) ? fmtNum(n) : fmtNum(n, 3));
 
 const NO_SPLIT = "this holding's dated rows do not walk its own printed opening balance to its own printed closing balance, so no in/out split is published for it — the two balances above are still the statement's own";
 
@@ -63,8 +71,42 @@ const T_PLEDGE = "A pledge, an unpledge or an early pay-in earmark moves units b
 /** The columns, in the order this table's rows write their cells. */
 const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] as const;
 
+/**
+ * ── AN ACCOUNT THAT HOLDS NONE OF IT STILL HAS A WINDOW, AND IT SAYS SO ─────
+ *
+ *   "According to the client, Kaynes … is also a holding of the family entity
+ *    Ajay's account."
+ *
+ * Ajay's main demat printed a Kaynes block — 16,300 shares on 1 April, nil on
+ * 31 July — and that block reached no page, because it was filed under a key
+ * nothing else carried (see `shareMovementsFrom` in `build-book.mjs`). It lands
+ * on this page now, beside the accounts that DO hold the name, and a row whose
+ * account carries no position here must not read like one of them: a nil
+ * closing is a sale, and a closing with no position is a holding this book
+ * cannot value because that account's only statement prints units and no rate.
+ * Both are stated on the row rather than left for the reader to infer from the
+ * Position table above not listing the account.
+ */
+export function notHeldNote(m: ShareMovement, account: Account | undefined): { label: string; why: string } {
+  if ((m.closing ?? 0) === 0) {
+    return {
+      label: "Sold out in this window",
+      why: `This account held ${units(m.opening)} at the window's opening and none at its close, so it is not a holding on this page. The dated rows are on its own depository statement.`,
+    };
+  }
+  return {
+    label: "Held, and not valued here",
+    why: account?.noPositionsReason
+      ?? "This account's statement prints the units and no rate, so the book carries no value for them and they are not in the holdings above.",
+  };
+}
+
 export function QuantityMovement(
-  { movements: raw, unmoved, accounts }: { movements: ShareMovement[]; unmoved: string[]; accounts: Account[] },
+  { movements: raw, unmoved, accounts, held }: {
+    movements: ShareMovement[]; unmoved: string[]; accounts: Account[];
+    /** The accounts holding a POSITION of this security — a window in any other is marked. */
+    held?: ReadonlySet<string>;
+  },
 ) {
   const view = useTableView("quantity-movement", QTY_COLS);
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
@@ -141,6 +183,14 @@ export function QuantityMovement(
                   <td className="px-4 py-2">
                     <div className="text-slate-200">{acc ? (acc.ownerId ? ownerDisplayName(acc.ownerId) : acc.owner) : m.accountId}</div>
                     <div className="text-[11px] text-slate-500">{acc ? `${acc.provider} · ${acc.accountNo}` : DASH}</div>
+                    {held && !held.has(m.accountId) && (() => {
+                      const n = notHeldNote(m, acc);
+                      return (
+                        <div className="text-[11px] text-amber-400/90" data-qty-not-held={(m.closing ?? 0) === 0 ? "sold-out" : "unvalued"} title={n.why}>
+                          {n.label}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-2 text-right mono text-slate-100" data-qty-opening={m.opening ?? ""}>{qty(m.opening)}</td>
                   <td className="px-4 py-2 text-right"><Move v={ties ? m.unitsIn : null} sign="+" zero={Z_IN} why={m.reason} /></td>
@@ -223,5 +273,61 @@ export function QuantityMovement(
         </p>
       </div>
     </Card>
+  );
+}
+
+/**
+ * ── THE SAME FACT, WHERE THE FAMILY LOOKED FOR IT ───────────────────────────
+ *
+ * The Portfolio Monitor row for a company opens into the accounts that HOLD it.
+ * An account whose depository statement carries the name and holds none of it
+ * at the close — Ajay's main demat, which sold its 16,300 Kaynes shares in May
+ * — is not one of those, so it was absent from exactly the table a reader
+ * opened to ask "is this in Ajay's account too?". It is named here, one line per
+ * account, with the two balances its own statement printed and what they mean,
+ * and it links to the company page where the dated quantity account is.
+ *
+ * NOTHING HERE IS A FIGURE THE ROW ADDS. A sold-out account holds none of it;
+ * an unvalued one carries no value this book can publish. So the row's money
+ * does not move, and the line says which of the two each account is.
+ */
+export function DematElsewhere(
+  { movements, held, accounts, securityKey }: {
+    /** Every window this book carries for the security — `movementsFor(key)`. */
+    movements: ShareMovement[];
+    /** The accounts the row above already lists. */
+    held: ReadonlySet<string>;
+    accounts: Account[];
+    /** The security, for the link to its page, where the full quantity account is. */
+    securityKey: string;
+  },
+) {
+  const elsewhere = movements.filter((m) => !held.has(m.accountId));
+  if (!elsewhere.length) return null;
+  const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
+  return (
+    <div className="space-y-0.5 text-[11px] leading-relaxed text-slate-400" data-demat-elsewhere={elsewhere.length}>
+      {elsewhere.map((m) => {
+        const a = accIdx.get(m.accountId);
+        const who = a ? (a.ownerId ? ownerDisplayName(a.ownerId) : a.owner) : m.accountId;
+        const n = notHeldNote(m, a);
+        return (
+          <p key={m.accountId} data-demat-elsewhere-row={m.accountId} data-closing={m.closing ?? ""} title={n.why}>
+            <span className="font-medium text-slate-300">{who}</span>
+            {/* THE ACCOUNT AS THE TREE AROUND IT PRINTS ONE: a depository's sixteen-digit
+                client id shortened to the last six digits a reader matches a statement by,
+                with the whole number in the hover — the Portfolio Monitor's own rule. */}
+            {a ? <> · {a.provider}{" "}{a.accountNo.length > 10
+              ? <span title={`Account ${a.accountNo}`}>a/c …{a.accountNo.slice(-6)}</span>
+              : <>a/c {a.accountNo}</>}</> : null}
+            {" "}— {units(m.opening)} on {m.periodFrom ? fmtDate(m.periodFrom) : "the window's opening"},{" "}
+            {(m.closing ?? 0) === 0 ? "nil" : units(m.closing)} on {m.periodTo ? fmtDate(m.periodTo) : "its close"}:{" "}
+            <span className="text-amber-400/90">{n.label.toLowerCase()}</span>
+            {" "}·{" "}
+            <Link to={stockHref(securityKey)} className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] hover:text-champagne-400">quantity on its page</Link>
+          </p>
+        );
+      })}
+    </div>
   );
 }

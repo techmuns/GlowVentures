@@ -42,7 +42,7 @@ import path from "node:path";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import {
   trancheTable, trancheKey, trancheCoverage,
-  contributionsAreComplete, capitalRollup, capitalTotals,
+  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn,
 } from "@/lib/tranches";
 import type { Position } from "@/lib/types";
 
@@ -267,14 +267,14 @@ eq("every position unit-tied → accepted with no inception date",
 const gateGroups = capitalRollup(gateMoves,
   [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2024-01-01" }],
   gatePos, {});
-eq("a refused group publishes no return", gateGroups[0].returnPct, null);
-eq("...and no gain either", gateGroups[0].gain, null);
+eq("a refused group publishes no return", capitalReturn(gateGroups[0], "auto").shown, false);
+eq("...and no appreciation either", gateGroups[0].appreciation, null);
 ok("...but keeps what it DID pay in", gateGroups[0].paidIn === 1e7);
 ok("...and names why the return is absent", !!gateGroups[0].incompleteReason);
 const okGroups = capitalRollup(gateMoves,
   [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O", inceptionDate: "2025-06-01" }],
   gatePos, {});
-ok("an accepted group does publish one", okGroups[0].returnPct !== null);
+ok("an accepted group does publish one", capitalReturn(okGroups[0], "absolute").shown);
 eq("...with no reason attached", okGroups[0].incompleteReason, null);
 /**
  * `capitalTotals` NO LONGER COUNTS THE MEASURABLE ROWS, and this asserts the

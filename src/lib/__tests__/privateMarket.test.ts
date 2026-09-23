@@ -78,6 +78,15 @@ console.log("\n── the private set ──");
 eq("raw private rows", scope.rows.length, 6);
 eq("deduped private rows", scope.dedupedRows.length, 4);
 eq("accounts in scope", scope.accounts.length, 15);
+// THE FAMILY DECLARED BOTH OF THESE CATEGORY II (`DECLARED_AIF_CATEGORY`), and
+// that decides their AIF drill-down section and nothing else: which SIDE of the
+// book a fund is on is the family's own placing, which outranks any category.
+// Delphi invests in listed equity, so it is off this page though Category II —
+// the Founders Fund's case exactly — and Neo Infra is on it.
+ok("Neo Infra, declared Category II and placed private by the family, is on this page",
+  scope.rows.some((p) => p.securityKey === "neo-infra-income-opportunities-fund-i-class-a5"));
+ok("…and Delphi, declared Category II but placed listed by the family, is not",
+  !scope.rows.some((p) => p.securityKey === "motilal-oswal-wealth-delphi-equity-fund"));
 // EVERY ROW IS ON THE PRIVATE SIDE, which is now what `isPrivateClass` means —
 // read from the SEBI category rather than from the asset class. The class test
 // this replaced would pass on a page carrying every Category III folio, which

@@ -271,6 +271,16 @@ reached.
 
 ## Verification
 
+### Corporate actions and dividend-inclusive returns
+
+**Extras → Corporate actions & dividends** reuses Glow Central Research's
+NSE/Screener feed. Splits and ordinary equity bonuses adjust projected holdings
+after each account's statement date; a separate period return includes gross
+declared dividends. Entitlements are not confirmed receipts. The projection
+assumes no later trades/transfers, flags incomplete evidence, and preserves the
+original statements and account cash/XIRR. Individual-share HPR/CAGR retain
+FIFO gains and exclude separate dividend income. See [the methodology and safeguards](docs/CORPORATE-ACTIONS.md).
+
 ```bash
 npm run test:ingest    # parseNum / layout / pipeline + the golden figures
 npm run check:pages    # every route, both themes: console errors, failed

@@ -184,8 +184,18 @@ function groupRows(
     .sort((a, b) => b.mv - a.mv);
 }
 
-/** The holdings table's columns, in the order its rows write their cells. */
-const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "pnl", "return"] as const;
+/**
+ * The holdings table's columns, in the order its rows write their cells.
+ *
+ * `costShare` — EACH ROW'S SHARE OF THE CAPITAL INVESTED — beside `weight`, its
+ * share of the value. *"add new columns and data regarding the invested capital
+ * that we were showing as a separate page."* Capital invested was its own page
+ * until it was folded into Current Value of Holdings, and the two shares side by
+ * side are the one comparison that page could not show: where the money went in
+ * against where it sits now. Struck over the rows that report a cost, so it adds
+ * to 100% of the invested figure and never to a share of a cost nobody reported.
+ */
+const HB_COLS = ["unit", "heldIn", "invested", "value", "weight", "costShare", "pnl", "return"] as const;
 
 export function HoldingsBehind() {
   const { portfolio, consolidated, statementPortfolio, fmtFromBase } = usePortfolio();
@@ -236,11 +246,11 @@ export function HoldingsBehind() {
                 same "which of these two answers my question" the tiles have
                 just been rid of. */}
             {([
-              ["book", "", "", "Every holding in the book"],
+              ["book", "", "", "Every holding in the book — its value and the capital invested in it"],
               ["book", "", "listed", "…the listed half"],
               ["book", "", "private", "…the private half"],
-              ["invested", "", "", "Capital invested — the holdings that report a cost"],
-              ["invested", "", "no-cost", "…and the ones that report none"],
+              ["book", "", "costed", "…the holdings that report a cost"],
+              ["book", "", "no-cost", "…and the ones that report none"],
               ["measured", "", "", "What the money-weighted return covers"],
               ["top-names", "", "", "The largest names"],
               ["cross-held", "", "", "Names two entities both hold"],
@@ -289,6 +299,14 @@ export function HoldingsBehind() {
    */
   const fifoOpts = { accounts: accIdx, universe: d.deduped ? consolidated : portfolio.positions };
   const ret = coveredReturn(rows, fifoOpts);
+  /**
+   * THE SET'S INVESTED, ON THE FOOTER'S BASIS AND MORNING CIO'S: the cost of
+   * what is held, except that a whole mandate enters at the capital paid into
+   * it (`investedWithCapital`). The headline, the Share of invested column and
+   * the tile this page opens from all divide by this one figure, so none of
+   * them can be struck on the cost of shares while another is on capital.
+   */
+  const invested = investedWithCapital(cost, ret.fifo);
   const names = new Set(rows.map((r) => r.securityKey));
   const accounts = new Set(rows.map((r) => r.accountId));
   /**
@@ -321,6 +339,8 @@ export function HoldingsBehind() {
     : sum(portfolio.positions.map((x) => x.marketValue));
   const shareOfBook = bookMV > 0 ? (mv / bookMV) * 100 : null;
   const weight = (v: number) => (mv > 0 ? `${((v / mv) * 100).toFixed(1)}%` : null);
+  /** A row's share of the capital invested in this set — its Invested over the set's. */
+  const costShare = (c: number | null) => (c != null && invested != null && invested > 0 ? `${((c / invested) * 100).toFixed(1)}%` : null);
 
   const term = q.trim().toLowerCase();
   const match = (r: Position) =>
@@ -345,6 +365,8 @@ export function HoldingsBehind() {
       value: (g) => g.mv,
       // Weight is this row's value over the set's, so it orders as Value does.
       weight: (g) => g.mv,
+      // …and the invested share is its cost over the set's, so it orders as Invested does.
+      costShare: (g) => g.invested,
       pnl: (g) => g.pnl,
       return: (g) => coveredReturn(g.rows, fifoOpts).pct,
     },
@@ -419,6 +441,19 @@ export function HoldingsBehind() {
     );
     return unvaluedAifFolios(portfolio.accounts, withPositions, drawn);
   }, [aifSectioned, portfolio]);
+  /**
+   * WHAT THE COLLAPSED SUMMARY STATES: the sections the folios sit in, in the
+   * page's own reading order, and what they have drawn between them. The total
+   * is `sumOrNull`'s — a folio whose statement prints no drawn figure is
+   * skipped rather than blended in as zero, and a set where none prints one has
+   * no total at all.
+   */
+  const unvaluedBySection = useMemo(() => {
+    const by = new Map<string, number>();
+    for (const f of unvalued) by.set(f.section, (by.get(f.section) ?? 0) + 1);
+    return [...by.entries()].sort((a, b) => aifSectionOrd(a[0]) - aifSectionOrd(b[0]));
+  }, [unvalued]);
+  const unvaluedDrawn = useMemo(() => sumOrNull(unvalued.map((f) => f.drawn)), [unvalued]);
 
   /** What one row of this table IS, so the header and the footer can say it. */
   const anyMandate = groups.some((g) => g.kind === "mandate");
@@ -489,17 +524,28 @@ export function HoldingsBehind() {
           {d.facets.length > 1 && (
             <div className="mt-3 inline-flex items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
               role="group" aria-label="Which set to show" data-testid="drilldown-facets">
-              {d.facets.map((f) => {
+              {d.facets.map((f, i) => {
                 const active = f.key === d.activeFacet;
+                /* A DIVIDER WHERE THE QUESTION CHANGES. The Current Value of
+                   Holdings page splits its rows two ways — by side of the book,
+                   and by whether a statement reports a cost — and each group
+                   partitions the page on its own while the two together do not.
+                   A reader adding the chips' counts across the divider would be
+                   adding two partitions of one set. */
+                const newGroup = i > 0 && !!f.group && f.group !== d.facets[i - 1].group;
                 return (
-                  <Link key={f.key} to={drilldownHref(d.id, d.key || undefined, f.key)}
-                    aria-current={active ? "true" : undefined}
-                    title={f.note || undefined}
-                    className={["rounded px-2.5 py-1 text-[11.5px] font-medium transition-colors",
-                      active ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
-                    {f.label}
-                    <span className="ml-1.5 tabular opacity-70">{fmtNum(f.rows.length)}</span>
-                  </Link>
+                  <Fragment key={f.key}>
+                    {newGroup && <span aria-hidden className="mx-1 h-4 w-px self-center bg-ink-600" data-facet-divider />}
+                    <Link to={drilldownHref(d.id, d.key || undefined, f.key)}
+                      aria-current={active ? "true" : undefined}
+                      title={f.note || undefined}
+                      data-facet-group={f.group ?? ""}
+                      className={["rounded px-2.5 py-1 text-[11.5px] font-medium transition-colors",
+                        active ? "bg-champagne-500 text-ink-950" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"].join(" ")}>
+                      {f.label}
+                      <span className="ml-1.5 tabular opacity-70">{fmtNum(f.rows.length)}</span>
+                    </Link>
+                  </Fragment>
                 );
               })}
             </div>
@@ -567,6 +613,49 @@ export function HoldingsBehind() {
               {names.size === 1 ? "name" : "names"} · {fmtNum(accounts.size)}{" "}
               {accounts.size === 1 ? "account" : "accounts"} ·{" "}
               {d.deduped ? "each holding counted once" : "each statement's row as printed"}
+            </div>
+          )}
+          {/* ── AND THE CAPITAL INVESTED IN IT, BESIDE WHAT IT IS WORTH ────────
+              *"inside that page … add the columns and data regarding the invested
+              capital that we were showing as a separate page … a consolidated
+              view."* Capital invested was its own page; it is this line and the
+              Share of invested column now, on every set this page opens.
+
+              THE RETURN IS PRINTED ONLY WHERE THE COST COVERS THE SET — the same
+              `coveredReturn` test the footer and Morning CIO's allocation row
+              run, so a row that reads "—" there never opens onto a percentage
+              here. The gain is struck over the holdings that report a cost and
+              says how many those are, because Invested covers a narrower set
+              than the value above it and a reader subtracting the two would
+              otherwise land on a figure neither describes. */}
+          {!d.absent && (
+            <div className="mt-1.5 text-[12.5px] text-slate-300" data-hb-invested={invested ?? ""}
+                 data-hb-invested-of={rows.length - noCost.length}>
+              {invested == null ? (
+                <span title="No statement in this set reports a cost basis, so there is no capital invested to show — absent, not zero.">
+                  Invested <span className="text-slate-500">{DASH}</span>
+                </span>
+              ) : (
+                <>
+                  <span title={investedBasisNote(ret.fifo, (n) => money(n)) || undefined}>
+                    Invested <span className="mono font-semibold text-slate-100">{money(invested)}</span>
+                  </span>
+                  {/* THE GAIN IS FIFO'S, the figure the return beside it divides:
+                      unrealised on what is held plus what was realised on units
+                      sold. The unrealised half alone is the footer's own column. */}
+                  {ret.fifo.gain != null && (
+                    <span title={fifoBasisNote(ret.fifo, (n) => money(n)) || undefined}> · gain <span className={`mono ${changeColor(ret.fifo.gain)}`}>{money(ret.fifo.gain, true)}</span>
+                      {ret.pct != null && <span className={`mono ${changeColor(ret.pct)}`}> ({fmtPct(ret.pct, { sign: true, decimals: 1 })})</span>}
+                    </span>
+                  )}
+                  {noCost.length > 0 && (
+                    <span className="text-slate-500"
+                      title={`${fmtNum(noCost.length)} holding${noCost.length === 1 ? "" : "s"} worth ${money(withoutCostMV)} report no cost: they are in the value above and in no capital figure. A depository reports what is held, never what it was bought for.`}>
+                      {" "}· {fmtNum(rows.length - noCost.length)} of {fmtNum(rows.length)} report a cost
+                    </span>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
@@ -683,6 +772,10 @@ export function HoldingsBehind() {
                       <SortHeader col="invested" view={view}>Invested</SortHeader>
                       <SortHeader col="value" view={view}>Value</SortHeader>
                       <SortHeader col="weight" view={view}>Weight</SortHeader>
+                      <SortHeader col="costShare" view={view}
+                        title="This row's share of the capital invested in the set — its cost over the total cost the statements report. Beside Weight, its share of today's value.">
+                        Share of invested
+                      </SortHeader>
                       <SortHeader col="pnl" view={view}>Unreal. P&amp;L</SortHeader>
                       <SortHeader col="return" view={view}>Return</SortHeader>
                     </Tr>
@@ -778,8 +871,19 @@ export function HoldingsBehind() {
                                     none send a reader to different documents. */}
                                 {aifSectioned && (() => {
                                   const read = aifCategoryOf(accIdx, g.rows[0]);
+                                  // A CATEGORY THE FAMILY DECLARED SAYS SO. It
+                                  // files the fund exactly as firmly as a printed
+                                  // one, and a section heading looks equally
+                                  // authoritative either way — so the difference
+                                  // is on the row, in words, not in a colour.
                                   return read.category
-                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}> · {read.category}</span>
+                                    ? <span className="text-[10.5px] text-slate-500" data-aif-row-cat={read.category}
+                                        data-aif-row-cat-source={read.source ?? undefined}
+                                        title={read.source === "family"
+                                          ? "No statement for this fund prints a SEBI category. The family declared it " + read.category + ", and this book files it there on their word."
+                                          : undefined}>
+                                        {" "}· {read.category}{read.source === "family" ? " · declared by the family" : ""}
+                                      </span>
                                     : <span className="text-[10.5px] text-slate-500" data-aif-row-cat="" title={aifCategoryWhy(read)}> · category not stated</span>;
                                 })()}
                                 {/*
@@ -842,6 +946,11 @@ export function HoldingsBehind() {
                             <td className="px-4 py-2.5 text-right mono text-slate-400">
                               {w ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
                             </td>
+                            <td className="px-4 py-2.5 text-right mono text-slate-400" data-hb-cost-share>
+                              {costShare(g.invested) ?? <AbsentCell reason={g.invested == null
+                                ? "No statement reports what this holding cost, so it has no share of the capital invested — absent, not zero."
+                                : "No holding in this set reports a cost, so there is no invested total to take a share of."} />}
+                            </td>
                             <td className={`px-4 py-2.5 text-right mono ${g.pnl == null ? "" : changeColor(g.pnl)}`}>
                               {g.pnl == null ? <AbsentCell reason="Needs a cost these statements do not report." /> : money(g.pnl, true)}
                             </td>
@@ -874,8 +983,19 @@ export function HoldingsBehind() {
                                   ? <AbsentCell reason={`No cost on the ${providerOf(accIdx, x)} statement for this holding.`} />
                                   : money(x.costBasis)}
                               </td>
-                              <td className="px-4 py-1.5 text-right mono text-slate-400">{money(x.marketValue)}</td>
-                              <td className="px-4 py-1.5 text-right mono text-slate-600">{fmtNum(x.quantity, x.quantity % 1 === 0 ? 0 : 3)}</td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-400"
+                                title={`${fmtNum(x.quantity, x.quantity % 1 === 0 ? 0 : 3)} units on this statement`}>{money(x.marketValue)}</td>
+                              {/* THIS LINE'S WEIGHT, under the Weight heading. The
+                                  cell printed the line's QUANTITY here — a unit
+                                  count under a column of percentages, which is the
+                                  caption-does-not-describe-its-figure failure one
+                                  row down. The quantity is the Value cell's hover. */}
+                              <td className="px-4 py-1.5 text-right mono text-slate-500">{weight(x.marketValue) ?? DASH}</td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-500">
+                                {g.capital
+                                  ? <AbsentCell reason="This mandate enters Invested at the capital paid into it, and a mandate's capital is not divided among its shares — so a single share has no part of it to show." />
+                                  : costShare(x.costBasis) ?? <AbsentCell reason="No cost on this statement line, so it has no share of the capital invested." />}
+                              </td>
                               <td className={`px-4 py-1.5 text-right mono ${x.unrealizedPnL == null ? "" : changeColor(x.unrealizedPnL)}`}>
                                 {x.unrealizedPnL == null ? <AbsentCell reason="Needs a cost this statement does not report." /> : money(x.unrealizedPnL, true)}
                               </td>
@@ -918,9 +1038,34 @@ export function HoldingsBehind() {
                 folios are listed with the capital they have DRAWN, and the note
                 says plainly that drawn capital is what was paid rather than
                 what the stake is worth and is in no total on this page. */}
+            {/*
+              ── A DROPDOWN, AT THE FAMILY'S REQUEST, AND THE SUMMARY STILL SAYS
+              WHAT IS INSIDE IT ──────────────────────────────────────────────
+
+                *"the 'Held, and valued by no statement' section needs to be
+                 hidden as a drop down list."*
+
+              Collapsed by default, so the table is what the page is. What it
+              must not become is a fold a reader has no reason to open: the
+              summary line carries the COUNT, the categories and the drawn total
+              — the Category I folios above all, because this is the only place
+              on the page a Category I AIF appears — and the list is one click
+              away. A `<details>` rather than state, so it needs no handler and
+              every row stays in the DOM for the structural checks.
+            */}
             {unvalued.length > 0 && (
-              <div className="border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
-                <div className="label-xs text-slate-300">Held, and valued by no statement</div>
+              <details className="group border-t border-ink-700/60 px-5 pt-4" data-testid="aif-unvalued">
+                <summary className="cursor-pointer list-none text-[11.5px] text-slate-400 [&::-webkit-details-marker]:hidden">
+                  <span className="inline-flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform group-open:rotate-90" />
+                    <span className="label-xs text-slate-300">Held, and valued by no statement</span>
+                  </span>
+                  <span className="ml-2" data-aif-unvalued-summary>
+                    {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} with no NAV
+                    {" · "}{unvaluedBySection.map(([k, n]) => `${k} ×${n}`).join(", ")}
+                    {unvaluedDrawn != null && <> · <span className="mono">{money(unvaluedDrawn)}</span> drawn, in no total</>}
+                  </span>
+                </summary>
                 <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-500">
                   {fmtNum(unvalued.length)} AIF {unvalued.length === 1 ? "folio" : "folios"} report units and the capital drawn
                   against a commitment and no NAV anywhere, so no position stands for them in the table above and their money is
@@ -942,7 +1087,7 @@ export function HoldingsBehind() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </details>
             )}
             <p className="px-5 pb-5 pt-3 text-[11.5px] leading-relaxed text-slate-500">
               {full(mv)} across {fmtNum(rows.length)} {rows.length === 1 ? "holding" : "holdings"} and {fmtNum(names.size)}{" "}
@@ -1039,6 +1184,20 @@ export function HoldingsBehind() {
           <span className="mono text-slate-400">{full(statementValue(statementPortfolio.positions, rows))}</span>.
           Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a
           realised gain or a dated cash flow.
+          {/* A ROW NO STATEMENT MARKS IS NOT IN THAT FIGURE, and a reader holding
+              the PDF has to be told why the two differ by more than price drift. */}
+          {rows.some((r) => r.depositoryUnits) && (() => {
+            const dep = rows.filter((r) => r.depositoryUnits);
+            return (
+              <span data-hb-depository={dep.length}>
+                {" "}{dep.length === 1 ? "One holding here carries" : `${dep.length} holdings here carry`} no statement
+                mark at all — {dep.length === 1 ? "it is" : "they are"} a depository&rsquo;s own closing units on an
+                account that sent a transaction statement and no holding statement, valued only at AMFI&rsquo;s
+                published NAV ({full(sum(dep.map((r) => r.marketValue)))}) — so {dep.length === 1 ? "it is" : "they are"} not
+                in that figure.
+              </span>
+            );
+          })()}
         </p>
       )}
     </div>
@@ -1154,6 +1313,12 @@ function Foot({ view, label, hidden, mv, cost, capitalNote, pnl, withoutCostMV, 
         weight: <td key="weight" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-weight
             title={`Weight is a share of this set, not of the book — ${money(mv)} is the denominator, so the column adds to 100%.`}>
           {mv > 0 ? "100%" : DASH}
+        </td>,
+        costShare: <td key="costShare" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-cost-share
+            title={cost == null
+              ? "No statement in this set reports a cost, so there is no invested total to share out — absent, not zero."
+              : `Share of the ${money(cost)} invested — each row's Invested over the set's, so the column adds to 100%. ${coverage}`.trim()}>
+          {cost == null || cost <= 0 ? DASH : "100%"}
         </td>,
         pnl: <td key="pnl" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
             title={pnl == null

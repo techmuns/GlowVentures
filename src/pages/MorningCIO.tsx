@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { Briefcase, Wallet, TrendingUp, Percent, Fuel, Coins } from "lucide-react";
+import { Briefcase, Wallet, TrendingUp, TrendingDown, Percent, Fuel, Coins, Landmark, Layers, Users, Target, Scale, PieChart, Banknote } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
-import { Kpi } from "@/components/Kpi";
+import { SelectableTiles, type TileMetric } from "@/components/SelectableTiles";
 import { StockLink } from "@/components/StockLink";
 import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -35,7 +35,7 @@ import { accountHasOpeningValue } from "@/lib/returns";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } from "@/lib/fifo";
-import { type PrivateSheet } from "@/lib/auditFormulas";
+import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { capitalScope, distributionOf } from "@/lib/privateMarket";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
@@ -182,6 +182,19 @@ const CIO_TABS = [
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
 ] as const;
+/**
+ * WHICH TILES THE STRIP OPENS ON, and where a reader's own choice is kept.
+ *
+ * *"Capital invested and current value of holdings can be a single KPI tile
+ * rather than being two separate KPI tiles."* So the default is the six the
+ * strip always led with, less one: Current Value of Holdings now carries the
+ * capital invested beneath it. Every other metric is one picker away.
+ * Versioned, so a set saved against an older catalogue can be retired by
+ * bumping it rather than by rendering ids this build does not have.
+ */
+const CIO_TILES_KEY = "glow:cioTiles:v1";
+const CIO_DEFAULT_TILES = ["value", "mwr", "return", "uncalled", "distributions"] as const;
+
 const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
   if (axis === "category") return bucketColor(key, i);
@@ -684,6 +697,13 @@ export function MorningCIO() {
        */
       ruleMV: number;
       /**
+       * …and the value placed by their OTHER rule — the instruction that
+       * arbitrage and liquid funds are cash. Kept apart from `ruleMV` because
+       * the two are different rules and the paragraph under the table names
+       * each one; see `TaxonomySource`.
+       */
+      cashRuleMV: number;
+      /**
        * TRUE where the family's review places this row nowhere — the
        * unclassified section, and any fund-of-funds row on a family axis. The
        * row says so rather than sitting under a heading that would read as a
@@ -714,7 +734,7 @@ export function MorningCIO() {
       // is no such thing as a drawdown with no call behind it.
       withoutCost: 0, withoutCostMV: 0,
       // The family's review classifies products and names none of these.
-      ruleMV: 0, unplaced: false,
+      ruleMV: 0, cashRuleMV: 0, unplaced: false,
     });
     // A bucket of POSITIONS — no dated capital-movement flows at bucket level,
     // so no money-weighted rate; its total return on cost is what the row shows.
@@ -731,10 +751,11 @@ export function MorningCIO() {
        * it. Zero on the category axis, which asks nothing of the family.
        */
       const ruleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "rule").map((x) => x.marketValue));
+      const cashRuleMV = sum(rows.filter((x) => groupSourceFor(axis, accIdx, x) === "cash-rule").map((x) => x.marketValue));
       return {
         key, color: sectionColor(axis, key, i), count: g.count, invested: g.invested, current: g.mv, kind: "MOIC",
         investedFifo: g.fifo,
-        fromPositions: true, ruleMV, unplaced: key === UNCLASSIFIED,
+        fromPositions: true, ruleMV, cashRuleMV, unplaced: key === UNCLASSIFIED,
         // THE MULTIPLE IS STRUCK OVER THE ROWS THE COST COVERS, like the return
         // beside it. It was `mv / cost` — the WHOLE bucket's market value over a
         // cost `sumOrNull` struck on part of it — which on Direct Equity is
@@ -775,7 +796,7 @@ export function MorningCIO() {
      * honest the day one does.
      */
     const fundModelBuckets: Bucket[] = [
-      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, unplaced: false },
+      { key: "Startups", color: "#6366f1", fromPositions: false, count: pm.startups.length, invested: st.invested, current: st.fairValue, kind: "MOIC", metric: st.moic, retPct: st.invested > 0 ? ((st.fairValue - st.invested) / st.invested) * 100 : null, distributed: 0, xirr: stX.pct, xirrBasis: "first-investment", xirrNote: fundBasis(stX), sheet: "startup", investedFifo: null, withoutCost: 0, withoutCostMV: 0, costedMV: st.fairValue, ruleMV: 0, cashRuleMV: 0, unplaced: false },
       // Fund buckets: the multiple and the return-on-cost both count cash already
       // returned, so a bucket in repayment isn't read as a loss.
       fundBucket("Unlisted Companies", "#10b981", pm.unlistedCompanies.length, unlF, unlX, "pre-ipo"),
@@ -940,12 +961,207 @@ export function MorningCIO() {
    * paid for twice.
    */
   const ruleMV = sections.reduce((a, b) => a + b.ruleMV, 0);
+  const cashRuleMV = sections.reduce((a, b) => a + b.cashRuleMV, 0);
   // Fund commitments exist or they don't. `committed === 0` across zero funds is
   // the absence of a commitment schedule, not a schedule that commits nothing.
   // A commitment schedule exists if ANY source reports one — a drawdown AIF's
   // capital account counts, not only a fund-of-funds block.
   const hasCommitments = (m.fundCount > 0 || m.commitments.length > 0) && m.deploy.committed > 0;
   const calledPct = hasCommitments ? (m.deploy.drawn / m.deploy.committed) * 100 : null;
+
+  /**
+   * ── THE TILES A READER CAN PUT ON THE STRIP ─────────────────────────────────
+   *
+   * Every figure here is one this page ALREADY COMPUTES — the model above, the
+   * Concentration card, the Capital deployment card — so a tile a reader picks
+   * is a second rendering of a measurement, never a new one. Each carries ONE
+   * destination: the drill-down that lists the set it is struck over, or
+   * Private Market for a commitment fact, which is not a holding. A tile whose
+   * figure the book does not carry renders an em dash WITH ITS REASON, because
+   * an em dash must always name its cause.
+   *
+   * NO CAPTION UNDER A FIGURE (Stage 10aa) — the one exception is the value
+   * tile's second FIGURE, the capital invested, which the family asked for when
+   * the two tiles became one.
+   */
+  const absentWhy = (why: string) => <span className="text-slate-500">{why}</span>;
+  const pct1 = (v: number | null | undefined, sign = true) =>
+    v == null ? <AbsentValue /> : <span className={sign ? changeColor(v) : undefined}>{fmtPct(v, { sign, decimals: 1 })}</span>;
+  const side = (key: string) => m.sides.find((x) => x.key === key) ?? null;
+  const sideShare = (v: number) => (m.totalValue > 0 ? ` — ${((v / m.totalValue) * 100).toFixed(1)}% of the book` : "");
+  const cashBucket = m.buckets.find((b) => b.key === "Cash") ?? null;
+  const cioTiles: TileMetric[] = [
+    /**
+     * CURRENT VALUE OF HOLDINGS — AND WHAT WAS INVESTED IN THEM, ON ONE TILE.
+     *
+     * *"Capital invested and current value of holdings can be a single KPI tile
+     * rather than being two separate KPI tiles and opening two separate pages.
+     * Make a single KPI tile and show the invested capital."* The value is the
+     * tile's figure and the capital invested is the second figure under it —
+     * two measurements of the same holdings, so they belong on one card and
+     * open one page, which lists both row by row.
+     *
+     * THE ACCRUED-INCOME DISCLOSURE STAYS IN THE HOVER. It has been moved twice
+     * and must not vanish: our value differs from a manager's printed total by
+     * exactly this, and a reader reconciling the two would otherwise find the gap
+     * and no explanation.
+     */
+    {
+      id: "value", label: "Current Value of Holdings", icon: <Briefcase className="h-4 w-4" />,
+      href: drilldownHref("book"),
+      hrefTitle: `Open every holding in the book — what each is worth today and what was invested in it, each holding two statements both report counted once. The listed and private sides, and the holdings whose statement reports a cost, are toggles on that page.${
+        m.accrued == null || !m.accruedCount ? "" :
+        ` NOT IN THIS FIGURE: ${fmtFromBase(m.accrued, { compact: true })} of accrued income — dividends and interest declared on ${m.accruedCount} holding${m.accruedCount === 1 ? "" : "s"} here and not yet received. The managers' printed totals fold it into market value on some rows and not others, so the book carries it as its own field and every market value on this site excludes it; a statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
+      }${m.totalInvested == null ? "" : ` INVESTED is the cost the statements report, over the ${fmtNum(m.p.length - m.noCostCount)} holdings that report one, except that each whole PMS mandate enters at the capital paid into it — what its FIFO return divides by; ${fmtNum(m.noCostCount)} holdings report no cost and are in the value and not in the capital invested.`}`,
+      value: fmtFromBase(m.totalValue, { compact: true }),
+      second: m.totalInvested == null
+        ? <span title="No statement in this book reports a cost basis, so there is no capital invested to show.">Invested <span className="text-slate-500">{DASH}</span></span>
+        : <>Invested <span className="mono font-semibold text-slate-100">{fmtFromBase(m.totalInvested, { compact: true })}</span></>,
+    },
+    /**
+     * MONEY-WEIGHTED RETURN — an XIRR over the accounts that publish an opening
+     * portfolio value. `moneyWeightedReturn` refuses to annualise a window
+     * under a year (this tile once read +99.0% for exactly that reason, with
+     * nothing miscalculated), and the hover is where the window and that refusal
+     * are stated — Stage 10g(ii)'s guard, which must keep a home.
+     */
+    {
+      id: "mwr", label: m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return",
+      icon: <TrendingUp className="h-4 w-4" />,
+      href: drilldownHref("measured"),
+      hrefTitle: `Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page.${
+        m.bookMW.windowDays == null ? "" :
+        m.bookMW.annualised
+          ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
+          : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
+      }`,
+      value: pct1(m.bookMW.pct),
+      sub: m.bookMW.pct == null ? absentWhy("no statement in this book carries an opening portfolio value") : undefined,
+    },
+    /**
+     * CONSOLIDATED RETURN — return on the capital actually invested, over the
+     * whole book. It opens the same page as the value tile, on the holdings the
+     * return is struck over: both figures divide by the same capital.
+     */
+    {
+      id: "return", label: "Consolidated return", icon: <Percent className="h-4 w-4" />,
+      href: drilldownHref("book", undefined, "costed"),
+      hrefTitle: "Open the holdings this return is struck over — the ones whose statement reports a cost — on the Current Value of Holdings page. FIFO: the unrealised gain on what is held plus the gain realised on units already sold, over the capital deployed. Cumulative, not annualised.",
+      value: pct1(m.gainPct),
+      sub: m.gainPct == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
+    },
+    /* Uncalled capital and Distributions are COMMITMENT facts. With no
+       commitment in the book they have no denominator — "₹0 undrawn" would
+       assert a schedule that draws nothing, a different claim entirely. The
+       figure is summed as each statement prints it, never derived from
+       committed − called; the page it opens says so beside the rows. */
+    {
+      id: "uncalled", label: "Uncalled capital", icon: <Fuel className="h-4 w-4" />,
+      href: hasCommitments ? "/private-market" : undefined,
+      hrefTitle: "Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down.",
+      value: hasCommitments ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span> : <AbsentValue />,
+      sub: hasCommitments ? undefined : absentWhy("no statement in this book reports a capital commitment"),
+    },
+    {
+      id: "distributions", label: "Distributions", icon: <Coins className="h-4 w-4" />,
+      href: hasCommitments ? "/private-market" : undefined,
+      hrefTitle: "Open the capital accounts behind it. Cash a fund has already returned is a movement on a capital account, not a position, so it lives with those accounts on the Private Market page.",
+      value: hasCommitments ? fmtFromBase(m.deploy.distributed, { compact: true }) : <AbsentValue />,
+      sub: hasCommitments ? undefined : absentWhy("no fund has distributed, because none is held"),
+    },
+    /* ── EVERY OTHER FIGURE THIS PAGE CARRIES, one picker away ─────────────── */
+    {
+      id: "invested", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
+      href: drilldownHref("book", undefined, "costed"),
+      hrefTitle: `Open the holdings whose statement reports a cost — the set this figure is summed over — on the Current Value of Holdings page. ${fmtNum(m.noCostCount)} holding${m.noCostCount === 1 ? "" : "s"} report none and sit outside it, a toggle away.`,
+      value: m.totalInvested == null ? <AbsentValue /> : fmtFromBase(m.totalInvested, { compact: true }),
+      sub: m.totalInvested == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
+    },
+    {
+      id: "gain", label: "Total gain", icon: <TrendingUp className="h-4 w-4" />,
+      href: drilldownHref("book", undefined, "costed"),
+      hrefTitle: "Open the holdings this gain is struck over — the ones whose statement reports a cost. FIFO: the unrealised gain on what is held plus the gain already realised on units sold (for a whole PMS mandate, its value plus withdrawals less the capital paid in). The Consolidated return is this gain over the capital deployed.",
+      value: m.embeddedGain == null ? <AbsentValue />
+        : <span className={changeColor(m.embeddedGain)}>{fmtFromBase(m.embeddedGain, { compact: true, sign: true })}</span>,
+      sub: m.embeddedGain == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
+    },
+    {
+      id: "committed", label: "Committed to funds", icon: <Landmark className="h-4 w-4" />,
+      href: hasCommitments ? "/private-market" : undefined,
+      hrefTitle: "Open the capital accounts behind it — the full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value.",
+      value: hasCommitments ? fmtFromBase(m.deploy.committed, { compact: true }) : <AbsentValue />,
+      sub: hasCommitments ? undefined : absentWhy("no statement in this book reports a capital commitment"),
+    },
+    ...(["listed", "private", "unplaced"] as const).flatMap((k) => {
+      const x = side(k);
+      if (!x) return [];
+      return [{
+        id: k, label: k === "listed" ? "Listed value" : k === "private" ? "Private value" : "Not placed",
+        icon: k === "private" ? <Landmark className="h-4 w-4" /> : <Scale className="h-4 w-4" />,
+        href: drilldownHref("book", undefined, k),
+        hrefTitle: `${x.why}${sideShare(x.value)}. Opens the book's own drill-down with this side selected.`,
+        value: fmtFromBase(x.value, { compact: true }),
+      } satisfies TileMetric];
+    }),
+    {
+      id: "positions", label: "Positions", icon: <Layers className="h-4 w-4" />,
+      href: drilldownHref("book"),
+      hrefTitle: `Open every holding in the book, one row per statement line — the unit this count counts.${m.smallDropped.count > 0 ? ` It leaves out ${m.smallDropped.count} holding${m.smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, ${fmtFromBase(m.smallDropped.value)} in total, dropped automatically at the family's instruction.` : ""}`,
+      value: fmtNum(m.p.length),
+    },
+    {
+      id: "names", label: "Distinct names", icon: <Layers className="h-4 w-4" />,
+      href: drilldownHref("book"),
+      hrefTitle: "Open every holding in the book, grouped one row per name and per mandate — the unit this count counts.",
+      value: fmtNum(m.distinctNames),
+    },
+    {
+      id: "top-10", label: `Top-${TOP_NAMES} concentration`, icon: <PieChart className="h-4 w-4" />,
+      href: drilldownHref("top-names"),
+      hrefTitle: `Open the ${TOP_NAMES} largest names and the accounts holding them — their share of the book.`,
+      value: m.top10Pct == null ? <AbsentValue /> : `${m.top10Pct.toFixed(0)}%`,
+      sub: m.top10Pct == null ? absentWhy("the book carries no holding to rank") : undefined,
+    },
+    {
+      id: "cross-held", label: "Cross-held names", icon: <Users className="h-4 w-4" />,
+      href: drilldownHref("cross-held"),
+      hrefTitle: "Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.",
+      value: fmtNum(m.crossHeld),
+    },
+    {
+      id: "winners", label: "Holdings showing a gain", icon: <TrendingUp className="h-4 w-4" />,
+      href: drilldownHref("winners"),
+      hrefTitle: "Open the holdings showing a gain against their own cost.",
+      value: <span className="text-gain">{fmtNum(m.winners)}</span>,
+    },
+    {
+      id: "losers", label: "Holdings showing a loss", icon: <TrendingDown className="h-4 w-4" />,
+      href: drilldownHref("losers"),
+      hrefTitle: "Open the holdings showing a loss against their own cost.",
+      value: <span className="text-loss">{fmtNum(m.losers)}</span>,
+    },
+    {
+      id: "largest", label: "Largest holding", icon: <Target className="h-4 w-4" />,
+      href: m.largestKey ? stockHref(m.largestKey) : undefined,
+      hrefTitle: m.largestName ? `Open ${m.largestName} — the single largest name in the book, by value across every account that holds it.` : undefined,
+      value: m.largestPct == null ? <AbsentValue /> : `${m.largestPct.toFixed(1)}%`,
+      second: m.largestName ? <span className="block max-w-full truncate" title={m.largestName}>{m.largestName}</span> : undefined,
+      sub: m.largestPct == null ? absentWhy("the book carries no holding to rank") : undefined,
+    },
+    {
+      id: "accrued", label: "Accrued income", icon: <Banknote className="h-4 w-4" />,
+      href: drilldownHref("book"),
+      hrefTitle: "Dividends and interest declared on holdings here and not yet received. NOT in the current value of holdings: the managers fold it into market value on some rows and not others, so the book carries it as its own field.",
+      value: m.accrued == null ? <AbsentValue /> : fmtFromBase(m.accrued, { compact: true }),
+      sub: m.accrued == null ? absentWhy("no statement in this book reports accrued income") : undefined,
+    },
+    ...(cashBucket ? [{
+      id: "cash", label: "Cash", icon: <Wallet className="h-4 w-4" />,
+      href: drilldownHref(AXIS_SCOPE.category, cashBucket.key),
+      hrefTitle: "Open the cash holdings — bank sweeps, liquid funds and liquid ETFs held outside a manager's mandate. A mandate's own cash sleeve stays with its mandate.",
+      value: fmtFromBase(cashBucket.current, { compact: true }),
+    } satisfies TileMetric] : []),
+  ];
 
   // "10 mandates", "1 mandate" — a count and its noun, agreeing.
   const many = (n: number, one: string, plural = `${one}s`) => `${n} ${n === 1 ? one : plural}`;
@@ -1074,154 +1290,25 @@ export function MorningCIO() {
           </div>
         } />
 
-      {/* KPI strip */}
-      {/* ONE LINK PER TILE, ASSERTED ON THE DOM. `check:pages` counts the
-          anchors inside each card here and requires at most one — a claim about
-          what a reader can click, which no amount of matching innerText can
-          make. See the `cio` invariant "each KPI tile offers exactly one
-          destination". */}
-      <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" data-testid="kpi-strip">
-        <Kpi label="Current Value of Holdings"
-          href={drilldownHref("book")}
-          hrefTitle={`Open every holding in the book — the set this figure is summed over, each holding two statements both report counted once. The listed and private halves are a toggle on that page.${
-            m.accrued == null || !m.accruedCount ? "" :
-            ` NOT IN THIS FIGURE: ${fmtFromBase(m.accrued, { compact: true })} of accrued income — dividends and interest declared on ${m.accruedCount} holding${m.accruedCount === 1 ? "" : "s"} here and not yet received. The managers' printed totals fold it into market value on some rows and not others, so the book carries it as its own field and every market value on this site excludes it; a statement whose total runs above ours by about this much is agreeing with us, not disagreeing.`
-          }`}
-          value={fmtFromBase(m.totalValue, { compact: true })}
-          /* NO SUB-LINE, AND THE ACCRUED-INCOME DISCLOSURE IS IN THE HOVER.
-             It has now been moved twice. It was this tile's caption; Stage 10aa
-             took the captions off and it went to the arithmetic card on the page
-             the tile opens, because it was the ONE line among the six that no
-             other surface repeated. The family have now asked for that card to
-             go as well, so the hover is what is left — the same treatment the
-             NAV chart's raw-return figures and its unproven accounts already
-             get. It is a weaker home than a caption and that is stated in
-             CLAUDE.md rather than pretended away; what it must not do is vanish,
-             because our NAV differs from a manager's printed total by exactly
-             this and a reader reconciling the two would find the gap and no
-             explanation for it. */
-          icon={<Briefcase className="h-4 w-4" />} />
+      {/* ── THE KPI STRIP: THE READER'S OWN TILES ────────────────────────────
+          *"After consolidating both the KPI tiles as a single one, we need to
+          make sure that the KPI tiles on morning CIO page are also editable just
+          like they are in the private market page. We should be able to select
+          different metrics and also add or remove number of KPI tiles."*
 
-        {/* CAPITAL INVESTED — the whole book, and its caption says which
-            positions it does NOT cover. This tile printed "cost in · listed
-            only" over a sum that has always run across every account, listed
-            and private alike; a scope stated narrower than the figure is as
-            misleading as one stated wider. `sumOrNull` skips a position whose
-            statement carries no cost rather than entering it as zero, so the
-            count of those positions belongs on the tile, not in a tooltip. */}
-        <Kpi label="Capital invested"
-          href={drilldownHref("invested")}
-          hrefTitle="Open the holdings whose statement reports a cost, and the arithmetic struck over them — with the ones that report none, and sit outside this figure, a toggle away on the same page."
-          value={fmtFromBase(m.totalInvested, { compact: true })}
-          /* NO SUB-LINE — both halves of what this said are on the page the
-             tile opens: its own total is the covered value against the book,
-             and the cost-less positions are a facet chip printing their count,
-             with their value on the tile beside it. */
-          icon={<Wallet className="h-4 w-4" />} />
+          `SelectableTiles` is the Private Market strip's own component, in its
+          `kpi` variant: each tile keeps its raised, clickable surface and its
+          ONE destination, and the metric picker, remove and add controls sit
+          above that click target. The catalogue is `cioTiles`, below — every
+          figure in it is one this page already computes, so nothing on a tile a
+          reader picks is a new measurement.
 
-        {/* MONEY-WEIGHTED RETURN — an XIRR, in place of Embedded gain (whose
-            rupee figure is the difference between this table's Invested and
-            Current columns, and is on the Book performance card).
-
-            THIS TILE READ +99.0% AND THAT WAS INDEFENSIBLE. Nothing was
-            miscalculated — ₹78.8 Cr became ₹99.4 Cr over 132 days, +28.3%
-            money-weighted, and compounding 0.36 of a year onto a full one gives
-            +99.0%. It was wrong because an annualised figure is a claim about a
-            YEAR and this book has four months of dated flows. The managers'
-            own annualised since-inception returns for these accounts settle it:
-            Carnelian 19.83%, Green Lantern 11.45% and 10.6%, Molecule 7.31%.
-
-            `moneyWeightedReturn` now refuses to annualise a window under a
-            year, so the tile shows the return the book has ACTUALLY EARNED over
-            its window and says the window on its face. The annualised rate is
-            in the popover, named as an extrapolation. When the flows reach a
-            year the same call starts returning a genuine annual rate and the
-            caption changes itself.
-
-            IT ALSO NAMES ITS COVERAGE, for the same reason this figure is not
-            called "consolidated": it can only be struck where a statement
-            carries an opening portfolio value — 7 of 30 accounts, about a fifth
-            of the book. On the tile, not behind it.
-
-            THE CALCULATION IS VERIFIED, not asserted. Five of the seven publish
-            their own FYTD return on the same report date; ours reproduces every
-            one to within 0.47 pp, two to 0.05 pp. That comparison is a test —
-            `npm run test:family` — so a change to the solver, the flow set or
-            the terminal value fails rather than drifts. */}
-        <Kpi label={m.bookMW.annualised ? "XIRR (annualised)" : "Money-weighted return"}
-          href={drilldownHref("measured")}
-          hrefTitle={`Open the holdings of the accounts this rate covers — those whose statements carry an opening portfolio value — with the accounts it cannot cover a toggle away on the same page.${
-            m.bookMW.windowDays == null ? "" :
-            m.bookMW.annualised
-              ? ` The window is ${m.bookMW.windowDays} days, so this is a genuine annual rate.`
-              : ` THE WINDOW IS ${m.bookMW.windowDays} DAYS AND THE RATE IS NOT ANNUALISED: it is what these accounts have actually earned over that window. Compounding it onto a full year would be a projection rather than a year the book has lived — this tile once read +99.0% for exactly that reason, with nothing miscalculated, against the managers' own annualised since-inception figures of about 7% to 31% for these very accounts.`
-          }`}
-          value={m.bookMW.pct == null
-            ? <AbsentValue />
-            : <span className={changeColor(m.bookMW.pct)}>{fmtPct(m.bookMW.pct, { sign: true, decimals: 1 })}</span>}
-          /* THE ABSENT BRANCH KEEPS ITS REASON, AND ONLY IT. An em dash must
-             name its cause (`Absent.tsx`), so a tile with no figure still says
-             why; a tile WITH one no longer explains itself here. The window and
-             the coverage both moved to `?of=measured`. */
-          sub={m.bookMW.pct == null
-            ? <span className="text-slate-500">no statement in this book carries an opening portfolio value</span>
-            : undefined}
-          icon={<TrendingUp className="h-4 w-4" />} />
-
-        {/* CONSOLIDATED RETURN — return on the capital actually invested, over
-            the WHOLE book. It sits beside the money-weighted figure because
-            they answer different questions and cover different sets: this one
-            spans every account and every asset class, and is cumulative on
-            cost; the one before it is money-weighted, dated, and can only be
-            struck where a statement carries an opening portfolio value. Neither
-            is a substitute for the other, which is why both are on the strip
-            and each states its own scope. */}
-        <Kpi label="Consolidated return"
-          href={drilldownHref("invested")}
-          hrefTitle="Open the holdings this return is struck over — the ones whose statement reports a cost"
-          value={m.gainPct == null
-            ? <AbsentValue />
-            : <span className={changeColor(m.gainPct)}>{fmtPct(m.gainPct, { sign: true, decimals: 1 })}</span>}
-          sub={m.gainPct == null
-            ? <span className="text-slate-500">no statement in this book reports a cost basis</span>
-            : undefined}
-          icon={<Percent className="h-4 w-4" />} />
-
-        {/* Uncalled capital and Distributions are COMMITMENT facts. With no
-            commitment in the book they have no denominator — "₹0 undrawn" would
-            assert a schedule that draws nothing, a different claim entirely.
-            (The label read "Dry powder" until the family asked for that jargon
-            off the dashboard; the figure is unchanged.) */}
-        <Kpi label="Uncalled capital"
-          href={hasCommitments ? "/private-market" : undefined}
-          hrefTitle="Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
-          /* THIS TILE'S POPOVER WAS ALSO WRONG, WHICH REMOVING IT FIXES. It
-             read `= Σ (Committed − Called) across funds` — and the book does
-             not derive uncalled capital that way. Private Market's own tile says so
-             in as many words: it is "summed exactly as each statement prints
-             it, never derived from committed − drawn", because two folios
-             print a commitment and a drawdown and NO undrawn figure, and
-             subtracting there would assert a fund has nothing left to call.
-             The page this tile opens already carries that explanation beside
-             Committed and Drawn, so nothing needs writing to replace it. */
-          value={hasCommitments
-            ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span>
-            : <AbsentValue />}
-          sub={hasCommitments
-            ? undefined
-            : <span className="text-slate-500">no statement in this book reports a capital commitment</span>}
-          icon={<Fuel className="h-4 w-4" />} />
-
-        <Kpi label="Distributions"
-          href={hasCommitments ? "/private-market" : undefined}
-          hrefTitle="Open the capital accounts behind it. Cash a fund has already returned is a movement on a capital account, not a position, so it lives with those accounts on the Private Market page."
-          value={hasCommitments
-            ? fmtFromBase(m.deploy.distributed, { compact: true })
-            : <AbsentValue />}
-          sub={hasCommitments
-            ? undefined
-            : <span className="text-slate-500">no fund has distributed, because none is held</span>}
-          icon={<Coins className="h-4 w-4" />} />
+          ONE LINK PER TILE, STILL ASSERTED ON THE DOM. `check:pages` counts the
+          anchors inside each card and requires at most one — a claim about what
+          a reader can click, which no amount of matching innerText can make. */}
+      <div className="shrink-0">
+        <SelectableTiles variant="kpi" page="cio" storageKey={CIO_TILES_KEY}
+          defaults={CIO_DEFAULT_TILES} metrics={cioTiles} />
       </div>
       {/* ── THE PANEL ───────────────────────────────────────────────────────
           ONE OF THE THREE, NEVER TWO. The inactive panels are UNMOUNTED rather
@@ -1485,9 +1572,11 @@ export function MorningCIO() {
                       <td key="return" className={`border-t-2 border-ink-600 px-2 py-2.5 text-right whitespace-nowrap mono font-semibold ${m.footerPct == null ? "text-slate-500" : changeColor(m.footerPct)}`}>
                         {/* AND NO POPOVER HERE EITHER. Its own arithmetic —
                             (Current − Invested) ÷ Invested over the whole book,
-                            cumulative rather than annualised — is on `?of=invested`,
-                            which is the page the Consolidated return tile opens and
-                            where the same division is worked out in full.
+                            cumulative rather than annualised — is on the Current Value
+                            of Holdings page's "Cost reported" facet
+                            (`?of=book&facet=costed`), which is what the Consolidated
+                            return tile opens: Capital invested was its own page
+                            until the family asked for the two tiles to be one.
 
                             THE ONE THING IT CARRIED THAT NOTHING ELSE DID was the
                             reconciliation against the MONEY-WEIGHTED return: two
@@ -1532,6 +1621,18 @@ export function MorningCIO() {
                         &mdash; &ldquo;all the direct stocks&rdquo; belong to Thematic &amp; Tactical &mdash; because the
                         review does not name those holdings individually.
                       </>
+                    )}
+                    {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
+                        arbitrage funds as Debt; the family have said arbitrage is
+                        cash, so those funds are placed by that instruction — and a
+                        sentence crediting them to the direct-stock rule above
+                        would be about the wrong rule. */}
+                    {cashRuleMV > 0 && (
+                      <span data-testid="alloc-cash-rule" data-cash-rule-mv={cashRuleMV}>
+                        {" "}{money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their instruction
+                        that arbitrage and liquid funds are cash &mdash; their review files its arbitrage funds as Debt,
+                        and the instruction overrules it.
+                      </span>
                     )}
                   </p>
                 )}
