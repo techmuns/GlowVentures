@@ -913,6 +913,60 @@ if (alreadyHeld.length) {
   say();
 }
 
+/**
+ * WHAT WOULD CLOSE THIS LINE, AND THE ANSWER IS DIFFERENT FOR AN AGGREGATE.
+ *
+ * The Equity tab names a custodian per line, which is what makes that half of
+ * this joinable at all. The three asset tabs name none, so their lines are
+ * routed on WHAT THE LINE IS instead: an AGGREGATE heading nothing itemises is
+ * not a missing statement and must not be asked for as one — `Private Equity
+ * ₹136.16 Cr` is a block whose constituents sit on the review's own
+ * `Private Investments` tab, and asking a custodian for it would be asking for
+ * a document nobody issues. A named fund is an AMC folio, and the document
+ * that carries it is that AMC's account statement or a CAS, never a demat
+ * holding statement — a depository moves units without a price (§precedence).
+ */
+const custodianNote = (l) => {
+  const adv = l.advisor ?? "";
+  if (l.aggregate) {
+    return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
+      + "`" + l.tab + "` tab and itemises it nowhere. Its constituents are on the review's own "
+      + "`Private Investments` tab and in the family's investment register (`/register`); no custodian issues "
+      + "a statement for it, so this is not a document to ask for";
+  }
+  if (l.tab) {
+    return `a fund line on the **${l.tab}** tab. What carries it is the AMC's own folio statement or a `
+      + "consolidated account statement (CAS) — not a demat holding statement, which moves units without a price";
+  }
+  return /HDFC/i.test(adv) ? "held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
+    : /ICICI/i.test(adv) ? "the ICICI NSDL statement is read; this line is not on it, so it sits in another account"
+    : /MOPWM|Motilal/i.test(adv) ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
+    : /Private/i.test(adv) ? "a private holding the review carries at cost; no statement in the drop values it"
+    : "no statement in `source/` reports this holding";
+};
+
+/**
+ * AND THE ONE DOCUMENT THAT WOULD CLOSE IT.
+ *
+ * A list of 21 holdings is something to read; a list of 3 documents is something
+ * to ACT on. Hoisted beside `custodianNote` because BOTH the report below and
+ * `src/data/reviewGaps.ts` read them: two copies would be two chances for the
+ * ask list and the dashboard to name different documents for one line, which is
+ * the drift `registerRead.mjs` was extracted to stop one workbook over.
+ */
+const askFor = (l) => {
+  const adv = l.advisor ?? "";
+  // An AGGREGATE is not a document anybody issues — see custodianNote. It is
+  // counted apart so the ask list stays a list of things a client can send.
+  return l.aggregate ? "NOTHING TO ASK FOR — an aggregate block the review itemises on another tab"
+    : l.tab ? "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
+    : /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
+    : /ICICI/i.test(adv) ? "an ICICI Bank NSDL statement for the account this line sits in"
+    : /MOPWM|Motilal/i.test(adv) ? "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
+    : /Private/i.test(adv) ? "a valuation for the private holdings the review carries at cost"
+    : "a statement from whoever holds this";
+};
+
 say("## D. What the review carries that this book does not — and what would close it");
 say();
 if (!notInBook.length && !trulyAbsent.length) {
@@ -920,37 +974,6 @@ if (!notInBook.length && !trulyAbsent.length) {
 } else {
   say("| Review line | Custodian / advisor | Review MV | Why it is not here |");
   say("| --- | --- | ---: | --- |");
-  /**
-   * WHAT WOULD CLOSE THIS LINE, AND THE ANSWER IS DIFFERENT FOR AN AGGREGATE.
-   *
-   * The Equity tab names a custodian per line, which is what makes that half of
-   * this joinable at all. The three asset tabs name none, so their lines are
-   * routed on WHAT THE LINE IS instead: an AGGREGATE heading nothing itemises is
-   * not a missing statement and must not be asked for as one — `Private Equity
-   * ₹136.16 Cr` is a block whose constituents sit on the review's own
-   * `Private Investments` tab, and asking a custodian for it would be asking for
-   * a document nobody issues. A named fund is an AMC folio, and the document
-   * that carries it is that AMC's account statement or a CAS, never a demat
-   * holding statement — a depository moves units without a price (§precedence).
-   */
-  const custodianNote = (l) => {
-    const adv = l.advisor ?? "";
-    if (l.aggregate) {
-      return "**an AGGREGATE line, not a holding** — the review reports this block only as a total on the "
-        + "`" + l.tab + "` tab and itemises it nowhere. Its constituents are on the review's own "
-        + "`Private Investments` tab and in the family's investment register (`/register`); no custodian issues "
-        + "a statement for it, so this is not a document to ask for";
-    }
-    if (l.tab) {
-      return `a fund line on the **${l.tab}** tab. What carries it is the AMC's own folio statement or a `
-        + "consolidated account statement (CAS) — not a demat holding statement, which moves units without a price";
-    }
-    return /HDFC/i.test(adv) ? "held at **HDFC Bank NSDL** — that statement is in `source/august-2026-e/` and is a SCAN with no text layer, so no reader can read it"
-      : /ICICI/i.test(adv) ? "the ICICI NSDL statement is read; this line is not on it, so it sits in another account"
-      : /MOPWM|Motilal/i.test(adv) ? "held at **Motilal Oswal**; the drop carries a holding statement for three of its demat accounts and a transaction tape only for a fourth"
-      : /Private/i.test(adv) ? "a private holding the review carries at cost; no statement in the drop values it"
-      : "no statement in `source/` reports this holding";
-  };
   for (const l of [...notInBook, ...trulyAbsent].sort((a, b) => (b.mv ?? 0) - (a.mv ?? 0)))
     say(`| ${l.product} | ${l.advisor || "—"} | ₹${cr(l.mv)} Cr | ${custodianNote(l)} |`);
   gapNoStatement = [...notInBook, ...trulyAbsent].reduce((s, l) => s + (l.mv ?? 0), 0);
@@ -968,16 +991,7 @@ if (!notInBook.length && !trulyAbsent.length) {
   say();
   const asks = new Map();
   for (const l of [...notInBook, ...trulyAbsent]) {
-    const adv = l.advisor ?? "";
-    // An AGGREGATE is not a document anybody issues — see custodianNote. It is
-    // counted apart so the ask list stays a list of things a client can send.
-    const k = l.aggregate ? "NOTHING TO ASK FOR — an aggregate block the review itemises on another tab"
-      : l.tab ? "AMC folio statements or a CAS for the mutual-fund and liquid holdings on the Debt / Cash / Alternate tabs"
-      : /HDFC/i.test(adv) ? "Bharat's HDFC Bank NSDL holding statement — **as a text PDF, not a scan**"
-      : /ICICI/i.test(adv) ? "an ICICI Bank NSDL statement for the account this line sits in"
-      : /MOPWM|Motilal/i.test(adv) ? "Motilal Oswal holding statements for the demat and PWM accounts not in the drop"
-      : /Private/i.test(adv) ? "a valuation for the private holdings the review carries at cost"
-      : "a statement from whoever holds this";
+    const k = askFor(l);
     const e = asks.get(k) ?? { n: 0, mv: 0, names: [] };
     e.n++; e.mv += l.mv ?? 0; e.names.push(l.product);
     asks.set(k, e);
@@ -1338,9 +1352,137 @@ say("Closing the residual line by line needs the statements in section D1. Until
 say("it stays stated rather than distributed across the book.");
 say();
 
-writeFileSync(OUT, L.join("\n") + "\n");
+const CHECK = process.argv.includes("--check");
+if (CHECK) {
+  const was = readFileSync(OUT, "utf8");
+  if (was !== L.join("\n") + "\n") { console.error(`${OUT} would change — run \`npm run reconcile:review\``); process.exitCode = 1; }
+} else {
+  writeFileSync(OUT, L.join("\n") + "\n");
+}
 console.log(`${OUT}`);
 console.log(`  review total      ₹${cr(reviewTotal)} Cr`);
 console.log(`  book total        ₹${cr(bookTotal)} Cr`);
 console.log(`  book ex-promoter  ₹${cr(bookExPromoter)} Cr`);
 console.log(`  direct equity     ${tiedQty} of ${securityLines.length} tie exactly, ${partial} partial, ${over} book-holds-more, ${unvalued} unvalued, ${missing} absent`);
+
+/**
+ * ── AND THE SAME FINDING, WHERE A READER WILL ACTUALLY MEET IT ─────────────
+ *
+ * `src/data/reviewGaps.ts` — every review line no statement in `source/`
+ * reports, so a reader who searches the dashboard for one is told WHY it is
+ * absent and WHICH document would close it, instead of a bare "no holdings
+ * match". That sentence is the defect this file already names twice: the
+ * family opened Fractal Analytics, saw four dashed tiles and asked whether the
+ * data was absent or the dashboard was broken, and *that question is the
+ * defect*. A search returning nothing is the same question one layer up, and a
+ * reader who cannot tell "no custodian sent this" from "the dashboard lost it"
+ * assumes the second.
+ *
+ * NOT ONE FIGURE OF THE REVIEW'S CROSSES OVER, and that is the whole licence
+ * for publishing any of it. The consolidated review is NOT A SOURCE — by
+ * decision — because it carries someone else's choices about what to include
+ * and how to value it, and folding a cell in would end this book's own
+ * guarantee on the first one. What travels here is the NAME, where the review
+ * says it is held, and the two sentences the report above already prints: an
+ * ABSENCE and a document to ask for, neither of which is a valuation. The
+ * emitter refuses to write a numeric field, and `reviewGaps.test.ts` asserts
+ * the refusal is load-bearing rather than merely true today.
+ *
+ * AN AGGREGATE IS LEFT OUT, for the reason `askFor` already states: `Private
+ * Equity ₹136.16 Cr` is a block the review itemises on another tab and no
+ * custodian issues a statement for it, so it is not a name anybody searches and
+ * there is no document to name.
+ */
+const GAPS_OUT = "src/data/reviewGaps.ts";
+
+/**
+ * SPELLINGS THE FAMILY USE THAT THE REVIEW DOES NOT PRINT.
+ *
+ * Committed, cited, and deliberately tiny. A search alias JOINS NOTHING and
+ * MOVES NO MONEY — it only decides whether a reader finds a sentence about an
+ * absence — so unlike `SECURITY_ALIASES` above, getting one wrong costs a
+ * wrong sentence rather than a wrong figure. It is still a hand-checked table
+ * and never a fuzzy tier: `shared/nameMatch.mjs` records what a token-overlap
+ * rule did to this corpus (`KIRANAKART TECHNOLOGIES` matched to `TATA
+ * TECHNOLOGIES`), and nothing here resembles anything.
+ */
+const SEARCH_ALIASES = new Map([
+  // The family asked for this holding by both names in the same sentence:
+  // "It is named either Bombay Stock Exchange or BSE." BSE Ltd. is the listed
+  // company that was the Bombay Stock Exchange, and the review prints only the
+  // short form — so a reader typing the long one finds nothing without this.
+  ["BSE Ltd.", ["Bombay Stock Exchange"]],
+]);
+
+const plain = (s) => s.replace(/\*\*/g, "").replace(/`/g, "");
+
+{
+  const gaps = [...notInBook, ...trulyAbsent]
+    .filter((l) => !l.aggregate)
+    .map((l) => ({
+      name: l.product,
+      aliases: SEARCH_ALIASES.get(l.product) ?? [],
+      custodian: l.advisor || null,
+      why: plain(custodianNote(l)),
+      ask: plain(askFor(l)),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  /**
+   * THE REFUSAL, STRUCK ON THE EMITTED OBJECT RATHER THAN TRUSTED TO THE MAP
+   * ABOVE. A future edit that adds `mv` to the projection fails the run instead
+   * of shipping a review valuation onto the dashboard.
+   */
+  for (const g of gaps)
+    for (const [k, v] of Object.entries(g))
+      if (typeof v === "number")
+        throw new Error(`reviewGaps: ${g.name} carries a numeric field "${k}" — the review's figures may never reach the dashboard`);
+
+  // The review's own as-of, read from the document's own filename rather than
+  // typed: it is the date the workbook calls itself.
+  const asOf = /as on (\d{1,2}) (\w+) (\d{4})/i.exec(WORKBOOK);
+  const REVIEW_AS_OF = asOf ? `${asOf[1]} ${asOf[2]} ${asOf[3]}` : null;
+  if (!REVIEW_AS_OF) throw new Error("reviewGaps: the workbook's filename no longer states its as-of date");
+
+  const ts = [
+    "// GENERATED by `npm run reconcile:review` — do not edit by hand.",
+    "//",
+    "// Every line the family's own consolidated review carries that NO STATEMENT",
+    "// in `source/` reports. It exists so a reader who searches this dashboard for",
+    "// one of these names is told why it is absent and which document would close",
+    "// it, rather than being shown an empty result they cannot tell from a defect.",
+    "//",
+    "// NOT A SOURCE, AND NOT ONE FIGURE OF ONE. The consolidated review is held",
+    "// out of the book by decision; what travels here is a NAME, a custodian and",
+    "// two sentences — an absence and a document to ask for. There is deliberately",
+    "// no value and no quantity on this type, and the generator throws rather than",
+    "// emit one. Nothing here reaches `glowData.ts`, any total, or any allocation.",
+    "",
+    "export interface ReviewGap {",
+    "  /** The review's own line name, verbatim. */",
+    "  name: string;",
+    "  /** Spellings the family use that the review does not print. Hand-checked. */",
+    "  aliases: string[];",
+    "  /** Where the review says it is held. Not a valuation. */",
+    "  custodian: string | null;",
+    "  /** Why this book carries no figure for it. */",
+    "  why: string;",
+    "  /** The one document that would close it. */",
+    "  ask: string;",
+    "}",
+    "",
+    "/** The as-of the review calls itself, read from its own filename. */",
+    `export const REVIEW_AS_OF = ${JSON.stringify(REVIEW_AS_OF)};`,
+    "",
+    `export const REVIEW_GAPS: ReviewGap[] = ${JSON.stringify(gaps, null, 2)};`,
+    "",
+  ].join("\n");
+
+  if (CHECK) {
+    const was = readFileSync(GAPS_OUT, "utf8");
+    if (was !== ts) { console.error(`${GAPS_OUT} would change — run \`npm run reconcile:review\``); process.exitCode = 1; }
+  } else {
+    writeFileSync(GAPS_OUT, ts);
+  }
+  console.log(`  review gaps       ${gaps.length} line(s) no statement reports -> ${GAPS_OUT}`);
+}

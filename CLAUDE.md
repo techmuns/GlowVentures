@@ -310,13 +310,13 @@ cash holding's genuinely-zero return both match, and both are correct.
   cell only, and an italic adjust row such as "Counted once"), and one
   `ExpandAllButton`. The columns, the sort and the drag stay `useTableView`'s,
   so a dragged column moves a parent, its children and the totals together.
-  See Stage 10bt.
+  See Stage 10bv.
 - `src/lib/privateBook.ts` — THE PRIVATE MARKET TABLE'S ONE MODEL. A folio is
   one account's view of one fund; a fund row, a member row and a section band
   are all built from folios, so no two can disagree. Fund rows are
   CONSOLIDATED and folio rows AS PRINTED, with the difference named on an adjust
   row; capital is never deduped; a total sums only what was reported and says
-  how much that covers. See Stage 10bt.
+  how much that covers. See Stage 10bv.
 - `src/lib/nav.ts` — THE ONE NAV TABLE, read by the sidebar AND by every page's
   breadcrumb, so the two cannot file a page under different groups.
   `src/components/PageNav.tsx` renders the back / forward / home controls and
@@ -1546,6 +1546,12 @@ statement has no rate column (§"the value column is a mark on 14 rows and par o
 the shares and did not buy them. A ₹0 cost would report the whole ₹12,351.24 Cr as
 profit at an infinite return.
 
+***THE PAGE IS ONE TABLE CARD SINCE Stage 10bt*** — *"Polycab could be just a
+simple table with all the columns and fields as required"* — so the hero, the five
+KPI tiles and the stacked cards the paragraphs below describe are gone, and every
+figure they printed is a column of the holding table, on the row it describes. The
+reasoning below about what the statement does and does not carry is unchanged.
+
 **THE PAGE IS THE HOLDING AND NOTHING ELSE — TWO CARDS HAVE SINCE BEEN REMOVED**,
 at the family's request, and the reasoning is kept here rather than on screen. One
 explained WHY the holding is ring-fenced; the other named Bharat's unreadable HDFC
@@ -1676,7 +1682,12 @@ can be harmed by losing — moved onto the promoter card's third tile**, where i
 sits BESIDE the group encumbrance it exists to be told apart from rather than two
 cards away from it, which is a better home than the one it came from.
 `check:pages` asserts that tile's dash, its reason and the group figure beside it
-as ONE claim, and the card's absence as another.
+as ONE claim, and the card's absence as another. ***AND IT MOVED A THIRD TIME AT
+Stage 10bt***: the promoter card became a table on its own tab, so the claim is on
+this demat's own Pledged cell — `this demat` under the heading, and a dash whose
+reason names the group figure as a different fact — while the group half is under
+the promoter table's heading (`group, not this demat`). Two claims on two tables,
+each asserted where it is drawn.
 
 The paragraph below is kept in the order it was learnt, because what it says
 about a card that can never be filled is still the rule this book follows
@@ -1724,7 +1735,12 @@ prints is not a boundary" failure, and they read that table's own node through
 `data-polycab-holders` now)*. Verified by breaking each in turn — an off-by-one
 tile, a demat count taken from rows, a weight over consolidated NAV, an unnamed
 account, a fabricated nil, and a silently dropped row — and watching exactly the right
-check fail.
+check fail. *(The KPI strip the first comparison read went at **Stage 10bt**; the
+demat rows are reconciled against `BOOK_POLYCAB` directly now, and against their
+own footer the moment there are two — while there is one, the footer's ABSENCE is
+asserted, because a total of one row is the row again. The share-of-block weights
+went with their column, which could only ever print 100% on a block held in one
+demat, and the check inverted to assert the column stays gone.)*
 
 **`ONLY=<route,route>` walks a subset of the sweep**, added for that
 verification: the discipline costs a build and a full 62-combination sweep per
@@ -8207,7 +8223,9 @@ two chose a name" (the Held via column). Four had no second home:
   **A sector page over ₹222 Cr of a ₹710 Cr book is an unexplained narrowing
   without it.**
 - **why Unclassified is unclassified** → onto the Unclassified row and its
-  legend entry, as a hover, which is where an absence's reason belongs.
+  legend entry, as a hover, which is where an absence's reason belongs. *(The
+  legend went at **Stage 10bt** — every row of it was a row of the table beside
+  it — so the reason rides on the table row, and on the Compare picker's row.)*
 
 `privateMV` and `unclassified` fed nothing but that paragraph and were DELETED
 with it rather than left computing the right number into no caller.
@@ -9127,6 +9145,11 @@ corner test allows. Re-measured on chords: `innerRadius` 56 → **66**,
 `outerRadius` 96 → **98**, `!tracking-normal` on the label, and the two lower
 lines OUT of the hole entirely — tightest slack **13.1px** on Consolidated and
 18.1px on Direct Equity, confirmed by screenshot.
+
+***THE DONUT IS THE LEFT HALF OF THE PAGE SINCE Stage 10bt***, drawn at 236px
+with a 70px inner radius, so the hole's three lines — label, total, count — sit
+with room to spare. The chord rule above is still the test a future change to its
+size must pass; the provenance line is the foot of the left half.
 
 **THE TWO LINES THAT LEFT THE HOLE DID NOT LEAVE THE PAGE.** A figure a reader
 acts on does not go away to fix a layout; it moves somewhere with room. The count
@@ -12819,7 +12842,11 @@ unencumbered** — and the two are one careless edit apart. So they are separate
 cards, the statement card's three dashes are untouched, and a third tile on the
 new card says in words that a group figure is not a statement about this
 account. `check:pages` asserts that the group pledge never fills the statement
-card's own pledge dash, and reintroducing exactly that bug fires it.
+card's own pledge dash, and reintroducing exactly that bug fires it. *(Separate
+TABLES behind one toggle since **Stage 10bt**, and the separation is unchanged:
+the demat's Pledged cell and the group's pledge column are still two claims, each
+naming the other as a different fact, and the harness case that fills the first
+from the second still fires.)*
 
 #### What the probe established, and the source that was refused
 
@@ -15428,7 +15455,7 @@ card and not in the table — and a call cannot be entered against them. Adding
 them as rows would put unvalued funds into a table whose footer sums market
 value, which is a decision for the family rather than this change.
 
-***CLOSED AT Stage 10bt.*** The fund table became the page's one master table,
+***CLOSED AT Stage 10bv.*** The fund table became the page's one master table,
 which already carried those funds as rows — in a closed "Not valued" section
 whose value cells are absent rather than summed, so nothing is added to a
 market value. Every fund-level row now carries a Capital call cell, and a fund
@@ -15554,7 +15581,541 @@ private holding reports a cost), one on the not-found drill-down and one on
 `stock-qty` (no row there carries a pledge). The count did not move because #69
 adds no route, and it is recorded as the same only because it was measured again.
 
-### Stage 10bt — PRIVATE MARKET IS ONE TABLE, AND THE STANDARD EVERY OTHER TABLE ADOPTS
+### Stage 10bt — POLYCAB IS ONE TABLE, AND SECTOR COMPOSITION IS TWO HALVES
+
+*"Look at how ugly the polycab tab is, You have made it too busy for no reason.
+Polycab could be just a simple table with all the columns and fields as
+required, and also match it with the exact UI upgrades that we're doing for
+master tables in the private market tab and the portfolio tab."* · *"In this
+sector composition tab this compare sectors needs to be a subtab next to direct
+equity, you have made the pages too busy and why not give this whole table of
+Sector breakdown next to this pie chart table by splitting the page into two
+parts right and left, you are unnecessarily taking a lot of realestate."*
+
+Two pages and one complaint: each printed the same figures several times over and
+spent most of its height on chrome. **NOT ONE FIGURE ON EITHER PAGE WAS
+RE-MEASURED** — `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` byte-identically, and the only arithmetic that changed is
+two defects the rewrite fixed, both named below.
+
+#### 1. Polycab — one card, three tables, a toggle
+
+**BEFORE:** a hero with four pills (ring-fenced, `STATEMENT · as of` with the mark,
+the ISIN, the price's live status), five KPI tiles (Market value, Shares held,
+Statement mark, Cost basis, Market price), and four stacked cards — per demat, per
+holder, what Polycab declared, and the promoter group with three tiles of its own.
+The value, the share count and the mark each printed three times.
+
+**NOW:** the page header with ONE pill — `Ring-fenced · excluded from portfolio
+totals`, because a reader arriving from the nav has to be told why a ₹12,000 Cr
+figure is not in the headline two pages over — and ONE card whose own header
+carries a toggle, `Holding · Corporate actions · Promoter group`, at `?view=`.
+That is Private Market's master-table shape (Stage 10bf): the control is in the
+card that draws it and ONLY the active table is in the DOM, which is what makes
+the page short and what `check:pages` counts. Every table sorts and every column
+but the first drags (Stage 10bh), the heading row is sticky, and the card scrolls
+inside itself so the page never does.
+
+**EVERY FIGURE A TILE PRINTED IS A COLUMN, ON THE ROW IT DESCRIBES:**
+
+| Was | Now |
+| --- | --- |
+| Shares held tile | the Shares column |
+| Statement mark tile + the `STATEMENT · as of` pill | the Mark column with `statement` under its heading, and its derivation (value ÷ units, no rate column, not a live price) in that note's hover; the as-of is a column of its own |
+| Market value tile | the Value column, `statement` |
+| Cost basis tile | the Cost column — `AbsentCell` with its reason, never ₹0 |
+| Market price tile + the live-status pill | the CMP column, its basis under the heading: `live · BSE`, `fetching` or `last close · BSE` |
+| — | Day (the exchange's own move) and Market value `at CMP` — the only figure on the page a live price may move (§6) |
+| the ISIN pill | under the security's name |
+| the Per holder card | the Holder column — it restated one row as a second one-row table |
+| Share of the block | GONE — with the block in one demat it could only ever print 100% |
+
+**THE PLEDGE CLAIM MOVED A THIRD TIME, AND IT IS THE ONE THAT HAD TO.** Stage 10bq
+put it on the promoter card's third tile, BESIDE the group encumbrance it exists to
+be told apart from. That card is a table on another tab now, so the claim is on
+this demat's own Pledged cell — `this demat` under the heading in words, and a dash
+whose reason says both that the NSDL statement prints no pledge column AND that the
+promoter group's pledge is a group figure, not a statement about this account. The
+group half is under the promoter table's own heading (`group, not this demat`) and
+in its card's subtitle. Two claims on two tables, each asserted where it is drawn;
+neither implies the other, which is why neither is struck on the other's tab.
+
+**A DASH OVER A FIGURE THE SOURCE DOES CARRY IS THE ABSENCE RULE RUN BACKWARDS, and
+the old declared table did it five times.** Five of Polycab's eight dividends carry
+a book-closure window and no record date, and the record column printed *"the
+exchange publishes no record date"* over all five while the store held the window.
+It is `Record / book closure` now and prints whichever the exchange published.
+
+**THE FOOTER DRAWS ONLY WHERE THERE IS SOMETHING TO ADD UP.** A total of one row is
+the row again. The table is written over the collection, so the day Bharat's HDFC
+statement arrives as a text PDF it is a second row with no code change and the
+footer appears with it — and `check:pages` asserts the footer ties to its rows the
+moment there are two, and is ABSENT while there is one.
+
+**AND THE CHECKS FOLLOWED THE TABLES THEY READ.** Three routes (`polycab`,
+`polycab-dividends`, `polycab-promoter`), because only the active table is in the
+DOM — the same reason the private book is walked at three addresses.
+`polycabViewChecks(expected)` is spread into all three: the toggle offers exactly
+the three tables, this address opens on its own, exactly ONE table and ONE card are
+drawn (a build that stacked all three under a toggle filtering nothing renders
+every figure correctly and satisfies every other check), and the page itself does
+not scroll. Every claim the old tiles and cards carried is still made, struck on
+`data-cell` handles because a row is drawn in the READER's column order; the ones
+whose subject was REMOVED invert, so a restored tile, the per-holder table, the
+share-of-block column or the second-statement card fails by name. The refresh date
+on the sources line is REQUIRED rather than excused — "Last refreshed" over nothing
+is the one thing that line must never print — and it is matched through a
+`dmyRe` that accepts ICU's `Sept` as well as `Sep`, so a runtime changing its locale
+data cannot fail a correct page.
+
+#### 2. Sector Composition — two halves, three tabs
+
+**BEFORE:** the donut with a two-column legend of every sector, three full-width
+partition cards, a full-width sector table, and Compare sectors as a card at the
+FOOT of the page — so comparing four sectors meant scrolling past everything else.
+
+**NOW:** `Consolidated · Direct Equity · Compare sectors` beside the title, at
+`?view=`, and a grid of two halves — the donut and what it is made of on the left,
+the table on the right, 3 : 5. Each half scrolls inside itself on a short window;
+the page itself does not scroll at the sweep's 1500×1000, and below `lg` the halves
+stack, which is right on a phone.
+
+**THE LEGEND WENT, AND NOTHING WENT WITH IT.** Every row of it — swatch, sector,
+weight, value — is a row of the table beside it, which also sorts, expands and says
+where each figure came from. Two lists of the same twelve sectors on one screen was
+the real estate. The Unclassified reason that rode on the legend entry (Stage 10aq)
+is on the table row, and on the picker's row on the Compare tab.
+
+**ONE SECTOR IS ONE COLOUR EVERYWHERE.** The swatch is keyed on a sector's place in
+the CONSOLIDATED order on every tab, so the chart, the table, the picker and the
+comparison agree. `CHART_COLORS[i % n]` keyed on a rendered index would repaint
+every swatch the moment a reader sorted the table — and the table sorts a COPY of
+the rows for exactly that reason.
+
+**THE THREE PARTITION CARDS ARE STACKED FIGURES IN THE LEFT HALF**, labels and
+lines unchanged — which is why every check that reads them (the three that rebuild
+the book, the excluded card's own total, the left-out card's route to
+Consolidated) passed untouched. They are a label, a figure and one line each; three
+full-width cards spent a row of the page on three numbers.
+
+**COMPARE IS A TAB, AND IT OPENS ON SOMETHING.** Its left half is the donut and a
+picker of every sector (largest first; a row or a wedge adds or removes one, up to
+four) and its right half is a TRANSPOSED table of BOTH sets at once — Consolidated
+(total exposure, weight, the measured and the derived halves, companies, largest
+company) and Direct Equity (value, weight, holdings, the cost reported and how many
+holdings it covers, return on cost, largest holding). It opens on the four largest
+sectors rather than on an empty table asking to be filled — a default of the
+largest by value is an ORDERING, not a judgement. A sector the family reaches only
+through funds prints its measured half as `₹0 only via funds`: a COMPUTED zero, and
+its reason is in the cell rather than in a hover.
+
+**AND THE OLD COMPARE CARD WAS PRINTING A FALSE SENTENCE, NOT ONLY A MISSING
+FIGURE.** Its sector rows carried `cost: null, pnl: null, returnPct: null,
+withoutCost: count` on BOTH views, so Cost, P&L and Return were always a dash — and
+the row beneath them, *"Of which report no cost"*, printed **N of N** on the Direct
+Equity view over sectors where some holdings DO report one. Measured on this book,
+Consumer Discretionary reads `₹47.6 L · 4 of 7` now: four of its seven own-account
+holdings carry a cost, where the old card told the family none did. A confidently
+wrong count is worse than a dash, because a reader goes looking for documents that
+are already in hand.
+
+**THE DIRECT EQUITY RETURN IS STRUCK WHERE ITS OWN COLUMNS CAN CARRY ONE.** The old
+table rendered `fmtPct(null)` — a bare dash inside a formula popover whose worked
+line read `— ÷ — × 100`, which is the absent-without-a-reason failure `Absent.tsx`
+exists to prevent. `rollSectors` now strikes a return only where the holdings that
+report a cost account for the whole sector (`costCoversSet`, the one test Morning
+CIO and the Portfolio Monitor share), and every other cell is a dash naming which
+costs are missing. Consolidated still refuses a return throughout, for its own
+reason — its value is part derived. Measured on this book, ONE Direct Equity
+sector is fully costed: Consumer Staples, all three of its own-account holdings
+reporting a cost, reads **−30.28%** — a real measurement the old table withheld
+behind a bare dash. The other eight are dashes naming how many of their holdings
+report a cost (`4 of 7`, `1 of 5`, `1 of 10`, or none).
+
+**AND THE GATE IS CHECKED — WHICH, IN THIS CHANGE'S FIRST DRAFT, IT WAS NOT.** The
+first check on that column accepted any signed figure, so dropping the `covered &&`
+term from `rollSectors` — striking a return over a sector's costed FEW and printing
+it beside the value of all of them — would have passed it while putting a return on
+Consumer Discretionary, Industrials and Financials. The sweep cannot re-derive a
+sector's coverage without re-implementing the three sector tiers, so the return
+cell carries the coverage it is gated on (`data-costed`, `data-holdings`,
+`data-uncosted-mv`, `data-mv`), the check re-expresses `costCoversSet`'s 0.5% over
+it rather than importing it, and the attributes are tied to the row's own printed
+Positions count so a cell cannot carry one set's coverage beside another's row. A
+dash's reason must state the row's own counts, because *"a cost is reported for 4
+of the 7 holdings"* tells a reader which documents to go and find. Found by reading
+the change back, before the bug pass rather than after it.
+
+**EVERY CLAIM ABOUT THE ASK IS GEOMETRY OR STRUCTURE**, because not one word on the
+page differs between a table beside the chart and a table under it, or between a
+Compare tab and a Compare card. `sectorLayout` reads the grid's own `.card`
+children through `data-sector-layout` rather than by their titles (the right card's
+title changes with the tab), and `sectorLayoutChecks(expected)` is spread into all
+three routes: three tabs, in order, beside the title's own line, this address on
+its own; two cards side by side on one line with the table the wider half; the page
+not scrolling; and the right half's table not cut off at the right — a table the
+narrower card clips is the real estate the ask was about, arriving sideways.
+`SECTOR_TABLE_TAB` holds the two claims the table tabs share: the legend stays gone
+(a list in the left half that is not the picker) and Compare is a TAB (no picker
+and no comparison drawn there). The Compare tab's own checks are ARITHMETIC on
+figures the page prints: a sector's two halves add to its total, its weight is that
+total over the donut's, and the Direct Equity rows sit inside the book's own
+own-account set and are weighted over it — a comparison keyed to the wrong set
+renders perfectly well-formed cells, and only the relations between them can see
+it. The Consolidated return check used to slice the page between "Sector
+breakdown" and the footer's opening words — a footer that went at Stage 10ap, so it
+had been reading the whole rest of the page ever since; it reads each row's own
+`data-cell="return"` now.
+
+#### Two review findings — one valid, one not reproducible and still worth a check
+
+**THE CARD CALLED THE RECORD "WHOLE SINCE LISTING" WHETHER OR NOT IT WAS.** Valid.
+The subtitle of the corporate-actions card was a constant. The builder has a
+supported path — the exchange's identity not established — that keeps the stored
+actions with `actionsComplete: false`, and on it the subtitle called a possibly
+truncated list complete while the bonus/split line beneath it correctly refused
+to. Both now read the same flag (`usePolycabLive().complete`); the incomplete
+wording says the latest refresh could not confirm the record is whole.
+`check:pages` asserts it against the committed store in BOTH directions, off the
+subtitle's own `data-polycab-card-sub` node. **The incomplete branch is one this
+book never renders**, so it was exercised once on purpose: the store flipped to
+incomplete with the page untouched sweeps CLEAN, which is what says the check
+accepts the right wording rather than merely rejecting the wrong one.
+
+**"THE CARD IS NOT HEIGHT-CONSTRAINED, SO `<main>` SCROLLS" — MEASURED AND NOT
+REPRODUCIBLE, AND THE CHECKS COULD NOT HAVE SAID SO.** The card is a flex child of
+the page's `flex h-full flex-col` root with `min-h-0` and the default
+`flex-shrink: 1`, so it does shrink. At a 1500×480 window the page does not scroll
+on any of the six addresses, and the table's own scroller inside the card holds
+the rest: 141px on the corporate actions, 268px on the promoter quarters, 223,
+114 and 238px on the three Sector Composition tabs. The holding table (one row)
+fits.
+
+What the finding exposed is real anyway: **at the sweep's 1000px every one of
+these tables fits whole**, so "the page does not scroll" could not tell a card
+that shrinks and scrolls inside itself from one that simply grew with its content.
+`SHORT_WINDOW` measures the same page at `SHORT_H` (480px) and restores the
+viewport before the invariants and the screenshot: the page must not scroll, no
+card may spill past its own box, and a table that does not fit must be held by an
+on-screen scroller inside its card. It checks that the window really WAS short,
+because a resize that silently did nothing would measure the 1000px page again and
+pass by asserting nothing.
+
+#### The bug-reintroduction pass, and the two cases that came back CLEAN
+
+Polycab: **22 cases, every one fires.** 20 fire a sweep invariant and 2 only the
+suite — the pledge defaulting to 0 and the store's ISIN diverging — both invisible
+on screen by construction, as Stage 10bk records. Case 21 (the subtitle claimed on
+an incomplete record) fires the subtitle check; case 22 (the card set to
+`flex-none`, the reviewer's shape) fires the short-window check on the two tables
+that do not fit, and correctly NOT on the holding table, which fits either way.
+
+Sector Composition: **14 cases, every one fires — two of them only after a second
+look, for two different reasons.**
+
+- **CASE 11 WAS A CHECK THAT COULD NOT FAIL.** The tabs moved into the header's
+  SUBTITLE slot came back clean: the check asked only "to the right of the title
+  and on its line", and a `w-full max-w-2xl` subtitle fits beside the crumb and the
+  title on a wide header, so the tabs landed at the far right of the row — measured
+  **489px** from the title, still on its line — and satisfied every clause. The
+  check requires ADJACENCY now (≤32px; where the tabs belong the gap measures 9px,
+  the header's own `gap-x-2.5`) and fires on all three tabs. The comment beside it
+  first said 900px, a figure nobody had measured; it says 489px because that is
+  what the measurement says.
+- **CASE 14 WAS A PATCH THAT DID NOT CREATE THE BUG.** Its first draft removed the
+  grid's `minmax(0,1fr)` row and swept clean — not because the check was blind but
+  because nothing changed: an `auto` row over items with `min-height: 0` only grows
+  into the free space a definite-height grid has, so the page still fit at 480px
+  (measured, main scroll 0). The cards' own `max-h-full` is the cap; without it
+  both halves grow — measured, main scrolls 261px on `/sectors` and 383px on
+  Compare at 480px, and 0 at 1000px, where no other check can see it — and the new
+  check fires on all three tabs. **A reintroduction that does not reintroduce the
+  bug is a clean run that proves nothing**, and only a measurement of the patched
+  page tells it apart from a blind check.
+
+Both harnesses take `CASES=` now, so one case is re-run alone rather than paying a
+build and a sweep for every case to re-check one.
+
+#### Merged with main, and the letter collided again
+
+**#71 took `10bs` while this branch held it.** Main merged first and keeps it; this
+section is `10bt`. Fourteen lines named `10bs` outside the two sections and each
+was classified by whether it exists verbatim on main: six were this branch's (the
+Polycab page paragraph, Stage 10bq's pledge claim, the six-invariants paragraph,
+Stage 10bk's two cards, Stage 10at's donut and Stage 10aq's legend) and moved;
+eight were main's and were left alone. The stage headings then differ from main's
+by `10bt` alone, with main's ten historical duplicates unchanged.
+
+**THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS**, so it was
+read rather than trusted: 81 keys, none duplicated, the exact union of both sides
+— the two this branch adds (`sectorLayout`, `shortWindow`) beside main's, and main
+added none. No generated file was touched by either side, and `npm run
+build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically
+on the merged tree.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` · `check:family` **86/0** · `check:pages` **198 combinations
+clean** on the merged tree, with the eight evidenced abstentions main's own sweep
+carries and **not one of this change's own**. This branch's pre-merge sweep was
+194 — its three routes (`polycab-dividends`, `polycab-promoter`,
+`sectors-compare`) across both themes on top of its base — and #71 adds two
+(`private-market-calls`, `private-market-calls-off`), so 198 reconciles; it is
+recorded because it was measured again, not because it adds up.
+### Stage 10bu — BSE IS THEIRS, NO STATEMENT REPORTS IT, AND THE SCREEN NOW SAYS SO
+
+*"Open PR and do not merge until i tell you to."* · *"According to the client,
+BSE is a holding for them and it is also provided for in the statements that
+they have provided us. But it is not visible anywhere on the dashboard… check
+why we cannot find BSE as a holding. Find the root cause of it and fix it. It is
+named either Bombay Stock Exchange or BSE."*
+
+**THEY ARE RIGHT THAT THEY HOLD IT AND WRONG THAT A STATEMENT CARRIES IT, AND
+SEPARATING THOSE IS THE WHOLE OF THE ANSWER** — because the two need completely
+different work, and only one of them is code.
+
+#### 1. Where BSE actually is, measured rather than reasoned about
+
+| Searched | BSE-the-COMPANY |
+| --- | --- |
+| **251 source PDFs**, every ZIP expanded, read with pdfjs | **0 hits.** All 55 matches are the EXCHANGE COLUMN on a trade row (`Thermax Ltd BSE 304.000`) or the broker's own `SEBI Regn. No.(BSE/NSE/MCX/NCDEX)` line |
+| the **8 encrypted** ones, which need `GLOW_PDF_PASSWORDS` | read at ingest — all 8 resolve to documents in `public/audit/`, and the archive carries no BSE and **no "Bombay" at all** |
+| **7 spreadsheets** | **one hit, and it is the finding** — see below |
+| `INE118H01025`, BSE Ltd.'s own ISIN | **0**, in `source/` and in the archive |
+| the **3 text-less PDFs** | the ones this file already documents: Bharat's HDFC scan (4 JPEG pages, and **no value column at all**) and the two trust statements, read by rendering, one Swapeco line each |
+
+**THE ONE HIT IS THE FAMILY'S OWN CONSOLIDATED REVIEW**: `BSE Ltd.`, 40,000
+shares, **₹15.46 Cr**, Ajay Jaisinghani, via MOPWM, coded `Direct Equity - Non
+MO` — and its own transaction history reconciles to that closing quantity
+exactly: 13,500 bought 19 Jul 2023, 9,500 more 23 Oct 2024, a 2:1 bonus on 23
+May 2025 and 29,000 sold 26 Aug 2025. **That workbook is NOT A SOURCE — by
+decision**, so the book is
+right to carry nothing: a figure for it would be the fabrication this whole book
+exists to prevent.
+
+**AND THE RECONCILER HAD ALREADY SAID ALL OF IT.** `docs/REVIEW-RECONCILIATION.md`
+has carried BSE Ltd. in section C2 (*"no statement in `source/` reports this"*)
+and on the D1 ask list (*"held at Motilal Oswal; the drop carries a holding
+statement for three of its demat accounts and a transaction tape only for a
+fourth"*) for as long as that report has existed. **Nothing was wrong with the
+book, the archive or the analysis. What was wrong is that a reader could not
+reach any of it from the screen.**
+
+#### 2. So the defect is the SCREEN, and it is one this file has already named
+
+The family typed BSE into the holdings pick-list and got:
+
+> **No holdings match “BSE”.**
+
+which is indistinguishable, to them, from the dashboard having lost a ₹15 Cr
+position they know they own. That is the Fractal Analytics defect one layer up
+— *"the family opened Fractal Analytics and saw four dashed tiles and asked
+whether the data was absent or the dashboard was buggy. **That question is the
+defect**"* — and it is answered by the same rule: *a reader who cannot tell "no
+custodian sent this" from "the dashboard is broken" assumes the second.*
+`costWhy` names the custodian on a cost cell for exactly this reason. **An empty
+search result is an absent measurement, and it owes the same sentence.**
+
+#### 3. `src/data/reviewGaps.ts` — emitted by the reconciler, not by a second reader
+
+`npm run reconcile:review` now writes the module beside the report, and
+`custodianNote` and `askFor` were **hoisted to module scope so both read the
+same two functions**. Two copies would be two chances for the ask list and the
+dashboard to name different documents for one line — the drift
+`registerRead.mjs` was extracted to stop, one workbook over. The hoist was
+verified as behaviour-neutral BEFORE anything was added: the report regenerates
+**byte-identically**.
+
+**`--check` IS THE CONTROL RUN** and covers both outputs, the convention every
+other generator here follows. It is a no-op.
+
+**NOT ONE FIGURE OF THE REVIEW'S CROSSES OVER, AND THAT IS THE WHOLE LICENCE FOR
+PUBLISHING ANY OF IT.** `ReviewGap` has no value and no quantity — only the
+name, where the review says it is held, and the two sentences the report already
+prints, neither of which is a valuation. Three guards, because they fail
+differently:
+
+- the **emitter throws** on a numeric field, so a future edit that adds `mv` to
+  the projection fails the run rather than shipping a review valuation;
+- `reviewGaps.test.ts` asserts the emitted TEXT carries no `₹` and no crore or
+  lakh figure — a value smuggled through prose is not a schema change;
+- and `check:pages` asserts the same of what RENDERS, which is the other end.
+
+**AN AGGREGATE IS LEFT OUT**, for the reason `askFor` already gives: `Private
+Equity ₹136.16 Cr` is a block the review itemises on another tab and no
+custodian issues a statement for it, so it is neither a name anybody searches
+nor a document anybody can send. 44 lines remain.
+
+#### 4. The alias is committed and cited, and there is still no fuzzy tier
+
+The family named it twice in one sentence — *"either Bombay Stock Exchange or
+BSE"* — and the review prints only the short form, so a reader typing the long
+one finds nothing. `SEARCH_ALIASES` is one entry with that quotation beside it.
+
+**A SEARCH ALIAS JOINS NOTHING AND MOVES NO MONEY**, which is what makes it a
+different object from `SECURITY_ALIASES`: it decides only whether a reader finds
+a sentence about an absence, so getting one wrong costs a wrong sentence rather
+than a wrong figure. It is still a hand-checked table. `reviewGapsFor` matches
+by SUBSTRING IN BOTH DIRECTIONS and nothing looser — `shared/nameMatch.mjs`
+records what a token-overlap rule did to this corpus (`KIRANAKART TECHNOLOGIES`
+to `TATA TECHNOLOGIES`), and the bug pass below reproduces it here: the tier
+matched `Deep Industries` to `Man Industries` and to `Manorama Industries`.
+
+A one-character query matches nothing: at that length a substring rule names
+half the list, which is noise rather than an answer.
+
+#### 4b. AND THE NOTE MAY NOT CLAIM A NAME THE BOOK MAY HOLD UNDER A CLIPPED ONE
+
+**FOUND BY READING THE 44 NAMES RATHER THAN BY A CHECK, and it was live.** The
+list carries `Onesource Specialty Pharma` — and the family's own screenshot of
+the defect shows `Onesource Special` in their table at ₹8.15 Cr. The book's row
+is `ONESOURCE SPECIAL-EQ`, 48,000 shares, ₹8.61 Cr: a DEPOSITORY'S CLIPPED
+SPELLING of the same company. Reproduced against the running page — searching
+the review's spelling returned 0 options and a note saying no statement reported
+it, **about a position one search away**. That is worse than the silence this
+change replaces, because it is a false statement rather than no statement.
+
+**THE RECONCILER IS RIGHT AND THE SCREEN WAS WRONG, WHICH IS WHY THE FIX IS NOT
+IN THE JOIN.** `shared/nameMatch.mjs`'s prefix tier runs ONE WAY on purpose, and
+its own comment records why: accepting the reverse matched `Vedanta Power`,
+`Vedanta Iron & Steel` and `Vedanta Oil & Gas` onto the single book row named
+`Vedanta` — four demerged companies reported against 12,909 shares of their
+former parent. Loosening it would re-commit that.
+
+So the SUPPRESSION tier is looser than the JOIN tier, deliberately, and the
+asymmetry is the argument: **there a weak match publishes a figure; here it only
+decides whether to stay quiet.** Suppressing too much costs the silence a reader
+already had; suppressing too little tells them their own holding is missing.
+`reviewGapsFor` therefore withholds any gap whose key is prefix-related to a
+book position's in EITHER direction, or on the same letters with the separators
+removed.
+
+**IT WITHHOLDS 8 OF THE 44, AND THREE OF THOSE ARE REAL GAPS.** Five are the
+clipped spellings it exists for — Onesource, Bharat Parenteral, Infinium Pharma,
+Kaynes Technology, Zaggle Prepaid — and three are Vedanta's spin-offs, which the
+book genuinely does not hold and which this rule declines to claim anyway,
+because nothing here can tell a clipped name from a demerged one without the
+hand-checked abbreviation table this file already names as the remedy. **Three
+real answers withheld rather than one false one published**, stated rather than
+glossed.
+
+**AND IT IMMEDIATELY BROKE A CHECK OF MY OWN, which is the same lesson one level
+down.** The fuzzy-tier suite check carried `"vedanta"` as its anti-vacuity probe
+— *the probes must actually find gaps, or the check passes by matching nothing*
+— and Vedanta is precisely what the new rule withholds, so a correct build
+failed. A probe list that names a case BY HAND goes stale the moment the rule it
+was written against moves; the probes are derived from the claimable list now.
+
+#### 5. Three searches are wired, ONE is walked, and the other two are guarded
+
+`AbsentFromBook` lives in `Absent.tsx` because it is the whole-holding form of
+everything already there, and it is rendered by the Portfolio Monitor's
+pick-list, Family & Entities' holdings search and the `/holdings` filter.
+
+**ONLY THE FIRST IS DRIVEN BY `check:pages`**, and that is stated rather than
+implied: reaching the other two needs a search that matches nothing, and no
+route types one. So the suite carries a SOURCE check that each of the three
+still renders it — crude, and it cannot tell a working note from a broken one,
+which is what the Monitor walk does on the shared component. What it catches is
+a caller that stopped rendering one at all, which is the half nothing else would
+report. Reintroducing exactly that fires it.
+
+#### 6. Ten bugs reintroduced, and TWO of them were defects in the checks
+
+`scripts/dev/absent-name-bug.sh`, committed so the next session's verification
+is one command. Restores BY COPY on a `trap … EXIT` — three of the files it
+patches are new and untracked, where `git checkout --` silently does nothing —
+**and rebuilds on the way out**, and reports a failed patch or a failed build as
+NOT A RESULT. A no-patch control runs first. **The work was committed before it
+ran at all**, which is Stage 10bm's own rule after a harness there destroyed a
+day of unversioned work.
+
+Eight fired first time. The two that did not are the return on running it:
+
+- **REMOVING `emptyNote` FROM THE MONITOR — THE ORIGINAL DEFECT, EXACTLY — LEFT
+  ITS OWN INVARIANT GREEN.** It returned a descriptive STRING on failure, and
+  the harness reads any truthy return as a PASS (`else if (!r)
+  invariants.push(desc)`). That is the Stage 10an defect, committed again in a
+  change written with that paragraph open, and only its two neighbours spoke.
+  Booleans now.
+- **AND "AN ORDINARY RESULT IS NOT GIVEN ONE" COULD NOT CATCH THE NOTE
+  RENDERING UNDER EVERY TYPO.** A query that MATCHES options never reaches the
+  empty state at all, so `emptyNote` is never called and the note is absent
+  whether or not the component guards itself — measured, dropping the guard
+  produced a completely clean sweep. What catches it is a query that empties the
+  list AND names no gap, which is what a typo does. Derived by reversing a real
+  name rather than typed, and the check abstains if it ever matches something.
+
+Two more defects were found by reading rather than by the harness:
+`REVIEW_GAP_BOOK.held` was computed and read by nothing once the probe moved,
+and was deleted with its reader; and the held-name probe was taken from the BOOK
+until it abstained on a correct page — `displaySecurity` rewrites a depository's
+clipped label into the AMC's published name (Stage 10az), so `Position.security`
+is routinely NOT what the control offers. It is read off the rendered options
+now.
+
+**AND CAPITALISING THE SENTENCE BROKE A CHECK, which is the `label-xs` trap
+again**: `innerText` returns the TRANSFORMED text, so a literal comparison
+failed a note carrying exactly the right words. Case-folded.
+
+**THE WALK LEAVES THE NOTE ON SCREEN** at the end, which is not tidiness: the
+contrast sweep resolves computed colour on what is RENDERED, and this is the
+only thing in the app drawing `text-champagne-400` inside a dropdown. A
+`champagne` variant with no light-mode remap has shipped twice here and both
+times it rendered only in a state no route walked.
+
+#### 7. What the family should actually be asked for
+
+**One document, and it is already named in `docs/REVIEW-RECONCILIATION.md`'s D1:
+Motilal Oswal holding statements for the demat and PWM accounts not in the
+drop.** The drop carries a holding statement for three of the family's Motilal
+demat accounts and, for the fourth — Ajay's main one, `1201090012539150` — only
+a TRANSACTION tape, whose closing balances carry quantities and no rates.
+
+**BSE IS ONE OF TWENTY LINES BEHIND THAT ONE DOCUMENT**, which is what makes it
+the ask worth putting in front of the family rather than a list of holdings to
+chase. The other two asks account for the rest of the 44: ten lines wait on
+Bharat's HDFC Bank NSDL statement AS A TEXT PDF RATHER THAN A SCAN, and fourteen
+on AMC folio statements or a CAS. The moment the Motilal one arrives, BSE leaves
+this list and enters the book with
+a figure struck by the institution that holds it — and `reviewGaps.test.ts`
+flips to saying so rather than passing over a sentence that has quietly become
+false.
+
+#### 8. Merged twice, and the second round brought BOTH predicted conflicts
+
+Held open at the family's request (*"do not merge until it tell you to"*), and
+main moved twice while it waited — #70 and #71, then #70 again as `8bcd2c8`.
+
+**THE FIRST MERGE WAS CLEAN, WHICH IS EXACTLY WHEN TO CHECK BY HAND**, and all
+three were: the `ctx` literal auto-merged and was PROVED a mechanical union
+rather than trusted (35 keys, nothing dropped from either side, nothing
+invented); the ten duplicated stage letters were byte-identical to main's own
+pre-existing ten, so none was introduced; and every generated file was
+re-derived byte-identically.
+
+**THE SECOND BROUGHT THE IDENTICAL PAIR THIS FILE HAS NOW RECORDED TWELVE
+TIMES**, and it is also what was blocking CI: `mergeable_state: "dirty"`, and
+GitHub cannot build `refs/pull/N/merge` on a conflicted PR, so the workflow
+never fired at all. The five runs GitHub showed for this branch were the
+PREVIOUS PR's, on a branch name reused — which reads as CI having passed until
+the head SHAs are compared.
+
+- **The `ctx` literal conflicted**, this time as a FRAGMENT of a two-line
+  literal rather than the whole of it, so a naive split on `{`…`}` throws. Split
+  on the continuation up to `})`, unioned, and each of the 37 keys then
+  confirmed to resolve to a declaration in the merged file — because a key
+  naming a probe that no longer exists throws inside every check and is reported
+  as a broken matcher on every route, not as a clean page. **Mine is
+  `absentName`; main's two are `sectorLayout` and `shortWindow`.**
+- **And the stage letter collided TEXTUALLY rather than silently**, because both
+  sides inserted at the same anchor — the one failure mode that announces
+  itself. Main's `10bt` merged first and keeps it; this section is `10bu`.
+  **Every one of the nine `10bt` references in the file is main's** — they name
+  Polycab-as-one-table and Sector Composition's two halves — and this section
+  references no letter at all, so none moved. Checked one at a time rather than
+  swept.
+
+### Stage 10bv — PRIVATE MARKET IS ONE TABLE, AND THE STANDARD EVERY OTHER TABLE ADOPTS
 
 *"This whole table has such an ugly ui … well-structured columns and rows so
 that it is easily expandable … a standard across the whole dashboard. And
@@ -15734,18 +16295,29 @@ of 7,500 units each is a question for the family — and the answer is §4c's
 duplicate policy, kept in one place for exactly this reversal, rather than
 anything on this page.
 
-**THE LETTER WAS CHECKED AGAINST MAIN'S TIP, AND COLLIDED FOR THE FOURTEENTH
-TIME.** This section was drafted as `10bs`; #71 merged first and keeps it, so
-this is `10bt`. Nothing else in the file named the draft's letter, so only the
-heading moved. The `ctx` literal in `check-pages.mjs` came through as a union
-(main's `callBuckets` and `callRows` beside this branch's probes), and twelve
-invariant hunks were resolved by INTENT rather than by side: main's reading of a
+**THE LETTER WAS CHECKED AGAINST MAIN'S TIP AT EACH MERGE, AND MOVED TWICE.**
+This section was drafted as `10bs`. #71 merged first and kept it, so it became
+`10bt` — and while this branch's own checks ran, #70 took `10bt` and #73 took
+`10bu`, so it is **`10bv`**. The second collision was TEXTUAL (both sides had
+inserted above Stage 10k), which is the failure mode that announces itself.
+Every line naming `10bt` was classified against main's own copy of this file
+before any moved: five are this branch's — its heading, the two Layout bullets
+for `TreeTable.tsx` and `privateBook.ts`, the note that closes 10bs's limit, and
+this paragraph — and moved; the other eleven are main's (Polycab as one table,
+Sector Composition's two halves) and were left alone.
+
+**THE `ctx` LITERAL IN `check-pages.mjs` CAME THROUGH AS A UNION BOTH TIMES.** At
+#71: main's `callBuckets` and `callRows` beside this branch's probes, and twelve
+invariant hunks resolved by INTENT rather than by side — main's reading of a
 tile's figure off its face and its counts out of its hover, this branch's
-reading of every table figure by the column its header names — and main's check
+reading of every table figure by the column its header names, and main's check
 of the removed scheme table's call counts DROPPED, because that table is not on
 this page; its two halves are asserted on `private-market-folios` (every capital
 account on one folio row, their calls every call in the register) and on the
-Transactions tab (the history, its count and its footer).
+Transactions tab (the history, its count and its footer). At #70 and #73: main's
+`absentName`, `sectorLayout` and `shortWindow` added — 82 keys, none duplicated,
+the exact union less the `schemeCalls` this branch removed with the table it
+read, and every key resolving to a declaration in the merged file.
 
 `build` · `tsc` · `test:ingest` · `test:family` · `check:family` **86/0** ·
 `check:pages` **194 combinations clean**, with eight evidenced abstentions · `npm run build-book` byte-identical — a table's

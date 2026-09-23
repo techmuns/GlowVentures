@@ -64,7 +64,7 @@ import { Auditable } from "@/components/Auditable";
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
 import type { Position } from "@/lib/types";
-import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
+import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 
@@ -1947,8 +1947,16 @@ export function PortfolioMonitor() {
         generosity.
       */}
       <div className="mb-2 flex flex-wrap items-center gap-1.5">
+        {/* A SEARCH THAT FINDS NOTHING SAYS WHY, WHERE THE BOOK KNOWS. The family
+            searched this control for BSE and were shown "No holdings match" — and
+            BSE Ltd. IS theirs: 40,000 shares on their own consolidated review,
+            reported by no statement in `source/`, so the book is right to carry
+            nothing and the screen was wrong to say nothing. `AbsentFromBook`
+            renders only where a review line answers the search, and never a
+            figure: the review is a cross-check, not a source. */}
         <MultiSelectFilter options={securityNames} selected={selected} onChange={setSelected} dense
-          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full" />
+          allLabel="All holdings" unit="holdings" placeholder="Search holdings…" className="w-56 max-w-full"
+          emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />
         <select value={entity} onChange={(e) => setEntity(e.target.value)} className="rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
           {entities.map((s) => <option key={s} value={s}>{s === "All" ? "All entities" : s}</option>)}
         </select>
