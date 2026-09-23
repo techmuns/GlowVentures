@@ -29,6 +29,12 @@ import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 // the extractor keyed a position — the same file both sides of the app read.
 import { securityKeyOf, stripDepositoryTail } from "../shared/securityKey.mjs";
 import { UPSTOX_INSTRUMENTS } from "../shared/upstoxInstruments.mjs";
+// THE FAMILY'S OWN PLACING OF THE FUNDS THEY HOLD, read as DATA — the committed
+// table, never the function that applies it. The ORDER the placing is applied
+// in (family, then private equity, then the SEBI category) is re-expressed
+// below in `fundSideOf`, so this sweep and the book are two derivations of one
+// rule and can disagree.
+import { FAMILY_MARKET_SIDE } from "../shared/aifCategory.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173";
@@ -1208,6 +1214,55 @@ const FAMILY_ENTITY = (() => {
  * Measured on this book: listed ₹655.82 Cr, private ₹37.88 Cr, and ₹16.69 Cr
  * over three funds no statement places on either side.
  */
+/**
+ * ── WHICH SIDE OF THE BOOK A FUND IS ON, RE-EXPRESSED ─────────────────────
+ *
+ *   "Also please note private market fund needs to be here in private market
+ *    only" — and the family said which funds those are, by what each invests
+ *    in: India SME, Baring, Transition Venture, Neo Infra and Sky Capital are
+ *    private; Carnelian Bharat Amritkaal, Delphi and the Founders Fund invest
+ *    in listed markets.
+ *
+ * The book applies it in `shared/aifCategory.mjs` (`fundMarketSideBasis`): the
+ * family's placing first, then a fund whose own paperwork names private equity
+ * or venture capital, then the SEBI category the statements print. This is the
+ * SECOND expression of that order, off the committed table and the printed
+ * words, so the pages and this sweep are two derivations and not one import.
+ * Hoisted because both the holdings split (`SIDE_BOOK`) and the capital
+ * register (`CAPITAL_BOOK`) are placed by it — a capital account and the
+ * fund's holding must land on one side.
+ */
+const sideCats = (t) => {
+  const out = new Set();
+  for (const m of String(t ?? "").matchAll(/\b(?:categor(?:y|ies)|cat)[\s‐-―-]*((?:III|II|I|[123])(?:\s*\/\s*(?:III|II|I|[123]))*)\b/gi)) {
+    for (const part of m[1].split("/")) {
+      const v = part.trim().toUpperCase();
+      if (v === "I" || v === "1") out.add("Category I");
+      else if (v === "II" || v === "2") out.add("Category II");
+      else if (v === "III" || v === "3") out.add("Category III");
+    }
+  }
+  return ["Category I", "Category II", "Category III"].filter((c) => out.has(c));
+};
+const sideIsPE = (name, a) => /\b(private equity|venture capital|growth equity|buyout)\b/i
+  .test([name, a?.providerEngagement, a?.strategy, a?.provider].filter(Boolean).join(" · "));
+/** The family's placing of one fund, or null. First match, on name + strategy + provider. */
+const familySideOf = (name, a) => {
+  const hay = [name, a?.strategy, a?.provider].filter(Boolean).join(" · ");
+  return FAMILY_MARKET_SIDE.find((d) => d.match.test(hay))?.side ?? null;
+};
+/** `"listed" | "private" | null` for one AIF, from its own name and account. */
+const fundSideOf = (name, a) => {
+  const fam = familySideOf(name, a);
+  if (fam) return fam;
+  if (sideIsPE(name, a)) return "private";
+  const u = [...new Set([...sideCats(name), ...sideCats(a?.providerEngagement)])];
+  const c = u.length === 1 ? u[0] : null;
+  if (c === "Category III") return "listed";
+  if (c === "Category I" || c === "Category II") return "private";
+  return null;
+};
+
 const SIDE_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
@@ -1232,17 +1287,18 @@ const SIDE_BOOK = (() => {
     };
     const isPE = (p, a) => /\b(private equity|venture capital|growth equity|buyout)\b/i
       .test([p?.security, a?.providerEngagement, a?.strategy, a?.provider].filter(Boolean).join(" · "));
+    /**
+     * THE FAMILY'S PLACING FIRST, then the paperwork — `fundSideOf` above. The
+     * local `cats`/`isPE` stay as they were written for the drill-down's own
+     * category read; the SIDE is decided in one place for this sweep.
+     */
     const sideOf = (p) => {
       const a = acc.get(p.accountId);
       if (p.assetClass === "Unlisted" || p.assetClass === "Structured Product") return "private";
       if (p.assetClass !== "AIF") return "listed";
-      if (isPE(p, a)) return "private";
-      const u = [...new Set([...cats(p.security), ...cats(a?.providerEngagement)])];
-      const c = u.length === 1 ? u[0] : null;
-      if (c === "Category III") return "listed";
-      if (c === "Category I" || c === "Category II") return "private";
-      return null;
+      return fundSideOf(p.security, a);
     };
+    void cats; void isPE;
     const seen = new Set();
     const ded = positions.filter((p) => {
       if (!p.dedupeGroup) return true;
@@ -1453,10 +1509,44 @@ const AIF_BOOK = (() => {
 const CAPITAL_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
-    const cs = bookArray(src, "BOOK_COMMITMENTS");
-    if (!Array.isArray(cs) || !cs.length) return null;
+    const whole = bookArray(src, "BOOK_COMMITMENTS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(whole) || !whole.length || !Array.isArray(accounts)) return null;
+    /**
+     * SCOPED TO THE PRIVATE-MARKET FUNDS, because the page is.
+     *
+     *   "Your dashboard should NOT classify these 15 capital accounts as
+     *    'private-market funds.'"
+     *
+     * Every capital account is placed by what its FUND invests in, through
+     * `fundSideOf` above; the ones in public-market funds are counted apart
+     * (`elsewhere*`) because the page NAMES them rather than dropping them.
+     */
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const cs = whole.filter((c) => fundSideOf(c.name, acc.get(c.accountId)) === "private");
+    const elsewhere = whole.filter((c) => fundSideOf(c.name, acc.get(c.accountId)) !== "private");
     const n = (f) => cs.filter((c) => c[f] != null).length;
+    const cr = (rows, f) => rows.reduce((t, c) => t + (Number(c[f]) || 0), 0) / 1e7;
     return {
+      wholeCount: whole.length,
+      elsewhereCount: elsewhere.length,
+      elsewhereCommittedCr: cr(elsewhere, "committed"),
+      elsewhereNames: [...new Set(elsewhere.map((c) => c.name))],
+      /** Every one of them placed on the LISTED side by the family's own word. */
+      elsewhereFamilyListed: elsewhere.length > 0
+        && elsewhere.every((c) => familySideOf(c.name, acc.get(c.accountId)) === "listed"),
+      committedCr: cr(cs, "committed"),
+      wholeCommittedCr: cr(whole, "committed"),
+      calledCr: cr(cs, "called"),
+      /**
+       * WHETHER CALLED AND INVESTED COVER ONE SET OF ACCOUNTS. Where they do not,
+       * their difference is a coverage gap and the page must say not to
+       * subtract them; where they do, saying so would be a false warning about
+       * a subtraction that is valid. Struck per account, never on the counts.
+       */
+      calledPaidSameSet: cs.every((c) => (c.called == null) === (c.paid == null)),
+      ids: cs.map((c) => c.accountId),
+      elsewhereIds: elsewhere.map((c) => c.accountId),
       count: cs.length,
       pendingOf: n("pending"),
       calledOf: n("called"),
@@ -1468,6 +1558,204 @@ const CAPITAL_BOOK = (() => {
       /** And the other path, over the accounts that print a called line only. */
       impliedCr: cs.filter((c) => c.called != null)
         .reduce((t, c) => t + (c.committed - c.called), 0) / 1e7,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHICH RETURN EACH PRIVATE FUND CAN SHOW, RE-EXPRESSED OFF THE BOOK ──────
+ *
+ *   "Just like you have this return methodology in portfolio monitor we need to
+ *    have it in private market table as well. The customer is confused about
+ *    what kind of return this is that we're showing."
+ *
+ * The page resolves each measure through `fundReturns.ts`. This is the SECOND
+ * expression of the same methodology, off `glowData.ts` alone: each fund's
+ * dated calls and payouts from its capital account, its value and cost from
+ * the book, each folio closing on its own valuation date. It is never imported
+ * — a check that calls the helper it is checking agrees with it by
+ * construction and reports nothing.
+ *
+ * The XIRR is solved here too, by bisection on the same ACT/365 NPV, so a page
+ * that dropped the payouts (and printed a LOWER rate that looks exactly as
+ * plausible) fails on the figure rather than on a label.
+ */
+const PM_RETURN_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const commitments = bookArray(src, "BOOK_COMMITMENTS");
+    if (![accounts, positions, commitments].every(Array.isArray)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const small = smallKeysOf(positions);
+    const current = positions.filter((p) => !small.has(p.securityKey)
+      && !(["AIF", "Mutual Fund", "ETF"].includes(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null));
+    const seen = new Set();
+    const ded = current.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const side = (p) => (p.assetClass === "Unlisted" || p.assetClass === "Structured Product") ? "private"
+      : p.assetClass !== "AIF" ? "listed" : fundSideOf(p.security, acc.get(p.accountId));
+    const priv = ded.filter((p) => side(p) === "private");
+    const capital = new Map(commitments
+      .filter((c) => fundSideOf(c.name, acc.get(c.accountId)) === "private")
+      .map((c) => [c.accountId, c]));
+    const DAY = 864e5;
+    const days = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY);
+    /** ACT/365 IRR by bisection, in percent; null where the flows do not bracket a root. */
+    const irr = (flows) => {
+      if (!flows.length) return null;
+      const t0 = Math.min(...flows.map((f) => Date.parse(`${f.date}T00:00:00Z`)));
+      const npv = (r) => flows.reduce((t, f) => t + f.amount / Math.pow(1 + r, (Date.parse(`${f.date}T00:00:00Z`) - t0) / (365 * DAY)), 0);
+      let lo = -0.999, hi = 100;
+      if (npv(lo) * npv(hi) > 0) return null;
+      for (let i = 0; i < 300; i++) {
+        const mid = (lo + hi) / 2;
+        if (npv(lo) * npv(mid) <= 0) hi = mid; else lo = mid;
+      }
+      return ((lo + hi) / 2) * 100;
+    };
+    const groups = new Map();
+    for (const p of priv) groups.set(p.securityKey, [...(groups.get(p.securityKey) ?? []), p]);
+    const funds = [];
+    for (const [key, g] of groups) {
+      const cost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
+      const mv = g.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
+      const costCoversAll = g.every((p) => p.costBasis != null);
+      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
+      let gap = false, unknown = false, withAccount = 0;
+      const flows = [];
+      const calls = new Set();
+      let paidOut = 0, first = null, valuedAt = null;
+      for (const p of g) {
+        const v = acc.get(p.accountId)?.asOf ?? null;
+        if (!v) { gap = true; continue; }
+        valuedAt = !valuedAt || v > valuedAt ? v : valuedAt;
+        const c = capital.get(p.accountId);
+        if (!c) { unknown = true; continue; }
+        withAccount++;
+        const cs = Array.isArray(c.calls) ? c.calls : [];
+        const sumCalls = cs.reduce((t, k) => t + (Number(k.amount) || 0), 0);
+        if (!cs.length || p.costBasis == null || Math.abs(sumCalls - p.costBasis) > 1 || cs.some((k) => k.date > v)) {
+          gap = true; continue;
+        }
+        for (const k of cs) {
+          flows.push({ date: k.date, amount: -k.amount, kind: "call" });
+          calls.add(`${p.accountId}|${k.date}`);
+          first = !first || k.date < first ? k.date : first;
+        }
+        if (c.payouts == null) { unknown = true; continue; }
+        for (const r of c.payouts) {
+          if (r.date > v) continue;             // inside the value already
+          flows.push({ date: r.date, amount: r.gross, kind: "payout" });
+          paidOut += r.gross;
+        }
+        flows.push({ date: v, amount: p.marketValue, kind: "value" });
+      }
+      if (withAccount === 0) gap = true;
+      else if (withAccount < g.length) gap = true;
+      const window = first && valuedAt ? days(first, valuedAt) : null;
+      const complete = !gap && !unknown && first != null;
+      const rate = complete ? irr(flows) : null;
+      // THE SAME FLOWS WITH THE PAYOUTS TAKEN OUT — what a page that forgot
+      // them would print. Kept so the check can prove it tells the two apart.
+      const rateNoPayouts = complete && paidOut > 0
+        ? irr(flows.filter((x) => x.kind !== "payout"))
+        : null;
+      const tranches = calls.size;
+      // THE FAMILY'S RULE, re-expressed: a gap → the holding-period return; more
+      // than one call or cash paid back → XIRR where it can be annualised;
+      // one call, nothing back, a year or more → CAGR; anything else → HPR.
+      let auto;
+      if (hpr == null) auto = null;
+      else if (!complete && gap) auto = "HPR";
+      else if (tranches > 1 || paidOut > 0) auto = !unknown && window != null && window >= 365 && rate != null ? "XIRR" : "HPR";
+      else auto = !unknown && window != null && window >= 365 && 1 + hpr / 100 > 0 ? "CAGR" : "HPR";
+      // AND WHAT THE XIRR COLUMN MAY SHOW: the rate where the record is
+      // complete and spans a year; the holding-period return, TAGGED, where one
+      // call and nothing back sits under a year; otherwise a dash.
+      const xirr = !complete || rate == null ? { shown: false }
+        : window >= 365 ? { shown: true, tag: null, pct: rate }
+        : tranches === 1 && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
+        : { shown: false };
+      funds.push({ key, security: g[0].security, mv, cost, hpr, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
+    }
+    const pooledIn = funds.filter((f) => f.complete);
+    const pooled = pooledIn.length ? irr(pooledIn.flatMap((f) => f.flows)) : null;
+    const pooledWindow = pooledIn.length
+      ? days(pooledIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
+        pooledIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
+      : null;
+    const costed = priv.filter((p) => p.costBasis != null);
+    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis), 0);
+    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
+    return {
+      funds, byKey: new Map(funds.map((f) => [f.key, f])),
+      pooledCovers: pooledIn.length, pooled, pooledWindow,
+      footHpr: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      paying: funds.filter((f) => f.complete && f.paidOut > 0).length,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT A READER TYPES INTO THE SEARCH, AND WHERE IT MUST TAKE THEM ────────
+ *
+ * Derived from `glowData.ts` on every run: the largest current holding (typed
+ * as the first long word of its key), an ISIN only one holding carries, the
+ * largest PMS mandate's account number, the largest member by full name, and
+ * the largest sector among company shares. Never imported from
+ * `searchIndex.ts` — the destinations are re-expressed from the routes the
+ * app declares, so the two can disagree.
+ */
+const SEARCH_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const small = smallKeysOf(positions);
+    const seen = new Set();
+    const ded = positions.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const current = ded.filter((p) => !small.has(p.securityKey)
+      && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null));
+    const byKey = new Map();
+    for (const p of current) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + Number(p.marketValue || 0));
+    const [largestKey] = [...byKey].sort((a, b) => b[1] - a[1])[0] ?? [];
+    const word = String(largestKey ?? "").split("-").find((w) => w.length >= 5 && /^[a-z]+$/.test(w)) ?? null;
+    const isinKeys = new Map();
+    for (const p of current) if (p.isin) isinKeys.set(p.isin, new Set([...(isinKeys.get(p.isin) ?? []), p.securityKey]));
+    const isinPick = [...isinKeys].filter(([, ks]) => ks.size === 1)
+      .map(([isin, ks]) => ({ isin, key: [...ks][0], mv: byKey.get([...ks][0]) ?? 0 }))
+      .sort((a, b) => b.mv - a.mv)[0] ?? null;
+    const rawByAccount = new Map();
+    for (const p of positions) rawByAccount.set(p.accountId, (rawByAccount.get(p.accountId) ?? 0) + Number(p.marketValue || 0));
+    const pms = accounts.filter((a) => a.engagement === "PMS")
+      .sort((a, b) => (rawByAccount.get(b.accountId) ?? 0) - (rawByAccount.get(a.accountId) ?? 0))[0] ?? null;
+    const byOwner = new Map();
+    for (const a of accounts) byOwner.set(a.owner, (byOwner.get(a.owner) ?? 0) + (rawByAccount.get(a.accountId) ?? 0));
+    const [owner] = [...byOwner].sort((a, b) => b[1] - a[1])[0] ?? [];
+    const bySector = new Map();
+    for (const p of current) {
+      if (p.assetClass !== "Equity" || !p.sector || p.sector === "Unclassified") continue;
+      bySector.set(p.sector, (bySector.get(p.sector) ?? 0) + Number(p.marketValue || 0));
+    }
+    const [sector] = [...bySector].sort((a, b) => b[1] - a[1])[0] ?? [];
+    const polycab = bookArray(src, "BOOK_POLYCAB");
+    return {
+      holding: largestKey && word ? { word, href: `/stock/${encodeURIComponent(largestKey)}` } : null,
+      isin: isinPick ? { isin: isinPick.isin, href: `/stock/${encodeURIComponent(isinPick.key)}` } : null,
+      mandate: pms ? { accountNo: pms.accountNo, href: `/mandate/${encodeURIComponent(pms.accountId)}` } : null,
+      owner: owner ? { name: owner, href: `/family?entity=${encodeURIComponent(owner)}` } : null,
+      sector: sector ? { name: sector, href: `/monitor?group=security&sector=${encodeURIComponent(sector)}` } : null,
+      fenced: Array.isArray(polycab) && polycab.length > 0,
     };
   } catch { return null; }
 })();
@@ -1724,6 +2012,16 @@ const REVIEW_GAP_BOOK = (() => {
     return {
       // Any one of them exercises the claim equally, so the list's own first.
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
+      /**
+       * …AND BOTH LISTS WHOLE, for the top bar's search (Stage 10bw). That
+       * search is FUZZY where the Monitor's pick-list is a substring filter, so
+       * which name reaches its empty state is something only the page can say:
+       * the walk tries these in order and keeps the first that does what the
+       * check needs. `claimable` is `reviewGapsFor`'s list re-expressed — a gap
+       * whose name keys to nothing is not claimable there either.
+       */
+      suppressedAll: gaps.filter((g) => related(g.name)).map((g) => g.name),
+      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name)).map((g) => g.name),
       count: gaps.length,
       name: withAlias.name,
       alias: withAlias.aliases?.[0] ?? null,
@@ -2874,6 +3172,14 @@ const ROUTES = [
   // invariant: an answer must never be mistakable for a measured figure.
   ["chat", "/cio"],
   /**
+   * THE TOP BAR'S SEARCH, TYPED INTO. Every claim is about what a reader gets
+   * back for something they would really type — a holding, an ISIN, a mandate's
+   * account number, a member, a page, a tab, a figure, a sector, a question —
+   * and each expected destination is derived from the book (`SEARCH_BOOK`), so
+   * the next drop picks its own largest holding and its own members.
+   */
+  ["search", "/cio"],
+  /**
    * ...AND THE SAME PAGE WITH THE LIVE LAYER FULFILLED.
    *
    * `vite preview` runs no Cloudflare Function, so on the plain `cio` walk the
@@ -3026,6 +3332,18 @@ const ROUTES = [
    */
   ["private-market-folios", "/private-market"],
   ["private-market-owners", "/private-market?view=owners"],
+  /**
+   * ...AND THE FUND TABLE WITH EVERY CONCRETE RETURN TICKED, one column each.
+   *
+   *   "The customer is confused about what kind of return this is that we're
+   *    showing in the private market table."
+   *
+   * The default route draws the methodology column alone, so the claims about
+   * the XIRR column, its pooled footer and the refused aggregates need their
+   * subject — and they move here rather than being softened into something one
+   * column satisfies.
+   */
+  ["private-market-returns", "/private-market?ret=absolute,cagr,xirr,ytd,calendar"],
   /**
    * ── THE CAPITAL-CALL COLUMN, WITH A STORE BEHIND IT ──────────────────────
    *
@@ -3949,6 +4267,8 @@ let FUND_DRILL = null;
 let CACHED = null;
 /** What the opened chat panel rendered — see the `chat` route. */
 let CHAT = null;
+/** What the search walk typed and what came back — see the `search` route. */
+let SEARCH = null;
 /** Header geometry, for the single-line headline claim — see `monitor`. */
 let HEAD = null;
 /** The opened return-measure dropdown's alignment/viewport fit — see `monitor`. */
@@ -6330,11 +6650,11 @@ const PRIVATE_SCOPE_CHECKS = [
    * satisfied by a rewording.
    *
    * NOT on the funds' names, which the first draft of this check tried and
-   * which failed a correct page: Carnelian Bharat Amritkaal, Delphi and Neo
-   * Infra each have a real CAPITAL ACCOUNT, and the scheme table lists every
-   * capital account whichever side of the book its fund sits on — a drawdown
-   * structure is how an account funds itself, not where it invests. The claim
-   * is that the card is gone, not that the page may never name those funds.
+   * which failed a correct page: Carnelian Bharat Amritkaal and Delphi each
+   * have a real CAPITAL ACCOUNT, and the working line under the scheme table
+   * names the public-market funds' capital accounts in one clause, on purpose
+   * (see below). The claim is that the card is gone, not that the page may
+   * never name those funds.
    */
   ["the 'funds this page does not carry' card stays removed", (t, ctx) => {
     const pv = ctx?.pmView;
@@ -6346,6 +6666,60 @@ const PRIVATE_SCOPE_CHECKS = [
       && !/(^|\n)Funds this page does not carry\s*\n/.test(t)
       && !/Category III AIFs — listed markets/.test(t)
       && !/Placed on neither side/.test(t);
+  }],
+  /**
+   * ── THE CAPITAL ACCOUNTS FOLLOW THE FUND, NOT THE DRAWDOWN STRUCTURE ──────
+   *
+   *   "Your dashboard should NOT classify these 15 capital accounts as
+   *    'private-market funds.'"
+   *
+   * A capital account is how a fund FUNDS ITSELF; what it invests in is what
+   * decides which side it is on. So the scheme table carries the private-market
+   * funds' accounts and nothing else, and the public-market ones are NAMED in
+   * one clause under it — not a card, since the family asked for the card
+   * about funds this page does not carry to go — each exactly once, and
+   * together the whole register. Struck on the `data-scheme` /
+   * `data-pm-cap-elsewhere` handles against the book's own placing, because a
+   * page that names every fund somewhere satisfies any text match.
+   */
+  ["the scheme table carries the private-market capital accounts, and only those", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv || !CAPITAL_BOOK) return false;
+    const rows = pv.schemeRows ?? [];
+    return rows.length === CAPITAL_BOOK.count
+      && CAPITAL_BOOK.ids.every((id) => rows.includes(id))
+      && rows.every((id) => !CAPITAL_BOOK.elsewhereIds.includes(id));
+  }],
+  ["…and the public-market capital accounts are named, each once, never counted", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv || !CAPITAL_BOOK) return false;
+    const named = pv.capElsewhere?.ids ?? [];
+    if (!CAPITAL_BOOK.elsewhereCount) return named.length === 0;
+    return named.length === CAPITAL_BOOK.elsewhereCount
+      && new Set(named).size === named.length
+      && CAPITAL_BOOK.elsewhereIds.every((id) => named.includes(id))
+      && named.length + (pv.schemeRows ?? []).length === CAPITAL_BOOK.wholeCount;
+  }],
+  /**
+   * AND THE CLAUSE THAT NAMES THEM SAYS WHICH FUNDS AND WHY — the family's own
+   * word where it was theirs that decided. A count with no names tells a reader
+   * the accounts exist and nothing about where their money went; a reason that
+   * is not the true one ("Category III" about Founders, whose statement prints
+   * Category II) is false in the sentence a reader checks against a statement.
+   * The committed figure is the book's own sum, so a clause that dropped an
+   * account cannot keep its total.
+   */
+  ["the one clause naming them names each fund, its committed total, and why", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv || !CAPITAL_BOOK) return false;
+    const c = pv.capElsewhere;
+    if (!CAPITAL_BOOK.elsewhereCount) return c == null;
+    if (!c) return false;
+    const cr = crU(...(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*committed/i.exec(c.text) ?? []).slice(1));
+    return CAPITAL_BOOK.elsewhereNames.every((n) => c.text.toLowerCase().includes(n.toLowerCase()))
+      && Number.isFinite(cr) && Math.abs(cr - CAPITAL_BOOK.elsewhereCommittedCr) <= 0.06
+      && /counted nowhere on this page/i.test(c.text)
+      && /the family class (that fund|those funds) as investing in listed equity/i.test(c.text) === CAPITAL_BOOK.elsewhereFamilyListed;
   }],
   ["the page states which side of the book it is, and the sides add to the total", (t) => {
     if (!SIDE_BOOK) return { notChecked: "the book's own sides could not be derived" };
@@ -6401,6 +6775,157 @@ const pmViewChecks = (expected) => [
      * only a count of the rendered tables can see it.
      */
     return pv.tables.length === 1 && pv.tables[0] === expected;
+  }],
+];
+
+/**
+ * ── THE PRIVATE MARKET FUND TABLE SAYS WHICH RETURN IT IS SHOWING ───────────
+ *
+ *   "Just like you have this return methodology in portfolio monitor we need to
+ *    have it in private market table as well. The customer is confused about
+ *    what kind of return this is that we're showing in the private market
+ *    table."
+ *
+ * The Monitor's picker and its one-column-per-measure mechanics, on the fund
+ * table — with each measure resolved from a fund's own dated capital account
+ * rather than from holdings wording that is false of a drawdown fund. Every
+ * expectation is re-expressed off the book in `PM_RETURN_BOOK`, never imported,
+ * so a page that picked the wrong measure, or printed an XIRR that forgot the
+ * cash a fund paid back, fails on the figure and not on a label.
+ */
+const pctOfCell = (text) => {
+  const m = /([+\-−])?(\d+(?:\.\d+)?)%/.exec(text ?? "");
+  return m ? ((m[1] === "-" || m[1] === "−") ? -1 : 1) * Number(m[2]) : NaN;
+};
+const PM_RETURN_CHECKS = [
+  ["the fund table offers the return-measure picker, with the methodology and every measure", (t, ctx) => {
+    // The funds view always draws it, so a missing picker is the defect and
+    // never a reason to abstain.
+    const rs = ctx?.returnSelect;
+    if (!rs) return false;
+    return ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"].every((k) => rs.offers.includes(k));
+  }],
+  ["every fund row carries one return cell per picked measure, in the picker's order", (t, ctx) => {
+    const pr = ctx?.pmReturn, rs = ctx?.returnSelect;
+    if (!pr || !rs || !PM_RETURN_BOOK) return false;
+    return pr.rows.length === PM_RETURN_BOOK.funds.length
+      && pr.rows.every((r) => r.cells.length === rs.active.length && r.cells.every((c, i) => c.measure === rs.active[i]));
+  }],
+  /**
+   * A RETURN IS NEVER A BARE FIGURE. Under the methodology every shown cell
+   * carries its own tag, because the header can only say "Return"; under a
+   * concrete measure the header names it, and a cell carries a tag only where
+   * it shows something else (the guard firing). Either way the tag a cell
+   * CLAIMS is the text it prints first.
+   */
+  ["every return cell names the measure it shows — in its own tag, or its header's", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr) return false;
+    return pr.rows.every((r) => r.cells.every((c) => {
+      if (!c.shown) return !/%/.test(c.text);
+      if (c.measure === "auto") return ["HPR", "CAGR", "XIRR"].includes(c.tag ?? "") && c.text.startsWith(c.tag);
+      return c.tag == null || c.text.startsWith(c.tag);
+    }));
+  }],
+  ["the methodology picks the measure each fund's own dated record supports", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const autos = pr.rows.flatMap((r) => r.cells.filter((c) => c.measure === "auto").map((c) => ({ c, f: PM_RETURN_BOOK.byKey.get(r.key) })));
+    if (!autos.length) return notChecked("the methodology column is not ticked on this route");
+    return autos.every(({ c, f }) => !!f && (f.auto == null ? !c.shown : c.shown && c.tag === f.auto));
+  }],
+  /**
+   * EVERY FIGURE UNDER A NAME IS THAT NAME'S FIGURE: an XIRR is the rate over
+   * every dated call, every payout dated on or before the valuation and the
+   * value; an HPR is value against cost. The bound is the page's own printing
+   * precision — one decimal — reproduced, never a tolerance widened.
+   */
+  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is value against cost", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    let checked = 0;
+    for (const r of pr.rows) {
+      const f = PM_RETURN_BOOK.byKey.get(r.key);
+      if (!f) return false;
+      for (const c of r.cells) {
+        if (!c.shown) continue;
+        const shownAs = c.tag ?? (c.measure === "xirr" ? "XIRR" : c.measure === "absolute" ? "HPR" : null);
+        const pct = pctOfCell(c.text);
+        if (shownAs === "XIRR") { if (f.rate == null || Math.abs(pct - f.rate) > 0.06) return false; checked++; }
+        if (shownAs === "HPR") { if (f.hpr == null || Math.abs(pct - f.hpr) > 0.06) return false; checked++; }
+      }
+    }
+    return checked > 0;
+  }],
+];
+
+/** Only where every concrete measure is ticked — `private-market-returns`. */
+const PM_RETURN_ROUTE_CHECKS = [
+  ["the XIRR column shows a rate exactly where the dated record is complete and spans a year", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const cells = pr.rows.map((r) => ({ c: r.cells.find((x) => x.measure === "xirr"), f: PM_RETURN_BOOK.byKey.get(r.key) }));
+    if (cells.some(({ c, f }) => !c || !f)) return false;
+    return cells.every(({ c, f }) => (f.xirr.shown
+      ? c.shown && (c.tag ?? null) === f.xirr.tag
+      : !c.shown));
+  }],
+  /**
+   * THE LOAD-BEARING ONE. A fund that paid cash back must show the rate WITH
+   * its payouts, and the check first proves it can tell the two apart: the
+   * rate without them must differ by more than the printing precision, or the
+   * comparison would pass a page that dropped them.
+   */
+  ["a fund that paid cash back shows the rate with its payouts, not the calls alone", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const paying = PM_RETURN_BOOK.funds.filter((f) => f.complete && f.paidOut > 0 && f.window >= 365);
+    if (!paying.length) return notChecked("no private fund in this book has paid cash back over a year-long window");
+    return paying.every((f) => {
+      const c = pr.rows.find((r) => r.key === f.key)?.cells.find((x) => x.measure === "xirr");
+      if (!c?.shown || f.rate == null || f.rateNoPayouts == null) return false;
+      const pct = pctOfCell(c.text);
+      return Math.abs(f.rate - f.rateNoPayouts) > 0.1 && Math.abs(pct - f.rate) <= 0.06;
+    });
+  }],
+  ["the XIRR footer pools exactly the funds with a complete record, and says how many", (t, ctx) => {
+    const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "xirr");
+    if (!foot || !PM_RETURN_BOOK) return false;
+    const covers = Number(foot.covers), of = Number(foot.of);
+    if (covers !== PM_RETURN_BOOK.pooledCovers || of !== PM_RETURN_BOOK.funds.length) return false;
+    if (PM_RETURN_BOOK.pooled == null || PM_RETURN_BOOK.pooledWindow < 365) return !/%/.test(foot.text);
+    return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.pooled) <= 0.06
+      // A total over part of a table says which part, on its face.
+      && (covers === of || foot.text.includes(`${covers} of ${of}`))
+      && (covers === of || /Not in it:/.test(foot.titles));
+  }],
+  ["the CAGR, YTD and CY footers are refused with the whole book's own reason", (t, ctx) => {
+    const foot = ctx?.pmReturn?.foot ?? [];
+    const want = ["cagr", "ytd", "calendar"];
+    const cells = want.map((m) => foot.find((x) => x.measure === m));
+    if (cells.some((c) => !c)) return false;
+    return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
+  }],
+  ["the HPR footer is the whole private book's value against its cost", (t, ctx) => {
+    const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
+    if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
+    return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.footHpr) <= 0.06;
+  }],
+  /**
+   * THE HEADER'S COUNT NAMES ONLY THE CELLS ON ITS OWN MEASURE. A part-year
+   * fund under CAGR or XIRR shows its holding-period return, tagged — and
+   * counting it as "annualised" would state a coverage the column does not have.
+   */
+  ["the CAGR and XIRR headers count only the cells on their own measure", (t, ctx) => {
+    const pr = ctx?.pmReturn, head = ctx?.returnHead ?? [];
+    if (!pr) return false;
+    for (const [m, label, word] of [["cagr", "CAGR", "annualised"], ["xirr", "XIRR", "money-weighted"]]) {
+      const h = head.find((x) => x.label.toUpperCase().startsWith(label));
+      if (!h?.note) return false;
+      const on = pr.rows.filter((r) => r.cells.some((c) => c.measure === m && c.shown && c.tag == null)).length;
+      if (h.note !== `${on} ${word} of ${pr.rows.length}`) return false;
+    }
+    return true;
   }],
 ];
 
@@ -7180,6 +7705,32 @@ const CIO_ALLOC = [
       return tiles && !!card && card.href === "/private-market"
         && /fund commitments/i.test(card.text) && /capital deployed/i.test(card.text)
         && links.every((l) => !/^fund commitments$/i.test(l.text));
+    }],
+    /**
+     * ── THE CAPITAL DEPLOYMENT CARD COUNTS PRIVATE-MARKET FUNDS ONLY ────────
+     *
+     * It opens `/private-market`, so it counts what that page counts: the
+     * capital accounts of funds the family placed on the private side. Summed
+     * over the whole register it would print ₹97.7 Cr committed over a page
+     * that shows ₹42.7 Cr — one click apart, two answers. Struck on the card's
+     * own handle against the book, and the whole register must genuinely differ
+     * or the check could not tell the two apart.
+     */
+    ["the Capital deployment card counts the private-market funds' commitments, as the page it opens does", (t, ctx) => {
+      const card = ctx?.deployLink;
+      if (!card || !CAPITAL_BOOK) return false;
+      const fig = (label) => {
+        const m = new RegExp(label + String.raw`\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?`, "i").exec(card.text);
+        return m ? crU(m[1], m[2]) : NaN;
+      };
+      const committed = fig("Fund commitments");
+      const uncalled = fig("uncalled capital");
+      if (![committed, uncalled].every(Number.isFinite)) return false;
+      if (Math.abs(CAPITAL_BOOK.wholeCommittedCr - CAPITAL_BOOK.committedCr) <= 0.15) {
+        return notChecked("every capital account in this book belongs to a private-market fund, so the two scopes coincide");
+      }
+      return Math.abs(committed - CAPITAL_BOOK.committedCr) <= 0.06
+        && Math.abs(uncalled - CAPITAL_BOOK.uncalledCr) <= 0.06;
     }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
@@ -9983,6 +10534,163 @@ const INVARIANTS = {
    * who cannot tell an answer from a figure is the one failure this whole book
    * is built to prevent, arriving through prose instead of a table.
    */
+  /**
+   * ── THE TOP BAR'S SEARCH TAKES A READER WHERE THEY MEANT ─────────────────
+   *
+   *   "this whole thing needs to be a very smart search bar which takes me to
+   *    exactly where i want to go when i type the data in this … any equity,
+   *    any fund, any position that I have taken, any tab, etc."
+   *
+   * Each claim pairs something a reader would type with the destination the
+   * BOOK says it must reach (`SEARCH_BOOK`) — struck on the first row's own
+   * `data-search-href`, so a list that "contains" the answer three rows down
+   * does not pass as one that leads with it.
+   */
+  search: [
+    /**
+     * A WALK THAT DID NOT RUN IS A FINDING, NOT AN ABSTENTION. These invariants
+     * run only on the route that walks, so a null `SEARCH` here means the walk
+     * THREW — a box that is missing or never took input — and reporting that
+     * as "not checked" is how a check retires itself in silence.
+     */
+    ["the walk ran and the box was found", () => !!SEARCH],
+    ["`/` from anywhere on the page focuses the search box", () => SEARCH?.slashFocus === true],
+    ...[
+      ["holding", "the largest holding, typed as its first long word, is the first result and opens its own page"],
+      ["isin", "an ISIN is the first result and opens that holding"],
+      ["mandate", "a PMS mandate's account number opens the mandate first"],
+      ["owner", "a member's full name opens their entity first"],
+      ["sector", "a sector's name opens the holdings in it first"],
+    ].map(([k, desc]) => [desc, () => {
+      if (!SEARCH || !SEARCH_BOOK) return false;
+      const want = SEARCH_BOOK[k]?.href;
+      if (!want) return notChecked(`this book has no ${k} to type`);
+      return SEARCH.results[k]?.rows?.[0]?.href === want;
+    }]),
+    ["a page's name opens the page", () => SEARCH?.results?.page?.rows?.[0]?.href === "/private-market"],
+    ["a tab's name opens the page on that tab", () => SEARCH?.results?.tab?.rows?.[0]?.href === "/monitor?show=transactions"],
+    // A TAB ANOTHER PAGE ADDED IS A TAB TOO. Sector Composition's Compare tab
+    // arrived after the index was written; "any tab" is the family's own word.
+    ["…and so does a tab on another page (Sector Composition's Compare)", () =>
+      SEARCH?.results?.tab2?.rows?.[0]?.href === "/sectors?view=compare"],
+    ["…and Enter lands on that page with that tab selected", () =>
+      SEARCH?.tabLanded?.path === "/sectors" && SEARCH.tabLanded.selected === "compare"],
+    ["a figure's word opens the page that shows and explains it", () => SEARCH?.results?.figure?.rows?.[0]?.href === "/private-market"],
+    /**
+     * A QUESTION GOES TO MUNS FIRST, and a place goes to the place: the Ask row
+     * is LAST for every query above and FIRST for this one. Asserted both ways,
+     * because a list that always led with Muns would bury every destination.
+     */
+    ["a question puts Ask Muns first, and a name puts it last", () => {
+      if (!SEARCH) return false;
+      const q = SEARCH.results.question?.rows ?? [];
+      const h = SEARCH.results.holding?.rows ?? [];
+      return q[0]?.kind === "ask" && h.length > 1 && h.at(-1)?.kind === "ask" && h[0]?.kind !== "ask";
+    }],
+    ["a query nothing matches says so, and still offers Muns", () => {
+      const n = SEARCH?.results?.nothing;
+      if (!n) return false;
+      return n.empty === true && n.rows.length === 1 && n.rows[0].kind === "ask";
+    }],
+    /**
+     * ── …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — IN THE TOP BAR TOO ──────
+     *
+     * Stage 10bu's rule, on the fourth search a reader can run over holdings
+     * and the one they are most likely to type into: the family searched for
+     * BSE, which is theirs on their own consolidated review and on no statement
+     * in `source/`, and "nothing matches" on its own reads as the dashboard
+     * having lost it. The name is `REVIEW_GAP_BOOK`'s, derived from the
+     * generated gap list, so the next drop picks its own.
+     *
+     * BOOLEANS, like the Monitor's: a returned description reads as a PASS.
+     */
+    ["a search for a name no statement reports says why, in the top bar too", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g) return { notChecked: "this book carries no review line that no statement reports" };
+      const a = SEARCH?.results?.gap;
+      if (!a) return false;
+      // Nothing found — a gap name that finds a holding is a gap the book
+      // carries, which is a failure and not an abstention.
+      if (a.rows.some((x) => x.kind !== "ask") || a.empty !== true || !a.note) return false;
+      // Case-folded: `innerText` returns the TRANSFORMED text, and the note
+      // capitalises each sentence the report prints in lower case.
+      const note = a.note.toLowerCase();
+      return a.named.includes(g.name) && note.includes(g.why.toLowerCase()) && note.includes(g.ask.toLowerCase());
+    }],
+    ["…and the note names no figure, because the review is not a source", () => {
+      if (!REVIEW_GAP_BOOK) return { notChecked: "no review gap to search for" };
+      const a = SEARCH?.results?.gap;
+      if (!a?.note) return false;
+      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note) && /review/i.test(a.note);
+    }],
+    ["…and the family's own spelling of the name finds it too", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g?.alias) return { notChecked: "no gap in this book carries an alias" };
+      const a = SEARCH?.results?.gapAlias;
+      if (!a) return false;
+      // *"It is named either Bombay Stock Exchange or BSE."*
+      return !a.rows.some((x) => x.kind !== "ask") && !!a.note && a.named.includes(g.name);
+    }],
+    ["…and a search that names nothing gets the plain line and no note", () => {
+      const n = SEARCH?.results?.nothing;
+      if (!n) return false;
+      // Both halves of the premise: the empty state IS reached, and no review
+      // line answers it — so there is nothing legitimate to say.
+      if (n.rows.some((x) => x.kind !== "ask")) return { notChecked: "the nonsense string matched something" };
+      return n.empty === true && n.note === null && n.named.length === 0;
+    }],
+    ["…and a review name that finds a holding is answered by the holding, with no note beside it", () => {
+      if (!SEARCH) return false;
+      const a = SEARCH.gapWithHits;
+      if (!a) return { notChecked: "no review line's own name finds anything in this search" };
+      // THE CASE THE EMPTY-STATE RULE EXISTS FOR: the book holds this fund
+      // under another spelling, and a note beside the holding would deny it.
+      return a.note === null && a.named.length === 0;
+    }],
+    ["…and neither is a name the book may carry under a clipped spelling", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g?.suppressedAll?.length) return { notChecked: "no review line in this book is prefix-related to a held position" };
+      if (!SEARCH) return false;
+      const a = SEARCH.gapSuppressed;
+      if (!a) return { notChecked: "every such name finds a holding here, so the empty state is never reached" };
+      return a.empty === true && a.note === null;
+    }],
+    /**
+     * THE RING-FENCE HOLDS IN THE SEARCH. "polycab" finds the PAGE the nav
+     * already carries on every screen first, then only that page's own tabs —
+     * and no holding, account or figure, because the index is built from
+     * positions the promoter block was spliced out of at the book layer. Every
+     * row must open the Polycab page itself; one that opens anywhere else is
+     * the leak.
+     */
+    ["'polycab' finds the Polycab page first and nothing outside it — no holding, account or figure", () => {
+      const r = SEARCH?.results?.fenced?.rows ?? [];
+      if (!SEARCH) return false;
+      const real = r.filter((x) => x.kind !== "ask");
+      return real.length > 0 && real[0].href === "/polycab" && real[0].kind === "page"
+        && real.every((x) => (x.kind === "page" || x.kind === "view") && (x.href === "/polycab" || x.href.startsWith("/polycab?")));
+    }],
+    ["every result says what it is and where it goes, and a holding says what it is worth", () => {
+      if (!SEARCH) return false;
+      const rows = Object.values(SEARCH.results).flatMap((r) => r.rows ?? []).filter((x) => x.kind !== "ask");
+      if (!rows.length) return false;
+      return rows.every((x) => x.kind && x.href?.startsWith("/") && x.detail.length > 0)
+        && rows.filter((x) => x.kind === "holding" && !/redeemed/i.test(x.detail)).every((x) => /₹[\d,.]+/.test(x.detail));
+    }],
+    ["the list paints over the page, not under it — a short list, a tall one and the one carrying the note", () => {
+      const g = SEARCH?.geometry, t = SEARCH?.geometryTall;
+      if (!g || !t) return false;
+      // The tall list must really BE taller, or the second probe proves nothing.
+      if (!(t.h > g.h)) return false;
+      const n = SEARCH?.geometryNote;
+      if (REVIEW_GAP_BOOK && !n) return false;
+      return [g, t, n].filter(Boolean).every((x) => x.onTop === true) && g.w >= 320 && g.h >= 60;
+    }],
+    ["Enter opens the first result", () => {
+      if (!SEARCH || !SEARCH_BOOK?.holding) return notChecked("this book has no holding to type");
+      return SEARCH.entered === SEARCH_BOOK.holding.href;
+    }],
+  ],
   chat: [
     ["the panel opens where the search box was",
       () => {
@@ -11678,14 +12386,26 @@ const INVARIANTS = {
     /**
      * …AND THE ONE MISREADING THAT WOULD COST THE MOST IS STILL WARNED AGAINST.
      *
-     * Called and Invested cover different sets of accounts, so the difference
-     * between them is a coverage gap and not money paid twice — and they sit
-     * side by side, which is exactly where a reader subtracts. Asserted on the
-     * PAGE rather than on the tile: it is on both, and a build that kept only
-     * the fuller statement under the table is still correct.
+     * On the whole register Called and Invested covered different sets of
+     * accounts, so the difference between them was a coverage gap and not
+     * money paid twice — and they sit side by side, which is exactly where a
+     * reader subtracts. Asserted on the PAGE rather than on the tile: it is on
+     * both, and a build that kept only the fuller statement under the table is
+     * still correct.
      */
-    ["the two tiles a reader would subtract say not to", (t) =>
-      /must never be subtracted|must not be subtracted/i.test(t)],
+    /**
+     * ...AND ONLY WHERE IT IS TRUE. Scoped to the private-market funds the
+     * family named, every capital account on this page prints BOTH lines, so
+     * the two cover one set and their difference is meaningful — a warning
+     * that they "must not be subtracted" would then be a false claim about a
+     * valid subtraction. Struck against the BOOK's own per-account answer in
+     * both directions: the warning is present exactly when the sets differ.
+     */
+    ["the two tiles a reader would subtract say not to — exactly where they cover different sets", (t) => {
+      if (!CAPITAL_BOOK) return false;
+      const warned = /must never be subtracted|must not be subtracted/i.test(t);
+      return warned === !CAPITAL_BOOK.calledPaidSameSet;
+    }],
     /**
      * ── AND THE PARAGRAPHS THEMSELVES STAY GONE ──────────────────────────────
      *
@@ -11821,6 +12541,7 @@ const INVARIANTS = {
       return pv.toggles.length > 0 && pv.panels.length === 0 && pv.toggles.every((x) => !x.open);
     }],
     ...PRIVATE_SCOPE_CHECKS,
+    ...PM_RETURN_CHECKS,
 
     /**
      * ── AND THE "WHAT THIS BOOK DOES NOT CARRY" CARD STAYS REMOVED ───────────
@@ -11929,10 +12650,17 @@ const INVARIANTS = {
       if (!SIDE_BOOK) return notChecked("the book's own sides could not be derived");
       return Number(n[1]) === SIDE_BOOK.privateCosted && Number(n[2]) === SIDE_BOOK.privateRows;
     }],
-    // PM-4. Undrawn is summed AS PRINTED. Two folios print a commitment and a
-    // drawdown and no undrawn figure; a `?? 0`, or deriving committed − drawn,
-    // puts a figure on all fifteen and the coverage count gives it away.
-    ["the uncalled-capital tile covers fewer capital accounts than the register holds", (t, ctx) => {
+    // PM-4. Undrawn is summed AS PRINTED. On the whole register two folios —
+    // the Founders Fund's — print a commitment and a drawdown and no undrawn
+    // figure; a `?? 0`, or deriving committed − drawn, puts a figure on every
+    // account and the coverage count gives it away. Those two are public-market
+    // funds now and off this page, so on this book the page's coverage is full
+    // — which is why the expectation is the BOOK's own count, never `<`: a
+    // coverage struck against the page's own denominator passes the bug.
+    // Read off the tile's OWN text: its label is "Still to call" since the
+    // tiles became a figure and one line, and the page is free to print the
+    // words elsewhere.
+    ["the uncalled-capital coverage is the book's own count of accounts printing the line", (t, ctx) => {
       const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
       // The footer now prints the figure and its coverage as two spans; the
       // working line under the table repeats both in words. BOTH are read, and
@@ -11943,10 +12671,11 @@ const INVARIANTS = {
       const rows = /Total\s*·\s*(\d+) accounts/i.exec(t);
       const hits = [...t.matchAll(new RegExp(foot, "gi"))].map((m) => ({ v: crU(m[1], m[2]), have: Number(m[3]), of: Number(m[4]) }));
       const cell = hits.find((h) => Math.abs(h.v - tile) <= 0.6);
-      if (!Number.isFinite(tile) || !said || !rows || !cell) return false;
+      if (!Number.isFinite(tile) || !said || !rows || !cell || !CAPITAL_BOOK) return false;
       return Math.abs(crU(said[1], said[2]) - tile) <= 0.6
         && Number(said[3]) === cell.have
-        && cell.have > 0 && cell.have < cell.of && cell.of === Number(rows[1]);
+        && cell.have === CAPITAL_BOOK.uncalledOf && cell.of === CAPITAL_BOOK.count
+        && cell.of === Number(rows[1]);
     }],
     // PM-4b. THE CLIENT'S OWN QUESTION, CHECKED AS ARITHMETIC. *"How are you
     // calculating this uncalled capital of 16 crores?"* — the page answers with
@@ -11994,7 +12723,7 @@ const INVARIANTS = {
       const tile = ctx?.tileStrip?.details?.uncalled;
       const shown = ctx?.tileStrip?.texts?.uncalled ?? "";
       if (!tile) return { notChecked: "the uncalled tile is not on this strip" };
-      const m = /across (\d+) capital accounts/i.exec(tile);
+      const m = /across (\d+) (?:private-market )?capital accounts/i.exec(tile);
       if (!m) return false;
       // THE OLD WORDING MUST BE GONE FROM THIS TILE — a removal is verified by
       // asserting it happened, and this one is the crossed-set caption itself.
@@ -12017,22 +12746,31 @@ const INVARIANTS = {
       const tile = ctx?.tileStrip?.details?.accounts;
       const unc = ctx?.tileStrip?.details?.uncalled;
       if (!shown || !tile || !unc) return { notChecked: "the capital-accounts tile is not on this strip" };
+      if (!CAPITAL_BOOK) return false;
       const total = /CAPITAL ACCOUNTS\s+(\d+)/i.exec(shown);
       const onPage = /(\d+) of this page['\u2019]s (\d+) private accounts/i.exec(tile);
       if (!total || !onPage) return false;
       /**
-       * THE ANCHOR IS THE OTHER TILE, AND THE FIRST DRAFT HAD NONE — which is
-       * why reintroducing the bug produced a CLEAN sweep. Struck on this tile
+       * TWO ANCHORS, AND THE FIRST DRAFT HAD NEITHER — which is why
+       * reintroducing the bug produced a CLEAN sweep. Struck on this tile
        * alone, `15 of this page's 18 private accounts` adds up perfectly and is
-       * still the crossed fraction: nothing in the sentence says how many of
-       * the 15 are on this page. The uncalled tile prints the total AND the
-       * accounts this page does not carry, so the on-page count is forced.
+       * still the crossed fraction.
+       *
+       * The OTHER TILE forces the on-page count: the uncalled tile prints how
+       * many of the capital accounts belong to funds this page does not carry.
+       * The BOOK forces the rest: the tile's figure is the private-market
+       * capital accounts, the ones in public-market funds are named as "more",
+       * and the two must rebuild the whole register.
        */
       const off = Number(/(\d+) of them in funds this page does not carry/i.exec(unc)?.[1] ?? 0);
       const named = Number(/(\d+) more come from funds this page does not carry/i.exec(tile)?.[1] ?? 0);
+      const pub = Number(/(\d+) more, in public-market funds/i.exec(tile)?.[1] ?? 0);
       return Number(onPage[1]) <= Number(onPage[2])
         && Number(onPage[1]) === Number(total[1]) - off
-        && named === off;
+        && named === off
+        && Number(total[1]) === CAPITAL_BOOK.count
+        && pub === CAPITAL_BOOK.elsewhereCount
+        && Number(total[1]) + pub === CAPITAL_BOOK.wholeCount;
     }],
     /**
      * ...AND THE CARD UNDER THE TABLE MAKES THE SAME CLAIM IN PROSE, WHERE AN
@@ -12047,12 +12785,20 @@ const INVARIANTS = {
     ["the card's own account sentence ties to the tile's capital-account count", (t, ctx) => {
       const tile = ctx?.tileStrip?.details?.uncalled;
       if (!tile) return { notChecked: "the uncalled tile is not on this strip" };
-      const total = /across (\d+) capital accounts/i.exec(tile);
+      if (!CAPITAL_BOOK) return false;
+      const total = /across (\d+) (?:private-market )?capital accounts/i.exec(tile);
       const sent = /(\d+) of this page['\u2019]s (\d+) private accounts send a\s+capital-account statement/i.exec(t);
       if (!total || !sent) return false;
+      // …AND THE PUBLIC-MARKET CAPITAL ACCOUNTS ARE NAMED BESIDE IT, never
+      // folded into its count — present exactly when the book has some.
+      const more = /(\d+) more capital accounts? belongs? to\s+public-market funds/i.exec(t);
+      const moreOk = CAPITAL_BOOK.elsewhereCount > 0
+        ? !!more && Number(more[1]) === CAPITAL_BOOK.elsewhereCount
+        : !more;
       const off = Number(/(\d+) of them in funds this page does not carry/i.exec(tile)?.[1] ?? 0);
       return Number(sent[1]) <= Number(sent[2])
-        && Number(sent[1]) + off === Number(total[1]);
+        && Number(sent[1]) + off === Number(total[1])
+        && moreOk;
     }],
     /**
      * PM-4d. THE CAPITAL-CALL TIMELINE STAYS REMOVED.
@@ -12149,11 +12895,12 @@ const INVARIANTS = {
         // TOGETHER cannot reconcile with each other and pass.
         && perScheme === CAPITAL_BOOK.callCount;
     }],
-    // PM-4g. Committed, Called and Invested are three figures and the page must
+    // PM-4g. Committed, Called and Paid in are three figures and the page must
     // keep them apart — this is the client's question, and the defect it names
-    // is one field carrying two quantities. Called and Invested cover different
-    // sets here, so the page must SAY they cannot be subtracted: their printed
-    // difference is a coverage gap and reads exactly like money paid twice.
+    // is one field carrying two quantities. Where Called and Paid in cover
+    // different sets the page must SAY they cannot be subtracted, because their
+    // printed difference is a coverage gap and reads exactly like money paid
+    // twice — and where they cover one set, saying so would be false.
     ["committed, called and invested are three separate tiles, each stating its coverage", (t, ctx) => {
       // Struck on the strip's own tiles: each is its own slot, headed with its
       // own short label, and each says what it is in its one line.
@@ -12163,9 +12910,21 @@ const INVARIANTS = {
       if (!Object.entries(want).every(([id, re]) => re.test(st.texts?.[id] ?? ""))) return false;
       const called = /(\d+) of (\d+) capital accounts print a called line/i.exec(st.details?.called ?? "");
       const paid = /(\d+) of (\d+) capital accounts · cash that has actually left/i.exec(st.details?.paid ?? "");
-      if (!called || !paid) return false;
-      return Number(called[1]) <= Number(called[2]) && Number(paid[1]) <= Number(paid[2])
-        && /must not be subtracted from each other/i.test(t);
+      if (!called || !paid || !CAPITAL_BOOK) return false;
+      /**
+       * EACH COVERAGE IS THE BOOK'S OWN, and the warning follows the sets. On
+       * the whole register Called and Paid in covered different sets (one fund
+       * printed a contribution and no called line) and the page had to say not
+       * to subtract them; scoped to private-market funds they cover one set and
+       * the warning would be false. So it is asserted in BOTH directions, in
+       * both places it is printed — the called tile's hover and the working
+       * line under the scheme table.
+       */
+      const different = !CAPITAL_BOOK.calledPaidSameSet;
+      return Number(called[1]) === CAPITAL_BOOK.calledOf && Number(called[2]) === CAPITAL_BOOK.count
+        && Number(paid[1]) === CAPITAL_BOOK.paidOf && Number(paid[2]) === CAPITAL_BOOK.count
+        && /must not be subtracted from each other/i.test(t) === different
+        && /must never be subtracted/i.test(st.details?.called ?? "") === different;
     }],
     // PM-5. The capital paid into funds that value nothing ties to its own table
     // and is NOT inside the private market value. Carrying drawn capital as a
@@ -12211,7 +12970,10 @@ const INVARIANTS = {
     // over an absent cost is struck against nothing. Asserted on the ROW: the
     // depository-held fund prints a value, an em dash for cost, and no return.
     ["no fund row prints a return where its cost is absent", (t) => {
-      const rows = [...t.matchAll(/\n[^\n\t]+\t[^\n\t]*\t\d+\t[\d,.]+\t(—|₹[\d,.]+\s*(?:Cr|L|K)?)\t(?:₹[\d,.]+\s*(?:Cr|L|K)?|₹0)\t(—|[+-][\d.]+%)/g)];
+      // The Return cell carries the measure it shows now (`XIRR+16.7%`,
+      // `HPR+48.7%`) — the family's own ask — so the tag is allowed in front of
+      // the figure, and a refused return is still a bare dash with its reason.
+      const rows = [...t.matchAll(/\n[^\n\t]+\t[^\n\t]*\t\d+\t[\d,.]+\t(—|₹[\d,.]+\s*(?:Cr|L|K)?)\t(?:₹[\d,.]+\s*(?:Cr|L|K)?|₹0)\t(?:[A-Z]{2,5})?(—|[+-][\d.]+%)/g)];
       if (!rows.length) return false;
       // Every row whose Invested cell is a dash must have a dash in Return too.
       if (!rows.filter((r) => r[1] === "—").every((r) => r[2] === "—")) return false;
@@ -12354,6 +13116,19 @@ const INVARIANTS = {
    * folio check assert the same ₹3.17 Cr from opposite ends, and a build that
    * deduped everything passes one and fails the other.
    */
+  "private-market-returns": [
+    ...pmViewChecks("funds"),
+    ...PRIVATE_SCOPE_CHECKS,
+    // The methodology column is not ticked here, so its own claim runs on the
+    // default route (where it cannot abstain) and not on this one.
+    ...PM_RETURN_CHECKS.filter(([d]) => !/^the methodology picks/.test(d)),
+    ...PM_RETURN_ROUTE_CHECKS,
+    ["the picker shows the five measures ticked, and not the methodology", (t, ctx) => {
+      const rs = ctx?.returnSelect;
+      if (!rs) return false;
+      return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar";
+    }],
+  ],
   "private-market-owners": [
     ...pmViewChecks("owners"),
     ...PRIVATE_SCOPE_CHECKS,
@@ -16778,6 +17553,180 @@ for (const theme of THEMES) {
           body: /\bNo\b[^\n]{0,80}?carries a day change/i.test(document.body.innerText),
         }));
       }
+      if (name === "search") {
+        /**
+         * TYPE WHAT A READER WOULD, AND READ WHAT COMES BACK — off each row's own
+         * attributes (`data-search-kind`, `data-search-href`), never its prose,
+         * because a row's words are a redesign away from changing while the
+         * destination is the claim.
+         */
+        await page.waitForSelector('[data-testid="smart-search-input"]', { timeout: 10000 }).catch(() => {});
+        const input = page.getByTestId("smart-search-input");
+        // A MISSING BOX FAILS BY NAME rather than taking the whole sweep down
+        // with it: `fill` on a locator that matches nothing waits 30s and
+        // throws, and nothing above this walk catches. Left null, `SEARCH` is
+        // what "the walk ran and the box was found" fails on.
+        if (await input.count()) {
+          const run = async (q) => {
+            await input.fill("");
+            await input.fill(q);
+            await page.waitForTimeout(200);
+            return page.evaluate(() => ({
+              rows: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-search-result]")].map((e) => ({
+                kind: e.getAttribute("data-search-kind"),
+                href: e.getAttribute("data-search-href"),
+                text: (e.innerText ?? "").replace(/\s+/g, " ").trim(),
+                detail: (e.querySelector("[data-search-detail]")?.textContent ?? "").trim(),
+              })),
+              empty: !!document.querySelector("[data-search-empty]"),
+              // The review-gap note's own node, so the claim is not struck on
+              // prose the component is free to reword.
+              note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
+              named: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-review-gap]")]
+                .map((n) => n.getAttribute("data-review-gap")),
+            }));
+          };
+          // THE SHORTCUT FIRST: `/` from the page, with nothing focused, lands in
+          // the box — the claim is about focus, so it is struck on focus.
+          await page.evaluate(() => { (document.activeElement)?.blur?.(); });
+          await page.keyboard.press("/");
+          const slashFocus = await page.evaluate(() =>
+            document.activeElement?.getAttribute("data-testid") === "smart-search-input");
+          const B = SEARCH_BOOK ?? {};
+          const queries = {
+            holding: B.holding?.word, isin: B.isin?.isin, mandate: B.mandate?.accountNo, owner: B.owner?.name,
+            sector: B.sector?.name, page: "private market", tab: "transactions", tab2: "compare sectors", figure: "uncalled",
+            question: "how much of the book is in AIFs?", nothing: "zzqqxx qqzz", fenced: "polycab",
+            // A NAME THE FAMILY HOLD AND NO STATEMENT REPORTS, in the review's
+            // spelling and in theirs — derived from the generated gap list.
+            gap: REVIEW_GAP_BOOK?.name, gapAlias: REVIEW_GAP_BOOK?.alias ?? undefined,
+          };
+          const results = {};
+          for (const [k, q] of Object.entries(queries)) if (q) results[k] = await run(q);
+          // THE LIST IS ON TOP OF THE PAGE — geometry, because not one word on
+          // screen changes when a panel paints under the index strip or the main
+          // column instead of over them.
+          /**
+           * …ACROSS THE WHOLE LIST, AND WITH HIT-TESTING SWITCHED ON EVERYWHERE.
+           *
+           * The first version probed ONE point 90px down, which on a short list
+           * lands above everything the list covers — and `elementFromPoint`
+           * skips anything drawn `pointer-events: none`, which is exactly how a
+           * KPI tile lifts its label and figure above its own overlay anchor.
+           * Measured: with the top bar at `z-10` and those tiles' text at
+           * `z-10` later in the page, Morning CIO's figures painted THROUGH the
+           * list, and this check passed. So every element is made hit-testable
+           * for the length of the probe — paint order is what is measured — and
+           * the list is sampled on a grid, on a short list AND a tall one.
+           */
+          const paintsOnTop = () => page.evaluate(() => {
+            const panel = document.querySelector("[data-testid='smart-search-panel']");
+            if (!panel) return null;
+            const r = panel.getBoundingClientRect();
+            const st = document.createElement("style");
+            st.textContent = "* { pointer-events: auto !important; }";
+            document.head.appendChild(st);
+            let covered = 0, total = 0;
+            const through = [];
+            for (let y = r.top + 6; y < r.bottom - 6; y += 12) {
+              for (let i = 0; i <= 8; i++) {
+                const x = r.left + 8 + (i * (r.width - 16)) / 8;
+                total++;
+                const hit = document.elementFromPoint(x, y);
+                if (hit && !panel.contains(hit)) {
+                  covered++;
+                  if (through.length < 3) through.push((hit.innerText ?? hit.tagName).replace(/\s+/g, " ").trim().slice(0, 40));
+                }
+              }
+            }
+            st.remove();
+            return { w: Math.round(r.width), h: Math.round(r.height), onTop: covered === 0, covered, total, through };
+          });
+          await run(queries.holding ?? "private market");
+          const geometry = await paintsOnTop();
+          // A TALL list — the family's surname answers every member and account.
+          const tallQ = (B.owner?.name ?? "").trim().split(/\s+/).at(-1) || "fund";
+          await run(tallQ);
+          const geometryTall = await paintsOnTop();
+          // ENTER OPENS THE TOP RESULT — and then the walk comes back, so every
+          // generic check on this route is still struck on the page it names.
+          let entered = null;
+          if (queries.holding) {
+            await input.fill(queries.holding);
+            await page.waitForTimeout(200);
+            const before = page.url();
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(700);
+            const u = new URL(page.url());
+            entered = u.pathname + u.search;
+            // COME BACK ONLY IF IT WENT SOMEWHERE. A dead Enter — or one that
+            // opened the chat instead — leaves the page where it was, and going
+            // back from THERE leaves the route: every generic check on it would
+            // then be struck on whatever came before, and a dead key would read
+            // as a broken crumb. Measured: both bugs did exactly that until this
+            // line. The failure belongs to "Enter opens the first result" alone.
+            if (page.url() !== before) await page.goBack({ waitUntil: "load" }).catch(() => {});
+            else await page.keyboard.press("Escape");
+            await page.waitForTimeout(500);
+          }
+          // …AND A TAB'S NAME LANDS ON THAT TAB, SELECTED. The href claim above
+          // cannot see a page that renamed its tab key: `useViewParam` falls
+          // back to the first tab, so a stale address opens the right PAGE on
+          // the wrong tab and every figure on it renders perfectly. So the walk
+          // follows the address and reads which tab the page itself selected.
+          let tabLanded = null;
+          await input.fill(queries.tab2);
+          await page.waitForTimeout(200);
+          const beforeTab = page.url();
+          await page.keyboard.press("Enter");
+          await page.waitForTimeout(900);
+          if (page.url() !== beforeTab) {
+            const u = new URL(page.url());
+            tabLanded = await page.evaluate(() => {
+              const sel = document.querySelector('[role="tab"][aria-selected="true"][data-sector-view]');
+              return { selected: sel?.getAttribute("data-sector-view") ?? null };
+            });
+            tabLanded.path = u.pathname;
+            await page.goBack({ waitUntil: "load" }).catch(() => {});
+            await page.waitForTimeout(500);
+          } else await page.keyboard.press("Escape");
+          /**
+           * TWO MORE GAP CASES, EACH NEEDING A NAME THE PAGE ITSELF PICKS.
+           *
+           * The EMPTY-STATE rule is the whole of what keeps the note honest: a
+           * query that finds a holding is answered by that holding, and a note
+           * beside it could deny a position the book carries under another
+           * spelling. So the walk looks for a review line whose own name DOES
+           * find something here — measured, "HDFC Balanced Advantage Fund" finds
+           * both plans the book holds — and a name the book may carry under a
+           * clipped spelling whose search DOES reach the empty state, which is
+           * the only place the note could wrongly appear. Bounded, and each
+           * abstains by name if this book offers no such name.
+           */
+          let gapWithHits = null;
+          for (const nm of (REVIEW_GAP_BOOK?.claimable ?? []).slice(0, 40)) {
+            const r = await run(nm);
+            if (r.rows.some((x) => x.kind !== "ask")) { gapWithHits = { q: nm, ...r }; break; }
+          }
+          let gapSuppressed = null;
+          for (const nm of (REVIEW_GAP_BOOK?.suppressedAll ?? []).slice(0, 12)) {
+            const r = await run(nm);
+            if (!r.rows.some((x) => x.kind !== "ask")) { gapSuppressed = { q: nm, ...r }; break; }
+          }
+          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed };
+          // …and the list that carries the note, which is the one the family's
+          // own search opens: measured after the walk, when it is on screen.
+          /**
+           * AND THE NOTE IS LEFT ON SCREEN, as the Monitor walk leaves its own:
+           * the contrast sweep resolves computed colour on what is RENDERED, and
+           * this is the only place the note is drawn inside the top bar's list.
+           */
+          if (REVIEW_GAP_BOOK?.name) {
+            await run(REVIEW_GAP_BOOK.name);
+            SEARCH.geometryNote = await paintsOnTop();
+          }
+        }
+      }
       if (name === "chat") {
         // Open the panel and ask one question. `/api/chat` is a Pages Function
         // and `vite preview` runs none, so the ask lands on the FAILURE path —
@@ -18857,6 +19806,21 @@ for (const theme of THEMES) {
          */
         rowText: [...document.querySelectorAll("main table[data-pm-table] tbody tr")]
           .map((e) => (e.innerText ?? "").replace(/\s+/g, " ").trim()),
+        /**
+         * WHICH CAPITAL ACCOUNTS THE PAGE COUNTS AND WHICH IT ONLY NAMES. The
+         * scheme table is the private-market funds'; the public-market ones are
+         * named in ONE CLAUSE under it, by account on its handle. A capital
+         * account in both — or in neither — is the defect, and neither is
+         * visible to a text match over a page that names every fund somewhere.
+         */
+        schemeRows: [...document.querySelectorAll("main tr[data-scheme]")].map((e) => e.getAttribute("data-scheme")),
+        capElsewhere: (() => {
+          const el = document.querySelector("main [data-pm-cap-elsewhere]");
+          return el ? {
+            ids: (el.getAttribute("data-pm-cap-elsewhere") ?? "").split(" ").filter(Boolean),
+            text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+          } : null;
+        })(),
         // The removed "funds this page does not carry" card's own handles.
         elsewhere: document.querySelectorAll("main [data-pm-elsewhere]").length,
         /**
@@ -18897,6 +19861,37 @@ for (const theme of THEMES) {
         callEditorFor: document.querySelector("main [data-pm-call-editor]")?.getAttribute("data-pm-call-editor") ?? null,
         callRows: [...document.querySelectorAll("main [data-pm-call-row]")].map((e) => e.getAttribute("data-pm-call-row")),
       }));
+      /**
+       * THE FUND TABLE'S RETURN CELLS, per row and per measure, off their own
+       * attributes — the tag a cell prints, whether it shows a figure, and the
+       * figure — plus the footer's return cells with the coverage they carry.
+       * A reason lives in a `title`, which `innerText` cannot see, so each
+       * cell's titles are read with it.
+       */
+      const pmReturn = FAST ? null : await page.evaluate(() => {
+        const rows = [...document.querySelectorAll("main tr[data-pm-fund]")];
+        if (!rows.length) return null;
+        const titles = (el) => [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")).join(" | ");
+        return {
+          rows: rows.map((tr) => ({
+            key: tr.getAttribute("data-pm-fund"),
+            cells: [...tr.querySelectorAll("td[data-return-cell]")].map((td) => ({
+              measure: td.getAttribute("data-return-cell"),
+              tag: td.getAttribute("data-return-tag"),
+              shown: td.getAttribute("data-return-shown") === "1",
+              text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+              titles: titles(td),
+            })),
+          })),
+          foot: [...document.querySelectorAll("main [data-return-foot]")].map((td) => ({
+            measure: td.getAttribute("data-return-foot"),
+            covers: td.getAttribute("data-return-foot-covers"),
+            of: td.getAttribute("data-return-foot-of"),
+            text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
+            titles: titles(td),
+          })),
+        };
+      });
       /**
        * THE TILE DEFINITIONS — their text, their SIZE, and the tile each sits on.
        *
@@ -20127,7 +21122,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, path, url: page.url(), sectorLayout, shortWindow }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, path, url: page.url(), absentName: ABSENT_NAME, costCarried}); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

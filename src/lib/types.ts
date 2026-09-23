@@ -731,6 +731,33 @@ export type CapitalCall = {
   amount: number;           // INR
 };
 
+/**
+ * One dated cash movement FROM a fund TO the family, as its statement prints it.
+ *
+ *   income        a distribution of income or gains
+ *   capital       principal returned — units redeemed at their cost
+ *   equalisation  a compensating payment from later investors in a later close,
+ *                 passed to the earlier ones outside the fund's NAV
+ *
+ * `gross` is the amount: the funds value themselves pre-tax, and TDS is the
+ * family's own tax withheld at source. It carries a sign only for
+ * equalisation, whose column the statements head "(paid)/received".
+ */
+export type FundPayout = {
+  date: string;             // ISO
+  kind: "income" | "capital" | "equalisation";
+  label: string | null;     // the fund's own wording
+  gross: number;            // INR
+  tds: number | null;       // INR — null where the statement prints a dash
+  net: number | null;       // INR
+  /**
+   * False on the one row a statement's own summary total does not count —
+   * carried and named rather than dropped, because the gate exists to stop a
+   * record SHORT a payment, and this is the opposite.
+   */
+  inPrintedTotal: boolean;
+};
+
 export type Commitment = {
   accountId: string;
   name: string;
@@ -769,6 +796,12 @@ export type Commitment = {
    * tie is EMPTY rather than partial.
    */
   calls: CapitalCall[];
+  /**
+   * What the fund PAID BACK, dated and reconciled against its own statement's
+   * totals. `null` = this book carries no payout record for the fund; `[]` = the
+   * statement prints a measured nil. Never read one as the other.
+   */
+  payouts: FundPayout[] | null;
   /**
    * Whether the fund's own three figures agree: committed − drawn = undrawn, to
    * the rupee. False means the statement disagrees with itself and the figures

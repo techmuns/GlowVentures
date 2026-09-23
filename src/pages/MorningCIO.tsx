@@ -36,6 +36,7 @@ import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/for
 import { xirrWithTerminal, xirrPct, pooledXirr, totalReturnFromXirr, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
 import { type PrivateSheet } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
+import { capitalScope, distributionOf } from "@/lib/privateMarket";
 import { AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { NavVsIndex } from "@/components/NavVsIndex";
 import { DailyMovers } from "@/components/DailyMovers";
@@ -280,13 +281,31 @@ export function MorningCIO() {
      * committed − drawn: the fund states all three, and the build records
      * whether they agree.
      */
-    const commitments = portfolio.commitments ?? [];
+    /**
+     * ── AND ONLY THE PRIVATE-MARKET FUNDS' CAPITAL ACCOUNTS ─────────────────
+     *
+     *   "private market fund needs to be here in private market only" — sent
+     *    with the family's own classification of every capital account.
+     *
+     * Every figure on this card and on the two KPI tiles that read it opens
+     * `/private-market`, and that page now carries the capital accounts of
+     * PRIVATE-market funds only: Carnelian Bharat Amritkaal, Motilal Oswal
+     * Delphi and both Founders Fund folios call capital against a commitment
+     * and invest in listed equity, so they are named there and counted
+     * nowhere on it. A tile that kept counting them would open a page whose
+     * own total is ₹55 Cr smaller — the disagreement `drilldown.ts` exists to
+     * prevent, one link over. `capitalScope` is the one rule both read.
+     *
+     * The distribution figure is `distributionOf`, the same function the
+     * page's own tile sums, for the same reason.
+     */
+    const commitments = capitalScope(portfolio.commitments ?? [], portfolio.accounts).onPage;
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     const deploy = commitments.length
       ? {
         committed: sum(commitments.map((c) => c.committed)) + fundDeploy.committed,
         drawn: sumOrNull([...commitments.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
-        distributed: sumOrNull([...commitments.map((c) => c.distributed), fundDeploy.distributed]) ?? 0,
+        distributed: sumOrNull([...commitments.map(distributionOf), fundDeploy.distributed]) ?? 0,
         currentValue: fundDeploy.currentValue,
         unfunded: sumOrNull([...commitments.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
         tvpi: fundDeploy.tvpi,
@@ -1460,7 +1479,7 @@ export function MorningCIO() {
           </Card>
 
           <div className="grid gap-5 content-start lg:col-span-1">
-            <Card title="Capital deployment" subtitle="Fund commitments &amp; uncalled capital">
+            <Card title="Capital deployment" subtitle="Private-market funds: commitments &amp; uncalled capital">
               {hasCommitments ? (
                 <>
                   {/*
