@@ -786,6 +786,129 @@ function sectorSourceChecks(bookCount) {
 }
 
 /**
+ * ── THE SAME PAGE ON A SHORT WINDOW ─────────────────────────────────────────
+ *
+ * Polycab and Sector Composition both claim that the page itself never scrolls
+ * and that a table too long for the window scrolls INSIDE its card, heading
+ * pinned. At the sweep's own 1000px most of their tables fit whole — so there
+ * "the page does not scroll" cannot tell a card that shrinks and scrolls
+ * inside itself from one that simply GREW with its content. That second shape
+ * is what a reviewer raised on the Polycab card, and a longer corporate-action
+ * record or a shorter screen would turn it into a page that scrolls its sticky
+ * heading away, with every figure on it still correct.
+ *
+ * So the same geometry is struck again at `SHORT_H`, where these tables do not
+ * fit: the page must still not scroll, no card may spill its content past its
+ * own box, and a table that does not fit must sit in a scroller INSIDE its
+ * card, on screen, holding the rest. The window really must have been short —
+ * a resize that silently did nothing would measure the 1000px page again and
+ * pass by asserting nothing.
+ */
+const SHORT_H = 480;
+const SHORT_WINDOW_CHECK = [`on a ${SHORT_H}px window the page still does not scroll, and a table that does not fit scrolls inside its card`, (_t, ctx) => {
+  const s = ctx?.shortWindow;
+  if (!s) return { notChecked: "the short-window probe did not run" };
+  return s.height === SHORT_H && s.hasTable && s.cardsHeld
+    && s.docScroll <= 0 && s.mainScroll <= 0
+    && (s.tableFits || (s.innerInCard && s.innerVisible && s.innerOverflow > 0));
+}];
+
+/**
+ * ── SECTOR COMPOSITION IS TWO HALVES AND THREE TABS ─────────────────────────
+ *
+ *   *"this compare sectors needs to be a subtab next to direct equity, you have
+ *    made the pages too busy and why not give this whole table of Sector
+ *    breakdown next to this pie chart table by splitting the page into two
+ *    parts right and left, you are unnecessarily taking a lot of realestate."*
+ *
+ * A FACTORY RUN BY ALL THREE ROUTES, parameterised on the one thing that
+ * differs — which tab the address asks for. Written once on the default route
+ * it could not catch a layout that splits on `/sectors` and stacks the moment
+ * a reader switches tab, and the Compare tab is half of what was asked.
+ *
+ * NOTHING HERE CAN BE STRUCK ON PROSE. A table beside the chart and a table
+ * under it render identical words; so do a Compare TAB and a Compare CARD at
+ * the foot of the page. Every claim is a count or a bounding box, read off
+ * `sectorLayout`.
+ *
+ * A MISSING LAYOUT IS A FINDING, NOT AN ABSTENTION: every tab draws it, so a
+ * page without `data-sector-layout` has lost the thing these check.
+ */
+function sectorLayoutChecks(expected) {
+  return [
+    [`three tabs — Consolidated, Direct Equity, Compare sectors — sit beside the title, and this address opens on ${expected}`, (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      return L.views.map((v) => v.key).join(",") === "consolidated,direct,compare"
+        && /compare/i.test(L.views[2]?.label ?? "")
+        && L.views.filter((v) => v.active).length === 1
+        && L.views.find((v) => v.active)?.key === expected
+        && L.view === expected
+        && L.tabsBesideTitle;
+    }],
+    ["the chart and the table sit side by side, the table the wider half, and the page itself does not scroll", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L || L.cards.length !== 2) return false;
+      const [left, right] = L.cards;
+      return left.right <= right.x + 1          // beside, never above
+        && Math.abs(left.y - right.y) <= 2      // on one line
+        && right.w > left.w                     // the table is the page's subject
+        && L.docScroll <= 0 && L.mainScroll <= 0;
+    }],
+    /**
+     * AND THE RIGHT HALF SHOWS ITS WHOLE TABLE. Splitting the page puts the
+     * table in a narrower card, and a table that half then cuts off on the
+     * right is the real estate the ask was about, arriving sideways instead of
+     * downwards — with every figure on the page still correct.
+     */
+    ["…and the right half shows its whole table, never cut off at the right", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      return L.tableClip !== null && L.tableClip <= 1;
+    }],
+    SHORT_WINDOW_CHECK,
+  ];
+}
+
+/**
+ * The two claims the Consolidated and Direct Equity tabs share and Compare
+ * does not: the table is the page's sector list, so the donut's old legend —
+ * the same sectors, a second time, beside the same chart — stays gone; and
+ * Compare is a TAB, so neither its picker nor its table is drawn here.
+ */
+const SECTOR_TABLE_TAB = [
+  ["the legend beside the donut stays removed — every row of it is a row of the table beside it", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (!L) return false;
+    const n = Number(/(\d+)\s+sectors?\b/i.exec(t)?.[1]);
+    return L.leftLists === 0 && L.table && L.hasPartition
+      && Number.isFinite(n) && n > 0 && L.tableRows.length === n;
+  }],
+  ["Compare is a tab, so neither its picker nor its table is drawn on this one", (t, ctx) => {
+    const L = ctx?.sectorLayout;
+    if (!L) return false;
+    return !L.hasPicker && !L.compare && L.compareCols.length === 0 && L.picks.length === 0
+      // The old card's own instruction, which only the removed card printed.
+      && !/click a chip to add or remove/i.test(t);
+  }],
+];
+
+/**
+ * A money cell as the page prints it — `₹61.2 Cr`, `₹45.3 L`, `₹8,012` — with
+ * the half of its last printed digit, so a sum of several is held to their
+ * printing precision reproduced rather than to a tolerance widened until the
+ * figures fit. Null for a cell that carries no figure.
+ */
+function printedMoney(text) {
+  const m = /₹\s*([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(text ?? "");
+  if (!m) return null;
+  const v = crU(m[1], m[2]);
+  const decimals = (m[1].split(".")[1] ?? "").length;
+  const unit = m[2] === "Cr" ? 1 : m[2] === "L" ? 0.01 : m[2] === "K" ? 0.0001 : 1e-7;
+  return Number.isFinite(v) ? { v, half: 0.5 * 10 ** -decimals * unit } : null;
+}
+
+/**
  * ── WHAT A NON-SECURITY AXIS MUST OFFER, off the book ──────────────────────
  *
  * Every axis but `security` lifts the PMS mandates out into one row each and
@@ -1887,6 +2010,11 @@ const FENCED = (() => {
       demats: demats.length,
       holders: new Set(demats.map((id) => byId.get(id)?.owner).filter(Boolean)).size,
       accountNos: demats.map((id) => byId.get(id)?.accountNo).filter(Boolean),
+      // How many fenced rows report a cost. A depository holds shares and did
+      // not buy them, so this is 0 today — and the cost check below requires
+      // every cost cell to be the dash WITH ITS REASON for exactly as long as
+      // it stays 0, rather than assuming the page is right about the book.
+      costed: fenced.filter((p) => typeof p.costBasis === "number").length,
     };
   } catch { return null; }
 })();
@@ -1925,12 +2053,108 @@ const POLYCAB_LIVE_BOOK = (() => {
       // record was fetched WHOLE — a truncated response and a company that
       // declared none produce the identical empty list.
       measuredNil: d.actionsComplete === true && actions.filter((a) => SHARE.has(a.kind)).length === 0,
+      // …and the flag itself, which the card's subtitle is gated on.
+      complete: d.actionsComplete === true,
       quarters,
       latest,
       quote: d.quote ?? null,
+      // The names the sources line must credit, read off the store the page
+      // reads — never typed, because the builder decides which sources carried
+      // a figure on a given run.
+      sources: Array.isArray(d.sources) ? d.sources.map((x) => String(x.name ?? "")).filter(Boolean) : [],
+      retrievedAt: String(d.retrievedAt ?? ""),
     };
   } catch { return null; }
 })();
+
+/**
+ * A DATE AS THE PAGE PRINTS IT, matched rather than typed.
+ *
+ * `fmtDate` is `toLocaleDateString("en-GB", { day: "numeric", month: "short",
+ * year: "numeric" })`, and ICU renders September as "Sept" on some builds and
+ * "Sep" on others — so a check that typed one of the two would fail a correct
+ * page the morning the runtime changed its locale data. Built from the ISO
+ * string's own parts, so no timezone can move the day.
+ */
+const dmyRe = (iso) => {
+  const [y, m, d] = String(iso).split("-").map(Number);
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept?", "Oct", "Nov", "Dec"];
+  return new RegExp(String.raw`(?<!\d)${d}\s+${MON[m - 1]}\s+${y}(?!\d)`);
+};
+
+/**
+ * ── THE POLYCAB PAGE IS ONE CARD WITH THREE TABLES BEHIND A TOGGLE ─────────
+ *
+ * Spread into each of the three routes, parameterised on the one thing that
+ * differs — which table the address asks for — for the reason `pmViewChecks`
+ * is: written once on the default route it would not catch a toggle that
+ * renders on `/polycab` and vanishes the moment a reader uses it.
+ *
+ * STRUCK ON THE CONTROL AND ON WHICH TABLE IS IN THE DOM, NEVER ON LABELS.
+ * "Holding", "Corporate actions" and "Promoter group" are words this page's
+ * own card titles and prose use, so a text match cannot tell a rendered
+ * button from a sentence about one. And ONE TABLE AT A TIME is the whole of
+ * what made the page short: a build that stacked all three under a toggle
+ * that filtered nothing renders every figure correctly and satisfies every
+ * other check here — only a count of the rendered tables can see it.
+ *
+ * A MISSING TOGGLE IS A FINDING, not an abstention; only the probe failing to
+ * run abstains.
+ */
+const polycabViewChecks = (expected) => [
+  [`the page is one card with three tables behind a toggle, and this address opens on ${expected}`, (_t, ctx) => {
+    const d = ctx?.polycabDom;
+    if (!d) return { notChecked: "the DOM probe did not run" };
+    const keys = d.views.map((v) => v.key);
+    return keys.length === 3
+      && ["holding", "actions", "promoter"].every((k) => keys.includes(k))
+      && d.views.filter((v) => v.active).length === 1
+      && d.views.find((v) => v.active)?.key === expected;
+  }],
+  [`…and it draws the ${expected} table and only that one, in one card`, (_t, ctx) => {
+    const d = ctx?.polycabDom;
+    if (!d) return { notChecked: "the DOM probe did not run" };
+    return d.cards === 1 && d.tables.length === 1 && d.tables[0] === expected;
+  }],
+  /**
+   * THE PAGE DOES NOT SCROLL. The card hugs its content and scrolls inside
+   * itself on a short window, so the headings stay pinned and the page itself
+   * never moves — the Private Market's master-table shape, which is what the
+   * family asked this page to match. Geometry, because no text or figure on
+   * the page differs between a page that scrolls and one that does not.
+   */
+  ["the page itself does not scroll", (_t, ctx) => {
+    const d = ctx?.polycabDom;
+    if (!d) return { notChecked: "the DOM probe did not run" };
+    return d.docScroll <= 0 && d.mainScroll <= 0;
+  }],
+  SHORT_WINDOW_CHECK,
+];
+
+/**
+ * THE SOURCES LINE UNDER BOTH COMPANY-LEVEL TABLES — the only data on this
+ * site that is not the family's own paperwork, so each source that carried a
+ * figure is named, when it was last refreshed is stated, and that it is in no
+ * total is said in words. Read off the line's own node, so a sentence that
+ * moved elsewhere on the page cannot satisfy it.
+ */
+const POLYCAB_SOURCES_CHECK = ["the sources line names every source, the refresh date, and that none of it is in a total", (_t, ctx) => {
+  if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+  const d = ctx?.polycabDom;
+  if (!d) return { notChecked: "the DOM probe did not run" };
+  const line = d.sources;
+  if (!line) return false;
+  const day = POLYCAB_LIVE_BOOK.retrievedAt.slice(0, 10);
+  return /^Sources:/.test(line)
+    && POLYCAB_LIVE_BOOK.sources.length > 0
+    && POLYCAB_LIVE_BOOK.sources.every((n) => line.includes(n))
+    && /in no total anywhere in this book/i.test(line)
+    && /Last refreshed/i.test(line)
+    // THE DATE IS REQUIRED, NOT EXCUSED. A store with no refresh date is a
+    // finding about the store, and "Last refreshed" over nothing is the one
+    // thing this line must never print.
+    && /^\d{4}-\d{2}-\d{2}$/.test(day) && dmyRe(day).test(line);
+}];
 
 /**
  * A COMPANY SHARE THE BOOK CARRIES NO COST FOR — derived, not typed.
@@ -2360,6 +2584,13 @@ const ROUTES = [
   // both are asserted: this page RENDERS the holding, and every other page in this
   // sweep is free of it (see `polycabAbsent`, applied to every other route).
   ["polycab", "/polycab"],
+  // THE PAGE IS ONE CARD WITH THREE TABLES BEHIND A TOGGLE, and only the active
+  // one is in the DOM — so each is walked at its own address, or every claim
+  // about the company-level record would report NOT CHECKED against a table
+  // that is correctly not drawn on the default view. A check that stops running
+  // because its table moved behind a control is a check that silently stopped.
+  ["polycab-dividends", "/polycab?view=actions"],
+  ["polycab-promoter", "/polycab?view=promoter"],
   // ...AND THE COMPANY-PAGE ADDRESS OF THE SAME SECURITY, which must REDIRECT
   // here rather than render. With the holding out of `BOOK_POSITIONS`,
   // `StockInfo`'s row filter comes back empty and its fully-exited branch prints
@@ -2927,6 +3158,10 @@ const ROUTES = [
   // and neither is the set this page used to show — a check on one says nothing
   // about the other.
   ["sectors-direct", "/sectors?view=direct"],
+  // …AND THE THIRD TAB, which is not a third set: it reads both at once, so the
+  // claims about it — the default pick, the two sets' figures tying — have no
+  // subject on either of the other two addresses.
+  ["sectors-compare", "/sectors?view=compare"],
   // Knowledge & Memory, Macro Research and Economy & Macro were REMOVED at the
   // family's request, so they are no longer walked — there is no page at any of
   // those three addresses to hold to the light-mode, overflow and stray-zero
@@ -7629,6 +7864,24 @@ const INVARIANTS = {
    * null sentinel short-circuits that guard and would retire the claim in
    * silence on the very change that makes it matter.
    */
+  /**
+   * ── THE POLYCAB PAGE IS ONE CARD, THREE TABLES AND A TOGGLE ──────────────────
+   *
+   *   *"Look at how ugly the polycab tab is, You have made it too busy for no
+   *    reason. Polycab could be just a simple table with all the columns and
+   *    fields as required, and also match it with the exact UI upgrades that
+   *    we're doing for master tables in the private market tab and the
+   *    portfolio tab."*
+   *
+   * THREE ROUTES, ONE PER TABLE, because only the active table is in the DOM —
+   * the same reason the private book is walked at three addresses. Every claim
+   * this block used to make about the tiles, the per-holder card and the
+   * company cards is still made; each moved to the table that now carries its
+   * subject, and the ones whose subject was REMOVED invert rather than go, so a
+   * restored tile or card fails by name. Struck on `data-cell` / `data-col`
+   * handles throughout: the rows are drawn in the reader's column order, so a
+   * cell's position says nothing about which column it is.
+   */
   polycab: [
     ["the holding is named, with a share count and a market value",
       (t) => /Polycab/i.test(t) && /[\d,]{7,}/.test(t) && new RegExp(CR).test(t)],
@@ -7636,222 +7889,180 @@ const INVARIANTS = {
      * THE PAGE SAYS IT IS OUT OF THE BOOK'S TOTALS. A reader who lands here from
      * the nav has to be able to tell why this ₹12,351 Cr is not in the ₹710 Cr
      * headline two pages over — an unexplained figure of that size reads as a
-     * contradiction, which is the "a total must tie" rule one page up.
+     * contradiction. It is the one pill left beside the title.
      */
     ["it states that the holding is excluded from the portfolio totals",
       (t) => /excluded from portfolio totals/i.test(t) && /ring-fenced/i.test(t)],
+    ...polycabViewChecks("holding"),
     /**
-     * COST IS ABSENT AND SAYS SO. A depository holds the shares; it did not buy
-     * them, so there is no acquisition cost on the statement — and a ₹0 cost
-     * would report the whole market value as profit at an infinite return, which
-     * is the exact failure `costBasis: number | null` exists to prevent.
+     * ── THE REMOVAL AND THE RE-HOMING ARE TWO CLAIMS, AND NEITHER IMPLIES THE OTHER
+     *
+     * The five KPI tiles, the hero's second value block and the stacked cards
+     * are gone — `.card` counts every one of them, because a Kpi tile IS a card
+     * — and every figure the tiles printed is a COLUMN of the holding table. A
+     * build that dropped the tiles and the figures together would pass the
+     * absence on its own; one that kept the tiles would pass the columns.
      */
-    // SCOPED TO THE COST TILE'S OWN TEXT. Struck on the whole page this would
-    // fail on any unrelated ₹0 — the top bar's, another tile's — and report the
-    // cost tile as fabricating a zero when it is rendering correctly. The tile
-    // is its label, its value and its reason, so the window between the label
-    // and the reason is exactly the text this claim is about.
-    ["cost renders absent with its reason, never as a zero",
-      (t) => {
-        const tile = /COST BASIS([\s\S]{0,120}?)depository reports no acquisition cost/i.exec(t);
-        return !!tile && /—/.test(tile[1]) && !/₹\s*0(?:\.00)?(?![\d,.])/.test(tile[1]);
-      }],
+    ["the KPI tiles, the hero figure and the stacked cards stay removed", (t, ctx) => {
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      // The tiles' own labels, UPPERCASE as `label-xs` renders them, and the
+      // hero's "₹12,351.2 Cr / excluded from portfolio totals" pair.
+      return d.cards === 1
+        && !/SHARES HELD|STATEMENT MARK|COST BASIS|MARKET PRICE/.test(t)
+        && !/₹[\d,.]+\s*Cr\s*\n\s*excluded from portfolio totals/i.test(t);
+    }],
+    ["…and every figure the tiles printed is a column of the one table", (t, ctx) => {
+      const cols = ctx?.polycabDom?.holdingCols;
+      if (!cols) return { notChecked: "the DOM probe did not run" };
+      return ["shares", "mark", "value", "cost", "pledge", "price", "day", "marketValue"].every((c) => cols.includes(c));
+    }],
+    /**
+     * COST IS ABSENT AND SAYS SO, on the cell. A depository holds the shares; it
+     * did not buy them — and a ₹0 cost would report the whole value as profit at
+     * an infinite return. Gated on the BOOK: where no fenced row reports a cost,
+     * every cost cell must be the dash with its reason, so a cell that invented
+     * a figure fails as surely as one that printed zero.
+     */
+    ["cost renders absent with its reason, never as a zero", (t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const rows = ctx?.polycabDom?.holdingRows;
+      if (!rows) return { notChecked: "the DOM probe did not run" };
+      if (!rows.length || rows.some((r) => r.cost == null)) return false;
+      return rows.every((r) => !/₹\s*0(?:\.00)?(?![\d,.])/.test(r.cost)
+        && (FENCED.costed > 0 || (r.cost === "—" && /depository reports no acquisition cost/i.test(r.costTitle ?? ""))));
+    }],
     /**
      * THE SECOND-STATEMENT CARD IS GONE, AND THIS ASSERTS THE REMOVAL RATHER
-     * THAN DISAPPEARING WITH IT.
-     *
-     * The page used to carry a card naming the HDFC Bank NSDL scan — four JPEG
-     * pages, zero fonts, `no-text-layer` — that holds a second family member's
-     * promoter shares. The family asked for it to go, so the assertion INVERTS
-     * instead of being deleted alongside the feature, which is the same
-     * treatment the removed Public dashboard tab and the `/news` redirects get.
-     *
-     * It also guards the thing that would actually be dangerous: that scan is
-     * still unread, so any share count from it appearing here would be a figure
-     * recovered from a document nobody could machine-read.
+     * THAN DISAPPEARING WITH IT. That scan is still unread, so any share count
+     * from it appearing here would be a figure recovered from a document nobody
+     * could machine-read.
      */
     ["the removed second-statement card stays removed, and no figure is claimed from the scan",
       (t) => !/could not be read/i.test(t) && !/no text layer/i.test(t) && !/51,?08,?911/.test(t)],
-
-    /**
-     * THE PER-DEMAT CARD'S SUBTITLE AND FOOTER ARE GONE, AND WHAT THEY SAID IS
-     * NOT — two claims, and the second is the one that could fail quietly.
-     *
-     * Removed at the family's request. Between them they carried the mark's
-     * DERIVATION (value ÷ units, because an NSDL statement prints no rate
-     * column), that it is therefore a statement figure rather than a live
-     * quote, and WHY cost is absent. All three are re-stated above — the first
-     * two on the `STATEMENT · as of` pill's hover, the third on the Cost basis
-     * tile's own sub, which is where the em dash is.
-     *
-     * Asserting only the absence would pass a page that had lost the lot, and
-     * asserting only the survivors would pass one that never removed anything.
-     * Both, and neither implies the other.
-     */
     ["the per-demat prose stays removed",
-      (t) => !/One row per depository account/i.test(t)
+      (t) => !/One row per (?:depository|demat) account/i.test(t)
         && !/Cost is absent because a depository holds the shares/i.test(t)
         && !/divided by the units it prints/i.test(t)],
-    ["…and the mark still says how it is derived, on the pill that dates it",
+    /**
+     * …AND THE MARK STILL SAYS HOW IT IS DERIVED, in the hover of the note under
+     * its own heading — the column it describes, where the `STATEMENT · as of`
+     * pill that used to carry it is gone. Value ÷ units, because an NSDL
+     * statement has no rate column; a statement figure, not a live price.
+     */
+    ["…and the mark still says how it is derived, on the column that carries it",
       (_t, ctx) => (ctx?.titles ?? []).some((x) =>
         /divided by the units it prints/i.test(x)
         && /no rate column/i.test(x)
         && /not a live price/i.test(x))],
-
     /**
-     * ── THE FIVE THINGS THE FAMILY ASKED THIS PAGE FOR ──────────────────────
-     *
-     * "Per demat, per holder, pledges, dividends and splits." Three of those
-     * are reported by the statements behind this holding and two are not, and
-     * the checks below hold each to the standard its own evidence allows:
-     * the tables are RECONCILED, and the absences are asserted to stay
-     * absences rather than acquiring a zero.
+     * THE DEMAT ROWS ACCOUNT FOR EVERY SHARE THE BOOK CARRIES — the rendered
+     * cells summed, against `BOOK_POLYCAB` read by a different path. A page that
+     * drops a row reconciles perfectly with itself and fails here. The footer
+     * draws only where there is more than one row to total, and where it does it
+     * must tie to the rows above it: a total of one row is the row again, and a
+     * footer computed independently of its rows is the Private Market's PM-1.
      */
-
+    ["the demat rows account for every share in the book", (t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const rows = d.holdingRows;
+      if (!rows.length || rows.some((r) => r.shares == null)) return false;
+      const summed = rows.reduce((a, r) => a + (r.shares === "—" ? 0 : Number(r.shares.replace(/,/g, ""))), 0);
+      if (rows.length > 1) {
+        const foot = /\t([\d,]{4,})/.exec(d.holdingFoot ?? "");
+        if (!foot || Number(foot[1].replace(/,/g, "")) !== summed) return false;
+      } else if (d.holdingFoot != null) return false;
+      return summed === FENCED.shares && rows.length === FENCED.demats;
+    }],
     /**
-     * THE PER-DEMAT TABLE ACCOUNTS FOR EVERY SHARE THE STRIP REPORTS.
-     *
-     * Struck twice over, and the second half is the one that matters. Summing
-     * the rendered rows against the rendered tile catches a tile computed
-     * independently of the table under it — the Private Market page shipped
-     * exactly that, its footer printing a deduped total while every row above
-     * carried the double count, each correct on its own terms and no check able
-     * to see it. Comparing the tile against `BOOK_POLYCAB` then catches the
-     * case that reconciliation cannot: a page that drops the same row from both
-     * and agrees with itself perfectly.
+     * THE PER-HOLDER TABLE IS THE HOLDER COLUMN NOW, and it still answers "per
+     * holder". The separate table stays gone (it restated one row as another
+     * one-row table), and every holder the book carries the block under is named
+     * in the column, over exactly one row per demat — the book's own count,
+     * derived here rather than read off the page.
      */
-    ["the per-demat rows account for every share the strip reports, and the strip for every share in the book",
-      (t) => {
-        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
-        const tile = /SHARES HELD\s*\n\s*([\d,]+)/.exec(t);
-        if (!tile) return false;
-        const strip = Number(tile[1].replace(/,/g, ""));
-        const section = sliceBetween(t, "SECURITY\tHOLDER\tDEPOSITORY ACCOUNT", "Per holder");
-        const rows = [...section.matchAll(/\t([\d,]{4,})\t(?:₹[^\t\n]+|—)\t(?:₹[^\t\n]+|—)/g)];
-        if (!rows.length) return false;
-        const summed = rows.reduce((s, m) => s + Number(m[1].replace(/,/g, "")), 0);
-        return summed === strip && strip === FENCED.shares;
-      }],
-
+    ["the per-holder table is folded into the Holder column, which names every holder the book carries", (t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (d.holderText != null) return false;
+      const holders = new Set(d.holdingRows.map((r) => r.holder).filter((h) => h && h !== "—"));
+      return holders.size === FENCED.holders && d.holdingRows.length === FENCED.demats;
+    }],
     /**
-     * ...AND SO DOES THE PER-HOLDER ROLLUP, over the same shares regrouped.
-     *
-     * A rollup keyed on the wrong field is wrong in one of two directions and
-     * both are silent: keyed on the POSITION it reports one member twice for a
-     * member holding the block in two demats, and deduped — which a per-owner
-     * breakdown must never be (§"consolidated counts once, per-account does
-     * not") — it drops a member's row entirely. Reconciling the column against
-     * the same total the demat table ties to catches both, and the demat COUNT
-     * is compared against the book's distinct accounts so a rollup that reports
-     * rows rather than accounts fails here rather than the first time a member
-     * holds promoter stock in two places.
+     * THE SHARE-OF-BLOCK COLUMN STAYS REMOVED. With the block in one demat it
+     * could only ever print 100%, which is a column of chrome; the value of each
+     * demat is beside it, and the footer totals them the day there are several.
+     * Asserted rather than assumed, because it inverts a check that used to
+     * require the column.
      */
-    ["the per-holder rollup regroups the same shares, over the book's own count of demats",
-      (t, ctx) => {
-        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
-        if (!ctx?.polycabDom) return { notChecked: "the DOM probe did not run" };
-        // A MISSING HANDLE IS A FINDING, NOT AN ABSTENTION. `polycabDom` being
-        // null means the probe never ran; `holderText` being null means the
-        // table it reads lost its handle, which is the defect this reconciliation
-        // exists to catch rather than a reason to stand down.
-        const section = ctx.polycabDom.holderText;
-        if (section == null) return false;
-        const rows = [...section.matchAll(/\n([^\t\n]+)\t([\d,]+)\t([\d,]+|—)\t([^\t\n]+)\t(?:[\d.]+%|—)/g)];
-        if (!rows.length) return false;
-        const shares = rows.reduce((s, m) => s + (m[3] === "—" ? 0 : Number(m[3].replace(/,/g, ""))), 0);
-        const demats = rows.reduce((s, m) => s + Number(m[2].replace(/,/g, "")), 0);
-        return shares === FENCED.shares && demats === FENCED.demats && rows.length === FENCED.holders;
-      }],
-
-    /**
-     * THE SHARE-OF-BLOCK COLUMN IS AGAINST THE BLOCK, NOT THE PORTFOLIO.
-     *
-     * This holding is ring-fenced OUT of the portfolio, so a weight struck
-     * against consolidated NAV would be arithmetic on two sets that were
-     * deliberately separated — and it renders as an ordinary percentage either
-     * way. On this book the wrong denominator reads about 1,738%, so the
-     * column summing to 100 is what says which figure it is. Rendered weights
-     * only: a row whose value is absent renders `—` and must not be counted as
-     * a zero, which would make a broken column sum correctly by shrinking.
-     */
-    ["the share-of-block column is a share OF THE BLOCK — its rendered weights sum to 100%",
-      (t, ctx) => {
-        if (!ctx?.polycabDom) return { notChecked: "the DOM probe did not run" };
-        const section = ctx.polycabDom.holderText;   // null ⇒ the handle is gone: a finding
-        if (section == null) return false;
-        const weights = [...section.matchAll(/\t([\d.]+)%(?:\n|$)/g)].map((m) => Number(m[1]));
-        return weights.length > 0 && Math.abs(weights.reduce((a, b) => a + b, 0) - 100) < 0.1;
-      }],
-
-    /**
-     * EVERY DEMAT THE BOOK CARRIES THE HOLDING IN IS NAMED ON THE PAGE.
-     *
-     * "Per demat" is only answered if a reader can tell WHICH demat. The
-     * account numbers come from the registry rather than being typed here, so
-     * a drop that adds a second promoter statement extends this check by
-     * itself; a page rendering one row per account without ever naming one
-     * would pass every reconciliation above and answer nothing.
-     */
-    ["every demat account the book reports the holding in is named on the page",
-      (t) => {
-        if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
-        const section = sliceBetween(t, "SECURITY\tHOLDER\tDEPOSITORY ACCOUNT", "Per holder");
-        return FENCED.accountNos.length > 0 && FENCED.accountNos.every((no) => section.includes(no));
-      }],
-
-    /**
-     * ── THE STATEMENT CARD IS GONE, AND THE ONE CLAIM THAT MATTERED IS NOT ──
-     *
-     *   *"remove the highlighted section from the dashboard UI."*
-     *
-     * It was a three-row table — pledged/locked-in, dividends received, bonus
-     * and splits — each REPORTED as absent with the document that would carry
-     * it. Two checks stood on it: that no cell ever acquires a fabricated zero,
-     * and that all three rows are actually asked. Both INVERT rather than being
-     * deleted alongside the feature, which is the treatment every removal in
-     * this file gets.
-     *
-     * AND THE PLEDGE CLAIM IS ASSERTED TO SURVIVE, as a claim of its own. It is
-     * the only thing on this page a reader can be actively harmed by losing: an
-     * NSDL holding statement prints no pledge, lock-in, earmark or freeze column,
-     * while the promoter card below prints a GROUP encumbrance — 0.00% on this
-     * book — and a reader who takes the second for a statement about this demat
-     * has learnt something false about a ₹12,000 Cr promoter block. The three
-     * claims are separate and none implies another: a build that removed the
-     * card AND the tile satisfies the two absences and loses the distinction in
-     * silence, which is exactly how this would go wrong.
-     */
+    ["the share-of-block column stays removed", (t, ctx) => {
+      const cols = ctx?.polycabDom?.holdingCols;
+      if (!cols) return { notChecked: "the DOM probe did not run" };
+      return cols.length > 0 && !cols.includes("weight") && !/SHARE OF THE BLOCK/i.test(t);
+    }],
+    ["every demat account the book reports the holding in is named on the page", (t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const rows = ctx?.polycabDom?.holdingRows;
+      if (!rows) return { notChecked: "the DOM probe did not run" };
+      return FENCED.accountNos.length > 0
+        && FENCED.accountNos.every((no) => rows.some((r) => (r.accountText ?? "").includes(no)));
+    }],
     ["the removed statement card stays removed",
       (t) => !/Pledged, locked-in or earmarked/i.test(t)
         && !/Dividends received/i.test(t)
         && !/Bonus, splits and spin-offs/i.test(t)
         && !/WHICH DOCUMENT CARRIES IT/i.test(t)
         && !/These three are absent/i.test(t)],
-    /* ...and the claim that card carried is asserted to survive by
-       "a promoter-GROUP pledge never fills this demat's own pledge dash" below,
-       which moved onto the promoter card's third tile with it. Kept as ONE
-       check rather than two: it is the same claim, and a second copy is a
-       second place for it to drift. */
-
     /**
-     * ── THE COMPANY-LEVEL RECORD, LIVE ──────────────────────────────────────
+     * ── THIS DEMAT'S OWN PLEDGE IS A DASH, AND SAYS WHY — the half of the
+     * group-vs-demat distinction that lives on this table.
      *
-     *   *"Every single data point in the Polycab Page should be live and
-     *    automatically updated everyday, there must be no placeholders. Daily
-     *    fetch all such information for the Polycab promoter activity,
-     *    dividend/split/bonus/pledge."*
-     *
-     * The checks below are struck against `POLYCAB_LIVE_BOOK`, re-derived from
-     * the committed store on this run — never against a figure typed here,
-     * because that store is rebuilt DAILY and a literal would fail the first
-     * morning the company declared a dividend.
-     *
-     * AND THEY RUN WITH `/api/polycab` DEAD. `vite preview` serves no Function,
-     * so everything asserted here is coming out of the committed store — which
-     * is the half of the two-layer design that has to keep working when the
-     * exchange is unreachable, and the half a live-only implementation would
-     * have left as a blank card.
+     * The NSDL statement prints no pledge, lock-in or freeze column, so this
+     * demat's pledge is absent — and the reason names the promoter GROUP's
+     * figure as a different fact, because that figure (0.00% on this book) is
+     * one tab away and a reader who takes it for a statement about this demat
+     * has learnt something false about a ₹12,000 Cr promoter block. The heading
+     * says "this demat" in words, under it. The group half is asserted on
+     * `polycab-promoter`, where the group figure is drawn.
      */
+    ["this demat's own pledge is a dash with its reason, under a heading that says it is this demat's", (t, ctx) => {
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (!d.holdingRows.length) return false;
+      return d.holdingRows.every((r) => r.pledge === "—"
+          && /no pledge, lock-in or freeze column/i.test(r.pledgeTitle ?? "")
+          && /group figure[\s\S]{0,20}not a statement about this account/i.test(r.pledgeTitle ?? ""))
+        && /this demat/i.test(d.noteOf?.pledge ?? "");
+    }],
+    /**
+     * THE PRICE RENDERS FROM THE COMMITTED STORE WHEN THE LIVE ENDPOINT IS DEAD
+     * — `/api/polycab` 404s in this harness, which is exactly a reader's state
+     * when the exchange is unreachable — and its basis is written under the
+     * heading, so a stored close never reads as a live quote.
+     */
+    ["the mark renders from the committed store when the live endpoint is dead", (t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK?.quote) return { notChecked: "the store carries no quote to fall back to" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (!d.holdingRows.length) return false;
+      return d.holdingRows.every((r) => /₹\s*[\d,]/.test(r.price ?? ""))
+        && /last close|live/i.test(d.noteOf?.price ?? "");
+    }],
+  ],
+  /**
+   * ── WHAT POLYCAB HAS DECLARED — the corporate-action table ──────────────────
+   *
+   * Struck against `POLYCAB_LIVE_BOOK`, re-derived from the committed store on
+   * this run and never typed here: the store is rebuilt DAILY, and a literal
+   * would fail the first morning the company declared a dividend. They run with
+   * `/api/polycab` dead, which is the half of the two-layer design that must
+   * keep working when the exchange is unreachable.
+   */
+  "polycab-dividends": [
+    ...polycabViewChecks("actions"),
     ["the declared dividends render, every one the store carries",
       (t, ctx) => {
         if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
@@ -7863,140 +8074,110 @@ const INVARIANTS = {
         // right number of the wrong rows.
         if (ctx.polycabDom.dividendRows !== want.length) return false;
         const dated = want.filter((d) => d.exDate);
-        return dated.length > 0 && dated.every((d) => {
-          const [y, m, day] = d.exDate.split("-");
-          const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-          return t.includes(`${Number(day)} ${MON[Number(m) - 1]} ${y}`);
-        });
+        return dated.length > 0 && dated.every((d) => dmyRe(d.exDate).test(t));
       }],
-
     /**
-     * THE ENTITLEMENT IS MARKED DERIVED, AND IS IN NO TOTAL.
-     *
-     * A per-share dividend times a share count is arithmetic anyone can do; what
-     * makes it honest is that this book cannot say the shares were still held on
-     * the ex-date, because the statement is a SNAPSHOT and not a history. The
-     * column says so, and the page never calls it received — which is the one
-     * word that would turn a derived figure into an income claim.
+     * THE ENTITLEMENT IS MARKED DERIVED, AND IS IN NO TOTAL. This book cannot
+     * say the shares were still held on an ex-date, because the statement is a
+     * SNAPSHOT — so the column says so, and the page never calls it received.
      */
     ["the entitlement column says it is derived, and never claims the cash arrived",
       (t, ctx) => {
         const derived = /On this block\s*·\s*derived/i.test(t);
         const titled = (ctx?.titles ?? []).some((x) =>
           /DERIVED/i.test(x) && /entitlement rather than income/i.test(x));
-        // "Dividends received" is the STATEMENT card's own row and is allowed to
-        // stand; what must not appear is the company record claiming receipt.
         const claims = /declared[^.]{0,40}received|received[^.]{0,30}from the exchange/i.test(t);
         return derived && titled && !claims;
       }],
-
     /**
-     * A MEASURED NIL IS A MEASUREMENT, AND ONLY WHERE THE RECORD IS COMPLETE.
-     *
-     * "No bonus, split or spin-off has ever been declared" is the one claim on
-     * this page stronger than an absence. It is gated on `actionsComplete`, so
-     * the check is an IMPLICATION in both directions: the sentence may appear
-     * only where the store vouches for the record, and where the store does
-     * vouch and carries none, the page must actually say so rather than falling
-     * back to a dash a reader learns nothing from.
+     * A MEASURED NIL IS A MEASUREMENT, AND ONLY WHERE THE RECORD IS COMPLETE —
+     * an IMPLICATION in both directions: the sentence may appear only where the
+     * store vouches for the record, and where it does and carries none, the page
+     * must say so rather than fall back to a dash.
      */
+    /**
+     * "WHOLE SINCE LISTING" IS SAID ONLY WHERE THE LAST REFRESH FETCHED THE
+     * RECORD WHOLE. The card's subtitle printed it unconditionally, so a
+     * refresh that kept a stored record through a failed fetch — the builder's
+     * own `actionsComplete: false` path — would have called a possibly
+     * truncated list complete while the nil beneath it correctly refused to.
+     * Struck on the subtitle's own node against the committed store, both ways
+     * round: the complete wording where the store is whole, the incomplete one
+     * where it is not, and never neither.
+     */
+    ["the card calls the record whole since listing only where the last refresh fetched it whole", (_t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const sub = d.cardSub ?? "";
+      const whole = /whole since listing/i.test(sub);
+      return POLYCAB_LIVE_BOOK.complete ? whole : !whole && /could not confirm it is whole/i.test(sub);
+    }],
     ["the bonus/split nil is claimed only where the exchange's record was fetched whole",
       (t) => {
         if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
-        // Matched on the sentence the page actually prints. The first draft
-        // looked for "never been declared" against a page reading "has EVER
-        // been declared" and failed a correct build — the same prose-drift this
-        // sweep keeps finding, which is why the row count above is struck on the
-        // DOM and only this one claim rests on wording.
         const claimed = /has ever been declared on this scrip/i.test(t);
         return claimed === POLYCAB_LIVE_BOOK.measuredNil;
       }],
-
     /**
-     * THE PROMOTER GROUP'S FIGURES ARE ON THE PAGE, AND MATCH THE STORE.
-     *
-     * Read off the tiles' own handles rather than out of the prose around them,
-     * and compared at the precision the page prints — the figure is rendered
-     * through `fmtPct`, so the comparison is to two decimals rather than to the
-     * full precision the store carries.
+     * A RECORD DATE THE EXCHANGE DID NOT PUBLISH SHOWS THE BOOK-CLOSURE WINDOW
+     * IT DID. Five of the eight dividends carry a book closure and no record
+     * date; the old table printed a dash for all five while the store held the
+     * window. A dash over a figure the source DOES carry is the absence rule run
+     * backwards.
+     */
+    ["a record date the exchange did not publish shows the book-closure window it did", (t) => {
+      if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+      const want = POLYCAB_LIVE_BOOK.dividends.filter((d) => !d.recordDate && d.bookClosureFrom);
+      if (!want.length) return { notChecked: "every declared action carries a record date" };
+      return want.every((d) => dmyRe(d.bookClosureFrom).test(t));
+    }],
+    POLYCAB_SOURCES_CHECK,
+  ],
+  /**
+   * ── THE PROMOTER GROUP, AS IT DISCLOSES ITSELF ──────────────────────────────
+   *
+   * The group half of the pledge distinction: this table carries the promoter
+   * GROUP's figures, and it has to say so in words, because a 0.00% here taken
+   * for a statement about the family's own demat is the most consequential
+   * misreading available on the page.
+   */
+  "polycab-promoter": [
+    ...polycabViewChecks("promoter"),
+    /**
+     * THE NEWEST QUARTER'S FIGURES ARE THE STORE'S, read off the two cells that
+     * carry the handles the tiles used to, at the precision the page prints.
      */
     ["the promoter holding and pledge render the figures the store carries",
-      (t) => {
-        if (!POLYCAB_LIVE_BOOK?.latest) return { notChecked: "the store carries no promoter disclosure" };
-        const { holdingPct, pledgePct } = POLYCAB_LIVE_BOOK.latest;
-        const want = (v) => (v === null ? null : v.toFixed(2));
-        const got = (label) => {
-          const m = new RegExp(String.raw`${label}\s*\n\s*(—|[\d.]+)%?`, "i").exec(t);
-          return m ? (m[1] === "—" ? null : Number(m[1]).toFixed(2)) : undefined;
-        };
-        return got("PROMOTER HOLDING") === want(holdingPct) && got("PROMOTER PLEDGE") === want(pledgePct);
-      }],
-
-    /**
-     * ...AND THE GROUP FIGURE NEVER FILLS THE DEMAT'S DASH.
-     *
-     * THE MOST IMPORTANT CHECK IN THIS BLOCK. A promoter-GROUP encumbrance of 0%
-     * is a real measurement about the group this holding belongs to; it is NOT a
-     * statement that this demat's balance is unencumbered, and the two are one
-     * careless edit apart. This demat's own pledge must stay absent whatever the
-     * group discloses, and the page must say in words that a group figure is not
-     * a statement about this account — otherwise a reader takes a 0.0% for a
-     * guarantee about ₹12,000 Cr of promoter stock.
-     *
-     * ── IT MOVED WITH THE CLAIM, TO A BETTER SURFACE ────────────────────────
-     *
-     * It used to slice the statement card's three-row table and read its first
-     * REPORTED cell. That card was removed at the family's request, and
-     * `sliceBetween` returns everything AFTER its start marker when the end
-     * marker is gone — so left alone this would have gone on running against the
-     * rest of the document rather than failing, which is the one outcome a claim
-     * of this weight must never have. It is struck on the promoter card's third
-     * tile now: the same dash and the same reason, BESIDE the group figure they
-     * exist to be told apart from, which is where the distinction is actually
-     * made rather than two cards away from it.
-     */
-    ["a promoter-GROUP pledge never fills this demat's own pledge dash",
       (t, ctx) => {
-        // The tile's VALUE line, not merely a dash somewhere in the tile: the
-        // sentence under it contains an em dash of its own, so matching the
-        // block would pass a tile whose figure had been filled from the group.
-        const value = /THIS DEMAT'S BALANCE\s*\n\s*(—|[\d.,]+\s*%?)/i.exec(t);
-        if (!value || value[1].trim() !== "—") return false;
-        const saysSo = new RegExp(
-          String.raw`THIS DEMAT'S BALANCE[\s\S]{0,300}?no pledge, lock-in or freeze column`
-          + String.raw`[\s\S]{0,160}?group figure is not a\s+statement about this account`, "i").test(t);
-        // ...AND THE GROUP'S OWN FIGURE IS STILL RENDERED. This is a distinction
-        // between two figures; a page that simply stopped printing the group
-        // pledge would satisfy every line above while answering nothing.
-        const group = ctx?.polycabDom?.pledge;
-        return saysSo && group != null;
+        if (!POLYCAB_LIVE_BOOK?.latest) return { notChecked: "the store carries no promoter disclosure" };
+        const d = ctx?.polycabDom;
+        if (!d) return { notChecked: "the DOM probe did not run" };
+        const { holdingPct, pledgePct } = POLYCAB_LIVE_BOOK.latest;
+        const want = (v) => (v === null ? "—" : `${v.toFixed(2)}%`);
+        return d.holding === want(holdingPct) && d.pledge === want(pledgePct);
       }],
-
+    ["every quarter the store carries is a row", (t, ctx) => {
+      if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (!POLYCAB_LIVE_BOOK.quarters.length) return { notChecked: "the store carries no promoter quarter" };
+      return d.quarterRows === POLYCAB_LIVE_BOOK.quarters.length;
+    }],
     /**
-     * THE PAGE IS COMPLETE WITH THE LIVE ENDPOINT DEAD.
-     *
-     * `/api/polycab` 404s in this harness, which is exactly the state a reader
-     * is in when the exchange is unreachable. The committed close must still be
-     * on screen with its basis named — a page that showed a price only when the
-     * Function answered would render blank here and pass every check above.
+     * …AND THE GROUP'S PLEDGE SAYS IT IS THE GROUP'S, NOT THIS DEMAT'S — in
+     * words under both headings, and in the card's own subtitle. The demat half
+     * of this distinction is asserted on `polycab`; the two are separate claims
+     * and neither implies the other.
      */
-    ["the mark renders from the committed store when the live endpoint is dead",
-      (t) => {
-        if (!POLYCAB_LIVE_BOOK?.quote) return { notChecked: "the store carries no quote to fall back to" };
-        return /MARKET PRICE/i.test(t)
-          && /last settled close|live · BSE/i.test(t)
-          && !/MARKET PRICE\s*\n\s*—/i.test(t);
-      }],
-
-    /**
-     * EVERY FIGURE ON THE NEW CARDS NAMES WHERE IT CAME FROM. The company-level
-     * record is the only data on this whole site that is not the family's own
-     * paperwork, so a reader has to be able to see which source carried it and
-     * when it was last refreshed.
-     */
-    ["the company-level record names its sources and its refresh date",
-      (t) => /Sources:/i.test(t) && /Last refreshed/i.test(t)
-        && /refreshed daily and is in no total anywhere in this book/i.test(t.replace(/\s+/g, " "))],
+    ["the group's holding and pledge say in words that they are the group's, not the family's demat", (t, ctx) => {
+      const n = ctx?.polycabDom?.noteOf;
+      if (!n) return { notChecked: "the DOM probe did not run" };
+      return /group/i.test(n.groupHolding ?? "")
+        && /group/i.test(n.groupPledge ?? "") && /not this demat/i.test(n.groupPledge ?? "")
+        && /not a statement about the family[’']s own demat/i.test(t);
+    }],
+    POLYCAB_SOURCES_CHECK,
   ],
   /**
    * ── THE YEAR'S TRADING IS FIVE LINES, NOT FOUR HUNDRED ─────────────────────
@@ -11809,13 +11990,18 @@ const INVARIANTS = {
    * the first paint, which this page's own header note has always warned against.
    */
   sectors: [
-    ["both views are offered and the page opens on Consolidated", (t) =>
-      // Both segments render, and the donut's own hole says which set is drawn.
-      // The default is asserted rather than assumed: two views beside an old one
-      // is exactly the change that silently moves a default, and the page would
-      // render perfectly while showing the family the narrower set.
-      /\bConsolidated\b/.test(t) && /\bDirect Equity\b/.test(t)
-      && /TOTAL EXPOSURE\s*\n\s*₹/i.test(t) && !/DIRECT EQUITY\s*\n\s*₹/i.test(t)],
+    /**
+     * THE TABS AND THE TWO HALVES — see `sectorLayoutChecks`. The default is
+     * asserted rather than assumed: a third tab beside two old ones is exactly
+     * the change that silently moves a default, and the page would render
+     * perfectly while showing the family the narrower set. The tabs' claim is
+     * struck on `data-sector-view`, never on their labels — "Consolidated" and
+     * "Direct Equity" are words this page's own figures print.
+     */
+    ...sectorLayoutChecks("consolidated"),
+    ...SECTOR_TABLE_TAB,
+    ["the donut's hole is the Consolidated set's", (t) =>
+      /TOTAL EXPOSURE\s*\n\s*₹/i.test(t) && !/DIRECT EQUITY\s*\n\s*₹/i.test(t)],
     /**
      * THE CLIENT'S ACTUAL REQUIREMENT, STRUCK ACROSS TWO PAGES. "based on the
      * aggregate securities weightage as per the data from the security filter in
@@ -11867,15 +12053,18 @@ const INVARIANTS = {
      * part-measured gain by a cost covering part of its own numerator. Struck on
      * the REASON as well as on the absence, because a bare dash teaches nothing.
      */
-    ["no sector return is struck, and the refusal names its cause", (t, ctx) => {
-      // Struck on the sector-breakdown card ALONE. A page-wide test would be
-      // satisfied by nothing and broken by anything: the legend prints a weight
-      // on every row and the closing note prints more, so a signed percentage
-      // elsewhere says nothing about the Return column.
-      const table = sliceBetween(t, "Sector breakdown", "This is ");
-      if (!table) return { notChecked: "the sector-breakdown card was not on screen on this run" };
-      const why = (ctx?.titles ?? []).some((x) => /divide a part-measured gain by a cost covering part/i.test(x));
-      return !/[+\-\u2212]\d+\.\d+%/.test(table) && why;
+    ["no sector return is struck, and every refusal names its cause", (t, ctx) => {
+      /*
+       * STRUCK ON EACH ROW'S OWN RETURN CELL, read by its column id. It used to
+       * slice the page between "Sector breakdown" and the footer's opening
+       * words — and the footer went at Stage 10ap, so `sliceBetween` had been
+       * returning the whole rest of the page ever since: a boundary the page no
+       * longer prints is not a boundary. The cells are what the claim is about.
+       */
+      const rs = ctx?.sectorLayout?.returns;
+      if (!rs || !rs.length) return false;
+      return rs.every((r) => r.text === "—"
+        && /divide a part-measured gain by a cost covering part/i.test(r.title ?? ""));
     }],
     ["the derived half says it is no part of the book's NAV, in words", (t) =>
       /DERIVED, not a position/i.test(t) && /no part of the book[\u2019']?s NAV/i.test(t)],
@@ -11927,6 +12116,53 @@ const INVARIANTS = {
    * left out, at its value.
    */
   "sectors-direct": [
+    ...sectorLayoutChecks("direct"),
+    ...SECTOR_TABLE_TAB,
+    /**
+     * A RETURN WHERE THE SECTOR'S OWN COLUMNS CAN CARRY ONE, AND A REASON
+     * WHERE THEY CANNOT. This view's Return column printed a bare dash on every
+     * row — a formula popover over "— ÷ — × 100" — which is the
+     * absent-without-a-reason failure `Absent.tsx` exists to prevent. Every cell
+     * is now one of exactly two things: a signed return, or a dash whose reason
+     * names the COST — none reported, or reported for only some holdings,
+     * because a return over the costed few beside the value of all of them
+     * describes neither (`costCoversSet`, the test Morning CIO and the Monitor
+     * share).
+     */
+    ["every sector's return is a signed figure, or a dash that says which costs are missing", (_t, ctx) => {
+      const rs = ctx?.sectorLayout?.returns;
+      if (!rs || !rs.length) return false;
+      return rs.every((r) => /^[+\-\u2212]\d+\.\d+%$/.test(r.text)
+        || (r.text === "—" && /reports? a cost|a cost is reported for/i.test(r.title ?? "")));
+    }],
+    /**
+     * …AND A RETURN APPEARS ONLY WHERE THE SECTOR'S COSTED HOLDINGS ACCOUNT FOR
+     * ITS WHOLE VALUE. The check above accepts any signed figure, so a page that
+     * dropped the coverage gate — striking a return over a sector's costed FEW
+     * and printing it beside the value of all of them — passed it, and on this
+     * book it would have printed one on every partially costed sector. The gate
+     * is `costCoversSet` (0.5% of the sector's value may be uncosted), RE-EXPRESSED
+     * here rather than imported, over the coverage the cell carries — and the
+     * attributes are tied to the row's own printed Positions count, so a cell
+     * cannot carry one set's coverage beside another set's row.
+     *
+     * AND A DASH'S REASON STATES THE COUNTS THE ROW CARRIES. "A cost is reported
+     * for 4 of the 7 holdings" is a claim a reader acts on — it says which
+     * documents to go and find — so it must be the row's own four and seven.
+     */
+    ["a return is struck only where the sector's costed holdings account for its whole value", (_t, ctx) => {
+      const rs = ctx?.sectorLayout?.returns;
+      if (!rs || !rs.length) return false;
+      return rs.every((r) => {
+        const { costed, holdings, uncosted, mv, count } = r;
+        if (![costed, holdings, uncosted, mv, count].every(Number.isFinite)) return false;
+        if (holdings !== count || costed > holdings || uncosted < 0 || uncosted > mv + 1) return false;
+        const covered = mv > 0 && uncosted <= mv * 0.005;
+        if (/^[+\-\u2212]\d+\.\d+%$/.test(r.text)) return covered && costed > 0;
+        if (costed === 0) return /No holding in this sector reports a cost/i.test(r.title ?? "");
+        return new RegExp(String.raw`A cost is reported for ${costed} of the ${holdings} holdings`).test(r.title ?? "");
+      });
+    }],
     ["it is the book's own Direct Equity bucket, to the rupee", (t) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
       const m = /DIRECT EQUITY\s*\n\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(t);
@@ -12140,6 +12376,149 @@ const INVARIANTS = {
       return (ctx?.titles ?? []).some((x) => /the statement simply does not report it/i.test(x)
         && /rather than assigned/i.test(x));
     }],
+  ],
+  /**
+   * ── COMPARE SECTORS IS A TAB, AND ITS TABLE IS THE RIGHT HALF ──────────────
+   *
+   * It was a card at the foot of the page, under the chart and the full-width
+   * table, so comparing four sectors meant scrolling past everything else. It
+   * is the third tab now: the donut and a picker on the left, the comparison on
+   * the right, both sets side by side, and it opens on the four largest sectors
+   * rather than on an empty table asking to be filled.
+   *
+   * THE COMPARISON IS ARITHMETIC ON FIGURES THE PAGE PRINTS ELSEWHERE, so it is
+   * checked as arithmetic rather than as prose: a sector's two halves add to its
+   * total, its weight is that total over the donut's, and the Direct Equity
+   * rows sit inside the family's own-account set and are weighted over it. A
+   * comparison keyed to the wrong sector, or to the wrong set, renders perfectly
+   * well-formed cells — only the relations between them can see it.
+   */
+  "sectors-compare": [
+    ...sectorLayoutChecks("compare"),
+    ["the left half is the donut and its picker, and neither the sector table nor the partition is drawn on this tab", (t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      return L.hasPicker && L.compare && !L.table && L.tableRows.length === 0 && !L.hasPartition
+        // …and the card it replaced, at the foot of the page, stays gone.
+        && !/click a chip to add or remove/i.test(t);
+    }],
+    ["the picker lists every sector the donut draws, largest first, and opens on the four largest it can place", (t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const n = Number(/(\d+)\s+sectors?\b/i.exec(t)?.[1]);
+      if (!Number.isFinite(n) || n === 0 || L.picks.length !== n) return false;
+      // LARGEST FIRST, read off each pick's own printed weight — so "the four
+      // largest" below is the page's own ordering shown to be one, rather than
+      // an order this sweep takes on trust.
+      const w = L.picks.map((p) => Number(/(\d+(?:\.\d+)?)%/.exec(p.text)?.[1]));
+      if (!w.every(Number.isFinite) || w.some((x, i) => i > 0 && x > w[i - 1] + 1e-9)) return false;
+      const on = L.picks.filter((p) => p.on).map((p) => p.key);
+      const want = L.picks.map((p) => p.key).filter((k) => k !== "Unclassified").slice(0, 4);
+      return want.length > 0 && on.length === want.length && want.every((k) => on.includes(k));
+    }],
+    ["the comparison's columns are exactly the sectors picked", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const on = L.picks.filter((p) => p.on).map((p) => p.key);
+      return L.compareCols.length > 0 && L.compareCols.length === on.length
+        && L.compareCols.every((k, i) => k === on[i]);
+    }],
+    ["it compares both sets, each under its own heading", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      return L.compareGroups.length === 2
+        && /^Consolidated/i.test(L.compareGroups[0]) && /^Direct Equity/i.test(L.compareGroups[1]);
+    }],
+    ["every comparison cell is a figure, or a dash that names its cause", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L || !L.compareRows.length) return false;
+      const k = L.compareCols.length;
+      return L.compareRows.every((r) => r.cells.length === k
+        && r.cells.every((c) => c.text !== "" && (c.text !== "—" || !!c.title)));
+    }],
+    ["each picked sector's two halves add to its total exposure", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const row = (label) => L.compareRows.find((r) => r.label === label);
+      const tot = row("Total exposure"), meas = row("Reported by their statements"), der = row("Via funds · derived");
+      if (!tot || !meas || !der || !tot.cells.length) return false;
+      return tot.cells.every((c, i) => {
+        const T = printedMoney(c.text), M = printedMoney(meas.cells[i]?.text);
+        if (!T || !M) return false;
+        const dc = der.cells[i];
+        let D;
+        // A DERIVED DASH is a measured nil only where its reason says no fund
+        // discloses a company in this sector; any other reason means the half
+        // could not be struck, and then neither can the sum.
+        if (dc?.text === "—") {
+          if (!/no fund this store can read discloses/i.test(dc.title ?? "")) return false;
+          D = { v: 0, half: 0 };
+        } else {
+          D = printedMoney(dc?.text);
+          if (!D) return false;
+        }
+        return Math.abs(M.v + D.v - T.v) <= M.half + D.half + T.half + 1e-9;
+      });
+    }],
+    ["each picked sector's weight is its total exposure over the donut's", (t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const H = printedMoney(/TOTAL EXPOSURE\s*\n\s*(₹[\d,.]+\s*(?:Cr|L|K)?)/i.exec(t)?.[1]);
+      const tot = L.compareRows.find((r) => r.label === "Total exposure");
+      const w = L.compareRows.find((r) => r.label === "Weight of total exposure");
+      if (!H || !tot || !w || !tot.cells.length) return false;
+      return tot.cells.every((c, i) => {
+        const T = printedMoney(c.text);
+        const pct = /^(\d+(?:\.\d+)?)%$/.exec(w.cells[i]?.text ?? "");
+        if (!T || !pct) return false;
+        const want = (T.v / H.v) * 100;
+        // The printing precision reproduced: the weight to one decimal, and
+        // what the two rounded money figures can move the ratio by.
+        return Math.abs(Number(pct[1]) - want) <= 0.05 + (100 * T.half) / H.v + (want * H.half) / H.v + 1e-9;
+      });
+    }],
+    /**
+     * THE DIRECT EQUITY ROWS ARE THE FAMILY'S OWN SHARES, weighted over that
+     * set — held against the book's own Direct Equity bucket, derived from
+     * `glowData.ts` rather than read off another page. A comparison whose
+     * second group quietly showed the consolidated figures would print
+     * well-formed cells that sum past the whole own-account set.
+     */
+    ["the Direct Equity rows sit inside the family's own-account set, each weighted over it", (_t, ctx) => {
+      if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const val = L.compareRows.find((r) => r.label === "Value");
+      const w = L.compareRows.find((r) => r.label === "Weight of Direct Equity");
+      if (!val || !w || !val.cells.length) return false;
+      const D = SECTOR_VIEW_BOOK.directCr;
+      let sum = 0, halves = 0, figures = 0;
+      const ok = val.cells.every((c, i) => {
+        if (c.text === "—") return /bought no share in this sector themselves/i.test(c.title ?? "") && w.cells[i]?.text === "—";
+        const V = printedMoney(c.text);
+        const pct = /^(\d+(?:\.\d+)?)%$/.exec(w.cells[i]?.text ?? "");
+        if (!V || !pct) return false;
+        sum += V.v; halves += V.half; figures += 1;
+        const want = (V.v / D) * 100;
+        // 0.15 Cr is the bound `sectors-direct` holds the page's own total to
+        // against this same book figure.
+        return Math.abs(Number(pct[1]) - want) <= 0.05 + (100 * V.half) / D + (want * 0.15) / D + 1e-9;
+      });
+      if (!ok) return false;
+      if (!figures) return { notChecked: "no picked sector holds an own-account share" };
+      return sum <= D + halves + 0.15;
+    }],
+    ["a Direct Equity return never stands beside a cost the sector does not report", (_t, ctx) => {
+      const L = ctx?.sectorLayout;
+      if (!L) return false;
+      const cost = L.compareRows.find((r) => r.label === "Cost reported");
+      const ret = L.compareRows.find((r) => r.label === "Return on cost");
+      if (!cost || !ret || !ret.cells.length) return false;
+      return ret.cells.every((c, i) => c.text === "—" || !!printedMoney(cost.cells[i]?.text));
+    }],
+    // The donut and its source line are the Consolidated set's on this tab,
+    // so the same three provenance claims hold here as on `sectors`.
+    ...sectorSourceChecks((b) => b.companySharesWithBookSector),
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
   // holdings are sectioned by BUCKET (who chose the position), the sections must
@@ -15706,6 +16085,34 @@ const OVERFLOW = () => {
   return { overflow, worst };
 };
 
+/**
+ * What `SHORT_WINDOW_CHECK` reads, measured while the window is `SHORT_H` high.
+ * The table's own scroller is the nearest ancestor below `<main>` that scrolls;
+ * every box is read in the same zoomed space, so they compare with each other.
+ */
+const SHORT_WINDOW = () => {
+  const de = document.documentElement, m = document.querySelector("main");
+  const t = document.querySelector("main [data-polycab-table], main [data-sector-table], main [data-sector-compare]");
+  const scrolls = (el) => ["auto", "scroll"].includes(getComputedStyle(el).overflowY);
+  let sc = t?.parentElement ?? null;
+  while (sc && sc !== m && !scrolls(sc)) sc = sc.parentElement;
+  const inner = sc && sc !== m ? sc : null;
+  const mb = m?.getBoundingClientRect() ?? null, tb = t?.getBoundingClientRect() ?? null, ib = inner?.getBoundingClientRect() ?? null;
+  const cards = [...document.querySelectorAll("main .card")];
+  return {
+    height: window.innerHeight,
+    docScroll: de.scrollHeight - de.clientHeight,
+    mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
+    hasTable: !!t,
+    tableFits: !!(tb && mb && tb.bottom <= mb.bottom + 1),
+    innerOverflow: inner ? inner.scrollHeight - inner.clientHeight : null,
+    innerInCard: !!inner?.closest(".card"),
+    innerVisible: !!(ib && mb && ib.top >= mb.top - 1 && ib.bottom <= mb.bottom + 1),
+    // No card spills its content past its own box: it holds it, or scrolls it.
+    cardsHeld: cards.length > 0 && cards.every((c) => c.scrollHeight <= c.clientHeight + 1 || scrolls(c)),
+  };
+};
+
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
 const report = [];
 
@@ -17977,6 +18384,15 @@ for (const theme of THEMES) {
        */
       const polycabDom = FAST ? null : await page.evaluate(() => {
         const txt = (sel) => document.querySelector(sel)?.innerText.replace(/\s+/g, " ").trim() ?? null;
+        /* A CELL IS READ BY WHAT IT IS, NEVER BY ITS POSITION. `<Tr>` draws a
+           row's cells in the READER's column order, so the n-th `<td>` is
+           whatever column a drag put there; `data-cell` is the column's own id. */
+        const cellOf = (tr, k) => tr.querySelector(`[data-cell="${k}"]`);
+        // A REASON IN A `title` IS NOT IN `innerText` — `AbsentCell` puts its
+        // cause on a span inside the cell, so the cell's own title or the first
+        // one inside it is where a dash says why.
+        const tipOf = (el) => el?.getAttribute("title") ?? el?.querySelector("[title]")?.getAttribute("title") ?? null;
+        const de = document.documentElement, m = document.querySelector("main");
         return {
           dividendRows: document.querySelectorAll("[data-polycab-dividend-row]").length,
           quarterRows: document.querySelectorAll("[data-polycab-quarter-row]").length,
@@ -17985,18 +18401,42 @@ for (const theme of THEMES) {
           holding: txt("[data-polycab-holding]"),
           pledge: txt("[data-polycab-pledge]"),
           /**
-           * THE PER-HOLDER TABLE'S OWN TEXT, rather than a slice of the page's.
-           *
-           * Two reconciliations are struck on these rows, and both used to bound
-           * a `sliceBetween` on the heading of the card that came NEXT — which
-           * has since been removed at the family's request. `sliceBetween`
-           * returns everything AFTER its start marker when the end marker is
-           * gone, so both would have gone on running against the rest of the
-           * document rather than failing: "a boundary the page no longer prints
-           * is not a boundary", for the third time in this file. A node cannot
-           * run past itself whatever the page prints after it.
+           * THE PER-HOLDER TABLE'S OWN TEXT — read so its ABSENCE can be asserted.
+           * The table was folded into the holding table's Holder column when the
+           * page became one card, and a check that stops reading a node because
+           * the node went is how a restored table would come back unseen.
            */
           holderText: document.querySelector("[data-polycab-holders]")?.innerText ?? null,
+          /* THE ONE CARD AND ITS TOGGLE. `.card` counts every panel a Kpi tile,
+             a hero or a stacked card would bring back — the tiles are cards. */
+          cards: document.querySelectorAll("main .card").length,
+          views: [...document.querySelectorAll("main [data-polycab-view]")].map((b) => ({
+            key: b.getAttribute("data-polycab-view"), active: b.getAttribute("aria-selected") === "true" })),
+          tables: [...document.querySelectorAll("main [data-polycab-table]")].map((t) => t.getAttribute("data-polycab-table")),
+          holdingCols: [...document.querySelectorAll('main [data-polycab-table="holding"] thead th[data-col]')].map((th) => th.getAttribute("data-col")),
+          holdingRows: [...document.querySelectorAll("main [data-polycab-demat-row]")].map((tr) => ({
+            account: tr.getAttribute("data-polycab-demat-row"),
+            holder: cellOf(tr, "holder")?.innerText.trim() ?? null,
+            accountText: cellOf(tr, "account")?.innerText.replace(/\s+/g, " ").trim() ?? null,
+            shares: cellOf(tr, "shares")?.innerText.trim() ?? null,
+            cost: cellOf(tr, "cost")?.innerText.trim() ?? null,
+            costTitle: tipOf(cellOf(tr, "cost")),
+            pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,
+            pledgeTitle: tipOf(cellOf(tr, "pledge")),
+            price: cellOf(tr, "price")?.innerText.trim() ?? null,
+          })),
+          holdingFoot: document.querySelector("main [data-polycab-holding-foot]")?.innerText ?? null,
+          noteOf: {
+            price: txt('main [data-polycab-table="holding"] th[data-col="price"] [data-col-note]'),
+            pledge: txt('main [data-polycab-table="holding"] th[data-col="pledge"] [data-col-note]'),
+            groupHolding: txt('main [data-polycab-table="promoter"] th[data-col="holding"] [data-col-note]'),
+            groupPledge: txt('main [data-polycab-table="promoter"] th[data-col="pledge"] [data-col-note]'),
+          },
+          sources: txt("main [data-polycab-sources]"),
+          shareActionsText: txt("main [data-polycab-share-actions]"),
+          cardSub: txt("main [data-polycab-card-sub]"),
+          docScroll: de.scrollHeight - de.clientHeight,
+          mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
         };
       });
       // THE CAPITAL-CALL TIMELINE, READ STRUCTURALLY.
@@ -18064,6 +18504,94 @@ for (const theme of THEMES) {
           unplacedMV: n("data-unplaced-mv"),
           text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
           titles: [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")),
+        };
+      });
+      /**
+       * ── SECTOR COMPOSITION'S LAYOUT, READ AS GEOMETRY AND STRUCTURE ────────
+       *
+       * *"this compare sectors needs to be a subtab next to direct equity … give
+       * this whole table of Sector breakdown next to this pie chart table by
+       * splitting the page into two parts right and left."*
+       *
+       * NOT ONE WORD ON THE PAGE DIFFERS between a table beside the chart and a
+       * table under it, or between a Compare tab and a Compare card at the
+       * foot of the page — so every claim about the ask is a bounding box or a
+       * count. The two halves are the grid's own `.card` children, found through
+       * `data-sector-layout` rather than by their titles, because the right
+       * card's title changes with the tab.
+       */
+      const sectorLayout = FAST ? null : await page.evaluate(() => {
+        const root = document.querySelector("main [data-sector-layout]");
+        if (!root) return null;
+        const box = (el) => { const r = el.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, right: r.right, bottom: r.bottom }; };
+        const de = document.documentElement, m = document.querySelector("main");
+        const tip = (el) => el?.getAttribute("title") ?? el?.querySelector("[title]")?.getAttribute("title") ?? null;
+        const h1 = document.querySelector("main h1");
+        const tabs = document.querySelector("main [data-sector-views]");
+        return {
+          view: root.getAttribute("data-sector-layout"),
+          views: [...document.querySelectorAll("main [data-sector-view]")].map((b) => ({
+            key: b.getAttribute("data-sector-view"), label: (b.innerText ?? "").trim(),
+            active: b.getAttribute("aria-selected") === "true" })),
+          // THE TABS SIT BESIDE THE TITLE — on its line, to its right, and NEXT
+          // to it — which is where the family asked for Compare to be: "a subtab
+          // next to direct equity", not a card at the foot of the page.
+          //
+          // ADJACENT, NOT MERELY ON THE SAME LINE. The first version asked only
+          // "right of the title and overlapping its line", and the bug pass
+          // proved that blind: moved into the header's SUBTITLE slot, the tabs
+          // did not wrap below the title at all — a `w-full max-w-2xl` item fits
+          // beside the crumb and the title on a wide header — and landed at the
+          // far right of the row, MEASURED 489px from the title and still on its
+          // line, satisfying every clause. Where they belong the gap measures
+          // 9px, the header's own `gap-x-2.5`; 32px is room for that and for
+          // nothing else.
+          tabsBesideTitle: !!(h1 && tabs) && (() => {
+            const a = h1.getBoundingClientRect(), b = tabs.getBoundingClientRect();
+            return b.left >= a.right - 1 && b.left - a.right <= 32 && b.top < a.bottom && b.bottom > a.top;
+          })(),
+          cards: [...root.children].filter((c) => c.classList.contains("card")).map(box),
+          // A LIST IN THE LEFT HALF THAT IS NOT THE PICKER is the legend coming
+          // back — every row of which is a row of the table beside it.
+          leftLists: [...document.querySelectorAll("main [data-sector-left] li")].filter((li) => !li.querySelector("[data-sector-pick]")).length,
+          hasPicker: !!document.querySelector("main [data-sector-picker]"),
+          picks: [...document.querySelectorAll("main [data-sector-pick]")].map((b) => ({
+            key: b.getAttribute("data-sector-pick"), on: b.getAttribute("aria-pressed") === "true",
+            text: (b.innerText ?? "").replace(/\s+/g, " ").trim() })),
+          hasPartition: !!document.querySelector("main [data-sector-partition]"),
+          table: !!document.querySelector("main [data-sector-table]"),
+          tableRows: [...document.querySelectorAll("main [data-sector-row]")].map((r) => r.getAttribute("data-sector-row")),
+          // EACH ROW'S RETURN CELL, read by its column id rather than its
+          // position: `<Tr>` draws cells in the READER's order, so the n-th cell
+          // is whatever a drag put there. A dash's reason is in a `title`, which
+          // `innerText` cannot see.
+          returns: [...document.querySelectorAll("main [data-sector-row]")].map((r) => {
+            const c = r.querySelector('[data-cell="return"]');
+            const n = (k) => (c?.hasAttribute(k) ? Number(c.getAttribute(k)) : null);
+            return {
+              key: r.getAttribute("data-sector-row"), text: (c?.innerText ?? "").trim(), title: tip(c),
+              costed: n("data-costed"), holdings: n("data-holdings"), uncosted: n("data-uncosted-mv"), mv: n("data-mv"),
+              count: Number((r.querySelector('[data-cell="count"]')?.innerText ?? "").trim()),
+            };
+          }),
+          compare: !!document.querySelector("main [data-sector-compare]"),
+          compareCols: [...document.querySelectorAll("main [data-compare-col]")].map((th) => th.getAttribute("data-compare-col")),
+          compareGroups: [...document.querySelectorAll("main [data-compare-group]")].map((r) => (r.innerText ?? "").replace(/\s+/g, " ").trim()),
+          compareRows: [...document.querySelectorAll("main [data-compare-row]")].map((r) => ({
+            label: r.getAttribute("data-compare-row"),
+            cells: [...r.querySelectorAll(":scope > td")].slice(1).map((td) => ({
+              text: (td.innerText ?? "").replace(/\s+/g, " ").trim(), title: tip(td) })),
+          })),
+          // WHAT A CARD WOULD NEED TO SHOW ALL OF ITS TABLE — a table the card
+          // cuts off on the right is the real estate the ask was about, arriving
+          // sideways instead of downwards.
+          tableClip: (() => {
+            const t = document.querySelector("main [data-sector-table], main [data-sector-compare]");
+            const sc = t?.parentElement;
+            return sc ? sc.scrollWidth - sc.clientWidth : null;
+          })(),
+          docScroll: de.scrollHeight - de.clientHeight,
+          mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
         };
       });
       /**
@@ -18406,6 +18934,21 @@ for (const theme of THEMES) {
       // is counted apart from both, because a check that passes over no input
       // claims confidence nobody earned and one that fails over no input is red
       // about a page that is rendering correctly.
+      /**
+       * THE SHORT WINDOW, on the two pages whose checks read it. Taken LAST,
+       * because it resizes the page, and the viewport is RESTORED before the
+       * invariants run and the screenshot is taken. The pause lets the charts'
+       * ResizeObservers and React's commit land before the page is read.
+       */
+      let shortWindow = null;
+      if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && /^(polycab|sectors)(-|$)/.test(name)) {
+        const was = page.viewportSize();
+        await page.setViewportSize({ width, height: SHORT_H });
+        await page.waitForTimeout(250);
+        shortWindow = await page.evaluate(SHORT_WINDOW);
+        await page.setViewportSize(was ?? { width, height: 1000 });
+        await page.waitForTimeout(250);
+      }
       const invariants = [], notCheckedHere = [];
       /**
        * THE RING-FENCE, ASSERTED ON EVERY PAGE THAT IS NOT THE POLYCAB PAGE.
@@ -18863,7 +19406,10 @@ for (const theme of THEMES) {
           }
         }
       }
-      const isPolycabPage = /\/polycab$/.test(page.url());
+      // ANY VIEW OF THE POLYCAB PAGE, not only the param-free one: the page grew
+      // a `?view=` toggle, and `/\/polycab$/` would have fired the ring-fence
+      // absence check on the page whose whole job is to name the holding.
+      const isPolycabPage = /\/polycab(?:[?#]|$)/.test(page.url());
       if (!FAST && theme === THEMES[0] && width === WIDTHS[0] && !isPolycabPage && /polycab/i.test(mainText)) {
         invariants.push("Polycab is ring-fenced to its own page, and this page names it");
       }
@@ -18903,7 +19449,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow}); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

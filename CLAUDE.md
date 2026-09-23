@@ -1531,6 +1531,12 @@ statement has no rate column (§"the value column is a mark on 14 rows and par o
 the shares and did not buy them. A ₹0 cost would report the whole ₹12,351.24 Cr as
 profit at an infinite return.
 
+***THE PAGE IS ONE TABLE CARD SINCE Stage 10bt*** — *"Polycab could be just a
+simple table with all the columns and fields as required"* — so the hero, the five
+KPI tiles and the stacked cards the paragraphs below describe are gone, and every
+figure they printed is a column of the holding table, on the row it describes. The
+reasoning below about what the statement does and does not carry is unchanged.
+
 **THE PAGE IS THE HOLDING AND NOTHING ELSE — TWO CARDS HAVE SINCE BEEN REMOVED**,
 at the family's request, and the reasoning is kept here rather than on screen. One
 explained WHY the holding is ring-fenced; the other named Bharat's unreadable HDFC
@@ -1661,7 +1667,12 @@ can be harmed by losing — moved onto the promoter card's third tile**, where i
 sits BESIDE the group encumbrance it exists to be told apart from rather than two
 cards away from it, which is a better home than the one it came from.
 `check:pages` asserts that tile's dash, its reason and the group figure beside it
-as ONE claim, and the card's absence as another.
+as ONE claim, and the card's absence as another. ***AND IT MOVED A THIRD TIME AT
+Stage 10bt***: the promoter card became a table on its own tab, so the claim is on
+this demat's own Pledged cell — `this demat` under the heading, and a dash whose
+reason names the group figure as a different fact — while the group half is under
+the promoter table's heading (`group, not this demat`). Two claims on two tables,
+each asserted where it is drawn.
 
 The paragraph below is kept in the order it was learnt, because what it says
 about a card that can never be filled is still the rule this book follows
@@ -1709,7 +1720,12 @@ prints is not a boundary" failure, and they read that table's own node through
 `data-polycab-holders` now)*. Verified by breaking each in turn — an off-by-one
 tile, a demat count taken from rows, a weight over consolidated NAV, an unnamed
 account, a fabricated nil, and a silently dropped row — and watching exactly the right
-check fail.
+check fail. *(The KPI strip the first comparison read went at **Stage 10bt**; the
+demat rows are reconciled against `BOOK_POLYCAB` directly now, and against their
+own footer the moment there are two — while there is one, the footer's ABSENCE is
+asserted, because a total of one row is the row again. The share-of-block weights
+went with their column, which could only ever print 100% on a block held in one
+demat, and the check inverted to assert the column stays gone.)*
 
 **`ONLY=<route,route>` walks a subset of the sweep**, added for that
 verification: the discipline costs a build and a full 62-combination sweep per
@@ -8192,7 +8208,9 @@ two chose a name" (the Held via column). Four had no second home:
   **A sector page over ₹222 Cr of a ₹710 Cr book is an unexplained narrowing
   without it.**
 - **why Unclassified is unclassified** → onto the Unclassified row and its
-  legend entry, as a hover, which is where an absence's reason belongs.
+  legend entry, as a hover, which is where an absence's reason belongs. *(The
+  legend went at **Stage 10bt** — every row of it was a row of the table beside
+  it — so the reason rides on the table row, and on the Compare picker's row.)*
 
 `privateMV` and `unclassified` fed nothing but that paragraph and were DELETED
 with it rather than left computing the right number into no caller.
@@ -9112,6 +9130,11 @@ corner test allows. Re-measured on chords: `innerRadius` 56 → **66**,
 `outerRadius` 96 → **98**, `!tracking-normal` on the label, and the two lower
 lines OUT of the hole entirely — tightest slack **13.1px** on Consolidated and
 18.1px on Direct Equity, confirmed by screenshot.
+
+***THE DONUT IS THE LEFT HALF OF THE PAGE SINCE Stage 10bt***, drawn at 236px
+with a 70px inner radius, so the hole's three lines — label, total, count — sit
+with room to spare. The chord rule above is still the test a future change to its
+size must pass; the provenance line is the foot of the left half.
 
 **THE TWO LINES THAT LEFT THE HOLE DID NOT LEAVE THE PAGE.** A figure a reader
 acts on does not go away to fix a layout; it moves somewhere with room. The count
@@ -12804,7 +12827,11 @@ unencumbered** — and the two are one careless edit apart. So they are separate
 cards, the statement card's three dashes are untouched, and a third tile on the
 new card says in words that a group figure is not a statement about this
 account. `check:pages` asserts that the group pledge never fills the statement
-card's own pledge dash, and reintroducing exactly that bug fires it.
+card's own pledge dash, and reintroducing exactly that bug fires it. *(Separate
+TABLES behind one toggle since **Stage 10bt**, and the separation is unchanged:
+the demat's Pledged cell and the group's pledge column are still two claims, each
+naming the other as a different fact, and the harness case that fills the first
+from the second still fires.)*
 
 #### What the probe established, and the source that was refused
 
@@ -15533,7 +15560,287 @@ private holding reports a cost), one on the not-found drill-down and one on
 `stock-qty` (no row there carries a pledge). The count did not move because #69
 adds no route, and it is recorded as the same only because it was measured again.
 
-### Stage 10bt — BSE IS THEIRS, NO STATEMENT REPORTS IT, AND THE SCREEN NOW SAYS SO
+### Stage 10bt — POLYCAB IS ONE TABLE, AND SECTOR COMPOSITION IS TWO HALVES
+
+*"Look at how ugly the polycab tab is, You have made it too busy for no reason.
+Polycab could be just a simple table with all the columns and fields as
+required, and also match it with the exact UI upgrades that we're doing for
+master tables in the private market tab and the portfolio tab."* · *"In this
+sector composition tab this compare sectors needs to be a subtab next to direct
+equity, you have made the pages too busy and why not give this whole table of
+Sector breakdown next to this pie chart table by splitting the page into two
+parts right and left, you are unnecessarily taking a lot of realestate."*
+
+Two pages and one complaint: each printed the same figures several times over and
+spent most of its height on chrome. **NOT ONE FIGURE ON EITHER PAGE WAS
+RE-MEASURED** — `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` byte-identically, and the only arithmetic that changed is
+two defects the rewrite fixed, both named below.
+
+#### 1. Polycab — one card, three tables, a toggle
+
+**BEFORE:** a hero with four pills (ring-fenced, `STATEMENT · as of` with the mark,
+the ISIN, the price's live status), five KPI tiles (Market value, Shares held,
+Statement mark, Cost basis, Market price), and four stacked cards — per demat, per
+holder, what Polycab declared, and the promoter group with three tiles of its own.
+The value, the share count and the mark each printed three times.
+
+**NOW:** the page header with ONE pill — `Ring-fenced · excluded from portfolio
+totals`, because a reader arriving from the nav has to be told why a ₹12,000 Cr
+figure is not in the headline two pages over — and ONE card whose own header
+carries a toggle, `Holding · Corporate actions · Promoter group`, at `?view=`.
+That is Private Market's master-table shape (Stage 10bf): the control is in the
+card that draws it and ONLY the active table is in the DOM, which is what makes
+the page short and what `check:pages` counts. Every table sorts and every column
+but the first drags (Stage 10bh), the heading row is sticky, and the card scrolls
+inside itself so the page never does.
+
+**EVERY FIGURE A TILE PRINTED IS A COLUMN, ON THE ROW IT DESCRIBES:**
+
+| Was | Now |
+| --- | --- |
+| Shares held tile | the Shares column |
+| Statement mark tile + the `STATEMENT · as of` pill | the Mark column with `statement` under its heading, and its derivation (value ÷ units, no rate column, not a live price) in that note's hover; the as-of is a column of its own |
+| Market value tile | the Value column, `statement` |
+| Cost basis tile | the Cost column — `AbsentCell` with its reason, never ₹0 |
+| Market price tile + the live-status pill | the CMP column, its basis under the heading: `live · BSE`, `fetching` or `last close · BSE` |
+| — | Day (the exchange's own move) and Market value `at CMP` — the only figure on the page a live price may move (§6) |
+| the ISIN pill | under the security's name |
+| the Per holder card | the Holder column — it restated one row as a second one-row table |
+| Share of the block | GONE — with the block in one demat it could only ever print 100% |
+
+**THE PLEDGE CLAIM MOVED A THIRD TIME, AND IT IS THE ONE THAT HAD TO.** Stage 10bq
+put it on the promoter card's third tile, BESIDE the group encumbrance it exists to
+be told apart from. That card is a table on another tab now, so the claim is on
+this demat's own Pledged cell — `this demat` under the heading in words, and a dash
+whose reason says both that the NSDL statement prints no pledge column AND that the
+promoter group's pledge is a group figure, not a statement about this account. The
+group half is under the promoter table's own heading (`group, not this demat`) and
+in its card's subtitle. Two claims on two tables, each asserted where it is drawn;
+neither implies the other, which is why neither is struck on the other's tab.
+
+**A DASH OVER A FIGURE THE SOURCE DOES CARRY IS THE ABSENCE RULE RUN BACKWARDS, and
+the old declared table did it five times.** Five of Polycab's eight dividends carry
+a book-closure window and no record date, and the record column printed *"the
+exchange publishes no record date"* over all five while the store held the window.
+It is `Record / book closure` now and prints whichever the exchange published.
+
+**THE FOOTER DRAWS ONLY WHERE THERE IS SOMETHING TO ADD UP.** A total of one row is
+the row again. The table is written over the collection, so the day Bharat's HDFC
+statement arrives as a text PDF it is a second row with no code change and the
+footer appears with it — and `check:pages` asserts the footer ties to its rows the
+moment there are two, and is ABSENT while there is one.
+
+**AND THE CHECKS FOLLOWED THE TABLES THEY READ.** Three routes (`polycab`,
+`polycab-dividends`, `polycab-promoter`), because only the active table is in the
+DOM — the same reason the private book is walked at three addresses.
+`polycabViewChecks(expected)` is spread into all three: the toggle offers exactly
+the three tables, this address opens on its own, exactly ONE table and ONE card are
+drawn (a build that stacked all three under a toggle filtering nothing renders
+every figure correctly and satisfies every other check), and the page itself does
+not scroll. Every claim the old tiles and cards carried is still made, struck on
+`data-cell` handles because a row is drawn in the READER's column order; the ones
+whose subject was REMOVED invert, so a restored tile, the per-holder table, the
+share-of-block column or the second-statement card fails by name. The refresh date
+on the sources line is REQUIRED rather than excused — "Last refreshed" over nothing
+is the one thing that line must never print — and it is matched through a
+`dmyRe` that accepts ICU's `Sept` as well as `Sep`, so a runtime changing its locale
+data cannot fail a correct page.
+
+#### 2. Sector Composition — two halves, three tabs
+
+**BEFORE:** the donut with a two-column legend of every sector, three full-width
+partition cards, a full-width sector table, and Compare sectors as a card at the
+FOOT of the page — so comparing four sectors meant scrolling past everything else.
+
+**NOW:** `Consolidated · Direct Equity · Compare sectors` beside the title, at
+`?view=`, and a grid of two halves — the donut and what it is made of on the left,
+the table on the right, 3 : 5. Each half scrolls inside itself on a short window;
+the page itself does not scroll at the sweep's 1500×1000, and below `lg` the halves
+stack, which is right on a phone.
+
+**THE LEGEND WENT, AND NOTHING WENT WITH IT.** Every row of it — swatch, sector,
+weight, value — is a row of the table beside it, which also sorts, expands and says
+where each figure came from. Two lists of the same twelve sectors on one screen was
+the real estate. The Unclassified reason that rode on the legend entry (Stage 10aq)
+is on the table row, and on the picker's row on the Compare tab.
+
+**ONE SECTOR IS ONE COLOUR EVERYWHERE.** The swatch is keyed on a sector's place in
+the CONSOLIDATED order on every tab, so the chart, the table, the picker and the
+comparison agree. `CHART_COLORS[i % n]` keyed on a rendered index would repaint
+every swatch the moment a reader sorted the table — and the table sorts a COPY of
+the rows for exactly that reason.
+
+**THE THREE PARTITION CARDS ARE STACKED FIGURES IN THE LEFT HALF**, labels and
+lines unchanged — which is why every check that reads them (the three that rebuild
+the book, the excluded card's own total, the left-out card's route to
+Consolidated) passed untouched. They are a label, a figure and one line each; three
+full-width cards spent a row of the page on three numbers.
+
+**COMPARE IS A TAB, AND IT OPENS ON SOMETHING.** Its left half is the donut and a
+picker of every sector (largest first; a row or a wedge adds or removes one, up to
+four) and its right half is a TRANSPOSED table of BOTH sets at once — Consolidated
+(total exposure, weight, the measured and the derived halves, companies, largest
+company) and Direct Equity (value, weight, holdings, the cost reported and how many
+holdings it covers, return on cost, largest holding). It opens on the four largest
+sectors rather than on an empty table asking to be filled — a default of the
+largest by value is an ORDERING, not a judgement. A sector the family reaches only
+through funds prints its measured half as `₹0 only via funds`: a COMPUTED zero, and
+its reason is in the cell rather than in a hover.
+
+**AND THE OLD COMPARE CARD WAS PRINTING A FALSE SENTENCE, NOT ONLY A MISSING
+FIGURE.** Its sector rows carried `cost: null, pnl: null, returnPct: null,
+withoutCost: count` on BOTH views, so Cost, P&L and Return were always a dash — and
+the row beneath them, *"Of which report no cost"*, printed **N of N** on the Direct
+Equity view over sectors where some holdings DO report one. Measured on this book,
+Consumer Discretionary reads `₹47.6 L · 4 of 7` now: four of its seven own-account
+holdings carry a cost, where the old card told the family none did. A confidently
+wrong count is worse than a dash, because a reader goes looking for documents that
+are already in hand.
+
+**THE DIRECT EQUITY RETURN IS STRUCK WHERE ITS OWN COLUMNS CAN CARRY ONE.** The old
+table rendered `fmtPct(null)` — a bare dash inside a formula popover whose worked
+line read `— ÷ — × 100`, which is the absent-without-a-reason failure `Absent.tsx`
+exists to prevent. `rollSectors` now strikes a return only where the holdings that
+report a cost account for the whole sector (`costCoversSet`, the one test Morning
+CIO and the Portfolio Monitor share), and every other cell is a dash naming which
+costs are missing. Consolidated still refuses a return throughout, for its own
+reason — its value is part derived. Measured on this book, ONE Direct Equity
+sector is fully costed: Consumer Staples, all three of its own-account holdings
+reporting a cost, reads **−30.28%** — a real measurement the old table withheld
+behind a bare dash. The other eight are dashes naming how many of their holdings
+report a cost (`4 of 7`, `1 of 5`, `1 of 10`, or none).
+
+**AND THE GATE IS CHECKED — WHICH, IN THIS CHANGE'S FIRST DRAFT, IT WAS NOT.** The
+first check on that column accepted any signed figure, so dropping the `covered &&`
+term from `rollSectors` — striking a return over a sector's costed FEW and printing
+it beside the value of all of them — would have passed it while putting a return on
+Consumer Discretionary, Industrials and Financials. The sweep cannot re-derive a
+sector's coverage without re-implementing the three sector tiers, so the return
+cell carries the coverage it is gated on (`data-costed`, `data-holdings`,
+`data-uncosted-mv`, `data-mv`), the check re-expresses `costCoversSet`'s 0.5% over
+it rather than importing it, and the attributes are tied to the row's own printed
+Positions count so a cell cannot carry one set's coverage beside another's row. A
+dash's reason must state the row's own counts, because *"a cost is reported for 4
+of the 7 holdings"* tells a reader which documents to go and find. Found by reading
+the change back, before the bug pass rather than after it.
+
+**EVERY CLAIM ABOUT THE ASK IS GEOMETRY OR STRUCTURE**, because not one word on the
+page differs between a table beside the chart and a table under it, or between a
+Compare tab and a Compare card. `sectorLayout` reads the grid's own `.card`
+children through `data-sector-layout` rather than by their titles (the right card's
+title changes with the tab), and `sectorLayoutChecks(expected)` is spread into all
+three routes: three tabs, in order, beside the title's own line, this address on
+its own; two cards side by side on one line with the table the wider half; the page
+not scrolling; and the right half's table not cut off at the right — a table the
+narrower card clips is the real estate the ask was about, arriving sideways.
+`SECTOR_TABLE_TAB` holds the two claims the table tabs share: the legend stays gone
+(a list in the left half that is not the picker) and Compare is a TAB (no picker
+and no comparison drawn there). The Compare tab's own checks are ARITHMETIC on
+figures the page prints: a sector's two halves add to its total, its weight is that
+total over the donut's, and the Direct Equity rows sit inside the book's own
+own-account set and are weighted over it — a comparison keyed to the wrong set
+renders perfectly well-formed cells, and only the relations between them can see
+it. The Consolidated return check used to slice the page between "Sector
+breakdown" and the footer's opening words — a footer that went at Stage 10ap, so it
+had been reading the whole rest of the page ever since; it reads each row's own
+`data-cell="return"` now.
+
+#### Two review findings — one valid, one not reproducible and still worth a check
+
+**THE CARD CALLED THE RECORD "WHOLE SINCE LISTING" WHETHER OR NOT IT WAS.** Valid.
+The subtitle of the corporate-actions card was a constant. The builder has a
+supported path — the exchange's identity not established — that keeps the stored
+actions with `actionsComplete: false`, and on it the subtitle called a possibly
+truncated list complete while the bonus/split line beneath it correctly refused
+to. Both now read the same flag (`usePolycabLive().complete`); the incomplete
+wording says the latest refresh could not confirm the record is whole.
+`check:pages` asserts it against the committed store in BOTH directions, off the
+subtitle's own `data-polycab-card-sub` node. **The incomplete branch is one this
+book never renders**, so it was exercised once on purpose: the store flipped to
+incomplete with the page untouched sweeps CLEAN, which is what says the check
+accepts the right wording rather than merely rejecting the wrong one.
+
+**"THE CARD IS NOT HEIGHT-CONSTRAINED, SO `<main>` SCROLLS" — MEASURED AND NOT
+REPRODUCIBLE, AND THE CHECKS COULD NOT HAVE SAID SO.** The card is a flex child of
+the page's `flex h-full flex-col` root with `min-h-0` and the default
+`flex-shrink: 1`, so it does shrink. At a 1500×480 window the page does not scroll
+on any of the six addresses, and the table's own scroller inside the card holds
+the rest: 141px on the corporate actions, 268px on the promoter quarters, 223,
+114 and 238px on the three Sector Composition tabs. The holding table (one row)
+fits.
+
+What the finding exposed is real anyway: **at the sweep's 1000px every one of
+these tables fits whole**, so "the page does not scroll" could not tell a card
+that shrinks and scrolls inside itself from one that simply grew with its content.
+`SHORT_WINDOW` measures the same page at `SHORT_H` (480px) and restores the
+viewport before the invariants and the screenshot: the page must not scroll, no
+card may spill past its own box, and a table that does not fit must be held by an
+on-screen scroller inside its card. It checks that the window really WAS short,
+because a resize that silently did nothing would measure the 1000px page again and
+pass by asserting nothing.
+
+#### The bug-reintroduction pass, and the two cases that came back CLEAN
+
+Polycab: **22 cases, every one fires.** 20 fire a sweep invariant and 2 only the
+suite — the pledge defaulting to 0 and the store's ISIN diverging — both invisible
+on screen by construction, as Stage 10bk records. Case 21 (the subtitle claimed on
+an incomplete record) fires the subtitle check; case 22 (the card set to
+`flex-none`, the reviewer's shape) fires the short-window check on the two tables
+that do not fit, and correctly NOT on the holding table, which fits either way.
+
+Sector Composition: **14 cases, every one fires — two of them only after a second
+look, for two different reasons.**
+
+- **CASE 11 WAS A CHECK THAT COULD NOT FAIL.** The tabs moved into the header's
+  SUBTITLE slot came back clean: the check asked only "to the right of the title
+  and on its line", and a `w-full max-w-2xl` subtitle fits beside the crumb and the
+  title on a wide header, so the tabs landed at the far right of the row — measured
+  **489px** from the title, still on its line — and satisfied every clause. The
+  check requires ADJACENCY now (≤32px; where the tabs belong the gap measures 9px,
+  the header's own `gap-x-2.5`) and fires on all three tabs. The comment beside it
+  first said 900px, a figure nobody had measured; it says 489px because that is
+  what the measurement says.
+- **CASE 14 WAS A PATCH THAT DID NOT CREATE THE BUG.** Its first draft removed the
+  grid's `minmax(0,1fr)` row and swept clean — not because the check was blind but
+  because nothing changed: an `auto` row over items with `min-height: 0` only grows
+  into the free space a definite-height grid has, so the page still fit at 480px
+  (measured, main scroll 0). The cards' own `max-h-full` is the cap; without it
+  both halves grow — measured, main scrolls 261px on `/sectors` and 383px on
+  Compare at 480px, and 0 at 1000px, where no other check can see it — and the new
+  check fires on all three tabs. **A reintroduction that does not reintroduce the
+  bug is a clean run that proves nothing**, and only a measurement of the patched
+  page tells it apart from a blind check.
+
+Both harnesses take `CASES=` now, so one case is re-run alone rather than paying a
+build and a sweep for every case to re-check one.
+
+#### Merged with main, and the letter collided again
+
+**#71 took `10bs` while this branch held it.** Main merged first and keeps it; this
+section is `10bt`. Fourteen lines named `10bs` outside the two sections and each
+was classified by whether it exists verbatim on main: six were this branch's (the
+Polycab page paragraph, Stage 10bq's pledge claim, the six-invariants paragraph,
+Stage 10bk's two cards, Stage 10at's donut and Stage 10aq's legend) and moved;
+eight were main's and were left alone. The stage headings then differ from main's
+by `10bt` alone, with main's ten historical duplicates unchanged.
+
+**THE `ctx` LITERAL AUTO-MERGED, WHICH IS WHEN IT IS MOST DANGEROUS**, so it was
+read rather than trusted: 81 keys, none duplicated, the exact union of both sides
+— the two this branch adds (`sectorLayout`, `shortWindow`) beside main's, and main
+added none. No generated file was touched by either side, and `npm run
+build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically
+on the merged tree.
+
+`build` · `tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` · `check:family` **86/0** · `check:pages` **198 combinations
+clean** on the merged tree, with the eight evidenced abstentions main's own sweep
+carries and **not one of this change's own**. This branch's pre-merge sweep was
+194 — its three routes (`polycab-dividends`, `polycab-promoter`,
+`sectors-compare`) across both themes on top of its base — and #71 adds two
+(`private-market-calls`, `private-market-calls-off`), so 198 reconciles; it is
+recorded because it was measured again, not because it adds up.
+### Stage 10bu — BSE IS THEIRS, NO STATEMENT REPORTS IT, AND THE SCREEN NOW SAYS SO
 
 *"Open PR and do not merge until i tell you to."* · *"According to the client,
 BSE is a holding for them and it is also provided for in the statements that
