@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+# VERIFY THE PRIVATE MARKET TABLE'S CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR.
+#
+# A check nobody has watched fail is a check nobody knows can fail. Each bug is
+# applied on its own, rebuilt, swept over every private-market route and — for
+# the ones that live in the model — run through `test:family` too, then
+# restored.
+#
+# THE RESTORE IS BY COPY AND ON A TRAP, and it REBUILDS on the way out:
+# `src/lib/privateBook.ts`, `src/components/TreeTable.tsx` and the new suite
+# are UNTRACKED, where `git checkout --` silently does nothing, and restoring
+# the source alone leaves `dist/` at the bugged build for the next run to report
+# under the wrong name. A patch that does not apply, or a tree that does not
+# build, is reported as NOT A RESULT rather than as a clean run.
+#
+# DO NOT EDIT ANY FILE IN `FILES` WHILE THIS RUNS: the restore puts the snapshot
+# back, silently undoing the edit.
+set -uo pipefail
+cd "$(dirname "$0")/../.."
+
+exec 9>"${TMPDIR:-/tmp}/glow-pm-table-bug.lock"
+flock -n 9 || { echo "another run of this harness is already going — refusing"; exit 1; }
+
+FILES=(
+  "src/pages/PrivateMarket.tsx"
+  "src/lib/privateBook.ts"
+  "src/lib/capitalCalls.ts"
+  "src/components/TreeTable.tsx"
+  "scripts/check-pages.mjs"
+)
+SNAP=$(mktemp -d)
+for f in "${FILES[@]}"; do mkdir -p "$SNAP/$(dirname "$f")"; cp "$f" "$SNAP/$f"; done
+restore() {
+  for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done
+  npm run build >/dev/null 2>&1 || echo "!! restore build FAILED — the tree is dirty"
+  rm -rf "$SNAP"
+}
+trap restore EXIT
+
+ROUTES=private-market,private-market-tiles,private-market-folios,private-market-owners,private-market-transactions
+
+put_back() { for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; }
+
+run_case() {
+  local name="$1" suite="$2"; shift 2
+  echo ""
+  echo "════════ BUG: $name"
+  if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; put_back; return; fi
+  if ! npm run build >/dev/null 2>&1; then
+    echo "   NOT A RESULT — the bugged tree does not build"
+  else
+    ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | grep -v 'NOT CHECKED' | sed 's/^/   /'
+    if [ "$suite" = "suite" ]; then
+      # THE VERDICT IS THE SUITE'S OWN EXIT STATUS, never grep's — the suite's
+      # output carries NUL bytes, and piped through grep with `pipefail` a
+      # failing suite read as clean on every case in the harness this copies.
+      local out rc
+      out=$(node scripts/test-family.mjs 2>&1); rc=$?
+      if [ $rc -eq 0 ]; then echo "   SUITE CLEAN — THE BUG DID NOT FIRE IN test:family"
+      else printf '%s\n' "$out" | tr -d '\000' | grep -aE '^FAIL' | head -6 | sed 's/^/   SUITE /'; fi
+    fi
+  fi
+  put_back
+}
+
+py() { python3 - "$@"; }
+
+echo "════════ CONTROL: no patch"
+npm run build >/dev/null 2>&1 && ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | grep -v 'NOT CHECKED' | sed 's/^/   /'
+
+# ── 1 ── the family's own complaint: a table drawn inside a cell
+run_case "a fund's folios open into a table inside a cell again" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '        {open && grouping === "fund" && g.overlap && overlapRow(g.overlap, g.key, g.overlap.statements, inPrivate)}'
+new = old + '\n        {open && <tr><td colSpan={bookView.order.length}><table><tbody><tr><td>panel</td></tr></tbody></table></td></tr>}'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 2 ── "a hidden drop down": the missing-data section opens on arrival
+run_case "the missing-data section is open by default" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '''    marker: <Pill tone="warn" className="whitespace-nowrap">missing data</Pill>,
+    defaultOpen: false,'''
+new = '''    marker: <Pill tone="warn" className="whitespace-nowrap">missing data</Pill>,
+    defaultOpen: true,'''
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 3 ── an absent value summed as ₹0
+run_case "a set with no holding sums to ₹0 instead of absent" suite py <<'PY'
+import sys
+p = "src/lib/privateBook.ts"
+s = open(p, encoding="utf-8").read()
+old = "  const value = held.length ? sum(held.map((f) => f.value ?? 0)) : null;"
+new = "  const value = held.length ? sum(held.map((f) => f.value ?? 0)) : 0;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 4 ── fund rows on the printed basis
+run_case "fund rows stop counting each holding once" suite py <<'PY'
+import sys
+p = "src/lib/privateBook.ts"
+s = open(p, encoding="utf-8").read()
+old = '    const consolidated = grouping === "fund";'
+new = '    const consolidated = false;'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 5 ── member rows deduped
+run_case "member rows dedupe (a per-owner figure never does)" suite py <<'PY'
+import sys
+p = "src/lib/privateBook.ts"
+s = open(p, encoding="utf-8").read()
+old = '    const consolidated = grouping === "fund";'
+new = '    const consolidated = true;'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 6 ── a capital account attached twice
+run_case "a capital account is attached twice" suite py <<'PY'
+import sys
+p = "src/lib/privateBook.ts"
+s = open(p, encoding="utf-8").read()
+old = "    if (cap) attached.add(p.accountId);\n"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# ── 7 ── the Expand all control wired to nothing
+run_case "Expand all opens nothing" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = "<ExpandAllButton allOpen={allOpen} onClick={toggleAll} />"
+new = "<ExpandAllButton allOpen={allOpen} onClick={() => { /* wired to nothing */ }} />"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 8 ── the calls read oldest first
+run_case "the capital calls read oldest first" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = "    m.history.filter((c) => !needle"
+new = "    [...m.history].reverse().filter((c) => !needle"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 9 ── the Other AIFs section loses its marker
+run_case "the not-private-market section is no longer marked" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '    marker: <Pill className="whitespace-nowrap">not private market</Pill>,'
+new = '    marker: null,'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 10 ── a measured nil drawn as an absence
+run_case "the redeemed account's ₹0 becomes a dash" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '                nil: f.status === "redeemed" ? valueWhy("redeemed", null) : undefined,\n'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# ── 11 ── the crossed-set wording comes back on the uncalled tile
+run_case "the uncalled tile stops naming the Other AIFs' capital accounts" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = "of them in funds that are not private market"
+new = "of them in funds this page does not carry"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 12 ── the coverage line drops off the totals
+run_case "a total stops saying how many accounts it covers" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = '''      ? <div className="text-[10px] font-normal leading-tight text-slate-500" data-covered={`${n}/${of}`}>{n} of {of} accounts</div>'''
+new = '''      ? null'''
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 13 ── due-now counted over every account (the `?? 0` shape)
+run_case "due-now claims every account prints the line" suite py <<'PY'
+import sys
+p = "src/lib/capitalCalls.ts"
+s = open(p, encoding="utf-8").read()
+old = "    dueNowOf: of((r) => r.pending),"
+new = "    dueNowOf: rows.length,"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 14 ── the table stops fitting its card
+run_case "the fund column grows until a column is cut off" nosuite py <<'PY'
+import sys
+p = "src/pages/PrivateMarket.tsx"
+s = open(p, encoding="utf-8").read()
+old = 'className="min-w-[16.5rem]"'
+new = 'className="min-w-[36rem]"'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+echo ""
+echo "════════ done"

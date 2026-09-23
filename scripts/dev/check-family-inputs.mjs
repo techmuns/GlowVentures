@@ -386,9 +386,12 @@ text = await page.locator("body").innerText();
 // is asserted beside it. Read off the removed pill this would have gone on
 // "passing" by being unable to match, which is the failure mode this suite has
 // already recorded once.
+// …AND THE FUND COUNT MOVED AGAIN, with the table: the page is one table now
+// and its "Private funds" section band counts the funds and the folios behind
+// them, where the old fund table's footer counted funds alone.
 check("the Private Market page still counts the funds and accounts it covers",
-  /Total · \d+ funds/i.test(text) && /across \d+ accounts · each holding counted once/i.test(text),
-  /across \d+ accounts/i.exec(text)?.[0]);
+  /\d+ funds · \d+ folios · each holding counted once/i.test(text) && /across \d+ accounts · each holding counted once/i.test(text),
+  /\d+ funds · \d+ folios/i.exec(text)?.[0]);
 check("...and its header pills and lead paragraph stay removed",
   !/\d+ funds · \d+ accounts/.test(text)
   && !/\bSTATEMENT\s*·\s*as of/i.test(text)
@@ -411,9 +414,13 @@ check("its private market value is a real measured figure, not the removed page'
  * opening the strip on it. Neither implies the other: a build that deleted the
  * metric passes the first, and one that dropped the card passes the second.
  */
+// THE CARD IS A SECTION OF THE ONE TABLE NOW — *"if this is missing data this
+// needs to be like a hidden drop down clearly marked"* — so the claim is struck
+// on its band, which states the paid-in capital and that it is in no value
+// total even while the section is folded.
 check("the capital the family paid into funds that publish no NAV is stated on its own",
-  /of drawn capital across \d+ of these accounts is real, paid, and in no total on this page/i.test(text)
-  && /must not be added to it/i.test(text));
+  /Not valued/i.test(text) && /missing data/i.test(text)
+  && /₹[\d,.]+\s*(?:Cr|L) paid in is in no value total/i.test(text));
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
