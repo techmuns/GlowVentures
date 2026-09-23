@@ -1986,6 +1986,26 @@ const UNVALUED_BOOK = (() => {
  * The XIRR is solved here too, by bisection on the same ACT/365 NPV, so a page
  * that dropped the payouts (and printed a LOWER rate that looks exactly as
  * plausible) fails on the figure rather than on a label.
+ *
+ * ── AND IT IS FIFO, BECAUSE THE PAGE IS (Stage 10ca, Stage 10cj) ────────────
+ *
+ * A rule expressed twice has to be MOVED twice. Stage 10ca put every return on
+ * FIFO — `(unrealised + realised) ÷ (cost of the units held + cost of the units
+ * sold)` — and moved `fundReturns.ts` with it, and this block was left on the
+ * rule it replaced, in two places:
+ *
+ *   - the HPR was `value ÷ cost held − 1`, which leaves out the units a fund
+ *     has already redeemed: Neo Infra 14.23% here against the page's 13.83%;
+ *   - a fund's dated calls were held to the cost of the units STILL HELD, and
+ *     Neo's ₹5 Cr called is ₹4.86 Cr held plus ₹14.16 L redeemed — so this
+ *     side marked it a gap, expected no XIRR and pooled three funds as two,
+ *     while the page (correctly) printed +16.7%.
+ *
+ * Five checks failed on a page that was right, from the day #80 landed. Both
+ * are written out here from each position's own fields — `costBasis`,
+ * `realizedPnL`, `costOfUnitsSold` — and never through `fifoTotals`, which is
+ * the code under test. The held-cost figure is kept beside the FIFO one
+ * (`hprHeld`) only so a check can prove the two differ on this book.
  */
 const PM_RETURN_BOOK = (() => {
   try {
@@ -2027,12 +2047,22 @@ const PM_RETURN_BOOK = (() => {
     };
     const groups = new Map();
     for (const p of priv) groups.set(p.securityKey, [...(groups.get(p.securityKey) ?? []), p]);
+    /** A FIFO field a position may carry — a measured figure, or nothing to add. */
+    const fifoOf = (x) => (typeof x === "number" && Number.isFinite(x) ? x : 0);
     const funds = [];
     for (const [key, g] of groups) {
       const cost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
       const mv = g.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
       const costCoversAll = g.every((p) => p.costBasis != null);
-      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
+      // FIFO: the gain on the units held plus the gain on the units redeemed,
+      // over what both cost — every rupee deployed into the holding.
+      const soldCost = g.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
+      const realised = g.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
+      const deployed = cost == null ? null : cost + soldCost;
+      const hpr = deployed != null && deployed > 0 && costCoversAll ? ((mv - cost + realised) / deployed) * 100 : null;
+      // What the page printed before FIFO — value against the cost of the units
+      // still held. Never an expectation; only what a regression would print.
+      const hprHeld = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
       let gap = false, unknown = false, withAccount = 0;
       const flows = [];
       const calls = new Set();
@@ -2046,7 +2076,11 @@ const PM_RETURN_BOOK = (() => {
         withAccount++;
         const cs = Array.isArray(c.calls) ? c.calls : [];
         const sumCalls = cs.reduce((t, k) => t + (Number(k.amount) || 0), 0);
-        if (!cs.length || p.costBasis == null || Math.abs(sumCalls - p.costBasis) > 1 || cs.some((k) => k.date > v)) {
+        // THE CALLS ARE EVERY RUPEE DEPLOYED: under FIFO the cost of the units
+        // held PLUS the cost of the units already redeemed. Held against the
+        // cost held alone, a fund that has redeemed any units reads as a gap.
+        const deployedHere = p.costBasis == null ? null : Number(p.costBasis) + fifoOf(p.costOfUnitsSold);
+        if (!cs.length || deployedHere == null || Math.abs(sumCalls - deployedHere) > 1 || cs.some((k) => k.date > v)) {
           gap = true; continue;
         }
         for (const k of cs) {
@@ -2088,7 +2122,7 @@ const PM_RETURN_BOOK = (() => {
         : window >= 365 ? { shown: true, tag: null, pct: rate }
         : tranches === 1 && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
         : { shown: false };
-      funds.push({ key, security: g[0].security, mv, cost, hpr, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
+      funds.push({ key, security: g[0].security, mv, cost, soldCost, hpr, hprHeld, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
     }
     const pooledIn = funds.filter((f) => f.complete);
     const pooled = pooledIn.length ? irr(pooledIn.flatMap((f) => f.flows)) : null;
@@ -2096,13 +2130,20 @@ const PM_RETURN_BOOK = (() => {
       ? days(pooledIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
         pooledIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
       : null;
+    // THE WHOLE PRIVATE BOOK, FIFO over the holdings that report a cost — the
+    // gain on units held and redeemed, over the capital deployed in both.
     const costed = priv.filter((p) => p.costBasis != null);
     const bookCost = costed.reduce((t, p) => t + Number(p.costBasis), 0);
+    const bookSold = costed.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
     const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
+    const bookRealised = costed.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
-      footHpr: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
+      footHprHeld: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      /** Whether any private holding here has redeemed units — what makes the FIFO claims bite. */
+      redeemed: bookSold > 0,
       paying: funds.filter((f) => f.complete && f.paidOut > 0).length,
     };
   } catch { return null; }
@@ -8404,10 +8445,12 @@ const PM_RETURN_CHECKS = [
   /**
    * EVERY FIGURE UNDER A NAME IS THAT NAME'S FIGURE: an XIRR is the rate over
    * every dated call, every payout dated on or before the valuation and the
-   * value; an HPR is value against cost. The bound is the page's own printing
-   * precision — one decimal — reproduced, never a tolerance widened.
+   * value; an HPR is FIFO — the gain on the units held plus the gain on the
+   * units redeemed, over what both cost (Stage 10ca). The bound is the page's
+   * own printing precision — one decimal — reproduced, never a tolerance
+   * widened.
    */
-  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is value against cost", (t, ctx) => {
+  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is FIFO over every rupee deployed", (t, ctx) => {
     const pr = ctx?.pmReturn;
     if (!pr || !PM_RETURN_BOOK) return false;
     let checked = 0;
@@ -8423,6 +8466,26 @@ const PM_RETURN_CHECKS = [
       }
     }
     return checked > 0;
+  }],
+  /**
+   * THE BOOK'S HPR SAYS WHAT IT COUNTS OF THE CASH PAID BACK, AND SAYS IT
+   * TRULY. The figure is FIFO, so the principal a fund returned by REDEEMING
+   * units is in it — their cost in what was paid in, any gain in the gain — and
+   * the hover on the one cell that sums the whole private book read "cash the
+   * funds have paid back is not in it" from Stage 10ca until Stage 10cj, false
+   * of Neo Infra's ₹14.16 L. Struck on the book's own redeemed units, so it
+   * asks for the principal clause only where there is principal to name; a
+   * figure that renders the same either way can only be told apart by the
+   * words beside it.
+   */
+  ["the private book's HPR hover says it is FIFO, and what it counts of the cash paid back", (t, ctx) => {
+    const foot = ctx?.pmReturn?.foot?.find((x) => (x.measure === "auto" || x.measure === "absolute") && /%/.test(x.text));
+    if (!foot || !PM_RETURN_BOOK) return false;
+    const says = foot.titles ?? "";
+    if (!/\bFIFO\b/.test(says)) return false;
+    return PM_RETURN_BOOK.redeemed
+      ? /principal returned on redeemed units is in it/i.test(says) && !/paid back is not in it/i.test(says)
+      : /paid back is not in it/i.test(says);
   }],
 ];
 
@@ -8455,6 +8518,26 @@ const PM_RETURN_ROUTE_CHECKS = [
       return Math.abs(f.rate - f.rateNoPayouts) > 0.1 && Math.abs(pct - f.rate) <= 0.06;
     });
   }],
+  /**
+   * AND THE SAME PROOF FOR FIFO. A fund that has redeemed units must show
+   * FIFO's holding-period return — the gain on the units held and redeemed,
+   * over what both cost — and the check first proves it can tell that from the
+   * figure every HPR used to be, value against the cost of the units STILL
+   * held: the two must differ by more than the printing precision on this
+   * book, or the comparison would pass a page that went back. On this book
+   * that is Neo Infra, 13.83% against 14.23%.
+   */
+  ["a fund that redeemed units shows FIFO's return, not value against the cost of the units it still holds", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const redeemed = PM_RETURN_BOOK.funds.filter((f) => f.soldCost > 0);
+    if (!redeemed.length) return notChecked("no private fund in this book has redeemed units, so FIFO and value against the cost held are one figure");
+    return redeemed.every((f) => {
+      const c = pr.rows.find((r) => r.key === f.key)?.cells.find((x) => x.measure === "absolute");
+      if (!c?.shown || f.hpr == null || f.hprHeld == null) return false;
+      return Math.abs(f.hpr - f.hprHeld) > 0.1 && Math.abs(pctOfCell(c.text) - f.hpr) <= 0.06;
+    });
+  }],
   ["the XIRR footer pools exactly the funds with a complete record, and says how many", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "xirr");
     if (!foot || !PM_RETURN_BOOK) return false;
@@ -8473,7 +8556,7 @@ const PM_RETURN_ROUTE_CHECKS = [
     if (cells.some((c) => !c)) return false;
     return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
   }],
-  ["the HPR footer is the whole private book's value against its cost", (t, ctx) => {
+  ["the HPR footer is FIFO over the whole private book — the gain on units held and redeemed, over the capital deployed in both", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
     if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
     return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.footHpr) <= 0.06;

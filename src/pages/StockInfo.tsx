@@ -662,7 +662,7 @@ export function StockInfo() {
             on one line a name held through a demat, a mandate and a fund
             pushed Return and Basis past the card's right edge — the sideways
             scroll Stage 10ba measured and removed. It wraps inside the same
-            12rem floor the fund lines below it already keep (Stage 10cj).
+            12rem floor the fund lines below it already keep (Stage 10ck).
             Stage 10cg reached the same cell for a second reason: where Inter
             cannot load, the fallback face's semibold headings run wider, and
             this sub-line gives up the width rather than Basis. */}
