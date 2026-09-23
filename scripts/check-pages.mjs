@@ -8082,9 +8082,9 @@ const PM_FIT_CHECK = ["the table fits its card at this width — no column is cu
  * to call. The header's hover is where the reason the column exists lives.
  *
  * RUN WITH THE SECTIONS CLOSED AND WITH EVERY ROW OPEN. Closed, only the
- * private funds are drawn; open, so are the funds no statement values and
- * the Other AIFs' capital accounts — and those are the rows this column was
- * missing when it shipped on a table of valued funds only.
+ * private funds are drawn; open, so are the funds no statement values — and
+ * those are the rows this column was missing when it shipped on a table of
+ * valued funds only.
  */
 const PM_CALL_COLUMN_CHECK = ["the table carries a Capital call column, one cell on every fund row and on no other", (t, ctx) => {
   const pv = ctx?.pmView;
@@ -14672,15 +14672,16 @@ const INVARIANTS = {
    *    transactions tab in the same table view"*, and of the accounts nothing
    *    values, *"this needs to be like a hidden drop down clearly marked"*.
    *
-   * Five cards became one table with three tabs, and three sections inside the
-   * first two: the private funds (open), the private accounts nothing values
-   * (closed, marked "missing data") and the AIFs that are not private market
-   * (closed, marked). A fund row opens into its folios IN THE SAME COLUMNS —
+   * Five cards became one table with three tabs, and two sections inside the
+   * first two: the private funds (open) and the private accounts nothing values
+   * (closed, marked "missing data"). A third — the AIFs that are not private
+   * market, closed and marked — went when the family placed their funds
+   * themselves (Stage 10bx). A fund row opens into its folios IN THE SAME COLUMNS —
    * the family's other complaint, that the old panels were tables inside cells
    * whose columns lined up with nothing above them.
    *
    * EVERY CLAIM ABOUT THE TABLE IS STRUCK ON ITS STRUCTURE — the section bands,
-   * the rows, the "Counted once" lines and the two totals each carry their own
+   * the rows, the "Counted once" lines and the one total each carry their own
    * handle, and `pmView` reads every cell by the column its header names. The
    * page renders the same words whether a section is open or closed, whether a
    * folio sits under its fund or in a table of its own, and whether the totals
@@ -14895,17 +14896,19 @@ const INVARIANTS = {
      *    clearly marked."*
      *
      * Three claims, and a build that got any one wrong renders every figure
-     * correctly: the private section opens, the two marked sections do not, and
+     * correctly: the private section opens, the missing-data section does not, and
      * no fund row is open until a reader opens it. A CLOSED BAND THAT STILL
      * DREW ITS ROWS IS NOT CLOSED, so the rows are counted by section.
      */
-    ["the private funds open, the two marked sections closed, and no fund row open until a reader opens it", (t, ctx) => {
+    ["the private funds open, the missing-data section closed, and no fund row open until a reader opens it", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return { notChecked: "the private-view probe did not run" };
       const sec = Object.fromEntries(pv.sections.map((s) => [s.id, s]));
       if (!sec.private) return false;
       return sec.private.open
-        && ["unvalued", "elsewhere"].filter((id) => sec[id]).every((id) => !sec[id].open)
+        // Present or not is the missing-data check's claim; this one is that it
+        // arrives CLOSED.
+        && (!sec.unvalued || !sec.unvalued.open)
         && pv.children.length === 0 && pv.overlaps.length === 0
         && pv.toggles.length > 0 && pv.toggles.every((x) => !x.open)
         && pv.groups.length > 0 && pv.groups.every((g) => g.section === "private");
