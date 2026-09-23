@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, Send, X, Loader2, TriangleAlert } from "lucide-react";
 import { askMuns, type ChatTurn } from "@/lib/munsChat";
-import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
+import { buildDashboardContext, contextPreamble, contextTickers, describeContext, type ChatBook } from "@/lib/chatContext";
+import { usePortfolio } from "@/context/PortfolioContext";
 
 // ── ASK THE BOOK — the Muns chat, beside the search box ─────────────────────
 //
@@ -123,9 +124,19 @@ export function MunsChat() {
   // its context built — never before, or it would be sent with no snapshot.
   const [pending, setPending] = useState<string | null>(null);
 
-  // Built once per open, from the book — so an answer is briefed on what the
-  // reader is looking at rather than on whatever the model remembers.
-  const context = useMemo(() => (open ? buildDashboardContext() : null), [open]);
+  // Built once per open, from THE BOOK THE SCREEN SHOWS — the same portfolio the
+  // top bar and every page read, with the published NAVs and any live quotes
+  // already applied — so an answer is briefed on what the reader is looking at
+  // rather than on the raw statement book or on whatever the model remembers.
+  // A second computation here would be a second answer to "what is the book
+  // worth", which is the failure the context exists to avoid.
+  const { portfolio, consolidated, basis, quotesAsOf } = usePortfolio();
+  const book = useMemo<ChatBook | null>(
+    () => (portfolio ? { portfolio, consolidated, basis, quotesAsOf } : null),
+    [portfolio, consolidated, basis, quotesAsOf],
+  );
+  const context = useMemo(() => (open && book ? buildDashboardContext(book) : null), [open, book]);
+  const described = useMemo(() => (context ? describeContext(context) : null), [context]);
 
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
@@ -167,7 +178,7 @@ export function MunsChat() {
       question,
       dashboardInputs: context,
       preamble: contextPreamble(context),
-      tickers: contextTickers(),
+      tickers: book ? contextTickers(book) : [],
       history,
       chatId: chatId.current,
       signal: ctl.signal,
@@ -280,17 +291,18 @@ export function MunsChat() {
             <div ref={scroller} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
               {msgs.length === 0 && (
                 <div className="space-y-3">
-                  <p className="text-[12.5px] leading-relaxed text-slate-400">
-                    The assistant is given a snapshot of this dashboard — the current value of holdings and its listed/private
-                    split, the allocation by mandate and asset class, every account with its owner and report date, the
-                    largest holdings, the undrawn commitments — <span className="text-slate-300">and the list of
-                    things this book does not carry</span>, so it can say what is missing instead of estimating it.
-                  </p>
-                  <p className="text-[11.5px] leading-relaxed text-slate-500">
-                    It reads that snapshot and nothing else: it cannot reach an account, place a trade, or see a figure
-                    the dashboard does not already show. Answers are generated text — check any figure against the page
-                    it came from.
-                  </p>
+                  {/* READ OFF THE PAYLOAD, never typed (SC-C1): `describeContext` counts
+                      the accounts, holdings and capital accounts the snapshot really
+                      carries, so this sentence cannot drift from what was sent. */}
+                  {described && (
+                    <>
+                      <p className="text-[12.5px] leading-relaxed text-slate-400" data-chat-described>
+                        {described.lead}<span className="text-slate-300">{described.missing}</span>, so it can say
+                        what is missing instead of estimating it.
+                      </p>
+                      <p className="text-[11.5px] leading-relaxed text-slate-500">{described.limits}</p>
+                    </>
+                  )}
                   <div className="flex flex-wrap gap-2 pt-1">
                     {SUGGESTIONS.map((s) => (
                       <button key={s} onClick={() => ask(s)}

@@ -2867,6 +2867,42 @@ const REVIEW_GAP_BOOK = (() => {
         bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
     };
     /**
+     * …AND THE SCHEME TIER (SC-B4), re-expressed on the same terms. A depository
+     * clips a mutual-fund scheme (`WOC MAAF D-GROW`) where the review writes it
+     * out with its plan tail (`WhiteOak Capital Multi Asset Allocation
+     * Fund-Direct(G)`), so the key tier above cannot see that the book holds it.
+     * The scheme's published names are AMFI's, joined on the book's own ISIN
+     * (`schemeNames.json`, and AMFI's daily file for Liquid BeES); the plan and
+     * option words and the review's `SL` / `Pru` are written out again here, as
+     * one regular expression, rather than read from `schemeStem`.
+     */
+    const schemes = JSON.parse(readFileSync(new URL("../src/data/schemeNames.json", import.meta.url), "utf8"));
+    const navs = bookArray(readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8"), "BOOK_FUND_NAVS") ?? [];
+    const TAIL = /\b(direct|regular|plan|growth|gr|grw|grow|g|d|dp|option|dd|idcw|dividend|reinvestment|reinvest|payout|daily|weekly|monthly|quarterly|bonus)\b/g;
+    const stem = (n) => n.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ")
+      .replace(/\bsl\b/g, "sun life").replace(/\bpru\b/g, "prudential")
+      .replace(TAIL, " ").replace(/\s+/g, " ").trim();
+    const relK = (a, b) => b.startsWith(a) || a.startsWith(b) || flat(b).startsWith(flat(a)) || flat(a).startsWith(flat(b));
+    const heldBy = new Map();
+    for (const p of bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? []) {
+      const names = [schemes[p.securityKey]?.name, schemes[p.securityKey]?.amfiName,
+        navs.find((e) => e.securityKey === p.securityKey)?.scheme].filter(Boolean);
+      for (const n of names) {
+        const k = securityKeyOf(stem(n));
+        if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(p.securityKey));
+      }
+    }
+    const schemeKeysOf = (g) => {
+      const keys = new Set();
+      for (const sp of [g.name, ...(g.aliases ?? [])]) {
+        const k = securityKeyOf(stem(sp));
+        if (!k) continue;
+        for (const [hk, v] of heldBy) if (relK(k, hk)) for (const x of v) keys.add(x);
+      }
+      return [...keys];
+    };
+    const heldScheme = (g) => schemeKeysOf(g).length > 0;
+    /**
      * …AND A REVIEW LINE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE
      * (Stage 10ce) — derived here BY THE JOIN THAT LICENSES IT, never read from
      * `REVIEW_LINE_ISINS`, which would agree with the page by construction: the
@@ -2877,6 +2913,12 @@ const REVIEW_GAP_BOOK = (() => {
      * derivation that ties none has lost its input.
      */
     let depositoryValued = null, depositoryRows = 0, recordedValued = null, recordedRows = 0;
+    // EVERY line that join ties, not only the first: the app withholds each of
+    // them (`valuedFromDepository`), so the scheme tier's claimable list below
+    // must too, or it offers the walk a name the note will never answer. The
+    // same for the lines A-17's closing-units join ties.
+    const depositoryAll = new Set();
+    const recordedAll = new Set();
     try {
       // `bookArray` already appends this checker's re-expressed depository rows
       // to BOOK_POSITIONS — running them through the gates a second time finds
@@ -2905,7 +2947,10 @@ const REVIEW_GAP_BOOK = (() => {
         if (i < 1) continue;
         const product = String(r[i - 1]), units = Number(r[i + 2]), date = excelDate(Number(r[i + 1]));
         if (!gapNames.has(product) || !(units > 0)) continue;
-        if (credits.some((c) => Math.abs(c.quantity - units) < 0.0005 && days(c.date, date) <= 5)) { depositoryValued = product; break; }
+        if (credits.some((c) => Math.abs(c.quantity - units) < 0.0005 && days(c.date, date) <= 5)) {
+          depositoryValued ??= product;
+          depositoryAll.add(product);
+        }
       }
       /**
        * …AND A LINE THE LIVE BOOK VALUES FROM UNITS A HOLDING STATEMENT RECORDS
@@ -2930,7 +2975,7 @@ const REVIEW_GAP_BOOK = (() => {
       for (const ps of byIsin.values()) {
         const hit = [...new Set(closings.map((c) => c.product))].find((prod) =>
           ps.every((p) => closings.some((c) => c.product === prod && Math.abs(c.units - p.quantity) < 0.0005)));
-        if (hit) { recordedValued = hit; break; }
+        if (hit) { recordedValued ??= hit; recordedAll.add(hit); }
       }
     } catch { depositoryValued = null; recordedValued = null; }
     return {
@@ -2939,6 +2984,7 @@ const REVIEW_GAP_BOOK = (() => {
       recordedValued,
       recordedRows,
       // Any one of them exercises the claim equally, so the list's own first.
+      // (The key tier alone — it is the Monitor walk's clipped-company case.)
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
       /**
        * …AND BOTH LISTS WHOLE, for the top bar's search (Stage 10bw). That
@@ -2948,8 +2994,15 @@ const REVIEW_GAP_BOOK = (() => {
        * check needs. `claimable` is `reviewGapsFor`'s list re-expressed — a gap
        * whose name keys to nothing is not claimable there either.
        */
-      suppressedAll: gaps.filter((g) => related(g.name)).map((g) => g.name),
-      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name)).map((g) => g.name),
+      suppressedAll: gaps.filter((g) => related(g.name) || heldScheme(g) || depositoryAll.has(g.name)
+        || recordedAll.has(g.name)).map((g) => g.name),
+      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name) && !heldScheme(g)
+        && !depositoryAll.has(g.name) && !recordedAll.has(g.name)).map((g) => g.name),
+      // The review lines that name a scheme the book holds, each with the
+      // holdings it names — the ones a search must FIND rather than stay
+      // silent about (SC-B4).
+      heldSchemes: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name) && heldScheme(g))
+        .map((g) => ({ q: g.name, keys: schemeKeysOf(g) })),
       count: gaps.length,
       name: withAlias.name,
       alias: withAlias.aliases?.[0] ?? null,
@@ -16817,6 +16870,25 @@ const INVARIANTS = {
       return a.empty === true && a.note === null;
     }],
     /**
+     * A FUND THE FAMILY HOLD IS NEVER DENIED (SC-B4). The review spells a
+     * scheme with its plan and option bolted on, and the depository clips it,
+     * so eight held funds — ₹30 Cr — reached the empty state here, and on the
+     * three substring searches the note said no statement reported them. Every
+     * such line is typed as the review prints it and must open, FIRST, a
+     * holding the book reports under that scheme; the set is re-expressed off
+     * the generated files, so the next drop picks its own.
+     */
+    ["a review line naming a scheme the book holds finds that scheme first — the fund is never denied", () => {
+      const g = REVIEW_GAP_BOOK;
+      if (!g) return { notChecked: "this book carries no review line that no statement reports" };
+      if (!Array.isArray(g.heldSchemes)) return false;
+      if (!g.heldSchemes.length) return { notChecked: "no review line in this book names a scheme the book holds" };
+      const got = SEARCH?.heldSchemeGaps;
+      if (!got || got.length !== Math.min(g.heldSchemes.length, 16)) return false;
+      return got.every((c) => c.note === null && c.named.length === 0 && c.rows[0]?.kind === "holding"
+        && c.keys.some((k) => c.rows[0]?.id === `holding:${k}`));
+    }],
+    /**
      * THE RING-FENCE HOLDS IN THE SEARCH. "polycab" finds the PAGE the nav
      * already carries on every screen first, then only that page's own tabs —
      * and no holding, account or figure, because the index is built from
@@ -26460,6 +26532,7 @@ for (const theme of THEMES) {
             await page.waitForTimeout(200);
             return page.evaluate(() => ({
               rows: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-search-result]")].map((e) => ({
+                id: e.getAttribute("data-search-result"),
                 kind: e.getAttribute("data-search-kind"),
                 href: e.getAttribute("data-search-href"),
                 text: (e.innerText ?? "").replace(/\s+/g, " ").trim(),
@@ -26620,7 +26693,12 @@ for (const theme of THEMES) {
             const r = await run(nm);
             if (!r.rows.some((x) => x.kind !== "ask")) { gapSuppressed = { q: nm, ...r }; break; }
           }
-          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed };
+          // …AND EVERY REVIEW LINE NAMING A SCHEME THE BOOK HOLDS, in the review's
+          // own spelling (SC-B4) — the search must find the scheme, never
+          // answer "nothing matches" about a fund the family own.
+          const heldSchemeGaps = [];
+          for (const c of (REVIEW_GAP_BOOK?.heldSchemes ?? []).slice(0, 16)) heldSchemeGaps.push({ ...c, ...(await run(c.q)) });
+          SEARCH = { slashFocus, results, geometry, geometryTall, entered, tabLanded, gapWithHits, gapSuppressed, heldSchemeGaps };
           // …and the list that carries the note, which is the one the family's
           // own search opens: measured after the walk, when it is on screen.
           /**

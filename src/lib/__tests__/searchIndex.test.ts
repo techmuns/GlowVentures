@@ -24,6 +24,10 @@ import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
 import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
 import { labelledAccounts, labelledPositions, labelVariants, securityLabel } from "@/lib/securityLabel";
+import { REVIEW_GAPS } from "@/data/reviewGaps";
+import { BOOK_FUND_NAVS } from "@/data/fundNavs";
+import SCHEME_NAMES from "@/data/schemeNames.json";
+import { securityKeyOf } from "@/lib/securityKey";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -149,6 +153,61 @@ console.log("── the words people use ──");
   ok(`its first long word ("${word}") finds it first`, top(word)?.id === largest.id, top(word)?.label);
   const typo = word[0] + word[2] + word[1] + word.slice(3);
   ok(`…and so does a transposition ("${typo}")`, topN(typo, 3).some((e) => e.id === largest.id), topN(typo, 3).map((e) => e.label).join(" | "));
+}
+
+console.log("── a review's spelling of a held scheme finds the scheme (SC-B4) ──");
+{
+  /**
+   * The family's review spells a fund with its plan and option bolted on, and
+   * the note under an empty result must not be the answer for a fund the book
+   * holds — so the SEARCH must find it. Re-expressed here: the scheme's
+   * published names (AMFI's, joined on the book's ISIN), the plan/option words
+   * and the review's `SL` / `Pru`, written out again rather than imported.
+   */
+  type SchemeRec = { name: string; amfiName: string };
+  const schemes = SCHEME_NAMES as Record<string, SchemeRec>;
+  const TAIL = /\b(direct|regular|plan|growth|gr|grw|grow|g|d|dp|option|dd|idcw|dividend|reinvestment|reinvest|payout|daily|weekly|monthly|quarterly|bonus)\b/g;
+  const stem = (n: string) => n.toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ")
+    .replace(/\bsl\b/g, "sun life").replace(/\bpru\b/g, "prudential")
+    .replace(TAIL, " ").replace(/\s+/g, " ").trim();
+  const flat = (k: string) => k.replace(/-/g, "");
+  const relK = (a: string, b: string) => b.startsWith(a) || a.startsWith(b) || flat(b).startsWith(flat(a)) || flat(a).startsWith(flat(b));
+  const bookKeys = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+  const heldBy = new Map<string, Set<string>>();
+  for (const p of BOOK_POSITIONS) {
+    const names = [schemes[p.securityKey]?.name, schemes[p.securityKey]?.amfiName,
+      BOOK_FUND_NAVS.find((e) => e.securityKey === p.securityKey)?.scheme].filter((x): x is string => !!x);
+    for (const n of names) {
+      const k = securityKeyOf(stem(n));
+      if (k) heldBy.set(k, (heldBy.get(k) ?? new Set()).add(p.securityKey));
+    }
+  }
+  const cases = REVIEW_GAPS.flatMap((g) => {
+    const raw = securityKeyOf(g.name);
+    if (!raw || bookKeys.some((bk) => relK(raw, bk))) return [];
+    const k = securityKeyOf(stem(g.name));
+    const keys = new Set([...heldBy.entries()].filter(([hk]) => !!k && relK(k, hk)).flatMap(([, v]) => [...v]));
+    return keys.size ? [{ name: g.name, keys }] : [];
+  });
+  ok("this book carries review lines naming a scheme it holds — the cases exist", cases.length > 0, String(cases.length));
+  const wrong = cases.filter((c) => {
+    const h = searchEntries(index, c.name, 10)[0]?.entry;
+    return !h || h.kind !== "holding" || ![...c.keys].some((k) => h.id === `holding:${k}`);
+  });
+  ok("every one is found, first, as the holding the book reports", wrong.length === 0,
+    wrong.map((c) => `${c.name} → ${searchEntries(index, c.name, 10)[0]?.entry.label ?? "nothing"}`).join("; "));
+  // LOAD-BEARING: at least one of them is found by NOTHING but the stem — its
+  // entry's names and words score zero against the review's spelling — so the
+  // check above is not passing on the ordinary tiers alone.
+  const stemOnly = cases.filter((c) => {
+    const e = index.find((x) => [...c.keys].some((k) => x.id === `holding:${k}`));
+    return !!e && [...e.names, ...e.keywords].every((n) => scoreText(c.name, n).score === 0);
+  });
+  ok("…and some are found by the scheme's published name alone, which the hover says", stemOnly.length > 0
+    && stemOnly.every((c) => /plan and option set aside/.test(searchEntries(index, c.name, 10)[0]?.matched ?? "")),
+    `${stemOnly.length}: ${stemOnly.slice(0, 3).map((c) => c.name).join("; ")}`);
+  ok("…and a query the stem reduces to one word is not widened by it — 'direct equity' is still the category",
+    top("direct equity")?.kind === "category");
 }
 
 console.log("── the ring-fence ──");
