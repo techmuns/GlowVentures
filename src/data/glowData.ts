@@ -1969,6 +1969,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Financials",
@@ -2266,6 +2267,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "goldstandard-wealth-private-limited-100022",
     "memberId": null,
     "sector": "Financials",
@@ -2834,6 +2836,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "karur-vysya-bank",
     "security": "Karur Vysya Bank Ltd.",
     "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Financials",
@@ -3131,6 +3134,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "goldstandard-wealth-private-limited-100023",
     "memberId": null,
     "sector": "Financials",
@@ -4000,6 +4004,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "green-lantern-capital-llp-510854",
     "memberId": null,
     "sector": "Financials",
@@ -4923,6 +4928,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "state-bank-of-india",
     "security": "State Bank Of India",
     "symbol": "SBIN",
+    "isin": "INE062A01020",
     "accountId": "green-lantern-capital-llp-510861",
     "memberId": null,
     "sector": "Financials",
@@ -5588,7 +5594,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "crompton-greaves-consumer-elec",
+    "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Elec",
     "symbol": "CROMPTON",
     "isin": "INE299U01018",
@@ -6621,6 +6627,34 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
+    "securityKey": "karur-vysya-bank",
+    "security": "THE KARUR VYS-EQ",
+    "symbol": "KARURVYSYA",
+    "isin": "INE036D01028",
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "memberId": null,
+    "sector": "Unclassified",
+    "providerSector": null,
+    "assetClass": "Equity",
+    "marketSide": "listed",
+    "quantity": 16250,
+    "avgCost": null,
+    "currentPrice": 300.15,
+    "costBasis": null,
+    "marketValue": 4877437.5,
+    "unrealizedPnL": null,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "returnPct": null,
+    "stCostBasis": null,
+    "ltCostBasis": null,
+    "daysToLT": null,
+    "heldSince": null,
+    "accruedIncome": null,
+    "dividendReceived": null,
+    "positionIrrPct": null
+  },
+  {
     "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY-EQ",
     "symbol": "KAYNES",
@@ -6705,7 +6739,7 @@ export const BOOK_POSITIONS: Position[] = [
     "positionIrrPct": null
   },
   {
-    "securityKey": "sbi",
+    "securityKey": "state-bank-of-india",
     "security": "SBI - EQ",
     "symbol": "SBIN",
     "isin": "INE062A01020",
@@ -6720,34 +6754,6 @@ export const BOOK_POSITIONS: Position[] = [
     "currentPrice": 1044.25,
     "costBasis": null,
     "marketValue": 28977937.5,
-    "unrealizedPnL": null,
-    "realizedPnL": null,
-    "costOfUnitsSold": null,
-    "returnPct": null,
-    "stCostBasis": null,
-    "ltCostBasis": null,
-    "daysToLT": null,
-    "heldSince": null,
-    "accruedIncome": null,
-    "dividendReceived": null,
-    "positionIrrPct": null
-  },
-  {
-    "securityKey": "the-karur-vys",
-    "security": "THE KARUR VYS-EQ",
-    "symbol": "KARURVYSYA",
-    "isin": "INE036D01028",
-    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "memberId": null,
-    "sector": "Unclassified",
-    "providerSector": null,
-    "assetClass": "Equity",
-    "marketSide": "listed",
-    "quantity": 16250,
-    "avgCost": null,
-    "currentPrice": 300.15,
-    "costBasis": null,
-    "marketValue": 4877437.5,
     "unrealizedPnL": null,
     "realizedPnL": null,
     "costOfUnitsSold": null,
@@ -10661,6 +10667,7 @@ export const BOOK_POSITIONS: Position[] = [
     "securityKey": "crompton-greaves-consumer-electrical",
     "security": "Crompton Greaves Consumer Electrical Ltd",
     "symbol": "CROMPTON",
+    "isin": "INE299U01018",
     "accountId": "v-e-c-assago-capital-management-llp-128005",
     "memberId": null,
     "sector": "Consumer Discretionary",
@@ -20264,9 +20271,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|bndh-l-and-mcf-dp-gr": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "bandhan-amc-ltd-bandhan-mf-bandhan-large-and-mid-cap-fund-direct-pl-growth",
+    "securityKey": "bndh-l-and-mcf-dp-gr",
     "security": "BANDHAN AMC LTD#BANDHAN MF-BANDHAN LARGE & MID CAP FUND - DIRECT PL - GROWTH",
     "isin": "INF194K01V89",
     "periodFrom": "2026-04-01",
@@ -20336,9 +20343,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|hdfc-asset-mgmnt-co-ltd-hdfc-mutual-fund-hdfc-liquid-fund-dir-pl-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|hdfc-liquid-fund-direct-plan-growth-option": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "hdfc-asset-mgmnt-co-ltd-hdfc-mutual-fund-hdfc-liquid-fund-dir-pl-growth",
+    "securityKey": "hdfc-liquid-fund-direct-plan-growth-option",
     "security": "HDFC ASSET MGMNT CO LTD#HDFC MUTUAL FUND-HDFC LIQUID FUND-DIR PL-GROWTH",
     "isin": "INF179KB1HP9",
     "periodFrom": "2026-04-01",
@@ -20354,9 +20361,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-ioppf-d-grw": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-pru-amc-ltd-icici-pru-mf-icici-pru-india-opportunities-fund-direct-plan-growth",
+    "securityKey": "icici-ioppf-d-grw",
     "security": "ICICI PRU AMC LTD#ICICI PRU MF-ICICI PRU INDIA OPPORTUNITIES FUND-DIRECT PLAN-GROWTH",
     "isin": "INF109KC1RH9",
     "periodFrom": "2026-04-01",
@@ -20408,9 +20415,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -20444,9 +20451,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|insolation-energy-limited-new-equity-shares-with-face-value-re-1-after-sub-division": {
+  "motilal-oswal-financial-services-demat-1201090012539150|insolation-energy": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "insolation-energy-limited-new-equity-shares-with-face-value-re-1-after-sub-division",
+    "securityKey": "insolation-energy",
     "security": "INSOLATION ENERGY LIMITED#NEW EQUITY SHARES WITH FACE VALUE RE. 1/- AFTER SUB-DIVISION",
     "isin": "INE0LGX01024",
     "periodFrom": "2026-04-01",
@@ -20462,9 +20469,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology-india-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kaynes-technology": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kaynes-technology-india-limited-equity-shares",
+    "securityKey": "kaynes-technology",
     "security": "KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES",
     "isin": "INE918Z01012",
     "periodFrom": "2026-04-01",
@@ -20498,9 +20505,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012539150|kotak-mtcf-d-grow": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "kotak-mahindra-amc-ltd-kotak-mf-kotak-multicap-fund-direct-growth",
+    "securityKey": "kotak-mtcf-d-grow",
     "security": "KOTAK MAHINDRA AMC LTD#KOTAK MF-KOTAK MULTICAP FUND-DIRECT-GROWTH",
     "isin": "INF174KA1HV3",
     "periodFrom": "2026-04-01",
@@ -20642,9 +20649,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|nippon-life-india-am-ltd-nippon-india-mf-nippon-india-etf-nifty-1d-rate-liquid-bees": {
+  "motilal-oswal-financial-services-demat-1201090012539150|nip-etnf1d-rtliqbees": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "nippon-life-india-am-ltd-nippon-india-mf-nippon-india-etf-nifty-1d-rate-liquid-bees",
+    "securityKey": "nip-etnf1d-rtliqbees",
     "security": "NIPPON LIFE INDIA AM LTD#NIPPON INDIA MF-NIPPON INDIA ETF NIFTY 1D RATE LIQUID BEES",
     "isin": "INF732E01037",
     "periodFrom": "2026-04-01",
@@ -20696,9 +20703,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012539150-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012539150|onesource-specialty-pharma-limited-equity-shares": {
+  "motilal-oswal-financial-services-demat-1201090012539150|onesource-special": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012539150",
-    "securityKey": "onesource-specialty-pharma-limited-equity-shares",
+    "securityKey": "onesource-special",
     "security": "ONESOURCE SPECIALTY PHARMA LIMITED # EQUITY SHARES",
     "isin": "INE013P01021",
     "periodFrom": "2026-04-01",
@@ -21200,9 +21207,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth": {
+  "motilal-oswal-financial-services-demat-1201090012838316|icici-liqf-d-growth": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "icici-prud-amc-ltd-icici-prud-mf-icici-prud-liquid-fund-direct-growth",
+    "securityKey": "icici-liqf-d-growth",
     "security": "ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD LIQUID FUND-DIRECT-GROWTH",
     "isin": "INF109K01Q49",
     "periodFrom": "2026-04-01",
@@ -21326,9 +21333,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|sbi": {
+  "motilal-oswal-financial-services-demat-1201090012838316|state-bank-of-india": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "sbi",
+    "securityKey": "state-bank-of-india",
     "security": "STATE BANK OF INDIA # NEW EQUITY SHARES OF FV RE. 1/- AFTER SUBDIVISION",
     "isin": "INE062A01020",
     "periodFrom": "2026-04-01",
@@ -21362,9 +21369,9 @@ export const BOOK_SHARE_MOVEMENTS: Record<string, ShareMovement> = {
     "reason": null,
     "source": "motilal-oswal-financial-services-demat-1201090012838316-2026-07-31-demat-transactions"
   },
-  "motilal-oswal-financial-services-demat-1201090012838316|the-karur-vys": {
+  "motilal-oswal-financial-services-demat-1201090012838316|karur-vysya-bank": {
     "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
-    "securityKey": "the-karur-vys",
+    "securityKey": "karur-vysya-bank",
     "security": "THE KARUR VYSYA BANK LIMITED # NEW EQ SH WITH FV RE 2/- AFTER SUB DIVISION",
     "isin": "INE036D01028",
     "periodFrom": "2026-04-01",

@@ -69,6 +69,8 @@ import { withReturnCols, returnAccessorsFor, AGG_NO_MEASURE, returnColumnMeta } 
 // for that, and a future session that gives `weightFormula` a way to express a
 // filtered denominator should collapse the two.
 import { pnlFormula, returnFormula } from "@/lib/auditFormulas";
+import { DematElsewhere } from "@/components/QuantityMovement";
+import { movementsFor } from "@/lib/shareMovements";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
@@ -825,6 +827,26 @@ export function PortfolioMonitor() {
     const mv = new Map<string, number>();
     for (const p of positions) mv.set(p.security, (mv.get(p.security) ?? 0) + p.marketValue);
     /**
+     * ── ONE OPTION PER COMPANY, AND IT IS STRUCK ON THE KEY ─────────────────
+     *
+     *   "when I am searching Kaynes in the search bar, it is coming up in small
+     *    cap and large cap both. It should be a single name only."
+     *
+     * The list offered `Kaynes Technology` AND `KAYNES TECHNOLOGY INDIA
+     * LIMITED`. They are one company: the book holds it (Ankita's demat) and
+     * HDFC Balanced Advantage discloses it, and the look-through had already
+     * joined the two on the ISIN — onto the SAME row. The list alone still
+     * compared NAMES, so the fund's spelling of a company the book holds was
+     * offered as a second company; and picking only that one drew a derived row
+     * holding ₹79,181 and none of the family's ₹1.64 Cr in the same shares, so
+     * which of the two a reader clicked changed the answer.
+     *
+     * So a company the BOOK holds is offered once, under the book's own label,
+     * and the look-through adds only what the book does not hold — by key,
+     * never by comparing two spellings of one name.
+     */
+    const bookKeys = new Set(positions.map((p) => p.securityKey));
+    /**
      * ── AND A NAME THE FAMILY ONLY HOLDS INSIDE A FUND IS IN THE LIST ────────
      *
      * *"It could be a bond. It could be an NCD. If I type it, it has to first
@@ -844,10 +866,25 @@ export function PortfolioMonitor() {
      * under Category or Basket would name something no section could contain.
      */
     if (bySecurity && exposure.status === "ok") {
-      for (const e of exposure.byKey.values()) if (!mv.has(e.name)) mv.set(e.name, e.total);
+      for (const e of exposure.byKey.values()) {
+        if (bookKeys.has(e.key)) continue;
+        mv.set(e.name, (mv.get(e.name) ?? 0) + e.total);
+      }
     }
     return [...mv.keys()].sort((a, b) => (mv.get(b) ?? 0) - (mv.get(a) ?? 0));
   }, [positions, bySecurity, exposure]);
+  /**
+   * THE LABEL A DERIVED ROW IS FILED UNDER — the book's own where the book holds
+   * the key, so the row a reader picks and the option they picked it by are the
+   * same string. A company the book holds and the ₹1,000 floor or a redemption
+   * keeps off the table is the one case where a look-through row stands alone
+   * for a key the pick-list names by the book's label.
+   */
+  const labelByKey = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of positions) if (!m.has(p.securityKey)) m.set(p.securityKey, p.security);
+    return m;
+  }, [positions]);
   // Lets the sector filter reach the Transactions tape, which carries no sector of its own.
   const sectorByKey = useMemo(() => {
     const m = new Map<string, string>();
@@ -1374,13 +1411,14 @@ export function PortfolioMonitor() {
       if (derivedShown) {
         for (const e of ex.byKey.values()) {
           if (matched.has(e.key)) continue;
-          if (selected.size > 0 && !selected.has(e.name)) continue;
+          const label = labelByKey.get(e.key) ?? e.name;
+          if (selected.size > 0 && !selected.has(label)) continue;
           out.push({
             kind: "security" as const,
             bucket: SECURITY_SECTION,
             groupSource: null,
             key: "derived:" + e.key,
-            security: e.name,
+            security: label,
             securityKey: e.key,
             // A derived look-through row stands for a company inside a fund, so
             // there is no unit class to club and none to name.
@@ -1529,7 +1567,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -2131,6 +2169,19 @@ export function PortfolioMonitor() {
     const printed = sum(vs.map((v) => v.marketValue));
     const gap = printed - r.marketValue;
     const overlap = gap > 1;
+    /*
+     * AN ACCOUNT WHOSE DEPOSITORY STATEMENT CARRIES THIS NAME AND HOLDS NONE OF
+     * IT is not a line above — it holds nothing to put in these columns — and it
+     * is the account a reader opens this row to find: "is this in Ajay's account
+     * too?". It gets a line of its own, naming the two balances its statement
+     * printed; no figure on the row moves. A row ONLY where there is such an
+     * account (an empty line in the tree reads as a figure that failed to
+     * arrive), and never under a clubbed fund, whose classes are the lines and
+     * whose units in a demat are the depository's copy of what the fund reports.
+     */
+    const elsewhere = r.fundClasses.length > 0 ? []
+      : movementsFor(r.securityKey).filter((w) => !vs.some((v) => v.accountId === w.accountId));
+    const soldElsewhere = elsewhere.length > 0;
     /**
      * THE ROUTE SPLIT, IN WORDS, FIRST.
      *
@@ -2183,7 +2234,7 @@ export function PortfolioMonitor() {
     vs.forEach((v, i) => {
       const fk = venueKeyOf(v);
       const t = info?.byVenue.get(fk) ?? null;
-      const lastLine = i === vs.length - 1 && !overlap && !lookThrough;
+      const lastLine = i === vs.length - 1 && !overlap && !soldElsewhere && !lookThrough;
       const vehicle = v.isMandate
         ? <Link to={`/mandate/${encodeURIComponent(v.accountId)}`} title={`Account ${v.accountNo} — open the mandate drill-down`}
             className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
@@ -2256,7 +2307,7 @@ export function PortfolioMonitor() {
       out.push(childRow(`${r.key}>overlap`, "overlap", 1, {
         title: <span className="text-amber-400">Counted once</span>,
         sub: `one holding reported under ${vs.length === 2 ? "two" : vs.length} accounts`,
-        last: !lookThrough,
+        last: !soldElsewhere && !lookThrough,
       }, {
         qty: printedQty !== null && r.quantity !== null && printedQty - r.quantity > 0.0005
           ? minus(`−${fmtNum(printedQty - r.quantity)}`) : undefined,
@@ -2279,6 +2330,11 @@ export function PortfolioMonitor() {
      * reads as part of what this row opened into. See `canLookThrough` for why
      * its gate is the issuer rather than the asset class.
      */
+    if (soldElsewhere) {
+      out.push(treeLine(`${r.key}>elsewhere`, "elsewhere", !lookThrough,
+        <DematElsewhere movements={elsewhere} securityKey={r.securityKey}
+          held={new Set(vs.map((v) => v.accountId))} accounts={portfolio?.accounts ?? []} />));
+    }
     if (lookThrough) {
       out.push(treeLine(`${r.key}>lookthrough`, "lookthrough", true,
         <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />));

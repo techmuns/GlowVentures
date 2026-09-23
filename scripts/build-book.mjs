@@ -1068,11 +1068,51 @@ function lotGain(l) {
  * Keyed `accountId|securityKey` because that is what a holdings row is, and
  * joined on the ISIN the statement prints — falling back to the name's own key
  * only where the statement printed no ISIN, which on these six is never.
+ *
+ * ── AND JOINED ON THE ISIN ACROSS THE BOOK, NOT ONLY INSIDE THE ACCOUNT ──────
+ *
+ *   "According to the client, Kaynes Technologies Limited is … also a holding
+ *    of the family entity Ajay's account."
+ *
+ * Ajay's main demat (1201090012539150) prints a Kaynes block: 16,300 shares on
+ * 1 April, sold on 10 April, bought back on 5 May, sold again on 12–13 May,
+ * nil at 31 July. The join above was scoped to the ACCOUNT, and that account
+ * holds no Kaynes position at 31 July — so the block fell through to its own
+ * printed name, `KAYNES TECHNOLOGY INDIA LIMITED # EQUITY SHARES`, whose key
+ * (`kaynes-technology-india-limited-equity-shares`) matches NO row anywhere in
+ * the book. The window was generated, correct, and filed where no page could
+ * ever read it: the Kaynes page showed Ankita's demat alone, and the one record
+ * in this book that answers the client's question was invisible.
+ *
+ * The ISIN IS the security, and the book already carries a key for it. So a
+ * block the account no longer holds takes the key the rest of the book files
+ * that ISIN under — where exactly ONE key carries it. An ISIN the book files
+ * under two keys (Helios Flexi Cap's, the extractor join `docs/BOOK-REPORT.md`
+ * names) is ambiguous and keeps the statement's own name rather than picking
+ * one. Measured: 14 windows were stranded this way, all on securities the book
+ * does carry — Kaynes, Onesource and Insolation among Ajay's shares.
+ *
+ * AN AIF UNIT IS NOT BRIDGED, and that is the book's own rule rather than a new
+ * one. A depository holding a fund's units is printing its copy of what the
+ * FUND's own statement reports — which is why `dropDepositoryDuplicates` drops
+ * those rows from the holdings and why a depository AIF row carries its units
+ * and no price. Filing that window on the fund's page would put the same units
+ * there twice, once as the fund's own figure and once as a demat's; so a window
+ * whose ISIN the book carries as an AIF keeps the statement's own name. Four
+ * of the fourteen are that (3P B3 in two demats, Baring 6 A1, Blue Ashva) — the
+ * other ten are shares and mutual-fund units no second statement reports.
  */
 function shareMovementsFrom(docs, positions, accounts, notes) {
   const out = {};
   const byAcctIsin = new Map();
   for (const p of positions) if (p.isin) byAcctIsin.set(`${p.accountId}|${p.isin}`, p.securityKey);
+  const keysByIsin = new Map();
+  const aifIsins = new Set();
+  for (const p of positions) {
+    if (!p.isin) continue;
+    (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
+    if (p.assetClass === "AIF") aifIsins.add(p.isin);
+  }
   // THE REGISTRY DECIDES WHICH ACCOUNTS EXIST. Account 32387399's three
   // identifiers give three answers, so it is excluded with the reason and its
   // ₹8.23 Cr is in no total — and it issues a transaction statement like every
@@ -1081,7 +1121,7 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
   // has said it cannot establish.
   const known = new Set(accounts.map((a) => a.accountId));
 
-  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0;
+  let blocks = 0, split = 0, joined = 0, unclassified = 0, offRegistry = 0, bridged = 0, ambiguous = 0, collided = 0, overwritten = 0, fundCopy = 0;
   for (const d of docs) {
     if (d.reportType !== "demat-transactions") continue;
     // The SLUG a position carries, never `acctKey`'s grouping key — those are
@@ -1098,8 +1138,27 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
       // A block whose security this book holds no position in is still emitted
       // — the family sold out of it during the window, which is exactly the
       // row a reader asking "what happened to my quantity" is looking for.
-      const key = byAcctIsin.get(`${accountId}|${row.isin}`) ?? securityKeyOf(row.security ?? "");
-      if (byAcctIsin.has(`${accountId}|${row.isin}`)) joined += 1;
+      const own = securityKeyOf(row.security ?? "");
+      let key = byAcctIsin.get(`${accountId}|${row.isin}`);
+      if (key) joined += 1;
+      else {
+        const across = row.isin ? keysByIsin.get(row.isin) : undefined;
+        if (row.isin && aifIsins.has(row.isin)) fundCopy += 1;
+        else if (across?.size === 1) {
+          const bookKey = [...across][0];
+          // NEVER OVERWRITE A WINDOW THIS ACCOUNT ALREADY FILED UNDER THAT KEY.
+          // Two ISIN blocks landing on one key in one account would be two
+          // instruments printed as one — the older issue of a split share, say —
+          // so the second keeps its own name rather than replacing the first.
+          if (out[`${accountId}|${bookKey}`]) collided += 1;
+          else { key = bookKey; bridged += 1; }
+        } else if ((across?.size ?? 0) > 1) ambiguous += 1;
+      }
+      key ??= own;
+      // A key this account already filed a window under would be OVERWRITTEN by
+      // the assignment below, which is a window silently lost — counted, so a
+      // drop that does it says so. None does on this corpus.
+      if (out[`${accountId}|${key}`]) overwritten += 1;
       const m = row.movements;
       if (m?.unclassified) unclassified += m.unclassified;
       out[`${accountId}|${key}`] = {
@@ -1127,6 +1186,9 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
   }
   if (blocks) {
     notes.push(`share movements: ${blocks} holding-window(s) from the demat statements, ${split} of which walk their own printed opening balance to their own printed closing balance and carry an opening-to-closing split. ${joined} join a position this book carries; the rest are securities the account no longer holds. ${unclassified} movement row(s) matched no known particular and are counted in the in/out totals by their own balance change.${offRegistry ? ` ${offRegistry} demat statement(s) were skipped entirely because their account is not in the registry — an account excluded by decision stays excluded here too.` : ""}`);
+    // PRINTED EVEN AT ZERO: a join that only speaks when it fires is
+    // indistinguishable, on a quiet drop, from one that was deleted.
+    notes.push(`share movements: ${bridged} window(s) in an account that no longer holds the security are filed under the key the rest of the book carries for the same ISIN, so the company's page shows them; ${ambiguous} ISIN(s) the book files under two keys keep the statement's own name rather than picking one; ${fundCopy} window(s) are the depository's copy of AIF units a fund's own statement reports and stay off the fund's page; ${collided} block(s) would have landed on a key their account already filed and keep their own name instead; ${overwritten} window(s) were overwritten by a second block under one key.`);
   }
   return out;
 }
@@ -2409,6 +2471,35 @@ function build(docs) {
   dropDepositoryDuplicates(positions, accounts, notes);
 
   positions.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey));
+
+  /**
+   * ── ONE NSE SYMBOL UNDER TWO KEYS IS ONE COMPANY KEYED TWICE ───────────────
+   *
+   * The ISIN guard above cannot see the split the family reported: `SBI - EQ`
+   * printed an ISIN and the four PMS statements spelling it `State Bank of
+   * India` printed none, so there was no second ISIN to compare. What both
+   * sides DID resolve is the same NSE symbol — the depository's through its
+   * ISIN on NSE's own master, the managers' through their name — and a symbol
+   * is issued once per listed company. So two book keys on one symbol are
+   * named here, every run and at zero, because a guard that only speaks when
+   * it fires is indistinguishable from one that was deleted. Closing one is a
+   * hand-checked entry in `KEY_ALIASES` (`shared/securityKey.mjs`), never a
+   * merge made here: this reports identity, it does not decide it.
+   */
+  {
+    const keysBySymbol = new Map();
+    for (const p of positions) {
+      if (!p.symbol) continue;
+      (keysBySymbol.get(p.symbol) ?? keysBySymbol.set(p.symbol, new Set()).get(p.symbol)).add(p.securityKey);
+    }
+    const split = [...keysBySymbol].filter(([, ks]) => ks.size > 1);
+    notes.push(split.length === 0
+      ? "identity: 0 NSE symbol(s) are carried by two securityKeys among the positions — no listed company is keyed twice."
+      : `identity: ${split.length} NSE symbol(s) are carried by TWO OR MORE securityKeys among the positions — one listed `
+        + `company keyed twice, so it is two rows and two names on every screen. Close each with a hand-checked `
+        + `\`KEY_ALIASES\` entry in shared/securityKey.mjs: `
+        + split.map(([sym, ks]) => `${sym} (${[...ks].sort().join(" / ")})`).join("; "));
+  }
 
   /**
    * PEEL OFF THE RING-FENCED PROMOTER STOCK (see RINGFENCED_SECURITY_KEYS).

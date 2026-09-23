@@ -35,6 +35,9 @@
 import type { Position } from "./types";
 import { securityKeyOf } from "./securityKey";
 import { resolveSector, UNCLASSIFIED } from "./sectors";
+import { displayFiledName, stripFilingMarks } from "./format";
+import { currentHoldings, isCompanyShare, isFundVehicle } from "./analytics";
+import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 import nseSymbols from "@/data/nseSymbols.json";
 import screenerSectors from "@/data/screenerSectors.json";
 
@@ -306,6 +309,166 @@ export const disclosedWeight = (pf: FundPortfolio): number =>
  * those 34 is one company written two ways. Not one merges two companies.
  */
 export const issuerOf = (isin: string): string => isin.slice(0, 7).toUpperCase();
+
+/**
+ * ── THE ISSUER, NOT THE INSTRUMENT ──────────────────────────────────────────
+ *
+ *   *"Make sure that the name of all the entities is written correctly…
+ *    Otherwise 2 separate names of the same company does not make sense."*
+ *
+ * A fund's filing names every debt line by the INSTRUMENT — its coupon, its
+ * maturity and the filer's footnote marks: `8.30% Aditya Birla Capital Ltd.
+ * (16/09/2026) **`, `7.18% GOI MAT 140833`, `91 DAY T-BILL 05.11.26`. The issuer
+ * tier made those one ROW per issuer, and named the row by whichever line was
+ * shortest — so a company the family holds as a share showed up a second time,
+ * in the pick-list and on the table, under one of its certificates of deposit:
+ * `Karur Vysya Bank Ltd. (17/11/2026) **#` beside `Karur Vysya Bank Ltd.`.
+ *
+ * This removes what names the INSTRUMENT and leaves what names the ISSUER: the
+ * coupon, a bracketed or trailing maturity, `(ZCB)`, the `MAT`/`ISD` date codes
+ * government paper carries, a dangling dash and the footnote marks. It only
+ * ever REMOVES, like `stripDepositoryTail`, and it is for the ROW's name and
+ * its join — the instrument lines under a row keep their own names, because
+ * there the coupon and the maturity ARE the name. A bracket that is not a date
+ * stays: `Tata Teleservices (Maharastra) Ltd.` is a different company from
+ * `Tata Teleservices Ltd.`, and the date rule cannot reach it.
+ */
+export function issuerNameOf(name: string): string {
+  const raw = stripFilingMarks(String(name ?? ""));
+  const out = stripFilingMarks(
+    raw
+      // `7.95% …`, and the doubled `9.99% % Gujarat SDL` one AMC prints
+      .replace(/^\s*\d+(?:\.\d+)?\s*%(?:\s*%)?\s*/, "")
+      // `(29/01/2028)`, `(MD 04/02/2027)`
+      .replace(/\(\s*(?:MD\s+)?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\s*\)/gi, " ")
+      .replace(/\(\s*ZCB\s*\)/gi, " ")
+      // `MAT 140833`, `ISD 171225`, `MAT 19112026`
+      .replace(/\b(?:MAT|ISD)\s*\d{6}(?:\d{2})?\b/gi, " ")
+      // a trailing `05.11.26`
+      .replace(/\s+\d{1,2}\.\d{1,2}\.\d{2,4}\s*$/, " "),
+  ).replace(/\s+-\s*$/, "").replace(/\s{2,}/g, " ").trim();
+  return out || raw;
+}
+
+/**
+ * ── WHO ISSUED GOVERNMENT PAPER, SAID ONCE ──────────────────────────────────
+ *
+ * Government securities carry NO ISIN in this store — 177 lines, and not one —
+ * so the issuer tier cannot group them and each bond stood as its own "company":
+ * `Government of India (24/07/2037)`, `7.18% GOI MAT 140833`, `91 DAY T-BILL
+ * 05.11.26` and `91 Days Treasury Bills` were twenty-odd rows for one issuer.
+ * Four readings, each a DEFINITION rather than a resemblance:
+ *
+ *   • `GOI` is how one AMC spells the Government of India on every line, and
+ *     `GOI STRIPS` are that government's own securities, stripped;
+ *   • a TREASURY BILL is issued by the Government of India and nobody else;
+ *   • an `SDL` is a State Development Loan — the state government's paper — and
+ *     another AMC files the same issuers as `State Government of Maharashtra`;
+ *   • a line carrying a government-security date code (`MAT 060848`) that names
+ *     a state and no company is that state's loan without the word `SDL` —
+ *     measured, exactly six lines, every one Madhya Pradesh or Maharashtra.
+ *
+ * `Government Securities`, which one filing prints with no issuer at all, is
+ * deliberately NOT folded in: it does not say which government, and a heading
+ * asserting one would be a classification nobody made. It stands as its own row.
+ */
+export function issuerKeyOf(name: string): string {
+  const bare = issuerNameOf(name);
+  if (/^(?:GOI|GOI\s+STRIPS|Government\s+of\s+India)$/i.test(bare)
+    || /\b(?:T-?\s?BILLS?|TBILLS?|TREASURY\s+BILLS?)\b/i.test(bare)) return "government-of-india";
+  const sdl = bare.match(/^(.+?)\s+SDL$/i);
+  if (sdl) return `state-government-of-${securityKeyOf(sdl[1])}`;
+  if (/\bMAT\s*\d{6}/i.test(String(name ?? "")) && !/\b(?:Ltd|Limited|Bank|Corp|Corporation|Finance|Co)\b/i.test(bare)) {
+    return `state-government-of-${securityKeyOf(bare)}`;
+  }
+  return securityKeyOf(bare);
+}
+
+/**
+ * ── WHICH ISIN IS THIS BOOK'S COMPANY — its own, or its listing's ────────────
+ *
+ * The look-through joins a fund's line to a company the book holds on the
+ * ISIN, and it could only use an ISIN the book's own statements printed. A PMS
+ * statement prints none, so every company the family holds ONLY through a
+ * mandate — Jammu & Kashmir Bank, LIC, Great Eastern Shipping, Vedanta —
+ * joined to nothing, and the same company stood twice: once as the book's row
+ * and once as a fund's (`The Jammu & Kashmir Bank Limited`, and its CDs).
+ *
+ * THE LISTING SUPPLIES IT, through two joins this app already trusts with
+ * money. `nseSymbols.json` is the book key's NSE trading symbol, which is what
+ * the quote feed PRICES the holding by; `UPSTOX_INSTRUMENTS` is that symbol's
+ * instrument in the price source's own list, `NSE_EQ|<ISIN>`, which the feed
+ * must echo back before a price is used. A wrong link in that chain would
+ * already be moving the family's market value, so reading the ISIN off it adds
+ * no new trust — and it is still an identifier, never a name.
+ *
+ * THE BOOK'S OWN ISIN WINS. Where a statement printed one it is used as printed,
+ * and a listing ISIN another book key already claims is refused rather than
+ * reassigned: one security under two keys is the defect `build-book` counts,
+ * and this must not manufacture it on the derived side.
+ */
+export function bookIsinBridge(positions: readonly Position[]): {
+  index: Map<string, string>;
+  fromListing: number;
+  refused: string[];
+} {
+  const index = new Map<string, string>();
+  for (const p of positions) {
+    if (!isCompanyShare(p) || !p.isin) continue;
+    const k = p.isin.trim().toUpperCase();
+    if (k && !index.has(k)) index.set(k, p.securityKey);
+  }
+  let fromListing = 0;
+  const refused: string[] = [];
+  const seen = new Set<string>();
+  for (const p of positions) {
+    if (!isCompanyShare(p) || seen.has(p.securityKey)) continue;
+    seen.add(p.securityKey);
+    const sym = KEY_TO_SYMBOL[p.securityKey];
+    const inst = sym ? UPSTOX_INSTRUMENTS[sym] : undefined;
+    const isin = inst && /^NSE_EQ\|/.test(inst.key) ? inst.key.slice(7).trim().toUpperCase() : "";
+    if (!/^IN[EF][A-Z0-9]{9}$/.test(isin)) continue;
+    const owner = index.get(isin);
+    if (owner === p.securityKey) continue;
+    if (owner) { refused.push(`${p.securityKey} → ${isin} (already ${owner})`); continue; }
+    index.set(isin, p.securityKey);
+    fromListing++;
+  }
+  return { index, fromListing, refused };
+}
+
+/**
+ * THE FUNDS THE LOOK-THROUGH READS — the ones the family holds TODAY, clubbed.
+ *
+ * Struck over the DEDUPED set, so a fund two members' statements both report is
+ * one vehicle at the value the book carries for both: this feeds a DERIVED
+ * exposure, and a fund counted twice would double the share derived from it.
+ * Clubbed on `securityKey`, so one scheme held by three members is one vehicle
+ * with one disclosure. And CURRENT holdings only: a scheme redeemed to nil is
+ * not a fund this family holds, and must not count in "N of your M funds".
+ *
+ * ONE DEFINITION, SHARED WITH THE SUITE — the reason `bookIsinBridge` is shared
+ * too. The suite used to take every fund vehicle the book ever carried, and
+ * that is not a smaller set of the same joins, it is a DIFFERENT join. The
+ * issuer prefix a line is filed under is decided over every filing loaded, a
+ * ₹0 fund's included — and HDFC Small Cap, redeemed to nil in folio 16180583,
+ * files City Union's SHARE. So in the suite City Union's certificates of
+ * deposit joined the book's company by that share's ISIN, while the page, which
+ * never loads a redeemed fund, needed the issuer seed to make the same join.
+ * The bug pass switched the seed off: the page offered `City Union Bank Ltd.`
+ * as a second company and failed, and the suite passed.
+ */
+export function heldFundVehicles(consolidated: readonly Position[]): HeldFund[] {
+  const m = new Map<string, HeldFund>();
+  for (const p of currentHoldings(consolidated)) {
+    if (!isFundVehicle(p)) continue;
+    const e = m.get(p.securityKey)
+      ?? { securityKey: p.securityKey, name: p.security, marketValue: 0, assetClass: p.assetClass };
+    e.marketValue += p.marketValue;
+    m.set(p.securityKey, e);
+  }
+  return [...m.values()];
+}
 
 /** Whether a holding could ever have a look-through — mirrors the ingest. */
 export const canHaveLookthrough = (p: Position): boolean =>
@@ -705,6 +868,11 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  * Lower is better: one the book itself carries, then the equity series, then
  * anything else. It never invents an identifier — every candidate was filed.
  */
+/** Lexicographic, so a row's name is chosen by a rule rather than by read order. */
+const compareScore = (a: readonly (number | string)[], b: readonly (number | string)[]): number => {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+  return 0;
+};
 const rankIsin = (isin: string, book: ReadonlyMap<string, string>): number =>
   book.has(isin) ? 0 : /^IN[EF][A-Z0-9]{5}01/.test(isin) ? 1 : 2;
 
@@ -735,6 +903,12 @@ export async function loadStockExposure(
    * only the identifier bridges them.
    */
   ringFenced: { keys: ReadonlySet<string>; isins: ReadonlySet<string> } = { keys: new Set(), isins: new Set() },
+  /**
+   * EVERY company the book holds, identifier or not — so an issuer whose name
+   * is a book company's can be told apart from one whose name merely resembles
+   * another line's. Defaults to the keys the ISIN index already names.
+   */
+  bookCompanyKeys: ReadonlySet<string> = new Set(isinToBookKey.values()),
 ): Promise<StockExposureState> {
   const idx = await loadIndex();
   if (!idx) return { status: "unreachable" };
@@ -755,59 +929,156 @@ export async function loadStockExposure(
 
   const byKey = new Map<string, StockExposure>();
   const skipped: FundExposureSkip[] = [];
-  /** An ISIN the BOOK does not carry still keys consistently across funds. */
-  const isinSeen = new Map<string, string>();
   /**
-   * ── AND A NAME AN AMC FILED *WITH* AN ISIN KEYS THE SAME AS ONE IT DID NOT ──
+   * ── A NAME AN AMC FILED *WITH* AN ISIN KEYS THE SAME AS ONE IT DID NOT ─────
    *
    * 18% of the disclosed lines carry no ISIN, and the same company arrives both
    * ways: one scheme files `ICICI Bank Ltd.` with INE090A01021, another files
    * `ICICI Bank Ltd.` with nothing. On a single pass the first lands on the
-   * BOOK's key (`icici-bank-eq`, joined by identifier) and the second on its own
-   * normalised name — so the family's own question, how much of this company do
-   * I hold, gets two answers. Measured: it split ICICI Bank, State Bank of
-   * India, Axis Bank and IndusInd Bank.
+   * BOOK's key (joined by identifier) and the second on its own normalised name
+   * — so the family's own question, how much of this company do I hold, gets
+   * two answers. Measured: it split ICICI Bank, State Bank of India, Axis Bank
+   * and IndusInd Bank.
    *
    * So the ISIN-BEARING FILINGS ARE READ FIRST and each records the key for its
-   * normalised name; an ISIN-less filing of that name then follows it. The
-   * evidence is the store's own — one AMC supplied the identifier for the name
-   * another omitted — so this is not a fuzzy tier and not a re-derivation of the
-   * BOOK's identity. Where no filing carries an ISIN, the name still stands
-   * alone, exactly as before.
+   * ISSUER name; an ISIN-less filing of that name then follows it. The evidence
+   * is the store's own — one AMC supplied the identifier for the name another
+   * omitted — so this is not a fuzzy tier and not a re-derivation of the BOOK's
+   * identity. Where no filing carries an ISIN, the name still stands alone.
    */
   const nameToKey = new Map<string, string>();
   /**
-   * ONE KEY PER ISSUER, decided once over every filing before any row is placed.
+   * ── ONE KEY PER ISSUER, decided over every filing before a row is placed ───
    *
-   * `isinSeen` keys on the full ISIN and so gave one issuer's fourteen
-   * instruments fourteen answers. `issuerSeen` keys on the issuer (see
-   * `issuerOf`) and takes the BOOK's own key wherever any one of that issuer's
-   * ISINs is in the book — so LIC Housing's NCDs land on the same row as its
-   * share if the family also hold the share, and on one row of their own if
-   * they do not.
+   * An Indian ISIN carries its issuer in characters 1-7 (see `issuerOf`), so
+   * every instrument of one issuer is one ROW — and which row is decided here,
+   * strongest evidence first:
    *
-   * THE NAME ON THE ROW IS THE SHORTEST THE FILINGS GIVE. An issuer's debt
-   * lines print the coupon and the maturity (`7.95% LIC Housing Finance Limited
-   * (29/01/2028) **`) and its equity line prints the company; a row headed by
-   * the first would name one bond over a figure covering fourteen instruments.
+   *   1. a line whose OWN ISIN is the book's — the company the family holds;
+   *   2. the book holds a share of the SAME ISSUER — Karur Vysya's certificates
+   *      of deposit (`INE036D16…`) are Karur Vysya Bank (`INE036D01028`), and
+   *      no fund here files its share for the first tier to catch. Only a
+   *      company prefix (`INE`), and only where it names ONE book key: a
+   *      warrant and a share of one company are two holdings, and a prefix both
+   *      carry is decided by the equity series or not at all;
+   *   3. otherwise the ISSUER NAME the filings give (`issuerKeyOf`) — which is
+   *      also what joins a company carrying two issuer codes: Aditya Birla
+   *      Finance's NCDs kept `INE860H` when it merged into Aditya Birla Capital
+   *      (`INE674K`), and every filing now names them Aditya Birla Capital.
+   *
+   * WHY THIS WAS THREE ROWS FOR ONE COMPANY BEFORE. The first line READ decided
+   * the key, and a debt line keyed on its own name — coupon, maturity, footnote
+   * marks and all. Karur Vysya's CD, J&K Bank's CD and a Tata Capital NCD each
+   * became a "company" beside the one the family holds or the one another
+   * filing names, and the pick-list offered both.
    */
-  const issuerSeen = new Map<string, string>();
-  const issuerName = new Map<string, string>();
+  const prefixKey = new Map<string, string>();
+  /**
+   * THE ROW'S NAME, chosen once every line is placed rather than by whichever
+   * line was read first: a spelling that states the row's own key (`Government
+   * of India` for the government's row, not `91 Days Treasury Bills`), then the
+   * best identifier behind it, then one the filer cased, then the shortest.
+   */
+  type NameScore = [number, number, number, number, number, string];
+  const nameFor = new Map<string, { raw: string; isin: string | null; score: NameScore }>();
+  /**
+   * ── A NAME PRINTED IN CAPITALS BORROWS ITS CASE FROM ANOTHER FILING ───────
+   *
+   *   "Make sure that the name of all the entities is written correctly neither
+   *    in all full cap nor in all small cap."
+   *
+   * 142 of the store's 2,362 disclosed lines are printed entirely in capitals —
+   * HDFC Balanced Advantage files `KAYNES TECHNOLOGY INDIA LIMITED` — and they
+   * reached the pick-list, the rows and the breakouts exactly so. A title-caser
+   * cannot do this alone: it does not know that `KPIT` is a name and `DAY` is a
+   * word. So where ANOTHER filing in the same store prints the same ISIN, or a
+   * name that normalises to the same key, in its own case, that spelling is
+   * used — the same identifier, cased by somebody who knew. Measured: that
+   * rescues 61 of the 142 lines, and the rest title-case through the measured
+   * acronym list in `format.ts`. The KEY is never taken from the borrowed name —
+   * every join below is still struck on the filing's own.
+   */
+  const casedByIsin = new Map<string, string>();
+  const casedByName = new Map<string, string>();
+  for (const { pf } of loaded) {
+    for (const h of pf?.holdings ?? []) {
+      if (!h.name || !/[a-z]/.test(h.name)) continue;
+      const isin = (h.isin ?? "").trim().toUpperCase();
+      if (isin && !casedByIsin.has(isin)) casedByIsin.set(isin, h.name);
+      const k = securityKeyOf(h.name);
+      if (k && !casedByName.has(k)) casedByName.set(k, h.name);
+    }
+  }
+  const cased = (name: string, isin: string | null): string => {
+    if (/[a-z]/.test(name)) return name;
+    return (isin ? casedByIsin.get(isin) : undefined) ?? casedByName.get(securityKeyOf(name)) ?? name;
+  };
+  /** An instrument line, as filed: coupon and maturity kept, the marks gone. */
+  const shown = (name: string, isin: string | null): string => displayFiledName(cased(name, isin));
+  /** An issuer row: the instrument's own words removed. */
+  const issuerShown = (name: string, isin: string | null): string => displayFiledName(issuerNameOf(cased(name, isin)));
+
+  const fenced = (isin: string | null, name: string): boolean =>
+    (!!isin && ringFenced.isins.has(isin))
+    || ringFenced.keys.has(securityKeyOf(name)) || ringFenced.keys.has(issuerKeyOf(name));
+  const isEquitySeries = (isin: string): boolean => /^IN[EF][A-Z0-9]{5}01/.test(isin);
+
+  // 2. The book's own issuers — the prefix of every company ISIN the book carries.
+  const bookIssuer = new Map<string, string>();
+  {
+    const cand = new Map<string, Map<string, boolean>>();
+    for (const [isin, key] of isinToBookKey) {
+      if (!/^INE/.test(isin)) continue;
+      const pre = issuerOf(isin);
+      const m = cand.get(pre) ?? new Map<string, boolean>();
+      m.set(key, (m.get(key) ?? false) || isEquitySeries(isin));
+      cand.set(pre, m);
+    }
+    for (const [pre, m] of cand) {
+      const keys = [...m.keys()];
+      const equity = keys.filter((k) => m.get(k));
+      const pick = keys.length === 1 ? keys[0] : equity.length === 1 ? equity[0] : null;
+      if (pick) bookIssuer.set(pre, pick);
+    }
+  }
+  const bookKeys = bookCompanyKeys;
+
+  type Line = { isin: string; name: string; key: string };
+  const byPrefix = new Map<string, Line[]>();
   for (const { pf } of loaded) {
     if (!pf) continue;
     for (const h of pf.holdings ?? []) {
       const isin = (h.isin ?? "").trim().toUpperCase();
       if (!isin || !(h.pctAum > 0)) continue;
-      const nameKey = securityKeyOf(h.name);
-      if (!nameKey || ringFenced.isins.has(isin) || ringFenced.keys.has(nameKey)) continue;
-      const iss = issuerOf(isin);
-      const bookKey = isinToBookKey.get(isin);
-      if (bookKey) issuerSeen.set(iss, bookKey);
-      else if (!issuerSeen.has(iss)) issuerSeen.set(iss, nameKey);
-      const prev = issuerName.get(iss);
-      if (!prev || h.name.length < prev.length) issuerName.set(iss, h.name);
-      if (!isinToBookKey.has(isin)) isinSeen.set(isin, issuerSeen.get(iss)!);
-      if (!nameToKey.has(nameKey)) nameToKey.set(nameKey, issuerSeen.get(iss)!);
+      const key = issuerKeyOf(h.name);
+      if (!key || fenced(isin, h.name)) continue;
+      const pre = issuerOf(isin);
+      (byPrefix.get(pre) ?? byPrefix.set(pre, []).get(pre)!).push({ isin, name: h.name, key });
+    }
+  }
+  // Deterministic, and the equity line first: it names the company rather than
+  // one of its papers.
+  const lineOrder = (a: Line, b: Line): number =>
+    Number(isEquitySeries(b.isin)) - Number(isEquitySeries(a.isin))
+    || issuerNameOf(a.name).length - issuerNameOf(b.name).length
+    || a.key.localeCompare(b.key);
+  for (const [pre, lines] of byPrefix) {
+    lines.sort(lineOrder);
+    const direct = lines.filter((l) => isinToBookKey.has(l.isin))
+      .sort((a, b) => Number(isEquitySeries(b.isin)) - Number(isEquitySeries(a.isin)))[0];
+    let key = direct ? isinToBookKey.get(direct.isin)! : bookIssuer.get(pre);
+    if (!key) {
+      const inBook = [...new Set(lines.map((l) => l.key).filter((k) => bookKeys.has(k)))];
+      key = inBook.length === 1 ? inBook[0] : lines[0].key;
+    }
+    prefixKey.set(pre, key);
+  }
+  // A contested issuer NAME goes to the book's key over anyone else's.
+  for (const [pre, lines] of byPrefix) {
+    const k = prefixKey.get(pre)!;
+    for (const l of lines) {
+      const prev = nameToKey.get(l.key);
+      if (!prev || (!bookKeys.has(prev) && bookKeys.has(k))) nameToKey.set(l.key, k);
     }
   }
   let covered = 0;
@@ -843,14 +1114,11 @@ export async function loadStockExposure(
       const isin = (h.isin ?? "").trim().toUpperCase() || null;
       const nameKey = securityKeyOf(h.name);
       if (!nameKey && !isin) continue;
-      if ((isin && ringFenced.isins.has(isin)) || (nameKey && ringFenced.keys.has(nameKey))) continue;
-      let key: string;
-      if (isin) {
-        key = isinToBookKey.get(isin) ?? issuerSeen.get(issuerOf(isin)) ?? isinSeen.get(isin) ?? nameKey;
-        if (!isinToBookKey.has(isin)) isinSeen.set(isin, key);
-      } else {
-        key = nameToKey.get(nameKey) ?? nameKey;
-      }
+      if (fenced(isin, h.name)) continue;
+      const issuerKey = issuerKeyOf(h.name);
+      const key = isin
+        ? isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? issuerKey
+        : nameToKey.get(issuerKey) ?? issuerKey;
       const dedupeOn = isin ?? `name:${nameKey}`;
       if (seenHere.has(dedupeOn)) continue;
 
@@ -864,7 +1132,22 @@ export async function loadStockExposure(
       if (!(value > 0)) continue;
       seenHere.add(dedupeOn);
       total += value;
-      const e = byKey.get(key) ?? { key, name: (isin ? issuerName.get(issuerOf(isin)) : null) ?? h.name, isin, rows: [], total: 0, classes: [], sector: null };
+      const e = byKey.get(key) ?? { key, name: "", isin, rows: [], total: 0, classes: [], sector: null };
+      {
+        const bare = issuerNameOf(h.name);
+        const score: NameScore = [
+          issuerKeyOf(h.name) === key && securityKeyOf(bare) === key ? 0 : 1,
+          !isin ? 3 : isinToBookKey.has(isin) ? 0 : isEquitySeries(isin) ? 1 : 2,
+          /[a-z]/.test(h.name) ? 0 : 1,
+          bare.length,
+          // …then the spelling its filer CASED most fully: `Tata Capital Ltd.`
+          // over `TATA Capital Ltd.`, which is the same company shouted.
+          -(bare.match(/[a-z]/g)?.length ?? 0),
+          bare,
+        ];
+        const prev = nameFor.get(key);
+        if (!prev || compareScore(score, prev.score) < 0) nameFor.set(key, { raw: h.name, isin, score });
+      }
       // ONE ROW PER FUND PER ISSUER, gaining an instrument rather than a row.
       let row = e.rows.find((r) => r.fundKey === f.securityKey);
       if (!row) {
@@ -889,7 +1172,7 @@ export async function loadStockExposure(
       row.pctAum += h.pctAum;
       row.value += value;
       if (!row.sector && h.sector) row.sector = h.sector;
-      row.instruments.push({ name: h.name, isin, assetClass: h.assetClass ?? null, rating: h.rating ?? null, pctAum: h.pctAum, value });
+      row.instruments.push({ name: shown(h.name, isin), isin, assetClass: h.assetClass ?? null, rating: h.rating ?? null, pctAum: h.pctAum, value });
       e.total += value;
       if (h.assetClass && !e.classes.includes(h.assetClass)) e.classes.push(h.assetClass);
       /**
@@ -910,6 +1193,8 @@ export async function loadStockExposure(
   }
 
   for (const e of byKey.values()) {
+    const n = nameFor.get(e.key);
+    e.name = n ? issuerShown(n.raw, n.isin) : e.key;
     e.rows.sort((a, b) => b.value - a.value);
     for (const r of e.rows) r.instruments.sort((a, b) => b.value - a.value);
     e.classes.sort();
