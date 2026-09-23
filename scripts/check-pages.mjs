@@ -9395,14 +9395,23 @@ const INVARIANTS = {
         if (!p) return false;
         // Over every section: the pair lives in one class, and that class need
         // not be the panel's largest.
+        //
+        // ON THE HOLDING-PERIOD RETURN, for the reason the monotonicity check
+        // above already records: a CAGR shrinks with the years held, so two
+        // contributions at one entry NAV bought on DIFFERENT dates print
+        // different annual rates while earning exactly the same. Sanshi's pair
+        // was bought on one day and hid that; Neo Infra's six drawdowns at a
+        // ₹100 face value span 2023 to 2026 and do not — every one reads HPR
+        // 14.23% and three of them print CAGR 4.69%, 4.78% and 5.45%. The claim
+        // was always about what the money EARNED.
         const shared = [];
         for (const x of p.sections) {
           if (x.navs.some((n) => n === null)) return false;
           const by = new Map();
-          x.navs.forEach((n, i) => { (by.get(n) ?? by.set(n, []).get(n)).push(x.returns[i]); });
+          x.navs.forEach((n, i) => { (by.get(n) ?? by.set(n, []).get(n)).push(x.hprs[i]); });
           shared.push(...[...by.values()].filter((v) => v.length > 1));
         }
-        return shared.length > 0 && shared.every((v) => v.every((r) => r !== null && Math.abs(r - v[0]) < 0.02));
+        return shared.length > 0 && shared.every((v) => v.every((r) => r !== null && Number.isFinite(r) && Math.abs(r - v[0]) < 0.02));
       }],
   ],
   /**

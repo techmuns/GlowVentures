@@ -15,7 +15,7 @@
 # or a build that fails, is NOT A RESULT — never read as a clean run.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
-FILES=(src/lib/fifo.ts shared/fifo.mjs src/pages/PortfolioMonitor.tsx src/pages/MandateHoldings.tsx scripts/build-book.mjs src/data/glowData.ts)
+FILES=(src/lib/fifo.ts shared/fifo.mjs src/lib/tranches.ts src/pages/PortfolioMonitor.tsx src/pages/MandateHoldings.tsx scripts/build-book.mjs src/data/glowData.ts)
 SNAP=$(mktemp -d)
 for f in "${FILES[@]}"; do mkdir -p "$SNAP/$(dirname "$f")"; cp "$f" "$SNAP/$f"; done
 exec 9>"$SNAP/.lock"
@@ -79,10 +79,13 @@ run_case() {
     7) echo "   the Monitor footer's return struck over the whole book, so the coverage test refuses it"
        patch src/pages/PortfolioMonitor.tsx 'const totalRet = totFifoCosted.returnPct;' 'const totalRet = totFifo.returnPct;' || return
        pages "monitor" ;;
+    8) echo "   two contributions at one entry NAV earn different holding-period returns by date"
+       patch src/lib/tranches.ts 'const returnPct = ((value - m.invested) / m.invested) * 100;' 'const returnPct = ((value - m.invested) / m.invested) * 100 + (m.date < "2025-01-01" ? 1 : 0);' || return
+       pages "monitor-tranche-shared" ;;
     *) echo "   no such case"; return ;;
   esac
   restore
 }
 
-CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6 7)
+CASES=("$@"); [ ${#CASES[@]} -eq 0 ] && CASES=(1 2 3 4 5 6 7 8)
 for c in "${CASES[@]}"; do run_case "$c"; done
