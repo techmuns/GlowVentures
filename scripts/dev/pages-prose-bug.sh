@@ -43,6 +43,14 @@ FILES=(
   "src/components/CorporateActionReturns.tsx"
   "src/pages/SectorComposition.tsx"
   "src/pages/UploadHistory.tsx"
+  "src/pages/MorningCIO.tsx"
+  "src/pages/PortfolioMonitor.tsx"
+  "src/pages/MandateHoldings.tsx"
+  "src/pages/StockInfo.tsx"
+  "src/pages/HoldingsBehind.tsx"
+  "src/components/QuantityMovement.tsx"
+  "src/components/FundLookthrough.tsx"
+  "src/components/EnteredCalls.tsx"
 )
 SNAP=$(mktemp -d)
 for f in "${FILES[@]}"; do mkdir -p "$SNAP/$(dirname "$f")"; cp "$f" "$SNAP/$f"; done
@@ -104,11 +112,20 @@ RT=src/components/ReturnsTable.tsx
 CAR=src/components/CorporateActionReturns.tsx
 SC=src/pages/SectorComposition.tsx
 UH=src/pages/UploadHistory.tsx
+CIO=src/pages/MorningCIO.tsx
+PM2=src/pages/PortfolioMonitor.tsx
+MH=src/pages/MandateHoldings.tsx
+SI=src/pages/StockInfo.tsx
+HB=src/pages/HoldingsBehind.tsx
+QM=src/components/QuantityMovement.tsx
+FL=src/components/FundLookthrough.tsx
+EC=src/components/EnteredCalls.tsx
 
+ROUND="private-market-calls-off,monitor-absent-name,cio-alloc-basket,monitor-assetclass,mandate-fund,mandate,stock-mandates-many,stock-aif-dual,stock-arbitrage-research,stock-qty,holdings-measured,stock-mf-lookthrough,cio-cached"
 ALL="performance,capital-gains,capital-gains-missing,family,sectors,sectors-direct,ledger,history,upload,polycab,cio,cio-allocation,cio-nav,stock-market,corporate-actions"
 
 echo "════════ CONTROL: no patch"
-npm run build >/dev/null 2>&1 && THEMES=light SHOTS=0 ONLY="$ALL,cio-live,cio-movers-funds,stock-funds-only-market,stock-funds-only-research" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
+npm run build >/dev/null 2>&1 && THEMES=light SHOTS=0 ONLY="$ALL,cio-live,cio-movers-funds,stock-funds-only-market,stock-funds-only-research,$ROUND" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
 
 # ── LINES COMING BACK, ON EVERY ROUTE ──────────────────────────────────────
 run_case "$ALL" "a card draws its subtitle as a line again" sub $CARD \
@@ -209,6 +226,100 @@ run_case "sectors-direct" "the excluded card's sentence is back on its face" sub
 
 run_case "history" "the history page stops showing its coverage" sub $UH \
   '          {nav.length > 0 && <Pill>{covered} of {accounts} accounts</Pill>}' '          {null}'
+
+
+# ── THIS ROUND'S MOVES (Stage 10cp, the full sweep's 26 routes) ──────────
+# Each line the full sweep flagged is now figures on the face and the
+# sentence in a hover; each case puts one of them back, or drops a hover.
+run_case "private-market-calls-off" 'the capital-call setup steps lose their exemption' sub $EC \
+  '<ol className="mt-1.5 list-decimal space-y-1 pl-5" data-prose-ok="setup steps">' \
+  '<ol className="mt-1.5 list-decimal space-y-1 pl-5">'
+
+run_case "monitor-absent-name" 'a search that finds nothing prints what would close the gap on its face' sub $ABS \
+  '            {g.custodian && <span className="text-slate-400"> · {g.custodian}</span>}' \
+  '            {g.custodian && <span className="text-slate-400"> · {g.custodian}</span>}
+            <div className="text-slate-400">What would close it: {g.ask}.</div>'
+
+run_case "monitor-absent-name" 'the gap loses its reason from the hover' sub $ABS \
+  'title={`${g.why.charAt(0).toUpperCase() + g.why.slice(1)}.\n\nWhat would close it: ${g.ask}.`}>' \
+  'title={`What would close it: ${g.ask}.`}>'
+
+run_case "cio-alloc-basket" 'the family-axis line is a sentence again' sub $CIO \
+  '                      The family&rsquo;s own {GROUP_NOUN[allocAxis].many}' \
+  '                      Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it, product by product'
+
+run_case "cio-alloc-basket" 'the cash-instruction line loses its hover' sub $CIO \
+  '                        title="Placed by the family'\''s instruction that arbitrage and liquid funds are cash. Their consolidated review files its arbitrage funds as Debt, and the instruction overrules it.">' \
+  '                        >'
+
+run_case "monitor-assetclass" 'the Cash band'\''s count loses its hover' sub $PM2 \
+  'title={`Cash is liquid and arbitrage — the family'\''s own instruction,' \
+  'title={`Cash — the family'\''s own instruction,'
+
+run_case "monitor-assetclass" 'the unclassified clause is a sentence again' sub $PM2 \
+  '                                · no {groupAxis === "basket" ? "basket" : "asset class"} stated' \
+  '                                · the family&rsquo;s review does not list these holdings, so no {groupAxis === "basket" ? "basket" : "asset class"} is stated for them'
+
+run_case "mandate-fund" 'a sub-year return stops saying so beside the figure' sub $MH \
+  '> · under a year, not annualised</span>}' \
+  '></span>}'
+
+run_case "mandate" 'the statement line is a sentence again' sub $MH \
+  '              Statement total {money(stmtMV)}' \
+  '              {money(stmtMV)} is this account&rsquo;s own statement total'
+
+run_case "stock-mandates-many" 'the mandate line'\''s hover forgets where each is linked' sub $SI \
+  '              ...(mandates.length > 2 ? ["Each is linked from its own row on the Position tab:"] : []),' \
+  ''
+
+run_case "stock-aif-dual" 'the reported-twice note is a sentence again' sub $SI \
+  '                    One holding on {new Set(visibleMeasured.map((r) => r.accountId)).size} statements · rows{" "}' \
+  '                    One holding, reported on each of the {new Set(visibleMeasured.map((r) => r.accountId)).size} statements listed — the rows add to{" "}'
+
+run_case "stock-aif-dual" 'the reported-twice note loses its hover' sub $SI \
+  ' Both rows are shown as printed, and the Total counts the holding once — the same basis as the current value of holdings.' \
+  ''
+
+run_case "stock-arbitrage-research" 'the arbitrage line loses the family'\''s instruction' sub $SI \
+  '                      cashFund ? "The family counts an arbitrage or liquid fund as cash, whatever wrapper its statement typed it as." : "",' \
+  ''
+
+run_case "stock-qty" 'the empty transaction record is a sentence again' sub $SI \
+  '                      No transactions
+' \
+  '                      No transaction in this name over the window the statements cover
+'
+
+run_case "stock-qty" 'the not-trades phrase is back under the quantity table' sub $QM \
+  '        {/* A HOLDING WITH NO BLOCK IS THE STATEMENT SAYING IT DID NOT MOVE, and' \
+  '        {movements.length > 0 && " · "}<span data-qty-not-trades>depository movements, not trades</span>
+        {/* A HOLDING WITH NO BLOCK IS THE STATEMENT SAYING IT DID NOT MOVE, and'
+
+run_case "stock-qty" 'the quantity card stops saying Depository' sub $QM \
+  'title={<span data-qty-title>Depository quantity through the year</span>}' \
+  'title={<span data-qty-title>Quantity through the year</span>}'
+
+run_case "holdings-measured" 'a derivation rule'\''s sentence leaves its hover' sub $HB \
+  '                    title="Not one shared date — closing them all on the newest would credit the earlier ones with standing still.">' \
+  '                    >'
+
+run_case "holdings-measured" 'the derivation is a paragraph again' sub $HB \
+  '                  The rate that balances the dated flows of{" "}
+                  <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
+                  account{coveredAccounts === 1 ? "" : "s"}
+                </p>' \
+  '                  Every dated capital movement in or out of the{" "}
+                  <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
+                  account{coveredAccounts === 1 ? "" : "s"} whose statements publish an opening portfolio value, with that opening value as the first flow and each account&rsquo;s own closing market value as the last. The rate is the one that makes them balance.
+                </p>'
+
+run_case "stock-mf-lookthrough" 'the scheme returns caption loses its hover' sub $FL \
+  '              title="The scheme'\''s own returns, on this plan, from its published NAVs. Not this family'\''s return, which depends on when they bought.">' \
+  '              >'
+
+run_case "cio-cached" 'the refresh line loses its hover' sub $TM \
+  '          title="The figures below are the last complete round of prices; a newer round is in flight and replaces them when it settles.">Refreshing prices</p>' \
+  '          >Refreshing prices</p>'
 
 echo ""
 echo "════════ DONE"

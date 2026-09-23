@@ -14278,6 +14278,19 @@ const INVARIANTS = {
         if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
         return CACHED.body === false && CACHED.saysLoading === false;
       }],
+    /**
+     * …AND IT SAYS THE FIGURES ARE THE LAST COMPLETE ROUND, IN THE HOVER.
+     * This walk holds the live round open over a complete snapshot, which is
+     * exactly when the line renders — so its absence here is a finding. Two
+     * words on the face since Stage 10cp; what they mean for the figures below
+     * is the line's hover, and required there.
+     */
+    ["...while the live round is in flight, a short line says so, and its hover says the figures are the last complete round",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        const r = CACHED.refreshing;
+        return !!r && r.text === "Refreshing prices" && /last complete round of prices/i.test(r.title);
+      }],
   ],
 
   "cio-index-loading": [
@@ -14534,6 +14547,13 @@ const INVARIANTS = {
      * period label rendered alone is the one figure on this card a reader could
      * not check, so the count of windows must match the count of periods.
      */
+    // WHOSE RETURN IT IS: the scheme's, never this family's — on the face in a
+    // few words since Stage 10cp, and why the two differ in its hover.
+    ["the scheme's returns say they are the scheme's and not this family's, and why in the hover", (t, ctx) => {
+      if (!/SCHEME RETURNS/i.test(t)) return notChecked("this scheme carries no returns in the store on this run");
+      return /the scheme’s, not this family’s/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /Not this family's return, which depends on when they bought/i.test(x));
+    }],
     ["every return period prints the window it really covers", (t) => {
       const i = t.search(/SCHEME RETURNS/i);
       if (i < 0) return notChecked("this scheme carries no returns in the store on this run");
@@ -21310,6 +21330,18 @@ const INVARIANTS = {
   ],
   "mandate-fund": [
     ...MONITOR_IN_FULL,
+    /**
+     * A RETURN UNDER A YEAR SAYS SO ON ITS FACE (Stage 10g(ii)'s guard, kept on
+     * the face through Stage 10cp): four words beside the figure, the sentence
+     * behind them in their hover. A sub-year return read as a rate is the +99%
+     * error, and a hover alone is not read by a reader scanning the figure.
+     */
+    ["a return under a year says so beside the figure — not annualised — and why in its hover", (t, ctx) => {
+      if (!/HPR on what was paid/i.test(t)) return notChecked("this folio's summary prints no holding-period return");
+      if (/XIRR money-weighted/i.test(t) || /no XIRR:/i.test(t)) return notChecked("this folio's return is money-weighted or refused, not under a year");
+      return /HPR on what was paid · under a year, not annualised/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /In under a year, so no annual rate is struck/i.test(x));
+    }],
     ["the address resolved to a fund folio this book carries, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
     /**
@@ -22609,6 +22641,12 @@ for (const theme of THEMES) {
           // wording carries the active scope's name, and a probe pinned to one
           // spelling reports "no claim on screen" whether or not one is there.
           body: /\bNo\b[^\n]{0,80}?(?:carries a day change|move today)/i.test(document.body.innerText),
+          // The line that says a newer round is in flight (Stage 10cp): two
+          // words on the face, what that means for the figures in its hover.
+          refreshing: (() => {
+            const e = document.querySelector("[data-movers-refreshing]");
+            return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
+          })(),
         }));
       }
       if (name === "cio-tiles-saved") {
