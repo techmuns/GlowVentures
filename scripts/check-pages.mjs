@@ -5023,15 +5023,17 @@ const FENCED = (() => {
 /**
  * WHAT THE FENCED DEMAT'S OWN STATEMENT PRINTS, read out of the audit archive —
  * the document the page's statement columns come from, and the only witness to
- * the claim the page makes about it: whether it prints a balance type per row
- * (the "Account Description" column, where a pre-IPO lock-in and a pending demat
- * are named). Found through the manifest on the fenced accounts' own ids and
- * dates, never a typed document key.
+ * two claims the page makes about it: the date its VALUES are struck at (its own
+ * "Prices as on …", which need not be its balance date), and whether it prints a
+ * balance type per row (the "Account Description" column, where a pre-IPO
+ * lock-in and a pending demat are named). Found through the manifest on the
+ * fenced accounts' own ids and dates, never a typed document key.
  */
 const POLYCAB_STATEMENT_BOOK = (() => {
   try {
     if (!FENCED) return null;
     const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+    const MON = { Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06", Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12" };
     const out = [];
     for (const b of FENCED.balances) {
       if (!b.asOf) continue;
@@ -5039,8 +5041,10 @@ const POLYCAB_STATEMENT_BOOK = (() => {
       if (!doc) continue;
       const pages = JSON.parse(readFileSync(new URL(`../public/audit/${doc.docKey}/pages.json`, import.meta.url), "utf8"));
       const text = (pages.pages ?? []).map((p) => p.text ?? "").join("\n");
+      const pm = /Prices as on (\d{1,2})-([A-Z][a-z]{2})-(\d{4})/.exec(text);
       out.push({
         accountId: b.accountId, asOf: b.asOf,
+        pricesAsOn: pm && MON[pm[2]] ? `${pm[3]}-${MON[pm[2]]}-${pm[1].padStart(2, "0")}` : null,
         // The header prints the column over two lines: "Account" above, "Description" below.
         balanceTypeColumn: /\bAccount\s*\n[^\n]*\bBalance\b[^\n]*\n\s*Description\b/.test(text),
         lockInRows: (text.match(/IPO Shares\//g) ?? []).length,
@@ -5105,10 +5109,14 @@ const POLYCAB_LIVE_BOOK = (() => {
       quarters,
       latest,
       quote: d.quote ?? null,
-      // The names the sources line must credit, read off the store the page
-      // reads — never typed, because the builder decides which sources carried
-      // a figure on a given run.
-      sources: Array.isArray(d.sources) ? d.sources.map((x) => String(x.name ?? "")).filter(Boolean) : [],
+      // The sources the line must credit and which of the page's tables each
+      // one feeds, read off the store the page reads — never typed, because the
+      // builder decides which sources carried a figure on a given run. A source
+      // with no `feeds` is from a store written before the field and is
+      // credited everywhere, exactly as the page always did.
+      sourceFeeds: Array.isArray(d.sources)
+        ? d.sources.map((x) => ({ name: String(x.name ?? ""), feeds: Array.isArray(x.feeds) ? x.feeds.map(String) : null })).filter((x) => x.name)
+        : [],
       // Every action, for the per-row payment-date reason.
       actions,
       retrievedAt: String(d.retrievedAt ?? ""),
@@ -5187,16 +5195,26 @@ const polycabViewChecks = (expected) => [
  * total is said in words. Read off the line's own node, so a sentence that
  * moved elsewhere on the page cannot satisfy it.
  */
-const POLYCAB_SOURCES_CHECK = ["the sources line names every source, the refresh date, and that none of it is in a total", (_t, ctx) => {
+const polycabSourcesCheck = (view) => [`the sources line under the ${view} table credits exactly the sources that feed it, the refresh date, and that none of it is in a total`, (_t, ctx) => {
   if (!POLYCAB_LIVE_BOOK) return { notChecked: "no committed Polycab record to reconcile against" };
   const d = ctx?.polycabDom;
   if (!d) return { notChecked: "the DOM probe did not run" };
   const line = d.sources;
   if (!line) return false;
   const day = POLYCAB_LIVE_BOOK.retrievedAt.slice(0, 10);
-  return /^Sources:/.test(line)
-    && POLYCAB_LIVE_BOOK.sources.length > 0
-    && POLYCAB_LIVE_BOOK.sources.every((n) => line.includes(n))
+  /**
+   * CREDITED PER TABLE. The line listed BSE, Tickertape and Screener under both
+   * tables, so a corporate-action record only BSE supplies was credited to two
+   * aggregators that carry nothing on it. Re-expressed off the store's own
+   * `feeds`: the names the line lists must be exactly the sources that feed this
+   * table — every one of them, and no other.
+   */
+  const feeds = (s) => !s.feeds || s.feeds.includes(view);
+  const want = POLYCAB_LIVE_BOOK.sourceFeeds.filter(feeds).map((s) => s.name);
+  const listed = /^Sources:\s*(.*?)\.\s+Refreshed daily/.exec(line)?.[1]?.split(/,\s*/).map((s) => s.trim()).filter(Boolean) ?? null;
+  if (!listed) return false;
+  return want.length > 0
+    && listed.length === want.length && want.every((n) => listed.includes(n))
     && /in no total anywhere in this book/i.test(line)
     && /Last refreshed/i.test(line)
     // THE DATE IS REQUIRED, NOT EXCUSED. A store with no refresh date is a
@@ -18646,6 +18664,12 @@ const INVARIANTS = {
       const ph = istPhase(q.fetchedAt);
       return /need not be today/i.test(t) && (!ph || dmyRe(ph.istDate).test(t));
     }],
+    ["the day move says it is DERIVED, never that it is the exchange's own printed change", (_t, ctx) => {
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const t = d.dayTitle ?? "";
+      return /DERIVED/.test(t) && !/as the exchange publishes it/i.test(t);
+    }],
     ["the block at CMP names the statement's date under its heading, and both dates — and the gap — in its hover", (_t, ctx) => {
       if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
       const q = POLYCAB_LIVE_BOOK?.quote;
@@ -18660,6 +18684,48 @@ const INVARIANTS = {
       if (!ph) return true;
       const gap = Math.round(Math.abs(Date.parse(`${ph.istDate}T00:00:00Z`) - Date.parse(`${dates[0]}T00:00:00Z`)) / 86400e3);
       return dmyRe(ph.istDate).test(why) && why.includes(`${gap.toLocaleString("en-IN")} days apart`);
+    }],
+    /**
+     * EACH DEMAT ROW IS DATED BY ITS OWN STATEMENT, and a total over several says
+     * whether they share one. The multi-row path struck the entitlement and its
+     * `*` on the FIRST row's date while summing every row's shares, and its
+     * footer had no date at all — a total of balances reported on different days
+     * with nothing saying so. One demat carries the holding today, so the footer
+     * branch has no subject on this book; `polycabLive.test.ts` constructs a
+     * second balance and holds the arithmetic to it.
+     */
+    ["each demat row is dated by its own statement, and a total over several names whether they share a date", (_t, ctx) => {
+      if (!FENCED) return { notChecked: "no ring-fenced holding in the book to reconcile against" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      const byAcct = new Map(FENCED.balances.map((b) => [b.accountId, b.asOf]));
+      const rowsOk = d.holdingRows.length > 0 && d.holdingRows.every((r) => {
+        const asOf = byAcct.get(r.account);
+        return asOf ? dmyRe(asOf).test(r.asOf ?? "") : false;
+      });
+      if (d.holdingRows.length < 2) return rowsOk;
+      const dates = [...new Set(FENCED.balances.map((b) => b.asOf).filter(Boolean))];
+      const foot = d.holdingFootAsOf ?? "";
+      return rowsOk && (dates.length === 1 ? dmyRe(dates[0]).test(foot) : foot.includes(`${dates.length} dates — blended`));
+    }],
+    /**
+     * THE MARK'S HOVER DOES NOT DATE THE VALUATION TO THE BALANCE DATE WHERE THE
+     * STATEMENT PRICES ON ANOTHER DAY. The balance is as of 31 Mar 2026 and the
+     * depository struck its values at "Prices as on 30-Mar-2026"; the hover said
+     * the mark was "as of the statement's date". Struck against the statement's
+     * own text in the audit archive, so it binds only where the two dates differ.
+     */
+    ["the mark's hover does not date the statement's valuation to its balance date where the statement prices on another day", (_t, ctx) => {
+      if (!POLYCAB_STATEMENT_BOOK) return { notChecked: "the fenced demat's statement is not in the audit archive" };
+      const d = ctx?.polycabDom;
+      if (!d) return { notChecked: "the DOM probe did not run" };
+      if (!POLYCAB_STATEMENT_BOOK.some((s) => s.pricesAsOn && s.pricesAsOn !== s.asOf)) {
+        return { notChecked: "every fenced statement prices on its own balance date" };
+      }
+      const t = d.noteTitleOf?.mark ?? "";
+      return /divided by the units it prints/i.test(t)
+        && !/as of the statement(?:['’]s)? date/i.test(t)
+        && /need not be the balance date/i.test(t);
     }],
     /**
      * THIS DEMAT'S PLEDGE REASON MAY NOT DENY WHAT THE STATEMENT PRINTS. It said
@@ -18816,7 +18882,7 @@ const INVARIANTS = {
         return x.exDate < dated[0] ? /older than any it dates/.test(t) : (/covers this period/.test(t) && !/older than any it dates/.test(t));
       });
     }],
-    POLYCAB_SOURCES_CHECK,
+    polycabSourcesCheck("actions"),
   ],
   /**
    * ── THE PROMOTER GROUP, AS IT DISCLOSES ITSELF ──────────────────────────────
@@ -18900,7 +18966,29 @@ const INVARIANTS = {
         && /% of group holding/i.test(n.groupPledge ?? "") && /Promoter Holding Pledged/.test(h.groupPledge ?? "")
         && /own holding/i.test(h.groupPledge ?? "");
     }],
-    POLYCAB_SOURCES_CHECK,
+    /**
+     * A DASHED GROUP PLEDGE IS A STATEMENT ABOUT WHAT THIS PAGE READS. It said
+     * "no source published an encumbrance figure for this quarter" — false of a
+     * listed company that files one every quarter. The reach it names is counted
+     * off the store.
+     */
+    ["a dashed group pledge says what this page reads, never that no source published one", (_t, ctx) => {
+      const qs = POLYCAB_LIVE_BOOK?.quarters;
+      if (!qs?.length) return { notChecked: "the store carries no promoter quarter" };
+      const rows = ctx?.polycabDom?.quarterCells;
+      if (!rows) return { notChecked: "the DOM probe did not run" };
+      const dashed = qs.filter((q) => q.pledgePct === null);
+      if (!dashed.length) return { notChecked: "every stored quarter carries a pledge figure" };
+      const carried = qs.filter((q) => q.pledgePct !== null).map((q) => q.asOf).sort();
+      return dashed.every((q) => {
+        const r = rows.find((x) => x.asOf === q.asOf);
+        if (!r || r.pledge !== "—") return false;
+        const t = r.pledgeTitle ?? "";
+        if (/no source published/i.test(t) || !/company's own quarterly encumbrance disclosure is not read/.test(t)) return false;
+        return carried.length && q.asOf < carried[0] ? t.includes(`reaches back only ${carried.length} quarter`) : true;
+      });
+    }],
+    polycabSourcesCheck("promoter"),
   ],
   /**
    * ── THE YEAR'S TRADING IS FIVE LINES, NOT FOUR HUNDRED ─────────────────────
@@ -37135,8 +37223,10 @@ for (const theme of THEMES) {
             pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,
             pledgeTitle: tipOf(cellOf(tr, "pledge")),
             price: cellOf(tr, "price")?.innerText.trim() ?? null,
+            asOf: cellOf(tr, "asOf")?.innerText.trim() ?? null,
           })),
           holdingFoot: document.querySelector("main [data-polycab-holding-foot]")?.innerText ?? null,
+          holdingFootAsOf: document.querySelector('main [data-polycab-holding-foot] [data-cell="asOf"]')?.innerText.trim() ?? null,
           noteOf: {
             price: txt('main [data-polycab-table="holding"] th[data-col="price"] [data-col-note]'),
             pledge: txt('main [data-polycab-table="holding"] th[data-col="pledge"] [data-col-note]'),
@@ -37147,7 +37237,7 @@ for (const theme of THEMES) {
           /* THE REASON UNDER EACH HEADING — the note's own `title`, which is not in
              `innerText`, so a basis a reader hovers for is read where it lives. */
           noteTitleOf: Object.fromEntries([
-            ["price", "holding", "price"], ["marketValue", "holding", "marketValue"],
+            ["price", "holding", "price"], ["mark", "holding", "mark"], ["marketValue", "holding", "marketValue"],
             ["pledge", "holding", "pledge"], ["groupHolding", "promoter", "holding"], ["groupPledge", "promoter", "pledge"],
           ].map(([k, table, col]) => [k,
             document.querySelector(`main [data-polycab-table="${table}"] th[data-col="${col}"] [data-col-note]`)?.getAttribute("title") ?? null])),
@@ -37166,6 +37256,8 @@ for (const theme of THEMES) {
           })),
           quarterCells: [...document.querySelectorAll("main [data-polycab-quarter-row]")].map((tr) => ({
             asOf: tr.getAttribute("data-polycab-quarter-row"),
+            pledge: cellOf(tr, "pledge")?.innerText.trim() ?? null,
+            pledgeTitle: tipOf(cellOf(tr, "pledge")),
             sources: cellOf(tr, "sources")?.innerText.trim() ?? null,
           })),
           sources: txt("main [data-polycab-sources]"),

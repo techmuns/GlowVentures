@@ -516,3 +516,54 @@ export function mergePromoterQuarters(tickertape, screener) {
   return { quarters, compared, disagreed };
 }
 
+/**
+ * IS THE CORPORATE-ACTION RECORD THIS RUN FETCHED WHOLE?
+ *
+ * "Whole since listing" is the claim behind the page's strongest sentence — no
+ * bonus, split or spin-off has ever been declared — and it used to rest on the
+ * fetch returning at least one row. A truncated response passes that as easily
+ * as a complete one, so the claim now needs two things the builder can see:
+ *
+ *   • IT MUST NOT HAVE LOST A ROW. A corporate action, once on the exchange's
+ *     record, does not leave it; a fetch lacking one a previous refresh stored
+ *     is a truncated fetch, whatever else it carries. The stored row is kept —
+ *     the harvester's merge rule, accumulate and never truncate — and the
+ *     record is published NOT as complete.
+ *   • IT MUST REACH THE EXCHANGE'S MOST RECENT ACTION. The short
+ *     `CorporateAction/w` record carries the latest actions; the newest ex-date
+ *     it names must be in the whole record, or the whole record stops short of
+ *     the present. Where that record did not answer, the check cannot be made
+ *     and the claim is not made either.
+ *
+ * Joined on the ex-date and the kind, never on the purpose string, which the
+ * exchange rewords between its own endpoints. What neither check can see — a
+ * record cut short at its OLD end on the first run this store ever makes — is
+ * named here rather than papered over.
+ */
+export function actionsRecordCheck(fetched, previous, shortTable) {
+  const key = (a) => `${a?.exDate ?? ""}|${a?.kind ?? ""}`;
+  if (!Array.isArray(fetched) || !fetched.length) {
+    return { whole: false, why: "the exchange returned no corporate action at all", merged: Array.isArray(previous) ? previous : null };
+  }
+  const have = new Set(fetched.map(key));
+  const lost = (Array.isArray(previous) ? previous : []).filter((a) => !have.has(key(a)));
+  const merged = [...fetched, ...lost].sort((a, b) => (b.exDate ?? "").localeCompare(a.exDate ?? ""));
+  if (lost.length) {
+    return {
+      whole: false, merged,
+      why: `the fetched record lacks ${lost.length} action(s) a previous refresh stored (${lost.map((a) => a.exDate ?? "undated").join(", ")}), so it was cut short — the stored rows are kept`,
+    };
+  }
+  if (!Array.isArray(shortTable)) {
+    return { whole: false, merged, why: "the exchange's recent-actions record did not answer, so the whole record could not be checked against the most recent action" };
+  }
+  const recent = shortTable.map((r) => isoDate(r?.Ex_date)).filter(Boolean).sort();
+  if (!recent.length) {
+    return { whole: false, merged, why: "the exchange's recent-actions record named no ex-date to check the whole record against" };
+  }
+  const newest = recent[recent.length - 1];
+  if (!fetched.some((a) => a.exDate === newest)) {
+    return { whole: false, merged, why: `the whole record does not reach the exchange's most recent action (ex-date ${newest})` };
+  }
+  return { whole: true, merged, why: null };
+}

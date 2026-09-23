@@ -81,7 +81,8 @@ export interface PolycabLive {
   actionsComplete: boolean;
   promoterQuarters: PolycabQuarter[] | null;
   promoterAgreement: { compared: number; disagreed: number } | null;
-  sources: { name: string; url: string; carries: string }[];
+  /** `feeds` names the page's views each source supplies, so a table credits only its own. */
+  sources: { name: string; url: string; carries: string; feeds?: string[] }[];
   notes: { severity: string; rule: string; detail: string }[];
   retrievedAt: string;
 }
@@ -102,7 +103,7 @@ export const POLYCAB_LIVE: PolycabLive = {
     "changePct": -0.2507462686567164,
     "printedChange": -21,
     "printedChangePct": -0.25,
-    "fetchedAt": "2026-09-22T15:56:39.171Z"
+    "fetchedAt": "2026-09-23T15:46:09.211Z"
   },
   "corporateActions": [
     {
@@ -313,17 +314,27 @@ export const POLYCAB_LIVE: PolycabLive = {
     {
       "name": "BSE (exchange)",
       "url": "https://www.bseindia.com/stock-share-price/polycab-india-ltd/polycab/542652/",
-      "carries": "identity, last traded price, the full corporate-action record"
+      "carries": "identity, last traded price, the full corporate-action record",
+      "feeds": [
+        "holding",
+        "actions"
+      ]
     },
     {
       "name": "Tickertape",
       "url": "https://www.tickertape.in/stocks/polycab-india-POLC",
-      "carries": "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN"
+      "carries": "promoter holding and promoter pledge, per quarter — gated on the book's own ISIN",
+      "feeds": [
+        "promoter"
+      ]
     },
     {
       "name": "Screener",
       "url": "https://www.screener.in/company/POLYCAB/consolidated/",
-      "carries": "promoter holding, per quarter — the second witness"
+      "carries": "promoter holding, per quarter — the second witness",
+      "feeds": [
+        "promoter"
+      ]
     }
   ],
   "notes": [
