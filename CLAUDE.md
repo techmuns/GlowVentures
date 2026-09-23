@@ -19826,8 +19826,12 @@ rule dropped fires two (Green Lantern rated, and marked dated where the book say
 undated); a rate closed on the wrong value fires both re-solves; the company
 page's XIRR line dropped fires two; a row holding PART of an account given its
 rate fires the converse; and the multiple-tranche rule dropped from `auto` fires
-the FIFO mandate-row check on SVAN's two rows. A no-patch control ran clean first,
-and the tree was restored and rebuilt after the last case.
+the FIFO mandate-row check on SVAN's two rows. The pass ran twice: first on the
+port before it was merged, after a no-patch control came back clean, and again
+with the committed harness on the merged tree. Both runs gave the same six
+results, and each time the files were restored and the tree rebuilt after the
+last case. On the merged tree the full sweep below is the control, and it was
+clean on every route these cases walk.
 
 #### Merged with main
 
@@ -19853,6 +19857,33 @@ gained fields; nothing else in the sweep's shared context moved.
 book plus `capitalRecordTo` on every account — a date on the 14 that publish a
 dated record, null on the other 37 — and `BOOK_SUMMARY` does not move by a rupee.
 `docs/BOOK-REPORT.md` is byte-identical.
+
+**VERIFIED ON THE MERGED TREE** (main at `c1bfddd` plus this port): `build` ·
+`tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund 35, buoyant
+42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22, neoFlows 8, golden
+140 — 2 not checked, 0 blocked) · `test:family` (46 suites, 2,466 checks, 0
+failed) · `build-book` byte-identical · `check:family` **84/2** · `check:pages`
+**246 combinations, 3 with a finding**. That is main's 244 plus `stock-capital` in
+both themes, and it reconciles only because the sweep was re-run.
+
+**EVERY ONE OF THOSE FAILURES IS MAIN'S, AND EACH WAS SHOWN TO BE ON `c1bfddd`
+ALONE BEFORE THIS MERGED.** The two `check:family` failures are the Extras-menu
+checks: #84 added a fifth page and the check still counts four. The three
+`check:pages` findings are the Private Market routes, 8 invariants in all, and the
+identical 8 fail on main's own build. #72's fund-return re-expression still
+computes HPR as value against cost where #80 made it FIFO. Stage 10ce named both
+and left them, and so does this. The 10 invariants not checked are all
+pre-existing claims with no subject on this book (six KPI-tile lines across the
+Morning CIO routes, three Private Market lines, one crumb on the not-found
+drill-down); none is this stage's.
+
+**AND THE DEFAULT VIEW MOVES, MEASURED ON BOTH BUILDS.** The Monitor's `auto`
+Return reads XIRR where it read HPR: Buoyant +8.65% → 12.11% (both folios pooled),
+Sanshi +29.84% → 42.31%, Neo Infra +13.83% → 16.68%, Baring −6.95% → −6.42%, SVAN
++13.56% · +12.73% → 9.07% · 8.60%. The HPR and Absolute columns read exactly what
+they did. SVAN's figure falls because a cumulative return over almost two years
+became an annual rate. Buoyant's rises because 75% of its ₹70.86 Cr went in
+during the last year, so an annual rate is above the 790-day cumulative figure.
 
 ### Stage 10k — News & Announcements: REMOVED
 
