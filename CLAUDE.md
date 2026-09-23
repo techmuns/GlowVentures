@@ -19688,6 +19688,174 @@ and neither is fixed here: a merge that also rewrote two other stages' checks
 would be a change nobody asked for, and the two are named here and in the PR so
 they are not mistaken for this branch's.
 
+### Stage 10cf — GLOW CENTRAL RESEARCH'S FONTS AND COLOURS
+
+*"also look how good the font is and the ui is of glow-central research -
+colours white etc - can you make this dashboard also with right color pallet and
+fonts please i think right now its too monotonous and dull"*
+
+**THE PALETTE AND THE FACES ARE GCR'S OWN, READ OFF ITS REPO RATHER THAN
+MATCHED BY EYE.** `techmuns/glow-central-research` is read-only here, and three
+of its files decide the look: `scripts/glow-palette.cjs` (ivory page `#f4f2ec`,
+white surfaces, navy ink `#1a1830`, gold `#c3a962` → `#8a6a1c`, emerald
+`#047857`), `public/css/glow.css` (the two faint gold glows at the top of the
+page) and `public/index.html` (Inter for reading, Plus Jakarta Sans for titles
+and headline figures, loaded from the same Google Fonts URL).
+
+**WHAT MADE IT DULL WAS THAT EVERYTHING WAS ONE TONE.** The nav, the top bar
+and the page were three shades of one beige, the tables were set in a
+monospace, and the only thing that stood out was the cards. What changed, and
+where it lives:
+
+| | was | is |
+| --- | --- | --- |
+| reading face | Inter with the single-storey `a` and open digits | plain Inter, as GCR sets it |
+| figures (`.mono`, ~400 cells) | JetBrains Mono | Inter with tabular digits |
+| titles, card titles, headline figures | Inter semibold | Plus Jakarta Sans bold (`font-display`) |
+| nav and top bar | the page's ivory | white (`app-sidebar`, `app-topbar`) |
+| the page | ivory on a graph-paper grid | ivory under two gold glows |
+| where you are in the nav | a beige wash | GCR's active tab: gold type on a pale-gold wash, a gold edge |
+| an active toggle or tab | flat gold | GCR's gold gradient, ink on it |
+| table headings | grey, medium weight | darker, semibold, on GCR's cream band |
+| cards | 12px corners, a grey shadow | 16px corners, GCR's two soft layers |
+| Export Excel | a gold outline | green, as GCR's is |
+| wordmark | "Glow Ventures Family Office" | GCR's: a gold G and GLOW VENTURES in gold capitals |
+
+**THE DARK THEME KEEPS ITS COLOURS AND TAKES THE FACES.** The family pointed at
+the light one, and the dark theme is the palette's native form; it gets the new
+type and nothing else.
+
+**ONE RULE HOLDS THROUGHOUT, AND IT IS WHY TWO THINGS DIFFER FROM GCR.** GCR
+prints white type on its gold "Portfolio" pill and on its green Export Excel
+button. `check:pages` rejects exactly that on a light page, because pale type is
+what a missing light-mode remap looks like, so an active control here is gold
+with INK on it (7:1) and Export Excel is a green tint with deep-green type
+(6.8:1). Nothing on the light theme is a dark fill or white text.
+
+**AND NO CARD MAY CARRY A HARD OFFSET.** A `0 Npx 0 0` shadow layer is what
+makes a KPI tile read as a button (Stage 10y), and the page check fails any card
+carrying one that opens nothing. GCR's card shadow is two blurred layers, so it
+was taken as it is.
+
+**WHERE INTER CANNOT LOAD, A FIGURE FALLS BACK TO A MONOSPACE — and that was
+measured, not chosen.** The page check cannot fetch a web font, so it renders
+every page in the machine's fallback faces. With `.mono` falling back to a
+proportional face, the company page's position table ran 16px past its card
+(DejaVu Sans digits are 0.64em against the monospace's 0.60em) and the check
+failed. With Inter loaded — every real reader — no table got wider. Measured
+with the real fonts from a local copy, on main and on this branch, both merged
+with #80 and #81: the company page's position table fits either way, Private
+Market's master table has exactly 0px to spare either way, and the Portfolio
+Monitor's — which has always scrolled inside its own card — is 2px NARROWER
+(1,670px against 1,672px in a 1,440px card). So a figure's fallback is the
+monospace these columns were fitted to, the check keeps measuring the wider of
+the two, and a reader whose network blocks Google Fonts sees exactly the columns
+they saw before.
+
+**THE LOOK IS CHECKED ON EVERY ROUTE, BY COMPUTED STYLE.** Five claims, and not
+one is in the page's words — a page renders the same text in any face and on any
+colour. In the light theme, on every page the sweep walks: the body reads in
+Inter; the title asks for Plus Jakarta Sans; a figure is Inter with tabular
+digits; the nav and the top bar are white; and the nav entry you are on is gold.
+The declared font stack is what is asserted, because the sweep cannot load the
+fonts and the stack is what a regression would change.
+
+**AND ONE TABLE HAD TO LEARN TO WRAP, BECAUSE A HEADING IS NOT A FIGURE.** The
+headings are semibold now, and a figure's fallback does nothing for them: where
+Inter cannot load, the reading face falls back to the machine's own sans, whose
+semibold is a real Bold and runs wider. On the Buoyant company page — the one
+whose Managed-by sub-line is longest — that put the position table 14px past its
+card, and *the position table fits its card* failed on `stock-carried` alone,
+while main passed it. With Inter loaded the table fits, and measured column by
+column it is the SAME width with or without the fix. So the Managed-by cell may
+wrap now (`whitespace-normal` on that one cell, the table staying `nowrap`
+around it). An auto-width table narrows a wrappable column only when it would
+not otherwise fit, so where it fits nothing moves, and where a wider face is
+drawn the sub-line gives up the width rather than pushing Basis behind a
+sideways scroll. All fifteen company-page routes sweep clean in both themes.
+
+**`scripts/dev/look-bug.sh` reintroduces nine bugs one at a time**, after a
+no-patch control came back clean on its ten route/theme combinations, and every
+one fires its own check — the seventh only after the check it exists for was
+fixed. The five routes are `cio`, `cio-allocation`, `monitor`, `holdings-book`
+and `stock`; the ninth case sweeps `stock-carried`, the page it is about:
+
+| Bug put back | Fires |
+| --- | --- |
+| the page title back in Inter | the title check, on the three routes whose title is `PageHeader`'s (a drill-down and a company page draw their own, also in the display face) |
+| figures back in JetBrains Mono | the figure check, 5 of 5 |
+| the nav ivory again | the white-chrome check, 5 of 5 |
+| the top bar ivory again | the same check, 5 of 5 |
+| the nav entry you are on not gold | the gold check, on every route that IS a nav entry (3 of 5) |
+| white type on an active gold toggle | the light-theme contrast probe, on the Monitor |
+| every card given a hard offset | **nothing, at first — see below**; the raised-card check on 5 of 5 after |
+| the same, in the dark theme only | the raised-card check, 5 of 5 |
+| the Managed-by cell no longer wraps | the position-table check, on `stock-carried` |
+
+**THE SEVENTH CAME BACK CLEAN, AND THAT IS THE FINDING.** *A raised card must
+be a button* was measured on every route and ASSERTED on one, `/holdings` —
+whose four summary tiles, the only cards that ever opened nothing, went at
+Stage 10bd. Every card left there contains a link, so a stylesheet raising
+every card in the app swept clean, and it had been unable to fail since. Two
+fixes. The claim is asserted on EVERY route, in both themes, beside the look
+checks. And a link must COVER the card to count: a table card whose rows link
+to company pages is not a button, and under the old rule — any `a[href]` inside
+— it could never fail at all, which on the Portfolio Monitor and on `/holdings`
+is every card on the page. The eighth case is the dark-theme half of the same
+claim: each theme has its own raised rule, and a restyle of one does not touch
+the other.
+
+**MERGED WITH MAIN THREE TIMES, AND THE LETTER MOVED FIVE TIMES BEFORE IT WAS
+WRITTEN DOWN.** This was drafted as `10ca`. #80 (FIFO returns) took that and
+#81 (four text blocks, seven NAV benchmarks) took `10by` in the same hour; #82
+(the KPI tiles) took `10cb` while this branch's first full sweep ran; and while
+the second one ran, #76 (one company, one key), #77 (purchase, redemption and
+appreciation) and #74 (arbitrage is cash) took `10cc`, `10cd` and `10ce` — so
+this section is **`10cf`**, and the code comments that name the stage moved
+with it. The first two merges each brought one conflict, resolved by keeping
+main's structure and giving it the new look: #81 put a percentage beside the
+published-NAV movers' figure, and #82 gave a KPI tile a second line and a name
+for its link. The figure takes the display face, and the link takes the 16px
+corner the cards now have. The third merge — five commits, 85 files — brought
+none, which is when this file says to check by hand: the `ctx` literal came
+through as main's own 92 keys, each declared once, because this change adds
+none (its checks read their own probe); and `build-book` regenerated the book
+byte-identically.
+
+**FIVE CHECKS ON THREE ROUTES FAIL ON THIS TREE AND ON MAIN, IDENTICALLY, AND
+THEY ARE NOT THIS CHANGE'S.** Built and swept side by side against main's
+`c1bfddd`, which carries nothing of this branch. All five are Private Market's
+fund returns: `private-market` and `private-market-tiles` each fail *the
+methodology picks the measure each fund's own dated record supports* and *each
+XIRR is the money-weighted rate … each HPR is value against cost*;
+`private-market-returns` fails the second of those and *the XIRR column shows a
+rate exactly where the dated record is complete*, *the XIRR footer pools exactly
+the funds with a complete record* and *the HPR footer is the whole private
+book's value against its cost*. All of them compare the fund table's returns
+with the sweep's own re-derivation, and #80 moved fund returns onto a FIFO
+basis; #82's own commit message records the first two. (A subset run of
+`monitor-txn-drill` also fails four checks, on both trees alike; in the full
+sweep it passes. A subset is not the whole walk.)
+
+And `check:family` fails two on both trees, 84 passed against 2: Extras holds
+exactly the four pages the family named, and clicking it reveals all four —
+#84 added a fifth, Corporate Actions, and the check still names four. Whether
+that page belongs in Extras is #84's question rather than a look's.
+
+A typeface and a colour move no figure and no row. They are named here rather
+than fixed, because the fixes belong to the changes that own returns and the
+Extras menu; queuing them as a separate task timed out three times.
+
+`build` · `tsc` · `test:ingest` (golden 140, 2 not checked) · `test:family` (45
+suites, 2,409 checks, 0 failed) · `check:family` **84 passed, 2 failed — the
+same two as main** · `check:pages` **244 combinations, 3 with a finding — the
+three Private Market routes above, and none of this change's own**, with ten
+evidenced abstentions across four claims, none of them this change's (every KPI
+tile on this book carries a figure, on the six Morning CIO routes; every private
+holding reports a cost; nothing on Morning CIO points at an undefined drill-down;
+no private account is redeemed to nil) · `npm run build-book` regenerates the
+book byte-identically: a colour and a typeface are not part of the book.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
