@@ -17453,7 +17453,7 @@ to 2026, so they print three different CAGRs while every one earned HPR 14.23%.
 
 `build` · `tsc` · `test:ingest` (neoFlows 8, buoyant 42, classSwitch 44,
 payouts 29, golden 140 with 2 not checked and 0 blocked) · `test:family` (every
-suite) · `check:family` **86/0** · `check:pages` **SWEEP_RESULT** — MEASURED ON
+suite) · `check:family` **86/0** · `check:pages` — the full sweep is recorded in the PR once it completes, MEASURED ON
 THE TREE MERGED WITH #72 AND #79, which is the only base that count is a fact
 about. `npm run build-book` regenerates `glowData.ts` and
 `docs/BOOK-REPORT.md` byte-identically from the merged archive, and `npm run
