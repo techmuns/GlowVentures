@@ -5,7 +5,10 @@
 // catch, because it bundles with esbuild and does not typecheck.
 export type QuotesContext = {
   request: Request;
-  /** `MUNS_TOKEN` is the only variable this function reads. */
+  /**
+   * The variables this function reads: `UPSTOX_ACCESS_TOKEN` (or `UPSTOX_TOKEN`)
+   * for the primary feed, and `MUNS_TOKEN` for the fallback.
+   */
   env?: Record<string, string | undefined>;
 };
 
