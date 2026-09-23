@@ -1458,7 +1458,7 @@ export function PrivateMarket() {
               {m.cc.count - m.capOutside} of this page&rsquo;s {m.scope.accounts.length} private accounts send a
               capital-account statement; a commitment behind any other is invisible here, and the family&rsquo;s own
               investment register names funds with no statement in this book at all. So {money(m.cc.uncalled)} is the floor
-              of what can still be called, never the ceiling.
+              of what the funds can still call, never the ceiling.
             </li>
             <li>
               <span className="text-slate-300">No fund in this book publishes a forward drawdown schedule</span>, so

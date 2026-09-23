@@ -329,10 +329,13 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
           ))}
         </div>
       )}
-      <p className="mt-1.5 text-[11px] text-slate-500" data-testid="navmovers-drastic-note">
-        Every scheme with a published move is listed, ranked by {rank === "pct" ? "the size of the move" : "its rupee effect"}; a
-        move of {DRASTIC_PCT}% or more in a single published day is chipped <em>drastic</em>. The chip labels a row and never
-        decides which rows are drawn.
+      {/* ONE LINE — the family asked for the notes under the tables to go. The
+          bound stays on screen because the chip is struck against it; how the
+          list is ranked and that the chip never decides which rows are drawn
+          are the hover. */}
+      <p className="mt-1.5 text-[11px] text-slate-500" data-testid="navmovers-drastic-note"
+        title={`Every scheme with a published move is listed, ranked by ${rank === "pct" ? "the size of the move" : "its rupee effect"}. The chip labels a row and never decides which rows are drawn.`}>
+        Every scheme is listed · a move of {DRASTIC_PCT}% or more in one published day is chipped <em>drastic</em>
       </p>
     </Card>
   );

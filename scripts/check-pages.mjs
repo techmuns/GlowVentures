@@ -10245,8 +10245,12 @@ const HB_DEPOSITORY = [
     if (!B) return false;
     if (B.depositoryCount === 0) return !d.hbDepository;
     const h = d.hbDepository;
-    return !!h && h.n === B.depositoryCount && /AMFI/.test(h.text)
-      && /transaction statement and no holding statement/.test(h.text) && /not\s+in that figure/.test(h.text);
+    // THE LINE SAYS WHAT THEY ARE; ITS HOVER SAYS WHY (Stage 10cf). The source is
+    // on screen — a reader must see these are valued at AMFI's NAV and not by a
+    // statement — and the sentence behind it is read from the hover, which
+    // `textContent` cannot see.
+    return !!h && h.n === B.depositoryCount && /AMFI/.test(h.text) && /not a statement mark/.test(h.text)
+      && /transaction statement and no holding statement/.test(h.title) && /not\s+in that figure/.test(h.title);
   }],
 ];
 /**
@@ -14944,7 +14948,9 @@ const INVARIANTS = {
       if (/of this page['\u2019]s \d+ private accounts/i.test(tile + " " + shown)) return false;
       return Number(m[1]) > 0
         && /so this is a floor/i.test(tile)
-        && /floor of what can still be called, never the ceiling/i.test(t);
+        // Worded so it never reads as the removed card's heading, "What can
+        // still be called" — whose absence the Transactions tab asserts.
+        && /floor of what the funds can still call, never the ceiling/i.test(t);
     }],
     /**
      * ...AND THE TWO COUNTS PARTITION RATHER THAN CROSSING. The page prints
@@ -19652,13 +19658,16 @@ const INVARIANTS = {
    * verified by asserting it happened.
    */
   "family-partial": [
-    ["the member's partly valued account is listed as such, with its own note", (t, ctx) => {
+    // THE LINE SAYS "PARTLY VALUED" AND WHAT IS; THE NOTE IS THE HOVER ON ITS
+    // NAME (Stage 10cf). What is NOT valued is read from that hover — a line
+    // that dropped it would leave a reader taking the valued part for the whole.
+    ["the member's partly valued account is listed as such, with its own note in the hover on its name", (t, ctx) => {
       const d = ctx?.cashDom;
       if (!d) return { notChecked: "the probe did not run" };
       const B = CASH_INSTRUCTION_BOOK;
       if (!B || !B.partialOwner) return false;
       return d.partialAccounts.length === B.partialAccounts.length && d.partialAccounts.every((x) =>
-        /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.text));
+        /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.why));
     }],
   ],
   "stock-arbitrage": [
@@ -20864,15 +20873,29 @@ for (const theme of THEMES) {
         for (const card of document.querySelectorAll("main .card")) {
           const tables = [...card.querySelectorAll("table")].filter((t) => t.querySelector("tbody td"));
           if (!tables.length) continue;
-          const last = tables[tables.length - 1];
           const head = card.querySelector(".h-section");
           const title = (head?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
           const subEl = head?.nextElementSibling ?? null;
           const sub = subEl && vis(subEl) ? subEl.innerText.replace(/\s+/g, " ").trim() : "";
+          /*
+           * "UNDER THE TABLE" IS WHERE A READER SEES IT: below the bottom of every
+           * table in the card, each clipped by any scroll box it sits in. DOM
+           * order was the first draft, and it read a card whose two lists sit
+           * SIDE BY SIDE — Today's movers, gainers beside losers — as the second
+           * list's heading and empty state being notes under the first.
+           */
+          const shownBottom = (t) => {
+            let b = t.getBoundingClientRect().bottom;
+            for (let a = t.parentElement; a && a !== card; a = a.parentElement) {
+              if (/(auto|scroll|hidden)/.test(getComputedStyle(a).overflowY)) b = Math.min(b, a.getBoundingClientRect().bottom);
+            }
+            return b;
+          };
+          const below = Math.max(...tables.map(shownBottom));
           const under = [];
           for (const el of card.querySelectorAll("p, div, li, summary")) {
             if (el.closest("table") || !vis(el)) continue;
-            if (!(last.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
+            if (el.getBoundingClientRect().top < below - 1) continue;
             if ([...el.children].some((c) => BLOCK.has(c.tagName))) continue;
             const d = el.closest("details");
             if (d && !d.open && el.tagName !== "SUMMARY" && !el.closest("summary")) continue;
@@ -21876,13 +21899,20 @@ for (const theme of THEMES) {
         allocSource: (document.querySelector("[data-testid=alloc-taxonomy-source]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
         hbDepository: (() => {
           const e = document.querySelector("[data-hb-depository]");
-          return e ? { n: Number(e.getAttribute("data-hb-depository")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+          // The line carries a count and a short clause; the SENTENCE naming why
+          // these units carry no statement mark is its hover (Stage 10cf).
+          return e ? { n: Number(e.getAttribute("data-hb-depository")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+            title: e.getAttribute("title") ?? "" } : null;
         })(),
         partial: [...document.querySelectorAll("[data-partial-valuation]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "",
         })),
         partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+          // The account's own note — what is valued and what is not — is the
+          // hover on its name, where every other account on that card keeps its
+          // reason (Stage 10cf). `innerText` cannot see a `title`.
+          why: e.querySelector("[data-unvalued-reason]")?.getAttribute("title") ?? "",
         })),
         stockClass: document.querySelector("[data-stock-class]")?.getAttribute("data-stock-class") ?? null,
         stockClassText: (document.querySelector("[data-stock-class]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
