@@ -8,10 +8,12 @@ import { fmtNum, fmtDate } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
+import { fetchPriceHistory } from "@/lib/prices";
 
 // COMPANY RESEARCH — the FOOS spec's deep company page. MIXED, now that the real
 // endpoints are wired:
-//   • LIVE — the 52-week trading range (from the quote feed) and insider trades
+//   • LIVE — the 52-week trading range (from the quote feed, or from the price
+//     history's daily closes where the quote carries none) and insider trades
 //     (the muns insider endpoint). The Financials, ratios, shareholding, street
 //     estimates, documents and concalls the spec asks for are ALREADY live in the
 //     Research panel above this, straight from screener.in / the filings feed, so
@@ -32,7 +34,7 @@ import { getHoldingsInsider, type InsiderResponse } from "@/lib/insider";
 /** The columns, in the order the insider table's rows write their cells. */
 const INSIDER_COLS = ["date", "insider", "type", "shares", "value", "post"] as const;
 
-export function CompanyResearchPreview({ name, ticker, price, live, low52, high52 }: {
+export function CompanyResearchPreview({ name, ticker, price, live, low52: quoteLow52, high52: quoteHigh52 }: {
   name: string;
   ticker: string | null;
   price: number | null;
@@ -51,6 +53,27 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
     getHoldingsInsider([{ symbol: ticker, name, key: ticker, weight: 0 }]).then((r) => { if (alive) setInsider(r); });
     return () => { alive = false; };
   }, [ticker, name]);
+
+  // THE 52-WEEK RANGE HAS TWO SOURCES, AND THE CARD SAYS WHICH ONE IT SHOWS.
+  //
+  // The muns quote carries the exchange's own 52-week range; an Upstox full
+  // quote carries none. Where the quote gave none, the range is struck from the
+  // price history's DAILY CLOSES — the figures the returns table on this page
+  // already prints — rather than the card going blank. The two are not the same
+  // measurement (intraday extremes against closes), which is why the subtitle
+  // names the one on screen.
+  const fromQuote = quoteLow52 != null && quoteHigh52 != null;
+  const [hist, setHist] = useState<{ low52: number | null; high52: number | null } | null | undefined>(undefined);
+  useEffect(() => {
+    if (fromQuote || !ticker) { setHist(null); return; }
+    let alive = true;
+    setHist(undefined);
+    fetchPriceHistory(ticker).then((r) => { if (alive) setHist(r.ok ? { low52: r.low52, high52: r.high52 } : null); });
+    return () => { alive = false; };
+  }, [fromQuote, ticker]);
+  const low52 = fromQuote ? quoteLow52 : hist?.low52 ?? null;
+  const high52 = fromQuote ? quoteHigh52 : hist?.high52 ?? null;
+  const rangeFrom = fromQuote ? "quote" : low52 != null && high52 != null ? "history" : null;
 
   // Position within the 52-week range, for the live band.
   const rangePct = useMemo(() => {
@@ -71,9 +94,14 @@ export function CompanyResearchPreview({ name, ticker, price, live, low52, high5
     <div className="mt-6">
       {/* Live: 52-week trading range */}
       <Card title={<span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-champagne-400" /> Trading range</span>}
-        subtitle="52-week high & low from the quote feed" right={<Pill tone="info">{live ? "live" : "statement mark"}</Pill>}>
+        subtitle={rangeFrom === "history" ? "52-week high & low of daily closes, from the price history" : "52-week high & low from the quote feed"}
+        right={<Pill tone="info">{live ? "live" : "statement mark"}</Pill>}>
         {low52 == null || high52 == null ? (
-          <AbsentCell reason="the quote feed did not return a 52-week range for this security" />
+          hist === undefined && !fromQuote && ticker
+            ? <div className="text-[12.5px] text-slate-500">Loading the 52-week range…</div>
+            : <AbsentCell reason={ticker
+                ? "neither the quote feed nor the price history returned a 52-week range for this security"
+                : "no NSE symbol is mapped for this security, so no 52-week range can be fetched"} />
         ) : (
           <>
             <div className="flex items-end justify-between text-sm">

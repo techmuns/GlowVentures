@@ -183,22 +183,32 @@ longer matches the archive it claims to come from.
 
 ## The live layer
 
-Six Cloudflare Pages Functions proxy the in-house muns API. The token lives in
-the Cloudflare environment and never reaches the browser.
+Live prices come from **Upstox**, with the in-house muns API as the fallback;
+the other feeds proxy muns. Every token lives in the Cloudflare environment and
+never reaches the browser.
 
-| Endpoint | Supplies | Needs `MUNS_TOKEN` |
-| --- | --- | :---: |
-| `/api/quotes` | Intraday NSE prices | yes |
-| `/api/news` | Holdings news | yes |
-| `/api/announcements` | Exchange filings | yes |
-| `/api/insider` | Insider / bulk deals | yes |
-| `/api/research` | Estimates, financials, concall docs | yes |
-| `/api/history` | Index close series | yes |
-| `/api/fx` | USD→INR reference rate (ECB) | no |
+| Endpoint | Supplies | Needs |
+| --- | --- | --- |
+| `/api/quotes` | Intraday NSE prices | `UPSTOX_ACCESS_TOKEN` (primary) and/or `MUNS_TOKEN` (fallback) |
+| `/api/news` | Holdings news | `MUNS_TOKEN` |
+| `/api/announcements` | Exchange filings | `MUNS_TOKEN` |
+| `/api/insider` | Insider / bulk deals | `MUNS_TOKEN` |
+| `/api/research` | Estimates, financials, concall docs | `MUNS_TOKEN` |
+| `/api/history` | Index close series | `MUNS_TOKEN` |
+| `/api/fx` | USD→INR reference rate (ECB) | nothing |
 
-Set the token once, in **Cloudflare Pages → Settings → Environment variables**
-(Production *and* Preview, ideally as a Secret), as `MUNS_TOKEN`. Nothing else
-needs configuring.
+Set each token once, in **Cloudflare Pages → Settings → Variables and Secrets**
+(Production *and* Preview, as a Secret), then redeploy.
+
+**The Upstox token is the one-year Analytics Token** (Upstox Developer Apps →
+Analytics → Generate Token). The daily login token expires at 3:30 AM and would
+stop the feed every morning. It is the same token the Glow and Sattva Central
+Research dashboards use, under the same name — so when it is replaced, replace
+it in all three. `UPSTOX_TOKEN` is accepted too.
+
+**To check it, sign in and open `/api/quotes?check=1`.** It makes one live call
+and answers in a sentence: which variable the token was found under, whether
+Upstox accepted it, and three sample prices. It never shows the token.
 
 The client fans out across **all** holdings in small chunks with limited
 concurrency (`src/lib/feedFetch.ts`), correlating results by `securityKey`, and

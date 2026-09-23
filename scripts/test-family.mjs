@@ -33,6 +33,7 @@ const SUITES = [
   ["chat function", "src/lib/__tests__/chatFunction.test.ts"],
   ["indices function", "src/lib/__tests__/indicesFunction.test.ts"],
   ["quotes function", "src/lib/__tests__/quotesFunction.test.ts"],
+  ["Upstox quotes", "src/lib/__tests__/upstoxQuotes.test.ts"],
   ["portfolio excel", "src/lib/__tests__/portfolioExcel.test.ts"],
   ["holding return", "src/lib/__tests__/holdingReturn.test.ts"],
   ["dated NAV series", "src/lib/__tests__/navSeries.test.ts"],
