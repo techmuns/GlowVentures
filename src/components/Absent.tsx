@@ -98,7 +98,11 @@ export function AbsentFromBook({ query, className = "" }: { query: string; class
     <div data-absent-from-book className={`rounded-md border border-dashed border-ink-600/70 bg-ink-800/40 px-3 py-2.5 text-left ${className}`}>
       <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-400">
         <Info className="h-3.5 w-3.5" aria-hidden />
-        held, but no statement reports it
+        {/* THE PROVENANCE LEADS, rather than sitting three lines below. "Held"
+            on its own asserts more than the evidence does: what is known is
+            that the family's own review names it and no statement reports it,
+            and both halves belong in the first line a reader reads. */}
+        on the consolidated review · no statement reports it
       </div>
       <ul className="space-y-2">
         {gaps.map((g) => (

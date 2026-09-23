@@ -1508,7 +1508,28 @@ const REVIEW_GAP_BOOK = (() => {
     const gaps = bookArray(readFileSync(new URL("../src/data/reviewGaps.ts", import.meta.url), "utf8"), "REVIEW_GAPS");
     if (!gaps?.length) return null;
     const withAlias = gaps.find((g) => g.aliases?.length) ?? gaps[0];
+    /**
+     * AND A NAME THE NOTE MUST NOT CLAIM — re-expressed here rather than
+     * imported from `src/lib/reviewGaps.ts`, on the same terms as
+     * `isMandateHeld` and `NAV_MOVERS_BOOK`: a check that calls the helper it is
+     * checking agrees with it by construction. The two agreeing is the
+     * measurement.
+     *
+     * A depository CLIPS a name, so the book's `ONESOURCE SPECIAL-EQ` and the
+     * review's `Onesource Specialty Pharma` key apart — and the note once told a
+     * reader no statement reported a ₹8.61 Cr position sitting one search away.
+     */
+    const flat = (k) => k.replace(/-/g, "");
+    const bookKeys = [...new Set((bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? [])
+      .map((p) => securityKeyOf(p.security)))].filter(Boolean);
+    const related = (n) => {
+      const k = securityKeyOf(n);
+      return !!k && bookKeys.some((bk) =>
+        bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+    };
     return {
+      // Any one of them exercises the claim equally, so the list's own first.
+      suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
       count: gaps.length,
       name: withAlias.name,
       alias: withAlias.aliases?.[0] ?? null,
@@ -8508,6 +8529,23 @@ const INVARIANTS = {
        * that MATCHES something must get the list and nothing else.
        */
       if (a.options === 0) return { notChecked: `“${a.q}” matched nothing, so this cannot be tested` };
+      return a.note === null;
+    }],
+    ["…and neither is a name the book may carry under a clipped spelling", (t, ctx) => {
+      const a = ctx.absentName?.suppressed;
+      if (!a) return { notChecked: "no review line in this book is prefix-related to a held position" };
+      /**
+       * THE CASE THE FAMILY'S OWN SCREENSHOT CONTAINS. Their table shows
+       * `Onesource Special` at ₹8.15 Cr; the review writes `Onesource Specialty
+       * Pharma`. The keys differ, so the reconciler reports it absent — rightly,
+       * since accepting the reverse prefix once joined four demerged Vedanta
+       * companies onto their former parent — and the DASHBOARD must not turn
+       * that into a claim. Silence here is the reader's status quo; a false
+       * claim is not.
+       */
+      // …and the empty state must really have been reached, or this asserts
+      // nothing: a name that MATCHES an option never calls `emptyNote` at all.
+      if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
       return a.note === null;
     }],
     ["…and neither is a search that names nothing at all", (t, ctx) => {
@@ -15829,6 +15867,11 @@ for (const theme of THEMES) {
            * chose; the invariant abstains if it ever matches something.
            */
           typo: await read([...REVIEW_GAP_BOOK.name].reverse().join("")),
+          // A review line whose name the BOOK may carry under a clipped
+          // spelling — the note must decline to claim that one absent.
+          suppressed: REVIEW_GAP_BOOK.suppressed
+            ? { q: REVIEW_GAP_BOOK.suppressed, ...(await read(REVIEW_GAP_BOOK.suppressed)) }
+            : null,
         };
         /**
          * AND THE NOTE IS LEFT ON SCREEN, which is not tidiness.

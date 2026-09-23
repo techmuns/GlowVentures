@@ -29,7 +29,7 @@
 import { readFileSync } from "node:fs";
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
-import { reviewGapsFor } from "@/lib/reviewGaps";
+import { reviewGapsFor, claimableGaps } from "@/lib/reviewGaps";
 import { securityKeyOf } from "@/lib/securityKey";
 
 let fails = 0;
@@ -140,8 +140,14 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   const substringRelated = (q: string, g: { name: string; aliases: string[] }) =>
     [g.name, ...g.aliases].some((s) => norm(s).includes(norm(q)) || norm(q).includes(norm(s)));
 
-  const probes = ["BSE", "Bombay Stock Exchange", "vedanta", "Tata Technologies",
-    "Deep Industries", "reliance", "Star Health", "zzzz"];
+  // DERIVED, not typed. The first draft named "vedanta" as the probe that must
+  // find something — and Vedanta is precisely what §6b then withheld, so a
+  // correct build failed this check. A probe list that names a case by hand goes
+  // stale the moment the rule it was written against moves.
+  const claimed = claimableGaps();
+  const derived = claimed.slice(0, 3).map((g) => g.name.split(/[^A-Za-z]+/)[0]);
+  const probes = [...derived, "Tata Technologies", "Deep Industries", "reliance",
+    "Star Health", "zzzz"];
   const bad = probes.flatMap((q) => reviewGapsFor(q, 50)
     .filter((g) => !substringRelated(q, g))
     .map((g) => `${q} -> ${g.name}`));
@@ -154,14 +160,52 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
   ok("an unrelated query matches nothing", reviewGapsFor("zzzz").length === 0);
 
   // AND IT IS LOAD-BEARING: the probes must actually find things, or the check
-  // above passes by matching nothing at all.
-  ok("the probes do find gaps", reviewGapsFor("vedanta", 50).length >= 2,
-    `${reviewGapsFor("vedanta", 50).length}`);
+  // above passes by matching nothing at all. Counted across the whole list, so
+  // no single name has to keep being the one that hits.
+  const hits = probes.reduce((n, q) => n + reviewGapsFor(q, 50).length, 0);
+  ok("the probes do find gaps", hits >= 2, `${hits}`);
 
   // Closest first: a reader typing a full name is not led by a longer line that
   // merely contains it.
-  const exact = REVIEW_GAPS[0];
+  const exact = claimed[0];
   ok("an exact name ranks first", reviewGapsFor(exact.name)[0]?.name === exact.name);
+}
+
+// ── 6b. A GAP THE BOOK MAY HOLD UNDER A CLIPPED NAME IS NEVER CLAIMED ───────
+//
+// Check 2 above is keyed on `securityKeyOf`, which is EXACT — and a depository
+// clips: the book holds `ONESOURCE SPECIAL-EQ` (48,000 shares, ₹8.61 Cr) while
+// the review writes `Onesource Specialty Pharma`, so the keys differ and the
+// note told a reader no statement reported a position sitting one search away.
+//
+// THE SUPPRESSION TIER IS LOOSER THAN THE JOIN TIER, ON PURPOSE. A weak match in
+// `shared/nameMatch.mjs` publishes a figure; a weak match here only decides
+// whether to stay quiet. Suppressing too much costs the silence a reader already
+// had; suppressing too little tells them their own holding is missing.
+{
+  const flat = (k: string) => k.replace(/-/g, "");
+  const bookKeys = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+  const related = (name: string) => {
+    const k = securityKeyOf(name);
+    return !!k && bookKeys.some((bk) =>
+      bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+  };
+
+  const claimable = claimableGaps();
+  const leaked = claimable.filter((g) => related(g.name)).map((g) => g.name);
+  ok("no claimable gap shares a name with a book position", leaked.length === 0, leaked.join(", "));
+
+  // LOAD-BEARING: the tier must actually withhold something, or the check above
+  // passes over a filter that does nothing.
+  const withheld = REVIEW_GAPS.length - claimable.length;
+  ok("the tier withholds the gaps it is for", withheld > 0, `${withheld} of ${REVIEW_GAPS.length}`);
+
+  // The case the family's own screenshot contains: the book's row is visible in
+  // it at ₹8.15 Cr, and a search for the review's spelling must not deny it.
+  ok("Onesource is never claimed absent",
+    reviewGapsFor("Onesource Specialty Pharma").length === 0);
+  ok("…and BSE, which the book really does not hold, still is",
+    reviewGapsFor("BSE").length === 1);
 }
 
 // ── 7. EVERY SEARCH A READER CAN RUN OVER HOLDINGS IS WIRED TO IT ───────────

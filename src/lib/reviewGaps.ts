@@ -15,10 +15,51 @@
 // review workbook is not a source — by decision"), so no value and no quantity
 // of its own crosses over; `REVIEW_GAPS` carries a name, a custodian and two
 // sentences, and its generator throws rather than emit a number.
+import { BOOK_POSITIONS } from "@/data/glowData";
+import { securityKeyOf } from "@/lib/securityKey";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
 export { REVIEW_AS_OF };
+
+/**
+ * ── A GAP THIS BOOK MAY NOT CLAIM, BECAUSE A NAME LIKE IT IS IN THE BOOK ────
+ *
+ * The reconciler reports a review line as absent when no tier JOINS it, and it
+ * is right to: its prefix tier runs one way only, because accepting the reverse
+ * once matched `Vedanta Power`, `Vedanta Iron & Steel` and `Vedanta Oil & Gas`
+ * onto the one book row named `Vedanta` — four demerged companies reported
+ * against 12,909 shares of their former parent.
+ *
+ * ON SCREEN THE CONSEQUENCES ARE THE OTHER WAY ROUND, AND THAT IS THE WHOLE
+ * REASON THIS TIER MAY BE LOOSER THAN THAT ONE. There, a weak match JOINS and
+ * publishes a figure. Here it only decides whether to stay quiet: the cost of
+ * suppressing too much is the silence a reader already had, and the cost of
+ * suppressing too little is telling them a holding they own is missing.
+ *
+ * Measured and the case is real: the book holds `ONESOURCE SPECIAL-EQ` — 48,000
+ * shares, ₹8.61 Cr, a depository's clipped spelling — while the review writes
+ * `Onesource Specialty Pharma`, and without this the note told a reader no
+ * statement reported a position sitting one search away. Also `Bharat
+ * Parenteral`, `Infinium Pharma`, `Kaynes Technology` and `Zaggle Prepaid`.
+ *
+ * AND IT DECLINES THE THREE VEDANTA SPIN-OFFS TOO, which ARE genuine gaps — the
+ * book's `vedanta` row is their former parent, and nothing here can tell that
+ * apart from a clipped name without the hand-checked table `nameMatch.mjs`
+ * already says this corpus needs. Three real answers withheld rather than one
+ * false one published; `shared/nameMatch.mjs` lists them for a human to commit.
+ */
+const flat = (k: string) => k.replace(/-/g, "");
+const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+const CLAIMABLE = REVIEW_GAPS.filter((g) => {
+  const k = securityKeyOf(g.name);
+  if (!k) return false;
+  return !BOOK_KEYS.some((bk) =>
+    bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+});
+
+/** The gaps a search may be told about — see `CLAIMABLE` above. */
+export const claimableGaps = () => CLAIMABLE;
 
 /**
  * Case, punctuation and spacing folded away, so `BSE Ltd.` and `bse ltd` are
@@ -48,7 +89,7 @@ export function reviewGapsFor(query: string, limit = 3): ReviewGap[] {
   const q = norm(query);
   if (q.length < 2) return [];
   const scored: Array<{ g: ReviewGap; rank: number }> = [];
-  for (const g of REVIEW_GAPS) {
+  for (const g of CLAIMABLE) {
     let best = Infinity;
     for (const s of spellings(g)) {
       const n = norm(s);
