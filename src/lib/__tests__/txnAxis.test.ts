@@ -48,7 +48,7 @@ const positions = [
   // f4 — nothing but ₹0 lines of two classes: still mixed, still named.
   pos("f4", "other-fund-class-b1", "AIF", 0), pos("f4", "cash", "Cash", 0),
   // f5 — holds nothing at all, in an account whose statement calls it an AIF:
-  //      India SME's and Sky Capital's shape (Stage 10bx).
+  //      India SME's and Sky Capital's shape (Stage 10bz).
   // f6 — holds nothing at all, and nothing says what the account is.
 ];
 const s = sectionsFor(accounts, positions);
@@ -63,7 +63,7 @@ ok("…and one holding nothing but empty lines of two classes is still named mix
   s.forAccount("category", "f4") === TXN_UNSECTIONED);
 ok("an account holding nothing, with nothing saying what it is, is not filed",
   s.forAccount("category", "f6") === TXN_UNSECTIONED);
-// Stage 10bx: a drawdown fund's dated CALLS put accounts that hold no valued
+// Stage 10bz: a drawdown fund's dated CALLS put accounts that hold no valued
 // position on the Transactions card. The ACCOUNT's engagement is the
 // statement's own wording, so it answers the CATEGORY question — and only that
 // one; a basket or a family asset class is the family's review, keyed on a

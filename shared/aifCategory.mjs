@@ -373,7 +373,7 @@ export function fundMarketSideOf(name, account, securityKey) {
 export function fundMarketSideBasis(name, account, securityKey) {
   const decision = familyMarketDecision(name, account);
   // `securityKey` lets the family's DECLARED category fill a category no
-  // statement prints (Stage 10bx). It can only ever fill: `readAifCategory`
+  // statement prints (Stage 10bz). It can only ever fill: `readAifCategory`
   // consults it where both printed fields are silent.
   const read = readAifCategory(name, account, securityKey);
   if (decision) return { side: decision.side, basis: "family", decision, category: read.category };

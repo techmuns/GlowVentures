@@ -492,7 +492,7 @@ export function capitalMovesWithCalls(
       });
     }
     /**
-     * ── AND THE FUND'S OWN DATED PAYOUTS, AS REDEMPTIONS (Stage 10bx) ──────
+     * ── AND THE FUND'S OWN DATED PAYOUTS, AS REDEMPTIONS (Stage 10bz) ──────
      *
      * Stage 10bw read every payout Neo Infra and Baring print — income,
      * principal and equalisation, each dated and each reconciled against the
