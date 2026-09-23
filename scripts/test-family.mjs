@@ -52,6 +52,7 @@ const SUITES = [
   ["fund returns", "src/lib/__tests__/fundReturns.test.ts"],
   ["search index", "src/lib/__tests__/searchIndex.test.ts"],
   ["share movements", "src/lib/__tests__/shareMovements.test.ts"],
+  ["review gaps", "src/lib/__tests__/reviewGaps.test.ts"],
   ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
   ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
 ];

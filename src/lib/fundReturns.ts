@@ -20,7 +20,7 @@
 //   · "the statements here cover the current period only, so no per-holding
 //     XIRR can be struck" is true of a share in a demat and FALSE of a drawdown
 //     fund, whose capital account prints every dated call since its first —
-//     and, since Stage 10bu, every dated payout too;
+//     and, since Stage 10bv, every dated payout too;
 //   · "no purchase date is on file" is false where a fund was paid in ONE
 //     dated call, which is exactly a purchase date.
 //

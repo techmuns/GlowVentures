@@ -383,7 +383,7 @@ export function commitmentTotals(commitments: Commitment[]): CommitmentTotals {
  * `distributed` where the reader captured the summary figure. Baring's reader
  * never did, although its statement prints one — `Less: Distribution (E)` in
  * the NAV summary — and that page always said the fund printed "no
- * distribution line", which was false. Since the payout reader (Stage 10bu)
+ * distribution line", which was false. Since the payout reader (Stage 10bv)
  * reconciles Baring's dated distribution against exactly that E, the income
  * and principal it carries ARE that printed total, so this reads them there.
  *
