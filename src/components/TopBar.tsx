@@ -51,7 +51,7 @@ function CurrencySwitch() {
 // Live-quote state, stated honestly. The dot used to be hard-coded green whenever
 // a book was loaded, which would now claim "Live" even with the feed down.
 function QuoteStatus() {
-  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive } = usePortfolio();
+  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive, quoteFeeds } = usePortfolio();
   if (!portfolio) {
     return <><span className="inline-block h-2 w-2 rounded-full bg-slate-600" /><span className="text-slate-400">Awaiting data</span></>;
   }
@@ -84,7 +84,7 @@ function QuoteStatus() {
   return <>
     <span className="inline-block h-2 w-2 rounded-full bg-gain shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
     <span className="text-slate-400"
-      title={`${livePriced} holdings priced live${notLive ? ` · ${notLive} on workbook marks — ETFs, warrants and securities the price feed does not carry` : ""}`}>
+      title={`${livePriced} holdings priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}${notLive ? ` · ${notLive} on workbook marks — ETFs, warrants and securities the price feed does not carry` : ""}`}>
       Live{clock ? ` ${clock}` : ""}
     </span>
   </>;

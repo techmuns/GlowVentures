@@ -115,6 +115,12 @@ export function outageSentence(e: UpstreamFailure, what: string): string {
 export function outageShort(e: UpstreamFailure): string {
   const meaning = statusMeaning(e.upstreamStatus);
   const code = typeof e.upstreamStatus === "number" ? ` (HTTP ${e.upstreamStatus})` : "";
+  // A REFUSED TOKEN IS NOT AN OUTAGE. Upstox answered, and said no — which is
+  // the one failure a reader can fix, so it says what to do rather than "the
+  // service is down". `/api/quotes?check=1` names the variable and the cause.
+  if (e.failureCode === "UPSTOX_UNAUTHORIZED") {
+    return `Upstox refused the price token${code} — it may have expired or been regenerated. Open /api/quotes?check=1 for the details.`;
+  }
   if (e.failureCode === "NETWORK") return "This browser could not reach the dashboard's own server.";
   if (meaning) return `The data service was reached but ${meaning}${code}.`;
   if (e.failureCode === "UPSTREAM_NO_RESPONSE") return "The data service did not answer in time.";

@@ -1,5 +1,7 @@
-// Live intraday quotes from the in-house muns batch API, via the /api/quotes
-// server proxy (the token lives in the Cloudflare environment, never the browser).
+// Live intraday quotes via the /api/quotes server proxy — from Upstox where its
+// token is set (one call prices the whole book), with the in-house muns batch
+// API as the fallback. Both tokens live in the Cloudflare environment, never
+// the browser; each quote says which feed priced it.
 //
 // The quote API works in NSE symbols. A position may already carry one (some
 // statements print the ticker); otherwise `nseSymbols.json` bridges it.
@@ -58,6 +60,10 @@ export type Quote = {
   yearChangePct: number | null;
   /** Seconds since this quote was pulled from the upstream. 0 = just fetched. */
   ageS: number;
+  /** Which feed priced it. Absent on a snapshot cached before the field existed. */
+  source?: "upstox" | "muns";
+  /** When the price last traded, where the feed says (Upstox does; muns does not). */
+  tradedAt?: string | null;
 };
 
 export type QuoteFeed = {
@@ -75,6 +81,13 @@ export type QuoteFeed = {
   fresh: number;
   stale: number;
 };
+
+/** The feeds that priced at least one quote in `feed`, in words, primary first. */
+export function quoteFeedNames(feed: QuoteFeed | null): string[] {
+  if (!feed) return [];
+  const seen = new Set(Object.values(feed.quotes).map((q) => q.source));
+  return [["upstox", "Upstox"], ["muns", "muns"]].filter(([k]) => seen.has(k as Quote["source"])).map(([, label]) => label);
+}
 
 /** Which of `symbols` this feed has not answered for yet. */
 export function pendingAmong(feed: QuoteFeed | null, symbols: readonly string[]): string[] {
