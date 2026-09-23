@@ -139,12 +139,29 @@ export function ReturnAnalysis() {
       return { label: b.label, value: sum(inBand.map((x) => x.marketValue)), names: inBand.length, loss: b.hi <= 0 };
     });
 
-    // Contribution to return: each position's unrealised P&L over the book's
-    // TOTAL cost, so the parts add to the embedded return exactly.
-    const contrib = priced
-      .map((x) => ({
-        key: x.securityKey, security: x.security, pnl: x.unrealizedPnL + realisedOf(x), returnPct: x.returnPct,
-        contribPct: deployed > 0 ? ((x.unrealizedPnL + realisedOf(x)) / deployed) * 100 : 0,
+    // Contribution to return: each SECURITY's FIFO gain — unrealised plus
+    // realised — over the book's total deployed cost, so the parts add to the
+    // embedded return exactly.
+    //
+    // ONE ROW PER SECURITY (XA-25). This mapped every POSITION, so Sanshi
+    // Fund-I Class E — held in four accounts — stood four times under a
+    // "Security" heading, taking four of the ten places. The accounts' gains
+    // are summed and the return re-struck on their summed cost, never averaged.
+    const byKey = new Map<string, { key: string; security: string; pnl: number; cost: number; sold: number; accounts: Set<string> }>();
+    for (const x of priced) {
+      const e = byKey.get(x.securityKey)
+        ?? { key: x.securityKey, security: x.security, pnl: 0, cost: 0, sold: 0, accounts: new Set<string>() };
+      e.pnl += x.unrealizedPnL + realisedOf(x);
+      e.cost += x.costBasis;
+      e.sold += soldOf(x);
+      e.accounts.add(x.accountId);
+      byKey.set(x.securityKey, e);
+    }
+    const contrib = [...byKey.values()]
+      .map((e) => ({
+        key: e.key, security: e.security, pnl: e.pnl, accounts: e.accounts.size,
+        returnPct: e.cost + e.sold > 0 ? (e.pnl / (e.cost + e.sold)) * 100 : 0,
+        contribPct: deployed > 0 ? (e.pnl / deployed) * 100 : 0,
       }))
       .sort((a, b) => b.pnl - a.pnl);
 
@@ -270,7 +287,11 @@ export function ReturnAnalysis() {
     }).sort((a, b) => (b.returnPct ?? -Infinity) - (a.returnPct ?? -Infinity));
 
     const rated = byAccount.filter((a) => a.returnPct !== null);
-    const winners = priced.filter((x) => x.unrealizedPnL > 0);
+    // HOLDINGS SHOWING A GAIN, on Morning CIO's own predicate (XA-24): a FIFO
+    // return above zero. `unrealizedPnL > 0` counted two cash rows at ₹0.01 and
+    // ₹0.10 of P&L, and ignored a holding whose realised loss outweighs its
+    // unrealised gain, so the two pages read 177 and 175 for one question.
+    const winners = priced.filter((x) => x.returnPct > 0);
     return {
       priced, withoutCost, cost, pnl, dist, contrib, sectors, wrapperClasses, sectorSource, byAccount, winners: winners.length,
       embeddedRet: deployed > 0 ? ((pnl + realised) / deployed) * 100 : null,
@@ -357,8 +378,14 @@ export function ReturnAnalysis() {
           title="Each holding's own FIFO figures, summed before they are divided: the unrealised gain on what is held plus the realised gain on units already sold, over the cost of both. A whole mandate's income, fees and earlier sales belong to no single name and are not here — Morning CIO strikes a whole mandate on its capital."
           icon={<Percent className="h-4 w-4" />} />
 
-        <StatTile label="Names in profit" value={`${(m.hitRate ?? 0).toFixed(0)}%`}
-          sub={`${m.winners} of ${m.priced.length} positions`} icon={<Target className="h-4 w-4" />} />
+        <StatTile label="Holdings showing a gain"
+          {...(m.hitRate === null
+            ? { value: <span className="text-slate-500">{DASH}</span>, sub: "no holding reports a cost to measure a gain against" }
+            : {
+              value: `${m.hitRate.toFixed(0)}%`,
+              sub: <span data-xa="returns-hit" data-winners={m.winners} data-priced={m.priced.length}>{`${m.winners} of ${m.priced.length} holdings with a cost`}</span>,
+            })}
+          icon={<Target className="h-4 w-4" />} />
 
         {/* SPREAD BETWEEN ACCOUNTS, WHICH IS WHAT IS MEASURED. `rated` is every
             account in the registry that carries a cost basis, and on this book
@@ -415,7 +442,7 @@ export function ReturnAnalysis() {
                 <YAxis stroke="#6b6880" fontSize={11} tickFormatter={(v: number) => fmtFromBase(v, { compact: true })} width={78} />
                 <ReferenceLine y={0} stroke="#3a3570" />
                 <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                  formatter={(v: number, _n, o) => [`${fmtFromBase(v as number, { compact: true })} · ${(o?.payload as { names: number })?.names ?? 0} names`, "Market value"]} />
+                  formatter={(v: number, _n, o) => [`${fmtFromBase(v as number, { compact: true })} · ${(o?.payload as { names: number })?.names ?? 0} holdings`, "Market value"]} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {m.dist.map((d, i) => <Cell key={i} fill={d.loss ? LOSS : GAIN} />)}
                 </Bar>
@@ -579,10 +606,13 @@ export function ReturnAnalysis() {
       </Card>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2 items-start">
-        <Card title="Largest contributors" subtitle="By unrealised P&amp;L">
+        {/* The P&L is the FIFO gain — unrealised plus realised — which the
+            subtitle used to call "unrealised" after the column stopped being
+            only that. */}
+        <Card title="Largest contributors" subtitle="By FIFO gain — unrealised plus realised, per security">
           <ContribTable rows={m.contrib.slice(0, 10)} money={money} storageKey="returns-contributors" />
         </Card>
-        <Card title="Largest detractors" subtitle="By unrealised P&amp;L">
+        <Card title="Largest detractors" subtitle="By FIFO gain — unrealised plus realised, per security">
           <ContribTable rows={[...m.contrib].reverse().slice(0, 10)} money={money} storageKey="returns-detractors" />
         </Card>
       </div>
@@ -607,7 +637,7 @@ export function ReturnAnalysis() {
 }
 
 function ContribTable({ rows, money, storageKey }: {
-  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number }[];
+  rows: { key: string; security: string; pnl: number; returnPct: number; contribPct: number; accounts: number }[];
   money: (n: number, sign?: boolean) => string;
   /** Contributors and detractors are two tables, so each keeps its own order. */
   storageKey: string;
@@ -635,9 +665,12 @@ function ContribTable({ rows, money, storageKey }: {
         </thead>
         <tbody>
           {shown.map((r) => (
-            <Tr view={view} key={`${r.key}-${r.pnl}`} className="border-t border-ink-700/60">
-              <td className="px-2 py-2">
+            <Tr view={view} key={r.key} className="border-t border-ink-700/60">
+              <td className="px-2 py-2" data-xa={`${storageKey}-row`} data-key={r.key} data-pnl={r.pnl} data-accounts={r.accounts}>
                 <a className="text-slate-200 hover:text-accent-400" href={stockHref(r.key)}>{r.security}</a>
+                {r.accounts > 1 && <span className="ml-1.5 text-[10.5px] text-slate-500"
+                  title={`Held in ${r.accounts} accounts; their gains are added and the return is struck on their added cost.`}>
+                  · {r.accounts} accounts</span>}
               </td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.pnl)}`}>{money(r.pnl, true)}</td>
               <td className={`px-2 py-2 text-right mono ${changeColor(r.returnPct)}`}>{fmtPct(r.returnPct, { sign: true, decimals: 1 })}</td>

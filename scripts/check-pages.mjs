@@ -7549,7 +7549,47 @@ const XA_BOOK = (() => {
       var auditShort = best;
     } catch { ledger = null; }
     return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history, counts, sectors, fifo, valuation, twrr,
-      cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort };
+      cg: cgHarvest, drawdown, historyCapital, historyPanel, ledger, auditShort: typeof auditShort === "undefined" ? null : auditShort,
+      returnsD: (() => {
+        // ── Return & Drawdown's gain count and contributors (XA-24 / XA-25),
+        // over the deduped book the page reads, with a cost to measure against.
+        // A statement row's return is the book's own, as generated (and so as
+        // rounded: a cash sleeve's ₹0.01 of P&L is a 0.00% return, which is not
+        // a gain). A NAV-priced row's is FIFO's, struck here from its fields —
+        // never this file's overlaid `returnPct`, which divides by cost alone.
+        const realisedOf = (x) => (typeof x.realizedPnL === "number" ? x.realizedPnL : 0);
+        const soldOf = (x) => (typeof x.costOfUnitsSold === "number" ? x.costOfUnitsSold : 0);
+        const retOf = (x) => (x.navPriced
+          ? ((x.marketValue - x.costBasis + realisedOf(x)) / (x.costBasis + soldOf(x))) * 100
+          : x.returnPct);
+        const pr = deduped.filter(isPricedRaw);
+        const by = new Map();
+        for (const x of pr) {
+          const e = by.get(x.securityKey) ?? { key: x.securityKey, pnl: 0, accounts: new Set() };
+          e.pnl += x.unrealizedPnL + realisedOf(x);
+          e.accounts.add(x.accountId);
+          by.set(x.securityKey, e);
+        }
+        const ranked = [...by.values()].sort((a, b) => b.pnl - a.pnl);
+        const shape = (e) => ({ key: e.key, accounts: e.accounts.size });
+        return {
+          priced: pr.length,
+          winners: pr.filter((x) => retOf(x) > 0).length,
+          unrealWinners: pr.filter((x) => x.unrealizedPnL > 0).length,
+          top: ranked.slice(0, 10).map(shape),
+          bottom: [...ranked].reverse().slice(0, 10).map(shape),
+          // Position by position, as the list used to be drawn: the load-bearing
+          // premise is that some security repeats among its top ten.
+          positionsInTop: [...pr].sort((a, b) => (b.unrealizedPnL + realisedOf(b)) - (a.unrealizedPnL + realisedOf(a)))
+            .slice(0, 10).map((x) => x.securityKey),
+        };
+      })(),
+      auditChips: (() => {
+        try {
+          const man = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+          return man.map((f) => ({ fileKey: f.fileKey, parts: String(f.label ?? "").split(" · "), fy: f.fy ?? "" }));
+        } catch { return null; }
+      })() };
   } catch { return null; }
 })();
 /**
@@ -30518,6 +30558,34 @@ const INVARIANTS = {
       return Math.abs(deepest - d.pct) < 1e-6
         && (!d.trough || rows.some((r) => r.attrs.date === d.trough && Math.abs(Number(r.attrs["from-peak"]) - d.pct) < 1e-6));
     }],
+    /**
+     * XA-24 / XA-25. "Names in profit" counted POSITIONS on `unrealizedPnL > 0`
+     * — 177 where Morning CIO's own predicate, a FIFO return above zero, gives
+     * 175 — and the contributors list mapped positions, so one fund held in
+     * four accounts took four of its ten places.
+     */
+    ["the gain count is Morning CIO's — a FIFO return above zero — over the holdings with a cost", (t, ctx) => {
+      const r = XA_BOOK?.returnsD;
+      if (!r) return { notChecked: "the book could not be re-derived from glowData.ts" };
+      if (r.unrealWinners === r.winners) return { notChecked: "the two predicates agree on this book" };
+      const el = xaEl(ctx, "returns-hit");
+      return !!el && Number(el.attrs.winners) === r.winners && Number(el.attrs.priced) === r.priced
+        && !/Names in profit/i.test(t);
+    }],
+    ["a contributor or detractor is a security, once, however many accounts hold it", (t, ctx) => {
+      const r = XA_BOOK?.returnsD;
+      if (!r) return { notChecked: "the book could not be re-derived from glowData.ts" };
+      // LOAD-BEARING: position by position, some security repeats among the top.
+      if (new Set(r.positionsInTop).size === r.positionsInTop.length) return { notChecked: "no security is held in two accounts among the largest contributors" };
+      const top = (ctx?.xa ?? []).filter((x) => x.xa === "returns-contributors-row");
+      const bottom = (ctx?.xa ?? []).filter((x) => x.xa === "returns-detractors-row");
+      const same = (got, want) => got.length === want.length
+        && got.every((g, i) => g.attrs.key === want[i].key && Number(g.attrs.accounts) === want[i].accounts);
+      return same(top, r.top) && same(bottom, r.bottom) && new Set(top.map((x) => x.attrs.key)).size === top.length
+        // The cards' subtitle is their title's hover since #95 (Stage 10cp), so
+        // the old "By unrealised P&L" is looked for there as well as on the page.
+        && ![t, ...(ctx?.titles ?? [])].some((x) => /By unrealised P&L/.test(x));
+    }],
     // STRUCK ON THE HOVERS AS WELL AS THE FACE. A page's subtitle is its
     // title's hover since #95 (Stage 10cp), so a check reading the page text
     // alone could no longer see the sentence either way — the wrong one
@@ -31213,6 +31281,30 @@ const INVARIANTS = {
     }],
     ["the Bought and Sold tiles name the window they are summed over", (t) =>
       !/over the window/.test(t) && /settled cost, \d/.test(t) && (/settled proceeds, \d/.test(t) || /no sells over this window/.test(t))],
+  ],
+
+  /**
+   * ── A DOCUMENT CHIP SAYS WHICH DOCUMENT IT OPENS (XA-26) ─────────────────
+   *
+   * Every chip read its date alone — 42 of them "2026-07-31". Each now names
+   * the provider, the account, the report type and the date, and a repeat of
+   * all four is numbered, so no two chips read alike. Struck against the
+   * archive's own manifest, read here rather than off the page.
+   */
+  audit: [
+    ["every document chip names its account, its report type and its date, and no two read alike", (t, ctx) => {
+      const want = XA_BOOK?.auditChips;
+      if (!want?.length) return { notChecked: "the audit manifest could not be read" };
+      const got = (ctx?.xa ?? []).filter((x) => x.xa === "audit-chip");
+      if (got.length !== want.length) return false;
+      const texts = got.map((g) => g.text.trim());
+      return new Set(texts).size === texts.length && want.every((w) => {
+        const g = got.find((x) => x.attrs.file === w.fileKey);
+        if (!g) return false;
+        const [, account, type] = w.parts;
+        return (!account || g.text.includes(account)) && (!type || g.text.includes(type)) && (!w.fy || g.text.includes(w.fy));
+      });
+    }],
   ],
 
   /**

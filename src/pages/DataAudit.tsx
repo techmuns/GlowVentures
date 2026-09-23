@@ -18,6 +18,30 @@ type FileMeta = {
 type Cell = string | number | null;
 type Sheet = { name: string; rows: Cell[][] };
 
+/**
+ * A chip names WHICH document it opens — the provider, the account, the report
+ * and its date (XA-26). It read the date alone, so 42 chips said "2026-07-31"
+ * and the only way to tell them apart was to open each one. Where two chips
+ * would still read alike (a statement reissued on the same date), the later is
+ * numbered; its source file is the chip's hover either way.
+ */
+const chipLabel = (f: { label: string; fy: string }) => {
+  const [provider, account, type] = f.label.split(" · ");
+  if (!provider || !account || !type) return [f.label, f.fy].filter(Boolean).join(" · ");
+  return [`${provider.split(" ").slice(0, 2).join(" ")} ${account}`, type, f.fy].filter(Boolean).join(" · ");
+};
+function chipLabels(manifest: readonly { fileKey: string; label: string; fy: string }[]): Map<string, string> {
+  const seen = new Map<string, number>();
+  const out = new Map<string, string>();
+  for (const f of manifest) {
+    const base = chipLabel(f);
+    const n = (seen.get(base) ?? 0) + 1;
+    seen.set(base, n);
+    out.set(f.fileKey, n === 1 ? base : `${base} · #${n}`);
+  }
+  return out;
+}
+
 const BASE = import.meta.env.BASE_URL;
 const VISIBLE_CAP = 200;
 
@@ -134,6 +158,7 @@ export function DataAudit() {
   }, [status, fileKey, sheetKey]);
 
   const currentFile = manifest.find((f) => f.fileKey === fileKey);
+  const labels = useMemo(() => chipLabels(manifest), [manifest]);
   const ncols = useMemo(() => sheet ? sheet.rows.reduce((m, r) => Math.max(m, r.length), 0) : 0, [sheet]);
   // Detect the sheet's column-heading row (the label-heaviest of the first rows) so
   // we can pin it as a header — otherwise a filter (e.g. by ISIN) hides it and the
@@ -282,7 +307,7 @@ export function DataAudit() {
                 : locked ? "cursor-not-allowed border-ink-700 bg-ink-800/40 text-slate-600"
                 : "border-ink-700 bg-ink-800 text-slate-300 hover:bg-ink-700/60"}`}>
               {locked ? <Lock className="h-3.5 w-3.5" /> : <FileSpreadsheet className="h-3.5 w-3.5" />}
-              <span className="font-medium">{f.fy || f.label}</span>
+              <span className="font-medium" data-xa="audit-chip" data-file={f.fileKey}>{labels.get(f.fileKey) ?? f.label}</span>
               {locked && <span className="text-[10px] uppercase tracking-wide">locked</span>}
               {!locked && <span className="text-slate-500">· {f.sheets.length}</span>}
             </button>
