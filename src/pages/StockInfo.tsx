@@ -1005,12 +1005,13 @@ export function StockInfo() {
         <ReturnsTable ticker={sym} name={name} />
       )}
 
-      <InvestmentTools
-        securityKey={securityKey}
-        name={name}
-        price={rows[0]?.currentPrice ?? null}
-        priceIsLive={live}
-      />
+      {/* THE CARD WORKS OUT ITS OWN PRICE NOW (`usePriceNow`), from the live
+          quote or the fund's published NAV and never from `rows[0]` — the first
+          array element's mark, which on a holding its statements price
+          differently is one statement's figure standing for all of them (the
+          header's own `cmp` stopped doing that at Stage 10bm). A statement mark
+          is never what an alert is checked against. See `priceAlerts.ts`. */}
+      <InvestmentTools securityKey={securityKey} name={name} />
 
       {!notACompany && (
         <>

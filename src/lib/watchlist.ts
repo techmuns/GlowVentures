@@ -63,6 +63,16 @@ export type WatchEntry = {
   valuationMethod: string;
   /** Free text — why this is on the list. The spec's "Why do we own it?". */
   note: string;
+  /**
+   * The holding's name as its page showed it when the entry was last saved.
+   *
+   * A FALLBACK, never the name of record: Morning CIO's All alerts table names
+   * a row by the book's own label wherever the book still holds the name, and
+   * reads this only for an alert on a holding since sold — so it says what the
+   * alert is about rather than showing a slug. Saving a name alone does not keep
+   * an entry alive; see the emptiness rule in `writeEntry`.
+   */
+  name: string;
   /** ISO timestamp of the last edit, so the page can say how stale a view is. */
   updatedAt: string;
 };
@@ -82,6 +92,7 @@ export const EMPTY_ENTRY = (securityKey: string): WatchEntry => ({
   fairValueRefYear: "",
   valuationMethod: "",
   note: "",
+  name: "",
   updatedAt: "",
 });
 
@@ -122,6 +133,7 @@ function coerce(raw: unknown, securityKey: string): WatchEntry {
     fairValueRefYear: label(o.fairValueRefYear, 16),
     valuationMethod: label(o.valuationMethod, 40),
     note: typeof o.note === "string" ? o.note.slice(0, 2000) : "",
+    name: label(o.name, 160),
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : "",
   };
 }
@@ -153,15 +165,14 @@ export const VALUATION_METHODS = [
 ];
 
 /**
- * Exported, and its LAST CALLER OUTSIDE THIS FILE has gone.
+ * The whole store, parsed fresh from `localStorage`.
  *
- * `CompareCompanies` read it to put a target and an upside beside each price,
- * and that page was removed at the family's request. `readEntry` and
- * `writeEntry` below still call it, so it is not an orphan — but it now looks
- * like one from the outside, which is exactly how a store the family typed into
- * gets deleted a release later. Said here rather than left silent, and the
- * export stays: `InvestmentTools` on a company page reads and writes every
- * entry through the two functions beneath this, so the whole store is live.
+ * Two surfaces read it now, through `watchlistSnapshot` below: the Investment
+ * tools card on a company page, which writes it, and Morning CIO's All alerts
+ * tab, which checks every level in it against the live price (Stage 10bz). Its
+ * last caller outside this file had gone once — `CompareCompanies` — and the
+ * store looked dead from the outside for a release; it is read on the page the
+ * family opens every morning now.
  */
 export function readWatchlist(): Watchlist {
   try {
@@ -180,19 +191,64 @@ export function readWatchlist(): Watchlist {
   }
 }
 
+/**
+ * ── ONE SNAPSHOT, AND EVERY SURFACE HEARS A SAVE ────────────────────────────
+ *
+ * The company page writes a level and Morning CIO's All alerts tab checks it,
+ * and those are two components that must never show two versions of one
+ * store. So both read ONE cached snapshot and subscribe to it
+ * (`useSyncExternalStore` in `usePriceAlerts.ts`), a save replaces the snapshot
+ * and tells every subscriber, and a save in ANOTHER browser tab arrives through
+ * the `storage` event — so a level typed in one tab shows on the other tab's
+ * All alerts table without a reload.
+ *
+ * THE SNAPSHOT IS REPLACED, NEVER MUTATED. `useSyncExternalStore` compares by
+ * identity, so a store edited in place would read as unchanged and nothing
+ * would re-render. And it holds the edit even where `localStorage` refused the
+ * write (a private window, a full quota): the reader keeps what they typed for
+ * the session rather than watching it vanish on the next render.
+ */
+let snapshot: Watchlist | null = null;
+const listeners = new Set<() => void>();
+const notify = () => { for (const l of [...listeners]) l(); };
+const onStorage = (e: StorageEvent) => {
+  if (e.key !== null && e.key !== KEY) return;
+  snapshot = null;
+  notify();
+};
+
+export function watchlistSnapshot(): Watchlist {
+  if (snapshot === null) snapshot = readWatchlist();
+  return snapshot;
+}
+
+export function subscribeWatchlist(listener: () => void): () => void {
+  if (listeners.size === 0 && typeof window !== "undefined") window.addEventListener("storage", onStorage);
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+    if (listeners.size === 0 && typeof window !== "undefined") window.removeEventListener("storage", onStorage);
+  };
+}
+
 export function writeWatchlist(w: Watchlist): void {
   try { localStorage.setItem(KEY, JSON.stringify(w)); } catch { /* private mode, quota */ }
+  snapshot = w;
+  notify();
 }
 
 export function readEntry(securityKey: string): WatchEntry {
-  return readWatchlist()[securityKey] ?? EMPTY_ENTRY(securityKey);
+  return watchlistSnapshot()[securityKey] ?? EMPTY_ENTRY(securityKey);
 }
 
 export function writeEntry(entry: WatchEntry): Watchlist {
-  const w = readWatchlist();
+  // A COPY — the snapshot is shared and replaced, never edited in place.
+  const w = { ...watchlistSnapshot() };
   const next = { ...entry, updatedAt: new Date().toISOString() };
   // An entry with nothing in it is DELETED rather than stored empty, so the
-  // watchlist page counts only rows a human actually put something in.
+  // All alerts table counts only levels a human actually set. A saved NAME is
+  // not "something in it": it is a label for the rest, and alone it would keep
+  // an empty entry alive for ever.
   const empty = !next.watching && !next.note.trim()
     && next.targetPrice === null && next.fairValue === null
     && next.entryPrice === null && next.exitPrice === null
@@ -210,36 +266,13 @@ export function writeEntry(entry: WatchEntry): Watchlist {
 /** Anything a reader has recorded — watched, priced or annotated. */
 export const trackedKeys = (w: Watchlist): string[] => Object.keys(w).sort();
 
-export type AlertKind = "above" | "below" | "target" | "exit";
-export type Alert = { securityKey: string; kind: AlertKind; threshold: number; price: number; overBy: number };
-
-/**
- * Alerts that a CURRENT price has tripped.
- *
- * `price` must be a live or statement mark the caller vouches for; this returns
- * nothing at all when there is no price, rather than comparing a threshold
- * against zero and firing every alert at once.
- */
-export function firedAlerts(entry: WatchEntry, price: number | null): Alert[] {
-  if (price === null || !(price > 0)) return [];
-  const out: Alert[] = [];
-  const add = (kind: AlertKind, threshold: number | null, tripped: boolean) => {
-    if (threshold === null || !tripped) return;
-    out.push({ securityKey: entry.securityKey, kind, threshold, price, overBy: price - threshold });
-  };
-  add("above", entry.alertAbove, price >= entry.alertAbove!);
-  add("below", entry.alertBelow, price <= entry.alertBelow!);
-  add("target", entry.targetPrice, price >= entry.targetPrice!);
-  add("exit", entry.exitPrice, price >= entry.exitPrice!);
-  return out;
-}
-
-export const ALERT_WORDING: Record<AlertKind, string> = {
-  above: "price is at or above the alert level",
-  below: "price is at or below the alert level",
-  target: "price has reached the target",
-  exit: "price has reached the exit level",
-};
+// ── THE ALERT CHECK MOVED TO `priceAlerts.ts` (Stage 10bz) ──────────────────
+//
+// `firedAlerts` and `ALERT_WORDING` lived here and are DELETED rather than left
+// beside their replacement: the old check never fired the entry price, fired on
+// a statement mark with no live quote behind it, and was called by one card on
+// one page. Two definitions of "has this alert fired" would be two chances for
+// the stock page and Morning CIO's All alerts tab to disagree about one alert.
 
 /**
  * What is still to be put into a name to reach its target weight — the spec's

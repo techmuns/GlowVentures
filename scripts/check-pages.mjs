@@ -3173,6 +3173,26 @@ const ROUTES = [
    * abstention rather than a failure and reads as a clean run.
    */
   ["cio-nav-live", "/cio?tab=nav"],
+  /**
+   * ...AND THE FOURTH PANEL, THE FAMILY'S OWN PRICE ALERTS (Stage 10bz), walked
+   * FOUR ways because an alert's whole claim depends on the state around it:
+   *
+   *   `cio-alerts`         seven alerts seeded (`ALERTS_BOOK`) with the live
+   *                        fixture priced — what fires, what is watched, what
+   *                        cannot be checked, and why;
+   *   `cio-alerts-nofeed`  the same seven with NO quote feed — the one state in
+   *                        which a stale statement mark could pass itself off as
+   *                        a price, so the one that proves it never does, and
+   *                        that a fund still fires on its published NAV;
+   *   `cio-alerts-empty`   nothing seeded — the empty state, and no badge;
+   *   `cio-alerts-badge`   seeded, on the MOVERS panel — the tab's count is how a
+   *                        reader on any other panel learns something fired, so
+   *                        it is asserted where the alerts table is not drawn.
+   */
+  ["cio-alerts", "/cio?tab=alerts"],
+  ["cio-alerts-nofeed", "/cio?tab=alerts"],
+  ["cio-alerts-empty", "/cio?tab=alerts"],
+  ["cio-alerts-badge", "/cio"],
   // ...ON THE ALLOCATION PANEL, because that is where the table is drawn now.
   // A `?alloc=` with no `?tab=` would land on the movers panel and walk a page
   // with no allocation table on it at all.
@@ -4887,6 +4907,114 @@ async function installCallStoreOff(page) {
     status: 503, contentType: "application/json",
     body: JSON.stringify({ ok: false, code: "NOT_CONFIGURED", message: "Saving capital calls is not switched on yet." }),
   }));
+}
+
+/**
+ * ── THE ALERTS THE `cio-alerts*` WALKS SEED, AND WHAT EACH MUST SAY ─────────
+ *
+ * *"Does these alerts actually work … in morning CIO can you make an ALL alerts
+ * tab where … whenever the alerts which have been set are triggered they show
+ * simply."* (Stage 10bz.)
+ *
+ * The store is the reader's own browser, so a walk that seeded nothing would
+ * only ever see the empty state — and every claim worth making is about what a
+ * SET alert does. So seven alerts are written into `localStorage` before the
+ * app boots, each on a holding chosen from the BOOK, so the next drop picks its
+ * own:
+ *
+ *   THE TWO LARGEST COMPANY SHARES THE LIVE FIXTURE PRICES. `installLiveMocks`
+ *   puts every symbol at its own mark × 1.10, so each level is a closed form:
+ *     share 1  Sell at   mark × 1.05  → REACHED — the price rose through it
+ *              Stop loss mark × 0.90  → WATCHING, 18.2% still to fall
+ *     share 2  Buy at    mark × 1.20  → REACHED — the price is under it. The
+ *                                       kind the old check left out, so it
+ *                                       could never fire
+ *              Target    mark × 1.50  → WATCHING, 36.4% still to rise
+ *   THE LARGEST FUND AMFI PRICES — Target at NAV × 0.95 → REACHED ON THE NAV,
+ *     with no quote feed involved at all, which is why it still fires on the
+ *     walk that serves no feed.
+ *   THE LARGEST AIF — Stop loss at TWICE its statement mark. Read against that
+ *     mark it has "fired"; there is no live price and no NAV behind it, so it
+ *     must say it cannot be checked. That is the old defect, seeded on purpose.
+ *   A NAME THE BOOK DOES NOT HOLD, saved with its name — it must be named by
+ *     what was saved, and must not be checked.
+ *
+ * RE-EXPRESSED, NEVER IMPORTED from `priceAlerts.ts`: a check that calls the
+ * helper it is checking agrees with it by construction. Which price (a quote,
+ * then the published NAV, never the mark), which way each kind fires and the
+ * words a fired alert says are written out here a second time, and the two
+ * agreeing is the measurement.
+ */
+const ALERT_STORE_KEY = "glow:watchlist/v1";
+const ALERT_FIELD = { entry: "entryPrice", exit: "exitPrice", below: "alertBelow", target: "targetPrice", above: "alertAbove" };
+const ALERT_DIR = { entry: "down", exit: "up", below: "down", target: "up", above: "up" };
+const ALERT_REACHED_WORDS = { entry: "Buy level reached", exit: "Sell level reached", below: "Stop loss hit", target: "Target reached", above: "Above your level" };
+const ALERTS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+    const byKey = new Map();
+    for (const p of positions) { const l = byKey.get(p.securityKey); if (l) l.push(p); else byKey.set(p.securityKey, [p]); }
+    const value = (k) => byKey.get(k).reduce((s, p) => s + (Number(p.marketValue) || 0), 0);
+    const largest = (pred) => [...byKey.keys()].filter((k) => pred(byKey.get(k))).sort((a, b) => value(b) - value(a));
+    const priced = (p) => typeof p.currentPrice === "number" && p.currentPrice > 0;
+    const quoted = (ps) => ps.map(symOf).find((s) => s && MARK_BY_SYMBOL.has(s)) ?? null;
+    const [s1, s2] = largest((ps) => ps.every((p) => p.assetClass === "Equity") && !!quoted(ps) && !ps.some((p) => p.navPriced));
+    const [fund] = largest((ps) => ps.some((p) => p.navPriced && priced(p)) && !ps.some((p) => symOf(p)));
+    const [aif] = largest((ps) => ps.every((p) => p.assetClass === "AIF") && !ps.some((p) => symOf(p) || p.navPriced) && ps.some(priced));
+    if (!s1 || !s2 || !fund || !aif) return null;
+    const r2 = (x) => Math.round(x * 100) / 100;
+    const mark = (k) => MARK_BY_SYMBOL.get(quoted(byKey.get(k)));
+    // Exactly as `installLiveMocks` rounds it, so the price is a closed form.
+    const live = (k) => Math.round(mark(k) * QUOTE_FACTOR * 10000) / 10000;
+    const nav = byKey.get(fund).find((p) => p.navPriced && priced(p)).currentPrice;
+    const aifMark = byKey.get(aif).find(priced).currentPrice;
+    const GONE = "alert-check-former-holding";
+    const alerts = [
+      { key: s1, kind: "exit", level: r2(mark(s1) * 1.05), live: live(s1), nav: null },
+      { key: s1, kind: "below", level: r2(mark(s1) * 0.90), live: live(s1), nav: null },
+      { key: s2, kind: "entry", level: r2(mark(s2) * 1.20), live: live(s2), nav: null },
+      { key: s2, kind: "target", level: r2(mark(s2) * 1.50), live: live(s2), nav: null },
+      { key: fund, kind: "target", level: r2(nav * 0.95), live: null, nav },
+      { key: aif, kind: "below", level: r2(aifMark * 2), live: null, nav: null, statementMark: aifMark },
+      { key: GONE, kind: "exit", level: 100, live: null, nav: null },
+    ].map((a) => ({ ...a, id: `${a.key}:${a.kind}` }));
+    const seed = {};
+    for (const a of alerts) seed[a.key] = { ...(seed[a.key] ?? {}), [ALERT_FIELD[a.kind]]: a.level, updatedAt: "2026-09-23T09:00:00.000Z" };
+    seed[GONE].name = "Former Holding Ltd";
+    return { seed, alerts, shares: [s1, s2], fund, aif, gone: GONE, goneName: "Former Holding Ltd" };
+  } catch { return null; }
+})();
+
+/**
+ * WHAT EACH SEEDED ALERT MUST SAY, with the feed up or down. A quote wins, then
+ * the published NAV; with neither there is NO verdict — never the mark. The
+ * distances are the two a reader is shown: how far past a fired level, as a
+ * share of the level, and how far still to go, as a share of the price now.
+ */
+function expectedAlerts(feedUp) {
+  if (!ALERTS_BOOK) return null;
+  return ALERTS_BOOK.alerts.map((a) => {
+    const price = feedUp && a.live != null ? a.live : a.nav;
+    const source = feedUp && a.live != null ? "live" : a.nav != null ? "nav" : "none";
+    if (price == null) return { ...a, price: null, source, status: "unchecked", past: null, toGo: null };
+    const reached = ALERT_DIR[a.kind] === "down" ? price <= a.level : price >= a.level;
+    return {
+      ...a, price, source, status: reached ? "reached" : "watching",
+      past: reached ? (Math.abs(price - a.level) / a.level) * 100 : null,
+      toGo: reached ? null : (Math.abs(a.level - price) / price) * 100,
+    };
+  });
+}
+
+/** The alerts, in the reader's browser before the app reads them. */
+async function installAlertStore(page) {
+  if (!ALERTS_BOOK) return;
+  await page.addInitScript(([k, v]) => {
+    try { localStorage.setItem(k, v); } catch { /* private mode — the route's own checks fail by name */ }
+  }, [ALERT_STORE_KEY, JSON.stringify(ALERTS_BOOK.seed)]);
 }
 
 async function installLiveMocks(page) {
@@ -8282,11 +8410,17 @@ const CIO_NAV = [
  * Only the probe failing to run abstains.
  */
 const CIO_TAB_CONTROL = [
-  ["Morning CIO offers exactly the three panels, in the order the family named them", (t, ctx) => {
+  /**
+   * FOUR SINCE Stage 10bz: *"in morning CIO can you make an ALL alerts tab."* It
+   * goes LAST, so the three the family arranged keep their places and the
+   * default is still the movers panel — which is why the order is asserted
+   * rather than the membership alone.
+   */
+  ["Morning CIO offers exactly the four panels, the three the family arranged and then All alerts", (t, ctx) => {
     const tabs = ctx?.cioTabs;
     if (tabs == null) return notChecked("the tab probe did not run on this pass");
-    return tabs.length === 3
-      && tabs.map((x) => x.key).join(",") === "movers,allocation,nav"
+    return tabs.length === 4
+      && tabs.map((x) => x.key).join(",") === "movers,allocation,nav,alerts"
       // EXACTLY ONE ACTIVE. Two would mean two panels are drawn at once, which
       // is the state this split exists to end; none would mean the route landed
       // somewhere the control does not describe.
@@ -8395,6 +8529,208 @@ const CIO_TAB_CONTROL = [
     const g = ctx?.cioLayout;
     if (!g || !g.strip || !g.panelBox) return notChecked("the layout probe did not run on this pass");
     return g.strip.bottom <= g.viewportH + 1 && g.panelBox.top >= g.strip.bottom - 1;
+  }],
+];
+
+/**
+ * ── ALL ALERTS: WHAT EACH SEEDED ALERT MUST SAY ──────────────────────────────
+ *
+ * A FACTORY, run by the two walks that seed the store: `feedUp` is the only
+ * thing that differs between them, and it decides every expectation through
+ * `expectedAlerts` — so the same claims are struck with the feed priced and
+ * with it down, and neither walk can pass by rendering the other's answer.
+ *
+ * NO ABSTENTION ON A MISSING PANEL OR A MISSING ROW. These walks seeded the
+ * store before the app booted, so an empty table is the defect — a sweep that
+ * stood down there would report CLEAN over a tab that had lost every alert. Only
+ * the probe failing to run abstains, and `ALERTS_BOOK` failing to derive is a
+ * FAILURE with its reason, because it means the book no longer holds a holding
+ * of one of the four kinds and the seed would silently shrink.
+ */
+const ALERT_PROBE = (ctx) => ctx?.alertsTab;
+function alertRowChecks(feedUp) {
+  const want = () => expectedAlerts(feedUp);
+  const panelOf = (ctx) => ALERT_PROBE(ctx)?.panel ?? null;
+  return [
+    ["the seed derived from the book — two quoted shares, a NAV-priced fund, an AIF and a name the book does not hold", () =>
+      ALERTS_BOOK != null && ALERTS_BOOK.alerts.length === 7],
+    ["the All alerts table draws one row per alert the store holds, and no other", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx), w = want();
+      if (!p || !w) return false;
+      const got = p.rows.map((r) => r.id).sort().join("|");
+      return p.table && !p.empty && got === w.map((a) => a.id).sort().join("|");
+    }],
+    /**
+     * THE CLAIM THE WHOLE TAB EXISTS FOR, and it is struck per row: each alert
+     * is in the state its OWN price puts it in — a quote for a share, the fund's
+     * published NAV for a fund, and none at all for an AIF or a name the book no
+     * longer holds. The source is asserted beside the state, because "reached"
+     * on a statement mark and "reached" on a live quote render identically.
+     */
+    ["each alert is in the state its own price puts it in, and says where the price came from", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx), w = want();
+      if (!p || !w) return false;
+      const by = new Map(p.rows.map((r) => [r.id, r]));
+      return w.every((a) => {
+        const r = by.get(a.id);
+        return r && r.status === a.status && r.source === a.source && r.kind === a.kind
+          && Math.abs((r.level ?? NaN) - a.level) < 1e-9
+          && (a.price == null ? r.price === null : Math.abs((r.price ?? NaN) - a.price) < 1e-6);
+      });
+    }],
+    /**
+     * AN AIF ALERT PAST ITS STATEMENT MARK NEVER FIRES. Its Stop loss is seeded
+     * at twice the mark, so read against the mark it has "fired" — which is
+     * exactly what the old card did, in a parenthesis. It must say it cannot be
+     * checked, with the reason in its hovers, and must never read "Watching".
+     */
+    ["an alert with no live price never fires on the statement mark, and says why it can't be checked", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx);
+      if (!p || !ALERTS_BOOK) return false;
+      const aif = p.rows.find((r) => r.key === ALERTS_BOOK.aif);
+      const gone = p.rows.find((r) => r.key === ALERTS_BOOK.gone);
+      const says = (r, re) => r && r.status === "unchecked" && !r.bell && /not checked/i.test(r.statusText)
+        && r.titles.some((x) => /no price to check against/i.test(x) && re.test(x));
+      return says(aif, /\bAIF\b/) && says(gone, /not held/i);
+    }],
+    ["...and an alert on a name the book no longer holds is named by what was saved with it", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const gone = panelOf(ctx)?.rows.find((r) => r.key === ALERTS_BOOK?.gone);
+      return !!gone && gone.name === ALERTS_BOOK.goneName;
+    }],
+    /**
+     * A FIRED ALERT LOOKS LIKE ONE: its own words ("Stop loss hit", "Buy level
+     * reached"), a bell, and a tinted row — and nothing that has not fired
+     * carries any of the three. Struck in both directions, because a table that
+     * tinted every row would satisfy the first half on its own.
+     */
+    ["a fired alert looks like an alert — its own words, a bell and a tinted row — and nothing else does", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx);
+      if (!p || !p.rows.length) return false;
+      const fired = p.rows.filter((r) => r.status === "reached");
+      const quiet = p.rows.filter((r) => r.status !== "reached");
+      return fired.length > 0
+        && fired.every((r) => r.bell && r.tinted && r.statusText.includes(ALERT_REACHED_WORDS[r.kind]))
+        && quiet.every((r) => !r.bell && !r.tinted && !Object.values(ALERT_REACHED_WORDS).some((w) => r.statusText.includes(w)));
+    }],
+    /**
+     * THE ORDER A READER WANTS BEFORE THEY PICK ONE: fired first, the furthest
+     * past its level at the top; then what is watched, closest to firing first;
+     * then what cannot be checked. Struck on the DERIVED distances rather than
+     * on the page's own ordering, so a table sorted by some other rule fails.
+     */
+    ["what has fired comes first, furthest past first; then what is watched, closest first; then what can't be checked", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx), w = want();
+      if (!p || !w) return false;
+      const rank = { reached: 0, checking: 1, watching: 2, unchecked: 3 };
+      const exp = new Map(w.map((a) => [a.id, a]));
+      const seq = p.rows.map((r) => exp.get(r.id));
+      if (seq.some((a) => !a)) return false;
+      for (let i = 1; i < seq.length; i++) {
+        const a = seq[i - 1], b = seq[i];
+        if (rank[a.status] > rank[b.status]) return false;
+        if (a.status === b.status && a.status === "reached" && a.past < b.past) return false;
+        if (a.status === b.status && a.status === "watching" && a.toGo > b.toGo) return false;
+      }
+      return true;
+    }],
+    /**
+     * THE DISTANCE, IN THE WORDS AN INVESTOR USES — "↓ 18.2% to go" while
+     * watching, the arrow the way the price must move; "4.8% past" once fired.
+     * Re-derived from the level and the price, so a column that divided by the
+     * wrong one (the level for a watched row, the price for a fired one) fails.
+     */
+    ["the distance says how far, and which way — to go while watching, past once fired", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx), w = want();
+      if (!p || !w) return false;
+      const by = new Map(p.rows.map((r) => [r.id, r]));
+      return w.every((a) => {
+        const r = by.get(a.id);
+        if (!r) return false;
+        if (a.status === "reached") return r.text.includes(a.past < 0.05 ? "right at your level" : `${a.past.toFixed(1)}% past`);
+        if (a.status === "watching") return r.text.includes(`${ALERT_DIR[a.kind] === "down" ? "↓" : "↑"} ${a.toGo.toFixed(1)}% to go`);
+        return !/% to go|% past/.test(r.text);
+      });
+    }],
+    ["the summary counts partition the rows, and the tab's badge is the number that have fired", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const a = ALERT_PROBE(ctx), p = a.panel, w = want();
+      if (!p?.summary || !w) return false;
+      const n = (s) => w.filter((x) => x.status === s).length;
+      const s = p.summary;
+      return s.reached === n("reached") && s.watching === n("watching") && s.checking === 0
+        && s.unchecked === n("unchecked") && s.total === w.length
+        && s.reached + s.watching + s.checking + s.unchecked === s.total
+        && (n("reached") > 0 ? a.badge === n("reached") && a.badgeText === String(n("reached")) : a.badge === null);
+    }],
+    ["every row opens its holding's own alert boxes", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx);
+      return !!p && p.rows.length > 0 && p.rows.every((r) => r.edit === `/stock/${encodeURIComponent(r.key)}#alerts`);
+    }],
+    ["the note under the table says where the prices came from, and that alerts are kept in this browser", (t, ctx) => {
+      if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+      const p = panelOf(ctx);
+      if (!p) return false;
+      return (feedUp ? p.feed === "live" && /live prices/i.test(p.feedText)
+        : p.feed === "unavailable" && /not reaching/i.test(p.feedText))
+        && /published NAV/i.test(p.feedText) && /this browser only/i.test(p.feedText);
+    }],
+  ];
+}
+
+const CIO_ALERTS_SEEDED = alertRowChecks(true);
+/**
+ * ...AND WITH THE FEED DOWN, which is the walk that proves the rule rather than
+ * describing it. Every share alert is "not checked" — including the Buy at that
+ * the statement mark sits under, which a mark-reading check would fire — and
+ * the fund still fires, on its published NAV, because that is committed data
+ * and needs no feed. A walk where the fund went quiet too would pass the first
+ * half of this and fail the second.
+ */
+const CIO_ALERTS_NOFEED = [
+  ...alertRowChecks(false),
+  ["with no price feed, no share alert fires — and the fund's still does, on its published NAV", (t, ctx) => {
+    if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+    const p = ALERT_PROBE(ctx).panel;
+    if (!p || !ALERTS_BOOK) return false;
+    const shares = p.rows.filter((r) => ALERTS_BOOK.shares.includes(r.key));
+    const fund = p.rows.find((r) => r.key === ALERTS_BOOK.fund);
+    return shares.length === 4 && shares.every((r) => r.status === "unchecked" && r.source === "none")
+      && !!fund && fund.status === "reached" && fund.source === "nav";
+  }],
+];
+const CIO_ALERTS_EMPTY = [
+  ["with no alert set, the tab says so, offers the way to set one, and draws no table", (t, ctx) => {
+    if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+    const p = ALERT_PROBE(ctx).panel;
+    return !!p && p.empty && !p.table && p.add && p.rows.length === 0 && p.summary === null;
+  }],
+  ["...and a quiet day adds nothing to the tab — no badge, never a 0", (t, ctx) => {
+    if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+    return ALERT_PROBE(ctx).badge === null;
+  }],
+];
+/**
+ * THE BADGE, FROM ANOTHER PANEL. *"whenever the alerts which have been set are
+ * triggered they show."* A reader who never opens the tab must still learn that
+ * something fired, so the count is on the tab itself and checked on every panel
+ * — and this is the walk where the table is NOT drawn, which is the only place
+ * that claim can be seen to hold.
+ */
+const CIO_ALERTS_BADGE = [
+  ["the All alerts tab carries the count of fired alerts while another panel is open", (t, ctx) => {
+    if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
+    const w = expectedAlerts(true);
+    const fired = w ? w.filter((a) => a.status === "reached").length : 0;
+    const a = ALERT_PROBE(ctx);
+    return fired > 0 && a.panel === null && a.badge === fired && a.badgeText === String(fired);
   }],
 ];
 
@@ -11227,6 +11563,13 @@ const INVARIANTS = {
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV],
+  // THE ALERTS PANEL (Stage 10bz). `CIO_SHARED` and the tab control ride on all
+  // four, because the strip, the header and the control are on every panel and
+  // a seeded store must not move any of them.
+  "cio-alerts": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_SEEDED],
+  "cio-alerts-nofeed": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_NOFEED],
+  "cio-alerts-empty": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_EMPTY],
+  "cio-alerts-badge": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_BADGE],
   /**
    * ── THE ALLOCATION ROW'S OWN DRILL-DOWN ──────────────────────────────────
    *
@@ -17653,6 +17996,11 @@ for (const theme of THEMES) {
       // every tab renders the same absent state and a filter that matched
       // nothing would be indistinguishable from one that worked.
       if (name === "cio-live" || name === "cio-nav-live") await installLiveMocks(page);
+      // THE ALERTS WALKS. The store is seeded before the app boots, and the live
+      // fixture is installed on the two that assert a quoted price; the no-feed
+      // walk deliberately gets none, because that is its whole subject.
+      if (name === "cio-alerts" || name === "cio-alerts-nofeed" || name === "cio-alerts-badge") await installAlertStore(page);
+      if (name === "cio-alerts" || name === "cio-alerts-badge") await installLiveMocks(page);
       if (name === "private-market-calls") await installCallStore(page);
       if (name === "private-market-calls-off") await installCallStoreOff(page);
       if (name === "cio-filling") await installFillingQuotes(page);
@@ -19020,6 +19368,67 @@ for (const theme of THEMES) {
           sections: [...document.querySelectorAll("main [data-cio-section]")].map((el) => el.getAttribute("data-cio-section")),
           head: { h1: box(h1), tabs: box(document.querySelector("main [data-cio-tabs]")), bar: box(h1?.parentElement?.parentElement) },
           viewportH: de.clientHeight,
+        };
+      });
+      /**
+       * ── THE ALL ALERTS PANEL, READ OFF ITS OWN ATTRIBUTES ────────────────
+       *
+       * Every claim about an alert is a claim about WHICH state it is in, and
+       * the words for those states ("Watching", "Stop loss hit") are prose a
+       * redesign is free to reword — so each row carries its state, its price,
+       * where the price came from and its level as attributes, and the checks
+       * strike on those. The rendered words are captured too, because "a fired
+       * alert LOOKS like one" is a claim about what the reader sees.
+       *
+       * A reason in a `title` is not in `innerText`, so each row's hovers are
+       * read separately — an alert that cannot be checked must say why, and it
+       * says so in a hover on its price, its distance and its status.
+       *
+       * The BADGE is read whatever panel is open: it is how a reader on another
+       * panel learns something has fired. `null` is ABSENT, which is what a
+       * quiet day must render — never a `0` pill.
+       */
+      const alertsTab = FAST ? null : await page.evaluate(() => {
+        const b = document.querySelector("main [data-cio-alert-badge]");
+        const sec = document.querySelector('main [data-cio-section="alerts"]');
+        const s = sec?.querySelector("[data-alert-summary]");
+        const num = (el, a) => (el?.hasAttribute(a) ? Number(el.getAttribute(a)) : null);
+        return {
+          badge: b ? Number(b.getAttribute("data-cio-alert-badge")) : null,
+          badgeText: b ? (b.textContent ?? "").trim() : null,
+          panel: sec ? {
+            empty: !!sec.querySelector("[data-alerts-empty]"),
+            table: !!sec.querySelector('table[data-table="all-alerts"]'),
+            add: !!sec.querySelector("[data-alert-add-input]"),
+            feed: sec.querySelector("[data-alert-feed]")?.getAttribute("data-alert-feed") ?? null,
+            feedText: sec.querySelector("[data-alert-feed]")?.textContent ?? "",
+            summary: s ? {
+              reached: num(s, "data-reached"), watching: num(s, "data-watching"), checking: num(s, "data-checking"),
+              unchecked: num(s, "data-unchecked"), total: num(s, "data-total"), text: (s.textContent ?? "").trim(),
+            } : null,
+            rows: [...sec.querySelectorAll("tr[data-alert-row]")].map((tr) => {
+              const st = tr.querySelector("[data-alert-status-cell]");
+              const bg = getComputedStyle(tr).backgroundColor;
+              return {
+                id: tr.getAttribute("data-alert-row"),
+                kind: tr.getAttribute("data-alert-kind"),
+                status: tr.getAttribute("data-alert-status"),
+                key: tr.getAttribute("data-alert-key"),
+                level: num(tr, "data-alert-level"),
+                price: tr.getAttribute("data-alert-price") === "" ? null : num(tr, "data-alert-price"),
+                source: tr.getAttribute("data-alert-source"),
+                name: (tr.cells[0]?.textContent ?? "").trim(),
+                text: tr.innerText,
+                statusText: (st?.textContent ?? "").trim(),
+                bell: !!st?.querySelector("svg"),
+                titles: [...tr.querySelectorAll("[title]")].map((el) => el.getAttribute("title") ?? ""),
+                edit: tr.querySelector("[data-alert-edit]")?.getAttribute("href") ?? null,
+                // A fired row is TINTED and a watched one is not. Transparent is
+                // `rgba(0, 0, 0, 0)`; anything with a non-zero alpha is a tint.
+                tinted: !/^rgba\(\s*0,\s*0,\s*0,\s*0\s*\)$|^transparent$/.test(bg),
+              };
+            }),
+          } : null,
         };
       });
       const navListRows = FAST ? null : await page.evaluate(() => ({
@@ -21364,7 +21773,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, pmReturn, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, alertsTab, absentName: ABSENT_NAME, costCarried, quotePriority: QUOTE_PRIORITY, path, url: page.url(), sectorLayout, shortWindow }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

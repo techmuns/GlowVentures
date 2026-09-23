@@ -25,6 +25,8 @@ import {
   BASKET_ORDER, FAMILY_CLASS_ORDER, UNCLASSIFIED, UNCLASSIFIED_WHY,
 } from "@/lib/familyTaxonomy";
 import { useViewParam } from "@/components/ViewToggle";
+import { AllAlerts } from "@/components/AllAlerts";
+import { usePriceAlerts } from "@/lib/usePriceAlerts";
 import { drilldownHref, AXIS_SCOPE, TOP_NAMES } from "@/lib/drilldown";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 
@@ -179,6 +181,15 @@ const CIO_TABS = [
   { key: "movers", label: "Daily Movers", title: "What moved today — the family's own direct equity, and their funds' published NAVs" },
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
+  /**
+   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10bz). *"in morning
+   * CIO can you make an ALL alerts tab where … whenever the alerts which have
+   * been set are triggered they show simply."* It goes LAST so the three the
+   * family arranged keep their places and the default stays the movers panel;
+   * what makes it findable from any of them is the count badge on the tab
+   * itself, which says how many have fired without the tab being open.
+   */
+  { key: "alerts", label: "All alerts", title: "Every price alert you have set, and which have been reached" },
 ] as const;
 const sectionColor = (axis: GroupAxis, key: string, i: number) => {
   if (key === UNCLASSIFIED) return UNPLACED_COLOR;
@@ -200,6 +211,10 @@ export function MorningCIO() {
   // WHICH PANEL IS ON SCREEN. See `CIO_TABS` above for what the three are and
   // why the choice lives in the URL.
   const [tab, setTab] = useViewParam(CIO_TABS, {}, "tab");
+  // THE ALERTS, CHECKED ON EVERY PANEL — not only the alerts panel — because
+  // the tab's badge is how a reader on any of the other three learns something
+  // has fired. A HOOK, so it sits up here with the others, above the early return.
+  const alerts = usePriceAlerts();
   // A HOOK, so it is declared here rather than beside the rows it arranges:
   // this component returns early on an unloaded book, and a hook after that is
   // a different bug from the one being fixed.
@@ -1013,6 +1028,15 @@ export function MorningCIO() {
                     : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"
                 }`}>
                 {v.label}
+                {/* HOW MANY ALERTS HAVE FIRED, on the tab itself — shown only
+                    when some have, so a quiet day adds nothing to the header. */}
+                {v.key === "alerts" && alerts.counts.reached > 0 && (
+                  <span data-cio-alert-badge={alerts.counts.reached}
+                    title={`${alerts.counts.reached} of your price alerts ${alerts.counts.reached === 1 ? "has" : "have"} been reached`}
+                    className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full border border-loss/40 bg-loss/15 px-1 text-[10px] font-semibold leading-4 text-loss">
+                    {alerts.counts.reached}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -1626,6 +1650,14 @@ export function MorningCIO() {
             `check:pages` asserts the card STAYS gone AND that the figures it
             carried are still reachable — a removal is verified by asserting it
             happened, never by deleting the test alongside the feature. */}
+        {/* ALL ALERTS — the family's own price levels, checked against the
+            live price (a fund's against its published NAV). See `AllAlerts`. */}
+        {tab === "alerts" && (
+          <div data-cio-section="alerts">
+            <AllAlerts />
+          </div>
+        )}
+
         {tab === "nav" && (
           <div data-cio-section="nav">
 

@@ -705,21 +705,212 @@ check("...and names the mandates this book does carry",
 // typed. The same treatment `deals.ts` and `household.ts` got in Stage 10f, and
 // the same reason `announcements.ts` stayed when `/news` went.
 //
-// So the surviving surface is asserted here: a name's own company page still
-// writes to the store. The address is taken off the monitor rather than typed,
-// like every other route this suite follows.
-await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
-const watched = page.locator('a[href^="/stock/"]').first();
-if (await watched.count()) {
-  await watched.click();
-  await page.waitForTimeout(1200);
-  text = await page.locator("body").innerText();
-  check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
-  check("...with the judgement fields the watchlist store holds",
-    /target price/i.test(text) && /fair value/i.test(text) && /valuation method/i.test(text));
-} else {
-  check("a company page still carries the Investment tools panel", false, "no /stock/ link on Portfolio Monitor");
+// So the surviving surface is asserted here: a holding's own page still writes
+// to the store, and — since Stage 10bz — Morning CIO's All alerts tab READS it.
+//
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10bz) ──
+//
+// *"Does these alerts actually work … in morning CIO can you make an ALL alerts
+// tab where … whenever the alerts which have been set are triggered they show."*
+//
+// That question is about WIRING, which is what this suite is for. The
+// arithmetic is `priceAlerts.test.ts`'s and the rendering of a SEEDED store is
+// `check:pages`'s, and neither can see a box that writes to a field the tab
+// does not read. So a reader's whole path is driven here:
+//
+//   type a Target the price has passed and a Stop loss it has not → the boxes
+//   say reached / watching → the store holds both, with the page's name → a
+//   typed "abc" is refused and erases nothing → the card's own link opens
+//   Morning CIO → All alerts → both rows, and the badge says 1 → one removed in
+//   TWO clicks, never one → the badge goes → the pencil opens the holding's
+//   boxes → the last level cleared → the store drops the entry (a name alone
+//   does not keep it) → the tab is empty again → its finder offers only
+//   holdings an alert can actually be checked on.
+//
+// ON A FUND THE PUBLISHED NAV PRICES, deliberately: that is committed data, so
+// its alerts are checkable on a preview that serves no quote feed — which is
+// exactly the state this suite runs in. A share's alert could only ever read
+// "not checked" here, and a path that ends there proves nothing about the tab.
+// The fund is DERIVED — the largest the committed NAV file may value — so the
+// next drop picks its own.
+{
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const navSrc = readFileSync(new URL("../../src/data/fundNavs.ts", import.meta.url), "utf8");
+  const symbols = JSON.parse(readFileSync(new URL("../../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const navs = (bookArray(navSrc, "BOOK_FUND_NAVS") ?? []).filter((e) => e.usableForValue && e.nav > 0);
+  const valueOf = (k) => positions.filter((p) => p.securityKey === k).reduce((s, p) => s + (Number(p.marketValue) || 0), 0);
+  const held = (k) => positions.some((p) => p.securityKey === k && Number(p.quantity) > 0);
+  const fund = navs.filter((e) => held(e.securityKey)).sort((a, b) => valueOf(b.securityKey) - valueOf(a.securityKey))[0];
+  const STORE = "glow:watchlist/v1";
+  const readStore = () => page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) ?? "{}"); } catch { return {}; } }, STORE);
+  const r2 = (x) => Math.round(x * 100) / 100;
+
+  if (!fund) {
+    check("a holding's page carries the price alerts card", false, "no fund in this book has a usable published NAV to drive the alert path on");
+  } else {
+    const key = fund.securityKey;
+    const card = page.locator("[data-alerts-card]");
+    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}#alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    // THE CARD, STRUCTURALLY. The four levels an investor acts at lead, in the
+    // order a reader meets them, and EVERY field the store holds is still on the
+    // page — under More if not in the main row — because the store surviving is
+    // only worth anything if a reader can still reach what they typed.
+    const layout = await page.evaluate(() => {
+      const c = document.querySelector("[data-alerts-card]");
+      const more = c?.querySelector("[data-alert-more]");
+      return c ? {
+        main: [...c.querySelectorAll("[data-alert-box]")].filter((b) => !more?.contains(b)).map((b) => b.getAttribute("data-alert-box")),
+        underMore: [...(more?.querySelectorAll("[data-alert-box]") ?? [])].map((b) => b.getAttribute("data-alert-box")),
+        inputs: [...c.querySelectorAll("[data-alert-input]")].map((i) => i.getAttribute("data-alert-input")).sort(),
+        plan: [...c.querySelectorAll("[data-plan-field]")].map((i) => i.getAttribute("data-plan-field")).sort(),
+        note: !!c.querySelector("[data-alert-note]"),
+        moreOpen: !!more?.open,
+        price: c.querySelector("[data-alert-price]")?.getAttribute("data-alert-price") ?? null,
+      } : null;
+    });
+    check("a holding's page carries the price alerts card", !!layout, key);
+    check("...leading with Buy at, Sell at, Stop loss and Target, with Alert above one click down under More",
+      !!layout && layout.main.join() === "entry,exit,below,target" && layout.underMore.join() === "above", layout ? `${layout.main} | ${layout.underMore}` : "");
+    check("...and every field the store holds is still on the page — the five levels, fair value, the plan fields and the note",
+      !!layout && layout.inputs.join() === "alertAbove,alertBelow,entryPrice,exitPrice,fairValue,targetPrice"
+        && layout.plan.join() === "fairValueRefYear,targetWeightPct,valuationMethod" && layout.note,
+      layout ? `${layout.inputs} · ${layout.plan}` : "");
+    check("...with More closed on a holding where nothing under it is set", !!layout && layout.moreOpen === false);
+    check("...and a fund's alerts are checked against its published NAV, with no quote feed at all",
+      layout?.price === "nav", layout?.price ?? "no chip");
+
+    // TYPE TWO LEVELS. Saved on Enter, exactly as a reader would.
+    const target = r2(fund.nav * 0.95), stop = r2(fund.nav * 0.5);
+    const typeLevel = async (field, v) => {
+      await page.fill(`[data-alerts-card] [data-alert-input="${field}"]`, String(v));
+      await page.press(`[data-alerts-card] [data-alert-input="${field}"]`, "Enter");
+      await page.waitForTimeout(250);
+    };
+    await typeLevel("targetPrice", target);
+    await typeLevel("alertBelow", stop);
+    const boxState = (kind) => page.$eval(`[data-alerts-card] [data-alert-box="${kind}"]`, (b) => ({
+      status: b.getAttribute("data-alert-status"), line: (b.querySelector("[data-alert-line]")?.textContent ?? "").trim(),
+    })).catch(() => null);
+    const tBox = await boxState("target"), sBox = await boxState("below");
+    check("a Target the NAV has passed says so in its own box, as it is typed",
+      tBox?.status === "reached" && /target reached/i.test(tBox.line), tBox ? `${tBox.status} · ${tBox.line}` : "");
+    check("...and a Stop loss it has not reached says how far is still to go",
+      sBox?.status === "watching" && /% to go/.test(sBox.line), sBox ? `${sBox.status} · ${sBox.line}` : "");
+    let store = await readStore();
+    const pageName = (await page.locator("main h1").first().innerText().catch(() => "")).trim();
+    check("the store holds both levels, with the page's own name beside them",
+      store[key]?.targetPrice === target && store[key]?.alertBelow === stop && !!store[key]?.name,
+      store[key] ? `target ${store[key].targetPrice} · stop ${store[key].alertBelow} · "${store[key].name}" (page "${pageName}")` : "no entry");
+
+    // A TYPO IS REFUSED, NEVER SAVED AS A DELETE. The old parser read "abc" as
+    // blank and silently erased whatever level was in the box.
+    await typeLevel("exitPrice", 321);
+    await typeLevel("exitPrice", "abc");
+    const bad = await page.$eval('[data-alerts-card] [data-alert-box="exit"] [data-alert-line]', (el) => el.textContent ?? "").catch(() => "");
+    store = await readStore();
+    check("a typed 'abc' is refused with a message, and the level that was there is kept",
+      /type a price/i.test(bad) && store[key]?.exitPrice === 321, `line "${bad.trim()}" · stored ${store[key]?.exitPrice}`);
+    await page.fill('[data-alerts-card] [data-alert-input="exitPrice"]', "");
+    await page.press('[data-alerts-card] [data-alert-input="exitPrice"]', "Enter");
+    await page.waitForTimeout(250);
+    store = await readStore();
+    check("...and a blank box clears it", store[key]?.exitPrice === null, `stored ${store[key]?.exitPrice}`);
+
+    // THE CARD'S OWN LINK OPENS THE TAB. Followed, not typed: a link that
+    // pointed anywhere else would still leave this suite able to goto the tab.
+    const link = card.locator('a[href="/cio?tab=alerts"]');
+    check("the card links straight to Morning CIO → All alerts", (await link.count()) === 1);
+    if (await link.count()) await link.first().click();
+    else await page.goto(`${BASE}/cio?tab=alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    const readTab = () => page.evaluate(() => ({
+      path: location.pathname + location.search,
+      rows: [...document.querySelectorAll("tr[data-alert-row]")].map((tr) => ({
+        id: tr.getAttribute("data-alert-row"), status: tr.getAttribute("data-alert-status"), source: tr.getAttribute("data-alert-source"),
+      })),
+      badge: document.querySelector("[data-cio-alert-badge]")?.getAttribute("data-cio-alert-badge") ?? null,
+      empty: !!document.querySelector("[data-alerts-empty]"),
+    }));
+    let tab = await readTab();
+    const rowIds = (t) => t.rows.map((r) => `${r.id}=${r.status}/${r.source}`).join(", ");
+    check("the All alerts tab shows both — the fired one first, checked on the NAV — and the badge counts it",
+      tab.path === "/cio?tab=alerts"
+        && rowIds(tab) === `${key}:target=reached/nav, ${key}:below=watching/nav` && tab.badge === "1",
+      `${tab.path} · ${rowIds(tab)} · badge ${tab.badge}`);
+
+    // REMOVING TAKES TWO CLICKS. One stray click must not delete a level the
+    // family set — there is no undo.
+    await page.click(`tr[data-alert-row="${key}:target"] [data-alert-remove]`);
+    await page.waitForTimeout(200);
+    tab = await readTab();
+    const confirmShown = await page.locator(`tr[data-alert-row="${key}:target"] [data-alert-remove-confirm]`).count();
+    check("one click on the cross asks, and removes nothing", confirmShown === 1 && tab.rows.length === 2);
+    await page.click(`tr[data-alert-row="${key}:target"] [data-alert-remove-confirm]`);
+    await page.waitForTimeout(300);
+    tab = await readTab();
+    store = await readStore();
+    check("...the second removes that alert only, and the badge goes with it",
+      rowIds(tab) === `${key}:below=watching/nav` && tab.badge === null && store[key]?.targetPrice === null && store[key]?.alertBelow === stop,
+      `${rowIds(tab)} · badge ${tab.badge}`);
+
+    // THE PENCIL OPENS THE HOLDING'S OWN BOXES, scrolled to them.
+    await page.click(`tr[data-alert-row="${key}:below"] [data-alert-edit]`);
+    await page.waitForTimeout(1200);
+    const landed = await page.evaluate(() => {
+      const c = document.querySelector("[data-alerts-card]");
+      const top = c ? c.getBoundingClientRect().top : null;
+      return { path: location.pathname, hash: location.hash, top, h: window.innerHeight };
+    });
+    check("the pencil opens the holding's alert boxes, scrolled into view",
+      landed.path === `/stock/${encodeURIComponent(key)}` && landed.hash === "#alerts" && landed.top !== null && landed.top >= -2 && landed.top < landed.h,
+      `${landed.path}${landed.hash} · card top ${landed.top}`);
+
+    // WHAT IS UNDER MORE OPENS ITSELF once something there is set — nothing the
+    // family typed is ever hidden — and a fair value says how far today's price
+    // is from it.
+    await page.evaluate(() => { const d = document.querySelector("[data-alerts-card] [data-alert-more]"); if (d) d.open = true; });
+    await typeLevel("fairValue", r2(fund.nav * 1.2));
+    const gap = await page.$eval("[data-alerts-card] [data-fair-value-gap]", (el) => el.textContent ?? "").catch(() => "");
+    check("a fair value says how far today's price is from it", /\+\d+(\.\d)?% from today/.test(gap), gap.trim());
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForTimeout(1000);
+    check("...and More opens by itself on a holding where something under it is set",
+      await page.$eval("[data-alerts-card] [data-alert-more]", (d) => d.open).catch(() => false));
+    await typeLevel("fairValue", "");
+
+    // CLEAR THE LAST LEVEL, AND THE ENTRY GOES. The name saved beside it is a
+    // fallback label, never a reason to keep an empty entry alive.
+    await page.click('[data-alerts-card] [data-alert-clear="below"]');
+    await page.waitForTimeout(300);
+    store = await readStore();
+    check("clearing the last level drops the entry — the saved name alone does not keep it", !(key in store),
+      key in store ? JSON.stringify(store[key]) : "gone");
+
+    await page.goto(`${BASE}/cio?tab=alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(700);
+    tab = await readTab();
+    check("...and the All alerts tab is empty again, with no badge", tab.empty && tab.rows.length === 0 && tab.badge === null);
+
+    // THE FINDER OFFERS ONLY WHAT AN ALERT CAN BE CHECKED ON: a holding the
+    // quote feed can price, or one with a published NAV. An alert on an AIF
+    // would sit there saying it can never be checked.
+    const checkable = new Set([
+      ...positions.filter((p) => p.symbol || symbols[p.securityKey]).map((p) => p.securityKey),
+      ...navs.map((e) => e.securityKey),
+    ]);
+    await page.click("[data-alert-add-input]");
+    await page.waitForTimeout(300);
+    const offered = await page.$$eval("[data-alert-add-option]", (els) => els.map((e) => e.getAttribute("data-alert-add-option")));
+    check("the New alert finder offers holdings, and only ones an alert can be checked on",
+      offered.length > 0 && offered.every((k) => checkable.has(k)), `${offered.length} offered · ${offered.filter((k) => !checkable.has(k)).join(", ") || "none unchecked"}`);
+    await page.press("[data-alert-add-input]", "Enter");
+    await page.waitForTimeout(900);
+    const to = await page.evaluate(() => location.pathname + location.hash);
+    check("...and picking one opens that holding's alert boxes", !!offered[0] && to === `/stock/${encodeURIComponent(offered[0])}#alerts`, to);
+  }
 }
 
 // ── AN ENTITY'S HOLDINGS THIS BOOK CANNOT VALUE ARE NAMED, NOT DROPPED ─────
