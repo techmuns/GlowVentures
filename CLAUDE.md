@@ -18521,10 +18521,10 @@ movement columns" is checked on that route rather than excused. `stock-pledge`
 now walks Insolation Energy rather than Kaynes, because the first pledged held
 name in window order changed; both assert the same claim.
 
-#### Merged with main five times, and the letter moved five times
+#### Merged with main six times, and the letter moved six times
 
 This branch was held at the family's request (*"do not merge until i tell you
-to"*), and main moved five times while it waited.
+to"*), and main moved six times while it waited.
 
 - **#70 and #73 landed first** and took `10bt` and `10bu`, so this section became
   `10bv`. The probe list unioned to 85 keys, and #73's generated `reviewGaps.ts`
@@ -18581,6 +18581,38 @@ to"*), and main moved five times while it waited.
   this branch's `family` and `variant` included, because both sides extend one
   capture.
 
+- **Then #80, #81, #82 and #84 landed together, and the family said to merge.**
+  #81 took `10by`, which this section had stepped over for #79's sake, so that
+  letter cost nothing. #80 took `10ca` — the letter this section held — and #82
+  took `10cb`, so this section is **`10cc`**. Four pointers outside it moved (the
+  `securityLabel.ts` entry in **Layout** and three under **Build**); every other
+  `10ca` in this file and all four in the code are #80's and stay, and one line of
+  this section's own history keeps `10ca` because it records the letter it held
+  then. Four conflicts, each resolved by what each side MEANT:
+  - **`tranches.ts`'s imports** — this branch's `securityLabel` beside #80's
+    `fifoReturnPct`.
+  - **The `monitor` block** — this branch's casing check beside #80's two FIFO
+    checks (the capital-basis Invested and the footer's FIFO return), none dropped.
+  - **The probe list** — main's per-route `TILE_MENU` / `TILE_PICK` maps (#82)
+    kept as maps, this branch's `pickOptions` beside them: 91 keys, none
+    duplicated, every one declared.
+  - **This file** — main's `10ca` and `10cb` first, this section after them.
+
+  `glowData.ts` and `BOOK-REPORT.md` were regenerated from the merged archive
+  rather than trusted to the text merge, and `BOOK_SUMMARY` does not move.
+
+  **AND THE SWEEP FOUND A CHECK THAT DID NOT KNOW THIS BRANCH'S LINE.**
+  `monitor-open-all` — #79's route that opens every row on the Category axis —
+  failed *"every row a row opened into has exactly the table's own columns"*. The
+  page was right: the line naming the depository account that carries a name and
+  holds none of it is a `treeLine`, one cell across the whole table, exactly like
+  the route-split line and the fund look-through. The probe knew those three by
+  name and not the fourth, so it measured a sentence as a one-column row. The
+  kinds are one list now (`FULL_WIDTH`) read by both checks it feeds — the width
+  check, which skips them, and the blank-line check, which holds them to saying
+  something. The two had never been walked together: this branch's last full
+  sweep was on `14cf81b` (#72), and `monitor-open-all` arrived with #79 after it.
+
 #### #72's search bar, checked against the family's own complaint
 
 #72 put a search box in the top bar — the search the family is most likely to
@@ -18624,6 +18656,28 @@ the same eight). Each step reconciles only because the sweep was run again rathe
 than the count adjusted. On the same final tree `npm run build-book` regenerates
 `glowData.ts` and `docs/BOOK-REPORT.md` byte for byte, and `rekey:archive`, the
 four `replay:*` passes and `reconcile:review` are all no-ops with `--check`.
+
+**On the tree merged with #80, #81, #82 and #84** (base `6453c99`): `build` ·
+`tsc` · `test:ingest` (golden 140 passed, 2 not checked, 0 blocked) ·
+`test:family` (every suite, #80's `fifo.test.ts` and this branch's
+`securityNames.test.ts` among them, 0 failed) · `check:pages` over **238
+combinations** with **two findings that are this merge's, both resolved**, and
+three that are not:
+- `monitor-open-all` — the probe above, fixed; re-run clean with
+  `monitor-sold-elsewhere`, `monitor-section-closed` and `monitor-txn-out`.
+- `monitor-txn-out` failed under load while a second sweep ran on the same
+  machine — its Sells click landed before the Transactions view had settled —
+  and passes on the same build run on its own, twice. Named rather than waved
+  through.
+- `private-market`, `private-market-tiles` and `private-market-returns` fail
+  **on `main` too**, measured on a worktree at `6453c99`: #80 made a fund's HPR
+  FIFO, and the sweep's re-expression still strikes it as value against cost.
+  That is main's own check to move, not this merge's.
+
+The ten NOT CHECKED lines are all main's evidenced abstentions: six Morning CIO
+panels (every KPI tile carries a figure), two Private Market fund routes (every
+private holding reports a cost), #79's redeemed private account (none is) and
+the not-found drill-down's crumb.
 
 ### Stage 10cd — PURCHASE, REDEMPTION AND APPRECIATION, AND NO RETURN IS STRUCK ON A NET
 

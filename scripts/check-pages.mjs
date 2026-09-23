@@ -21633,6 +21633,17 @@ for (const theme of THEMES) {
         if (!table) return null;
         const kids = [...table.querySelectorAll("tbody tr[data-tree-child]")];
         const kindOf = (tr) => tr.getAttribute("data-tree-child");
+        /*
+         * THE LINES DRAWN ACROSS THE WHOLE TABLE, ON PURPOSE — a sentence, not a
+         * row: the route split (`lead`), the fund look-through card, a note
+         * among the contributions, and the depository account that carries the
+         * name and holds none of it (`elsewhere`, Stage 10cc). Each is ONE cell
+         * spanning every column, so it is held to saying something rather than
+         * to the table's column count. One list for both checks below: an
+         * `elsewhere` line counted as a ROW fails "every row has the table's own
+         * columns" on a page that is right, which is how it was found.
+         */
+        const FULL_WIDTH = ["lead", "lookthrough", "note", "elsewhere"];
         const under = (tr) => {
           const out = [];
           for (let n = tr.nextElementSibling; n && n.hasAttribute("data-tree-child"); n = n.nextElementSibling) out.push(n);
@@ -21655,9 +21666,9 @@ for (const theme of THEMES) {
           venues: kids.filter((tr) => kindOf(tr) === "venue").length,
           // A full-width line with nothing in it — a card that rendered empty,
           // drawn as a blank row in the tree.
-          emptyLines: kids.filter((tr) => ["lead", "lookthrough", "note"].includes(kindOf(tr))
+          emptyLines: kids.filter((tr) => FULL_WIDTH.includes(kindOf(tr))
             && !(tr.innerText ?? "").trim()).length,
-          childWidths: kids.filter((tr) => !["lead", "lookthrough", "note"].includes(kindOf(tr))).map((tr) => tr.cells.length),
+          childWidths: kids.filter((tr) => !FULL_WIDTH.includes(kindOf(tr))).map((tr) => tr.cells.length),
           nested: [...table.querySelectorAll("tbody tr")]
             .filter((tr) => kindOf(tr) !== "lookthrough")
             .reduce((n, tr) => n + tr.querySelectorAll("table").length, 0),
