@@ -25,8 +25,8 @@ import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, loadSales, type Txn } from "@/lib/ledger";
 import { rollup, type GroupRow } from "@/lib/txnRollup";
 import {
-  trancheTable, trancheKey, capitalRollup,
-  type TrancheTable, type CapitalSide,
+  trancheTable, trancheKey, capitalRollup, carriedCostOf, carriedCostNote, boughtNavOf,
+  type TrancheTable, type TrancheRow, type CapitalSide,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
 // that must never be added. See its header for what that was measured at.
@@ -2326,6 +2326,15 @@ export function PortfolioMonitor() {
                   const trancheCount = trancheGroups.reduce((a, g) => a + g.table.rows.length, 0);
                   const trancheOpen = openTranches.has(r.key);
                   /**
+                   * A COST CARRIED THROUGH A FUND'S CLASS SWITCH SAYS SO, on the
+                   * cell that shows it. Buoyant's own statements print ₹72.5 Cr
+                   * for what the family paid ₹70.9 Cr for, and a reader holding
+                   * those statements has to be able to see which figure this is
+                   * and why the other exists — see `carriedCostOf`.
+                   */
+                  const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
+                  const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
+                  /**
                    * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
                    * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
                    * price and sector belong to a security; a mandate holds many
@@ -2524,16 +2533,20 @@ export function PortfolioMonitor() {
                             the row: what the reader wants apart is the money,
                             date by date. Drawn only where a breakdown exists —
                             a chevron that opens nothing is worse than none. */}
-                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                        <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
+                          data-cost-carried={carried ? carried.paid : undefined}
+                          data-cost-printed={carried ? carried.printed : undefined}>
                           {r.costNA ? "—" : trancheCount > 0 ? (
                             <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
                               data-tranche-toggle={r.key} data-tranche-rows={trancheCount}
-                              title={`Bought over ${trancheCount} dated contribution${trancheCount === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.${trancheGroups.length > 1 ? ` Shown per unit class, because each class is marked at its own NAV.` : ""}`}
+                              title={`Bought over ${trancheCount} dated contribution${trancheCount === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.${trancheGroups.length > 1 ? ` Shown per unit class, because each class is marked at its own NAV.` : ""}${carriedWhy ? ` ${carriedWhy}` : ""}`}
                               className="inline-flex items-center gap-1 rounded ring-focus transition-colors hover:text-champagne-400">
                               <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${trancheOpen ? "rotate-90" : ""}`} />
                               {fmtFromBase(r.costBasis, { compact: true })}
                             </button>
-                          ) : fmtFromBase(r.costBasis, { compact: true })}
+                          ) : carriedWhy
+                            ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
+                            : fmtFromBase(r.costBasis, { compact: true })}
                         </td>
                         {/*
                           THE DATE, AND WHAT IT IS NOT. A row funded several times
@@ -2766,6 +2779,9 @@ export function PortfolioMonitor() {
                       {trancheOpen && trancheGroups.map((g, gi) => {
                         const tranches = g.table;
                         const trancheSpansEntities = g.spansEntities;
+                        // The class these units are held in TODAY: the section's own
+                        // where the row clubs several, the row's where it clubs none.
+                        const heldClass = g.cls ?? classOfName(r.security);
                         return (
                         <tr key={"tr-" + r.key + "|" + (g.cls ?? "")} className="bg-ink-900/60"
                           data-tranche-panel={r.key} data-tranche-class={g.cls ?? ""}>
@@ -2790,7 +2806,12 @@ export function PortfolioMonitor() {
                                   under each class turns a sectioned panel into a wall. */}
                               {gi === 0 && <>
                                 {" "}Entry NAV is derived as invested &divide; units allotted and reproduces the allotment NAV the
-                                statement prints. A contribution held a year or more is annualised and tagged CAGR; anything
+                                statement prints{tranches.rows.some((t) => t.move.carriedFrom) && <>
+                                  {" "}&mdash; except on a row marked <span className="text-slate-400">switched</span>, which the fund
+                                  bought in an earlier unit class and moved into this one: its units and entry NAV are restated in
+                                  this class at the fund&rsquo;s own switch ratio, and its hover gives the NAV it was bought at.
+                                  The amount and the date are the statement&rsquo;s
+                                </>}. A contribution held a year or more is annualised and tagged CAGR; anything
                                 shorter shows the absolute return, because a rate for a year the money has not seen is a claim
                                 about a year.
                               </>}
@@ -2834,9 +2855,28 @@ export function PortfolioMonitor() {
                                     gain: (t) => t.value - t.invested,
                                     return: (t) => (t.ret.kind === "absent" ? null : t.ret.pct),
                                   }).map((t) => (
-                                    <Tr view={tv} key={t.date + t.label} data-tranche-row={r.key} className="hover:bg-ink-700/30">
+                                    <Tr view={tv} key={t.date + t.label + t.move.accountId} data-tranche-row={r.key}
+                                      data-tranche-hpr={t.returnPct}
+                                      data-tranche-switched={t.move.carriedFrom?.switchedOn ?? undefined}
+                                      data-tranche-bought-nav={boughtNavOf(t)?.toFixed(4) ?? undefined}
+                                      className="hover:bg-ink-700/30">
                                       <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(t.date)}</td>
-                                      <td className="px-3 py-1.5 text-slate-400">{t.label}</td>
+                                      {/* A SWITCHED ROW SAYS SO WHERE ITS TYPE IS, because its
+                                          units and entry NAV are in a class the statement's
+                                          own allotment line does not name. Inline, never a
+                                          block: a second line in this cell is a newline in
+                                          innerText, which splits the row for every row-based
+                                          check on this panel. */}
+                                      <td className="px-3 py-1.5 text-slate-400">
+                                        {t.label}
+                                        {t.move.carriedFrom && (
+                                          <span className="ml-1 whitespace-nowrap text-[10px] text-slate-500"
+                                            title={switchedRowNote(t, heldClass, fmtFromBase)}>
+                                            &middot; switched {classOfName(t.move.carriedFrom.security) ?? "from an earlier class"}{" "}
+                                            &rarr; {heldClass ?? "this class"}, {fmtDate(t.move.carriedFrom.switchedOn)}
+                                          </span>
+                                        )}
+                                      </td>
                                       {trancheSpansEntities && (
                                         <td className="px-3 py-1.5 whitespace-nowrap text-slate-400">{ownerOfAccount(t.move.accountId)}</td>
                                       )}
@@ -2849,8 +2889,16 @@ export function PortfolioMonitor() {
                                           : fmtFromBase(t.amount, { compact: true })}
                                       </td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">{fmtFromBase(t.invested, { compact: true })}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{fmtNum(t.units)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{fmtFromBase(t.navAtEntry)}</td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                                        {t.move.carriedFrom
+                                          ? <span title={`${fmtNum(t.move.carriedFrom.units)} ${classOfName(t.move.carriedFrom.security) ?? "earlier-class"} units as allotted; ${fmtNum(t.units)} after the fund moved them into ${heldClass ?? "this class"} on ${fmtDate(t.move.carriedFrom.switchedOn)}, at its own switch ratio.`}>{fmtNum(t.units)}</span>
+                                          : fmtNum(t.units)}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
+                                        {t.move.carriedFrom
+                                          ? <span title={switchedRowNote(t, heldClass, fmtFromBase)}>{fmtFromBase(t.navAtEntry)}</span>
+                                          : fmtFromBase(t.navAtEntry)}
+                                      </td>
                                       <td className="px-3 py-1.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(t.value, { compact: true })}</td>
                                       <td className={`px-3 py-1.5 text-right mono whitespace-nowrap ${t.value - t.invested >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                                         {fmtFromBase(t.value - t.invested, { compact: true })}
@@ -3868,6 +3916,23 @@ export function PortfolioMonitor() {
  * yields no section rather than an empty one.
  */
 type TrancheGroup = { cls: string | null; table: TrancheTable; spansEntities: boolean };
+
+/** A fund's unit class out of a security name — `A1` — or null where it prints none. */
+function classOfName(security: string | null | undefined): string | null {
+  return security ? (splitFundClass(security)?.cls ?? null) : null;
+}
+
+/** The hover on a switched tranche: what it was bought as, and what it is shown as. */
+function switchedRowNote(t: TrancheRow, heldClass: string | null, money: (v: number) => string): string {
+  const cf = t.move.carriedFrom!;
+  const bought = boughtNavOf(t);
+  const was = classOfName(cf.security) ?? "an earlier class";
+  const now = heldClass ?? "this class";
+  return `Bought on ${fmtDate(t.date)} as ${fmtNum(cf.units)} Class ${was} units`
+    + `${bought !== null ? ` at ${money(bought)} each — the allotment NAV the statement prints` : ""}. `
+    + `The fund moved them into Class ${now} on ${fmtDate(cf.switchedOn)}; shown here as ${fmtNum(t.units)} ${now} units `
+    + `at ${money(t.navAtEntry)} each, so every row of this table is priced in the class held today. What was paid, and when, is unchanged.`;
+}
 
 function trancheGroupsOf(r: Row, asOf: string): TrancheGroup[] {
   const spans = (t: TrancheTable) => new Set(t.rows.map((x) => x.move.accountId)).size > 1;
