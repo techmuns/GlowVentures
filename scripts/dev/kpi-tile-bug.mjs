@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// BUG-REINTRODUCTION HARNESS for Stage 10bv — the KPI tile strips.
+// BUG-REINTRODUCTION HARNESS for Stage 10bw — the KPI tile strips.
 //
 //   node scripts/dev/kpi-tile-bug.mjs            # every case
 //   node scripts/dev/kpi-tile-bug.mjs 3 7        # just those cases (1-based)

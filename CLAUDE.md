@@ -341,7 +341,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   per page, METRIC IDS AND NOTHING ELSE; `localStorage` is the instant copy the
   page paints from and the whole memory where the store is not connected.
   `chooseTileSet` is the one precedence rule — a `?tiles=` address, then a change
-  made here the store never confirmed, then the shared layout. See Stage 10bv.
+  made here the store never confirmed, then the shared layout. See Stage 10bw.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -5757,7 +5757,7 @@ set's caption.
 | Winners / losers | `?of=winners` / `losers` | Showing a gain · In neither count |
 | Dry powder · Distributions | `/private-market` | not holdings — no facet, and no holdings table |
 
-***CAPITAL INVESTED IS NO LONGER A SCOPE OF ITS OWN — see Stage 10bv.*** At the
+***CAPITAL INVESTED IS NO LONGER A SCOPE OF ITS OWN — see Stage 10bw.*** At the
 family's request it is the second line of the Current Value of Holdings tile, and
 `?of=invested` resolves to `?of=book&facet=costed`: a second facet GROUP on the
 value page (*Cost reported · No cost reported*) beside the listed / private one.
@@ -16106,6 +16106,229 @@ the head SHAs are compared.
   Polycab-as-one-table and Sector Composition's two halves — and this section
   references no letter at all, so none moved. Checked one at a time rather than
   swept.
+
+### Stage 10bw — ONE TILE FOR WHAT THE BOOK IS WORTH AND WHAT WENT INTO IT, AND EVERY STRIP REMEMBERS ITSELF FOR EVERYONE
+
+*"Open PR and do not merge until I tell you to."* · *"the headings of the KPI
+tiles is not being shown completely… the small text below… is very messy and it
+is not legible at all… make sure that these sub-texts are shorter and direct…
+If it is irrelevant then remove them."* · *"When we are selecting a particular
+KPI tile, after changing the metric that we want to see on it, make sure that it
+is being saved and next time when we come on the dashboard it should be in the
+same format as it was after we changed it."* · *"Capital invested and current
+value of holdings can be a single KPI tile… inside that page keep the Current
+value of holdings only view and add new columns and data regarding the invested
+capital… they don't need to be two separate pages."* · *"the KPI tiles on
+Morning CIO page are also editable just like they are in the private market
+page."*
+
+Four asks, and the second is the one that turned out to be two defects.
+
+#### 1. THE HEADINGS WERE CUT OFF BY A BROWSER BUG, NOT BY A LACK OF ROOM
+
+The family's screenshot read "DISTRIBUTION / S" and "CURRENT VALUE OF /
+HOLDINGS" with a third of the tile empty beside them. **Measured, not guessed:**
+Chromium computes the intrinsic width of letter-spaced text short by ~0.18px a
+letter under CSS `zoom` — and `#root` carries `--app-zoom: 0.875` (Stage 10n).
+A label sized to its content (`inline-flex`, shrink-to-fit) is therefore laid
+out a few pixels narrower than the text it holds, and the last letters wrap onto
+a line of their own. Padding (`pr-[0.15em]`) did not fix it — the shortfall
+scales with the letter count.
+
+The fix is to never size a label to its own content: the picker button is
+`flex w-full` and its text a `flex-1` span, so a label takes the free width of
+its tile and wraps only when there genuinely is no room — and then between
+WORDS (`break-words`), never mid-word. Kpi's control label is a block-width
+flex div rather than an `inline-flex` span for the same reason, and the ↗ arrow
+beside it went, because it was the one inline-sized element left on the line.
+**Any other `label-xs` sized to its content under `#root` is exposed to the same
+measurement**; this change fixes the two strips that were reported and names the
+cause rather than hunting the rest unmeasured.
+
+**AND THE CHECK THAT WAS WRITTEN FOR IT COULD NOT SEE IT, WHICH ONLY THE BUG
+PASS SHOWED.** The first version measured two things on the label's own text —
+an ellipsis (`scrollWidth > clientWidth`) and a word split across two lines — and
+putting main's own truncating markup back produced a CLEAN sweep. Nothing was
+wrong with the measures; the ROUTES were wrong: with the labels shortened, main's
+picker renders every default heading whole at five tiles, and only cuts
+"Current Value of Holdings" to 127px of the ~167px it needs at SIX. And the
+family's second symptom — "UNCALLED CAPITAL" on two lines in 101px of a 122px
+tile — is neither an ellipsis nor a split word, so neither measure could ever
+have caught it. Three things changed:
+
+- **`cio-tiles-dense`** opens the MAXIMUM six tiles on the six longest labels
+  Morning CIO's own picker offers — read off the open menu, never typed, so a
+  renamed metric moves the worst case with it — and asserts it really drew six,
+  because a stale address falls back to the default five and would pass on
+  exactly the width where there is nothing to catch.
+- **`needlessWrap`** measures a label that wrapped while the next word would have
+  fitted. **Its edge is the tile's HEADER ROW, up to the icon beside the label —
+  never any box inside the label**, because in the defect every one of those
+  shrinks with the bug and would agree with it. The first draft measured against
+  the label container and was blind to the very case it was written for.
+- **`headingsWhole`** is one predicate over all three measures, run by the
+  default strips and the dense one, so a heading cannot be held to two standards.
+
+A fourth measure — a label spilling past its tile — was written, found to fire on
+no regression anyone could construct (the one case that overflows is caught by
+the clipping test instead), and **removed** rather than shipped unable to fire.
+Its premise was a misreading: a button 151px wide in a 148px slot is the `-ml-1`
+offset, and the right edges line up exactly.
+
+#### 2. ONE LINE UNDER A FIGURE, AT A SIZE A READER CAN READ
+
+`StatTile`'s sub-line was 11px slate-500. It is 13px slate-300 now, and three
+lines that merely REPEATED their own heading ("Cost of these holdings" under
+Cost, "Distinct funds held" under Funds, "Statement lines" under Folios) are
+gone rather than shortened — a line that says the label again is chrome.
+`check:pages` asserts both: at most one short line, at ≥13px, and no line that
+restates its tile's heading. The longer working stays in each tile's hover, as
+Stage 10bs left it.
+
+#### 3. "SAVED" MEANT ONE BROWSER, AND THE FAMILY READ THAT AS NOT SAVED
+
+The strip already kept a choice in `localStorage`. Measured, that survives a
+reload and a new tab — and does NOT survive a second laptop, a phone, a cleared
+browser, or the partitioned storage a browser gives a page inside another
+site's frame, which is how this dashboard is served (the session cookie is
+`SameSite=None` for exactly that reason). Each of those reads as "it did not
+save". And a second defect sat on top: a picked tile wrote `?tiles=` into the
+ADDRESS, so a reader who bookmarked or re-opened that address was pinned to the
+set in the URL whatever they later chose.
+
+- **`functions/api/tile-sets.js`** keeps each page's layout in Cloudflare KV —
+  the SAME `GLOW_STORE` binding the capital-call column uses, so there is no new
+  set-up. One key per PAGE (`tile-set:<page>`), last write wins: the site has one
+  password and no user accounts, so a layout is the dashboard's, like the
+  capital calls. It stores **METRIC IDS AND NOTHING ELSE** — validated as slugs,
+  at most 40 — so nothing saved can put a figure on screen; the page decides what
+  an id means from the book when it renders, and an id a later build does not
+  know is dropped rather than drawn blank. The save's answer applies the save
+  itself, because KV's list is eventually consistent and a reader must never see
+  their pick revert. Writes carry the capital-call store's cross-site guards.
+- **`src/lib/tileSets.ts`** is the client: one GET per page load shared by both
+  strips, a `{ ids, synced }` copy in `localStorage` that the page paints from
+  first (so it never opens on the defaults and jumps), and ONE pure precedence
+  rule, `chooseTileSet`:
+
+  ```
+  a ?tiles= address  >  a change made here the store never confirmed
+                     >  the shared layout  >  this browser's copy
+  ```
+
+  The second tier is the load-bearing one: a choice made while the store was
+  down is the newest thing anybody did to the strip, and it is PUSHED when the
+  store answers rather than overwritten by the older shared layout. An older
+  build's bare-array copy is of unknown age and yields to the shared set.
+- **A PICK NO LONGER WRITES THE ADDRESS** — it deletes `?tiles=` with `replace`,
+  so an address carries a layout only when somebody deliberately shares one.
+- **THE PICKER SAYS WHERE THE CHOICE WENT**, and the cause picks the sentence:
+  saved for everyone; saved in this browser only because the store is not
+  switched on, not running here, the reader was signed out, or it did not answer.
+  Each sends a reader somewhere different — `upstreamStatus.ts`'s rule arriving
+  through a preference. It is in the picker, never on the strip.
+
+`tileSets.test.ts` (48 checks) runs the function against an in-memory KV that
+pages and can be frozen stale, and reads the function's OWN responses through
+the client, so the two halves cannot drift; it walks every tier of the
+precedence rule.
+
+#### 4. ONE TILE, ONE PAGE: WHAT THE BOOK IS WORTH AND WHAT WENT INTO IT
+
+**Current Value of Holdings** carries a second line, **Invested ₹X**, and opens
+`/holdings?of=book`. Capital invested is no longer a default tile or a scope of
+its own:
+
+- the `invested` drill-down is **merged into `book`** as a second facet group —
+  *Cost reported · No cost reported* beside *Listed · Private · Not placed*,
+  with a divider between the two groups because they cut the same holdings two
+  different ways and a reader must not read the six chips as one partition.
+  `?of=invested` and `?of=no-cost` still resolve (to `book` with the `costed` /
+  `no-cost` facet), so every bookmark keeps working;
+- the page's headline gains **Invested ₹X · gain ±₹Y (±Z%) · N of M report a
+  cost** — the return printed only where `coveredReturn` says the costed set
+  covers the value, the rule the allocation row and the footer already apply;
+- the table gains a **Share of invested** column beside Weight, footed at 100%,
+  so a reader sees where the money went as well as what it is worth now. A row
+  whose statement reports no cost renders an `AbsentCell` naming why, never 0%.
+
+**Nothing moved in the arithmetic.** Capital invested is the same `sumOrNull`
+over the same costed set; the tile's figure and the page's figure are asserted
+to be one number by two paths.
+
+#### 5. MORNING CIO'S STRIP IS THE PRIVATE MARKET PICKER
+
+`SelectableTiles` gains a `variant="kpi"` that draws the raised, clickable `Kpi`
+tile, and Morning CIO's fixed strip is now a catalogue of **twenty metrics on this book**
+over five defaults (value, money-weighted return, consolidated return, uncalled,
+distributions): capital invested, unrealised gain, committed, each side of the
+book, positions, names, top-10, cross-held, winners, losers, the largest holding,
+accrued income and cash. **Every figure is one this page already derived**; the
+catalogue re-homes them, it computes nothing new. Each tile keeps ITS OWN
+destination, and the picker and remove controls are lifted above the tile's
+stretched link so choosing a metric never navigates. The grid follows the tile
+count (`--kpi-cols`, capped at six) — as `.grid.kpi-grid`, because Tailwind
+emits its responsive column classes after every custom rule and a single-class
+selector lost to `lg:grid-cols-3` at 1500px.
+
+`check:pages` gains three routes: `cio-tiles-saved` (pick a metric with a stubbed
+store, then a SECOND browser context must open on it), `cio-tiles-dense` (above)
+and `holdings-invested-legacy` (the old address still lands on the costed half,
+and its crumb is held to the figure it now opens rather than abstaining on a link
+that is gone by design). `tilePickerChecks` is one factory run by both strips.
+
+**ONE SET-UP STEP, AND IT IS THE SAME ONE AS THE CAPITAL-CALL COLUMN.** If the
+`GLOW_STORE` KV binding is connected, layouts are saved for everyone on the next
+deploy with nothing else to do. Until it is, every choice is kept in the browser
+and the picker says so.
+
+#### The bug pass, and the harness that runs it
+
+`scripts/dev/kpi-tile-bug.mjs` — committed so the next session's verification is
+one command. Each case patches ONE defect back, rebuilds, and walks only the
+routes (or runs only the suite) that exist to catch it; a patch that does not
+apply or a build that fails is reported as NOT A RESULT, and the tree is restored
+from memory, verified byte for byte, and REBUILT on the way out. It edits with
+`split(from).join(to)` and never `.replace` — this session's own patch scripts
+lost a `$$eval` to `String.replace`'s `$$` pattern TWICE, the trap this file
+records at Stage 10bj, and the first time it silently aborted the pick walk.
+
+| Defect put back | Fires |
+| --- | --- |
+| main's truncating label (the ellipsis the family photographed) | the heading check on `cio-tiles-dense` |
+| a label that will not wrap, overflowing its box | the same |
+| the KPI label container sized to its content — the zoom wrap | the heading check on `cio` |
+| a pick writes `?tiles=` into the address | "the next visit opens on it", on Private Market and Morning CIO |
+| a save never reaches the shared store | all four `cio-tiles-saved` checks — the fourth only after it was re-struck: it read the picker's sentence BEFORE the pick, which reports the store being READ, so the first run fired three. It reads the sentence again once the save has answered |
+| the value tile loses its Invested line | "Current Value of Holdings carries the capital invested, as one tile" |
+| Morning CIO's strip fixed again — no picker | four picker checks |
+| the value page loses its cost facets | eight checks across four drill-down routes |
+| Share of invested struck on half the cost | "the Share of invested column adds to the footer's 100%" |
+| the headline's invested line deleted | "the capital invested stands beside the value, and it is the Morning CIO tile's" |
+| a tile line restating its heading | "no tile's line merely repeats its heading" |
+| the line under a figure back at 11px slate-500 | "at most one short, legible line" |
+| an unsynced change overwritten by the older shared layout | 2 suite checks |
+| a save's answer read from KV's stale list | 2 |
+| any string accepted as a metric id | 2 |
+| a cross-site write accepted | 3 |
+
+**THE FIRST RUN OF THIS TABLE HAD A CLEAN ROW, AND THAT ROW IS THE SECTION ABOVE.**
+The label case as first written reverted only the button's width, found nothing,
+and was measured rather than assumed: that variant renders every heading
+correctly here. Main's own markup and the container regression are what break a
+heading, and the checks were extended until both fire.
+
+#### Merged with main, and the letter was checked against the tip
+
+Stage 10bu (#73) landed while this branch was open and **keeps its letter**; this
+section is **10bw**. The `ctx` literal conflicted on one line and was resolved as
+a union — main's `absentName` beside this branch's `tileSaved` and
+`hbCostShares`, 85 keys, none duplicated, each confirmed declared. `HoldingsBehind.tsx`
+auto-merged and was read rather than trusted: main added the `AbsentFromBook`
+note under an empty filter, which sits beside this branch's invested headline
+without touching it. No generated file was touched by either side, and
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+byte-identically (md5 unchanged).
 
 ### Stage 10k — News & Announcements: REMOVED
 

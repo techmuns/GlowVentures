@@ -19629,7 +19629,7 @@ for (const theme of THEMES) {
           if (/^holdings-/.test(name) && leaf?.text) {
             // A RETIRED ADDRESS IS HELD TO THE FIGURE IT NOW OPENS. Morning CIO
             // no longer links `?of=invested` — Capital invested is a facet of the
-            // value page since Stage 10bv — so the pairing is struck against the
+            // value page since Stage 10bw — so the pairing is struck against the
             // address the legacy one resolves to, rather than abstaining on a
             // link that is gone by design.
             const crumbPath = CRUMB_ALIAS[name]?.() ?? path;
