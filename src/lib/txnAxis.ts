@@ -160,7 +160,7 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
      * AN ACCOUNT THAT HOLDS NO VALUED POSITION IS STILL AN AIF ON THE CATEGORY
      * AXIS, WHEN ITS OWN STATEMENT SAYS SO.
      *
-     * Stage 10bz put a drawdown fund's dated CALLS on this table for the
+     * Stage 10ca put a drawdown fund's dated CALLS on this table for the
      * accounts that publish no capital record — India SME's three folios and
      * Sky Capital's four among them — and none of those seven carries a
      * position, because no statement values them. Left to the holdings they

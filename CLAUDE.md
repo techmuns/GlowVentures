@@ -199,7 +199,7 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/tranches.ts` — THE FAMILY'S OWN DATED INVESTMENTS, one definition read
   by both surfaces: the Transactions card's Purchase / Redemption / appreciation
   columns and the per-contribution breakdown a holdings row opens into. See Stage
-  10ag, and Stage 10bz for `capitalRollup`'s appreciation split, `capitalReturn`
+  10ag, and Stage 10ca for `capitalRollup`'s appreciation split, `capitalReturn`
   (the return methodology struck on the family's own money) and
   `capitalMovesWithCalls` (a drawdown fund's dated calls as purchases).
   `carriedCostOf` / `carriedCostNote` are the ONE place a cost carried through a
@@ -236,7 +236,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   statement — the FAMILY's own declaration, keyed on `securityKey`, cited, and
   only ever filling a category both printed fields leave blank; it can never
   overrule a statement, and it decides a fund's AIF drill-down section rather
-  than its side. See Stage 10bz.
+  than its side. See Stage 10ca.
 - `src/lib/sectors.ts` — the browser's door to `shared/sectors.mjs`, so
   `build-book` and the app resolve a sector through ONE committed table. Three
   TIERS read it: the family's own statement, a fund's SEBI filing joined on the
@@ -381,7 +381,8 @@ cash holding's genuinely-zero return both match, and both are correct.
 - `src/lib/searchIndex.ts` + `src/components/SmartSearch.tsx` — THE SEARCH BOX
   IN THE TOP BAR. One index over every holding, mandate, account, member, page,
   tab, category, sector and headline figure the app has, each with the address
-  that opens it; a question goes to Muns. Built from the book on every render
+  that opens it. (A question went to Muns until the family paused the chat —
+  Stage 10bz.) Built from the book on every render
   and never from a hand-kept list, and the ring-fenced security is in none of
   it. See Stage 10bw.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
@@ -3754,10 +3755,12 @@ apart).
 from the dashboard and answer the client any queries. It should understand the
 context since the dashboard data will be available to it."*
 
-*(A REAL search box stands in that slot since Stage 10bw, with the chat as a
-compact "Ask Muns" button beside it and one keystroke from any search. The chat
-route's check still counts the DEAD box by its old placeholder, which the new one
-does not share.)*
+*(A REAL search box stands in that slot since Stage 10bw, and **the chat is
+PAUSED since Stage 10bz**: the family asked for "Ask Muns" off the top bar, so
+neither its button nor the search list's Ask row is drawn. Everything below is
+kept because the component is — it is what the chat must do again when it comes
+back. The chat route asserts the chat is ABSENT now, and still counts the DEAD
+box by its old placeholder, which the new one does not share.)*
 
 **WHAT IT REPLACED WAS A CONTROL THAT SEARCHED NOTHING.** The top bar's search
 box was an `<input>` with no `value`, no `onChange` and no handler, in the most
@@ -3919,7 +3922,9 @@ payload for a non-finite number, because a `?? 0` in the builder is the
 absent-vs-zero rule failing through a JSON field instead of a table cell.
 `check:pages` walks a `chat` route that opens the panel and asks one question:
 the label, the stated snapshot, the vanished search input, and the named
-failure. All verified by reintroducing their bug.
+failure. All verified by reintroducing their bug. *(Since Stage 10bz that route
+asserts the chat is absent instead; these are the claims it must make again the
+day the chat returns.)*
 
 **AND THIRTY MORE ON THE FUNCTION ITSELF** (`chatFunction.test.ts`),
 against a STUBBED upstream — the token exists only in Cloudflare, so the real
@@ -16600,7 +16605,8 @@ the XIRR and not in that total.
 *"any equity, any fund, any position that I have taken, any tab … think as the
 customer: what all they can type."* The top bar's slot held a button that opened
 the Muns chat. It is a search over everything the book and the app carry now,
-and Muns is still one keystroke away.
+and Muns was still one keystroke away — until the family paused the chat, Ask
+row and all (Stage 10bz).
 
 **ONE INDEX, BUILT FROM THE BOOK ON EVERY RENDER** (`buildSearchIndex`), 329
 entries on this book, each with the address that opens it:
@@ -17191,7 +17197,67 @@ every one resolving to a declaration.
 finishes · `npm run build-book` byte-identical — a table's layout is not part of
 the book.
 
-### Stage 10bz — PURCHASE, REDEMPTION AND APPRECIATION, AND NO RETURN IS STRUCK ON A NET
+### Stage 10bz — ASK MUNS IS OFF THE TOP BAR, AND THE CHAT IS PAUSED RATHER THAN DELETED
+
+*"Remove Ask muns from here, dont want this right now"* — sent with a screenshot
+of the "✦ Ask Muns" button beside the search box.
+
+**TWO DOORS LED TO THE CHAT, AND BOTH ARE GONE.** The button, and an "Ask Muns"
+row the search list appended to EVERY query — first where the query read as a
+question (`looksLikeQuestion`), last for everything else. The family pointed at
+the button; a row offering the same chat on every search is Muns in the top bar
+all the same, so it went with it. That is the one part of this change that goes
+past the screenshot, and it is said in the PR rather than decided silently.
+
+**"RIGHT NOW" IS WHY IT IS PAUSED, NOT DELETED** — the opposite of the
+`exportDeck.ts` call, and the difference is the family's own word for it.
+`MunsChat.tsx` is kept whole and says at its own definition that nothing renders
+it and how it comes back; `munsChat.ts`, `chatContext.ts` and
+`functions/api/chat.js` are untouched and still tested (`chatContext.test.ts`,
+`chatFunction.test.ts`); `looksLikeQuestion` keeps its test and names its missing
+caller. What went is the RENDERING — the button in `TopBar.tsx` and the row's
+code in `SmartSearch.tsx` — deleted rather than hidden behind a constant flag,
+because a branch pinned off is the dead-code-that-looks-alive failure this file
+keeps naming.
+
+**AND THE ROW HAD BEEN CARRYING SOMETHING ELSE.** The list opened only when it
+had rows, and the Ask row gave every query one — so the empty state, and Stage
+10bu's note saying why a name the family holds is on no statement (BSE), rode on
+it. Removing the row alone would have closed the list on exactly those queries
+and dropped both in silence. The list now opens on any query, and its empty line
+no longer offers Muns the question.
+
+**THE CHECKS INVERTED, NOT DELETED.** The `chat` route opened the panel and held
+five claims about it — the answer marked as generated, the snapshot and its
+limits, a scrim covering the viewport rather than the header, a panel sized for
+reading, a failure that names itself. None has a subject while the chat is
+paused; each is listed in Stage 10s for the day it returns. The route asserts the
+REMOVAL instead: the button gone by its handle AND by its words (a button put
+back under another test id still reads "Ask Muns"), no panel anywhere, the dead
+search box the chat first replaced still gone — and a walk that did not run fails
+rather than abstains. The `search` route asserts that no query offers Ask Muns (a
+question, a name, a page and a string nothing matches — by each row's kind and by
+the list's words), and that a query nothing matches still opens the list, says
+so, and offers nothing in its place.
+
+**`scripts/dev/ask-muns-bug.sh` reintroduces six bugs one at a time**, after a
+no-patch control came back clean — and every one fires its own check. The
+button put back fires the button claim; the same button under another test id
+fires it too, by its words. The search's Ask row put back fires the no-Ask claim
+and the nothing-matches claim, and the same row with no handle fires the no-Ask
+claim alone, by the list's words. A list that closes whenever it has no rows
+fires seven — the nothing-matches claim, every claim about Stage 10bu's BSE note
+(which rides on that empty state), and the check that the list paints over the
+page. An empty line that still offers Muns the question fires the
+nothing-matches claim alone.
+
+`build` · `tsc` · `test:family` · `check:family` **86/0** · `check:pages`
+**216 combinations clean** — the same count as before, because this change adds
+no route — with the same nine evidenced abstentions across the same five
+pre-existing claims, none of them this change's. `npm run build-book`
+regenerates the book byte-identically: nothing here touches the ingest.
+
+### Stage 10ca — PURCHASE, REDEMPTION AND APPRECIATION, AND NO RETURN IS STRUCK ON A NET
 
 *"Open PR and do not merge until it tell you to."* · *"Motilal Oswal Wealth
 Delphi Equity Fund and Neo Infra Income Opportunities Fund I — Class A5 classify
@@ -17457,13 +17523,13 @@ and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY, run as a control on the merged tree,
 and `replay:calls`, `replay:flows`, `replay:owners` and `replay:movements` are
 each a no-op with `--check`.
 
-#### Merged with main — and the letter moved FIVE times before it held
+#### Merged with main — and the letter moved SIX times before it held
 
 This section was going to be `10bt`; **#70 and #73 landed on main while it was
 being verified and took `10bt` and `10bu`**, so it became `10bv`. The PR was then
 open and green when **#75 — Buoyant's carried cost — landed and took `10bv`
 too**, and the section became `10bw`; then **#72 took `10bw`** and it became
-`10bx`; then **#79 took `10bx`** (the subsections below) and it is **`10bz`**. Every time it was caught the same way: the
+`10bx`; then **#79 took `10bx`**, and **#83 took `10bz`** (the subsections below), so it is **`10ca`**. Every time it was caught the same way: the
 letters on main's TIP compared against the branch's own at the moment of merging,
 not against the base the branch was cut from. Main keeps all three.
 
@@ -17503,7 +17569,7 @@ main's by this change's own additions alone.
 
 **#72 — Private Market returns by measure, the family's own fund split, and a
 search box — landed while this change's sweep was running**, and took `10bw`.
-Main keeps it; this section became `10bx` (and then `10bz`, below). Seventeen code comments and one Layout
+Main keeps it; this section became `10bx` (and then `10ca`, below). Seventeen code comments and one Layout
 pointer were this change's and moved; the four in `fundReturns.ts`,
 `privateMarket.ts`, `replay-capital-calls.mjs` and the search block are #72's and
 did not. The `ctx` literal is the exact union again.
@@ -17540,7 +17606,7 @@ and the Portfolio Monitor as one master table each, a row opening into rows of
 the same table — landed after this PR's last green sweep, left it conflicted,
 and took `10bx`. Main keeps it. #79's own section says *"the Portfolio Monitor's
 stage is `10by`"* and no `10by` section exists yet, so that letter reads as
-reserved; this section skipped it and is **`10bz`**, so a later `10by` cannot
+reserved; this section skipped it and is **`10ca`**, so a later `10by` cannot
 silently land on the Transactions stage. All twenty code references to this
 change's letter were this change's own and moved; main's code carried none.
 
@@ -17555,9 +17621,26 @@ is untouched by it; its checks were re-run rather than assumed.
 **AND THE REST WAS CHECKED BY HAND, BECAUSE A CLEAN SIDE OF A MERGE IS WHEN TO.**
 The `ctx` literal is 85 keys, the exact union less #79's own deliberate removal of
 `schemeCalls`, every key naming a declaration. The stage headings differ from
-main's tip by `10bz` alone, with main's ten historical duplicates unchanged.
+main's tip by `10ca` alone, with main's ten historical duplicates unchanged.
 `npm run build-book` regenerates both generated files to the same md5 as before
 the merge, and the full sweep is the 218 above.
+
+#### …and a sixth time, in the minutes after the #79 merge: #83 took `10bz`
+
+**The #79 merge was verified, recorded and pushed, and main had moved again.**
+#83 — Ask Muns off the top bar — landed in between and took `10bz`, the letter
+this section had just settled on. Main keeps it; `10by` is still the one #79's
+text reserves, so this section is **`10ca`**. The two sections were inserted at
+the same place, so git marked the conflict — the safer failure mode — and it
+was resolved by placing main's section first. Every line naming `10bz` was
+classified against main's own copy of its file before any moved: **twenty code
+comments and seven lines of this file were this change's and moved; eleven code
+comments and five lines of this file are #83's and stayed.**
+
+**NOTHING ELSE OVERLAPPED IN INTENT.** #83 changes the top bar, the search box
+and `check-pages.mjs`; the last auto-merged, so its `ctx` literal was read
+rather than trusted. #83 touches no generated file, and `build-book` was run as a
+control anyway.
 
 ### Stage 10k — News & Announcements: REMOVED
 

@@ -2084,7 +2084,7 @@ const YTD_MEASURABLE = (() => {
  * ── THE FAMILY'S DATED CAPITAL, AS THE TRANSACTIONS TABLE READS IT ─────────
  *
  * The capital record is `BOOK_CAPITAL_MOVES` PLUS a drawdown fund's own dated
- * CALLS, for an account that publishes no record of its own (Stage 10bz) — a
+ * CALLS, for an account that publishes no record of its own (Stage 10ca) — a
  * call is money the family paid a fund on a date, so it is a purchase. Before
  * that, India SME, Sky Capital, Baring, Neo Infra and the rest were funded
  * accounts with no row on a table headed "what the family bought".
@@ -2114,7 +2114,7 @@ const CAPITAL_RECORD_BOOK = (() => {
       for (const k of dated) calls.push({ accountId: c.accountId, date: k.date, direction: "in", amount: k.amount });
       // A fund whose payouts are carried DATED has them as redemptions — on or
       // before its own valuation only; one dated after is inside that value
-      // (Stage 10bz). Only a fund with no dated record falls back to the one
+      // (Stage 10ca). Only a fund with no dated record falls back to the one
       // undated total its statement prints.
       if (Array.isArray(c.payouts)) {
         const v = asOf.get(c.accountId);
@@ -3146,9 +3146,11 @@ const ROUTES = [
   // with them held open: the figures must still be on screen from the stored
   // snapshot rather than the card starting over from nothing.
   ["cio-cached", "/cio"],
-  // ...AND THE MUNS CHAT PANEL, opened. It is the one surface in this app that
-  // renders text no statement produced, so what it SAYS ABOUT ITSELF is the
-  // invariant: an answer must never be mistakable for a measured figure.
+  // ...AND THE MUNS CHAT, WHICH IS NO LONGER THERE. The family paused it
+  // (Stage 10bz: *"Remove Ask muns from here, dont want this right now"*), so
+  // this route asserts the top bar offers it nowhere — the removal verified,
+  // never the test deleted with the feature. It opened the panel until then,
+  // and those claims are recorded in CLAUDE.md for the day it comes back.
   ["chat", "/cio"],
   /**
    * THE TOP BAR'S SEARCH, TYPED INTO. Every claim is about what a reader gets
@@ -5348,7 +5350,7 @@ const txnMergedCore = () => [
     // later cell sits at its own column — and `TrFoot` fills an untotalled
     // column rather than skipping it, so nothing shifts. The sweep opens a
     // fresh context, so no reader's drag has moved them.
-    // BY HEADING SINCE Stage 10bz. It was `tie(2) && tie(7)` — Capital in and
+    // BY HEADING SINCE Stage 10ca. It was `tie(2) && tie(7)` — Capital in and
     // Bought — and Committed arriving in front moved both: index 2 became the
     // commitment and 7 the account's value, which both tie to their own rows,
     // so the check went on passing while reading neither of the columns it
@@ -5456,7 +5458,7 @@ const txnBasketChecks = () => {
       if (!offered.size || !drawn.length) return false;
       /**
        * ...OR IT IS THE ONE KEY NO HOLDING CAN PRODUCE, which the category
-       * check beside this already allows. Stage 10bz put seven accounts on this
+       * check beside this already allows. Stage 10ca put seven accounts on this
        * table that hold no valued position — India SME's and Sky Capital's
        * folios, funded by dated calls — and which basket a fund belongs to is
        * the family's review, keyed on a product this book has no row for. So
@@ -9660,7 +9662,7 @@ const INVARIANTS = {
          * record.
          */
         /**
-         * THE FAMILY'S WORDS, SINCE Stage 10bz: *"Make it purchase redemption"*.
+         * THE FAMILY'S WORDS, SINCE Stage 10ca: *"Make it purchase redemption"*.
          * "Capital N in · M out" was the old pair, and the check refuses it as
          * well as requiring the new one — a counter that kept both would say
          * one thing twice in two vocabularies.
@@ -9712,7 +9714,7 @@ const INVARIANTS = {
          * dash can find it, and that is the column head; the per-row reason is
          * the specific case on top of it.
          *
-         * THE CONDITION CHANGED AT Stage 10bz, and so did the column. It was
+         * THE CONDITION CHANGED AT Stage 10ca, and so did the column. It was
          * "the record provably reaches the account's inception", printed on the
          * Return and Gain heads — Gain is gone with Net invested, and the return
          * is one column PER MEASURE the reader ticks. What the default column
@@ -9797,7 +9799,7 @@ const INVARIANTS = {
     /**
      * AN ACCOUNT NO STATEMENT VALUES IS STILL AN AIF ON THE CATEGORY AXIS,
      * WHERE ITS OWN STATEMENT SAYS SO — India SME's and Sky Capital's folios,
-     * on this table since their dated calls became purchases (Stage 10bz). With
+     * on this table since their dated calls became purchases (Stage 10ca). With
      * no position to read a class off, the ACCOUNT's engagement is the only
      * classification there is, and it is the statement's own wording. Derived
      * from the book so the next drop's unvalued fund is the one held to it.
@@ -10805,7 +10807,7 @@ const INVARIANTS = {
    * ...AND THE APPRECIATION AND EVERY RETURN ARE WITHHELD, WITH THEIR REASON.
    *
    * This asserted the NET was withheld, and the Net column is gone at the
-   * family's request (Stage 10bz) — it subtracted a redemption that CARRIES
+   * family's request (Stage 10ca) — it subtracted a redemption that CARRIES
    * appreciation from what was paid in, which is how 3P read −₹2.56 Cr. What
    * replaced it is struck over the account's WHOLE record: purchases,
    * redemptions and today's value. Over one side it describes an account that
@@ -10891,7 +10893,7 @@ const INVARIANTS = {
    * ...AND THE APPRECIATION AND EVERY RETURN ARE WITHHELD, WITH THEIR REASON.
    *
    * This asserted the NET was withheld, and the Net column is gone at the
-   * family's request (Stage 10bz) — it subtracted a redemption that CARRIES
+   * family's request (Stage 10ca) — it subtracted a redemption that CARRIES
    * appreciation from what was paid in, which is how 3P read −₹2.56 Cr. What
    * replaced it is struck over the account's WHOLE record: purchases,
    * redemptions and today's value. Over one side it describes an account that
@@ -11025,7 +11027,7 @@ const INVARIANTS = {
         // STRUCK ON THE RENDERED CELL, because the claim is that the fraction is
         // on SCREEN beside the figure — and reconciled against the handles, so a
         // cell printing some other pair of numbers cannot satisfy it. BY ITS
-        // HEADING — "P&L on sales" since Stage 10bz, which renamed the manager's
+        // HEADING — "P&L on sales" since Stage 10ca, which renamed the manager's
         // realised column so it cannot be read as the family's Realised
         // appreciation beside it. It was `foot[9]`, and Committed arriving in
         // front moved every column after it.
@@ -11191,20 +11193,33 @@ const INVARIANTS = {
       SEARCH?.tabLanded?.path === "/sectors" && SEARCH.tabLanded.selected === "compare"],
     ["a figure's word opens the page that shows and explains it", () => SEARCH?.results?.figure?.rows?.[0]?.href === "/private-market"],
     /**
-     * A QUESTION GOES TO MUNS FIRST, and a place goes to the place: the Ask row
-     * is LAST for every query above and FIRST for this one. Asserted both ways,
-     * because a list that always led with Muns would bury every destination.
+     * …AND NO SEARCH OFFERS ASK MUNS — Stage 10bz. The list used to end every
+     * query in an "Ask Muns" row, first where the query read as a question, and
+     * the family asked for Muns off the top bar: a row on every search is Muns
+     * in the top bar all the same. Struck on EVERY query the walk typed — a
+     * question, a name, a page and a string nothing matches — by the row's own
+     * kind AND by the list's words, because a row put back under another handle
+     * would still read "Ask Muns" to the family. The three queries that matter
+     * most must have run, or the claim is struck over nothing.
      */
-    ["a question puts Ask Muns first, and a name puts it last", () => {
+    ["no search offers Ask Muns — not for a question, a name, or a query nothing matches", () => {
       if (!SEARCH) return false;
-      const q = SEARCH.results.question?.rows ?? [];
-      const h = SEARCH.results.holding?.rows ?? [];
-      return q[0]?.kind === "ask" && h.length > 1 && h.at(-1)?.kind === "ask" && h[0]?.kind !== "ask";
+      const r = SEARCH.results;
+      if (!r.question || !r.holding || !r.nothing) return false;
+      return Object.values(r).every((x) => (x.rows ?? []).every((row) => row.kind !== "ask")
+        && !/ask\s+muns/i.test(x.panelText ?? ""));
     }],
-    ["a query nothing matches says so, and still offers Muns", () => {
+    /**
+     * …AND A QUERY THAT FINDS NOTHING STILL OPENS THE LIST AND SAYS SO. The Ask
+     * row kept the list non-empty on every query, so the empty state — and the
+     * note naming why a holding is on no statement — rode on it. Without that
+     * row, a list that closes whenever it has no rows would drop both in
+     * silence, and "nothing matched" would read as the box not working.
+     */
+    ["a query nothing matches says so, and offers nothing in its place", () => {
       const n = SEARCH?.results?.nothing;
       if (!n) return false;
-      return n.empty === true && n.rows.length === 1 && n.rows[0].kind === "ask";
+      return n.empty === true && n.rows.length === 0 && !!n.emptyText && !/muns/i.test(n.emptyText);
     }],
     /**
      * ── …AND WHERE THE BOOK KNOWS WHY, IT SAYS SO — IN THE TOP BAR TOO ──────
@@ -11306,95 +11321,42 @@ const INVARIANTS = {
     }],
   ],
   chat: [
-    ["the panel opens where the search box was",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return CHAT.open === true;
-      }],
-
     /**
-     * ...AND THE DEAD SEARCH BOX IS GONE. It was an `<input>` with no value, no
-     * onChange and no handler — a control that searched nothing, in the most
-     * prominent slot on the app. Counted as an INPUT rather than matched as
-     * text, because its placeholder could legitimately appear in prose.
-     */
-    ["...and the control it replaced, which searched nothing, is gone",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return CHAT.searchInputs === 0;
-      }],
-
-    /**
-     * THE ANSWER IS MARKED AS GENERATED, IN WORDS. Not a badge to hover: a
-     * reader scanning this panel beside a dashboard of traced figures has to
-     * be able to see, without acting, that this text is a different kind of
-     * thing.
-     */
-    ["the panel states plainly that its output is generated, not a statement figure",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /AI ANSWER/i.test(CHAT.text) && /NOT A STATEMENT FIGURE/i.test(CHAT.text);
-      }],
-
-    /**
-     * ...AND SAYS WHAT IT WAS GIVEN AND WHAT IT CANNOT REACH. An assistant that
-     * looks omniscient invites questions it will answer by inventing; one that
-     * names its snapshot invites the questions it can actually answer.
-     */
-    ["...and names its snapshot, and the limits of it",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /snapshot of this dashboard/i.test(CHAT.intro)
-          && /does not carry/i.test(CHAT.intro)
-          && /cannot reach an account/i.test(CHAT.intro);
-      }],
-
-    /**
-     * THE SCRIM COVERS THE PAGE, NOT THE BAR IT WAS OPENED FROM.
+     * THE MUNS CHAT IS OFF THE TOP BAR — Stage 10bz.
      *
-     * `backdrop-filter` on an ancestor makes that ancestor the containing block
-     * for `position: fixed` descendants, and the top bar carries
-     * `backdrop-blur` — so `fixed inset-0` resolved against the HEADER and the
-     * overlay measured 1304x55. The dashboard underneath was never dimmed, and
-     * the reader saw a dialog mixed into the page. The fix is a portal out of
-     * the bar; this is the check that it stays out, and it can only be struck
-     * on geometry — not one rendered word changes when it regresses.
-     */
-    ["the overlay covers the viewport, not just the bar it was opened from",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        const { overlay, viewport } = CHAT;
-        if (!overlay) return false;
-        return overlay.w >= viewport.w - 2 && overlay.h >= viewport.h - 2;
-      }],
-
-    /**
-     * ...AND THE PANEL IS SIZED FOR READING. It was 672x614 on a 1500x900
-     * window — under half the width, with the dashboard legible all around it.
-     * Struck as a FRACTION of the viewport rather than in pixels, so the claim
-     * survives a different window and the `--app-zoom` scale.
-     */
-    ["...and the panel takes a majority of it, rather than floating in the middle of a live page",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        const { panelBox, viewport } = CHAT;
-        if (!panelBox) return false;
-        return panelBox.w / viewport.w >= 0.55 && panelBox.h / viewport.h >= 0.7;
-      }],
-
-    /**
-     * A FAILURE NAMES ITSELF RATHER THAN RENDERING AN EMPTY ANSWER.
+     *   *"Remove Ask muns from here, dont want this right now"*
      *
-     * This harness runs no Pages Function, so the ask 404s — and an empty
-     * assistant bubble there reads as the model having considered the question
-     * and had nothing. THE CAUSE PICKS THE HEADLINE: it must say the function
-     * is not available here, which is a fact about the deployment.
+     * The route used to open the panel and hold what it said about itself to
+     * the light: an answer marked as generated, a snapshot named with its
+     * limits, a scrim that covers the viewport rather than the header, a panel
+     * sized for reading, a failure that names itself. None of those has a
+     * subject while the chat is paused, and each is written down in CLAUDE.md
+     * to be turned back on with it. What this route asserts instead is the
+     * REMOVAL, from both ends — a removal is verified by asserting it happened.
+     *
+     * A WALK THAT DID NOT RUN IS A FINDING, NOT AN ABSTENTION: `CHAT` is read on
+     * this route alone, so a null here means the probe threw, and reporting that
+     * as "not checked" is how a check retires itself in silence.
      */
-    ["a failed ask names the failure instead of rendering an empty answer",
-      () => {
-        if (!CHAT) return { notChecked: "the chat walk did not run on this pass" };
-        return /server-side function/i.test(CHAT.text) && /not available in local preview/i.test(CHAT.text);
-      }],
+    ["the walk ran and found the top bar", () => !!CHAT && CHAT.header === true],
+    /**
+     * BY ITS HANDLE AND BY ITS WORDS. The handle alone passes a button put back
+     * under another test id, which would still read "Ask Muns" to the family;
+     * the words alone pass a trigger drawn as an icon. Either is the button
+     * they asked to have removed.
+     */
+    ["the Ask Muns button is gone from the top bar — by its handle and by its words", () =>
+      !!CHAT && CHAT.trigger === 0 && CHAT.askButtons === 0],
+    ["…and no Muns panel is drawn anywhere on the page", () => !!CHAT && CHAT.panel === 0],
+    /**
+     * ...AND THE DEAD SEARCH BOX STAYS GONE. It was an `<input>` with no value,
+     * no onChange and no handler — a control that searched nothing, in the most
+     * prominent slot on the app — and the chat was what first replaced it.
+     * Counted as an INPUT rather than matched as text, because its placeholder
+     * could legitimately appear in prose.
+     */
+    ["...and the control the chat first replaced, which searched nothing, is still gone", () =>
+      !!CHAT && CHAT.searchInputs === 0],
   ],
 
   /**
@@ -18279,6 +18241,10 @@ for (const theme of THEMES) {
                 detail: (e.querySelector("[data-search-detail]")?.textContent ?? "").trim(),
               })),
               empty: !!document.querySelector("[data-search-empty]"),
+              // The empty line's own words, and the whole list's: the Ask Muns
+              // claims are struck on WORDS as well as on each row's kind.
+              emptyText: document.querySelector("[data-search-empty]")?.innerText ?? null,
+              panelText: document.querySelector("[data-testid='smart-search-panel']")?.innerText ?? null,
               // The review-gap note's own node, so the claim is not struck on
               // prose the component is free to reword.
               note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
@@ -18428,52 +18394,25 @@ for (const theme of THEMES) {
         }
       }
       if (name === "chat") {
-        // Open the panel and ask one question. `/api/chat` is a Pages Function
-        // and `vite preview` runs none, so the ask lands on the FAILURE path —
-        // which is the branch worth walking anyway: a chat that cannot reach
-        // its API must say which failure it was, not render an empty answer
-        // that reads as the model having nothing to say.
-        const t = page.getByTestId("muns-chat-open");
-        if (await t.count()) { await t.click(); await page.waitForTimeout(400); }
-        // THE INTRO IS CAPTURED BEFORE THE ASK. Sending a question replaces the
-        // empty state with the conversation, so an invariant about what the
-        // panel says it was GIVEN has to be struck on the state that says it.
-        const intro = await page.evaluate(() =>
-          document.querySelector('[data-testid="muns-chat-panel"]')?.innerText ?? "");
-        const box = page.getByTestId("muns-chat-input");
-        if (await box.count()) {
-          await box.fill("What is the book worth?");
-          await page.keyboard.press("Enter");
-          await page.waitForTimeout(2500);
-        }
-        CHAT = await page.evaluate((introText) => {
-          const panel = document.querySelector('[data-testid="muns-chat-panel"]');
-          return {
-            open: !!panel,
-            intro: introText,
-            text: panel ? panel.innerText : "",
-            // The dead search box this replaced. Counted as an INPUT, because
-            // its placeholder text could legitimately appear in prose.
-            searchInputs: [...document.querySelectorAll("input")]
-              .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
-            // GEOMETRY, because the bug this catches is invisible in the text.
-            // `backdrop-filter` on an ancestor makes THAT ancestor the
-            // containing block for a `position: fixed` child — and the top bar
-            // the trigger lives in carries `backdrop-blur`. The overlay
-            // measured 1304x55, a scrim over the header strip alone, so the
-            // dashboard was never dimmed and the dialog read as part of the
-            // page. Nothing in the rendered words changes when that happens.
-            overlay: panel ? (() => {
-              const r = panel.parentElement.getBoundingClientRect();
-              return { w: Math.round(r.width), h: Math.round(r.height) };
-            })() : null,
-            panelBox: panel ? (() => {
-              const r = panel.getBoundingClientRect();
-              return { w: Math.round(r.width), h: Math.round(r.height) };
-            })() : null,
-            viewport: { w: window.innerWidth, h: window.innerHeight },
-          };
-        }, intro);
+        /**
+         * NOTHING TO OPEN, AND THAT IS THE CLAIM. The Muns chat is paused at the
+         * family's request (Stage 10bz), so the walk no longer clicks a trigger:
+         * it counts what the top bar offers. A button is matched by its HANDLE
+         * and, separately, by its WORDS inside the header — the second catches a
+         * trigger put back under another test id.
+         */
+        CHAT = await page.evaluate(() => ({
+          header: !!document.querySelector("header"),
+          trigger: document.querySelectorAll('[data-testid="muns-chat-open"]').length,
+          askButtons: [...document.querySelectorAll("header button, header a, header [role='button']")]
+            .filter((b) => /ask\s+muns/i.test((b.innerText || b.textContent || "") + " " + (b.getAttribute("title") || "")))
+            .length,
+          panel: document.querySelectorAll('[data-testid="muns-chat-panel"]').length,
+          // The dead search box the chat first replaced. Counted as an INPUT,
+          // because its placeholder text could legitimately appear in prose.
+          searchInputs: [...document.querySelectorAll("input")]
+            .filter((i) => /search holdings/i.test(i.placeholder || "")).length,
+        }));
       }
       /**
        * EXPAND THE ONE NAME THE FUND LOOK-THROUGH HAS MOST TO SAY ABOUT.
@@ -19843,7 +19782,7 @@ for (const theme of THEMES) {
           // The two money cells, as figures or as absences, READ BY HANDLE. A
           // side filter must EMPTY the other side rather than print a ₹0 there —
           // not visible in the row count alone. These were `tr.cells[2]`/`[3]`
-          // and Stage 10bz put Committed in front of them, so a positional read
+          // and Stage 10ca put Committed in front of them, so a positional read
           // would have compared the commitment against the side filter: a real
           // figure in the wrong place, which is what this sweep exists to catch.
           committedCell: (tr.querySelector("[data-mine-cell=committed]")?.innerText ?? "").trim(),
@@ -19877,7 +19816,7 @@ for (const theme of THEMES) {
           // percentage, which is the plausible-wrong-answer this sweep exists to
           // catch rather than commit.
           //
-          // AND IT MOVED AGAIN AT Stage 10bz — one return column PER MEASURE the
+          // AND IT MOVED AGAIN AT Stage 10ca — one return column PER MEASURE the
           // reader ticks, as on the Holdings table — so it is read by its own
           // handle now rather than counted: the first `data-return-cell`.
           hasReturn: /%/.test((tr.querySelector("td[data-return-cell]")?.innerText ?? "")),
@@ -20021,7 +19960,7 @@ for (const theme of THEMES) {
            * THE FOOTER BY COLUMN, with each cell repeated over the columns it
            * spans — so a claim about Purchase is struck under the heading
            * Purchase, wherever the reader has dragged it. `foot[2]` meant Capital
-           * in until Stage 10bz put Committed in front of it, and a positional
+           * in until Stage 10ca put Committed in front of it, and a positional
            * read would then have compared the COMMITMENT against Bought.
            */
           footByCol: foot ? [...foot.cells].flatMap((td) =>
