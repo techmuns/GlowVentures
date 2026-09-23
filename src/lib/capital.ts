@@ -22,8 +22,9 @@
  *     return struck on what is held. V.E.C 128004 read +8.42% against +30.12%
  *     on capital; Carnelian read +24.98% against +19.93%, because its manager
  *     realised LOSSES and charged ₹0.99 Cr of fees. The error runs both ways.
- *   • A FUND PAYING OUT (Neo Infra). ₹49.48 L of distributions left the fund
- *     and no return on cost can see money that is no longer in it.
+ *   • A FUND PAYING OUT (Neo Infra). ₹51.04 L had come back by its 30 June
+ *     valuation — income, principal and equalisation — and no return on cost
+ *     can see money that is no longer in the fund.
  *
  * ── THE RULE ────────────────────────────────────────────────────────────────
  *
@@ -40,11 +41,15 @@
  *      performance appraisal prints, or the Contribution less Withdrawal a
  *      fact sheet prints — struck on the account's OWN as-of, so the capital
  *      and the value it is compared with stand on one date;
- *   3. a drawdown fund's CAPITAL ACCOUNT — paid in, less distributed — used
- *      only where the distribution line is PRINTED, zero included. Reading an
- *      absent line as nil would assert a fund returned nothing when its
- *      statement does not say; `Commitment.distributed` is null for exactly
- *      that reason.
+ *   3. a drawdown fund's CAPITAL ACCOUNT — every call it made and every payout
+ *      it sent back, each DATED, and each reconciled against the totals the
+ *      fund's own statement prints (the calls at Stage 10ay, the payouts at
+ *      Stage 10bw). Counted up to the valuation and no further: a payout dated
+ *      after it is still inside the value it is set against. Where the payout
+ *      table is not reconciled (`Commitment.payouts` null) there is no capital
+ *      here at all — reading the absence as nil would assert a fund returned
+ *      nothing when its statement does not say so, and the printed distribution
+ *      TOTAL cannot stand in for the dated rows (see the note at step 3).
  *
  * A HOLDING INSIDE AN ACCOUNT HAS NO CAPITAL OF ITS OWN. A share a manager
  * bought inside a mandate, a stock in a demat: the family funded the account,
@@ -102,7 +107,7 @@ export type AccountCapital = {
 export const CAPITAL_SOURCE_LABEL: Record<CapitalSource, string> = {
   "dated-record": "every payment in and out, dated, from the account's own statements",
   "statement": "the capital the manager's since-inception statement prints",
-  "capital-account": "the fund's capital account — paid in, less what it has distributed",
+  "capital-account": "the fund's capital account — every call paid in and every payout received, dated",
 };
 
 /** A rupee is this book's settlement tolerance; a missed payment moves crores. */
@@ -175,16 +180,50 @@ export function accountCapital(input: {
     };
   }
 
-  // 3 — a drawdown fund's capital account, only where the payout line is printed.
+  // 3 — a drawdown fund's CAPITAL ACCOUNT, on its own dated calls and payouts.
+  //
+  //     THE PRINTED DISTRIBUTION TOTAL IS NOT USED, AND THAT WAS MEASURED. Neo
+  //     Infra's statement is struck at 30 June and prints ₹49.48 L distributed —
+  //     which includes ₹7.13 L of income paid on 9 July, after the valuation, so
+  //     still inside the value it is set against. Subtracting the total counted
+  //     that payment twice: once in the value, once out of the capital. The
+  //     dated rows say which payouts the value no longer holds, and they are
+  //     read only where they reproduce the totals the statement prints.
+  //
+  //     Every payout kind counts — income, principal returned and equalisation —
+  //     because each is cash that came back to the family from this investment,
+  //     at its GROSS amount, the basis the fund values itself on (TDS is the
+  //     family's own tax, credited back to them). It is the same set of flows the
+  //     Private Market fund table solves its XIRR over (`fundReturns.ts`), so the
+  //     capital and that rate describe one set of money.
   const c = input.commitment;
-  if (c && c.asOf === asOf && isNum(c.paid) && isNum(c.distributed) && c.paid - c.distributed > 0) {
-    return {
-      accountId: account.accountId, source: "capital-account",
-      paidIn: c.paid, tookOut: c.distributed, net: c.paid - c.distributed, asOf,
-      since: (c.calls ?? []).map((x) => x.date).sort()[0] ?? null,
-      payments: null, flows: null,
-      document: null,
-    };
+  if (c && c.asOf === asOf && isNum(c.paid) && c.calls?.length && c.payouts != null) {
+    const called = c.calls.reduce((t, k) => t + k.amount, 0);
+    // The calls must BE the money paid — a call still unpaid is a demand, not
+    // capital — and none may fall after the value it is measured against.
+    if (Math.abs(called - c.paid) <= TIE && !c.calls.some((k) => k.date > asOf)) {
+      // ON the valuation date is OUTSIDE the value, as `fundReturns.ts` reads it:
+      // a NAV struck on a distribution date is struck after it.
+      const back = c.payouts.filter((r) => r.date <= asOf);
+      const tookOut = back.reduce((t, r) => t + r.gross, 0);
+      const net = called - tookOut;
+      if (net > 0) {
+        return {
+          accountId: account.accountId, source: "capital-account",
+          paidIn: called, tookOut, net, asOf,
+          since: c.calls.map((k) => k.date).sort()[0] ?? null,
+          payments: c.calls.length,
+          // Money to the fund negative, money back positive. Equalisation is the
+          // one kind a statement may print with a sign — a payment BY the family —
+          // and its gross then already carries it.
+          flows: [
+            ...c.calls.map((k) => ({ date: new Date(k.date), amount: -k.amount })),
+            ...back.map((r) => ({ date: new Date(r.date), amount: r.gross })),
+          ],
+          document: null,
+        };
+      }
+    }
   }
   return null;
 }

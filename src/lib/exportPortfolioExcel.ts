@@ -78,7 +78,7 @@ type HoldingRow = {
 const SOURCE_SHORT: Record<CapitalSource, string> = {
   "dated-record": "dated payments",
   "statement": "manager's statement",
-  "capital-account": "fund's capital account",
+  "capital-account": "fund's dated calls and payouts",
 };
 
 /** The Return basis cell, from the one model every surface reads. */

@@ -36,6 +36,8 @@ import {
 import { accountCapital, buildCapitalModel, describeCapital } from "@/lib/capital";
 import { currentHoldings, dedupedPositions, measuredReturn, onCapitalBasis, type ReturnInput } from "@/lib/analytics";
 import { GROUP_AXES, groupKeyFor } from "@/lib/groupAxis";
+import { privateScope, fundRollup } from "@/lib/privateMarket";
+import { fundDatedRecords, fundMeasuredReturn } from "@/lib/fundReturns";
 import { accountIndex } from "@/lib/accounts";
 import type { Position } from "@/lib/types";
 
@@ -237,20 +239,101 @@ const ANKITA = "buoyant-capital-103472";
     && Math.abs(all.invested - byHand) < 1, `${cr(all.invested)} vs ${cr(byHand)}`);
 }
 
-// ── 5. A payout line is used only where it is printed ───────────────────────
+// ── 5. A fund's capital account, on its DATED calls and payouts ─────────────
+//
+// It used to be paid in less the PRINTED distribution total, and Neo Infra is
+// the measurement that retired that: its statement is struck at 30 June and
+// prints a total that includes a payout dated 9 July, still inside the 30 June
+// value. So the capital is the dated calls less the dated payouts ON OR BEFORE
+// the valuation, every kind, at gross — and it must be the SAME money the
+// Private Market fund table solves its XIRR over (`fundReturns.ts`), which is a
+// second path to one rate, written by a different stage for a different page.
 {
   const neo = BOOK_ACCOUNTS.find((a) => a.accountId.startsWith("neo-infra"))!;
   const nc = model.of(neo.accountId);
-  ok("Neo Infra is measured on its capital account", nc?.source === "capital-account", JSON.stringify(nc));
-  ok("…net of the distributions it printed", nc !== null && nc.tookOut === 4948221 && nc.net === 50000000 - 4948221,
-    JSON.stringify({ paid: nc?.paidIn, out: nc?.tookOut, net: nc?.net }));
-  // Baring prints no distribution line at all, so reading it as nil would
-  // assert the fund has paid nothing back. It stays on the cost of its units.
-  const baring = BOOK_ACCOUNTS.find((a) => a.accountId.startsWith("baring"))!;
-  const bc = BOOK_COMMITMENTS.find((c) => c.accountId === baring.accountId)!;
-  ok("Baring prints no distribution line", bc.distributed === null, String(bc.distributed));
-  ok("…so it is not given a capital figure that assumes one", model.of(baring.accountId) === null,
-    JSON.stringify(model.of(baring.accountId)));
+  const neoC = BOOK_COMMITMENTS.find((c) => c.accountId === neo.accountId)!;
+  const payouts = neoC.payouts ?? [];
+  const inside = payouts.filter((r) => r.date <= neo.asOf!);
+  const after = payouts.filter((r) => r.date > neo.asOf!);
+  const insideGross = inside.reduce((t, r) => t + r.gross, 0);
+  const called = neoC.calls.reduce((t, k) => t + k.amount, 0);
+  ok("Neo Infra is measured on its capital account, dated", nc?.source === "capital-account" && !!nc.flows,
+    JSON.stringify({ source: nc?.source, flows: nc?.flows?.length }));
+  ok("…paid in is its dated calls, which ARE the money paid", nc !== null && nc.paidIn === called
+    && Math.abs(called - (neoC.paid as number)) <= 1 && nc.payments === neoC.calls.length,
+    JSON.stringify({ paidIn: nc?.paidIn, called, paid: neoC.paid, payments: nc?.payments }));
+  ok("…taken out is every payout dated on or before the valuation, at gross",
+    nc !== null && Math.abs((nc.tookOut as number) - insideGross) < 1e-6 && Math.abs(nc.net - (called - insideGross)) < 1e-6,
+    JSON.stringify({ tookOut: nc?.tookOut, insideGross, net: nc?.net }));
+  // LOAD-BEARING, IN BOTH HALVES. There is a payout after the valuation, and the
+  // printed distribution total counts it — so using the total would count that
+  // money twice. And equalisation is cash back too, so a rule reading income
+  // and principal alone would state a different capital.
+  const afterGross = after.reduce((t, r) => t + r.gross, 0);
+  ok("…and a payout after the valuation is NOT subtracted, though the printed total includes it",
+    after.length > 0 && afterGross > 0 && neoC.distributed !== null
+      && Math.abs((neoC.distributed as number) - insideGross) > 1e5 && nc !== null && nc.net < (neoC.paid as number),
+    JSON.stringify({ after: after.map((r) => r.date), afterGross, printed: neoC.distributed, insideGross }));
+  const equalisation = inside.filter((r) => r.kind === "equalisation").reduce((t, r) => t + r.gross, 0);
+  ok("…and equalisation received is counted as cash back", equalisation > 0 && nc !== null
+    && (nc.tookOut as number) > insideGross - equalisation, String(equalisation));
+
+  // TWO PATHS, ONE RATE. The fund table's XIRR (`fundDatedRecords` →
+  // `fundMeasuredReturn`) and the capital model's, over the same fund.
+  const accIdx = accountIndex(BOOK_ACCOUNTS);
+  const scope = privateScope(universe, BOOK_ACCOUNTS);
+  const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows, model);
+  const dated = fundDatedRecords(scope.dedupedRows, BOOK_COMMITMENTS, accIdx, (n) => String(n), (d) => d);
+  let tied = 0;
+  for (const f of funds) {
+    const d = dated.get(f.securityKey);
+    const onCap = f.capital?.onCapital ?? [];
+    if (!d || d.gap || !onCap.length || onCap.some((x) => x.capital.source !== "capital-account")) continue;
+    const table = fundMeasuredReturn(f, d, "xirr", (n) => String(n), (x) => x);
+    const mine = model.behind(scope.dedupedRows.filter((p) => p.securityKey === f.securityKey)).xirr;
+    const same = table.shown && table.tag === "XIRR" && mine?.pct != null && Math.abs(mine.pct - table.pct) < 1e-6;
+    if (same) tied++;
+    ok(`${f.security}: the capital model's XIRR is the fund table's, to the millionth of a point`, same,
+      JSON.stringify({ table: table.shown ? table.pct : table.reason, model: mine?.pct }));
+    ok(`${f.security}: …and its Invested is the capital, net of the payouts the XIRR dates`,
+      f.cost !== null && Math.abs((f.cost as number) - onCap.reduce((t, x) => t + x.capital.net, 0)) < 1e-6
+        && Math.abs(onCap.reduce((t, x) => t + (x.capital.tookOut ?? 0), 0) - d.paidOut) < 1,
+      JSON.stringify({ cost: f.cost, paidOut: d.paidOut }));
+  }
+  ok("…on both funds whose capital account dates every call and payout", tied >= 2, String(tied));
+
+  // A FUND WHOSE PAYOUT TABLE IS NOT RECONCILED GETS NO CAPITAL FROM ITS ACCOUNT.
+  // Reading an unread payout record as nil would assert it returned nothing.
+  const unread = BOOK_COMMITMENTS.filter((c) => c.payouts === null && c.calls.length > 0
+    && own(c.accountId).length > 0);
+  ok("a fund whose payout table is not reconciled is not put on its capital account",
+    unread.length > 0 && unread.every((c) => model.of(c.accountId)?.source !== "capital-account"),
+    unread.map((c) => `${c.accountId}: ${model.of(c.accountId)?.source ?? "none"}`).join("; "));
+
+  // AND THE GATES, ON CONSTRUCTED INPUTS — the book cannot exercise them all.
+  const acct = { ...neo, accountId: "t-fund", asOf: "2026-06-30", inceptionDate: null } as typeof neo;
+  const pos = [{ ...own(neo.accountId)[0], accountId: "t-fund" }];
+  const base = {
+    ...neoC, accountId: "t-fund", asOf: "2026-06-30", paid: 300,
+    calls: [{ date: "2024-01-01", label: null, amount: 100 }, { date: "2025-01-01", label: null, amount: 200 }],
+    payouts: [
+      { date: "2025-06-30", kind: "income", label: null, gross: 10, tds: 1, net: 9, inPrintedTotal: true },
+      { date: "2026-06-30", kind: "equalisation", label: null, gross: -5, tds: null, net: -5, inPrintedTotal: true },
+      { date: "2026-07-09", kind: "income", label: null, gross: 40, tds: 4, net: 36, inPrintedTotal: true },
+    ],
+  } as unknown as typeof neoC;
+  const run = (c: typeof neoC) => accountCapital({ account: acct, moves: [], bridges: [], commitment: c, positions: pos, tranches: {} });
+  const r = run(base);
+  ok("constructed: calls less payouts to the valuation — the one after it is left in the value",
+    r !== null && r.paidIn === 300 && r.tookOut === 5 && r.net === 295 && r.flows?.length === 4,
+    JSON.stringify(r));
+  ok("constructed: an equalisation the family PAID is money in, in the flows' own sign",
+    !!r?.flows?.some((f) => f.amount === -5), JSON.stringify(r?.flows));
+  ok("constructed: an unreconciled payout table gives no capital", run({ ...base, payouts: null }) === null);
+  ok("constructed: calls that are not the money paid give no capital", run({ ...base, paid: 250 }) === null);
+  ok("constructed: a call after the valuation gives no capital",
+    run({ ...base, calls: [...base.calls, { date: "2026-07-01", label: null, amount: 0 }] }) === null);
+  ok("constructed: a capital account struck on another date gives no capital", run({ ...base, asOf: "2026-03-31" }) === null);
 }
 
 // ── 6. A money-weighted return only where every rupee is dated ──────────────

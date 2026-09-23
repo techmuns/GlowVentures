@@ -278,9 +278,20 @@ eq("a trade with no realised figure is an em dash, not a zero",
   ok("at least one row's capital differs from the cost of its units",
      moved.length > 0, moved.map((r) => r.sec.slice(0, 30)).join("; "));
 
-  // AN XIRR ONLY WHERE EVERY RUPEE IS A DATED PAYMENT — never on a holding.
+  // AN XIRR ONLY WHERE EVERY RUPEE IS A DATED PAYMENT — never on a holding. Two
+  // sources date the money: an account's dated record, and a drawdown fund's
+  // capital account read on its dated calls and payouts. Struck on EVERY source
+  // the basis names, so a row mixing a dated source with an undated one — or
+  // with the cost of units — cannot pass on the word "dated" alone.
+  const DATED = new Set(["dated payments", "fund's dated calls and payouts"]);
+  const allDated = (basis: string) => {
+    const m = /^Capital put in \(([^)]*)\)$/.exec(basis);
+    return !!m && m[1].split(" + ").every((x) => DATED.has(x));
+  };
+  const withXirr = rows.filter((r) => num(r.xirr));
   ok("an XIRR is printed only on a row measured on dated payments",
-     rows.filter((r) => num(r.xirr)).every((r) => /dated payments/.test(r.basis)));
+     withXirr.length > 0 && withXirr.every((r) => allDated(r.basis)),
+     withXirr.filter((r) => !allDated(r.basis)).map((r) => `${r.sec.slice(0, 30)}: ${r.basis}`).join("; "));
 
   // THE NOTE UNDER THE TOTAL SAYS WHICH ROWS ARE ON WHICH BASIS, AND WHY THE
   // SHEET'S TOTAL DIFFERS FROM THE TAB'S.

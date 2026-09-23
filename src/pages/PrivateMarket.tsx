@@ -1127,7 +1127,9 @@ export function PrivateMarket() {
                       invested: <td key="invested" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300">{money(m.privCost)}</td>,
                       value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(m.privMV)}</td>,
                       /* THE FOOTER HAS TWO RETURNS AND NOT FIVE. Its cumulative
-                         return on cost stands under HPR and under the methodology
+                         return on what was invested — the capital put in on the
+                         funds that stand on it, the cost of the units on the rest,
+                         exactly as each row's Invested — stands under HPR and under the methodology
                          (tagged, as every cell in that column is), and its pooled
                          money-weighted return under XIRR — the same computation
                          each row's XIRR is, over the funds whose dated record is
@@ -1144,7 +1146,9 @@ export function PrivateMarket() {
                               {pct == null
                                 ? <AbsentCell reason="no cost is reported across this book's private holdings" />
                                 : <>{measure === "auto" && <span className="ret-tag mr-0.5">HPR</span>}
-                                    <span className={changeColor(pct)} title="The whole private book's current value against the capital paid in, not annualised. Cash the funds have paid back is not in it — the pooled XIRR under XIRR counts it.">{fmtPct(pct, { sign: true, decimals: 1 })}</span></>}
+                                    <span className={changeColor(pct)} title={capFunds > 0
+                                      ? `The whole private book's current value against what was invested in it, not annualised — on ${capFunds} of ${m.funds.length} funds the capital put in, net of what each has paid back; on the rest the cost of the units, where a payout is not in the figure. The pooled XIRR under XIRR dates every call and payout.`
+                                      : "The whole private book's current value against the capital paid in, not annualised. Cash the funds have paid back is not in it — the pooled XIRR under XIRR counts it."}>{fmtPct(pct, { sign: true, decimals: 1 })}</span></>}
                             </td>
                           )];
                         }

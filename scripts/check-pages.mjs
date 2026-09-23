@@ -1510,8 +1510,11 @@ const CAPITAL_BOOK = (() => {
  *      the account's own as-of (`capitalRecordTo`);
  *   2. the manager's since-inception statement on the account's own as-of,
  *      every copy agreeing to the rupee;
- *   3. a drawdown fund's capital account, where the distribution line is
- *      printed — paid in less distributed.
+ *   3. a drawdown fund's capital account, on its DATED calls and payouts —
+ *      the calls, which must be the money paid, less every payout dated on or
+ *      before the valuation, at gross. The printed distribution TOTAL is not
+ *      used: Neo Infra's includes a payout dated after the valuation, still
+ *      inside the value it is set against.
  *
  * RE-EXPRESSED, NEVER IMPORTED from `src/lib/capital.ts`, on the terms
  * `isMandateHeld`, `NAV_MOVERS_BOOK` and `CMP_BOOK` already follow: a check that
@@ -1573,8 +1576,19 @@ const CAPITAL_PUT_IN = (() => {
         continue;
       }
       const c = commitments.find((x) => x.accountId === a.accountId);
-      if (c && c.asOf === a.asOf && num(c.paid) && num(c.distributed) && c.paid - c.distributed > 0) {
-        byAccount.set(a.accountId, { source: "capital-account", net: c.paid - c.distributed, payments: null });
+      if (c && c.asOf === a.asOf && num(c.paid) && Array.isArray(c.calls) && c.calls.length && Array.isArray(c.payouts)) {
+        const called = c.calls.reduce((t, k) => t + k.amount, 0);
+        if (Math.abs(called - c.paid) <= 1 && !c.calls.some((k) => k.date > a.asOf)) {
+          // ON the valuation date is outside the value; AFTER it is inside.
+          const back = c.payouts.filter((r) => r.date <= a.asOf);
+          const out = back.reduce((t, r) => t + r.gross, 0);
+          if (called - out > 0) {
+            byAccount.set(a.accountId, { source: "capital-account", net: called - out, payments: c.calls.length,
+              firstIn: c.calls.map((k) => k.date).sort()[0], asOf: a.asOf,
+              flows: [...c.calls.map((k) => ({ t: Date.parse(k.date), v: -k.amount })),
+                ...back.map((r) => ({ t: Date.parse(r.date), v: r.gross }))] });
+          }
+        }
       }
     }
     const unitCost = (id) => current.filter((p) => p.accountId === id && num(p.costBasis))
@@ -1593,7 +1607,9 @@ const CAPITAL_PUT_IN = (() => {
      */
     const rowRate = (ids) => {
       const cs = ids.map((id) => byAccount.get(id));
-      if (!cs.length || cs.some((c) => !c || c.source !== "dated-record")) return null;
+      // DATED, from either source that dates the money — an account's own record
+      // or a fund's capital account read on its dated calls and payouts.
+      if (!cs.length || cs.some((c) => !c || !c.flows)) return null;
       const flows = cs.flatMap((c, i) => [...c.flows, { t: Date.parse(c.asOf), v: valueOf(ids[i]) }]);
       const t0 = Math.min(...flows.map((f) => f.t));
       const last = Math.max(...cs.map((c) => Date.parse(c.asOf)));
@@ -1658,6 +1674,13 @@ const CAPITAL_PUT_IN = (() => {
  * The XIRR is solved here too, by bisection on the same ACT/365 NPV, so a page
  * that dropped the payouts (and printed a LOWER rate that looks exactly as
  * plausible) fails on the figure rather than on a label.
+ *
+ * HPR FOLLOWS THE ROW'S OWN INVESTED, on the page and here alike: the capital
+ * the family put in where a fund's folios are whole accounts whose capital the
+ * book publishes (`CAPITAL_PUT_IN`, itself re-expressed), the cost of the units
+ * otherwise. `hprOnCost` is kept beside it, so the check can prove the two
+ * differ on this book — a page back on cost would otherwise pass wherever they
+ * happened to agree.
  */
 const PM_RETURN_BOOK = (() => {
   try {
@@ -1701,10 +1724,29 @@ const PM_RETURN_BOOK = (() => {
     for (const p of priv) groups.set(p.securityKey, [...(groups.get(p.securityKey) ?? []), p]);
     const funds = [];
     for (const [key, g] of groups) {
-      const cost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
+      const unitCost = g.every((p) => p.costBasis == null) ? null : g.reduce((t, p) => t + (Number(p.costBasis) || 0), 0);
       const mv = g.reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
       const costCoversAll = g.every((p) => p.costBasis != null);
-      const hpr = cost != null && cost > 0 && costCoversAll ? ((mv - cost) / cost) * 100 : null;
+      const hprOnCost = unitCost != null && unitCost > 0 && costCoversAll ? ((mv - unitCost) / unitCost) * 100 : null;
+      // A folio stands on its account's capital where the account is WHOLE in
+      // this fund row — the account's own current value is all here.
+      const onCap = [];
+      let invested = 0, anyBasis = false, basisMV = 0;
+      for (const p of g) {
+        const cap = CAPITAL_PUT_IN?.byAccount.get(p.accountId);
+        const whole = cap && Math.abs(CAPITAL_PUT_IN.valueOf(p.accountId)
+          - g.filter((x) => x.accountId === p.accountId).reduce((t, x) => t + Number(x.marketValue || 0), 0)) <= 0.5;
+        if (whole) {
+          if (!onCap.includes(p.accountId)) { onCap.push(p.accountId); invested += cap.net; anyBasis = true; }
+          basisMV += Number(p.marketValue || 0);
+        } else if (p.costBasis != null) {
+          invested += Number(p.costBasis); anyBasis = true; basisMV += Number(p.marketValue || 0);
+        }
+      }
+      const cost = anyBasis ? invested : null;
+      const hpr = onCap.length
+        ? (cost != null && cost > 0 && (costCoversAll || g.every((p) => onCap.includes(p.accountId) || p.costBasis != null)) ? ((mv - cost) / cost) * 100 : null)
+        : hprOnCost;
       let gap = false, unknown = false, withAccount = 0;
       const flows = [];
       const calls = new Set();
@@ -1760,7 +1802,7 @@ const PM_RETURN_BOOK = (() => {
         : window >= 365 ? { shown: true, tag: null, pct: rate }
         : tranches === 1 && paidOut === 0 && hpr != null ? { shown: true, tag: "HPR", pct: hpr }
         : { shown: false };
-      funds.push({ key, security: g[0].security, mv, cost, hpr, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
+      funds.push({ key, security: g[0].security, mv, basisMV, cost, hpr, hprOnCost, onCapital: onCap, auto, xirr, complete, rate, rateNoPayouts, window, tranches, paidOut, flows });
     }
     const pooledIn = funds.filter((f) => f.complete);
     const pooled = pooledIn.length ? irr(pooledIn.flatMap((f) => f.flows)) : null;
@@ -1768,13 +1810,17 @@ const PM_RETURN_BOOK = (() => {
       ? days(pooledIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
         pooledIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
       : null;
-    const costed = priv.filter((p) => p.costBasis != null);
-    const bookCost = costed.reduce((t, p) => t + Number(p.costBasis), 0);
-    const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
+    // THE FOOTER'S HPR, on the rows' own basis: each fund's Invested added up,
+    // against the value of the parts that carry one — the page's own
+    // Σ P&L ÷ Σ Invested, reached without its helpers.
+    const withBasis = funds.filter((f) => f.cost != null);
+    const bookCost = withBasis.reduce((t, f) => t + f.cost, 0);
+    const bookMV = withBasis.reduce((t, f) => t + f.basisMV, 0);
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
-      footHpr: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
+      footHpr: bookCost > 0 ? ((bookMV - bookCost) / bookCost) * 100 : null,
+      onCapital: funds.filter((f) => f.onCapital.length > 0),
       paying: funds.filter((f) => f.complete && f.paidOut > 0).length,
     };
   } catch { return null; }
@@ -6915,10 +6961,12 @@ const PM_RETURN_CHECKS = [
   /**
    * EVERY FIGURE UNDER A NAME IS THAT NAME'S FIGURE: an XIRR is the rate over
    * every dated call, every payout dated on or before the valuation and the
-   * value; an HPR is value against cost. The bound is the page's own printing
-   * precision — one decimal — reproduced, never a tolerance widened.
+   * value; an HPR is value against the row's own Invested — the capital put in
+   * where the fund stands on it, the cost of the units otherwise. The bound is
+   * the page's own printing precision — one decimal — reproduced, never a
+   * tolerance widened.
    */
-  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is value against cost", (t, ctx) => {
+  ["each XIRR is the money-weighted rate over every call, every payout and the value, and each HPR is value against the row's own Invested", (t, ctx) => {
     const pr = ctx?.pmReturn;
     if (!pr || !PM_RETURN_BOOK) return false;
     let checked = 0;
@@ -6966,6 +7014,40 @@ const PM_RETURN_ROUTE_CHECKS = [
       return Math.abs(f.rate - f.rateNoPayouts) > 0.1 && Math.abs(pct - f.rate) <= 0.06;
     });
   }],
+  /**
+   * A FUND ON ITS CAPITAL ACCOUNT SHOWS ITS HPR ON THAT CAPITAL. Neo Infra's
+   * capital account dates every call and every payout, so its Invested is the
+   * capital put in, net of what it paid back to its valuation — and its HPR is
+   * struck on that, as on the Monitor. LOAD-BEARING: on this book the capital
+   * and the cost of the units part company by more than the printing precision,
+   * or a page still dividing by cost would pass wherever the two agreed.
+   */
+  ["a fund on its capital account shows its HPR on the capital put in, not on the cost of its units", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const moved = PM_RETURN_BOOK.onCapital.filter((f) => f.hpr != null && f.hprOnCost != null && Math.abs(f.hpr - f.hprOnCost) > 0.1);
+    if (!moved.length) return notChecked("no private fund in this book has a capital that differs from the cost of its units");
+    return moved.every((f) => {
+      const c = pr.rows.find((r) => r.key === f.key)?.cells.find((x) => x.measure === "absolute");
+      return !!c?.shown && Math.abs(pctOfCell(c.text) - f.hpr) <= 0.06;
+    });
+  }],
+  /**
+   * …AND ITS NOTE SAYS WHERE THE PAYOUTS ARE. On the cost of the units a
+   * payout is invisible and the cell says XIRR counts it; on the capital it is
+   * netted out, and "not in this figure" would be false. Struck on the note the
+   * cell carries — a `title`, which `innerText` cannot see.
+   */
+  ["…and its note says the payouts are netted out of that capital, never that they are missing", (t, ctx) => {
+    const pr = ctx?.pmReturn;
+    if (!pr || !PM_RETURN_BOOK) return false;
+    const paying = PM_RETURN_BOOK.onCapital.filter((f) => f.paidOut > 0);
+    if (!paying.length) return notChecked("no private fund on its capital account has paid cash back");
+    return paying.every((f) => {
+      const c = pr.rows.find((r) => r.key === f.key)?.cells.find((x) => x.measure === "absolute");
+      return !!c?.shown && /netted out of the capital/i.test(c.titles) && !/not in this figure/i.test(c.titles);
+    });
+  }],
   ["the XIRR footer pools exactly the funds with a complete record, and says how many", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "xirr");
     if (!foot || !PM_RETURN_BOOK) return false;
@@ -6984,7 +7066,7 @@ const PM_RETURN_ROUTE_CHECKS = [
     if (cells.some((c) => !c)) return false;
     return cells.every((c) => !/%/.test(c.text) && /whole private book/i.test(c.titles));
   }],
-  ["the HPR footer is the whole private book's value against its cost", (t, ctx) => {
+  ["the HPR footer is the whole private book's value against what was invested in it — the rows' own Invested", (t, ctx) => {
     const foot = ctx?.pmReturn?.foot?.find((x) => x.measure === "absolute");
     if (!foot || !PM_RETURN_BOOK || PM_RETURN_BOOK.footHpr == null) return false;
     return Math.abs(pctOfCell(foot.text) - PM_RETURN_BOOK.footHpr) <= 0.06;
@@ -14624,7 +14706,7 @@ const INVARIANTS = {
         if (!r.capitalAccounts?.length || r.capitalMixed) return null;
         const firsts = r.capitalAccounts.map((id) => {
           const c = CAPITAL_PUT_IN.byAccount.get(id);
-          return c && c.source === "dated-record" ? c.firstIn : null;
+          return c && c.flows ? c.firstIn : null;
         });
         return firsts.every(Boolean) ? [...firsts].sort()[0] : null;
       };
@@ -15724,7 +15806,7 @@ const INVARIANTS = {
       for (const c of mine) {
         const v = pct(c.text);
         const dated = c.capitalAccounts.length > 0 && !c.capitalMixed
-          && c.capitalAccounts.every((id) => CAPITAL_PUT_IN.byAccount.get(id)?.source === "dated-record");
+          && c.capitalAccounts.every((id) => !!CAPITAL_PUT_IN.byAccount.get(id)?.flows);
         // A row whose money is not ALL on a dated record has no rate: a dash.
         if (!dated) { if (v !== null || !/—/.test(c.text)) return false; continue; }
         const r = CAPITAL_PUT_IN.rowRate(c.capitalAccounts);
