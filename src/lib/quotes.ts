@@ -20,6 +20,7 @@
 // wrong symbol shows another company's price and says nothing about it.
 import nseSymbols from "@/data/nseSymbols.json";
 import type { Position } from "./types";
+import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 const KEY_TO_SYMBOL = nseSymbols as Record<string, string>;
 
@@ -228,7 +229,10 @@ export function applyQuotes(positions: Position[], feed: QuoteFeed | null): Posi
       currentPrice: q.price,
       marketValue,
       unrealizedPnL,
-      returnPct: costNA || unrealizedPnL === null ? p.returnPct : (unrealizedPnL / (cost as number)) * 100,
+      // FIFO's one return: a live price moves the unrealised half and nothing
+      // else, so the realised gain on units already sold stays in it (§6).
+      returnPct: costNA || unrealizedPnL === null ? p.returnPct
+        : fifoReturnPct(marketValue, cost as number, p.realizedPnL, p.costOfUnitsSold),
       prevClose: q.prevClose,
       dayChange: dayChangePct == null ? null : marketValue - p.quantity * (q.prevClose as number),
       dayChangePct,

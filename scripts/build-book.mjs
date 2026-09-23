@@ -23,6 +23,7 @@ import { OWNERS, ownerById } from "../shared/owners.mjs";
 import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { marketSideOf, readAifCategory, readsAsPrivateEquity, fundMarketSideBasis } from "../shared/aifCategory.mjs";
+import { fifoForClass, fifoReturnPct, fifoFromCashFlows } from "../shared/fifo.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
@@ -1011,6 +1012,25 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
   return moves;
 }
 
+
+/** Half of the last decimal a printed unit count carries — the tie a FIFO balance is held to. */
+function printedUnitTie(q) {
+  if (!isNum(q)) return UNIT_TIE;
+  const s = String(q);
+  const dp = s.includes(".") ? s.split(".")[1].length : 0;
+  return Math.max(UNIT_TIE, 0.5 * 10 ** -dp);
+}
+
+/** The economic gain on one capital-gain lot: proceeds less what those units cost. */
+function lotGain(l) {
+  if (isNum(l.saleAmount) && isNum(l.purchaseAmount)) return { gain: l.saleAmount - l.purchaseAmount, cost: l.purchaseAmount };
+  const g = (isNum(l.shortTerm) ? l.shortTerm : 0) + (isNum(l.longTerm) ? l.longTerm : 0);
+  if (!isNum(l.shortTerm) && !isNum(l.longTerm)) return null;
+  if (isNum(l.purchaseAmount)) return { gain: g, cost: l.purchaseAmount };
+  if (isNum(l.saleAmount)) return { gain: g, cost: l.saleAmount - g };
+  return null;
+}
+
 /**
  * OPENING, PLUS, MINUS, CLOSING — per holding, per statement window.
  *
@@ -1121,7 +1141,40 @@ function shareMovementsFrom(docs, positions, accounts, notes) {
  * report a return on a holding that is partly missing — the same failure the
  * ST/LT split already refuses on Pricol and Belrise.
  */
-function positionTranchesFrom(capitalMoves, reclassifications, positions, notes) {
+function positionTranchesFrom(capitalMoves, reclassifications, positions, notes, fifoLots = new Map()) {
+  const out = {};
+  /**
+   * WHERE FIFO RAN, THE TRANCHES ARE THE LOTS STILL HELD. A switch carries a
+   * lot into the new class with its own date and cost, and a sale takes the
+   * oldest first — so a contribution partly redeemed shows what is LEFT of it,
+   * and a contribution made into a class the family then switched out of shows
+   * up in the class that holds its units now. The allotment table alone could
+   * say neither: Neo's first drawdown is 25,000 units of which 10,837.2
+   * survive. (A record with a class SWITCH and no sale — Buoyant — is carried
+   * by `carryLotsThroughSwitches` below; FIFO lots stand only where units LEFT.)
+   */
+  for (const [k, lots] of [...fifoLots.entries()].sort()) {
+    if (!lots.length) continue;
+    const [accountId, securityKey] = k.split("|");
+    const pos = positions.find((p) => p.accountId === accountId && p.securityKey === securityKey);
+    const moves = lots.map((l) => ({
+      accountId, date: l.date, direction: "in",
+      label: [l.label ?? "Allotment",
+        l.carriedFromName ? `switched in from ${l.carriedFromName.replace(/^.*?\b(Class \S+)$/, "$1")}` : null,
+        l.unitsBought - l.units > UNIT_TIE ? `${r3((l.units / l.unitsBought) * 100)}% of it still held` : null,
+      ].filter(Boolean).join(" · "),
+      // What THESE units cost — the lot's own cost, carried unchanged through a
+      // switch and reduced in proportion by a sale. Never the contribution's
+      // full amount where part of it has already gone.
+      amount: r2(l.cost),
+      invested: r2(l.cost),
+      units: Math.round(l.units * 1e4) / 1e4,
+      security: pos?.security ?? null,
+      securityKey,
+    }));
+    out[k] = { accountId, securityKey, moves, units: Math.round(sum(moves.map((m) => m.units)) * 1e3) / 1e3, basis: "fifo" };
+  }
+
   const byKey = new Map();
   for (const m of capitalMoves) {
     // MONEY IN ONLY. A redemption now carries the units it took OUT, and folding
@@ -1138,8 +1191,9 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes)
   // `carryLotsThroughSwitches` in `lib/classSwitch.mjs`.
   carryLotsThroughSwitches(byKey, reclassifications, capitalMoves, notes);
 
-  const out = {};
   for (const [k, moves] of [...byKey.entries()].sort()) {
+    // FIFO's lots already stand for this position.
+    if (out[k]) continue;
     // Every lot moved out of this class by a switch: nothing is left to tie.
     if (!moves.length) continue;
     const [accountId, securityKey] = k.split("|");
@@ -1352,6 +1406,12 @@ function build(docs) {
   const excludedAccounts = [];
   /** Positions whose lot register does not account for the units held — no split. */
   const splitUnreconciled = [];
+  /** Positions whose statement cost FIFO over the fund's own unit record restates — named in the report. */
+  const fifoRestated = [];
+  /** The FIFO lots still held, per `${accountId}|${securityKey}` — the per-contribution breakdown's source. */
+  const fifoLotsByPosition = new Map();
+  /** FIFO's cost for a holding a class SWITCH alone moved — checked against the switch carry, never applied. */
+  const fifoSwitchOnly = [];
   /**
    * UNDRAWN CAPITAL — money the family OWES a fund on demand.
    *
@@ -1597,6 +1657,57 @@ function build(docs) {
         lotsByKey.set(l.securityKey, [...(lotsByKey.get(l.securityKey) ?? []), l]);
       }
     }
+    /**
+     * WHAT EACH HOLDING HAS ALREADY REALISED, matched FIFO by the statement that
+     * sold it.
+     *
+     * The capital gain statements ARE a FIFO match: every lot names the units
+     * sold, the date they were bought and what they cost, and the managers'
+     * appraisals carry the cost of the units LEFT on the same basis (measured
+     * against these lots before this was written). So a holding's realised
+     * gain is the sum of its own lots — the proceeds less what those units
+     * cost — and the cost of the units sold is what joins it to the return.
+     *
+     * ONLY LOTS SOLD ON OR BEFORE THE HOLDING'S OWN DATE. LKP's holding
+     * statement is struck 31 March; its capital gain statement sells 6,000
+     * Belrise on 25 June. The 31 March position still HOLDS those 6,000 units
+     * at their 31 March mark, so adding the June gain to it counts the same
+     * units twice — once as value, once as profit. A later sale belongs to a
+     * later snapshot, and until one arrives it is named rather than added.
+     */
+    const realisedByKey = new Map();
+    let lotsAfterSnapshot = 0;
+    let lotsUnreadable = 0;
+    const hasCgStatement = dated.capitalGains.length > 0;
+    for (const l of dated.capitalGains) {
+      if (!l.securityKey) continue;
+      if (asOf && l.saleDate && l.saleDate > asOf) {
+        lotsAfterSnapshot += 1;
+        const e = realisedByKey.get(l.securityKey) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
+        e.after += 1;
+        realisedByKey.set(l.securityKey, e);
+        continue;
+      }
+      const g = lotGain(l);
+      if (!g) { lotsUnreadable += 1; continue; }
+      const e = realisedByKey.get(l.securityKey) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
+      e.gain += g.gain;
+      e.cost += g.cost;
+      e.lots += 1;
+      realisedByKey.set(l.securityKey, e);
+    }
+    if (lotsAfterSnapshot) {
+      notes.push(`account ${accountNo}: ${lotsAfterSnapshot} capital-gain lot(s) were sold after this account's holding statement of ${asOf}, `
+        + "so the units they sold are still IN that statement's positions at its own mark. Their gain is on the capital gain "
+        + "statement and is not added to any position's return — doing so would count the same units once as value and once as profit.");
+    }
+    if (lotsUnreadable) notes.push(`account ${accountNo}: ${lotsUnreadable} capital-gain lot(s) print neither proceeds and cost nor a gain, and carry no realised figure`);
+
+    /** FIFO over the fund's own unit record, where anything was sold or switched. */
+    const fundFifo = fifoFromCashFlows(dated.cashFlows);
+    const unitRecord = dated.cashFlows;
+    if (fundFifo?.reason) notes.push(`account ${accountNo}: FIFO not run over the fund's unit record — ${fundFifo.reason}; the statement's own cost stands`);
+
     const costFor = (key, quantity) => {
       const o = openingCost.get(key);
       if (!o || !isNum(o.quantity) || !isNum(quantity) || !isNum(o.totalCost)) return null;
@@ -1719,8 +1830,78 @@ function build(docs) {
       // Where the holdings statement prints no cost, the broker's opening
       // position supplies it — but only when the quantities agree exactly.
       const joinedCost = isNum(h.totalCost) ? null : costFor(h.securityKey, h.quantity);
-      const costBasis = isNum(h.totalCost) ? h.totalCost : joinedCost;
+      let costBasis = isNum(h.totalCost) ? h.totalCost : joinedCost;
+      let costBasisSource = joinedCost !== null ? "opening-position" : undefined;
+      let printedCostBasis = undefined;
       const marketValue = h.marketValue;
+      /**
+       * REALISED, AND THE COST OF THE UNITS IT WAS REALISED ON — the half of a
+       * FIFO return the book used to leave out. A holding that sold part of
+       * itself kept only the cost of what was LEFT, so its return was struck on
+       * the survivors alone and the gain already banked on the rest fell out of
+       * it.
+       *
+       * NULL where no record could carry it: an account with no capital gain
+       * statement and no unit record reports what it holds, not what it sold.
+       * ZERO where a record exists and this holding sold nothing in it — a
+       * measurement over that record's window, not an absence.
+       */
+      let realizedPnL = null;
+      let costOfUnitsSold = null;
+      const rz = realisedByKey.get(h.securityKey);
+      if (hasCgStatement) {
+        realizedPnL = rz?.lots ? r2(rz.gain) : 0;
+        costOfUnitsSold = rz?.lots ? r2(rz.cost) : 0;
+      }
+      const realizedLotsAfter = rz?.after ?? 0;
+      /**
+       * THE FUND'S OWN UNIT RECORD OUTRANKS ITS COST COLUMN, BUT ONLY WHERE IT
+       * ACCOUNTS FOR EVERY UNIT HELD. A FIFO balance that does not reproduce the
+       * statement's own unit count means some units came from something the
+       * record does not contain, and a cost struck on part of a holding would be
+       * the Pricol failure again. So the lots must tie to the printed quantity,
+       * to the precision it is printed to, with no sale left unmatched.
+       */
+      const fifoCls = fundFifo?.ledger ? fifoForClass(fundFifo.ledger, h.securityKey) : null;
+      if (fifoCls && (fifoCls.lots.length || fifoCls.realised.length)) {
+        const short = fundFifo.ledger.shortfalls.filter((x) => x.cls === h.securityKey);
+        const ties = isNum(h.quantity) && Math.abs(fifoCls.unitsHeld - h.quantity) <= printedUnitTie(h.quantity);
+        if (!short.length && ties && !fifoCls.realised.length) {
+          /**
+           * NO UNIT LEFT THIS HOLDING — only a class switch moved it. Nothing was
+           * sold, so the realised half is a MEASURED zero over a record that runs
+           * from the first purchase. The COST is left to `carryCostThroughSwitches`,
+           * which carries each contribution through the switch at the fund's own
+           * ratio; FIFO's own figure is kept to check that carry against, because
+           * two implementations writing one cost is how two screens come to
+           * disagree about it.
+           */
+          realizedPnL = 0;
+          costOfUnitsSold = 0;
+          fifoSwitchOnly.push({ accountId, securityKey: h.securityKey, fifoCost: r2(fifoCls.costHeld) });
+        } else if (!short.length && ties) {
+          const fifoCost = r2(fifoCls.costHeld);
+          if (!isNum(costBasis) || Math.abs(fifoCost - costBasis) > 1) {
+            fifoRestated.push({ accountId, security: h.security, printed: isNum(costBasis) ? r2(costBasis) : null, fifo: fifoCost,
+              realised: r2(fifoCls.realisedGain), costSold: r2(fifoCls.costSold) });
+            printedCostBasis = isNum(costBasis) ? r2(costBasis) : undefined;
+          }
+          costBasis = fifoCost;
+          costBasisSource = "fifo";
+          realizedPnL = r2(fifoCls.realisedGain);
+          costOfUnitsSold = r2(fifoCls.costSold);
+          // The class a lot was switched OUT of, by the name the record printed
+          // for it — the key alone reads as a slug on screen.
+          const nameOf = (k) => unitRecord.find((c) => c.securityKey === k)?.security ?? k;
+          fifoLotsByPosition.set(`${accountId}|${h.securityKey}`,
+            fifoCls.lots.map((l) => ({ ...l, carriedFromName: l.carriedFrom ? nameOf(l.carriedFrom) : null })));
+        } else {
+          notes.push(`account ${accountNo}: FIFO over the unit record does not account for ${h.security} — `
+            + (short.length ? `a sale takes ${r3(sum(short.map((x) => x.units)))} unit(s) no recorded purchase holds`
+              : `the lots hold ${r3(fifoCls.unitsHeld)} unit(s) against ${h.quantity} printed`)
+            + "; the statement's own cost stands");
+        }
+      }
       /**
        * THE SHORT/LONG-TERM SPLIT, WHERE — AND ONLY WHERE — LOT DATES EXIST.
        *
@@ -1844,18 +2025,29 @@ function build(docs) {
          * "opening-position" where the cost came from the broker's ledger, not
          * this statement; "carried-through-switch" where a fund's class switch
          * restated it and `carryCostThroughSwitches` carried the family's own
-         * cost through — set there, after the tranches, never here.
+         * cost through — set there, after the tranches, never here; "fifo"
+         * where units LEFT the holding and its cost is that of the units still
+         * held after the fund's own unit record was matched first-in, first-out.
          */
-        costBasisSource: joinedCost !== null ? "opening-position" : undefined,
+        costBasisSource,
         /** The statement's own cost, kept beside a cost this book carried — a CHECK, never a source. */
-        printedCostBasis: undefined,
+        printedCostBasis,
         marketValue,
         // Derived from whatever cost we ended up with, so a joined cost yields a
         // gain on the same basis. Both stay null when there is no cost at all —
         // a market value with no basis under it is not a profit of its own size.
         unrealizedPnL: isNum(marketValue) && isNum(costBasis) ? r2(marketValue - costBasis) : h.gainLoss,
-        returnPct: isNum(marketValue) && isNum(costBasis) && costBasis
-          ? r2(((marketValue - costBasis) / costBasis) * 100)
+        realizedPnL,
+        costOfUnitsSold,
+        realizedLotsAfter: realizedLotsAfter || undefined,
+        /**
+         * THE ONE RETURN FORMULA (`shared/fifo.mjs`): everything the holding
+         * produced — unrealised on what is held, realised on what was sold —
+         * over every rupee that bought a unit of it. Where nothing was sold it
+         * is the familiar unrealised ÷ cost, to the paisa.
+         */
+        returnPct: isNum(marketValue) && isNum(costBasis)
+          ? r2(fifoReturnPct(marketValue, costBasis, realizedPnL, costOfUnitsSold))
           : h.pctGainLoss,
         stCostBasis,
         ltCostBasis,
@@ -2094,6 +2286,56 @@ function build(docs) {
     // in this book that answers "what did WE buy, and when".
     capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
     reclassifications.push(...reclassificationsFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+
+    /**
+     * ── A MANDATE'S CAPITAL, SINCE INCEPTION, AT THE SAME DATE AS ITS HOLDINGS ──
+     *
+     * FIFO inside a mandate is the manager's: every appraisal carries the cost of
+     * the shares LEFT and every capital gain statement the gain on the ones SOLD,
+     * each matched first-in, first-out. But a capital gain statement covers ONE
+     * WINDOW, so the realised gain on everything the manager sold before it is
+     * in no position — and a mandate's return struck over its surviving shares
+     * alone reads 8.42% on V.E.C 128004 where the fund's own since-inception
+     * record (realised ₹1.05 Cr, unrealised ₹50.5 L, income, fees) says 30%.
+     *
+     * The mandate as a WHOLE needs no matching at all: the family paid capital
+     * in and the account is worth what its positions are worth, so everything
+     * the mandate has earned — every lot the manager ever sold, every dividend,
+     * less every fee — is `value + withdrawn − contributed`. That is FIFO's own
+     * total, because however the units are matched, cost held plus cost sold is
+     * what was put in.
+     *
+     * Taken only from a statement that states it SINCE INCEPTION and AS AT THE
+     * HOLDINGS' OWN DATE — a capital figure a fortnight older than the value it
+     * is set against would book a fortnight's deposits as profit. Where no such
+     * statement exists, the account's own dated capital record stands in only if
+     * it starts at the account's printed inception.
+     */
+    if (acctForPositions.engagement === "PMS") {
+      const si = bridges.filter((b) => b.basis === "since-inception" && b.periodTo === asOf
+        && isNum(b.contribution));
+      const mine = capitalMoves.filter((m) => m.accountId === accountId);
+      const ins = mine.filter((m) => m.direction === "in" && isNum(m.amount));
+      const firstIn = ins.map((m) => m.date).sort()[0] ?? null;
+      if (si.length) {
+        const b = si[0];
+        acctForPositions.capital = {
+          contributed: r2(b.contribution), withdrawn: r2(b.withdrawal ?? 0),
+          from: b.periodFrom, to: b.periodTo, source: b.source,
+        };
+      } else if (ins.length && inception && firstIn <= inception
+        && mine.every((m) => m.date <= asOf)) {
+        acctForPositions.capital = {
+          contributed: r2(sum(ins.map((m) => m.amount))),
+          withdrawn: r2(sum(mine.filter((m) => m.direction === "out" && isNum(m.amount)).map((m) => m.amount))),
+          from: inception, to: asOf, source: "capital-record",
+        };
+      } else {
+        acctForPositions.capital = null;
+        notes.push(`account ${accountNo}: no statement states this mandate's capital since inception as at ${asOf}, `
+          + "so its return is struck holding by holding and carries only the realised gain its capital gain statement's window reports");
+      }
+    }
 
     const register = group.find((d) => d.reportType === "capital-register" && (d.cashFlows ?? []).length);
     const bank = group.find((d) => d.reportType === "bank-book" && (d.cashFlows ?? []).length);
@@ -2400,6 +2642,16 @@ function build(docs) {
         + "capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates."
       : "unrealised short/long-term split is NULL on every position: it needs per-lot purchase dates, "
         + "and no statement in this drop carries a lot register.");
+    // FIFO's restatements, NAMED with both figures, so any one can be checked
+    // against the statement it overrides.
+    for (const f of fifoRestated) {
+      notes.push(`FIFO restates the cost of ${f.security} (${f.accountId}): the statement prints `
+        + `${f.printed === null ? "no cost" : f.printed.toLocaleString("en-IN")}, the fund's own unit record matched `
+        + `first-in, first-out holds ${f.fifo.toLocaleString("en-IN")} of cost in the units still held`
+        + (f.costSold ? `, and ${f.costSold.toLocaleString("en-IN")} of cost was sold for a realised `
+          + `${f.realised.toLocaleString("en-IN")}` : "")
+        + ". The record carries every unit from its first purchase, and its FIFO balance ties to the printed unit count.");
+    }
     // Named, never silently dropped: a register that does not account for the
     // units held cannot split them, and saying so is the whole point.
     for (const u of splitUnreconciled) {
@@ -2414,13 +2666,34 @@ function build(docs) {
   // regenerates byte-identically; the accountId breaks ties within a date.
   capitalMoves.sort((a, b) =>
     a.date.localeCompare(b.date) || a.accountId.localeCompare(b.accountId) || a.direction.localeCompare(b.direction));
-  const positionTranches = positionTranchesFrom(capitalMoves, reclassifications, positions, notes);
+  const positionTranches = positionTranchesFrom(capitalMoves, reclassifications, positions, notes, fifoLotsByPosition);
   // After the tranches, because the tranches ARE the licence: a cost is carried
   // through a switch only onto a holding whose dated contributions account for
   // every unit it holds. Market value, and therefore every total and every side
   // of the book, is untouched — this moves cost and the three figures derived
   // from it, on the positions a switch restated and nowhere else.
   carryCostThroughSwitches(positions, positionTranches, reclassifications, accountBridges, notes);
+  // TWO PATHS TO ONE COST, AND THEY MUST AGREE. A class switch with no sale is
+  // carried above by `carryCostThroughSwitches`; FIFO ran over the same unit
+  // record and reached its own answer independently. They are different code
+  // over the same record, so agreement is a real check — and a disagreement
+  // means one of them is wrong about which units are which, which is the one
+  // thing a cost must never be. Named loudly rather than resolved silently.
+  for (const f of fifoSwitchOnly) {
+    const p = positions.find((x) => x.accountId === f.accountId && x.securityKey === f.securityKey);
+    if (!p) continue;
+    if (p.costBasisSource !== "carried-through-switch") {
+      notes.push(`FIFO and the class-switch carry disagree on ${p.security} (${p.accountId}): FIFO over the unit record `
+        + `holds ${f.fifoCost} of cost, and the switch carry did not restate the statement's ${p.costBasis}. `
+        + "The statement's cost stands; see the switch notes above for why it was not carried.");
+    } else if (Math.abs(p.costBasis - f.fifoCost) > 1) {
+      notes.push(`FIFO and the class-switch carry DISAGREE on ${p.security} (${p.accountId}): carried ${p.costBasis}, `
+        + `FIFO ${f.fifoCost}. One of them has the wrong units in the wrong lot.`);
+    } else {
+      notes.push(`FIFO agrees with the class-switch carry on ${p.security} (${p.accountId}): both hold `
+        + `${p.costBasis.toLocaleString("en-IN")} of cost in the units still held, and the unit record shows none sold.`);
+    }
+  }
   const shareMovements = shareMovementsFrom(docs, [...positions, ...polycab], accounts, notes);
 
   return {

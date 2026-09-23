@@ -13,6 +13,7 @@ import {
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
+import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { AbsentValue, AbsentCell } from "@/components/Absent";
 import { fundNavFor } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
@@ -321,7 +322,13 @@ export function StockInfo() {
     basis: (r) => (r.stCostBasis === null && r.ltCostBasis === null ? null : (r.ltCostBasis ?? 0) >= (r.stCostBasis ?? 0) ? "LT" : "ST"),
   });
   const avgCost = cost !== null && qty > 0 ? cost / qty : null;
-  const ret = cost !== null && pnl !== null && cost > 0 ? (pnl / cost) * 100 : null;
+  /**
+   * FIFO — the realised gain on units of this holding already sold stays in
+   * its return (`fifoTotals`), over the rows that report a cost, which is the
+   * set Invested beside it is struck on.
+   */
+  const fifo = fifoTotals(drows.filter((r) => r.costBasis != null && !r.costUnavailable));
+  const ret = cost !== null && pnl !== null && cost > 0 ? fifo.returnPct : null;
   /**
    * WHY THERE IS NO COST — the question the reader actually opened this page with.
    *
@@ -625,7 +632,8 @@ export function StockInfo() {
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
           delta={ret}
-          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span> : "on cost"}
+          sub={pnl === null ? <span className="text-slate-500">{costWhy}</span>
+            : <span title={fifoBasisNote(fifo, (n) => money(n))}>return · FIFO{fifo.realised ? ` · incl. ${money(fifo.realised, true)} realised` : ""}</span>}
           icon={<TrendingUp className="h-4 w-4" />} />
         {/* Realised P&L exists only where a capital gain statement covers this
             name's sells. Null is not zero: the sells may be real and what they
@@ -814,7 +822,7 @@ export function StockInfo() {
                       pnl: <td key="pnl" className={`px-4 py-2.5 text-right mono ${changeColor(pnl)}`}>{money(pnl, true)}</td>,
                       return: (
                         <td key="return" className={`px-4 py-2.5 text-right mono ${changeColor(ret)}`}
-                          title="The holding-period return across every row above — the total on cost, not annualised: these rows were bought on different dates, so there is no single window to compound over.">
+                          title={`The holding-period return across every row above, FIFO — the unrealised gain on what is held and the realised gain on units already sold, over the cost of both. Not annualised: these rows were bought on different dates, so there is no single window to compound over. ${fifoBasisNote(fifo, (n) => money(n))}`}>
                           <span className="ret-tag mr-0.5">HPR</span>{fmtPct(ret, { sign: true, decimals: 1 })}
                         </td>
                       ),
