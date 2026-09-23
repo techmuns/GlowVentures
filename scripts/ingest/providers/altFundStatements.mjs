@@ -340,15 +340,17 @@ export function threePFlows(text, warn) {
 // PDF, so it is emitted only where the statement's own figures witness it —
 // `threePFlows`' licence and `hdfcNsdl.mjs`'s, applied to a third layout:
 //
-//   1. every dated row is a DECLARED type — an unfamiliar event (a withdrawal
-//      this reader has not met, a dividend payout) fails to match rather than
+//   1. every dated row is a DECLARED type — an unfamiliar event (a payout this
+//      reader has never seen printed, a dividend) fails to match rather than
 //      being filed under whichever type it resembles;
 //   2. amount = units × NAV on every class row, to the precision the two are
 //      PRINTED to (4dp each) — reproduced, never a tolerance widened;
 //   3. EVERY DATE BALANCES: what was allotted = what was deposited + what was
 //      redeemed + what was distributed, within the rows' own printing
 //      precision. This is the check that catches a missed deposit — it would
-//      leave an allotment on its date with nothing paying for it;
+//      leave an allotment on its date with nothing paying for it — and every
+//      redemption must be one leg of a same-day SWITCH, because a redemption
+//      paid out to the family is a movement this reader has never seen printed;
 //   4. per class, units allotted less units redeemed = the Account Summary's
 //      printed Unit Balance, and a class absent from the summary nets to zero;
 //   5. per class still held, the allotments add to the summary's printed Cost —
@@ -363,8 +365,14 @@ export function threePFlows(text, warn) {
 
 /** `Date Transactions Amount (INR)` — the cash table's own header, no NAV/Units. */
 const BY_CASH_HEAD = /^Date Transactions Amount \(INR\)$/i;
-/** `01/06/2024 Cash Deposits 3,50,00,000.00` */
-const BY_CASH_ROW = /^(\d{2}\/\d{2}\/\d{4}) (Cash Deposits|Cash Withdrawals?) (-?[\d,]+\.\d{2})$/i;
+/**
+ * `01/06/2024 Cash Deposits 3,50,00,000.00` — THE ONLY CASH TYPE DECLARED, because
+ * it is the only one any Buoyant statement in this corpus prints. A payout's own
+ * label has never been seen, and declaring a guessed one would be a regex written
+ * against a document nobody has read; a statement carrying one fails check 1 by
+ * name instead, and the next session declares it against the real page.
+ */
+const BY_CASH_ROW = /^(\d{2}\/\d{2}\/\d{4}) (Cash Deposits) ([\d,]+\.\d{2})$/i;
 /** `Transactions : BUOYANT … - CLASS A4` · `Transactions : Other Liabilities and Assets` */
 const BY_CLASS_HEAD = /^Transactions : (.+)$/i;
 /** `01/06/2026 Units Allotment 139.1284 17,96,901.6155 25,00,00,000.00` */
@@ -468,24 +476,23 @@ export function buoyantFlows(text, warn) {
   const role = new Map(); // row → "allotment" | "switch-in" | "switch-out" | "reinvested-income"
   const fundedClass = new Map(); // date → the class a deposit on that date bought, where one is named
   for (const d of dates) {
-    const dep = cash.filter((c) => c.date === d && /^Cash Deposits$/i.test(c.type));
-    const wd = cash.filter((c) => c.date === d && !/^Cash Deposits$/i.test(c.type));
+    const dep = cash.filter((c) => c.date === d);
     const allot = rows.filter((r) => r.date === d && isAllot(r));
     const redeem = rows.filter((r) => r.date === d && isRedeem(r));
     const distr = rows.filter((r) => r.date === d && isDistr(r));
-    const uses = paise(allot.reduce((t, r) => t + r.amount, 0) + wd.reduce((t, c) => t + Math.abs(c.amount), 0));
+    const uses = paise(allot.reduce((t, r) => t + r.amount, 0));
     const sources = paise(dep.reduce((t, c) => t + c.amount, 0) + redeem.reduce((t, r) => t + r.amount, 0)
       + distr.reduce((t, r) => t + r.amount, 0));
     const bound = [...allot, ...redeem, ...distr].reduce((t, r) => t + precision(r), 0) + 0.01;
     if (Math.abs(uses - sources) > bound) {
-      fails.push(`${d}: ${uses} was allotted or withdrawn against ${sources} deposited, redeemed or distributed`);
+      fails.push(`${d}: ${uses} was allotted against ${sources} deposited, redeemed or distributed`);
       continue;
     }
     // A redemption is a SWITCH only where one allotment of another class on the
     // same day matches it within their joint printing precision — exactly one,
-    // or the pairing would be a guess. An unpaired redemption would be money
-    // paid OUT, which this layout prints as a Cash Withdrawal and which check 3
-    // has already required to balance.
+    // or the pairing would be a guess. An unpaired redemption is money that left
+    // the fund, and this corpus has never printed one, so it withholds the table
+    // rather than being read as a switch it is not.
     const free = new Set(allot);
     for (const r of redeem) {
       const pairs = [...free].filter((a) => a.cls !== r.cls && Math.abs(a.amount - r.amount) <= precision(a) + precision(r));
@@ -540,17 +547,16 @@ export function buoyantFlows(text, warn) {
 
   const out = [];
   for (const c of cash) {
-    const deposit = /^Cash Deposits$/i.test(c.type);
-    const bought = deposit ? fundedClass.get(c.date) : null;
+    const bought = fundedClass.get(c.date);
     out.push(makeCashFlow({
       date: c.date,
       // The statement's own word for the movement, verbatim.
       description: c.type,
       security: bought ? buoyantClassName(bought) : null,
-      kind: deposit ? "contribution" : "withdrawal",
+      kind: "contribution",
       // A deposit prints no NAV and no units — it is money reaching the fund,
       // and the allotment it paid for is its own row below.
-      amount: deposit ? c.amount : -Math.abs(c.amount),
+      amount: c.amount,
     }));
   }
   for (const r of rows) {

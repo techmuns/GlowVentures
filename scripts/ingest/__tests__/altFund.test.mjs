@@ -6,7 +6,7 @@
 // the checks are load-bearing is to break the statement one figure at a time and
 // watch each one refuse. A suite that only asserts the happy path proves the
 // regex matches; it proves nothing about the licence to publish a dated tape.
-import { threePFlows } from "../providers/altFundStatements.mjs";
+import { threePFlows, buoyantFlows } from "../providers/altFundStatements.mjs";
 
 let pass = 0, fail = 0;
 const ok = (label, cond, detail = "") => {
@@ -149,6 +149,175 @@ for (const [label, [from, to]] of breaks) {
   const { rows, warns } = read("Account Summary as on 31-07-2026\nNothing dated here at all.\n");
   ok("no table, no rows", rows.length === 0);
   ok("no table, no warning", warns.length === 0, JSON.stringify(warns));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BUOYANT — the dated deposits, and the class switch the return was hiding
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Figures chosen so every identity holds, and so the statement carries the
+// three things the real ones do: a CLASS SWITCH (A1 -> A4 on 01/03/2026), a
+// GAIN DISTRIBUTION reinvested into an allotment (01/06/2025), and a PAGE
+// BREAK between Class A1's heading and its first rows — the header lines it
+// reprints must not reset the class.
+//
+//   01/01/2025  deposit 1,00,00,000  -> A1 1,00,000 units at 100.0000
+//   01/06/2025  deposit   50,00,000  + gain distr 5,000 -> A1 40,000 at 125.1250
+//   01/03/2026  deposit   22,40,000  -> A4 20,000 at 112.0000
+//               A1 1,40,000 redeemed at 120.0000 = 1,68,00,000
+//                 -> A4 1,50,000 at 112.0000 (the switch)
+//   held: A4 1,70,000 units, cost 1,90,40,000
+const BUOYANT = `
+Account Summary : As of 31/07/2026
+Folio : TEST001
+Serial No NAV Date Unit Balance Cost (INR) NAV Value (INR) Absolute % Annualised %
+BUOYANT OPPORTUNITIES 31/07/2026 1,70,000.0000 1,90,40,000.00 115.0000 1,95,50,000.00 2.68 5.00
+STRATEGY - CATEGORY III -
+CLASS A4
+Total 1,70,000.0000 1,90,40,000.00 1,95,50,000.00
+Date Transactions Amount (INR)
+01/01/2025 Cash Deposits 1,00,00,000.00
+01/06/2025 Cash Deposits 50,00,000.00
+01/03/2026 Cash Deposits 22,40,000.00
+Transactions : BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4
+Date Transactions NAV Units Amount (INR)
+01/03/2026 Units Allotment 112.0000 20,000.0000 22,40,000.00
+01/03/2026 Units Allotment 112.0000 1,50,000.0000 1,68,00,000.00
+Transactions : BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A1
+Date Transactions NAV Units Amount (INR)
+Account Statement
+Account : 100001 TEST HOLDER
+Buoyant Opportunities Strategy - Investor
+As of 31/07/2026
+01/01/2025 Units Allotment 100.0000 1,00,000.0000 1,00,00,000.00
+01/06/2025 Units Allotment 125.1250 40,000.0000 50,05,000.00
+01/03/2026 Unit Redemption 120.0000 1,40,000.0000 1,68,00,000.00
+Transactions : Other Liabilities and Assets
+Date Transactions NAV Units Amount (INR)
+01/06/2025 Gain Distr. 1.0000 5,000.0000 5,000.00
+Note: NAV per unit is net of all expenses and taxes, up to the last closure date.
+`;
+
+const readB = (text) => {
+  const warns = [];
+  const rows = buoyantFlows(text, (code, detail) => warns.push({ code, detail }));
+  return { rows, warns };
+};
+
+// ── the statement as printed ────────────────────────────────────────────────
+{
+  const { rows, warns } = readB(BUOYANT);
+  ok("buoyant: a statement that ties is read", rows.length === 9, `got ${rows.length} row(s), warns ${JSON.stringify(warns)}`);
+  ok("buoyant: no warning on a clean read", warns.length === 0, JSON.stringify(warns));
+
+  const of = (k) => rows.filter((r) => r.kind === k);
+  // ONLY A DEPOSIT IS CAPITAL. Everything else on the statement is a movement
+  // INSIDE the fund, and `capitalMovesFrom` reads contributions and withdrawals
+  // alone — so the switch cannot enter the family's capital record as money out
+  // and back in, and the reinvested distribution cannot enter it as money in.
+  ok("buoyant: the deposits and only the deposits are contributions",
+    of("contribution").length === 3 && of("contribution").reduce((t, r) => t + r.amount, 0) === 17240000,
+    JSON.stringify(of("contribution").map((r) => r.amount)));
+  ok("buoyant: nothing is a withdrawal", of("withdrawal").length === 0);
+  ok("buoyant: the switch is two reclassification legs",
+    of("reclassification").length === 2, rows.map((r) => r.kind).join(","));
+  ok("buoyant: the switch moves no money",
+    Math.round(of("reclassification").reduce((t, r) => t + r.amount, 0) * 100) === 0,
+    String(of("reclassification").reduce((t, r) => t + r.amount, 0)));
+  ok("buoyant: the reinvested distribution is income, never capital",
+    of("reinvested-income").length === 1 && of("reinvested-income")[0].amount === 5000);
+  ok("buoyant: a deposit-funded allotment is an allotment", of("allotment").length === 3);
+
+  // THE PAGE BREAK. Class A1's rows sit after a reprinted page header, and all
+  // three must still be filed under A1 — the redemption above all, because it
+  // is the leg that makes this a switch rather than a mystery.
+  // Class-table rows only: a DEPOSIT also names the class it bought, so counting
+  // every A1-keyed row would count the cash table too.
+  const a1 = rows.filter((r) => r.kind !== "contribution" && /class-a1$/.test(r.securityKey ?? ""));
+  ok("buoyant: the class carries across a page break", a1.length === 3,
+    JSON.stringify(rows.map((r) => [r.date, r.kind, r.securityKey])));
+  ok("buoyant: a deposit names the class it bought",
+    of("contribution").map((r) => (r.securityKey ?? "").slice(-2)).join(",") === "a1,a1,a4",
+    of("contribution").map((r) => r.securityKey).join(","));
+}
+
+// ── EACH GATE MUST BE ABLE TO REFUSE ON ITS OWN ─────────────────────────────
+//
+// Every mutation is built to break ONE identity and leave the other four
+// holding, so a gate that stopped checking would let exactly its own case
+// through. A mutation that tripped two gates would prove neither.
+const bBreaks = [
+  ["gate 1 — an undeclared row type",
+    BUOYANT.replace("Note: NAV", "01/07/2025 Dividend Payout 1.0000 100.0000 100.00\nNote: NAV"),
+    "transaction-type-not-declared"],
+  ["gate 1 — a cash movement this reader has never seen printed",
+    BUOYANT.replace("01/03/2026 Cash Deposits 22,40,000.00", "01/03/2026 Cash Deposits 22,40,000.00\n01/04/2026 Cash Withdrawal 1,000.00"),
+    "transaction-type-not-declared"],
+  // units x NAV no longer meets the printed amount — and nothing else moves.
+  ["gate 2 — a row's own arithmetic",
+    BUOYANT.replace("01/01/2025 Units Allotment 100.0000", "01/01/2025 Units Allotment 101.0000"),
+    "dated-table-does-not-tie", /unit\(s\) at 101/],
+  // The deposit that paid for 01/06/2025's allotment is gone.
+  ["gate 3 — a missed deposit",
+    BUOYANT.replace("01/06/2025 Cash Deposits 50,00,000.00\n", ""),
+    "dated-table-does-not-tie", /2025-06-01: 5005000 was allotted/],
+  ["gate 4 — units against the printed balance",
+    BUOYANT.replace("31/07/2026 1,70,000.0000 1,90,40,000.00", "31/07/2026 1,70,001.0000 1,90,40,000.00"),
+    "dated-table-does-not-tie", /Class A4: 170000 unit/],
+  ["gate 5 — cost against the printed cost",
+    BUOYANT.replace("31/07/2026 1,70,000.0000 1,90,40,000.00", "31/07/2026 1,70,000.0000 1,90,50,000.00"),
+    "dated-table-does-not-tie", /Class A4: allotments add to 19040000/],
+];
+for (const [label, text, code, detail] of bBreaks) {
+  const { rows, warns } = readB(text);
+  ok(`buoyant ${label}: publishes nothing`, rows.length === 0, `got ${rows.length} row(s)`);
+  const w = warns.find((x) => x.code === code);
+  ok(`buoyant ${label}: says why`, !!w && (!detail || detail.test(w.detail)), JSON.stringify(warns));
+  // And names ONLY its own cause: a second failure would mean the mutation
+  // broke two identities, and then neither gate is shown to be load-bearing.
+  const causes = (w?.detail ?? "").split("; ").length;
+  ok(`buoyant ${label}: trips one gate only`, code !== "dated-table-does-not-tie" || causes === 1,
+    w?.detail ?? "");
+}
+
+// ── A redemption that is not one leg of a switch is not read as one ─────────
+//
+// TWO WAYS IT CAN FAIL TO BE ONE, AND THEY ARE DIFFERENT GUARDS.
+{
+  // Money that LEFT. The switch-in allotment is gone and the A4 summary moved
+  // to match, so gates 4 and 5 hold — but ₹1,68,00,000 was redeemed on a day
+  // nothing paid out is printed, and the day cannot balance. Gate 3 is what
+  // refuses a payout this reader has never seen printed, before any pairing.
+  const payout = BUOYANT
+    .replace("01/03/2026 Units Allotment 112.0000 1,50,000.0000 1,68,00,000.00\n", "")
+    .replace("31/07/2026 1,70,000.0000 1,90,40,000.00", "31/07/2026 20,000.0000 22,40,000.00");
+  const { rows, warns } = readB(payout);
+  ok("buoyant: money redeemed and paid out publishes nothing", rows.length === 0, `got ${rows.length}`);
+  ok("buoyant: and the day that cannot balance is named",
+    warns.some((w) => /2026-03-01: 2240000 was allotted against 19040000/.test(w.detail)), JSON.stringify(warns));
+}
+{
+  // Money that STAYED, but in two pieces. The switch-in is split across two
+  // allotments of 84,00,000 each, so the day balances, the units tie and the
+  // cost ties — every other gate passes — and no SINGLE allotment matches the
+  // redemption. Which rows came from the switch is then a guess, so the table
+  // is withheld rather than filed on one.
+  const split = BUOYANT.replace(
+    "01/03/2026 Units Allotment 112.0000 1,50,000.0000 1,68,00,000.00",
+    "01/03/2026 Units Allotment 112.0000 75,000.0000 84,00,000.00\n01/03/2026 Units Allotment 112.0000 75,000.0000 84,00,000.00");
+  const { rows, warns } = readB(split);
+  ok("buoyant: a switch that cannot be paired publishes nothing", rows.length === 0, `got ${rows.length}`);
+  ok("buoyant: and says it cannot tell a switch from a payout",
+    warns.some((w) => /pairs with 0 allotment\(s\) rather than one/.test(w.detail)), JSON.stringify(warns));
+  ok("buoyant: and that is its only complaint",
+    (warns[0]?.detail ?? "").split("; ").length === 1, warns[0]?.detail ?? "");
+}
+
+// ── No such table: nothing, and no warning ──────────────────────────────────
+{
+  const { rows, warns } = readB("Account Summary : As of 31/07/2026\nNothing dated here at all.\n");
+  ok("buoyant: no table, no rows", rows.length === 0);
+  ok("buoyant: no table, no warning", warns.length === 0, JSON.stringify(warns));
 }
 
 console.log(`  ${pass} passed, ${fail} failed`);
