@@ -207,8 +207,21 @@ export type Position = {
    * Where a cost basis came from another document — "opening-position" means the
    * broker's carried-forward ledger row, joined only where the quantities match
    * exactly. Absent when the holdings statement printed the cost itself.
+   *
+   * "carried-through-switch" means a fund moved these units between its own
+   * classes and restated their cost at the switch-day NAV, and the book carries
+   * what the family actually PAID through the switch instead: the sum of this
+   * holding's own dated contributions, which account for every unit it holds.
+   * The statement's figure stays beside it as `printedCostBasis`. See
+   * `carryCostThroughSwitches` in `scripts/build-book.mjs`.
    */
-  costBasisSource?: "opening-position";
+  costBasisSource?: "opening-position" | "carried-through-switch";
+  /**
+   * The cost the statement's own cost column prints, kept ONLY where the book's
+   * cost differs from it (`costBasisSource`) — a CHECK beside the figure, never
+   * a source. Undefined everywhere else.
+   */
+  printedCostBasis?: number;
   /**
    * PER-UNIT figures, and NULLABLE — not every provider prints them.
    *
@@ -612,6 +625,15 @@ export type CapitalMove = {
   /** The security those units are in — only a unitised fund names one. */
   security: string | null;
   securityKey: string | null;
+  /**
+   * PRESENT ONLY ON A TRANCHE, and only where the fund later moved these units
+   * into another of its classes. The move is then shown in the class it sits in
+   * today — `units` converted at the switch's own printed ratio, `security` the
+   * new class — and this records what the money originally BOUGHT, so a reader
+   * can see the purchase as the statement printed it. The date and the amount
+   * paid never change. `BOOK_CAPITAL_MOVES` itself never carries it.
+   */
+  carriedFrom?: { security: string | null; securityKey: string | null; units: number; switchedOn: string };
 };
 
 /**
