@@ -27,7 +27,10 @@ restore() {
 }
 trap 'restore; rm -rf "$SNAP"' EXIT
 
-ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-cmp-derived,stock-fund"
+# `stock-cmp-derived` was retired at Stage 10bn; `stock-cmp-agree` carries the
+# Total-row claim since the position page became tabs (Stage 10cn), because the
+# `stock` holding is held in ONE account and draws no Total row.
+ROUTES="stock,stock-cmp-split,stock-cmp-unmarked,stock-cmp-agree,stock-cmp-nav,stock-fund"
 run() {
   if ! npm run build >/dev/null 2>&1; then echo "    NOT A RESULT (build failed)"; return; fi
   ONLY=$ROUTES npm run check:pages 2>&1 \
@@ -77,17 +80,17 @@ patch src/pages/StockInfo.tsx \
   'data-cmp={r.currentPrice ?? ""}' 'data-cmp={r.currentPrice ?? ""} data-derived' \
 && patch src/pages/StockInfo.tsx \
   '{price(r.currentPrice)}
-                            </span>}' \
+              </span>}' \
   '{price(r.quantity > 0 ? r.marketValue / r.quantity : null)}
-                            </span>}' && run
+              </span>}' && run
 restore
 
 bug "4. every row prints the holding-level figure, not its own statement's"
 patch src/pages/StockInfo.tsx \
   '{price(r.currentPrice)}
-                            </span>}' \
+              </span>}' \
   '{cmpMarks[0] ?? price(r.currentPrice)}
-                            </span>}' && run
+              </span>}' && run
 restore
 
 bug "5. the refusal swallows the book — a dash on every holding"
@@ -100,31 +103,31 @@ python3 - <<'EOF' || echo "    NOT A RESULT (anchor)"
 import io,re
 p="src/pages/StockInfo.tsx"
 s=io.open(p,encoding="utf8").read()
-m=re.search(r"\n                          \{cmpSplit\n.*?\n                            : cmp\}", s, re.S)
+m=re.search(r"\n              \{marks\.length > 1\n.*?\n                : marks\[0\]\}", s, re.S)
 assert m and s.count(m.group(0))==1
-io.open(p,"w",encoding="utf8").write(s.replace(m.group(0), "{price(qty > 0 ? mv / qty : null)}", 1))
+io.open(p,"w",encoding="utf8").write(s.replace(m.group(0), "\n              {price(t.qty > 0 ? t.mv / t.qty : null)}", 1))
 EOF
 run
 restore
 
 bug "7. the unmarked absence borrows the disagreement wording"
 patch src/pages/StockInfo.tsx \
-  '? "no per-unit mark — this holding is reported at a total value, not a price per unit"' \
-  '? "CMP · the statements reporting this holding do not agree on a mark"' && run
+  'line: "reported at a total value, not a price per unit",' \
+  'line: "the statements reporting this holding do not agree on a mark",' && run
 restore
 
 bug "8. the absent mark is price()'s bare dash, with no cause"
 patch src/pages/StockInfo.tsx \
   '{r.currentPrice === null
-                          ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />' \
+            ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />' \
   '{r.currentPrice === null
-                          ? price(null)' && run
+            ? price(null)' && run
 restore
 
-bug "9. the headline caption dates the mark to rows[0] rather than the statement that supplied it"
+bug "9. the price tile dates the mark to rows[0] rather than the statement that supplied it"
 patch src/pages/StockInfo.tsx \
-  'const marked = rows.find((r) => r.currentPrice != null);' \
-  'const marked = rows[0];' && run
+  'const markedRow = rows.find((r) => r.currentPrice != null);' \
+  'const markedRow = rows[0];' && run
 restore
 echo
 echo "=== done"
