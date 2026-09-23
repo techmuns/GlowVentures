@@ -86,7 +86,7 @@ export default function App() {
             needed for the same reason. */}
         <IndexStrip />
         {/* THE FAMILY'S PRICE LEVELS GO TO GLOW CENTRAL RESEARCH FROM HERE
-            (Stage 10cl) — mounted once in the shell rather than on a page, so a
+            (Stage 10cm) — mounted once in the shell rather than on a page, so a
             level saved on any page is sent, a page load sends whatever did not
             arrive last time, and a failed send is retried on its own. It draws
             nothing; the alert card and the All alerts table say where each

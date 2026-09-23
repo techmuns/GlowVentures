@@ -169,7 +169,7 @@ export const VALUATION_METHODS = [
  *
  * Two surfaces read it now, through `watchlistSnapshot` below: the Investment
  * tools card on a company page, which writes it, and Morning CIO's All alerts
- * tab, which checks every level in it against the live price (Stage 10cl). Its
+ * tab, which checks every level in it against the live price (Stage 10cm). Its
  * last caller outside this file had gone once — `CompareCompanies` — and the
  * store looked dead from the outside for a release; it is read on the page the
  * family opens every morning now.
@@ -266,7 +266,7 @@ export function writeEntry(entry: WatchEntry): Watchlist {
 /** Anything a reader has recorded — watched, priced or annotated. */
 export const trackedKeys = (w: Watchlist): string[] => Object.keys(w).sort();
 
-// ── THE ALERT CHECK MOVED TO `priceAlerts.ts` (Stage 10cl) ──────────────────
+// ── THE ALERT CHECK MOVED TO `priceAlerts.ts` (Stage 10cm) ──────────────────
 //
 // `firedAlerts` and `ALERT_WORDING` lived here and are DELETED rather than left
 // beside their replacement: the old check never fired the entry price, fired on
