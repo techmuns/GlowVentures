@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # VERIFY THE NEW LOOK'S CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR.
 #
-# The family asked for Glow Central Research's fonts and colours (Stage 10ca):
+# The family asked for Glow Central Research's fonts and colours (Stage 10cf):
 # *"look how good the font is and the ui is of glow-central research - colours
 # white etc - can you make this dashboard also with right color pallet and
 # fonts."* `check:pages` holds the look on every route by COMPUTED STYLE — the

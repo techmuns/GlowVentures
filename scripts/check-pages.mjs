@@ -12374,7 +12374,7 @@ const INVARIANTS = {
      * on this page contains a link — so a stylesheet raising every card swept
      * clean. The claim is asserted on EVERY route now, in both themes, beside
      * the look checks in the walk ("a raised card is a button"), and a link
-     * must COVER the card to count (Stage 10cb).
+     * must COVER the card to count (Stage 10cf).
      */
     /**
      * ── THE ARITHMETIC LANDED HERE ───────────────────────────────────────────
@@ -22003,7 +22003,7 @@ for (const theme of THEMES) {
          * such card through, and `/holdings` — the one route this was asserted
          * on — has had no card WITHOUT a link since its four summary tiles went
          * (Stage 10bd). So a stylesheet raising every card swept clean: found by
-         * reintroducing exactly that (Stage 10cb).
+         * reintroducing exactly that (Stage 10cf).
          */
         const raised = (el) => /\b0px\s+([2-9]|\d{2,})px\s+0px\s+0px\b/.test(getComputedStyle(el).boxShadow);
         const coveredByLink = (c) => {
@@ -22136,7 +22136,7 @@ for (const theme of THEMES) {
         }
       }
       /**
-       * ── GLOW CENTRAL RESEARCH'S LOOK, ON EVERY ROUTE (Stage 10ca) ─────────
+       * ── GLOW CENTRAL RESEARCH'S LOOK, ON EVERY ROUTE (Stage 10cf) ─────────
        *
        * *"look how good the font is and the ui is of glow-central research -
        * colours white etc - can you make this dashboard also with right color
