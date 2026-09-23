@@ -42,3 +42,6 @@ jobs:
       #    pipeline, and the golden figures a human read off the real statements).
       - name: Ingest tests
         run: npm run test:ingest
+
+      - name: Financial calculations and feed contracts
+        run: npm run test:family

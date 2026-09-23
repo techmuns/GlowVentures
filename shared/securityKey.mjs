@@ -223,6 +223,54 @@ export function stripDepositoryTail(name) {
 }
 
 /**
+ * ── ONE COMPANY, ONE KEY, WHERE ONLY AN IDENTIFIER CAN SAY SO ──────────────
+ *
+ *   "Otherwise 2 separate names of the same company does not make sense."
+ *
+ * The depository strip above closes a split the NAME can show (`ICICI BANK-EQ`
+ * is `ICICI Bank Ltd.` with furniture). It cannot close one where the
+ * depository ABBREVIATES or CLIPS the company — `SBI - EQ` is not a spelling of
+ * `State Bank of India` any rule may derive — and on this book three companies
+ * stood as two keys each for exactly that reason: two rows on the security axis,
+ * two options in the pick-list, and the family's own question ("how much SBI do
+ * I hold") answered in two halves. `docs/BOOK-REPORT.md` has long said what
+ * closes such a split: "a hand-checked alias, not another statement".
+ *
+ * These are those aliases, and each is licensed by an IDENTIFIER rather than a
+ * resemblance — the key the depository or broker row makes carries an ISIN,
+ * that ISIN resolves an NSE symbol on NSE's own master, and the other key
+ * resolves the SAME symbol independently through its name. Two tiers nobody in
+ * this join controls, agreeing:
+ *
+ *   sbi → state-bank-of-india
+ *     `SBI - EQ`, Ankita's Motilal demat 1201090012838316, INE062A01020 → SBIN
+ *     `State Bank of India` / `State Bank Of India`, four PMS statements → SBIN
+ *   the-karur-vys → karur-vysya-bank
+ *     `THE KARUR VYS-EQ`, the same demat, INE036D01028 → KARURVYSYA
+ *     `Karur Vysya Bank Ltd.`, both Goldstandard appraisals → KARURVYSYA
+ *   crompton-greaves-consumer-elec → crompton-greaves-consumer-electrical
+ *     LKP's `Crompton Greaves Consumer Elec`, INE299U01018 → CROMPTON
+ *     V.E.C's `Crompton Greaves Consumer Electrical Ltd` → CROMPTON
+ *
+ * THE FULLER NAME'S KEY IS THE ONE KEPT, so the identity reads as the company
+ * rather than as a column-width clipping of it. Nothing about the NAME a row
+ * displays is decided here — that is `src/lib/securityLabel.ts` — and a key
+ * that aliases must never itself be an alias target, or the map would not be a
+ * function of the name the way `rekey:archive`'s gate requires.
+ *
+ * WHAT IS DELIBERATELY NOT HERE: the fund-unit twins `docs/BOOK-REPORT.md` also
+ * names (Helios Flexi Cap's AMC folio and its depository rows, and the
+ * depository copies of fund-reported AIF units). Those share an ISIN but join
+ * three generated stores keyed on the fund's key, and they already render under
+ * one label; merging them is its own change, not a side effect of this one.
+ */
+const KEY_ALIASES = Object.freeze({
+  "sbi": "state-bank-of-india",
+  "the-karur-vys": "karur-vysya-bank",
+  "crompton-greaves-consumer-elec": "crompton-greaves-consumer-electrical",
+});
+
+/**
  * Stable slug for a security name — `Position.securityKey`.
  *
  * URL-safe (it is a route segment) and idempotent: feeding a key back through
@@ -241,5 +289,7 @@ export function stripDepositoryTail(name) {
  */
 export function securityKeyOf(name) {
   const norm = normalizeSecurityName(stripDepositoryTail(name));
-  return norm ? norm.replace(/ /g, "-") : "unknown";
+  const key = norm ? norm.replace(/ /g, "-") : "unknown";
+  return KEY_ALIASES[key] ?? key;
 }
+

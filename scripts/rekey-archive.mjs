@@ -71,20 +71,42 @@ let rowsSeen = 0, rowsChanged = 0, docsChanged = 0, groupsChanged = 0;
  * written and the run exits non-zero. The archive then needs a real
  * `npm run extract`, not this.
  */
+/**
+ * EVERY ROW IN A DOCUMENT THAT CARRIES A KEY — AT ANY DEPTH.
+ *
+ * This walked the document's TOP-LEVEL arrays only, and one row kind is not at
+ * the top: `positionsAsOf.positions`, the balances a transaction statement
+ * closes on — and on LKP's, the OPENING ledger rows `costFor` in `build-book`
+ * joins a depository holding's cost from. Measured the first time a key change
+ * reached one: aliasing LKP's `Crompton Greaves Consumer Elec` re-keyed its
+ * holding and left its opening row behind, so the cost join found nothing and
+ * the position lost ₹15.47 L of cost basis and its return — on a run that
+ * reported success. A replay that misses a row kind is not a faithful replay,
+ * so the gate and the rewrite now walk the same thing: every object inside any
+ * array, wherever it sits, that carries a `securityKey`.
+ */
+function* keyedRows(node) {
+  if (Array.isArray(node)) {
+    for (const x of node) {
+      if (x && typeof x === "object" && !Array.isArray(x) && "securityKey" in x) yield x;
+      yield* keyedRows(x);
+    }
+  } else if (node && typeof node === "object") {
+    for (const v of Object.values(node)) yield* keyedRows(v);
+  }
+}
+
 function gate() {
   const keyOfName = new Map();
   const broken = [];
   for (const dir of readdirSync(AUDIT_DIR).sort()) {
     const file = path.join(AUDIT_DIR, dir, "document.json");
     if (!existsSync(file)) continue;
-    for (const rows of Object.values(JSON.parse(readFileSync(file, "utf8")))) {
-      if (!Array.isArray(rows)) continue;
-      for (const r of rows) {
-        if (!r || typeof r !== "object" || !r.securityKey || !r.security) continue;
-        const seen = keyOfName.get(r.security);
-        if (seen === undefined) keyOfName.set(r.security, r.securityKey);
-        else if (seen !== r.securityKey) broken.push({ dir, name: r.security, keys: [seen, r.securityKey] });
-      }
+    for (const r of keyedRows(JSON.parse(readFileSync(file, "utf8")))) {
+      if (!r.securityKey || !r.security) continue;
+      const seen = keyOfName.get(r.security);
+      if (seen === undefined) keyOfName.set(r.security, r.securityKey);
+      else if (seen !== r.securityKey) broken.push({ dir, name: r.security, keys: [seen, r.securityKey] });
     }
   }
   return { names: keyOfName.size, broken };
@@ -103,26 +125,22 @@ for (const dir of readdirSync(AUDIT_DIR).sort()) {
   const doc = JSON.parse(readFileSync(file, "utf8"));
   let touched = false;
 
-  for (const rows of Object.values(doc)) {
-    if (!Array.isArray(rows)) continue;
-    for (const r of rows) {
-      if (!r || typeof r !== "object" || !("securityKey" in r)) continue;
-      if (r.securityKey == null || !r.security) continue;
-      rowsSeen++;
-      const next = securityKeyOf(r.security);
-      if (next !== r.securityKey) {
-        const e = moved.get(r.securityKey) ?? { to: next, rows: 0, names: new Set() };
-        e.rows++; e.names.add(r.security);
-        moved.set(r.securityKey, e);
-        r.securityKey = next;
-        rowsChanged++; touched = true;
-      }
-      // The dedupe tag carries the key inside it, so it moves with the key.
-      const m = typeof r.dedupeGroup === "string" ? r.dedupeGroup.match(DEDUPE_GROUP) : null;
-      if (m && m[1] !== r.securityKey) {
-        r.dedupeGroup = `dg-${r.securityKey}-${m[2]}`;
-        groupsChanged++; touched = true;
-      }
+  for (const r of keyedRows(doc)) {
+    if (r.securityKey == null || !r.security) continue;
+    rowsSeen++;
+    const next = securityKeyOf(r.security);
+    if (next !== r.securityKey) {
+      const e = moved.get(r.securityKey) ?? { to: next, rows: 0, names: new Set() };
+      e.rows++; e.names.add(r.security);
+      moved.set(r.securityKey, e);
+      r.securityKey = next;
+      rowsChanged++; touched = true;
+    }
+    // The dedupe tag carries the key inside it, so it moves with the key.
+    const m = typeof r.dedupeGroup === "string" ? r.dedupeGroup.match(DEDUPE_GROUP) : null;
+    if (m && m[1] !== r.securityKey) {
+      r.dedupeGroup = `dg-${r.securityKey}-${m[2]}`;
+      groupsChanged++; touched = true;
     }
   }
 

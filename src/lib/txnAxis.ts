@@ -157,6 +157,28 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
   const forAccount = (axis: GroupAxis, accountId: string): string => {
     const all = byAccount.get(accountId) ?? [];
     /**
+     * AN ACCOUNT THAT HOLDS NO VALUED POSITION IS STILL AN AIF ON THE CATEGORY
+     * AXIS, WHEN ITS OWN STATEMENT SAYS SO.
+     *
+     * Stage 10cd put a drawdown fund's dated CALLS on this table for the
+     * accounts that publish no capital record — India SME's three folios and
+     * Sky Capital's four among them — and none of those seven carries a
+     * position, because no statement values them. Left to the holdings they
+     * would all file under "not classified", on a page whose Category axis the
+     * family read them on as AIFs. The ACCOUNT's engagement is the statement's
+     * own wording (`Category I Alternative Investment Fund – Angel Fund`,
+     * `Category II AIF - drawdown…`), never defaulted, so it answers the
+     * CATEGORY question — and only that one: which basket or family asset
+     * class a fund belongs to is the family's review, keyed on a product this
+     * book holds no row for, so those two axes still say it is not stated.
+     */
+    if (!all.length) {
+      if (axis === "category" && idx.get(accountId)?.engagement === "AIF") {
+        return groupKeyFor(axis, idx, { assetClass: "AIF", securityKey: "", accountId });
+      }
+      return TXN_UNSECTIONED;
+    }
+    /**
      * A LINE THAT HOLDS NOTHING IS NOT WHERE THE MONEY WENT.
      *
      * Buoyant's two folios each carry an empty cash sleeve — a MEASURED ₹0 —
@@ -174,9 +196,8 @@ export function sectionsFor(accounts: Account[], positions: Position[]): TxnSect
     // A MIXED ACCOUNT IS NAMED, NOT FILED UNDER ITS FIRST KEY. No funded account
     // in this book is mixed on any axis once an empty line is set aside —
     // measured, all thirteen resolve to one, and `txnAxis.test.ts` holds the
-    // book to that — and an account that holds nothing at all cannot be filed
-    // either: its capital record is real and its section is simply not
-    // established.
+    // book to that — and an account that holds nothing at all is filed only
+    // where its own statement names what it is (above).
     return keys.size === 1 ? [...keys][0] : TXN_UNSECTIONED;
   };
 

@@ -1399,7 +1399,7 @@
   },
   {
    "security": "SBI - EQ",
-   "securityKey": "sbi",
+   "securityKey": "state-bank-of-india",
    "isin": "INE062A01020",
    "symbol": null,
    "printedSecurity": null,
@@ -1439,7 +1439,7 @@
   },
   {
    "security": "THE KARUR VYS-EQ",
-   "securityKey": "the-karur-vys",
+   "securityKey": "karur-vysya-bank",
    "isin": "INE036D01028",
    "symbol": null,
    "printedSecurity": null,
