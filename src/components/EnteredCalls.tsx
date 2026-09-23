@@ -55,15 +55,22 @@ export function CallCell({ fund, fundName, state, today, open, onToggle, money }
       </button>
     );
   }
+  /* TWO LINES, AMOUNT OVER DATE. It is a cell in a twelve-column table, and one
+     line of "₹2.5 Cr · 23 Oct 2026 +1" was the widest thing in it — wide enough
+     to push the As of column off the card. The amount is what a reader scans
+     for, so it is the line in the figure's colour. */
   return (
     <button type="button" onClick={onToggle} aria-expanded={open}
       data-pm-call={fund} data-pm-call-state="ready"
       data-call-amount={head.call.amount} data-call-date={head.call.date} data-call-more={head.more}
       title={`${head.past ? "Latest call entered (already past)" : "Next call entered"} — open to add, edit or delete`}
-      className={`${cls} tabular ${head.past ? "text-slate-400" : "text-champagne-400"}`}>
-      {money(head.call.amount)} · {fmtDate(head.call.date)}
-      {head.past && <span className="text-[10.5px] text-slate-500"> past</span>}
-      {head.more > 0 && <span className="text-[10.5px] text-slate-500"> +{head.more}</span>}
+      className={`inline-flex flex-col items-start rounded px-1.5 py-0.5 text-left text-[12px] leading-tight ring-focus transition-colors hover:bg-ink-700/60 tabular ${head.past ? "text-slate-400" : "text-champagne-400"}`}>
+      <span>{money(head.call.amount)}</span>
+      <span className="text-[10.5px] text-slate-500">
+        {fmtDate(head.call.date)}
+        {head.past && <> · past</>}
+        {head.more > 0 && <> · +{head.more}</>}
+      </span>
     </button>
   );
 }

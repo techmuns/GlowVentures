@@ -306,7 +306,7 @@ export function DematElsewhere(
   if (!elsewhere.length) return null;
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
   return (
-    <div className="mt-1.5 space-y-0.5 text-[11px] leading-relaxed text-slate-400" data-demat-elsewhere={elsewhere.length}>
+    <div className="space-y-0.5 text-[11px] leading-relaxed text-slate-400" data-demat-elsewhere={elsewhere.length}>
       {elsewhere.map((m) => {
         const a = accIdx.get(m.accountId);
         const who = a ? (a.ownerId ? ownerDisplayName(a.ownerId) : a.owner) : m.accountId;
@@ -314,7 +314,12 @@ export function DematElsewhere(
         return (
           <p key={m.accountId} data-demat-elsewhere-row={m.accountId} data-closing={m.closing ?? ""} title={n.why}>
             <span className="font-medium text-slate-300">{who}</span>
-            {a ? <> · {a.provider} {a.accountNo}</> : null}
+            {/* THE ACCOUNT AS THE TREE AROUND IT PRINTS ONE: a depository's sixteen-digit
+                client id shortened to the last six digits a reader matches a statement by,
+                with the whole number in the hover — the Portfolio Monitor's own rule. */}
+            {a ? <> · {a.provider}{" "}{a.accountNo.length > 10
+              ? <span title={`Account ${a.accountNo}`}>a/c …{a.accountNo.slice(-6)}</span>
+              : <>a/c {a.accountNo}</>}</> : null}
             {" "}— {units(m.opening)} on {m.periodFrom ? fmtDate(m.periodFrom) : "the window's opening"},{" "}
             {(m.closing ?? 0) === 0 ? "nil" : units(m.closing)} on {m.periodTo ? fmtDate(m.periodTo) : "its close"}:{" "}
             <span className="text-amber-400/90">{n.label.toLowerCase()}</span>

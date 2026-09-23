@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -15,6 +15,7 @@ import {
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
   measuredReturn, returnCoverage, returnMeasureDef,
+  type ReturnMeasure, type ReturnInput,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
@@ -72,6 +73,12 @@ import { movementsFor } from "@/lib/shareMovements";
 import type { Position } from "@/lib/types";
 import { AbsentCell, AbsentFromBook, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { SortHeader, SortableTable, Tr, TrFoot } from "@/components/SortHeader";
+// THE SAME TABLE STANDARD THE PRIVATE MARKET PAGE READS — a row opens into rows
+// of THIS table, in THESE columns, never into a table drawn inside a cell. See
+// the header of `TreeTable.tsx`, and "WHAT A ROW OPENS INTO" below.
+import {
+  TREE_ROW_DENSE, TREE_CELL_DENSE, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
+} from "@/components/TreeTable";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 
 /**
@@ -111,6 +118,24 @@ type Venue = {
   costBasis: number | null; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
   /** This venue's share of the name as PRINTED across the statements. */
   share: number;
+  /**
+   * ── WHAT A LINE NEEDS TO STAND IN THE TABLE'S OWN COLUMNS ─────────────────
+   *
+   * The venue used to be drawn in a table of its own inside the row's cell, with
+   * columns of its own — Held via, Vehicle, Owning entity, Qty, Market value,
+   * % of holding — none of which lined up with the row above it. It is a ROW of
+   * the holdings table now, so it carries what each of those columns asks of a
+   * holding: its own per-unit cost and mark (which is how a clubbed fund's
+   * classes finally show the units and the NAV the row above cannot), its own
+   * day move, its own dates, and the statements behind it, which are what its
+   * dated contributions hang from.
+   */
+  positions: Position[];
+  avgCost: number | null; currentPrice: number | null;
+  navPriced: boolean; navDate?: string;
+  live: boolean; dayChangePct: number | null;
+  heldSince: string | null; assetClass: string;
+  investedOn: { first: string; last: string; payments: number } | null;
 };
 
 /**
@@ -122,6 +147,10 @@ type MandateHolding = {
   quantity: number; avgCost: number | null; currentPrice: number | null;
   costBasis: number | null; marketValue: number; unrealizedPnL: number | null;
   returnPct: number | null; costNA: boolean; live: boolean;
+  /** For the row's own Day, Invested on and return cells — see `Venue`. */
+  dayChangePct: number | null;
+  heldSince: string | null; assetClass: string;
+  investedOn: { first: string; last: string; payments: number } | null;
 };
 /**
  * What a mandate ROW stands for: one PMS account, its manager, and the shares
@@ -408,11 +437,11 @@ const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedO
  * clickable — `sortRows` returns the list untouched for a column it cannot
  * rank, so a reader is never left guessing which headings are controls.
  */
-const TRANCHE_COLS = ["date", "type", "amount", "invested", "units", "nav", "value", "gain", "return"] as const;
-const TRANCHE_ENTITY_COLS = ["date", "type", "entity", "amount", "invested", "units", "nav", "value", "gain", "return"] as const;
-const MANDATE_DRILL_COLS = ["security", "qty", "avgCost", "invested", "cmp", "mv", "share", "pnl", "return", "sector"] as const;
-const VENUE_COLS = ["route", "vehicle", "entity", "qty", "mv", "share", "pnl", "return"] as const;
-const VENUE_CLASS_COLS = ["cls", "route", "vehicle", "entity", "qty", "mv", "share", "pnl", "return"] as const;
+// THE FIVE COLUMN LISTS THE NESTED PANELS DECLARED — tranche, tranche-by-entity,
+// mandate, venue and venue-by-class — ARE GONE WITH THE PANELS. Each opened
+// row is now a row of THIS table in THESE columns (see "WHAT A ROW OPENS INTO"),
+// so there is one column list, and a column a reader drags moves a row and
+// everything it opens into together.
 
 const MONITOR_ACCESSORS: Record<string, (r: Row) => number | string | null | undefined> = {
   security: (r) => r.security,
@@ -686,15 +715,24 @@ export function PortfolioMonitor() {
   const COL_COUNT = holdView.order.length;
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   /**
-   * A SECOND EXPANDER, AND DELIBERATELY ITS OWN SET.
+   * ── ONE EXPANDER, AND THE SECOND ONE WENT ──────────────────────────────────
    *
-   * The Entities chevron opens who holds a row; this one opens WHEN it was
-   * bought. Sharing one set would make either chevron toggle both, and a reader
-   * who clicked Entities would get a contribution history they did not ask for.
+   * The Invested cell used to carry its own chevron, opening WHEN a holding was
+   * bought as a separate table under the row, beside the one the name opened.
+   * Two expanders on one row, each drawing a table with columns of its own, is
+   * the arrangement the family asked to be rid of on the Private Market page —
+   * *"instead of seeing these kind of sub-rows which have data indented towards
+   * the right and left, this does not make sense"* — and asked for here too. A
+   * row opens once now, into rows of this table: the statements behind it, and
+   * under each statement the dated contributions that bought it.
+   *
+   * A SECTION CAN CLOSE, which the standard gives every band. Keyed on the axis
+   * as well as the section, so closing "AIF" on Category does not close a
+   * basket of another name on the next axis.
    */
-  const [openTranches, setOpenTranches] = useState<Set<string>>(() => new Set());
-  const toggleTranche = (k: string) =>
-    setOpenTranches((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const [closedSections, setClosedSections] = useState<Set<string>>(() => new Set());
+  const toggleSection = (k: string) =>
+    setClosedSections((prev) => { const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [exporting, setExporting] = useState(false);
   // Realised P&L per security (by securityKey) from the archive's sales —
   // undefined = loading, null = the archive didn't respond. A VALUE of null in
@@ -1046,6 +1084,8 @@ export function PortfolioMonitor() {
             quantity: x.quantity, avgCost: x.avgCost, currentPrice: x.currentPrice,
             costBasis: x.costBasis, marketValue: x.marketValue, unrealizedPnL: x.unrealizedPnL,
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
+            dayChangePct: x.dayChangePct ?? null,
+            heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]),
           })).sort((a, b) => b.marketValue - a.marketValue),
           accountMV: whole?.mv ?? mv, accountCount: whole?.count ?? ps.length,
         },
@@ -1551,6 +1591,40 @@ export function PortfolioMonitor() {
       })
       .sort((a, b) => groupOrdFor(groupAxis)(a.key) - groupOrdFor(groupAxis)(b.key));
   }, [rows, bucketTotals, groupAxis]);  const showBucketSections = bucket === "All" && bucketGroups.length > 1;
+  /**
+   * THE DATED CONTRIBUTIONS, PER STATEMENT LINE — struck once over the row set
+   * rather than per open row, because a row says how many it opens onto before
+   * anyone opens it (`data-tranche-rows`, and the chevron's own label).
+   *
+   * PER LINE, NOT PER ROW. A consolidated row is one security across several
+   * statements, and a contribution belongs to ONE of them — the folio it bought
+   * units in. Hung from its own line it ties to that line's units, cost and
+   * value by the book's own gate (`trancheTable` refuses a folio whose
+   * allotments do not account for every unit held), where one blended table
+   * under the row put four members' contributions under one heading and needed
+   * an Entity column to tell them apart. In the by-entity view the row IS one
+   * statement, so its contributions hang from the row itself.
+   */
+  const trancheInfo = useMemo(() => {
+    const out = new Map<string, { byVenue: Map<string, TrancheTable>; direct: TrancheTable | null; count: number }>();
+    for (const r of rows) {
+      if (r.kind === "mandate") continue;
+      const byVenue = new Map<string, TrancheTable>();
+      let direct: TrancheTable | null = null;
+      let count = 0;
+      if (r.venues) {
+        for (const v of r.venues) {
+          const t = trancheTable(v.positions, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+          if (t) { byVenue.set(`${v.securityKey}@${v.accountId}`, t); count += t.rows.length; }
+        }
+      } else if (r.trancheSet.length) {
+        direct = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+        count = direct?.rows.length ?? 0;
+      }
+      if (count) out.set(r.key, { byVenue, direct, count });
+    }
+    return out;
+  }, [rows, portfolio.asOf]);
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
   const totalRet = totCost !== null && totPnL !== null && totCost > 0 ? (totPnL / totCost) * 100 : null;
@@ -1789,6 +1863,516 @@ export function PortfolioMonitor() {
   // of basis clears them rather than leaving a stale row open.
   useEffect(() => { setExpanded(new Set()); }, [holdingsView]);
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
+  //
+  //   *"i hope the ui design upgrades you are doing and making it much amazing
+  //    you also do to the portfolio monitor master table"*
+  //
+  // Three things opened under a row here, and every one was a TABLE DRAWN
+  // INSIDE THE ROW'S CELL with columns of its own: a mandate's shares, the
+  // accounts a name is held through, and — behind a second chevron on the
+  // Invested cell — the dated contributions that bought it. None of those
+  // columns lined up with the table they sat in; a share's Market value was at
+  // one x in the mandate panel and at another in the row it opened from. That
+  // is the defect the family named on the Private Market page, and the same
+  // standard answers it here. Every one of them is a ROW OF THIS TABLE, in THESE
+  // columns, under a tree guide drawn in the first cell and nowhere else:
+  //
+  //   a mandate   → the shares the manager chose                  (depth 1)
+  //   a holding   → one line per statement that reports it         (depth 1)
+  //                   → the dated contributions behind that line    (depth 2)
+  //   by entity   → the dated contributions behind the holding     (depth 1)
+  //
+  // So a column a reader drags moves the row, its lines and their contributions
+  // together, because they are all `<Tr view={holdView}>`.
+  //
+  // A CHILD FILLS A COLUMN ONLY WITH ITS OWN FIGURE. Where the figure belongs to
+  // the parent — a property of the security (its sector), or a per-security
+  // aggregate (realised gain, which no statement splits by account) — the
+  // child's cell is left BLANK rather than repeated or dashed: the parent row
+  // directly above carries it, or carries the reason it is absent. Where the
+  // child's OWN figure is missing for a reason of its own — this account's
+  // statement reports no cost — it says so through `AbsentCell`, exactly as a
+  // row does. A blank here is "see the row above", never "zero" and never
+  // "nobody measured it".
+  type ChildCells = Partial<Record<"qty" | "avgCost" | "invested" | "investedOn" | "cmp" | "day" | "mv"
+    | "viaFunds" | "totalExposure" | "weight" | "pnl" | "realised" | "sector" | "entity", ReactNode>>
+    & { ret?: (measure: ReturnMeasure) => ReactNode };
+  const CHILD_NUM = `${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-400`;
+  /** A child's cells, in the table's DECLARED column order — which is what `<Tr>` permutes from. */
+  const childTds = (c: ChildCells) => [
+    <td key="qty" className={CHILD_NUM}>{c.qty}</td>,
+    <td key="avgCost" className={CHILD_NUM}>{c.avgCost}</td>,
+    <td key="invested" className={CHILD_NUM}>{c.invested}</td>,
+    <td key="investedOn" className={`${TREE_CELL_DENSE.child} text-left mono whitespace-nowrap text-slate-400`}>{c.investedOn}</td>,
+    <td key="cmp" className={CHILD_NUM}>{c.cmp}</td>,
+    <td key="day" className={CHILD_NUM}>{c.day}</td>,
+    <td key="mv" className={`${TREE_CELL_DENSE.child} text-right mono whitespace-nowrap text-slate-200`}>{c.mv}</td>,
+    ...(bySecurity ? [
+      <td key="viaFunds" className={CHILD_NUM}>{c.viaFunds}</td>,
+      <td key="totalExposure" className={CHILD_NUM}>{c.totalExposure}</td>,
+    ] : []),
+    <td key="weight" className={CHILD_NUM}>{c.weight}</td>,
+    <td key="pnl" className={CHILD_NUM}>{c.pnl}</td>,
+    <td key="realised" className={CHILD_NUM}>{c.realised}</td>,
+    ...returnMeasures.map((measure) => (
+      <td key={`ret:${measure}`} className={CHILD_NUM} data-child-return={c.ret ? measure : undefined}>{c.ret?.(measure)}</td>
+    )),
+    <td key="sector" className={`${TREE_CELL_DENSE.child} text-slate-500`}>{c.sector}</td>,
+    <td key="entity" className={`${TREE_CELL_DENSE.child} text-slate-400`}>{c.entity}</td>,
+  ];
+  /**
+   * A CHILD'S RETURN, through `measuredReturn` like every row's — so the guard
+   * that refuses to compound a sub-year window onto a year is the same guard on
+   * a line and on the row above it, and the tag rule is the one the row cells
+   * use: tagged wherever the figure is not the measure the column promises.
+   */
+  const childReturn = (input: ReturnInput, measure: ReturnMeasure) => {
+    const res = measuredReturn(input, measure, portfolio.asOf);
+    const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
+    return (
+      <span data-child-return-tag={off ? res.tag : undefined}>
+        {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
+        {res.shown
+          ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>
+          : <AbsentCell reason={res.reason} />}
+      </span>
+    );
+  };
+  const pctOfBook = (v: number) => (weightBase > 0 ? `${((v / weightBase) * 100).toFixed(1)}%` : null);
+  const signed = (v: number | null) =>
+    v === null ? null : <span className={changeColor(v)}>{fmtFromBase(v, { compact: true, sign: true })}</span>;
+  const dateCell = (d: { first: string; last: string; payments: number } | null, why: string) =>
+    d === null ? <AbsentCell reason={why} />
+      : <span title={d.payments > 1 ? `Funded over ${d.payments} dated payments, ${fmtDate(d.first)} to ${fmtDate(d.last)} — each is its own row below.` : `One dated payment, ${fmtDate(d.first)}.`}>
+          {fmtDate(d.first)}{d.payments > 1 && <span className="ml-1 text-[10px] text-slate-500">+{d.payments - 1}</span>}
+        </span>;
+  /** One child row: the tree cell, then the figures in their own columns. */
+  const childRow = (key: string, kind: string, depth: 1 | 2, name: {
+    title: ReactNode; sub?: ReactNode; last?: boolean; ancestorLast?: boolean;
+  }, cells: ChildCells, data: Record<string, string | number | undefined> = {}, adjust = false) => (
+    <Tr view={holdView} key={key} className={adjust ? TREE_ROW_DENSE.adjust : TREE_ROW_DENSE.child}
+      data-tree-child={kind} {...data}>
+      <TreeNameCell depth={depth} density="dense" className="min-w-[16rem]"
+        title={name.title} sub={name.sub} last={name.last} ancestorLast={name.ancestorLast} />
+      {childTds(cells)}
+    </Tr>
+  );
+  /**
+   * A FULL-WIDTH LINE INSIDE THE TREE — a sentence, or the look-through card —
+   * drawn with the same guide so it reads as part of what the row opened into
+   * rather than as a new block under the table.
+   */
+  const treeLine = (key: string, kind: string, last: boolean, body: ReactNode, data: Record<string, string> = {}) => (
+    <tr key={key} className={TREE_ROW_DENSE.child} data-tree-child={kind} {...data}>
+      <td colSpan={COL_COUNT} className="relative py-1.5 pl-[2.35rem] pr-3">
+        <span aria-hidden className={`absolute left-[1rem] top-0 border-l border-ink-600 ${last ? "h-3" : "bottom-0"}`} />
+        {body}
+      </td>
+    </tr>
+  );
+  /**
+   * A SENTENCE AMONG THE CONTRIBUTIONS, at the depth of the rows it explains —
+   * full width, with the guides a row at that depth carries, so it reads as part
+   * of the tree rather than as a caption under it.
+   */
+  const treeNote = (key: string, depth: 1 | 2, ancestorLast: boolean, body: ReactNode) => (
+    <tr key={key} className={TREE_ROW_DENSE.child} data-tree-child="note">
+      <td colSpan={COL_COUNT} className={`relative py-1 pr-3 ${depth === 2 ? "pl-[3.5rem]" : "pl-[2.35rem]"}`}>
+        {depth === 2 && !ancestorLast && (
+          <span aria-hidden className="absolute left-[1rem] top-0 bottom-0 border-l border-ink-600" />
+        )}
+        <span aria-hidden className={`absolute ${depth === 2 ? "left-[2.15rem]" : "left-[1rem]"} top-0 bottom-0 border-l border-ink-600`} />
+        {body}
+      </td>
+    </tr>
+  );
+  /**
+   * THE DATED CONTRIBUTIONS BEHIND ONE STATEMENT — each its own units at the
+   * NAV it bought at, valued at today's mark. The line above them is the
+   * statement they add up to: the book emits a breakdown only where the
+   * allotted units account for EVERY unit held (`trancheTable`'s gate), so
+   * the contributions' units, invested and value tie to that line by
+   * construction rather than by a footer printed beside them.
+   */
+  const trancheRows = (parentKey: string, folioKey: string, cls: string | null, assetClass: string,
+    t: TrancheTable, depth: 1 | 2, ancestorLast: boolean, withNote: boolean) => {
+    const rows: ReactNode[] = [];
+    /*
+     * WHAT A ROW MARKED "SWITCHED" IS, said once above the rows it explains.
+     * Buoyant bought some of these units as Class A1 and moved them into A4; a
+     * row of the tree cannot carry the old panel's lead paragraph, so the
+     * sentence is a line of the tree itself, above that line's contributions.
+     */
+    if (withNote && t.rows.some((x) => x.move.carriedFrom)) {
+      rows.push(treeNote(`${folioKey}#switch-note`, depth, ancestorLast, (
+        <p className="max-w-[52rem] text-[11px] leading-relaxed text-slate-400">
+          A contribution <span className="text-slate-300">marked switched</span> was bought in an earlier unit class
+          and moved into this one by the fund: its units and entry NAV are restated in this class at the
+          fund&rsquo;s own switch ratio, and its hover gives the NAV it was bought at. The amount and the date
+          are the statement&rsquo;s.
+        </p>
+      )));
+    }
+    t.rows.forEach((x, i) => {
+      const cf = x.move.carriedFrom;
+      // WHAT WAS PAID, where the fund's own charges on the day make it differ
+      // from what bought units — the figure the family means by "10 crores".
+      // The charge is printed whole, because in compact form a ₹500 stamp
+      // duty rounds away and "₹1 Cr paid · ₹100 L invested" reads as a
+      // contradiction rather than as the charge.
+      const paid = x.amount === null
+        ? "the statement prints only a running balance for that date, so what moved on the day is not stated"
+        : x.amount - x.invested >= 1
+          ? `${fmtFromBase(x.amount, { compact: true })} paid · ${fmtFromBase(Math.round(x.amount - x.invested), { compact: true })} charges`
+          : null;
+      rows.push(childRow(`${folioKey}#${x.date}#${x.label}#${i}`, "tranche", depth, {
+        title: x.label,
+        // A SWITCHED ROW SAYS SO UNDER ITS TYPE, because its units and entry NAV
+        // are in a class the statement's own allotment line does not name. On
+        // the second line rather than beside the label, so the label keeps its
+        // one line in a narrow column.
+        sub: cf ? (
+          <>
+            <span className="whitespace-nowrap" title={switchedRowNote(x, cls, fmtFromBase)}>
+              switched {classOfName(cf.security) ?? "from an earlier class"} &rarr; {cls ?? "this class"}, {fmtDate(cf.switchedOn)}
+            </span>
+            {paid && <> &middot; {paid}</>}
+          </>
+        ) : paid ?? undefined,
+        last: i === t.rows.length - 1, ancestorLast,
+      }, {
+        qty: cf
+          ? <span title={`${fmtNum(cf.units)} ${classOfName(cf.security) ?? "earlier-class"} units as allotted; ${fmtNum(x.units)} after the fund moved them into ${cls ?? "this class"} on ${fmtDate(cf.switchedOn)}, at its own switch ratio.`}>{fmtNum(x.units)}</span>
+          : fmtNum(x.units),
+        // THE ENTRY NAV IS THIS CONTRIBUTION'S COST PER UNIT — which is what the
+        // column means on every row — derived as invested ÷ units allotted, and it
+        // reproduces the allotment NAV the statement prints (`tranches.test.ts`).
+        // On a switched row it is restated in the class held today, and the
+        // hover gives the NAV it was bought at.
+        avgCost: <span title={cf ? switchedRowNote(x, cls, fmtFromBase) : "Entry NAV — what this contribution paid per unit (invested ÷ units allotted)."}>{fmtFromBase(x.navAtEntry)}</span>,
+        invested: fmtFromBase(x.invested, { compact: true }),
+        investedOn: fmtDate(x.date),
+        mv: fmtFromBase(x.value, { compact: true }),
+        pnl: signed(x.value - x.invested),
+        // A contribution is the one thing in this book with a real purchase date,
+        // so it is the one place a CAGR is genuinely strikable — through the same
+        // guard, so a four-month contribution still reads as its holding-period
+        // return and says so.
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, assetClass, costNA: false }, measure),
+      }, {
+        "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
+        // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
+        // higher return" is true of THIS figure by construction, and of a CAGR
+        // only while every row is on one basis.
+        "data-tranche-nav": x.navAtEntry, "data-tranche-hpr": x.returnPct, "data-tranche-units": x.units,
+        "data-tranche-invested": x.invested, "data-tranche-value": x.value, "data-tranche-date": x.date,
+        "data-tranche-switched": cf?.switchedOn ?? undefined,
+        "data-tranche-bought-nav": boughtNavOf(x)?.toFixed(4) ?? undefined,
+      }));
+    });
+    return rows;
+  };
+  const venueKeyOf = (v: Venue) => `${v.securityKey}@${v.accountId}`;
+  /**
+   * AN ACCOUNT NUMBER UNDER A NAME, shortened where it is long: a depository's
+   * sixteen-digit client id wrapped every line it sat on into four, while its
+   * last six digits are what a reader matches a statement by. The whole number
+   * is the hover, so nothing is lost — only moved out of the line.
+   */
+  const acct = (no: string) => (no.length > 10
+    ? <span title={`Account ${no}`}>a/c …{no.slice(-6)}</span>
+    : <>a/c {no}</>);
+  /** Can this row open at all? A chevron that opens nothing is worse than none. */
+  const canExpand = (r: Row) => r.kind === "mandate" ? (r.mandate?.holdings.length ?? 0) > 0
+    : r.venues ? (r.venues.length > 0 || canLookThrough(r))
+    : !!trancheInfo.get(r.key);
+  const toggleLabelFor = (r: Row, open: boolean) => {
+    if (r.mandate) return open ? "Hide the shares inside this mandate" : "List the shares inside this mandate";
+    const n = trancheInfo.get(r.key)?.count ?? 0;
+    if (!r.venues) return open ? "Hide the contributions" : `Bought over ${n} dated contribution${n === 1 ? "" : "s"} — show each one's own units, entry NAV and return`;
+    if (r.fundClasses.length) return open ? "Hide this fund's unit classes" : `One fund, ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}) — show each`;
+    // A DERIVED-ONLY ROW HAS NO ACCOUNT TO NAME, so a label counting accounts
+    // would read "held through 0", which is a measurement of nothing rather
+    // than the honest statement that this is a fund look-through.
+    if (r.venues.length === 0) return open ? "Hide what your funds hold of this issuer" : "No statement in this book reports it — show what your funds hold of it";
+    return open ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which${n ? `, and the ${n} dated contributions behind them` : ""}`;
+  };
+  const NO_COST_LINE = "this account's statement reports no cost for the holding — a depository holds the shares and did not buy them";
+  const dayCell = (live: boolean, pct: number | null) => (live && pct != null
+    ? <span className={changeColor(pct)}>{pct >= 0 ? "+" : ""}{pct.toFixed(2)}%</span> : undefined);
+  /**
+   * THE ROWS A ROW OPENS INTO. Built only for an open row, so the table pays
+   * nothing for what is shut.
+   */
+  const renderChildren = (r: Row): ReactNode[] => {
+    const out: ReactNode[] = [];
+    const m = r.mandate;
+    /**
+     * A MANDATE → THE SHARES ITS MANAGER CHOSE. Each is a company of its own,
+     * so each carries every column a holding carries — its sector too — and
+     * its share of the mandate rides under its name, where "% of mandate" used
+     * to be a column of a table no other row had.
+     */
+    if (m) {
+      m.holdings.forEach((h, i) => out.push(childRow(`${r.key}>${h.securityKey || h.security}`, "constituent", 1, {
+        title: <StockLink securityKey={h.securityKey} name={h.security} />,
+        // DIVIDED BY THE MANDATE — `m.accountMV`, the account's own pre-filter
+        // total — never by the row's roll-up of whatever survived the filters.
+        // Filtered to one company that read 100.0% for a ₹4.39 Cr holding of a
+        // ₹39.53 Cr mandate.
+        sub: m.accountMV > 0 ? `${((h.marketValue / m.accountMV) * 100).toFixed(1)}% of the mandate` : undefined,
+        last: i === m.holdings.length - 1,
+      }, {
+        qty: fmtNum(h.quantity),
+        avgCost: h.costNA ? <AbsentCell reason={NO_COST_LINE} />
+          : h.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
+          : fmtFromBase(h.avgCost),
+        invested: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(h.costBasis, { compact: true }),
+        investedOn: dateCell(h.investedOn, h.costNA
+          ? "no statement reports what this share cost, so there is no payment to date"
+          : "the manager's statement reports what this share cost but not the date it was bought"),
+        cmp: h.currentPrice === null ? <AbsentCell reason="marked at a total value, not a per-unit price" /> : fmtFromBase(h.currentPrice),
+        day: dayCell(h.live, h.dayChangePct),
+        mv: fmtFromBase(h.marketValue, { compact: true }),
+        weight: pctOfBook(h.marketValue),
+        pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
+        ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, assetClass: h.assetClass, costNA: h.costNA }, measure),
+        sector: h.sector,
+      }, { "data-constituent": h.securityKey || h.security, "data-constituent-mv": h.marketValue })));
+      return out;
+    }
+    const info = trancheInfo.get(r.key);
+    // BY ENTITY: the row IS one statement, so its contributions hang from it.
+    if (!r.venues) {
+      if (info?.direct) {
+        out.push(...trancheRows(r.key, r.key, splitFundClass(r.security)?.cls ?? null, r.assetClass, info.direct, 1, false, true));
+      }
+      return out;
+    }
+    const vs = r.venues;
+    /*
+     * THE LOOK-THROUGH IS A ROW ONLY ONCE IT HAS SOMETHING TO SAY. On the
+     * three allocation axes the store is never asked (`useStockExposure` is
+     * disabled there and stays `loading`), and while it IS loading the card
+     * renders nothing — so drawn regardless, it was an empty row under every
+     * company a reader opened, a blank line in the tree that reads as a
+     * figure that failed to arrive.
+     */
+    const lookThrough = canLookThrough(r) && exposure.status !== "loading";
+    /**
+     * A ROW NO STATEMENT REPORTS — the family's own case: an issuer they hold
+     * only inside a fund. There is no account to list, so what it opens into is
+     * the look-through itself, led by the sentence that says why there is no
+     * line above it.
+     */
+    if (vs.length === 0) {
+      out.push(treeLine(`${r.key}>lead`, "lead", !lookThrough, (
+        <p className="text-[11px] leading-relaxed text-slate-400">
+          <span className="font-medium text-slate-300">{r.security}</span> —
+          {" "}<span className="font-medium text-slate-200">no statement in this book reports this
+          issuer</span>, so there is no account, no quantity and no cost for it. Every figure on this
+          row is the family&rsquo;s share of what their funds disclose.
+        </p>
+      )));
+      if (lookThrough) {
+        out.push(treeLine(`${r.key}>lookthrough`, "lookthrough", true,
+          <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />));
+      }
+      return out;
+    }
+    const printed = sum(vs.map((v) => v.marketValue));
+    const gap = printed - r.marketValue;
+    const overlap = gap > 1;
+    /*
+     * AN ACCOUNT WHOSE DEPOSITORY STATEMENT CARRIES THIS NAME AND HOLDS NONE OF
+     * IT is not a line above — it holds nothing to put in these columns — and it
+     * is the account a reader opens this row to find: "is this in Ajay's account
+     * too?". It gets a line of its own, naming the two balances its statement
+     * printed; no figure on the row moves. A row ONLY where there is such an
+     * account (an empty line in the tree reads as a figure that failed to
+     * arrive), and never under a clubbed fund, whose classes are the lines and
+     * whose units in a demat are the depository's copy of what the fund reports.
+     */
+    const elsewhere = r.fundClasses.length > 0 ? []
+      : movementsFor(r.securityKey).filter((w) => !vs.some((v) => v.accountId === w.accountId));
+    const soldElsewhere = elsewhere.length > 0;
+    /**
+     * THE ROUTE SPLIT, IN WORDS, FIRST.
+     *
+     *   "Then I drill down, then you tell me direct you hold X Cr through
+     *    direct equity, and then you hold another Y crores through these five
+     *    funds."
+     *
+     * A sentence about ROUTES rather than accounts, so it leads the lines rather
+     * than being left to be assembled by eye. Struck over the statements AS
+     * PRINTED — and where that is not the figure at the head of the same
+     * sentence (a holding two accounts both report), the sentence says so
+     * rather than leaving two figures for one holding a clause apart.
+     */
+    const byRoute = [...vs.reduce((acc, v) => {
+      const e = acc.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
+      e.mv += v.marketValue; e.n += 1;
+      return acc.set(v.route, e);
+    }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
+    // THE SENTENCE ONLY WHERE IT SAYS SOMETHING THE LINES DO NOT: a split
+    // across more than one statement, or an overlap. Over a single line it
+    // restates the row it opened from, word for word.
+    if (vs.length > 1 || overlap) out.push(treeLine(`${r.key}>lead`, "lead", false, (
+      <p className="text-[11px] leading-relaxed text-slate-400">
+        <span className="font-medium text-slate-300">{r.security}</span> —
+        {" "}<span className="font-medium text-slate-200">{money(r.marketValue)}</span>, {(r.weight * 100).toFixed(2)}% of the book, held{" "}
+        {byRoute.map((g, i) => (
+          <span key={g.route}>
+            {i > 0 && (i === byRoute.length - 1 ? " and " : ", ")}
+            <span className="font-medium text-slate-200">{money(g.mv)}</span> through{" "}
+            {g.n === 1 ? "" : `${g.n} `}{g.route}{g.n === 1 ? "" : "s"}
+          </span>
+        ))}
+        {overlap && (
+          <> as the statements print it, of which{" "}
+            <span className="font-medium text-slate-200">{money(gap)}</span> is the same holding
+            reported twice</>
+        )}.
+      </p>
+    ), { "data-venue-lead": "" }));
+    /**
+     * ONE LINE PER STATEMENT THAT REPORTS THIS NAME — every line AS PRINTED,
+     * because a per-account figure never dedupes (§"consolidated counts once,
+     * per-account does not"). Its own units, cost, mark, value and return, in
+     * the columns the row above prints its own; the route, the account and its
+     * share of the holding under its name. On a clubbed fund the line IS a
+     * unit class, named and linked as one — which is where the row's absent
+     * Qty, Avg cost and CMP finally have their figures.
+     */
+    let switchNoted = false;
+    vs.forEach((v, i) => {
+      const fk = venueKeyOf(v);
+      const t = info?.byVenue.get(fk) ?? null;
+      const lastLine = i === vs.length - 1 && !overlap && !soldElsewhere && !lookThrough;
+      const vehicle = v.isMandate
+        ? <Link to={`/mandate/${encodeURIComponent(v.accountId)}`} title={`Account ${v.accountNo} — open the mandate drill-down`}
+            className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+            {v.vehicle}
+          </Link>
+        : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>;
+      // A CLASS IS WHAT `/stock/:securityKey` SERVES, so on a CLUBBED fund the
+      // class is the line's name and its link, and the row above deliberately
+      // is not one. A fund with one class keeps the vehicle as the line's name:
+      // the row above already carries the class in the name its statement prints.
+      const asClass = r.fundClasses.length > 0 && !!v.cls;
+      // A LINE IS NAMED FOR WHOSE IT IS. The row above already names the
+      // security, so repeating it on every line (which is what the vehicle
+      // reads as for a fund held directly) told a reader nothing; the member
+      // is what tells two lines apart, and the vehicle, the route and the
+      // account go under it. The Entity column carries the member too — it
+      // closes a row that is wider than the screen, so it is not relied on.
+      out.push(childRow(`${r.key}>${fk}`, "venue", 1, {
+        title: asClass ? <StockLink securityKey={v.securityKey} name={`Class ${v.cls}`} /> : v.owner,
+        // Its share only where there is more than one line to share it
+        // between: over one line it is always 100%.
+        sub: <>{asClass ? v.owner : <>{vehicle} · {v.route}</>} · {acct(v.accountNo)}{vs.length > 1
+          ? <> · {(v.share * 100).toFixed(1)}% of the {asClass ? "fund" : "holding"}</> : null}</>,
+        last: lastLine,
+      }, {
+        qty: fmtNum(v.quantity),
+        avgCost: v.costNA ? <AbsentCell reason={NO_COST_LINE} />
+          : v.avgCost === null ? <AbsentCell reason="this line holds no units to divide its cost by" />
+          : fmtFromBase(v.avgCost),
+        invested: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : fmtFromBase(v.costBasis, { compact: true }),
+        investedOn: dateCell(v.investedOn, v.costNA
+          ? "no statement reports what this holding cost, so there is no payment to date — a depository records what is held and never what was paid for it"
+          : "this account's statement reports the holding's cost but not the date it was bought"),
+        cmp: v.currentPrice === null
+          ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+          : <>{fmtFromBase(v.currentPrice)}{!v.live && (
+              <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
+                title={v.navPriced
+                  ? `AMFI's published NAV for this scheme, as of ${v.navDate}.`
+                  : `No live price — the mark from this statement as of ${portfolio.asOf}.`}>◦</span>
+            )}</>,
+        day: dayCell(v.live, v.dayChangePct),
+        mv: fmtFromBase(v.marketValue, { compact: true }),
+        weight: pctOfBook(v.marketValue),
+        pnl: v.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(v.unrealizedPnL),
+        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, assetClass: v.assetClass, costNA: v.costNA }, measure),
+        entity: v.owner,
+      }, {
+        "data-venue": v.route, "data-venue-class": v.cls ?? "", "data-venue-share": v.share,
+        "data-venue-account": v.accountId, "data-venue-key": v.securityKey, "data-venue-mv": v.marketValue,
+        ...(t ? { "data-folio-tranches": t.rows.length } : {}),
+      }));
+      if (t) {
+        out.push(...trancheRows(r.key, fk, v.cls, v.assetClass, t, 2, lastLine, !switchNoted));
+        if (t.rows.some((x) => x.move.carriedFrom)) switchNoted = true;
+      }
+    });
+    /**
+     * COUNTED ONCE — the line that makes the lines add to the row. A holding
+     * two accounts both report is listed twice above (each statement as
+     * printed) and counted once in the row, so without this the lines would sum
+     * past the figure they open from. Italic, because it is arithmetic and not a
+     * holding; amber, because it is the one place this table subtracts.
+     */
+    if (overlap) {
+      const printedCost = sumOrNull(vs.map((v) => v.costBasis));
+      const printedPnl = sumOrNull(vs.map((v) => v.unrealizedPnL));
+      const printedQty = r.quantity === null ? null : sum(vs.map((v) => v.quantity));
+      const minus = (v: ReactNode) => <span className="text-amber-400">{v}</span>;
+      out.push(childRow(`${r.key}>overlap`, "overlap", 1, {
+        title: <span className="text-amber-400">Counted once</span>,
+        sub: `one holding reported under ${vs.length === 2 ? "two" : vs.length} accounts`,
+        last: !soldElsewhere && !lookThrough,
+      }, {
+        qty: printedQty !== null && r.quantity !== null && printedQty - r.quantity > 0.0005
+          ? minus(`−${fmtNum(printedQty - r.quantity)}`) : undefined,
+        invested: printedCost !== null && r.costBasis !== null && printedCost - r.costBasis > 1
+          ? minus(`−${fmtFromBase(printedCost - r.costBasis, { compact: true })}`) : undefined,
+        mv: minus(`−${fmtFromBase(gap, { compact: true })}`),
+        weight: weightBase > 0 ? minus(`−${((gap / weightBase) * 100).toFixed(1)}%`) : undefined,
+        pnl: printedPnl !== null && r.unrealizedPnL !== null && Math.abs(printedPnl - r.unrealizedPnL) > 1
+          ? minus(fmtFromBase(r.unrealizedPnL - printedPnl, { compact: true, sign: true })) : undefined,
+      }, {
+        "data-venue-overlap": Math.round(gap), "data-venue-printed": Math.round(printed), "data-venue-once": Math.round(r.marketValue),
+      }, true));
+    }
+    /**
+     * …AND WHAT THE FAMILY'S FUNDS HOLD OF THIS NAME, last and fenced. It is a
+     * DERIVED figure — the AMC disclosed what the fund holds and this is the
+     * family's units' share of it — so it is never a row in these columns, where
+     * it would sit under Market value beside measured lines and read as one of
+     * them. It stays the card it has always been, drawn inside the tree so it
+     * reads as part of what this row opened into. See `canLookThrough` for why
+     * its gate is the issuer rather than the asset class.
+     */
+    if (soldElsewhere) {
+      out.push(treeLine(`${r.key}>elsewhere`, "elsewhere", !lookThrough,
+        <DematElsewhere movements={elsewhere} securityKey={r.securityKey}
+          held={new Set(vs.map((v) => v.accountId))} accounts={portfolio?.accounts ?? []} />));
+    }
+    if (lookThrough) {
+      out.push(treeLine(`${r.key}>lookthrough`, "lookthrough", true,
+        <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />));
+    }
+    return out;
+  };
+  /**
+   * ── EXPAND ALL, ON THE ALLOCATION AXES ────────────────────────────────────
+   *
+   * Every row the table can open, and every section it has closed. Not offered
+   * on the SECURITY axis, where nearly every row opens onto a fund look-through
+   * — a derived card per issuer — rather than onto rows of the table: 565 of
+   * them at once is a page nobody reads, and that axis is used by typing one
+   * name and opening it.
+   */
+  const expandableKeys = bySecurity ? [] : rows.filter(canExpand).map((r) => r.key);
+  const sectionKeys = showBucketSections ? bucketGroups.map((g) => `${groupAxis}|${g.key}`) : [];
+  const allOpen = expandableKeys.length > 0
+    && expandableKeys.every((k) => expanded.has(k)) && sectionKeys.every((k) => !closedSections.has(k));
+  const toggleAll = () => {
+    if (allOpen) setExpanded(new Set());
+    else { setExpanded(new Set(expandableKeys)); setClosedSections(new Set()); }
+  };
   // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
   // styled workbook. exceljs is code-split so it only loads on demand.
   const handleExport = async () => {
@@ -1929,6 +2513,13 @@ export function PortfolioMonitor() {
         {view === "holdings" && (
           <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
         )}
+        {/* EXPAND ALL — the standard's one control for every row the table can
+            open. At the END of the filter row, because it acts on the table
+            rather than narrowing it; absent on the security axis, where
+            `expandableKeys` is empty by design (see its note). */}
+        {view === "holdings" && expandableKeys.length > 0 && (
+          <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />
+        )}
       </div>
 
       {/*
@@ -1987,7 +2578,7 @@ export function PortfolioMonitor() {
       {view === "holdings" ? (
         <Card pad={false} className="flex min-h-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-auto">
-            <table className="min-w-full text-xs">
+            <table className="min-w-full text-xs" data-monitor-table="holdings">
               <thead className="sticky top-0 z-10 bg-ink-800">
                 <Tr view={holdView} className="border-b border-ink-700">
                   <SortHeader col="security" view={holdView} align="left" pad="px-2 py-1.5">Security</SortHeader>
@@ -2097,7 +2688,12 @@ export function PortfolioMonitor() {
                 </Tr>
               </thead>
               <tbody className="divide-y divide-ink-700/70">
-                {bucketGroups.map((grp) => (
+                {bucketGroups.map((grp) => {
+                  // A section closes on its band's chevron (or anywhere on the
+                  // band). Where the table draws no band there is nothing to close.
+                  const secKey = `${groupAxis}|${grp.key}`;
+                  const secOpen = !showBucketSections || !closedSections.has(secKey);
+                  return (
                   <Fragment key={grp.key}>
                     {showBucketSections && (
                       /*
@@ -2113,28 +2709,29 @@ export function PortfolioMonitor() {
                         `data-row` already are: a claim about structure must not
                         depend on prose a redesign is free to reword.
                       */
-                      <tr className="bg-ink-900/50" data-section={grp.key} data-axis={groupAxis}
-                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}>
-                        <td colSpan={COL_COUNT} className="px-2 py-1.5">
-                          <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
-                            {groupLabelFor(groupAxis)(grp.key)}
+                      <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
+                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}
+                        data-section-open={secOpen ? "open" : "closed"}
+                        {...rowToggle(() => toggleSection(secKey))}>
+                        <TreeSectionCell density="dense" colSpan={COL_COUNT}
+                          title={groupLabelFor(groupAxis)(grp.key)}
+                          open={secOpen} onToggle={() => toggleSection(secKey)}
+                          toggleData={{ "data-section-toggle": grp.key }}
+                          sub={<>
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
                                 positions from the page without saying so. */}
-                            <span className="font-normal normal-case tracking-normal text-slate-500">
-                              {grp.key === MANDATE_BUCKET ? `· ${grp.rows.length} ${grp.rows.length === 1 ? "mandate" : "mandates"} ` : ""}· {grp.holdings} {grp.holdings === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}
-                            </span>
+                            {grp.key === MANDATE_BUCKET ? `· ${grp.rows.length} ${grp.rows.length === 1 ? "mandate" : "mandates"} ` : ""}· {grp.holdings} {grp.holdings === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}
                             {/* A MEASURED ZERO KEEPS ITS ZERO, and says why it is
                                 one. The section is not empty — every row in it is
                                 reported at nil, which is a different fact from
                                 "no statement carries this" and must not be shown
                                 as an em dash. */}
                             {grp.subtotal === 0 && grp.rows.length > 0 && (
-                              <span className="font-normal normal-case tracking-normal text-slate-500"
-                                title="Not an absent figure: every statement in this section reports a nil balance, so the subtotal is a measurement.">
+                              <>{" "}<span title="Not an absent figure: every statement in this section reports a nil balance, so the subtotal is a measurement.">
                                 · a measured nil — every row here is reported at zero
-                              </span>
+                              </span></>
                             )}
                             {/*
                               WHY A LIQUID FUND IS SITTING IN CASH, said where
@@ -2148,16 +2745,14 @@ export function PortfolioMonitor() {
                               re-bucketed row says nothing at all.
                             */}
                             {grp.key === "Cash" && grp.rows.some((r) => isCashEquivalent(r)) && (
-                              <span className="font-normal normal-case tracking-normal text-slate-500"
-                                title={`Cash is liquid and arbitrage — the family's own instruction, corroborated by the Cash sheet of their consolidated review (30 June 2026), which lists each of these by name. The issuing documents type them Mutual Fund or ETF, and that is what the archive still records: this is the CATEGORY axis answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`}>
+                              <>{" "}<span title={`Cash is liquid and arbitrage — the family's own instruction, corroborated by the Cash sheet of their consolidated review (30 June 2026), which lists each of these by name. The issuing documents type them Mutual Fund or ETF, and that is what the archive still records: this is the CATEGORY axis answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`}>
                                 · includes {grp.rows.filter((r) => isCashEquivalent(r)).length} liquid {grp.rows.filter((r) => isCashEquivalent(r)).length === 1 ? "holding" : "holdings"} the statements type as a fund
-                              </span>
+                              </span></>
                             )}
                             {grp.collapsed > 0 && (
-                              <span className="font-normal normal-case tracking-normal text-slate-500"
-                                title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
+                              <>{" "}<span title="The same holding is reported on two members' statements. Both rows are shown as printed; the subtotal counts it once, exactly as the footer does.">
                                 · {fmtFromBase(grp.collapsed, { compact: true })} reported twice, counted once
-                              </span>
+                              </span></>
                             )}
                             {/*
                               AN UNCLASSIFIED SECTION NAMES ITS CAUSE, and it is
@@ -2169,9 +2764,9 @@ export function PortfolioMonitor() {
                               applied to a section heading.
                             */}
                             {grp.key === UNCLASSIFIED && (
-                              <span className="font-normal normal-case tracking-normal text-amber-400/80" title={UNCLASSIFIED_WHY}>
+                              <>{" "}<span className="text-amber-400/80" title={UNCLASSIFIED_WHY}>
                                 · the family's review does not list {grp.rows.length === 1 ? "this holding" : "these holdings"}, so no {groupAxis === "basket" ? "basket" : "asset class"} is stated
-                              </span>
+                              </span></>
                             )}
                             {/*
                               AND A SECTION FILLED BY THE FAMILY'S RULE SAYS SO.
@@ -2183,62 +2778,231 @@ export function PortfolioMonitor() {
                               section is review-stated, which is the common case.
                             */}
                             {grp.ruleMV > 0 && (
-                              <span className="font-normal normal-case tracking-normal text-slate-500"
-                                title={`The family's review names most of this section product by product. ${fmtFromBase(grp.ruleMV, { compact: true })} of it is placed here by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.`}>
+                              <>{" "}<span title={`The family's review names most of this section product by product. ${fmtFromBase(grp.ruleMV, { compact: true })} of it is placed here by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.`}>
                                 · {fmtFromBase(grp.ruleMV, { compact: true })} by the family's stated rule, not named individually
-                              </span>
+                              </span></>
                             )}
-                          </span>
-                        </td>
+                          </>} />
                       </tr>
                     )}
-                    {sortRows(grp.rows, holdView.sort, holdAccessors).map((r) => {
+                    {/*
+                      ── EVERY METRIC, TOTALLED FOR THE CATEGORY IT HEADS ───────
+                      "Show aggregate totals for every metric for each category."
+                      The heading names the category and its size; this row is the
+                      rest of the table's columns, added up over the same set.
+
+                      IT SITS UNDER THE BAND, AT THE TOP OF ITS SECTION, which is
+                      where the Private Market page's standard puts a section's
+                      totals: a reader sees what a category adds up to before its
+                      rows, and a CLOSED section still shows its figures — the band
+                      and this row are what remain when its holdings are folded
+                      away. Nothing about what the row carries moved.
+
+                      IT IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is the
+                      whole design: a total belongs UNDER THE COLUMN IT TOTALS.
+                      This book has already paid twice for a figure printed under
+                      a heading that describes something else — the allocation
+                      footer on a different basis from its own column, and the
+                      Capital invested tile captioned "listed only" over a
+                      whole-book sum.
+
+                      EVERY CELL A CATEGORY CANNOT ANSWER RENDERS `AbsentCell`
+                      WITH ITS REASON rather than being left blank. Quantity and
+                      the two per-unit columns are the ones that matter: shares of
+                      one company plus units of a fund is not a quantity, and the
+                      reader who scans across an empty cell learns nothing about
+                      whether a figure was withheld or never existed.
+                    */}
+                    {showBucketSections && (() => {
+                      const tot = grp.totals;
+                      // Struck over the positions, so it cannot disagree with the
+                      // rows drawn above it — but a category with no partition
+                      // entry has nothing to total and says so rather than
+                      // printing zeros for a row it cannot see.
+                      if (!tot) return null;
+                      const weight = weightBase > 0 ? (tot.mv / weightBase) * 100 : null;
+                      const uncostedMV = tot.mv - tot.costedMV;
+                      /**
+                       * THE RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT
+                       * DESCRIBE DIFFERENT SETS OF HOLDINGS — `costCoversSet`,
+                       * the same test Morning CIO's allocation row runs on the
+                       * same buckets. Direct Equity reports a cost on 9 of 37
+                       * holdings, so a return on cost would sit between a printed
+                       * ₹1.22 Cr invested and a printed ₹94.9 Cr current and
+                       * describe neither. A reader who divides one printed cell
+                       * by another and gets a third answer has found a
+                       * contradiction, and this is the row they would find it on.
+                       */
+                      // The section's own words on the active axis — the two
+                      // family axes are already the family's wording and render
+                      // verbatim; only the category axis has a label function.
+                      const label = groupLabelFor(groupAxis)(grp.key);
+                      const covered = costCoversSet(tot.mv, uncostedMV);
+                      const ret = covered && tot.cost !== null && tot.pnl !== null && tot.cost > 0
+                        ? (tot.pnl / tot.cost) * 100 : null;
+                      /**
+                       * AND A REFUSED RETURN NAMES THE FAILURE IT ACTUALLY HAD.
+                       *
+                       * Four different things stop this cell, and the first cut
+                       * gave the coverage reason for all of them — so Cash, whose
+                       * every statement reports a nil balance, read "₹0 of this
+                       * category's ₹0 is held in accounts that report no cost",
+                       * which is a confident diagnosis of something that is not
+                       * happening. A wrong message sends the next reader to look
+                       * for statements nobody owes, which this book already
+                       * records as worse than a blank cell.
+                       */
+                      const retWhy =
+                        tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
+                        : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
+                        : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
+                        : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
+                        : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
+                      const realised = realisedFor(grp.key);
+                      const sharedNames = realisedByBucket.shared.get(grp.key) ?? 0;
+                      const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
+                      return (
+                        /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
+                           carries a cell under EVERY column — its label spans
+                           one, not the footer's three — so it permutes like an
+                           ordinary row and stays cell-for-cell under the
+                           headings above it. */
+                        <Tr view={holdView} className={`${TREE_ROW_DENSE.total} font-semibold`}
+                          data-category-total={grp.key}>
+                          <td className="py-1.5 pl-[2.1rem] pr-2 text-slate-200">
+                            {label} <span className="font-normal text-slate-500">· total</span>
+                          </td>
+                          {/* NOT A BLANK CELL AND NOT A SUM. Adding 1,80,185
+                              shares of one company to 3,416,657 units of a fund
+                              produces a number with no unit, and it would sit in
+                              a column of real quantities looking like one. */}
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="quantities of different securities cannot be added: shares of one company and units of a fund are not the same thing, and their sum has no unit." />
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="an average cost per unit needs one security; this category holds many, each with a cost of its own. Invested beside it is the money." />
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
+                            {tot.cost === null
+                              ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
+                              : <span title={uncostedMV > 1 ? costCover : undefined}>
+                                  {fmtFromBase(tot.cost, { compact: true })}
+                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
+                                </span>}
+                          </td>
+                          {/* A CATEGORY WAS BOUGHT ON MANY DATES, so there is
+                              no one date to print — the same reason its Qty and
+                              Avg cost cells are absent rather than blended. The
+                              coverage is on the FOOTER, where a count over the
+                              whole table means something. */}
+                          <td className="px-2 py-1.5 text-left mono">
+                            <AbsentCell reason="a category holds many holdings bought on many dates; there is no single date for it. Each row above carries its own." />
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono">
+                            <AbsentCell reason="a price is per unit and belongs to one security; a category has no price. Its market value is in the column that measures money." />
+                          </td>
+                          {/* The category's move over the part of it the feed
+                              actually repriced — never over its whole value,
+                              which would dilute the move by every folio and cash
+                              sleeve that has no quote and no previous close. */}
+                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${grp.dayPct == null ? "text-slate-600" : changeColor(grp.dayPct)}`}
+                            title={grp.dayPct == null ? undefined
+                              : `${fmtFromBase(grp.day, { compact: true, sign: true })} since previous close, across the ${fmtFromBase(grp.dayBase, { compact: true })} of ${label} the feed prices.`}>
+                            {grp.dayPct == null
+                              ? <AbsentCell reason={`no holding in ${label} carries a live quote, so there is no previous close to move from`} />
+                              : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
+                          </td>
+                          {/* `grp.subtotal` IS `tot.mv` — the heading prints the
+                              same field, so the two figures a reader sees three
+                              lines apart are one computation and cannot differ. */}
+                          <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
+                            {fmtFromBase(grp.subtotal, { compact: true })}
+                          </td>
+                          <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
+                            title={`${label} as a share of ${weightScope ? `the ${weightScope} book` : "the whole book"} — the same denominator every Weight cell above divides by, so the categories add to the Total row.`}>
+                            {weight === null ? <AbsentCell reason="the book this weight would divide by is empty" /> : `${weight.toFixed(1)}%`}
+                          </td>
+                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${tot.pnl === null ? "text-slate-500" : changeColor(tot.pnl)}`}>
+                            {tot.pnl === null
+                              ? <AbsentCell reason={`an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
+                              : <span title={uncostedMV > 1 ? costCover : undefined}>
+                                  {fmtFromBase(tot.pnl, { compact: true, sign: true })}
+                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
+                                </span>}
+                          </td>
+                          {/* Realised is reported PER SECURITY across the whole
+                              book, so the categories claim each name once and the
+                              rows inside a mandate show none of it — the same
+                              split the footer already names in the caption. */}
+                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
+                            !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
+                            : realized === undefined ? <span className="font-normal text-slate-500">…</span>
+                            : realised === null || realised.total === null ? <AbsentCell reason={realised?.anySold
+                                ? `these names were sold, but no capital gain statement covers the accounts they were sold from`
+                                : `no sale of a name held in ${label} appears on the transaction statements in this drop`} />
+                            : <span className={changeColor(realised.total)}
+                                title={sharedNames > 0
+                                  ? `${sharedNames} of these names are also held in another category. A name's realised gain is reported once for the whole book, so it is counted under the first category that holds it rather than split between them — there is no per-category split on any statement to divide it by.`
+                                  : undefined}>
+                                {fmtFromBase(realised.total, { compact: true, sign: true })}
+                              </span>
+                          }</td>
+                          {/*
+                              ── ONE CELL PER RETURN COLUMN, AND ONLY ONE OF THEM
+                                 HAS A FIGURE TO PUT IN IT ──────────────────────
+
+                              The category return is CUMULATIVE ON COST and does
+                              NOT follow the per-holding measure picker: a bucket
+                              has no single purchase date to annualise over, so
+                              annualising it would be the very extrapolation the
+                              guard forbids. It is refused where the cost side does
+                              not cover the market value beside it
+                              (`costCoversSet`), the same as Morning CIO.
+
+                              THAT USED TO BE ONE CELL UNDER A HEADER THAT COULD
+                              MEAN ANY OF FIVE THINGS. With a column per measure it
+                              has to say which: the cumulative figure stands under
+                              HPR and under `auto` — which resolves to the total
+                              return on cost for an aggregate — and under CAGR,
+                              XIRR, YTD or CY it renders an `AbsentCell` with the
+                              reason, because a category genuinely has none of
+                              those. Printing the same percentage under all five
+                              would be the caption-does-not-describe-its-figure
+                              failure, five columns wide.
+                          */}
+                          {returnMeasures.map((measure) => {
+                            const onCost = measure === "auto" || measure === "absolute";
+                            const why = !onCost
+                              ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
+                              : retWhy;
+                            return (
+                              <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
+                                {!onCost || ret === null
+                                  ? <AbsentCell reason={why} />
+                                  : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
+                                      {fmtPct(ret, { sign: true })}
+                                    </span>}
+                              </td>
+                            );
+                          })}
+                          {/* Sector and Entity describe a holding; a category has
+                              no sum of words. Empty, exactly as in the footer. */}
+                          <td className="px-2 py-1.5"></td>
+                          <td className="px-2 py-1.5"></td>
+                        </Tr>
+                      );
+                    })()}
+                    {secOpen && sortRows(grp.rows, holdView.sort, holdAccessors).map((r) => {
                   const isOpen = expanded.has(r.key);
                   const multi = r.entities.length > 1;
                   /**
-                   * WHEN THIS HOLDING WAS BOUGHT, CONTRIBUTION BY CONTRIBUTION.
-                   *
-                   * Null on all but a handful of rows, and that is the honest
-                   * state rather than a gap: it needs the fund to allot UNITS per
-                   * contribution AND those units to account for every unit held.
-                   * `trancheTable` is handed the row's OWN deduped positions, so
-                   * a holding two members report cannot be counted twice here
-                   * while the row above counts it once.
-                   *
-                   * "cagr" is the family's own rule, not a preference: a year or
-                   * more annualises, anything shorter stands as the absolute
-                   * figure and says so. It deliberately does NOT follow the
-                   * page's measure picker — a tranche is the one thing in this
-                   * book with a real purchase date, and the picker's other
-                   * measures (XIRR, YTD, calendar) are absent on every row here.
+                   * CAN IT OPEN, AND HOW MANY CONTRIBUTIONS IT OPENS ONTO — the
+                   * row advertises the second before anyone opens it, so a walk
+                   * (and a reader) can find the longest history without opening
+                   * every row. See `trancheInfo`.
                    */
-                  /**
-                   * ONE SECTION PER UNIT CLASS, AND THAT IS NOT A LAYOUT CHOICE.
-                   *
-                   * A tranche is valued as ITS OWN units at TODAY'S NAV, so a
-                   * panel's whole claim — cheaper entry, higher return, always —
-                   * holds only where every row shares one NAV. Clubbing Sanshi's
-                   * Class E and Class A2 into one row put two NAVs under one
-                   * footer: each row stayed arithmetically right, the combined
-                   * UNITS became a number with no unit, and the comparison a
-                   * reader opens the panel to make stopped being valid. The
-                   * per-unit cells on the row above go absent for exactly this
-                   * reason; a tranche panel is a per-unit measurement, so it gets
-                   * the same treatment one level down. Found by `check:pages`
-                   * rather than by reading — see the note in `trancheGroupsOf`.
-                   */
-                  const trancheGroups = trancheGroupsOf(r, portfolio.asOf);
-                  const trancheCount = trancheGroups.reduce((a, g) => a + g.table.rows.length, 0);
-                  const trancheOpen = openTranches.has(r.key);
-                  /**
-                   * A COST CARRIED THROUGH A FUND'S CLASS SWITCH SAYS SO, on the
-                   * cell that shows it. Buoyant's own statements print ₹72.5 Cr
-                   * for what the family paid ₹70.9 Cr for, and a reader holding
-                   * those statements has to be able to see which figure this is
-                   * and why the other exists — see `carriedCostOf`.
-                   */
-                  const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
-                  const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
+                  const expandable = canExpand(r);
+                  const contributions = trancheInfo.get(r.key)?.count ?? 0;
                   /**
                    * A MANDATE ROW IS AN ACCOUNT, AND HALF THESE COLUMNS ARE
                    * QUESTIONS AN ACCOUNT CANNOT ANSWER. Quantity, average cost,
@@ -2279,6 +3043,15 @@ export function PortfolioMonitor() {
                   const mixedBasisNote = partLive
                     ? `Part live: ${money(r.liveMV)} of this mandate's ${money(r.marketValue)} is repriced from live quotes and the rest keeps its statement mark — a mandate's cash sleeve can never be quoted, and neither can a share whose NSE symbol does not resolve. Every figure on this row that market value feeds — value, weight, unrealised P&L and return — therefore blends the two bases, and has no single statement cell to trace to.`
                     : LIVE_CELL;
+                  /**
+                   * A COST CARRIED THROUGH A FUND'S CLASS SWITCH SAYS SO, on the
+                   * cell that shows it. Buoyant's own statements print ₹72.5 Cr
+                   * for what the family paid ₹70.9 Cr for, and a reader holding
+                   * those statements has to be able to see which figure this is
+                   * and why the other exists — see `carriedCostOf`.
+                   */
+                  const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
+                  const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
                   return (
                     <Fragment key={r.key}>
                       {/* THE SECURITY AXIS'S OWN HANDLES. A structural claim must
@@ -2302,7 +3075,15 @@ export function PortfolioMonitor() {
                           because the walk could not pick a row to open. Gated on
                           the key itself it cannot go stale again; a mandate row
                           carries none, which is why the guard is not dropped. */}
-                      <Tr view={holdView} className="hover:bg-ink-700/40"
+                      {/* THE WHOLE ROW IS THE CONTROL — the standard's rule. A click
+                          anywhere opens it, except on a link, a button or a
+                          popover inside it, which keep their own meaning: the
+                          name still opens the holding's page, a formula still
+                          opens its arithmetic. */}
+                      <Tr view={holdView} className={expandable ? TREE_ROW_DENSE.parent : "hover:bg-ink-700/40"}
+                        {...(expandable ? rowToggle(() => toggleRow(r.key)) : {})}
+                        data-tree-parent={expandable ? (isOpen ? "open" : "closed") : undefined}
+                        {...(contributions > 0 ? { "data-tranche-rows": String(contributions) } : {})}
                         data-bucket={r.bucket}
                         {...(r.securityKey ? { "data-security-key": r.securityKey } : {})}
                         {...(r.venues ? { "data-venues": String(r.venues.length) } : {})}
@@ -2336,52 +3117,28 @@ export function PortfolioMonitor() {
                           subset as the account. It renders nothing in the unfiltered
                           view, which is the clean row that was asked for.
                         */}
-                        <td className="min-w-[15rem] px-2 py-1.5">
-                          {m ? (
-                            <div className="flex flex-col gap-0.5">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
-                                  title={isOpen ? "Hide the shares inside this mandate" : "List the shares inside this mandate"}
-                                  className="-ml-0.5 rounded text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
-                                  <ChevronRight className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                                </button>
-                                <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
-                                  title={`${m.manager} — account ${m.accountNo}, ${m.accountCount} holdings. Open the mandate drill-down.`}
-                                  className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                                  {r.security}
-                                </Link>
-                                <Pill tone="core">PMS mandate</Pill>
-                              </div>
-                              {m.holdings.length < m.accountCount && (
-                                <span className="pl-5 text-[11px] text-amber-400/80">
-                                  {m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}
-                                </span>
-                              )}
-                            </div>
+                        <TreeNameCell depth={0} density="dense" className="min-w-[16rem]"
+                          open={isOpen} onToggle={expandable ? () => toggleRow(r.key) : undefined}
+                          toggleLabel={toggleLabelFor(r, isOpen)}
+                          title={m ? (
+                            <>
+                              <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
+                                title={`${m.manager} — account ${m.accountNo}, ${m.accountCount} holdings. Open the mandate drill-down.`}
+                                className="font-medium text-slate-100 underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
+                                {r.security}
+                              </Link>{" "}
+                              <span className="align-middle"><Pill tone="core">PMS mandate</Pill></span>
+                            </>
                           ) : (
-                            <span className="font-medium text-slate-100">
-                              {r.venues && (
-                                <button type="button" onClick={() => toggleRow(r.key)} aria-expanded={isOpen}
-                                  title={r.fundClasses.length
-                                    ? (isOpen ? "Hide this fund's unit classes" : `One fund, ${r.fundClasses.length} unit classes (${r.fundClasses.join(", ")}) — show each`)
-                                    : r.venues.length === 0
-                                    // A DERIVED-ONLY ROW HAS NO ACCOUNT TO NAME, so a
-                                    // title counting accounts would read "held through 0",
-                                    // which is a measurement of nothing rather than the
-                                    // honest statement that this is a fund look-through.
-                                    ? (isOpen ? "Hide what your funds hold of this issuer" : "No statement in this book reports it — show what your funds hold of it")
-                                    : (isOpen ? "Hide how this name is held" : `Held through ${r.venues.length} account${r.venues.length === 1 ? "" : "s"} — show which, and what your funds hold of it`)}
-                                  className="-ml-0.5 mr-1 rounded align-middle text-slate-400 transition-colors hover:text-champagne-400 ring-focus">
-                                  <ChevronRight className={`inline h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-90" : ""}`} />
-                                </button>
-                              )}
+                            <>
                               {/*
                                 A CLUBBED FUND ROW IS NOT A LINK, AND THAT IS THE
                                 POINT. `/stock/:securityKey` serves ONE class, so
                                 a row reading "3P India Equity Fund 1" that opened
                                 Class B3's page would name one thing and show
-                                another. The classes are each linked inside the
-                                expansion, where each is itself again.
+                                another. The classes are each linked on their own
+                                lines when the row is opened, where each is itself
+                                again.
                               */}
                               {r.fundClasses.length
                                 ? <span data-fund-classes={r.fundClasses.join(",")}>{r.security}</span>
@@ -2391,33 +3148,29 @@ export function PortfolioMonitor() {
                                   cell and shatter every row-based check that splits the
                                   page on newlines (Stage 10af) — and an inline element
                                   contributes no whitespace to `innerText`, so without it
-                                  the row reads "Fund 13 unit classesredeemed". */}
+                                  the row reads "Fund 13 unit classes". */}
                               {r.fundClasses.length > 0 && (
                                 <>{" "}<span className="ml-1 align-middle"><Pill>{r.fundClasses.length} unit classes</Pill></span></>
                               )}
                               {/*
                                 THE `redeemed` PILL WAS HERE AND IS GONE, BECAUSE
-                                THE ROW IT EXPLAINED IS GONE.
-
-                                It was the right answer to the previous round —
-                                *"the 3P funds … are lacking invested and current
-                                market value figures"* — where the fix was to say
-                                ON THE ROW that the ₹0 is a MEASUREMENT. The
-                                family's next answer supersedes it: *"in the
-                                holdings page we only need to show the current
-                                holdings"*, so a closed position is not listed
-                                here at all and there is no row left to pill.
-                                Left as code it could never fire — the row build
-                                filters those positions out before anything sees
-                                them — which is the dead-code-that-looks-alive
-                                failure this book keeps naming. The measured zero
-                                is still stated under the table by `closedNote`,
-                                and a closed row still RENDERS on `/holdings`,
-                                where it carries the explanation instead.
+                                THE ROW IT EXPLAINED IS GONE. The monitor lists
+                                current holdings only (`currentHoldings`), so a
+                                closed position has no row left to pill; a closed
+                                row still RENDERS on `/holdings`, where it carries
+                                the explanation instead.
                               */}
-                            </span>
+                            </>
                           )}
-                        </td>
+                          /* THE ONE THING THAT IS NOT A DETAIL STAYS, and only
+                             when it is true: under a filter a mandate row's
+                             figures cover PART of the mandate, and a reader who
+                             is not told that reads a subset as the account. */
+                          sub={m && m.holdings.length < m.accountCount ? (
+                            <span className="text-amber-400/80">
+                              {m.holdings.length} of {m.accountCount} holdings match the filters — the mandate itself holds {fmtFromBase(m.accountMV, { compact: true })}
+                            </span>
+                          ) : undefined} />
                         <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                           {r.quantity === null
                             ? <AbsentCell reason={r.fundClasses.length
@@ -2433,23 +3186,20 @@ export function PortfolioMonitor() {
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
                             : fmtFromBase(r.avgCost)}
                         </td>
-                        {/* INVESTED IS THE FIGURE A CONTRIBUTION HISTORY BREAKS
-                            APART, so the affordance lives on it rather than on
-                            the row: what the reader wants apart is the money,
-                            date by date. Drawn only where a breakdown exists —
-                            a chevron that opens nothing is worse than none. */}
+                        {/* THE INVESTED CELL CARRIED A SECOND CHEVRON, opening the
+                            contribution history as a table of its own. It is a
+                            plain figure now: the row opens once, and the dated
+                            contributions are rows under the statement they
+                            bought units in — see "WHAT A ROW OPENS INTO".
+
+                            AND A COST CARRIED THROUGH A CLASS SWITCH SAYS SO,
+                            in the hover on the figure itself — see `carried`
+                            above. The handles are what the sweep reads. */}
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-cost-carried={carried ? carried.paid : undefined}
                           data-cost-printed={carried ? carried.printed : undefined}>
-                          {r.costNA ? "—" : trancheCount > 0 ? (
-                            <button type="button" onClick={() => toggleTranche(r.key)} aria-expanded={trancheOpen}
-                              data-tranche-toggle={r.key} data-tranche-rows={trancheCount}
-                              title={`Bought over ${trancheCount} dated contribution${trancheCount === 1 ? "" : "s"} — open for each one's own units, entry NAV and return.${trancheGroups.length > 1 ? ` Shown per unit class, because each class is marked at its own NAV.` : ""}${carriedWhy ? ` ${carriedWhy}` : ""}`}
-                              className="inline-flex items-center gap-1 rounded ring-focus transition-colors hover:text-champagne-400">
-                              <ChevronRight className={`h-3 w-3 shrink-0 transition-transform ${trancheOpen ? "rotate-90" : ""}`} />
-                              {fmtFromBase(r.costBasis, { compact: true })}
-                            </button>
-                          ) : carriedWhy
+                          {r.costNA ? "—"
+                            : carriedWhy
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : fmtFromBase(r.costBasis, { compact: true })}
                         </td>
@@ -2470,7 +3220,7 @@ export function PortfolioMonitor() {
                                 ? "no statement in this book reports what this holding cost, so there is no payment to date. A depository records what is held and never what was paid for it"
                                 : "the statements report this holding's cost but not the date it was bought. A lot register or the fund's own dated allotments would carry it; this account issues neither"} />
                             : <span title={r.investedOn.payments > 1
-                              ? `Funded over ${r.investedOn.payments} dated payments, ${fmtDate(r.investedOn.first)} to ${fmtDate(r.investedOn.last)}. Open the Invested cell for each payment's own units, entry NAV and return — they are not the same return, because each has been at work for a different length of time.`
+                              ? `Funded over ${r.investedOn.payments} dated payments, ${fmtDate(r.investedOn.first)} to ${fmtDate(r.investedOn.last)}. Open the row for each payment's own units, entry NAV and return — they are not the same return, because each has been at work for a different length of time.`
                               : `One dated payment, ${fmtDate(r.investedOn.first)}.`}>
                               {fmtDate(r.investedOn.first)}
                               {r.investedOn.payments > 1 && (
@@ -2675,710 +3425,15 @@ export function PortfolioMonitor() {
                           )}
                         </td>
                       </Tr>
-                      {/* EACH INVESTMENT SEPARATELY, AND THE COMBINED BENEATH IT.
-                          *"I invested additional 10 crores… previous amount…
-                          what was the return? Now this 10 crores… what it has
-                          done what's the overall portfolio return."* Both
-                          questions, one table: a row per contribution and a
-                          footer that ties to the cell it opened from. */}
-                      {trancheOpen && trancheGroups.map((g, gi) => {
-                        const tranches = g.table;
-                        const trancheSpansEntities = g.spansEntities;
-                        // The class these units are held in TODAY: the section's own
-                        // where the row clubs several, the row's where it clubs none.
-                        const heldClass = g.cls ?? classOfName(r.security);
-                        return (
-                        <tr key={"tr-" + r.key + "|" + (g.cls ?? "")} className="bg-ink-900/60"
-                          data-tranche-panel={r.key} data-tranche-class={g.cls ?? ""}>
-                          <td colSpan={COL_COUNT} className="px-3 pb-3 pt-1">
-                            {/* THE CLASS IS NAMED WHERE THERE IS MORE THAN ONE, because
-                                a second table under one row with no heading reads as a
-                                continuation of the first — and the two are marked at
-                                different NAVs, which is the whole reason they are apart. */}
-                            {g.cls && (
-                              <p className="mb-1 text-[11px] font-medium text-slate-300">
-                                Class {g.cls} <span className="font-normal text-slate-500">— marked at its own NAV, so its contributions are compared only with each other</span>
-                              </p>
-                            )}
-                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                              {tranches.rows.length === 1
-                                ? <>This holding was bought in ONE contribution, so its return and the row&rsquo;s are the same figure.</>
-                                : <>The {tranches.rows.length} dated contributions behind this holding. Each carries its OWN units,
-                                    so each is valued at today&rsquo;s NAV on the units IT bought — the earlier money bought cheaper
-                                    units and is worth more per rupee, which is what a single blended return hides.</>}
-                              {/* THE METHOD IS STATED ONCE. It is a fact about how every
-                                  section is computed, not about this one, and repeating it
-                                  under each class turns a sectioned panel into a wall. */}
-                              {gi === 0 && <>
-                                {" "}Entry NAV is derived as invested &divide; units allotted and reproduces the allotment NAV the
-                                statement prints{tranches.rows.some((t) => t.move.carriedFrom) && <>
-                                  {" "}&mdash; except on a row marked <span className="text-slate-400">switched</span>, which the fund
-                                  bought in an earlier unit class and moved into this one: its units and entry NAV are restated in
-                                  this class at the fund&rsquo;s own switch ratio, and its hover gives the NAV it was bought at.
-                                  The amount and the date are the statement&rsquo;s
-                                </>}. A contribution held a year or more is annualised and tagged CAGR; anything
-                                shorter shows the absolute return, because a rate for a year the money has not seen is a claim
-                                about a year.
-                              </>}
-                            </p>
-                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
-                              <SortableTable className="min-w-full text-[12px]"
-                                storageKey={trancheSpansEntities ? "monitor-tranche-entity" : "monitor-tranche"}
-                                columns={trancheSpansEntities ? TRANCHE_ENTITY_COLS : TRANCHE_COLS}>
-                                {(tv) => (<>
-                                <thead>
-                                  <Tr view={tv} className="border-b border-ink-700/70">
-                                    <SortHeader col="date" view={tv} align="left" pad="px-3 py-1.5">Invested on</SortHeader>
-                                    <SortHeader col="type" view={tv} align="left" pad="px-3 py-1.5"
-                                    title="The statement's own word for the movement — Subscription, Drawdown, Top Up, Full Units Redemption. Printed as it arrived rather than mapped to a vocabulary of ours.">Type</SortHeader>
-                                    {/* ONLY WHERE THE ROW SPANS MORE THAN ONE FOLIO, and
-                                        then it is load-bearing rather than decoration: this
-                                        book's Sanshi Class E row unions four members, and
-                                        two of them contributed on the SAME DAY under the
-                                        same label. Without the holder those read as one
-                                        decision printed twice at different sizes. */}
-                                    {trancheSpansEntities && <SortHeader col="entity" view={tv} align="left" pad="px-3 py-1.5">Entity</SortHeader>}
-                                    <SortHeader col="amount" view={tv} pad="px-3 py-1.5">Amount</SortHeader>
-                                    <SortHeader col="invested" view={tv} pad="px-3 py-1.5">Invested</SortHeader>
-                                    <SortHeader col="units" view={tv} pad="px-3 py-1.5">Units</SortHeader>
-                                    <SortHeader col="nav" view={tv} pad="px-3 py-1.5">Entry NAV</SortHeader>
-                                    <SortHeader col="value" view={tv} pad="px-3 py-1.5">Value today</SortHeader>
-                                    <SortHeader col="gain" view={tv} pad="px-3 py-1.5">Gain</SortHeader>
-                                    <SortHeader col="return" view={tv} pad="px-3 py-1.5">Return</SortHeader>
-                                  </Tr>
-                                </thead>
-                                <tbody className="divide-y divide-ink-700/50">
-                                  {sortRows(tranches.rows, tv.sort, {
-                                    date: (t) => t.date,
-                                    type: (t) => t.label,
-                                    entity: (t) => ownerOfAccount(t.move.accountId),
-                                    amount: (t) => t.amount,
-                                    invested: (t) => t.invested,
-                                    units: (t) => t.units,
-                                    nav: (t) => t.navAtEntry,
-                                    value: (t) => t.value,
-                                    gain: (t) => t.value - t.invested,
-                                    return: (t) => (t.ret.kind === "absent" ? null : t.ret.pct),
-                                  }).map((t) => (
-                                    <Tr view={tv} key={t.date + t.label + t.move.accountId} data-tranche-row={r.key}
-                                      data-tranche-hpr={t.returnPct}
-                                      data-tranche-switched={t.move.carriedFrom?.switchedOn ?? undefined}
-                                      data-tranche-bought-nav={boughtNavOf(t)?.toFixed(4) ?? undefined}
-                                      className="hover:bg-ink-700/30">
-                                      <td className="px-3 py-1.5 mono whitespace-nowrap text-slate-300">{fmtDate(t.date)}</td>
-                                      {/* A SWITCHED ROW SAYS SO WHERE ITS TYPE IS, because its
-                                          units and entry NAV are in a class the statement's
-                                          own allotment line does not name. Inline, never a
-                                          block: a second line in this cell is a newline in
-                                          innerText, which splits the row for every row-based
-                                          check on this panel. */}
-                                      <td className="px-3 py-1.5 text-slate-400">
-                                        {t.label}
-                                        {t.move.carriedFrom && (
-                                          <span className="ml-1 whitespace-nowrap text-[10px] text-slate-500"
-                                            title={switchedRowNote(t, heldClass, fmtFromBase)}>
-                                            &middot; switched {classOfName(t.move.carriedFrom.security) ?? "from an earlier class"}{" "}
-                                            &rarr; {heldClass ?? "this class"}, {fmtDate(t.move.carriedFrom.switchedOn)}
-                                          </span>
-                                        )}
-                                      </td>
-                                      {trancheSpansEntities && (
-                                        <td className="px-3 py-1.5 whitespace-nowrap text-slate-400">{ownerOfAccount(t.move.accountId)}</td>
-                                      )}
-                                      {/* The GROSS the statement prints — what the family
-                                          means by "10 crores" — beside what actually bought
-                                          units after the fund's own charge on the day. */}
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
-                                        {t.amount === null
-                                          ? <AbsentCell reason="this statement prints only a running balance for that date, so what moved on the day is not stated" />
-                                          : fmtFromBase(t.amount, { compact: true })}
-                                      </td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">{fmtFromBase(t.invested, { compact: true })}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
-                                        {t.move.carriedFrom
-                                          ? <span title={`${fmtNum(t.move.carriedFrom.units)} ${classOfName(t.move.carriedFrom.security) ?? "earlier-class"} units as allotted; ${fmtNum(t.units)} after the fund moved them into ${heldClass ?? "this class"} on ${fmtDate(t.move.carriedFrom.switchedOn)}, at its own switch ratio.`}>{fmtNum(t.units)}</span>
-                                          : fmtNum(t.units)}
-                                      </td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
-                                        {t.move.carriedFrom
-                                          ? <span title={switchedRowNote(t, heldClass, fmtFromBase)}>{fmtFromBase(t.navAtEntry)}</span>
-                                          : fmtFromBase(t.navAtEntry)}
-                                      </td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(t.value, { compact: true })}</td>
-                                      <td className={`px-3 py-1.5 text-right mono whitespace-nowrap ${t.value - t.invested >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                        {fmtFromBase(t.value - t.invested, { compact: true })}
-                                      </td>
-                                      <td className="px-3 py-1.5 text-right mono whitespace-nowrap">
-                                        {t.ret.kind === "absent"
-                                          ? <AbsentCell reason={t.ret.reason} />
-                                          : <span className={t.ret.pct >= 0 ? "text-emerald-400" : "text-rose-400"}>
-                                              <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">
-                                                {t.ret.kind === "cagr" ? "CAGR" : "HPR"}
-                                              </span>
-                                              {fmtPct(t.ret.pct)}
-                                            </span>}
-                                      </td>
-                                    </Tr>
-                                  ))}
-                                </tbody>
-                                {/* SUMMED FROM THE ROWS ABOVE, never computed beside
-                                    them — so it reconciles to the Invested cell this
-                                    panel opened from by construction rather than by a
-                                    tolerance. The Private Market page's PM-1 is what
-                                    happens when a footer is derived independently. */}
-                                <tfoot className="border-t border-ink-700 bg-ink-900/40">
-                                  <TrFoot view={tv} data-tranche-total={r.key}
-                                    className="px-3 py-1.5 font-medium text-slate-300"
-                                    label={<>Combined · {tranches.rows.length} {tranches.rows.length === 1 ? "contribution" : "contributions"}</>}
-                                    cells={{
-                                      invested: <td key="invested" className="px-3 py-1.5 text-right mono font-medium text-slate-200 whitespace-nowrap">{fmtFromBase(tranches.invested, { compact: true })}</td>,
-                                      units: <td key="units" className="px-3 py-1.5 text-right mono font-medium text-slate-300 whitespace-nowrap">{fmtNum(tranches.units)}</td>,
-                                      value: <td key="value" className="px-3 py-1.5 text-right mono font-medium text-slate-100 whitespace-nowrap">{fmtFromBase(tranches.value, { compact: true })}</td>,
-                                      gain: (
-                                        <td key="gain" className={`px-3 py-1.5 text-right mono font-medium whitespace-nowrap ${tranches.value - tranches.invested >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                          {fmtFromBase(tranches.value - tranches.invested, { compact: true })}
-                                        </td>
-                                      ),
-                                      return: (
-                                        <td key="return" className={`px-3 py-1.5 text-right mono font-medium whitespace-nowrap ${tranches.returnPct >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                                          <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-500">HPR</span>{fmtPct(tranches.returnPct)}
-                                        </td>
-                                      ),
-                                    }} />
-                                </tfoot>
-                                </>)}
-                              </SortableTable>
-                            </div>
-                          </td>
-                        </tr>
-                        );
-                      })}
-                      {/* THE MANDATE'S OWN HOLDINGS — the drill-down the family
-                          asked for, in place. Each share appears here and in the
-                          mandate's row above, and nowhere beside the shares the
-                          family bought itself. */}
-                      {m && isOpen && (
-                        <tr className="bg-ink-900/60">
-                          <td colSpan={COL_COUNT} className="px-3 pb-3 pt-1">
-                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-500">
-                              {/* WHAT THE MANAGER REPORTS, OR WHAT THE FILTERS LEFT OF IT — never the
-                                  first sentence over the second list. Filtered to one company this read
-                                  "The 1 holding inside this mandate, as {manager} reports them", which is a
-                                  false statement about a named counterparty that reports {accountCount} of
-                                  them; the row's own sub-line one line above already said otherwise. */}
-                              {whole ? (
-                                <>
-                                  The {m.holdings.length} {m.holdings.length === 1 ? "holding" : "holdings"} inside this mandate,
-                                  as {m.manager} reports them at {fmtDate(m.asOf)}.
-                                </>
-                              ) : (
-                                <>
-                                  The {m.holdings.length} of {m.accountCount} holdings in this mandate that match the filters
-                                  above — not the whole mandate, whose own total across all {m.accountCount} holdings is
-                                  {" "}{money(m.accountMV)} on this page&rsquo;s current basis. Clear the filters, or open the
-                                  drill-down below, for the mandate as {m.manager} reports it.
-                                </>
-                              )}{" "}
-                              The family owns these shares; the manager chose
-                              them — which is why they are counted here and in the row above, and never a second time among
-                              the shares the family bought in its own name.
-                            </p>
-                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
-                              <SortableTable className="min-w-full text-[12px]"
-                                storageKey="monitor-mandate-drill" columns={MANDATE_DRILL_COLS}>
-                                {(mv2) => (<>
-                                <thead>
-                                  <Tr view={mv2} className="border-b border-ink-700/70">
-                                    <SortHeader col="security" view={mv2} align="left" pad="px-3 py-1.5">Security</SortHeader>
-                                    <SortHeader col="qty" view={mv2} pad="px-3 py-1.5">Qty</SortHeader>
-                                    <SortHeader col="avgCost" view={mv2} pad="px-3 py-1.5">Avg cost</SortHeader>
-                                    <SortHeader col="invested" view={mv2} pad="px-3 py-1.5">Invested</SortHeader>
-                                    <SortHeader col="cmp" view={mv2} pad="px-3 py-1.5">CMP</SortHeader>
-                                    <SortHeader col="mv" view={mv2} pad="px-3 py-1.5">Market value</SortHeader>
-                                    <SortHeader col="share" view={mv2} pad="px-3 py-1.5"
-                                        title={`Each holding's share of the mandate's own total — ${money(m.accountMV)} across ${m.accountCount} holdings, struck before this page's filters.`}>% of mandate</SortHeader>
-                                    <SortHeader col="pnl" view={mv2} pad="px-3 py-1.5">Unreal. P&L</SortHeader>
-                                    <SortHeader col="return" view={mv2} pad="px-3 py-1.5">Return</SortHeader>
-                                    {/* Sector last here too, so the drill-down reads
-                                        in the same order as the row it opens out of. */}
-                                    <SortHeader col="sector" view={mv2} align="left" pad="px-3 py-1.5">Sector</SortHeader>
-                                  </Tr>
-                                </thead>
-                                <tbody className="divide-y divide-ink-700/50">
-                                  {sortRows(m.holdings, mv2.sort, {
-                                    security: (h) => h.security,
-                                    qty: (h) => h.quantity,
-                                    avgCost: (h) => (h.costNA ? null : h.avgCost),
-                                    invested: (h) => (h.costNA ? null : h.costBasis),
-                                    cmp: (h) => h.currentPrice,
-                                    mv: (h) => h.marketValue,
-                                    share: (h) => (m.accountMV > 0 ? h.marketValue : null),
-                                    pnl: (h) => (h.costNA ? null : h.unrealizedPnL),
-                                    return: (h) => (h.costNA ? null : h.returnPct),
-                                    sector: (h) => h.sector,
-                                  }).map((h) => (
-                                    <Tr view={mv2} key={h.securityKey || h.security}>
-                                      <td className="px-3 py-1.5 text-slate-200"><StockLink securityKey={h.securityKey} name={h.security} /></td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(h.quantity)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : h.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" /> : fmtFromBase(h.avgCost)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.costNA ? "—" : fmtFromBase(h.costBasis, { compact: true })}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">{h.currentPrice === null ? <AbsentCell reason="this row is marked at a total value, not a per-unit price" /> : fmtFromBase(h.currentPrice)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(h.marketValue, { compact: true })}</td>
-                                      {/* DIVIDED BY THE MANDATE, WHICH IS WHAT THE HEADER SAYS —
-                                          `m.accountMV`, the account's own pre-filter total, and never
-                                          `r.marketValue`, which is the roll-up of whatever survived the
-                                          filters. Filtered to one company that read 100.0% for a
-                                          ₹4.39 Cr holding of a ₹39.53 Cr mandate. Under a filter these
-                                          therefore sum to less than 100%, which the sentence above the
-                                          table states. */}
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400">
-                                        {m.accountMV > 0
-                                          ? `${((h.marketValue / m.accountMV) * 100).toFixed(1)}%`
-                                          : <AbsentCell reason="the mandate is valued at nil, so a share of it cannot be struck" />}
-                                      </td>
-                                      <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.unrealizedPnL)}`}>{h.costNA ? "—" : fmtFromBase(h.unrealizedPnL, { compact: true, sign: true })}</td>
-                                      <td className={`px-3 py-1.5 text-right mono ${h.costNA ? "text-slate-500" : changeColor(h.returnPct)}`}>{h.costNA ? "—" : fmtPct(h.returnPct, { sign: true })}</td>
-                                      <td className="px-3 py-1.5 text-slate-400">{h.sector}</td>
-                                    </Tr>
-                                  ))}
-                                </tbody>
-                                </>)}
-                              </SortableTable>
-                            </div>
-                            <p className="mt-1.5 text-[11px] text-slate-500">
-                              <Link to={`/mandate/${encodeURIComponent(m.accountId)}`}
-                                className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                                Open the full {m.name} drill-down
-                              </Link>
-                              {" "}for this mandate&rsquo;s own returns, capital movements and dated ledger.
-                            </p>
-                          </td>
-                        </tr>
-                      )}
-                      {/* ── THROUGH WHAT MEANS THIS NAME IS HELD ────────────
-                          The security axis's drill-down, in place. It supersedes
-                          the by-entity table below on this axis: that one groups
-                          by MEMBER and lumps the routes into a set, which cannot
-                          answer "held how" for a name three mandates hold for one
-                          member. Every account is listed AS PRINTED — the row's
-                          own value counts each dedupeGroup once — so the share
-                          column divides by the printed sum and the footer names
-                          the gap when the two differ. */}
-                      {/* ── A ROW NO STATEMENT REPORTS, OPENED ───────────────
-                          The family's own case: an issuer they hold only inside
-                          a fund. There is no account to list and so no venue
-                          table — what the expansion carries is the look-through
-                          itself. It gets its own branch rather than an empty
-                          version of the one below, because a route-split
-                          sentence over zero routes and a table with no rows are
-                          both statements about a measurement that does not
-                          exist. */}
-                      {!m && isOpen && r.venues && r.venues.length === 0 && canLookThrough(r) && (
-                        <tr className="bg-ink-900/60">
-                          <td colSpan={COL_COUNT} className="px-3 pb-3 pt-1">
-                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-400">
-                              <span className="font-medium text-slate-300">{r.security}</span> —
-                              {" "}<span className="font-medium text-slate-200">no statement in this book reports this
-                              issuer</span>, so there is no account, no quantity and no cost for it. Every figure on this
-                              row is the family&rsquo;s share of what their funds disclose.
-                            </p>
-                            <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />
-                          </td>
-                        </tr>
-                      )}
-                      {!m && isOpen && r.venues && r.venues.length > 0 && (() => {
-                        const vs = r.venues;
-                        const printed = sum(vs.map((v) => v.marketValue));
-                        const gap = printed - r.marketValue;
-                        /**
-                         * THE ROUTE SPLIT, IN WORDS, FIRST.
-                         *
-                         *   "Then I drill down, then you tell me direct you hold
-                         *    X Cr through direct equity, and then you hold
-                         *    another Y crores through these five funds."
-                         *
-                         * That is a sentence about ROUTES, not about accounts, so
-                         * it is answered before the per-account table rather than
-                         * left to be assembled by eye from a Held via column. The
-                         * table below still carries every statement as printed.
-                         */
-                        const byRoute = [...vs.reduce((m, v) => {
-                          const e = m.get(v.route) ?? { route: v.route, mv: 0, n: 0 };
-                          e.mv += v.marketValue; e.n += 1;
-                          return m.set(v.route, e);
-                        }, new Map()).values()].sort((a, b) => b.mv - a.mv);
-                        return (
-                        <tr className="bg-ink-900/60">
-                          <td colSpan={COL_COUNT} className="px-3 pb-3 pt-1">
-                            <p className="mb-1.5 text-[11px] leading-relaxed text-slate-400">
-                              <span className="font-medium text-slate-300">{r.security}</span> —
-                              {" "}<span className="font-medium text-slate-200">{money(r.marketValue)}</span>, {(r.weight * 100).toFixed(2)}% of the book, held{" "}
-                              {byRoute.map((g, i) => (
-                                <span key={g.route}>
-                                  {i > 0 && (i === byRoute.length - 1 ? " and " : ", ")}
-                                  <span className="font-medium text-slate-200">{money(g.mv)}</span> through{" "}
-                                  {g.n === 1 ? "" : `${g.n} `}{g.route}{g.n === 1 ? "" : "s"}
-                                </span>
-                              ))}
-                              {/*
-                                THE ROUTE SPLIT IS STRUCK OVER THE STATEMENTS AS
-                                PRINTED, and on two rows in this book that is not
-                                the figure at the head of the same sentence.
-
-                                Transition Venture Fund I is reported by both
-                                family trusts, so the row counts it once at
-                                ₹1.71 Cr and this clause adds to ₹3.43 Cr — and a
-                                reader who divides one printed cell by another and
-                                gets a third answer has found a contradiction that
-                                a sentence three lines below does not rescue. The
-                                reconciliation under the table stays; this is the
-                                mark that sends them to it, and it renders only
-                                where the two really differ.
-                              */}
-                              {gap > 1 && (
-                                <> as the statements print it, of which{" "}
-                                  <span className="font-medium text-slate-200">{money(gap)}</span> is the same holding
-                                  reported twice</>
-                              )}.
-                            </p>
-                            {/* THE CAPTION THAT SAT HERE IS GONE at the family's
-                                request, and its two claims were checked against
-                                the rest of the panel before it went. That the row
-                                clubs these lines is the lead sentence above, which
-                                names the row's own value and then splits it by
-                                route; that each line is one STATEMENT rather than
-                                a deduped view only has a consequence where the two
-                                differ, and on exactly those rows the lead sentence
-                                names the overlap in rupees and the amber line under
-                                the table reconciles it in figures. On every other
-                                row the distinction changes no number, so the
-                                sentence was telling a reader about a difference
-                                their own row does not have. */}
-                            <div className="overflow-x-auto rounded-lg border border-ink-700 bg-ink-800">
-                              <SortableTable className="min-w-full text-[12px]"
-                                storageKey={r.fundClasses.length > 0 ? "monitor-venue-class" : "monitor-venue"}
-                                columns={r.fundClasses.length > 0 ? VENUE_CLASS_COLS : VENUE_COLS}>
-                                {(vv) => (<>
-                                <thead>
-                                  <Tr view={vv} className="border-b border-ink-700/70">
-                                    {/* THE CLASS COLUMN, ONLY WHERE THE ROW CLUBS MORE THAN ONE.
-                                        Drawn from the row rather than from the venues: a
-                                        column headed Class over a table where every line
-                                        says the same thing is chrome, and over a table
-                                        where none does it is empty. It leads the row where
-                                        it is drawn, so it is the FIXED column there and the
-                                        one that never moves. */}
-                                    {r.fundClasses.length > 0 && (
-                                      <SortHeader col="cls" view={vv} align="left" pad="px-3 py-1.5">Class</SortHeader>
-                                    )}
-                                    <SortHeader col="route" view={vv} align="left" pad="px-3 py-1.5">Held via</SortHeader>
-                                    <SortHeader col="vehicle" view={vv} align="left" pad="px-3 py-1.5">Vehicle</SortHeader>
-                                    <SortHeader col="entity" view={vv} align="left" pad="px-3 py-1.5">Owning entity</SortHeader>
-                                    <SortHeader col="qty" view={vv} pad="px-3 py-1.5">Qty</SortHeader>
-                                    <SortHeader col="mv" view={vv} pad="px-3 py-1.5">Market value</SortHeader>
-                                    <SortHeader col="share" view={vv} pad="px-3 py-1.5">% of holding</SortHeader>
-                                    <SortHeader col="pnl" view={vv} pad="px-3 py-1.5">Unreal. P&L</SortHeader>
-                                    <SortHeader col="return" view={vv} pad="px-3 py-1.5">Return</SortHeader>
-                                  </Tr>
-                                </thead>
-                                <tbody className="divide-y divide-ink-700/50">
-                                  {sortRows(vs, vv.sort, {
-                                    cls: (v) => v.cls,
-                                    route: (v) => v.route,
-                                    vehicle: (v) => v.vehicle,
-                                    entity: (v) => v.owner,
-                                    qty: (v) => v.quantity,
-                                    mv: (v) => v.marketValue,
-                                    share: (v) => v.share,
-                                    pnl: (v) => (v.costNA ? null : v.unrealizedPnL),
-                                    return: (v) => (v.costNA ? null : v.returnPct),
-                                  }).map((v) => (
-                                    <Tr view={vv} key={v.securityKey + "@" + v.accountId} data-venue={v.route} data-venue-class={v.cls ?? ""}>
-                                      {/* AND THE CLASS ITSELF IS THE LINK, because a class
-                                          is what `/stock/:securityKey` actually serves. The
-                                          clubbed row above deliberately is not one. */}
-                                      {r.fundClasses.length > 0 && (
-                                        <td className="px-3 py-1.5 whitespace-nowrap">
-                                          {v.cls
-                                            ? <StockLink securityKey={v.securityKey} name={v.cls} />
-                                            : <AbsentCell reason="this line's statement names no unit class for the holding" />}
-                                        </td>
-                                      )}
-                                      <td className="px-3 py-1.5 text-slate-300 whitespace-nowrap">{v.route}</td>
-                                      <td className="px-3 py-1.5 text-slate-200">
-                                        {v.isMandate
-                                          ? <Link to={`/mandate/${encodeURIComponent(v.accountId)}`}
-                                              title={`Account ${v.accountNo} — open the mandate drill-down`}
-                                              className="underline decoration-dotted decoration-slate-500/40 underline-offset-[3px] transition-colors hover:text-champagne-400 hover:decoration-champagne-500">
-                                              {v.vehicle}
-                                            </Link>
-                                          : <span title={`Account ${v.accountNo}`}>{v.vehicle}</span>}
-                                      </td>
-                                      <td className="px-3 py-1.5 text-slate-400">{v.owner}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-300">{fmtNum(v.quantity)}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-100 whitespace-nowrap">{fmtFromBase(v.marketValue, { compact: true })}</td>
-                                      <td className="px-3 py-1.5 text-right mono text-slate-400">{(v.share * 100).toFixed(1)}%</td>
-                                      <td className={`px-3 py-1.5 text-right mono ${v.costNA ? "text-slate-500" : changeColor(v.unrealizedPnL)}`}>
-                                        {v.costNA
-                                          ? <AbsentCell reason="this account's statement reports no cost for the holding — a depository holds the shares and did not buy them" />
-                                          : fmtFromBase(v.unrealizedPnL, { compact: true, sign: true })}
-                                      </td>
-                                      <td className={`px-3 py-1.5 text-right mono ${v.costNA ? "text-slate-500" : changeColor(v.returnPct)}`}>
-                                        {v.costNA
-                                          ? <AbsentCell reason="no cost on this statement, so there is nothing to strike a return against" />
-                                          : fmtPct(v.returnPct, { sign: true })}
-                                      </td>
-                                    </Tr>
-                                  ))}
-                                </tbody>
-                                </>)}
-                              </SortableTable>
-                            </div>
-                            {gap > 1 && (
-                              <p className="mt-1.5 text-[11px] leading-relaxed text-amber-400/80">
-                                These lines add to {fmtFromBase(printed, { compact: true })} because this holding is reported
-                                under two accounts; the row above counts it once at {fmtFromBase(r.marketValue, { compact: true })}
-                                {" "}(a {fmtFromBase(gap, { compact: true })} overlap).
-                              </p>
-                            )}
-                            {/* AN ACCOUNT WHOSE DEPOSITORY STATEMENT CARRIES THE NAME
-                                AND HOLDS NONE OF IT is not a line in the table above,
-                                and it is the account a reader opens this row to find —
-                                "is this in Ajay's account too?". Named here with the two
-                                balances its own statement printed; no figure on the row
-                                moves. A clubbed fund row is not given this: its classes
-                                are the rows, and a fund's units in a demat are the
-                                depository's copy of what the fund itself reports. */}
-                            {r.fundClasses.length === 0 && (
-                              <DematElsewhere movements={movementsFor(r.securityKey)} securityKey={r.securityKey}
-                                held={new Set(vs.map((v) => v.accountId))} accounts={portfolio?.accounts ?? []} />
-                            )}
-                            {/* ...AND THE SECOND HALF OF THE QUESTION: what the
-                                family's FUNDS hold of this name. Derived, fenced,
-                                and never added to anything above — see the
-                                component's own header.
-
-                                THE GATE USED TO BE `assetClass === "Equity"` AND
-                                THAT STOPPED BEING RIGHT. It was, while the store
-                                carried each AMC's equity section alone — a
-                                disclosure that holds only shares can speak for
-                                nothing else. The store reads the whole monthly
-                                filing now, so an issuer reached through its NCDs
-                                has an answer and that gate refused to show it,
-                                which is the family's own example refused on the
-                                one page it was asked for. See `canLookThrough`. */}
-                            {canLookThrough(r) && (
-                              <FundExposure exposure={exposure} securityKey={r.securityKey} money={money} />
-                            )}
-                          </td>
-                        </tr>
-                        );
-                      })()}
+                      {/* WHAT THIS ROW OPENS INTO — rows of this table, in its
+                          columns. See "WHAT A ROW OPENS INTO" above the table. */}
+                      {isOpen && renderChildren(r)}
                     </Fragment>
                   );
                     })}
-                    {/*
-                      ── EVERY METRIC, TOTALLED FOR THE CATEGORY ABOVE IT ──────
-                      "Show aggregate totals for every metric for each category."
-                      The heading names the category and its size; this row is the
-                      rest of the table's columns, added up over the same set.
-
-                      IT IS A ROW OF CELLS, NOT A WIDENED HEADING, and that is the
-                      whole design: a total belongs UNDER THE COLUMN IT TOTALS.
-                      This book has already paid twice for a figure printed under
-                      a heading that describes something else — the allocation
-                      footer on a different basis from its own column, and the
-                      Capital invested tile captioned "listed only" over a
-                      whole-book sum.
-
-                      EVERY CELL A CATEGORY CANNOT ANSWER RENDERS `AbsentCell`
-                      WITH ITS REASON rather than being left blank. Quantity and
-                      the two per-unit columns are the ones that matter: shares of
-                      one company plus units of a fund is not a quantity, and the
-                      reader who scans across an empty cell learns nothing about
-                      whether a figure was withheld or never existed.
-                    */}
-                    {showBucketSections && (() => {
-                      const tot = grp.totals;
-                      // Struck over the positions, so it cannot disagree with the
-                      // rows drawn above it — but a category with no partition
-                      // entry has nothing to total and says so rather than
-                      // printing zeros for a row it cannot see.
-                      if (!tot) return null;
-                      const weight = weightBase > 0 ? (tot.mv / weightBase) * 100 : null;
-                      const uncostedMV = tot.mv - tot.costedMV;
-                      /**
-                       * THE RETURN IS REFUSED WHERE THE TWO COLUMNS BESIDE IT
-                       * DESCRIBE DIFFERENT SETS OF HOLDINGS — `costCoversSet`,
-                       * the same test Morning CIO's allocation row runs on the
-                       * same buckets. Direct Equity reports a cost on 9 of 37
-                       * holdings, so a return on cost would sit between a printed
-                       * ₹1.22 Cr invested and a printed ₹94.9 Cr current and
-                       * describe neither. A reader who divides one printed cell
-                       * by another and gets a third answer has found a
-                       * contradiction, and this is the row they would find it on.
-                       */
-                      // The section's own words on the active axis — the two
-                      // family axes are already the family's wording and render
-                      // verbatim; only the category axis has a label function.
-                      const label = groupLabelFor(groupAxis)(grp.key);
-                      const covered = costCoversSet(tot.mv, uncostedMV);
-                      const ret = covered && tot.cost !== null && tot.pnl !== null && tot.cost > 0
-                        ? (tot.pnl / tot.cost) * 100 : null;
-                      /**
-                       * AND A REFUSED RETURN NAMES THE FAILURE IT ACTUALLY HAD.
-                       *
-                       * Four different things stop this cell, and the first cut
-                       * gave the coverage reason for all of them — so Cash, whose
-                       * every statement reports a nil balance, read "₹0 of this
-                       * category's ₹0 is held in accounts that report no cost",
-                       * which is a confident diagnosis of something that is not
-                       * happening. A wrong message sends the next reader to look
-                       * for statements nobody owes, which this book already
-                       * records as worse than a blank cell.
-                       */
-                      const retWhy =
-                        tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
-                        : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
-                        : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
-                        : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
-                        : `${fmtFromBase(uncostedMV, { compact: true })} of this category's ${fmtFromBase(tot.mv, { compact: true })} is held in accounts that report no cost, so a return on cost would divide one set of holdings by another and describe neither column beside it. The ${tot.costedCount} costed holdings show their own return on their own rows.`;
-                      const realised = realisedFor(grp.key);
-                      const sharedNames = realisedByBucket.shared.get(grp.key) ?? 0;
-                      const costCover = `Added over the ${tot.costedCount} of ${tot.heldCount} holdings in ${label} whose statement reports a cost; the other ${tot.heldCount - tot.costedCount} hold ${fmtFromBase(uncostedMV, { compact: true })} and are in Market value only.`;
-                      return (
-                        /* A `<Tr>` RATHER THAN A `<TrFoot>`, because this row
-                           carries a cell under EVERY column — its label spans
-                           one, not the footer's three — so it permutes like an
-                           ordinary row and stays cell-for-cell under the
-                           headings above it. */
-                        <Tr view={holdView} className="border-t border-ink-700 bg-ink-900/40 font-semibold"
-                          data-category-total={grp.key}>
-                          <td className="px-2 py-1.5 text-slate-200">
-                            {label} <span className="font-normal text-slate-500">· total</span>
-                          </td>
-                          {/* NOT A BLANK CELL AND NOT A SUM. Adding 1,80,185
-                              shares of one company to 3,416,657 units of a fund
-                              produces a number with no unit, and it would sit in
-                              a column of real quantities looking like one. */}
-                          <td className="px-2 py-1.5 text-right mono">
-                            <AbsentCell reason="quantities of different securities cannot be added: shares of one company and units of a fund are not the same thing, and their sum has no unit." />
-                          </td>
-                          <td className="px-2 py-1.5 text-right mono">
-                            <AbsentCell reason="an average cost per unit needs one security; this category holds many, each with a cost of its own. Invested beside it is the money." />
-                          </td>
-                          <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                            {tot.cost === null
-                              ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
-                              : <span title={uncostedMV > 1 ? costCover : undefined}>
-                                  {fmtFromBase(tot.cost, { compact: true })}
-                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
-                                </span>}
-                          </td>
-                          {/* A CATEGORY WAS BOUGHT ON MANY DATES, so there is
-                              no one date to print — the same reason its Qty and
-                              Avg cost cells are absent rather than blended. The
-                              coverage is on the FOOTER, where a count over the
-                              whole table means something. */}
-                          <td className="px-2 py-1.5 text-left mono">
-                            <AbsentCell reason="a category holds many holdings bought on many dates; there is no single date for it. Each row above carries its own." />
-                          </td>
-                          <td className="px-2 py-1.5 text-right mono">
-                            <AbsentCell reason="a price is per unit and belongs to one security; a category has no price. Its market value is in the column that measures money." />
-                          </td>
-                          {/* The category's move over the part of it the feed
-                              actually repriced — never over its whole value,
-                              which would dilute the move by every folio and cash
-                              sleeve that has no quote and no previous close. */}
-                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${grp.dayPct == null ? "text-slate-600" : changeColor(grp.dayPct)}`}
-                            title={grp.dayPct == null ? undefined
-                              : `${fmtFromBase(grp.day, { compact: true, sign: true })} since previous close, across the ${fmtFromBase(grp.dayBase, { compact: true })} of ${label} the feed prices.`}>
-                            {grp.dayPct == null
-                              ? <AbsentCell reason={`no holding in ${label} carries a live quote, so there is no previous close to move from`} />
-                              : `${grp.dayPct >= 0 ? "+" : ""}${grp.dayPct.toFixed(2)}%`}
-                          </td>
-                          {/* `grp.subtotal` IS `tot.mv` — the heading prints the
-                              same field, so the two figures a reader sees three
-                              lines apart are one computation and cannot differ. */}
-                          <td className="px-2 py-1.5 text-right mono text-slate-100 whitespace-nowrap">
-                            {fmtFromBase(grp.subtotal, { compact: true })}
-                          </td>
-                          <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
-                            title={`${label} as a share of ${weightScope ? `the ${weightScope} book` : "the whole book"} — the same denominator every Weight cell above divides by, so the categories add to the Total row.`}>
-                            {weight === null ? <AbsentCell reason="the book this weight would divide by is empty" /> : `${weight.toFixed(1)}%`}
-                          </td>
-                          <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${tot.pnl === null ? "text-slate-500" : changeColor(tot.pnl)}`}>
-                            {tot.pnl === null
-                              ? <AbsentCell reason={`an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
-                              : <span title={uncostedMV > 1 ? costCover : undefined}>
-                                  {fmtFromBase(tot.pnl, { compact: true, sign: true })}
-                                  {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
-                                </span>}
-                          </td>
-                          {/* Realised is reported PER SECURITY across the whole
-                              book, so the categories claim each name once and the
-                              rows inside a mandate show none of it — the same
-                              split the footer already names in the caption. */}
-                          <td className="px-2 py-1.5 text-right mono whitespace-nowrap">{
-                            !consolidate ? <AbsentCell reason="realised gain is a per-security figure; switch to the consolidated view to see it" />
-                            : realized === undefined ? <span className="font-normal text-slate-500">…</span>
-                            : realised === null || realised.total === null ? <AbsentCell reason={realised?.anySold
-                                ? `these names were sold, but no capital gain statement covers the accounts they were sold from`
-                                : `no sale of a name held in ${label} appears on the transaction statements in this drop`} />
-                            : <span className={changeColor(realised.total)}
-                                title={sharedNames > 0
-                                  ? `${sharedNames} of these names are also held in another category. A name's realised gain is reported once for the whole book, so it is counted under the first category that holds it rather than split between them — there is no per-category split on any statement to divide it by.`
-                                  : undefined}>
-                                {fmtFromBase(realised.total, { compact: true, sign: true })}
-                              </span>
-                          }</td>
-                          {/*
-                              ── ONE CELL PER RETURN COLUMN, AND ONLY ONE OF THEM
-                                 HAS A FIGURE TO PUT IN IT ──────────────────────
-
-                              The category return is CUMULATIVE ON COST and does
-                              NOT follow the per-holding measure picker: a bucket
-                              has no single purchase date to annualise over, so
-                              annualising it would be the very extrapolation the
-                              guard forbids. It is refused where the cost side does
-                              not cover the market value beside it
-                              (`costCoversSet`), the same as Morning CIO.
-
-                              THAT USED TO BE ONE CELL UNDER A HEADER THAT COULD
-                              MEAN ANY OF FIVE THINGS. With a column per measure it
-                              has to say which: the cumulative figure stands under
-                              HPR and under `auto` — which resolves to the total
-                              return on cost for an aggregate — and under CAGR,
-                              XIRR, YTD or CY it renders an `AbsentCell` with the
-                              reason, because a category genuinely has none of
-                              those. Printing the same percentage under all five
-                              would be the caption-does-not-describe-its-figure
-                              failure, five columns wide.
-                          */}
-                          {returnMeasures.map((measure) => {
-                            const onCost = measure === "auto" || measure === "absolute";
-                            const why = !onCost
-                              ? `${label} is a category, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return on cost shows under HPR — tick Holding Period Return to see it.`
-                              : retWhy;
-                            return (
-                              <td key={measure} className={`px-2 py-1.5 text-right mono whitespace-nowrap ${!onCost || ret === null ? "text-slate-500" : changeColor(ret)}`}>
-                                {!onCost || ret === null
-                                  ? <AbsentCell reason={why} />
-                                  : <span title={`${fmtFromBase(tot.pnl, { compact: true, sign: true })} on ${fmtFromBase(tot.cost, { compact: true })} invested. Cumulative on cost, not annualised — a category has no single purchase date to strike a CAGR or XIRR over.`}>
-                                      {fmtPct(ret, { sign: true })}
-                                    </span>}
-                              </td>
-                            );
-                          })}
-                          {/* Sector and Entity describe a holding; a category has
-                              no sum of words. Empty, exactly as in the footer. */}
-                          <td className="px-2 py-1.5"></td>
-                          <td className="px-2 py-1.5"></td>
-                        </Tr>
-                      );
-                    })()}
                   </Fragment>
-                ))}
+                  );
+                })}
                 {rows.length === 0 && <tr><td colSpan={COL_COUNT} className="py-12 text-center text-sm text-slate-500">No positions match your filters.</td></tr>}
               </tbody>
               <tfoot className="sticky bottom-0 bg-ink-800">
@@ -3811,29 +3866,6 @@ export function PortfolioMonitor() {
  * that formed it, so a row can never claim a class it does not carry: the two
  * agree by construction and this is the one a figure is struck over.
  */
-/**
- * ── A CONTRIBUTION HISTORY IS PER UNIT CLASS ───────────────────────────────
- *
- * `trancheTable` values every tranche as its OWN units at TODAY'S NAV, taken
- * from the position the tranche belongs to. That is right per row whatever the
- * set — and the PANEL makes two further claims that are only true within one
- * class: its footer adds the units up, and its whole point is that a cheaper
- * entry NAV shows a higher return. Two classes are marked at NAVs of their own,
- * so a combined footer states a quantity in no unit and the comparison a reader
- * opens the panel to make stops holding.
- *
- * This was NOT reasoned out in advance — clubbing shipped with one blended
- * panel and `check:pages` failed three of its tranche invariants at once
- * (combined units, monotonicity, and the panel matching the book's largest
- * single history). It is the same rule the clubbed row's own Qty, Avg cost and
- * CMP cells already follow, one level down.
- *
- * Groups are ordered by size so the largest history is the first panel a reader
- * — and the sweep — sees. A class whose statements carry no dated contribution
- * yields no section rather than an empty one.
- */
-type TrancheGroup = { cls: string | null; table: TrancheTable; spansEntities: boolean };
-
 /** A fund's unit class out of a security name — `A1` — or null where it prints none. */
 function classOfName(security: string | null | undefined): string | null {
   return security ? (splitFundClass(security)?.cls ?? null) : null;
@@ -3849,26 +3881,6 @@ function switchedRowNote(t: TrancheRow, heldClass: string | null, money: (v: num
     + `${bought !== null ? ` at ${money(bought)} each — the allotment NAV the statement prints` : ""}. `
     + `The fund moved them into Class ${now} on ${fmtDate(cf.switchedOn)}; shown here as ${fmtNum(t.units)} ${now} units `
     + `at ${money(t.navAtEntry)} each, so every row of this table is priced in the class held today. What was paid, and when, is unchanged.`;
-}
-
-function trancheGroupsOf(r: Row, asOf: string): TrancheGroup[] {
-  const spans = (t: TrancheTable) => new Set(t.rows.map((x) => x.move.accountId)).size > 1;
-  if (!r.fundClasses.length) {
-    const table = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", asOf);
-    return table ? [{ cls: null, table, spansEntities: spans(table) }] : [];
-  }
-  const byClass = new Map<string, Position[]>();
-  for (const p of r.trancheSet) {
-    const cls = splitFundClass(p.security)?.cls;
-    if (!cls) continue;
-    (byClass.get(cls) ?? byClass.set(cls, []).get(cls)!).push(p);
-  }
-  const out: TrancheGroup[] = [];
-  for (const [cls, ps] of byClass) {
-    const table = trancheTable(ps, BOOK_POSITION_TRANCHES, "cagr", asOf);
-    if (table) out.push({ cls, table, spansEntities: spans(table) });
-  }
-  return out.sort((a, b) => b.table.rows.length - a.table.rows.length || a.cls!.localeCompare(b.cls!));
 }
 
 function clubbedClassesOf(ps: Position[]): string[] {
@@ -3905,6 +3917,7 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
     const costBasis = sumOrNull(xs.map((x) => x.costBasis));
     const costNA = costBasis === null || (costBasis === 0 && marketValue > 0) || xs.some((x) => x.costUnavailable);
     const pnl = costNA ? null : marketValue - (costBasis as number);
+    const quantity = sum(xs.map((x) => x.quantity));
     return {
       accountId, accountNo: acc?.accountNo ?? "",
       cls: splitFundClass(xs[0].security)?.cls ?? null,
@@ -3915,10 +3928,26 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       owner: ownerOf(accIdx, xs[0]),
       route: ROUTE_LABEL[holdingRoute(engagementOf(accIdx, xs[0]) || null)],
       isMandate: heldUnderMandate(accIdx, xs[0]),
-      quantity: sum(xs.map((x) => x.quantity)),
+      quantity,
       marketValue, costBasis, unrealizedPnL: pnl,
       returnPct: !costNA && pnl !== null && (costBasis as number) > 0 ? (pnl / (costBasis as number)) * 100 : null,
       costNA, share: 0,
+      positions: xs,
+      // DERIVED as cost ÷ units, exactly as the consolidated row above derives
+      // its own — so a line and the row it opens from are on one basis in the
+      // one column they share.
+      avgCost: !costNA && quantity > 0 ? (costBasis as number) / quantity : null,
+      // One security per line, so one mark — the line's OWN, which on a clubbed
+      // fund is the class's NAV the row above has to leave absent.
+      currentPrice: xs[0].currentPrice ?? null,
+      navPriced: !!xs[0].navPriced, navDate: xs[0].navDate,
+      live: xs.every((x) => x.live),
+      dayChangePct: xs[0].dayChangePct ?? null,
+      heldSince: xs.every((x) => x.heldSince)
+        ? xs.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), xs[0].heldSince!)
+        : null,
+      assetClass: xs[0].assetClass,
+      investedOn: investedOnOf(xs),
     };
   }).sort((a, b) => b.marketValue - a.marketValue);
   const raw = sum(built.map((v) => v.marketValue));

@@ -166,9 +166,9 @@ PY
 run_case "the Monitor's row does not name the account that sold out" sweep py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"; s = open(p, encoding="utf-8").read()
-old = "                              <DematElsewhere movements={movementsFor(r.securityKey)} securityKey={r.securityKey}"
-if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "                              <DematElsewhere movements={[]} securityKey={r.securityKey}", 1))
+old = "      : movementsFor(r.securityKey).filter((w) => !vs.some((v) => v.accountId === w.accountId));"
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "      : [];", 1))
 PY
 
 run_case "the company page does not mark the account that sold out" sweep py <<'PY'

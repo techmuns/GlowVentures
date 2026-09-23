@@ -124,9 +124,9 @@ run_page_case "the Invested cell stops saying its cost was carried" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
-old = '${carriedWhy ? ` ${carriedWhy}` : ""}'
-if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+old = '? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '? <span>{fmtFromBase(r.costBasis, { compact: true })}</span>', 1))
 PY
 
 run_page_case "the row shows the statement's restated cost again" py <<'PY'
@@ -143,9 +143,9 @@ run_page_case "a switched contribution loses its mark" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
-old = "data-tranche-switched={t.move.carriedFrom?.switchedOn ?? undefined}"
-if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "data-tranche-switched={undefined}", 1))
+old = '"data-tranche-switched": cf?.switchedOn ?? undefined,'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '"data-tranche-switched": undefined,', 1))
 PY
 
 run_page_case "the NAV a switched row was bought at becomes the restated one" py <<'PY'
@@ -158,24 +158,22 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
-run_page_case "the panel stops saying what a switched row is" py <<'PY'
+run_page_case "the tree stops saying what a switched row is" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
-a = s.find("statement prints{tranches.rows.some((t) => t.move.carriedFrom) && <>")
-b = s.find("</>}. A contribution held a year or more", a)
-if a < 0 or b < 0: sys.exit(1)
-s = s[:a] + "statement prints" + s[b + len("</>}"):]
-open(p, "w", encoding="utf-8").write(s)
+old = "    if (withNote && t.rows.some((x) => x.move.carriedFrom)) {"
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "    if (withNote && t.rows.some((x) => x.move.carriedFrom) && t.rows.length < 0) {", 1))
 PY
 
 run_page_case "a tranche's HPR attribute carries the printed (maybe annualised) figure" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
-old = "data-tranche-hpr={t.returnPct}"
-new = 'data-tranche-hpr={t.ret.kind === "absent" ? undefined : t.ret.pct}'
-if old not in s: sys.exit(1)
+old = '"data-tranche-hpr": x.returnPct,'
+new = '"data-tranche-hpr": x.ret.kind === "absent" ? undefined : x.ret.pct,'
+if s.count(old) != 1: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY
 
