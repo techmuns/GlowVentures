@@ -4,7 +4,7 @@ import { Pill } from "@/components/Pill";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { fmtDate, fmtNum, fmtPct, changeColor } from "@/lib/format";
+import { fmtDate, fmtNum, fmtPct, changeColor, displayFiledName } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -63,7 +63,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding }
   const pf: FundPortfolio | null = state.status === "ok" ? state.portfolio : null;
   const view = useTableView("fund-lookthrough", FL_COLS);
 
-  const rows = useMemo(() => pf?.holdings ?? [], [pf]);
+  // THE AMC'S OWN SPELLING, CASED FOR DISPLAY. HDFC files some lines entirely in
+  // capitals (`KAYNES TECHNOLOGY INDIA LIMITED`); a name the filer cased is kept
+  // as filed and only an all-capitals one is title-cased — see
+  // `displayFiledName`. Nothing is re-keyed from it: this table joins nothing.
+  const rows = useMemo(() => (pf?.holdings ?? []).map((h) => ({ ...h, name: displayFiledName(h.name) })), [pf]);
   const term = q.trim().toLowerCase();
   // A DEBT ROW IS FOUND BY ITS RATING AND ITS CLASS, not only by a sector it
   // does not have — the two columns a bond actually fills.

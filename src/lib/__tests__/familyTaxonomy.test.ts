@@ -16,7 +16,9 @@
 import path from "node:path";
 import fs from "node:fs";
 import XLSX from "xlsx";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
+import { BOOK_FUND_NAVS } from "@/data/fundNavs";
+import { depositoryCashHoldings, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   holdingBucket, MANDATE_BUCKET, dedupedPositions,
@@ -291,10 +293,17 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   // (a) NO DEAD ENTRIES — the same rule section 1 applies to the taxonomy. A key
   // that matches no holding is a typo, and a typo here is invisible: the liquid
   // fund it was meant for simply stays under Mutual Fund.
+  //
+  // "A holding" is one the LIVE BOOK carries: the generated positions, plus the
+  // cash-equivalent units a depository reports on an account that sent no
+  // holding statement (`depositoryCashHoldings`). The three arbitrage funds
+  // exist only there, and they are the reason those keys are in the map at all.
+  // That is not circular — the depository rows are built from the depository's
+  // OWN balances, so a mistyped key matches no balance and produces no row.
   const keys = Object.keys(CASH_EQUIVALENT_KEYS);
-  const held = new Set(BOOK_POSITIONS.map((p) => p.securityKey));
+  const held = new Set([...BOOK_POSITIONS, ...depositoryCashHoldings()].map((p) => p.securityKey));
   const dead = keys.filter((k) => !held.has(k));
-  ok("every cash-equivalent key matches a holding in the book",
+  ok("every cash-equivalent key matches a holding the live book carries",
      dead.length === 0, dead.length ? dead.join("; ") : `${keys.length} keys`);
 
   // (b) EVERY ENTRY CITES THE FAMILY'S OWN DOCUMENT. The map's whole authority
@@ -343,29 +352,49 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   /**
    * (f) ── WHAT THE MAP DOES NOT NAME, WHICH IS THE HALF THAT GOES STALE ──────
    *
-   * The family named ARBITRAGE in the same breath as liquid, and their review
-   * carries ₹41.08 Cr of it across four funds — the largest ₹30.99 Cr. Not one
-   * is in this book, so the map has no arbitrage entry and the screen shows
-   * none; saying otherwise would be a claim about a row that does not exist.
+   * The family named ARBITRAGE in the same breath as liquid. No arbitrage fund
+   * is a POSITION in the generated book: the three this family holds sit only as
+   * a depository's closing balances on an account that sent a transaction
+   * statement and no holding statement, which is why the map carries them and
+   * why (a) reads the live book rather than the generated one.
    *
    * That is exactly how a typed list dies quietly, so this is the line that
    * speaks up. `cashEquivalentCandidates` reads the NAMES — the one place a
    * name rule is allowed here, because it decides nothing and moves no money —
    * and the first drop bringing a liquid or arbitrage fund this map does not
-   * carry FAILS here, naming it, so a human commits it with a citation.
+   * carry FAILS here, naming it, so a human commits it with a citation. It reads
+   * the depository's BALANCES as well as the positions: a fund that arrives on a
+   * transaction-only demat is just as much the family's cash, and would reach no
+   * position for the old version of this check to see.
    *
    * It is not a licence to bucket on the pattern. A name matched
    * "Motilal Oswal Active Momentum Fund" to "Motilal Oswal Founders Fund II" on
    * a shared house, and a section heading looks equally authoritative whichever
    * rows sit under it.
    */
-  const missed = cashEquivalentCandidates(BOOK_POSITIONS);
-  ok("no holding reads as a cash equivalent that the map does not carry",
+  // A balance is keyed as the book keys that ISIN wherever the book carries it
+  // — the depository spells "HDFC LIQUID FUND-DIR PL-GROWTH" where the book's
+  // own holding reads "HDFC Liquid Fund - Direct Plan - Growth Option", and the
+  // row the live book values is the book's key. Joined on the identifier, never
+  // on the name.
+  const bookKeyByIsin = new Map<string, string>();
+  for (const p of BOOK_POSITIONS) {
+    const k = p.isin?.trim().toUpperCase();
+    if (k && !bookKeyByIsin.has(k)) bookKeyByIsin.set(k, p.securityKey);
+  }
+  const balances = Object.values(BOOK_SHARE_MOVEMENTS)
+    .filter((w) => typeof w.closing === "number" && w.closing > 0)
+    .map((w) => ({
+      securityKey: bookKeyByIsin.get(w.isin?.trim().toUpperCase() ?? "") ?? w.securityKey,
+      security: w.security ?? w.securityKey,
+    }));
+  const missed = cashEquivalentCandidates([...BOOK_POSITIONS, ...balances]);
+  ok("no holding or depository balance reads as a cash equivalent that the map does not carry",
      missed.length === 0,
      missed.length
        ? `commit these to CASH_EQUIVALENT_KEYS with a citation, or record why they are not cash: ${
            [...new Set(missed.map((p) => `${p.securityKey} ("${p.security}")`))].join("; ")}`
-       : "checked every position by name");
+       : `checked ${BOOK_POSITIONS.length} positions and ${balances.length} depository balances by name`);
 
   // (g) AND THE DETECTOR CAN ACTUALLY FIRE. A pattern that matched nothing
   // would satisfy (f) for ever, including after the rule was deleted — so it is
@@ -376,6 +405,83 @@ for (const [axis, key] of [["basket", basketKeyOf], ["asset class", familyClassK
   );
   ok("...and the detector is not a pattern that can never match",
      selfFound.length > 0, `${selfFound.length} caught when a mapped key is hidden from it`);
+
+  /**
+   * (h) ── AND A SECOND DETECTOR THAT READS NO NAME AT ALL ────────────────────
+   *
+   * A name is a spelling. AMFI files every scheme under SEBI's own category —
+   * "Hybrid Scheme - Arbitrage Fund", "Debt Scheme - Liquid Fund" — against its
+   * ISIN, and `build-fund-navs` records it for every scheme this book reaches.
+   * So a liquid or arbitrage fund whose name the pattern cannot read ("KOTAK
+   * EQ ARB" would do it) still fails here, by category, before it can sit under
+   * Mutual Fund on a screen the family were told shows it as cash.
+   */
+  const CASH_CATEGORIES = new Set(["Liquid Fund", "Arbitrage Fund"]);
+  const byCategory = BOOK_FUND_NAVS.filter((e) => e.sebiCategory && CASH_CATEGORIES.has(e.sebiCategory));
+  const unmapped = byCategory.filter((e) => !isCashEquivalent({ securityKey: e.securityKey }));
+  ok("every scheme AMFI files as a liquid or arbitrage fund is in the cash map",
+     unmapped.length === 0,
+     unmapped.length
+       ? unmapped.map((e) => `${e.securityKey} (${e.sebiCategory})`).join("; ")
+       : `${byCategory.length} schemes by SEBI category`);
+  ok("...and the store carries at least one of each, so that check has a subject",
+     byCategory.some((e) => e.sebiCategory === "Arbitrage Fund") && byCategory.some((e) => e.sebiCategory === "Liquid Fund"),
+     [...new Set(byCategory.map((e) => e.sebiCategory))].join(", "));
+}
+
+// ── 11. THE CASH INSTRUCTION IS ITS OWN RULE, ON BOTH FAMILY AXES ────────────
+//
+//   "Wherever we have cash as asset class or category… arbitrage funds are
+//    nothing but basically cash… need not be classified into any other
+//    category except for cash."
+//
+// Their review files its arbitrage funds on the DEBT tab. The instruction
+// overrules it, so a cash equivalent outside a mandate is Cash on the family's
+// asset-class axis and Liquidity on their basket axis — and the SOURCE says the
+// instruction put it there, never the review and never the direct-stock rule.
+// Asserted on the LIVE book, because the arbitrage funds are only there.
+{
+  const live = [...BOOK_POSITIONS, ...depositoryCashHoldings()];
+  const cashOutside = live.filter((p) => isCashEquivalent(p) && !isM(p));
+  ok("the live book carries cash equivalents outside a mandate for this section to bite on",
+     cashOutside.length > 0 && cashOutside.some((p) => isArbitrageFund(p)),
+     `${cashOutside.length} rows, ${cashOutside.filter((p) => isArbitrageFund(p)).length} of them arbitrage`);
+  ok("every one is Cash on the family's asset-class axis",
+     cashOutside.every((p) => familyClassKeyOf(p, false) === "Cash"),
+     cashOutside.filter((p) => familyClassKeyOf(p, false) !== "Cash").map((p) => p.securityKey).join("; "));
+  ok("...and Liquidity on their basket axis — there is no Cash basket",
+     cashOutside.every((p) => basketKeyOf(p, false) === "Liquidity"),
+     cashOutside.filter((p) => basketKeyOf(p, false) !== "Liquidity").map((p) => p.securityKey).join("; "));
+  const arb = cashOutside.filter((p) => isArbitrageFund(p));
+  ok("an arbitrage fund is placed there by the cash instruction, not by the review that files it as Debt",
+     arb.every((p) => familyAssetClass(p, false)?.source === "cash-rule" && familyBasket(p, false)?.source === "cash-rule"),
+     arb.map((p) => `${p.securityKey} ${familyAssetClass(p, false)?.source}/${familyBasket(p, false)?.source}`).join("; "));
+  // THE REVIEW KEEPS ITS OWN ANSWER WHERE IT ALREADY SAYS CASH. The liquid funds
+  // are on its Cash sheet by name, so the instruction adds nothing to them and
+  // must not claim them — a heading saying "₹X by the family's instruction" over
+  // funds the review itself named would misattribute them the other way.
+  const reviewCash = cashOutside.filter((p) => FAMILY_TAXONOMY[productKeyOf(p, false)]?.assetClass === "Cash");
+  ok("...while a liquid fund the review names on its Cash sheet keeps the review as its source",
+     reviewCash.length > 0 && reviewCash.every((p) => familyAssetClass(p, false)?.source === "review"),
+     `${reviewCash.length} rows`);
+  // TWO RULES, TWO SOURCES: neither may claim the other's rows.
+  const stockRule = live.filter((p) => familyBasket(p, isM(p))?.source === "rule");
+  ok("the direct-stock rule never claims a cash equivalent",
+     stockRule.every((p) => !isCashEquivalent(p)),
+     stockRule.filter((p) => isCashEquivalent(p)).map((p) => p.securityKey).join("; "));
+  const cashRule = live.filter((p) => familyBasket(p, isM(p))?.source === "cash-rule"
+    || familyAssetClass(p, isM(p))?.source === "cash-rule");
+  ok("...and the cash instruction never claims anything but a cash equivalent outside a mandate",
+     cashRule.length > 0 && cashRule.every((p) => isCashEquivalent(p) && !isM(p)),
+     `${cashRule.length} rows`);
+  // A MANDATE KEEPS ITS SLEEVE. The same order `holdingBucket` keeps on the
+  // category axis: a mandate's product is the mandate, whose row ties to its
+  // own statement.
+  const sleeve = live.filter((p) => isCashEquivalent(p) && isM(p));
+  ok("a cash equivalent INSIDE a mandate stays with the mandate's own product on both axes",
+     sleeve.length > 0 && sleeve.every((p) =>
+       familyBasket(p, true)?.source !== "cash-rule" && familyAssetClass(p, true)?.source !== "cash-rule"),
+     `${sleeve.length} rows`);
 }
 
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");

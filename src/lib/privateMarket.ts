@@ -59,6 +59,7 @@ import {
   type MarketSideRow,
 } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
+import { fifoTotals } from "./fifo";
 import {
   fundMarketSideOf, fundMarketSideBasis,
   type AifCategory, type MarketSide, type MarketSideBasis,
@@ -261,9 +262,11 @@ export function fundRollup(dedupedRows: Position[], accIdx: AccountIndex, rawRow
         mv,
         pnl,
         costedMV,
+        // FIFO over the fund's own holdings — the realised gain on units
+        // already redeemed stays in the return (`fifoTotals`).
         returnPct:
           cost != null && cost > 0 && pnl != null && mv > 0 && costedMV >= mv * COST_COVERAGE_MIN
-            ? (pnl / cost) * 100
+            ? fifoTotals(g).returnPct
             : null,
       };
     })

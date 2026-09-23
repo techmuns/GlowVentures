@@ -8,37 +8,54 @@ ISIN** and never on a name. 14,393 scheme rows read.
 
 | | |
 | --- | ---: |
-| Schemes priced | **20** |
-| …of which identified by the family's own statement | 19 |
+| Schemes priced | **25** |
+| …of which identified by the family's own statement | 24 |
 | …by the look-through's resolved ISIN | 1 |
 | Resolved but **not usable to value a holding** | 0 |
-| Named below and not resolved | 2 |
+| Named below and not resolved | 3 |
 | Newest published date | 2026-09-22 |
 
 ## Priced
 
-| Security | ISIN | via | NAV | Date | Day |
-| --- | --- | --- | ---: | --- | ---: |
-| ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | 112.54 | 2026-09-22 | -0.07% |
-| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | 459.9142 | 2026-09-22 | +0.02% |
-| BNDH L&MCF DP GR | `INF194K01V89` | statement | 165.827 | 2026-09-22 | -0.15% |
-| HDFC BAF D-GROW | `INF179K01WA6` | statement | 561.356 | 2026-09-22 | -0.14% |
-| HDFC BAF R-GROW | `INF179K01830` | statement | 515.897 | 2026-09-22 | -0.14% |
-| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | statement | 5587.7545 | 2026-09-22 | +0.02% |
-| HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | statement | 160.553 | 2026-09-22 | -0.01% |
-| HELIOS FCF D-GROW | `INF0R8701046` | statement | 16.15 | 2026-09-22 | -0.06% |
-| Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | 16.15 | 2026-09-22 | -0.06% |
-| ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | 39.14 | 2026-09-22 | -0.23% |
-| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | 421.0917 | 2026-09-22 | +0.02% |
-| ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | 66.8419 | 2026-09-22 | -0.39% |
-| ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | 63.1444 | 2026-09-22 | -0.39% |
-| ICICI NIFT50IND DP G | `INF109K012M7` | statement | 246.9576 | 2026-09-22 | -0.36% |
-| ICICI PRU BAF DP GRW | `INF109K012B0` | statement | 87.62 | 2026-09-22 | -0.10% |
-| INVES CON R GROWTH | `INF205K01189` | statement | 133 | 2026-09-22 | -0.15% |
-| KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | 21.639 | 2026-09-22 | +0.39% |
-| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | look-through | 14.6536 | 2026-09-22 | +0.70% |
-| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | 1000 | 2026-09-22 | +0.00% |
-| WOC MAAF D-GROW | `INF03VN01761` | statement | 16.717 | 2026-09-22 | -0.08% |
+| Security | ISIN | via | SEBI category | NAV | Date | Day |
+| --- | --- | --- | --- | ---: | --- | ---: |
+| ABSL BAL ADV-GROWTH | `INF084M01AB8` | statement | Dynamic Asset Allocation or Balanced Advantage | 112.54 | 2026-09-22 | -0.07% |
+| ABSL LIQF D-GROWTH | `INF209K01VA3` | statement | Liquid Fund | 459.9142 | 2026-09-22 | +0.02% |
+| BNDH L&MCF DP GR | `INF194K01V89` | statement | Large & Mid Cap Fund | 165.827 | 2026-09-22 | -0.15% |
+| HDFC BAF D-GROW | `INF179K01WA6` | statement | Dynamic Asset Allocation or Balanced Advantage | 561.356 | 2026-09-22 | -0.14% |
+| HDFC BAF R-GROW | `INF179K01830` | statement | Dynamic Asset Allocation or Balanced Advantage | 515.897 | 2026-09-22 | -0.14% |
+| HDFC Liquid Fund-Direct Plan-Growth Option | `INF179KB1HP9` | statement | Liquid Fund | 5587.7545 | 2026-09-22 | +0.02% |
+| HDFC Small Cap Fund - Direct Growth Plan | `INF179KA1RW5` | statement | Small Cap Fund | 160.553 | 2026-09-22 | -0.01% |
+| HELIOS FCF D-GROW | `INF0R8701046` | statement | Flexi Cap Fund | 16.15 | 2026-09-22 | -0.06% |
+| Helios Flexi Cap Fund - Direct Growth | `INF0R8701046` | statement | Flexi Cap Fund | 16.15 | 2026-09-22 | -0.06% |
+| ICICI IOPPF D-GRW | `INF109KC1RH9` | statement | Sectoral/ Thematic | 39.14 | 2026-09-22 | -0.23% |
+| ICICI LIQF D-GROWTH | `INF109K01Q49` | statement | Liquid Fund | 421.0917 | 2026-09-22 | +0.02% |
+| ICICI NFT NT 50 DP G | `INF109K01Y80` | statement | Index Funds | 66.8419 | 2026-09-22 | -0.39% |
+| ICICI NFT NX 50 R GR | `INF109K01IF1` | statement | Index Funds | 63.1444 | 2026-09-22 | -0.39% |
+| ICICI NIFT50IND DP G | `INF109K012M7` | statement | Index Funds | 246.9576 | 2026-09-22 | -0.36% |
+| ICICI PRU BAF DP GRW | `INF109K012B0` | statement | Dynamic Asset Allocation or Balanced Advantage | 87.62 | 2026-09-22 | -0.10% |
+| INVES CON R GROWTH | `INF205K01189` | statement | Contra Fund | 133 | 2026-09-22 | -0.15% |
+| KOTAK MTCF D-GROW | `INF174KA1HV3` | statement | Multi Cap Fund | 21.639 | 2026-09-22 | +0.39% |
+| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | `INF247L01EP5` | look-through | Sectoral/ Thematic | 14.6536 | 2026-09-22 | +0.70% |
+| NIP ETNF1D RTLIQBEES | `INF732E01037` | statement | Other ETFs | 1000 | 2026-09-22 | +0.00% |
+| WOC MAAF D-GROW | `INF03VN01761` | statement | Multi Asset Allocation Fund | 16.717 | 2026-09-22 | -0.08% |
+
+## Priced from a depository's own units
+
+These are balances a demat account's TRANSACTION statement reports at its close,
+for an account that sent no holding statement — so no statement marks them and
+the book carries none of them as a position. They are priced here so a reader
+can see what they are worth. Which of them the dashboard SHOWS is its own cash
+rule's decision (`CASH_EQUIVALENT_KEYS` in `src/lib/analytics.ts`), not this
+table's.
+
+| Security | ISIN | SEBI category | NAV | Date |
+| --- | --- | --- | ---: | --- |
+| BANDHAN AMC LTD#BANDHAN MF-BANDHAN ARBITRAGE FUND - DIRECT PL - GROWTH | `INF194K01Y60` | Arbitrage Fund | 37.8551 | 2026-09-22 |
+| ICICI PRUD AMC LTD#ICICI PRUD MF-ICICI PRUD EQUITY SAVINGS FUND DIRECT CUMULATIVE | `INF109KA11J9` | Equity Savings | 25.15 | 2026-09-22 |
+| KOTAK MAHINDRA AMC LTD#KOTAK MAHINDRA MF-KOTAK ARBITRAGE FUND - DIRECT PLAN - GROWTH | `INF174K01LC6` | Arbitrage Fund | 43.2772 | 2026-09-22 |
+| KOTAK MAHINDRA AMC LTD-KOTAK MAHINDRA MF-KOTAK LARGE & MIDCAP FUND-DIRECT PLAN-GROWTH OPTION | `INF174K01LF9` | Large & Mid Cap Fund | 402.888 | 2026-09-22 |
+| MOTILAL OSWAL AMC LTD#MOMF-MOTILAL OSWAL ARBITRAGE FUND-DIRECT-GROWTH | `INF247L01ED1` | Arbitrage Fund | 11.2834 | 2026-09-22 |
 
 ## Resolved, and NOT used to value a holding
 
@@ -50,3 +67,4 @@ _None._
 
 - **DSP GOLD ETF** — ISIN INF740KA1SW3 is not in AMFI's published NAV file
 - **DSP SILVER ETF** — ISIN INF740KA1RE3 is not in AMFI's published NAV file
+- **NEO CREDIT ALTERNATIVES INVESTMENT TRUST#NEO INFRA INCOME OPPORTUNITIES FUND-CAT II AIF-CLASS A5** — ISIN INF0QS022178 is not in AMFI's published NAV file

@@ -147,6 +147,62 @@ export function categoriesNamedIn(text) {
 }
 
 /**
+ * ── WHAT THE FAMILY HAVE SAID, WHERE NO STATEMENT SPEAKS ────────────────────
+ *
+ *   "Motilal Oswal Wealth Delphi Equity Fund and Neo Infra Income Opportunities
+ *    Fund I — Class A5: classify both of these AIFs as Category 2 funds."
+ *
+ * Neither fund's name nor its account's wording prints a SEBI category, so the
+ * read above leaves both UNSTATED and the book placed them on neither side of
+ * the listed/private split. The family have now said which category each is,
+ * and a category is a fact about their own investments that is theirs to
+ * supply — the standing `familyTaxonomy.ts` already has for a basket.
+ *
+ * THREE RULES, and each is a wrong answer this map could otherwise give:
+ *
+ *   • IT ONLY EVER FILLS AN EMPTY. A declaration is consulted where BOTH printed
+ *     fields are silent and never where a statement names a category — the rule
+ *     `shared/sectors.mjs` applies to its own lower tiers. A declaration that
+ *     disagreed with a printed category would be a conflict to show a human,
+ *     not a value to take; the suite asserts every entry here is load-bearing,
+ *     i.e. that its statement really is silent.
+ *   • IT IS KEYED ON THE `securityKey`, because a category is a property of the
+ *     FUND and not of one folio: a second family member subscribing to Delphi
+ *     is the same fund in the same category. Never on the security NAME — the
+ *     browser renders a DISPLAY label (`displaySecurity`, the AMFI scheme name)
+ *     in that field, and a name matcher here would be a fuzzy tier.
+ *   • IT SAYS WHERE IT CAME FROM. `source` travels with the read, so a page can
+ *     say "declared by the family" beside a category no statement printed — a
+ *     section heading looks exactly as authoritative whichever put a row under
+ *     it, and the reader is owed the difference.
+ *
+ * WHAT THE ARCHIVE CORROBORATES, MEASURED RATHER THAN ASSUMED. Neo Infra's own
+ * statement prints its manager's SEBI registration on its disclaimer page —
+ * `AIF -Category-II No : IN/AIF2/22-23/1042` — and the family's Motilal demat
+ * files the same units as `NEO INFRA INCOME OPPORTUNITIES FUND-CAT II AIF`, so
+ * the family's answer agrees with two documents already in hand. Nothing in the
+ * archive states Delphi's category at all: its statement prints no category and
+ * no registration number, so that entry rests on the family's word alone and
+ * says so.
+ *
+ * Written as plain literals, one entry per line of `"key": {`, because
+ * `check-pages.mjs` reads this block as committed DATA and re-derives the side
+ * from it rather than importing this module — a check that imports the helper
+ * it is checking agrees with it by construction.
+ */
+export const DECLARED_AIF_CATEGORY = {
+  "motilal-oswal-wealth-delphi-equity-fund": { category: "Category II", source: "family", declaredOn: "2026-09-23", corroboration: null },
+  "neo-infra-income-opportunities-fund-i-class-a5": { category: "Category II", source: "family", declaredOn: "2026-09-23", corroboration: "the statement prints its SEBI registration, AIF -Category-II No : IN/AIF2/22-23/1042, and the family's demat files the units as CAT II AIF" },
+};
+
+/** The family's declared category for a fund, where there is one. */
+export function declaredAifCategory(securityKey) {
+  if (!securityKey) return null;
+  return Object.prototype.hasOwnProperty.call(DECLARED_AIF_CATEGORY, securityKey)
+    ? DECLARED_AIF_CATEGORY[securityKey] : null;
+}
+
+/**
  * The phrases that make a fund a private-equity or venture vehicle, matched
  * against the FUND'S OWN NAME and its account's engagement wording.
  *
@@ -182,20 +238,27 @@ export function readsAsPrivateEquity(security, account) {
  * only speaks when it fires is indistinguishable, on a clean run, from one that
  * was deleted.
  */
-export function readAifCategory(security, account) {
+export function readAifCategory(security, account, securityKey) {
   const fromSecurity = categoriesNamedIn(security);
   const fromEngagement = categoriesNamedIn(account?.providerEngagement);
   const union = AIF_CATEGORIES.filter((c) => fromSecurity.includes(c) || fromEngagement.includes(c));
 
-  if (union.length === 0) return { category: null, fromSecurity, fromEngagement, why: "unstated" };
+  if (union.length === 0) {
+    // THE FAMILY'S DECLARATION FILLS THIS GAP AND NO OTHER — see
+    // `DECLARED_AIF_CATEGORY`. Consulted only where both printed fields are
+    // silent, so a statement that names a category always wins.
+    const declared = declaredAifCategory(securityKey);
+    if (declared) return { category: declared.category, fromSecurity, fromEngagement, why: null, source: "family" };
+    return { category: null, fromSecurity, fromEngagement, why: "unstated", source: null };
+  }
   if (union.length > 1) {
     // TWO SOURCES NAMING DIFFERENT SINGLE CATEGORIES IS NOT THE SAME FAULT as
     // one source naming two. The first says the paperwork disagrees with itself
     // and someone must decide; the second says the issuer never committed.
     const conflict = fromSecurity.length === 1 && fromEngagement.length === 1 && fromSecurity[0] !== fromEngagement[0];
-    return { category: null, fromSecurity, fromEngagement, why: conflict ? "conflict" : "ambiguous" };
+    return { category: null, fromSecurity, fromEngagement, why: conflict ? "conflict" : "ambiguous", source: null };
   }
-  return { category: union[0], fromSecurity, fromEngagement, why: null };
+  return { category: union[0], fromSecurity, fromEngagement, why: null, source: "statement" };
 }
 
 // ── THE LISTED / PRIVATE SIDE ───────────────────────────────────────────────
@@ -294,8 +357,8 @@ export function familyMarketDecision(name, account) {
  * ONE rule for both, so a fund's holding and its capital account cannot land
  * on different sides of the page.
  */
-export function fundMarketSideOf(name, account) {
-  return fundMarketSideBasis(name, account).side;
+export function fundMarketSideOf(name, account, securityKey) {
+  return fundMarketSideBasis(name, account, securityKey).side;
 }
 
 /**
@@ -307,9 +370,12 @@ export function fundMarketSideOf(name, account) {
  *   category        the SEBI category the statements print
  *   unstated        none of the three places it
  */
-export function fundMarketSideBasis(name, account) {
+export function fundMarketSideBasis(name, account, securityKey) {
   const decision = familyMarketDecision(name, account);
-  const read = readAifCategory(name, account);
+  // `securityKey` lets the family's DECLARED category fill a category no
+  // statement prints (Stage 10cd). It can only ever fill: `readAifCategory`
+  // consults it where both printed fields are silent.
+  const read = readAifCategory(name, account, securityKey);
   if (decision) return { side: decision.side, basis: "family", decision, category: read.category };
   if (readsAsPrivateEquity(name, account)) return { side: "private", basis: "private-equity", decision: null, category: read.category };
   if (read.category === CATEGORY_III) return { side: "listed", basis: "category", decision: null, category: read.category };
@@ -327,11 +393,12 @@ export function fundMarketSideBasis(name, account) {
  * written three holdings reached it (₹16.69 Cr) — Motilal Oswal Wealth Delphi
  * Equity Fund, Neo Infra Income Opportunities and Blue Ashva Varenya, none of
  * whose statements print a SEBI category. The family have since placed the
- * first two (below), so ONE reaches it today: Blue Ashva, ₹98,742. Filing it
- * private would claim it is private capital; filing it listed would claim the
- * opposite. Both are claims no document makes, so the split is three-way and
- * the third is NAMED with its value wherever the other two are printed — the
- * count here is history, `BOOK_SUMMARY.unplacedValue` is the measurement.
+ * first two (below), and declared both Category II (`DECLARED_AIF_CATEGORY`),
+ * so ONE reaches it today: Blue Ashva, ₹98,742. Filing it private would claim
+ * it is private capital; filing it listed would claim the opposite. Both are
+ * claims no document makes, so the split is three-way and the third is NAMED
+ * with its value wherever the other two are printed — the count here is
+ * history, `BOOK_SUMMARY.unplacedValue` is the measurement.
  *
  * Private equity outranks the category for the same reason it does in the AIF
  * drill-down: a fund whose own name says `Private Equity` is private capital
@@ -349,7 +416,7 @@ export function marketSideOf(position, account) {
   const cls = position?.assetClass;
   if (ALWAYS_PRIVATE.has(cls)) return "private";
   if (cls !== "AIF") return "listed";
-  return fundMarketSideOf(position.security, account);
+  return fundMarketSideOf(position.security, account, position.securityKey);
 }
 
 /**

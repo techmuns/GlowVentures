@@ -67,11 +67,18 @@ console.log("── the record is built over the row's own folios ──");
       `${d.parts.length} parts, ${deduped.length} folios`);
     if (d.gap) continue;
     // THE TWO SIDES OF THE RETURN DESCRIBE THE SAME MONEY: the calls the record
-    // carries add to the cost the row divides by. Pairing a consolidated cost
+    // carries add to the capital the row divides by. Pairing a consolidated cost
     // with both trusts' calls would set twice the money against it.
+    //
+    // UNDER FIFO THAT CAPITAL IS THE COST HELD PLUS THE COST OF UNITS ALREADY
+    // REDEEMED (Stage 10ca) — Neo Infra's ₹5 Cr called is ₹4.86 Cr held and
+    // ₹14.16 L redeemed. Read off the row's own positions, so a fund that has
+    // redeemed nothing still ties to its cost to the rupee.
     const calls = d.calls.reduce((t, c) => t + c.amount, 0);
-    ok(`${f.security.slice(0, 32)}: its calls add to the row's own cost`,
-      f.cost != null && Math.abs(calls - f.cost) <= 1, `${money(calls)} vs ${f.cost == null ? "—" : money(f.cost)}`);
+    const sold = deduped.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
+    ok(`${f.security.slice(0, 32)}: its calls add to the row's own cost held plus the cost of units redeemed`,
+      f.cost != null && Math.abs(calls - (f.cost + sold)) <= 1,
+      `${money(calls)} vs ${f.cost == null ? "—" : money(f.cost + sold)}`);
   }
   // THE CASE THAT MAKES IT LOAD-BEARING: a fund two folios both report, where
   // the raw rows carry two sets of calls and the row carries one cost.
@@ -138,15 +145,32 @@ console.log("── the money-weighted return counts the cash paid back ──")
   }
 }
 
-// ── 4. HPR IS THE MONITOR'S FIGURE: VALUE AGAINST COST ───────────────────────
-console.log("── HPR is value against cost, on every page ──");
+// ── 4. HPR IS THE MONITOR'S FIGURE: FIFO ─────────────────────────────────────
+//
+// Every return on the dashboard is FIFO (Stage 10ca): the gain on the units
+// still held plus the gain on units already redeemed, over the cost of both.
+// Struck here from the row's own positions' fields by the formula written out,
+// never through `fifoTotals` — which is the code under test.
+console.log("── HPR is FIFO, the same figure on every page ──");
+let redeemedFunds = 0;
 for (const f of funds) {
   const h = resolve(f.securityKey, "absolute");
   if (f.cost == null || f.returnPct == null) { ok(`${f.security.slice(0, 32)}: no cost, no HPR`, !h.shown); continue; }
-  const want = ((f.mv - f.cost) / f.cost) * 100;
-  ok(`${f.security.slice(0, 32)}: HPR = (value − cost) ÷ cost`, h.shown && Math.abs((h.pct ?? NaN) - want) < 1e-9,
-    `${h.shown ? h.pct : "—"} vs ${want}`);
+  const ps = scope.dedupedRows.filter((p) => p.securityKey === f.securityKey && p.costBasis != null);
+  const held = ps.reduce((t, p) => t + (p.costBasis as number), 0);
+  const sold = ps.reduce((t, p) => t + (p.costOfUnitsSold ?? 0), 0);
+  const realised = ps.reduce((t, p) => t + (p.realizedPnL ?? 0), 0);
+  const mv = ps.reduce((t, p) => t + p.marketValue, 0);
+  if (sold > 0) redeemedFunds++;
+  const want = ((mv - held + realised) / (held + sold)) * 100;
+  ok(`${f.security.slice(0, 32)}: HPR = (unrealised + realised) ÷ (cost held + cost redeemed)`,
+    h.shown && Math.abs((h.pct ?? NaN) - want) < 1e-9, `${h.shown ? h.pct : "—"} vs ${want}`);
 }
+// THE BOOK HAS A FUND THAT REDEEMED UNITS, or the FIFO half of that formula
+// is multiplied by zero on every row and the check cannot tell it from
+// value ÷ cost.
+ok("a private fund in this book has redeemed units, so FIFO's second half is exercised", redeemedFunds > 0,
+  `${redeemedFunds} fund(s)`);
 
 // ── 5. NOTHING UNDER A YEAR IS COMPOUNDED ONTO ONE ───────────────────────────
 console.log("── the annualisation guard ──");

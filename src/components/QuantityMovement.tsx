@@ -39,6 +39,12 @@ import type { Account, ShareMovement } from "@/lib/types";
 
 /** The three decimals these statements print units at, reproduced. */
 const qty = (n: number | null | undefined) => (n == null ? DASH : fmtNum(n, 3));
+/**
+ * The same figure in a SENTENCE. Shares print as whole numbers and a fund's
+ * units keep the three decimals their statement prints — `16,300.000` in prose
+ * is a table's precision leaking into a sentence.
+ */
+const units = (n: number | null | undefined) => (n == null ? DASH : Number.isInteger(n) ? fmtNum(n) : fmtNum(n, 3));
 
 const NO_SPLIT = "this holding's dated rows do not walk its own printed opening balance to its own printed closing balance, so no in/out split is published for it — the two balances above are still the statement's own";
 
@@ -63,8 +69,42 @@ const T_PLEDGE = "A pledge, an unpledge or an early pay-in earmark moves units b
 /** The columns, in the order this table's rows write their cells. */
 const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] as const;
 
+/**
+ * ── AN ACCOUNT THAT HOLDS NONE OF IT STILL HAS A WINDOW, AND IT SAYS SO ─────
+ *
+ *   "According to the client, Kaynes … is also a holding of the family entity
+ *    Ajay's account."
+ *
+ * Ajay's main demat printed a Kaynes block — 16,300 shares on 1 April, nil on
+ * 31 July — and that block reached no page, because it was filed under a key
+ * nothing else carried (see `shareMovementsFrom` in `build-book.mjs`). It lands
+ * on this page now, beside the accounts that DO hold the name, and a row whose
+ * account carries no position here must not read like one of them: a nil
+ * closing is a sale, and a closing with no position is a holding this book
+ * cannot value because that account's only statement prints units and no rate.
+ * Both are stated on the row rather than left for the reader to infer from the
+ * Position table above not listing the account.
+ */
+export function notHeldNote(m: ShareMovement, account: Account | undefined): { label: string; why: string } {
+  if ((m.closing ?? 0) === 0) {
+    return {
+      label: "Sold out in this window",
+      why: `This account held ${units(m.opening)} at the window's opening and none at its close, so it is not a holding on this page. The dated rows are on its own depository statement.`,
+    };
+  }
+  return {
+    label: "Held, and not valued here",
+    why: account?.noPositionsReason
+      ?? "This account's statement prints the units and no rate, so the book carries no value for them and they are not in the holdings above.",
+  };
+}
+
 export function QuantityMovement(
-  { movements: raw, unmoved, accounts }: { movements: ShareMovement[]; unmoved: string[]; accounts: Account[] },
+  { movements: raw, unmoved, accounts, held }: {
+    movements: ShareMovement[]; unmoved: string[]; accounts: Account[];
+    /** The accounts holding a POSITION of this security — a window in any other is marked. */
+    held?: ReadonlySet<string>;
+  },
 ) {
   const view = useTableView("quantity-movement", QTY_COLS);
   const accIdx = new Map(accounts.map((a) => [a.accountId, a]));
@@ -141,6 +181,14 @@ export function QuantityMovement(
                   <td className="px-4 py-2">
                     <div className="text-slate-200">{acc ? (acc.ownerId ? ownerDisplayName(acc.ownerId) : acc.owner) : m.accountId}</div>
                     <div className="text-[11px] text-slate-500">{acc ? `${acc.provider} · ${acc.accountNo}` : DASH}</div>
+                    {held && !held.has(m.accountId) && (() => {
+                      const n = notHeldNote(m, acc);
+                      return (
+                        <div className="text-[11px] text-amber-400/90" data-qty-not-held={(m.closing ?? 0) === 0 ? "sold-out" : "unvalued"} title={n.why}>
+                          {n.label}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-2 text-right mono text-slate-100" data-qty-opening={m.opening ?? ""}>{qty(m.opening)}</td>
                   <td className="px-4 py-2 text-right"><Move v={ties ? m.unitsIn : null} sign="+" zero={Z_IN} why={m.reason} /></td>
@@ -226,3 +274,4 @@ export function QuantityMovement(
     </Card>
   );
 }
+
