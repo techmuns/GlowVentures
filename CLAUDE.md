@@ -16907,6 +16907,194 @@ Morning CIO panels (every KPI tile carries a figure), two on Private Market
 and one on `stock-qty` (no pledge). None is this change's own. MEASURED ON THE
 MERGED TREE.
 
+### Stage 10bx — FOUR BLOCKS OF TEXT GO, AND THE NAV CHART TAKES ANY OF SEVEN BENCHMARKS
+
+*"Open PR and do not merge to main until I tell you to."* · *"Remove the
+highlighted texts from the dashboard UI"* — four screenshots: the published-NAV
+movers' **What this measures** panel; the NAV chart's basis line and its four
+headline pills (**Book +5.09%**, **Nifty 500 +4.42%**, **₹28.3 Cr not proven**,
+**over 2026-05-31 → 2026-08-13**); the paragraph under Family & Entities' sector
+mix (*"Both routes count here…"*); and Sector Composition's header pills. ·
+*"[In the] Portfolio vs Nifty 500 tab. Allow us to select different benchmarks
+to compare the portfolio returns with and make sure that the benchmark returns
+are live just like the Nifty 500 benchmark."*
+
+#### 1. The removals — audited claim by claim, the method every removal here has used
+
+Nothing was deleted until each claim was checked for a second home. What had
+none and a reader acts on went into a HOVER on the element it describes; a
+hover is weaker than a caption, and that is recorded rather than glossed.
+
+| Removed | Claims with no second home | Where they are now |
+| --- | --- | --- |
+| NAV movers' "What this measures" panel | the two measurements are **never added**; **AIF folios publish no daily NAV** | the tile's own hover, with the panel's other sentences verbatim. The older-day disclosure was already on each row's second line (`SchemeNote`) |
+| NAV chart's basis line | window, point count, coverage, rebase | the chart TITLE's hover |
+| the Book and Nifty 500 pills | the like-for-like pair | the title's hover — **and the chart's own tooltip at the book's last point prints exactly that pair**, because both lines are rebased at the book's first point |
+| the "not proven" pill | the value and the accounts behind it | the title's hover, as its own paragraph |
+| Family & Entities' paragraph | the mandate-chosen share of these companies; the excluded value **per class**; why a fund has no sector; where a mandate's cash sleeve went | the sector-mix SUBTITLE's hover — the subtitle states the company-share count and value, so the excluded complement is implied on screen |
+| Sector Composition's header pills | the LIVE label and the as-of skew | **nowhere on this page** — see §6. The sector count is the table's rows and the donut's wedges; the basis pill's hover repeated the column notes and the Direct Equity tab's hover |
+
+**THE FOURTH SCREENSHOT SHOWED A SUBTITLE THAT MAIN NO LONGER RENDERS.** *"Every
+company this family is exposed to…"* became the Consolidated tab's hover at
+Stage 10bt; the screenshot was taken on an older build. So on this page only the
+pills went, and the sentence stays where 10bt put it.
+
+**SECTOR COMPOSITION IS THE FOURTH PAGE TO LOSE ITS `<BasisPill>`** at the
+family's request, after Morning CIO, `/holdings` and Private Market, and §6
+records it as a narrowing. It costs less here than on any of the three: this page
+has always read the LIVE book and was never one a reader checks against a PDF,
+so what went is the label and the "49 accounts behind" skew — not a guarantee.
+`feedLive`, `Pill` and `BasisPill` had no other reader on the page and went with
+them rather than being left computed into nothing.
+
+#### 2. The benchmark control
+
+`src/lib/benchmarks.ts` — seven, in the chart header where the pills were, as
+TABS rather than a dropdown (what the family asked for on the Portfolio Monitor):
+
+| | symbol | live `longName`, measured 2026-09-23 | history from |
+| --- | --- | --- | --- |
+| **Nifty 500** (default) | `^CRSLDX` | NIFTY 500 | 2005-09-26 |
+| Nifty 50 | `^NSEI` | NIFTY 50 | 2007-09-17 |
+| Nifty Next 50 | `^NSMIDCP` | NIFTY NEXT 50 | 2007-09-17 |
+| Midcap 150 | `NIFTYMIDCAP150.NS` | NIFTY MIDCAP 150 | 2019-01-14 |
+| Smallcap 250 | `NIFTYSMLCAP250.NS` | NIFTY SMLCAP 250 | 2005-04-01 |
+| Sensex | `^BSESN` | S&P BSE SENSEX | 1997-07-01 |
+| BSE 500 | `BSE-500.BO` | S&P BSE 500 INDEX | 2007-09-17 |
+
+**"LIVE JUST LIKE THE NIFTY 500" IS THE SAME PIPE, NOT A SECOND ONE.** The Nifty
+500 line has always come from `/api/prices` — Yahoo's keyless chart endpoint,
+settled daily closes. Every benchmark comes through that exact call, so none is a
+baked series and every one moves on the day the Nifty 500 does. Nothing is
+harvested, typed or interpolated; the range note's *"<index> alone over this
+period"* and the like-for-like pair both follow the selection.
+
+**AND EACH IS CHECKED BY NAME BEFORE A CLOSE IS DRAWN.** Trap 2 in
+`functions/api/indices.js`, measured on this very upstream: `NIFTY_MIDCAP_150.NS`
+answers 200 with a rupee figure for an instrument that is not the index, and
+`^NSMIDCP` — which reads like a midcap symbol — is the Nifty NEXT 50. So
+`/api/prices` now hands back the upstream's own `longName` / `shortName` (cache
+key bumped to v2, so a cached body with no name is never served to the gate), and
+`benchmarkIdentity` compares it against the names each benchmark declares. A
+mismatch — or NO name at all, because unverified is not a match — draws no line,
+says what answered, and states no comparison figure. A correct-looking line
+about the wrong market is the worst figure this card could draw.
+
+**THEY ARE PRICE INDICES, AND EVERY OPTION'S HOVER SAYS SO.** The managers' own
+reports compare against total-return versions (N50TRI, S&P BSE 500 TRI,
+NSmCap250TRI), and the keyless feed carries only the price ones — the basis the
+Nifty 500 line was always on, stated rather than left to be assumed.
+
+**`?bench=`, AND THE TAB FOLLOWS IT.** In the URL like every view here, the Nifty
+500 first and therefore param-free, so every existing link lands where it did.
+Morning CIO's third tab reads the same param — *"NAV vs Sensex"* over a chart of
+the Sensex, *"NAV vs Nifty 500"* by default — because a tab naming one index over
+a panel drawing another is a label not describing its panel. (**"NAV vs
+benchmark" stays banned**: the roadmap-absence check still asserts it never
+returns.) Switching clears the previous curve first, so for the length of a fetch
+the chart draws the book alone rather than the last index under the new name.
+
+#### The checks
+
+`check:pages` gains **`cio-nav-bench`** (`?bench=sensex`, live mocks) and
+**`cio-nav-bench-wrong`** (`?bench=nifty-next-50`, the fixture answering `^NSMIDCP`
+as "NIFTY MIDCAP 50"). The price fixture now ECHOES the symbol asked for, answers
+under the live name, gives each benchmark its OWN slope (the Nifty 500 keeps
+`PRICE_SLOPE`, so nothing existing moves) and records `PRICE_REQUESTS` — because
+a line cannot say which symbol it was fetched as, and a card that fetched the
+Nifty 500 whatever was selected and relabelled it would draw a perfect line.
+
+- **the control** — every benchmark in order, keyed and labelled, exactly one
+  active, the one the address asked for; the title and the tab name it.
+- **the request** — the chart asked for this benchmark's symbol and no other.
+- **the return** — the hover's benchmark figure equals the fixture ramp's return
+  over the hover's own window, derived here in closed form, to the printed digit;
+  on any benchmark but the default it must also DIFFER from the Nifty 500's.
+- **the gate** — a mismatched benchmark: state `mismatch`, the book's two curves
+  and no third, the message names what answered, no comparison in the hover.
+- **the removals** — the NAV header carries no basis line and no return beside
+  any name, and the not-proven pill's handle is gone; the movers panel's handle
+  and heading are gone; Family & Entities' paragraph phrases are gone; Sector
+  Composition's header node carries no pill.
+
+**EVERY CHECK THAT READ A REMOVED FIGURE WAS RE-HOMED, NOT SOFTENED.** Twelve
+NAV-card invariants read the header; they read `navBasis(ctx)` — the title's
+hover — now, and a card on screen with no hover is a FAILURE (`navBasisMissing`),
+never an abstention. CIO_LIVE_NAV reads the benchmark off the ADDRESS rather than
+the literal "Nifty 500", which is what lets it run unchanged on the Sensex route.
+Three Sector Composition checks read the sector count off the removed pill and
+read the donut's wedges now — read off the page text they would have come back
+NaN and failed a page that removed the pill exactly as asked.
+
+`benchmarks.test.ts` (`test:family`) holds the catalogue to the MEASURED live
+spellings — written into the suite, not read out of the module — asserts each
+benchmark accepts its own name and refuses all 42 others, refuses the measured
+decoy and an unnamed history, and stubs the Function to prove the name reaches
+the body at all. Without that last one the gate is a gate on a field that never
+arrives, and it refuses every benchmark on the deployed site only.
+
+#### Fifteen bugs reintroduced, and every one fires its own check
+
+`scripts/dev/nav-bench-bug.sh`, committed so the next session's verification is
+one command. It restores BY COPY on a `trap … EXIT` (two of the files it patches
+are new and untracked, where `git checkout --` silently does nothing), verifies
+each restore with `cmp`, rebuilds on the way out, takes a `flock` so a second
+copy refuses rather than racing one `dist/`, and reports a patch that does not
+apply or a build that fails as NOT A RESULT. A no-patch CONTROL runs first and is
+clean. `CASES=` re-runs one case.
+
+| Bug put back | Fires |
+| --- | --- |
+| the benchmark control deleted | the control check **and** the hover check, on all four NAV routes |
+| the chart fetches the Nifty 500 whatever is selected | **eight** — the request check, the return check, the gate check, and five NAV-card checks on the route whose name no longer matches |
+| the identity gate accepts any instrument | the mismatch check |
+| Morning CIO's tab keeps naming the Nifty 500 | the tab check |
+| a Book pill back beside the title | the header check, on three routes |
+| the basis line back as a subtitle | the header check, on three routes |
+| the hover drops the book-vs-benchmark pair | three checks, on two routes |
+| the hover drops the not-proven disclosure | the not-proven check, on three routes |
+| the movers' "What this measures" panel restored | the panel-stays-removed check |
+| the movers tile loses its hover | four — the older-day, basis, never-added and AIF checks |
+| Family & Entities' paragraph restored | the paragraph-stays-removed check |
+| the sector-mix subtitle loses its hover | the names-what-it-excluded check |
+| a sector-count pill back in the header | the header check, on two routes |
+| **(suite)** `/api/prices` stops returning the name | `benchmarks.test.ts`, exit 1 |
+| **(suite)** an unnamed history is accepted | `benchmarks.test.ts`, exit 1 |
+
+**THE SECOND CASE IS THE ONE WORTH THE PASS.** A card that fetched the default
+index whatever was selected and relabelled it would draw a PERFECT line under
+the wrong name — every geometric and textual check on the chart is satisfied by
+it. Only the recorded REQUEST can see it, which is why `PRICE_REQUESTS` exists;
+and on this route the identity gate then refuses the Nifty 500's own name for
+the Sensex, so the fixture proves both halves at once.
+
+**AND ONE CASE WAS NOT A RESULT THE FIRST TIME, WHICH IS THE HARNESS WORKING.**
+Case 5 put the pill beside the title as a SIBLING element inside `title={…}`,
+which does not parse; the build failed and the run said so rather than sweeping
+an unchanged tree and reporting the header check clean. Rewritten as a fragment,
+re-run alone with `CASES=5`, it fires on three routes.
+
+**Two cases are suite-only, and that is correct rather than a gap.** The page
+sweep serves `/api/prices` from a fixture that ALWAYS returns a name, so a
+Function that stopped returning one — the defect that would refuse every
+benchmark on the deployed site and on no local run — is invisible to it by
+construction. `benchmarks.test.ts` stubs the upstream and calls the real
+Function, which is where it can be caught.
+
+`build` · `tsc` · `test:ingest` 49 + 31 + 84 + 35 + 42 + 44 + 30 + 29 + 22 + 140
+(2 not checked, 0 blocked) · `test:family` (a new `benchmarks.test.ts`) ·
+`check:family` **86/0** · `check:pages` **214 combinations clean**, with the ten
+evidenced abstentions main's own sweep carries across four pre-existing claims
+(six KPI-tile lines across the Morning CIO routes, two private-market cost
+lines, one pledge line on `stock-qty`, one crumb line on `holdings-unknown`) and
+**not one of this change's own**. MEASURED ON THE MERGED TREE: main walks 67
+routes and this branch 69, so the two new routes (`cio-nav-bench`,
+`cio-nav-bench-wrong`) are four combinations over main's 210 — which reconciles
+only because the sweep was run again. `npm run build-book` regenerates
+`glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY — nothing here touches
+the ingest, and a benchmark control that moved a generated figure would not be
+one.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

@@ -134,9 +134,21 @@ EOF
 run_case "a Book pill returns beside the title" py <<'EOF'
 import sys
 p='src/components/NavVsIndex.tsx'; s=open(p).read()
-old='          Portfolio NAV vs {bench.label}\n        </span>'
+# Two sibling elements inside `title={…}` do not parse, so the pill is added
+# inside a FRAGMENT — a first draft of this case failed to build and was
+# reported as NOT A RESULT rather than as a clean run, which is the harness
+# working.
+old='''      title={
+        <span data-testid="nav-basis" title={basisHover} className="cursor-help">
+          Portfolio NAV vs {bench.label}
+        </span>
+      }'''
 if s.count(old)!=1: sys.exit(1)
-open(p,'w').write(s.replace(old,'          Portfolio NAV vs {bench.label}\n        </span>{bookRet != null && <span> Book {fmtPct(bookRet, { sign: true })}</span>}'))
+open(p,'w').write(s.replace(old,'''      title={<>
+        <span data-testid="nav-basis" title={basisHover} className="cursor-help">
+          Portfolio NAV vs {bench.label}
+        </span>{bookRet != null && <span> Book {fmtPct(bookRet, { sign: true })}</span>}</>
+      }'''))
 EOF
 
 # 6 ── the basis line comes back as a subtitle
