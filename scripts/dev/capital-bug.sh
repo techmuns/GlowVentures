@@ -28,6 +28,7 @@ FILES=(
   "src/lib/analytics.ts"
   "src/lib/chatContext.ts"
   "src/lib/exportPortfolioExcel.ts"
+  "src/lib/txnAxis.ts"
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/StockInfo.tsx"
   "src/pages/ReturnAnalysis.tsx"
@@ -54,13 +55,21 @@ ROUTES=monitor,stock-capital,returns
 
 run_case() {
   local name="$1"; shift
+  run_case_on "$ROUTES" "$name" "$@"
+}
+
+# ...on the routes a particular bug is visible from. A bug in the Transactions
+# section join cannot be seen on the Holdings table, and sweeping the wrong
+# routes reports a clean run over a bug that fired nowhere it was looked for.
+run_case_on() {
+  local routes="$1"; local name="$2"; shift 2
   echo ""
-  echo "════════ BUG: $name"
+  echo "════════ BUG: $name   [$routes]"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; put_back; return; fi
   if ! npm run build >/dev/null 2>&1; then
     echo "   NOT A RESULT — the bugged tree does not build"
   else
-    ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|NOT CHECKED|^✓|^✗' | sed 's/^/   /'
+    ONLY=$routes npm run check:pages 2>&1 | grep -E 'INVARIANT|NOT CHECKED|^✓|^✗' | sed 's/^/   /'
   fi
   put_back
 }
@@ -205,6 +214,73 @@ p = "src/lib/analytics.ts"
 s = open(p, encoding="utf-8").read()
 old = "  const annual = xirr && xirr.pct !== null && xirr.annualised ? xirr.pct : null;"
 new = "  const annual = xirr && xirr.pct !== null ? xirr.pct : null;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+
+# ── 12 ── a ₹0 line splits an account again ──────────────────────────────
+run_case_on "monitor,monitor-basket" "a ₹0 cash line splits a folio across two rows" py <<'PY'
+import sys
+p = "src/lib/capital.ts"
+s = open(p, encoding="utf-8").read()
+old = "      const oneRow = !unitOf || new Set(carries.map(unitOf)).size <= 1;"
+new = "      const oneRow = !unitOf || new Set(ps.map(unitOf)).size <= 1;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 13 ── the Transactions join files a funded account on its ₹0 line ──────
+run_case_on "monitor-txn-basket" "the section join reads the ₹0 line as part of what an account is" py <<'PY'
+import sys
+p = "src/lib/txnAxis.ts"
+s = open(p, encoding="utf-8").read()
+old = "    const keys = new Set((carrying.length ? carrying : held).map((p) => groupKeyFor(axis, idx, p)));"
+new = "    const keys = new Set(held.map((p) => groupKeyFor(axis, idx, p)));"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 14 ── the CAGR caption counts only the CAGR tag ────────────────────────
+run_case_on "monitor-cagr" "an XIRR under the CAGR heading is counted as held under a year" py <<'PY'
+import sys
+p = "src/lib/analytics.ts"
+s = open(p, encoding="utf-8").read()
+old = '    if (m.tag === "CAGR" || m.tag === "XIRR") {'
+new = '    if (m.tag === "CAGR") {'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 15 ── the XIRR column prints the total return where the rate belongs ───
+run_case_on "monitor-xirr" "the XIRR column prints the holding-period return untagged" py <<'PY'
+import sys
+p = "src/lib/analytics.ts"
+s = open(p, encoding="utf-8").read()
+old = '      return { shown: true, pct: annual, tag: measure === "cagr" ? annualTag : "XIRR",'
+new = '      return { shown: true, pct: measure === "xirr" ? (hpr ?? annual) : annual, tag: measure === "cagr" ? annualTag : "XIRR",'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 16 ── a return column sorts on the return on cost ──────────────────────
+run_case_on "monitor-ret-sort" "every return column is ranked on the holding-period return" py <<'PY'
+import sys
+p = "src/pages/PortfolioMonitor.tsx"
+s = open(p, encoding="utf-8").read()
+old = "    return res.shown ? res.pct : null;"
+new = "    return res.shown ? (r.returnPct ?? null) : null;"
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# ── 17 ── a row on dated capital dates itself by its LAST payment ──────────
+run_case_on "monitor" "a dated-capital row's Invested on shows a payment other than the first" py <<'PY'
+import sys
+p = "src/pages/PortfolioMonitor.tsx"
+s = open(p, encoding="utf-8").read()
+old = "      return ins.length ? { ...r, investedOn: { first: ins[0], last: ins[ins.length - 1], payments: ins.length } } : r;"
+new = "      return ins.length ? { ...r, investedOn: { first: ins[ins.length - 1], last: ins[ins.length - 1], payments: ins.length } } : r;"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
 PY

@@ -201,6 +201,17 @@ cash holding's genuinely-zero return both match, and both are correct.
   per-contribution breakdown a holdings row opens into. See Stage 10ag, and
   Stage 10bg for `capitalSectionRollup`, which files each account's record under
   the same section its holdings sit in.
+- `src/lib/capital.ts` — THE CAPITAL BEHIND AN INVESTMENT, one definition read by
+  every surface that prints an Invested, a P&L or a return. Which of three
+  documents publishes an account's capital — a dated record reaching inception
+  AND the account's own as-of, the manager's since-inception statement, a
+  drawdown fund's capital account where its payout line is printed — and
+  `behind(set, unitOf)`, which stands a WHOLE account on that capital and
+  everything else on the cost of its units. The methodology on top of it (XIRR
+  over several dated payments, CAGR over one, the holding-period return under a
+  year) is `capitalMeasured` in `analytics.ts`. A return on the cost of the units
+  held today is a tax figure; see Stage 10bv for why it is the wrong one for a
+  return, in both directions.
 - `src/lib/lookthrough.ts` — what a fund the family holds DISCLOSES, and
   `companyExposure`: ONE definition of this family's exposure to a COMPANY, both
   halves kept apart, read by the Portfolio Monitor's stock axis and by Sector
@@ -17008,6 +17019,18 @@ register it in `run.mjs`'s `ADAPTERS`, and declare its series in the catalogue.
   produces, and a third value means somebody else wrote it; and `--check` writes
   nothing and is the control run, which must be a no-op. Follow it with
   `build-book`.
+- `npm run replay:flows` re-runs the DATED-TABLE readers over the committed
+  archive — Buoyant's cash deposits and class switch, 3P's financial
+  transactions — from each document's own `pages.json`, through the reader's own
+  `extract()`. The SIXTH faithful partial replay, on the same three rules (see
+  Stage 10bv): it touches `cashFlows` and the warning a dated reader emits and
+  nothing else; its gate is struck on the ARCHIVE — the reader's holdings must
+  reproduce the ones on disk, and a document already carrying a dated table must
+  get exactly that table back; and `--check` writes nothing and is the control
+  run, which must be a no-op. Follow it with `build-book`, which also emits
+  `Account.capitalRecordTo` — the last date an account's dated capital record
+  reaches, so a record that stops before the account's own as-of is never read
+  as the capital behind that value.
 - `npm run rekey:archive` re-derives `securityKey` across the committed archive
   from each row's own stored NAME, through the same `securityKeyOf` the extractor
   uses — a faithful partial replay of extraction, not a repair layer. It is how a
