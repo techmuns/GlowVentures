@@ -1,10 +1,9 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { AbsentCell } from "@/components/Absent";
 import { fmtDate } from "@/lib/format";
 import {
   type CallDraft, type EnteredCall, type EnteredCallsState,
-  callsOf, headlineCall, parseRupees,
+  CAUSE_WORD, SWITCH_ON_STEPS, callsOf, headlineCall, parseRupees,
 } from "@/lib/enteredCalls";
 
 type Money = (n: number | null | undefined, sign?: boolean) => string;
@@ -23,7 +22,11 @@ type Result = { ok: true } | { ok: false; reason: string };
  *
  *   loading      the list has not arrived yet — never a dash, which would say
  *                there is nothing;
- *   unavailable  the store could not be read, with the reason in the hover;
+ *   unavailable  the store could not be read. The cell NAMES the cause in a
+ *                word ("Not set up", "Signed out") and opens the editor, where
+ *                the whole reason is. It was an em dash with the reason in a
+ *                hover, and a column of dashes read as "nothing entered" —
+ *                *"which is empty right now"* — so it says what it is;
  *   no call      an "Add" button — nothing has been entered for this fund;
  *   a call       its amount and date, in the colour this page gives a figure
  *                the FAMILY entered rather than one a statement printed.
@@ -40,11 +43,21 @@ export function CallCell({ fund, fundName, state, today, open, onToggle, money }
   if (state.status === "loading") {
     return <span className="text-[11px] text-slate-500" data-pm-call-state="loading">Loading…</span>;
   }
+  const cls = "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] ring-focus transition-colors hover:bg-ink-700/60";
   if (state.status === "unavailable") {
-    return <span data-pm-call-state="unavailable"><AbsentCell reason={state.reason} /></span>;
+    // NEVER "Add": a button that promises a save the store cannot make is the
+    // control that looks live and does nothing. It opens the editor, which
+    // says why and keeps Save switched off.
+    return (
+      <button type="button" onClick={onToggle} aria-expanded={open}
+        data-pm-call-state="unavailable" data-pm-call-cause={state.cause}
+        title={state.reason}
+        className={`${cls} whitespace-nowrap text-slate-500 hover:text-slate-300`}>
+        {CAUSE_WORD[state.cause]}
+      </button>
+    );
   }
   const head = headlineCall(state.calls, fund, today);
-  const cls = "inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] ring-focus transition-colors hover:bg-ink-700/60";
   if (!head) {
     return (
       <button type="button" onClick={onToggle} aria-expanded={open}
@@ -150,7 +163,9 @@ export function CallEditor({ fund, fundName, state, onSave, onDelete, onClose, m
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[12.5px] font-medium text-slate-200">Capital calls · {fundName}</div>
-          <div className="text-[11px] text-slate-500">Saved for everyone who opens this dashboard.</div>
+          {/* ONLY WHERE IT IS TRUE. With the store switched off nothing here is
+              saved for anyone, and this line would say otherwise. */}
+          {writable && <div className="text-[11px] text-slate-500">Saved for everyone who opens this dashboard.</div>}
         </div>
         <button type="button" onClick={onClose} title="Close" aria-label="Close"
           className="grid h-6 w-6 place-items-center rounded text-slate-500 ring-focus hover:bg-ink-700/60 hover:text-slate-200">
@@ -159,7 +174,18 @@ export function CallEditor({ fund, fundName, state, onSave, onDelete, onClose, m
       </div>
 
       {state.status === "unavailable" && (
-        <p className="mt-2 text-[12px] text-amber-400" data-pm-call-unavailable>{state.reason}</p>
+        <p className="mt-2 text-[12px] text-amber-400" data-pm-call-unavailable={state.cause}>{state.reason}</p>
+      )}
+      {/* THE ONE-TIME SET-UP, for the one cause it fixes. Folded, because the
+          family reads this page and the steps are for whoever manages the site;
+          a signed-out reader is never shown them. */}
+      {state.status === "unavailable" && state.cause === "not-configured" && (
+        <details className="mt-2 rounded-md border border-ink-700/70 px-3 py-2 text-[12px] text-slate-400" data-pm-call-setup>
+          <summary className="cursor-pointer text-slate-300">How to switch saving on — once, for everyone</summary>
+          <ol className="mt-1.5 list-decimal space-y-1 pl-5">
+            {SWITCH_ON_STEPS.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+        </details>
       )}
       {state.status === "loading" && <p className="mt-2 text-[12px] text-slate-500">Loading…</p>}
 

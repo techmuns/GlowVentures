@@ -16,7 +16,7 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
    * measured flat move.
    */
   delta?: number | null; icon?: ReactNode; hint?: ReactNode;
-  /** Controls that act on the TILE rather than on its figure — remove, add. */
+  /** Controls that act on the TILE rather than on its figure — remove it. Adding is the ADD TILE card's. */
   action?: ReactNode;
   /**
    * THE DETAIL BEHIND THE FIGURE, ON HOVER. A tile is a figure and one short
