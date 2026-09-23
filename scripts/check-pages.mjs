@@ -148,8 +148,113 @@ function bookArray(src, name) {
   if (end < 0) return null;
   let out;
   try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
-  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER.
-  return name === "BOOK_POSITIONS" ? withPublishedNavs(out) : out;
+  // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — the published
+  // NAV overlaid, and the depository's cash-equivalent units that the live book
+  // values on an account that sent no holding statement.
+  return name === "BOOK_POSITIONS" ? withPublishedNavs([...out, ...withDepositoryCash(src, out)]) : out;
+}
+
+/**
+ * ── THE CASH MAP, READ ONCE AS COMMITTED DATA ──────────────────────────────
+ *
+ * `CASH_EQUIVALENT_KEYS` in `src/lib/analytics.ts`, parsed rather than imported
+ * — the rule the rest of this file follows for `BOOK_POLYCAB` and
+ * `holdingBucket`. Null on any failure, so a caller FAILS rather than reading a
+ * renamed constant as a book with no cash equivalents in it.
+ */
+const CASH_EQ_KEYS = (() => {
+  try {
+    const a = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+    const i = a.indexOf("export const CASH_EQUIVALENT_KEYS");
+    if (i < 0) return null;
+    const end = a.indexOf("\n};", i);
+    if (end < 0) return null;
+    const keys = [...a.slice(i, end).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]);
+    return keys.length ? new Set(keys) : null;
+  } catch { return null; }
+})();
+
+/**
+ * WHICH SCHEMES AMFI FILES AS ARBITRAGE FUNDS — by the store's key and by ISIN,
+ * read off SEBI's own category heading in the committed NAV store. Never a name
+ * and never `isArbitrageFund`, which would agree with the page by construction.
+ */
+const ARB_STORE = (() => {
+  const keys = new Set(), isins = new Set();
+  for (const e of fundNavStore() ?? []) {
+    if (e.sebiCategory !== "Arbitrage Fund") continue;
+    keys.add(e.securityKey);
+    if (e.isin) isins.add(String(e.isin).toUpperCase());
+  }
+  return { keys, isins };
+})();
+const isArbStore = (p) => ARB_STORE.keys.has(p.securityKey) || (!!p.isin && ARB_STORE.isins.has(String(p.isin).toUpperCase()));
+
+/** AMFI's published NAVs by ISIN — the store the live overlay reads. */
+function fundNavStore() {
+  try {
+    const nsrc = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+    const i = nsrc.indexOf("export const BOOK_FUND_NAVS");
+    const a = nsrc.indexOf("= [", i), b = nsrc.indexOf("\n];", a);
+    return JSON.parse(nsrc.slice(a + 2, b + 2));
+  } catch { return null; }
+}
+
+/**
+ * ── THE DEPOSITORY'S CASH, RE-EXPRESSED ─────────────────────────────────────
+ *
+ *   "Arbitrage funds or holdings into that cash as well, because arbitrage
+ *    funds are nothing but basically cash."
+ *
+ * The three arbitrage funds this family holds are no POSITION in `glowData.ts`:
+ * they are a depository's closing balances on an account that sent a
+ * transaction statement and no holding statement. `PortfolioContext` values
+ * them at AMFI's published NAV on the LIVE basis, so every page that reads the
+ * live portfolio carries five rows the generated book does not — and every
+ * derivation here that reconciles against a rendered figure has to carry them
+ * too, or it compares two different books.
+ *
+ * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `depositoryCashHoldings` AND NEVER
+ * IMPORTED — the same five gates, written a second time off the committed
+ * data: a transaction-only account with no position of its own; a block that
+ * walked to its printed closing, with units left; a NAV AMFI publishes and the
+ * builder cleared for value; a cash equivalent by the committed map; and no
+ * book position of the same ISIN and the same units.
+ */
+function withDepositoryCash(src, positions) {
+  const accounts = bookArray(src, "BOOK_ACCOUNTS");
+  const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+  const store = fundNavStore();
+  if (!Array.isArray(accounts) || !movements || !Array.isArray(store) || !CASH_EQ_KEYS) return [];
+  const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+  const withPositions = new Set(positions.map((p) => p.accountId));
+  const navByIsin = new Map(store.map((e) => [String(e.isin).toUpperCase(), e]));
+  const bookByIsin = new Map();
+  for (const p of positions) {
+    const k = p.isin?.trim().toUpperCase();
+    if (k && !bookByIsin.has(k)) bookByIsin.set(k, p);
+  }
+  const out = [];
+  for (const w of Object.values(movements)) {
+    if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;
+    if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue;
+    const isin = w.isin?.trim().toUpperCase();
+    const nav = isin ? navByIsin.get(isin) : null;
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
+    const book = bookByIsin.get(isin);
+    const securityKey = book?.securityKey ?? w.securityKey;
+    if (!CASH_EQ_KEYS.has(securityKey)) continue;
+    if (positions.some((p) => p.isin?.trim().toUpperCase() === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
+    out.push({
+      securityKey, security: book?.security ?? w.security ?? securityKey, isin: w.isin,
+      accountId: w.accountId, sector: book?.sector ?? "Unclassified",
+      assetClass: /\bETFs?\b/i.test(nav.category ?? "") ? "ETF" : (book?.assetClass ?? "Mutual Fund"),
+      marketSide: "listed", quantity: w.closing, marketValue: w.closing * nav.nav, currentPrice: nav.nav,
+      costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
+      navPriced: true, navDate: nav.date, depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
+    });
+  }
+  return out;
 }
 
 /**
@@ -391,7 +496,10 @@ const SECURITY_AXIS_BOOK = (() => {
     const nav = sum(ded.map((p) => p.marketValue));
     const stocks = ded.filter((p) => p.assetClass === "Equity");
     const measured = sum(stocks.map((p) => p.marketValue));
-    const cash = sum(ded.filter((p) => p.assetClass === "Cash").map((p) => p.marketValue));
+    // CASH IS THE BOOK'S OWN CASH ROWS AND THE ARBITRAGE FUNDS, which the family
+    // count as cash and which are not looked through — their long shares are
+    // hedged, so reading them as stock would print exposure nobody carries.
+    const cash = sum(ded.filter((p) => p.assetClass === "Cash" || isArbStore(p)).map((p) => p.marketValue));
 
     // ── The look-through, recomputed here rather than imported ──────────────
     // A check that calls the helper it is checking agrees with it by
@@ -417,6 +525,7 @@ const SECURITY_AXIS_BOOK = (() => {
     const vehicles = new Map();
     for (const p of ded) {
       if (!["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)) continue;
+      if (isArbStore(p)) continue;   // cash, and never looked through — see `cash` above
       const e = vehicles.get(p.securityKey) ?? { key: p.securityKey, name: p.security, mv: 0, cls: p.assetClass };
       e.mv += p.marketValue;
       vehicles.set(p.securityKey, e);
@@ -2858,6 +2967,10 @@ const ROUTES = [
   // The owner is resolved from the book (see `FAMILY_ENTITY`) rather than typed, and
   // the scope now lives in the URL so this route can exist at all.
   ["family-entity", () => (FAMILY_ENTITY ? `/family?entity=${encodeURIComponent(FAMILY_ENTITY)}` : "/family?entity=none-resolved-from-the-book")],
+  // THE MEMBER WHOSE DEMAT SENT ONLY A TRANSACTION STATEMENT — resolved off the
+  // book, so its partly valued account is walked on the page that lists it.
+  ["family-partial", () => (CASH_INSTRUCTION_BOOK?.partialOwner
+    ? `/family?entity=${encodeURIComponent(CASH_INSTRUCTION_BOOK.partialOwner)}` : "/family?entity=none-resolved-from-the-book")],
   ["sectors", "/sectors"],
   // The family's own toggle. Both are walked, because the two are DIFFERENT SETS
   // and neither is the set this page used to show — a check on one says nothing
@@ -2887,6 +3000,10 @@ const ROUTES = [
   // company panels are absent BY DECISION there. Walked as its own route so a
   // regression that puts them back is caught here rather than by the client.
   ["stock-fund", "/stock/sanshi-fund-i-open-ended-aif-cat-iii-class-e"],
+  // THE LARGEST ARBITRAGE FUND THE FAMILY HOLDS, derived from the book and
+  // AMFI's category store — a typed key would keep "passing" on a not-found page.
+  ["stock-arbitrage", () => (CASH_INSTRUCTION_BOOK?.largestArb
+    ? `/stock/${encodeURIComponent(CASH_INSTRUCTION_BOOK.largestArb)}` : "/stock/none-resolved-from-the-book")],
   /**
    * ...AND ONE MUTUAL FUND, WHICH NOW HAS A LOOK-THROUGH THE AIF ABOVE CANNOT.
    *
@@ -3810,7 +3927,7 @@ const MOVERS_EXCLUDED = (() => {
  *    cash… Cash is liquid, arbitrage. All of it is cash."
  *   "here, you've given me the amount, but you've not given me the date."
  *
- * THE FIVE KEYS ARE RE-LISTED HERE ON PURPOSE, not imported. A check that calls
+ * THE EIGHT KEYS ARE RE-LISTED HERE ON PURPOSE, not imported. A check that calls
  * the helper it is checking agrees with it by construction — and this is the one
  * place in this file where that costs something real, because a key added to
  * `CASH_EQUIVALENT_KEYS` and not here would go unchecked. That is covered from
@@ -3832,6 +3949,12 @@ const CASH_MAPPING_BOOK = (() => {
       "absl-liqf-d-growth", "icici-liqf-d-growth",
       "hdfc-liquid-fund-direct-plan-growth-option",
       "nip-etnf1d-rtliqbees", "axis-liquid-fund-direct-plan-growth-option",
+      // THE ARBITRAGE FUNDS — "nothing but basically cash". They are no position
+      // in `glowData.ts`; they reach this list through the depository rows the
+      // checker's model carries, exactly as the live page does.
+      "motilal-oswal-amc-ltd-momf-motilal-oswal-arbitrage-fund-direct-growth",
+      "kotak-mahindra-amc-ltd-kotak-mahindra-mf-kotak-arbitrage-fund-direct-plan-growth",
+      "bandhan-amc-ltd-bandhan-mf-bandhan-arbitrage-fund-direct-pl-growth",
     ]);
     const outside = new Set();      // expected under Cash
     const inMandate = new Set();    // expected to stay with their mandate
@@ -3840,6 +3963,71 @@ const CASH_MAPPING_BOOK = (() => {
       (engagement.get(p.accountId) === "PMS" ? inMandate : outside).add(p.securityKey);
     }
     return outside.size ? { outside: [...outside], inMandate: [...inMandate] } : null;
+  } catch { return null; }
+})();
+
+/**
+ * ── WHERE THE ARBITRAGE FUNDS MUST LAND, AND ON WHOSE AUTHORITY ─────────────
+ *
+ *   "Wherever we have cash as asset class or category… we need to show
+ *    arbitrage funds inside it. Arbitrage funds need not be classified into any
+ *    other category except for cash."
+ *
+ * Derived from the checker's MODEL of the live book — `glowData.ts` plus the
+ * depository's cash-equivalent units, both re-expressed above — so the
+ * expectation carries the same five rows the page does. What is an ARBITRAGE
+ * fund is read off AMFI's own SEBI category in the committed NAV store, by the
+ * store's key and by ISIN: never by a name, and never by importing
+ * `isArbitrageFund`, which would agree with the page by construction.
+ *
+ * `cashRuleMV` is what the family-axis headings must attribute to the CASH
+ * INSTRUCTION rather than to the review or the direct-stock rule. On this book
+ * that is exactly the arbitrage funds' value — the liquid funds are on the
+ * review's own Cash sheet by name — and a review that one day files arbitrage
+ * as Cash would make this FAIL rather than drift, which is the direction wanted.
+ *
+ * Null when any input cannot be read, so the checks FAIL rather than pass: an
+ * unreadable store must not read as a book with no arbitrage in it.
+ */
+const CASH_INSTRUCTION_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const store = fundNavStore();
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !Array.isArray(store) || !CASH_EQ_KEYS) return null;
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const small = smallKeysOf(positions);
+    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null;
+    const current = positions.filter((p) => !closed(p) && !small.has(p.securityKey));
+    const arbKeys = new Set(), arbIsins = new Set();
+    for (const e of store) {
+      if (e.sebiCategory !== "Arbitrage Fund") continue;
+      arbKeys.add(e.securityKey);
+      if (e.isin) arbIsins.add(String(e.isin).toUpperCase());
+    }
+    const isArb = (p) => arbKeys.has(p.securityKey) || (!!p.isin && arbIsins.has(String(p.isin).toUpperCase()));
+    const outside = current.filter((p) => CASH_EQ_KEYS.has(p.securityKey) && engagement.get(p.accountId) !== "PMS");
+    const seen = new Set();
+    let arbMV = 0;
+    const arb = new Set(), liquid = new Set();
+    for (const p of outside) {
+      (isArb(p) ? arb : liquid).add(p.securityKey);
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      if (isArb(p)) arbMV += Number(p.marketValue) || 0;
+    }
+    const depository = positions.filter((p) => p.depositoryUnits);
+    const partialAccounts = [...new Set(depository.map((p) => p.accountId))];
+    const largestArb = outside.filter(isArb).sort((a, b) => b.marketValue - a.marketValue)[0]?.securityKey ?? null;
+    const partialOwner = (() => {
+      const a = accounts.find((x) => x.accountId === partialAccounts[0]);
+      return a?.ownerId ?? null;
+    })();
+    return {
+      arb: [...arb], liquid: [...liquid], arbMV, largestArb,
+      depositoryCount: depository.length, depositoryMV: depository.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      partialAccounts, partialOwner,
+    };
   } catch { return null; }
 })();
 
@@ -5429,7 +5617,17 @@ const FUND_CLASSES = [
     const rows = ctx?.tableRows;
     if (!rows?.length) return { notChecked: "no holdings rows captured on this run" };
     if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
-    return rows.every((r) => !FUND_CLASS_BOOK.closedKeys.has(r.securityKey))
+    /*
+     * STRUCK ON THE KEYS REDEEMED EVERYWHERE, NOT ON EVERY KEY WITH A NIL ROW.
+     * The two coincided until a security was redeemed in ONE account and is
+     * still held in another: HDFC Liquid sits at nil in the HDFC folio and is
+     * held on Ajay's demat, whose depository units the live book now values as
+     * the family's cash. The page drops the nil POSITION and correctly draws
+     * the live one under the same key, and a check on `closedKeys` failed it
+     * for doing exactly that. `redeemedKeys` is this block's own comment made
+     * true: a key is closed only where every position under it is at nil.
+     */
+    return rows.every((r) => !FUND_CLASS_BOOK.redeemedKeys.has(r.securityKey))
       // AND the pill it replaced is gone. A build that kept both would list no
       // closed row and still carry code that can never fire, which is the
       // dead-code-that-looks-alive failure — invisible to the half above.
@@ -7522,6 +7720,96 @@ const RETURN_COLUMNS = [
       }
       return true;
     }],
+];
+
+/**
+ * ── ARBITRAGE IS CASH, WHEREVER CASH IS A LINE ─────────────────────────────
+ *
+ *   "Wherever we have cash as asset class or category. Arbitrage funds or
+ *    holdings into that cash as well, because arbitrage funds are nothing but
+ *    basically cash. Implement this everywhere on the dashboard… Arbitrage funds
+ *    need not be classified into any other category except for cash."
+ *
+ * Every claim is struck on a STRUCTURAL handle — the row's own section
+ * (`data-bucket`), the heading's own counts and values (`data-cash-includes`,
+ * `data-cash-rule-mv`) — against `CASH_INSTRUCTION_BOOK`, which is derived from
+ * the checker's model of the live book and AMFI's committed category store.
+ *
+ * THE BOOK'S OWN PREMISE IS A FAILURE, NEVER AN ABSTENTION. The live book
+ * carries three arbitrage funds; a derivation that finds none has lost its
+ * input, and reporting NOT CHECKED there would let the whole feature be deleted
+ * behind a clean sweep. Only a probe that did not run abstains.
+ */
+const cashSection = (axis) => (axis === "basket" ? "Liquidity" : "Cash");
+const CASH_ON_AXIS = (axis) => [
+  [`every arbitrage fund the live book holds is a row under ${cashSection(axis)}, and under nothing else`, (t, ctx) => {
+    const rows = ctx?.tableRows;
+    if (!rows?.length) return { notChecked: "the table was not captured on this run" };
+    const B = CASH_INSTRUCTION_BOOK;
+    if (!B || !B.arb.length) return false;
+    const drawn = rows.filter((r) => r.securityKey && B.arb.includes(r.securityKey));
+    return drawn.length === B.arb.length && drawn.every((r) => r.bucket === cashSection(axis));
+  }],
+];
+const CASH_HEADING_COUNTS = [
+  ["the Cash heading counts the liquid and the arbitrage funds it holds", (t, ctx) => {
+    const inc = ctx?.cashDom?.includes;
+    if (!inc) return { notChecked: "the probe did not run" };
+    const B = CASH_INSTRUCTION_BOOK;
+    if (!B) return false;
+    return inc.length === 1 && inc[0] === `${B.liquid.length}/${B.arb.length}`
+      && /includes \d+ liquid and \d+ arbitrage funds? the family counts as cash/i.test(t);
+  }],
+];
+/**
+ * ON THE FAMILY'S OWN AXES THE HEADING SAYS WHICH RULE PUT THEM THERE. Their
+ * review files arbitrage as Debt; the family's instruction overrules it, and the
+ * heading must credit that instruction — never the review, and never the
+ * direct-stock rule, whose sentence ("all the direct stocks belong to Thematic &
+ * Tactical") over a Liquidity basket of arbitrage funds would name the wrong
+ * rule beside the largest figure in the section.
+ */
+const CASH_RULE_HEADINGS = (axis) => [
+  [`the ${cashSection(axis)} heading credits the arbitrage funds to the family's cash instruction, to the rupee`, (t, ctx) => {
+    const secs = ctx?.cashDom?.sections;
+    if (!secs) return { notChecked: "the probe did not run" };
+    const B = CASH_INSTRUCTION_BOOK;
+    if (!B) return false;
+    const sec = secs.find((x) => x.key === cashSection(axis));
+    return !!sec && sec.cashRuleMV != null && Math.abs(sec.cashRuleMV - B.arbMV) <= 1
+      && /counted as cash by the family.s instruction/i.test(sec.text);
+  }],
+  ["...and no heading credits them to the direct-stock rule, or the cash instruction to anything else", (t, ctx) => {
+    const secs = ctx?.cashDom?.sections;
+    if (!secs?.length) return { notChecked: "no section headings on this run" };
+    const strayCash = secs.filter((x) => x.key !== cashSection(axis) && (x.cashRuleMV ?? 0) > 1);
+    const strayStock = secs.filter((x) => x.key !== "Thematic & Tactical" && x.ruleMV > 1);
+    return strayCash.length === 0 && strayStock.length === 0;
+  }],
+];
+const ALLOC_CASH_RULE = (axis) => [
+  [`the allocation card names the value the cash instruction placed in ${cashSection(axis)}, as its own rule`, (t, ctx) => {
+    const d = ctx?.cashDom;
+    if (!d) return { notChecked: "the probe did not run" };
+    const B = CASH_INSTRUCTION_BOOK;
+    if (!B) return false;
+    const c = d.allocCashRule;
+    return !!c && Math.abs(c.mv - B.arbMV) <= 1
+      && new RegExp(`is ${cashSection(axis)} by their instruction that arbitrage and liquid funds are cash`, "i").test(c.text);
+  }],
+];
+/** A DEPOSITORY BALANCE IS NO STATEMENT MARK, AND THE PAGE THAT OFFERS ONE SAYS SO. */
+const HB_DEPOSITORY = [
+  ["the holdings no statement marks are named under the statement-basis figure, with their count", (t, ctx) => {
+    const d = ctx?.cashDom;
+    if (!d) return { notChecked: "the probe did not run" };
+    const B = CASH_INSTRUCTION_BOOK;
+    if (!B) return false;
+    if (B.depositoryCount === 0) return !d.hbDepository;
+    const h = d.hbDepository;
+    return !!h && h.n === B.depositoryCount && /AMFI/.test(h.text)
+      && /transaction statement and no holding statement/.test(h.text) && /not\s+in that figure/.test(h.text);
+  }],
 ];
 
 const INVARIANTS = {
@@ -9867,6 +10155,7 @@ const INVARIANTS = {
   ],
   "holdings-book": [
     ...DRILLDOWN_CHROME_GONE,
+    ...HB_DEPOSITORY,
     ...DRILLDOWN_FACET_NOTE,
     /**
      * ── A CLOSED POSITION IS NOT LISTED BEHIND THE FIGURE ANY MORE ──────────
@@ -9907,7 +10196,9 @@ const INVARIANTS = {
       // shrugged at it could not fail in the one direction that matters.
       if (!hb || !hb.keys.length) return false;
       return hb.marked.length === 0
-        && hb.keys.every((k) => !FUND_CLASS_BOOK.closedKeys.has(k))
+        // Redeemed EVERYWHERE — see the monitor's own check for the key that
+        // is redeemed in one account and held in another.
+        && hb.keys.every((k) => !FUND_CLASS_BOOK.redeemedKeys.has(k))
         && !/\bredeemed\b/i.test(t);
     }],
     /**
@@ -10915,7 +11206,7 @@ const INVARIANTS = {
       if (!FUND_CLASS_BOOK?.closedKeys.size) return { notChecked: "no holding in this book is redeemed to nil" };
       const keys = ctx?.pmFunds;
       if (!keys?.length) return false;
-      return keys.every((k) => !FUND_CLASS_BOOK.closedKeys.has(k));
+      return keys.every((k) => !FUND_CLASS_BOOK.redeemedKeys.has(k));
     }],
 
     /**
@@ -12252,8 +12543,8 @@ const INVARIANTS = {
         && !/Today\u2019s movers/i.test(t);
     }],
   ],
-  "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
-  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS],
+  "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket")],
+  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass")],
 
   monitor: [
     /**
@@ -12676,8 +12967,11 @@ const INVARIANTS = {
      * available reading is that the app has misfiled them. It is one of the few
      * places a count is load-bearing rather than chrome.
      */
-    ["the Cash section names the liquid holdings it took in", (t) =>
-      /includes \d+ liquid holdings? the statements type as a fund/i.test(t)],
+    /* The count is now LIQUID AND ARBITRAGE, and struck on the heading's own
+       `data-cash-includes` against the book rather than on a word pattern that a
+       page printing any number would satisfy. */
+    ...CASH_HEADING_COUNTS,
+    ...CASH_ON_AXIS("category"),
 
     /**
      * ── THE DATE, BESIDE THE AMOUNT ──────────────────────────────────────────
@@ -13426,7 +13720,10 @@ const INVARIANTS = {
       const derived  = cr(/and ₹([\d,.]+)\s*(Cr|L|K)? DERIVED/i);
       const opaque   = cr(/₹([\d,.]+)\s*(Cr|L|K)? sits inside vehicles that publish no holdings/i);
       const nonEq    = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the part of a disclosed fund no line in the filing accounted for/i);
-      const cash     = cr(/₹([\d,.]+)\s*(Cr|L|K)? is the book/i);
+      // CASH NAMES THE ARBITRAGE FUNDS IT HOLDS. The figure is read off the
+      // sentence that says so, so a page that went on counting them while its
+      // words stopped saying what the bucket is made of fails here.
+      const cash     = cr(/₹([\d,.]+)\s*(Cr|L|K)? is cash: the book.s own cash rows and the arbitrage funds/i);
       const all = [covers, directly, derived, opaque, nonEq, cash];
       if (all.some((v) => !Number.isFinite(v))) return false;
       // Each figure against its own independently-derived expectation...
@@ -13930,8 +14227,10 @@ const INVARIANTS = {
   // The totals row renders on every axis, so its claims are checked on every
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
-  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES],
-  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES],
+  "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
+    ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS],
+  "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
+    ...CASH_ON_AXIS("basket"), ...CASH_RULE_HEADINGS("basket")],
   /**
    * ── AND ONE OF THEM ACTUALLY OPENED, ON THE DEFAULT AXIS ──────────────────
    *
@@ -15226,7 +15525,42 @@ const INVARIANTS = {
    * the old wording above a working chart satisfies the second. A removal is
    * verified by asserting it happened.
    */
+  "family-partial": [
+    ["the member's partly valued account is listed as such, with its own note", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const B = CASH_INSTRUCTION_BOOK;
+      if (!B || !B.partialOwner) return false;
+      return d.partialAccounts.length === B.partialAccounts.length && d.partialAccounts.every((x) =>
+        /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.text));
+    }],
+  ],
+  "stock-arbitrage": [
+    ["an arbitrage fund's own page says it is Cash — an arbitrage fund the family counts as cash", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      return d.stockClass === "Cash" && /arbitrage fund/i.test(d.stockClassText ?? "")
+        && /counts as cash/i.test(d.stockClassText ?? "");
+    }],
+    ["...and draws no look-through: a hedged book of long shares is not this family's stock", (t) =>
+      !/The scheme — NAV, returns and what it holds/.test(t)],
+    ["...and its mark names the depository and AMFI, because no statement priced it", (t, ctx) =>
+      (ctx?.titles ?? []).some((x) => /depository/i.test(x) && /AMFI/.test(x))],
+  ],
   performance: [
+    /**
+     * A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. The demat that
+     * sent only a transaction statement now carries its cash-equivalent funds at
+     * AMFI's NAV, and a bare total beside it would read as the whole account.
+     */
+    ["an account valued only in part says so beside its figure, and names what is not valued", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const B = CASH_INSTRUCTION_BOOK;
+      if (!B) return false;
+      return d.partial.length === B.partialAccounts.length && d.partial.every((x) =>
+        /partial/.test(x.text) && /transaction statement and no holding statement/.test(x.title) && /not valued/.test(x.title));
+    }],
     ["the stale 'no valuation series' absence is gone", (t) =>
       !/No valuation series in this book/i.test(t)
       && !/two points are not a trajectory/i.test(t)],
@@ -16747,6 +17081,47 @@ for (const theme of THEMES) {
        */
       const closedNote = FAST ? null : await page.evaluate(() =>
         (document.querySelector("[data-closed-note]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null);
+      /**
+       * ── THE FAMILY'S CASH, READ AS STRUCTURE ────────────────────────────────
+       *
+       *   "Wherever we have cash as asset class or category… we need to show
+       *    arbitrage funds inside it."
+       *
+       * Every claim about where an arbitrage fund sits, and on whose authority,
+       * is struck on attributes the page writes beside the prose: the Cash
+       * heading's own liquid/arbitrage count, each section's value placed by
+       * the cash instruction, the depository provenance on `/holdings`, the
+       * partial-valuation marker an account carries once some of it is valued,
+       * and the class the stock page states. A heading's words are free to be
+       * reworded; a count in an attribute is what a reader's figure is.
+       */
+      const cashDom = FAST ? null : await page.evaluate(() => ({
+        includes: [...document.querySelectorAll("[data-cash-includes]")].map((e) => e.getAttribute("data-cash-includes")),
+        sections: [...document.querySelectorAll("tr[data-section]")].map((tr) => ({
+          key: tr.getAttribute("data-section"),
+          axis: tr.getAttribute("data-axis"),
+          ruleMV: Number(tr.getAttribute("data-rule-mv") ?? "NaN"),
+          cashRuleMV: tr.hasAttribute("data-cash-rule-mv") ? Number(tr.getAttribute("data-cash-rule-mv")) : null,
+          text: (tr.innerText ?? "").replace(/\s+/g, " ").trim(),
+        })),
+        allocCashRule: (() => {
+          const e = document.querySelector("[data-testid=alloc-cash-rule]");
+          return e ? { mv: Number(e.getAttribute("data-cash-rule-mv")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+        })(),
+        allocSource: (document.querySelector("[data-testid=alloc-taxonomy-source]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+        hbDepository: (() => {
+          const e = document.querySelector("[data-hb-depository]");
+          return e ? { n: Number(e.getAttribute("data-hb-depository")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+        })(),
+        partial: [...document.querySelectorAll("[data-partial-valuation]")].map((e) => ({
+          text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "",
+        })),
+        partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({
+          text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+        })),
+        stockClass: document.querySelector("[data-stock-class]")?.getAttribute("data-stock-class") ?? null,
+        stockClassText: (document.querySelector("[data-stock-class]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+      }));
       /**
        * ── THE AIF DRILL-DOWN'S SECTIONS, READ AS STRUCTURE ───────────────────
        *
@@ -18627,7 +19002,7 @@ for (const theme of THEMES) {
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
           try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU, tilePick: TILE_PICK, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels,
-            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, path, url: page.url() }); }
+            capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundExposure, stockCoverage, colNotes, donut, sectorSource, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, stockMark, polycabDom, callBuckets, callRows, schemeCalls, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, quotePriority: QUOTE_PRIORITY, cashDom, path, url: page.url() }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
