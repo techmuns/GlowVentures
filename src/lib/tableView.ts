@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { readMemory, subscribeMemory, writeMemory } from "@/lib/viewMemory";
 
 export type SortDir = "asc" | "desc";
 export type TableSort = { col: string; dir: SortDir } | null;
@@ -24,7 +25,160 @@ export type TableView = {
   fixed: string;
 };
 
+/**
+ * WHAT IS SAVED FOR A TABLE: every column it has ever been arranged with, in
+ * the reader's order — INCLUDING the ones not drawn right now — and its sort.
+ * An empty `order` means "never arranged": the table follows its declared order.
+ */
+export type StoredView = { order: readonly string[]; sort: TableSort };
+
 const KEY = (k: string) => `glow:tableView:${k}:v1`;
+const EMPTY: StoredView = Object.freeze({ order: Object.freeze([]) as readonly string[], sort: null });
+const NO_LEGACY: readonly string[] = [];
+
+/** Read what a table saved, from any build: unknown fields are ignored, a bad sort is dropped. */
+export function parseStoredView(raw: unknown): StoredView | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as { order?: unknown; sort?: unknown };
+  const order: string[] = [];
+  if (Array.isArray(r.order)) {
+    for (const c of r.order) if (typeof c === "string" && c && !order.includes(c)) order.push(c);
+  }
+  const s = r.sort as { col?: unknown; dir?: unknown } | null | undefined;
+  const sort: TableSort = s && typeof s === "object" && typeof s.col === "string" && (s.dir === "asc" || s.dir === "desc")
+    ? { col: s.col, dir: s.dir } : null;
+  return { order, sort };
+}
+
+/**
+ * What a table saved, falling back to the keys it used to save under — so a
+ * table whose key was merged keeps the arrangement the reader already made.
+ */
+export function storedView(storageKey: string, legacyKeys: readonly string[]): StoredView {
+  const own = readMemory(KEY(storageKey), parseStoredView);
+  if (own) return own;
+  for (const k of legacyKeys) {
+    const v = readMemory(KEY(k), parseStoredView);
+    if (v) return v;
+  }
+  return EMPTY;
+}
+
+/**
+ * A saved sort applies while its column is drawn — and is KEPT, not dropped,
+ * while it is not, so a tab that hides the column gives the sort back when the
+ * reader returns to one that draws it.
+ */
+export const visibleSort = (sort: TableSort, declared: readonly string[]): TableSort =>
+  sort && declared.includes(sort.col) ? sort : null;
+
+/** `ret:cagr` → `ret`. Columns of one family (one per return measure) stay together. */
+const familyOf = (c: string) => { const i = c.indexOf(":"); return i > 0 ? c.slice(0, i) : null; };
+
+/**
+ * ── THE WHOLE ARRANGEMENT, WITH EVERY DECLARED COLUMN IN IT ────────────────
+ *
+ * The saved order, with each column this table declares that the reader has
+ * never placed put where it belongs — and every column the reader HAS placed
+ * kept exactly where they put it, whether or not it is drawn right now.
+ *
+ * That last clause is the fix for *"remember the exact position … even when i
+ * am changing the tab"*. A table's columns change with its tab and its picker:
+ * the security axis adds Via funds and Total exposure, the return picker adds
+ * a column per measure. The old rule kept only the columns drawn at the time,
+ * so arranging one tab threw away where the reader had put the other tab's
+ * columns, and a column that came back reappeared at the far right.
+ *
+ * A column never placed goes:
+ *   - beside its own family — a newly ticked return goes with the other
+ *     returns, wherever the reader has put them, in the picker's order;
+ *   - otherwise right after the column it is declared after, wherever the
+ *     reader has moved that one — Via funds follows Market value.
+ * With nothing saved, that reproduces the declared order exactly.
+ */
+export function arrangeColumns(stored: readonly string[], declared: readonly string[]): string[] {
+  const fixed = declared[0];
+  if (fixed === undefined) return [];
+  const rest: string[] = [];
+  const seen = new Set<string>([fixed]);
+  for (const c of stored) {
+    if (typeof c !== "string" || seen.has(c)) continue;
+    seen.add(c);
+    rest.push(c);
+  }
+  for (let i = 1; i < declared.length; i++) {
+    const c = declared[i];
+    if (seen.has(c)) continue;
+    const fam = familyOf(c);
+    const pred = i > 1 ? declared[i - 1] : null;
+    let at: number;
+    if (pred && fam && familyOf(pred) === fam) {
+      at = rest.indexOf(pred) + 1;
+    } else {
+      const members = fam ? rest.filter((x) => familyOf(x) === fam) : [];
+      if (members.length) {
+        // Before the first sibling that comes AFTER it in the picker's order,
+        // or after the last sibling where none does.
+        const later = members.filter((x) => declared.indexOf(x) > i);
+        at = later.length ? rest.indexOf(later[0]) : rest.indexOf(members[members.length - 1]) + 1;
+      } else {
+        at = pred ? rest.indexOf(pred) + 1 : 0;
+      }
+    }
+    rest.splice(at, 0, c);
+    seen.add(c);
+  }
+  return [fixed, ...rest];
+}
+
+/** The columns as they are DRAWN: the whole arrangement, narrowed to what this table declares. */
+export function visibleOrder(stored: readonly string[], declared: readonly string[]): string[] {
+  const want = new Set(declared);
+  return arrangeColumns(stored, declared).filter((c) => want.has(c));
+}
+
+/**
+ * The whole arrangement after putting `col` before `before` (or after the last
+ * DRAWN column when `before` is null). `null` when the move is refused: the
+ * first column is neither a subject nor a destination, and a column not drawn
+ * cannot be carried.
+ */
+export function moveColumn(stored: readonly string[], declared: readonly string[], col: string, before: string | null): string[] | null {
+  const all = arrangeColumns(stored, declared);
+  const fixed = all[0];
+  if (fixed === undefined || col === fixed || col === before || !declared.includes(col)) return null;
+  const rest = all.slice(1).filter((c) => c !== col);
+  let at: number;
+  if (before === fixed) at = 0;
+  else if (before && rest.includes(before)) at = rest.indexOf(before);
+  else {
+    const drawn = new Set(declared);
+    let last = -1;
+    rest.forEach((c, i) => { if (drawn.has(c)) last = i; });
+    at = last + 1;
+  }
+  rest.splice(at, 0, col);
+  return [fixed, ...rest];
+}
+
+/**
+ * One place left or right among the DRAWN columns — the keyboard's drag. A
+ * column not drawn keeps its place. `null` when the nudge would pass the first
+ * column or fall off the end.
+ */
+export function nudgeColumn(stored: readonly string[], declared: readonly string[], col: string, delta: -1 | 1): string[] | null {
+  const all = arrangeColumns(stored, declared);
+  const fixed = all[0];
+  if (fixed === undefined || col === fixed) return null;
+  const drawn = all.filter((c) => declared.includes(c));
+  const i = drawn.indexOf(col), j = i + delta;
+  if (i < 0 || j < 1 || j >= drawn.length) return null;
+  const neighbour = drawn[j];
+  const rest = all.slice(1).filter((c) => c !== col);
+  const k = rest.indexOf(neighbour);
+  rest.splice(delta < 0 ? k : k + 1, 0, col);
+  return [fixed, ...rest];
+}
 
 /**
  * ── ONE DEFINITION OF "HOW THIS TABLE IS ARRANGED" ──────────────────────────
@@ -64,109 +218,73 @@ const KEY = (k: string) => `glow:tableView:${k}:v1`;
  * among the smallest. Sorting them to the TOP on ascending would put every
  * holding whose custodian sends no cost at the head of a table about cost.
  *
- * ── STORED PER TABLE, IN `localStorage`, AND NOWHERE NEAR THE BOOK ──────────
+ * ── REMEMBERED EXACTLY, ACROSS TABS, FROM THE FIRST PAINT ───────────────────
  *
- * It is a preference about a screen, exactly like the nav's width and the
- * Extras group's open state, so it never reaches `glowData.ts`. Every read and
- * write is wrapped, because the accessor throws in a private window and a
- * blocked store must leave the table rendering its declared order rather than
- * rendering nothing. Deliberately NOT a URL param: there are fifty-odd tables
- * and a param each would make every address unreadable, and unlike the private
- * market's tile picker nothing here changes WHICH FIGURES are on screen — only
- * the order they are read in.
+ * Saved per table in `localStorage` through `viewMemory.ts`, and nowhere near
+ * the book. What is saved is the WHOLE arrangement (`arrangeColumns`), so a
+ * column the current tab does not draw keeps its place for the tab that does;
+ * a sort on such a column is kept too, and applies again when it is drawn. It
+ * is read before the first paint, so a page never opens on the declared order
+ * and then jumps. `legacyKeys` names keys a merged table used to save under.
+ * Deliberately NOT a URL param: there are fifty-odd tables and a param each
+ * would make every address unreadable, and nothing here changes WHICH FIGURES
+ * are on screen — only the order they are read in.
  */
-export function useTableView(storageKey: string, columns: readonly string[]): TableView {
-  const declared = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [columns]);
+export function useTableView(storageKey: string, columns: readonly string[], opts?: { legacyKeys?: readonly string[] }): TableView {
+  // Keyed on the CONTENT of the list, so a caller that rebuilds the same list
+  // every render does not re-derive the arrangement every render.
+  const colKey = columns.join("\u0001");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const declared = useMemo(() => columns.filter((c, i) => columns.indexOf(c) === i), [colKey]);
   const fixed = declared[0] ?? "";
+  const legacy = opts?.legacyKeys ?? NO_LEGACY;
+  const legacyKey = legacy.join("\u0001");
 
-  const [state, setState] = useState<{ order: string[]; sort: TableSort }>(() => ({ order: [...declared], sort: null }));
+  const subscribe = useCallback((l: () => void) => subscribeMemory(KEY(storageKey), l), [storageKey]);
+  const read = () => storedView(storageKey, legacy);
+  const stored = useSyncExternalStore(subscribe, read, read);
 
-  /**
-   * READ ON MOUNT RATHER THAN IN THE INITIALISER, and reconciled against the
-   * columns this build declares: a set saved by an older build can name a
-   * column that no longer exists, and one that has GAINED a column must show
-   * it rather than silently hiding it at the end of the world. Unknown ids are
-   * dropped, missing ones are appended in declared order, and a stored sort on
-   * a column that has gone is discarded.
-   */
-  useEffect(() => {
-    let stored: { order?: unknown; sort?: unknown } | null = null;
-    try {
-      const raw = window.localStorage.getItem(KEY(storageKey));
-      if (raw) stored = JSON.parse(raw) as { order?: unknown; sort?: unknown };
-    } catch { /* private mode, or a value this build cannot parse */ }
-    const kept = Array.isArray(stored?.order)
-      ? (stored!.order as unknown[]).filter((c): c is string => typeof c === "string" && declared.includes(c))
-      : [];
-    const order = kept.length
-      ? [fixed, ...kept.filter((c) => c !== fixed), ...declared.filter((c) => c !== fixed && !kept.includes(c))]
-      : [...declared];
-    const s = stored?.sort as TableSort | undefined;
-    const sort = s && typeof s === "object" && declared.includes(s.col) && (s.dir === "asc" || s.dir === "desc")
-      ? { col: s.col, dir: s.dir } : null;
-    setState({ order, sort });
-  }, [storageKey, declared, fixed]);
+  const order = useMemo(() => visibleOrder(stored.order, declared), [stored.order, declared]);
+  const sort = visibleSort(stored.sort, declared);
 
-  const commit = useCallback((next: { order: string[]; sort: TableSort }) => {
-    setState(next);
-    try { window.localStorage.setItem(KEY(storageKey), JSON.stringify(next)); } catch { /* private mode */ }
-  }, [storageKey]);
+  // Every change reads what is saved NOW rather than what this render saw, so
+  // two quick changes cannot write over each other.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const current = useCallback(() => storedView(storageKey, legacy), [storageKey, legacyKey]);
+  const save = useCallback((next: StoredView) => writeMemory(KEY(storageKey), next), [storageKey]);
 
   const toggleSort = useCallback((col: string) => {
-    setState((p) => {
-      /**
-       * THREE STATES, NOT TWO, AND THE THIRD IS THE ONE THAT MATTERS. A third
-       * click clears the sort and puts the table back in the order its own page
-       * chose — which is routinely a meaningful order (largest first, newest
-       * first, the statement's own) rather than an arbitrary one, so a reader
-       * who sorted by a column must be able to get that back without reloading.
-       */
-      const next: { order: string[]; sort: TableSort } = p.sort?.col !== col
-        ? { order: p.order, sort: { col, dir: "desc" } }
-        : p.sort.dir === "desc"
-          ? { order: p.order, sort: { col, dir: "asc" } }
-          : { order: p.order, sort: null };
-      try { window.localStorage.setItem(KEY(storageKey), JSON.stringify(next)); } catch { /* private mode */ }
-      return next;
-    });
-  }, [storageKey]);
+    const cur = current();
+    const eff = visibleSort(cur.sort, declared);
+    /**
+     * THREE STATES, NOT TWO, AND THE THIRD IS THE ONE THAT MATTERS. A third
+     * click clears the sort and puts the table back in the order its own page
+     * chose — which is routinely a meaningful order (largest first, newest
+     * first, the statement's own) rather than an arbitrary one, so a reader
+     * who sorted by a column must be able to get that back without reloading.
+     */
+    const next: TableSort = eff?.col !== col ? { col, dir: "desc" }
+      : eff.dir === "desc" ? { col, dir: "asc" } : null;
+    save({ order: cur.order, sort: next });
+  }, [current, declared, save]);
 
   const move = useCallback((col: string, before: string | null) => {
-    // THE FIXED COLUMN IS NEITHER A SUBJECT NOR A DESTINATION: it is the row's
-    // identity and the family asked for it to stay put.
-    if (col === fixed || col === before) return;
-    setState((p) => {
-      const rest = p.order.filter((c) => c !== col && c !== fixed);
-      const at = before && before !== fixed ? rest.indexOf(before) : rest.length;
-      rest.splice(at < 0 ? rest.length : at, 0, col);
-      const next = { order: [fixed, ...rest], sort: p.sort };
-      try { window.localStorage.setItem(KEY(storageKey), JSON.stringify(next)); } catch { /* private mode */ }
-      return next;
-    });
-  }, [fixed, storageKey]);
+    const cur = current();
+    const next = moveColumn(cur.order, declared, col, before);
+    if (next) save({ order: next, sort: cur.sort });
+  }, [current, declared, save]);
 
   const nudge = useCallback((col: string, delta: -1 | 1) => {
-    if (col === fixed) return;
-    setState((p) => {
-      const i = p.order.indexOf(col);
-      const j = i + delta;
-      // Never past the fixed column, never off either end.
-      if (i < 0 || j < 1 || j >= p.order.length) return p;
-      const order = [...p.order];
-      [order[i], order[j]] = [order[j], order[i]];
-      const next = { order, sort: p.sort };
-      try { window.localStorage.setItem(KEY(storageKey), JSON.stringify(next)); } catch { /* private mode */ }
-      return next;
-    });
-  }, [fixed, storageKey]);
+    const cur = current();
+    const next = nudgeColumn(cur.order, declared, col, delta);
+    if (next) save({ order: next, sort: cur.sort });
+  }, [current, declared, save]);
 
-  const reset = useCallback(() => commit({ order: [...declared], sort: null }), [commit, declared]);
+  const reset = useCallback(() => save({ order: [], sort: null }), [save]);
 
-  const isDefault = state.sort == null
-    && state.order.length === declared.length
-    && state.order.every((c, i) => c === declared[i]);
+  const isDefault = sort == null && order.every((c, i) => c === declared[i]);
 
-  return { order: state.order, columns: declared, sort: state.sort, toggleSort, move, nudge, reset, isDefault, fixed };
+  return { order, columns: declared, sort, toggleSort, move, nudge, reset, isDefault, fixed };
 }
 
 /**

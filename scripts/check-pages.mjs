@@ -4394,8 +4394,13 @@ const ROUTES = [
    * the XIRR column, its pooled footer and the refused aggregates need their
    * subject — and they move here rather than being softened into something one
    * column satisfies.
+   *
+   * THE BARE ADDRESS, WITH NOTHING SAVED, SINCE Stage 10cs: *"make default All
+   * ratios showing coloumns as selected"*. Every measure is what a fresh reader
+   * opens on now, so this route is that reader — `RETURN_DEFAULT_ROUTES` —
+   * rather than a `?ret=` address asking for it.
    */
-  ["private-market-returns", "/private-market?ret=absolute,cagr,xirr,ytd,calendar"],
+  ["private-market-returns", "/private-market"],
   /**
    * ── THE CAPITAL-CALL COLUMN, WITH A STORE BEHIND IT ──────────────────────
    *
@@ -4460,6 +4465,21 @@ const ROUTES = [
    * under the wrong heading.
    */
   ["monitor-arrange", "/monitor?group=category"],
+  /**
+   * ── AN ARRANGEMENT AND A RETURN PICK, REMEMBERED ACROSS TABS (Stage 10cs) ─
+   *
+   * *"when i am drag and drop rearranging the coloumns then the system needs
+   *  to remeber the exact position and save it even when i am changing the tab
+   *  i will not keep doing the same configuration again"*, and *"make default
+   *  All ratios showing coloumns as selected … and remeber it the next time"*.
+   *
+   * A fresh reader (`RETURN_DEFAULT_ROUTES`, nothing saved). The walk moves a
+   * column on Category, crosses to All Securities and moves one only that axis
+   * draws, crosses back and moves another, crosses again — then picks a return,
+   * leaves the page, comes back, reloads, and ticks a measure. Every snapshot is
+   * a claim: see `REMEMBER` and the invariants.
+   */
+  ["monitor-remember", "/monitor?group=category"],
   // ...AND THE SAME TAPE DRILLED INTO. The rollup's whole claim is that a
   // collapsed line still carries every dated row underneath it, and that is only
   // true once something expands one. Walked as its own route so a regression
@@ -4537,11 +4557,12 @@ const ROUTES = [
    *   *"Just like in the holdings page, we have return methodology selector add
    *    the same to the transactions page as well. With the same functioning."*
    *
-   * Every measure ticked at once, by URL — `?ret=` is shared with the Holdings
-   * table, so the picker is the same control reading the same param — and the
-   * walk clicks Transactions, as every route here does.
+   * Every measure ticked at once — the picker is the Holdings table's own
+   * control, reading the same pick — and the walk clicks Transactions, as
+   * every route here does. Since Stage 10cs every measure is the DEFAULT, so
+   * this is the bare address with nothing saved (`RETURN_DEFAULT_ROUTES`).
    */
-  ["monitor-txn-returns", "/monitor?ret=absolute,cagr,xirr,ytd,calendar"],
+  ["monitor-txn-returns", "/monitor"],
   /**
    * ...AND CROSSING BACK FROM IT.
    *
@@ -5479,6 +5500,48 @@ let AXIS_DRILL = null;
  * first and last states would call that a working move.
  */
 const ARRANGE = { before: null, desc: null, sorted: null, moved: null, lift: null, dropped: null, escape: null, back: null };
+/**
+ * ── WHO OPENS AS A FRESH READER (Stage 10cs) ────────────────────────────────
+ *
+ * A reader with nothing saved now opens every return table on all five
+ * measures, one column each. Most routes here were written against ONE return
+ * column — the COL maps count it as one — so every route but these starts as a
+ * reader who picked "by methodology": a real, saved state (the same key and
+ * shape the picker writes), seeded before the app boots and only where nothing
+ * is saved, so a pick a walk makes survives its own reload. These three get no
+ * seed, because the default IS their subject.
+ */
+const RETURN_DEFAULT_ROUTES = new Set(["private-market-returns", "monitor-txn-returns", "monitor-remember"]);
+const RETURN_PICK_KEYS = ["glow:returnMeasures:monitor:v1", "glow:returnMeasures:private-market:v1"];
+/** Does this address ask for a return pick? `true` where it cannot be read, so a check fails rather than passes. */
+const addressAsksForReturns = (url) => { try { return new URL(url).searchParams.has("ret"); } catch { return true; } };
+/** Two column orders, drawn identically. */
+const sameCols = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((c, i) => c === b[i]);
+/** A column order with two columns' places exchanged — one keyboard nudge. */
+const swapCols = (cols, a, b) => (cols ?? []).map((c) => (c === a ? b : c === b ? a : c));
+/** The run of `ret:*` columns replaced by the one column `into`, where the run began. */
+const collapseReturns = (cols, into) => {
+  const i = (cols ?? []).findIndex((c) => String(c).startsWith("ret:"));
+  return i < 0 ? cols : [...cols.slice(0, i), into, ...cols.slice(i).filter((c) => !String(c).startsWith("ret:"))];
+};
+/**
+ * A FRESH READER OPENS ON EVERY MEASURE (Stage 10cs) — five ticked, BY DEFAULT
+ * rather than by an address or a saved pick, and nothing in the address. Run
+ * on the routes in `RETURN_DEFAULT_ROUTES` that open on a table.
+ */
+const FRESH_READER_PICK = ["a fresh reader opens on every return measure, by default, with nothing in the address asking for it", (t, ctx) => {
+  const rs = ctx?.returnSelect;
+  if (!rs) return false;   // the handle is gone — the picker is, too
+  return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar" && rs.source === "default"
+    && !addressAsksForReturns(ctx.url);
+}];
+/**
+ * WHAT `monitor-remember` SAW AT EACH STEP — the column order the holdings
+ * table drew, the picker's ticked measures and where they came from, and the
+ * address. `null` on every other route, which its invariants report as a
+ * FAILURE there (it is the one route that walks it), never as a pass.
+ */
+let REMEMBER = null;
 /**
  * WHAT THE HOLDINGS SEARCH SAYS WHEN IT FINDS NOTHING — read off the control
  * the family used, on `monitor-absent-name` only, `null` everywhere else.
@@ -13160,6 +13223,7 @@ const INVARIANTS = {
   "monitor-txn-returns": [
     ...txnMergedChecks(),
     ...CAPITAL_RETURN_CHECKS,
+    FRESH_READER_PICK,
     ["the return picker is on the Transactions view, offering every measure, with all five ticked", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;   // the handle is gone — the picker is, too
@@ -13752,6 +13816,123 @@ const INVARIANTS = {
         && B.after.cols.join() === B.before.cols.join()
         && B.after.rows.length === B.before.rows.length && B.after.rows.every((k, j) => B.before.rows[j] === k)
         && B.after.ghosts === 0;
+    }],
+  ],
+  /**
+   * ── REMEMBERED ACROSS TABS, AND ACROSS VISITS (Stage 10cs) ────────────────
+   *
+   * *"remeber the exact position and save it even when i am changing the tab"*
+   * and *"make default All ratios showing coloumns as selected … and remeber it
+   * the next time"*. Each claim holds one snapshot of the walk to the one
+   * before it — never to a literal order, so a new column in the table moves
+   * the expectation with it. A walk that captured nothing is a FINDING, not an
+   * abstention: this route draws the table on every build.
+   */
+  "monitor-remember": [
+    ["a fresh reader opens on every return measure, one column each, in the picker's order, with nothing saved", (t, ctx) => {
+      const I = ctx.remember?.initial;
+      if (!I?.cols?.length) return false;
+      const five = ["absolute", "cagr", "xirr", "ytd", "calendar"];
+      const at = I.cols.indexOf("ret:absolute");
+      return I.active.join(",") === five.join(",") && I.source === "default" && !/[?&]ret=/.test(I.url)
+        && at > 0 && five.every((m, k) => I.cols[at + k] === `ret:${m}`) && !I.cols.includes("ret:auto")
+        && I.savedOrder === null && I.savedPick === null;
+    }],
+    ["a column moved on Category stays where it was put, and is saved", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.initial?.cols?.length || !R.c1) return false;
+      const want = [R.initial.cols[0], "mv", ...R.initial.cols.slice(1).filter((c) => c !== "mv")];
+      return R.initial.cols.indexOf("mv") > 1 && sameCols(R.c1.cols, want) && R.c1.savedOrder?.[1] === "mv";
+    }],
+    ["…crossing to All Securities keeps it, and the columns only that tab draws follow Market value", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.c1 || !R.s1) return false;
+      return R.s1.axis === "security" && R.s1.cols[1] === "mv" && R.s1.cols[2] === "viaFunds" && R.s1.cols[3] === "totalExposure"
+        && sameCols(R.s1.cols.filter((c) => c !== "viaFunds" && c !== "totalExposure"), R.c1.cols);
+    }],
+    ["…a move made on All Securities is kept", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.s1 || !R.s2) return false;
+      return sameCols(R.s2.cols, swapCols(R.s1.cols, "viaFunds", "totalExposure"));
+    }],
+    ["…crossing back to Category draws exactly what the reader left there", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.c1 || !R.c2) return false;
+      return R.c2.axis === "category" && sameCols(R.c2.cols, R.c1.cols);
+    }],
+    /**
+     * THE DEFECT ITSELF. A save made while the security-only columns are not
+     * drawn used to keep only what was drawn, so the reader's placing of Via
+     * funds and Total exposure was lost the moment they arranged Category —
+     * and the two came back at the far right. Held twice: in what the browser
+     * saved, and in what All Securities draws next.
+     */
+    ["…and a move made on Category keeps where the reader put the columns Category does not draw", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.c2 || !R.c3 || !R.s2 || !R.s3) return false;
+      const saved = R.c3.savedOrder ?? [];
+      return sameCols(R.c3.cols, swapCols(R.c2.cols, "qty", "avgCost"))
+        && saved.indexOf("totalExposure") > 0 && saved.indexOf("totalExposure") < saved.indexOf("viaFunds")
+        && R.s3.axis === "security" && sameCols(R.s3.cols, swapCols(R.s2.cols, "qty", "avgCost"));
+    }],
+    ["a return pick is remembered in this browser, and the address stays clean", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.a1 || !R.s3) return false;
+      return /remembered/i.test(R.autoKept ?? "") && R.a1.active.join() === "auto" && R.a1.source === "saved"
+        && !/[?&]ret=/.test(R.a1.url) && sameCols(R.a1.savedPick ?? [], ["auto"])
+        && sameCols(R.a1.cols, collapseReturns(R.s3.cols, "ret:auto"));
+    }],
+    ["…leaving the page and coming back opens it the same way", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.back || !R.a1) return false;
+      return R.awayAt === "/cio" && R.back.active.join() === "auto" && R.back.source === "saved"
+        && !/[?&]ret=/.test(R.back.url) && R.back.axis === R.a1.axis && sameCols(R.back.cols, R.a1.cols);
+    }],
+    ["…and so does a reload", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.reloaded || !R.a1) return false;
+      return R.reloaded.active.join() === "auto" && R.reloaded.source === "saved" && sameCols(R.reloaded.cols, R.a1.cols);
+    }],
+    ["a measure ticked later takes the returns' place, not the far right", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.cagr || !R.s3) return false;
+      return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "cagr" && R.cagr.source === "saved"
+        && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:cagr"));
+    }],
+    /**
+     * ANOTHER BROWSER TAB shares this browser's memory: it opens the table as
+     * this one left it, and a move made there arrives here without a reload.
+     */
+    ["a second browser tab opens the table exactly as this one left it", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.tab2?.opened?.length || !R.cagr?.cols?.length) return false;
+      return sameCols(R.tab2.opened, R.cagr.cols);
+    }],
+    ["…and a column moved in that tab moves here too, without a reload", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.tab2?.moved?.length || !R.tab2.here?.length || !R.cagr?.cols?.length) return false;
+      return !sameCols(R.tab2.moved, R.cagr.cols) && sameCols(R.tab2.here, R.tab2.moved);
+    }],
+    /**
+     * HOLDINGS ↔ TRANSACTIONS IS A TAB TOO. Each table keeps its own
+     * arrangement across the switch, and neither disturbs the other's.
+     */
+    ["a column moved on the transactions table stays put, and is saved", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.t0?.cols?.length || !R.t1) return false;
+      return R.t0.cols.includes("value") && R.t0.cols.includes("unrealisedGain")
+        && sameCols(R.t1.cols, swapCols(R.t0.cols, "value", "unrealisedGain"))
+        && sameCols(R.t1.saved ?? [], R.t1.cols);
+    }],
+    ["…crossing back to Holdings draws the holdings table exactly as the reader left it", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.h1?.cols?.length || !R.tab2?.moved?.length) return false;
+      return R.h1.axis === "security" && sameCols(R.h1.cols, R.tab2.moved);
+    }],
+    ["…and crossing to Transactions again draws the reader's move there", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.t1?.cols?.length || !R.t2) return false;
+      return sameCols(R.t2.cols, R.t1.cols);
     }],
   ],
 
@@ -17456,6 +17637,7 @@ const INVARIANTS = {
     // default route (where it cannot abstain) and not on this one.
     ...PM_RETURN_CHECKS.filter(([d]) => !/^the methodology picks/.test(d)),
     ...PM_RETURN_ROUTE_CHECKS,
+    FRESH_READER_PICK,
     ["the picker shows the five measures ticked, and not the methodology", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return false;
@@ -19283,16 +19465,22 @@ const INVARIANTS = {
      * are only in the DOM when it is open, and a control asserted on prose a
      * redesign is free to reword is the fragile check this file keeps replacing.
      * `data-return-measures` is every measure it offers; `data-return-active` is
-     * what is ticked. The default is `auto` (the methodology), asserted here; the
-     * guard that keeps CAGR safe is asserted on `monitor-cagr`, YTD on
-     * `monitor-ytd`, XIRR on `monitor-xirr`, and the multi-select on
-     * `monitor-returns-multi`.
+     * what is ticked. The guard that keeps CAGR safe is asserted on
+     * `monitor-cagr`, YTD on `monitor-ytd`, XIRR on `monitor-xirr`, and the
+     * multi-select on `monitor-returns-multi`.
+     *
+     * SINCE Stage 10cs THE DEFAULT IS EVERY MEASURE, asserted on the routes that
+     * open as a fresh reader (`RETURN_DEFAULT_ROUTES`). This route opens as a
+     * reader who SAVED "by methodology", so the claim is that the saved pick is
+     * what it opens on — and says so (`data-return-source`) — with nothing in
+     * the address asking for it.
      */
-    ["the return-measure picker offers the methodology and every measure, and defaults to it", (t, ctx) => {
+    ["the return-measure picker offers the methodology and every measure, and opens on the reader's saved pick", (t, ctx) => {
       const rs = ctx?.returnSelect;
       if (!rs) return { notChecked: "the return-measure picker was not on screen on this run" };
       const want = ["auto", "absolute", "cagr", "xirr", "ytd", "calendar"];
-      return want.every((k) => rs.offers.includes(k)) && rs.active.length === 1 && rs.active[0] === "auto";
+      return want.every((k) => rs.offers.includes(k)) && rs.active.length === 1 && rs.active[0] === "auto"
+        && rs.source === "saved" && !addressAsksForReturns(ctx.url);
     }],
     /**
      * ── THE SEPARATE YTD COLUMN IS GONE — YTD IS A MEASURE NOW ──────────────
@@ -23216,6 +23404,14 @@ for (const theme of THEMES) {
           else document.addEventListener("readystatechange", apply, { once: true });
         }
       }, theme);
+      // THE OLD DEFAULT, AS A SAVED PICK — see `RETURN_DEFAULT_ROUTES`.
+      if (!RETURN_DEFAULT_ROUTES.has(name)) {
+        await ctx.addInitScript((keys) => {
+          try {
+            for (const k of keys) if (localStorage.getItem(k) == null) localStorage.setItem(k, JSON.stringify(["auto"]));
+          } catch { /* private mode */ }
+        }, RETURN_PICK_KEYS);
+      }
       const page = await ctx.newPage();
       // The web-font CDN is unreachable from this sandbox and blocks `load` for
       // ~12s per navigation. Abort it up front: it changes no layout the checks
@@ -24614,6 +24810,168 @@ for (const theme of THEMES) {
             ARRANGE.back = { before, mid, after: await liftSnap("pnl", null) };
           }
         }
+      }
+      /**
+       * ── REMEMBERED ACROSS TABS, AND ACROSS VISITS (Stage 10cs) ─────────────
+       *
+       * One reader, nothing saved, doing what the family does: move a column,
+       * change tab, move another, change back, pick a return, leave, come back.
+       * Every step is snapshotted — the columns the holdings table DRAWS, the
+       * picker's ticked measures and where they came from, the address, and
+       * what the browser saved — so the invariants can hold each state to the
+       * one before it rather than to a literal. Keyboard nudges rather than
+       * drags: `monitor-arrange` proves the drag, and a nudge moves exactly one
+       * place, which is what makes the expected orders exact.
+       */
+      if (name === "monitor-remember" && theme === THEMES[0] && width === WIDTHS[0]) {
+        const snap = () => page.evaluate(() => {
+          const t = document.querySelector("main table");
+          const el = document.querySelector("[data-return-measures]");
+          const read = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return "unreadable"; } };
+          return {
+            axis: document.querySelector("[data-axis-control]")?.getAttribute("data-axis-active") ?? null,
+            cols: t ? [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")) : [],
+            active: (el?.getAttribute("data-return-active") || "").split(",").filter(Boolean),
+            source: el?.getAttribute("data-return-source") || null,
+            url: location.pathname + location.search,
+            savedOrder: read("glow:tableView:monitor:v1")?.order ?? null,
+            savedPick: read("glow:returnMeasures:monitor:v1"),
+          };
+        });
+        const table = () => page.locator("main table").first();
+        const nudge = async (col, key, times) => {
+          for (let i = 0; i < times; i++) {
+            const g = table().locator(`thead [data-col-grip='${col}']`).first();
+            if (!(await g.count())) return false;
+            await g.focus();
+            await page.keyboard.press(key);
+            await page.waitForTimeout(250);
+          }
+          return true;
+        };
+        const toAxis = async (key) => {
+          const b = page.locator(`button[data-group-axis='${key}']`).first();
+          if (!(await b.count())) return false;
+          await b.click();
+          await page.waitForFunction((k) => document.querySelector("[data-axis-control]")?.getAttribute("data-axis-active") === k,
+            key, { timeout: 8000 }).catch(() => {});
+          await page.waitForTimeout(900);
+          return true;
+        };
+        const pick = async (measure) => {
+          const trig = page.locator("[data-return-measures] > button").first();
+          if (!(await trig.count())) return null;
+          await trig.click();
+          const opt = page.locator(`[data-return-option='${measure}']`).first();
+          await opt.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+          if (!(await opt.count())) return null;
+          await opt.click();
+          await page.waitForTimeout(350);
+          const kept = await page.evaluate(() => document.querySelector("[data-return-kept]")?.textContent?.trim() ?? null);
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(250);
+          return kept;
+        };
+        const settle = async () => {
+          await page.waitForSelector("main table thead [data-col]", { timeout: 15000 }).catch(() => {});
+          await page.waitForTimeout(900);
+        };
+        const R = {};
+        R.initial = await snap();
+        // Market value to second place, on Category.
+        await nudge("mv", "ArrowLeft", Math.max(0, R.initial.cols.indexOf("mv") - 1));
+        R.c1 = await snap();
+        // Across to All Securities, where Via funds and Total exposure are drawn;
+        // swap those two.
+        await toAxis("security");
+        R.s1 = await snap();
+        await nudge("viaFunds", "ArrowRight", 1);
+        R.s2 = await snap();
+        // Back to Category — the two are not drawn there — and move another.
+        await toAxis("category");
+        R.c2 = await snap();
+        await nudge("qty", "ArrowRight", 1);
+        R.c3 = await snap();
+        // And across again.
+        await toAxis("security");
+        R.s3 = await snap();
+        // A return pick, then away and back through the nav, then a reload.
+        R.autoKept = await pick("auto");
+        R.a1 = await snap();
+        const cio = page.locator("a[data-nav-entry='/cio']").first();
+        if (await cio.count()) {
+          await cio.click();
+          await page.waitForURL(/\/cio/, { timeout: 8000 }).catch(() => {});
+          await page.waitForTimeout(700);
+          R.awayAt = await page.evaluate(() => location.pathname);
+          const mon = page.locator("a[data-nav-entry='/monitor']").first();
+          if (await mon.count()) { await mon.click(); await page.waitForURL(/\/monitor/, { timeout: 8000 }).catch(() => {}); }
+          await settle();
+          R.back = await snap();
+        }
+        await page.reload({ waitUntil: "load" }).catch(() => {});
+        await settle();
+        R.reloaded = await snap();
+        // A measure ticked afterwards takes the returns' place.
+        R.cagrKept = await pick("cagr");
+        R.cagr = await snap();
+        // ANOTHER BROWSER TAB. It shares this browser's memory, so it opens the
+        // table as this one left it, and a column moved there moves here too —
+        // through the `storage` event, with no reload. It gets no stand-in of
+        // its own for Glow Central Research (installing one resets the posts
+        // this walk records), so any request there is ABORTED instead.
+        {
+          const colsOf = (p) => p.evaluate(() => {
+            const t = document.querySelector("main table");
+            return t ? [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")) : [];
+          });
+          const other = await ctx.newPage();
+          try {
+            await other.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+            await other.route(RESEARCH_HOST, (r) => r.abort());
+            await other.goto(page.url(), { waitUntil: "load" }).catch(() => {});
+            await other.waitForSelector("main table thead [data-col]", { timeout: 15000 }).catch(() => {});
+            await other.waitForTimeout(900);
+            R.tab2 = { opened: await colsOf(other) };
+            const g = other.locator("main table").first().locator("thead [data-col-grip='mv']").first();
+            if (await g.count()) { await g.focus(); await other.keyboard.press("ArrowRight"); await other.waitForTimeout(400); }
+            R.tab2.moved = await colsOf(other);
+            await page.waitForTimeout(900);
+            R.tab2.here = (await snap()).cols;
+          } finally {
+            await other.close().catch(() => {});
+          }
+        }
+        // HOLDINGS ↔ TRANSACTIONS IS A TAB TOO, and each table keeps its own
+        // arrangement: move a column on the transactions table, cross back to
+        // Holdings, then cross again.
+        {
+          const datedSnap = () => page.evaluate(() => {
+            const t = document.querySelector("[data-dated-table]");
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem("glow:tableView:monitor-dated:v1") || "null")?.order ?? null; } catch { saved = "unreadable"; }
+            return { cols: t ? [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")) : [], saved };
+          });
+          const toView = async (v) => {
+            const b = page.locator(`button[data-monitor-view='${v}']`).first();
+            if (!(await b.count())) return false;
+            await b.click();
+            if (v === "transactions") {
+              await page.locator("[data-dated-table] thead [data-col]").first().waitFor({ timeout: 20000 }).catch(() => {});
+              await page.waitForTimeout(700);
+            } else await settle();
+            return true;
+          };
+          if (await toView("transactions")) {
+            R.t0 = await datedSnap();
+            const g = page.locator("[data-dated-table] thead [data-col-grip='value']").first();
+            if (await g.count()) { await g.focus(); await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(350); }
+            R.t1 = await datedSnap();
+            if (await toView("holdings")) R.h1 = await snap();
+            if (await toView("transactions")) R.t2 = await datedSnap();
+          }
+        }
+        REMEMBER = R;
       }
       if (name === "monitor-axis-switch") {
         // THE SECTION FILTER IS A ROW OF TABS, clicked by the first one after
@@ -27475,6 +27833,9 @@ for (const theme of THEMES) {
         return {
           offers: (el.getAttribute("data-return-measures") || "").split(",").filter(Boolean),
           active: (el.getAttribute("data-return-active") || "").split(",").filter(Boolean),
+          // WHERE THE PICK CAME FROM — the address, the reader's saved pick, or
+          // the default (Stage 10cs).
+          source: el.getAttribute("data-return-source") || null,
         };
       });
       /**
@@ -28578,7 +28939,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS] }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
