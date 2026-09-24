@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Card } from "./Card";
 import { AbsentCell } from "./Absent";
-import { dedupedPositions } from "@/lib/analytics";
+import { currentHoldings, dedupedPositions } from "@/lib/analytics";
 import { positionActionKey } from "@/lib/corporateActions";
 import { fmtDate, fmtNum, fmtPct } from "@/lib/format";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -27,12 +27,26 @@ const TITLES: Record<string, string> = {
   total: "Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value. Since each statement date, not since purchase; a lifetime return needs the full holding and payment history. Fund distributions stay in their fund-specific return model. There is no portfolio total, as accounts open on different dates.",
 };
 
+const LOADING = "Corporate-action evidence is loading";
+/**
+ * THE CAUSE TO NAME FIRST. A security no NSE symbol resolves for can never be
+ * priced live, so that is the reason — not the feed-coverage or reconciliation
+ * sentences that follow from it, which read as a gap somebody could close.
+ */
+function leadIssue(issues: readonly string[]): string | null {
+  return issues.find((x) => /^No NSE symbol resolves/.test(x)) ?? issues[0] ?? null;
+}
+
 export function CorporateActionReturns({ securityKey }: { securityKey?: string }) {
   const { statementPortfolio, corporateActions, corporateActionsStatus, corporateActionReturns, fmtFromBase } = usePortfolio();
   const [search, setSearch] = useState("");
   const view = useTableView("corporate-actions-returns", COLS);
   const rows = useMemo(() => {
-    const positions = dedupedPositions(statementPortfolio?.positions ?? [])
+    // CURRENT HOLDINGS, like every allocation surface: a closed position and a
+    // speck under the ₹1,000 floor are not rows (the page drew Everest Fleet and
+    // EFPL, both under ₹1,000, as two of its 300). `currentHoldings` is the one
+    // definition, applied to the consolidated set as the Monitor applies it.
+    const positions = currentHoldings(dedupedPositions(statementPortfolio?.positions ?? []))
       .filter((p) => p.assetClass === "Equity" && (!securityKey || p.securityKey === securityKey));
     const accounts = new Map(statementPortfolio?.accounts.map((a) => [a.accountId, a]));
     const items = positions.map((p) => ({ p, account: accounts.get(p.accountId), result: corporateActionReturns.get(positionActionKey(p)) }))
@@ -75,25 +89,44 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
           {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
         </Tr></thead>
         <tbody>{rows.map(({ p, account, result: r }) => {
-          const issues = r ? [...r.quantityIssues, ...r.incomeIssues] : ["Corporate-action evidence is loading"];
+          const issues = r ? [...r.quantityIssues, ...r.incomeIssues] : [LOADING];
+          const lead = leadIssue(issues) ?? LOADING;
           const events = r?.lines.filter((l) => l.status !== "in-statement") ?? [];
           const cells = {
             holding: <td key="holding" className="min-w-[170px] px-4 py-3"><Link className="text-champagne-400 hover:underline" to={`/stock/${p.securityKey}`}>{p.security}</Link>
               <div className="mt-1 text-[11px] text-slate-500">{account?.owner} · {account?.provider} · {account?.accountNo}</div></td>,
-            window: <td key="window" className="whitespace-nowrap px-4 py-3 text-slate-400">{r ? <>{fmtDate(r.statementDate)}<br />→ {fmtDate(r.through)}</> : "—"}</td>,
+            window: <td key="window" className="whitespace-nowrap px-4 py-3 text-slate-400" data-action-window={r ? `${r.statementDate}|${r.through}` : ""}>{r ? <>{fmtDate(r.statementDate)}<br />→ {fmtDate(r.through)}</> : <AbsentCell reason={LOADING} />}</td>,
             shares: <td key="shares" className="whitespace-nowrap px-4 py-3 mono">{fmtNum(p.quantity)} → {fmtNum(r?.adjustedQuantity ?? p.quantity)}
               {r && r.factor !== 1 && <div className="mt-1 text-[11px] text-champagne-400">×{r.factor.toFixed(4)} · cost unchanged</div>}</td>,
-            capital: <td key="capital" className="whitespace-nowrap px-4 py-3 mono">{fmtPct(r?.priceReturnPct, { sign: true, decimals: 2 })}</td>,
-            dividends: <td key="dividends" className="px-4 py-3 mono" data-dividend-entitlement>{r?.dividendEntitlement == null ? "—" : fmtFromBase(r.dividendEntitlement, { compact: true })}
-              <div className="mt-1 text-[10px] font-sans text-slate-500">Gross · receipt unconfirmed</div></td>,
-            total: <td key="total" className="whitespace-nowrap px-4 py-3 mono font-semibold" data-dividend-total-return>{fmtPct(r?.totalReturnPct, { sign: true, decimals: 2 })}</td>,
-            evidence: <td key="evidence" className="min-w-[230px] max-w-md px-4 py-3 text-slate-400">
+            capital: <td key="capital" className="whitespace-nowrap px-4 py-3 mono" data-capital-return>
+              {r?.priceReturnPct == null
+                ? <AbsentCell reason={`No period return — ${lead}`} />
+                : fmtPct(r.priceReturnPct, { sign: true, decimals: 2 })}</td>,
+            // A COMPUTED ZERO CARRIES ITS REASON IN THE CELL: the window is priced
+            // and no dividend was declared in it. An entitlement the evidence
+            // cannot establish is an absence, and says which evidence.
+            dividends: <td key="dividends" className="px-4 py-3 mono" data-dividend-entitlement>
+              {r?.dividendEntitlement == null
+                ? <AbsentCell reason={r ? `Not established — ${leadIssue(r.incomeIssues) ?? lead}` : LOADING} />
+                : <>{fmtFromBase(r.dividendEntitlement, { compact: true })}
+                    <div className="mt-1 text-[10px] font-sans text-slate-500">
+                      {r.dividendEntitlement === 0 ? "none declared in this window" : "Gross · receipt unconfirmed"}</div></>}
+            </td>,
+            total: <td key="total" className="whitespace-nowrap px-4 py-3 mono font-semibold" data-dividend-total-return>
+              {r?.totalReturnPct == null
+                ? <AbsentCell reason={r?.priceReturnPct != null
+                    ? `No total — the dividends in the window are not established: ${leadIssue(r.incomeIssues) ?? lead}`
+                    : `No period return — ${lead}`} />
+                : fmtPct(r.totalReturnPct, { sign: true, decimals: 2 })}</td>,
+            evidence: <td key="evidence" className="min-w-[230px] max-w-md px-4 py-3 text-slate-400" data-action-lead={issues.length ? lead : ""}>
               {/* The FIRST open question on screen and every one in the hover —
                   joined, three of them ran to 232 characters in one cell, the
                   wall of text the family asked to be rid of (Stage 10ci). */}
               {issues.length > 0
                 ? (() => {
                     const open = [...new Set(issues)];
+                    const first = open.indexOf(lead);
+                    if (first > 0) open.unshift(...open.splice(first, 1));
                     return <p className="text-amber-400/90" title={`${open.join(". ")}.`}>
                       {open[0]}{open.length > 1 ? ` · +${open.length - 1} more` : ""}.</p>;
                   })()

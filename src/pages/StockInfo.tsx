@@ -13,7 +13,9 @@ import {
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
 } from "@/lib/analytics";
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
-import { fifoBasisNote } from "@/lib/fifo";
+import { fifoBasisNote, realisedReason } from "@/lib/fifo";
+import { liveWithheldReason } from "@/lib/corporateActions";
+import { realisedTile } from "@/lib/stockRealised";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
@@ -262,7 +264,7 @@ export function StockInfo() {
   // Keyed by securityKey — this book's providers mostly print a name and nothing
   // else, so an ISIN route would leave most holdings unreachable.
   const { securityKey = "" } = useParams();
-  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
+  const { portfolio, consolidated, fmtFromBase, convertFromBase, displayCurrency, quotesStatus, corporateActionReturns } = usePortfolio();
   // WHICH TAB IS OPEN — see `STOCK_TABS` for what the five are and why the
   // choice lives in the URL.
   const [tab, setTab] = useViewParam(STOCK_TABS, {}, "tab");
@@ -629,6 +631,31 @@ export function StockInfo() {
   const dayPct = live ? rows[0]?.dayChangePct ?? null : null;
   const dayChange = sum(drows.map((r) => r.dayChange ?? 0));
   /**
+   * WHY THIS HOLDING IS NOT ON A LIVE PRICE — ONE ANSWER, read by the price
+   * tile's line and its hover (`priceNote`), so the two cannot disagree. The
+   * day's move is on that tile too since the Change today tile was folded in.
+   *
+   * The corporate-action layer withholds a quote that DID arrive wherever
+   * pairing it with the statement's share count could be wrong — a buyback,
+   * sales recorded after the statement, a capture that does not reach the
+   * quote's day, or its evidence still loading — and this page said "the price
+   * feed returned no quote" over every one of them (DL-9), which sends a reader
+   * to wait for a feed that already answered. `liveWithheldReason` is the
+   * gate's own sentence, the one place its words live.
+   *
+   * THE CAUSE PICKS THE WORDS, IN THIS ORDER: a name with no NSE symbol can
+   * never go live, so that is said even while prices are loading; a quote held
+   * back is said before "fetching", because it has already arrived.
+   */
+  const withheld = [...new Set(rows
+    .map((r) => liveWithheldReason(r, corporateActionReturns))
+    .filter((x): x is string => !!x))];
+  const notLiveWhy = !sym ? "no NSE symbol resolves for this name, so it cannot be priced live"
+    : withheld.length ? `a live quote arrived and is held back: ${withheld.join("; ")}`
+    : quotesStatus === "loading" ? "fetching the live price…"
+    : quotesStatus === "unavailable" ? "the price feed did not respond"
+    : `the price feed returned no quote for ${sym}`;
+  /**
    * PER-OWNER, SO THE RAW ROWS. This counted `drows` and reported "Held in 1
    * entity" for 360 ONE Special Opportunities — a holding reported on Ajay's
    * CRN37702 and Bharat's CRN60117, whose own "Position by account" table
@@ -664,6 +691,66 @@ export function StockInfo() {
   const price = (n: number | null | undefined) =>
     (typeof n === "number" && Number.isFinite(n) ? fmtCurrency(convertFromBase(n), displayCurrency) : "—");
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * THE BOOK'S REALISED, over the rows this page counts (each dedupeGroup
+   * once) — the field `build-book` strikes by FIFO up to each statement's date.
+   * `realizedLotsAfter` counts the sales a capital gain statement dates AFTER
+   * the holding's own statement: those units are still in it at its mark, so
+   * their gain is not in this figure, and the tile says so.
+   */
+  const rt = realisedTile(drows, led === undefined ? undefined : led?.realizedProfit ?? null);
+  const realised = rt.value;
+  const lotsAfterRow = drows.find((r) => (r.realizedLotsAfter ?? 0) > 0) ?? null;
+  const lotsAfterDate = lotsAfterRow ? accIdx.get(lotsAfterRow.accountId)?.asOf ?? null : null;
+  /**
+   * A REALISED STRUCK ON SOME OF THE ACCOUNTS SAYS HOW MANY. State Bank of
+   * India's tile read "₹0 booked on units sold" over five accounts, two of which
+   * issue a capital gain statement and sold nothing, and three of which issue
+   * none — a figure for two accounts reading as the holding's, and a claim about
+   * sales that did not happen. The count goes on the face, the accounts with no
+   * statement in the hover, and a zero where nothing was sold says so.
+   */
+  const realisedCover = rt.basis === "book" && realised != null && rt.covered < rt.accounts
+    ? ` · on ${rt.covered} of ${rt.accounts} accounts` : "";
+  const uncoveredNames = [...new Set(drows
+    .filter((r) => !(typeof r.realizedPnL === "number" && Number.isFinite(r.realizedPnL)))
+    .map((r) => providerOf(accIdx, r)).filter(Boolean))];
+  const realisedCoverWhy = realisedCover
+    ? ` No capital gain statement covers the other ${rt.accounts - rt.covered} account${rt.accounts - rt.covered === 1 ? "" : "s"} that hold it${uncoveredNames.length ? ` (${uncoveredNames.join(", ")})` : ""}, so what their sales realised is not reported — and it is not counted here as zero.`
+    : "";
+  const realisedNothingWhy = rt.nothingSold
+    ? " Nothing was sold in the accounts that report one, so the figure is a measured zero."
+    : "";
+  // THE CAUSE PICKS THE WORDS. An exited name's figure comes from the dated
+  // record, so a record that did not load is said as that — never as "no
+  // statement covers it", which is a claim about the book.
+  const realisedNote = rt.basis === "statements"
+    ? led === undefined ? "loading the capital gain statements…"
+      : led === null ? "the dated record did not load"
+      : realised == null ? "no capital gain statement covers this name"
+      : "booked on exits · from the capital gain statements"
+    : rt.lotsAfter > 0
+      ? `${rt.lotsAfter} sale${rt.lotsAfter === 1 ? "" : "s"} after ${fmtDate(lotsAfterDate ?? "")} not counted`
+    : rt.unreconciled != null ? `the capital gain statements record ${money(rt.unreconciled, true)} on this name — not in this figure`
+    : realised == null ? "no capital gain statement covers the accounts that hold it"
+    : rt.source === "unit-record" ? `from the fund's dated redemption record · FIFO${realisedCover}`
+    // Kept under ten small words so the line stays a figure's note (#95).
+    : rt.source === "mixed" ? (realisedCover ? `booked on units sold · FIFO · two records${realisedCover}` : "booked on units sold · FIFO · statements and the fund's own record")
+    : rt.nothingSold ? `nothing sold · FIFO${realisedCover}`
+    : `booked on units sold · FIFO${realisedCover}`;
+  const realisedWhy = rt.basis === "statements"
+    ? "No statement in this book reports a current holding in this name, so the capital gain statements' own lots are the only record of what its sales realised — and no units are shown as held that they could be counted against twice."
+    : rt.lotsAfter > 0 && lotsAfterRow ? realisedReason(lotsAfterRow)
+    : rt.unreconciled != null
+      ? `The book strikes each holding's realised gain from its own account's capital gain statement, by FIFO, up to that statement's date — the figure the FIFO return beside it includes. The statements' lots for this name total ${money(rt.unreconciled, true)} and the holdings carry ${realised == null ? "none" : money(realised, true)}: a lot that does not join the holding it was sold from (a statement spelling the security differently), or one sold in an account that no longer holds it. The Capital Gains page lists every lot.`
+    : realised == null ? realisedReason(drows[0])
+    : rt.source === "unit-record"
+      ? "No capital gain statement covers this holding: the fund bought its units back, and the gain is FIFO over the fund's own dated record of every allotment and redemption — the oldest units first — against what was paid for them. The FIFO return beside it includes it."
+    : rt.source === "mixed"
+      ? "The realised gain on units already sold, by FIFO — the oldest units first. Where an account issues a capital gain statement the book strikes it from that statement up to its date; where a fund bought its units back, from the fund's own dated redemption record. The FIFO return beside it includes it."
+    : "The realised gain on units already sold, by FIFO — the oldest units first — as the book strikes it from each account's capital gain statement up to that statement's date. The FIFO return beside it includes it.";
+  const realisedTip = realised != null && rt.basis === "book" && rt.lotsAfter === 0 && rt.unreconciled == null
+    ? `${realisedWhy}${realisedNothingWhy}${realisedCoverWhy}` : realisedWhy;
   /**
    * A COST CARRIED THROUGH A FUND'S CLASS SWITCH, and the figure the fund's own
    * statement prints instead. This is the page a reader opens with that
@@ -792,8 +879,15 @@ export function StockInfo() {
         // arrive is a feed shortfall that may resolve on a refresh. The LINE
         // is a few words so the strip stays one height; the hover says it in
         // full.
-        const [short, why] = quotesStatus === "loading" ? ["fetching live price…", "the live price is still being fetched"]
-          : !sym ? ["no NSE symbol", "no NSE trading symbol resolves for this security, so it can never carry a live quote"]
+        //
+        // AND A QUOTE THAT ARRIVED AND IS HELD BACK IS NOT "NO QUOTE" (DL-9).
+        // The corporate-action gate withholds it where pairing it with the
+        // statement's share count could be wrong; the gate's own sentence is
+        // the hover (`notLiveWhy`, the one ordering of these causes), and it is
+        // said before "fetching", because the quote has already arrived.
+        const [short, why] = !sym ? ["no NSE symbol", "no NSE trading symbol resolves for this security, so it can never carry a live quote"]
+          : withheld.length ? ["live quote held back", notLiveWhy]
+          : quotesStatus === "loading" ? ["fetching live price…", "the live price is still being fetched"]
           : quotesStatus === "unavailable" ? ["price feed down", "the price feed did not respond"]
           : ["no live quote", `the price feed returned no quote for ${sym}`];
         return {
@@ -1527,16 +1621,24 @@ export function StockInfo() {
             // return beside it, and the hover says over what.
             : <span title={fifoBasisNote(fifo, (n) => money(n))}>return · FIFO{fifo.realised ? ` · incl. ${money(fifo.realised, true)} realised` : ""}{costedShare ? ` · on ${costedShare}` : ""}</span>}
           icon={<TrendingUp className="h-4 w-4" />} />
-        {/* Realised P&L exists only where a capital gain statement covers this
-            name's sells. Null is not zero: the sells may be real and what they
-            realised simply never reported. */}
+        {/* ONE REALISED FIGURE, ON THE BOOK'S BASIS (DL-6). This tile read the
+            runtime ledger while the Unrealised tile beside it read the book, and
+            the two follow different rules: the ledger counts sales dated after
+            the holding's statement, which the book's FIFO leaves out because
+            those units are still IN the statement at its mark. So LKP's Belrise
+            read +₹6.6 L "booked on exits" on units the page still showed as held.
+            It reads the book's own `realizedPnL` now, and where sales came after
+            the statement it says they are not counted. Null is not zero. */}
         <Kpi label="Realised P&L"
-          value={led === undefined ? "…" : led?.realizedProfit == null
-            ? <AbsentValue />
-            : <span className={changeColor(led.realizedProfit)}>{fmtFromBase(led.realizedProfit, { compact: true, sign: true })}</span>}
-          sub={led === undefined ? "booked on exits" : led?.realizedProfit == null
-            ? <span className="text-slate-500">no capital gain statement covers this name</span>
-            : "booked on exits"}
+          value={rt.basis === "statements" && led === undefined ? "…"
+            : realised == null ? <AbsentValue />
+            : <span className={changeColor(realised)} data-stock-realised={realised}>{fmtFromBase(realised, { compact: true, sign: true })}</span>}
+          sub={<span className={realised == null || rt.lotsAfter > 0 || rt.unreconciled != null ? "text-slate-500" : undefined}
+            data-stock-realised-note={rt.lotsAfter} data-stock-realised-basis={rt.basis}
+            data-stock-realised-unreconciled={rt.unreconciled ?? ""}
+            data-stock-realised-covered={rt.covered} data-stock-realised-accounts={rt.accounts} title={realisedTip}>
+            {realisedNote}
+          </span>}
           icon={<Activity className="h-4 w-4" />} />
       </div>
       )}

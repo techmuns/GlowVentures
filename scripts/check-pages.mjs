@@ -4696,7 +4696,57 @@ const M2_BOOK = (() => {
     const cardDrawn = (k) => (byKey.get(k) ?? []).every((p) => (p.assetClass === "Mutual Fund" || p.assetClass === "ETF") && !isArbStore(p));
     const cagrScheme = held.filter(cardDrawn).map(schemeOf).filter((x) => x && !x.crossing.length && x.annualised.length)
       .sort((a, b) => b.annualised.length - a.annualised.length || mvOf(b.key) - mvOf(a.key))[0] ?? null;
-    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme };
+    /*
+     * REALISED, ON THE BOOK'S OWN FIELD (DL-6) — each dedupeGroup once — and
+     * the sales a capital gain statement dates after the statement still
+     * carrying the holding, which the book counts and does not add.
+     */
+    const nse = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const symOf = (p) => p.symbol || nse[p.securityKey] || null;
+    const onceEach = (ps) => { const seen = new Set(); return ps.filter((p) => !p.dedupeGroup || (!seen.has(p.dedupeGroup) && !!seen.add(p.dedupeGroup))); };
+    const realisedOf = (key) => {
+      const d = onceEach(byKey.get(key) ?? []);
+      const vals = d.map((p) => p.realizedPnL).filter((x) => typeof x === "number" && Number.isFinite(x));
+      const carrying = d.filter((p) => typeof p.realizedPnL === "number" && Number.isFinite(p.realizedPnL));
+      return { value: vals.length ? vals.reduce((a, b) => a + b, 0) : null, lotsAfter: d.reduce((s, p) => s + (Number(p.realizedLotsAfter) || 0), 0), rows: d.length,
+        // Struck from a fund's own dated unit record (FIFO over its allotments
+        // and redemptions), not from any capital gain statement.
+        fromRecord: carrying.length > 0 && carrying.every((p) => p.costBasisSource === "fifo"),
+        // HOW MUCH OF THE HOLDING THE FIGURE COVERS, and a zero because nothing
+        // was sold — re-expressed here off the book's own fields.
+        accounts: new Set(d.map((p) => p.accountId)).size,
+        covered: new Set(carrying.map((p) => p.accountId)).size,
+        nothingSold: carrying.length > 0 && vals.reduce((a, b) => a + b, 0) === 0 && carrying.every((p) => p.costOfUnitsSold === 0) };
+    };
+    const small = smallKeysOf(positions);
+    // The largest company share with a sale after its statement that can reach
+    // the quote feed — so the corporate-action gate has a quote to hold back.
+    const soldAfter = [...byKey.entries()]
+      .filter(([k, ps]) => !small.has(k) && ps.every((p) => p.assetClass === "Equity")
+        && ps.some((p) => (Number(p.realizedLotsAfter) || 0) > 0) && ps.some((p) => !!symOf(p)))
+      .map(([key]) => ({ key, mv: mvOf(key), ...realisedOf(key) }))
+      .sort((a, b) => b.mv - a.mv)[0] ?? null;
+    // The fund whose own dated unit record strikes the largest realised figure
+    // (3P's redemption) — a gain no capital gain statement carries.
+    const realisedFund = [...byKey.entries()]
+      .filter(([, ps]) => ps.every((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"))
+      .map(([key]) => ({ key, ...realisedOf(key) }))
+      .filter((r) => r.value != null && r.value !== 0)
+      .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))[0] ?? null;
+    // /corporate-actions (DL-15): the company shares the STATEMENTS carry now —
+    // each dedupeGroup once, no speck under the floor.
+    const corpRows = onceEach(positions).filter((p) => p.assetClass === "Equity" && !small.has(p.securityKey));
+    const keyOfRow = (p) => `${p.accountId}|${p.securityKey}`;
+    const corporate = {
+      rows: corpRows.length,
+      noSymbol: corpRows.filter((p) => !symOf(p)).map(keyOfRow),
+      specks: onceEach(positions).filter((p) => p.assetClass === "Equity" && small.has(p.securityKey)).map(keyOfRow),
+      soldAfter: corpRows.filter((p) => (Number(p.realizedLotsAfter) || 0) > 0 && !!symOf(p)).map(keyOfRow),
+    };
+    // AMFI's own published record for a key — the last one wins, as the page's index keeps it.
+    const navStore = fundNavStore() ?? [];
+    const navOf = (key) => { let hit = null; for (const e of navStore) if (e.securityKey === key) hit = e; return hit; };
+    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme, realisedOf, soldAfter, realisedFund, corporate, navOf };
   } catch { return null; }
 })();
 
@@ -5566,6 +5616,9 @@ const ROUTES = [
   ["stock-research", "/stock/aditya-birla-capital?tab=research"],
   ["stock-targets", "/stock/aditya-birla-capital?tab=targets"],
   ["corporate-actions", "/corporate-actions"],
+  // ...AND WITH THE LIVE FEED, where a window can be priced: a computed ₹0
+  // entitlement exists only there, and it must say that none was declared.
+  ["corporate-actions-live", "/corporate-actions"],
   // ...AND ONE FUND PAGE, because the two must not render the same. A fund unit
   // has no price history, no PE, no filings and no insider trades, so the five
   // company panels are absent BY DECISION there. Walked as its own route so a
@@ -5624,6 +5677,15 @@ const ROUTES = [
   // A COMPANY HELD IN MORE ACCOUNTS THAN BY MEMBERS — where "Held in N entities"
   // read the account count. Derived from the book.
   ["stock-entities", () => (M2_BOOK?.entities ? `/stock/${encodeURIComponent(M2_BOOK.entities.key)}` : "/stock/no-company-held-in-more-accounts-than-by-members")],
+  /**
+   * ...AND THE REALISED TILE ON THE BOOK'S OWN FIELD (DL-6): the company whose
+   * capital gain statement records sales AFTER the statement that still carries
+   * it (LKP's), walked with the live feed so the corporate-action gate has a
+   * quote to hold back and the page must say so (DL-9); and the fund whose own
+   * unit record strikes its realised — a gain no capital gain statement carries.
+   */
+  ["stock-sold-after", () => (M2_BOOK?.soldAfter ? `/stock/${encodeURIComponent(M2_BOOK.soldAfter.key)}` : "/stock/no-company-sold-after-its-statement")],
+  ["stock-realised-fund", () => (M2_BOOK?.realisedFund ? `/stock/${encodeURIComponent(M2_BOOK.realisedFund.key)}` : "/stock/no-fund-with-a-realised-figure")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -10347,6 +10409,116 @@ const ALL_TITLE = { "asset class": "All asset classes", basket: "All baskets" };
  * A missing probe is a FAILURE, never an abstention — this table is on every
  * company page, so `posTable === null` means it stopped rendering.
  */
+/**
+ * ── ONE REALISED FIGURE, ON THE BOOK'S OWN FIELD (DL-6) ─────────────────────
+ *
+ * The Realised tile read the runtime ledger while the FIFO return beside it read
+ * the book, so LKP's Belrise printed +₹6.6 L "booked on exits" on units the same
+ * page still showed as held. The tile must be the book's own realised for the
+ * holding — each dedupeGroup once, re-derived from `glowData.ts` — and where the
+ * book records sales after the statement, count them and say they are not in it.
+ */
+function realisedTileChecks(keyOf) {
+  return [
+    ["the Realised tile is the book's own realised for this holding, never the ledger's", (t, ctx) => {
+      const key = keyOf(), r = ctx?.stockM2?.realised;
+      if (!key || !M2_BOOK || !r) return false;
+      const want = M2_BOOK.realisedOf(key);
+      if (!want.rows) return false;
+      return r.basis === "book"
+        && (want.value == null ? r.value == null : r.value != null && Math.abs(r.value - want.value) <= 0.5);
+    }],
+    ["...and it counts the sales after the statement it leaves out, exactly where the book records them", (t, ctx) => {
+      const key = keyOf(), r = ctx?.stockM2?.realised;
+      if (!key || !M2_BOOK || !r) return false;
+      const want = M2_BOOK.realisedOf(key);
+      return r.lotsAfter === want.lotsAfter
+        && (want.lotsAfter > 0
+          ? new RegExp(`^${want.lotsAfter} sales? after .+ not counted`).test(r.text ?? "") && /still in it at that statement's mark/.test(r.tip ?? "")
+          : !/not counted/.test(r.text ?? ""));
+    }],
+    ["...and an absent realised names why, never a bare dash", (t, ctx) => {
+      const r = ctx?.stockM2?.realised;
+      if (!r) return false;
+      return r.value != null || (/\S/.test(r.text ?? "") && /\S/.test(r.tip ?? ""));
+    }],
+    // A REALISED STRUCK ON SOME OF THE ACCOUNTS SAYS HOW MANY. State Bank of
+    // India read "₹0 booked on units sold" over five accounts: two issue a
+    // capital gain statement and sold nothing, three issue none. The counts are
+    // the book's, and the words are held to them in both directions.
+    ["...and a realised struck on some of the accounts says how many, and a ₹0 where nothing was sold says so", (t, ctx) => {
+      const key = keyOf(), r = ctx?.stockM2?.realised;
+      if (!key || !M2_BOOK || !r) return false;
+      const want = M2_BOOK.realisedOf(key);
+      const text = r.text ?? "";
+      const claimsCover = / of \d+ accounts/.test(text), claimsNothing = /nothing sold/.test(text);
+      if (want.value == null || want.lotsAfter > 0 || r.unreconciled != null) return !claimsCover && !claimsNothing;
+      const partial = want.covered < want.accounts;
+      return r.covered === want.covered && r.accounts === want.accounts
+        && (partial
+          ? new RegExp(`on ${want.covered} of ${want.accounts} accounts`).test(text)
+            && new RegExp(`other ${want.accounts - want.covered} accounts? that hold it`).test(r.tip ?? "")
+          : !claimsCover)
+        && (want.nothingSold ? claimsNothing && /measured zero/.test(r.tip ?? "") : !claimsNothing);
+    }],
+  ];
+}
+
+/**
+ * ── /corporate-actions: CURRENT HOLDINGS, AND EVERY DASH SAYS WHY (DL-15) ────
+ *
+ * The page drew two company shares under the ₹1,000 floor, printed a computed
+ * ₹0 entitlement with no reason, and told the company shares no NSE symbol
+ * resolves for that they were "pending share reconciliation" — a cause somebody
+ * could close, about holdings that can never be priced live. Every expectation
+ * is re-derived from `glowData.ts` (`M2_BOOK.corporate`).
+ */
+function corporateActionChecks(live) {
+  const rowsOf = (ctx) => ctx?.stockM2?.corporate ?? [];
+  const isFigure = (c) => !!c && /[%₹]/.test(c.text ?? "");
+  return [
+    ["the table lists the current company shares the statements carry, each once, and no speck under the floor", (t, ctx) => {
+      const C = M2_BOOK?.corporate, rows = rowsOf(ctx);
+      if (!C || !rows.length) return false;
+      const keys = new Set(rows.map((r) => r.key));
+      return rows.length === C.rows && keys.size === rows.length && C.specks.every((k) => !keys.has(k));
+    }],
+    ["a company share no NSE symbol resolves for names THAT as its cause, never share reconciliation", (t, ctx) => {
+      const C = M2_BOOK?.corporate, rows = rowsOf(ctx);
+      if (!C) return false;
+      if (!C.noSymbol.length) return { notChecked: "every company share in this book resolves an NSE symbol" };
+      const by = new Map(rows.map((r) => [r.key, r]));
+      return C.noSymbol.every((k) => {
+        const r = by.get(k);
+        if (!r) return false;
+        return /^No NSE symbol resolves/.test(r.lead ?? "")
+          && !/pending share reconciliation/i.test([r.lead, r.capital?.tip, r.dividends?.tip, r.total?.tip].join(" "));
+      });
+    }],
+    ["every return and dividend cell is a figure, or a dash that names its cause", (t, ctx) => {
+      const rows = rowsOf(ctx);
+      if (!rows.length) return false;
+      return rows.every((r) => [r.capital, r.dividends, r.total]
+        .every((c) => !!c && (isFigure(c) || (/—/.test(c.text ?? "") && /\S/.test(c.tip ?? "")))));
+    }],
+    ["a company sold after its statement names the gate's own reason first", (t, ctx) => {
+      const C = M2_BOOK?.corporate, rows = rowsOf(ctx);
+      if (!C) return false;
+      if (!C.soldAfter.length) return { notChecked: "no company share in this book records a sale after its statement" };
+      const by = new Map(rows.map((r) => [r.key, r]));
+      return C.soldAfter.every((k) => /^Sales are recorded after this statement/.test(by.get(k)?.lead ?? ""));
+    }],
+    ...(live ? [
+      ["a computed ₹0 entitlement says that none was declared in the window", (t, ctx) => {
+        const zero = rowsOf(ctx).filter((r) => /^₹\s*0(?![\d.,])/.test(r.dividends?.text ?? ""));
+        // The live fixture's action feed declares nothing, so every priced
+        // window's entitlement is a computed zero — at least one must be drawn.
+        return zero.length > 0 && zero.every((r) => /none declared in this window/.test(r.dividends.text));
+      }],
+    ] : []),
+  ];
+}
+
 const stockLayoutChecks = () => [
   ["the position table fits its card, so no column is behind a sideways scroll",
     (t, ctx) => !!ctx.posTable && ctx.posTable.overflow <= 1 && ctx.posTable.cut.length === 0,
@@ -17912,6 +18084,21 @@ const INVARIANTS = {
     ["it says the figures are AMFI's and the AMC's, not this family's statement", (t) =>
       /not a statement issued to this family/i.test(t)],
     /**
+     * ONE NAV PER PAGE (DSM-B5). The page prices this fund at AMFI's own daily
+     * NAV (`fundNavs.ts`) and the card printed the fund store's, a fortnight
+     * older — two NAVs both called "AMFI's", with day moves of opposite sign.
+     * Where AMFI's file carries the holding, the card's NAV is that record: the
+     * figure, the date, and the date under the price above.
+     */
+    ["the card's NAV is AMFI's own published NAV — the figure and date the page prices at", (t, ctx) => {
+      const n = ctx?.stockM2?.ltNav;
+      if (!n || !MF_KEY || !M2_BOOK) return false;
+      const rec = M2_BOOK.navOf(MF_KEY);
+      if (!rec) return n.source === "store";
+      return n.source === "amfi" && n.date === rec.date && Math.abs((n.nav ?? NaN) - rec.nav) < 1e-9
+        && (!rec.usableForValue || (ctx.stockMark?.caption ?? "").includes(rec.date));
+    }],
+    /**
      * NAV AND ITS DAILY CHANGE, which no mutual fund on this site could show
      * before: a fund resolves to no NSE symbol, so the quote feed never priced
      * one. The change must name the PREVIOUS NAV AND ITS DATE — a fund does not
@@ -18083,6 +18270,17 @@ const INVARIANTS = {
         && /change in the unit/i.test(ctx.stockM2.refusedTip ?? "")],
     ["the card no longer calls its returns complete", (t) => !/returns (above )?are complete/i.test(t)],
     /**
+     * ONE NAV PER PAGE (DSM-B5). AMFI's daily file carries no NAV for this
+     * holding's ISIN, so the card falls back to the fund store's own — and must
+     * say whose it is rather than calling it AMFI's.
+     */
+    ["with no AMFI record for this holding, the card names its NAV as the fund store's own", (t, ctx) => {
+      const n = ctx?.stockM2?.ltNav, ub = M2_BOOK?.unitBreak;
+      if (!n || !ub) return false;
+      const rec = M2_BOOK.navOf(ub.key);
+      return rec ? n.source === "amfi" && n.date === rec.date : n.source === "store" && n.date === (ub.nav?.date ?? null);
+    }],
+    /**
      * THE STATEMENT AND THE NAV PRICE DIFFERENT UNITS, AND THE CARD SAYS SO.
      * The page's mark is the family's statement (₹151.10) and the card's NAV is
      * 14.7633; nothing explained a tenfold gap. Where the step falls after the
@@ -18129,7 +18327,48 @@ const INVARIANTS = {
    * counts members and names the accounts beside them; both are held to the
    * BOOK's own counts, and the accounts also to the rows the table draws.
    */
+  "stock-sold-after": [
+    ...stockLayoutChecks(),
+    ...realisedTileChecks(() => M2_BOOK?.soldAfter?.key),
+    ["the book carries a company share sold after the statement that still holds it",
+      () => !!M2_BOOK?.soldAfter && M2_BOOK.soldAfter.lotsAfter > 0],
+    /**
+     * A QUOTE THAT ARRIVED AND WAS HELD BACK IS NOT "NO QUOTE" (DL-9). The live
+     * fixture prices this company, and the corporate-action gate withholds it
+     * because sales after the statement mean its share count may be stale. The
+     * page said "the price feed returned no quote", which sends a reader to wait
+     * for a feed that already answered.
+     */
+    ["the price line says the live quote is held back — never 'no quote'", (t, ctx) => {
+      const c = ctx?.stockMark?.caption ?? "";
+      return /live quote held back/.test(c) && !/no live quote|returned no quote|did not respond|price feed down/.test(c);
+    }],
+    ["...and its hover is the corporate-action gate's own reason", (t, ctx) =>
+      /held back/.test(ctx?.stockM2?.markTip ?? "") && /Sales are recorded after this statement/.test(ctx?.stockM2?.markTip ?? "")],
+  ],
+  "stock-realised-fund": [
+    ...stockLayoutChecks(),
+    ...realisedTileChecks(() => M2_BOOK?.realisedFund?.key),
+    ["the book carries a fund whose own unit record strikes a realised figure",
+      () => !!M2_BOOK?.realisedFund && M2_BOOK.realisedFund.fromRecord],
+    /**
+     * 3P ISSUES NO CAPITAL GAIN STATEMENT. Its +₹2.56 Cr is FIFO over the fund's
+     * own dated record of every allotment and redemption, and the tile said "no
+     * capital gain statement covers this name" beside a FIFO tile that included
+     * the gain. The tile names the record it comes from, and the ledger's
+     * silence — it reads capital-gain lots only — is not flagged as a gap.
+     */
+    ["...and the tile says the figure comes from the fund's own dated redemption record, flagging no gap", (t, ctx) => {
+      const r = ctx?.stockM2?.realised;
+      return !!r && M2_BOOK?.realisedFund?.fromRecord === true && /dated redemption record/.test(r.text ?? "") && r.unreconciled == null;
+    }],
+  ],
+  "corporate-actions": corporateActionChecks(false),
+  "corporate-actions-live": corporateActionChecks(true),
   "stock-entities": [
+    // This route's subject is a holding reported in more accounts than by
+    // members; on this book its realised is struck on 2 of its 5 accounts.
+    ...realisedTileChecks(() => M2_BOOK?.entities?.key),
     ["the pill counts the members, and names the accounts separately", (t, ctx) => {
       const want = M2_BOOK?.entities;
       const pill = ctx?.stockM2?.pill;
@@ -18152,9 +18391,10 @@ const INVARIANTS = {
     // "Change today" is folded into the price tile, so its reason is that
     // tile's own line — read off its handle rather than off the page text.
     ["realised P&L and the price tile still state their own reasons",
-      (t, ctx) => /no capital gain statement covers this name/i.test(t)
-        && /no live quote|price feed|no NSE symbol|fetching live price|total value, not a price per unit|AMFI NAV|NAV on the statement|do not agree/i
+      (t, ctx) => /no capital gain statement covers (this name|the accounts that hold it)/i.test(t)
+        && /no live quote|price feed|no NSE symbol|fetching live price|total value, not a price per unit|AMFI NAV|NAV on the statement|do not agree|held back|cannot be priced live/i
           .test(ctx.stockMark?.caption ?? "")],
+    ...realisedTileChecks(() => NO_COST_KEY),
     ...stockTabChecks("position"),
   ],
   /**
@@ -27178,6 +27418,8 @@ for (const theme of THEMES) {
       PRICE_REQUESTS = [];
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
       if (name === "performance-live") await installLiveMocks(page);
+      if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench"
+        || name === "stock-sold-after" || name === "corporate-actions-live") await installLiveMocks(page);
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
@@ -31509,7 +31751,42 @@ for (const theme of THEMES) {
           refusedLine: num(document.querySelector("[data-scheme-returns-refused]")?.getAttribute("data-scheme-returns-refused")),
           unitNote: unit ? { text: txt(unit), tip: unit.getAttribute("title") } : null,
           pill: pill ? { owners: num(pill.getAttribute("data-stock-owners")), accounts: num(pill.getAttribute("data-stock-accounts")), text: txt(pill), tip: pill.getAttribute("title") } : null,
+          // The Realised tile: its figure (absent where none), its note, and
+          // what the note is on — the book's field or the statements' lots.
+          realised: (() => {
+            const note = document.querySelector("[data-stock-realised-note]");
+            const val = document.querySelector("[data-stock-realised]");
+            return note ? {
+              value: val ? num(val.getAttribute("data-stock-realised")) : null,
+              text: txt(note), tip: note.getAttribute("title"),
+              lotsAfter: num(note.getAttribute("data-stock-realised-note")),
+              basis: note.getAttribute("data-stock-realised-basis"),
+              unreconciled: num(note.getAttribute("data-stock-realised-unreconciled")),
+              covered: num(note.getAttribute("data-stock-realised-covered")),
+              accounts: num(note.getAttribute("data-stock-realised-accounts")),
+            } : null;
+          })(),
+          // The price tile's hover — where the corporate-action gate's reason is.
+          markTip: document.querySelector("[data-stock-mark-note]")?.getAttribute("title") ?? null,
           refusedTip: document.querySelector("[data-scheme-returns-refused]")?.getAttribute("title") ?? null,
+          // The fund card's NAV: whose it is, and the figure and date it prints.
+          ltNav: (() => {
+            const n = document.querySelector("[data-lt-nav-source]");
+            return n ? { nav: num(n.getAttribute("data-lt-nav")), date: n.getAttribute("data-lt-nav-date") || null,
+              source: n.getAttribute("data-lt-nav-source"),
+              change: num(document.querySelector("[data-lt-nav-change]")?.getAttribute("data-lt-nav-change")) } : null;
+          })(),
+          // /corporate-actions and the company page's own table: each row's
+          // cells read by what they are, and the cause the row names first.
+          corporate: [...document.querySelectorAll("[data-corporate-return-row]")].map((tr) => {
+            const cell = (sel) => { const c = tr.querySelector(sel); return c ? { text: txt(c), tip: tipOf(c) } : null; };
+            return {
+              key: tr.getAttribute("data-corporate-return-row"),
+              lead: tr.querySelector("[data-action-lead]")?.getAttribute("data-action-lead") ?? null,
+              window: tr.querySelector("[data-action-window]")?.getAttribute("data-action-window") ?? null,
+              capital: cell("[data-capital-return]"), dividends: cell("[data-dividend-entitlement]"), total: cell("[data-dividend-total-return]"),
+            };
+          }),
         };
       });
       /**
