@@ -4034,6 +4034,35 @@ const CARRIED_BOOK = (() => {
 })();
 
 /**
+ * THE COSTS ON THE GROSS-PAID BASIS (VD-24) — derived, never typed. Every
+ * position `build-book` restated to what the family PAID, with the statement's
+ * net kept beside it as `printedCostBasis`. `charges` is their sum, which the
+ * page must account for in full: the two figures differ by thousands on crores,
+ * so a check struck at compact precision could not tell them apart.
+ */
+const GROSS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const pos = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(pos)) return null;
+    const gp = pos.filter((p) => p.costBasisSource === "gross-paid"
+      && typeof p.costBasis === "number" && typeof p.printedCostBasis === "number");
+    const byKey = new Map();
+    for (const p of gp) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)).push(p);
+    const keys = [...byKey.keys()].sort((a, b) =>
+      byKey.get(b).reduce((x, p) => x + p.costBasis, 0) - byKey.get(a).reduce((x, p) => x + p.costBasis, 0));
+    return {
+      keys,
+      charges: gp.reduce((a, p) => a + (p.costBasis - p.printedCostBasis), 0),
+      positions: gp.map((p) => ({ key: p.securityKey, accountId: p.accountId, paid: p.costBasis, printed: p.printedCostBasis })),
+    };
+  } catch { return null; }
+})();
+/** Every full-precision rupee figure a hover prints, as numbers. */
+const rupeesIn = (title) => [...String(title ?? "").matchAll(/₹\s*(-?[\d,]+(?:\.\d+)?)(?!\d|[.,]\d|\s*(?:Cr|L)\b)/g)]
+  .map((x) => Number(x[1].replace(/,/g, "")));
+
+/**
  * THE HISTORY THAT CARRIES TWO PAYMENTS AT ONE ENTRY NAV — the subject of the
  * "same NAV, same return" claim, which used to ride on whichever history was
  * largest. It was Sanshi Class E's (two members at 109.4462 on one day) for as
@@ -7110,6 +7139,7 @@ const ROUTES = [
   // the page a reader opens with the fund's own statement in hand, which prints
   // a different cost. Derived (`CARRIED_BOOK`), so the next drop picks its own.
   ["stock-carried", () => (CARRIED_BOOK?.rows[0] ? `/stock/${encodeURIComponent(CARRIED_BOOK.rows[0].key)}` : "/stock/no-cost-carried-through-a-switch-in-the-book")],
+  ["stock-gross", () => (GROSS_BOOK?.keys[0] ? `/stock/${encodeURIComponent(GROSS_BOOK.keys[0])}` : "/stock/no-cost-on-the-gross-paid-basis-in-the-book")],
   // THE FUND THE CLIENT POINTED AT — *"the return on this AIF is a lot higher
   // than what we are showing"* — where each whole folio shows the XIRR its own
   // fact sheet prints (Stage 10cf). Derived (`DATED_CAPITAL_BOOK`), so a drop
@@ -20945,6 +20975,40 @@ const INVARIANTS = {
    * PAID and must name the statement's own figure, and the Avg cost tile must
    * say its basis — each against `CARRIED_BOOK`.
    */
+  /**
+   * ── THE COMPANY PAGE OF A COST ON THE GROSS-PAID BASIS (VD-24) ──────────
+   *
+   * Sanshi's statements cost its units at what bought them, net of the stamp
+   * duty they print; the book carries every rupee paid. A reader holding that
+   * statement sees a different figure, so every account row's Invested and the
+   * Avg cost tile must say which this is — in full, because at compact
+   * precision the two print identically.
+   */
+  "stock-gross": [
+    ...stockTabChecks("position"),
+    ["the book carries a cost restated to what was paid", () => !!GROSS_BOOK && GROSS_BOOK.keys.length > 0],
+    ["every gross-paid account row shows what was paid, and names the statement's net and the charges in full",
+      (t, ctx) => {
+        const key = GROSS_BOOK?.keys[0];
+        const want = (GROSS_BOOK?.positions ?? []).filter((p) => p.key === key);
+        const cells = ctx.costGross?.cells ?? [];
+        return want.length > 0 && cells.length === want.length && want.every((w) => cells.some((c) => {
+          const named = rupeesIn(c.title);
+          return Math.abs(c.paid - w.paid) <= 0.01 && c.printed !== null && Math.abs(c.printed - w.printed) <= 0.01
+            && /PAID IN/.test(c.title ?? "")
+            && [w.paid, w.printed, w.paid - w.printed].every((v) => named.some((n) => Math.abs(n - v) <= 0.01));
+        }));
+      }],
+    ["the Avg cost tile says its cost is what was paid, stamp duty included",
+      (t, ctx) => {
+        const key = GROSS_BOOK?.keys[0];
+        const want = (GROSS_BOOK?.positions ?? []).filter((p) => p.key === key);
+        const tile = ctx.costGross?.tile;
+        const paid = want.reduce((a, p) => a + p.paid, 0);
+        return want.length > 0 && !!tile && Math.abs(tile.paid - paid) <= 0.01
+          && /as paid, stamp duty included/.test(tile.text) && /PAID IN/.test(tile.title ?? "");
+      }],
+  ],
   "stock-carried": [
     ...stockTabChecks("position"),
     ...stockLayoutChecks(),
@@ -26635,6 +26699,26 @@ const INVARIANTS = {
      * from the restated figure at that precision or the check could not tell
      * the two apart.
      */
+    /**
+     * …AND A COST ON THE GROSS-PAID BASIS (VD-24). The row's Invested is every
+     * rupee paid; the statement's net is below it by the stamp duty it prints.
+     * The cells together must account for every rupee of those charges the book
+     * restated — struck on the handles, and on the full-precision figures the
+     * hover prints, because at the row's compact precision the two are one label.
+     */
+    ["a cost on the gross-paid basis shows what was PAID, and names the statement's net and the charges in full",
+      (t, ctx) => {
+        if (!GROSS_BOOK) return false;
+        const cells = ctx.costGross?.cells ?? [];
+        if (!GROSS_BOOK.positions.length) return cells.length === 0;
+        const charges = cells.reduce((a, c) => a + (c.paid - (c.printed ?? c.paid)), 0);
+        return cells.length > 0 && Math.abs(charges - GROSS_BOOK.charges) <= 0.05
+          && cells.every((c) => {
+            const named = rupeesIn(c.title);
+            return c.printed !== null && /PAID IN/.test(c.title ?? "")
+              && [c.paid, c.printed, c.paid - c.printed].every((v) => named.some((n) => Math.abs(n - v) <= 0.01));
+          });
+      }],
     ["a cost carried through a class switch shows what was PAID, and names the statement's figure",
       (t, ctx) => {
         if (!CARRIED_BOOK) return false;
@@ -35784,6 +35868,19 @@ for (const theme of THEMES) {
        * `title` is not in `innerText`, which is the trap the cost-cell reasons
        * already needed `ctx.titles` for.
        */
+      const costGross = FAST ? null : await page.evaluate(() => ({
+        cells: [...document.querySelectorAll("[data-cost-gross]")].map((el) => ({
+          paid: Number(el.getAttribute("data-cost-gross")),
+          printed: el.hasAttribute("data-cost-gross-printed") ? Number(el.getAttribute("data-cost-gross-printed")) : null,
+          text: (el.innerText ?? "").trim(),
+          title: el.getAttribute("title") ?? el.querySelector("[title]")?.getAttribute("title") ?? null,
+        })),
+        tile: (() => {
+          const el = document.querySelector("[data-stock-cost-gross]");
+          return el ? { paid: Number(el.getAttribute("data-stock-cost-gross")), text: (el.innerText ?? "").trim(),
+            title: el.getAttribute("title") } : null;
+        })(),
+      }));
       const costCarried = FAST ? null : await page.evaluate(() => ({
         cells: [...document.querySelectorAll("[data-cost-carried]")].map((el) => ({
           paid: Number(el.getAttribute("data-cost-carried")),
@@ -38893,7 +38990,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT, costGross }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

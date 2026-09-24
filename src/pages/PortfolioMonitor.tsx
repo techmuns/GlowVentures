@@ -33,7 +33,7 @@ import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VAC
 import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN, type GroupRow, type InstrumentRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, capitalReturnCoverage,
-  carriedCostOf, carriedCostNote, boughtNavOf,
+  carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote, boughtNavOf,
   type TrancheTable, type TrancheRow, type CapitalSide, type CapitalGroup,
 } from "@/lib/tranches";
 // THE TWO DATED RECORDS, MERGED INTO ONE ROW SET — and the two money blocks
@@ -3882,6 +3882,15 @@ export function PortfolioMonitor() {
                   const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
                   const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
                   /**
+                   * …AND A COST ON THE GROSS-PAID BASIS SAYS SO TOO (VD-24).
+                   * Sanshi's statements net the stamp duty out of what they
+                   * print as cost and the book carries every rupee paid; the two
+                   * differ by thousands on crores, so the hover prints both in
+                   * full — a compact figure would print them identically.
+                   */
+                  const gross = r.costNA || carried ? null : grossPaidOf(r.trancheSet);
+                  const grossWhy = gross ? grossPaidNote(gross, (v) => fmtFromBase(v)) : "";
+                  /**
                    * WHAT A PARTLY COSTED ROW'S COST FIGURES COVER (A-02), and why
                    * an uncosted one has none — in the cell, never a bare dash.
                    * ICICI Bank is the book's case: 7,000 of 21,500 shares carry a
@@ -4050,6 +4059,8 @@ export function PortfolioMonitor() {
                         <td className="px-2 py-1.5 text-right mono text-slate-400 whitespace-nowrap"
                           data-cost-carried={carried ? carried.paid : undefined}
                           data-cost-printed={carried ? carried.printed : undefined}
+                          data-cost-gross={gross ? gross.paid : undefined}
+                          data-cost-gross-printed={gross ? gross.printed : undefined}
                           data-invested-capital={capitalNote ? investedOf(r) ?? undefined : undefined}
                           data-invested-cost-held={capitalNote ? r.costBasis ?? undefined : undefined}>
                           {r.costNA ? <AbsentCell reason={noCostWhy} />
@@ -4057,6 +4068,8 @@ export function PortfolioMonitor() {
                             ? <span title={capitalNote}>{fmtFromBase(investedOf(r), { compact: true })}</span>
                             : carriedWhy
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
+                            : grossWhy
+                            ? <span title={grossWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
                             : coverNote
                             ? <span title={coverNote}>{fmtFromBase(r.costBasis, { compact: true })}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
                             : fmtFromBase(r.costBasis, { compact: true })}

@@ -21,7 +21,7 @@ import { holdingValuation } from "@/lib/valuedAt";
 import { isinAbsentWords } from "@/lib/schemeMatch";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
-import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
+import { carriedCostOf, carriedCostNote, grossPaidOf, grossPaidNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
 
@@ -762,6 +762,9 @@ export function StockInfo() {
    */
   const carried = cost === null ? null : carriedCostOf(drows, BOOK_POSITION_TRANCHES);
   const carriedWhy = carried ? carriedCostNote(carried, (v) => money(v)) : "";
+  /** …and a cost on the gross-paid basis, the Monitor's words again (VD-24). */
+  const gross = cost === null || carried ? null : grossPaidOf(drows);
+  const grossWhy = gross ? grossPaidNote(gross, (v) => fmtFromBase(v)) : "";
 
   /**
    * THE MARK, AND WHY IT IS NOT `rows[0]`.
@@ -1048,9 +1051,13 @@ export function StockInfo() {
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-400"
           data-cost-carried={r.costBasisSource === "carried-through-switch" ? (r.costBasis ?? undefined) : undefined}
-          data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}>
+          data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}
+          data-cost-gross={r.costBasisSource === "gross-paid" ? (r.costBasis ?? undefined) : undefined}
+          data-cost-gross-printed={r.costBasisSource === "gross-paid" ? r.printedCostBasis : undefined}>
           {r.costBasisSource === "carried-through-switch"
             ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>
+            : r.costBasisSource === "gross-paid"
+            ? <span title={grossPaidNote(grossPaidOf([r])!, (v) => fmtFromBase(v))}>{money(r.costBasis)}</span>
             : r.costBasis === null
             /* `money()` returns a BARE dash for a null, and §2 forbids one
                (DSM-D4): the row names whose statement reports no cost. */
@@ -1626,6 +1633,7 @@ export function StockInfo() {
           value={avgCost === null ? <AbsentValue /> : <span className="mono" data-stock-avg-cost={avgCost}>{price(avgCost)}</span>}
           sub={cost === null ? <span className="text-slate-500">{costWhy}</span>
             : carried ? <span title={carriedWhy} data-stock-cost-carried={carried.paid}>invested {money(cost)} &middot; as paid, across a class switch</span>
+            : gross ? <span title={grossWhy} data-stock-cost-gross={gross.paid}>invested {money(cost)} &middot; as paid, stamp duty included</span>
             : costedShare ? <span data-stock-cost-covers={costedShare}
                 title={`A cost is reported for ${costedShare}; the rest are held in an account whose statement reports none, so the average is over the ${costedShare.split(" of ")[0]} that have one.`}>
                 invested {money(cost)} &middot; on {costedShare}</span>

@@ -307,6 +307,49 @@ export function carriedCostNote(c: CarriedCost, money: (v: number) => string): s
 }
 
 /**
+ * A COST ON THE GROSS-PAID BASIS (VD-24): every rupee the family paid in, where
+ * the fund's statement costs the units at what bought them — its contributions
+ * LESS the stamp duty and charges it prints against them. `build-book` restates
+ * it (`grossPaidCost`) only where the net and the charges add to the paid figure
+ * to the paisa, and keeps the statement's net as `printedCostBasis`.
+ *
+ * Summed over the constituents that REPORT a cost, on both sides, exactly as
+ * `carriedCostOf` is, so `paid` is the row's own Invested figure. Null where no
+ * constituent's cost is on this basis.
+ */
+export type GrossPaidCost = {
+  /** Every rupee paid in — the book's own cost. */
+  paid: number;
+  /** What the statements print instead: the net that bought units. */
+  printed: number;
+  /** The stamp duty and charges between the two. */
+  charges: number;
+};
+
+export function grossPaidOf(ps: Position[]): GrossPaidCost | null {
+  if (!ps.some((p) => p.costBasisSource === "gross-paid")) return null;
+  let paid = 0, printed = 0;
+  for (const p of ps) {
+    if (p.costBasis === null) continue;
+    paid += p.costBasis;
+    printed += p.printedCostBasis ?? p.costBasis;
+  }
+  return { paid, printed, charges: paid - printed };
+}
+
+/**
+ * WHY THIS INVESTED FIGURE IS A LITTLE ABOVE THE ONE THE STATEMENT PRINTS. The
+ * charges are a few thousand rupees on crores, so a compact figure would print
+ * both costs identically: `exact` prints the two that differ in full.
+ */
+export function grossPaidNote(g: GrossPaidCost, exact: (v: number) => string): string {
+  return `This is every rupee PAID IN, stamp duty and charges included: ${exact(g.paid)}. `
+    + `The fund's statements cost these units at ${exact(g.printed)} — what bought units after the `
+    + `${exact(g.charges)} of stamp duty and charges they print against the same contributions. `
+    + `The book counts what was paid, the basis Helios, Active Momentum, Founders and Delphi print.`;
+}
+
+/**
  * The per-unit price a CARRIED tranche was bought at, in the class it was
  * bought in — the Allotment NAV the statement prints. Null on a tranche that
  * was bought in the class it is held in, whose `navAtEntry` already is that.
