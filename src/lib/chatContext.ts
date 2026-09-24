@@ -25,7 +25,7 @@
 import {
   BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
 } from "@/data/glowData";
-import { depositoryCashHoldings } from "./fundNavs";
+import { depositoryCashHoldings, unpricedStatementUnits } from "./fundNavs";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
   topByValue, sum,
@@ -202,6 +202,29 @@ export function buildDashboardContext(): ContextBlock[] {
       rows: depositoryCashHoldings().map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
         unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR.
+     *
+     * NOT CASH — a hybrid fund, kept out of the block above on purpose. The
+     * dashboard values these at AMFI's NAV only because a sibling statement at
+     * the same depository, on the same date, prices the same scheme on the same
+     * basis (A-17). Told only the statement-basis blocks, a model asked "how
+     * much ABSL Balanced Advantage do I hold" would answer "none" and contradict
+     * the screen.
+     */
+    {
+      kind: "fund_units_a_statement_records_without_a_rate",
+      note: "These fund units are on a holding statement that records them and prints no rate, so no statement "
+        + "values them and they are NOT in the statement-basis totals above. The dashboard values them at AMFI's "
+        + "published NAV because another account at the same depository, on the same date, prices the same scheme "
+        + "on the same basis (pricedLikeAccountId). They are not cash. No cost is reported for them.",
+      totalCr: cr(sum(unpricedStatementUnits().map((p) => p.marketValue))),
+      rows: unpricedStatementUnits().map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, pricedLikeAccountId: p.depositoryUnits?.witnessAccountId ?? null,
+        valueCr: cr(p.marketValue),
       })),
     },
     /**

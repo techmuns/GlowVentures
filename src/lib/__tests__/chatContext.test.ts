@@ -20,6 +20,7 @@
 import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
 import { dedupedPositions, doubleCountedValue, publicPrivateSplit, sum } from "@/lib/analytics";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
+import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -181,6 +182,29 @@ ok("the context is a non-empty set of named blocks",
   // LOAD-BEARING: both kinds exist on this book, or the check passes over nothing.
   ok("...and this book has both kinds, so the check is not vacuous",
     absent.length > 0 && nil.length > 0, `${absent.length} not valued, ${nil.length} measured nil`);
+}
+
+// ── A-17: units a statement records with no rate are named, and are not cash ──
+//
+// The dashboard values ABSL Balanced Advantage at AMFI's NAV where a sibling
+// statement proves the basis. The context must carry those rows in a block of
+// their own — never inside the cash block, because the fund is not cash.
+{
+  type Row = { fund: string; accountId: string; units: number; valueCr: number | null; pricedLikeAccountId: string | null };
+  const b = block<{ rows: Row[]; totalCr: number | null }>("fund_units_a_statement_records_without_a_rate");
+  const want = unpricedStatementUnits();
+  const cash = block<{ rows: { accountId: string; fund: string }[] }>("cash_valued_from_depository_units");
+  ok("the context names the fund units a statement records and prints no rate for",
+    !!b && Array.isArray(b.rows) && b.rows.length === want.length
+      && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity)),
+    `${b?.rows?.length ?? "no block"} vs ${want.length}`);
+  ok("...each names the account whose statement prices the scheme",
+    !!b && b.rows.every((r) => typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0));
+  ok("...and none of them is filed as cash",
+    !!cash && want.every((p) => !cash.rows.some((r) => r.accountId === p.accountId && r.fund === p.security))
+      && cash.rows.length === depositoryCashHoldings().length);
+  // LOAD-BEARING: this book has such a row, or the three checks pass over nothing.
+  ok("...and this book has at least one such row", want.length > 0, `${want.length} row(s)`);
 }
 
 // ── NO FABRICATED ZEROS ANYWHERE IN THE CONTEXT ────────────────────────────
