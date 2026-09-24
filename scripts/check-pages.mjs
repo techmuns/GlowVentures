@@ -11087,7 +11087,7 @@ const MULTI_MANDATE_COMPANIES = (() => {
   } catch { return null; }
 })();
 const ROUTE_WORDS_D = [
-  ["[D] a route held more than once is pluralised in words — never \"2 manager's mandates\" (MH-17)", (t, ctx) => {
+  ["a route held more than once is pluralised in words — never \"2 manager's mandates\" (MH-17)", (t, ctx) => {
     if (MULTI_MANDATE_COMPANIES === null) return false;
     const tips = (ctx?.titles ?? []).filter((x) => /^(Held through \d+ accounts?:|Show how this name is held|Hide how this name is held)/.test(x ?? ""));
     if (!tips.length) return false;

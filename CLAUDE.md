@@ -17843,8 +17843,9 @@ formula on the position's own fields for every costed position in the book.
 redemption and 3P's redemption are sales; the position takes FIFO's cost, its
 realised gain and its cost of units sold, `costBasisSource: "fifo"`, and keeps
 the statement's figure as `printedCostBasis`. Neo: ₹4,85,83,720 held + ₹14,16,280
-sold = every rupee drawn. 3P: realised ₹2,56,09,033.87 + cost sold
-₹28,49,73,801.30 = ₹31,05,82,835.17, the redemption on the ICICI advice.
+sold = every rupee drawn. 3P: realised ₹2,55,82,835.17 + cost sold
+₹28,50,00,000 = ₹31,05,82,835.17, the redemption on the ICICI advice. (Stage
+10cw: the cost is what was paid, setup expense and stamp duty included.)
 
 **A SWITCH WITH NO SALE IS MAIN'S CLASS-SWITCH CARRY, AND FIFO CHECKS IT.** Stage
 10bv landed on main while this was being built, with its own Buoyant reader and
@@ -24438,6 +24439,39 @@ check. Case 14 is the checker refusing to run on a repeated route key.
 **Not fixed, and why.** Which NAV to value Sanshi at is the family's call (about
 ₹11 Cr lower post-tax). Capturing each demat line's pledged balance needs a reader
 change; the one pledged line is named instead.
+
+### Stage 10cw — THE FIGURE AUDIT, PART D: THE SMALL ONES, AND WHAT A COST IS
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The D group of `docs/FIGURE-AUDIT.md`: the cosmetic items — a bare dash, a
+rounding, a hover naming a column the table does not have — and two where the
+words were right and the figure beside them was not quite. Stacked on Stage 10cv.
+
+| | Was | Now |
+| --- | --- | --- |
+| VD-24 | Sanshi's cost was the statement's net of stamp duty, and a reader who paid ₹75 Cr read ₹74,99,62,501.87 | the cost is every rupee paid (`costBasisSource: "gross-paid"`); the statement's net and the charges are in the cell's hover. 3P's realised is struck on the same basis: ₹2,56,09,033.87 → ₹2,55,82,835.17 |
+| VD-17 | ICICI's NSDL statement counts shares at 31 Mar and prices them at the 30 Mar close; the page named one date for both | the value is struck on the pricing day (`priceAsOf`, carried where the statement prints it), and the tile, the Monitor's marker and each statement line name both |
+| VD-25, XA-23 | a class switch's legs read as dated flows; capital no dated row carries was silent beside the rate it is missing from | the switch is not a flow; the missing capital is named beside the rate |
+| DL-16, PM-D1 – D3 | Private Market figures that did not say what they divide by or round to | each says so, in its hover |
+| FS-20, FS-23, FS-24, PC-11 | a fund's Sector read "Unclassified"; the bar tooltip called company-share value the entity's NAV | a fund says it has no sector; the tooltip names the value it draws |
+| DL-17, DL-18, DSM-D4 – D9, MT-18, MSX-22/23, MH-17, MNT-20 – 25, SC-D1 – D3, XA-24 – 28, PC-12 | a bare dash, "2 manager's mandates", a hover naming a column the table does not have, an FX chip that did not say why it names no source, a nil price left blank in Excel | each dash names its cause, and each figure its unit and precision |
+
+**What moved.** `glowData.ts`: five Sanshi folios' cost rises by what their
+statements net out (₹78,746.09 in all; each return falls by 0.01 point), 3P's
+realised as above, `priceAsOf` on 20 rows, and `charges` on each dated capital
+move. `BOOK_SUMMARY` does not move. The Polycab report and store were regenerated
+by `npm run build-polycab`, which now names its sources per table.
+
+**Guards.** `grossPaid.test.ts` and `nsdlPriceDate.test.mjs` (new), cases in
+twelve more suites, two new `check:pages` routes (`stock-gross`,
+`sectors-direct-live`), and two harnesses: `scripts/dev/cost-date-bug.sh` and
+`scripts/dev/txn-labels-bug.py`, each case firing its own check.
+
+**Not done, and reported.** The Monitor's lakh rounding (MH-19) needs a change to
+`format.ts` that moves every compact figure on the site; PM-D4, PM-D6 and the
+LIVE_CELL wording are listed in the audit and left for their own change.
 
 ### Stage 10k — News & Announcements: REMOVED
 
