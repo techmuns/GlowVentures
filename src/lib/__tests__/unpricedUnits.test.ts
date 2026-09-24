@@ -78,9 +78,14 @@ ok("the helper values exactly the rows the gates admit, and no other",
   `got ${got.length}, re-derived ${want.length}`);
 ok("each is valued at its own units × the published NAV, nothing else",
   got.every((p) => { const w = want.find((x) => sig(x) === sig(p)); return !!w && Math.abs(p.marketValue - w.quantity * w.nav) < 0.01 && p.currentPrice === w.nav; }));
-ok("...and on this book that is the ABSL Balanced Advantage units the audit found, ≈ ₹7.15 Cr",
-  got.length > 0 && got.every((p) => I(p) === "INF084M01AB8") && Math.abs(got.reduce((s, p) => s + p.marketValue, 0) / 1e7 - 7.15) < 0.01,
-  `₹${(got.reduce((s, p) => s + p.marketValue, 0) / 1e7).toFixed(4)} Cr over ${got.length} account(s)`);
+// THE UNITS, NOT THE VALUE: the value moves with every published NAV (it read
+// ≈ ₹7.15 Cr on the day of the audit and ₹7.18 Cr once AMFI's file refreshed),
+// and "units × that NAV" is already asserted above. What the audit found is the
+// two statements' own balances.
+ok("...and on this book that is the ABSL Balanced Advantage units the audit found — 3,93,095.951 + 2,42,412.122 units",
+  got.length === 2 && got.every((p) => I(p) === "INF084M01AB8")
+    && Math.abs(got.reduce((s, p) => s + p.quantity, 0) - 635508.073) < 0.0005,
+  `${got.reduce((s, p) => s + p.quantity, 0).toFixed(3)} units, ₹${(got.reduce((s, p) => s + p.marketValue, 0) / 1e7).toFixed(4)} Cr over ${got.length} account(s)`);
 ok("no cost, never zero — a depository holds units and did not buy them",
   got.every((p) => p.costBasis === null && p.costUnavailable === true && p.unrealizedPnL === null && p.returnPct === null));
 ok("each is NAV-priced, carries the NAV's own date, and says it is a no-rate row with its witness",
