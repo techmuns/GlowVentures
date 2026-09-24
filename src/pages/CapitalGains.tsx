@@ -364,6 +364,7 @@ export function CapitalGains() {
   // (Stage 10bx), so they are named — one click in — and never mixed into the
   // rows a reader is scanning for figures.
   const acctReported = acctRowsShown.filter((c) => !c.absent);
+  const footLots = acctReported.every((c) => c.lots != null) ? acctReported.reduce((n, c) => n + (c.lots ?? 0), 0) : null;
   const acctMissing = acctRowsShown.filter((c) => c.absent);
 
   return (
@@ -515,7 +516,7 @@ export function CapitalGains() {
                 <TrFoot view={bucketView} className="px-4 py-2.5 text-slate-200"
                   label={<>Total — the canonical figure</>}
                   cells={{
-                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400">{byBucket.reduce((s, c) => s + c.lots, 0)}</td>,
+                    lots: <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400" data-cg-bucket-lots>{byBucket.reduce((s, c) => s + c.lots, 0)}</td>,
                     st: <td key="st" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>{fmtFromBase(totRealST ?? 0, { compact: true, sign: true })}</td>,
                     lt: <td key="lt" className={`px-4 py-2.5 text-right mono ${changeColor(totRealLT ?? 0)}`}>{fmtFromBase(totRealLT ?? 0, { compact: true, sign: true })}</td>,
                     total: <td key="total" className={`px-4 py-2.5 text-right mono ${changeColor(realisedTotal ?? 0)}`}>{fmtFromBase(realisedTotal ?? 0, { compact: true, sign: true })}</td>,
@@ -547,7 +548,7 @@ export function CapitalGains() {
                 <Tr view={acctView} key={c.entity} className="hover:bg-ink-700/40" data-cg-account={c.entity}>
                   <td className="px-4 py-2.5 font-medium text-slate-100">{c.entity}</td>
                   <td className="px-4 py-2.5 text-[11px] text-slate-400">{c.periodFrom} → {c.periodTo}</td>
-                  <td className="px-4 py-2.5 text-right mono text-slate-400">{c.lots ?? DASH}</td>
+                  <td className="px-4 py-2.5 text-right mono text-slate-400" data-cg-lots={c.lots ?? ""}>{c.lots ?? DASH}</td>
                   <td className={`px-4 py-2.5 text-right mono ${changeColor(c.realisedST ?? 0)}`}>
                     {fmtFromBase(c.realisedST ?? 0, { compact: true, sign: true })}
                   </td>
@@ -582,9 +583,16 @@ export function CapitalGains() {
             </tbody>
             <tfoot className="border-t border-ink-700 font-semibold">
               <TrFoot view={acctView} className="px-4 py-2.5 text-slate-200"
-                label={<>Total</>}
+                label={<span data-cg-foot-accounts={reported.length}
+                  title={`${reported.length} of ${cg.length} accounts issue a capital gain statement; the other ${cg.length - reported.length} are the band above, each with its reason.`}>Total</span>}
                 cells={{
-                  lots: <td key="lots" className="px-4 py-2.5 text-[11px] text-slate-500">{reported.length} of {cg.length} accounts</td>,
+                  /* THE LOTS COLUMN'S TOTAL IS ITS LOTS (XP-16). It printed "7 of
+                     51 accounts" here, a count of a different thing under a
+                     column of lot counts; the bucket table above prints the
+                     same lots and ties. The account coverage is the label's hover. */
+                  lots: footLots === null
+                    ? <td key="lots" className="px-4 py-2.5 text-right mono" data-cg-foot-lots=""><AbsentCell reason="an account's statement prints no lot count" /></td>
+                    : <td key="lots" className="px-4 py-2.5 text-right mono text-slate-400" data-cg-foot-lots={footLots}>{footLots}</td>,
                   realST: (
                     <td key="realST" className={`px-4 py-2.5 text-right mono ${changeColor(totRealST ?? 0)}`}>
                       {totRealST === null ? <AbsentCell /> : fmtFromBase(totRealST, { compact: true, sign: true })}

@@ -30674,6 +30674,20 @@ const INVARIANTS = {
    * band that dropped an account — or kept a reporting one in it — fails.
    */
   "capital-gains": [
+    // THE LOTS COLUMN'S TOTAL IS ITS LOTS (XP-16): the footer's Lots cell is
+    // the rows' own lots summed, the bucket table above prints the same number,
+    // and the account coverage it used to print there is the Total label's hover.
+    ["the account table's Lots total is its rows' lots, and ties to the bucket table (XP-16)", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!d.rowLots.length || d.footLots == null) return false;
+      if (d.rowLots.some((v) => v === "" || !Number.isFinite(Number(v)))) return false;
+      const sum = d.rowLots.reduce((n, v) => n + Number(v), 0);
+      if (Number(d.footLots) !== sum || d.footLotsText !== String(sum)) return false;
+      if (d.bucketLots !== String(sum)) return false;
+      if (/accounts/i.test(d.footLotsText)) return false;
+      return !!d.footAccounts && new RegExp(`\\b${d.reported.length} of \\d+ accounts issue a capital gain statement`).test(d.footAccounts);
+    }],
     ["the accounts with no capital gain statement are one band, marked missing data, closed on arrival", (t, ctx) => {
       const d = ctx?.cgMissing;
       if (!d) return { notChecked: "the probe did not run" };
@@ -30698,6 +30712,108 @@ const INVARIANTS = {
     }],
     ["no row reads the old 'no capital gain statement issued' line on its face",
       (t) => !/no capital gain statement issued for this account/i.test(t)],
+    // (A second "capital-gains" key here silently dropped this whole block — a later duplicate key wins. Merged at Stage 10cv.)
+    /**
+     * ── CAPITAL GAINS: THE TAX IS STRUCK PER TAXPAYER (XA-1) ─────────────────
+     *
+     * The tile pooled every member's heads before applying the rates, so Ajay's
+     * −₹70.9 L of short-term losses erased Ankita's and Bharat's short-term gains
+     * and the tile read ₹18.2 L against ₹33.1 L on the page's own rules. Struck on
+     * the tile's own handle (the figure as the helper computed it) AND its
+     * rendered text, each against the per-taxpayer figure re-expressed above — and
+     * the book must be one where the pooled figure differs, or the equality would
+     * pass just as well against the defect.
+     */
+    ["the tax estimate is the per-taxpayer sum, never the heads pooled across members", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const v = Number(el.attrs.value);
+      const shown = xaRupees(el.text);
+      const { perTaxpayer, pooled } = XA_BOOK.tax;
+      // One decimal of lakh is the tile's printing precision (±₹5,000).
+      return Math.abs(v - perTaxpayer) <= 1 && Math.abs(shown - v) <= 5100
+        && Math.abs(pooled - perTaxpayer) > 1e5 && Math.abs(shown - pooled) > 5100;
+    }],
+    // A-13: per taxpayer is not the whole of it — Ajay's own short-term loss
+    // absorbs his own long-term gain inside one year, and the tile printed
+    // ₹33.1 L without it. The book must be one where the set-off moves the
+    // figure, or the equality above would pass without it.
+    ["…with each person's short-term loss set off against their own long-term gain, and the tile says so", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const shown = xaRupees(el.text);
+      const { perTaxpayer, noSetOff } = XA_BOOK.tax;
+      return Math.abs(noSetOff - perTaxpayer) > 1e5 && Math.abs(shown - noSetOff) > 5100
+        && (ctx.titles ?? []).some((x) => /short-term loss is set off against that person's own long-term gain/i.test(x));
+    }],
+    ["and says so on the tile, naming each taxpayer's own figure", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
+    }],
+    /**
+     * XA-16. Three captions said the book carries no lot date — "No statement
+     * in this drop carries lot dates", "Without a lot date there is no mark to
+     * count to", and "the other 50 accounts issue a CAPITAL REGISTER" — while
+     * three LKP holdings carry a dated lot register and only eight accounts
+     * issue a capital register at all. The planner is empty because all three
+     * are at a loss, which is what the tile must say.
+     */
+    // STRUCK ON THE HOVERS AS WELL AS THE FACE. #95 moved an absent tile's
+    // hint and an absent section's "what would fill it" into hovers (Stage
+    // 10cp) — which is exactly where these three captions and the count that
+    // replaced them stand now, so a page-text match could fail on neither.
+    ["no tile or card says the book carries no lot dates while a holding carries one", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      if (!b.dated) return { notChecked: "no holding in this book carries a dated lot" };
+      const all = [t, ...(ctx?.titles ?? [])].join("\n");
+      return !/No statement in this drop carries lot dates/.test(all)
+        && !/Without a lot date there is no mark to count to/.test(all)
+        && !/accounts issue a CAPITAL REGISTER/.test(all)
+        && all.includes(`${b.dated} holding${b.dated === 1 ? " carries" : "s carry"} a purchase date`);
+    }],
+    ["a harvest row whose broker dates its lots shows its term, never the no-date absence", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      const drawn = b.harvest.slice(0, 30);
+      const dated = drawn.filter((h) => h.dated);
+      if (!dated.length) return { notChecked: "no holding with a dated lot is among the harvest rows drawn" };
+      const terms = (ctx?.xa ?? []).filter((x) => x.xa === "cg-term");
+      return terms.length === dated.length && dated.every((h) => terms.some((x) => x.attrs.key === h.key
+        && x.attrs.account === h.account && Number(x.attrs.st) === h.st && Number(x.attrs.lt) === h.lt
+        && /\b(ST|LT)\b/.test(x.text)));
+    }],
+    /**
+     * XA-22. The list is on the statements' marks by design — it has to tie
+     * to the PDFs — and those marks are up to five months old. Each row must
+     * name the date its loss is marked at, and a loss the published NAV has
+     * since turned into a gain must be flagged and counted, never offered as a
+     * loss to book.
+     */
+    ["every harvest row names the date its loss is marked at — its own account's report date", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
+      if (!b.harvest.length) return rows.length === 0;
+      return rows.length === Math.min(30, b.harvest.length) && rows.every((r) => {
+        const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
+        return !!w && w.marked !== "" && r.attrs.marked === w.marked;
+      });
+    }],
+    ["a loss the published NAV has turned into a gain is flagged, and the caption counts every one", (t, ctx) => {
+      const b = XA_BOOK?.cg;
+      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
+      if (!b.turned) return { notChecked: "no harvest candidate is at a gain at the published NAV on this book" };
+      const cap = xaEl(ctx, "cg-harvest-caption");
+      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
+      return !!cap && Number(cap.attrs["nav-turned"]) === b.turned && Number(cap.attrs.rows) === b.harvest.length
+        && /no longer at a loss at AMFI/.test(cap.text)
+        && rows.every((r) => {
+          const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
+          return !!w && (r.attrs["nav-turned"] === "1") === w.turned;
+        });
+    }],
   ],
   "capital-gains-missing": [
     ["the band opens by its own chevron, and names every account it holds", (t, ctx) => {
@@ -31023,109 +31139,6 @@ const INVARIANTS = {
     }],
   ],
 
-  /**
-   * ── CAPITAL GAINS: THE TAX IS STRUCK PER TAXPAYER (XA-1) ─────────────────
-   *
-   * The tile pooled every member's heads before applying the rates, so Ajay's
-   * −₹70.9 L of short-term losses erased Ankita's and Bharat's short-term gains
-   * and the tile read ₹18.2 L against ₹33.1 L on the page's own rules. Struck on
-   * the tile's own handle (the figure as the helper computed it) AND its
-   * rendered text, each against the per-taxpayer figure re-expressed above — and
-   * the book must be one where the pooled figure differs, or the equality would
-   * pass just as well against the defect.
-   */
-  "capital-gains": [
-    ["the tax estimate is the per-taxpayer sum, never the heads pooled across members", (t, ctx) => {
-      const el = xaEl(ctx, "cg-tax");
-      if (!XA_BOOK?.tax || !el) return false;
-      const v = Number(el.attrs.value);
-      const shown = xaRupees(el.text);
-      const { perTaxpayer, pooled } = XA_BOOK.tax;
-      // One decimal of lakh is the tile's printing precision (±₹5,000).
-      return Math.abs(v - perTaxpayer) <= 1 && Math.abs(shown - v) <= 5100
-        && Math.abs(pooled - perTaxpayer) > 1e5 && Math.abs(shown - pooled) > 5100;
-    }],
-    // A-13: per taxpayer is not the whole of it — Ajay's own short-term loss
-    // absorbs his own long-term gain inside one year, and the tile printed
-    // ₹33.1 L without it. The book must be one where the set-off moves the
-    // figure, or the equality above would pass without it.
-    ["…with each person's short-term loss set off against their own long-term gain, and the tile says so", (t, ctx) => {
-      const el = xaEl(ctx, "cg-tax");
-      if (!XA_BOOK?.tax || !el) return false;
-      const shown = xaRupees(el.text);
-      const { perTaxpayer, noSetOff } = XA_BOOK.tax;
-      return Math.abs(noSetOff - perTaxpayer) > 1e5 && Math.abs(shown - noSetOff) > 5100
-        && (ctx.titles ?? []).some((x) => /short-term loss is set off against that person's own long-term gain/i.test(x));
-    }],
-    ["and says so on the tile, naming each taxpayer's own figure", (t, ctx) => {
-      const el = xaEl(ctx, "cg-tax");
-      if (!XA_BOOK?.tax || !el) return false;
-      return /per taxpayer/i.test(t) && Number(el.attrs.taxpayers) === XA_BOOK.tax.taxpayers;
-    }],
-    /**
-     * XA-16. Three captions said the book carries no lot date — "No statement
-     * in this drop carries lot dates", "Without a lot date there is no mark to
-     * count to", and "the other 50 accounts issue a CAPITAL REGISTER" — while
-     * three LKP holdings carry a dated lot register and only eight accounts
-     * issue a capital register at all. The planner is empty because all three
-     * are at a loss, which is what the tile must say.
-     */
-    // STRUCK ON THE HOVERS AS WELL AS THE FACE. #95 moved an absent tile's
-    // hint and an absent section's "what would fill it" into hovers (Stage
-    // 10cp) — which is exactly where these three captions and the count that
-    // replaced them stand now, so a page-text match could fail on neither.
-    ["no tile or card says the book carries no lot dates while a holding carries one", (t, ctx) => {
-      const b = XA_BOOK?.cg;
-      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
-      if (!b.dated) return { notChecked: "no holding in this book carries a dated lot" };
-      const all = [t, ...(ctx?.titles ?? [])].join("\n");
-      return !/No statement in this drop carries lot dates/.test(all)
-        && !/Without a lot date there is no mark to count to/.test(all)
-        && !/accounts issue a CAPITAL REGISTER/.test(all)
-        && all.includes(`${b.dated} holding${b.dated === 1 ? " carries" : "s carry"} a purchase date`);
-    }],
-    ["a harvest row whose broker dates its lots shows its term, never the no-date absence", (t, ctx) => {
-      const b = XA_BOOK?.cg;
-      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
-      const drawn = b.harvest.slice(0, 30);
-      const dated = drawn.filter((h) => h.dated);
-      if (!dated.length) return { notChecked: "no holding with a dated lot is among the harvest rows drawn" };
-      const terms = (ctx?.xa ?? []).filter((x) => x.xa === "cg-term");
-      return terms.length === dated.length && dated.every((h) => terms.some((x) => x.attrs.key === h.key
-        && x.attrs.account === h.account && Number(x.attrs.st) === h.st && Number(x.attrs.lt) === h.lt
-        && /\b(ST|LT)\b/.test(x.text)));
-    }],
-    /**
-     * XA-22. The list is on the statements' marks by design — it has to tie
-     * to the PDFs — and those marks are up to five months old. Each row must
-     * name the date its loss is marked at, and a loss the published NAV has
-     * since turned into a gain must be flagged and counted, never offered as a
-     * loss to book.
-     */
-    ["every harvest row names the date its loss is marked at — its own account's report date", (t, ctx) => {
-      const b = XA_BOOK?.cg;
-      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
-      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
-      if (!b.harvest.length) return rows.length === 0;
-      return rows.length === Math.min(30, b.harvest.length) && rows.every((r) => {
-        const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
-        return !!w && w.marked !== "" && r.attrs.marked === w.marked;
-      });
-    }],
-    ["a loss the published NAV has turned into a gain is flagged, and the caption counts every one", (t, ctx) => {
-      const b = XA_BOOK?.cg;
-      if (!b) return { notChecked: "the statement book could not be re-derived from glowData.ts" };
-      if (!b.turned) return { notChecked: "no harvest candidate is at a gain at the published NAV on this book" };
-      const cap = xaEl(ctx, "cg-harvest-caption");
-      const rows = (ctx?.xa ?? []).filter((x) => x.xa === "cg-harvest-row");
-      return !!cap && Number(cap.attrs["nav-turned"]) === b.turned && Number(cap.attrs.rows) === b.harvest.length
-        && /no longer at a loss at AMFI/.test(cap.text)
-        && rows.every((r) => {
-          const w = b.harvest.find((h) => h.key === r.attrs.key && h.account === r.attrs.account);
-          return !!w && (r.attrs["nav-turned"] === "1") === w.turned;
-        });
-    }],
-  ],
 
   /**
    * ── LEDGER INSIGHTS IS DATED BY ITS OWN TAPE (XA-18) ─────────────────────
@@ -31168,6 +31181,28 @@ const INVARIANTS = {
     }],
   ],
 };
+
+// A DUPLICATE ROUTE KEY IN INVARIANTS IS SILENT: an object literal keeps the
+// LAST of two same-named keys, so the earlier block never runs and reports
+// nothing — no failure, no abstention. Found at Stage 10cv: a second
+// "capital-gains" block had dropped the missing-data band's checks since Stage
+// 10ct. This reads the literal's own source and refuses to run on a repeat.
+{
+  const own = readFileSync(new URL(import.meta.url), "utf8").split("\n");
+  const from = own.findIndex((l) => l.startsWith("const INVARIANTS = {"));
+  const to = own.findIndex((l, i) => i > from && l.startsWith("};"));
+  const seen = new Map();
+  for (let i = from + 1; i < to; i++) {
+    const m = /^  (?:"([^"]+)"|([A-Za-z_$][\w$-]*)): \[/.exec(own[i]);
+    if (!m) continue;
+    const key = m[1] ?? m[2];
+    if (seen.has(key)) {
+      console.error(`INVARIANTS has two "${key}" blocks (lines ${seen.get(key)} and ${i + 1}); the first would never run. Merge them.`);
+      process.exit(1);
+    }
+    seen.set(key, i + 1);
+  }
+}
 
 /**
  * ── THE PRIVATE MARKET'S TWO ROUTES SHARE ONE BLOCK ─────────────────────────
@@ -35912,6 +35947,11 @@ for (const theme of THEMES) {
             reason: tr.querySelector("[title]")?.getAttribute("title") ?? null,
           })),
           reported: [...document.querySelectorAll("main [data-cg-account]")].map((tr) => tr.getAttribute("data-cg-account")),
+          rowLots: [...document.querySelectorAll("main tr[data-cg-account] [data-cg-lots]")].map((td) => td.getAttribute("data-cg-lots")),
+          footLots: document.querySelector("main [data-cg-foot-lots]")?.getAttribute("data-cg-foot-lots") ?? null,
+          footLotsText: (document.querySelector("main [data-cg-foot-lots]")?.textContent ?? "").trim(),
+          bucketLots: (document.querySelector("main [data-cg-bucket-lots]")?.textContent ?? "").trim(),
+          footAccounts: document.querySelector("main [data-cg-foot-accounts]")?.getAttribute("title") ?? null,
         };
       });
       const statHints = FAST ? null : await page.evaluate(() =>

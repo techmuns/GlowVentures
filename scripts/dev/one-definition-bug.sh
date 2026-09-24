@@ -35,6 +35,7 @@ FILES=(
   "src/pages/MandateHoldings.tsx"
   "src/pages/MorningCIO.tsx"
   "src/pages/HoldingsBehind.tsx"
+  "src/pages/CapitalGains.tsx"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -52,11 +53,12 @@ trap restore EXIT
 
 SIDES=upload,history,holdings-book,cio-allocation
 MANDATES=mandate,mandate-sector,mandate-fifo
+CG=capital-gains,capital-gains-missing
 DROPS=cio-allocation,holdings-row-1,holdings-row-3,holdings-aif,holdings-winners,holdings-listed,holdings-book
 
 sweep() {
   THEMES=light ONLY="$1" npm run check:pages 2>&1 | tr -d '\000' \
-    | grep -aE 'INVARIANT FAILED|^✓|^✗|combinations' | sed 's/^/   /'
+    | grep -aE 'INVARIANT FAILED|INVARIANTS has two|^✓|^✗|combinations' | sed 's/^/   /'
 }
 suite() {
   npm run test:family > "$SNAP/suite.txt" 2>&1
@@ -120,7 +122,7 @@ OLD_UNPLACED='No statement for these funds prints a SEBI category, so this book 
 
 if [ -z "${CASES:-}" ]; then
   echo "════════ CONTROL: no patch"
-  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES,$DROPS"; else echo "   the committed tree does not build"; fi
+  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES,$DROPS,$CG"; else echo "   the committed tree does not build"; fi
   suite
 fi
 
@@ -190,3 +192,24 @@ run_case 10 "$DROPS" no "each drill-down's footer counts the whole book's droppe
 run_case 11 "$DROPS" no "the footer's dropped-row handle is gone" \
   sub src/pages/HoldingsBehind.tsx \
     'data-hb-closed={closedExcluded} ' ''
+
+# ── 12 ── the Lots total prints an account count again (XP-16)
+run_case 12 "$CG" no "the Capital Gains Lots total says \"7 of 51 accounts\" again" \
+  sub src/pages/CapitalGains.tsx \
+    'data-cg-foot-lots={footLots}>{footLots}</td>,' \
+    'data-cg-foot-lots={footLots}>{reported.length} of {cg.length} accounts</td>,'
+
+# ── 13 ── the missing-data band opens on arrival — its checks must RUN to catch it
+run_case 13 "$CG" no "the no-statement band is open on arrival" \
+  sub src/pages/CapitalGains.tsx \
+    'const [missingOpen, setMissingOpen] = useState(false);' \
+    'const [missingOpen, setMissingOpen] = useState(true);'
+
+# ── 14 ── a second block under one route key: the checker must refuse to run
+run_case 14 "$CG" no "INVARIANTS gains a second \"capital-gains\" block" \
+  sub scripts/check-pages.mjs \
+    'const INVARIANTS = {
+' \
+    'const INVARIANTS = {
+  "capital-gains": [],
+'
