@@ -1,15 +1,16 @@
-// Styled Excel export for the whole Portfolio Monitor tab (Holdings + the full
-// transaction tape), carrying the dashboard's champagne-on-ink design language
-// into the workbook. Values are in INR (the model's base currency) so a saved
-// file never drifts with the FX rate.
+// Styled Excel export for the whole Portfolio Monitor tab (Holdings + the
+// managers' dated trade tape), carrying the dashboard's champagne-on-ink design
+// language into the workbook. Values are in INR (the model's base currency) so a
+// saved file never drifts with the FX rate.
 //
 // ── THE SHEET IS THE SCREEN IT EXPORTS (B-08) ───────────────────────────────
 //
-// It kept its own row build, and two of the screen's decisions never reached
+// It kept its own row build, and three of the screen's decisions never reached
 // it: it listed the closed positions and the sub-₹1,000 specks the tab drops
-// (`currentHoldings`), and its Return was always the cumulative return on cost
-// where the tab's default measure shows a CAGR on a lot-dated holding a year or
-// older. Each now goes through the helper the screen uses:
+// (`currentHoldings`), its Return was always the cumulative return on cost where
+// the tab's default measure shows a CAGR on a lot-dated holding a year or older,
+// and nothing in the file said what date a figure was struck on or why a cell
+// was blank. Each of those now goes through the helper the screen uses:
 //
 //   • WHICH HOLDINGS — `currentHoldings`, applied here, so the sheet cannot be
 //     handed a set the tab does not draw;
@@ -18,19 +19,21 @@
 //     that is whole accounts included — with the measure it resolved to
 //     written beside it (HPR, CAGR or XIRR);
 //   • WHICH PRICE    — `commonMark` (one mark or none) and `costedFigures`
-//     (cost, average and gain over one set), as the tab's clubbed row.
+//     (cost, average and gain over one set), as the tab's clubbed row;
+//   • WHICH DATE     — `valueDateOf`, per row, and a line under the title naming
+//     the blend of statement dates, published NAVs and live quotes.
 import ExcelJS from "exceljs";
 import type { Account, Position } from "./types";
-import type { Txn } from "./ledger";
+import type { Txn, TxnData } from "./ledger";
 import { basketKeyOf, familyClassKeyOf } from "./familyTaxonomy";
 import { displaySecurity, fmtCr, fmtCurrency, DASH } from "./format";
 import {
-  valueDateOf, commonValueDate, measuredReturn,
+  valueDateOf, commonValueDate, measuredReturn, isFixedIncome,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
 } from "./analytics";
 import { accountIndex, accountOf, ownerOf, providerOf, engagementOf } from "./accounts";
 import { fifoTotals } from "./fifo";
-import { costedFigures, commonMark, markKey } from "./clubbedFigures";
+import { costedFigures, commonMark, markKey, VACUOUS_COST_REASON } from "./clubbedFigures";
 import { buildDatedCapital, type DatedCapital } from "./datedCapital";
 import { labelledAccounts, labelledPositions } from "./securityLabel";
 import {
@@ -57,6 +60,12 @@ const C = {
   zebra: "FFFAF8F1",
   totalFill: "FFF4F2EC",
 };
+
+/** How a line's value was struck — the three bases a figure on the tab can carry. */
+type Basis = "live" | "nav" | "statement";
+const BASIS_LABEL: Record<Basis, string> = { live: "Live quote", nav: "AMFI NAV", statement: "Statement" };
+/** The basis a live quote, a published NAV and a statement mark each carry — the overlays' own flags. */
+const basisOf = (p: Position): Basis => (p.live ? "live" : p.navPriced ? "nav" : "statement");
 
 /**
  * Rupees for a sentence: compact above a lakh, to the paisa below it — a
@@ -118,6 +127,10 @@ type HoldingRow = {
   returnPct: number | null;
   /** Which return `returnPct` is — the tag the tab prints in the cell. Null where there is none. */
   returnTag: string | null;
+  /** Every (basis, date) the row's lines are valued on, oldest first. */
+  bases: { basis: Basis; date: string | null }[];
+  /** Why each blank figure is blank, and what a shown return covers — in column order. */
+  notes: string[];
 };
 
 /**
@@ -221,7 +234,8 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       const zeroCost = cost === 0 && mv > 0;
       const costNA = cost === null || zeroCost;
       // ONE MARK OR NONE (A-03): where the statements disagree on a price no
-      // single figure covers every unit, and the sheet leaves it blank.
+      // single figure covers every unit, and the sheet leaves it blank — with
+      // the marks named in the row's note, as the tab's hover names them.
       const mark = commonMark(ps, markKey);
       const sources = [...new Set(ps.map((x) => providerOf(idx, x)))].sort().join(" + ");
       const avgCost = !costNA ? cf.avgCost : null;
@@ -254,6 +268,82 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
       const input = { returnPct: fifoRet, heldSince: since, valuedAt, assetClass: ps[0].assetClass, costNA, capital };
       const ret = measuredReturn(input, "auto", bookAsOf);
 
+      // How each line was priced and on what date, oldest first.
+      const basisSeen = new Map<string, { basis: Basis; date: string | null }>();
+      for (const x of ps) {
+        const b = { basis: basisOf(x), date: valueDate(x) };
+        basisSeen.set(`${b.basis}|${b.date}`, b);
+      }
+      const bases = [...basisSeen.values()].sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "") || a.basis.localeCompare(b.basis));
+
+      /**
+       * EVERY BLANK FIGURE SAYS WHY (MSX-17), in the words the tab's own cells
+       * carry in their hover — and, for a cost nobody reported, naming WHOSE
+       * statement it is rather than asserting one cause over all of them.
+       */
+      const notes: string[] = [];
+      if (costNA) {
+        const why = cf.vacuous ? VACUOUS_COST_REASON
+          : zeroCost ? "the statement reports a cost of zero against a positive market value, which would book the whole holding as profit, so no cost-based figure is struck on it"
+          : `no statement behind this holding reports what it cost — it is reported by ${sources}. A ₹0 here would report the whole holding as profit`;
+        notes.push(`Avg Cost, Unreal. P&L, Return — ${why}`);
+      } else {
+        if (avgCost === null) notes.push("Avg Cost — the lines that report a cost hold no units to divide it by");
+        if (!cf.complete && cf.uncosted.value !== 0) {
+          notes.push(`Avg Cost, Unreal. P&L${ret.shown ? ", Return" : ""} — struck over the costed units alone: `
+            + `${cf.uncosted.lines} line${cf.uncosted.lines === 1 ? "" : "s"} worth ${inr(cf.uncosted.value)} `
+            + `${cf.uncosted.lines === 1 ? "reports" : "report"} no cost and ${cf.uncosted.lines === 1 ? "is" : "are"} left out of all three, never counted at zero`);
+        }
+      }
+      // WHERE A DEPOSITORY LINE'S UNITS CAME FROM — the tab's own sentence: no
+      // statement priced these units at all, so their value is AMFI's NAV on a
+      // depository's closing balance, and a reader must not take them for a
+      // statement mark replaced.
+      const depo = ps.map((x) => x.depositoryUnits?.asOf).filter((d): d is string => !!d).sort();
+      if (depo.length) {
+        notes.push(`Qty — ${depo.length === ps.length ? "these units are" : "some of these units are"} a depository's own `
+          + `closing balance of ${depo[depo.length - 1]}, on an account that sent a transaction statement and no holding `
+          + `statement — no statement priced them, and they are valued at AMFI's published NAV`);
+      }
+      if (mark.price === null) {
+        // The tab's own sentence names the marks and then says "open the row";
+        // a workbook row does not open, so the sheet says what the lines are.
+        notes.push(`CMP — ${mark.values.length > 1
+          ? `the statements reporting this holding mark it at ${mark.values.map((v) => fmtCurrency(v, "INR")).join(" and ")}; `
+            + `no one price covers every unit, and a weighted mean of them is a figure no statement printed`
+          : "marked at a total value, not a per-unit price"}`);
+      }
+      if (!costNA) {
+        if (!ret.shown) {
+          // A cost is reported, but it covers too little of the row to strike a
+          // return over — `fifoTotals`' coverage test. A return over part of a
+          // holding would describe neither part.
+          notes.push(fifoRet === null
+            ? (mv <= 0
+              // A nil cash sleeve, or a settlement payable carried at a
+              // negative value: nothing of value is held, so nothing earns.
+              ? `Return — this line holds nothing of positive value (a nil balance, or a settlement payable carried at ${inr(mv)}), so there is no return to strike`
+              : `Return — the lines that report a cost cover ${inr(cf.costedValue)} of this row's ${inr(mv)}, too little of it to strike a return over the whole`)
+            : `Return — ${ret.reason}`);
+        } else {
+          const parts: string[] = [];
+          // The measure's own sentence where the row is DATED — a CAGR's
+          // window, dated end to end the way the tab's CAGR measure words it,
+          // or a lot-dated holding under a year — and never the generic "no
+          // purchase date" line, which the note under the total states once for
+          // every HPR row.
+          const dated = ret.tag === "CAGR" ? measuredReturn(input, "cagr", bookAsOf) : ret;
+          const note = dated.shown ? dated.note : undefined;
+          if (note && (since || valuedAt === null || isFixedIncome(ps[0].assetClass) || capital?.dated)) parts.push(note);
+          if (typeof fifo.realised === "number" && Math.abs(fifo.realised) >= 0.005) {
+            parts.push(fifo.realised > 0
+              ? `includes ${inr(fifo.realised)} realised on units already sold (FIFO), which Unreal. P&L does not`
+              : `includes a realised loss of ${inr(-fifo.realised)} on units already sold (FIFO), which Unreal. P&L does not`);
+          }
+          if (parts.length) notes.push(`Return — ${parts.join("; ")}`);
+        }
+      }
+
       rows.push({
         security: ps[0].security, bucket, sector: ps[0].sector,
         // THE FAMILY'S OWN AXES, struck on the same position the bucket is and
@@ -285,6 +375,8 @@ function consolidate(held: Position[], accounts: Account[], nowMs: number, dated
         pnl: costNA ? null : cf.unrealised,
         returnPct: ret.shown ? ret.pct : null,
         returnTag: ret.shown ? ret.tag : null,
+        bases,
+        notes,
       });
     }
   }
@@ -323,21 +415,38 @@ type ColSpec = {
   header: string; width: number; numFmt?: string; align?: "left" | "right" | "center"; signed?: boolean;
 };
 
-function titleBlock(ws: ExcelJS.Worksheet, span: number, subtitle: string) {
-  const last = String.fromCharCode(64 + span); // A..
-  ws.mergeCells(`A1:${last}1`);
+/** The header row sits under the title and the two lines that describe the sheet. */
+const HEADER_ROW = 4;
+
+/**
+ * The title, then TWO lines under it: what the sheet is, and what its figures
+ * are AS OF. The second is the one a reader needs before any figure (MSX-17) —
+ * it used to end at "exported <date>", which dates the FILE and none of the
+ * figures in it.
+ */
+function titleBlock(ws: ExcelJS.Worksheet, cols: ColSpec[], subtitle: string, asOfLine: string) {
+  const span = cols.length;
+  ws.mergeCells(1, 1, 1, span);
   const t = ws.getCell("A1");
-  t.value = "Glow Ventures Family Office \u2014 Portfolio Monitor";
+  t.value = "Glow Ventures Family Office — Portfolio Monitor";
   t.font = { name: "Calibri", size: 14, bold: true, color: { argb: C.champagneText } };
   t.fill = { type: "pattern", pattern: "solid", fgColor: { argb: C.ink } };
   t.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
   ws.getRow(1).height = 26;
-  ws.mergeCells(`A2:${last}2`);
-  const s = ws.getCell("A2");
-  s.value = subtitle;
-  s.font = { name: "Calibri", size: 9, italic: true, color: { argb: C.muted } };
-  s.alignment = { vertical: "middle", horizontal: "left", indent: 1 };
-  ws.getRow(2).height = 16;
+  // A merged cell CLIPS rather than overflowing and Excel does not auto-fit a
+  // merged row, so each line is wrapped and its height computed from the
+  // span's own width in character units (conservative at Calibri 9).
+  const perLine = cols.reduce((w, c) => w + c.width, 0);
+  const line = (r: number, text: string, italic: boolean) => {
+    ws.mergeCells(r, 1, r, span);
+    const s = ws.getCell(r, 1);
+    s.value = text;
+    s.font = { name: "Calibri", size: 9, italic, color: { argb: C.muted } };
+    s.alignment = { vertical: "top", horizontal: "left", indent: 1, wrapText: true };
+    ws.getRow(r).height = 13 * Math.max(1, Math.ceil(text.length / perLine)) + 3;
+  };
+  line(2, subtitle, true);
+  line(3, asOfLine, false);
 }
 
 function headerRow(ws: ExcelJS.Worksheet, cols: ColSpec[], rowIdx: number) {
@@ -421,8 +530,45 @@ const PRICE = "#,##0.00";
 const PCT = '+0.0"%";-0.0"%";0.0"%"';
 const QTY = "#,##0";
 
+/**
+ * The line that dates a sheet's figures: how many rows are valued on each
+ * basis, and on which dates. A total over them BLENDS those dates, which is the
+ * thing a reader must be told before they compare it with a statement.
+ */
+function holdingsAsOfLine(rows: HoldingRow[]): string {
+  let statement = 0, nav = 0, live = 0, mixed = 0;
+  const statementDates: string[] = [];
+  const navDates = new Set<string>();
+  const liveDates = new Set<string>();
+  for (const r of rows) {
+    const kinds = new Set(r.bases.map((b) => b.basis));
+    if (kinds.size > 1) mixed++;
+    else if (kinds.has("live")) live++;
+    else if (kinds.has("nav")) nav++;
+    else statement++;
+    for (const b of r.bases) {
+      if (!b.date) continue;
+      if (b.basis === "statement") statementDates.push(b.date);
+      else if (b.basis === "nav") navDates.add(b.date);
+      else liveDates.add(b.date);
+    }
+  }
+  statementDates.sort();
+  const plural = (n: number, w: string) => `${n} row${n === 1 ? "" : "s"}${w}`;
+  const parts: string[] = [];
+  if (statement) {
+    const lo = statementDates[0], hi = statementDates[statementDates.length - 1];
+    parts.push(`${plural(statement, "")} at statement marks dated ${lo === hi ? lo : `${lo} → ${hi}`}`);
+  }
+  if (nav) parts.push(`${plural(nav, "")} at AMFI's published NAV for ${[...navDates].sort().join(", ")}`);
+  parts.push(live ? `${plural(live, "")} at live quotes of ${[...liveDates].sort().join(", ")}` : "no row at a live quote");
+  if (mixed) parts.push(`${plural(mixed, "")} mixing these bases`);
+  return `Values as struck, not on one date: ${parts.join("; ")}. Every total below blends these dates — `
+    + `each row's own basis and date is in "Priced as of", and a figure left blank says why in "Notes".`;
+}
+
 function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Account[], nowMs: number) {
-  const ws = wb.addWorksheet("Holdings", { views: [{ state: "frozen", ySplit: 3 }] });
+  const ws = wb.addWorksheet("Holdings", { views: [{ state: "frozen", ySplit: HEADER_ROW }] });
   /**
    * THE MONEY READS FIRST AND THE DESCRIPTORS CLOSE THE SHEET — the same
    * reading order the tab was given, at the family's request, and for the same
@@ -435,7 +581,9 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
    * turns on: WHICH SECTION a row sits in, WHO CHOSE IT, and where a manager
    * did, WHICH MANDATE. Without them the sheet flattens the tab's sections into
    * one undifferentiated list and cannot answer which mandate holds a given
-   * company.
+   * company. And "Priced as of" and "Notes", which are the tab's hovers: a
+   * workbook has no hover, so the basis a figure was struck on and the reason a
+   * cell is blank travel on the row.
    */
   const cols: ColSpec[] = [
     { key: "security", header: "Security", width: 34 },
@@ -482,6 +630,8 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     { key: "basket", header: "Basket (family)", width: 24 },
     { key: "sector", header: "Sector", width: 20 },
     { key: "entities", header: "Entities", width: 24 },
+    { key: "pricedAsOf", header: "Priced as of", width: 22 },
+    { key: "notes", header: "Notes", width: 80 },
   ];
   const exported = new Date(nowMs).toISOString().slice(0, 10);
 
@@ -511,14 +661,15 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
   // rolls each mandate into ONE expandable row, while this sheet orders classes
   // by value and prints every constituent. The Class, Held via and Mandate
   // columns carry the tab's grouping; the subtitle no longer claims its layout.
-  titleBlock(ws, cols.length,
+  titleBlock(ws, cols,
     `Holdings · the current holdings the Portfolio Monitor draws on its Category view, where every holding is a row `
     + `(what it leaves out is named under the total) · `
     + `one row per security per class, and per mandate inside PMS mandates · classes largest first · `
-    + `each dedupeGroup counted once · values in INR · exported ${exported}`);
-  headerRow(ws, cols, 3);
+    + `each dedupeGroup counted once · values in INR · exported ${exported}`,
+    holdingsAsOfLine(rows));
+  headerRow(ws, cols, HEADER_ROW);
 
-  let r = 4;
+  let r = HEADER_ROW + 1;
   for (const h of rows) {
     // `?? DASH` on every absent cell, never null and never a blank: an empty
     // cell is a third state beside their em dashes, and the one a reader's own
@@ -540,6 +691,8 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       mandate: h.mandate ?? DASH,
       sector: h.sector,
       entities: h.entities,
+      pricedAsOf: h.bases.map((b) => `${BASIS_LABEL[b.basis]} ${b.date ?? "undated"}`).join(" + "),
+      notes: h.notes.length ? h.notes.join(" · ") : DASH,
     }, (r % 2) === 0);
     r++;
   }
@@ -647,7 +800,7 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
     + `.`);
 
   // WHICH RETURN, stated once for every row — the Measure column says which
-  // one each row carries.
+  // one each row carries, and Notes carries a row's own window where it has one.
   r++;
   const tagged = (tag: string) => rows.filter((h) => h.returnTag === tag).length;
   const n = (k: number) => `${k} row${k === 1 ? "" : "s"}`;
@@ -661,15 +814,24 @@ function buildHoldings(wb: ExcelJS.Workbook, positions: Position[], accounts: Ac
       ? ` XIRR (${n(xirrRows)}): the money-weighted rate over the family's own dated payments into the whole account(s) a`
         + ` row is, where the money went in on several dates a year or more ago — the record the Transactions card solves over.`
       : ``)
-    + ` Unreal. P&L excludes gains already realised, so a Return can differ from P&L ÷ cost. Individual-share returns`
-    + ` exclude separately paid dividends.`);
+    + ` Unreal. P&L excludes gains already realised, so a Return can differ from P&L ÷ cost — Notes names the realised`
+    + ` figure where there is one. Individual-share returns exclude separately paid dividends.`);
 }
 
-function buildTransactions(wb: ExcelJS.Workbook, txns: Txn[]) {
-  const ws = wb.addWorksheet("Transactions", { views: [{ state: "frozen", ySplit: 3 }] });
-  // Entity closes the row, as it does on the tape this sheet mirrors. Type
-  // stays beside Security: one narrow column saying what the row IS, not a
-  // block of descriptors standing between the name and the first figure.
+/**
+ * What the Transactions sheet is handed. `TxnData` is `loadTransactions()`'s
+ * whole answer and `null` is that loader saying the archive did not answer —
+ * the two cases the sheet must never render alike (MSX-19). A bare array is
+ * rows alone, from a caller that did not keep the difference.
+ */
+export type TxnInput = TxnData | readonly Txn[] | null;
+
+function buildTransactions(wb: ExcelJS.Workbook, input: TxnInput, nowMs: number) {
+  const ws = wb.addWorksheet("Transactions", { views: [{ state: "frozen", ySplit: HEADER_ROW }] });
+  // Entity closes the row's figures, as it does on the tape this sheet mirrors.
+  // Type stays beside Security: one narrow column saying what the row IS, not a
+  // block of descriptors standing between the name and the first figure. Notes
+  // closes the sheet: why a figure on the row is blank.
   const cols: ColSpec[] = [
     { key: "date", header: "Date", width: 12, align: "left" },
     { key: "security", header: "Security", width: 34 },
@@ -679,22 +841,71 @@ function buildTransactions(wb: ExcelJS.Workbook, txns: Txn[]) {
     { key: "amount", header: "Amount (₹)", width: 18, numFmt: MONEY, align: "right" },
     { key: "realized", header: "Realized P&L (₹)", width: 18, numFmt: MONEY_SIGNED, align: "right", signed: true },
     { key: "account", header: "Entity", width: 24 },
+    { key: "notes", header: "Notes", width: 70 },
   ];
-  const asOf = new Date().toISOString().slice(0, 10);
-  titleBlock(ws, cols.length, `Transactions · full dated buy/sell tape · values in INR · exported ${asOf}`);
-  headerRow(ws, cols, 3);
+  const exported = new Date(nowMs).toISOString().slice(0, 10);
+  const data = input !== null && !Array.isArray(input) ? (input as TxnData) : null;
+  const txns: readonly Txn[] = input === null ? [] : Array.isArray(input) ? (input as readonly Txn[]) : (input as TxnData).txns;
 
-  let r = 4;
+  /**
+   * WHAT THIS TAPE IS, NOT "THE FULL DATED BUY/SELL TAPE" (MSX-19). It is the
+   * managers' dealing as the transaction statements print it, over the window
+   * those statements cover, from the accounts that issue one — the family's own
+   * capital in and out is the dated capital record, which is not on this sheet.
+   * And an archive that did not answer must not export as a tape with no rows,
+   * which reads exactly like a quarter in which nobody traded.
+   */
+  const scope = data
+    ? `Transactions · the managers' dealing as the transaction statements print it, `
+      + `${data.periodFrom && data.periodTo ? `${data.periodFrom} → ${data.periodTo}` : "over the window those statements cover"} · `
+      + `${data.accounts.length} account${data.accounts.length === 1 ? " issues" : "s issue"} a transaction statement and `
+      + `${data.accountsWithout.length} do${data.accountsWithout.length === 1 ? "es" : ""} not · `
+      + (data.ownAllotments.length
+        ? `${data.ownAllotments.length} row${data.ownAllotments.length === 1 ? "" : "s"} a fund's own statement prints for the family buying or redeeming its units `
+          + `${data.ownAllotments.length === 1 ? "is" : "are"} the family's capital and are in the dated capital record, not here · `
+        : ``)
+      + `values in INR · exported ${exported}`
+    : `Transactions · the managers' dealing as the transaction statements print it · values in INR · exported ${exported}`;
+  const state = input === null
+    ? `The transaction archive did not answer when this file was exported, so NO TRADES ARE LISTED — this is not a statement `
+      + `that there were none. Export again once the archive is reachable.`
+    : txns.length === 0
+    ? (data
+      ? `The transaction statements in this book print no trades for this window, so no row is listed.`
+      : `No trades were handed to this export, so no row is listed — this is not a statement that there were none.`)
+    : `${txns.length} dated row${txns.length === 1 ? "" : "s"}, `
+      + `${txns.filter((t) => t.side === "Buy").length} buys and ${txns.filter((t) => t.side === "Sell").length} sells, `
+      + `each as its statement printed it; a blank figure says why in "Notes".`;
+  titleBlock(ws, cols, scope, state);
+  headerRow(ws, cols, HEADER_ROW);
+
+  let r = HEADER_ROW + 1;
+  if (!txns.length) {
+    // THE EMPTY STATE IS A ROW, NOT ONLY A SUBTITLE: a reader who scrolls past
+    // the title lands on the table, and an empty table reads as "no trades".
+    noteRow(ws, cols, r, state);
+    return;
+  }
   for (const t of txns) {
+    const why: string[] = [];
+    // `?? DASH`, never `|| DASH`: a zero is a figure and a null is its absence,
+    // and `||` sent both to the same dash.
+    if (t.price === null) why.push("Price — the statement prints no price for this row");
+    if (t.amount === null) why.push("Amount — the statement prints no settled amount for this row");
+    if (t.realized === null) {
+      why.push(`Realized P&L — ${t.realizedNote
+        ?? (t.side === "Buy" ? "a purchase realises nothing" : "no capital gain statement reports what this sale realised")}`);
+    }
     writeRow(ws, cols, r, {
       date: t.date,
       security: displaySecurity(t.security),
       side: t.side,
       qty: Math.round(t.qty),
-      price: t.price || DASH,
-      amount: t.amount || DASH,
-      realized: t.realized == null ? DASH : t.realized,
+      price: t.price ?? DASH,
+      amount: t.amount ?? DASH,
+      realized: t.realized ?? DASH,
       account: t.account,
+      notes: why.length ? why.join(" · ") : DASH,
     }, (r % 2) === 0);
     r++;
   }
@@ -712,18 +923,18 @@ function buildTransactions(wb: ExcelJS.Workbook, txns: Txn[]) {
  * `nowMs` dates a live quote and the file; a test passes its own.
  */
 export function buildPortfolioWorkbook(
-  positions: Position[], accounts: Account[], txns: Txn[], nowMs: number = Date.now(),
+  positions: Position[], accounts: Account[], txns: TxnInput, nowMs: number = Date.now(),
 ): ExcelJS.Workbook {
   const wb = new ExcelJS.Workbook();
   wb.creator = "Glow Ventures Family Office";
   wb.created = new Date(nowMs);
   buildHoldings(wb, positions, accounts, nowMs);
-  buildTransactions(wb, txns);
+  buildTransactions(wb, txns, nowMs);
   return wb;
 }
 
 // Build the styled workbook and trigger a browser download.
-export async function exportPortfolioExcel(positions: Position[], accounts: Account[], txns: Txn[]): Promise<void> {
+export async function exportPortfolioExcel(positions: Position[], accounts: Account[], txns: TxnInput): Promise<void> {
   const wb = buildPortfolioWorkbook(positions, accounts, txns);
 
   const buf = await wb.xlsx.writeBuffer();
