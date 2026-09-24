@@ -17,7 +17,7 @@
 // sentences, and its generator throws rather than emit a number.
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
-import { depositoryCashHoldings } from "@/lib/fundNavs";
+import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
@@ -80,10 +80,23 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, string> = new Map([
   // units: the depository's closing balance on the same demat, to the third
   // decimal.
   ["HDFC Liquid Fund -Direct(G)", "INF179KB1HP9"],
+  // A-17: the review's transaction sheet closes Aarti at 2,42,412.122 units and
+  // Ankita at 3,93,095.951 — the two Motilal Oswal holding statements' own
+  // balances of ABSL BAL ADV-GROWTH, to the third decimal. Those statements
+  // record the units and print no rate, and the live book values them at AMFI's
+  // NAV (`unpricedStatementUnits`); Bharat's statement prices the same scheme.
+  // Left claimable, a search for the review's spelling would say "no statement
+  // reports it" about a holding three statements report.
+  ["Aditya Birla SL Balanced Advantage Fund(G)", "INF084M01AB8"],
 ]);
 const DEPOSITORY_VALUED = new Set(
-  depositoryCashHoldings().map((p) => p.isin?.trim().toUpperCase()).filter((x): x is string => !!x));
-/** Whether the live book values this review line from a depository's balance. */
+  [...depositoryCashHoldings(), ...unpricedStatementUnits()]
+    .map((p) => p.isin?.trim().toUpperCase()).filter((x): x is string => !!x));
+/**
+ * Whether the live book values this review line from units no statement
+ * prices — a depository's closing balance, or units a holding statement records
+ * and prints no rate for (A-17).
+ */
 export const valuedFromDepository = (g: ReviewGap) =>
   DEPOSITORY_VALUED.has(REVIEW_LINE_ISINS.get(g.name) ?? "");
 

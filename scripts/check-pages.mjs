@@ -2663,7 +2663,7 @@ const REVIEW_GAP_BOOK = (() => {
      * an abstention: while the live book values any depository balance, a
      * derivation that ties none has lost its input.
      */
-    let depositoryValued = null, depositoryRows = 0;
+    let depositoryValued = null, depositoryRows = 0, recordedValued = null, recordedRows = 0;
     try {
       // `bookArray` already appends this checker's re-expressed depository rows
       // to BOOK_POSITIONS — running them through the gates a second time finds
@@ -2694,10 +2694,37 @@ const REVIEW_GAP_BOOK = (() => {
         if (!gapNames.has(product) || !(units > 0)) continue;
         if (credits.some((c) => Math.abs(c.quantity - units) < 0.0005 && days(c.date, date) <= 5)) { depositoryValued = product; break; }
       }
-    } catch { depositoryValued = null; }
+      /**
+       * …AND A LINE THE LIVE BOOK VALUES FROM UNITS A HOLDING STATEMENT RECORDS
+       * WITH NO RATE (A-17) — derived by ITS licensing join: the review CLOSES
+       * each holder at the statement's own balance, unit for unit, on every
+       * such row of one ISIN. Never read from `REVIEW_LINE_ISINS`.
+       */
+      const noRate = dep.filter((p) => p.depositoryUnits?.kind === "no-rate");
+      recordedRows = noRate.length;
+      const closings = [];
+      for (const r of rows) {
+        const j = r.findIndex((c) => /^closing$/i.test(String(c).trim()));
+        if (j < 1) continue;
+        const product = String(r[j - 1]), units = Number(r[j + 2]);
+        if (gapNames.has(product) && units > 0) closings.push({ product, units });
+      }
+      const byIsin = new Map();
+      for (const p of noRate) {
+        const k = String(p.isin ?? "").toUpperCase();
+        if (k) byIsin.set(k, [...(byIsin.get(k) ?? []), p]);
+      }
+      for (const ps of byIsin.values()) {
+        const hit = [...new Set(closings.map((c) => c.product))].find((prod) =>
+          ps.every((p) => closings.some((c) => c.product === prod && Math.abs(c.units - p.quantity) < 0.0005)));
+        if (hit) { recordedValued = hit; break; }
+      }
+    } catch { depositoryValued = null; recordedValued = null; }
     return {
       depositoryValued,
       depositoryRows,
+      recordedValued,
+      recordedRows,
       // Any one of them exercises the claim equally, so the list's own first.
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
       /**
@@ -14621,6 +14648,26 @@ const INVARIANTS = {
       if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
       return !a.named.includes(a.q);
     }],
+    /**
+     * …NOR ONE THE LIVE BOOK VALUES FROM UNITS A HOLDING STATEMENT RECORDS
+     * WITH NO RATE (A-17). The review prints "Aditya Birla SL Balanced Advantage
+     * Fund(G)"; Ankita's and Aarti's Motilal Oswal statements record those units
+     * and print no rate, Bharat's statement prices the scheme, and the live book
+     * values them at AMFI's NAV. The note must not say no statement reports it.
+     */
+    ["…nor a review line the live book values from units a holding statement records with no rate", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.recordedValued) {
+        // The premise is struck on `UNPRICED_BOOK`, a separate derivation: while
+        // the live book values such a row, a join that ties none has lost its input.
+        return (UNPRICED_BOOK?.lines?.length ?? 0) > 0 ? false : { notChecked: "the live book values no units a holding statement records without a rate" };
+      }
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const a = ctx.absentName.recordedValued;
+      if (!a) return false;
+      if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
+      return !a.named.includes(a.q);
+    }],
     ["…and neither is a search that names nothing at all", (t, ctx) => {
       const a = ctx.absentName?.typo;
       if (!a) return { notChecked: "the nonsense search was not driven" };
@@ -25804,6 +25851,11 @@ for (const theme of THEMES) {
           // the note must not call it unreported beside the row valuing it.
           depositoryValued: REVIEW_GAP_BOOK.depositoryValued
             ? { q: REVIEW_GAP_BOOK.depositoryValued, ...(await read(REVIEW_GAP_BOOK.depositoryValued)) }
+            : null,
+          // A-17: a review line the live book values from units a holding
+          // statement records with no rate — the note must not call it unreported.
+          recordedValued: REVIEW_GAP_BOOK.recordedValued
+            ? { q: REVIEW_GAP_BOOK.recordedValued, ...(await read(REVIEW_GAP_BOOK.recordedValued)) }
             : null,
         };
         /**
