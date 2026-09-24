@@ -117,7 +117,7 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
   return (
     <Card className="mt-5"
       title="Growth &amp; CAGR"
-      subtitle={<>Computed from the reported annual P&amp;L — {pl.periods.filter((p) => !p.ttm).length} year-ends, {pl.periods[0]?.label} to {pl.periods.filter((p) => !p.ttm).slice(-1)[0]?.label}</>}
+      subtitle={`Computed from the reported annual P&L — ${pl.periods.filter((p) => !p.ttm).length} year-ends, ${pl.periods[0]?.label} to ${pl.periods.filter((p) => !p.ttm).slice(-1)[0]?.label}.`}
       right={<Pill tone="info">derived</Pill>}
       pad={false}>
       <div className="overflow-x-auto">
@@ -179,17 +179,14 @@ export function FinancialSummary({ markdown, ticker }: { markdown: string; ticke
         </table>
       </div>
 
-      <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
-        Read from the reported table by ROW LABEL, never by position, and the label the source actually printed is shown
-        beside each metric so the figure traces back.
-        {missing.length > 0 && <> <span className="text-slate-400">{missing.map((m) => m.label).join(", ")}</span>{" "}
-          {missing.length === 1 ? "is" : "are"} absent because this company reports no line under{" "}
-          {missing.length === 1 ? "that name" : "those names"} — a lender's P&amp;L and a manufacturer's are different
-          documents, and mapping one onto the other would invent a line it never published.</>}
-        {" "}A CAGR is left absent rather than computed where the span is under a year or the starting value is not
-        positive: a company that swung from a loss to a profit has no compound rate, and the formula returns a
-        confident number for it.
-      </p>
+      {/* THE ABSENT METRICS NAMED ON THE FACE, the reading rule its hover
+          (Stage 10cp); a table with nothing missing carries no line at all. */}
+      {missing.length > 0 && (
+        <p className="border-t border-ink-700/70 px-4 py-3 text-[11px] leading-relaxed text-slate-500"
+          title={`${missing.length === 1 ? "It is" : "They are"} absent because this company reports no line under ${missing.length === 1 ? "that name" : "those names"} — a lender's P&L and a manufacturer's are different documents, and mapping one onto the other would invent a line it never published. Every figure is read from the reported table by ROW LABEL, never by position, and the label the source printed is shown beside each metric. A CAGR is left absent where the span is under a year or the starting value is not positive: a company that swung from a loss to a profit has no compound rate.`}>
+          Not reported: <span className="text-slate-400">{missing.map((m) => m.label).join(", ")}</span>
+        </p>
+      )}
     </Card>
   );
 }

@@ -256,7 +256,10 @@ export function Polycab() {
    * it used to be a paragraph.
    */
   const sourcesLine = (
-    <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[11px] leading-relaxed text-slate-500" data-polycab-sources>
+    // `data-prose-ok`: PROVENANCE, NOT AN EXPLAINER (Stage 10cp) — the only
+    // figures on this site that are not the family's own paperwork, so which
+    // source carried them, when, and that they are in no total stay on screen.
+    <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[11px] leading-relaxed text-slate-500" data-polycab-sources data-prose-ok="sources">
       Sources:{" "}
       {POLYCAB_SOURCES.map((s, i) => (
         <span key={s.url}>
@@ -291,9 +294,14 @@ export function Polycab() {
           the DOM — which is what makes the page short, and what `check:pages`
           counts. The card hugs its content and scrolls INSIDE itself on a short
           window, so the page never scrolls and the headings stay pinned. */}
+      {/* THE SUBTITLE IS THE TITLE'S HOVER (Stage 10cp), and keeps its handle
+          there: `data-polycab-card-sub` now carries the sentence in `title`, so
+          the check that the record is called whole only where it was fetched
+          whole reads it where it went. */}
       <Card pad={false} className="flex min-h-0 flex-col"
-        title={active.cardTitle}
-        subtitle={cardSub ? <span data-polycab-card-sub>{cardSub}</span> : undefined}
+        title={cardSub
+          ? <span data-polycab-card-sub title={cardSub}>{active.cardTitle}</span>
+          : active.cardTitle}
         right={
           <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-ink-600 bg-ink-800/60 p-0.5"
             role="tablist" aria-label="Which Polycab table to show">
@@ -515,7 +523,7 @@ export function Polycab() {
                 list, and only the fetch knows which. */}
             <p className="shrink-0 border-t border-ink-700/60 px-4 py-2 text-[12px] text-slate-400" data-polycab-share-actions>
               {live.shareActions.length > 0
-                ? <>{fmtNum(live.shareActions.length)} share-count action{live.shareActions.length === 1 ? "" : "s"} above — a bonus, split or spin-off changes the share count and pays no cash.</>
+                ? <span title="A bonus, split or spin-off changes the share count and pays no cash.">{fmtNum(live.shareActions.length)} share-count action{live.shareActions.length === 1 ? "" : "s"} above</span>
                 : live.measuredNil
                   ? <span className="font-medium text-slate-300"
                       title={`The exchange's record runs from listing and all ${fmtNum(live.dividends.length)} of its actions are dividends.`}>

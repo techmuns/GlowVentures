@@ -176,17 +176,13 @@ export function DataRefresh() {
 
       {bookIsEmpty && (
         <Card className="mb-5" title="No statements ingested yet"
-          subtitle="The data model is in place; the book is empty until the pipeline runs.">
+          subtitle={'The data model is in place; the book is empty until the pipeline runs. Until then every page shows an empty state rather than zeros: a zero that means "no statement" and a zero that means "measured at nil" look identical on screen, and only one of them is true here.'}>
           <ol className="ml-4 list-decimal space-y-2 text-sm text-slate-400 marker:text-slate-600">
             <li>Drop the wealth-platform ZIPs and PDFs into <span className="mono text-slate-300">source/</span> at the repo root. They stay out of the browser bundle — <span className="mono text-slate-300">source/</span> is never served.</li>
             <li>Run <span className="mono text-slate-300">npm run inventory</span>. It expands the ZIPs, walks every PDF, and writes <span className="mono text-slate-300">docs/INGEST-INVENTORY.md</span> grouped by provider → account → as-of date → report type.</li>
             <li>Review the inventory, especially its "could not classify" section — one account at one date often produces several overlapping reports, and which of them is authoritative is a decision, not a default.</li>
             <li>The extraction pass then writes <span className="mono text-slate-300">public/audit/</span> and regenerates <span className="mono text-slate-300">src/data/glowData.ts</span>.</li>
           </ol>
-          <p className="mt-3 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-            Until then every page shows an empty state rather than zeros. A zero that means "no statement" and a
-            zero that means "measured at nil" look identical on screen, and only one of them is true here.
-          </p>
         </Card>
       )}
 
@@ -225,6 +221,9 @@ export function DataRefresh() {
               + (dominated && dominantPct !== null ? ` · one holding is ${dominantPct.toFixed(0)}% of that value` : "")}
             hint={[
               "Company shares only — a GICS sector is a property of a company, and a fund unit, an ETF or a cash row has none.",
+              notCompany.length > 0
+                ? `Measured over ${shareRows.length} of ${deduped.length} consolidated positions; ${notCompany.map((c) => `${assetClassLabel(c.key)} ${fmtFromBase(c.mv, { compact: true })}`).join(" · ")} sit outside both sides of the ratio rather than being counted as unclassified.`
+                : "",
               dominationNote,
               noCostNote,
             ].filter(Boolean).join(" ")}
@@ -287,7 +286,8 @@ export function DataRefresh() {
                     value={fmtFromBase(x.value, { compact: true })} />
                 ))}
             <Row label="Sector classification" value={coverage === null ? "no company shares to classify yet" : `${coverage.toFixed(1)}% of company-share value`} />
-            <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length} />
+            <Row label="Positions carrying an ISIN" value={p.length ? `${withIsin} of ${p.length}` : "no positions ingested yet"} muted={withIsin < p.length}
+              title="ISIN and ticker are enrichment here, not identity — several providers print neither. Positions are joined on a slug of the normalised security name, so a holding is never dropped for lacking an ISIN." />
             {/* Stated in MONEY as well as in a count. One promoter row is most
                 of the shortfall, so a bare name count reads as a rounding error
                 against a book it in fact covers nearly all of. */}
@@ -296,52 +296,31 @@ export function DataRefresh() {
                 : noCost.length
                   ? `${noCostNames} names · ${noCost.length} of ${deduped.length} positions · ${fmtFromBase(noCostMV, { compact: true })}`
                   : "none — every position carries a cost"}
-              muted={!noCost.length} />
+              muted={!noCost.length}
+              title={!bookIsEmpty && noCost.length > 0
+                ? `${noCostNote} A depository reports what an account holds and not what it paid, and a fund's own account statement values the folio without pricing the units, so those rows are left out of every P&L rather than counted at a cost of zero — which would report their whole market value as profit.`
+                : undefined} />
             <Row label="Private instruments"
               value={hasPrivate ? `${pm.startups.length} startups · ${fundCount} funds/cos` : "None registered"}
-              muted={!hasPrivate} />
+              muted={!hasPrivate}
+              title={hasPrivate ? undefined
+                : "The private-instrument register — a fund-of-funds structure carrying its own TVPI and DPI — is empty because no statement in this drop reports one, not because the family holds nothing private. What they do hold in private classes is carried as ordinary positions."} />
             <Row label="NAV snapshots" value={portfolio.navHistory.length ? `${portfolio.navHistory.length}` : "None ingested"} muted={!portfolio.navHistory.length} />
           </ul>
-          {/* WHAT A NARROWED RATIO LEFT OUT IS NAMED, NEVER DROPPED. The
-              classes below are excluded from BOTH sides of the coverage figure:
-              counting them in the denominator alone understates it, and cash —
-              whose sector string is literally "Cash" — would otherwise count as
-              classified and overstate it. */}
-          {notCompany.length > 0 && (
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              Sector coverage is measured over company shares alone — {shareRows.length} of {deduped.length} consolidated
-              positions. A GICS sector is a property of a company, and this book carries no look-through behind a fund,
-              so {notCompany.map((c) => `${assetClassLabel(c.key)} ${fmtFromBase(c.mv, { compact: true })}`).join(" · ")} sit
-              outside both sides of the ratio rather than being counted as unclassified.
-            </p>
-          )}
-          {!hasPrivate && (
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              The private-instrument register — a fund-of-funds structure carrying its own TVPI and DPI — is empty
-              because no statement in this drop reports one, not because the family holds nothing private. What they
-              do hold in private classes is carried as ordinary positions and is the Private book figure above.
-            </p>
-          )}
-          {!bookIsEmpty && noCost.length > 0 && (
-            <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-              {noCostNote} A depository reports what an account holds and not what it paid, and a fund's own account
-              statement values the folio without pricing the units, so those rows are left out of every P&amp;L rather
-              than counted at a cost of zero — which would report their whole market value as profit.
-            </p>
-          )}
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-            ISIN and ticker are enrichment here, not identity — several providers print neither. Positions are
-            joined on a slug of the normalised security name, so a holding is never dropped for lacking an ISIN.
-          </p>
+          {/* NO FOOTNOTES UNDER THE LIST (Stage 10cp). Each of the four that sat
+              here is the hover on the row or tile it explains: the ISIN note on
+              "Positions carrying an ISIN", why a costless row is out of P&L on
+              "No cost basis", why the private register is empty on "Private
+              instruments", and which classes the sector ratio leaves out — each
+              with its value — on the Sector coverage tile. */}
         </Card>
         <Card title="How refresh works">
           <div className="flex items-start gap-3">
             <RefreshCw className="mt-0.5 h-5 w-5 shrink-0 text-champagne-400" />
-            <p className="text-sm text-slate-400">
-              New statements go into <span className="mono text-slate-300">source/</span>; re-running the ingest
-              regenerates <span className="mono text-slate-300">src/data/glowData.ts</span> and the audit archive,
-              and the cockpit picks up the new report dates automatically. Accounts are updated independently — an
-              account with no new statement keeps its own older as-of date rather than inheriting the newest.
+            {/* ONE LINE, THE REST ITS HOVER (Stage 10cp). */}
+            <p className="text-sm text-slate-400"
+              title="Re-running the ingest regenerates src/data/glowData.ts and the audit archive, and the cockpit picks up the new report dates automatically. Accounts are updated independently — an account with no new statement keeps its own older as-of date rather than inheriting the newest.">
+              New statements go into <span className="mono text-slate-300">source/</span>, then re-run the ingest
             </p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">

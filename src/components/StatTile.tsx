@@ -15,7 +15,17 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
    * figure the book does not carry must not show a "■ 0.00%" that reads as a
    * measured flat move.
    */
-  delta?: number | null; icon?: ReactNode; hint?: ReactNode;
+  delta?: number | null; icon?: ReactNode;
+  /**
+   * WHAT THE FIGURE IS, ON HOVER — never a paragraph under it (Stage 10cp).
+   * *"We have such random one-liners, two-liners, and footnotes everywhere
+   * across the product … no one is genuinely reading them."* It was a visible
+   * 12.5px line; it is folded into the tile's own `title` now, after `title`,
+   * so every tile in the app sheds it at once rather than page by page. A
+   * qualifier a reader must SEE — a coverage, a "not annualised" — is the
+   * tile's `sub`, never this. A string, because a hover can carry nothing else.
+   */
+  hint?: string;
   /** Controls that act on the TILE rather than on its figure — remove it. Adding is the ADD TILE card's. */
   action?: ReactNode;
   /**
@@ -29,7 +39,7 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
   className?: string;
 }) {
   return (
-    <div className={`card p-5 ${className}`} title={title}>
+    <div className={`card p-5 ${className}`} title={[title, hint].filter((x) => x && x.trim()).join("\n\n") || undefined}>
       <div className="flex items-start justify-between gap-2">
         {/* `flex-1`, NOT just `min-w-0`. Sized to its content, Chromium measured
             a label that is a CONTROL (the tile picker's button) short of its own
@@ -62,16 +72,11 @@ export function StatTile({ label, value, sub, delta, icon, hint, action, title, 
             reading, and a line not worth reading is removed by its caller. */}
         {sub && <span className="text-[13px] leading-snug text-slate-300" data-stat-sub>{sub}</span>}
       </div>
-      {/* THE DEFINITION UNDER A FIGURE, AND IT HAS TO BE READABLE.
-          *"just tell what is it in short and legible font text."* At 11px in
-          `slate-500` it was the least legible text on the page, under figures
-          rendered at 22px — so a reader who asked what a term meant was sent to
-          the one line hardest to read. 12.5px in `slate-400` is the sub-line’s
-          own weight, which is what a definition of the figure above it should
-          carry. Set HERE rather than per caller: every hint in this app is the
-          same thing in the same place, and a size chosen per page is a size
-          that drifts. */}
-      {hint && <p className="mt-1.5 text-[12.5px] leading-snug text-slate-400" data-stat-hint>{hint}</p>}
+      {/* NO LINE UNDER THE SUB (Stage 10cp). The 12.5px definition that sat
+          here — "just tell what is it in short and legible font text" (Stage
+          10be) — went when the family asked for every explainer line to go;
+          it is the tile's hover now, and `data-stat-hint` is counted ABSENT on
+          every route so it cannot quietly come back. */}
     </div>
   );
 }

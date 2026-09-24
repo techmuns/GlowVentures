@@ -11,6 +11,21 @@ import { SortHeader, Tr } from "./SortHeader";
 
 const COLS = ["holding", "window", "total", "dividends", "shares", "capital", "evidence"] as const;
 const LABELS: Record<string, string> = { holding: "Holding / account", window: "Window", shares: "Shares: statement → adjusted", capital: "Capital return", dividends: "Gross dividend entitlement", total: "Total return incl. dividends", evidence: "Evidence & coverage" };
+/**
+ * WHAT EACH COLUMN MEANS, ON ITS HEADING (Stage 10cp). *"We have such random
+ * one-liners, two-liners, and footnotes everywhere across the product … no one
+ * is genuinely reading them."* The card carried two sentences above the table,
+ * a "How this return is calculated" fold and a line under it; each fact is the
+ * hover on the column it qualifies now — the window's basis on Window, the
+ * entitlement caveat on the dividend column (whose every cell also says "receipt
+ * unconfirmed"), the formula and why there is no total on Total return.
+ */
+const TITLES: Record<string, string> = {
+  window: "Since each statement date, not since purchase — from the statement that carries the holding to the date the return is struck. It assumes no later trades or transfers.",
+  shares: "Splits and equity bonuses adjust the projected shares and the average cost; they do not create profit.",
+  dividends: "Dividends are entitlements, not confirmed cash receipts — gross, without reinvestment or tax, and never added to account cash, NAV or account XIRR. Missing evidence shows —. Confirmed receipts must be reconciled to the payment statement.",
+  total: "Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value. Since each statement date, not since purchase; a lifetime return needs the full holding and payment history. Fund distributions stay in their fund-specific return model. There is no portfolio total, as accounts open on different dates.",
+};
 
 export function CorporateActionReturns({ securityKey }: { securityKey?: string }) {
   const { statementPortfolio, corporateActions, corporateActionsStatus, corporateActionReturns, fmtFromBase } = usePortfolio();
@@ -35,19 +50,19 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
   if (securityKey && !rows.length) return null;
   const covered = rows.filter((r) => r.result?.totalReturnPct != null).length;
   const adjusted = rows.filter((r) => r.result && r.result.factor !== 1).length;
-  return <Card className="mt-5" title="Corporate actions & total return" pad={false}>
+  // THE COVERAGE LINE IS ITS FIGURES; WHEN THE CAPTURE WAS TAKEN AND HOW FAR
+  // BACK IT READS ARE ITS HOVER (Stage 10cp). A saved capture still SAYS so on
+  // the face — a figure drawn from yesterday's copy must not read as current.
+  const captured = corporateActions
+    ? `Corporate actions captured ${new Date(corporateActions.capturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST, event history from ${fmtDate(corporateActions.requestedFrom)}${corporateActionsStatus !== "current" ? " — a saved capture, the refresh is unavailable or pending" : ""}.`
+    : undefined;
+  return <Card className="mt-5" title="Corporate actions & total return" pad={false}
+    subtitle="Since each statement date, not since purchase. Includes gross declared dividends and split/bonus adjustments, assuming no later trades or transfers.">
     <div className="space-y-2 border-b border-ink-700 p-4 text-xs text-slate-400">
-      <p><strong className="text-slate-200">Since each statement date, not since purchase.</strong> Includes gross declared dividends and split/bonus adjustments, assuming no later trades or transfers.</p>
-      <p>Dividends are <strong className="text-slate-200">entitlements, not confirmed cash receipts</strong>. Missing evidence shows —.</p>
-      <details><summary className="cursor-pointer text-champagne-400">How this return is calculated</summary>
-        <p className="mt-2">Splits and equity bonuses adjust projected shares and average investment cost; they do not create profit. Dividends are included once, without reinvestment or tax deductions, and are not added to account cash, NAV or account XIRR.
-          Lifetime dividend-inclusive returns require the full holding and payment history. Confirmed receipts must be reconciled to the payment statement.</p>
-      </details>
-      <p data-action-coverage>{covered} of {rows.length} position windows calculable · {adjusted} share quantities adjusted ·{" "}
+      <p data-action-coverage title={captured}>{covered} of {rows.length} windows calculable · {adjusted} adjusted
         {corporateActions
-          ? <>Research captured {new Date(corporateActions.capturedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST
-            {corporateActionsStatus !== "current" ? " · saved capture; refresh unavailable or pending" : ""} · event history from {fmtDate(corporateActions.requestedFrom)}</>
-          : corporateActionsStatus === "loading" ? "Loading corporate-action capture…" : "Corporate-action feed unavailable"}</p>
+          ? corporateActionsStatus !== "current" ? " · saved capture" : ""
+          : corporateActionsStatus === "loading" ? " · loading the capture…" : " · corporate-action feed unavailable"}</p>
       {!securityKey && <div className="flex flex-wrap gap-3 pt-2">
         <input aria-label="Search corporate action holdings" placeholder="Find a company, owner or account" value={search} onChange={(e) => setSearch(e.target.value)}
           className="min-w-0 flex-1 rounded border border-ink-700 bg-ink-900 px-3 py-2 text-slate-100" />
@@ -57,7 +72,7 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
     <div className="overflow-x-auto">
       <table className="w-full text-xs" data-corporate-return-table>
         <thead className="bg-ink-900 text-slate-400"><Tr view={view}>
-          {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left">{LABELS[col]}</SortHeader>)}
+          {view.columns.map((col) => <SortHeader key={col} view={view} col={col} align="left" title={TITLES[col]}>{LABELS[col]}</SortHeader>)}
         </Tr></thead>
         <tbody>{rows.map(({ p, account, result: r }) => {
           const issues = r ? [...r.quantityIssues, ...r.incomeIssues] : ["Corporate-action evidence is loading"];
@@ -104,12 +119,8 @@ export function CorporateActionReturns({ securityKey }: { securityKey?: string }
       </table>
       {!rows.length && <div className="p-5"><AbsentCell reason="No listed-equity holdings match this selection" /></div>}
     </div>
-    {/* ONE LINE, the formula in its hover — it was a 268-character note under
-        the table, and the family asked for the notes around the tables to go
-        (Stage 10cg). Why there is no total stays on screen: an absent total a
-        reader is not told about reads as one that was forgotten. */}
-    <p className="border-t border-ink-700 px-4 py-3 text-[11px] text-slate-500"
-      title="Total return = (adjusted holding value + gross dividends declared during the window − opening statement value) ÷ opening statement value. Fund distributions remain in their fund-specific return model.">
-      Total return adds the dividends declared in the window · no portfolio total, as accounts open on different dates</p>
+    {/* THE LINE UNDER THE TABLE IS GONE (Stage 10cp): the formula and why
+        there is no portfolio total are the Total return heading's hover, where
+        a reader looking for the total asks. */}
   </Card>;
 }

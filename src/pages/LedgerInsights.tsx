@@ -222,7 +222,7 @@ function TransactionsView({ data, sales }: { data: TxnData; sales: SalesData | n
       {sales?.statementRealized != null && sales.totalRealized != null
         && Math.abs(sales.statementRealized - sales.totalRealized) > 1 && (
         <div className="rounded-lg border border-dashed border-ink-600/70 px-3 py-2.5 text-xs leading-relaxed text-slate-500">
-          <div className="font-medium text-slate-400">Cross-check: attributing each lot to the sale that produced it</div>
+          <div className="font-medium text-slate-400" title="Each lot attributed to the sale that produced it, set against the statement's own total.">Cross-check · lots by sale</div>
           <table className="mt-2 w-full max-w-2xl">
             <tbody className="mono">
               <tr>
@@ -545,13 +545,11 @@ function GainsView({ data }: { data: LotData | null }) {
         </Card>
       )}
 
-      <p className="text-xs leading-relaxed text-slate-500">
-        Short vs long term is <span className="font-medium text-slate-400">read from the statement, not re-derived here</span> —
-        the holding-period rule differs by asset and the determination is the manager's.
-        {data.accountsWithout.length > 0 && <> {data.accountsWithout.join(", ")} issued no capital gain statement,
-          so nothing they realised appears here or in any total on this page.</>}
-        {" "}These lots are the only place in the book that carries a purchase DATE, and only for lots already sold —
-        which is why the hold-to-LTCG planner on Capital Gains has nothing to work from.
+      {/* ONE LINE, THE REST ITS HOVER (Stage 10cp) — including the accounts that
+          issued no capital gain statement, named rather than dropped. */}
+      <p className="text-xs leading-relaxed text-slate-500"
+        title={`The holding-period rule differs by asset and the determination is the manager's.${data.accountsWithout.length > 0 ? ` ${data.accountsWithout.join(", ")} issued no capital gain statement, so nothing they realised appears here or in any total on this page.` : ""} These lots are the only place in the book that carries a purchase DATE, and only for lots already sold — which is why the hold-to-LTCG planner on Capital Gains has nothing to work from.`}>
+        Short vs long term is <span className="font-medium text-slate-400">read from the statement, not re-derived here</span>
       </p>
 
       <Card pad={false}>
@@ -643,13 +641,10 @@ function IncomeView({ data }: { data: IncomeData | null }) {
           icon={<Gift className="h-4 w-4" />} />
       </div>
 
-      <p className="text-xs leading-relaxed text-slate-500">
-        The dividend statement is authoritative for <span className="font-medium text-slate-400">cash</span>; the
-        corporate benefits report is authoritative for <span className="font-medium text-slate-400">non-cash</span>{" "}
-        actions it alone can carry. Where both list the same cash event it is counted once, on the dividend
-        statement's figures. Preferring one report wholesale would silently drop every bonus and split.
-        {data.accountsWithout.length > 0 && <> {data.accountsWithout.join(", ")} issued neither, so nothing
-          they received appears in these totals.</>}
+      {/* ONE LINE, THE REST ITS HOVER (Stage 10cp). */}
+      <p className="text-xs leading-relaxed text-slate-500"
+        title={`Where both list the same cash event it is counted once, on the dividend statement's figures. Preferring one report wholesale would silently drop every bonus and split.${data.accountsWithout.length > 0 ? ` ${data.accountsWithout.join(", ")} issued neither, so nothing they received appears in these totals.` : ""}`}>
+        Cash from the dividend statement · non-cash from corporate benefits
       </p>
 
       {data.cash.length > 0 && (

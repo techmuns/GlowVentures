@@ -3291,13 +3291,17 @@ violate any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
 - **No explainer lines.** *"Why do i need all this garbage written please remove
-  its obvious from the table what it is."* Every table carries at most one short
-  note (Stage 10ci's guard, on every route), and Private Market carries none: no
-  card subtitle, no footnote, no fold of working under a table. A sentence a
-  reader ACTS ON is the hover on the figure it qualifies (`title`,
-  `TreeNameCell`'s `hint`, `SortHeader`'s `coverage`), and is asserted there.
-  Checked on structure by the `prose` probe in `check:pages` rather than on
-  wording. See Stage 10co.
+  its obvious from the table what it is."* No page carries a card subtitle, a
+  footnote, a line under a figure or a fold of working under a table. A sentence
+  a reader ACTS ON is the hover on the figure it qualifies — `title`, `Card`'s
+  `subtitle` (the title's hover now), `StatTile`'s `hint`, `PageHeader`'s
+  `subtitle`, `AbsentSection`'s `needs`, `TreeNameCell`'s `hint`, `SortHeader`'s
+  `coverage` — and is asserted there. What stays on the face is a figure, a
+  count, a status word, a fence ("DERIVED", "in no total") or a guard ("not
+  annualised"); a line a reader must SEE says why at the element with
+  `data-prose-ok="<reason>"`. Checked on structure by the `prose` probe in
+  `check:pages`, on every route, rather than on wording. See Stages 10co and
+  10cp.
 
 ## Stage 10 — the family-input layer (`src/lib/familyInputs.ts`)
 
@@ -23007,6 +23011,212 @@ change's own.
 `check:pages` **288 combinations clean** on the merged tree. `npm run build-book`
 regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically: a line
 removed from a page is not part of the book.
+
+### Stage 10cp — EVERY OTHER PAGE SAYS NOTHING ITS TABLE DOES NOT
+
+*"We have such random one-liners, two-liners, and footnotes everywhere across the
+product. Please go hunt and remove all of this. Footnotes, etc., because no one
+is genuinely reading them. The customer is literally looking at the table and
+seeing the values inside it … So first fix everything for the private market
+page, and then we go on to the others."*
+
+Stage 10co did Private Market. This is "the others", and the method is the same
+one: audit every line, MOVE a fact a reader acts on onto the figure it describes
+(its hover), delete the rest, and assert both the removal and the new address.
+What is new is where the work was done — **in the four shared components every
+page draws its prose through**, so no page can put a line back by accident:
+
+| Component | Was | Is |
+| --- | --- | --- |
+| `Card` | `subtitle`: a 12px line under the title, on 45 cards in 19 files | the title's hover (`data-card-title-hint`); a string, so a figure cannot hide in it |
+| `PageHeader` | `subtitle`: a sentence under the headline, on 7 pages | the `h1`'s hover |
+| `StatTile` | `hint`: a 12.5px definition under the figure | folded into the tile's own hover, after its `title` |
+| `AbsentSection` | `needs`: a paragraph under an absence's headline, the longest past 500 characters | the box's hover (`data-absent-needs`) |
+
+**THE LAST ONE MOVED A CAUSE, SO THE HEADLINE HAD TO TAKE IT.** An absence's
+`needs` was where a failed SERVICE was named — "the quote feed did not respond",
+"the price service did not respond". With `needs` a hover, a headline reading
+"No price history for this security" over a failed call would teach a reader
+something false about the company, which is the HTTP 522 lesson this file already
+records. So where the cause is a service, the headline carries it: Today's movers
+reads **"No direct-equity move today — the quote feed did not respond"**, the price
+card **"The price service did not answer"** for any status, timeout or no answer
+(only an empty answer about the symbol is "No price history for this security"),
+and an AIF's price tab **"No market price — an AIF folio publishes no daily NAV"**.
+A loading card says "Loading closes…" in its body now rather than in a subtitle
+(Stage 10r's rule).
+
+#### What moved, page by page
+
+- **Morning CIO** — the movers tile's coverage sentence, the index comparison's
+  basis, the "Also moved today and not counted here" lead-in, the NAV card's
+  panel paragraph and the "three lists" reconciliation in its fold, the NAV
+  movers' coverage and its "Every scheme is listed · … drastic" line (the bound
+  is the Move heading's hover and each chip's own), Capital deployment's subtitle.
+  Every FIGURE stays: "₹X of ₹Y held · N of M names", "Not counted: …", "All
+  three lists · ₹713.6 Cr".
+- **Capital Gains** — forty-four rows each reading "— no capital gain statement
+  issued for this account in this drop" are ONE CLOSED BAND, "No capital gain
+  statement · 44 accounts", marked **missing data** — the family's own standard
+  for missing data (Stage 10bx: *"a hidden drop down clearly marked"*). The band
+  opens by its chevron and names every account, each with its reason in the dash's
+  hover. The tax caveat stays on screen (`data-prose-ok`, Stage 10ci's reason).
+- **Performance** — "not annualised" is a GUARD, not an explainer (Stage 10g(ii)),
+  so it stays on the money-weighted tile's face AND moves INTO the per-account
+  card's title, where the line under the title that said it went.
+- **Sector Composition** — the Direct Equity cards keep their figures and counts;
+  "the holdings tables call this Direct Equity" and "excluded rather than folded
+  in — … a fund holds many companies" are the hovers on the lines they qualify.
+- **Family & Entities, Portfolio Monitor, Polycab, Data & Refresh (`/upload`),
+  Ledger Insights, the mandate page, the company page and its research panels,
+  and Snapshot History (`/history`, "Upload History" in the nav)** — the same
+  treatment. Snapshot History's coverage is a FIGURE, so it is a pill on the
+  header now ("13 of 49 accounts") rather than inside the sentence that went.
+- **Corporate actions** — two sentences, a "How this return is calculated" fold
+  and a line under the table became the hovers on Window, the dividend column and
+  Total return; the coverage line is its counts, with the capture date its hover.
+
+**WHAT STAYS ON SCREEN, AND WHY IT IS NOT THE SAME THING.** A figure, a count, a
+row's identity line, a status word ("partly valued", "saved capture", "missing
+data"), a fence a reader could be harmed by losing ("DERIVED, not a position ·
+no part of the book's NAV", "in no total"), and a guard (§6's statement basis,
+"not annualised"). Five lines a reader must SEE declare `data-prose-ok` with
+their reason, at the element: Capital Gains' tax caveat (a tax figure read
+without it is read as advice), Polycab's sources line (the only figures on the
+site that are not the family's own paperwork), a fund folio's list of what its
+statement carries (it IS the content), Snapshot History's reason for a
+measured ₹0 (Convention 2: a computed zero's cause goes on the face), and the
+capital-call set-up steps (a procedure behind a closed fold, shown only while
+saving is off; shortened, they lose the Cloudflare menu names they exist to
+give).
+
+#### The check — on structure, on every route
+
+`check:pages` now runs, on EVERY route, what `PM_NO_PROSE` ran on Private Market:
+no `data-card-subtitle`, no `data-stat-hint`, and no visible text that reads as a
+SENTENCE past 60 characters outside a table or 120 inside one. Two refinements
+make it a check about prose rather than about length, and each was measured:
+
+- **A SENTENCE HAS SMALL WORDS IN IT.** A line of figures ("Listed ₹766.4 Cr ·
+  Private ₹10.6 Cr · Total ₹777 Cr") or an account's identity and state is long
+  and is not prose. Every removed footnote carried ten or more lower-case words;
+  no line of figures on a cleaned page carries that many (`PROSE_WORDS`).
+- **A FLEX OR GRID ROW OF ITEMS IS MEASURED ITEM BY ITEM.** An entity picker, a
+  legend, a strip of chips or of counts joins into a 150-character "line" nobody
+  wrote; its items are what a reader reads.
+
+Private Market keeps the stricter form — any block past the bound, sentence or
+not — which it has met since Stage 10co.
+
+**AND EVERY FACT THAT MOVED IS ASSERTED WHERE IT WENT**, because a removal and a
+re-homing are two claims: the movers coverage and whose scope the excluded line
+is, the NAV movers' coverage and the drastic bound, the NAV card's panel, the
+funds-only research and price reasons, an AIF's no-disclosure reason, Polycab's
+card sentence and the group-not-this-demat distinction, the depository line on
+`/holdings`, the corporate-action caveats (in their own dev check). New ones:
+the Capital Gains band (closed on arrival, its count the book's, its hover saying
+none is counted as zero; opened, every account named with its reason), "not
+annualised" on Performance, the history coverage pill, and the price card blaming
+the service.
+
+#### The full sweep found what the targeted runs could not
+
+The routes this change touched were walked first and came back clean. The first
+FULL sweep then flagged **26 of 145 combinations** — 24 of them long lines on
+routes nobody had edited on purpose (a mandate page's statement line, a company
+page's quantity footer, the capital-call set-up steps behind a fold), and two
+checks still reading a sentence that had moved. It is the lesson every stage
+here re-learns: a check that runs on every route finds what a list of routes
+does not. **`PROSE_DUMP=1`** prints every flagged line with its route, which is
+how the 34 lines were worked through one by one rather than one failure per run.
+
+What each became — the figures stay on the face, the sentence is the hover:
+
+- **A holding two statements report** — "One holding on 2 statements · rows ₹X ·
+  counted once in the Total, ₹Y".
+- **The empty transaction history** — "No transactions", then the window the
+  statements cover.
+- **The quantity card** — "depository movements, not trades" left the footer; the
+  title says **Depository** quantity through the year, so the word that tells a
+  reader these are not trades stays on the face, and the rest is its hover.
+- **A company held through many mandates** — a count; which mandate is which is
+  on each account row, as before.
+- **A mandate page's statement line** — the total, then "every ₹0 above is
+  measured".
+- **A mandate's return under a year** — the figure, then "under a year, not
+  annualised". That clause is Stage 10g(ii)'s GUARD, not an explainer, so it stays
+  on the face; only why is the hover. A new check holds it there.
+- **A fund's own returns** — "the scheme's, not this family's · to <date>".
+- **Morning CIO's family-axis lines, the Monitor's Cash band and its "no basket
+  stated" clause, the review-gap note under an empty search, the refreshing-prices
+  line** — each a short state or a count, its sentence the hover.
+- **The XIRR derivation on `/holdings?of=measured` was KEPT, and shortened.** The
+  family asked for it by name at Stage 10be (*"show the table first and the
+  formula section below it"*), so removing it would undo an ask. It is a lead,
+  the formula and three one-line rules now, each rule's reason its hover.
+
+Every one of these is asserted twice — gone from the face, present in its new
+place — on the route that draws it.
+
+#### The bug pass, run in a worktree of its own
+
+`scripts/dev/pages-prose-bug.sh` puts 42 bugs back one at a time. Each is one of
+three kinds: a removed line COMING BACK, a moved fact GOING MISSING from its
+hover, or a guard LEAVING the face. It restores by copy on a trap, checks the
+restore byte for byte, and rebuilds on the way out. A patch that does not apply,
+or a build that fails, is reported as NOT A RESULT, never as clean.
+
+It ran in a separate `git worktree` with its own `vite preview` on :4177. That
+kept the working copy clean while the full sweep ran beside it, for the reason
+Stage 10cl gives. A no-patch control walks every route any case walks, and came
+back clean.
+
+| Bug put back | Caught by |
+| --- | --- |
+| a card's subtitle drawn as a line again | the card-subtitle and prose checks, on 7 of the 15 routes it walks (17 findings) |
+| a tile's hint drawn as a line again | the tile-line and prose checks, on 5 of 15 |
+| a page's subtitle drawn under the headline again | the prose check, on 4 of 15 |
+| an absence's reason printed as a paragraph again | the prose check where an absence renders (1 of 3) |
+| "not annualised" gone from the money-weighted tile, or from the per-account card | the guard's own check, for each |
+| the Capital Gains band open on arrival · its chevron dead · its accounts back as rows · its hover lost · one account's reason lost | five checks, one for each |
+| a fact gone from its hover: the movers and NAV-movers coverage · the drastic bound · the Polycab card sentence · the review gap's reason · the cash-instruction line · the Cash band's count · the mandate line · the reported-twice note · the arbitrage line · a derivation rule · the scheme-returns caption · the refresh line | the check that reads that hover, for each |
+| a line back on the face: the corporate-action notes · the Sector card · the search gap · the family-axis line · a mandate's statement line · the reported-twice note · the empty transaction record · the not-trades phrase · the derivation | the prose check, and the fact's own check where it has one |
+| the movers coverage back on its tile · the unclassified clause back as a sentence | the fact's own check |
+| a service failure the headline stops naming (the movers card, the price card) | the check that the headline names the cause, for each |
+| the history coverage pill · the excluded line's scope · a sub-year return's guard · the quantity card's "Depository" | its own check, for each |
+| the capital-call set-up steps losing their `data-prose-ok` | the prose check inside a table |
+
+**ONE CASE CAME BACK CLEAN, AND THE DEFECT WAS IN THE HARNESS.** The Polycab
+card-sentence case walked `polycab`, the Holding tab, which draws no card
+sentence. So the patch changed nothing a reader could see. The two checks that
+read the sentence are on the Corporate actions and Promoter group tabs. The case
+now walks those two tabs, and so does the control. Re-run, the control is clean
+and the case is caught on both tabs. A case that puts nothing back gives a clean
+run that proves nothing. That is Stage 10bt's finding, arriving on this
+harness's first run.
+
+#### The verification
+
+**THE FULL SWEEP THAT COUNTS RAN ON THE COMMITTED CHECKER.** An earlier full run
+started three minutes before the last 38 lines of checks were saved, so it was
+running an older checker. It was stopped and not recorded. The run that counts
+found **290 combinations clean, 0 invariant failures**, and `PROSE_DUMP` flagged
+no line. 290 is main's 288 plus `capital-gains-missing` in both themes.
+
+Ten invariants did not run. They are main's usual abstentions, each read out by
+name: six on the Morning CIO panels (every KPI tile on this book carries a
+figure), two on Private Market (every private holding reports a cost), one on
+the redeemed-account claim, and one on the not-found drill-down's crumb. None
+belongs to this change.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140; 2 not checked, 0 blocked) · `test:family` (2,500
+checks, 0 failed; its four NOT CHECKED lines are main's) · `check:family`
+**93/0** · `check:pages` **290 combinations clean**.
+
+`npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
+byte-identically. Moving a sentence into a hover does not change the book.
 
 ### Stage 10k — News & Announcements: REMOVED
 

@@ -219,7 +219,7 @@ run_case "the plan-view sentence comes back on My targets" py <<'PY'
 import sys
 p = "src/components/InvestmentTools.tsx"
 s = open(p, encoding="utf-8").read()
-old = "          Plan — your target weight, the year your fair value refers to, and how you valued it\n"
+old = "          Plan\n"
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, "          Plan — these fill the Target weight and Valuation method columns on Portfolio Monitor's plan view.\n", 1))
 PY

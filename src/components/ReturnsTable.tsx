@@ -75,8 +75,11 @@ export function ReturnsTable({ ticker, name }: {
     return all.filter((p) => Date.parse(p.t + "T00:00:00Z") >= cutoff);
   }, [live, meta, range]);
 
+  // A LOADING CARD SAYS SO ON ITS FACE (Stage 10r) — the subtitle that did is
+  // a hover since Stage 10cp, so the words are in the body now.
   if (data === undefined) {
-    return <Card className="mt-5" title="Price history & returns" subtitle="Loading closes…"><div className="h-56" /></Card>;
+    return <Card className="mt-5" title="Price history & returns">
+      <div className="flex h-56 items-center justify-center text-xs text-slate-500">Loading closes…</div></Card>;
   }
 
   if (!live) {
@@ -84,9 +87,23 @@ export function ReturnsTable({ ticker, name }: {
       (data as { ok: false; reason: string }) ?? { ok: false, reason: "no symbol" },
       !!ticker,
     );
+    // THE CAUSE PICKS THE HEADLINE, now that `needs` is the box's hover (Stage
+    // 10cp): a price service that did not answer is a fact about the SERVICE,
+    // and "No price history for this security" over it would teach a reader
+    // something false about the security.
+    // Only an ANSWER about the symbol — no settled closes, or the upstream's
+    // own "no data for this symbol" — is a fact about the security; a status,
+    // a timeout or no answer at all is a fact about the service
+    // (`upstreamStatus.ts`'s rule).
+    const failure = (data as { ok: false; reason: string } | undefined)?.reason ?? "";
+    const serviceDown = failure === "unreachable" || failure === "error" || /^http_/.test(failure);
+    const what = !ticker ? "No NSE symbol, so no price history"
+      : failure === "timeout" ? "The price service timed out"
+      : serviceDown ? "The price service did not answer"
+      : "No price history for this security";
     return (
       <Card className="mt-5" title="Price history & returns">
-        <AbsentSection what="No price history for this security" needs={reason} />
+        <AbsentSection what={what} needs={reason} />
       </Card>
     );
   }
@@ -164,15 +181,13 @@ export function ReturnsTable({ ticker, name }: {
         </table>
       </div>
 
-      <p className="mt-2 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500">
-        <span className="font-medium text-slate-400">*</span> 3Y/5Y/10Y/Max are annualised (CAGR); the shorter horizons
-        are cumulative. Measured on settled closes only, to{" "}
-        <span className="text-slate-400">{live.last}</span> — today's in-progress move is not in these figures, and the
-        live price above is a separate measurement.{" "}
-        <span className="font-medium text-slate-400">Every horizon is independent</span>: a cell is{" "}
-        <span className="mono">—</span> when this listing does not reach back that far, never a shorter window
-        relabelled, so a company listed in 2023 shows no 10-year CAGR and an honest max from its first trading day
-        ({live.first}).
+      {/* THE KEY TO THE ASTERISK STAYS ON THE FACE — which horizons are
+          annualised is what a reader needs to read the row — and the rest is its
+          hover (Stage 10cp). */}
+      <p className="mt-2 border-t border-dashed border-ink-700 pt-2.5 text-[11px] leading-relaxed text-slate-500"
+        title={`Measured on settled closes only, to ${live.last} — today's in-progress move is not in these figures, and the live price above is a separate measurement. Every horizon is independent: a cell is — when this listing does not reach back that far, never a shorter window relabelled, so a company listed in 2023 shows no 10-year CAGR and an honest max from its first trading day (${live.first}).`}>
+        <span className="font-medium text-slate-400">*</span> annualised (CAGR); shorter horizons cumulative · closes to{" "}
+        <span className="text-slate-400">{live.last}</span>
       </p>
     </Card>
   );

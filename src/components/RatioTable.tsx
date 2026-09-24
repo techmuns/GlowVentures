@@ -202,10 +202,11 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
           </table>
         </div>
 
-        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-          Read by row label and column header, never by position — the source puts a chart placeholder in the second
-          column, and a positional read would take it as the most recent year and shift every figure back one.{" "}
-          {doc.basis && <>Figures are on the source's {doc.basis.toLowerCase()} basis. </>}
+        {/* THE BASIS AND THE SOURCE LINK ON THE FACE; how the table is read is
+            the line's hover (Stage 10cp). */}
+        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500"
+          title="Read by row label and column header, never by position — the source puts a chart placeholder in the second column, and a positional read would take it as the most recent year and shift every figure back one.">
+          {doc.basis && <>{doc.basis} basis · </>}
           <a href={state.sourceUrl} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-slate-400 hover:text-champagne-400">
             Source page <ExternalLink className="h-3 w-3" />
