@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS } from "../../data/glowData";
-import { applyCorporateActionQuotes, projectActions, positionActionKey, marketDay } from "../corporateActions";
+import { applyCorporateActionQuotes, projectActions, positionActionKey, marketDay, SHARE_EVENT_LEAD_DAYS } from "../corporateActions";
+import { symbolFor } from "../quotes";
 import { parseAction, normalizeActionFeed, validActionFeed, type ActionFeed } from "../../../shared/corporateActions.mjs";
 import type { Position, Account } from "../types";
 import type { QuoteFeed } from "../quotes";
@@ -78,7 +79,23 @@ assert.equal(noQuote.positions[0].currentPrice, 10, "never leave adjusted units 
 assert.equal(noQuote.returns.get(positionActionKey(p))!.totalReturnPct, null);
 assert.equal(projectActions(p, "2020-08-31", "2026-09-23", f).dividendEntitlement, null, "missing historical coverage is not zero income");
 assert.equal(projectActions(p, "2026-08-31", "2026-09-23", { ...f, verifiedThrough: "2026-09-22" }).dividendEntitlement, null, "stale source coverage cannot certify current return");
-assert.equal(applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: "2026-09-22" }).positions[0].live, false, "stale coverage cannot miss a split while marking old units at new prices");
+// A CAPTURE A DAY OR TWO BEHIND STILL COVERS SHARE EVENTS (`SHARE_EVENT_LEAD_DAYS`):
+// the live price and the split projection stand, and only the DIVIDEND side —
+// entitlement and total return — waits for a capture that covers the day.
+// This was the 24 Sep 2026 incident: the whole Direct Equity book off live
+// prices because the capture was one day old.
+const lagging = applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: "2026-09-22" });
+const lagPlan = lagging.returns.get(positionActionKey(p))!;
+assert.equal(lagging.positions[0].live, true, "a capture one day behind still marks shares live");
+assert.equal(lagging.positions[0].quantity, 400, "…with the share events it does list still applied");
+assert.equal(lagging.positions[0].dayChangePct, 0, "…and a day move struck on the quote");
+assert.equal(lagPlan.dividendEntitlement, null, "…but a lagging capture cannot certify the dividends");
+assert.equal(lagPlan.totalReturnPct, null, "…so the total return is withheld");
+assert.ok(lagPlan.incomeIssues.includes("Event capture does not cover the valuation date"), "…and the income side names why");
+assert.ok(!lagPlan.quantityIssues.includes("Event capture does not cover the valuation date"), "…while the quantity side does not");
+assert.equal(applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: "2026-09-20" }).positions[0].live, true, `the lead window is inclusive: ${SHARE_EVENT_LEAD_DAYS} days`);
+assert.equal(applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: "2026-09-19" }).positions[0].live, false, "stale coverage cannot miss a split while marking old units at new prices");
+assert.equal(applyCorporateActionQuotes([p], accounts, quotes(), { ...f, verifiedThrough: null }).positions[0].live, false, "a capture with no verified date covers nothing");
 assert.equal(applyCorporateActionQuotes([{ ...p, realizedLotsAfter: 1 }], accounts, quotes(), f).positions[0].live, false, "a recorded later sale invalidates the unchanged-holdings assumption");
 const undatedQuote = quotes(5); delete undatedQuote.quotes.TEST.tradedAt; undatedQuote.asOf = "2026-09-02T03:00:00Z";
 assert.equal(applyCorporateActionQuotes([p], accounts, undatedQuote, f).positions[0].live, false, "an ex-date pre-open quote is not post-split evidence");
@@ -112,6 +129,31 @@ assert.ok(collision?.issue && collision.cashPerShare === null, "Recode cannot cr
 assert.ok(saved.rows.some((r) => r.type === "split" && r.factor !== null), "real split terms parse");
 assert.ok(saved.rows.some((r) => r.type === "bonus" && r.factor !== null), "real bonus terms parse");
 assert.ok(saved.rows.some((r) => r.type === "dividend" && r.cashPerShare !== null), "real rupee dividends parse");
+
+// THE INCIDENT, ON THE BOOK AND THE COMMITTED CAPTURE. Every company share the
+// family holds that the capture covers on its own date must still be live the
+// next day — and stop being live once the capture is more than
+// SHARE_EVENT_LEAD_DAYS behind. Anchored on the real book and the real
+// fallback, so it moves with both rather than with a fixture.
+const dayAfter = (d: string, n: number) => new Date(Date.parse(d) + n * 86_400_000).toISOString().slice(0, 10);
+const through = saved.verifiedThrough as string;
+const asOf = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.asOf]));
+const shares = BOOK_POSITIONS.filter((x) => x.assetClass === "Equity" && symbolFor(x) && (asOf.get(x.accountId) ?? "9999") <= through && !(x.realizedLotsAfter ?? 0));
+const liveOn = (day: string) => {
+  const feedOn: QuoteFeed = { asOf: `${day}T06:00:00Z`, missing: [], pending: [], fresh: 1, stale: 0, quotes: {} };
+  for (const x of shares) {
+    const px = x.currentPrice ?? 100;
+    feedOn.quotes[symbolFor(x)!] = { price: px * 1.01, prevClose: px, tradedAt: `${day}T06:00:00Z`, open: px, dayLow: px, dayHigh: px,
+      low52: null, high52: null, marketCap: null, volume: 1, yearChangePct: null, ageS: 0, source: "upstox" };
+  }
+  return applyCorporateActionQuotes(shares, BOOK_ACCOUNTS, feedOn, saved).positions.filter((x) => x.live && x.dayChangePct != null).length;
+};
+const onCapture = liveOn(through);
+assert.ok(shares.length >= 10 && onCapture >= 10, `the control: ${onCapture} of ${shares.length} book shares are live on the capture's own date`);
+assert.equal(liveOn(dayAfter(through, 1)), onCapture, "the morning after the capture, the same shares are still live with a day move");
+assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS)), onCapture, "…and through the lead window");
+assert.equal(liveOn(dayAfter(through, SHARE_EVENT_LEAD_DAYS + 1)), 0, "…and none past it");
+
 const funds = BOOK_POSITIONS.filter((p) => p.assetClass !== "Equity");
 assert.deepEqual(applyCorporateActionQuotes(funds, BOOK_ACCOUNTS, null, saved).positions, funds.map((p) => ({ ...p, live: false })), "fund NAVs and distributions are not equity corporate actions");
 console.log("PASS corporate-action identity, split/bonus invariance, dividend timing, coverage, replay and source-fixture checks");
