@@ -1226,12 +1226,15 @@ function ManagerTrades({ account }: { account: Account }) {
                         <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
                           {ins.buys + ins.sells}<span className="ml-1 text-[10px] text-slate-500">{ins.buys}B/{ins.sells}S</span>
                         </td>
-                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                          {ins.buys === 0 ? <span className="text-slate-600">—</span>
+                        {/* A SIDE THE MANAGER NEVER TRADED SAYS SO (DSM-D8) — a bare
+                            dash read exactly like a figure the statement failed to
+                            print. It is a count of nothing, and its reason says that. */}
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap" data-trade-cell="bought">
+                          {ins.buys === 0 ? <AbsentCell reason="nothing of this security was bought over the period — there is no buy row, rather than a missing figure" />
                             : money(ins.bought) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
                         </td>
-                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
-                          {ins.sells === 0 ? <span className="text-slate-600">—</span>
+                        <td className="px-3 py-1.5 text-right mono text-slate-300 whitespace-nowrap" data-trade-cell="sold">
+                          {ins.sells === 0 ? <AbsentCell reason="nothing of this security was sold over the period — there is no sell row, rather than a missing figure" />
                             : money(ins.sold) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
                         </td>
                         {/* THE REASON IS EACH SALE'S OWN (DSM-C10). "No capital gain
@@ -1255,8 +1258,8 @@ function ManagerTrades({ account }: { account: Account }) {
                             <span className="ml-2 mono text-slate-500">{fmtNum(t.qty)}{t.price !== null && <> @ {fmtFromBase(t.price)}</>}</span>
                           </td>
                           <td />
-                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? "—") : ""}</td>
-                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? "—") : ""}</td>
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />) : ""}</td>
+                          <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" />) : ""}</td>
                           {/* A PURCHASE REALISES NOTHING — blank, like the other
                               side's money cell on this row, never a dash that names
                               "this sale" on a buy. */}

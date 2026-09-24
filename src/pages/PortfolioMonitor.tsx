@@ -5591,6 +5591,15 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
   const accByPA = useMemo(() => new Map(accountsReg.map((a) => [acctKey(a.provider, a.accountNo), a])), [accountsReg]);
   /** Accounts the WHOLE record funds — the book fact a narrowed count must not be read as. */
   const fundedInBook = useMemo(() => new Set(CAPITAL_RECORD.map((m) => m.accountId)).size, []);
+  /**
+   * An account whose positions are all fund units redeemed to nil, at a NAV the
+   * fund still publishes — the one case "₹0, measured" is true of on its own terms.
+   */
+  const redeemedToNil = useMemo(() => {
+    const by = new Map<string, Position[]>();
+    for (const p of positionsReg) (by.get(p.accountId) ?? by.set(p.accountId, []).get(p.accountId)!).push(p);
+    return new Set([...by].filter(([, ps]) => ps.length > 0 && ps.every((p) => isFundVehicle(p) && p.quantity === 0 && p.currentPrice != null)).map(([id]) => id));
+  }, [positionsReg]);
 
   /** What each return column covers, over EVERY row drawn — a manager's dealing carries no return on the family's money. */
   const retCov = (measure: ReturnMeasure) => {
@@ -6035,7 +6044,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                             title={r.value == null ? undefined : [
                               asOfOf(r) ? `As of ${fmtDate(asOfOf(r)!)} — the date of the statement that values this account. Each account is valued on its own statement's date, so this column is not one "today".` : null,
                               r.value === 0
-                                ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                                ? (redeemedToNil.has(r.accountId ?? "")
+                                  ? "This account holds nothing today: its own statement reports zero units at a NAV the fund still publishes, so the ₹0 is what was measured rather than a figure this book is missing."
+                                  : "The positions this account's statement reports sum to ₹0 — a measured zero, not a missing figure.")
                                 : null,
                             ].filter(Boolean).join(" ") || undefined}>
                             {r.value === null
@@ -6179,9 +6190,9 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                                                 : money(m.amount)) : ""}
                                             </td>
                                             <td className="px-3 py-1.5 text-right mono whitespace-nowrap text-slate-400">
-                                              {m.units === null ? <span className="text-slate-600">—</span> : fmtNum(m.units)}
+                                              {m.units === null ? <AbsentCell reason="the statement prints no unit count against this movement" /> : fmtNum(m.units)}
                                             </td>
-                                            <td className="px-3 py-1.5 text-slate-400">{m.security ?? <span className="text-slate-600">—</span>}</td>
+                                            <td className="px-3 py-1.5 text-slate-400">{m.security ?? <AbsentCell reason="the statement names no security against this movement" />}</td>
                                           </Tr>
                                         ))}
                                         {/* A PAYOUT THE FUND PRINTS ONLY AS A TOTAL is still

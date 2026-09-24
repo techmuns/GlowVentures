@@ -6796,8 +6796,8 @@ const ROUTES = [
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
   // A MANDATE WHOSE ACCOUNT ISSUES A CAPITAL GAIN STATEMENT, and whose manager
-  // both bought a line without selling it and sold one without buying
-  // (DSM-C10) — the case the "no capital gain statement covers this account"
+  // both bought a line without selling it and sold one without buying (DSM-C10,
+  // DSM-D8) — the case the "no capital gain statement covers this account"
   // reason was false on. Derived in `TXN_T_BOOK`, never typed; every line opened.
   ["mandate-trades-realised", () => (TXN_T_BOOK?.cgMandate ? `/mandate/${encodeURIComponent(TXN_T_BOOK.cgMandate.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
@@ -8445,7 +8445,7 @@ const TXN_SECTIONS = (() => {
 })();
 
 /**
- * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6…MT-16, DSM-C10) ──
+ * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6…MT-18) ──
  *
  * The Transactions tab's labels and reasons were wrong in ways no figure on the
  * page could show: a purchase span that ran to a TDS outflow, a value column
@@ -8807,6 +8807,9 @@ const txnTTableChecks = () => [
   }],
   ["an own-account security row's Capital cells say it is the family's own broking — never a mandate's ledger",
     (t, ctx) => txnOwnBrokingCapital(ctx)],
+  /** MT-18: a dash names its cause, in the table and in every opened panel. */
+  ["no dash in the dated table or its panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
 /** With every row and every dealt line open: the realised reasons, line by line. */
@@ -8899,6 +8902,8 @@ const txnTRealisedChecks = () => [
         && !x.some((y) => /security bought/.test(y) || y === "bought" || y === "sold");
     });
   }],
+  ["no dash in the dated table or its opened panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
 /** MT-16, on a fiscal year that ends before the transaction statements begin. */
@@ -8950,10 +8955,20 @@ const txnTLateWindowChecks = () => [
         && /inside the date window/.test(p.label.title) && /not the whole record/.test(p.label.title);
     });
   }],
+  ["no dash in the windowed table or its opened panels is without a reason", (t, ctx) =>
+    txnTReady(ctx) && ctx.txnT.bare.length === 0],
 ];
 
-/** DSM-C10, on a mandate's own "What the manager traded" card, every line open. */
+/** DSM-C10 and DSM-D8, on a mandate's own "What the manager traded" card, every line open. */
 const mgrTradeChecks = () => [
+  ["a side the manager never traded says so — never a bare dash (DSM-D8)", (t, ctx) => {
+    const M = ctx?.mgrT;
+    if (!M || !M.rows.length) return false;
+    const nb = M.rows.filter((r) => r.buys === 0), ns = M.rows.filter((r) => r.sells === 0);
+    return M.bare.length === 0 && nb.length > 0 && ns.length > 0
+      && nb.every((r) => /nothing of this security was bought/.test(r.bought?.dash ?? ""))
+      && ns.every((r) => /nothing of this security was sold/.test(r.sold?.dash ?? "") && /nothing was realised/.test(r.realised?.dash ?? ""));
+  }],
   ["a line's realised dash names its own cause — never 'no capital gain statement' in an account that issues one (DSM-C10)", (t, ctx) => {
     const M = ctx?.mgrT;
     if (!M || !TXN_T_BOOK) return false;
@@ -19556,7 +19571,7 @@ const INVARIANTS = {
      */
 
 
-    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6…MT-15) ────────────────
+    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6…MT-18) ────────────────
     ...txnTTableChecks(),
   ],
 
@@ -21023,8 +21038,9 @@ const INVARIANTS = {
     // the fund name. Either way it must be the statement's word, not ours.
     return CAPITAL_SIDES.outLabels.some((l) => t.includes(l));
   }],
-    // The capital panels are OPEN on this route: their headings (MT-15).
-    ...txnTRealisedChecks().filter(([d]) => /capital drill-down heads/.test(d)),
+    // The capital panels are OPEN on this route: their headings (MT-15) and
+    // every dash inside them (MT-18).
+    ...txnTRealisedChecks().filter(([d]) => /capital drill-down heads|without a reason/.test(d)),
   ],
   /**
    * THE MANAGERS' OWN DEALING, WHICH IS NO LONGER A TAB.
@@ -30217,7 +30233,7 @@ const INVARIANTS = {
       /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
   ],
   /**
-   * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10) ───────────
+   * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10, DSM-D8) ───────────
    *
    * A mandate whose account issues a capital gain statement, so no line on it
    * may say "no capital gain statement covers this account" — the reason that
@@ -34005,7 +34021,7 @@ for (const theme of THEMES) {
         });
       }
       /**
-       * THE MANAGER'S DEALING, EVERY LINE OPEN (DSM-C10). The card
+       * THE MANAGER'S DEALING, EVERY LINE OPEN (DSM-C10, DSM-D8). The card
        * reads the dated tape from the audit archive at runtime, so the walk
        * waits for its first line rather than for a clock — a card that never
        * draws still reaches the invariants, which then fail on what they find.
@@ -35388,7 +35404,7 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── THE TRANSACTIONS TABLE, CELL BY CELL, WITH EVERY REASON (MT-6…MT-16) ──
+       * ── THE TRANSACTIONS TABLE, CELL BY CELL, WITH EVERY REASON (MT-6…MT-18) ──
        *
        * Each main-table cell is read under the column its header names — the
        * header's `th[data-col]` order is the reader's, and `Tr` permutes a row's
@@ -35467,9 +35483,19 @@ for (const theme of THEMES) {
         const foot = table.querySelector("tr[data-dated-total]");
         const footCells = foot ? Object.fromEntries([...foot.querySelectorAll("[data-foot-cell]")].map((td) =>
           [td.getAttribute("data-foot-cell"), { text: t(td), title: ti(td), dash: dashOf(td) }])) : null;
+        /** Every dash in the table and its panels that names no reason at all. */
+        const bare = [];
+        for (const td of table.querySelectorAll("td")) {
+          for (const el of [td, ...td.querySelectorAll("*")]) {
+            if (el.children.length !== 0 || el.textContent.trim() !== "—") continue;
+            let ok = false;
+            for (let x = el; x && x !== td.parentElement; x = x.parentElement) if (ti(x).trim()) { ok = true; break; }
+            if (!ok) bare.push(t(td.closest("tr")).slice(0, 90));
+          }
+        }
         return {
           framing: ti(document.querySelector("[data-txn-framing]")),
-          heads, rows, panels,
+          heads, rows, panels, bare,
           foot: foot ? {
             label: { text: t(foot.cells[0]), title: ti(foot.cells[0]) },
             cells: footCells,
@@ -35478,10 +35504,10 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── WHAT THE MANAGER TRADED, ON A MANDATE'S OWN PAGE (DSM-C10) ──
+       * ── WHAT THE MANAGER TRADED, ON A MANDATE'S OWN PAGE (DSM-C10, DSM-D8) ──
        *
        * The same shape for `ManagerTrades`: each line's counts off its own
-       * handles, its Realized cell with the reason its dash
+       * handles, each Bought / Sold / Realized cell with the reason its dash
        * carries, and the dated tranches under an opened line.
        */
       const mgrT = FAST ? null : await page.evaluate(() => {
@@ -35496,7 +35522,17 @@ for (const theme of THEMES) {
           for (let x = d; x && x !== el.parentElement; x = x.parentElement) { const v = ti(x).trim(); if (v) return v; }
           return "";
         };
+        const bare = [];
+        for (const td of table.querySelectorAll("td")) {
+          for (const el of [td, ...td.querySelectorAll("*")]) {
+            if (el.children.length !== 0 || el.textContent.trim() !== "—") continue;
+            let ok = false;
+            for (let x = el; x && x !== td.parentElement; x = x.parentElement) if (ti(x).trim()) { ok = true; break; }
+            if (!ok) bare.push(t(td.closest("tr")).slice(0, 90));
+          }
+        }
         return {
+          bare,
           rows: [...table.querySelectorAll("tr[data-manager-row]")].map((tr) => {
             const c = (n) => { const td = tr.querySelector(`[data-trade-cell="${n}"]`); return td ? { text: t(td), dash: dashOf(td) } : null; };
             const ro = tr.querySelector("[data-realised-of]");
@@ -35508,7 +35544,7 @@ for (const theme of THEMES) {
             return {
               key: tr.getAttribute("data-manager-row"), buys: Number(tr.getAttribute("data-buys")), sells: Number(tr.getAttribute("data-sells")),
               staggeredTitle: ti(tr.querySelector("[data-staggered-title]")),
-              realised: c("realised"),
+              bought: c("bought"), sold: c("sold"), realised: c("realised"),
               realisedOf: ro ? { of: ro.getAttribute("data-realised-of"), title: ti(ro) } : null,
               tranches,
             };

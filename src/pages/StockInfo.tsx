@@ -1949,8 +1949,8 @@ export function StockInfo() {
                           </td>
                           <td className="px-4 py-2 text-[13px] text-slate-300">{t.account}</td>
                           <td className="px-4 py-2 text-right mono text-slate-300">{fmtNum(t.qty)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-400">{price(t.rate)}</td>
-                          <td className="px-4 py-2 text-right mono text-slate-200">{fmtFromBase(t.amount, { compact: true })}</td>
+                          <td className="px-4 py-2 text-right mono text-slate-400">{t.rate == null ? <AbsentCell reason="this trade row reports no unit price and no settled amount on its statement" /> : price(t.rate)}</td>
+                          <td className="px-4 py-2 text-right mono text-slate-200">{t.amount == null ? <AbsentCell reason="this trade row reports neither a net nor a gross amount on its statement" /> : fmtFromBase(t.amount, { compact: true })}</td>
                         </Tr>
                       ))}
                     </tbody>

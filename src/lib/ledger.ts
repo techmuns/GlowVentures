@@ -887,7 +887,11 @@ export async function loadSales(): Promise<SalesData | null> {
 // Per-stock ledger: every dated buy / sell for one security, for Stock Info.
 // Matched on securityKey — the archive rows carry a name, not an ISIN.
 // ─────────────────────────────────────────────────────────────────────────────
-export type StockTxn = { date: string; side: "Buy" | "Sell"; account: string; qty: number; rate: number; amount: number };
+/**
+ * `rate` and `amount` are NULL where the statement reports neither a price nor a
+ * settled amount (DSM-D9) — never a ₹0 that reads as a trade struck at nothing.
+ */
+export type StockTxn = { date: string; side: "Buy" | "Sell"; account: string; qty: number; rate: number | null; amount: number | null };
 export type StockLedger = {
   securityKey: string; name: string; txns: StockTxn[];
   /** Null when no capital gain statement covers this name's sells. */
@@ -911,10 +915,13 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
     name = securityLabel(t.securityKey, t.security);
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
-    const qty = t.quantity ?? 0, amount = settledAmount(t) ?? 0;
+    const qty = t.quantity ?? 0, amount = settledAmount(t);
     txns.push({
       date: t.date, side: t.side === "sell" ? "Sell" : "Buy", account, qty,
-      rate: t.unitPrice ?? (qty > 0 ? amount / qty : 0), amount,
+      // Derived only where both halves exist — the rule `loadTransactions`
+      // already applies. `?? 0` put a ₹0 price and a ₹0 amount on a trade whose
+      // statement reported neither (DSM-D9).
+      rate: t.unitPrice ?? (amount != null && qty > 0 ? amount / qty : null), amount,
     });
   }
   txns.sort((a, b) => b.date.localeCompare(a.date));
