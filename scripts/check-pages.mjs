@@ -18460,13 +18460,33 @@ const PLEDGED_ABSL = NOTE_BOOK.some((p) => p.securityKey === "absl-liqf-d-growth
  * drawn (VD-17) — ICICI's NSDL statement of 31 Mar prices at the 30 Mar close —
  * off the book's own `priceAsOf` and each account's as-of, never typed.
  */
-const PRICED_OTHER_DAY = (() => {
+const PRICED_OTHER_DAY_PAIRS = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const asOf = new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.asOf]));
-    return NOTE_BOOK.filter((p) => p.priceAsOf && !p.navPriced && p.marketValue > 0 && p.priceAsOf !== asOf.get(p.accountId)).length;
-  } catch { return 0; }
+    return new Set(NOTE_BOOK
+      .filter((p) => p.priceAsOf && !p.navPriced && p.marketValue > 0 && asOf.get(p.accountId) && p.priceAsOf !== asOf.get(p.accountId))
+      .map((p) => `${asOf.get(p.accountId)}|${p.priceAsOf}`));
+  } catch { return new Set(); }
 })();
+const PRICED_OTHER_DAY = PRICED_OTHER_DAY_PAIRS.size;
+/**
+ * The (balances' day, pricing day) pairs a hover names, as ISO dates — read
+ * off "as of 31 Mar 2026, priced as of 30 Mar 2026". The month is matched on
+ * its first three letters, so ICU's "Sept" reads as September.
+ */
+const PRICED_PAIR_RE = /as of (\d{1,2}) (\w{3,4}) (\d{4}), priced as of (\d{1,2}) (\w{3,4}) (\d{4})/;
+const MONTHS3 = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+function pricedPairOf(title) {
+  const m = PRICED_PAIR_RE.exec(title ?? "");
+  if (!m) return null;
+  const iso = (d, mon, y) => {
+    const i = MONTHS3.indexOf(mon.slice(0, 3).toLowerCase());
+    return i < 0 ? null : `${y}-${String(i + 1).padStart(2, "0")}-${String(+d).padStart(2, "0")}`;
+  };
+  const a = iso(m[1], m[2], m[3]), b = iso(m[4], m[5], m[6]);
+  return a && b ? `${a}|${b}` : null;
+}
 
 const INVARIANTS = {
   /**
@@ -26606,7 +26626,11 @@ const INVARIANTS = {
      */
     ["a statement value priced on another day than its balances names both dates in its price cell's hover (VD-17)", (t, ctx) => {
       if (!PRICED_OTHER_DAY) return { notChecked: "no statement in this book prices on another day than its balances" };
-      return (ctx?.titles ?? []).some((x) => /as of \d{1,2} \w{3,4} \d{4}, priced as of \d{1,2} \w{3,4} \d{4}/.test(x));
+      // The two dates must be the BOOK's pair — its balances' day and its
+      // pricing day — never one date named twice, which a value dated at its
+      // balances' day would print.
+      const named = (ctx?.titles ?? []).map(pricedPairOf).filter(Boolean);
+      return named.length > 0 && named.every((p) => PRICED_OTHER_DAY_PAIRS.has(p));
     }],
     ["a pre-tax NAV and a pledged cash line say so in the CMP marker's hover (VD-16, VD-18)", (t, ctx) => {
       if (!PRETAX_KEY || !PLEDGED_ABSL) return false;

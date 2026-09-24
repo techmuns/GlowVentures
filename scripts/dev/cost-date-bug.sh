@@ -107,13 +107,13 @@ run_case 5 "monitor" no "the Monitor's note counts one folio's charges, not the 
     'const gross = r.costNA || carried ? null : grossPaidOf(r.trancheSet.slice(0, 1));'
 
 # ── 6 ── a value is dated at the balances' day, not the day it was priced
-run_case 6 "stock,monitor" yes "a statement mark is dated at its balances' day rather than its pricing day" \
+run_case 6 "stock-nocost,monitor" yes "a statement mark is dated at its balances' day rather than its pricing day" \
   sub src/lib/analytics.ts \
     'return p.priceAsOf ?? statementAsOf ?? null;' \
     'return statementAsOf ?? null;'
 
 # ── 7 ── the Holding value tile stops naming the balances' own date
-run_case 7 "stock" no "the Holding value tile's hover names one date for both" \
+run_case 7 "stock-nocost" no "the Holding value tile's hover names one date for both" \
   sub src/lib/valuedAt.ts \
     'const priced = drawn.length === 1 ? ` The statement counts its balances at ${fmtDate(drawn[0])} and prices them as of ${d}.` : "";' \
     'const priced = "";'
