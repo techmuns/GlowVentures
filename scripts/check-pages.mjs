@@ -5072,6 +5072,15 @@ const ROUTES = [
   // one tab at a time. Its default tab carries the mark and its caption.
   ["stock-arbitrage-research", () => (CASH_INSTRUCTION_BOOK?.largestArb
     ? `/stock/${encodeURIComponent(CASH_INSTRUCTION_BOOK.largestArb)}?tab=research` : "/stock/none-resolved-from-the-book?tab=research")],
+  // A-17: UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR, valued on the
+  // live basis at AMFI's NAV only where a sibling statement proves the basis —
+  // the key off the checker's own model of those rows, never typed.
+  ["stock-unpriced", () => (UNPRICED_BOOK?.key
+    ? `/stock/${encodeURIComponent(UNPRICED_BOOK.key)}` : "/stock/none-resolved-from-the-book")],
+  // …AND THE MEMBER WHOSE CARD LISTS THE LINES A VALUED ACCOUNT RECORDS AND
+  // NOTHING VALUES, chosen so the same card also counts a line valued live.
+  ["family-unvalued-lines", () => (UNPRICED_BOOK?.ownerId
+    ? `/family?entity=${encodeURIComponent(UNPRICED_BOOK.ownerId)}` : "/family?entity=none-resolved-from-the-book")],
   // …AND ITS PRICE TAB, which keeps the scheme's own NAV half: the reason for
   // not looking through a hedged book is about what the fund HOLDS, and says
   // nothing against the fund's own published price (see `lookThroughHoldings`).
@@ -6786,7 +6795,13 @@ const CASH_INSTRUCTION_BOOK = (() => {
       if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
       if (isArb(p)) arbMV += Number(p.marketValue) || 0;
     }
-    const depository = positions.filter((p) => p.depositoryUnits);
+    // THE CLOSING-BALANCE KIND ONLY — a depository's own balance on an account
+    // that sent a transaction statement and no holding statement. The A-17 rows
+    // (units a holding statement records with no rate) are depository-valued
+    // too, but their accounts DID send a holding statement and are not partly
+    // valued, so they are counted apart (`unpriced`) and never folded in here.
+    const depository = positions.filter((p) => p.depositoryUnits && p.depositoryUnits.kind !== "no-rate");
+    const unpriced = positions.filter((p) => p.depositoryUnits?.kind === "no-rate");
     const partialAccounts = [...new Set(depository.map((p) => p.accountId))];
     const largestArb = outside.filter(isArb).sort((a, b) => b.marketValue - a.marketValue)[0]?.securityKey ?? null;
     const partialOwner = (() => {
@@ -6799,11 +6814,74 @@ const CASH_INSTRUCTION_BOOK = (() => {
     return {
       arb: [...arb], liquid: [...liquid], arbMV, largestArb,
       depositoryCount: depository.length, depositoryMV: depository.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
+      // EVERY ROW NO STATEMENT PRICES, of both kinds — what `/holdings` names
+      // under its statement-basis figure, because neither kind is in it.
+      depositoryAllCount: depository.length + unpriced.length,
+      unpricedLines: unpriced.map((p) => `${p.securityKey}@${p.accountId}`),
       partialAccounts, partialOwner, partialAccountNo,
       // Each depository row as the Monitor's opened tree keys its statement
       // line: the security and the account it sits in.
       depositoryLines: depository.map((p) => `${p.securityKey}@${p.accountId}`),
     };
+  } catch { return null; }
+})();
+
+/**
+ * ── THE UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR (A-17) ──────
+ *
+ * The rows `withUnpricedStatementUnits` adds to the checker's live model, keyed
+ * the way the pages key a statement line, each with the WITNESS — the account
+ * whose statement from the same depository on the same day prices the same
+ * scheme — whose owner and number every sentence about these units must name.
+ *
+ * And, per owner, the lines a VALUED account's statement records and nothing
+ * values: `unvaluedStatementLinesOf` (src/lib/accounts.ts) RE-EXPRESSED, never
+ * imported. An account with a position in the live book; its
+ * BOOK_UNVALUED_HOLDINGS rows less a depository's copy of units a fund reports
+ * itself (counted as `elsewhere`) and less a line the live book values at
+ * AMFI's NAV (counted as `live`, never listed — the card is "in no total").
+ */
+const UNPRICED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !Array.isArray(unvalued)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const rows = positions.filter((p) => p.depositoryUnits?.kind === "no-rate");
+    const lines = rows.map((p) => {
+      const w = acc.get(p.depositoryUnits.witnessAccountId);
+      return { key: `${p.securityKey}@${p.accountId}`, securityKey: p.securityKey, accountId: p.accountId,
+        asOf: p.depositoryUnits.asOf, witnessOwner: w?.owner ?? null, witnessNo: w?.accountNo ?? null };
+    });
+    const valuedHere = new Set(positions.map((p) => p.accountId));
+    const byOwner = new Map();
+    for (const a of accounts) {
+      if (!valuedHere.has(a.accountId)) continue;
+      const mine = unvalued.filter((u) => u.accountId === a.accountId);
+      if (!mine.length) continue;
+      const own = mine.filter((u) => !u.sameUnitsReportedBy);
+      const live = (u) => !!I(u) && rows.some((p) => p.accountId === a.accountId && I(p) === I(u));
+      const listed = own.filter((u) => !live(u));
+      if (!listed.length) continue;
+      byOwner.set(a.owner, [...(byOwner.get(a.owner) ?? []), {
+        account: a.accountId, keys: listed.map((u) => u.securityKey).sort(),
+        live: own.length - listed.length, elsewhere: mine.length - own.length }]);
+    }
+    const total = (o) => (byOwner.get(o) ?? []).reduce((n, g) => n + g.keys.length, 0);
+    // THE ROUTE'S OWNER: one whose card also COUNTS a line valued live, so the
+    // listed half and the counted half are walked on one page; failing that, the
+    // owner with the most lines.
+    const owners = [...byOwner.keys()].sort((x, y) => total(y) - total(x));
+    const owner = owners.find((o) => byOwner.get(o).some((g) => g.live > 0)) ?? owners[0] ?? null;
+    // THE PAGE ACCEPTS AN OWNER ID OR A NAME in `?entity=`, and the routes use
+    // either, so a route's entity resolves through both to the owner the card
+    // is keyed on here.
+    const nameOf = new Map(accounts.flatMap((a) => [[a.ownerId, a.owner], [a.owner, a.owner]]));
+    const ownerId = accounts.find((a) => a.owner === owner)?.ownerId ?? null;
+    return { lines, byOwner, owner, ownerId, nameOf, key: rows[0]?.securityKey ?? null };
   } catch { return null; }
 })();
 
@@ -12892,7 +12970,7 @@ const HB_DEPOSITORY = [
     if (!d) return { notChecked: "the probe did not run" };
     const B = CASH_INSTRUCTION_BOOK;
     if (!B) return false;
-    if (B.depositoryCount === 0) return !d.hbDepository;
+    if (B.depositoryAllCount === 0) return !d.hbDepository;
     const h = d.hbDepository;
     // THE LINE SAYS WHAT THEY ARE; ITS HOVER SAYS WHY (Stage 10cf). The source is
     // on screen — a reader must see these are valued at AMFI's NAV — and the
@@ -12900,8 +12978,14 @@ const HB_DEPOSITORY = [
     // Since Stage 10cp the face is the count and the source alone ("5 holdings
     // at AMFI's NAV"); the old "valued from depository units …" line must not
     // come back.
-    return !!h && h.n === B.depositoryCount && /AMFI.s NAV/.test(h.text) && !/valued\s+from depository units/.test(h.text)
-      && /transaction statement and no holding statement/.test(h.title) && /not\s+in that figure/.test(h.title);
+    // EACH KIND THAT IS PRESENT IS NAMED, AND NO OTHER (A-17): a closing
+    // balance on an account that sent no holding statement, and units a holding
+    // statement records with no rate — only the first may say "no holding
+    // statement", and a line naming a kind the set does not carry is false.
+    const closing = B.depositoryCount > 0, noRate = B.unpricedLines.length > 0;
+    return !!h && h.n === B.depositoryAllCount && /AMFI.s NAV/.test(h.text) && !/valued\s+from depository units/.test(h.text)
+      && closing === /transaction statement and no holding statement/.test(h.title)
+      && noRate === /prints no rate/.test(h.title) && /not\s+in that figure/.test(h.title);
   }],
 ];
 /**
@@ -12967,6 +13051,64 @@ const pickListChecks = (axis, security = false) => [
   }],
 ];
 
+/**
+ * THE LINES A VALUED ACCOUNT'S STATEMENT RECORDS AND NOTHING VALUES (A-17),
+ * held to `UNPRICED_BOOK`'s re-expression on whichever member the route opens.
+ * Three claims, none implying another: the right accounts are drawn and no
+ * other; each opens onto exactly the book's lines, each naming its reason, and
+ * none the live book values at AMFI's NAV (the card is "in no total"); and the
+ * counts it states are the book's.
+ */
+const entityOfRoute = (ctx) => { try { return ctx?.url ? new URL(ctx.url).searchParams.get("entity") : null; } catch { return null; } };
+const unpricedOwnerOf = (ctx) => { const e = entityOfRoute(ctx); return UNPRICED_BOOK?.nameOf?.get(e) ?? e; };
+const unvaluedLinesChecks = () => [
+  ["each valued account whose statement records holdings nothing values is drawn, and no other", (t, ctx) => {
+    const d = ctx?.cashDom;
+    if (!d) return { notChecked: "the probe did not run" };
+    const U = UNPRICED_BOOK;
+    if (!U) return false;
+    const want = (U.byOwner.get(unpricedOwnerOf(ctx)) ?? []).map((g) => g.account).sort();
+    const got = (d.unvaluedLines ?? []).map((g) => g.account).sort();
+    return want.length > 0 && JSON.stringify(want) === JSON.stringify(got);
+  }],
+  ["...each opens onto exactly the book's lines, every one naming its reason, none of them valued live", (t, ctx) => {
+    const d = ctx?.cashDom;
+    if (!d) return { notChecked: "the probe did not run" };
+    const U = UNPRICED_BOOK;
+    const want = new Map((U?.byOwner.get(unpricedOwnerOf(ctx)) ?? []).map((g) => [g.account, g]));
+    if (!want.size || !d.unvaluedLines?.length) return false;
+    const liveKeys = new Set((U.lines ?? []).map((l) => l.key));
+    return d.unvaluedLines.every((g) => {
+      const w = want.get(g.account);
+      const keys = g.lines.map((l) => l.key).sort();
+      return !!w && JSON.stringify(keys) === JSON.stringify(w.keys)
+        && g.lines.every((l) => l.why.trim().length > 0 && !liveKeys.has(`${l.key}@${g.account}`));
+    });
+  }],
+  ["...and the counts it states are the book's: not valued on its face, valued live and reported elsewhere in its hover", (t, ctx) => {
+    const d = ctx?.cashDom;
+    if (!d) return { notChecked: "the probe did not run" };
+    const U = UNPRICED_BOOK;
+    const want = new Map((U?.byOwner.get(unpricedOwnerOf(ctx)) ?? []).map((g) => [g.account, g]));
+    if (!want.size || !d.unvaluedLines?.length) return false;
+    return d.unvaluedLines.every((g) => {
+      const w = want.get(g.account);
+      return !!w && g.notValued === w.keys.length && g.live === w.live && g.elsewhere === w.elsewhere
+        && g.summary.includes(`${w.keys.length} held, not valued`)
+        && (w.live === 0 || /AMFI.s published NAV/.test(g.summaryTitle))
+        && (w.elsewhere === 0 || /fund.s own statement reports/.test(g.summaryTitle));
+    });
+  }],
+];
+/**
+ * A SENTENCE ABOUT UNITS A HOLDING STATEMENT PRINTS NO RATE FOR (A-17) must say
+ * that, must name the witness statement — the account at the same depository,
+ * on the same day, that prices the same scheme — and must never say the account
+ * sent no holding statement, which is the OTHER kind's reason and false here.
+ */
+const noRateSentenceOk = (x, line) => typeof x === "string" && /records and prints no rate for/.test(x)
+  && !!line.witnessOwner && x.includes(line.witnessOwner) && !!line.witnessNo && x.includes(line.witnessNo)
+  && !!line.asOf && x.includes(line.asOf) && !/no holding statement/.test(x);
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -21826,6 +21968,21 @@ const INVARIANTS = {
       const said = new Set(lines.filter((l) => l.depository).map((l) => l.key));
       return [...want].every((k) => said.has(k)) && said.size === want.size;
     }],
+    /**
+     * …AND A LINE A HOLDING STATEMENT RECORDS WITH NO RATE SAYS THAT, AND NAMES
+     * ITS WITNESS (A-17). These accounts DID send a holding statement, so the
+     * depository sentence above would be false of them. The set is the
+     * checker's own model of those rows; an empty one is a FINDING.
+     */
+    ["every line a holding statement records with no rate says so and names its witness, and no other line does", (t, ctx) => {
+      const lines = ctx?.treeState?.venueLines;
+      if (!lines?.length) return false;
+      const want = new Map((UNPRICED_BOOK?.lines ?? []).map((l) => [l.key, l]));
+      if (!want.size) return false;
+      const said = lines.filter((l) => l.noRate);
+      return [...want.values()].every((w) => lines.some((l) => l.key === w.key && noRateSentenceOk(l.noRate, w)))
+        && said.every((l) => want.has(l.key));
+    }],
   ],
   /**
    * ── ONE SECTION FOLDED ────────────────────────────────────────────────────
@@ -23781,7 +23938,19 @@ const INVARIANTS = {
    * the old wording above a working chart satisfies the second. A removal is
    * verified by asserting it happened.
    */
+  "family-unvalued-lines": [
+    ...unvaluedLinesChecks(),
+    // LOAD-BEARING: this member was chosen because a line of theirs is valued
+    // live, so the "counted, not listed" half of the card has a subject here.
+    ["this member's card counts a line the live book values at AMFI's NAV, and does not list it", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const w = UNPRICED_BOOK?.byOwner.get(unpricedOwnerOf(ctx)) ?? [];
+      return w.some((g) => g.live > 0) && (d.unvaluedLines ?? []).some((g) => g.live > 0);
+    }],
+  ],
   "family-partial": [
+    ...unvaluedLinesChecks(),
     // THE LINE SAYS "PARTLY VALUED" AND WHAT IS; THE NOTE IS THE HOVER ON ITS
     // NAME (Stage 10cf). What is NOT valued is read from that hover — a line
     // that dropped it would leave a reader taking the valued part for the whole.
@@ -23826,6 +23995,39 @@ const INVARIANTS = {
       const e = key ? (fundNavStore() ?? []).find((x) => x.securityKey === key) : null;
       if (!e?.date) return false;
       return /AMFI/.test(cap) && cap.includes(e.date) && !/statement mark/i.test(cap);
+    }],
+  ],
+  /**
+   * THE ABSL UNITS AARTI'S AND ANKITA'S STATEMENTS RECORD AND PRINT NO RATE FOR
+   * (A-17), on the fund's own page. Each of those accounts' rows carries the
+   * NAV AMFI publishes, and its mark's hover says no statement prices these
+   * units, names the witness and never says "no holding statement"; a row a
+   * statement DID price says nothing of the kind; and the price tile's hover
+   * names the kind of unpriced units the page carries.
+   */
+  "stock-unpriced": [
+    ...stockTabChecks("position"),
+    ["each account whose statement records these units with no rate says so on its mark, naming the statement that prices them", (t, ctx) => {
+      const U = UNPRICED_BOOK;
+      const cells = ctx?.posTable?.cmps ?? [];
+      if (!U?.key || !cells.length) return false;
+      const want = U.lines.filter((l) => l.securityKey === U.key);
+      if (!want.length) return false;
+      return want.every((l) => cells.some((c) => c.account === l.accountId && noRateSentenceOk(c.reason, l)));
+    }],
+    ["...and no row a statement prices carries that sentence", (t, ctx) => {
+      const U = UNPRICED_BOOK;
+      const cells = ctx?.posTable?.cmps ?? [];
+      if (!U?.key || !cells.length) return false;
+      const noRate = new Set(U.lines.filter((l) => l.securityKey === U.key).map((l) => l.accountId));
+      const others = cells.filter((c) => !noRate.has(c.account));
+      return others.length > 0 && others.every((c) => !/prints no rate/.test(c.reason ?? ""));
+    }],
+    ["...and the price tile's hover names these as units a holding statement records with no rate, never as a missing holding statement", (t, ctx) => {
+      if (FAST) return { notChecked: "the headline probe does not run under FAST=1" };
+      const tip = ctx?.stockMark?.tip;
+      if (!tip) return false;
+      return /units a depository's holding statement records and prints no rate for/.test(tip) && !/no holding statement/.test(tip);
     }],
   ],
   "stock-arbitrage-research": [
@@ -26867,6 +27069,21 @@ for (const theme of THEMES) {
         partial: [...document.querySelectorAll("[data-partial-valuation]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "",
         })),
+        // THE LINES A VALUED ACCOUNT'S STATEMENT RECORDS AND NOTHING VALUES
+        // (A-17) — one group per account, each line keyed by its security, read
+        // off the DOM whether or not its fold is open (a closed <details> keeps
+        // its children in the document).
+        unvaluedLines: [...document.querySelectorAll("[data-unvalued-lines-account]")].map((e) => ({
+          account: e.getAttribute("data-unvalued-lines-account"),
+          notValued: Number(e.getAttribute("data-unvalued-lines")),
+          live: Number(e.getAttribute("data-unvalued-lines-live")),
+          elsewhere: Number(e.getAttribute("data-unvalued-lines-elsewhere")),
+          summary: (e.querySelector("summary")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+          summaryTitle: e.querySelector("summary")?.getAttribute("title") ?? "",
+          lines: [...e.querySelectorAll("[data-unvalued-line]")].map((l) => ({
+            key: l.getAttribute("data-unvalued-line"), why: l.getAttribute("title") ?? "",
+          })),
+        })),
         partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
           // The account's own note — what is valued and what is not — is the
@@ -27509,6 +27726,11 @@ for (const theme of THEMES) {
             key: `${tr.getAttribute("data-venue-key") ?? ""}@${tr.getAttribute("data-venue-account") ?? ""}`,
             depository: [...tr.querySelectorAll("[title]")]
               .some((e) => /a depository's own closing balance of \d{4}-\d{2}-\d{2}/.test(e.getAttribute("title") ?? "")),
+            // …AND UNITS A HOLDING STATEMENT RECORDS WITH NO RATE (A-17), read
+            // as the sentence itself, so the claim can hold it to naming its
+            // witness and to never saying no holding statement was sent.
+            noRate: [...tr.querySelectorAll("[title]")].map((e) => e.getAttribute("title") ?? "")
+              .find((x) => /records and prints no rate for/.test(x)) ?? null,
           })),
           // A full-width line with nothing in it — a card that rendered empty,
           // drawn as a blank row in the tree.
@@ -28333,6 +28555,7 @@ for (const theme of THEMES) {
           heads: [...t.querySelectorAll("thead th")].map((h) => h.innerText.replace(/\s+/g, " ").trim()),
           cmps: [...t.querySelectorAll("td[data-cmp]")].map((e) => ({
             book: e.getAttribute("data-cmp"), text: e.innerText.replace(/\s+/g, " ").trim(),
+            account: e.closest("tr")?.getAttribute("data-account-row") ?? null,
             // THE CAUSE, WHICH `innerText` CANNOT SEE. `AbsentCell` puts its
             // reason in a `title`, so a cell that fell back to `price()`'s BARE
             // dash renders identically to one that names why — and §2 forbids
@@ -28596,6 +28819,7 @@ for (const theme of THEMES) {
           state: el.getAttribute("data-stock-mark"),
           value: el.innerText.replace(/\s+/g, " ").trim(),
           caption: document.querySelector("[data-stock-mark-note]")?.innerText.replace(/\s+/g, " ").trim() ?? null,
+          tip: document.querySelector("[data-stock-mark-note]")?.getAttribute("title") ?? null,
         };
       });
       /**

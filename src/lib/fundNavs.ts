@@ -389,17 +389,24 @@ export function unpricedStatementUnits(
  * is chosen, for both kinds (see `Position.depositoryUnits`). A page that
  * hard-codes "an account that sent no holding statement" is false about a
  * `no-rate` row, whose account did send one.
+ *
+ * A NOUN PHRASE, so every caller writes "they are …" or "no statement prices
+ * these units: …" around it the same way. The closing-balance wording keeps
+ * "a depository's own closing balance of <date>", which is the phrase the
+ * Monitor's line check reads a depository line by.
  */
 export function describeDepositoryUnits(
   d: NonNullable<Position["depositoryUnits"]>,
-  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
   if (d.kind === "no-rate") {
-    const w = d.witnessAccountId ? accounts.find((a) => a.accountId === d.witnessAccountId) : undefined;
+    const id = d.witnessAccountId;
+    const w = !id ? undefined
+      : "get" in accounts ? accounts.get(id) : accounts.find((a) => a.accountId === id);
     const witness = w ? `${w.owner}'s ${w.provider} ${w.accountNo}` : "another account at the same depository";
-    return `the depository's holding statement of ${d.asOf ?? "its date"} records these units and prints no rate for them; ${witness} statement of the same day prices the same scheme, which is what puts the units on the published NAV's basis`;
+    return `units the depository's holding statement of ${d.asOf ?? "its date"} records and prints no rate for — ${witness} statement of the same day prices the same scheme, which is what puts them on the published NAV's basis`;
   }
-  return `they are the depository's own closing balance of ${d.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement`;
+  return `a depository's own closing balance of ${d.asOf ?? "its statement date"}, on an account that sent a transaction statement and no holding statement`;
 }
 
 /**

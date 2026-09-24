@@ -16,7 +16,8 @@ import {
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
-import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf } from "@/lib/accounts";
+import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
+import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -25,7 +26,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
-import { fmtPct, changeColor, fmtCurrency } from "@/lib/format";
+import { fmtNum, fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -378,6 +379,25 @@ export function FamilyEntities() {
   const partlyValued = selected
     ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
     : [];
+  /**
+   * AND THE LINES A STATEMENT RECORDS THAT NOTHING VALUES, inside an account
+   * the table above DOES value (A-17). The ICICI NSDL demat's par-value rows,
+   * the Motilal demats' fund units printed with no rate: each is a holding the
+   * statement says the family has, with a quantity and no value, and no page
+   * named them. Listed per account; a line the live book values at AMFI's NAV
+   * (the ABSL Balanced Advantage units) is marked as valued, because it IS in
+   * the figure above. A depository's copy of units a fund reports itself is
+   * counted, not listed — the fund's own row is in the table.
+   */
+  const unvaluedLines = (selected
+    ? unvaluedStatementLinesOf(scope, portfolio.accounts, portfolio.positions, BOOK_UNVALUED_HOLDINGS)
+    : [])
+    // THIS CARD IS "IN NO TOTAL", so a line the live book values at AMFI's NAV
+    // is not LISTED here — it IS in the figure above. It is counted in its
+    // account's hover, and an account whose every recorded line is valued that
+    // way (Aarti's ABSL units) has nothing to list and draws no line at all.
+    .map((g) => ({ ...g, live: g.lines.filter((l) => l.valuedLive).length, lines: g.lines.filter((l) => !l.valuedLive) }))
+    .filter((g) => g.lines.length > 0);
   /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
@@ -1096,14 +1116,15 @@ export function FamilyEntities() {
               *
               * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
               * says so: it is what was PAID, never what the stake is worth. */}
-          {(unvalued.length > 0 || partlyValued.length > 0) && (
+          {(unvalued.length > 0 || partlyValued.length > 0 || unvaluedLines.length > 0) && (
             // "IN NO TOTAL" IS THE FENCE, SO IT IS IN THE TITLE (Stage 10cp): the
             // line that said "None of these figures is in the ₹X above" went
             // with every other line under a card title, and this card sits
             // directly under one that sums. The sentence is the title's hover.
             <Card className="mt-5" title={`${scope} — held, not valued, in no total`}
-              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""} Hover an account for why it carries no figure.`}>
-              <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}>
+              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""}${unvaluedLines.length > 0 ? ` ${unvaluedLines.length === 1 ? "One account" : `${unvaluedLines.length} accounts`} the table above values ${unvaluedLines.length === 1 ? "records" : "record"} further holdings with a quantity and no value; open ${unvaluedLines.length === 1 ? "it" : "one"} for the lines.` : ""} Hover an account for why it carries no figure.`}>
+              <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}
+                data-entity-unvalued-lines={unvaluedLines.reduce((n, g) => n + g.lines.length, 0)}>
                 {/* A PARTLY VALUED ACCOUNT says so on its line, and its own note —
                     what is valued, from what, and what is not — is the hover on
                     its name, where every other account on this card keeps its
@@ -1119,6 +1140,41 @@ export function FamilyEntities() {
                     </div>
                   </li>
                 ))}
+                {/* A VALUED ACCOUNT WHOSE STATEMENT RECORDS MORE THAN IS VALUED —
+                    one line per account, opening onto every holding it records
+                    with a quantity and no value, each line's reason its hover. */}
+                {unvaluedLines.map((g) => {
+                  const live = g.live;
+                  const notValued = g.lines.length;
+                  return (
+                    <li key={`lines-${g.account.accountId}`} data-unvalued-lines-account={g.account.accountId}
+                      data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-elsewhere={g.reportedElsewhere}>
+                      <details>
+                        <summary className="flex cursor-pointer items-baseline justify-between gap-3"
+                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${live ? ` ${live} more ${live === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${live === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
+                          <span className="text-slate-300">
+                            {g.account.provider}
+                            <span className="text-slate-500"> · {g.account.accountNo}</span>
+                          </span>
+                          <span className="text-[11px] text-amber-400/80 whitespace-nowrap">
+                            {`${notValued} held, not valued`}
+                          </span>
+                        </summary>
+                        <ul className="mt-1 space-y-0.5 pl-3 text-[12px]">
+                          {g.lines.map((l) => (
+                            <li key={`${l.row.securityKey}-${l.row.isin ?? ""}`} data-unvalued-line={l.row.securityKey}
+                              className="flex items-baseline justify-between gap-3" title={l.row.reason ?? undefined}>
+                              <span className="text-slate-400">{l.row.security}</span>
+                              <span className="mono whitespace-nowrap text-slate-500">
+                                {l.row.quantity == null ? DASH : `${fmtNum(l.row.quantity, Number.isInteger(l.row.quantity) ? 0 : 3)} units`}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    </li>
+                  );
+                })}
                 {unvalued.map((u) => (
                   <li key={u.account.accountId} data-unvalued-account={u.account.accountId}>
                     <div className="flex items-baseline justify-between gap-3">

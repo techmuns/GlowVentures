@@ -19,7 +19,7 @@ import {
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
-import { isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
@@ -150,6 +150,12 @@ type Venue = {
    * statement — so the NAV beside it replaced no statement mark at all.
    */
   depositoryAsOf: string | null;
+  /**
+   * WHY NO STATEMENT PRICES THIS LINE'S UNITS, in words — a depository's
+   * closing balance on an account with no holding statement, or units a holding
+   * statement records and prints no rate for (A-17). `fundNavs.ts` chooses it.
+   */
+  depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
   investedOn: { first: string; last: string; payments: number } | null;
@@ -281,6 +287,8 @@ type Row = {
    * statement — so no statement marks them at all (`fundNavs.ts`).
    */
   depositoryAsOf?: string | null;
+  /** Which kind of unpriced units those are, in words (`depositoryUnitsGist`). */
+  depositoryWhy?: string | null;
   /**
    * THE UNIT CLASSES THIS ROW CLUBS, on a row that clubs more than one.
    *
@@ -1423,6 +1431,7 @@ export function PortfolioMonitor() {
           costCover: cf,
           navPriced: perUnit && !!ps[0].navPriced, navDate: ps[0].navDate,
           depositoryAsOf: ps.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
+          depositoryWhy: ps.some((x) => x.depositoryUnits) ? depositoryUnitsGist(ps) : null,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           // FIFO over the row's own deduped holdings: the realised gain on
           // units already sold stays in the return (`fifoTotals`).
@@ -1495,6 +1504,7 @@ export function PortfolioMonitor() {
         entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         navPriced: !!p.navPriced, navDate: p.navDate,
         depositoryAsOf: p.depositoryUnits?.asOf ?? null,
+        depositoryWhy: p.depositoryUnits ? describeDepositoryUnits(p.depositoryUnits, portfolio.accounts) : null,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         realised: p.realizedPnL ?? null,
@@ -2570,8 +2580,8 @@ export function PortfolioMonitor() {
                     // A DEPOSITORY LINE IS NOT A STATEMENT MARK REPLACED, and
                     // says so on the one line it is: no statement priced these
                     // units at all (Stage 10ce).
-                    + (v.depositoryAsOf
-                      ? ` These units are a depository's own closing balance of ${v.depositoryAsOf}, on an account that sent a transaction statement and no holding statement — no statement priced them.`
+                    + (v.depositoryWhy
+                      ? ` No statement priced these units: they are ${v.depositoryWhy}.`
                       : "")
                   // The line's OWN statement date (C-01), not the book's newest.
                   : v.valuedAt
@@ -3106,12 +3116,16 @@ export function PortfolioMonitor() {
                               const arb = eq.filter((r) => isArbitrageFund(r)).length;
                               const liq = eq.length - arb;
                               const fromDepository = eq.filter((r) => r.depositoryAsOf).length;
+                              // EACH ROW'S OWN REASON, distinct — the two kinds are
+                              // different sentences, and only one of them is an
+                              // account with no holding statement (A-17).
+                              const depositoryWhy = [...new Set(eq.map((r) => r.depositoryWhy).filter(Boolean))].join("; or ");
                               const parts = [liq ? `${liq} liquid` : null, arb ? `${arb} arbitrage` : null].filter(Boolean).join(" and ");
                               return (
                                 <>{" "}<span data-cash-includes={`${liq}/${arb}`}
                                   title={`Cash is liquid and arbitrage — the family's own instruction, which they have given twice: arbitrage funds "need not be classified into any other category except for cash". The liquid funds are named on the Cash sheet of their consolidated review (30 June 2026); its arbitrage funds are on its Debt tab, and the family's instruction overrules that. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, not by its name. The issuing documents type these Mutual Fund or ETF, and that is what the archive still records: this is the dashboard answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`
                                     + (fromDepository
-                                      ? ` ${fromDepository} of these ${fromDepository === 1 ? "is" : "are"} valued from a depository's own closing units at AMFI's published NAV: the account sent a transaction statement and no holding statement, so no statement marks them.`
+                                      ? ` ${fromDepository} of these ${fromDepository === 1 ? "is" : "are"} valued at AMFI's published NAV from units no statement prices — ${depositoryWhy}.`
                                       : "")}>
                                   · includes {parts} {eq.length === 1 ? "fund" : "funds"}
                                 </span></>
@@ -3667,8 +3681,8 @@ export function PortfolioMonitor() {
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={r.navPriced
                                     ? `AMFI's published NAV for this scheme, as of ${r.navDate}. A fund resolves no NSE trading symbol so it can never carry an intraday quote; this is the industry's own daily figure, refreshed every day, and it is NEWER than the statement mark it replaced.`
-                                      + (r.depositoryAsOf
-                                        ? ` Some of these units carry no statement mark at all: they are a depository's own closing balance of ${r.depositoryAsOf}, on an account that sent a transaction statement and no holding statement, valued at this NAV.`
+                                      + (r.depositoryWhy
+                                        ? ` Some of these units carry no statement mark at all: they are ${r.depositoryWhy}, valued at this NAV.`
                                         : "")
                                     // THE STATEMENT'S OWN DATE, never the book's newest (C-01): a
                                     // mark struck on 31 Jul captioned 29 Aug is a month-old price
@@ -4400,6 +4414,9 @@ function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position)
       costCover: cf,
       navPriced: !!xs[0].navPriced, navDate: xs[0].navDate,
       depositoryAsOf: xs.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
+      depositoryWhy: xs.length === 1 && xs[0].depositoryUnits
+        ? describeDepositoryUnits(xs[0].depositoryUnits, accIdx)
+        : xs.some((x) => x.depositoryUnits) ? depositoryUnitsGist(xs) : null,
       live: xs.every((x) => x.live),
       dayChangePct: xs[0].dayChangePct ?? null,
       heldSince: xs.every((x) => x.heldSince)

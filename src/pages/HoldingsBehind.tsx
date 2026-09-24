@@ -18,6 +18,7 @@ import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Dr
 import { fifoBasisNote, fifoTotals, investedBasisNote, investedWithCapital, type FifoOptions, type FifoTotals } from "@/lib/fifo";
 import { costedFigures, costCoverNote, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { stockHref } from "@/lib/auditFormulas";
+import { depositoryUnitsGist } from "@/lib/fundNavs";
 import { fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Position } from "@/lib/types";
 
@@ -331,15 +332,17 @@ export function HoldingsBehind() {
   const owners = new Set(rows.map((r) => ownerOf(accIdx, r)));
   /**
    * THE HOLDINGS NO STATEMENT MARKS — a depository's own closing units on an
-   * account that sent a transaction statement and no holding statement, valued
-   * only at AMFI's published NAV. They are not in the statement-basis figure
+   * account that sent a transaction statement and no holding statement, or
+   * units a holding statement records and prints no rate for (A-17), valued
+   * only at AMFI's published NAV. Which of the two is `depositoryUnitsGist`'s
+   * to say, because only one of them is an account with no holding statement. They are not in the statement-basis figure
    * the headline's hover states, and a reader holding the PDF has to be told
    * why the two differ by more than price drift. The sentence is written once
    * and read by both the hover and the short line under the headline.
    */
   const depositoryRows = rows.filter((r) => r.depositoryUnits);
   const depositoryNote = depositoryRows.length === 0 ? null
-    : `${depositoryRows.length === 1 ? "One holding here carries" : `${depositoryRows.length} holdings here carry`} no statement mark at all — ${depositoryRows.length === 1 ? "it is" : "they are"} a depository's own closing units on an account that sent a transaction statement and no holding statement, valued only at AMFI's published NAV (${full(sum(depositoryRows.map((r) => r.marketValue)))}) — so ${depositoryRows.length === 1 ? "it is" : "they are"} not in that figure.`;
+    : `${depositoryRows.length === 1 ? "One holding here carries" : `${depositoryRows.length} holdings here carry`} no statement mark at all — ${depositoryRows.length === 1 ? "it is" : "they are"} ${depositoryUnitsGist(depositoryRows)}, valued only at AMFI's published NAV (${full(sum(depositoryRows.map((r) => r.marketValue)))}) — so ${depositoryRows.length === 1 ? "it is" : "they are"} not in that figure.`;
   // THE BUCKET CHIP EARNS ITS PLACE ONLY WHERE THE SET SPANS MORE THAN ONE.
   // On a bucket drill-down every row would carry the same chip — a repetition of
   // the heading above them, pushing the name out of its column for no

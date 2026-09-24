@@ -15,7 +15,7 @@ import {
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { fifoBasisNote } from "@/lib/fifo";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
-import { fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
@@ -747,11 +747,13 @@ export function StockInfo() {
     ? {
         line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on its day`}`,
         tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.${
-          // NO STATEMENT PRICES A DEPOSITORY'S OWN CLOSING UNITS, so the tip
-          // says whose count they are rather than implying a statement mark
-          // that the NAV replaced.
+          // NO STATEMENT PRICES THESE UNITS, so the tip says whose count they
+          // are rather than implying a statement mark that the NAV replaced —
+          // and which KIND of count, because a depository's closing balance
+          // on an account with no holding statement and units a holding
+          // statement records with no rate are two different reasons (A-17).
           rows.some((r) => r.depositoryUnits)
-            ? ` ${rows.every((r) => r.depositoryUnits) ? "These units are" : "Some units here are"} a depository's own closing balance, on an account that sent no holding statement, so no statement prices them.`
+            ? ` ${rows.every((r) => r.depositoryUnits) ? "These units are" : "Some units here are"} ${depositoryUnitsGist(rows)}, so no statement prices them.`
             : ""}`,
       }
     : live
@@ -909,8 +911,9 @@ export function StockInfo() {
             ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
             : <span title={r.depositoryUnits
                 /* NO STATEMENT MARKS THESE UNITS, so the sentence that says a
-                   NAV "replaces" one would be false here. */
-                ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
+                   NAV "replaces" one would be false here. Which of the two
+                   reasons applies is `describeDepositoryUnits`'s to say. */
+                ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — and their value is those units at this NAV.`
                 : r.navPriced
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
                 : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
