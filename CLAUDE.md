@@ -5,6 +5,22 @@ The book is assembled offline from **PDF statements issued by several wealth
 platforms** and baked into `src/data/glowData.ts`; the display layer converts INR
 (the base currency) into the selected display currency.
 
+## How to ship — read this first
+
+*"this is a live dashboard and main will keep moving but the code will not
+unless something is pushed … i want things pushed"* — the family, 24 Sep 2026.
+
+- **Default: push, open the PR, and merge it to `main` yourself** as soon as
+  `build` and the checks for what you changed are green. Do not leave a fix
+  waiting on a PR. Hold a PR open only when the user says so in that request
+  (for example "do not merge until I tell you").
+- **Be quick.** Run the checks that cover the change: `build`, the relevant
+  suite, and `ONLY=<routes>` for the pages you touched. A full `check:pages`
+  sweep is not needed before every merge. Keep the stage notes in this file
+  short.
+- Before merging, `git fetch origin main` and check that no other change has
+  taken your stage letter.
+
 ## The standing rule
 
 **No figure is ever fabricated.** If the source doesn't carry a number, the UI
