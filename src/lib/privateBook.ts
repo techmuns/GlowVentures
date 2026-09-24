@@ -91,13 +91,13 @@
 // the book's own unit count), carrying no holding figure of their own: their
 // units are already counted on the line above.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
-import { type AccountIndex, ownerOf, providerOf } from "./accounts";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
+import { type AccountIndex, accountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import {
-  COST_COVERAGE_MIN, unvaluedAccounts, incomeOnlyViewOf, capitalCountedOnce, distributionOf, type UnvaluedKind,
+  COST_COVERAGE_MIN, unvaluedAccounts, incomeOnlyViewOf, capitalCountedOnce, distributionOf, privateCapital, type UnvaluedKind,
 } from "./privateMarket";
-import type { SchemeCall } from "./capitalCalls";
+import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 
 export type BookSectionId = "private" | "unvalued";
@@ -535,6 +535,52 @@ export function bookFolios(args: {
     }
   }
   return out;
+}
+
+/**
+ * ── THE FOLIOS OF A BOOK, BUILT ONE WAY FOR EVERY PAGE THAT PRINTS OFF THEM ─
+ *
+ * Private Market draws its master table from these folios, and Morning CIO's
+ * Distributions tile opens that page. Built twice they drifted: once the page
+ * counted 360 ONE's distribution letters — once across the two CRNs — it read
+ * ₹57 L while the tile, summing the capital accounts alone, went on reading
+ * ₹50 L (B-10). So the inputs are assembled here and nowhere else: the current
+ * holdings, the capital accounts counted once with their holdings
+ * (`privateCapital`), their dated calls, and the funds' own letters.
+ *
+ * `ownerName` labels a scheme row for the call history and moves no figure.
+ */
+export function privateBookFolios(
+  book: { positions: Position[]; accounts: Account[]; commitments?: Commitment[] | null },
+  distributions: readonly DistributionRecord[],
+  ownerName: (ownerId: string) => string | null = () => null,
+) {
+  const accIdx = accountIndex(book.accounts);
+  const current = currentHoldings(book.positions);
+  const cap = privateCapital(book.commitments ?? [], book.accounts, book.positions);
+  const schemes = schemeCalls(cap.onPage, (c) => c.name, (c) => (c.ownerId ? ownerName(c.ownerId) : null));
+  const folios = bookFolios({
+    positions: current, allPositions: book.positions, accounts: book.accounts,
+    commitments: cap.onPage, accIdx, schemes, distributions: [...distributions],
+  });
+  return { accIdx, current, cap, schemes, folios };
+}
+
+/**
+ * THE DISTRIBUTIONS A CONSOLIDATED TOTAL LEAVES OUT, IN ONE SENTENCE — each on
+ * the second statement of a holding counted once, counted with the first and
+ * not again, pending the family's answer on whether the two are one investment
+ * or two (§4c). Written once, so a tile and the page it opens say it alike.
+ */
+export function distributionLeftOutNote(
+  folios: BookFolio[],
+  accountName: (accountId: string) => string,
+  money: (n: number | null | undefined) => string,
+): string {
+  return folios
+    .filter((f) => f.distributed != null && !f.distributionCounted && f.distributedBasis != null)
+    .map((f) => `${f.provider} ${f.accountNo} reports ${money(f.distributed)} too, on the second statement of a holding counted once; it is counted with ${f.distributionCountedAs ? accountName(f.distributionCountedAs) : "the first"}'s and not again — pending the family's answer on whether the two are one investment or two${(f.distributed ?? 0) > 0 ? `; if two, add ${money(f.distributed)}` : ""}.`)
+    .join(" ");
 }
 
 function unvaluedFolio(

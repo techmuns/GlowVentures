@@ -15,17 +15,16 @@ import {
   TREE_ROW, TREE_CELL, useExpanded, rowToggle, TreeNameCell, TreeSectionCell, ExpandAllButton,
 } from "@/components/TreeTable";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import {
-  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef, isPrivateClass, dedupedPositions,
+  sum, sumOrNull, consolidatedMarketValue, returnMeasureDef, isPrivateClass, dedupedPositions,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
 import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  privateCapital, countedOnceNote,
+  countedOnceNote,
 } from "@/lib/privateMarket";
 import { isValuedByNoStatement } from "@/lib/aifCategory";
 import {
@@ -35,10 +34,10 @@ import {
 import { ReturnMeasureSelect, useReturnMeasures } from "@/components/ReturnMeasureSelect";
 import { withReturnCols, returnAccessorsFor, returnColId } from "@/lib/returnColumns";
 import {
-  bookFolios, privateBook, figuresOf, BOOK_SECTIONS,
+  privateBookFolios, distributionLeftOutNote, privateBook, figuresOf, BOOK_SECTIONS,
   type BookFigures, type BookFolio, type BookGroup, type BookSectionId, type Overlap, type PrivateBook,
 } from "@/lib/privateBook";
-import { schemeCalls, callTotals, callHistory } from "@/lib/capitalCalls";
+import { callTotals, callHistory } from "@/lib/capitalCalls";
 import { useEnteredCalls, headlineCall, todayIso, CAUSE_WORD } from "@/lib/enteredCalls";
 import { fmtPct, fmtNum, fmtDate, changeColor } from "@/lib/format";
 import { fifoTotals, positionFifoReturn } from "@/lib/fifo";
@@ -367,7 +366,13 @@ export function PrivateMarket() {
 
   const m = useMemo(() => {
     if (!portfolio) return null;
-    const accIdx = accountIndex(portfolio.accounts);
+    /**
+     * ONE BUILD OF THE PRIVATE BOOK — `privateBookFolios`, which Morning CIO's
+     * Distributions tile reads too, so the tile and this page cannot count the
+     * funds' distributions two ways (B-10).
+     */
+    const pb = privateBookFolios(portfolio, BOOK_CORPORATE_ACTIONS, ownerDisplayName);
+    const accIdx = pb.accIdx;
     /**
      * CURRENT HOLDINGS, LIKE EVERY OTHER ALLOCATION SURFACE — and deliberately
      * NOT for `unvaluedAccounts`, which asks whether an account reports any
@@ -375,7 +380,7 @@ export function PrivateMarket() {
      * funds that publish no NAV, which is the opposite of true: it publishes
      * one and redeemed against it.
      */
-    const current = currentHoldings(portfolio.positions);
+    const current = pb.current;
     const scope = privateScope(current, portfolio.accounts);
     /**
      * ── THE CAPITAL ACCOUNTS OF PRIVATE-MARKET FUNDS, AND ONLY THOSE ─────────
@@ -390,7 +395,7 @@ export function PrivateMarket() {
      * Founders Fund folios, which call capital and invest in listed equity — are
      * NAMED under the table with their figures, never dropped.
      */
-    const cap = privateCapital(portfolio.commitments ?? [], portfolio.accounts, portfolio.positions);
+    const cap = pb.cap;
     const commitments = cap.onPage;
 
     const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
@@ -414,11 +419,7 @@ export function PrivateMarket() {
      * tiles and the Transactions tab alike, so they cannot describe different
      * registers.
      */
-    const schemes = schemeCalls(
-      commitments,
-      (c) => c.name,
-      (c) => (c.ownerId ? ownerDisplayName(c.ownerId) : null),
-    );
+    const schemes = pb.schemes;
     // Money totals over the COUNTED capital accounts; the dated history below is
     // every call as its own statement prints it, a per-account record.
     const cc = callTotals(schemes.filter((s) => countedIds.has(s.accountId)));
@@ -457,13 +458,9 @@ export function PrivateMarket() {
     const rawMV = sum(scope.rows.map((p) => p.marketValue));
 
     // THE MASTER TABLE, both groupings off one set of folios.
-    const all = bookFolios({
-      positions: current, allPositions: portfolio.positions, accounts: portfolio.accounts,
-      commitments, accIdx, schemes,
-      // The funds' own distribution letters — 360 ONE's two income-only folios
-      // report theirs nowhere else (B-10).
-      distributions: BOOK_CORPORATE_ACTIONS,
-    });
+    // The funds' own distribution letters are in it — 360 ONE's two
+    // income-only folios report theirs nowhere else (B-10).
+    const all = pb.folios;
 
     return {
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
@@ -742,9 +739,7 @@ export function PrivateMarket() {
         + `${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report one do; the rest print no distribution line and are skipped, never counted as nil. `
         + "Equalisation is not a distribution — the statements print it apart — and is not in this figure. "
         + (distReconcile.length ? distReconcile.join(" ") + " " : "")
-        + (distLeftOut.length
-          ? distLeftOut.map((f) => `${f.provider} ${f.accountNo} reports ${money(f.distributed)} too, on the second statement of a holding counted once; it is counted with ${f.distributionCountedAs ? accName(f.distributionCountedAs) : "the first"}'s and not again — pending the family's answer on whether the two are one investment or two${(f.distributed ?? 0) > 0 ? `; if two, add ${money(f.distributed)}` : ""}.`).join(" ") + " "
-          : "")
+        + (distLeftOut.length ? distributionLeftOutNote(m.byFund.folios, accName, money) + " " : "")
         + "Not part of the value above, and it does not reduce what a fund can still call.",
     },
     /* ── THE TWO THAT ARE ABSENT BY MEASUREMENT ──────────────────────────────

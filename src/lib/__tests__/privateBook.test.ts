@@ -36,7 +36,7 @@ import { isValuedByNoStatement, unvaluedAifFolios } from "@/lib/aifCategory";
 import fs from "node:fs";
 import path from "node:path";
 import { schemeCalls, callTotals } from "@/lib/capitalCalls";
-import { bookFolios, privateBook, figuresOf, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
+import { bookFolios, privateBook, figuresOf, privateBookFolios, BOOK_SECTIONS, type BookFolio } from "@/lib/privateBook";
 import type { SchemeCall } from "@/lib/capitalCalls";
 
 let fails = 0;
@@ -361,6 +361,11 @@ console.log("\n── what the funds paid back: each distribution once, on its o
   near("counted once: the consolidated total is every counted capital account's plus each holding's letter once",
     byFund.privateTotal.distributed, onceWant);
   near("as printed: every statement's and every letter's", figuresOf(folios, false).distributed, printedWant);
+  // THE ONE BUILD BOTH PAGES READ — Private Market's table and Morning CIO's
+  // Distributions tile, which read ₹57 L and ₹50 L while they were two builds.
+  const shared = privateBookFolios({ positions: BOOK_POSITIONS, accounts: BOOK_ACCOUNTS, commitments: BOOK_COMMITMENTS }, BOOK_CORPORATE_ACTIONS);
+  near("…and the one build Morning CIO's tile and this page both read counts the same, once",
+    figuresOf(shared.folios, true).distributed, onceWant);
   // THE LOAD-BEARING GATE: counting both income-only folios would pass every
   // relation written between the page's own rows. The two bases must differ by
   // exactly the letters and capital the consolidated total leaves out.

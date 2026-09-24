@@ -12946,6 +12946,48 @@ const CIO_ALLOC = [
       return names(tile.hover ?? "") && /if two, add ₹/i.test(tile.hover ?? "") && names(hint);
     }],
     /**
+     * ── …AND ITS DISTRIBUTIONS ARE THE PAGE'S, EACH FUND ONCE (B-10) ──────────
+     *
+     * Private Market counts each fund's distribution once — a capital account's
+     * own total, or an income-only folio's letters (360 ONE's two CRNs report one
+     * ₹7,15,619 between them) — and read ₹57 L while this tile and this card,
+     * summing the capital accounts alone, read ₹50 L. Struck against
+     * `DIST_BOOK.once`, derived off the book by a second path, at the figure's
+     * own printing precision — and the capital accounts alone must genuinely
+     * differ from it, or a tile that ignored the letters would pass.
+     */
+    ["the Distributions tile and the Capital deployment card count what the page they open counts, each fund once (B-10)", (t, ctx) => {
+      if (!DIST_BOOK) return false;
+      const tile = ctx?.kpiTiles?.find((x) => x.slot === "distributions");
+      const card = ctx?.deployLink;
+      if (!tile || !card) return false;
+      const near = (txt) => {
+        const m = /₹\s*([\d,]+(?:\.(\d+))?)\s*(Cr|L|K)?/i.exec(txt ?? "");
+        if (!m) return false;
+        const unit = (m[3] ?? "").toUpperCase();
+        const scale = unit === "CR" ? 1 : unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1e-7;
+        const bound = 0.5 * 10 ** -(m[2]?.length ?? 0) * scale;
+        return Math.abs(cr(m[1]) * scale - DIST_BOOK.once / 1e7) <= bound + 1e-9;
+      };
+      const capsAlone = DIST_BOOK.parts.filter((x) => x.basis === "capital-account").reduce((a, x) => a + x.amount, 0);
+      const cardFig = /Distributions received\s*(₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?)/i.exec(card.text ?? "")?.[1];
+      return DIST_BOOK.once - capsAlone > 1 && near(tile.value) && near(cardFig);
+    }],
+    /**
+     * …AND THE TILE SAYS WHAT IT COUNTS ONCE, IN THE PAGE'S OWN WORDS: how many
+     * of the accounts that could report a distribution do, and each letter it
+     * counts with another, pending the family's answer (§4c).
+     */
+    ["...and the Distributions tile names what it counts and the letter it counts with another", (t, ctx) => {
+      if (!DIST_BOOK) return false;
+      const h = ctx?.kpiTiles?.find((x) => x.slot === "distributions")?.hover ?? "";
+      if (!h) return false;
+      const cov = /(\d+) of the (\d+) private-market accounts that could report one do/i.exec(h);
+      const also = DIST_BOOK.letters.filter((l) => !l.counted);
+      return !!cov && Number(cov[1]) === DIST_BOOK.reportedOf && Number(cov[2]) === DIST_BOOK.accountsOf
+        && also.every((l) => h.includes(` ${l.accountNo} reports`) && h.includes(`${l.countedAs}'s`) && /pending the family's answer/i.test(h));
+    }],
+    /**
      * AND THE TOTAL ROW'S RETURN TIES TO THE SET IT NAMES (B-07).
      *
      * It carried a money-weighted rate in a column of return-on-cost figures
