@@ -285,6 +285,14 @@ export function threePFlows(text, warn) {
     // `capitalMovesFrom` takes the magnitude it needs for itself.
     amount: r.gross ?? r.net,
     netAmount: r.gross === null ? null : r.net,
+    // THE CHARGES THE ROW PRINTS — setup expense and stamp duty, the two columns
+    // between the gross and the net that check (1) above ties to the paisa. They
+    // are the difference between every rupee the family paid (the gross) and
+    // what bought units (the net), so a cost struck on what was PAID needs them
+    // as the statement prints them rather than as our subtraction. A printed
+    // dash is a nil on a row that prints the columns; a redemption and a
+    // reclassification print no gross, and carry no charge line at all.
+    expenses: r.gross === null ? null : money((r.setup ?? 0) + (r.stamp ?? 0)),
     units: r.units,
     // The printed running unit balance — carried as the CHECK it is.
     balance: r.balance,

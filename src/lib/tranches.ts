@@ -180,7 +180,11 @@ export function trancheTable(
       rows.push({
         move: m, date: m.date, label: m.label, amount: m.amount,
         invested: m.invested, units: m.units,
-        navAtEntry: m.invested / m.units,
+        // What BOUGHT the units over the units it bought. `invested` is every
+        // rupee paid (VD-24) and the statement's own charges on that
+        // contribution were not unit-buying money, so they come back out here —
+        // a stamp duty does not move a unit price.
+        navAtEntry: (m.invested - (m.charges ?? 0)) / m.units,
         value, returnPct, valuedAt: end,
         // This tranche's OWN contribution date, which is the whole reason a
         // tranche can annualise where the position around it cannot.

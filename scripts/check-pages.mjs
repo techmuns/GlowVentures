@@ -7768,7 +7768,7 @@ const NAV_SERIES_BOOK = (() => {
 })();
 
 /**
- * ── /performance, RE-DERIVED FROM THE BOOK (A-12, CK-A3, XA-14, XA-21) ──
+ * ── /performance, RE-DERIVED FROM THE BOOK (A-12, CK-A3, XA-14, XA-21, VD-25) ──
  *
  * The value bridge and the money-weighted table, restated here off
  * `glowData.ts` by the checker's own arithmetic — never by importing the page
@@ -7786,9 +7786,10 @@ const PERF_BOOK = (() => {
     const stmt = statementBookPositions(src);
     const live = bookArray(src, "BOOK_POSITIONS");
     const flowsBy = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS");
+    const undated = bookArray(src, "BOOK_UNDATED_CAPITAL");
     const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
     const commitments = bookArray(src, "BOOK_COMMITMENTS");
-    if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !moves || !commitments) return null;
+    if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !undated || !moves || !commitments) return null;
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
     const num = (v) => typeof v === "number" && Number.isFinite(v);
     const r2 = (v) => Math.round(v * 100) / 100;
@@ -7846,6 +7847,12 @@ const PERF_BOOK = (() => {
     };
     const closes = measured.map((id) => perAccount.get(id).asOf).sort();
     const windowStart = measured.flatMap((id) => perAccount.get(id).flows.map((f) => f.date)).sort()[0] ?? null;
+    const undatedFor = (id) => {
+      if (!measured.includes(id)) return 0;
+      const to = perAccount.get(id).asOf;
+      return r2(undated.filter((u) => u.accountId === id && u.undated !== 0 && (!windowStart || u.to > windowStart) && u.from < to)
+        .reduce((t, u) => t + u.undated, 0));
+    };
     // The family's dated capital record per account, as the Transactions card
     // reads it: the statements' own capital movements, else a drawdown fund's
     // dated calls.
@@ -7866,7 +7873,7 @@ const PERF_BOOK = (() => {
       rateStatement: solve(measured, (x) => x.stmtMV),
       firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
       bookNewest: accounts.map((a) => a.asOf).filter(Boolean).sort().pop() ?? null,
-      capitalRecord,
+      undatedFor, capitalRecord,
       measuredQuoted: measured.some((id) => perAccount.get(id).symbols),
       navPricedGap: [...perAccount].filter(([, x]) => !x.unvalued && Math.abs(x.liveMV - x.stmtMV) > 1e5).map(([id]) => id),
       basisLabel: { "since-inception": /^since inception/i, "financial-year-to-date": /^fy to date/i, "window": /^window/i },
@@ -7982,7 +7989,7 @@ const PERF_BRIDGE = [
 ];
 
 /**
- * ── /performance's MONEY-WEIGHTED TABLE, ON THE STATEMENT (CK-A3, XP-15, XA-14) ──
+ * ── /performance's MONEY-WEIGHTED TABLE, ON THE STATEMENT (CK-A3, XP-15, XA-14, VD-25) ──
  *
  * Each account closes on the value its own STATEMENT strikes on its own date —
  * never a live or NAV-priced figure dated to a statement weeks older — and the
@@ -8059,6 +8066,22 @@ const PERF_MW = [
       }
       return /no performance summary|nothing is valued|do not solve/i.test(r.returnText);
     });
+  }],
+  ["capital no dated row carries is named beside the rate it is missing from, and never dated (VD-25)", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B) return false;
+    const want = new Map(B.measured.map((id) => [id, B.undatedFor(id)]));
+    const total = [...want.values()].reduce((s, v) => s + v, 0);
+    if (Math.abs(total) < 1) return { notChecked: "every rupee the pooled accounts' totals carry is dated in this book" };
+    const rowsOk = d.xirr.every((r) => {
+      const w = want.get(r.id) ?? 0;
+      if (Math.abs(w) < 1) return r.undated == null;
+      return Math.abs(Number(r.undated) - w) <= 1 && /dated in none of them/i.test(r.undatedTitle ?? "")
+        && /no day is assumed/i.test(r.undatedTitle ?? "") && /undated · not in these flows/i.test(r.returnText);
+    });
+    return rowsOk && Math.abs(Number(d.cons.undated) - total) <= 1 && /dated in none of them/i.test(d.cons.returnTitle ?? "");
   }],
   ["a rate over less than a year is named an extrapolation beside the managers' own since-inception returns (XA-14, XA-29)", (t, ctx) => {
     const d = ctx?.perfDom;
@@ -30885,7 +30908,7 @@ const INVARIANTS = {
       (t) => /to date · not annualised/i.test(t) && /money-weighted return to date, per account · not annualised/i.test(t)],
     /**
      * THE VALUE BRIDGE AND THE MONEY-WEIGHTED TABLE, HELD TO THE BOOK (A-12,
-     * CK-A3, XA-14, XA-21). This page is on the STATEMENT basis now, so
+     * CK-A3, XA-14, XA-21, VD-25). This page is on the STATEMENT basis now, so
      * the demat the live book values in part keeps its statement's own reason
      * here rather than a "partial" figure — asserted, inverted, in PERF_MW.
      */
@@ -34391,7 +34414,7 @@ for (const theme of THEMES) {
        * kind of cells, and a money-weighted row closed on a NAV-priced value and
        * one closed on its statement print the same kind of figure — so every
        * claim about either is struck on the attributes the page writes beside
-       * them (A-12, CK-A3, XA-14, XA-21), and a reason in a `title` is
+       * them (A-12, CK-A3, XA-14, XA-21, VD-25), and a reason in a `title` is
        * read off the element because `innerText` cannot see it.
        */
       const perfDom = FAST ? null : await page.evaluate(() => {
@@ -34423,10 +34446,12 @@ for (const theme of THEMES) {
             flows: txt(c[1]), mvText: txt(c[2]), mvReason: c[2]?.querySelector("[title]")?.getAttribute("title") ?? null,
             terminal: txt(c[3]), returnText: txt(c[4]),
             returnTitle: c[4]?.querySelector("span[title]")?.getAttribute("title") ?? null,
+            undated: tr.querySelector("[data-xirr-undated]")?.getAttribute("data-xirr-undated") ?? null,
+            undatedTitle: tr.querySelector("[data-xirr-undated]")?.getAttribute("title") ?? null,
           };
         });
         const cons = document.querySelector("tr[data-xirr-consolidated]");
-        const consRet = cons?.cells[4]?.querySelector("span[title]") ?? null;
+        const consRet = cons?.cells[4]?.querySelector("[data-xirr-undated]") ?? null;
         return {
           cols, cells, rows,
           totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")), text: txt(tot) } : null,
@@ -34435,7 +34460,7 @@ for (const theme of THEMES) {
             mv: cons.getAttribute("data-mv"), book: cons.getAttribute("data-book"), first: cons.getAttribute("data-first"),
             last: cons.getAttribute("data-last"), pct: cons.getAttribute("data-pct"), toDate: cons.getAttribute("data-todate"),
             days: cons.getAttribute("data-days"), text: txt(cons), terminal: txt(cons.cells[3]),
-            returnTitle: consRet?.getAttribute("title") ?? null,
+            returnTitle: consRet?.getAttribute("title") ?? null, undated: consRet?.getAttribute("data-xirr-undated") ?? null,
           } : null,
           partialMarkers: document.querySelectorAll("[data-partial-valuation]").length,
           tileTitle: [...document.querySelectorAll("[title]")].map((e) => e.getAttribute("title"))
