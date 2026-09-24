@@ -23526,9 +23526,10 @@ to get right that the long version got wrong:
   defects asserted AS defects, the store's notify/snapshot/deletion rules, and a
   book-anchored half (every NAV-priced fund checkable with the feed DOWN; a
   quotable share `checking` before the feed answers; an AIF never checkable).
-  `researchLevels.test.ts` (116 checks): the rules on constructed inputs
+  `researchLevels.test.ts` (134 checks): the rules on constructed inputs
   (including the note under an old level and every shape of the footer line — the
-  count, the short cause per failure, the worst day, the too-high reason), a REAL
+  count, the short cause per failure, the worst day, the too-high reason — each
+  face held to `readsAsSentence`, main's Stage 10cp rule written again), a REAL
   send against a stand-in that follows the receiving
   side's rules — seeds, a set, a clear, a seed declined because another device
   holds the company, a note typed while the other side was down, each failure
@@ -23556,7 +23557,7 @@ to get right that the long version got wrong:
   clock**, because fifteen minutes cannot be waited out: the first send is
   refused, NOT asked again inside ten minutes, and sent BY THE TIMER once the
   other side is up — the one path a dashboard left open all day depends on.
-- `scripts/dev/alerts-bug.sh` reintroduces 26 alert bugs and 23 sender bugs
+- `scripts/dev/alerts-bug.sh` reintroduces 29 alert bugs and 23 sender bugs
   (`CASES=SENDER` for the sender's alone), each through the layers that can see
   it, restoring by copy on a trap and rebuilding on the way out. It runs in a
   separate `git worktree` with its own preview (`BASE=`): the pass takes about
