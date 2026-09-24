@@ -14,6 +14,7 @@ import {
   byEntity, byCustodian, bucketBy, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
   isCompanyShare, isFundVehicle, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
+  currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
@@ -25,8 +26,8 @@ import { UNCLASSIFIED } from "@/lib/sectors";
 import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
-import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
-import { fmtNum, fmtPct, changeColor, fmtCurrency } from "@/lib/format";
+import { ownerMeasuredReturn, measuredAccountsReturn, entityYtdPct } from "@/lib/returns";
+import { fmtNum, fmtPct, changeColor, fmtCurrency, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -175,14 +176,13 @@ export function FamilyEntities() {
    *
    * `currentHoldings` keeps a closed position and a sub-₹1,000 speck out of an
    * ALLOCATION FIGURE, which is right for a total and wrong for a lookup table:
-   * a company's sector does not depend on how much of it the family holds. This
-   * page's own chart DRAWS those rows — Ankita's book carries two, a ₹60
-   * preference line and a ₹580 demat row — so narrowing the index would have
-   * sent exactly those two to Unclassified while placing everything around
-   * them, which is this change running backwards on the rows least able to
-   * defend themselves.
+   * a company's sector does not depend on how much of it the family holds. The
+   * page's own rows ARE current holdings now (see `p` below), so the index is
+   * simply wider than anything drawn — a classification, in no total. (This
+   * note used to say narrowing it would send Ankita's ₹60 preference line and
+   * ₹580 demat row to Unclassified; they were Unclassified either way, and
+   * since FS-5 they are not drawn at all.)
    *
-   * It costs nothing: the index is a classification, it enters no total, and
    * `useStockExposure` still narrows the DENOMINATOR it is right to narrow —
    * which fund holdings the family currently has.
    */
@@ -193,12 +193,62 @@ export function FamilyEntities() {
   /** This page's one answer to "what sector is this row in", for chart and table alike. */
   const sectorOf = (x: Position) => companySectors.get(x.securityKey)?.sector || UNCLASSIFIED;
   if (!portfolio) return null;
-  const p = portfolio.positions;
+  /**
+   * ── CURRENT HOLDINGS, THE SET EVERY OTHER ALLOCATION SURFACE DRAWS (FS-5) ──
+   *
+   * This page was the one allocation surface without the `currentHoldings`
+   * step, so its Positions column counted the three redeemed 3P classes and
+   * Bharat's two redeemed HDFC schemes, its custody card counted 3P as a
+   * custodian at ₹0, and Bharat's table listed the ₹52 Invesco row the family
+   * asked to have dropped automatically. And the entity RETURN folded in the
+   * redeemed 3P fund's realised gain and the cost of its units sold (DL-4):
+   * Ajay read +12.49% over a set whose current holdings give +12.88%.
+   *
+   * PER STATEMENT, NOT DEDUPED — each entity's rows are its own statements, as
+   * before; `currentHoldings` only drops rows, it does not collapse any. The
+   * dropped rows are NAMED where the counts are printed (`droppedNote`), in
+   * the Monitor's and the holdings drill-down's own words. What does NOT narrow:
+   * `unvaluedHoldingsOf` asks whether an account reports ANY holding, which is
+   * a question about the statements, not about what is held today.
+   */
+  const p = currentHoldings(portfolio.positions);
+  const dropped = droppedHoldings(portfolio.positions);
   const accIdx = accountIndex(portfolio.accounts);
+  /**
+   * THE ACCOUNTS BEHIND EACH ENTITY, off the page's own `ownerOf` (FS-8) — every
+   * account reporting a row, a closed one included, because a money-weighted
+   * return asks about an account's dated flows rather than about what it holds
+   * today. It is the set `ownerMeasuredReturn` selects from the registry: an
+   * account with no row has nothing to close against and is skipped there too,
+   * so the cell's figure and the accounts its hover names are one computation.
+   */
+  const accountsByOwner = new Map<string, Set<string>>();
+  for (const x of portfolio.positions) {
+    const o = ownerOf(accIdx, x);
+    const set = accountsByOwner.get(o) ?? new Set<string>();
+    set.add(x.accountId);
+    accountsByOwner.set(o, set);
+  }
+  const accountsOfOwner = (owner: string) =>
+    (statementPortfolio ?? portfolio).accounts.filter((a) => accountsByOwner.get(owner)?.has(a.accountId));
   // Declared here because the captions below build their sentences from them —
   // money through `fmtFromBase`, never a hard-coded symbol, and a class list
   // through `assetClassLabel` so "Equity" reads as Company Shares everywhere.
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /** What `currentHoldings` left out of a set, in the Monitor's own words — or "". */
+  const droppedNote = (keep: (x: Position) => boolean) => {
+    const closed = dropped.closed.filter(keep);
+    const small = dropped.negligible.filter(keep);
+    const smallMV = sum(small.map((x) => x.marketValue));
+    return [
+      closed.length > 0
+        ? `${closed.length} closed position${closed.length === 1 ? " is" : "s are"} not listed: the fund still publishes a NAV, the family no longer holds ${closed.length === 1 ? "it" : "them"}, and ${closed.length === 1 ? "it carries" : "they carry"} no value and no cost here.`
+        : "",
+      small.length > 0
+        ? `${small.length} holding${small.length === 1 ? "" : "s"} worth under ${money(NEGLIGIBLE_VALUE_FLOOR)} ${small.length === 1 ? "is" : "are"} dropped automatically, ${money(smallMV)} in total — at the family's instruction, and not because anything is missing.`
+        : "",
+    ].filter(Boolean).join(" ");
+  };
   const classList = (cs: { key: string; mv: number }[]) =>
     cs.map((c) => `${assetClassLabel(c.key)} ${money(c.mv)}`).join(", ");
   // The FAMILY total counts each dedupeGroup once; the per-owner rows below do
@@ -408,7 +458,7 @@ export function FamilyEntities() {
       + `.`,
     inHouseAccountsUnreported > 0
       ? `The other ${inHouseAccountsUnreported} in-house account${inHouseAccountsUnreported === 1 ? "" : "s"} in the registry`
-        + ` ${inHouseAccountsUnreported === 1 ? "carries" : "carry"} no position in this book, so`
+        + ` ${inHouseAccountsUnreported === 1 ? "carries" : "carry"} no current position in this book — nothing reported, or everything redeemed — so`
         + ` ${inHouseAccountsUnreported === 1 ? "it is" : "they are"} outside this figure rather than counted at zero.`
       : "",
   ].filter(Boolean).join(" ");
@@ -543,8 +593,37 @@ export function FamilyEntities() {
     ? `${money(selSleeveMV)} of ${assetClassLabel(selSleeveClasses[0].key)}`
     : `${money(selSleeveMV)} (${classList(selSleeveClasses)})`;
   const sleeveNoteText = selSleeve.length === 0 ? ""
-    : ` Of that, ${sleeveWhat} sits INSIDE a mandate rather than under a class heading of its own: a mandate is grouped`
-      + ` as its own statement totals it, cash sleeve included, so that value is counted in the ${MANDATE_BUCKET} section.`;
+    : ` The ${sleeveWhat} sits INSIDE a mandate: a mandate is grouped as its own statement totals it, cash sleeve`
+      + ` included, so that value is counted in the ${MANDATE_BUCKET} section rather than under a heading of its own.`;
+  /**
+   * ── …AND THE REST IS NAMED ON THE TABLE'S OWN AXIS (FS-6) ──
+   *
+   * The caption named each left-out holding by `excludedClasses` — what it IS —
+   * and then said "all of them are in the holdings table below", a table
+   * sectioned by `holdingBucket`. `readerClassOf` has since put a liquid or
+   * arbitrage fund under Cash on both, so the one label left carrying two
+   * values is Cash: Ajay's caption read "Cash ₹10.1 Cr" above a Cash section of
+   * ₹0, because that cash is the PMS mandates' own and is counted in them.
+   *
+   * So it lists the SECTIONS the table draws, through the same `bucketOf` the
+   * table groups on, and names the sleeve by where it is counted. Each label
+   * carries one value on this page, and it is the value of the section a reader
+   * scrolls down to. Derived, so a mandate that one day holds a fund says so.
+   */
+  const selSections = (() => {
+    const m = new Map<string, { mv: number; count: number }>();
+    for (const x of selRows) {
+      if (isCompanyShare(x)) continue;
+      const k = bucketOf(x);
+      if (k === MANDATE_BUCKET) continue;   // the sleeve, named by where it is counted
+      const e = m.get(k) ?? { mv: 0, count: 0 };
+      e.mv += x.marketValue; e.count += 1;
+      m.set(k, e);
+    }
+    return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
+  })();
+  const leftOutList = selSections.map((c) => `${bucketLabel(c.key)} ${money(c.mv)}`).join(", ")
+    + (selSleeve.length === 0 ? "" : `${selSections.length ? ", and " : ""}${sleeveWhat} inside the ${MANDATE_BUCKET}`);
   /**
    * WHAT THE SECTOR MIX LEAVES OUT, AND WHY — the paragraph that stood under
    * the chart, as the subtitle's hover. *"remove the highlighted texts from the
@@ -570,7 +649,7 @@ export function FamilyEntities() {
       ? `Both routes count here: ${money(selMandateSharesMV)} of these shares were chosen by a discretionary manager and have a sector exactly like the ones ${scope} bought directly. Which of the two chose a name is in the Held via column below.`
       : "",
     selExcluded.length > 0
-      ? `${money(selExcludedMV)} across ${excludedCount} position${excludedCount === 1 ? "" : "s"} is excluded rather than folded in — ${classList(selExcluded)}. A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a folio, so every wrapper would land in one false "Unclassified" slice and bury the sectors this chart exists to show. All of them are in the holdings table below.${sleeveNoteText}`
+      ? `${money(selExcludedMV)} across ${excludedCount} position${excludedCount === 1 ? "" : "s"} is excluded rather than folded in — ${leftOutList}. A GICS sector is a property of a COMPANY; a fund holds many and no statement in this book prints a sector for a folio, so every wrapper would land in one false "Unclassified" slice and bury the sectors this chart exists to show. All of them are in the holdings table below, under those headings.${sleeveNoteText}`
       : "Every one of this entity's positions is a share in a company, so nothing is excluded from the chart.",
   ].filter(Boolean).join("\n\n");
   const holdings = (() => {
@@ -671,7 +750,8 @@ export function FamilyEntities() {
      */
     const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
     return (
-      <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40">
+      <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
+        data-fe-holding-key={h.securityKey} data-fe-holding-account={h.accountId}>
         <td className="px-4 py-2.5 text-slate-100"><StockLink securityKey={h.securityKey} name={h.security} /></td>
         {/* WHO CHOSE THIS ROW. A section heading answers it for a group and stops
             answering it the moment the search box narrows the table, so the route
@@ -827,8 +907,22 @@ export function FamilyEntities() {
                     // so its value there is what the rate closes against. Set
                     // beside this row's live value it would be two measurements
                     // in one sentence.
+                    /**
+                     * WHICH ACCOUNTS, AND WHICH WINDOW (FS-8). The figure pools a
+                     * subset of this entity's accounts over a window of its own, and
+                     * Morning CIO's tile pools every such account over the book's —
+                     * so the two can only be read against each other if each says
+                     * what it covers. `measuredAccountsReturn` over the same
+                     * accounts is the function `ownerMeasuredReturn` calls: the
+                     * parts it names are the parts the figure is struck on.
+                     */
+                    const mwParts = measuredAccountsReturn(statementPortfolio ?? portfolio, accountsOfOwner(e.key));
+                    const coveredNames = mwParts.parts.map((pt) => `${accIdx.get(pt.accountId)?.provider ?? "account"} ${pt.accountNo}`);
+                    const closes = mwParts.firstClose && mwParts.firstClose !== mwParts.lastClose
+                      ? `each closed on its own statement date, ${fmtDate(mwParts.firstClose)} to ${fmtDate(mwParts.lastClose ?? "")}`
+                      : `each closed on its own statement date`;
                     const coverNote = mwr.annPct == null ? undefined
-                      : `Money-weighted, over ${mwr.windowDays} days — not annualised; ${fmtPct(mwr.annPct, { sign: true })} p.a. if it were. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} worth ${money(mwr.measuredMV)} on their own statements, each closed on its statement date${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
+                      : `Money-weighted, over ${mwr.windowDays} days — ${fmtDate(mwParts.windowStart ?? "")}, the first dated flow, to ${fmtDate(mwParts.lastClose ?? "")}, the latest statement it closes on — not annualised; ${fmtPct(mwr.annPct, { sign: true })} p.a. if it were. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} — ${coveredNames.join(", ")} — worth ${money(mwr.measuredMV)} on their own statements, ${closes}${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     // The popovers' own worked lines ride on their cells, so
                     // `check:pages` reads the arithmetic a reader is shown rather
@@ -883,7 +977,9 @@ export function FamilyEntities() {
                                 : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide"} />
                             : <Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
                         </td>
-                        <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
+                        <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}
+                          data-mwr-accounts={mwParts.parts.map((pt) => pt.accountNo).join(",")}
+                          data-mwr-start={mwParts.windowStart ?? ""} data-mwr-end={mwParts.lastClose ?? ""} data-mwr-days={mwr.windowDays ?? ""}>
                           {xirrPct == null
                             ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
                             : <span title={coverNote}>{fmtPct(xirrPct, { sign: true })}</span>}
@@ -911,7 +1007,7 @@ export function FamilyEntities() {
                   <TrFoot view={entityView}
                     className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300"
                     label={<>Total</>}
-                    labelTitle={`${entities.length} entities, each on its own statements as printed.`}
+                    labelTitle={[`${entities.length} entities, each on its own statements as printed.`, droppedNote(() => true)].filter(Boolean).join(" ")}
                     cells={{
                       nav: <td key="nav" className="px-4 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(perStatementMV)}</td>,
                       weight: <td key="weight" className="px-4 py-2.5 text-right mono text-slate-300">{`${(sum(entities.map((e) => e.weight)) * 100).toFixed(1)}%`}</td>,
@@ -1014,13 +1110,19 @@ export function FamilyEntities() {
               of ₹Y NAV"; the narrowing a reader must not miss — that the bars
               are company shares, not the entity's whole NAV — is in the title
               itself now, and the counts and the reason are one hover. */}
-          <Card className="mt-5" title={`${scope} — sector mix of company shares`}
+          {/* THE HANDLES RIDE ON THE TITLE (FS-6): the caption's sections and
+              the sleeve are read by `check:pages` off the node that carries the
+              hover's words — the card title, since Stage 10cp moved the
+              subtitle onto it. A handle on a visible line would need a line. */}
+          <Card className="mt-5"
+            title={selShares.length === 0 ? `${scope} — sector mix of company shares`
+              : <span data-fe-sector-why data-fe-excluded={JSON.stringify(selSections)} data-fe-sleeve-mv={selSleeveMV}>{scope} — sector mix of company shares</span>}
             subtitle={selShares.length === 0
               ? `No company shares — this entity holds fund vehicles and cash only · ${selRows.length} position${selRows.length === 1 ? "" : "s"} · ${fmtFromBase(selMV, { compact: true })} NAV.`
               : `Company shares only — ${selShares.length} of ${selRows.length} positions · ${money(selSharesMV)} of ${fmtFromBase(selMV, { compact: true })} NAV. ${sectorMixWhy}`}>
             {selShares.length === 0
               ? <AbsentSection what={`${scope} holds no shares in a company`}
-                  needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${classList(selExcluded)}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />
+                  needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${leftOutList}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />
               : <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={selSectors.map((s) => ({ name: s.key, value: convertFromBase(s.mv) }))} margin={{ top: 8, right: 8, left: 8, bottom: 40 }}>
@@ -1110,7 +1212,7 @@ export function FamilyEntities() {
                   {groups.map((grp) => (
                     <Fragment key={grp.key}>
                       {showSections && (
-                        <tr className="bg-ink-900/50">
+                        <tr className="bg-ink-900/50" data-fe-section={grp.key} data-fe-section-mv={grp.mv} data-fe-section-count={grp.rows.length}>
                           <td colSpan={5} className="px-4 py-1.5">
                             <span className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-champagne-500">
                               {bucketLabel(grp.key)}
@@ -1188,9 +1290,13 @@ export function FamilyEntities() {
                         {/* THE COUNT ON SCREEN, AND WHAT THE RETURN COVERS IN ITS
                             HOVER — the sentence that ran across the footer was
                             the widest note on this page. */}
-                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500"
+                        <span className="ml-2 font-normal normal-case tracking-normal text-slate-500" data-fe-foot-note
                           title={[
                             showSections ? "The section subtotals above add to this figure." : "",
+                            // What `currentHoldings` left out of this entity, in the
+                            // Monitor's own words — the rows are not listed, so the
+                            // count they are missing from is where they are named.
+                            filtered ? "" : droppedNote((x) => ownerOf(accIdx, x) === scope),
                             visNoCost > 0
                               ? visCost === null
                                 ? `Every one of these ${visNoCost} ${visNoCost === 1 ? "row reports" : "rows report"} a value and no cost basis, carrying ${money(visNoCostMV)} with nothing to measure a return against.`
