@@ -249,7 +249,7 @@ export function HoldingsBehind() {
                 same "which of these two answers my question" the tiles have
                 just been rid of. */}
             {([
-              ["book", "", "", "Every holding in the book — its value and the capital invested in it"],
+              ["book", "", "", "Every holding in the book, and what went into it"],
               ["book", "", "listed", "…the listed half"],
               ["book", "", "private", "…the private half"],
               ["book", "", "costed", "…the holdings that report a cost"],
@@ -648,8 +648,7 @@ export function HoldingsBehind() {
           {!d.absent && depositoryRows.length > 0 && (
             <div className="mt-0.5 text-[10.5px] text-amber-400/80" data-hb-depository={depositoryRows.length}
                  title={depositoryNote ?? undefined}>
-              {depositoryRows.length === 1 ? "1 holding is" : `${fmtNum(depositoryRows.length)} holdings are`} valued
-              from depository units at AMFI&rsquo;s NAV, not a statement mark
+              {depositoryRows.length === 1 ? "1 holding" : `${fmtNum(depositoryRows.length)} holdings`} at AMFI&rsquo;s NAV
             </div>
           )}
           {/* ── AND THE CAPITAL INVESTED IN IT, BESIDE WHAT IT IS WORTH ────────
@@ -1166,32 +1165,31 @@ export function HoldingsBehind() {
                   would make a layout claim depend on prose a redesign is free to
                   reword, which is the failure this sweep keeps finding. */}
               <div data-hb-derivation className="space-y-3 text-sm leading-relaxed text-slate-300">
-                <p>
-                  Every dated capital movement in or out of the{" "}
+                {/* SHORT AND DIRECT, AS IT WAS ASKED FOR — and now one line
+                    each (Stage 10cp). The family asked for this section by
+                    name, so it stays; what went is the sentences, which are
+                    each line's hover. Every rule is still on the face. */}
+                <p data-hb-derivation-lead
+                  title={`Every dated capital movement in or out of the ${fmtNum(coveredAccounts)} account${coveredAccounts === 1 ? "" : "s"} whose statements publish an opening portfolio value, with that opening value as the first flow and each account's own closing market value as the last. The rate is the one that makes them balance.`}>
+                  The rate that balances the dated flows of{" "}
                   <span className="text-slate-100">{fmtNum(coveredAccounts)}</span>{" "}
-                  account{coveredAccounts === 1 ? "" : "s"} whose statements publish an opening
-                  portfolio value, with that opening value as the first flow and each
-                  account&rsquo;s own closing market value as the last. The rate is the one that
-                  makes them balance.
+                  account{coveredAccounts === 1 ? "" : "s"}
                 </p>
                 <p className="mono rounded-md border border-ink-700 px-3 py-2 text-[13px] text-slate-200">
                   find r where &nbsp;Σ&nbsp; flow ÷ (1 + r)<sup>days ÷ 365</sup> &nbsp;=&nbsp; 0
                 </p>
                 <ul className="space-y-1.5 pl-4">
-                  <li className="list-disc">
-                    Each account closes on <span className="text-slate-100">its own report date</span>,
-                    not one shared date — closing them all on the newest would credit the
-                    earlier ones with standing still.
+                  <li className="list-disc"
+                    title="Not one shared date — closing them all on the newest would credit the earlier ones with standing still.">
+                    Each account closes on <span className="text-slate-100">its own report date</span>
                   </li>
-                  <li className="list-disc">
-                    Over a window shorter than a year this is the return{" "}
-                    <span className="text-slate-100">earned over that window</span>, never
-                    compounded up to a yearly rate.
+                  <li className="list-disc"
+                    title="Over a window shorter than a year this is the return earned over that window, never compounded up to a yearly rate.">
+                    Under a year: the return over that window, <span className="text-slate-100">not annualised</span>
                   </li>
-                  <li className="list-disc">
-                    A buy or a sell is <span className="text-slate-100">not a flow</span>: it moves
-                    cash inside the account, and its proceeds are already in the closing value.
-                    Only money the family put in or took out counts.
+                  <li className="list-disc"
+                    title="A buy or a sell moves cash inside the account, and its proceeds are already in the closing value. Only money the family put in or took out counts.">
+                    A buy or a sell is <span className="text-slate-100">not a flow</span>
                   </li>
                 </ul>
               </div>

@@ -34,7 +34,7 @@ import {
   marketSideOf, readAifCategory, readsAsPrivateEquity, categoriesNamedIn,
   CATEGORY_I, CATEGORY_II, CATEGORY_III, FAMILY_MARKET_SIDE,
 } from "@/lib/aifCategory";
-import { pageScopeNote, privateScope } from "@/lib/privateMarket";
+import { privateScope } from "@/lib/privateMarket";
 import { familyAssetClass } from "@/lib/familyTaxonomy";
 import { isMandateHeld } from "@/lib/analytics";
 import { engagementOf } from "@/lib/accounts";
@@ -306,30 +306,28 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
 }
 
 // ── 7. THE PRIVATE MARKET PAGE'S OWN SCOPE ──────────────────────────────────
+//
+// The line that stated the book's sides under the fund table went at the
+// family's request ("Why do i need all this garbage written"), and
+// `pageScopeNote` with it. What stays true, and is what a reader relies on, is
+// WHICH funds the page carries — so that is what is asserted.
 {
-  const note = pageScopeNote(currentHoldings(BOOK_POSITIONS));
-  near("the sides on the page rebuild its stated book total",
-    sum(note.sides.map((s) => s.value)), note.bookMV);
-  // THE THREE FUNDS THE FAMILY NAMED ARE NOT ON THE PRIVATE SIDE.
   const scope = privateScope(currentHoldings(BOOK_POSITIONS), BOOK_ACCOUNTS);
+  // THE THREE FUNDS THE FAMILY NAMED ARE NOT ON THE PRIVATE SIDE.
   for (const name of ["Sanshi", "Buoyant", "Carnelian Bharat Amritkaal"]) {
     ok(`${name} is not a private-market holding`,
       !scope.dedupedRows.some((p) => p.security.toLowerCase().includes(name.toLowerCase())));
   }
-  // ...AND THE PAGE STILL SAYS WHICH SIDE IT IS. The card that named these
-  // three funds one by one went at the family's request ("these kind of
-  // placeholders are not relevant"); what a reader cannot do without is the
-  // LISTED side's value beside the private one, so the funds that left are
-  // visibly somewhere. It is the sides line, and its listed term must hold them.
-  const listed = note.sides.find((x) => x.key === "listed");
-  // Every AIF on the listed side — the Category III folios, and since the
-  // family's own placing, Founders and Delphi too.
-  const listedAifs = sum(dedupedPositions(currentHoldings(BOOK_POSITIONS))
+  // ...AND THE LISTED SIDE STILL HOLDS THEM. Every AIF on the listed side — the
+  // Category III folios, and since the family's own placing, Founders and
+  // Delphi too — is in `marketSides`' listed term, so the funds that left this
+  // page are visibly somewhere in the split Morning CIO prints.
+  const current = dedupedPositions(currentHoldings(BOOK_POSITIONS));
+  const listed = marketSides(current).find((x) => x.key === "listed");
+  const listedAifs = sum(current
     .filter((p) => p.assetClass === "AIF" && p.marketSide === "listed").map((p) => p.marketValue));
-  ok("the listed side the page states holds the listed-side AIFs that left it",
+  ok("the book's listed side holds the listed-side AIFs that left this page",
     !!listed && listedAifs > 0 && listed.value >= listedAifs, `listed ${listed?.value}, listed AIFs ${listedAifs}`);
-  ok("the scope note no longer carries the removed card's fund lists",
-    !("listedFunds" in note) && !("unplaced" in note));
   // THE WHOLE DOUBLE COUNT IS STILL ON THIS PAGE, which is the page's own
   // central arithmetic and the one thing a rescope could have taken away.
   ok("both duplicated holdings are still in the private scope",

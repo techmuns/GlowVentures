@@ -250,7 +250,9 @@ export function Performance() {
           value={money(listedMV)}
           sub={p.length === consolidated.length
             ? `${p.length} positions across ${accounts.length} accounts`
-            : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once`}
+            : `${consolidated.length} of ${p.length} rows · ${p.length - consolidated.length} counted once`}
+          title={p.length === consolidated.length ? undefined
+            : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once.`}
           icon={<Layers className="h-4 w-4" />} />
 
         <StatTile label="Return · FIFO"
@@ -270,8 +272,11 @@ export function Performance() {
         ) : (
           <StatTile label="Money-weighted return (to date)"
             value={<span className={(consolidatedTotalReturn ?? 0) >= 0 ? "text-gain" : "text-loss"}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
-            sub={<>to date · {windowNote}</>}
-            hint={xirrMissing.length ? `Over ${measurable.length} of ${accounts.length} accounts · not annualised` : "Over every account · not annualised"}
+            // "NOT ANNUALISED" STAYS ON THE FACE — Stage 10g(ii)'s guard, which
+            // the caller must state — and the window and coverage are the hover
+            // (Stage 10cp), where `hint` now lands.
+            sub={`to date · not annualised${consWindowDays ? ` · ${consWindowDays} days` : ""}`}
+            hint={`${xirrMissing.length ? `Over ${measurable.length} of ${accounts.length} accounts` : "Over every account"}, ${windowNote}.`}
             title={`${xirrMissing.length
               ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
               : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}; the annualised XIRR${consolidatedXirr != null ? ` is ${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a.` : ""}, kept off the tile because a >100% annualised quarter reads as a sustained yearly rate.`}
@@ -426,8 +431,12 @@ export function Performance() {
       </Card>
 
       {/* ── Money-weighted return, per account ── */}
-      <Card className="mt-5" title="Money-weighted return to date, per account"
-        subtitle={<span title="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised.">From each account&rsquo;s own dated capital movements · to date, not annualised</span>}>
+      {/* "NOT ANNUALISED" IS THE GUARD, SO IT IS IN THE TITLE (Stage 10cp) —
+          Stage 10g(ii): a sub-year window is never compounded onto a year, and
+          the caller must say so on screen. The line under the title went with
+          every other; how the rate is struck is the title's hover. */}
+      <Card className="mt-5" title="Money-weighted return to date, per account · not annualised"
+        subtitle="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised.">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">

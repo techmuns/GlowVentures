@@ -808,33 +808,35 @@ export function FamilyEntities() {
             removed tiles carried and nothing else on this page states. All of it
             is derived here, so it follows the book rather than this comment.
           */}
-          <Card title={direct ? "In-house vs external" : "Custody"}
-            subtitle={direct
-              ? <>
-                  Where the capital sits — the platform, not the decision
-                  <span className="mt-1.5 block" data-custody-split title={splitWorking}>
-                    In-house <span className="mono text-slate-200">{pctOfBook(directMV)}</span> · {money(directMV)} ·{" "}
-                    {inHouseAccountsUnreported > 0
-                      ? <>{directAccounts} of {inHouseAccountsInRegistry} accounts</>
-                      : <>{directAccounts} account{directAccounts === 1 ? "" : "s"}</>}
-                    <span className="mx-1.5 text-slate-600">|</span>
-                    External <span className="mono text-slate-200">{pctOfBook(externalMV)}</span> · {money(externalMV)} ·{" "}
-                    {externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}
-                  </span>
-                </>
-              : <>
-                  Who custodies the capital — all of it external, across {externalCustodians.length} manager{externalCustodians.length === 1 ? "" : "s"}
-                  {/* WHY THERE IS NO IN-HOUSE SHARE, and the two reasons are not
-                      the same finding: an account nobody runs in-house and an
-                      in-house account reporting nothing are different asks. A 0%
-                      would say the family runs an in-house book that holds
-                      nothing, which is a third claim again. */}
-                  <span className="mt-1.5 block">
-                    {inHouseAccountsInRegistry > 0
-                      ? <>No in-house share to draw: the {inHouseAccountsInRegistry} in-house account{inHouseAccountsInRegistry === 1 ? "" : "s"} in this book report no holdings, so there is nothing to measure rather than a measured nil.</>
-                      : <>No in-house share to draw: every account here reaches its assets through a manager, a distributor or a broker.</>}
-                  </span>
-                </>}>
+          {/* THE CARD CARRIES NO SUBTITLE (Stage 10cp). What it shows is its
+              title's hover; the split is DATA and is the first line of its body,
+              so the two percentages and their coverage stay on screen. */}
+          <Card title={direct
+            ? <span data-card-title-hint title="Where the capital sits — the platform, not the decision.">In-house vs external</span>
+            : <span data-card-title-hint title={`Who custodies the capital — all of it external, across ${externalCustodians.length} manager${externalCustodians.length === 1 ? "" : "s"}.`}>Custody</span>}>
+            {direct ? (
+              <div className="-mt-2 mb-2 text-xs text-slate-400" data-custody-split title={splitWorking}>
+                In-house <span className="mono text-slate-200">{pctOfBook(directMV)}</span> · {money(directMV)} ·{" "}
+                {inHouseAccountsUnreported > 0
+                  ? <>{directAccounts} of {inHouseAccountsInRegistry} accounts</>
+                  : <>{directAccounts} account{directAccounts === 1 ? "" : "s"}</>}
+                <span className="mx-1.5 text-slate-600">|</span>
+                External <span className="mono text-slate-200">{pctOfBook(externalMV)}</span> · {money(externalMV)} ·{" "}
+                {externalCustodians.length} custodian{externalCustodians.length === 1 ? "" : "s"}
+              </div>
+            ) : (
+              /* WHY THERE IS NO IN-HOUSE SHARE, and the two reasons are not the
+                 same finding: an account nobody runs in-house and an in-house
+                 account reporting nothing are different asks. A 0% would say the
+                 family runs an in-house book that holds nothing, which is a third
+                 claim again. One line, the reason in its hover. */
+              <div className="-mt-2 mb-2 text-xs text-slate-400"
+                title={inHouseAccountsInRegistry > 0
+                  ? `The ${inHouseAccountsInRegistry} in-house account${inHouseAccountsInRegistry === 1 ? "" : "s"} in this book report no holdings, so there is nothing to measure rather than a measured nil.`
+                  : "Every account here reaches its assets through a manager, a distributor or a broker."}>
+                No in-house share to draw
+              </div>
+            )}
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -863,12 +865,15 @@ export function FamilyEntities() {
       )}
       {selected && (
         <>
-          <Card className="mt-5" title={`${scope} — sector mix`}
+          {/* THE SCOPE IS THE TITLE, THE COUNTS ARE ITS HOVER (Stage 10cp). The
+              line under it said "Company shares only — N of M positions · ₹X
+              of ₹Y NAV"; the narrowing a reader must not miss — that the bars
+              are company shares, not the entity's whole NAV — is in the title
+              itself now, and the counts and the reason are one hover. */}
+          <Card className="mt-5" title={`${scope} — sector mix of company shares`}
             subtitle={selShares.length === 0
-              ? <>No company shares — this entity holds fund vehicles and cash only{" · "}{selRows.length} position{selRows.length === 1 ? "" : "s"}{" · "}
-                {fmtFromBase(selMV, { compact: true })} NAV</>
-              : <span data-fe-sector-why title={sectorMixWhy} className="cursor-help">Company shares only — {selShares.length} of {selRows.length} positions{" · "}{money(selSharesMV)} of{" "}
-                {fmtFromBase(selMV, { compact: true })} NAV</span>}>
+              ? `No company shares — this entity holds fund vehicles and cash only · ${selRows.length} position${selRows.length === 1 ? "" : "s"} · ${fmtFromBase(selMV, { compact: true })} NAV.`
+              : `Company shares only — ${selShares.length} of ${selRows.length} positions · ${money(selSharesMV)} of ${fmtFromBase(selMV, { compact: true })} NAV. ${sectorMixWhy}`}>
             {selShares.length === 0
               ? <AbsentSection what={`${scope} holds no shares in a company`}
                   needs={`Every one of this entity's ${selRows.length} position${selRows.length === 1 ? "" : "s"} is a fund vehicle or cash — ${classList(selExcluded)}. A GICS sector is a property of a company; a fund holds many and no statement in this book prints one for a folio, so there is no sector mix to draw rather than an empty frame with axes around nothing. The holdings table below lists every one of them.${sleeveNoteText}`} />
@@ -941,8 +946,7 @@ export function FamilyEntities() {
             )}
           </Card>
           <Card className="mt-5" title={`${scope} — holdings`} pad={false}
-            subtitle={<span title={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}>
-              Grouped by who chose each holding: directly, under a mandate, or through a fund</span>}
+            subtitle={`Grouped by how each holding came to be held — what ${scope} chose directly, what a discretionary manager chose under a mandate, and the fund vehicles and cash beside them.`}
             right={<SearchInput value={holdingsQ} onChange={setHoldingsQ} placeholder="Search this entity…" className="w-56" suggestions={Array.from(new Set(selRows.map((x) => x.security))).sort()} />}>
             <div className="max-h-[520px] overflow-auto">
               <table className="min-w-full text-sm">
@@ -1093,9 +1097,12 @@ export function FamilyEntities() {
               * THE DRAWN CAPITAL IS IN NO TOTAL ON THIS PAGE, and the footnote
               * says so: it is what was PAID, never what the stake is worth. */}
           {(unvalued.length > 0 || partlyValued.length > 0) && (
-            <Card className="mt-5" title={`${scope} — held, and not valued here`}
-              subtitle={<span title={`${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""} Hover an account for why it carries no figure.`}>
-                None of these figures is in the {money(selMV)} above — no statement values these holdings</span>}>
+            // "IN NO TOTAL" IS THE FENCE, SO IT IS IN THE TITLE (Stage 10cp): the
+            // line that said "None of these figures is in the ₹X above" went
+            // with every other line under a card title, and this card sits
+            // directly under one that sums. The sentence is the title's hover.
+            <Card className="mt-5" title={`${scope} — held, not valued, in no total`}
+              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""} Hover an account for why it carries no figure.`}>
               <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}>
                 {/* A PARTLY VALUED ACCOUNT says so on its line, and its own note —
                     what is valued, from what, and what is not — is the hover on

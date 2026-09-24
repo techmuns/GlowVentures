@@ -17,8 +17,8 @@ import {
  * dashboard; it needs to be absolutely simple and clear."* So `sub` is one
  * line of a few words and there is no paragraph under it; the coverage counts
  * and the working that used to be paragraphs are `detail`, which rides on the
- * tile's own hover. `hint` stays on the type for a page that wants a visible
- * definition, and no metric on the Private Market sets one.
+ * tile's own hover. `hint` is folded into that same hover by `StatTile`
+ * (Stage 10cp) — there is no visible line under a tile anywhere now.
  */
 export type TileMetric = {
   id: string;
@@ -33,7 +33,7 @@ export type TileMetric = {
    */
   second?: ReactNode;
   sub?: ReactNode;
-  hint?: ReactNode;
+  hint?: string;
   detail?: string;
   /** The percentage arrow — `null` renders nothing, never a measured-looking 0%. */
   delta?: number | null;

@@ -404,8 +404,16 @@ text = await page.locator("body").innerText();
 // "passing" against text that is no longer on the page.
 const valueHover = await page.$eval('[data-tile-slot="value"] [title]', (el) => el.getAttribute("title") ?? "")
   .catch(() => "");
+// …AND THE BASIS IS THE BAND'S HOVER NOW, the counts staying on its face. The
+// family asked for the lines that say what the table is to go (*"its obvious
+// from the table what it is"*), so "each holding counted once" left the band's
+// visible line for its `title` — read there, and asserted gone from the text.
+const privateBandHover = await page.$eval('tr[data-pm-section="private"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the Private Market page still counts the funds and accounts it covers",
-  /\d+ funds · \d+ folios · each holding counted once/i.test(text)
+  /\d+ funds · \d+ folios/i.test(text)
+    && /each holding counted once/i.test(privateBandHover)
+    && !/\d+ funds · \d+ folios · each holding counted once/i.test(text)
     && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
   (/\d+ funds · \d+ folios/i.exec(text)?.[0] ?? "(no section count)") + " | "
     + (/across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)"));
@@ -437,9 +445,16 @@ check("its private market value is a real measured figure, not the removed page'
 // needs to be like a hidden drop down clearly marked"* — so the claim is struck
 // on its band, which states the paid-in capital and that it is in no value
 // total even while the section is folded.
+// …AND WHAT IT PAID IS THE BAND'S HOVER, the band's face keeping its name,
+// its "missing data" marker and its counts — the sentence under it went at the
+// family's request, and must no longer be in the page's text.
+const unvaluedBandHover = await page.$eval('tr[data-pm-section="unvalued"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /Not valued/i.test(text) && /missing data/i.test(text)
-  && /₹[\d,.]+\s*(?:Cr|L) paid in is in no value total/i.test(text));
+  && /₹[\d,.]+\s*(?:Cr|L) paid in here is in no value total/i.test(unvaluedBandHover)
+  && !/paid in (?:here )?is in no value total/i.test(text),
+  unvaluedBandHover.slice(0, 120));
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
@@ -757,6 +772,13 @@ const watched = page.locator('a[href^="/stock/"]').first();
 if (await watched.count()) {
   await watched.click();
   await page.waitForTimeout(1200);
+  // THE PANEL IS ON ITS OWN TAB NOW. The position page became five tabs with no
+  // long scroll, and the family's own judgements are "My targets" — so the walk
+  // opens that tab the way a reader does, by its KEY rather than its label. A
+  // missing tab is a finding: the panel then has no way to be reached at all.
+  const targetsTab = page.locator('[data-stock-tab-key="targets"]');
+  check("a company page offers the My targets tab", (await targetsTab.count()) === 1);
+  if (await targetsTab.count()) { await targetsTab.click(); await page.waitForTimeout(600); }
   text = await page.locator("body").innerText();
   check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
   check("...with the judgement fields the watchlist store holds",
@@ -832,8 +854,14 @@ if (await watched.count()) {
         && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
+    // …ON ITS FACE, IN THE TITLE ("in no total"), and the sentence naming the
+    // figure it is not in is the title's hover — the family asked for the line
+    // under every card title to go (Stage 10cp), and a `title` is not in the
+    // page text, so it is read where it went.
+    const cardHints = await page.$$eval("[data-card-title-hint]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...and the card says none of it is in the value above",
-      /None of these figures is in the/i.test(text));
+      /held, not valued, in no total/i.test(text)
+        && cardHints.some((h) => /None of these figures is in the/i.test(h)));
   }
 }
 

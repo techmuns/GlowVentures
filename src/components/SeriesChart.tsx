@@ -151,9 +151,9 @@ export function SeriesChart({
         )}
       </ResponsiveContainer>
       {rebased && (
-        <p className="mt-1.5 text-[11px] text-slate-500">
-          Rebased to 100 at the start of the window — these series are quoted in different units
-          ({[...units].join(", ")}), so levels are not comparable and only their paths are.
+        <p className="mt-1.5 text-[11px] text-slate-500"
+          title={`These series are quoted in different units (${[...units].join(", ")}), so levels are not comparable and only their paths are.`}>
+          Rebased to 100 at the start of the window
         </p>
       )}
     </div>

@@ -359,8 +359,7 @@ export function ReturnAnalysis() {
             named under the table — still come from `bucketLabel`, which is
             correct: those ARE classes. */}
         <Card className="lg:col-span-2" title="Contribution by sector"
-          subtitle={<span title="Every share in a company, by sector — a manager's mandate included — and every fund wrapper under its own class, each as a share of total cost.">
-            Company shares by sector, funds by class · as a share of total cost</span>}>
+          subtitle="Company shares by sector, funds by class, each as a share of total cost — every share in a company, a manager's mandate included, and every fund wrapper under its own class.">
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead className="label-xs border-b border-ink-700">
@@ -400,15 +399,17 @@ export function ReturnAnalysis() {
               stays on screen, because that is what makes a row readable. */}
           <p className="mt-2 text-[11px] text-slate-500"
             title="Contributions are each row's P&L over the book's total cost, so they add to the embedded return exactly. A GICS sector is a property of a company, so every share in a company is bucketed by one — including the shares a discretionary manager chose under a PMS mandate. A fund is a wrapper holding many companies and has no sector of its own, so it appears under its asset class instead; its gain still counts.">
-            Contributions add to the total return exactly.
-            {m.wrapperClasses.length > 0 && <> Bucketed by class here:{" "}
-              <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span>.</>}
+            {/* Stage 10cp: the line is the classes alone; that contributions
+                add to the total exactly is the first words of its hover. */}
+            {m.wrapperClasses.length > 0
+              ? <>Funds by class: <span className="text-slate-400">{m.wrapperClasses.join(", ")}</span></>
+              : <>Contributions add to the total return exactly</>}
           </p>
         </Card>
       </div>
 
       <Card className="mt-5" title="Per account"
-        subtitle={<span title="The same measure on every account the book carries, and each one's best and worst name — a PMS mandate is one account here, and so is the family's own demat.">Every account, with its best and worst name</span>}>
+        subtitle="Every account, with its best and worst name — the same measure on every account the book carries; a PMS mandate is one account here, and so is the family's own demat.">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">

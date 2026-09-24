@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, ShieldAlert, ShieldCheck, Split } from "lucide-react";
-import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { AbsentCell, AbsentSection } from "@/components/Absent";
 import { parseRatioTable, checkIdentity, shareCountBreaks } from "@/lib/ratioTable";
@@ -62,6 +61,14 @@ const REASONS: Record<string, string> = {
   NOT_CONFIGURED: "The data token isn't set on this deployment.",
 };
 
+/**
+ * DRAWN AS A PANEL OF THE COMPANY RESEARCH CARD, not as a card of its own. The
+ * position page is tabs now, and ratios are one sub-tab of that card beside
+ * Financials and Insider deals instead of a separate "Ratio analysis" card a
+ * reader scrolled past. The body, the identity check and the refusal are
+ * unchanged; only the frame moved — and the stand-alone frame went with its
+ * last caller rather than being kept as a mode nothing selects.
+ */
 export function RatioTable({ ticker, name }: { ticker: string | null; name: string }) {
   const [state, setState] = useState<Fetched | undefined>(undefined);
 
@@ -195,10 +202,11 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
           </table>
         </div>
 
-        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-          Read by row label and column header, never by position — the source puts a chart placeholder in the second
-          column, and a positional read would take it as the most recent year and shift every figure back one.{" "}
-          {doc.basis && <>Figures are on the source's {doc.basis.toLowerCase()} basis. </>}
+        {/* THE BASIS AND THE SOURCE LINK ON THE FACE; how the table is read is
+            the line's hover (Stage 10cp). */}
+        <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500"
+          title="Read by row label and column header, never by position — the source puts a chart placeholder in the second column, and a positional read would take it as the most recent year and shift every figure back one.">
+          {doc.basis && <>{doc.basis} basis · </>}
           <a href={state.sourceUrl} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-slate-400 hover:text-champagne-400">
             Source page <ExternalLink className="h-3 w-3" />
@@ -209,16 +217,15 @@ export function RatioTable({ ticker, name }: { ticker: string | null; name: stri
   })();
 
   return (
-    <Card className="mt-5" title="Ratio analysis"
-      subtitle="Per-share, profitability, liquidity, coverage and valuation ratios, as the source reports them"
-      right={
+    <div data-ratio-table>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[11.5px] text-slate-500">Per-share, profitability, liquidity, coverage and valuation ratios, as the source reports them</span>
         <div className="flex items-center gap-1.5">
           {state?.ok && state.stale && <Pill tone="warn">last saved copy</Pill>}
           {identity && !identity.matches && <Pill tone="warn"><ShieldAlert className="mr-1 inline h-3 w-3" />refused</Pill>}
-          <Pill tone="info">{ticker}</Pill>
         </div>
-      }>
+      </div>
       {body}
-    </Card>
+    </div>
   );
 }

@@ -69,10 +69,14 @@ export function UploadHistory() {
     <div className="mx-auto max-w-4xl">
       <PageHeader eyebrow="Admin" title="Snapshot History"
         subtitle={nav.length
-          ? <span title="One point per date on which a covered account restated. Every other account is held at its latest mark, and Morning CIO names the ones that cannot supply a series at all.">
-              Dated valuations over the {covered} of {accounts} accounts that publish more than one</span>
+          ? `Dated valuations over the ${covered} of ${accounts} accounts that publish more than one. One point per date on which a covered account restated; every other account is held at its latest mark, and Morning CIO names the ones that cannot supply a series at all.`
           : "Dated portfolio valuations from the accounts that publish more than one."}
-        right={<Pill tone="info">{nav.length} dated points</Pill>} />
+        right={<div className="flex items-center gap-2">
+          {/* THE COVERAGE IS A FIGURE, SO IT IS ON SCREEN (Stage 10p) — the
+              sentence around it is the headline's hover since Stage 10cp. */}
+          {nav.length > 0 && <Pill>{covered} of {accounts} accounts</Pill>}
+          <Pill tone="info">{nav.length} dated points</Pill>
+        </div>} />
       {/* An empty table is still a table: header row, column names, and nothing
           under them reads as "we looked and there were no snapshots". There are
           none because no performance-history statement in this drop prints a
@@ -156,7 +160,9 @@ export function UploadHistory() {
         /* THE REASON FOR A ₹0 IS UNDER THE TABLE, NOT ONLY IN A HOVER. §2 keeps
            a computed zero and requires its cause on screen; seven per-row
            sentences would be unreadable, so the column's rule is stated once. */
-        <p className="mt-3 text-[11.5px] text-slate-500"
+        // `data-prose-ok`: A MEASURED ZERO'S REASON GOES ON THE FACE, never in a
+        // tooltip (Convention 2) — so the no-explainer sweep excuses this line.
+        <p className="mt-3 text-[11.5px] text-slate-500" data-prose-ok="measured zero"
           title="No subscription or withdrawal reached a covered account in that interval, so the whole change beside it is a change in value. Where capital did move, that much of the change is money added rather than earned, and Morning CIO's NAV chart nets it out before comparing the book against the Nifty 500. Four covered accounts publish no dated capital record at all; they are named there too.">
           <strong className="text-slate-400">₹0 under Capital in is measured</strong> — no money came in or went out in that interval.
         </p>
