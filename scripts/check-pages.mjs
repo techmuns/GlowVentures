@@ -5637,6 +5637,25 @@ const ROUTES = [
   // book in `LEDGER_BOOK.window`, selected by the preset's own value.
   ["monitor-txn-window", "/monitor"],
   /**
+   * ...AND TWO MORE WINDOWS, EACH A CASE THE LABELS GOT WRONG (MT-16) — both
+   * chosen off the book in `TXN_T_BOOK`. EARLY: the latest fiscal year that
+   * ends before the transaction statements begin, where the footer's Trades
+   * read "0 (0B/0S)" over a period no statement covers. LATE: the latest one
+   * the statements cover in which an account moved money OUT and put none in —
+   * the rows that read "lumpsum" over no purchase, with a side-filter reason
+   * under a date filter. The walk opens those rows' panels.
+   */
+  ["monitor-txn-window-early", "/monitor"],
+  ["monitor-txn-window-late", "/monitor"],
+  /**
+   * ...AND EVERY ROW AND EVERY DEALT LINE OPEN, for the realised reasons
+   * (MT-12, MT-13, MT-14): each sale's dash must name its OWN cause — no
+   * statement issued, a sale after the statement's window, no lot — and a
+   * line's other side is on its sibling line, never "not traded". The plain
+   * drill walk opens one staggered line only, and its checks count on that.
+   */
+  ["monitor-txn-realised", "/monitor"],
+  /**
    * ── THE RETURN METHODOLOGY, ON THE TRANSACTIONS TABLE TOO ────────────────
    *
    *   *"Just like in the holdings page, we have return methodology selector add
@@ -5861,6 +5880,11 @@ const ROUTES = [
   // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // A MANDATE WHOSE ACCOUNT ISSUES A CAPITAL GAIN STATEMENT, and whose manager
+  // both bought a line without selling it and sold one without buying
+  // (DSM-C10) — the case the "no capital gain statement covers this account"
+  // reason was false on. Derived in `TXN_T_BOOK`, never typed; every line opened.
+  ["mandate-trades-realised", () => (TXN_T_BOOK?.cgMandate ? `/mandate/${encodeURIComponent(TXN_T_BOOK.cgMandate.accountId)}` : "/mandate/none-resolved-from-the-book")],
   /**
    * ── THE DRILL-DOWNS EVERY MORNING CIO FIGURE NOW OPENS ────────────────────
    *
@@ -7437,11 +7461,13 @@ const TXN_SECTIONS = (() => {
 })();
 
 /**
- * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6, MT-7) ──
+ * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6…MT-16, DSM-C10) ──
  *
- * The Transactions tab's return headers borrowed the Holdings tab's FIFO
- * basis (MT-6), and its Value total said nothing of a holding two account
- * rows both report (MT-7). Every check that
+ * The Transactions tab's labels and reasons were wrong in ways no figure on the
+ * page could show: a purchase span that ran to a TDS outflow, a value column
+ * that blended nine statement dates under "today", a liquid ETF filed as Direct
+ * Equity beside a Holdings table that calls it Cash, a realised dash telling a
+ * reader LKP issues no capital gain statement when it does. Every check that
  * holds the page to the truth needs the truth from somewhere the PAGE cannot
  * move — `glowData.ts` and the audit archive — re-expressed here rather than
  * imported, for the reason this sweep applies to `holdingBucket`: a check that
@@ -7458,13 +7484,25 @@ const TXN_T_BOOK = (() => {
   try {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const cgs = bookArray(src, "BOOK_CAPITAL_GAINS");
     // THE STATEMENT BOOK — the Transactions view reads `statementPortfolio`,
     // so a value here is the statement's, never a published NAV's.
     const positions = statementBookPositions(src);
-    if (![accounts, positions].every(Array.isArray) || !CAPITAL_RECORD_BOOK) return null;
+    if (![accounts, cgs, positions].every(Array.isArray) || !CAPITAL_RECORD_BOOK) return null;
     const idOf = new Map(accounts.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
     const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const own = (id) => ["Direct", "Execution"].includes(acc.get(id)?.engagement);
     const pms = (id) => acc.get(id)?.engagement === "PMS";
+    // STAGGERED_MIN and CASH_EQUIVALENT_KEYS read as committed DATA.
+    const rollSrc = readFileSync(new URL("../src/lib/txnRollup.ts", import.meta.url), "utf8");
+    const staggeredMin = Number(/export const STAGGERED_MIN = (\d+);/.exec(rollSrc)?.[1]);
+    if (!(staggeredMin > 0)) return null;
+    const an = readFileSync(new URL("../src/lib/analytics.ts", import.meta.url), "utf8");
+    const ci = an.indexOf("export const CASH_EQUIVALENT_KEYS");
+    const ce = ci < 0 ? -1 : an.indexOf("\n};", ci);
+    if (ce < 0) return null;
+    const cashEq = new Set([...an.slice(ci, ce).matchAll(/^\s*"([a-z0-9-]+)":/gm)].map((m) => m[1]));
+    if (!cashEq.size) return null;
     // ── the tape: per account the FIRST authoritative type present ──────────
     const root = new URL("../public/audit/", import.meta.url);
     const manifest = JSON.parse(readFileSync(new URL("manifest.json", root), "utf8"));
@@ -7511,8 +7549,66 @@ const TXN_T_BOOK = (() => {
       .map(({ d, r }) => ({ accountId: idOf.get(`${d.provider}|${d.accountNo}`) ?? null, acct: `${d.provider}|${d.accountNo}`,
         key: r.securityKey, date: r.date, sell: r.side === "sell", isin: r.isin ?? null }));
     if (!tape.length || !tapeFrom || !tapeTo) return null;
+    // ── each account's capital gain statement window, or none (MT-12) ──────
+    const cgOf = new Map(cgs.map((e) => [e.accountId, e]));
+    /** acctKey → null (no statement issued) | { from, to } — the window it covers. */
+    const cgWin = new Map(accounts.map((a) => {
+      const e = cgOf.get(a.accountId);
+      return [`${a.provider}|${a.accountNo}`, !e ? { from: null, to: null } : e.absent ? null : { from: e.periodFrom ?? null, to: e.periodTo ?? null }];
+    }));
+    /** What a sale on `date` in `acctKey` can honestly say about its realised gain. */
+    const causeAt = (acctKey, date) => {
+      if (!cgWin.has(acctKey)) return null;
+      const w = cgWin.get(acctKey);
+      if (w === null) return { cause: "none" };
+      if ((w.to && date > w.to) || (w.from && date < w.from)) return { cause: "outside", from: w.from, to: w.to, after: !!w.to && date > w.to };
+      return { cause: "inside" };
+    };
+    const sales = tape.filter((t) => t.sell).map((t) => ({ ...t, ...causeAt(t.acct, t.date) }));
+    const outsideSales = sales.filter((s) => s.cause === "outside");
+    // ── MT-10: a sale the ISIN its capital gain lot prints re-files ─────────
+    const lotIsin = new Map();
+    for (const { d, r: l } of unionRows(perAcct(["capital-gain"]), "capitalGains")) {
+      if (!l.saleDate || !l.isin) continue;
+      const k = `${d.provider}|${d.accountNo}|${l.securityKey}|${l.saleDate}`;
+      (lotIsin.get(k) ?? lotIsin.set(k, new Set()).get(k)).add(l.isin);
+    }
+    const keysByIsin = new Map();
+    for (const p of positions) if (p.isin) (keysByIsin.get(p.isin) ?? keysByIsin.set(p.isin, new Set()).get(p.isin)).add(p.securityKey);
+    const bucket = (accountId, key, assetClass) => {
+      const e = acc.get(accountId)?.engagement;
+      if (e === "PMS") return MANDATE_BUCKET;
+      if (cashEq.has(key)) return "Cash";
+      if (assetClass !== "Equity") return assetClass;
+      return e === "Direct" || e === "Execution" ? DIRECT_EQUITY_BUCKET : "Equity — how it is held is not stated";
+    };
+    const refiled = [];
+    for (const t of tape) {
+      if (t.isin || !t.sell) continue;
+      const is = lotIsin.get(`${t.acct}|${t.key}|${t.date}`);
+      if (!is || is.size !== 1) continue;
+      const isin = [...is][0];
+      const ks = keysByIsin.get(isin);
+      if (!ks || ks.size !== 1) continue;
+      const bookKey = [...ks][0];
+      if (bookKey === t.key) continue;
+      const classes = new Set(positions.filter((x) => x.securityKey === bookKey).map((x) => x.assetClass));
+      const own1 = positions.find((x) => x.securityKey === bookKey && x.accountId === t.accountId);
+      const cls = own1?.assetClass ?? (classes.size === 1 ? [...classes][0] : null);
+      if (refiled.some((x) => x.acct === t.acct && x.key === t.key)) continue;
+      refiled.push({ ...t, isin, bookKey, section: bucket(t.accountId, bookKey, cls),
+        tapeSection: bucket(t.accountId, t.key, "Equity") });
+    }
+    // ── MT-8: each capital row's PURCHASES, and its last movement of any kind ─
+    const span = new Map();
+    for (const m of CAPITAL_RECORD_BOOK.moves) {
+      const e = span.get(m.accountId) ?? { first: null, last: null, lastAny: null };
+      if (m.direction === "in") { if (!e.first || m.date < e.first) e.first = m.date; if (!e.last || m.date > e.last) e.last = m.date; }
+      if (!e.lastAny || m.date > e.lastAny) e.lastAny = m.date;
+      span.set(m.accountId, e);
+    }
     // ── MT-7: a holding two ACCOUNT rows both report ─────────────────────────
-    const rowAccounts = new Set([...CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId), ...tape.filter((t) => pms(t.accountId)).map((t) => t.accountId)]);
+    const rowAccounts = new Set([...span.keys(), ...tape.filter((t) => pms(t.accountId)).map((t) => t.accountId)]);
     const inView = positions.filter((p) => rowAccounts.has(p.accountId));
     const groups = new Map();
     for (const p of inView) if (p.dedupeGroup) (groups.get(p.dedupeGroup) ?? groups.set(p.dedupeGroup, []).get(p.dedupeGroup)).push(p);
@@ -7522,14 +7618,62 @@ const TXN_T_BOOK = (() => {
       return { security: ps[0].security, accountNos: ps.map((p) => acc.get(p.accountId)?.accountNo).filter(Boolean),
         excessMin: sum - Math.max(...mvs), excessMax: sum - Math.min(...mvs) };
     });
-    return { doubled };
+    // ── MT-13/MT-14/MT-15: own-account securities; sell-downs ───────────────
+    const ownRows = tape.filter((t) => own(t.accountId));
+    const ownAccts = new Set(ownRows.map((t) => t.acct));
+    const ownBoth = [...new Set(ownRows.map((t) => t.key))]
+      .filter((k) => ownRows.some((t) => t.key === k && t.sell) && ownRows.some((t) => t.key === k && !t.sell));
+    const lines = new Map();
+    for (const t of tape) {
+      const k = pms(t.accountId) ? `${t.accountId}|${t.key}` : `${t.key}|${t.sell}`;
+      const e = lines.get(k) ?? { b: 0, s: 0 };
+      if (t.sell) e.s += 1; else e.b += 1;
+      lines.set(k, e);
+    }
+    const sellDowns = [...lines.values()].filter((e) => e.s >= staggeredMin && e.b < staggeredMin).length;
+    // ── MT-16: a window before the tape, and one inside it with outflows only ─
+    const fyOf = (d) => { const y = Number(d.slice(0, 4)), m = Number(d.slice(5, 7)); return m >= 4 ? y : y - 1; };
+    const moves = CAPITAL_RECORD_BOOK.moves;
+    const fys = [...new Set(moves.map((m) => fyOf(m.date)))].sort((a, b) => a - b);
+    const win = (fy) => ({ preset: `fy:${fy}`, fy, from: `${fy}-04-01`, to: `${fy + 1}-03-31` });
+    const early = fys.map(win).filter((w) => w.to < tapeFrom && moves.some((m) => m.date >= w.from && m.date <= w.to)).at(-1) ?? null;
+    const late = fys.map(win).map((w) => {
+      const inW = moves.filter((m) => m.date >= w.from && m.date <= w.to);
+      const ids = [...new Set(inW.map((m) => m.accountId))];
+      const outOnly = ids.filter((id) => !inW.some((m) => m.accountId === id && m.direction === "in"));
+      return { ...w, outOnly, accounts: ids.length };
+    }).filter((w) => w.from <= tapeTo && w.to >= tapeFrom && w.outOnly.length).at(-1) ?? null;
+    // ── DSM-C10: a mandate that issues a capital gain statement and whose ─────
+    // manager both bought a line without selling it and sold one without buying.
+    const cgMandates = [...new Set(tape.filter((t) => pms(t.accountId) && cgWin.get(t.acct) !== null).map((t) => t.accountId))]
+      .map((id) => {
+        const ks = new Map();
+        for (const t of tape.filter((x) => x.accountId === id)) { const e = ks.get(t.key) ?? { b: 0, s: 0 }; if (t.sell) e.s += 1; else e.b += 1; ks.set(t.key, e); }
+        const es = [...ks.values()];
+        return { accountId: id, sells: es.reduce((a, e) => a + e.s, 0), buyOnly: es.filter((e) => e.s === 0).length, sellOnly: es.filter((e) => e.b === 0).length };
+      })
+      .filter((m) => m.buyOnly > 0 && m.sellOnly > 0)
+      // Most sales first; a tie broken on the account id, so the subject does
+      // not depend on the order the archive's manifest happens to list files.
+      .sort((a, b) => b.sells - a.sells || a.accountId.localeCompare(b.accountId));
+    return {
+      tapeFrom, tapeTo, staggeredMin, causeAt,
+      asOf: Object.fromEntries(accounts.map((a) => [a.accountId, a.asOf ?? null])),
+      accountNoOf: Object.fromEntries(accounts.map((a) => [a.accountId, a.accountNo])),
+      acctKeyOf: Object.fromEntries(accounts.map((a) => [a.accountId, `${a.provider}|${a.accountNo}`])),
+      outsideSales, refiled, span: Object.fromEntries(span), doubled,
+      ownAccts: [...ownAccts], ownBoth, sellDowns, early, late,
+      cgMandate: cgMandates[0] ?? null,
+      fundedInBook: new Set(moves.map((m) => m.accountId)).size,
+      accountsCount: accounts.length,
+    };
   } catch { return null; }
 })();
 
 /**
  * ── THE CHECKS THAT HOLD THOSE LABELS TO THE BOOK ─────────────────────────
  *
- * Every one reads `ctx.txnT` — the
+ * Every one reads `ctx.txnT` (or `ctx.mgrT`, on a mandate's own page) — the
  * cells by column, each with the reason its dash carries — and sets it against
  * `TXN_T_BOOK`. A missing probe or a missing derivation FAILS: these routes
  * exist to draw the table, and a check that abstained there would report a
@@ -7537,6 +7681,41 @@ const TXN_T_BOOK = (() => {
  * `{ notChecked }`, never a string, which the harness reads as a pass.
  */
 const txnTReady = (ctx) => !!ctx?.txnT && !!TXN_T_BOOK;
+const txnTLines = (ctx) => ctx.txnT.panels.flatMap((p) => p.instruments);
+/** A sale's realised dash, held to the cause its account's own statement supports. */
+const saleReasonOk = (acct, date, why) => {
+  const c = TXN_T_BOOK.causeAt(acct, date);
+  if (!c) return false;
+  if (c.cause === "none") return /no capital gain statement is issued for this account/i.test(why);
+  if (/no capital gain statement/i.test(why)) return false;
+  if (c.cause === "outside") {
+    return /capital gain statement runs/i.test(why) && dmyRe(c.from).test(why) && dmyRe(c.to).test(why)
+      && dmyRe(date).test(why) && new RegExp(`falls ${c.after ? "after" : "before"} it`).test(why);
+  }
+  return /no capital gain lot in the statements matches this sale|shown on its first row for the day/i.test(why);
+};
+/** A staggered pill's hover, held to the line's own counts (MT-14). */
+const staggeredTitleOk = (buys, sells, title) => {
+  const m = TXN_T_BOOK.staggeredMin, b = buys >= m, s = sells >= m;
+  if (b && s) return /^Bought over \d+ trading days and sold over \d+/.test(title);
+  if (b) return /^Built up over \d+ trading days/.test(title) && !/Sold down/.test(title);
+  if (s) return /^Sold down over \d+ trading days/.test(title) && !/Built up/.test(title);
+  return false;
+};
+/**
+ * An own-account security row's Capital cells (MT-15): the family's own broking
+ * account, never "the managed mandates issue a capital-account ledger".
+ */
+const txnOwnBrokingCapital = (ctx) => {
+  if (!txnTReady(ctx)) return false;
+  const own = new Set(TXN_T_BOOK.ownAccts);
+  const rows = ctx.txnT.rows.filter((r) => r.kind !== "account" && !r.mine && r.accounts.length && r.accounts.every((a) => own.has(a)));
+  if (!rows.length) return false;
+  return rows.every((r) => ["how", "committed", "in", "out", "realisedGain", "unrealisedGain", "investedOn"].every((c) => {
+    const d = r.cells[c]?.dash;
+    return d != null && /family's own broking account/.test(d) && /Bought column/.test(d) && !/managed mandates issue/.test(d);
+  }));
+};
 
 /** On the default view: the whole table, collapsed. */
 const txnTTableChecks = () => [
@@ -7567,6 +7746,273 @@ const txnTTableChecks = () => [
     return !!v && Number.isFinite(got) && got >= min - 1 && got <= max + 1
       && D.every((d) => d.accountNos.length > 1 && d.accountNos.every((n) => v.title.includes(n)))
       && /Holdings table/.test(v.title) && /family's to say/.test(v.title);
+  }],
+  /**
+   * MT-8. "Purchased on" is each row's first and last PURCHASE — it ran Green
+   * Lantern's one payment to a TDS outflow, 3P's to its redemption and SVAN's
+   * to a withdrawal. Struck off the book's own dated record, and load-bearing:
+   * the book must carry rows whose last movement is not a purchase, or the
+   * check could not tell the two spans apart.
+   */
+  ["Purchased on is each row's own first and last purchase — never a later redemption or outflow", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const rows = ctx.txnT.rows.filter((r) => r.mine && !r.windowed);
+    if (!rows.length) return false;
+    const S = TXN_T_BOOK.span;
+    let later = 0;
+    const ok = rows.every((r) => {
+      const e = S[r.mine];
+      const cell = r.cells.investedOn?.text ?? "";
+      if (!e?.first || r.boughtFirst !== e.first || r.boughtLast !== e.last) return false;
+      if (!dmyRe(e.first).test(cell) || !dmyRe(e.last).test(cell)) return false;
+      if (e.lastAny && e.lastAny > e.last) { later += 1; if (dmyRe(e.lastAny).test(cell)) return false; }
+      return true;
+    });
+    return ok && later > 0;
+  }],
+  /**
+   * MT-9. Each account is valued on its own statement's date — nine dates on
+   * this book under one heading reading "today". Every value cell names its
+   * date, the header says the column is several, and the total says it adds
+   * values struck on different days.
+   */
+  ["each account's value names the statement date it is struck on, and the column and its total say they span several", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const T = ctx.txnT;
+    const rows = T.rows.filter((r) => r.kind === "account" && r.valueAsof != null);
+    if (!rows.length) return false;
+    const dates = new Set();
+    const cells = rows.every((r) => {
+      const want = TXN_T_BOOK.asOf[r.account];
+      if (want) dates.add(want);
+      return !!want && r.valueAsof === want && dmyRe(want).test(r.cells.value?.title ?? "");
+    });
+    const d = [...dates].sort();
+    const h = T.heads.find((x) => x.col === "value");
+    const f = T.foot?.cells?.value;
+    const head = !!h && (d.length > 1
+      ? /as of each statement/i.test(h.note) && dmyRe(d[0]).test(h.noteTitle) && dmyRe(d.at(-1)).test(h.noteTitle)
+      : dmyRe(d[0]).test(h.note));
+    const foot = !!f && (d.length < 2 || (dmyRe(d[0]).test(f.title) && dmyRe(d.at(-1)).test(f.title)));
+    return cells && head && foot && d.length > 1;
+  }],
+  /**
+   * MT-10. LKP prints its Liquid BeES sale under another spelling with no ISIN;
+   * the capital gain lot that settles it prints the ISIN, and that ISIN names
+   * one book security, which the Holdings tab files under Cash. This table must
+   * file the sale there too — and the case is load-bearing only if its own key
+   * would have filed it elsewhere.
+   */
+  ["a sale filed through the one book security its lot's ISIN names sits in that security's section", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const R = TXN_T_BOOK.refiled;
+    if (!R.length) return { notChecked: "no sale on this book is filed through its capital gain lot's ISIN" };
+    return R.every((x) => {
+      const rows = ctx.txnT.rows.filter((r) => r.kind !== "account" && (r.key ?? "").endsWith(`sec:${x.key}`));
+      return rows.length > 0 && rows.every((r) => r.section === x.section) && x.section !== x.tapeSection;
+    });
+  }],
+  /**
+   * MT-15. The framing named every Trades column "what their managers dealt",
+   * over a Direct Equity section that is Bharat's own LKP broking.
+   */
+  ["the table's framing names the family's own broking beside a manager's dealing", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const f = ctx.txnT.framing;
+    return /manager's in a mandate/i.test(f) && /family's own in a broking account/i.test(f) && /never added/i.test(f);
+  }],
+  ["an own-account security row's Capital cells say it is the family's own broking — never a mandate's ledger",
+    (t, ctx) => txnOwnBrokingCapital(ctx)],
+];
+
+/** With every row and every dealt line open: the realised reasons, line by line. */
+const txnTRealisedChecks = () => [
+  /**
+   * MT-12. "No capital gain statement covers this account" was printed on
+   * LKP's Ather and Pricol sales — LKP issues one, and they fall after its
+   * window — and "no lot matches" on Goldstandard's and SVAN's, which issue
+   * none. Each sale's reason is held to its own account's statement window,
+   * and the book must carry both of the first two causes.
+   */
+  ["every sale's realised dash names its OWN cause — no statement, a sale outside the statement's window, or no lot", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const sells = txnTLines(ctx).flatMap((i) => i.tranches).filter((x) => x.side === "Sell" && x.dash !== null);
+    if (!sells.length) return false;
+    const seen = new Set(sells.map((x) => TXN_T_BOOK.causeAt(x.acct, x.date)?.cause));
+    return sells.every((x) => saleReasonOk(x.acct, x.date, x.dash)) && seen.has("none") && seen.has("outside");
+  }],
+  ["a purchase realises nothing — a buy tranche's realised cell is blank, never a dash about a sale", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const buys = txnTLines(ctx).flatMap((i) => i.tranches).filter((x) => x.side === "Buy");
+    return buys.length > 0 && buys.every((x) => x.text === "" && x.dash === null);
+  }],
+  /**
+   * ...AND THE COUNT IS OF THE SALES WHOSE GAIN IS IN THE FIGURE. A first-of-day
+   * sibling's gain is on its day's first row, so it is counted — Carnelian's
+   * "13/18" read four covered sales as missing. Struck line by line on the
+   * tranches drawn under it, and load-bearing on the siblings this book carries.
+   */
+  ["a line's realised figure counts exactly the sales whose gain it carries — a first-of-day sibling is counted", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const lines = txnTLines(ctx).filter((i) => i.sells > 0);
+    if (!lines.length) return false;
+    let siblings = 0;
+    const ok = lines.every((i) => {
+      const s = i.tranches.filter((x) => x.side === "Sell");
+      if (s.length !== i.sells) return false;
+      const sib = s.filter((x) => /shown on its first row for the day/i.test(x.dash ?? "")).length;
+      siblings += sib;
+      const k = s.filter((x) => x.dash === null).length + sib;
+      if (i.realised?.dash != null) return k === 0;
+      if (k === i.sells) return !i.realisedOf;
+      return i.realisedOf?.of === `${k}/${i.sells}` && new RegExp(`^${k} of ${i.sells} sales? carry`).test(i.realisedOf.title);
+    });
+    return ok && siblings > 0;
+  }],
+  /**
+   * MT-13. A security row opens into one line per side. Ather Energy's sell
+   * line said "no buy row reports a settled amount" and its buy line "not sold
+   * over the window", each denying the other under a row reading 1B/1S.
+   */
+  ["a security's two side lines each say which side they hold and point at the other — never deny it", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const both = TXN_T_BOOK.ownBoth;
+    if (!both.length) return false;
+    const ins = txnTLines(ctx);
+    return both.every((k) => {
+      const b = ins.find((i) => i.key === k && i.side === "Buy");
+      const s = ins.find((i) => i.key === k && i.side === "Sell");
+      return !!b && !!s && /buys/.test(b.sideLabel) && /sells/.test(s.sideLabel)
+        && /units bought$/.test(b.units) && /units sold$/.test(s.units)
+        && /on the line marked buys/.test(s.bought?.dash ?? "") && /on the line marked sells/.test(b.sold?.dash ?? "")
+        && /on the line marked sells/.test(b.realised?.dash ?? "");
+    });
+  }],
+  ["a line that traded one side only says it traded none of the other — never that a row reports no settled amount", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const ins = txnTLines(ctx);
+    const nb = ins.filter((i) => i.buys === 0), ns = ins.filter((i) => i.sells === 0);
+    return nb.length > 0 && ns.length > 0
+      && nb.every((i) => i.bought?.dash != null && !/reports a settled amount/.test(i.bought.dash))
+      && ns.every((i) => i.sold?.dash != null && !/reports a settled amount/.test(i.sold.dash));
+  }],
+  /** MT-14: a sell-down's pill said "Built up over 16 trading days". */
+  ["a staggered pill says which side was worked over time, from the line's own counts", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const st = txnTLines(ctx).filter((i) => i.staggeredSide);
+    const m = TXN_T_BOOK.staggeredMin;
+    const want = (i) => (i.buys >= m && i.sells >= m ? "both" : i.buys >= m ? "buy" : i.sells >= m ? "sell" : null);
+    return st.length > 0 && TXN_T_BOOK.sellDowns > 0 && st.some((i) => want(i) === "sell")
+      && st.every((i) => i.staggeredSide === want(i) && staggeredTitleOk(i.buys, i.sells, i.staggeredTitle));
+  }],
+  /** MT-15: the capital drill-down headed the family's money "Security bought". */
+  ["the capital drill-down heads the family's money Purchase and Redemption, and the fund a movement was in Security", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const hs = ctx.txnT.panels.map((p) => p.moveHeads).filter(Boolean);
+    return hs.length > 0 && hs.every((h) => {
+      const x = h.map((c) => c.text.toLowerCase());
+      return x.includes("purchase") && x.includes("redemption") && x.includes("security")
+        && !x.some((y) => /security bought/.test(y) || y === "bought" || y === "sold");
+    });
+  }],
+];
+
+/** MT-16, on a fiscal year that ends before the transaction statements begin. */
+const txnTEarlyWindowChecks = () => [
+  ["a window before the transaction statements begin is a dash naming their span — never a count of 0 trades", (t, ctx) => {
+    if (!txnTReady(ctx) || !TXN_T_BOOK.early || !ctx.txnT.foot) return false;
+    const B = TXN_T_BOOK;
+    return ["trades", "bought", "sold", "realised"].every((c) => {
+      const x = ctx.txnT.foot.cells?.[c];
+      return !!x && x.dash != null && /no transaction statement covers this date window/.test(x.dash)
+        && dmyRe(B.tapeFrom).test(x.dash) && dmyRe(B.tapeTo).test(x.dash) && !/0B\/0S/.test(x.text);
+    });
+  }],
+  // ...AND THE WINDOW REALLY IS APPLIED: its rows are the capital accounts
+  // with a movement inside it — a walk that never selected the preset would
+  // strike the claim above on the whole table, where it cannot hold.
+  ["…while the capital half of the same window still draws its rows, each windowed", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const rows = ctx.txnT.rows;
+    return rows.length > 0 && rows.every((r) => r.mine && r.windowed);
+  }],
+];
+
+/** MT-16, on a fiscal year the statements cover in which some accounts only paid out. */
+const txnTLateWindowChecks = () => [
+  ["a row with only outflows in the window counts them — never 'lumpsum' over no purchase, never a side-filter reason", (t, ctx) => {
+    if (!txnTReady(ctx) || !TXN_T_BOOK.late) return false;
+    return TXN_T_BOOK.late.outOnly.every((id) => {
+      const r = ctx.txnT.rows.find((x) => x.mine === id);
+      const inWhy = r?.cells.in?.dash ?? "";
+      return !!r && r.windowed && r.how === "withdrawals" && /withdrawal/.test(r.howText) && !/lumpsum/i.test(r.howText)
+        && /date window/.test(r.howTitle) && /date window/.test(inWhy) && !/filtered to what came back out/.test(inWhy)
+        && /no purchase falls inside the date window/.test(r.cells.investedOn?.dash ?? "");
+    });
+  }],
+  ["…the footer counts the accounts IN VIEW, and names the whole record's count apart", (t, ctx) => {
+    if (!txnTReady(ctx) || !TXN_T_BOOK.late || !ctx.txnT.foot) return false;
+    const B = TXN_T_BOOK, lab = ctx.txnT.foot.label;
+    return /in view/.test(lab.text)
+      && new RegExp(`Across the whole record, ${B.fundedInBook} of this book's ${B.accountsCount} accounts`).test(lab.title)
+      && !new RegExp(`^\\d+ of this book's ${B.accountsCount} accounts publish`).test(lab.title);
+  }],
+  ["…and an opened row's panel says it lists the movements inside the window, not the whole record", (t, ctx) => {
+    if (!txnTReady(ctx) || !TXN_T_BOOK.late) return false;
+    return TXN_T_BOOK.late.outOnly.every((id) => {
+      const key = ctx.txnT.rows.find((r) => r.mine === id)?.key;
+      const p = ctx.txnT.panels.find((x) => x.key === key);
+      return !!p?.label && /in the date window/.test(p.label.filter)
+        && /inside the date window/.test(p.label.title) && /not the whole record/.test(p.label.title);
+    });
+  }],
+];
+
+/** DSM-C10, on a mandate's own "What the manager traded" card, every line open. */
+const mgrTradeChecks = () => [
+  ["a line's realised dash names its own cause — never 'no capital gain statement' in an account that issues one (DSM-C10)", (t, ctx) => {
+    const M = ctx?.mgrT;
+    if (!M || !TXN_T_BOOK) return false;
+    const id = decodeURIComponent(/\/mandate\/([^/?#]+)/.exec(ctx.url ?? ctx.path ?? "")?.[1] ?? "");
+    const acct = TXN_T_BOOK.acctKeyOf[id];
+    if (!acct) return false;
+    const issuesOne = TXN_T_BOOK.causeAt(acct, TXN_T_BOOK.tapeFrom)?.cause !== "none";
+    const dashed = M.rows.filter((r) => r.realised?.dash != null);
+    const sells = M.rows.flatMap((r) => r.tranches).filter((x) => x.side === "Sell" && x.dash !== null);
+    return dashed.length > 0 && issuesOne
+      && dashed.every((r) => !/no capital gain statement/.test(r.realised.dash))
+      && sells.every((x) => saleReasonOk(acct, x.date, x.dash));
+  }],
+  ["a purchase realises nothing — a buy's realised cell is blank", (t, ctx) => {
+    const tr = (ctx?.mgrT?.rows ?? []).flatMap((r) => r.tranches);
+    const buys = tr.filter((x) => x.side === "Buy");
+    return tr.length > 0 && buys.length > 0 && buys.every((x) => x.text === "" && x.dash === null);
+  }],
+  ["a staggered pill says which side the manager worked over time (MT-14)", (t, ctx) => {
+    const st = (ctx?.mgrT?.rows ?? []).filter((r) => r.staggeredTitle);
+    return st.length > 0 && st.some((r) => r.buys < TXN_T_BOOK.staggeredMin)
+      && st.every((r) => staggeredTitleOk(r.buys, r.sells, r.staggeredTitle));
+  }],
+  /**
+   * Which lines are partial is read off the TRANCHES, whose causes the check
+   * above holds to the book — so an abstention here is the book's answer, not
+   * the card declining to draw a fraction. A sibling carries its day's figure.
+   */
+  ["a partial realised figure says how many sales it carries", (t, ctx) => {
+    const all = ctx?.mgrT?.rows ?? [];
+    if (!all.length) return false;
+    const carried = (x) => x.dash === null || /shown on its first row for the day/i.test(x.dash);
+    const sellsOf = (r) => r.tranches.filter((x) => x.side === "Sell");
+    const partial = new Map(all.map((r) => [r.key, sellsOf(r)])
+      .filter(([, s]) => s.some(carried) && s.some((x) => !carried(x))));
+    const rows = all.filter((r) => r.realisedOf);
+    if (!rows.length && !partial.size) return { notChecked: "no line on this card has a sale carrying its figure beside one that does not" };
+    return rows.length === partial.size && rows.every((r) => {
+      const s = partial.get(r.key);
+      const [k, n] = r.realisedOf.of.split("/").map(Number);
+      return !!s && n === r.sells && n === s.length && k === s.filter(carried).length && k < n
+        && new RegExp(`^${k} of ${n} sales? carry`).test(r.realisedOf.title);
+    });
   }],
 ];
 
@@ -17513,7 +17959,7 @@ const INVARIANTS = {
      */
 
 
-    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6, MT-7) ────────────────
+    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6…MT-15) ────────────────
     ...txnTTableChecks(),
   ],
 
@@ -17648,6 +18094,25 @@ const INVARIANTS = {
         return !!m && m.returns.every((x) => x.pct == null);
       });
     }],
+  ],
+  /**
+   * ── TWO MORE WINDOWS, AND EVERY LINE OPEN (MT-12…MT-16) ──────────────────
+   *
+   * Each route is chosen or walked off the book (`TXN_T_BOOK`) — see the route
+   * table. `txnMergedCore` rides along because it holds on every view of this
+   * card, and a window is a view.
+   */
+  "monitor-txn-window-early": [
+    ...txnMergedCore(),
+    ...txnTEarlyWindowChecks(),
+  ],
+  "monitor-txn-window-late": [
+    ...txnMergedCore(),
+    ...txnTLateWindowChecks(),
+  ],
+  "monitor-txn-realised": [
+    ...txnMergedCore(),
+    ...txnTRealisedChecks(),
   ],
   "monitor-txn-returns": [
     ...txnMergedChecks(),
@@ -18961,6 +19426,8 @@ const INVARIANTS = {
     // the fund name. Either way it must be the statement's word, not ours.
     return CAPITAL_SIDES.outLabels.some((l) => t.includes(l));
   }],
+    // The capital panels are OPEN on this route: their headings (MT-15).
+    ...txnTRealisedChecks().filter(([d]) => /capital drill-down heads/.test(d)),
   ],
   /**
    * THE MANAGERS' OWN DEALING, WHICH IS NO LONGER A TAB.
@@ -19669,17 +20136,19 @@ const INVARIANTS = {
       return rows.every((r) => r.section === DIRECT_EQUITY_BUCKET);
     }],
     /**
-     * ...AND THE TABLE STILL SAYS WHAT IT DROPPED. With no capital record in
-     * view the Capital columns are a wall of dashes, and a dash that names no
-     * cause reads as a broken feed rather than as a document this book does not
-     * have — which is this page's founding rule, arriving at a filtered column.
+     * ...AND THE TABLE STILL SAYS WHAT IT DROPPED — TRUTHFULLY (MT-15). With no
+     * capital record in view the Capital columns are a wall of dashes, and a
+     * dash that names no cause reads as a broken feed rather than as a document
+     * this book does not have. Every row left is a security the family dealt in
+     * its OWN broking account, so that is the cause each dash names — never
+     * "the managed mandates issue a capital-account ledger", which was printed
+     * here about Bharat's own LKP trades and told a reader a manager chose them.
      */
-    ["…and the empty Capital columns name the document that would fill them",
+    ["…and the empty Capital columns name why — the family's own broking, never a mandate's ledger",
       (t, ctx) => {
         const rows = ctx.mineRows ?? [];
         if (rows.length) return { notChecked: "an account the family funded is Direct Equity on this run" };
-        const titles = ctx.titles ?? [];
-        return titles.some((x) => /reports the family's own dated capital/i.test(x));
+        return txnOwnBrokingCapital(ctx);
       }],
   ],
 
@@ -28050,6 +28519,16 @@ const INVARIANTS = {
     ["the tile names what it is struck over — capital paid in since inception", (t) =>
       /on\s+₹[\d.,]+\s*(?:Cr|L)?\s+paid in since/i.test(t)],
   ],
+  /**
+   * ── WHAT THE MANAGER TRADED, EVERY LINE OPEN (DSM-C10) ───────────
+   *
+   * A mandate whose account issues a capital gain statement, so no line on it
+   * may say "no capital gain statement covers this account" — the reason that
+   * was printed on 67 lines that sold nothing and on 3 whose account does.
+   */
+  "mandate-trades-realised": [
+    ...mgrTradeChecks(),
+  ],
   "mandate-funded": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
@@ -30487,6 +30966,8 @@ for (const theme of THEMES) {
         || name === "monitor-txn-in" || name === "monitor-txn-out"
         || name === "monitor-txn-basket" || name === "monitor-txn-secaxis"
         || name === "monitor-txn-window"
+        || name === "monitor-txn-window-early" || name === "monitor-txn-window-late"
+        || name === "monitor-txn-realised"
         || name === "monitor-txn-returns") {
         const t = page.getByRole("button", { name: /transactions/i }).first();
         if (await t.count()) { await t.click(); await page.waitForTimeout(1200); }
@@ -30561,6 +31042,32 @@ for (const theme of THEMES) {
         if (name === "monitor-txn-window" && LEDGER_BOOK?.window) {
           const sel = page.locator(`select:has(option[value="${LEDGER_BOOK.window.preset}"])`).first();
           if (await sel.count()) { await sel.selectOption(LEDGER_BOOK.window.preset); await page.waitForTimeout(900); }
+        }
+        // THE TWO WINDOWS MT-16 NAMES, each chosen off the book (`TXN_T_BOOK`)
+        // and selected by the preset's own value, never by its label.
+        const tWin = name === "monitor-txn-window-early" ? TXN_T_BOOK?.early?.preset
+          : name === "monitor-txn-window-late" ? TXN_T_BOOK?.late?.preset : null;
+        if (tWin) {
+          const sel = page.locator(`select:has(option[value="${tWin}"])`).first();
+          if (await sel.count()) { await sel.selectOption(tWin); await page.waitForTimeout(900); }
+        }
+        // ...and on the late one, the rows that moved money out and none in are
+        // opened, because the claim about their panel's own label is there.
+        if (name === "monitor-txn-window-late") {
+          for (const id of TXN_T_BOOK?.late?.outOnly ?? []) {
+            const row = page.locator(`[data-dated-table] tr[data-mine-row="${id}"]`).first();
+            if (await row.count()) { await row.click(); await page.waitForTimeout(150); }
+          }
+          await page.waitForTimeout(500);
+        }
+        // EVERY ROW, THEN EVERY DEALT LINE, OPEN — clicked in one pass each
+        // inside the page, because the rows are keyed and stay the same nodes
+        // while the panels mount beneath them.
+        if (name === "monitor-txn-realised") {
+          await page.evaluate(() => { for (const tr of [...document.querySelectorAll("[data-dated-table] tr[data-dated-row]")]) tr.click(); });
+          await page.waitForTimeout(900);
+          await page.evaluate(() => { for (const tr of [...document.querySelectorAll('[data-dated-table] tr[data-row="instrument"]')]) tr.click(); });
+          await page.waitForTimeout(1200);
         }
         // THE SIDE IS PICKED BY ITS VALUE, NEVER BY ITS LABEL. It carried two
         // vocabularies until the family settled it on Buys/Sells, and a walk
@@ -31667,6 +32174,17 @@ for (const theme of THEMES) {
             footRows: n(/Total · ([\d,]+) rows?/.exec(f[0] ?? "")?.[1] ?? "0"),
           };
         });
+      }
+      /**
+       * THE MANAGER'S DEALING, EVERY LINE OPEN (DSM-C10). The card
+       * reads the dated tape from the audit archive at runtime, so the walk
+       * waits for its first line rather than for a clock — a card that never
+       * draws still reaches the invariants, which then fail on what they find.
+       */
+      if (name === "mandate-trades-realised") {
+        await page.waitForSelector("[data-manager-trades] tr[data-manager-row]", { timeout: 45000 }).catch(() => {});
+        await page.evaluate(() => { for (const tr of [...document.querySelectorAll("[data-manager-trades] tr[data-manager-row]")]) tr.click(); });
+        await page.waitForTimeout(900);
       }
       if (name === "monitor-txn-drill") {
         /**
@@ -33039,13 +33557,16 @@ for (const theme of THEMES) {
         };
       });
       /**
-       * ── THE TRANSACTIONS TABLE'S HEADERS AND ITS FOOTER (MT-6, MT-7) ──
+       * ── THE TRANSACTIONS TABLE, CELL BY CELL, WITH EVERY REASON (MT-6…MT-16) ──
        *
-       * Each return header is read with its own `title`, and each footer cell by
-       * its `data-foot-cell` handle with the reason its dash carries. A reason lives
-       * in a `title`, which `innerText` never returns, so a check struck on page
-       * text could not see either claim below. Null where no dated table is drawn,
-       * which the checks read as a failure.
+       * Each main-table cell is read under the column its header names — the
+       * header's `th[data-col]` order is the reader's, and `Tr` permutes a row's
+       * cells into that same order — with its text, its own `title` and the
+       * reason the dash inside it carries. A reason lives in a `title`, which
+       * `innerText` never returns, so a check struck on page text could not see
+       * a single one of the claims below. The opened panels are read too: the
+       * capital movements, and each dealt line with the tranches drawn under it.
+       * Null where no dated table is drawn, which the checks read as a failure.
        */
       const txnT = FAST ? null : await page.evaluate(() => {
         const table = document.querySelector("[data-dated-table]");
@@ -33064,16 +33585,103 @@ for (const theme of THEMES) {
           col: th.getAttribute("data-col"), text: t(th), title: ti(th),
           note: t(th.querySelector("[data-col-note]")), noteTitle: ti(th.querySelector("[data-col-note]")),
         }));
+        const cols = heads.map((h) => h.col);
+        const cellsOf = (tr) => Object.fromEntries([...tr.cells].map((td, i) => [cols[i] ?? `#${i}`,
+          { text: t(td), title: ti(td), dash: dashOf(td), titles: [...td.querySelectorAll("[title]")].map(ti) }]));
+        const rows = [...table.querySelectorAll("tr[data-dated-row]")].map((tr) => {
+          const pill = tr.querySelector("[data-mine-how]");
+          const ro = tr.querySelector("[data-realised-of]");
+          return {
+            key: tr.getAttribute("data-dated-row"), kind: tr.getAttribute("data-dated-kind"),
+            section: tr.getAttribute("data-dated-section"), label: tr.getAttribute("data-dated-label"),
+            account: tr.getAttribute("data-dated-account"), accounts: (tr.getAttribute("data-dated-accounts") ?? "").split(";").filter(Boolean),
+            mine: tr.getAttribute("data-mine-row"), windowed: tr.hasAttribute("data-mine-windowed"),
+            trades: tr.hasAttribute("data-trades"),
+            how: pill?.getAttribute("data-mine-how") ?? null, howText: t(pill), howTitle: ti(pill),
+            boughtFirst: tr.getAttribute("data-mine-bought-first"), boughtLast: tr.getAttribute("data-mine-bought-last"),
+            valueAsof: tr.querySelector("[data-value-asof]")?.getAttribute("data-value-asof") ?? null,
+            realisedOf: ro ? { of: ro.getAttribute("data-realised-of"), title: ti(ro) } : null,
+            cells: cellsOf(tr),
+          };
+        });
+        const panels = [...table.querySelectorAll("tr[data-dated-panel]")].map((tr) => {
+          const lab = tr.querySelector("[data-mine-panel-label]");
+          const mt = tr.querySelector("tr[data-mine-move], tr[data-mine-undated]")?.closest("table");
+          return {
+            key: tr.getAttribute("data-dated-panel"),
+            label: lab ? { text: t(lab), title: ti(lab), filter: t(lab.querySelector("[data-mine-panel-filter]")) } : null,
+            moveHeads: mt ? [...(mt.tHead?.rows[0]?.cells ?? [])].map((th) => ({ text: t(th), title: ti(th) })) : null,
+            moves: [...tr.querySelectorAll("tr[data-mine-move]")].length,
+            instruments: [...tr.querySelectorAll('tr[data-row="instrument"]')].map((ir) => {
+              const dc = (n) => { const td = ir.querySelector(`[data-dealt-cell="${n}"]`); return td ? { text: t(td), dash: dashOf(td) } : null; };
+              const ro = ir.querySelector("[data-realised-of]");
+              const tranches = [];
+              for (let x = ir.nextElementSibling; x && x.matches('tr[data-row="tranche"]'); x = x.nextElementSibling) {
+                const rc = x.querySelector("[data-tranche-realised]");
+                tranches.push({ date: x.getAttribute("data-tranche-date"), acct: x.getAttribute("data-tranche-acct"),
+                  side: rc?.getAttribute("data-tranche-realised") ?? null, text: t(rc), dash: dashOf(rc) });
+              }
+              return {
+                key: ir.getAttribute("data-instrument-key"), side: ir.getAttribute("data-side-line"),
+                buys: Number(ir.getAttribute("data-buys")), sells: Number(ir.getAttribute("data-sells")),
+                staggeredSide: ir.getAttribute("data-staggered-side"), staggeredTitle: ti(ir.querySelector("[data-staggered-title]")),
+                sideLabel: t(ir.querySelector("[data-side-label]")), units: t(ir.querySelector("[data-units-line]")),
+                bought: dc("bought"), sold: dc("sold"), realised: dc("realised"),
+                realisedOf: ro ? { of: ro.getAttribute("data-realised-of"), title: ti(ro) } : null,
+                tranches,
+              };
+            }),
+          };
+        });
         const foot = table.querySelector("tr[data-dated-total]");
         const footCells = foot ? Object.fromEntries([...foot.querySelectorAll("[data-foot-cell]")].map((td) =>
           [td.getAttribute("data-foot-cell"), { text: t(td), title: ti(td), dash: dashOf(td) }])) : null;
         return {
-          heads,
+          framing: ti(document.querySelector("[data-txn-framing]")),
+          heads, rows, panels,
           foot: foot ? {
             label: { text: t(foot.cells[0]), title: ti(foot.cells[0]) },
             cells: footCells,
             doubled: foot.querySelector("[data-foot-value-doubled]")?.getAttribute("data-foot-value-doubled") ?? null,
           } : null,
+        };
+      });
+      /**
+       * ── WHAT THE MANAGER TRADED, ON A MANDATE'S OWN PAGE (DSM-C10) ──
+       *
+       * The same shape for `ManagerTrades`: each line's counts off its own
+       * handles, its Realized cell with the reason its dash
+       * carries, and the dated tranches under an opened line.
+       */
+      const mgrT = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("[data-manager-trades]");
+        if (!table) return null;
+        const t = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
+        const ti = (e) => e?.getAttribute?.("title") ?? "";
+        const dashOf = (el) => {
+          if (!el) return null;
+          const d = [el, ...el.querySelectorAll("*")].find((x) => x.children.length === 0 && x.textContent.trim() === "—");
+          if (!d) return null;
+          for (let x = d; x && x !== el.parentElement; x = x.parentElement) { const v = ti(x).trim(); if (v) return v; }
+          return "";
+        };
+        return {
+          rows: [...table.querySelectorAll("tr[data-manager-row]")].map((tr) => {
+            const c = (n) => { const td = tr.querySelector(`[data-trade-cell="${n}"]`); return td ? { text: t(td), dash: dashOf(td) } : null; };
+            const ro = tr.querySelector("[data-realised-of]");
+            const tranches = [];
+            for (let x = tr.nextElementSibling; x && x.hasAttribute("data-manager-tranche"); x = x.nextElementSibling) {
+              const rc = x.querySelector("[data-tranche-realised]");
+              tranches.push({ date: x.getAttribute("data-tranche-date"), side: rc?.getAttribute("data-tranche-realised") ?? null, text: t(rc), dash: dashOf(rc) });
+            }
+            return {
+              key: tr.getAttribute("data-manager-row"), buys: Number(tr.getAttribute("data-buys")), sells: Number(tr.getAttribute("data-sells")),
+              staggeredTitle: ti(tr.querySelector("[data-staggered-title]")),
+              realised: c("realised"),
+              realisedOf: ro ? { of: ro.getAttribute("data-realised-of"), title: ti(ro) } : null,
+              tranches,
+            };
+          }),
         };
       });
       /**
@@ -36152,7 +36760,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

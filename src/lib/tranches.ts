@@ -354,8 +354,20 @@ export type CapitalGroup = {
   committed: number | null;
   /** ...and how much of that promise is still to be called, as its statement prints it. */
   undrawn: number | null;
+  /**
+   * The dated span of EVERY movement in view, both directions — what the table
+   * is ORDERED on ("recent first" means the latest movement of either kind).
+   */
   first: string;
   last: string;
+  /**
+   * ...and the span of the PURCHASES in view alone, which is what "Purchased on"
+   * states (MT-8). Taken over both directions it read "16 Jan 2025 → 25 Jun
+   * 2026" on an account funded once, the second date a TDS-sized outflow, and
+   * ran 3P's to the day of its redemption. Empty where no purchase is in view.
+   */
+  boughtFirst: string;
+  boughtLast: string;
   /** More than one dated contribution. A fact about the count, not a judgement. */
   staggered: boolean;
   /**
@@ -679,6 +691,7 @@ export function capitalRollup(
       : held.reduce((s, p) => s + (p.costBasis ?? 0), 0);
 
     const dates = ms.map((m) => m.date).sort();
+    const boughtDates = ins.map((m) => m.date).sort();
     // BOTH ENDS: the record must reach back to inception AND forward to the date
     // the value beside it is struck on (`recordShortfall`) — the second asked of
     // a capital RECORD only, since a fund's call list is read off the very
@@ -847,6 +860,7 @@ export function capitalRollup(
       committed: c?.committed ?? null,
       undrawn: c?.undrawn ?? null,
       first: dates[0] ?? "", last: dates[dates.length - 1] ?? "",
+      boughtFirst: boughtDates[0] ?? "", boughtLast: boughtDates.at(-1) ?? "",
       staggered: ins.length > 1,
       value,
       valueAsOf: a?.asOf ?? null,

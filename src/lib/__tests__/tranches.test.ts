@@ -394,5 +394,24 @@ ok("no figure in the moves is non-finite",
     && (m.invested == null || Number.isFinite(m.invested))
     && (m.units == null || Number.isFinite(m.units))));
 
+// ── MT-8: "Purchased on" is the span of the PURCHASES, not of every movement ──
+// Green Lantern 510861 was funded once, on 16 Jan 2025, and its record's last
+// movement is a TDS-sized outflow eighteen months later; 3P's last is its
+// redemption. The row's recency still runs to its latest movement of either
+// kind, which is what "recent first" orders on.
+{
+  const mv = (date: string, direction: "in" | "out", amount: number) =>
+    ({ ...gateMoves[0], date, direction, amount, invested: direction === "in" ? amount : null, label: direction === "in" ? "Subscription" : "Capital outflow" });
+  const moves = [mv("2025-01-16", "in", 1e8), mv("2026-06-25", "out", 5000)];
+  const acc = [{ accountId: gateAcct, provider: "P", accountNo: "1", strategy: null, owner: "O" }];
+  const [g] = capitalRollup(moves, acc, gatePos, {});
+  ok("MT-8: the purchase span is the purchases' own — one payment, one date",
+    g.boughtFirst === "2025-01-16" && g.boughtLast === "2025-01-16", `${g.boughtFirst} → ${g.boughtLast}`);
+  ok("MT-8: …while the row's own span still reaches its latest movement, for ordering",
+    g.first === "2025-01-16" && g.last === "2026-06-25", `${g.first} → ${g.last}`);
+  const [o] = capitalRollup(moves, acc, gatePos, {}, "out");
+  ok("MT-8: with no purchase in view, there is no purchase span to state", o.boughtFirst === "" && o.boughtLast === "");
+}
+
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);

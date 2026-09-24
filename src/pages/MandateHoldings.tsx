@@ -14,7 +14,7 @@ import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import { loadTransactions, type Txn } from "@/lib/ledger";
-import { rollup, acctKey } from "@/lib/txnRollup";
+import { rollup, acctKey, realisedAbsence, realisedCoverageNote, STAGGERED_MIN } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
@@ -1182,13 +1182,16 @@ function ManagerTrades({ account }: { account: Account }) {
                   const isOpen = open.has(ins.key);
                   return (
                     <Fragment key={ins.key}>
-                      <Tr view={tradeView} data-manager-row={ins.key} className="cursor-pointer hover:bg-ink-700/30"
+                      <Tr view={tradeView} data-manager-row={ins.key} data-buys={ins.buys} data-sells={ins.sells} className="cursor-pointer hover:bg-ink-700/30"
                         onClick={() => setOpen((prev) => { const n = new Set(prev); if (n.has(ins.key)) n.delete(ins.key); else n.add(ins.key); return n; })}>
                         <td className="px-3 py-1.5">
                           <div className="flex items-center gap-1.5">
                             <ChevronRight className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                             <span className="text-slate-200">{ins.security}</span>
-                            {ins.staggered && <Pill>staggered · {ins.days} days</Pill>}
+                            {ins.staggered && <Pill><span data-staggered-title title={ins.buys >= STAGGERED_MIN && ins.sells >= STAGGERED_MIN
+                              ? `Bought over ${ins.buyDays} trading days and sold over ${ins.sellDays} rather than in one go.`
+                              : ins.buys >= STAGGERED_MIN ? `Built up over ${ins.buyDays} trading days rather than in one go.`
+                              : `Sold down over ${ins.sellDays} trading days rather than in one go.`}>staggered · {ins.days} days</span></Pill>}
                           </div>
                         </td>
                         <td className="px-3 py-1.5 text-right mono text-slate-400 whitespace-nowrap">
@@ -1202,17 +1205,21 @@ function ManagerTrades({ account }: { account: Account }) {
                           {ins.sells === 0 ? <span className="text-slate-600">—</span>
                             : money(ins.sold) ?? <AbsentCell reason="no row on this side reports a settled amount" />}
                         </td>
-                        <td className="px-3 py-1.5 text-right mono whitespace-nowrap">
+                        {/* THE REASON IS EACH SALE'S OWN (DSM-C10). "No capital gain
+                            statement covers this account" was printed on 67 lines
+                            that sold nothing and on three whose account DOES issue
+                            one; each sale now says which of its causes it is. */}
+                        <td className="px-3 py-1.5 text-right mono whitespace-nowrap" data-trade-cell="realised">
                           {ins.realized === null
-                            ? <AbsentCell reason="no capital gain statement covers this account, so what these sales realised was never reported" />
-                            : <span className={changeColor(ins.realized)}>{money(ins.realized)}</span>}
+                            ? <AbsentCell reason={ins.sells === 0 ? "nothing of this security was sold over the period, so nothing was realised" : realisedAbsence(ins.tranches)} />
+                            : <><span className={changeColor(ins.realized)}>{money(ins.realized)}</span>{ins.realizedOf < ins.sells && <span className="ml-1 text-[10px] text-slate-500" data-realised-of={`${ins.realizedOf}/${ins.sells}`} title={realisedCoverageNote(ins.tranches)}>{ins.realizedOf}/{ins.sells}</span>}</>}
                         </td>
                         <td className="px-3 py-1.5 text-[12px] mono text-slate-500 whitespace-nowrap">
                           {ins.first === ins.last ? fmtDate(ins.first) : `${fmtDate(ins.first)} → ${fmtDate(ins.last)}`}
                         </td>
                       </Tr>
                       {isOpen && ins.tranches.map((t, i) => (
-                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} className="bg-ink-900/40 text-[12px]">
+                        <Tr view={tradeView} key={`${ins.key}::${i}`} data-manager-tranche={ins.key} data-tranche-date={t.date} className="bg-ink-900/40 text-[12px]">
                           <td className="px-3 py-1 pl-8 text-slate-400">
                             {fmtDate(t.date)}
                             <span className={`ml-2 rounded px-1 py-0.5 text-[10px] ${t.side === "Buy" ? "bg-sky-500/15 text-sky-300" : "bg-amber-500/15 text-amber-300"}`}>{t.side}</span>
@@ -1221,8 +1228,12 @@ function ManagerTrades({ account }: { account: Account }) {
                           <td />
                           <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Buy" ? (money(t.amount) ?? "—") : ""}</td>
                           <td className="px-3 py-1 text-right mono text-slate-400 whitespace-nowrap">{t.side === "Sell" ? (money(t.amount) ?? "—") : ""}</td>
-                          <td className="px-3 py-1 text-right mono whitespace-nowrap">
-                            {t.realized === null
+                          {/* A PURCHASE REALISES NOTHING — blank, like the other
+                              side's money cell on this row, never a dash that names
+                              "this sale" on a buy. */}
+                          <td className="px-3 py-1 text-right mono whitespace-nowrap" data-tranche-realised={t.side}>
+                            {t.side !== "Sell" ? ""
+                              : t.realized === null
                               ? <AbsentCell reason={t.realizedNote ?? "no capital gain lot in the statements matches this sale"} />
                               : <span className={changeColor(t.realized)}>{money(t.realized)}</span>}
                           </td>
