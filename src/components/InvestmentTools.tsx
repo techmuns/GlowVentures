@@ -230,7 +230,7 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
           </div>
         </details>
 
-        {/* WHERE THESE LEVELS WENT (Stage 10co): every save is also sent to
+        {/* WHERE THESE LEVELS WENT (Stage 10cp): every save is also sent to
             Glow Central Research, which alerts there too — and this line says
             whether it arrived, or why not and what happens next. */}
         <ResearchStatusLine securityKey={securityKey} updatedAt={entry.updatedAt} />

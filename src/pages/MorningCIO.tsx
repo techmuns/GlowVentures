@@ -184,7 +184,7 @@ const CIO_TABS = [
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
-   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10co). *"in morning
+   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cp). *"in morning
    * CIO can you make an ALL alerts tab where … whenever the alerts which have
    * been set are triggered they show simply."* It goes LAST so the three the
    * family arranged keep their places and the default stays the movers panel;

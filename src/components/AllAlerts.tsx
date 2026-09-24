@@ -138,8 +138,11 @@ export function AllAlerts() {
                 <SortHeader col="price" view={view}>Price now</SortHeader>
                 <SortHeader col="status" view={view} align="left">Status</SortHeader>
                 <SortHeader col="gap" view={view}>Distance</SortHeader>
+                {/* The hover keeps SortHeader's own words for the move (Stage
+                    10co): the whole column lifts when dragged, not the handle
+                    alone, and the handle is what a keyboard focuses. */}
                 <SortHeader col="actions" view={view} sortable={false} pad="px-5 py-2.5"
-                  title="Change or remove an alert · drag the handle, or focus it and press ← or →, to move this column">
+                  title="Change or remove an alert · drag this column, or focus the handle and press ← or →, to move it">
                   Edit
                 </SortHeader>
               </Tr>

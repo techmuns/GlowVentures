@@ -91,7 +91,7 @@ const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-san
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10co) ──────────────────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cp) ──────────────────────
  *
  * Every price level saved in this dashboard is also sent to Glow Central
  * Research. This suite types levels on real holdings, so without this the walk
@@ -450,8 +450,16 @@ text = await page.locator("body").innerText();
 // "passing" against text that is no longer on the page.
 const valueHover = await page.$eval('[data-tile-slot="value"] [title]', (el) => el.getAttribute("title") ?? "")
   .catch(() => "");
+// …AND THE BASIS IS THE BAND'S HOVER NOW, the counts staying on its face. The
+// family asked for the lines that say what the table is to go (*"its obvious
+// from the table what it is"*), so "each holding counted once" left the band's
+// visible line for its `title` — read there, and asserted gone from the text.
+const privateBandHover = await page.$eval('tr[data-pm-section="private"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the Private Market page still counts the funds and accounts it covers",
-  /\d+ funds · \d+ folios · each holding counted once/i.test(text)
+  /\d+ funds · \d+ folios/i.test(text)
+    && /each holding counted once/i.test(privateBandHover)
+    && !/\d+ funds · \d+ folios · each holding counted once/i.test(text)
     && /across this page's \d+ private accounts · each holding counted once/i.test(valueHover),
   (/\d+ funds · \d+ folios/i.exec(text)?.[0] ?? "(no section count)") + " | "
     + (/across this page's \d+ private accounts/i.exec(valueHover)?.[0] ?? "(no hover on the value tile)"));
@@ -483,9 +491,16 @@ check("its private market value is a real measured figure, not the removed page'
 // needs to be like a hidden drop down clearly marked"* — so the claim is struck
 // on its band, which states the paid-in capital and that it is in no value
 // total even while the section is folded.
+// …AND WHAT IT PAID IS THE BAND'S HOVER, the band's face keeping its name,
+// its "missing data" marker and its counts — the sentence under it went at the
+// family's request, and must no longer be in the page's text.
+const unvaluedBandHover = await page.$eval('tr[data-pm-section="unvalued"] td[title]', (el) => el.getAttribute("title") ?? "")
+  .catch(() => "");
 check("the capital the family paid into funds that publish no NAV is stated on its own",
   /Not valued/i.test(text) && /missing data/i.test(text)
-  && /₹[\d,.]+\s*(?:Cr|L) paid in is in no value total/i.test(text));
+  && /₹[\d,.]+\s*(?:Cr|L) paid in here is in no value total/i.test(unvaluedBandHover)
+  && !/paid in (?:here )?is in no value total/i.test(text),
+  unvaluedBandHover.slice(0, 120));
 
 await page.goto(`${BASE}/private-market?tiles=unvalued`, { waitUntil: "networkidle" });
 await page.waitForTimeout(700);
@@ -798,13 +813,13 @@ check("...and names the mandates this book does carry",
 // Stage 10cn made the position page five tabs), with `#alerts` so the card
 // scrolls itself into view. Re-expressed here rather than imported from
 // `priceAlerts.ts`, so a link built there that drifted from this address fails
-// rather than agreeing with itself (Stage 10co).
+// rather than agreeing with itself (Stage 10cp).
 const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alerts`;
 
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10co — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10cp — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10co) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cp) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -911,7 +926,7 @@ const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alert
 
     // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
     // companies by their ticker — cannot take its levels. They stay here, the
-    // card says so in words, and NOTHING is sent (Stage 10co).
+    // card says so in words, and NOTHING is sent (Stage 10cp).
     await page.waitForTimeout(1200);
     const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
       kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
@@ -1028,7 +1043,7 @@ const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alert
   }
 }
 
-// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10co) ───
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cp) ───
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."*
@@ -1141,7 +1156,7 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
-// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10co) ───
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cp) ───
 //
 // Until Glow Central Research's route is deployed every send is refused as NOT
 // READY, and the sender asks again every fifteen minutes on its own — a

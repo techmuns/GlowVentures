@@ -1909,7 +1909,7 @@ export function StockInfo() {
                 price differently is one statement's figure standing for all of
                 them (the header's own price stopped doing that at Stage 10bm). A
                 statement mark is never what an alert is checked against. See
-                `priceAlerts.ts` (Stage 10co). */}
+                `priceAlerts.ts` (Stage 10cp). */}
             <InvestmentTools securityKey={securityKey} name={name} />
           </div>
         )}

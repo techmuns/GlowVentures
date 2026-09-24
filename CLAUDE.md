@@ -367,7 +367,10 @@ cash holding's genuinely-zero return both match, and both are correct.
   `SortableTable` is the seam for a panel drawn inside a row, where a hook
   cannot sit. A table that must NOT be rearranged declares
   `data-table-static="<reason>"` — an upstream financial document, a transposed
-  metric grid, a fixed list of facts. See Stage 10bh.
+  metric grid, a fixed list of facts. See Stage 10bh. The DRAG itself is
+  `src/lib/columnDrag.ts`, called from `SortHeader`: a pointer gesture that
+  lifts the WHOLE column — heading and every visible cell — rather than
+  HTML5's picture of the heading. See Stage 10co.
 - `src/components/TreeTable.tsx` — THE STANDARD FOR A TABLE WHOSE ROWS OPEN
   INTO OTHER ROWS. A row opens into ROWS OF THE SAME TABLE, in the same columns
   — never into a table drawn inside a cell, whose columns cannot line up with
@@ -456,7 +459,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   reached, watching, checking, unchecked — of which only the first two are
   verdicts. The levels are the family's own, in `watchlist.ts`, per browser.
   `alertBoxesHref` is the ONE address of a holding's alert boxes — its My
-  targets tab — read by every link that opens them. See Stage 10co.
+  targets tab — read by every link that opens them. See Stage 10cp.
 - `src/lib/researchLevels.ts` + `src/lib/researchSync.ts` +
   `src/lib/useResearchSync.ts` — EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW
   CENTRAL RESEARCH, which checks it against its own live price and raises it in
@@ -465,7 +468,7 @@ cash holding's genuinely-zero return both match, and both are correct.
   how the All alerts footer words the count (`summaryLine`), all PURE; the second
   sends it and remembers what arrived (`glow:research-levels/v1`, never inside
   the store); the third is the one mount, in the app shell. A fund or an AIF has
-  no NSE symbol, so its levels stay here and its card says so. See Stage 10co.
+  no NSE symbol, so its levels stay here and its card says so. See Stage 10cp.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -3304,6 +3307,14 @@ violate any of them.**
   rather than softened here. **The source never moved on any of them.**
 - An absent figure goes through `src/components/Absent.tsx` with a reason. Never
   type a bare `—` inline, and never let an empty collection reach a formatter.
+- **No explainer lines.** *"Why do i need all this garbage written please remove
+  its obvious from the table what it is."* Every table carries at most one short
+  note (Stage 10ci's guard, on every route), and Private Market carries none: no
+  card subtitle, no footnote, no fold of working under a table. A sentence a
+  reader ACTS ON is the hover on the figure it qualifies (`title`,
+  `TreeNameCell`'s `hint`, `SortHeader`'s `coverage`), and is asserted there.
+  Checked on structure by the `prose` probe in `check:pages` rather than on
+  wording. See Stage 10co.
 
 ## Stage 10 — the family-input layer (`src/lib/familyInputs.ts`)
 
@@ -22758,7 +22769,263 @@ the view as it opens. Those walks are all on the Portfolio Monitor, and this
 branch changes none of them. The fix, waiting for the table rather than for a
 fixed time, is left for a separate change.
 
-### Stage 10co — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
+### Stage 10co — PRIVATE MARKET SAYS NOTHING THE TABLE DOES NOT, AND A DRAGGED COLUMN LIFTS WHOLE
+
+*"Why do i need all this garbage written please remove its obvious from the
+table what it is … We have such random one-liners, two-liners, and footnotes
+everywhere across the product. Please go hunt and remove all of this. Footnotes,
+etc., because no one is genuinely reading them. The customer is literally
+looking at the table and seeing the values inside it … So first fix everything
+for the private market page, and then we go on to the others."* · *"When I'm
+dragging … a column across the table to a different position — it should lift
+up the whole column instead of just lifting up the header. If you can implement
+this across the dashboard, across all tables, that would be great."*
+
+**STAGE 10ci ANSWERED THE SAME COMPLAINT ON EVERY TABLE FIRST, AND THIS GOES
+FURTHER ON ONE PAGE.** That change cut every table's notes to one short line and
+kept Private Market's working in one collapsed "How the totals are worked out"
+line. This one was asked to remove it all on Private Market first, so what 10ci
+left there as a short line is gone too, and what it put in the fold is the hover
+on the figure it explains. Every other page keeps 10ci's one short line for
+now; the family asked for the same cut there next, in the same sentence.
+
+#### 1. Private Market carries no explainer line
+
+Audited line by line first — the Stage 10aa / 10ai / 10ap method: each claim's
+second home was found before the line went.
+
+| What was still on screen after 10ci | Where what it said lives now |
+| --- | --- |
+| the card subtitle on each tab ("One row per fund, each holding counted once. Click a row…") | the tab button's own hover, which already said it |
+| "Marks span 30 Jun → 31 Jul 2026" above the tiles | every row's As of cell, which says it per row |
+| the word under each money heading — "promised", "asked for", "cash sent", "not yet asked", "of units held", "fund's mark", "of private" | the first words of that heading's own hover |
+| the count under each return heading ("1 annualised of 4") | the heading's hover, and `data-col-coverage` — `SortHeader`'s new `coverage` |
+| the band's basis — "· each holding counted once", "· ₹X paid in is in no value total" | the band's hover; its COUNTS stay on its face, because they are data |
+| the "Counted once" line's "one holding on 2 statements" | that line's hover; its figures stay |
+| "each holding once · 11 capital accounts" under the total's label | the label's hover |
+| the "How the totals are worked out" fold: the working, the second path, the floor | the Still to call TOTAL's hover |
+| …whether Called may be set against Paid in | the Called total's hover, in both directions |
+| …the public-market funds' capital accounts, named | the COMMITTED total's hover, beside the figure they are left out of |
+| …"This page is the private side of the book: Listed ₹… · Private ₹… · Total ₹…" | **nowhere, deliberately** — the Market value tile states this page's share of the whole book, and Morning CIO's Concentration card prints every side with its own drill-down |
+| "N calls, newest first" on the Transactions band | "N calls"; the rest its hover |
+
+**A HOVER IS WEAKER THAN A CAPTION, AND THAT IS RECORDED RATHER THAN GLOSSED.**
+A reader scanning does not hover. What makes the trade right here is WHERE each
+hover is: the working behind "how are you calculating this uncalled capital of
+16 crores?" — the client's own question, Stage 10ay — is on the uncalled total
+itself, which is where that question is asked, rather than in a fold under the
+table a reader had to know to open. The floor sentence keeps 10ci's wording
+("the floor of what the funds can still call"), which that change chose so it
+never reads as the removed calls card's heading.
+
+**THE PUBLIC-MARKET CAPITAL ACCOUNTS ARE STILL NAMED.** Stage 10bw's rule is
+that a commitment the family signed must not vanish without a word, and it is
+unchanged: the clause naming Carnelian Bharat Amritkaal, Delphi and both
+Founders folios is the Committed total's hover, and its ids and words ride on
+the total row (`data-pm-cap-elsewhere`, `data-pm-cap-elsewhere-text`) so the
+sweep holds them to the book.
+
+**WHAT STAYED, AND WHY IT IS NOT THE SAME THING:**
+
+- a fund row's quiet line ("Category II · 2 folios · 6 calls · reported twice ·
+  counted once") and a folio row's provider and account number — data a reader
+  identifies the row by, not a sentence about the table;
+- the tiles' one short line (Stage 10bs) and the "missing data" marker the
+  family asked for by name (Stage 10bx);
+- **the Capital call heading's one word** — "you enter", or while the store
+  cannot be read "not available", "not set up", "signed out" (Stage 10cl). That
+  is a STATE, the thing the family reported the screen could not say, and not an
+  explainer; its reason is the word's own hover.
+
+**`pageScopeNote` IS DELETED WITH THE LINE IT FED**, rather than left computing
+the right answer into no caller. `marketSide.test.ts` §7 asserts what a reader
+relies on instead: the three funds the family named are not private, and the
+book's listed side (`marketSides`, which Morning CIO prints) holds them. `Card`
+marks its subtitle `data-card-subtitle`, and `TreeNameCell` / `TreeSectionCell`
+take a `hint` — the cell's hover — so a sentence has a home that is not a line.
+
+#### 2. Checked on STRUCTURE, never on wording
+
+A rewording that keeps a paragraph is exactly how one comes back, so the claim
+is counted rather than matched. A `prose` probe in `check:pages` counts the
+visible card subtitles, every visible leaf text block outside a table longer
+than 60 characters (longer than any tile's one line) and every one inside a
+table longer than 120 (longer than any fund's name). **`PM_NO_PROSE`** requires
+all three to be zero on every Private Market route, the removed blocks' own
+handles to be gone and the removed sentences absent. That is stricter than
+10ci's `tableNotes` guard on this page only; the guard still runs everywhere.
+
+**AND EVERY RE-HOMED FACT IS ASSERTED IN ITS NEW HOME**, because a removal and a
+re-homing are two claims and neither implies the other: PM-4, PM-4b and PM-4c
+read the working, the second path and the floor off the Still to call total's
+hover; PM-4g and the subtract check read the Called total's, in both
+directions; the clause check requires the public-market clause to be IN the
+Committed total's hover and OUT of the page's text; `PM_BAND_HINTS` and
+`PM_OVERLAP_HINT` hold the band and "Counted once" hovers, and the band's ₹
+figure to its own Paid in; the return headings' counts are read off their
+hovers. `check:family` reads the band hovers too.
+
+**TWO OF 10ci's CHECKS INVERTED RATHER THAN BEING DELETED.** *"the page states
+which side of the book it is"* and *"the notes under the table are one collapsed
+line"* asserted the fold; `PRIVATE_SIDES_GONE` and `PM_NO_PROSE` assert it and
+its handles are gone. `foldsOnArrival` still holds the AIF drill-down's fold
+shut on arrival — the one fold 10ci leaned on that is still there.
+
+Two more moved further than their wording:
+
+- **PM-2 HOLDS THE MARKET VALUE TILE TO THE BOOK**, because the sides line it
+  reconciled against is gone. Its "of the ₹X book" is struck on the STATEMENT
+  book — `statementBookPositions`, which main already carried for Stage 10cf —
+  because this page reads `statementPortfolio` (§6) while the sweep's default
+  model of the book is the live one; set against that, a correct page fails by
+  exactly the overlay.
+- **PM-7 READS EVERY FUND ROW'S AS OF CELL**, against `SIDE_BOOK.privateAsOfMax`,
+  because the Marks span line it read is gone. A range within one year prints
+  its first date without the year ("30 Jun → 31 Jul 2026"), which the first
+  draft of this check did not allow for and failed a correct page on.
+
+#### 3. A dragged column lifts whole
+
+`src/lib/columnDrag.ts`, called from `SortHeader`'s `onPointerDown`, so every
+table that declares its columns gets it with no change of its own — the reason
+the sort and the keyboard move already live in one place. HTML5's drag, which it
+replaces, can only carry a STATIC picture of the element under the pointer: the
+heading. The drag is a pointer gesture now, and what moves is a copy of the
+column as it stands on screen — the heading and every cell under it a reader can
+see, total row included — lifted with a shadow, while the column it came from
+dims in place and a bar shows where it will land.
+
+Four things it must not break, each a way a drag goes wrong quietly:
+
+- **A click still sorts.** A press only becomes a drag after 5px of travel; and
+  a drag that ends back on the heading it began on must NOT then sort it, so the
+  click after a drag is swallowed.
+- **The first column stays put**, as a subject and as a destination.
+- **It draws at the app's own scale.** `#root` carries `--app-zoom` (0.875 on a
+  wide screen). Measured in this Chromium: `getBoundingClientRect` reports
+  PAINTED pixels while CSS lengths are pre-zoom, so the copy takes the table's
+  own effective zoom and every position is divided back into its CSS pixels. A
+  copy drawn at 100% over a table drawn at 87.5% would be a different size from
+  the column it is a copy of.
+- **Escape cancels, and nothing is left behind** — no copy, no dimmed cells, no
+  bar — and the release that follows it is not a click either.
+
+The table scrolls under a copy held at its edge, so a column can be carried to a
+place not yet on screen; touch starts from the grip only, so a finger can still
+scroll a wide table sideways. The copy takes the table's own computed colours,
+so it read correctly on Stage 10cg's white theme with no change — checked by a
+screenshot taken mid-drag on the merged tree.
+
+**CHECKED BY A REAL MOUSE DRAG, READ MID-AIR**, because the copy only exists
+while the pointer is down and no snapshot taken after the drop can see it.
+`monitor-arrange` presses Weight, carries it and reads the page with the pointer
+down: exactly one copy, of the pressed column, headed with its heading, carrying
+every cell a reader can see — counted off the table by GRID POSITION,
+re-expressed in the sweep rather than imported, so a copy of the heading alone
+(HTML5's picture) carries none and fails — the source column dimmed and nothing
+else, the bar at the edge it will land on, the copy under the pointer. After the
+drop: it sits before the column the bar was on, nothing else moved, the rows
+keep their sort, and nothing is left behind. Then Escape (nothing moves, nothing
+stays) and a drag brought home (its release is a click on the heading's sort
+button, and must not sort).
+
+#### 4. Merged with main, which moved sixteen commits while this was open
+
+#74 to #92 landed while this branch waited — among them 10ci's note cut on every
+table, 10cl's Capital call cells and 10cg's new look. Three files conflicted,
+and the rule for each was 10ci's own: **main's features are kept, and this
+branch's removals are kept on top of them.**
+
+- **`SortHeader.tsx`** — the pointer drag in place of HTML5's, with 10cg's
+  `font-semibold`.
+- **`PrivateMarket.tsx`** — seven hunks: this branch's removals in six, and
+  10cl's Capital call heading in the seventh (see what stayed, above). #80's
+  FIFO returns, #82's tile layouts and #85's ADD TILE card merged without a
+  marker and are main's, checked by hand.
+- **`check-pages.mjs`** — eight hunks. Main's `bookArray` and its statement book
+  taken whole; this branch's prose checks in place of the fold checks (above);
+  main's `tableNotes`, `foldsOnArrival` and ADD TILE walks kept, the walk that
+  opened the Private Market fold dropped; the two Capital call heading checks
+  this branch had rewritten point at 10cl's word and its hover.
+- **THE `ctx` LITERAL IS A UNION**: 102 keys, none duplicated, each naming a
+  declaration — main's 101 and this branch's `prose`. `fundExposure` is absent
+  on purpose, as 10ci dropped it with the box it read.
+
+**THE LETTER.** This section was drafted as `10ca`, the letter after main's
+newest at the time (`10bz`). Main took `10ca` to `10cm` while it was open, and
+then `10cn` — #91's Position page — in the minutes before this branch was
+pushed, so it is `10co`. The stage headings were compared against main's tip at
+each merge, and it is the second comparison that caught it.
+
+#### 4b. Merged with #91, which landed as this was being pushed
+
+- **`CLAUDE.md` conflicted textually** — both sides inserted after Stage 10cm.
+  Main's section is first and keeps `10cn`; this one follows it as `10co`. Of
+  the lines naming `10cn`, two are this change's (the `columnDrag.ts` bullet in
+  Layout and the no-explainer bullet in Conventions) and moved; the other
+  thirteen are main's and stayed, each classified against main's own copy.
+- **The `ctx` literal conflicted and is a union**: #91's `stockPage` beside this
+  branch's `prose` — 103 keys, none duplicated, every one declared.
+- **#91 touched none of this change's files.** It rewrote `StockInfo.tsx` and
+  the research components; this change's checks are on Private Market and
+  `monitor-arrange`, and its bug cases patch `PrivateMarket.tsx`,
+  `columnDrag.ts` and its own checks. So the bug pass was not run again; the
+  full sweep below is its control on the tree that ships.
+- **AND #91 MEASURED THE FLAKE THIS CHANGE FIXES.** Its section records the
+  transactions walks failing under load — the dated record is 265 requests,
+  and a fixed 1.2s wait ran out before the table drew — and leaves the fix,
+  *"waiting for the table rather than for a fixed time"*, for a separate
+  change. This is that change (see below).
+
+#### 5. Verification
+
+**27 BUGS PUT BACK ONE AT A TIME, AND EVERY ONE FIRES ITS OWN CHECK.**
+`scripts/dev/pm-prose-bug.sh` restores by copy on a trap, verifies byte for byte
+and rebuilds on the way out, reports a patch that does not apply as NOT A RESULT
+rather than as clean, and runs a no-patch control first. Ten put a removed line
+or a stale hover back, eleven take a moved fact out of its hover, and six make
+the drag carry less than the whole column — the heading alone, the source not
+dimmed, Escape ignored, a drag brought home that sorts, the copy left behind
+after the drop, and the copy drawn at 100% over a zoomed table. `CASES=` re-runs
+chosen cases alone, the control always first.
+
+- **ONE CASE WAS NOT A RESULT ON THE MERGED TREE, AND THE HARNESS SAID SO.**
+  Main's `SelectableTiles` call gained a `page` prop, so the Marks-span case's
+  anchor matched nothing. Re-anchored, it fires two checks.
+- **AND READING THE CASES BACK FOUND ONE STALE HOVER.** The Transactions tab's
+  `title` still read *"What can still be called, and every capital call the
+  funds have made"* — eleven stages after Stage 10bs removed the windows it
+  named — and the check asserting their removal could not see it, because a
+  `title` is not in `innerText`. The tab reads *"Every capital call the funds
+  have made, newest first"* now, the check strikes the words on hovers as well,
+  and the 27th case puts the old hover back and fires it.
+
+**THE FIRST FULL SWEEP FOUND ONE FINDING, AND IT WAS THE WALK, NOT THE PAGE.**
+258 combinations, before #91; `monitor-txn-out` failed four checks on the one
+run taken beside the bug pass. The dated record is read from the audit archive
+at runtime, and on a loaded machine it landed after the walk's fixed 1.2s pause,
+so the Sells option was not in the DOM, its click was skipped and the page was
+checked unfiltered — the cause #91 measured to the second. The same route
+re-ran clean against both builds, and the walk now WAITS for the table and the
+option rather than pausing, which cannot make a check pass that should fail: a
+table that never draws still fails them all. All nine transactions routes then
+ran clean.
+
+**AND THE FULL SWEEP ON THE MERGED TREE CAME BACK CLEAN.** It walks #91's new
+position-page routes too, so the count is its own rather than the 258 above plus
+arithmetic: **288 combinations clean, 0 invariant failures**, with ten evidenced
+abstentions read out of the report by name — six on the Morning CIO panels (every
+KPI tile on this book carries a figure), two on Private Market (every private
+holding reports a cost), one on the redeemed-account claim (no private account is
+redeemed to nil) and one on the not-found drill-down's crumb. Not one is this
+change's own.
+
+`build` · `tsc` · `test:ingest` · `test:family` · `check:family` **93/0** ·
+`check:pages` **288 combinations clean** on the merged tree. `npm run build-book`
+regenerates `glowData.ts` and `docs/BOOK-REPORT.md` byte-identically: a line
+removed from a page is not part of the book.
+
+### Stage 10cp — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
 
 *"Does these alerts actually work, can you make this much simpler to fill in for
 the customer and also in morning CIO can you make an ALL alerts tab where in a
@@ -22772,15 +23039,17 @@ alert, and automatically come to the AI Alert section in the Glow Central
 Research dashboard."*
 
 (Written as `10bz`. While it waited, main took every letter from `10by` to
-`10cn` — its `10bz` is *"Ask Muns is off the top bar"*, its `10cg` is *"Glow
+`10co` — its `10bz` is *"Ask Muns is off the top bar"*, its `10cg` is *"Glow
 Central Research's fonts and colours"*, its `10ck` is #88's company page, which
 landed the hour the family said to merge, its `10cl` is #85's ADD TILE card,
 which landed while that merge was being verified, its `10cm` is #86's All
-Securities view, which landed while this change's final checks were running, and
-its `10cn` is #91's five-tab position page, which landed while the notes for the
-#86 merge were being written — so this is **`10co`**, the first free one. This
-work's own references moved with it each time, in code and here, and main's were
-counted against main's copy of each file and left alone. Some of main's `10cg`
+Securities view, which landed while this change's final checks were running, its
+`10cn` is #91's five-tab position page, which landed while the notes for the #86
+merge were being written, and its `10co` is #94's Private Market cut and
+whole-column drag, which landed before the notes for the #91 merge could be
+pushed — so this is **`10cp`**, the first free one. This work's own references
+moved with it each time, in code and here, and main's were counted against
+main's copy of each file and left alone. Some of main's `10cg`
 code comments describe Stage 10ci's work rather than the fonts — the
 corporate-action card, the Portfolio Monitor's route split, and their checks.
 Those are main's to repoint.)
@@ -23248,7 +23517,7 @@ What else the merge touched:
 Research and My targets — the same five on every holding, at `?tab=`. It landed
 while the notes for the #86 merge were being written, and took `10cn`. Both
 sections were inserted after `10cm`, so git marked the conflict. Main keeps
-`10cn` and comes first, and this section is **`10co`**. The headings were
+`10cn` and comes first, and this section became **`10co`**. The headings were
 compared against main's tip: the merged file differs from main's by `10co`
 alone, main's historical duplicates are unchanged, and nothing on main names
 `10co`.
@@ -23264,7 +23533,8 @@ carries it:
 - Three lines of this section's history keep `10cn`, because they record the
   letter #91 took and the one this section held then.
 - The comments this merge writes cite the stage they describe: the six about
-  #91's tabs say `10cn`, and the ones about the alerts say `10co`.
+  #91's tabs say `10cn`, and the ones about the alerts said `10co`, this
+  section's letter then.
 
 **THE MERGE WOULD HAVE BROKEN THE ALL ALERTS PENCIL, AND NO CONFLICT SAID SO.**
 The pencil, a row's name and the New alert finder all opened
@@ -23315,25 +23585,103 @@ the sentence under the closed More, the harder place, which is what the
 strengthened check is for. It also walks `stock-funds-only-targets` now, because
 every stock route carries #91's tab checks.
 
+#### …and a seventh time: #94 took `10co`, and its whole-column drag reached this table
+
+#94 removes Private Market's explainer lines and makes a dragged column lift
+whole on every table. It landed before the notes for the #91 merge could be
+pushed, and took `10co`. Both sections were inserted after `10cn`, so git marked
+the conflict. Main keeps `10co` and comes first, and this section is **`10cp`**.
+The headings were compared against main's tip: the merged file differs from
+main's by `10cp` alone, main's historical duplicates are unchanged, and nothing
+on main names `10cp`.
+
+Every line naming `10co` was placed by whether main's own copy of its file
+carries it:
+
+- #94's 5 lines here stay (its heading, its pointers in Layout and Conventions,
+  and two lines of its own letter note), and so do its 2 comments in
+  `check-pages.mjs`.
+- This section's heading, its two Layout pointers, the note at its top and its
+  36 code comments moved to `10cp`.
+- The five lines of the #91 merge note that name `10co` keep it, because they
+  record the letter this section held then. Two of them were reworded to say
+  so: "this section became", and the alert comments "said" it.
+
+What the merge touched:
+
+- **`check-pages.mjs` conflicted on the `ctx` literal alone**, and it is the
+  union: #94's `prose` beside `alertsTab` and `researchPosts`, 105 keys, none
+  duplicated, every one declared. **The first resolution kept a key and lost
+  its value.** It wrote `researchPosts` as a bare name, but this change's entry
+  is `researchPosts: [...RESEARCH_POSTS]`, and no variable is called
+  `researchPosts`, so every check on every route would have thrown. The check
+  that every key names a declaration caught it before a build. A union of keys
+  has to keep each key's value, not only its name.
+- **`check-family-inputs.mjs` merged without a marker, and was read.** It is
+  this branch's file plus exactly #94's 19 changed lines (its band-hover rows),
+  and the 7 renamed comments.
+- **#94's drag reaches the All alerts table, and it was driven there.** That
+  table declares its columns through `SortHeader`, so it gets the whole-column
+  drag with no change of its own. #94 checks the drag on `monitor-arrange`
+  alone. A real mouse drag on this tree, read mid-air, carried Price now past
+  Alert: one copy, of that column, holding its heading and all six rows' cells,
+  the seven source cells dimmed, and the drop bar showing. After the drop the
+  column sat before Alert, every body cell had followed its heading, nothing
+  was left behind, and nothing sorted. That was a scratch script with a
+  screenshot, not a permanent check — the way #94 measured its drag on the
+  white theme.
+- **ONE HOVER STILL GAVE THE OLD INSTRUCTIONS, AND NO CONFLICT COULD SHOW IT.**
+  #94 rewrote `SortHeader`'s own hover, because the whole heading drags now
+  rather than the handle: *"drag it, or focus the handle and press ← or →, to
+  move it"*. The All alerts Edit column passes a hover of its own, and it still
+  said *"drag the handle, or focus it and press ← or →"*. It uses #94's words
+  now. #94 never touched `AllAlerts.tsx`, so the merge could not flag it.
+
+**THE THREE BUG HARNESSES WERE DRY-RUN ON THE MERGED FILES, AND EVERY PATCH
+APPLIES**: this change's 49, #91's 27 and #94's 27. Each anchor was found exactly
+once in a copy of the tree, so none would report NOT A RESULT. None was re-run:
+
+- `alerts-bug.sh` — #94 changed two of the 17 files it restores, the two
+  checkers, and none of the lines its cases patch or the checks they fire. The
+  one component #94 changed that the All alerts table draws with is
+  `SortHeader`, and no alert check reads the header's markup. The drag on that
+  table was driven directly, above.
+- `stock-tabs-bug.sh` (#91's) — #94 changed none of the four page files it
+  patches, and none of its checks.
+- `pm-prose-bug.sh` (#94's) — this change touches none of the files it patches
+  but the checker, and none of its checks there: they are on Private Market and
+  `monitor-arrange`, and this change's walks are elsewhere.
+
+So the full sweep below is the control for all three, the treatment Stage 10cl
+gave #88.
+
 #### The verification
 
-Every result below is from the tree that ships: this change merged with #91
-(main `090c7e1`), and each was run again there rather than carried across.
+Every result below is from the tree that ships: this change merged with #94
+(main `9d51cad`), and each was run again there rather than carried across.
 
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
 neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (49 suites,
-2,670 checks, 0 failed — `priceAlerts.test.ts` and `researchLevels.test.ts`
+2,668 checks, 0 failed — `priceAlerts.test.ts` and `researchLevels.test.ts`
 among them; its four NOT CHECKED lines are main's: three managers' bridges with
 no performance history on their capital's own date, and the fund-NAV basis
-gate) · `check:family` **124/0**, which is #91's own 93 plus this change's 31 ·
+gate) · `check:family` **124/0**, which is #94's own 93 plus this change's 31 ·
 `check:pages` **298 combinations clean, 0 invariant failures** · `npm run
 build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY:
 a price level is the family's own input and never reaches the book. CI (`build`)
 and Cloudflare Pages are green on the final commit.
 
-**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cn records 288 combinations
-walked on main. This change adds five routes — `cio-alerts`,
+**`test:family` HAS TWO CHECKS FEWER THAN ON THE TREE MERGED WITH #91, AND BOTH
+WERE #94's TO REMOVE.** #94 took the sides line off Private Market, and
+`pageScopeNote` with it, so the two `marketSide.test.ts` checks that read that
+note went too: *"the sides on the page rebuild its stated book total"* and *"the
+scope note no longer carries the removed card's fund lists"*. A third was
+reworded, not removed. The two runs were compared check by check, and nothing
+else differs.
+
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10co records 288 combinations
+clean on main. This change adds five routes — `cio-alerts`,
 `cio-alerts-nofeed`, `cio-alerts-empty`, `cio-alerts-badge` and
 `stock-funds-only-targets` — each walked in both themes, which makes 298. The
 fourteen invariants not checked were read out of the log by route, and all
@@ -23345,17 +23693,18 @@ fourteen are main's claims:
 - **one redeemed-account line** on `private-market-folios`;
 - **one crumb** on `holdings-unknown`.
 
-None of this change's own checks abstains. Stage 10cn records two Transactions
-walks (`monitor-txn-drill`, `monitor-txn-in`) failing under load and passing
-alone; this sweep ran with no harness beside it, and both passed.
+None of this change's own checks abstains. The sweep ran with no harness beside
+it, on a build made after the last edit to any file it serves and with the
+checker as committed. #94 made the Transactions walks wait for their table
+rather than pause a fixed 1.2 s — the cause of the load failures Stage 10cn
+records — and all nine Transactions routes passed.
 
-**THE SWEEP RAN WITH A CHECKER READ BEFORE ITS LAST EDIT**, so the two routes
-that edit touched — `stock-targets` and `stock-funds-only-targets` — were walked
-again afterwards with the committed checker, in both themes: 4 combinations
-clean.
-
-**BOTH BUG HARNESSES RAN ON THIS TREE**, one after the other, in a separate
-worktree with its own preview:
+**THE BUG HARNESSES WERE DRY-RUN ON THIS TREE AND NOT RE-RUN**, for the reasons
+in the seventh merge note above: all 49 of `alerts-bug.sh`'s patches, all 27 of
+#91's `stock-tabs-bug.sh` and all 27 of #94's `pm-prose-bug.sh` apply to the
+merged files, and #94 changed none of the lines they patch or the checks they
+fire. Their last full runs were on the tree merged with #91, one after the
+other, in a separate worktree with its own preview:
 
 - `alerts-bug.sh`, all 49 cases, after a control that came back clean (its five
   routes clean, `check:family` 124/0, every suite clean). The table above is
@@ -23364,9 +23713,9 @@ worktree with its own preview:
   tab: 1 (every tab drawn at once) fires on all 36 stock routes, 4 (the tabs
   reordered) on all 36, 5 (a tile dropped) on the 31 that draw tiles, and 14
   (the plan-view sentence, now under the closed More) on `stock-targets`. The
-  other 23 cases patch code this merge did not change, and all 27 of its
-  patches were checked to still apply to the merged files. The full sweep above
-  is the control for its routes.
+  other 23 cases patch code that merge did not change.
+
+The full sweep above is the control for all three on this tree.
 
 ### Stage 10k — News & Announcements: REMOVED
 
