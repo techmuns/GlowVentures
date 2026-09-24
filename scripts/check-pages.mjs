@@ -648,6 +648,22 @@ const SECURITY_AXIS_BOOK = (() => {
     // count as cash and which are not looked through — their long shares are
     // hedged, so reading them as stock would print exposure nobody carries.
     const cash = sum(ded.filter((p) => p.assetClass === "Cash" || isArbStore(p)).map((p) => p.marketValue));
+    /**
+     * ONE DEFINITION OF CASH, AND WHERE EACH VIEW FILES IT (MSX-11, B-09).
+     * `holdingBucket`'s rule — a Cash row, or a liquid or arbitrage fund on
+     * `CASH_EQUIVALENT_KEYS` (read here as committed data) — re-derived, with the
+     * two ways the views depart from it: the category axis files a mandate's
+     * cash sleeve inside its mandate, and this axis reads the liquid funds
+     * through (their paper is real credit) where it holds the arbitrage funds as
+     * cash. `cash` above is what this axis holds as cash; these reconcile it to
+     * the Category view's Cash section, which is the sentence the page prints.
+     */
+    const isPms = (p) => acc.get(p.accountId)?.engagement === "PMS";
+    const inCashRule = (p) => p.assetClass === "Cash" || (CASH_EQ_KEYS?.has(p.securityKey) ?? false) || isArbStore(p);
+    const cashRule = sum(ded.filter(inCashRule).map((p) => p.marketValue));
+    const liquidThrough = sum(ded.filter((p) => inCashRule(p) && p.assetClass !== "Cash" && !isArbStore(p)).map((p) => p.marketValue));
+    const mandateCash = sum(ded.filter((p) => p.assetClass === "Cash" && isPms(p)).map((p) => p.marketValue));
+    const categoryCash = sum(ded.filter((p) => inCashRule(p) && !isPms(p)).map((p) => p.marketValue));
 
     // ── The look-through, recomputed here rather than imported ──────────────
     // A check that calls the helper it is checking agrees with it by
@@ -939,6 +955,9 @@ const SECURITY_AXIS_BOOK = (() => {
       // cash, a metal ETF's metal, and the disclosure's own rounding.
       unaccountedCr: (disclosedValue - derived) / 1e7,
       cashCr: cash / 1e7,
+      cashRuleCr: cashRule / 1e7, liquidThroughCr: liquidThrough / 1e7,
+      mandateCashCr: mandateCash / 1e7, categoryCashCr: categoryCash / 1e7,
+      cashRuleOk: !!CASH_EQ_KEYS,
       // The five buckets are a PARTITION: they must reconstruct NAV exactly.
       residualCr: (nav - (measured + derived + skippedValue + (disclosedValue - derived) + cash)) / 1e7,
       names: measuredKeys.size,
@@ -6531,10 +6550,25 @@ function sectionOf(text, label) {
     total: block.find(isCategoryTotalRow),
   };
 }
-/** `· N holdings · ₹X` off a section heading, in crore. */
+/**
+ * `· N holdings [(M statement lines)] · K names · ₹X` off a section heading, in
+ * crore — ONE NOUN PER COUNT (MH-06). "Holdings" are the deduped positions the
+ * section's totals are struck over, "names" the distinct securities among them
+ * (the two counts `/holdings` prints for the same section), and the by-entity
+ * view adds how many statement LINES it draws where that differs. One pattern,
+ * read by every caller, so a reworded band cannot retire one reader silently.
+ */
+const HOLDINGS_BAND = String.raw`·\s*([\d,]+)\s*holdings?(?:\s*\(([\d,]+)\s*statement lines?\))?(?:\s*·\s*([\d,]+)\s*names?)?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?`;
+/**
+ * THE FOOTER'S RETURN CELL: the whole-book figure, then the set it is struck
+ * over, on its face (MH-04 / B-07) — "on the ₹X of ₹Y that reports a cost · N
+ * of M holdings", or "every one of the N holdings reports a cost" where the
+ * table's every holding does. Nothing else may follow the figure.
+ */
+const FOOT_RETURN_CELL = /^[+\-−]?[\d.]+%(?:\s+(?:on the ₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? that reports a cost\s*[·,]\s*[\d,]+ of [\d,]+ holdings|every one of the [\d,]+ holdings? reports? a cost))?$/;
 function headingCount(head) {
-  const m = /·\s*([\d,]+)\s*holdings?\s*·\s*₹([\d,.]+)\s*(Cr|L|K)?/i.exec(head ?? "");
-  return m ? { holdings: cr(m[1]), mv: crU(m[2], m[3]) } : null;
+  const m = new RegExp(HOLDINGS_BAND, "i").exec(head ?? "");
+  return m ? { holdings: cr(m[1]), lines: m[2] ? cr(m[2]) : null, names: m[3] ? cr(m[3]) : null, mv: crU(m[4], m[5]) } : null;
 }
 /**
  * A MANDATE ROW, which is an ACCOUNT and not a security — read off the ROW'S OWN
@@ -7693,6 +7727,306 @@ const MEMBER_REALISED_BOOK = (() => {
     return best;
   } catch { return null; }
 })();
+
+/**
+ * ── WHAT THE MONITOR'S FOOTER AND ITS SECTION BANDS ARE STRUCK OVER ─────────
+ *    (MH-04 / B-07, MH-05 / B-05 / DL-5 / MSX-7, MH-06, MH-07 / B-04 / MSX-6)
+ *
+ * Four claims the holdings table makes about SETS, each re-derived here from the
+ * generated book rather than read back off the page or imported from the helper
+ * that draws it — a check that calls the helper it is checking agrees with it by
+ * construction.
+ *
+ *   `sets.all` / `sets.companies` — the footer's set on the three allocation
+ *     axes (every current holding, each dedupeGroup once) and on the Security
+ *     axis (company shares only): how many holdings, how many report a cost, the
+ *     value of each, and the FIFO return over the costed ones. FIFO is
+ *     re-expressed: a holding's gain is its unrealised plus its own realised
+ *     over the cost held plus the cost of units sold; a WHOLE PMS mandate (every
+ *     current holding of it in the set) is struck on its capital since
+ *     inception. This is Stage 10ca's rule, the one Morning CIO's tile and its
+ *     allocation Total are held to by fixer M1 — so the three agree on one set.
+ *   `statements` — the capital gain statements' own total, the TAX figure
+ *     Capital Gains and the Ledger print, with its accounts and window.
+ *   `sections` — the category axis's partition, `holdingBucket` re-expressed:
+ *     a PMS account's rows are its mandate, a cash-equivalent key is Cash, a
+ *     company share is Direct Equity where the account is the family's own, and
+ *     anything else is its asset class. Deduped holdings and distinct names per
+ *     section — the two counts `/holdings` prints for the same section.
+ *   `sector` — tiers 1 and 3 of the shared sector index, per held company: the
+ *     first consolidated row that prints a sector, else screener.in's GICS for
+ *     the NSE symbol, else Unclassified. Tier 2 (the fund filings) is not loaded
+ *     on the allocation axes, and `monitorSectors.test.ts` asserts it places no
+ *     held company the other two leave unplaced; so this is the whole answer.
+ */
+const MONITOR_BASIS_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const gains = bookArray(src, "BOOK_CAPITAL_GAINS") ?? [];
+    if (!accounts.length || !positions.length || !CASH_EQ_KEYS) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const num = (x) => typeof x === "number" && Number.isFinite(x);
+    const total = (xs) => xs.reduce((a, p) => a + p.marketValue, 0);
+    const small = smallKeysOf(positions);
+    const closed = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const current = positions.filter((p) => !closed(p) && !small.has(p.securityKey));
+    const seen = new Set();
+    const ded = current.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const costed = (p) => num(p.costBasis) && !p.costUnavailable;
+    const fifo = (set) => {
+      const inSet = new Map();
+      for (const p of set) {
+        if (!inSet.has(p.accountId)) inSet.set(p.accountId, new Set());
+        inSet.get(p.accountId).add(p.securityKey);
+      }
+      const whole = new Set();
+      for (const [id, keys] of inSet) {
+        const a = acc.get(id);
+        if (a?.engagement !== "PMS" || !a.capital || !(a.capital.contributed > 0)) continue;
+        const all = current.filter((p) => p.accountId === id);
+        if (all.length && all.every((p) => keys.has(p.securityKey))) whole.add(id);
+      }
+      let gain = 0, deployed = 0, realised = null;
+      const mmv = new Map(), mcost = new Map();
+      for (const p of set) {
+        if (whole.has(p.accountId)) {
+          mmv.set(p.accountId, (mmv.get(p.accountId) ?? 0) + p.marketValue);
+          if (costed(p)) mcost.set(p.accountId, (mcost.get(p.accountId) ?? 0) + p.costBasis);
+          continue;
+        }
+        if (!costed(p)) continue;
+        gain += p.marketValue - p.costBasis + (num(p.realizedPnL) ? p.realizedPnL : 0);
+        deployed += p.costBasis + (num(p.costOfUnitsSold) ? p.costOfUnitsSold : 0);
+        if (num(p.realizedPnL)) realised = (realised ?? 0) + p.realizedPnL;
+      }
+      for (const id of whole) {
+        const cap = acc.get(id).capital;
+        gain += (mmv.get(id) ?? 0) + cap.withdrawn - cap.contributed;
+        deployed += cap.contributed;
+        realised = (realised ?? 0) + (mcost.get(id) ?? 0) + cap.withdrawn - cap.contributed;
+      }
+      return { pct: deployed > 0 ? (gain / deployed) * 100 : null, realised, whole: whole.size };
+    };
+    const setOf = (xs) => {
+      const c = xs.filter(costed);
+      return { holdings: xs.length, costedCount: c.length, bookValue: total(xs), costedValue: total(c),
+        ret: fifo(c).pct, realised: fifo(xs).realised, whole: fifo(xs).whole };
+    };
+    const companies = ded.filter((p) => p.assetClass === "Equity");
+    const stmts = gains.filter((c) => c.realisedST != null || c.realisedLT != null);
+    const dates = (xs) => xs.filter(Boolean).sort();
+    const bucketOf = (p) => {
+      const e = acc.get(p.accountId)?.engagement;
+      if (e === "PMS") return "PMS mandates";
+      if (CASH_EQ_KEYS.has(p.securityKey)) return "Cash";
+      if (p.assetClass === "Equity") return e === "Direct" || e === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
+      return p.assetClass;
+    };
+    const sections = new Map();
+    for (const p of ded) {
+      const k = bucketOf(p);
+      const s = sections.get(k) ?? { holdings: 0, names: new Set() };
+      s.holdings += 1; s.names.add(p.securityKey);
+      sections.set(k, s);
+    }
+    const SYM = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const VENDOR = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    // Deduped over EVERY position, as the page's `consolidated` is — the index
+    // is built over it, closed and small rows included.
+    const seenAll = new Set();
+    const allShares = positions.filter((p) => {
+      if (p.assetClass !== "Equity") return false;
+      if (!p.dedupeGroup) return true;
+      if (seenAll.has(p.dedupeGroup)) return false;
+      seenAll.add(p.dedupeGroup); return true;
+    });
+    const sector = new Map();
+    for (const k of new Set(companies.map((p) => p.securityKey))) {
+      // The index is built over the CONSOLIDATED company shares, current or not
+      // — a company's sector does not depend on how much of it is held.
+      const rows = allShares.filter((p) => p.securityKey === k);
+      const book = rows.find((p) => !!p.sector && p.sector !== "Unclassified");
+      if (book) { sector.set(k, { sector: book.sector, from: "book" }); continue; }
+      const symbol = rows.find((p) => !!p.symbol)?.symbol ?? SYM[k] ?? null;
+      const g = symbol ? VENDOR[symbol]?.gics : null;
+      sector.set(k, g && g !== "Unclassified" ? { sector: g, from: "vendor" } : { sector: "Unclassified", from: null, symbol });
+    }
+    return {
+      sets: { all: setOf(ded), companies: setOf(companies) },
+      statements: stmts.length ? {
+        total: stmts.reduce((a, c) => a + (c.realisedST ?? 0) + (c.realisedLT ?? 0), 0),
+        accounts: stmts.length,
+        from: dates(stmts.map((c) => c.periodFrom))[0] ?? null,
+        to: dates(stmts.map((c) => c.periodTo)).pop() ?? null,
+      } : null,
+      sections: new Map([...sections].map(([k, s]) => [k, { holdings: s.holdings, names: s.names.size }])),
+      heldTotal: ded.length,
+      sector,
+      bookPlaced: [...sector.values()].filter((s) => s.from === "book").length,
+    };
+  } catch { return null; }
+})();
+
+
+/**
+ * ── THE MONITOR'S FOOTER NAMES ITS SETS (MH-04 / B-07, MH-05 / B-05 / DL-5 / MSX-7)
+ *
+ * The whole-book return on cost is struck over the holdings that REPORT a cost —
+ * Stage 10ca's decision, and the set Morning CIO's tile and allocation Total are
+ * held to — and the footer prints that set UNDER the figure, not only in a
+ * popover. Its realised is FIFO over the same holdings, which is a different
+ * figure from the capital gain statements' own tax total, and the cell says
+ * which on its face and names the statements' total in its hover.
+ *
+ * Every expectation is `MONITOR_BASIS_BOOK`'s, derived from the book. A missing
+ * footer, set line, face or hover is a FAILURE: these routes draw rows, so a
+ * footer that lost a handle is the regression, not a reason to stand down.
+ */
+const footBasisChecks = (setKey) => [
+  [`the footer's whole-book return names, on its face, the holdings it is struck over — the ones that report a cost (${setKey})`, (t, ctx) => {
+    const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
+    const f = ctx?.monitorFoot;
+    if (!b || !f?.returnSet) return false;
+    const [c, n] = String(f.returnSet.counts ?? "").split("/").map(Number);
+    if (c !== b.costedCount || n !== b.holdings) return false;
+    if (c === n) return /^every one of the [\d,]+ holdings? reports? a cost$/i.test(f.returnSet.text);
+    const m = /^on the ₹([\d,.]+)\s*(Cr|L|K)? of ₹([\d,.]+)\s*(Cr|L|K)? that reports a cost\s*[·,]\s*([\d,]+) of ([\d,]+) holdings$/i
+      .exec(f.returnSet.text);
+    if (!m) return false;
+    return Math.abs(crU(m[1], m[2]) - b.costedValue / 1e7) <= 0.06
+      && Math.abs(crU(m[3], m[4]) - b.bookValue / 1e7) <= 0.06
+      && cr(m[5]) === b.costedCount && cr(m[6]) === b.holdings;
+  }],
+  [`…and the figure is FIFO over exactly those holdings, re-derived from the book (${setKey})`, (t, ctx) => {
+    const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
+    const f = ctx?.monitorFoot;
+    if (!b || b.ret === null || !f?.returnText) return false;
+    const pct = signedPctOf(f.returnText);
+    return Number.isFinite(pct) && Math.abs(pct - b.ret) <= 0.006;
+  }],
+  [`the footer's realised is FIFO's over the same holdings — a whole mandate since inception, every other holding its own record (${setKey})`, (t, ctx) => {
+    const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
+    const f = ctx?.monitorFoot;
+    if (!b || !f) return false;
+    const v = f.realised === null ? null : Number(f.realised);
+    if (b.realised === null) return v === null;
+    return v !== null && Number.isFinite(v) && Math.abs(v - b.realised) <= 1;
+  }],
+  [`…and it says its basis on its face, with the capital gain statements' own total, accounts and window in its hover (${setKey})`, (t, ctx) => {
+    const b = MONITOR_BASIS_BOOK?.sets?.[setKey];
+    const st = MONITOR_BASIS_BOOK?.statements;
+    const f = ctx?.monitorFoot;
+    if (!b || !st || !f?.realisedFace || !f?.realisedNote) return false;
+    const face = setKey === "companies" ? /^names still held · statement windows$/i.test(f.realisedFace)
+      : b.whole ? new RegExp(String.raw`^incl\. ${b.whole} mandates? since inception · excl\. names exited outside (it|them)$`, "i").test(f.realisedFace)
+      : /^each record's own window · excl\. names exited$/i.test(f.realisedFace);
+    const m = /statements themselves report ([+\-−]?)₹([\d,.]+)\s*(Cr|L|K)? across (\d+) accounts?/i.exec(f.realisedNote);
+    if (!face || !m) return false;
+    const v = crU(m[2], m[3]) * (m[1] === "-" || m[1] === "−" ? -1 : 1);
+    const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = (iso) => { const d = new Date(iso); return new RegExp(String.raw`\b${d.getUTCDate()} ${MON[d.getUTCMonth()]}\w* ${d.getUTCFullYear()}\b`); };
+    return Math.abs(v - st.total / 1e7) <= 0.006 && Number(m[4]) === st.accounts
+      && day(st.from).test(f.realisedNote) && day(st.to).test(f.realisedNote)
+      // What it leaves out is named: a name sold out entirely is no row here.
+      && /Not in this total: .*sold out entirely/i.test(f.realisedNote);
+  }],
+  /**
+   * AND THE ROWS ADD TO IT. A footer on the right basis over rows that do not
+   * reconstruct it is two figures for one set. Read off each row's own
+   * `data-realised` (present only where a figure is printed), in rupees, so a
+   * drift far below the compact precision the cells print still fails.
+   */
+  [`the rows' realised add to the footer's, to the rupee (${setKey})`, (t, ctx) => {
+    const f = ctx?.monitorFoot;
+    const rows = ctx?.monitorMember?.rows;
+    if (!f || !rows?.length) return false;
+    const vals = rows.map((r) => (r.realised === null || r.realised === "" ? null : Number(r.realised)));
+    const known = vals.filter((v) => v !== null);
+    if (f.realised === null) return known.length === 0;
+    return known.every(Number.isFinite) && Math.abs(known.reduce((a, v) => a + v, 0) - Number(f.realised)) <= 1;
+  }],
+];
+/** …and on a sectioned axis, the sections add to it too — in rupees, off `data-realised`. */
+const SECTION_REALISED = [
+  ["the section totals' realised add to the footer's, to the rupee", (t, ctx) => {
+    const gate = needTotals(ctx);
+    if (gate) return gate;
+    const ct = ctx.categoryTotals;
+    const known = ct.rows.map((r) => r.realised).filter((v) => v !== null);
+    if (ct.footer.realised === null) return known.length === 0;
+    return known.every(Number.isFinite) && Math.abs(known.reduce((a, v) => a + v, 0) - ct.footer.realised) <= 1;
+  }],
+];
+
+/**
+ * ── ONE NOUN PER COUNT (MH-06) ──────────────────────────────────────────────
+ *
+ * A section band says how many HOLDINGS it is (the deduped positions its totals
+ * are struck over), how many NAMES (the distinct securities among them) — the
+ * two counts `/holdings` prints for the same section — and, on the by-entity
+ * view, how many statement LINES it draws where that differs. On the category
+ * axis each section's two counts are held to `holdingBucket` re-expressed over
+ * the book; on every axis the sections' holdings add to the book's own count
+ * and their lines to the rows the table draws.
+ */
+const SECTION_COUNTS = [
+  ["each category section's holdings and names are the book's own count for that section", (t, ctx) => {
+    const book = MONITOR_BASIS_BOOK?.sections;
+    const secs = ctx?.sectionRows;
+    if (!book || !secs?.length) return false;
+    return secs.length === book.size && secs.every((x) => {
+      const want = book.get(x.key);
+      const head = headingCount(x.text);
+      return !!want && !!head && x.holdings === want.holdings && x.names === want.names
+        && head.holdings === want.holdings && head.names === want.names;
+    });
+  }],
+];
+const sectionTotalsTie = (axis) => [
+  [`the ${axis} sections' holdings add to the book's own count, and their statement lines to the rows drawn`, (t, ctx) => {
+    const secs = ctx?.sectionRows;
+    const rows = ctx?.tableRows;
+    const total = MONITOR_BASIS_BOOK?.heldTotal;
+    if (!secs?.length || !rows?.length || !total) return false;
+    // Mandate rows stand for many holdings; a statement line is a row with each
+    // mandate expanded to its shares.
+    const fromRows = rows.reduce((n, r) => n + (r.mandate ? (r.holdings || 1) : 1), 0);
+    return secs.every((x) => Number.isFinite(x.names) && Number.isFinite(x.lines) && x.names <= x.holdings)
+      && secs.reduce((n, x) => n + x.holdings, 0) === total
+      && secs.reduce((n, x) => n + x.lines, 0) === fromRows;
+  }],
+];
+
+/**
+ * ── THE SECTOR COLUMN IS THE SHARED INDEX, AND UNCLASSIFIED SAYS WHY (MH-07) ──
+ *
+ * Every company row's Sector cell is what `MONITOR_BASIS_BOOK.sector` derives —
+ * its statement's sector, else screener.in's for its NSE symbol — and never the
+ * statement alone. An Unclassified cell carries a reason naming the three
+ * sources it was looked up in. Load-bearing: the table must show companies placed
+ * by screener.in that the statements leave unplaced, or a build that wired the
+ * column back to `Position.sector` would pass by showing only the book's own.
+ */
+const sectorCellChecks = (label) => [
+  [`every company row's Sector is the shared three-tier index's, and Unclassified names its reason (${label})`, (t, ctx) => {
+    const book = MONITOR_BASIS_BOOK?.sector;
+    const rows = (ctx?.tableRows ?? []).filter((r) => r.securityKey && book?.has(r.securityKey) && r.sector !== null);
+    if (!book || !rows.length) return false;
+    const vendorPlaced = rows.filter((r) => book.get(r.securityKey).from === "vendor").length;
+    return vendorPlaced > 0 && rows.every((r) => {
+      const want = book.get(r.securityKey);
+      if (r.sector !== want.sector) return false;
+      return want.sector !== "Unclassified"
+        || /^Unclassified — .*screener\.in.*left unplaced/i.test(r.sectorWhy ?? "");
+    });
+  }],
+];
 
 /** The first signed percentage in a cell, and half of its last printed decimal. */
 const pctIn = (text) => {
@@ -9413,20 +9747,19 @@ const axisChecks = (axis, expected) => [
     const sum = secs.reduce((a, x) => a + x.subtotal, 0) / 1e7;
     return Number.isFinite(nav) && Math.abs(sum - nav) <= NAV_TOL;
   }],
-  // 4. ...AND SO DO THEIR HOLDING COUNTS, against the footer's own row count on
-  //    the same page. Value alone can balance while a row is double-counted in
-  //    one section and dropped from another.
+  // 4. ...AND SO DO THEIR HOLDING COUNTS. Value alone can balance while a row is
+  //    double-counted in one section and dropped from another. Since a band
+  //    counts HOLDINGS and NAMES (MH-06) — the deduped positions its totals are
+  //    struck over, not the rows it draws — the holdings are held to the book's
+  //    own count and the statement lines to the rows on screen, which is
+  //    `sectionTotalsTie`'s claim; a repeated section fails first.
   [`every holding lands in exactly one ${axis} section`, (t, ctx) => {
     const secs = ctx?.sectionRows;
     if (!secs?.length) return { notChecked: "no section headings on this run" };
     const keys = secs.map((x) => x.key);
     if (new Set(keys).size !== keys.length) return false;      // a repeated section
-    const rows = ctx?.tableRows;
-    if (!rows?.length) return { notChecked: "no holdings rows on this run" };
-    // Mandate rows stand for many holdings; the section counts holdings, so
-    // reconstruct the same figure from the rows themselves.
-    const fromRows = rows.reduce((n, r) => n + (r.mandate ? (r.holdings || 1) : 1), 0);
-    return secs.reduce((n, x) => n + x.holdings, 0) === fromRows;
+    if (!ctx?.tableRows?.length) return { notChecked: "no holdings rows on this run" };
+    return sectionTotalsTie(axis)[0][1](t, ctx) === true;
   }],
   // 5. AN UNCLASSIFIED SECTION NAMES ITS CAUSE. "Other" would read as a bucket
   //    the family chose. If the axis ever classifies everything this passes
@@ -13377,7 +13710,7 @@ const RETURN_COLUMNS = [
       const onCost = (h) => /^(Return|HPR)$/i.test(h.label);
       for (const h of head) {
         const cell = String(foot[h.headIndex] ?? "").trim();
-        if (onCost(h)) { if (!/^[+\-−]?[\d.]+%$/.test(cell)) return false; }
+        if (onCost(h)) { if (!FOOT_RETURN_CELL.test(cell)) return false; }
         // A DASH, and never a percentage: a rate under a heading that cannot
         // strike one is the whole defect this asserts against.
         else if (cell !== "—") return false;
@@ -21691,8 +22024,8 @@ const INVARIANTS = {
       const foot = ctx?.footerCells;
       if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
       const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
-      const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
-        .map((m) => unit(m[1], m[2]));
+      const parts = [...t.matchAll(new RegExp(HOLDINGS_BAND, "gi"))]
+        .map((m) => unit(m[4], m[5]));
       const total = moneyCell(foot[COL.mv]);
       if (!parts.length || !Number.isFinite(total)) return false;   // no input is never a pass
       const sum = parts.reduce((a, b) => a + b, 0);
@@ -21857,10 +22190,13 @@ const INVARIANTS = {
      * what says the two descriptor columns are past the last figure. The cell
      * before them is the total return, which is where the money now stops.
      */
-    ["the footer totals nothing under the two descriptor columns", (t) => {
-      const foot = t.split("\n").find((l) => /^Total\s*·\s*\d+\s*rows\t/.test(l));
-      if (!foot) return false;
-      const cells = foot.split("\t");
+    ["the footer totals nothing under the two descriptor columns", (t, ctx) => {
+      // Read by COLUMN off `footerCells`. It used to split the page's text on
+      // newlines and take the "Total · N rows" line — and the return cell now
+      // carries the set it is struck over as a line of its own under the
+      // figure (MH-04), which cuts that text line at the figure.
+      const cells = ctx?.footerCells;
+      if (!cells?.length) return false;
       // …Realised, Return, Sector, Entities. The two descriptor columns stay
       // empty; the last figure the footer carries is now the return, since the
       // separate YTD column (and its absent total) is gone — YTD is a Return
@@ -21868,7 +22204,7 @@ const INVARIANTS = {
       return cells.length >= 3
         && cells[cells.length - 1].trim() === ""
         && cells[cells.length - 2].trim() === ""
-        && /^[+-]?[\d.]+%$/.test(cells[cells.length - 3].trim());
+        && FOOT_RETURN_CELL.test(cells[cells.length - 3].trim());
     }],
     /**
      * ── DENSITY, MEASURED RATHER THAN DESCRIBED ─────────────────────────────
@@ -21979,6 +22315,13 @@ const INVARIANTS = {
     // clubbing is a property of the ROW, so a build that did it on one axis and
     // not another is exactly what these catch.
     ...FUND_CLASSES,
+    // ── WHAT THE FOOTER AND THE BANDS ARE STRUCK OVER, AND THE SECTOR COLUMN
+    // (MH-04, MH-05, MH-06, MH-07) — every expectation `MONITOR_BASIS_BOOK`'s.
+    ...footBasisChecks("all"),
+    ...SECTION_REALISED,
+    ...SECTION_COUNTS,
+    ...sectionTotalsTie("category"),
+    ...sectorCellChecks("category"),
   ],
   /**
    * ── "AND ANOTHER Y CRORES THROUGH THESE FIVE FUNDS" ────────────────────────
@@ -22625,6 +22968,40 @@ const INVARIANTS = {
         && Math.abs(covers - (directly + derived)) <= 0.15;
     }],
     /**
+     * ── THIS VIEW'S CASH AND THE CATEGORY VIEW'S CASH ARE BRIDGED (MSX-11) ────
+     *
+     * Two figures for "the family's cash" a click apart — ₹74 Cr here and ₹78 Cr
+     * in the Category view's Cash section — and a reader who has seen both needs
+     * the bridge, not a third definition: the family's cash rule (every Cash row,
+     * liquid fund and arbitrage fund, `holdingBucket`'s own) less the liquid
+     * funds this view reads through is this bucket; the Category view counts
+     * those liquid funds and files the cash inside PMS mandates with each
+     * mandate. Every figure is `SECURITY_AXIS_BOOK`'s, re-expressed over the
+     * book, and the bridge must also ADD UP on the page's own printed figures, so
+     * a sentence naming five right numbers that do not reconcile still fails.
+     */
+    ["the cash bucket names its bridge to the Category view's Cash section, and the bridge adds up", (t, ctx) => {
+      const cov = ctx?.stockCoverage?.exposure;
+      if (!cov) return false;
+      const b = SECURITY_AXIS_BOOK;
+      if (!b?.cashRuleOk) return false;
+      if (/still loading|did not answer/i.test(cov)) return { notChecked: "the look-through did not answer on this run" };
+      const cr = (re) => { const m = re.exec(cov); return m ? crU(m[1], m[2]) : NaN; };
+      const cash = cr(/₹([\d,.]+)\s*(Cr|L|K)? is cash: the book.s own cash rows/i);
+      const rule = cr(/family.s cash rule \(₹([\d,.]+)\s*(Cr|L|K)?: every Cash row, liquid fund and arbitrage fund\)/i);
+      const liquid = cr(/less the ₹([\d,.]+)\s*(Cr|L|K)? of liquid funds, which this view reads through/i);
+      const category = cr(/Category view.s Cash section reads ₹([\d,.]+)\s*(Cr|L|K)?/i);
+      const mandate = cr(/files the ₹([\d,.]+)\s*(Cr|L|K)? of cash inside PMS mandates with each mandate/i);
+      if ([cash, rule, liquid, category, mandate].some((v) => !Number.isFinite(v))) return false;
+      const near = (a, e) => Math.abs(a - e) <= 0.06;
+      return near(rule, b.cashRuleCr) && near(liquid, b.liquidThroughCr)
+        && near(category, b.categoryCashCr) && near(mandate, b.mandateCashCr)
+        // the rule less the liquid funds is this bucket…
+        && Math.abs(rule - liquid - cash) <= 0.15
+        // …and this bucket less the mandates' cash, plus the liquid funds, is the Category view's.
+        && Math.abs(cash - mandate + liquid - category) <= 0.15;
+    }],
+    /**
      * THE AIF BLOCK IS NAMED WITH ITS VALUE AND ITS CAUSE. Half this book by
      * value has no look-through and never will: an AIF files no disclosure that
      * joins to a folio the family holds. Told "no data" a reader goes looking
@@ -22789,6 +23166,10 @@ const INVARIANTS = {
      */
     ["the derived fence survived the caption's removal", (t, ctx) =>
       (ctx?.colNotes ?? []).some((n) => /no part of the book's NAV/i.test(n.title ?? ""))],
+    // ── THE FOOTER ON THIS AXIS IS STRUCK OVER THE COMPANY SHARES THE ROWS ARE,
+    // and names that set; the Sector column is the shared index (MH-04 – MH-07).
+    ...footBasisChecks("companies"),
+    ...sectorCellChecks("security"),
   ],
   /**
    * ── THE CAGR VIEW, AND THE GUARD THAT MAKES IT SAFE ─────────────────────────
@@ -23280,9 +23661,11 @@ const INVARIANTS = {
   // axis: the sections it totals are the family's own here, and a partition that
   // adds up on the category axis can still miss on one the family defined.
   "monitor-assetclass": [...axisChecks("asset class", ["Equity", "Debt", "Alternate", "Cash"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
-    ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE],
+    ...CASH_ON_AXIS("assetClass"), ...CASH_RULE_HEADINGS("assetClass"), ...CASH_HEADING_COUNTS, ...NO_PHANTOM_DUPLICATE,
+    ...footBasisChecks("all"), ...SECTION_REALISED],
   "monitor-basket": [...axisChecks("basket", ["Stable Growth", "Entrepreneurial Growth", "Thematic & Tactical", "Liquidity"]), ...CATEGORY_TOTALS, ...AXIS_EXPANSION, ...FUND_CLASSES,
-    ...CASH_ON_AXIS("basket"), ...CASH_RULE_HEADINGS("basket"), ...NO_PHANTOM_DUPLICATE],
+    ...CASH_ON_AXIS("basket"), ...CASH_RULE_HEADINGS("basket"), ...NO_PHANTOM_DUPLICATE,
+    ...footBasisChecks("all"), ...SECTION_REALISED],
   /**
    * ── AND ONE OF THEM ACTUALLY OPENED, ON THE DEFAULT AXIS ──────────────────
    *
@@ -23686,6 +24069,11 @@ const INVARIANTS = {
   "monitor-entity": [
     ...CATEGORY_TOTALS,
     ...CATEGORY_TOTAL_NOT_A_HOLDING,
+    // The footer is consolidated on this view too, so it names the same set and
+    // the same realised basis; a band counts holdings, with its statement lines.
+    ...footBasisChecks("all"),
+    ...SECTION_REALISED,
+    ...sectionTotalsTie("by-entity"),
     ["the by-entity view still sections into Direct Equity, PMS mandates and the wrappers",
       (t) => !!sectionOf(t, "DIRECT EQUITY") && !!sectionOf(t, "PMS MANDATES") && !!sectionOf(t, "AIF")],
     // A mandate row is one account's statement already, so the by-entity toggle
@@ -23714,8 +24102,8 @@ const INVARIANTS = {
       const foot = ctx?.footerCells;
       if (!foot?.length) return { notChecked: "the footer was not captured on this run" };
       const unit = (n, u) => Number(n.replace(/,/g, "")) * (u === "L" ? 0.01 : u === "K" ? 0.0001 : 1);
-      const parts = [...t.matchAll(/·\s*\d+\s*holdings?\s*·\s*₹([\d.,]+)\s*(Cr|L|K)?/gi)]
-        .map((m) => unit(m[1], m[2]));
+      const parts = [...t.matchAll(new RegExp(HOLDINGS_BAND, "gi"))]
+        .map((m) => unit(m[4], m[5]));
       const total = moneyCell(foot[COL.mv]);
       if (!parts.length || !Number.isFinite(total)) return false;
       const sum = parts.reduce((a, b) => a + b, 0);
@@ -28754,6 +29142,14 @@ for (const theme of THEMES) {
            */
           cellTitles: [...tr.cells].map((td) =>
             td.querySelector("[title]")?.getAttribute("title") ?? td.getAttribute("title") ?? ""),
+          /**
+           * THE SECTOR CELL, off its own handle (MH-07): `data-sector` is what
+           * the shared three-tier index placed the company in, and its `title`
+           * the reason where that is Unclassified. Null on a mandate or a fund
+           * row, whose Sector cell is an absence with its own reason.
+           */
+          sector: tr.querySelector("[data-sector]")?.getAttribute("data-sector") ?? null,
+          sectorWhy: tr.querySelector("[data-sector]")?.getAttribute("title") ?? null,
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
       /**
@@ -28771,6 +29167,28 @@ for (const theme of THEMES) {
             key: tr.getAttribute("data-security-key"),
             realised: tr.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
           })),
+        };
+      });
+      /**
+       * WHAT THE FOOTER SAYS IT IS STRUCK OVER (MH-04, MH-05), off its own
+       * handles: the return cell's set line (`data-footer-return-set` carries
+       * "costed/holdings"), and the realised cell's short face and the hover
+       * under it. `null` where no footer is drawn, which the checks treat as a
+       * finding wherever the table has rows.
+       */
+      const monitorFoot = FAST ? null : await page.evaluate(() => {
+        const f = document.querySelector("tfoot tr[data-footer-total]");
+        if (!f) return null;
+        const set = f.querySelector("[data-footer-return-set]");
+        const retCell = set?.closest("td") ?? null;
+        const basis = f.querySelector("[data-realised-basis]");
+        return {
+          returnSet: set ? { counts: set.getAttribute("data-footer-return-set"), text: (set.innerText ?? "").replace(/\s+/g, " ").trim() } : null,
+          returnText: retCell ? (retCell.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          realised: f.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
+          realisedFace: (f.querySelector("[data-realised-face]")?.innerText ?? "").replace(/\s+/g, " ").trim() || null,
+          realisedNote: basis?.getAttribute("title") ?? null,
+          rows: document.querySelectorAll("tbody tr[data-bucket]").length,
         };
       });
       /**
@@ -29537,7 +29955,12 @@ for (const theme of THEMES) {
               capital.push(i === 0 ? c : null); costHeld.push(i === 0 ? k : null);
             }
           }
-          return { text, title, capital, costHeld };
+          // THE REALISED FIGURE ITSELF, off `data-realised` — present only where
+          // a figure is printed — so the sections are added in rupees rather
+          // than at the compact precision their text prints (MH-05).
+          const rz = tr.querySelector("td[data-realised]")?.getAttribute("data-realised");
+          const realised = rz == null || rz === "" ? null : Number(rz);
+          return { text, title, capital, costHeld, realised };
         };
         const foot = document.querySelector("tfoot tr[data-footer-total]");
         return {
@@ -31086,6 +31509,10 @@ for (const theme of THEMES) {
           axis: tr.getAttribute("data-axis"),
           subtotal: Number(tr.getAttribute("data-subtotal")),
           holdings: Number(tr.getAttribute("data-holdings")),
+          // ONE NOUN PER COUNT (MH-06): the distinct securities, and the
+          // statement lines drawn (which differ from holdings on ?view=entity).
+          names: tr.hasAttribute("data-names") ? Number(tr.getAttribute("data-names")) : null,
+          lines: tr.hasAttribute("data-lines") ? Number(tr.getAttribute("data-lines")) : null,
           ruleMV: Number(tr.getAttribute("data-rule-mv")),
           text: (tr.innerText ?? "").replace(/\s+/g, " ").trim(),
         })));
@@ -32232,7 +32659,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -8,7 +8,9 @@ import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLink } from "@/components/StockLink";
 import { useStockExposure } from "@/lib/useStockExposure";
-import type { FundExposureRow } from "@/lib/lookthrough";
+import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
+import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
+import { symbolFor, symbolForKey } from "@/lib/quotes";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
@@ -24,7 +26,7 @@ import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/ac
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn } from "@/lib/ledger";
-import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, type FifoTotals } from "@/lib/fifo";
+import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, realisedBasisNote, type FifoTotals, type RealisedBasisFacts } from "@/lib/fifo";
 import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, type GroupRow } from "@/lib/txnRollup";
 import {
@@ -36,7 +38,7 @@ import {
 // that must never be added. See its header for what that was measured at.
 import { mergeDatedRecords, datedTotals, datedSectionRollup, type DatedRow } from "@/lib/txnLedger";
 import { TXN_SORTS, type TxnSort } from "@/lib/txnSort";
-import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
+import { BOOK_POSITION_TRANCHES, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS, BOOK_CAPITAL_GAINS } from "@/data/glowData";
 import { useViewParam, type ViewDef } from "@/components/ViewToggle";
 import { UNCLASSIFIED, UNCLASSIFIED_WHY, type TaxonomySource } from "@/lib/familyTaxonomy";
 // THE AXES, DECIDED ONCE. Morning CIO's allocation table groups on the same
@@ -578,6 +580,8 @@ type BucketTotals = {
   costedMV: number;
   costedCount: number;
   heldCount: number;
+  /** Distinct securities among those holdings — the drill-down's "names". */
+  names: Set<string>;
   /** The section's FIFO totals — its return and its realised, struck on its own positions. */
   fifo: FifoTotals;
   /**
@@ -808,6 +812,40 @@ export function PortfolioMonitor() {
    */
   const exposure = useStockExposure(consolidated, bySecurity);
   /**
+   * ── ONE ANSWER TO "WHAT SECTOR IS THIS COMPANY IN" (MH-07, MSX-6) ─────────
+   *
+   * The Sector column and `?sector=` read `Position.sector`, which is the
+   * family's own STATEMENT alone — and a depository statement prints an ISIN, a
+   * quantity and a rate and no industry at all. So every share the family
+   * bought in its own demat read "Unclassified" here (35 of 35 Direct Equity
+   * rows), while Sector Composition and Family & Entities placed 33 of them
+   * through the shared three-tier classification: the statement, then a fund's
+   * SEBI filing joined on the ISIN, then screener.in joined on the NSE symbol.
+   * Fractal Analytics was Information Technology's largest name there and
+   * "Unclassified" here, and `?sector=Information Technology` dropped it.
+   *
+   * `companySectorIndex` is that classification, a projection of
+   * `companyExposure` and deliberately not a second resolver. Built over every
+   * company share rather than over `currentHoldings`, exactly as Family &
+   * Entities builds it: a company's sector does not depend on how much of it
+   * the family holds.
+   *
+   * THE FUND TIER IS LOADED ON THE SECURITY AXIS ONLY, and that costs nothing
+   * on the other three — measured, and asserted by `monitorSectors.test.ts`:
+   * for every company share this book holds, the fund filings place nothing
+   * the statement and screener.in do not already place. The suite fails the
+   * day a drop brings one they would, which is when this has to load the
+   * filings everywhere.
+   */
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
+  /** A company share's sector through the shared index; anything else keeps what its statement printed. */
+  const sectorOfPos = useCallback((p: Position) =>
+    isCompanyShare(p) ? companySectors.get(p.securityKey)?.sector || UNCLASSIFIED_SECTOR : p.sector,
+  [companySectors]);
+  /**
    * THE READER'S OWN RANKING, AND IT REPLACED A SECOND MECHANISM RATHER THAN
    * SITTING BESIDE ONE. This table used to carry its own `sortKey`/`asc` pair
    * driving six clickable headers out of fourteen; the family asked for every
@@ -1031,9 +1069,9 @@ export function PortfolioMonitor() {
   // Lets the sector filter reach the Transactions tape, which carries no sector of its own.
   const sectorByKey = useMemo(() => {
     const m = new Map<string, string>();
-    for (const p of positions) m.set(p.securityKey, p.sector);
+    for (const p of positions) m.set(p.securityKey, sectorOfPos(p));
     return m;
-  }, [positions]);
+  }, [positions, sectorOfPos]);
   /**
    * WHAT THE FAMILY NO LONGER HOLDS, AND WHY IT LEAVES THIS TABLE.
    *
@@ -1059,7 +1097,7 @@ export function PortfolioMonitor() {
    * than silently gone — this book shows what it can and names the rest.
    */
 
-  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped, realisedFacts } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
@@ -1083,7 +1121,7 @@ export function PortfolioMonitor() {
     const small = droppedHoldings(positions).negligible;
     const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)) };
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
-    if (sector !== "All") base = base.filter((p) => p.sector === sector);
+    if (sector !== "All") base = base.filter((p) => sectorOfPos(p) === sector);
     /**
      * THE FILTER IS ON THE ACTIVE AXIS, and it has to be: its options come from
      * that axis (see `buckets`), so testing them against the category key would
@@ -1271,7 +1309,7 @@ export function PortfolioMonitor() {
           accountId, name: mandateLabel(acc),
           manager: acc?.provider ?? "", accountNo: acc?.accountNo ?? "", asOf: acc?.asOf ?? "",
           holdings: ps.map((x) => ({
-            securityKey: x.securityKey, security: x.security, sector: x.sector,
+            securityKey: x.securityKey, security: x.security, sector: sectorOfPos(x),
             quantity: x.quantity, avgCost: x.avgCost, currentPrice: x.currentPrice,
             costBasis: x.costBasis, marketValue: x.marketValue, unrealizedPnL: x.unrealizedPnL,
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
@@ -1422,7 +1460,7 @@ export function PortfolioMonitor() {
           kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, ps[0]),
         groupSource: groupSourceFor(groupAxis, accIdx, ps[0]),
           key: ps[0].securityKey, security: fundClasses.length ? splitFundClass(ps[0].security)!.fund : ps[0].security,
-          securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
+          securityKey: ps[0].securityKey, sector: sectorOfPos(ps[0]), assetClass: ps[0].assetClass,
           fundClasses,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: perUnit ? qty : null,
           avgCost: perUnit && !costNA ? cf.avgCost : null,
@@ -1500,7 +1538,7 @@ export function PortfolioMonitor() {
       out = rest.map((p) => ({
         kind: "security" as const, bucket: groupKeyFor(groupAxis, accIdx, p),
         groupSource: groupSourceFor(groupAxis, accIdx, p),
-        key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: p.sector, assetClass: p.assetClass,
+        key: p.securityKey + "@" + p.accountId, security: p.security, securityKey: p.securityKey, sector: sectorOfPos(p), assetClass: p.assetClass,
         entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         navPriced: !!p.navPriced, navDate: p.navDate,
         depositoryAsOf: p.depositoryUnits?.asOf ?? null,
@@ -1579,20 +1617,28 @@ export function PortfolioMonitor() {
         };
       });
       /**
-       * A DERIVED ROW SURVIVES THE PICK-LIST, AND ONLY THE PICK-LIST.
+       * A DERIVED ROW SURVIVES THE PICK-LIST AND THE SECTOR FILTER.
        *
-       * Entity and sector still suppress it, and must: a company the family
-       * reach only through a fund has no account and so no entity, and the book
-       * carries no sector for a company it does not hold — a filter that looked
-       * like it narrowed and did not is worse than one that says what it
-       * dropped. The SECURITY filter is different now that the list offers these
+       * The entity filter still suppresses it, and must: a company the family
+       * reach only through a fund has no account and so no entity — a filter
+       * that looked like it narrowed and did not is worse than one that says
+       * what it dropped. (The sector filter used to suppress it too, on the
+       * ground that the book carries no sector for a company it does not hold;
+       * see below for why that stopped being true.) The SECURITY filter is different now that the list offers these
        * names (see `securityNames`): picking LIC Housing Finance and being shown
        * nothing is the defect the family reported, not a narrowing.
        */
-      const derivedShown = ex && entity === "All" && sector === "All";
+      // THE SECTOR FILTER NO LONGER SUPPRESSES A DERIVED ROW. It did while the
+      // book carried no sector for a company it does not hold; the shared index
+      // places one through the fund filings and screener.in, which is how
+      // Sector Composition's Consolidated view counts it, so `?sector=` keeps
+      // the derived rows the index places in that sector and drops the rest.
+      const derivedShown = ex && entity === "All";
       if (derivedShown) {
         for (const e of ex.byKey.values()) {
           if (matched.has(e.key)) continue;
+          const eSector = companySectors.get(e.key)?.sector || UNCLASSIFIED_SECTOR;
+          if (sector !== "All" && eSector !== sector) continue;
           const label = labelByKey.get(e.key) ?? e.name;
           if (selected.size > 0 && !selected.has(label)) continue;
           out.push({
@@ -1605,7 +1651,7 @@ export function PortfolioMonitor() {
             // A derived look-through row stands for a company inside a fund, so
             // there is no unit class to club and none to name.
             fundClasses: [],
-            sector: "",
+            sector: eSector,
             // WHAT THE FUNDS ACTUALLY FILED IT AS. Hardcoded `Equity` was true
             // while the store carried the equity section alone; an issuer the
             // family reach only through its NCDs is not an equity holding, and
@@ -1711,9 +1757,10 @@ export function PortfolioMonitor() {
     for (const x of db) {
       const k = groupKeyFor(groupAxis, accIdx, x);
       let t = bucketTotals.get(k);
-      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, fifo: fifoTotals([]), vacuous: false }));
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, names: new Set<string>(), fifo: fifoTotals([]), vacuous: false }));
       t.mv += x.marketValue;
       t.heldCount += 1;
+      t.names.add(x.securityKey);
       // `sumOrNull` semantics, accumulated: a statement that reports no cost
       // contributes NOTHING rather than a zero, and a category where none of
       // them does stays null and renders an em dash with its reason.
@@ -1730,12 +1777,54 @@ export function PortfolioMonitor() {
     // The footer on the same rule: a filter that leaves only a section like Cash
     // in view must not print Invested ₹0 over what no statement costs.
     const footCover = costedFigures(db);
+    const totFifo = fifoTotals(db, fifoOpts);
+    /**
+     * WHAT THE FOOTER'S REALISED COUNTS AND LEAVES OUT, measured on the same set
+     * (MH-05). The statements' own total is struck over the accounts of the
+     * entity in view — every account when none is picked — which is the scope
+     * Capital Gains prints it on. A holding no longer held is found in the raw
+     * `positions`, through the same filters the table applies, so a Direct Equity
+     * section never names a redeemed AIF.
+     */
+    const inScope = (p: Position) => (entity === "All" || ownerOf(accIdx, p) === entity)
+      && (sector === "All" || sectorOfPos(p) === sector)
+      && (bucket === "All" || groupKeyFor(groupAxis, accIdx, p) === bucket)
+      && (selected.size === 0 || selected.has(p.security))
+      && (!bySecurity || isCompanyShare(p));
+    // What `currentHoldings` took off the table, by its own two rules — a fund
+    // redeemed to nil, and a speck under the ₹1,000 floor — so each is named for
+    // what it is rather than both as "redeemed".
+    const offTable = droppedHoldings(positions);
+    const withRealised = (xs: Position[]) => dedupedPositions(xs.filter((p) => inScope(p)
+      && typeof p.realizedPnL === "number" && p.realizedPnL !== 0));
+    const gone = withRealised(offTable.closed);
+    const specks = withRealised(offTable.negligible);
+    const stmts = BOOK_CAPITAL_GAINS.filter((c) => (c.realisedST !== null || c.realisedLT !== null)
+      && (entity === "All" || (!!c.accountId && ownerOf(accIdx, { accountId: c.accountId } as Position) === entity)));
+    const dates = (xs: (string | null | undefined)[]) => xs.filter((d): d is string => !!d).sort();
+    const whole = new Set(totFifo.wholeMandates);
+    const realisedFacts: RealisedBasisFacts = {
+      statements: stmts.length ? {
+        total: sum(stmts.map((c) => (c.realisedST ?? 0) + (c.realisedLT ?? 0))),
+        accounts: stmts.length,
+        from: dates(stmts.map((c) => c.periodFrom))[0] ?? null,
+        to: dates(stmts.map((c) => c.periodTo)).at(-1) ?? null,
+      } : null,
+      closed: { names: [...new Set(gone.map((p) => p.security))], realised: sum(gone.map((p) => p.realizedPnL as number)) },
+      floor: { holdings: specks.length, realised: sum(specks.map((p) => p.realizedPnL as number)) },
+      after: {
+        sales: sum(db.map((x) => x.realizedLotsAfter ?? 0)),
+        holdings: db.filter((x) => (x.realizedLotsAfter ?? 0) > 0).length,
+      },
+      companiesOnly: bySecurity,
+      recorded: db.filter((x) => !whole.has(x.accountId) && typeof x.realizedPnL === "number").length,
+    };
     return {
-      rows: out, totMV: totalMV,
+      rows: out, totMV: totalMV, realisedFacts,
       totCost: footCover.cost,
       totPnL: footCover.unrealised,
       footCover,
-      totFifo: fifoTotals(db, fifoOpts),
+      totFifo,
       /**
        * THE FOOTER'S RETURN IS OVER THE HOLDINGS THAT REPORT A COST — the set its
        * own Invested and Unrealised cells already sum (`sumOrNull` skips the
@@ -1757,7 +1846,7 @@ export function PortfolioMonitor() {
       heldCount: db.length,
       weightBase, weightCount, bucketTotals, smallDropped,
     };
-  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap]);
+  }, [positions, accIdx, mandateTotals, consolidate, bySecurity, exposure, selected, sector, entity, bucket, groupAxis, labelByKey, datedCap, sectorOfPos, companySectors]);
   /**
    * Rows grouped by BUCKET, not by asset class — the fix the family asked for
    * three times. Direct Equity is what they bought themselves; PMS mandates is
@@ -1813,11 +1902,26 @@ export function PortfolioMonitor() {
         // required more than a rupee; this is the same bound.
         const gap = raw - subtotal;
         const collapsed = gap > 1 ? gap : 0;
-        // HOW MANY HOLDINGS THE SECTION STANDS FOR, which is not how many rows it
-        // draws: a mandate row stands for every share inside it, so the PMS
-        // heading counts 281 across 10 rows. Counting rows there would report the
-        // section as ten holdings and quietly retire 271 of them from the page.
-        const holdings = rs.reduce((n, r) => n + (r.mandate ? r.mandate.holdings.length : 1), 0);
+        /**
+         * ── ONE NOUN PER COUNT (MH-06) ──────────────────────────────────────
+         *
+         * "N holdings" meant three different counts on one screen and its
+         * drill-down: this band counted ROWS with each mandate expanded to its
+         * shares, so Sanshi's two classes clubbed into one row read as one
+         * holding (AIF: 10), the totals row's hover counted deduped POSITIONS
+         * (16), and `/holdings` prints "16 holdings · 11 names".
+         *
+         * `holdings` is now the deduped positions the section's totals are
+         * struck over — `bucketTotals`, the same partition the footer sums — and
+         * `names` the distinct securities among them, which is exactly what the
+         * `/holdings` drill-down for the same section prints. On the by-entity
+         * view the rows are each statement as printed, so the band also says how
+         * many statement LINES it draws where that differs: a line is not a
+         * holding when two members' statements report the same one.
+         */
+        const holdings = totals?.heldCount ?? rs.length;
+        const names = totals?.names.size ?? rs.length;
+        const lines = rs.reduce((n, r) => n + (r.mandate ? r.mandate.holdings.length : 1), 0);
         /**
          * THE DAY MOVE IS THE ONE METRIC STRUCK OVER ROWS, and deliberately.
          *
@@ -1861,7 +1965,7 @@ export function PortfolioMonitor() {
           else cashRuleMV += r.marketValue;
         }
         return {
-          key, rows: rs, subtotal, collapsed, holdings, ruleMV, cashRuleMV,
+          key, rows: rs, subtotal, collapsed, holdings, names, lines, ruleMV, cashRuleMV,
           day, dayBase, liveRows: live.length,
           dayPct: live.length && dayBase - day !== 0 ? (day / (dayBase - day)) * 100 : null,
           totals,
@@ -1946,6 +2050,25 @@ export function PortfolioMonitor() {
     // The arbitrage funds are here and NOT in the look-through — see
     // `useStockExposure`. Liquid funds stay looked through: their paper is real.
     const cash = sum(held.filter((p) => p.assetClass === "Cash" || isArbitrageFund(p)).map((p) => p.marketValue));
+    /**
+     * ONE DEFINITION OF CASH, AND HOW EACH VIEW FILES IT (MSX-11, B-09).
+     *
+     * The family's rule is `holdingBucket`'s: a Cash row, a liquid fund or
+     * liquid ETF, or an arbitrage fund (`isCashEquivalent`). This axis departs
+     * from it in ONE place — the liquid funds are looked through, because their
+     * paper is real credit (see `heldFundVehicles`) — and the Category view in
+     * one other: a mandate's cash sleeve stays inside its mandate. Neither view
+     * said the other used another basis, so "the book's own cash" here read
+     * ₹11.6 Cr beside a Cash section of ₹14.2 Cr on the same table. The hover
+     * now states the rule's whole figure and both departures, so the two
+     * reconcile on the reader's screen: this bucket − the mandates' sleeves +
+     * the liquid funds = the Category view's Cash section.
+     */
+    const inCashRule = (p: Position) => p.assetClass === "Cash" || isCashEquivalent(p) || isArbitrageFund(p);
+    const cashRule = sum(held.filter(inCashRule).map((p) => p.marketValue));
+    const liquidThrough = sum(held.filter((p) => inCashRule(p) && p.assetClass !== "Cash" && !isArbitrageFund(p)).map((p) => p.marketValue));
+    const mandateCash = sum(held.filter((p) => p.assetClass === "Cash" && heldUnderMandate(accIdx, p)).map((p) => p.marketValue));
+    const categoryCash = sum(held.filter((p) => groupKeyFor("category", accIdx, p) === "Cash").map((p) => p.marketValue));
     const nav = sum(held.map((p) => p.marketValue));
     const ex = exposure.status === "ok" ? exposure : null;
     const derived = ex?.total ?? 0;
@@ -1953,7 +2076,7 @@ export function PortfolioMonitor() {
     const unaccounted = ex?.unaccountedValue ?? 0;
     const aif = (ex?.skipped ?? []).filter((sk) => /^an AIF files/.test(sk.reason));
     return {
-      nav, measured, derived, opaque, unaccounted, cash,
+      nav, measured, derived, opaque, unaccounted, cash, cashRule, liquidThrough, mandateCash, categoryCash,
       total: measured + derived,
       names: new Set(stocks.map((p) => p.securityKey)).size,
       aifCount: aif.length,
@@ -2003,7 +2126,7 @@ export function PortfolioMonitor() {
         };
       })(),
     };
-  }, [consolidated, exposure]);
+  }, [consolidated, exposure, accIdx]);
   /**
    * WHAT THE WEIGHT COLUMN DIVIDES BY, IN WORDS — and by how much that
    * denominator exceeds the rows on screen.
@@ -2098,6 +2221,25 @@ export function PortfolioMonitor() {
   // of basis clears them rather than leaving a stale row open.
   useEffect(() => { setExpanded(new Set()); }, [holdingsView]);
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * ── THE WHOLE-BOOK RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, ON ITS FACE
+   *    (MH-04, B-07) ───────────────────────────────────────────────────────
+   *
+   * The footer's return is struck over the holdings that report a cost —
+   * Stage 10ca's decision, the set its own Invested and Unrealised cells
+   * already sum, and the set Morning CIO's Consolidated return tile and its
+   * allocation Total row are struck over. On this book that is ~70% of the
+   * value: 60-odd depository rows print no cost, and a reader who takes a
+   * whole-book figure for one over every holding has been told something the
+   * figure does not say. So the set is printed UNDER the figure, not left to a
+   * popover — "on the ₹X of ₹Y that reports a cost, N of M holdings" — and a
+   * table every holding of which reports a cost says that instead.
+   */
+  /** What the footer's Realised counts, said on its face and in its hover (MH-05). */
+  const realisedBasis = realisedBasisNote(totFifo, realisedFacts, (n) => money(n, true), fmtDate);
+  const returnSetLine = footCover.uncosted.lines === 0 || footCover.uncosted.value === 0
+    ? `every one of the ${footCover.lines} ${footCover.lines === 1 ? "holding reports" : "holdings reports"} a cost`
+    : `on the ${money(footCover.costedValue)} of ${money(footCover.value)} that reports a cost · ${footCover.lines - footCover.uncosted.lines} of ${footCover.lines} holdings`;
   // ── WHAT A ROW OPENS INTO: ROWS OF THIS TABLE, IN ITS COLUMNS ─────────────
   //
   //   *"i hope the ui design upgrades you are doing and making it much amazing
@@ -2175,6 +2317,24 @@ export function PortfolioMonitor() {
     );
   };
   const pctOfBook = (v: number) => (weightBase > 0 ? `${((v / weightBase) * 100).toFixed(1)}%` : null);
+  /**
+   * "Unclassified" WITH ITS REASON, never bare (MH-07). A company the shared
+   * index cannot place names the three sources it was looked up in and what
+   * each lacked — which is what tells a reader whether anything could ever fill
+   * it (a symbol screener.in has no page for) or nothing can (a name that
+   * resolves no NSE symbol at all). `data-sector` is the handle the sweep
+   * reads, so the claim is struck on the cell rather than on its text.
+   */
+  const sectorCell = (value: string, key: string, ps: readonly Position[], held: boolean) => {
+    if (value !== UNCLASSIFIED_SECTOR) return <span data-sector={value}>{value}</span>;
+    const sym = ps.map((x) => symbolFor(x)).find(Boolean) ?? symbolForKey(key);
+    const why = `Unclassified — ${held ? "no statement in this book prints a sector for this company, " : ""}no fund's portfolio filing that names it prints an industry, and ${sym ? `screener.in publishes none for NSE: ${sym}` : "it resolves no NSE symbol, so screener.in cannot be asked"}. It is left unplaced rather than given a sector we would have to guess.`;
+    return <span data-sector={value} title={why}>{value}</span>;
+  };
+  /** Why a fund's Sector cell is a dash, true of the kind of fund it is. */
+  const fundSectorWhy = (assetClass: string) => assetClass === "AIF"
+    ? "an AIF holds many companies and has no sector of its own, and it files no portfolio disclosure that joins to a folio this family holds, so it cannot be looked through either"
+    : "a fund holds many companies across sectors and has no sector of its own; the Security view looks through its portfolio disclosure, company by company";
   const signed = (v: number | null) =>
     v === null ? null : <span className={changeColor(v)}>{fmtFromBase(v, { compact: true, sign: true })}</span>;
   const dateCell = (d: { first: string; last: string; payments: number } | null, why: string) =>
@@ -2486,7 +2646,7 @@ export function PortfolioMonitor() {
         weight: pctOfBook(h.marketValue),
         pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
         ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA }, measure),
-        sector: h.sector,
+        sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
       }, { "data-constituent": h.securityKey || h.security, "data-constituent-mv": h.marketValue })));
       return out;
     }
@@ -3076,7 +3236,7 @@ export function PortfolioMonitor() {
                         depend on prose a redesign is free to reword.
                       */
                       <tr className={`${TREE_ROW_DENSE.section} cursor-pointer`} data-section={grp.key} data-axis={groupAxis}
-                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-rule-mv={grp.ruleMV}
+                        data-subtotal={grp.subtotal} data-holdings={grp.holdings} data-names={grp.names} data-lines={grp.lines} data-rule-mv={grp.ruleMV}
                         data-cash-rule-mv={grp.cashRuleMV}
                         data-section-open={secOpen ? "open" : "closed"}
                         {...rowToggle(() => toggleSection(secKey))}>
@@ -3088,8 +3248,12 @@ export function PortfolioMonitor() {
                             {/* The count is of HOLDINGS, not of rows: ten mandate
                                 rows stand for 281 of them, and a heading reading
                                 "10 holdings" over ₹138.7 Cr would retire 271
-                                positions from the page without saying so. */}
-                            {grp.key === MANDATE_BUCKET ? `· ${grp.rows.length} ${grp.rows.length === 1 ? "mandate" : "mandates"} ` : ""}· {grp.holdings} {grp.holdings === 1 ? "holding" : "holdings"} · {fmtFromBase(grp.subtotal, { compact: true })}
+                                positions from the page without saying so. And
+                                holdings are the DEDUPED positions the totals row
+                                is struck over, with the distinct securities among
+                                them as "names" — the two counts the `/holdings`
+                                drill-down prints for the same section (MH-06). */}
+                            {grp.key === MANDATE_BUCKET ? `· ${grp.rows.length} ${grp.rows.length === 1 ? "mandate" : "mandates"} ` : ""}· {grp.holdings} {grp.holdings === 1 ? "holding" : "holdings"}{!consolidate && grp.lines !== grp.holdings ? ` (${grp.lines} statement lines)` : ""} · {grp.names} {grp.names === 1 ? "name" : "names"} · {fmtFromBase(grp.subtotal, { compact: true })}
                             {/* A MEASURED ZERO KEEPS ITS ZERO, and says why it is
                                 one. The section is not empty — every row in it is
                                 reported at nil, which is a different fact from
@@ -3874,8 +4038,8 @@ export function PortfolioMonitor() {
                           {m
                             ? <AbsentCell reason="a mandate spans many sectors and is not one holding; expand it, or open its drill-down, for each share's own" />
                             : isFundVehicle(r)
-                            ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
-                            : r.sector}
+                            ? <AbsentCell reason={fundSectorWhy(r.assetClass)} />
+                            : sectorCell(r.sector, r.securityKey, r.trancheSet, !r.measuredNA)}
                         </td>
                         <td className="px-2 py-1.5 text-slate-400">
                           {multi ? (
@@ -4057,6 +4221,7 @@ export function PortfolioMonitor() {
                                 ? ` (${stockCoverage.aifCount} AIF folio${stockCoverage.aifCount === 1 ? "" : "s"}, ${money(stockCoverage.aifValue)} — an AIF files no portfolio disclosure that joins to a folio this family holds, so no future statement fills it)`
                                 : "")
                             + `, ${money(stockCoverage.unaccounted)} is the part of a disclosed fund no line in the filing accounted for — its cash sleeve, a gold or silver ETF's metal, and the disclosure's own rounding — and ${money(stockCoverage.cash)} is cash: the book's own cash rows and the arbitrage funds the family counts as cash, which are not looked through because their long shares are hedged.`
+                            + ` That is the family's cash rule (${money(stockCoverage.cashRule)}: every Cash row, liquid fund and arbitrage fund) less the ${money(stockCoverage.liquidThrough)} of liquid funds, which this view reads through instead because their paper is real credit; the Category view's Cash section reads ${money(stockCoverage.categoryCash)} because it counts those liquid funds and files the ${money(stockCoverage.mandateCash)} of cash inside PMS mandates with each mandate.`
                             + (stockCoverage.splitNames.count > 0
                                 ? ` ${stockCoverage.splitNames.count === 1 ? "One company stands here as two rows" : `${stockCoverage.splitNames.count} companies stand here as more than one row each`} (${money(stockCoverage.splitNames.value)}): one issuer clips its name where another spells it out, their ISINs say they are one security, and the fix belongs in the extractor — docs/BOOK-REPORT.md names them.`
                                 : "")}>
@@ -4128,10 +4293,17 @@ export function PortfolioMonitor() {
                     <td key="realised" className="px-2 py-1.5 text-right mono whitespace-nowrap" data-realised={totFifo.realised ?? undefined}>{
                       totFifo.realised === null
                         ? <AbsentCell reason="no holding in this table is covered by a capital gain statement or a dated unit record, so what its sales realised is not reported" />
-                        : <span className={changeColor(totFifo.realised)}
-                            title={`Realised on units already sold, matched first-in, first-out, over the ${totFifo.realisedCovered} of ${totFifo.holdings} holdings with a record that could carry it${totFifo.wholeMandates.length ? `; ${totFifo.wholeMandates.length} whole mandate(s) contribute everything they have booked since inception — every sale, and income less fees` : ""}.`}>
+                        : <>
+                          <span className={changeColor(totFifo.realised)} title={realisedBasis.note} data-realised-basis>
                             {fmtFromBase(totFifo.realised, { compact: true, sign: true })}
                           </span>
+                          {/* THE BASIS ON THE FACE (MH-05): which of the two
+                              realised figures this book prints this is, in a
+                              few words; what it counts and leaves out, and the
+                              statements' own total, are in the hover. */}
+                          <span className="mt-0.5 ml-auto block max-w-[11rem] whitespace-normal text-right text-[10px] font-normal leading-tight text-slate-500"
+                            title={realisedBasis.note} data-realised-face>{realisedBasis.face}</span>
+                        </>
                     }</td>
                     ),
                     /* THE FOOTER RETURN IS THE WHOLE BOOK ON COST — cumulative, on
@@ -4158,8 +4330,10 @@ export function PortfolioMonitor() {
                             ? <AbsentCell reason={`This is the whole book, not a holding: ${AGG_NO_MEASURE[measure]} Its cumulative return shows under HPR — tick Holding Period Return to see it.`} />
                             : totalRet === null
                             ? <AbsentCell reason="no holding in this table reports a cost, so there is nothing to strike a return over — each costed holding shows its own on its row" />
-                            : feedLive ? fmtPct(totalRet, { sign: true })
+                            : <>{feedLive ? fmtPct(totalRet, { sign: true })
                             : <Auditable formula={{ title: "Total return (FIFO)", excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100", plain: "Everything the holdings in this table have produced — the unrealised gain on what is held and the realised gain on what was already sold, matched first-in, first-out — over every rupee that bought a unit of them. A whole mandate is struck on its capital since inception.", worked: `= (${money(totFifoCosted.unrealised ?? 0, true)} + ${money(totFifoCosted.realised ?? 0, true)}) ÷ ${money(totFifoCosted.deployed ?? 0)} × 100 = ${fmtPct(totalRet, { sign: true })}${totFifo.uncosted ? ` · over the holdings that report a cost; ${totFifo.uncosted} worth ${money(totFifo.uncostedValue)} report none and are in no part of it` : ""}` }}>{fmtPct(totalRet, { sign: true })}</Auditable>}
+                              <span className="mt-0.5 ml-auto block max-w-[12rem] whitespace-normal text-right text-[10px] font-normal leading-tight text-slate-500"
+                                data-footer-return-set={`${footCover.lines - footCover.uncosted.lines}/${footCover.lines}`}>{returnSetLine}</span></>}
                         </td>
                       )];
                     })),
