@@ -1403,7 +1403,15 @@ export function MorningCIO() {
                     </button>
                   ))}
                 </div>
-                <Pill tone="info">{groupCount(allocAxis, sections.length)} held</Pill>
+                {/* THE COUNT IS OF THE SECTIONS THE AXIS NAMES (CK-C11): "5 baskets
+                    held" counted the Not-classified row, which is no basket of
+                    the family's four — it is named beside the count instead. */}
+                <Pill tone="info">
+                  <span data-alloc-held={sections.filter((b) => !b.unplaced).length} data-alloc-unplaced={sections.filter((b) => b.unplaced).length}>
+                    {groupCount(allocAxis, sections.filter((b) => !b.unplaced).length)} held
+                    {sections.some((b) => b.unplaced) && <> · {sections.filter((b) => b.unplaced).length} not classified</>}
+                  </span>
+                </Pill>
               </div>
             }>
             {/* THE ALLOCATION BAR CHART, above the table. The donut this replaced
@@ -1474,7 +1482,7 @@ export function MorningCIO() {
                   </thead>
                   <tbody className="divide-y divide-ink-700/60">
                     {sections.map((b) => (
-                      <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key}>
+                      <Tr view={allocView} key={b.key} className="hover:bg-ink-700/40" data-alloc-row={b.key} data-alloc-unplaced-row={b.unplaced ? "1" : undefined}>
                         <td className="px-2 py-2.5">
                           {/* THE ROW OPENS THE HOLDINGS BEHIND IT — on whichever
                               axis the table is grouped by. AIF, PMS mandates,

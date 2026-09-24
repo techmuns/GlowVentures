@@ -6916,6 +6916,9 @@ const MOVERS_EXCLUDED = (() => {
     // report is one mover and one line here; counting both rows would overstate
     // this expectation by exactly the double count the book already collapses.
     const names = new Set();
+    // THE MANDATES AND THE NAMES INSIDE THEM, COUNTED APART (MNT-17): the
+    // footer read "131 PMS mandates" for 131 holdings in ten.
+    const pmsNames = new Set(), pmsAccounts = new Set();
     const seen = new Set();
     let mv = 0;
     for (const p of positions) {
@@ -6924,6 +6927,7 @@ const MOVERS_EXCLUDED = (() => {
       const sym = p.symbol || symbols[p.securityKey];
       if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
       names.add(p.securityKey);
+      if (engagement.get(p.accountId) === "PMS") { pmsNames.add(p.securityKey); pmsAccounts.add(p.accountId); }
       // LIVE MARKET VALUE, NOT THE STATEMENT'S. The card is reading the overlaid
       // portfolio on this walk, and the fixture prices every symbol it can at
       // the mark x QUOTE_FACTOR — so a value summed off `glowData.ts` alone runs
@@ -6931,7 +6935,29 @@ const MOVERS_EXCLUDED = (() => {
       // correctly-rendered ₹138.8 Cr, which is 1.10 to the second decimal.
       mv += p.marketValue * QUOTE_FACTOR;
     }
-    return names.size ? { names: names.size, cr: mv / 1e7 } : null;
+    return names.size ? { names: names.size, cr: mv / 1e7, pmsNames: pmsNames.size, pmsAccounts: pmsAccounts.size } : null;
+  } catch { return null; }
+})();
+
+/**
+ * THE FOLIOS VALUED BY NO STATEMENT (DSM-A4), on the terms the AIF drill-down's
+ * own invariant holds that card to (A-15): an AIF account that holds no
+ * position at all AND whose capital account records capital drawn. Never "every
+ * AIF account holding nothing", which counted the two 360 ONE income-only
+ * folios (their units are valued under another account) and a strategy
+ * redeemed to nil. Re-expressed here rather than read off the page.
+ */
+const UNVALUED_AIF_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+    if (!accounts.length) return null;
+    const withPositions = new Set(positions.map((q) => q.accountId));
+    const drew = new Set(commitments.filter((c) => (Number(c.drawn) || 0) > 0).map((c) => c.accountId));
+    const accs = accounts.filter((a) => a.engagement === "AIF" && !withPositions.has(a.accountId) && drew.has(a.accountId));
+    return { accountNos: accs.map((a) => String(a.accountNo)) };
   } catch { return null; }
 })();
 
@@ -11151,6 +11177,24 @@ const CIO_MOVERS = [
    */
 ];
 
+/**
+ * ── THE "N HELD" PILL (CK-C11) ────────────────────────────────────────────
+ * Counts the sections the axis NAMES and names the not-classified row beside
+ * the count. Struck on the rows' own labels, read cell by cell.
+ */
+const ALLOC_HELD_PILL = [
+  ["the held count counts the axis's own sections, and names a not-classified row apart (CK-C11)", (t, ctx) => {
+    const a = ctx?.allocTable;
+    if (!a?.pill || !a.cells?.length) return false;
+    const labels = a.cells.map((c) => c.label ?? "");
+    if (labels.some((l) => !l)) return false;
+    const unplaced = labels.filter((l) => /^not classified/i.test(l)).length;
+    const held = labels.length - unplaced;
+    return a.pill.held === held && a.pill.unplaced === unplaced && a.pill.rowsUnplaced === unplaced
+      && new RegExp(`^${held} [a-z ]+ held${unplaced ? ` · ${unplaced} not classified` : ""}$`).test(a.pill.text);
+  }],
+];
+
 const CIO_ALLOC = [
   /**
    * ── NEVER ₹0 OVER NOTHING (A-14) ──────────────────────────────────────────
@@ -11555,6 +11599,13 @@ const CIO_ALLOC = [
       const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
       return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
     }],
+    /**
+     * ── THE "N HELD" PILL COUNTS THE AXIS'S OWN SECTIONS (CK-C11) ────────────
+     * "5 baskets held" counted the Not-classified row, which is no basket of the
+     * family's four. On the category axis every row is a category, so the pill
+     * counts them all — asserted here so a pill that dropped one fails too.
+     */
+    ...ALLOC_HELD_PILL,
     /**
      * ...AND EVERY CONCENTRATION FIGURE OPENS ITS OWN SET. The other half of the
      * check split above, on the panel that draws the card. Paired label to
@@ -17840,6 +17891,27 @@ const INVARIANTS = {
   "holdings-private": [
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
+    /**
+     * THE FOLIOS VALUED BY NO STATEMENT ARE EXACTLY THE BOOK'S (DSM-A4), on the
+     * AIF drill-down's own terms (`UNVALUED_AIF_BOOK`): each line names one of
+     * those folios by the account number its statement prints, none is named
+     * twice, nothing else is named, and each prints the capital it drew — which
+     * is what the card's sentence says of every line.
+     */
+    ["the folios it names as valued by no statement are exactly the book's, each with the capital it drew (DSM-A4)", (t, ctx) => {
+      if (!UNVALUED_AIF_BOOK) return false;
+      const lines = ctx?.drilldown?.unvaluedLines;
+      if (!lines) return false;
+      const nos = UNVALUED_AIF_BOOK.accountNos;
+      if (!nos.length) return lines.length === 0;
+      // A whole token, so account 1759 can never be read inside 175962.
+      const has = (line, no) => line.split(/[\s·]+/).includes(no);
+      const named = lines.map((l) => nos.filter((n) => has(l, n)));
+      return lines.length === nos.length
+        && named.every((m) => m.length === 1)
+        && new Set(named.map((m) => m[0])).size === nos.length
+        && lines.every((l) => /₹[\d,.]+\s*(?:Cr|L|K)? drawn$/.test(l));
+    }],
     ["its value is a real part of the book, not all of it and not none", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -20335,6 +20407,24 @@ const INVARIANTS = {
         && Math.abs(cr - MOVERS_EXCLUDED.cr) <= Math.max(0.15, parts.length * 0.05);
     }],
     /**
+     * ...AND A MANDATE ENTRY COUNTS ITS HOLDINGS AND ITS MANDATES APART (MNT-17).
+     * "131 PMS mandates ₹137.5 Cr" read as 131 mandates where there are ten.
+     * Both numbers are the book's own: the distinct priced names held inside a
+     * PMS account, and how many PMS accounts hold them.
+     */
+    ["a mandate entry counts its holdings and its mandates apart (MNT-17)", (t) => {
+      // A BOOK THE CHECK CANNOT READ IS A FAILURE, never an abstention.
+      if (!MOVERS_EXCLUDED) return false;
+      // "Not counted:" since Stage 10cp, which moved the lead-in sentence into
+      // the line's hover and kept the figures on its face.
+      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
+      if (!line) return false;
+      const bare = /(?:^|·)\s*\d+\s+PMS mandates?\s+₹/.test(line);
+      if (!MOVERS_EXCLUDED.pmsAccounts) return !bare;
+      const m = /(\d+)\s+holdings?\s+in\s+(\d+)\s+PMS mandates?\s+₹/.exec(line);
+      return !bare && !!m && Number(m[1]) === MOVERS_EXCLUDED.pmsNames && Number(m[2]) === MOVERS_EXCLUDED.pmsAccounts;
+    }],
+    /**
      * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
      *
      * Asserted on both walks and not just one: the toggle is a CONTROL and
@@ -20452,8 +20542,8 @@ const INVARIANTS = {
         && !/Today\u2019s movers/i.test(t);
     }],
   ],
-  "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket")],
-  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass")],
+  "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
+  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL],
 
   monitor: [
     /**
@@ -27232,6 +27322,9 @@ for (const theme of THEMES) {
            */
           cells: [...t.querySelectorAll("tbody tr[data-alloc-row]")].map((r) => ({
             key: r.getAttribute("data-alloc-row"),
+            // The row's own name — its first line; a not-classified row carries
+            // its cause on a second one (CK-C11).
+            label: (r.cells[0]?.innerText ?? "").split("\n")[0].trim(),
             current: (r.cells[2]?.innerText ?? "").trim(),
             weight: (r.cells[4]?.innerText ?? "").trim(),
             // …and Invested with the reason an absent one carries (A-14).
@@ -27240,7 +27333,35 @@ for (const theme of THEMES) {
           })),
           foot: (() => {
             const f = t.querySelector("tfoot tr");
-            return f ? { current: (f.cells[2]?.innerText ?? "").trim(), weight: (f.cells[4]?.innerText ?? "").trim() } : null;
+            if (!f) return null;
+            const ret = f.querySelector("[data-alloc-total-return]");
+            return {
+              current: (f.cells[2]?.innerText ?? "").trim(), weight: (f.cells[4]?.innerText ?? "").trim(),
+              // THE TOTAL ROW'S RETURN AND THE SET IT NAMES (B-07), off their own
+              // handles: the figure's raw value and the label's words.
+              invested: (f.cells[1]?.innerText ?? "").trim(),
+              ret: ret ? ret.getAttribute("data-alloc-total-return") : null,
+              retText: ret ? (ret.innerText ?? "").split("\n")[0].trim() : null,
+              label: (f.querySelector("[data-costed-label]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+            };
+          })(),
+          /**
+           * THE "N HELD" PILL, off its own handles (CK-C11): how many sections
+           * it counts, and how many not-classified rows it leaves out of that.
+           */
+          pill: (() => {
+            const el = document.querySelector("main [data-alloc-held]");
+            return el ? {
+              held: Number(el.getAttribute("data-alloc-held")), unplaced: Number(el.getAttribute("data-alloc-unplaced")),
+              text: (el.textContent ?? "").trim(),
+              // …against the table's own rows, counted by the row's own marker.
+              rowsUnplaced: t.querySelectorAll("tbody tr[data-alloc-unplaced-row]").length,
+            } : null;
+          })(),
+          /** WHAT THE REVIEW DID NOT PLACE AND THE INSTRUMENT DID (CK-C2). */
+          derived: (() => {
+            const el = document.querySelector("main [data-derived-mv]");
+            return el ? { mv: Number(el.getAttribute("data-derived-mv")), text: (el.textContent ?? "").replace(/\s+/g, " ").trim(), title: el.getAttribute("title") ?? "" } : null;
           })(),
           underlined: [...t.querySelectorAll("*")].filter((e) =>
             (e.textContent ?? "").trim()
@@ -28533,6 +28654,40 @@ for (const theme of THEMES) {
           names: n(c, "data-hb-names"),
           accounts: n(c, "data-hb-accounts"),
           deduped: c?.getAttribute("data-hb-deduped") === "1",
+          /**
+           * THE FIGURES THE AUDIT PAIRED WITH A TILE, off their own handles:
+           * the share line's book (B-01), the money-weighted rate (B-06), the
+           * whole-book return and every label naming its set (B-07), the
+           * accrued income (DL-14), and each capital-basis Unrealised cell with
+           * the row it sits in (DL-12).
+           */
+          share: (() => {
+            const el = document.querySelector("main [data-hb-share]");
+            return el ? { pct: Number(el.getAttribute("data-hb-share")), book: Number(el.getAttribute("data-hb-book")), text: (el.textContent ?? "").trim(), title: el.getAttribute("title") ?? "" } : null;
+          })(),
+          mwr: (() => {
+            const el = document.querySelector("main [data-hb-mwr]");
+            if (!el) return null;
+            const v = el.getAttribute("data-hb-mwr");
+            return { pct: v === "" || v == null ? null : Number(v), days: Number(el.getAttribute("data-hb-mwr-days")), to: el.getAttribute("data-hb-mwr-to") ?? "", accounts: Number(el.getAttribute("data-hb-mwr-accounts")), text: (el.textContent ?? "").replace(/\s+/g, " ").trim(), title: el.getAttribute("title") ?? "" };
+          })(),
+          headReturn: (() => {
+            const el = document.querySelector("main [data-hb-return]");
+            return el ? Number(el.getAttribute("data-hb-return")) : null;
+          })(),
+          costedLabels: [...document.querySelectorAll("main [data-costed-label]")].map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim()),
+          // THE FOLIOS VALUED BY NO STATEMENT (DSM-A4), each line as a reader
+          // sees it — read here rather than off `aifSections`, which is the AIF
+          // drill-down's own probe.
+          unvaluedLines: [...document.querySelectorAll("main [data-aif-unvalued]")].map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim()),
+          accrued: (() => {
+            const el = document.querySelector("main [data-hb-accrued]");
+            return el ? { value: Number(el.getAttribute("data-hb-accrued")), count: Number(el.getAttribute("data-hb-accrued-count")), text: (el.textContent ?? "").trim() } : null;
+          })(),
+          pnlOnHeld: [...document.querySelectorAll("main [data-hb-pnl-on-held]")].map((e) => {
+            const tr = e.closest("tr");
+            return { title: e.getAttribute("title") ?? "", cells: tr ? [...tr.cells].map((c) => (c.innerText ?? "").trim()) : [] };
+          }),
           /**
            * ...AND THE FILTER BOX, MEASURED AGAINST ITS OWN PLACEHOLDER.
            *
