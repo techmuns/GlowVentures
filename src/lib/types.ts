@@ -370,8 +370,24 @@ export type Position = {
    * valued at AMFI's published NAV. `asOf` is that statement's closing date and
    * `source` its docKey. Such a position has no statement mark at all, so it is
    * never in `statementPortfolio`, and a page says so wherever it shows one.
+   *
+   * `kind` says WHICH absence of a mark it is, because the two need different
+   * sentences and a page that used one for both would be false about the other:
+   *   - `closing-balance` (or unset): the account sent no holding statement, and
+   *     the units are its transaction statement's closing balance;
+   *   - `no-rate` (the figure audit, A-17): the account's holding statement
+   *     records the units and prints no rate for them, and `witnessAccountId`
+   *     is the account whose statement — same depository, same day — prices the
+   *     same scheme, which is what proves the units are on the NAV's basis.
+   * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
+   * chosen.
    */
-  depositoryUnits?: { asOf: string | null; source: string | null };
+  depositoryUnits?: {
+    asOf: string | null;
+    source: string | null;
+    kind?: "closing-balance" | "no-rate";
+    witnessAccountId?: string | null;
+  };
 };
 
 /**

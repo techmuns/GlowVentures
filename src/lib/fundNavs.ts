@@ -46,11 +46,11 @@
  * family asked to see.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
-import type { Account, Position, ShareMovement } from "./types";
+import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export { FUND_NAV_AS_OF };
@@ -275,6 +275,146 @@ export function depositoryCashHoldings(
     });
   }
   return out.sort((a, b) => b.marketValue - a.marketValue);
+}
+
+/**
+ * ── UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE (the figure audit, A-17)
+ *
+ * Aarti's and Ankita's 31 July Motilal Oswal demat statements each record units
+ * of ABSL Balanced Advantage in FREE balance — 2,42,412.122 and 3,93,095.951 —
+ * and print no rate against them. `build-book` rightly carries no position for
+ * a row with no mark (a rate nobody printed is not invented), so ₹7.15 Cr of the
+ * family's money was on no screen: not in a total, not in a table, not named.
+ * Bharat's statement from the SAME depository on the SAME day prices the same
+ * scheme, and AMFI publishes its NAV.
+ *
+ * So the LIVE book values those units at the published NAV — the treatment
+ * `depositoryCashHoldings` gives a depository's closing units — and only where
+ * a witness proves the units are on the NAV's basis. SIX GATES, each a reason a
+ * recorded balance must NOT become a holding:
+ *
+ *   1. the row names an ISIN and a quantity, and is an open-ended MUTUAL FUND —
+ *      a scheme's units do not split, where an ETF's can (the DSP gold and
+ *      silver break is ten-fold) and an AIF's unit has no NAV AMFI publishes;
+ *   2. no fund's own statement reports the same units (`sameUnitsReportedBy`),
+ *      which would count one holding twice;
+ *   3. AMFI publishes a NAV for the ISIN that the builder cleared for value;
+ *   4. THE WITNESS: a position the book carries for the same ISIN, on another
+ *      account at the SAME depository whose statement is dated the SAME day,
+ *      carrying the statement's own per-unit mark — the depository prints units
+ *      on one basis across the accounts it keeps;
+ *   5. that mark and the published NAV are on one basis (within a factor of
+ *      two, the builder's own gate) — a mark ten times the NAV is a
+ *      share-count break, never a price move;
+ *   6. the row's own account carries no position of that ISIN already.
+ *
+ * NO COST, NEVER ZERO: a depository holds the units and did not buy them.
+ * LIVE ONLY: no statement marks these units, so `statementPortfolio` — what a
+ * page that ties to the PDFs reads — never sees them, and a page that shows one
+ * names its units, its witness and its NAV through `describeDepositoryUnits`.
+ *
+ * ONE SWITCH. `false` takes every row out of every page at once.
+ */
+export const VALUE_UNPRICED_STATEMENT_UNITS = true;
+
+/** The factor a statement mark and a published NAV may differ by and still be one basis. */
+const BASIS_FACTOR = 2;
+
+export function unpricedStatementUnits(
+  unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  positions: readonly Position[] = BOOK_POSITIONS,
+): Position[] {
+  if (!VALUE_UNPRICED_STATEMENT_UNITS) return [];
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const isinOf = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+  const out: Position[] = [];
+  for (const u of unvalued) {
+    const isin = isinOf(u);
+    const qty = u.quantity;
+    if (!isin || !(typeof qty === "number" && qty > 0) || u.assetClass !== "Mutual Fund") continue; // gate 1
+    if (u.sameUnitsReportedBy) continue;                                                           // gate 2
+    const nav = BY_ISIN.get(isin);
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                                   // gate 3
+    const own = acc.get(u.accountId);
+    if (!own || !u.asOf) continue;
+    const witness = positions.find((p) => {
+      if (isinOf(p) !== isin || p.accountId === u.accountId) return false;
+      const a = acc.get(p.accountId);
+      return !!a && a.provider === own.provider && a.asOf === u.asOf
+        && typeof p.currentPrice === "number" && p.currentPrice > 0;                               // gate 4
+    });
+    if (!witness) continue;
+    const ratio = nav.nav / (witness.currentPrice as number);
+    if (!(ratio > 1 / BASIS_FACTOR && ratio < BASIS_FACTOR)) continue;                             // gate 5
+    if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;        // gate 6
+    out.push({
+      // THE WITNESS'S KEY, so one scheme is one key and one row wherever the
+      // book already carries it — the name follows the key (#76's rule).
+      securityKey: witness.securityKey,
+      security: securityLabel(witness.securityKey, witness.security),
+      isin: u.isin,
+      symbol: witness.symbol ?? null,
+      accountId: u.accountId,
+      memberId: null,
+      sector: witness.sector,
+      providerSector: null,
+      assetClass: "Mutual Fund",
+      marketSide: witness.marketSide ?? null,
+      quantity: qty,
+      marketValue: qty * nav.nav,
+      costBasis: null,
+      costUnavailable: true,
+      unrealizedPnL: null,
+      returnPct: null,
+      avgCost: null,
+      currentPrice: nav.nav,
+      stCostBasis: null,
+      ltCostBasis: null,
+      daysToLT: null,
+      heldSince: null,
+      dividendReceived: null,
+      accruedIncome: null,
+      positionIrrPct: null,
+      navPriced: true,
+      navDate: nav.date,
+      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId: witness.accountId },
+    });
+  }
+  return out.sort((a, b) => b.marketValue - a.marketValue);
+}
+
+/**
+ * WHY NO STATEMENT PRICES THIS POSITION'S UNITS — the one place the sentence
+ * is chosen, for both kinds (see `Position.depositoryUnits`). A page that
+ * hard-codes "an account that sent no holding statement" is false about a
+ * `no-rate` row, whose account did send one.
+ */
+export function describeDepositoryUnits(
+  d: NonNullable<Position["depositoryUnits"]>,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+): string {
+  if (d.kind === "no-rate") {
+    const w = d.witnessAccountId ? accounts.find((a) => a.accountId === d.witnessAccountId) : undefined;
+    const witness = w ? `${w.owner}'s ${w.provider} ${w.accountNo}` : "another account at the same depository";
+    return `the depository's holding statement of ${d.asOf ?? "its date"} records these units and prints no rate for them; ${witness} statement of the same day prices the same scheme, which is what puts the units on the published NAV's basis`;
+  }
+  return `they are the depository's own closing balance of ${d.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement`;
+}
+
+/**
+ * THE SAME FACT FOR A SET OF ROWS, as a noun phrase — for a caption that speaks
+ * of several depository rows at once (a drill-down's headline, a table's tip).
+ * It names each KIND that is present and nothing else, because the two are
+ * different reasons and only one of them says the account sent no holding
+ * statement.
+ */
+export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUnits">[]): string {
+  const kinds = new Set(rows.flatMap((r) => r.depositoryUnits ? [r.depositoryUnits.kind === "no-rate" ? "no-rate" : "closing-balance"] : []));
+  const closing = "a depository's own closing balance, on an account that sent a transaction statement and no holding statement";
+  const noRate = "units a depository's holding statement records and prints no rate for";
+  if (kinds.has("no-rate") && kinds.has("closing-balance")) return `either ${closing}, or ${noRate}`;
+  return kinds.has("no-rate") ? noRate : closing;
 }
 
 /**

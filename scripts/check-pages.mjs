@@ -218,7 +218,9 @@ function bookArray(src, name) {
   // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — the published
   // NAV overlaid, and the depository's cash-equivalent units that the live book
   // values on an account that sent no holding statement.
-  return name === "BOOK_POSITIONS" ? withPublishedNavs([...out, ...withDepositoryCash(src, out)]) : out;
+  return name === "BOOK_POSITIONS"
+    ? withPublishedNavs([...out, ...withDepositoryCash(src, out), ...withUnpricedStatementUnits(src, out)])
+    : out;
 }
 
 /**
@@ -342,6 +344,62 @@ function withDepositoryCash(src, positions) {
       marketSide: "listed", quantity: w.closing, marketValue: w.closing * nav.nav, currentPrice: nav.nav,
       costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
       navPriced: true, navDate: nav.date, depositoryUnits: { asOf: w.periodTo ?? null, source: w.source ?? null },
+    });
+  }
+  return out;
+}
+
+/**
+ * ── UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE, RE-EXPRESSED (A-17)
+ *
+ * `PortfolioContext` values the ABSL Balanced Advantage units Aarti's and
+ * Ankita's 31 July Motilal demat statements record and print no rate for, at
+ * AMFI's NAV, on the LIVE basis — so every page drawn on the live portfolio
+ * carries rows the generated book does not, and every derivation here that
+ * reconciles against a rendered figure must carry them too.
+ *
+ * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `unpricedStatementUnits` AND NEVER
+ * IMPORTED — the six gates written again off the committed data: a mutual-fund
+ * row with an ISIN and units and no fund reporting the same units; a NAV the
+ * builder cleared; a witness — the same ISIN, marked per unit on another account
+ * at the same depository on the same day; that mark within a factor of two of
+ * the NAV; and no position of the ISIN already in the row's own account.
+ */
+function withUnpricedStatementUnits(src, positions) {
+  const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
+  const accounts = bookArray(src, "BOOK_ACCOUNTS");
+  const store = fundNavStore();
+  if (!Array.isArray(unvalued) || !Array.isArray(accounts) || !Array.isArray(store)) return [];
+  const acc = new Map(accounts.map((a) => [a.accountId, a]));
+  const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+  const navByIsin = new Map();
+  for (const e of store) {
+    const k = String(e.isin).toUpperCase();
+    const cur = navByIsin.get(k);
+    if (!cur || (!cur.usableForValue && e.usableForValue)) navByIsin.set(k, e);
+  }
+  const out = [];
+  for (const u of unvalued) {
+    const isin = I(u);
+    if (!isin || u.assetClass !== "Mutual Fund" || !(Number(u.quantity) > 0) || u.sameUnitsReportedBy) continue;
+    const nav = navByIsin.get(isin);
+    if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
+    const own = acc.get(u.accountId);
+    if (!own || !u.asOf) continue;
+    const w = positions.find((p) => I(p) === isin && p.accountId !== u.accountId
+      && acc.get(p.accountId)?.provider === own.provider && acc.get(p.accountId)?.asOf === u.asOf
+      && Number(p.currentPrice) > 0);
+    if (!w) continue;
+    const r = nav.nav / Number(w.currentPrice);
+    if (!(r > 0.5 && r < 2)) continue;
+    if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
+    out.push({
+      securityKey: w.securityKey, security: w.security, isin: u.isin, accountId: u.accountId,
+      sector: w.sector, assetClass: "Mutual Fund", marketSide: w.marketSide ?? null,
+      quantity: Number(u.quantity), marketValue: Number(u.quantity) * nav.nav, currentPrice: nav.nav,
+      costBasis: null, costUnavailable: true, unrealizedPnL: null, returnPct: null, avgCost: null,
+      navPriced: true, navDate: nav.date,
+      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-rate", witnessAccountId: w.accountId },
     });
   }
   return out;
