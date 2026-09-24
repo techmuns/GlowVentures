@@ -23563,7 +23563,7 @@ to get right that the long version got wrong:
   separate `git worktree` with its own preview (`BASE=`): the pass takes about
   an hour, and for all of it the files it patches carry a bug.
 
-**ALL 49 FIRE THEIR OWN CHECKS**, on the tree merged with #91, after a no-patch
+**ALL 52 FIRE THEIR OWN CHECKS**, on the tree merged with #95, after a no-patch
 control that came back clean:
 
 | # | Bug put back | Fires |
@@ -23607,9 +23607,9 @@ control that came back clean:
 | 37 | SENDER: a refusal is asked again at once instead of in fifteen minutes | 1 `check:family` row · 2 `researchLevels` checks |
 | 38 | SENDER: a failed send is never tried again on its timer | 1 `check:family` row |
 | 39 | SENDER: a browser coming back online does not send what was waiting | 1 `check:family` row |
-| 40 | SENDER: the footer says every company was sent, whatever arrived | 1 page check on 1 route · 1 `researchLevels` check |
-| 41 | SENDER: the footer's hover sentences are put back on screen | #90's note guard, on 2 routes |
-| 42 | SENDER: the reasons never drop to the hover, so a bad day runs past one line | 2 `researchLevels` checks |
+| 40 | SENDER: the footer says every company was sent, whatever arrived | 1 page check on 1 route · 3 `researchLevels` checks |
+| 41 | SENDER: the footer's hover sentences are put back on screen | #90's note guard and #95's prose check, each on 2 routes |
+| 42 | SENDER: the reasons never drop to the hover, so a bad day runs past one line | 11 `researchLevels` checks |
 | 43 | SENDER: a level kept here as too high is said to have no NSE symbol | 2 `researchLevels` checks |
 | 44 | a company held only inside funds is said to be not held in this book | 1 page check on 1 route |
 | 45 | SENDER: a holding this dashboard has no symbol for is said to have none | 1 `researchLevels` check |
@@ -23617,9 +23617,16 @@ control that came back clean:
 | 47 | SENDER: nothing is ever sent — the sender is not mounted | 5 page checks on 2 routes · 9 `check:family` rows |
 | 48 | the alert boxes' address names no tab, so it opens Position | 1 page check on 2 routes · 1 `check:family` row |
 | 49 | a holding's My targets tab draws no alert card | 3 page checks on 2 routes · 5 `check:family` rows |
+| 50 | the card's line puts its whole sentence back on screen | 1 page check on 1 route · 4 `check:family` rows |
+| 51 | an alert no price reaches says so in a sentence again | 2 page checks on 1 route |
+| 52 | the card stops saying an alert no price reaches is not checked | 1 page check on 1 route |
 
-Case 41 is ONE check, #90's note guard, firing on both routes it runs on. The
-guard prints each route's own measured line, so the run lists it twice.
+Case 41 is TWO checks now, #90's note guard and #95's prose check, each firing
+on both routes it runs on. Each prints its route's own measured line, so the run
+lists four. Rows 40 and 42 fire more checks than on the tree merged with #91,
+because the Glow Central Research suite now holds every face the footer can draw
+to `readsAsSentence`. Every other row from 1 to 49 reads as it did there, and
+rows 50–52 are the three cases the #95 merge added.
 
 #### Merged with main, and one check main itself was failing
 
