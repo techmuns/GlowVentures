@@ -367,6 +367,28 @@ export function HoldingsBehind() {
   const setOnceMV = d.deduped ? mv : sum(dedupedPositions([...rows]).map((r) => r.marketValue));
   const shareOfBook = bookMV > 0 ? (setOnceMV / bookMV) * 100 : null;
   /**
+   * WHAT PRICES MOVED THIS SET OFF ITS STATEMENT MARKS (DSM-C1). The headline's
+   * hover used to call every difference "a live quote", and with no quote feed
+   * running the gap was AMFI's published NAV on the fund holdings — a
+   * different source, struck once a day after the close. Counted by source so
+   * the sentence names the one that moved it.
+   */
+  const navPricedRows = rows.filter((r) => r.navPriced && !r.depositoryUnits).length;
+  const quotedRows = rows.filter((r) => r.live).length;
+  const priceSources = [
+    navPricedRows ? `AMFI's published NAV on ${fmtNum(navPricedRows)} fund holding${navPricedRows === 1 ? "" : "s"}` : "",
+    quotedRows ? `a live quote on ${fmtNum(quotedRows)}` : "",
+  ].filter(Boolean).join(" and ");
+  /**
+   * ACCRUED INCOME, WHICH NO VALUE ON THIS SITE INCLUDES (DL-14). Morning
+   * CIO's Accrued income tile opens this page, and the page carried no accrued
+   * figure at all. Summed over this set's own rows the way the tile sums the
+   * book's — `sumOrNull`, so a set where no statement reports any says nothing
+   * rather than "₹0 accrued".
+   */
+  const accruedRows = rows.filter((r) => typeof r.accruedIncome === "number" && r.accruedIncome !== 0);
+  const accrued = accruedRows.length ? sumOrNull(rows.map((r) => r.accruedIncome)) : null;
+  /**
    * THE WHOLE-BOOK RETURN ON COST, ON THE BOOK'S OWN PAGE (B-07). The
    * Consolidated return tile and the allocation table's Total row open this
    * scope, and both print one figure over one set — the holdings that report a
@@ -651,7 +673,7 @@ export function HoldingsBehind() {
               figure it is about. Weaker than a caption, and recorded as such. */}
           <div className="font-display text-2xl font-bold tabular text-slate-100"
                data-hb-total={mv}
-               title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone — before any live quote — these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}. Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.${depositoryNote ? ` ${depositoryNote}` : ""}` : ""}`}>{money(mv)}</div>
+               title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}${priceSources ? `; the difference is ${priceSources}` : ""}. A price may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.${depositoryNote ? ` ${depositoryNote}` : ""}` : ""}`}>{money(mv)}</div>
           <div className="mt-0.5 text-[10.5px] text-slate-500" data-hb-share={shareOfBook ?? ""} data-hb-book={bookMV}
                title={d.deduped
                  ? `Over the ${full(bookMV)} current value of holdings — the figure the top bar and Morning CIO's tile print.`
@@ -660,6 +682,14 @@ export function HoldingsBehind() {
               ? "no book value to measure a share against"
               : <>{shareOfBook.toFixed(1)}% of the {money(bookMV)} book</>}
           </div>
+          {/* ACCRUED INCOME IS IN NO VALUE ON THIS SITE (DL-14): named beside the
+              figure it is not in, because the Accrued income tile opens here. */}
+          {!d.absent && accrued != null && (
+            <div className="mt-0.5 text-[10.5px] text-slate-500" data-hb-accrued={accrued} data-hb-accrued-count={accruedRows.length}
+                 title={`Dividends and interest declared on ${fmtNum(accruedRows.length)} holding${accruedRows.length === 1 ? "" : "s"} here and not yet received. The managers' printed totals fold it into market value on some rows and not others, so the book carries it as its own field and every market value on this site excludes it.`}>
+              + {money(accrued)} accrued income, not in this figure
+            </div>
+          )}
           {/* THE RATE THE READER CLICKED, ON THE PAGE IT OPENS (B-06 — CK-B3,
               DSM-B2). The table below prints a FIFO return on cost; this is the
               money-weighted rate over the dated flows of the accounts it covers,
@@ -871,7 +901,7 @@ export function HoldingsBehind() {
                       <SortHeader col="value" view={view}>Value</SortHeader>
                       <SortHeader col="weight" view={view}>Weight</SortHeader>
                       <SortHeader col="costShare" view={view}
-                        title="This row's share of the capital invested in the set — its cost over the total cost the statements report. Beside Weight, its share of today's value.">
+                        title="This row's share of the capital invested in the set — its Invested over the set's: the capital paid in for a whole PMS mandate, the cost of what is held for anything else. Beside Weight, its share of today's value.">
                         Share of invested
                       </SortHeader>
                       <SortHeader col="pnl" view={view}>Unreal. P&amp;L</SortHeader>
@@ -1053,6 +1083,7 @@ export function HoldingsBehind() {
                             </td>
                             <td className={`px-4 py-2.5 text-right mono ${g.pnl == null ? "" : changeColor(g.pnl)}`}>
                               {g.pnl == null ? <AbsentCell reason="Needs a cost these statements do not report." />
+                                : g.capital ? <span title={capitalGapNote([g.capital], money)} data-hb-pnl-on-held>{money(g.pnl, true)}</span>
                                 : g.withoutCost > 0 ? <span title={costCoverNote(costedFigures(g.rows), (n) => money(n), fmtNum)}>{money(g.pnl, true)}</span>
                                 : money(g.pnl, true)}
                             </td>
@@ -1125,10 +1156,15 @@ export function HoldingsBehind() {
                       const paid = sum(f.map((x) => x.wholeContributed)), held = sum(f.map((x) => x.wholeCostHeld));
                       return `${f.length} whole mandate${f.length === 1 ? " enters" : "s enter"} at the capital paid in, ${money(paid)} — what ${f.length === 1 ? "its" : "their"} return is divided by — where the cost of the shares ${f.length === 1 ? "it holds" : "they hold"} now is ${money(held)}; this total is the sum of the Invested cells above it`;
                     })()}
+                    capitalGap={capitalGapNote(groups.filter((g) => g.capital).map((g) => g.capital!), money)}
                     pnl={setCost.vacuous ? null : sumOrNull(groups.map((g) => g.pnl))}
                     withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))}
                     ret={coveredReturn(groups.flatMap((g) => g.rows), fifoOpts)}
-                    holdings={rows.length} noCost={noCost.length}
+                    // THE COUNTS OF THE ROWS THIS FOOTER TOTALS (DSM-C8). They were
+                    // the whole set's while the value beside them was the filtered
+                    // rows', so under a search the coverage sentence mixed two sets.
+                    holdings={shown.length} noCost={shown.filter((r) => r.costBasis == null).length}
+                    setMV={mv} setInvested={invested}
                     // THE WHOLE-BOOK RETURN, NAMED (B-07) — only where this footer
                     // totals the whole of that set: under a search it totals the
                     // rows that matched, and its return is theirs.
@@ -1287,6 +1323,32 @@ export function HoldingsBehind() {
  * `securityKey` alone, which would sum every account's row for a name the scope
  * only carries once.
  */
+/**
+ * WHY A CAPITAL-BASIS ROW'S INVESTED + UNREALISED DOES NOT COME TO ITS VALUE
+ * (DL-12). A whole PMS mandate enters Invested at the capital paid into it —
+ * what its FIFO return divides by — while Unrealised stays on the cost of the
+ * shares it holds now, because that is what "unrealised" means. The two
+ * differ by what the mandate has realised on shares already sold, less what
+ * was taken out of it: `paid − held = withdrawn − realised`. Stated with the
+ * figures, on the cell a reader adds up, because the table has no Realised
+ * column to make the sum close.
+ */
+function capitalGapNote(
+  caps: readonly Pick<FifoTotals, "wholeContributed" | "wholeCostHeld" | "wholeWithdrawn">[],
+  money: (n: number | null | undefined, sign?: boolean) => string,
+): string {
+  if (!caps.length) return "";
+  const paid = sum(caps.map((c) => c.wholeContributed));
+  const held = sum(caps.map((c) => c.wholeCostHeld));
+  const withdrawn = sum(caps.map((c) => c.wholeWithdrawn));
+  const realised = withdrawn - paid + held;
+  const n = caps.length;
+  return `Unrealised is struck on the cost of the shares ${n === 1 ? "this mandate holds" : `the ${n} whole mandates hold`} now (${money(held)}); `
+    + `Invested is the capital paid in (${money(paid)}), which is what the return divides by. `
+    + `So Invested + Unrealised − Value = ${money(paid - held, true)}: what was taken out (${money(withdrawn)}) less what was `
+    + `realised inside the mandate — gains booked on shares already sold and income collected, less fees (${money(realised, true)}) — which the Return column counts and neither Invested nor Unrealised does.`;
+}
+
 function statementValue(statement: Position[], rows: Position[]): number {
   const want = new Set(rows.map((r) => `${r.accountId}\u0000${r.securityKey}`));
   return sum(statement.filter((p) => want.has(`${p.accountId}\u0000${p.securityKey}`)).map((p) => p.marketValue));
@@ -1323,7 +1385,7 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withoutCostMV, money, holdings, noCost, bookReturn, closedExcluded, negligible, ret }: {
+function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, capitalGap, pnl, withoutCostMV, money, holdings, noCost, setMV, setInvested, bookReturn, closedExcluded, negligible, ret }: {
   /** THE LABEL'S SPAN IS A FUNCTION OF THE ORDER, not the literal `cols={2}`
       this took: with a column dragged, a fixed span would put every total one
       cell out and a reader would find the value under the weight's heading. */
@@ -1333,6 +1395,10 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withou
   vacuous: boolean;
   /** Where whole mandates entered Invested at their capital paid in, what that means; empty otherwise. */
   capitalNote: string;
+  /** ...and why Invested + Unrealised does not come to Value on those rows (DL-12); empty otherwise. */
+  capitalGap: string;
+  /** The WHOLE set's value and invested — the denominators every row's Weight and Share of invested use. */
+  setMV: number; setInvested: number | null;
   /** The whole-book return on cost with its set's words, where this footer totals that set (B-07). */
   bookReturn: { pct: number; label: string; fifo: FifoTotals } | null;
   money: (n: number | null | undefined, sign?: boolean) => string;
@@ -1353,7 +1419,9 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withou
    * extracted for one screen over.
    */
   const coverage = noCost > 0
-    ? `${fmtNum(holdings - noCost)} of the ${fmtNum(holdings)} holdings in this set report a cost and ${fmtNum(noCost)} report none, ${money(withoutCostMV)} of the value.`
+    // "SHOWN" UNDER A SEARCH (DSM-C8): the counts are the matched rows', so
+    // "in this set" would name the whole set over a fraction of it.
+    ? `${fmtNum(holdings - noCost)} of the ${fmtNum(holdings)} holdings ${hidden > 0 ? "shown" : "in this set"} report a cost and ${fmtNum(noCost)} report none, ${money(withoutCostMV)} of the value.`
     : "";
   /**
    * ...AND WHAT THE TABLE LEAVES OUT, on the cell that counts what it drew.
@@ -1387,25 +1455,35 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withou
               ? vacuous
                 ? `In this set, ${VACUOUS_COST_REASON}.`
                 : "No statement in this set reports a cost — absent, not zero. A depository reports what is held, never what it was paid for, and a ₹0 here would report the whole market value as profit."
-              : [capitalNote, coverage || "Every holding in this set reports a cost."].filter(Boolean).join(" · ")}
+              : [capitalNote, capitalGap, coverage || (hidden > 0 ? "Every holding shown reports a cost." : "Every holding in this set reports a cost.")].filter(Boolean).join(" · ")}
             data-invested-capital={capitalNote ? cost ?? undefined : undefined}>
           {cost == null ? DASH : money(cost)}
         </td>,
         value: <td key="value" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100" data-hb-foot-mv>{money(mv)}</td>,
         weight: <td key="weight" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-weight
-            title={`Weight is a share of this set, not of the book — ${money(mv)} is the denominator, so the column adds to 100%.`}>
-          {mv > 0 ? "100%" : DASH}
+            title={hidden > 0
+              ? `These rows' share of the set — ${money(mv)} of its ${money(setMV)}. Each row's Weight is struck over the whole set, and ${fmtNum(hidden)} more match no filter, so the column adds to this rather than to 100%.`
+              : `Weight is a share of this set, not of the book — ${money(mv)} is the denominator, so the column adds to 100%.`}>
+          {/* UNDER A SEARCH THE ROWS' WEIGHTS ARE STILL SHARES OF THE WHOLE SET,
+              so the footer is their sum rather than a 100% they do not add to
+              (DSM-C8). */}
+          {setMV > 0 ? (hidden > 0 ? `${((mv / setMV) * 100).toFixed(1)}%` : "100%")
+            : <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
         </td>,
         costShare: <td key="costShare" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-300" data-hb-foot-cost-share
             title={cost == null
               ? "No statement in this set reports a cost, so there is no invested total to share out — absent, not zero."
-              : `Share of the ${money(cost)} invested — each row's Invested over the set's, so the column adds to 100%. ${coverage}`.trim()}>
-          {cost == null || cost <= 0 ? DASH : "100%"}
+              : hidden > 0 && setInvested != null
+                ? `These rows' share of the ${money(setInvested)} invested in the set — ${money(cost)} of it. Each row's share is struck over the whole set, and ${fmtNum(hidden)} more match no filter. ${coverage}`.trim()
+                : `Share of the ${money(cost)} invested — each row's Invested over the set's, the capital paid in for a whole PMS mandate and the cost of what is held for anything else, so the column adds to 100%. ${coverage}`.trim()}>
+          {cost == null || cost <= 0
+            ? <AbsentCell reason="No statement in this set reports a cost, so there is no invested total to share out — absent, not zero." />
+            : hidden > 0 && setInvested != null && setInvested > 0 ? `${((cost / setInvested) * 100).toFixed(1)}%` : "100%"}
         </td>,
         pnl: <td key="pnl" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${pnl == null ? "text-slate-400" : changeColor(pnl)}`} data-hb-foot-pnl
             title={pnl == null
               ? vacuous ? `An unrealised gain needs a cost, and in this set, ${VACUOUS_COST_REASON}.` : "Needs a cost these statements do not report — absent, not zero."
-              : coverage ? `On the ${fmtNum(holdings - noCost)} holdings reporting a cost. ${coverage}` : "On cost."}>
+              : [coverage ? `On the cost of what is held, over the ${fmtNum(holdings - noCost)} holdings reporting a cost. ${coverage}` : "On the cost of what is held.", capitalGap].filter(Boolean).join(" ")}>
           {pnl == null ? DASH : money(pnl, true)}
         </td>,
         return: (() => {

@@ -291,6 +291,19 @@ const amfiFile = (() => {
     `flagged ${flagged.map((r) => r.security).join(", ")} · expected ${indep.map((r) => r.security).join(", ")}`);
 }
 
+// ── MNT-15 · THE LIQUID FUNDS THE CARD LEAVES OUT ARE COUNTED ───────────────
+// The family's rule files a liquid fund or liquid ETF under Cash; the card must
+// name them rather than read "of the ₹X held" as every fund the family owns.
+// Membership re-expressed over the committed key list, not through the bucket.
+{
+  const cashKeys = new Set(Object.keys(CASH_EQUIVALENT_KEYS));
+  const own = rows.filter((p) => (p.assetClass === "Mutual Fund" || p.assetClass === "ETF")
+    && cashKeys.has(p.securityKey) && engagementOf(accts, p) !== "PMS");
+  near("the card counts the liquid funds it leaves out", m.cashFunds.value, own.reduce((a, p) => a + p.marketValue, 0), 1);
+  ok("…by distinct name", m.cashFunds.names === new Set(own.map((p) => p.securityKey)).size,
+    `${m.cashFunds.names} vs ${new Set(own.map((p) => p.securityKey)).size}`);
+}
+
 // ── A LOOK-THROUGH STORE THAT DID NOT ANSWER NO LONGER BLANKS THE CARD ──────
 {
   const down = navMoverModel(rows, accts, null);

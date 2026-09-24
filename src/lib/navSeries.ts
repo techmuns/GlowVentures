@@ -39,7 +39,12 @@ export type NavIndexPoint = {
   flowIn: number;
   /** The flow-adjusted index, 100 at the first point. */
   index: number;
-  /** The raw NAV rebased to 100 — the same curve the index corrects. */
+  /**
+   * The raw NAV — capital left in — scaled to start ON the book's own index
+   * where the panel completes, so the distance between the two lines after that
+   * date is the capital the book's line nets out. NaN before the panel is
+   * complete, where the level is a growing set of accounts.
+   */
   navIndex: number;
   accountsOnDate: number;
   accountsCarried: number;
@@ -81,6 +86,20 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
    */
   const firstComplete = history.find((p) => p.panelComplete !== false);
   const base = firstComplete ? firstComplete.nav : history[0].nav;
+  /**
+   * …AND IT STARTS ON THE BOOK'S LINE, NOT AT ITS OWN 100 (MNT-12).
+   *
+   * The raw line used to be rebased to 100 at the complete panel while the
+   * book's line is 100 at the series' first point, so on one chart the two
+   * sat on different bases: at 13 Aug the gap between them read 4.2 points
+   * where the capital the raw line leaves in is worth 8.75, and the tooltip
+   * printed a +9.29% (from 10 Jul) beside a +5.09% (from 31 May) with nothing
+   * saying they are two windows. Anchored on the book's own index at the date
+   * the panel completes, the two lines meet there and every point of distance
+   * after it is the capital left in. `anchor` is 100 where the panel is
+   * complete from the first point, so an older book draws what it always did.
+   */
+  let anchor = 100;
   for (let i = 0; i < history.length; i++) {
     const p = history[i];
     if (i > 0) {
@@ -100,12 +119,13 @@ export function navIndexSeries(history: NavPoint[]): NavIndexPoint[] {
       const flow = p.flowIn ?? 0;
       if (open > 0) idx *= (close - flow) / open;
     }
+    if (p === firstComplete) anchor = idx;
     out.push({
       date: p.date,
       nav: p.nav,
       flowIn: p.flowIn ?? 0,
       index: idx,
-      navIndex: p.panelComplete === false || base <= 0 ? NaN : (p.nav / base) * 100,
+      navIndex: p.panelComplete === false || base <= 0 ? NaN : (p.nav / base) * anchor,
       accountsOnDate: p.accountsOnDate ?? 0,
       accountsCarried: p.accountsCarried ?? 0,
       unreportedFlowValue: p.unreportedFlowValue ?? 0,
@@ -322,4 +342,27 @@ export function navCoverageStats(coverage: NavCoverage, portfolio: Portfolio | n
 export function windowReturnPct(points: { index: number }[]): number | null {
   if (points.length < 2) return null;
   return points[points.length - 1].index - 100;
+}
+
+/**
+ * ── A REDEEMED ACCOUNT IS A MEASURED NIL, NOT AN ABSENT VALUATION (MNT-14) ──
+ *
+ * The coverage list of accounts that "publish no valuation at all" mixes two
+ * different facts: folios nothing values (an angel fund with no NAV, a custody
+ * account at face value, a demat whose holding statement is missing) and
+ * accounts whose own holding statement says every holding has been REDEEMED.
+ * The second is a balance of zero that a statement struck, and §2 forbids it
+ * looking like the first — it drew a dash under "That is an absent valuation,
+ * not a measured zero" for two accounts whose own reason says the opposite.
+ *
+ * `build-book` records the distinction only in the sentence it writes on the
+ * account, so this reads that sentence's own clause. It is TIED TO ITS
+ * GENERATOR: `navCard.test.ts` asserts the clause appears verbatim in
+ * `scripts/build-book.mjs`, so rewording the branch there fails the suite
+ * rather than quietly turning two measured nils back into absences.
+ */
+export const MEASURED_NIL_CLAUSE = "has been redeemed — the balance is nil, and that is a measurement";
+
+export function isMeasuredNilAccount(a: { noPositionsReason?: string | null } | null | undefined): boolean {
+  return !!a?.noPositionsReason && a.noPositionsReason.includes(MEASURED_NIL_CLAUSE);
 }

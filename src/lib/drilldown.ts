@@ -283,6 +283,31 @@ export type Drilldown = {
   moneyWeighted?: BookMoneyWeighted;
 };
 
+/**
+ * ── WHAT EACH SIDE OF THE BOOK IS, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5) ──
+ *
+ * These read "the Category III AIFs … Category I or II" — the rule before Stage
+ * 10bw, when the SEBI category alone placed a fund. The family have since
+ * placed their funds themselves, and their word outranks the category: Motilal
+ * Oswal's Founders Fund prints Category II and is on the LISTED side (it
+ * invests in listed equities), Delphi prints none and is listed, and Neo Infra
+ * prints none and is private. `shared/aifCategory.mjs` is the order — the
+ * family's placing, then a fund whose own name says private equity or venture,
+ * then the category its statement prints — and these say that order. Read by
+ * the facets below and by Morning CIO's side tiles, so the two cannot describe
+ * one side two ways.
+ */
+export const SIDE_NOTE = {
+  listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
+    + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
+    + " statement prints where they have not said.",
+  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
+    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
+    + " or by the Category I or II its statement prints.",
+  unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
+    + " family, or the fund's own SEBI registration, would settle each one.",
+} as const;
+
 type Ctx = {
   portfolio: Portfolio;
   /** The consolidated set Morning CIO's figures are struck on. */
@@ -562,20 +587,17 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       const sideFacets: Facet[] = [
         ...(listed.length ? [{
           key: "listed", label: "Listed", group: "side" as const,
-          note: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the"
-            + " Category III AIFs whose own statements say they trade listed securities.",
+          note: SIDE_NOTE.listed,
           rows: listed,
         }] : []),
         ...(priv.length ? [{
           key: "private", label: "Private", group: "side" as const,
-          note: "Private capital: unlisted holdings, structured products, and the AIFs whose statements"
-            + " print Category I or II or name their own discipline as private equity or venture.",
+          note: SIDE_NOTE.private,
           rows: priv,
         }] : []),
         ...(unplaced.length ? [{
           key: "unplaced", label: "Not placed", group: "side" as const,
-          note: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; a fund's`
-            + " own SEBI registration or its contribution agreement would settle each one.",
+          note: SIDE_NOTE.unplaced,
           rows: unplaced,
         }] : []),
       ];

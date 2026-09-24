@@ -4,6 +4,7 @@ import { usePortfolio, SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency } from
 import { lastQuoteFailure } from "@/lib/quotes";
 import { outageShort } from "@/lib/upstreamStatus";
 import { SmartSearch } from "@/components/SmartSearch";
+import { valuationDates, dateSpan, valuationNote as blendNote, type ValuationDates } from "@/components/BasisPill";
 
 const THEME_KEY = "glow:theme";
 
@@ -50,8 +51,30 @@ function CurrencySwitch() {
 
 // Live-quote state, stated honestly. The dot used to be hard-coded green whenever
 // a book was loaded, which would now claim "Live" even with the feed down.
+/**
+ * ── THE DATE BESIDE THE BOOK IS THE SPAN ITS MARKS WERE STRUCK ON ────────────
+ *
+ * This read "Marks as of {portfolio.asOf}" — the NEWEST account date in the
+ * book, 2026-08-29 on this drop, which is the date of two custody accounts that
+ * carry no valued position. Not one rupee of the current value was marked on it
+ * (MNT-7 · CK-C1). The figure beside it BLENDS statement marks struck from
+ * 31 Mar to 13 Aug with AMFI's published NAV on the mutual funds, so the top bar
+ * now prints the span and the NAV date, and the hover says how much of the value
+ * sits on each — `valuationDates`, the one split every surface can read.
+ *
+ * AND "EVERY HOLDING IS SHOWING ITS STATEMENT MARK" WAS FALSE (MNT-8): the NAV
+ * overlay runs whether or not the quote feed answers.
+ */
+function markLine(vd: ValuationDates): string {
+  const st = vd.statement.map((x) => x.date);
+  const nav = vd.nav.map((x) => x.date);
+  return [st.length ? `Marks ${dateSpan(st)}` : null, nav.length ? `NAV ${dateSpan(nav)}` : null]
+    .filter(Boolean).join(" · ");
+}
+
+
 function QuoteStatus() {
-  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive, liveWithheld, quoteFeeds } = usePortfolio();
+  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive, liveWithheld, unpriceable, quoteFeeds, fmtFromBase } = usePortfolio();
   if (!portfolio) {
     return <><span className="inline-block h-2 w-2 rounded-full bg-slate-600" /><span className="text-slate-400">Awaiting data</span></>;
   }
@@ -61,35 +84,60 @@ function QuoteStatus() {
       <span className="text-slate-400">Fetching prices…</span>
     </>;
   }
+  const vd = valuationDates(portfolio);
+  const money = (n: number) => fmtFromBase(n, { compact: true });
+  const at = quotesAsOf ? new Date(quotesAsOf) : null;
+  const clock = at ? at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
   if (quotesStatus === "unavailable") {
     // Name the reason rather than just saying it's off — "Live · 149 not live"
     // with no explanation is what made the last feed outage hard to diagnose.
     const f = lastQuoteFailure();
-    const why = f
-      ? `${outageShort(f)} Every holding is showing its statement mark, and nothing has been substituted for a live price. (${f.failureCode}${f.upstreamStatus != null ? ` · upstream ${f.upstreamStatus}` : ""}${f.detail ? ` · ${f.detail}` : ""}; full diagnostics in the console.)`
-      : "The live price feed is unavailable — every holding is showing its statement mark.";
+    /**
+     * A FAILED ROUND OVER A CACHED SNAPSHOT IS NOT "NOTHING SUBSTITUTED" (MNT-18).
+     * The app opens on the session's last snapshot (`quoteCache.ts`) and a failed
+     * fetch keeps it applied — so `livePriced` can be above zero while the status
+     * is unavailable. Saying every holding is on its statement mark would then be
+     * false about exactly the prices on screen; this names the snapshot's time.
+     */
+    const cached = livePriced > 0;
+    const state = cached
+      ? `The live feed did not answer this round. ${livePriced} securit${livePriced === 1 ? "y carries" : "ies carry"} the last prices it returned${clock ? ` at ${clock}` : ""}, cached this session; nothing else carries a live price.`
+      : "The live feed did not answer, so no holding carries a live price.";
+    const why = [
+      f ? `${outageShort(f)}` : null,
+      state,
+      blendNote(vd, money),
+      f ? `(${f.failureCode}${f.upstreamStatus != null ? ` · upstream ${f.upstreamStatus}` : ""}${f.detail ? ` · ${f.detail}` : ""}; full diagnostics in the console.)` : null,
+    ].filter(Boolean).join(" ");
     return <>
       <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-      <span className="text-slate-400" title={why}>
-        Marks as of {portfolio.asOf}
+      <span className="text-slate-400" title={why} data-testid="topbar-marks">
+        {cached ? `Cached ${clock ?? "prices"}` : markLine(vd) || "No valued holding"}
         {f && <span className="ml-1 text-amber-500/80">· feed down</span>}
       </span>
     </>;
   }
-  const at = quotesAsOf ? new Date(quotesAsOf) : null;
-  const clock = at ? at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : null;
-  // The count of unpriced holdings stays in the tooltip, not the header. Those
-  // rows are already marked individually in the table, where the reader can see
-  // which ones they are — a bare number up here just raised questions.
-  //
-  // THE TWO KINDS OF NOT-LIVE ARE NAMED APART (DL-9). A holding with no quote in
-  // this round and one whose quote the corporate-action check held back are
-  // both on their statement mark, for different reasons — and neither is on a
-  // "workbook" mark: every mark here is a statement's.
+  /**
+   * WHAT THE PILL COUNTS, IN THE UNIT IT COUNTS (MNT-9). These are SECURITIES,
+   * not holdings; the ones on statement marks are statement marks, not
+   * "workbook marks"; and the securities no NSE symbol resolves — which no feed
+   * will ever price — were never mentioned, so a best-case "every symbol priced"
+   * read as the whole book being live. The value split says how much is.
+   *
+   * AND THE TWO KINDS OF NOT-LIVE ARE NAMED APART (DL-9). A security with no
+   * quote in this round and one whose quote the corporate-action check held
+   * back are both on their statement mark, for different reasons.
+   */
   return <>
     <span className="inline-block h-2 w-2 rounded-full bg-gain shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-    <span className="text-slate-400" data-quote-coverage
-      title={`${livePriced} holdings priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}${notLive ? ` · ${notLive} got no quote in this round and are on their statement marks` : ""}${liveWithheld ? ` · ${liveWithheld} had a quote the corporate-action check held back, because the statement's share count may not match it, and are on their statement marks` : ""}`}>
+    <span className="text-slate-400" data-testid="topbar-live" data-quote-coverage
+      title={[
+        `${livePriced} securit${livePriced === 1 ? "y" : "ies"} priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}.`,
+        notLive ? `${notLive} ha${notLive === 1 ? "s" : "ve"} an NSE symbol and no quote this round, so ${notLive === 1 ? "it stays" : "they stay"} on ${notLive === 1 ? "its" : "their"} statement mark.` : null,
+        liveWithheld ? `${liveWithheld} had a quote the corporate-action check held back, because the statement's share count may not match it, so ${liveWithheld === 1 ? "it stays" : "they stay"} on ${liveWithheld === 1 ? "its" : "their"} statement mark.` : null,
+        unpriceable ? `${unpriceable} resolve${unpriceable === 1 ? "s" : ""} no NSE symbol and can never be priced live — ${unpriceable === 1 ? "it stays" : "they stay"} on ${unpriceable === 1 ? "its" : "their"} statement mark, or AMFI's published NAV for a mutual fund.` : null,
+        blendNote(vd, money),
+      ].filter(Boolean).join(" ")}>
       Live{clock ? ` ${clock}` : ""}
     </span>
   </>;

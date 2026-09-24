@@ -4822,7 +4822,22 @@ const DRILLDOWN_CHROME_GONE = [
   ["the notes under the drill-down's table moved into the headline figure's hover", (t, ctx) =>
     !/a blend rather than one report date/i.test(t) && !/On statement marks alone/i.test(t)
     && (ctx?.titles ?? []).some((x) => /a blend rather than one report date/i.test(x))
-    && (ctx?.titles ?? []).some((x) => /On statement marks alone — before any live quote — these holdings are worth ₹/i.test(x))],
+    && (ctx?.titles ?? []).some((x) => /On statement marks alone these holdings are worth ₹/i.test(x))],
+  /**
+   * ...AND THAT HOVER NAMES WHAT MOVED THE FIGURE OFF ITS STATEMENT MARKS
+   * (DSM-C1). It read "before any live quote" on every set, and with no quote
+   * feed running the difference was AMFI's published NAV on the fund holdings —
+   * a different source, struck once a day after the close. Where it names a
+   * difference it names the source by count, and a live quote only where one
+   * priced a row.
+   */
+  ["the headline's hover names what moved the set off its statement marks, never a quote that did not (DSM-C1)", (t, ctx) => {
+    const h = (ctx?.titles ?? []).find((x) => /On statement marks alone these holdings are worth ₹/i.test(x));
+    if (!h) return false;
+    if (/before any live quote/i.test(h)) return false;
+    const diff = /; the difference is ([^.]*)\./.exec(h)?.[1];
+    return diff == null || /^(?:AMFI's published NAV on \d+ fund holdings?(?: and a live quote on \d+)?|a live quote on \d+)$/.test(diff);
+  }],
   ["the holdings table's subtitle paragraph stays removed", (t) =>
     !/Weight is within this set, not within the book/i.test(t)
     && !/dropped automatically/i.test(t)],
@@ -5842,6 +5857,9 @@ const ROUTES = [
    */
   ["holdings-aif", () => CIO_BUCKET_HREFS.find((h) => /[?&]key=AIF(&|$)/.test(h)) ?? "/holdings?of=bucket&key=no-aif-row-on-morning-cio"],
   ["holdings-book", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
+  // THE SAME PAGE UNDER A SEARCH (DSM-C8): the walk types `FILTER_BOOK.term`
+  // into the table's filter box, and the footer must total the rows it shows.
+  ["holdings-book-filter", () => drilldownPath("book") ?? "/holdings?of=none-resolved-from-cio"],
   /**
    * ...AND ONE ROW FROM EACH OF THE FAMILY'S OWN TWO AXES.
    *
@@ -8259,7 +8277,8 @@ const WITHHELD_PILL = [
       n(/(\d+) securities priced live/),
       n(/(\d+) have a symbol but no quote in this round/),
       n(/(\d+) had a live quote that the corporate-action check held back/),
-      n(/(\d+) have no listing at all/),
+      // PR-C names these by the fact they are struck on (MNT-9): no NSE symbol.
+      n(/(\d+) resolve no NSE trading symbol/),
     ];
     return parts.reduce((a, b) => a + b, 0) === PILL_UNIVERSE;
   }],
@@ -8515,12 +8534,19 @@ const COSTED_BOOK = (() => {
       deployed += cap.contributed;
       invested += cap.contributed;
     }
+    // ACCRUED INCOME over the same current holdings, which is what the
+    // drill-down the Accrued income tile opens sums (DL-14).
+    const accruedRows = current.filter((q) => typeof q.accruedIncome === "number" && q.accruedIncome !== 0);
     return current.length
       ? {
         holdings: current.length, costedCount: costed.length, costedValue: mv(costed), bookValue: mv(current),
         // THE ONE BOOK: every deduped position, as the top bar sums it.
         totalValue: mv(ded),
         pct: deployed > 0 ? (gain / deployed) * 100 : null, gain, deployed, invested, wholeMandates: whole.size,
+        accrued: accruedRows.length ? accruedRows.reduce((t, q) => t + q.accruedIncome, 0) : null, accruedCount: accruedRows.length,
+        // THE HOLDINGS AMFI'S PUBLISHED NAV MOVES OFF THEIR STATEMENT MARK
+        // (DSM-C1) — a depository's cash fund has no statement mark to move.
+        navPriced: current.filter((q) => q.navPriced && !q.depositoryUnits).length,
       }
       : null;
   } catch { return null; }
@@ -8574,6 +8600,31 @@ const UNVALUED_AIF_BOOK = (() => {
     const drew = new Set(commitments.filter((c) => (Number(c.drawn) || 0) > 0).map((c) => c.accountId));
     const accs = accounts.filter((a) => a.engagement === "AIF" && !withPositions.has(a.accountId) && drew.has(a.accountId));
     return { accountNos: accs.map((a) => String(a.accountNo)) };
+  } catch { return null; }
+})();
+
+/**
+ * WHAT THE FILTER WALK TYPES (DSM-C8): the first word of a company the book
+ * holds both WITH a reported cost and WITHOUT one, so the rows it matches carry
+ * a coverage sentence to check. Only the input is derived here; every claim on
+ * `holdings-book-filter` is an identity among figures the page prints.
+ */
+const FILTER_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const byKey = new Map();
+    for (const q of positions) {
+      if (q.assetClass !== "Equity" || !(Number(q.marketValue) > 0)) continue;
+      if (!byKey.has(q.securityKey)) byKey.set(q.securityKey, []);
+      byKey.get(q.securityKey).push(q);
+    }
+    const first = (x) => (String(x ?? "").toLowerCase().match(/[a-z]{4,}/) ?? [""])[0];
+    const cands = [...byKey.values()].filter((rows) => rows.length >= 2
+      && rows.some((q) => q.costBasis != null && !q.costUnavailable) && rows.some((q) => q.costBasis == null)
+      && first(rows[0].security) && rows.every((q) => first(q.security) === first(rows[0].security)))
+      .sort((a, b) => b.reduce((t, q) => t + q.marketValue, 0) - a.reduce((t, q) => t + q.marketValue, 0));
+    return cands.length ? { term: first(cands[0][0].security), key: cands[0][0].securityKey } : null;
   } catch { return null; }
 })();
 
@@ -13223,6 +13274,23 @@ const CIO_SHARED = [
       && ctx.kpiTiles.every((x) => x.links.every((h) => !/[?&]of=invested\b/.test(h)));
   }],
   /**
+   * ...AND THE INVESTED FIGURE SAYS HOW MANY HOLDINGS IT COVERS (DL-11). The
+   * tile's face paired ₹777 Cr of every holding with ₹467 Cr struck over the
+   * ones that report a cost, and nothing on it said the two were different
+   * sets. The counts are the book's, derived here (`COSTED_BOOK`), never read
+   * back off the page they are checked against.
+   */
+  ["the value tile's invested line names the holdings it covers (DL-11)", (t, ctx) => {
+    if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
+    // A BOOK THE CHECK CANNOT READ IS A FAILURE, never an abstention.
+    if (!COSTED_BOOK) return false;
+    const value = ctx.kpiTiles.find((x) => x.slot === "value");
+    if (!value) return false;
+    if (COSTED_BOOK.costedCount === COSTED_BOOK.holdings) return { notChecked: "every holding in this book reports a cost, so the invested line covers the whole value" };
+    const m = / · (\d+) of (\d+) reports? a cost$/.exec(value.second ?? "");
+    return !!m && Number(m[1]) === COSTED_BOOK.costedCount && Number(m[2]) === COSTED_BOOK.holdings;
+  }],
+  /**
    * ...AND NO TILE LINKS AT A SCOPE THAT IS NOW A FACET. `?of=listed`,
    * `?of=private` and `?of=no-cost` still RESOLVE, deliberately, so a bookmark
    * keeps working — which is precisely why their absence from the strip has to
@@ -13479,6 +13547,45 @@ const VALUE_WINDOW_BOOK = (() => {
   } catch { return null; }
 })();
 
+/**
+ * ── THE DATES THE CURRENT VALUE IS STRUCK ON, RE-EXPRESSED OFF THE BOOK ──────
+ *
+ * The top bar read "Marks as of 2026-08-29" — the newest ACCOUNT date, which is
+ * two quantity-only trust demats that value nothing (MNT-7 · CK-C1). The value
+ * beside it is statement marks struck on several dates plus AMFI's published
+ * NAV on the funds, so the bar prints the span of the one and the date of the
+ * other. Derived here from `bookArray`'s positions (the NAV overlay the page
+ * renders), each dedupe group once, every valued holding: a NAV-priced one on
+ * its NAV date, the rest on their account's own statement date.
+ */
+const VALUATION_SPAN = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    const seen = new Set(), st = new Set(), nav = new Set();
+    // …and what each basis is worth, for the top bar's split (MNT-8).
+    let stValue = 0, navValue = 0, navCount = 0;
+    for (const p of positions) {
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      if (!(Math.abs(Number(p.marketValue) || 0) > 0)) continue;
+      if (p.navPriced && p.navDate) { nav.add(p.navDate); navValue += p.marketValue; navCount++; continue; }
+      const d = asOf.get(p.accountId);
+      if (d) { st.add(d); stValue += p.marketValue; }
+    }
+    const sd = [...st].sort(), nd = [...nav].sort();
+    const newestAccount = accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "");
+    return sd.length ? { first: sd[0], last: sd[sd.length - 1], nav: nd, newestAccount, stDates: sd.length, stValue, navValue, navCount } : null;
+  } catch { return null; }
+})();
+/** `31 Mar` as the page prints it, allowing ICU's `Sept`. */
+const shortDayRe = (iso) => {
+  const [, m, d] = iso.split("-").map(Number);
+  const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept?", "Oct", "Nov", "Dec"][m - 1];
+  return `${d} ${mon}`;
+};
+
 /** The two money-weighted checks, also run on the LIVE walk (see the first). */
 const CIO_MWR = CIO_SHARED.filter(([d]) =>
   /money-weighted tile is the statement-basis rate|book's newest date lies after that close/.test(d));
@@ -13586,6 +13693,31 @@ const CIO_MOVERS = [
  * moves the figure off the statement book `COSTED_BOOK` is struck on.
  */
 const CIO_BOOK_RETURN = [
+  /**
+   * ── THE TOP BAR SAYS WHAT EACH PART OF THE CURRENT VALUE IS PRICED ON (MNT-8)
+   * Three captions said every holding showed its statement mark while AMFI's
+   * published NAV priced the fund holdings. The top bar's hover splits the
+   * figure by basis now, and each part — its value, its dates, its count — is
+   * the book's own, re-derived in `VALUATION_SPAN`. Walked where no quote feed
+   * answers, so no part is live.
+   */
+  ["the top bar's hover splits the current value by what prices it, each part the book's (MNT-8)", (t, ctx) => {
+    const V = VALUATION_SPAN;
+    const h = (ctx?.headerTitles ?? []).find((x) => /is on statement marks struck on/.test(x));
+    if (!V || !h) return false;
+    if (/every (?:holding|figure)[^.]*on (?:its|their) statement mark/i.test(h)) return false;
+    const st = /(₹[\d,.]+\s*(?:Cr|L|K)?) is on statement marks struck on (\d+) dates?, (\d{4}-\d{2}-\d{2})(?: to (\d{4}-\d{2}-\d{2}))?/.exec(h);
+    if (!st) return false;
+    const stV = money2cr(st[1]);
+    const stOk = Math.abs(stV - V.stValue / 1e7) <= compactTieCr(stV) && Number(st[2]) === V.stDates
+      && st[3] === V.first && (st[4] ?? st[3]) === V.last;
+    if (!V.navCount) return stOk && !/AMFI's published NAV/.test(h);
+    const nv = /(₹[\d,.]+\s*(?:Cr|L|K)?) on AMFI's published NAV of ([\d, -]+?) \((\d+) fund holdings?\)/.exec(h);
+    if (!nv) return false;
+    const nvV = money2cr(nv[1]);
+    return stOk && Math.abs(nvV - V.navValue / 1e7) <= compactTieCr(nvV) && Number(nv[3]) === V.navCount
+      && nv[2].split(/,\s*/).join(",") === V.nav.join(",");
+  }],
   ["the Consolidated return tile is the book's costed set's return, and names that set (B-07)", (t, ctx) => {
     if (!ctx?.kpiTiles) return false;
     if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
@@ -13611,6 +13743,25 @@ const ALLOC_HELD_PILL = [
     const held = labels.length - unplaced;
     return a.pill.held === held && a.pill.unplaced === unplaced && a.pill.rowsUnplaced === unplaced
       && new RegExp(`^${held} [a-z ]+ held${unplaced ? ` · ${unplaced} not classified` : ""}$`).test(a.pill.text);
+  }],
+];
+
+/**
+ * ── WHAT WAS FILED BY THE INSTRUMENT IS NAMED, WITH ITS VALUE (CK-C2) ──────
+ * On the family's asset-class axis a company share the review does not name is
+ * Equity and cash is Cash. The line's hover said nothing there was inferred;
+ * the value filed that way is on its face now, and the hover says what it is.
+ */
+const ALLOC_DERIVED = [
+  ["the value filed by what the instrument is is on the line's face, and its hover never says nothing was inferred (CK-C2)", (t, ctx) => {
+    const d = ctx?.allocTable?.derived;
+    if (!d) return false;
+    if (!(d.mv > 0)) return /Nothing here is inferred from what the instrument is\./.test(d.title) && !/by what the instrument is/.test(d.text);
+    const m = /· (₹[\d,.]+\s*(?:Cr|L|K)?) by what the instrument is/.exec(d.text);
+    if (!m) return false;
+    const v = money2cr(m[1]);
+    return Math.abs(v - d.mv / 1e7) <= compactTieCr(v)
+      && !/nothing here is inferred/i.test(d.title) && /is filed by what the instrument is/.test(d.title);
   }],
 ];
 
@@ -13755,8 +13906,19 @@ const CIO_ALLOC = [
    * page that tile opens and where the same words already stood. The report
    * date is in the header's basis pill and stays here.
    */
-  ["...and the as-of that subtitle carried is still on the page",
-    (t) => /as of \d{4}-\d{2}-\d{2}/i.test(t)],
+  /**
+   * ...AND THE DATES NOW ARE THE DATES THE VALUE IS STRUCK ON (MNT-7 · CK-C1).
+   * The page's own "as of" was the top bar's "Marks as of <newest account>",
+   * a date on which nothing in the value was marked. It prints the SPAN of the
+   * statement marks and AMFI's NAV date now, both derived from the book.
+   */
+  ["...and the dates the figures are struck on are still on the page (MNT-7)", (t) => {
+    if (!VALUATION_SPAN) return false;
+    if (/Marks as of/.test(t)) return false;
+    const re = new RegExp(`Marks ${shortDayRe(VALUATION_SPAN.first)}\\u2013${shortDayRe(VALUATION_SPAN.last)}`);
+    const navOk = !VALUATION_SPAN.nav.length || new RegExp(`NAV ${shortDayRe(VALUATION_SPAN.nav[0])}`).test(t);
+    return re.test(t) && navOk;
+  }],
   /**
    * ── THE BOOK PERFORMANCE CARD IS REMOVED, AND ITS FIGURES ARE NOT ─────────
    *
@@ -13968,8 +14130,18 @@ const CIO_ALLOC = [
       // anchor therefore carries no text — see the invariant above. Fund
       // commitments sits on the Capital deployment card and is still a text
       // link, so the same claim is struck in the two places the pairing lives.
-      const tiles = [/^uncalled capital$/i, /^distributions$/i]
-        .every((label) => ctx.kpiTiles.some((tile) => label.test(tile.label) && tile.links[0] === "/private-market"));
+      // THE DISTRIBUTIONS TILE OPENS THE PAGE WITH ITS OWN FIGURE ON IT (CK-C9):
+      // Private Market's strip does not show Distributions by default, so the
+      // tile names it in `?tiles=` — the same page, the same pathname, and the
+      // figure a reader clicked among the tiles it lands on.
+      const opens = (h, metric) => {
+        const u = new URL(h ?? "", "http://x");
+        if (u.pathname !== "/private-market") return false;
+        const want = u.searchParams.get("tiles");
+        return metric == null ? want == null : (want ?? "").split(",").includes(metric);
+      };
+      const tiles = [[/^uncalled capital$/i, null], [/^distributions$/i, "distributed"]]
+        .every(([label, metric]) => ctx.kpiTiles.some((tile) => label.test(tile.label) && opens(tile.links[0], metric)));
       // AND THE CARD ITSELF, which is the half the family asked for:
       //
       //   *"What is the capital deployed for private equity?… I told you —
@@ -14154,6 +14326,28 @@ const CIO_ALLOC = [
      */
     ...ALLOC_HELD_PILL,
     /**
+     * ── THE CONCENTRATION CARD NAMES ITS DENOMINATOR (CK-C12) ────────────────
+     * Its shares — Top-10, each side of the book — are all of the one current
+     * value of holdings, and nothing on the card said which figure that was.
+     * The title's hover says so now (a card's line is its title's hover since
+     * Stage 10cp), and it is the book's figure, re-derived here.
+     */
+    ["the Concentration card names the book its shares are of (CK-C12)", (t, ctx) => {
+      if (!COSTED_BOOK) return false;
+      const h = (ctx?.titles ?? []).map((x) => /^Every share on this card is of the (₹[\d,.]+\s*(?:Cr|L|K)?) current value of holdings/.exec(x)).find(Boolean);
+      if (!h) return false;
+      const v = money2cr(h[1]), nav = CIO_FIGURES.get("nav");
+      return Math.abs(v - COSTED_BOOK.totalValue / 1e7) <= compactTieCr(v)
+        && (!Number.isFinite(nav) || Math.abs(v - nav) <= compactTieCr(v));
+    }],
+    /** ...and Capital deployment names what its Called and Undrawn shares are of (CK-C12). */
+    ["Capital deployment names what its Called and Undrawn shares are of (CK-C12)", (t) => {
+      const m = /Called [\d.]+%\s*of the (₹[\d,.]+\s*(?:Cr|L|K)?) committed\s*Undrawn [\d.]+%/.exec(t);
+      if (!m || !CAPITAL_BOOK) return false;
+      const v = money2cr(m[1]);
+      return Math.abs(v - CAPITAL_BOOK.committedCr) <= compactTieCr(v);
+    }],
+    /**
      * ...AND EVERY CONCENTRATION FIGURE OPENS ITS OWN SET. The other half of the
      * check split above, on the panel that draws the card. Paired label to
      * destination for the same reason: "the page links to `of=book` somewhere"
@@ -14237,6 +14431,35 @@ const NAV_RECON = [
       && Math.abs(book - NAV_RECON_BOOK.once) <= 0.01
       && Math.abs(cur - COSTED_BOOK.totalValue) <= 1
       && Math.abs(book / 1e7 + steps.reduce((a, x) => a + signedCr(x), 0) - cur / 1e7) <= tie;
+  }],
+];
+
+/**
+ * EACH RANGE SAYS WHAT IT DRAWS (MNT-13): a dated range starts its length
+ * before the book's last statement date and runs to the index's own latest
+ * close. The dates are re-derived here from `BOOK_NAV_HISTORY` and the
+ * ranges' own lengths, never read back off the component.
+ */
+const NAV_RANGE_DAYS = { "3M": 91, "6M": 183, "1Y": 365, "3Y": 365 * 3, "5Y": 365 * 5 };
+const NAV_RANGE_HOVERS = [
+  ["each NAV range's hover names the closes it draws, to the index's own latest close (MNT-13)", (t, ctx) => {
+    if (!ctx?.navChart) return navBasisMissing(ctx);
+    if (!NAV_SERIES_BOOK?.seriesTo) return notChecked("the book's NAV series could not be read on this run");
+    const to = NAV_SERIES_BOOK.seriesTo;
+    const rs = ctx.navChart.ranges ?? [];
+    if (rs.filter((r) => r.key in NAV_RANGE_DAYS).length < 3 || rs.some((r) => !r.title)) return false;
+    return rs.every((r) => {
+      if (/closes ending at the book's last statement date/.test(r.title)) return false;
+      if (r.key === "book") {
+        return r.title === "The window the book's line covers — its own first to last statement date — with the index drawn over exactly the same dates.";
+      }
+      if (r.key === "MAX") return /^Every .+ close the price service carries, to its latest\./.test(r.title);
+      if (!(r.key in NAV_RANGE_DAYS)) return false;
+      const d = new Date(`${to}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - NAV_RANGE_DAYS[r.key]);
+      const start = d.toISOString().slice(0, 10);
+      return new RegExp(`^.+ closes from ${start} — ${r.key} before the book's last statement date, ${to} — to the index's own latest close\\.`).test(r.title);
+    });
   }],
 ];
 
@@ -14645,7 +14868,10 @@ const CIO_NAV = [
       const ex = /Not in the series:\s*(\d+) accounts/.exec(t);
       if (/that cannot supply a\s+series —/.test(t)) return false;
       const parts = /(\d+) publish exactly one dated valuation/i.exec(t);  // `label-xs` is uppercase in innerText
-      const none = /(\d+) publish no valuation at all/i.exec(t);
+      // "CARRY NO VALUED HOLDING" (MNT-14): true of every row the list holds,
+      // the two redeemed to a measured nil included — "publish no valuation at
+      // all" was false of those two, whose own statement struck the nil.
+      const none = /(\d+) carry no valued holding/i.exec(t);
       if (!cov || !ex || !parts || !none) return false;
       // The COUNTS have to partition…
       if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
@@ -19827,7 +20053,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-tiles-dense": [
     /**
@@ -20586,6 +20812,49 @@ const INVARIANTS = {
         && labels.length >= 2 && labels.every((l) => l === tileLabel) && costedLabelIsTheBooks(tileLabel)
         && (ctx?.titles ?? []).some((x) => /Value ÷ Invested is not this figure/.test(x));
     }],
+    /** ...and its headline hover names AMFI's NAV on as many holdings as the book prices by it (DSM-C1). */
+    ["the headline's hover counts the holdings AMFI's published NAV moved (DSM-C1)", (t, ctx) => {
+      if (!COSTED_BOOK) return false;
+      const h = (ctx?.titles ?? []).find((x) => /On statement marks alone these holdings are worth ₹/i.test(x));
+      if (!h) return false;
+      if (!COSTED_BOOK.navPriced) return !/AMFI's published NAV/.test(h);
+      const m = /AMFI's published NAV on (\d+) fund holdings?/.exec(h);
+      return !!m && Number(m[1]) === COSTED_BOOK.navPriced;
+    }],
+    /**
+     * ACCRUED INCOME IS NAMED BESIDE THE FIGURE IT IS NOT IN (DL-14). Morning
+     * CIO's Accrued income tile opens this page, which carried no accrued figure
+     * at all. It is the book's own, over the same current holdings.
+     */
+    ["it names the accrued income no value on this site includes, the book's own (DL-14)", (t, ctx) => {
+      if (!COSTED_BOOK) return false;
+      const a = ctx?.drilldown?.accrued;
+      if (COSTED_BOOK.accrued == null) return a == null;
+      if (!a) return false;
+      const m = /^\+ (₹[\d,.]+\s*(?:Cr|L|K)?) accrued income, not in this figure$/.exec(a.text);
+      return !!m && a.count === COSTED_BOOK.accruedCount && Math.abs(a.value - COSTED_BOOK.accrued) < 1
+        && Math.abs(money2cr(m[1]) - COSTED_BOOK.accrued / 1e7) <= compactTieCr(money2cr(m[1]));
+    }],
+    /**
+     * A WHOLE MANDATE'S ROW SAYS WHY ITS INVESTED + UNREALISED IS NOT ITS VALUE
+     * (DL-12). Invested is the capital paid in, which the FIFO return divides
+     * by; Unrealised stays on the cost of the shares it holds now. The hover on
+     * the Unrealised cell states the difference with the figures, and those
+     * figures are the row's own cells — one hover per whole mandate the book has.
+     */
+    ["every whole mandate's Unrealised cell states the gap between its three cells (DL-12)", (t, ctx) => {
+      if (!COSTED_BOOK) return false;
+      const cells = ctx?.drilldown?.pnlOnHeld ?? [];
+      if (cells.length !== COSTED_BOOK.wholeMandates) return false;
+      return cells.every((c) => {
+        const m = /Invested \+ Unrealised − Value = ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?)/.exec(c.title);
+        if (!m || c.cells.length < 7) return false;
+        const inv = money2cr(c.cells[2]), val = money2cr(c.cells[3]), pnl = signedCr(c.cells[6]), said = signedCr(m[1]);
+        if (![inv, val, pnl, said].every(Number.isFinite)) return false;
+        const tie = compactTieCr(Math.abs(inv)) + compactTieCr(Math.abs(val)) + compactTieCr(Math.abs(pnl)) + compactTieCr(Math.abs(said));
+        return Math.abs(inv + pnl - val - said) <= tie;
+      });
+    }],
     /**
      * THE BOOK IS ONE FIGURE (B-01): the share line divides by the current value
      * of holdings the top bar and the tile print, re-derived here.
@@ -20669,6 +20938,39 @@ const INVARIANTS = {
        now, asserted there, where the figure it qualifies is printed. */
     ["the lead paragraph stays removed", (t) =>
       !/counted once per member/i.test(t)],
+  ],
+  /**
+   * ── UNDER A SEARCH, THE FOOTER TOTALS THE ROWS IT SHOWS (DSM-C8) ──────────
+   * The walk types a name the book holds both with a cost and without one. The
+   * footer's Weight read 100% over rows worth a fraction of the set, and its
+   * coverage sentence counted the whole set's holdings beside a value that was
+   * only the matched rows'. Every claim here is an identity among figures the
+   * page prints — the rows it shows, the ones it filtered out, and the set.
+   */
+  "holdings-book-filter": [
+    ["the walk narrowed the table to the rows its search matches", (t, ctx) => {
+      const f = ctx?.drilldown?.filter;
+      if (!FILTER_BOOK || !f) return false;
+      const hidden = Number(/(\d[\d,]*) filtered out and not counted here/.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      return f.value === FILTER_BOOK.term && hidden > 0;
+    }],
+    ["under a search the footer's Weight is those rows' share of the set, never 100% (DSM-C8)", (t, ctx) => {
+      const d = ctx?.drilldown;
+      if (!d) return false;
+      const w = pctIn(footCell(ctx, "weight")), v = money2cr(footCell(ctx, "value"));
+      const total = d.total / 1e7;
+      if (!w || !Number.isFinite(v) || !(total > 0)) return false;
+      return w.v < 100 - w.tie && Math.abs(w.v - (v / total) * 100) <= w.tie + (compactTieCr(v) / total) * 100;
+    }],
+    ["under a search the coverage sentence counts the rows shown, and they and the rest make the set (DSM-C8)", (t, ctx) => {
+      const d = ctx?.drilldown;
+      if (!d) return false;
+      const hidden = Number(/(\d[\d,]*) filtered out and not counted here/.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      const m = (ctx?.titles ?? []).map((x) => /(\d[\d,]*) of the (\d[\d,]*) holdings shown report a cost and (\d[\d,]*) report none/.exec(x)).find(Boolean);
+      if (!m || !Number.isFinite(hidden)) return false;
+      const [n, of, none] = [m[1], m[2], m[3]].map((x) => Number(x.replace(/,/g, "")));
+      return of + hidden === d.holdings && n + none === of && none > 0;
+    }],
   ],
   "holdings-topnames": [
     ...DRILLDOWN_CHROME_GONE,
@@ -23804,7 +24106,7 @@ const INVARIANTS = {
     }],
   ],
   "cio-alloc-basket": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("basket"), ...ALLOC_HELD_PILL],
-  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL],
+  "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL, ...ALLOC_DERIVED],
 
   monitor: [
     /**
@@ -28615,8 +28917,9 @@ const INVARIANTS = {
   "performance-live": [...PERF_MW_LIVE, ...PERF_MW, ...WITHHELD_PILL],
   performance: [
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
-    // to the statement book and the current value step by step, as on `cio-nav`.
-    ...NAV_RECON,
+    // to the statement book and the current value step by step, as on `cio-nav`,
+    // and its range hovers say the same things there.
+    ...NAV_RECON, ...NAV_RANGE_HOVERS,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -29934,6 +30237,12 @@ for (const theme of THEMES) {
           }
           await page.waitForTimeout(name === "monitor-security-loading" ? 1200 : 500);
         }
+      }
+      if (name === "holdings-book-filter" && FILTER_BOOK) {
+        // Typed as a reader types it; the box is found by its role, never by
+        // its placeholder's words.
+        const box = page.locator('main input[role="combobox"]').first();
+        if (await box.count()) { await box.fill(FILTER_BOOK.term); await page.waitForTimeout(700); }
       }
       /**
        * THE FAMILY'S OWN EXAMPLE: TYPE THE NAME, OPEN THE ROW, EXPAND THE FUND.
@@ -31314,6 +31623,9 @@ for (const theme of THEMES) {
        * a 60-row table unreadable.
        */
       const titles = FAST ? [] : await page.$$eval("main [title]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
+      // THE TOP BAR'S OWN HOVERS (MNT-8): it sits outside <main>, so `titles`
+      // never reads it.
+      const headerTitles = FAST ? [] : await page.$$eval("header [title]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
       /**
        * HOW MANY ACCOUNTS THE NAV CARD ACTUALLY NAMES, counted off the DOM.
        *
@@ -31810,6 +32122,7 @@ for (const theme of THEMES) {
         const ranges = [...(card?.querySelectorAll("[data-range]") ?? [])].map((b) => ({
           key: b.getAttribute("data-range"),
           active: b.getAttribute("aria-selected") === "true",
+          title: b.getAttribute("title"),
         }));
         return {
           height: Math.round(el.getBoundingClientRect().height),
@@ -33082,6 +33395,8 @@ for (const theme of THEMES) {
             const need = span.getBoundingClientRect().width;
             span.remove();
             return {
+              // What the reader typed (DSM-C8's walk).
+              value: el.value ?? "",
               width: el.getBoundingClientRect().width,
               // `pl-9 pr-3` plus the search icon: the room gone before a
               // character is drawn, read off the element rather than assumed.
@@ -35676,7 +35991,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

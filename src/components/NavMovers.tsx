@@ -184,8 +184,12 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
       ? `both struck ${model.newestNavDate}.`
       : `struck between ${model.oldestNavDate} and ${model.newestNavDate}; a scheme does not publish on a non-business day, so the rows do not share one date.`}`,
     "That is a different measurement from the Direct Equity branch of this card, which is a live intraday price against the previous session's close — the two are never added together.",
-    "The rupee figure is derived: the scheme's move applied to what this book values the holding at, whose mark is its own statement's.",
+    // MNT-10: the value is units × AMFI's NAV wherever the overlay priced the
+    // holding — not "its own statement's" mark, which is true of the few AMFI
+    // does not price.
+    "The rupee figure is derived: the scheme's move applied to what this book values the holding at — units × AMFI's published NAV where AMFI publishes one, and the statement's own mark where it does not.",
     "Each scheme's NAV is AMFI's own daily file — the same NAV the rest of the dashboard values the fund at. A scheme that file does not carry is on the look-through store's NAV, and its row says so.",
+    ...(model.olderRows ? [`${model.olderRows} scheme${model.olderRows === 1 ? "" : "s"} last published on an earlier day ${model.olderRows === 1 ? "is" : "are"} listed with ${model.olderRows === 1 ? "its" : "their"} own date and kept out of the figure above, which is one day's move.`] : []),
     "AIF folios are not here — no alternative fund publishes a daily NAV.",
   ].join("\n\n");
 
@@ -258,17 +262,34 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
         {/* THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp) —
             the family asked for the lines that explain a card to go. What the
             move stands on is still on screen, in rupees and in schemes; what the
-            store could not price is counted on the face and named below. */}
+            store could not price is counted on the face and named below. Two
+            more counts ride on the face beside them, each explained in the
+            hover: a scheme last published on an OLDER day is listed below with
+            its own date and is not in the figure (rule 8, MNT-9), and the liquid
+            funds are Cash by the family's rule, so "of the ₹X held" must not
+            read as every fund they own (MNT-15). */}
         <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500 sm:text-right" data-testid="navmovers-coverage"
+          data-navmovers-older={model.olderRows} data-navmovers-cash-funds={model.cashFunds.names}
           title={`The move is struck on ${fmtFromBase(model.coveredValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.rows.length} scheme${model.rows.length === 1 ? "" : "s"} behind ${model.scopeNames} name${model.scopeNames === 1 ? "" : "s"}${
             model.skipped.length > 0
               ? ` — ${model.skipped.length} holding${model.skipped.length === 1 ? "" : "s"}${
                   skippedNames === model.skipped.length ? "" : ` across ${skippedNames} name${skippedNames === 1 ? "" : "s"}`
                 } worth ${fmtFromBase(skippedValue, { compact: true })} resolve no scheme and are not counted either way`
-              : ""}.`}>
+              : ""}.${
+            model.olderRows > 0
+              ? ` ${model.olderRows} scheme${model.olderRows === 1 ? "" : "s"} worth ${fmtFromBase(model.olderValue, { compact: true })} last published earlier ${model.olderRows === 1 ? "is" : "are"} listed below with ${model.olderRows === 1 ? "its" : "their"} own date and ${model.olderRows === 1 ? "is" : "are"} not in this figure, which is one day's move.`
+              : ""}${
+            model.cashFunds.names > 0
+              ? ` ${model.cashFunds.names} liquid fund${model.cashFunds.names === 1 ? "" : "s"} worth ${fmtFromBase(model.cashFunds.value, { compact: true })} ${model.cashFunds.names === 1 ? "is" : "are"} Cash on this dashboard and not on this card.`
+              : ""}`}>
           {fmtFromBase(model.coveredValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
           {" "}· {model.rows.length} scheme{model.rows.length === 1 ? "" : "s"} · {model.scopeNames} name{model.scopeNames === 1 ? "" : "s"}
           {model.skipped.length > 0 ? ` · ${model.skipped.length} not priced` : ""}
+          {/* COUNTS ON THE FACE, THE SENTENCES IN THE HOVER (Stage 10cp): which
+              schemes are on an older day and why they are not in the move, and
+              which liquid funds are Cash on this dashboard, are the title's. */}
+          {model.olderRows > 0 ? ` · ${model.olderRows} on an older NAV` : ""}
+          {model.cashFunds.names > 0 ? ` · ${model.cashFunds.names} in Cash` : ""}
         </p>
       </div>
 
@@ -281,7 +302,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
               <SortHeader col="move" view={view} pad="py-1.5 pr-3"
                 title={`The scheme's own published move, NAV against the one before it. Every scheme with a published move is listed; a move of ${DRASTIC_PCT}% or more in one published day is chipped drastic.`}>Move</SortHeader>
               <SortHeader col="impact" view={view} pad="py-1.5 pr-3" title="The scheme's move applied to what this book values the holding at. Derived — the two sides are dated differently.">&#8377; on holding</SortHeader>
-              <SortHeader col="held" view={view} pad="py-1.5" title="What this book values these holdings at, on the statement that reports them.">Held</SortHeader>
+              <SortHeader col="held" view={view} pad="py-1.5" title="What this book values these holdings at: units × AMFI's published NAV where AMFI publishes one, else the statement's own mark. Each cell's hover says which.">Held</SortHeader>
             </Tr>
           </thead>
           <tbody className="divide-y divide-ink-700">
@@ -309,9 +330,13 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
                   {fmtFromBase(r.move, { compact: true, sign: true })}
                 </td>
                 <td className="py-1.5 text-right tabular text-slate-400"
-                    title={r.valueAsOf
-                      ? `What this book values the holding at, on its own statement of ${r.valueAsOf} — a different date from the ${r.navDate} NAV beside it.`
-                      : "What this book values the holding at, on the statement that reports it."}>
+                    title={r.valueBasis === "nav"
+                      ? `What this book values the holding at: its units × AMFI's published NAV of ${r.navDate}.`
+                      : r.valueBasis === "mixed"
+                        ? `What this book values these holdings at: units × AMFI's published NAV of ${r.navDate} on some statements, and the statement's own mark${r.valueAsOf ? ` (${r.valueAsOf})` : ""} on the rest.`
+                        : r.valueAsOf
+                          ? `What this book values the holding at, on its own statement of ${r.valueAsOf} — a different date from the ${r.navDate} NAV beside it.`
+                          : "What this book values the holding at, on the statement that reports it."}>
                   {fmtFromBase(r.value, { compact: true })}
                 </td>
               </Tr>
@@ -356,11 +381,14 @@ function SchemeNote({ row, newest }: { row: NavMover; newest: string | null }) {
   // Only where the book holds BOTH plans of one fund, which is what makes two
   // rows of one scheme name legitimate rather than a duplicate.
   if (row.plan) bits.push(`${row.plan} plan`);
-  if (row.keys > 1) bits.push(`${row.keys} holdings clubbed on one scheme`);
+  if (row.keys > 1) { bits.push(`${row.keys} holdings clubbed`); why.push(`${row.keys} holdings in this book resolve to this one scheme, so they are one row.`); }
   else if (row.positions > 1) bits.push(`${row.positions} statements`);
   // A ROW OLDER THAN THE NEWEST SAYS SO. Without it a reader takes the card's
   // heading date for every row on it.
-  if (newest && row.navDate !== newest) bits.push(`NAV ${row.navDate}`);
+  if (newest && row.navDate !== newest) {
+    bits.push(`NAV ${row.navDate}`);
+    why.push(`This scheme last published on ${row.navDate}, before the ${newest} the card is dated, so it is listed and kept out of the day's figure.`);
+  }
   // The store's own tier, surfaced only where it is NOT the ISIN — an exact
   // identifier needs no disclosure and a name match does.
   if (row.matchedVia !== "isin") { bits.push(`matched on ${row.matchedVia}`); why.push(`The scheme was matched on its ${row.matchedVia}, not an ISIN.`); }
