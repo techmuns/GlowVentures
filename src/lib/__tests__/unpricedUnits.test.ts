@@ -20,6 +20,7 @@ import {
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
 import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_UNVALUED_HOLDINGS, BOOK_POLYCAB } from "@/data/glowData";
 import type { Account, Position, UnvaluedStatementHolding } from "../types";
+import { unvaluedHoldingsOf, unvaluedStatementLinesOf } from "../accounts";
 
 let pass = 0;
 const fails: string[] = [];
@@ -113,6 +114,30 @@ ok("...over closing-balance rows alone it says the account sent none",
   /no holding statement/.test(depositoryUnitsGist([closingRow])) && !/prints no rate/.test(depositoryUnitsGist([closingRow])));
 ok("...and over both it names both",
   got.length > 0 && /no holding statement/.test(depositoryUnitsGist([...got, closingRow])) && /prints no rate/.test(depositoryUnitsGist([...got, closingRow])));
+
+// ── every line a statement records, named on the owner's page ────────────────
+console.log("── the unvalued lines, per owner ──");
+const live = [...BOOK_POSITIONS, ...got];
+const owners = [...new Set(BOOK_ACCOUNTS.map((a) => a.owner))];
+const listed = owners.flatMap((o) => unvaluedStatementLinesOf(o, BOOK_ACCOUNTS, live, BOOK_UNVALUED_HOLDINGS));
+const lineRows = listed.flatMap((g) => g.lines.map((l) => l.row));
+const wholeAccounts = new Set(owners.flatMap((o) => unvaluedHoldingsOf(o, BOOK_ACCOUNTS, live).map((u) => u.account.accountId)));
+ok("LOAD-BEARING: the book has unvalued lines inside accounts that value others — or this list is untested",
+  lineRows.length > 0, `${lineRows.length} line(s) across ${listed.length} account(s)`);
+ok("every unvalued line is named once, or is a depository copy a fund's own statement reports, or sits in an account named whole",
+  BOOK_UNVALUED_HOLDINGS.every((u) => {
+    const n = lineRows.filter((r) => r === u).length;
+    if (u.sameUnitsReportedBy) return n === 0;
+    return wholeAccounts.has(u.accountId) ? n === 0 : n === 1;
+  }));
+ok("...and the depository copies are counted, not dropped silently",
+  listed.reduce((s, g) => s + g.reportedElsewhere, 0)
+    === BOOK_UNVALUED_HOLDINGS.filter((u) => u.sameUnitsReportedBy && !wholeAccounts.has(u.accountId)).length);
+ok("an owner's accounts are split between the two lists, none in both",
+  listed.every((g) => !wholeAccounts.has(g.account.accountId)));
+ok("the lines the live book values at AMFI's NAV say so, and no other line does",
+  lineRows.length > 0 && listed.every((g) => g.lines.every((l) =>
+    !!l.valuedLive === got.some((p) => p.accountId === l.row.accountId && I(p) === I(l.row)))));
 
 // ── the refusals, on constructed inputs ──────────────────────────────────────
 console.log("── the refusals ──");

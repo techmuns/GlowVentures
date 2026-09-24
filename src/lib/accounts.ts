@@ -6,7 +6,7 @@
 // answer two different questions ("whose money is this?" and "who manages it?"),
 // and statements from several platforms give no reason to expect either answer
 // to be readable out of the account code. Both come from `Portfolio.accounts`.
-import type { Account, Engagement, Portfolio, Position } from "./types";
+import type { Account, Engagement, Portfolio, Position, UnvaluedStatementHolding } from "./types";
 import { ownerDisplayName } from "./owners";
 
 export type AccountIndex = Map<string, Account>;
@@ -152,4 +152,69 @@ export function unvaluedHoldingsOf(
     .filter((a) => a.owner === owner && !held.has(a.accountId))
     .map((a) => ({ account: a, reason: a.noPositionsReason ?? null, drawn: drawnBy.get(a.accountId) ?? null }))
     .sort((x, y) => (y.drawn ?? 0) - (x.drawn ?? 0) || x.account.provider.localeCompare(y.account.provider));
+}
+
+/**
+ * ── THE LINES A STATEMENT RECORDS AND NOTHING VALUES, inside an account that
+ *    values other lines (the figure audit, A-17)
+ *
+ * `unvaluedHoldingsOf` names an ACCOUNT with no valued position. An account that
+ * values some of its lines and not others was named nowhere, so the lines it
+ * does not value — a depository's quantity-only rows, a par row, a scheme the
+ * statement prints no rate for — read on screen as not held at all. `build-book`
+ * emits every such line with its reason (`BOOK_UNVALUED_HOLDINGS`); this is one
+ * owner's share of them, account by account.
+ *
+ * Only accounts that DO carry a position here: the others are already whole
+ * rows of `unvaluedHoldingsOf`, and listing their lines again would name one
+ * account twice on one card.
+ *
+ * Two kinds are handled apart, because neither is "valued nowhere":
+ *   - a depository's copy of AIF units the fund's own statement also reports
+ *     (`sameUnitsReportedBy`) is valued, by that fund's statement, and listing it
+ *     here would say the family holds units nothing values while the table above
+ *     carries them. It is left out and counted in `reportedElsewhere`.
+ *   - a line the LIVE book values at AMFI's published NAV (`unpricedStatementUnits`,
+ *     a `no-rate` depository row) comes back with `valuedLive` set, so a page can
+ *     say it IS in the live figures and how, and that no statement values it.
+ *
+ * Nothing here is summed into a value: `quantity` is units, not money.
+ */
+export type UnvaluedLine = {
+  row: UnvaluedStatementHolding;
+  /** The live position that values this line at AMFI's NAV, where one does. */
+  valuedLive: Position | null;
+};
+export type UnvaluedLinesOfAccount = {
+  account: Account;
+  lines: UnvaluedLine[];
+  /** Depository copies of fund units that the fund's own statement reports — not listed. */
+  reportedElsewhere: number;
+};
+
+export function unvaluedStatementLinesOf(
+  owner: string,
+  accounts: readonly Account[],
+  positions: readonly Position[],
+  unvalued: readonly UnvaluedStatementHolding[],
+): UnvaluedLinesOfAccount[] {
+  // THE SAME TEST `unvaluedHoldingsOf` applies, on the same positions, so the two
+  // PARTITION an owner's accounts: one with no position is a whole row there, one
+  // with any position has its unvalued lines here, and none is in both or neither.
+  const valuedHere = new Set(positions.map((p) => p.accountId));
+  const isin = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+  const out: UnvaluedLinesOfAccount[] = [];
+  for (const a of accounts) {
+    if (a.owner !== owner || !valuedHere.has(a.accountId)) continue;
+    const mine = unvalued.filter((u) => u.accountId === a.accountId);
+    if (mine.length === 0) continue;
+    const lines = mine.filter((u) => !u.sameUnitsReportedBy).map((row) => ({
+      row,
+      valuedLive: positions.find((p) => p.accountId === a.accountId && p.depositoryUnits?.kind === "no-rate"
+        && !!isin(row) && isin(p) === isin(row)) ?? null,
+    }));
+    lines.sort((x, y) => Number(!!y.valuedLive) - Number(!!x.valuedLive) || x.row.security.localeCompare(y.row.security));
+    out.push({ account: a, lines, reportedElsewhere: mine.length - lines.length });
+  }
+  return out.sort((x, y) => y.lines.length - x.lines.length || x.account.provider.localeCompare(y.account.provider));
 }
