@@ -639,10 +639,21 @@ export function StockInfo() {
    * CONSOLIDATED value below is right to dedupe, and a count of the entities
    * that report this name is not a consolidated figure — it is the answer to
    * "whose statements is this on", and the answer is two.
+   *
+   * AND AN ENTITY IS A MEMBER, NOT AN ACCOUNT. The count above was of ACCOUNTS
+   * under the word "entities", so the family's Cash read "Held in 12 entities"
+   * over three members, and State Bank of India "4" where the Portfolio
+   * Monitor's own Entities column says 2. The pill counts the MEMBERS whose
+   * statements carry the name — `ownerId`, the registry's one identity per
+   * person or trust — and names the account count beside it wherever the two
+   * differ, since "which statements" is still a real question. An account the
+   * registry attributes to nobody counts as its own entity rather than
+   * vanishing into another's.
    */
-  const held = new Set(rows.map((r) => r.accountId)).size;
+  const heldAccounts = new Set(rows.map((r) => r.accountId)).size;
+  const heldOwners = new Set(rows.map((r) => accIdx.get(r.accountId)?.ownerId ?? `account:${r.accountId}`)).size;
   // NO ROW IS NOT THE SAME AS EXITED — see `fundOnly` above.
-  const exited = held === 0 && !fundOnly && !resolving;
+  const exited = heldAccounts === 0 && !fundOnly && !resolving;
   /**
    * What the account rows carry that the (consolidated) footer beneath them does
    * not. Non-zero only where this name is reported under more than one member,
@@ -797,6 +808,10 @@ export function StockInfo() {
   // drawn at zero, which would read as "none of this is long-term".
   const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
   const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /** The EARLIEST statement date behind this holding — what a change in a
+   *  scheme's unit is compared with, since a statement drawn before the change
+   *  counts the earlier unit (DSM-A2, `FundLookthrough`). */
+  const statementAsOfEarliest = [...new Set(rows.map((r) => accIdx.get(r.accountId)?.asOf).filter((d): d is string => !!d))].sort()[0] ?? null;
 
   /**
    * ── THE POSITION TABLE, BY ROUTE ───────────────────────────────────────────
@@ -1380,7 +1395,16 @@ export function StockInfo() {
             ? <Pill tone="info"><span data-stock-held="funds-only"
                 title="No statement issued to this family reports this company, so there is no account, quantity or cost for it. The family holds it through the funds listed on the Position tab — derived from each fund's own monthly filing, and no part of the book's own value.">
                 Held only inside your funds</span></Pill>
-            : !resolving && <Pill>{unchecked ? "No direct holding" : exited ? "Position closed" : `Held in ${held} ${held === 1 ? "entity" : "entities"}`}</Pill>}
+            : !resolving && <Pill>{unchecked ? "No direct holding" : exited ? "Position closed" : (
+                // AN ENTITY IS A MEMBER, NOT AN ACCOUNT (DSM-A3) — see
+                // `heldOwners`. The account count rides beside it wherever the
+                // two differ, and what each counts is the hover.
+                <span data-stock-owners={heldOwners} data-stock-accounts={heldAccounts}
+                  title={heldAccounts === heldOwners
+                    ? `${heldOwners === 1 ? "One member's statement reports" : `${heldOwners} members' statements report`} this holding — ${heldAccounts === 1 ? "one account" : `one account each`}.`
+                    : `${heldOwners} ${heldOwners === 1 ? "member holds" : "members hold"} this across ${heldAccounts} accounts — an entity is a member of the family or a trust, and one member can hold a name in several accounts. Each account is a row of the Position table.`}>
+                  {`Held in ${heldOwners} ${heldOwners === 1 ? "entity" : "entities"}`}{heldAccounts !== heldOwners ? ` · ${heldAccounts} accounts` : ""}
+                </span>)}</Pill>}
           {/* ...AND THE OTHER ROUTE, BESIDE IT, where a company is held both
               ways: a reader who sees "Held in 3 entities" has otherwise no hint
               that ten funds hold it too until they open the table. */}
@@ -1834,7 +1858,7 @@ export function StockInfo() {
                 <CorporateActionReturns securityKey={securityKey} />
               </>
             ) : schemeHalves ? (
-              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
+              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
                 <AbsentSection
@@ -1869,7 +1893,7 @@ export function StockInfo() {
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
                 {lookThroughHoldings && (
-                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
+                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no
                     balance sheet, no concall and no insider filing — absent

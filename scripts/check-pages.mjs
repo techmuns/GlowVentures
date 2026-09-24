@@ -4222,6 +4222,88 @@ const MF_KEY = (() => {
 })();
 
 /**
+ * ── THE STOCK PAGE'S OWN COUNTS AND THE FUND STORE'S UNIT CHANGES, RE-DERIVED ─
+ *
+ * Every expectation the M2 checks strike is computed here from `glowData.ts`
+ * and `public/lookthrough/` — never imported from the module that renders it,
+ * because a check that calls the helper it is checking agrees with it by
+ * construction.
+ *
+ *   • MEMBERS AND ACCOUNTS. "Held in N entities" counted ACCOUNTS: the book's
+ *     Cash read 12 over three members and State Bank of India 4 where the
+ *     Portfolio Monitor says 2. An entity is an `ownerId`; an account the
+ *     registry attributes to nobody counts as its own.
+ *   • A CHANGE IN A SCHEME'S UNIT, on the store's raw NAVs: consecutive dated
+ *     points no more than 92 days apart that differ by a factor of two or
+ *     more either way. DSP's Gold ETF steps 137.7268 → 14.7633 in 36 days, and
+ *     every return whose window spans that step is a price per old unit set
+ *     against a price per new one.
+ */
+const M2_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    if (!accounts.length || !positions.length) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const byKey = new Map();
+    for (const p of positions) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)).push(p);
+    const entitiesOf = (key) => {
+      const ps = byKey.get(key) ?? [];
+      return {
+        accounts: new Set(ps.map((p) => p.accountId)).size,
+        owners: new Set(ps.map((p) => acc.get(p.accountId)?.ownerId ?? `account:${p.accountId}`)).size,
+      };
+    };
+    const mvOf = (key) => (byKey.get(key) ?? []).reduce((a, p) => a + (Number(p.marketValue) || 0), 0);
+    // The company share where the old count and the right one are furthest apart.
+    const entities = [...byKey.keys()]
+      .filter((k) => (byKey.get(k) ?? []).every((p) => p.assetClass === "Equity"))
+      .map((key) => ({ key, ...entitiesOf(key), mv: mvOf(key) }))
+      .filter((c) => c.accounts > c.owners)
+      .sort((a, b) => (b.accounts - b.owners) - (a.accounts - a.owners) || b.mv - a.mv)[0] ?? null;
+
+    const idx = JSON.parse(readFileSync(new URL("../public/lookthrough/index.json", import.meta.url), "utf8"));
+    const schemeOf = (key) => {
+      const e = idx.schemes?.[key];
+      if (!e) return null;
+      const f = JSON.parse(readFileSync(new URL(`../public/lookthrough/${e.schemecode}.json`, import.meta.url), "utf8"));
+      const pts = new Map();
+      const add = (d, v) => { if (d && typeof v === "number" && v > 0 && !pts.has(d)) pts.set(d, v); };
+      for (const r of Object.values(f.returns ?? {})) { add(r.startDate, r.startNav); add(r.endDate, r.endNav); }
+      add(f.nav?.prevDate, f.nav?.prev);
+      add(f.nav?.date, f.nav?.value);
+      const ser = [...pts].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+      const steps = [];
+      for (let i = 1; i < ser.length; i++) {
+        const days = (Date.parse(ser[i][0]) - Date.parse(ser[i - 1][0])) / 86_400_000;
+        const f2 = ser[i][1] / ser[i - 1][1];
+        if (days <= 92 && (f2 >= 2 || f2 <= 0.5)) steps.push({ from: { date: ser[i - 1][0], nav: ser[i - 1][1] }, to: { date: ser[i][0], nav: ser[i][1] } });
+      }
+      const periods = Object.keys(f.returns ?? {});
+      const crossing = periods.filter((k) => {
+        const r = f.returns[k];
+        return r.startDate && r.endDate && steps.some((b) => b.from.date >= r.startDate && b.to.date <= r.endDate);
+      });
+      const annualised = periods.filter((k) => /^cagr$/i.test(f.returns[k].kind ?? ""));
+      const statementAsOf = [...new Set((byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort()[0] ?? null;
+      return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null,
+        holdingsN: Array.isArray(f.holdings) ? f.holdings.length : null };
+    };
+    const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k));
+    const unitBreak = held.map(schemeOf).filter((x) => x && x.steps.length)
+      .sort((a, b) => mvOf(b.key) - mvOf(a.key))[0] ?? null;
+    // The scheme card is drawn for a mutual fund or an ETF, never an arbitrage
+    // fund (that page draws no look-through at all). The one publishing the most
+    // annualised returns, none refused, is where the p.a. marker must bind.
+    const cardDrawn = (k) => (byKey.get(k) ?? []).every((p) => (p.assetClass === "Mutual Fund" || p.assetClass === "ETF") && !isArbStore(p));
+    const cagrScheme = held.filter(cardDrawn).map(schemeOf).filter((x) => x && !x.crossing.length && x.annualised.length)
+      .sort((a, b) => b.annualised.length - a.annualised.length || mvOf(b.key) - mvOf(a.key))[0] ?? null;
+    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme };
+  } catch { return null; }
+})();
+
+/**
  * THE HOLDING HELD THROUGH THE MOST DISCRETIONARY MANDATES — derived, never typed.
  *
  * The line under a position's name links each mandate it sits in, and a cash
@@ -5127,6 +5209,19 @@ const ROUTES = [
   // fund's PRICE (Price & returns) and its disclosed holdings are what a reader
   // researches it for (Research). Each half is walked where it is drawn.
   ["stock-mf-holdings", () => (MF_KEY ? `/stock/${encodeURIComponent(MF_KEY)}?tab=research` : "/stock/no-mutual-fund-in-the-book?tab=research")],
+  // A SCHEME WHOSE NAV SERIES CROSSES A CHANGE IN THE UNIT — DSP's Gold ETF read
+  // −89% "in a month" across a 1:10 split of its units. Derived from the store.
+  // A SCHEME THAT PUBLISHES ANNUALISED RETURNS, none of them across a unit
+  // change — where the p.a. marker the card never drew must now bind.
+  ["stock-scheme-cagr", () => (M2_BOOK?.cagrScheme ? `/stock/${encodeURIComponent(M2_BOOK.cagrScheme.key)}?tab=market` : "/stock/no-held-scheme-with-an-annualised-return?tab=market")],
+  ["stock-dsp-split", () => (M2_BOOK?.unitBreak ? `/stock/${encodeURIComponent(M2_BOOK.unitBreak.key)}?tab=market` : "/stock/no-held-scheme-with-a-unit-change-in-the-store?tab=market")],
+  // ...AND ITS RESEARCH TAB, where the card's other half says what the store
+  // discloses. Since the card split across two tabs (#91) and its reasons moved
+  // into hovers (#95), a "returns are complete" claim can only return there.
+  ["stock-dsp-research", () => (M2_BOOK?.unitBreak ? `/stock/${encodeURIComponent(M2_BOOK.unitBreak.key)}?tab=research` : "/stock/no-held-scheme-with-a-unit-change-in-the-store?tab=research")],
+  // A COMPANY HELD IN MORE ACCOUNTS THAN BY MEMBERS — where "Held in N entities"
+  // read the account count. Derived from the book.
+  ["stock-entities", () => (M2_BOOK?.entities ? `/stock/${encodeURIComponent(M2_BOOK.entities.key)}` : "/stock/no-company-held-in-more-accounts-than-by-members")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -16381,6 +16476,19 @@ const INVARIANTS = {
       const windows = (block.match(/\d{1,2} \w{3,} \d{4}\s*→\s*\d{1,2} \w{3,} \d{4}/g) ?? []).length;
       return periods > 0 && windows === periods;
     }],
+    /**
+     * NOTHING IS REFUSED WHERE THE SERIES HAS NO CHANGE IN THE UNIT. A rule
+     * that refused good returns would be as wrong as one that let the split
+     * through, and this route is the scheme the store was measured to carry
+     * the most of — so every period it publishes must be drawn as a figure.
+     */
+    ["no scheme return is refused where the store's NAV series has no change in the unit", (t, ctx) => {
+      const want = MF_KEY ? M2_BOOK?.schemeOf(MF_KEY) : null;
+      const cells = ctx?.stockM2?.schemeReturns;
+      if (!want || !cells) return false;
+      if (want.crossing.length) return notChecked("this scheme's own series crosses a change in the unit");
+      return want.periods.length > 0 && cells.length === want.periods.length && cells.every((c) => !c.refused && /%/.test(c.text ?? ""));
+    }],
   ],
   "stock-mf-holdings": [
     ...stockTabChecks("research"),
@@ -16427,6 +16535,128 @@ const INVARIANTS = {
     ["the card states none of it is in any total on the site", (t, ctx) =>
       /None of this is in any total on this site/i.test(t)
       && (ctx?.titles ?? []).some((x) => /count the same money twice/i.test(x))],
+  ],
+  /**
+   * A CAGR IS MARKED p.a. The store writes its basis as `cagr`, and the card
+   * tested for "CAGR", so every annualised figure went out unmarked and every
+   * hover said "Simple" — ABSL Liquid's 3Y +7.0% is a CAGR; its simple return
+   * over the same NAVs is +22.6%. Struck on the store's own `kind`, on the held
+   * scheme publishing the most annualised returns (`M2_BOOK.cagrScheme`).
+   */
+  "stock-scheme-cagr": [
+    ["a return the source struck as a CAGR is marked p.a., and a simple one is not", (t, ctx) => {
+      const want = M2_BOOK?.cagrScheme;
+      const cells = ctx?.stockM2?.schemeReturns;
+      if (!want || !cells?.length) return false;
+      const ann = new Set(want.annualised);
+      return ann.size > 0 && cells.length === want.periods.length
+        && cells.every((c) => c.annualised === ann.has(c.period) && /p\.a\./.test(c.text ?? "") === ann.has(c.period));
+    }],
+    ["each window's hover says which: an annualised CAGR, or a simple return", (t, ctx) => {
+      const want = M2_BOOK?.cagrScheme;
+      if (!want) return false;
+      const tips = (ctx?.titles ?? []).filter((x) => /return from NAV /.test(x));
+      return tips.length === want.periods.length
+        && tips.filter((x) => /^Annualised \(CAGR\) return/.test(x)).length === want.annualised.length
+        && tips.filter((x) => /^Simple return/.test(x)).length === want.periods.length - want.annualised.length;
+    }],
+    ["no return is refused on a series with no change in the unit", (t, ctx) =>
+      (ctx?.stockM2?.schemeReturns ?? []).length > 0 && ctx.stockM2.schemeReturns.every((c) => !c.refused)],
+  ],
+  /**
+   * ── A CHANGE IN THE UNIT IS NOT A RETURN ────────────────────────────────────
+   *
+   * DSP's Gold ETF printed 1M −89.3% · 3M −89.9% · 6M −90.4% · 1Y −86.1% and the
+   * card said its returns were complete. The store's own NAVs step ÷9.3 in 36
+   * days — the scheme's units were split. Every return whose window spans the
+   * step is refused WITH the step named, and never adjusted by a factor nobody
+   * published. Expectations re-derived on the store's raw NAVs (`M2_BOOK`).
+   */
+  "stock-dsp-split": [
+    ["every scheme return whose window spans the change in the unit is refused, and prints no percentage", (t, ctx) => {
+      const ub = M2_BOOK?.unitBreak;
+      const cells = ctx?.stockM2?.schemeReturns;
+      if (!ub || !cells?.length) return false;
+      const refused = cells.filter((c) => c.refused);
+      const got = new Set(refused.map((c) => c.period));
+      return ub.crossing.length > 0 && got.size === ub.crossing.length && ub.crossing.every((k) => got.has(k))
+        && refused.every((c) => !/%/.test(c.text ?? ""))
+        && cells.filter((c) => !c.refused).every((c) => /%/.test(c.text ?? ""));
+    }],
+    ["each refusal names the step's own NAVs, calls it a change in the unit, and says it is not adjusted", (t, ctx) => {
+      const ub = M2_BOOK?.unitBreak;
+      const refused = (ctx?.stockM2?.schemeReturns ?? []).filter((c) => c.refused);
+      if (!ub || !refused.length) return false;
+      const step = ub.steps[0];
+      const four = (v) => Number(v).toFixed(4);
+      return refused.every((c) => {
+        const r = c.reason ?? "";
+        return r.includes(four(step.from.nav)) && r.includes(four(step.to.nav)) && /change in the unit/i.test(r) && /not adjusted/i.test(r);
+      });
+    }],
+    ["the returns row states how many it refused, and why in its hover", (t, ctx) =>
+      M2_BOOK?.unitBreak != null && ctx?.stockM2?.refusedLine === M2_BOOK.unitBreak.crossing.length
+        && /change in the unit/i.test(ctx.stockM2.refusedTip ?? "")],
+    ["the card no longer calls its returns complete", (t) => !/returns (above )?are complete/i.test(t)],
+    /**
+     * THE STATEMENT AND THE NAV PRICE DIFFERENT UNITS, AND THE CARD SAYS SO.
+     * The page's mark is the family's statement (₹151.10) and the card's NAV is
+     * 14.7633; nothing explained a tenfold gap. Where the step falls after the
+     * earliest statement behind the holding, the NAV must carry the note — and
+     * where it does not, it must not.
+     */
+    ["the NAV says the family's statement counts the earlier unit, exactly where it does", (t, ctx) => {
+      const ub = M2_BOOK?.unitBreak;
+      if (!ub || !ctx?.stockM2) return false;
+      const want = !!ub.statementAsOf && ub.steps.some((b) => b.from.date >= ub.statementAsOf);
+      const note = ctx.stockM2.unitNote;
+      return want
+        ? !!note && /unit changed after your statement of \d{1,2} \w{3,} \d{4}/i.test(note.text ?? "")
+          && /earlier unit/i.test(note.tip ?? "") && /not adjusted/i.test(note.tip ?? "")
+        : note === null;
+    }],
+  ],
+  /**
+   * THE RESEARCH HALF OF THE SAME CARD NEVER CALLS THE RETURNS COMPLETE (DSM-A2).
+   * The card said its returns were complete over a series with a 1:10 split in
+   * it. The no-portfolio line is this tab's, and its words are the absence's
+   * hover (Stage 10cp) — so the claim is struck on the face AND on every hover,
+   * and the refusals it names are the store's own count.
+   */
+  "stock-dsp-research": [
+    ...stockTabChecks("research"),
+    ["the book carries a held scheme whose NAV series crosses a change in the unit", () => !!M2_BOOK?.unitBreak],
+    ["the research tab never calls this scheme's returns complete — not on its face, not in a hover", (t, ctx) => {
+      const ub = M2_BOOK?.unitBreak;
+      if (!ub) return false;
+      const says = (x) => /returns (above |there )?are complete|are complete on the Price/i.test(x ?? "");
+      const hovers = ctx?.titles ?? [];
+      if (says(t) || hovers.some(says)) return false;
+      if (ub.holdingsN == null) return false;
+      if (ub.holdingsN > 0) return { notChecked: "the store discloses this scheme's portfolio, so no absence is drawn" };
+      return hovers.some((x) => new RegExp(`${ub.crossing.length} of ${ub.periods.length} of its returns there are refused`).test(x ?? ""));
+    }],
+  ],
+  /**
+   * ── AN ENTITY IS A MEMBER, NOT AN ACCOUNT ──────────────────────────────────
+   *
+   * State Bank of India read "Held in 4 entities" over two members, and the
+   * Portfolio Monitor's own Entities column said 2 on the next page. The pill
+   * counts members and names the accounts beside them; both are held to the
+   * BOOK's own counts, and the accounts also to the rows the table draws.
+   */
+  "stock-entities": [
+    ["the pill counts the members, and names the accounts separately", (t, ctx) => {
+      const want = M2_BOOK?.entities;
+      const pill = ctx?.stockM2?.pill;
+      if (!want || !pill) return false;
+      return pill.owners === want.owners && pill.accounts === want.accounts
+        && new RegExp(`Held in ${want.owners} entit(y|ies) · ${want.accounts} accounts`).test(pill.text ?? "");
+    }],
+    ["the account count is the rows Position by account draws", (t, ctx) =>
+      Number.isFinite(ctx?.accountRows) && ctx.accountRows === M2_BOOK?.entities?.accounts],
+    ["no entity count is the account count", (t, ctx) =>
+      M2_BOOK?.entities != null && !new RegExp(`Held in ${M2_BOOK.entities.accounts} entities`).test(t)],
   ],
   "stock-nocost": [
     ["Avg cost and Unrealised P&L both name the statement that reports no cost",
@@ -23877,18 +24107,21 @@ const INVARIANTS = {
   // them must agree with the rows it renders.
   "stock-aif-dual": [
     ...stockTabChecks("position"),
-    // THE COUNT AGAINST THE ROWS, not against a literal — this book's entity
-    // count for this folio is a generated figure and a copy of it here would be
-    // a second source for it. The bug was exactly this disagreement: a pill
-    // reading 1 above a table listing 2.
-    ["the entity count agrees with the account rows rendered", (t, ctx) => {
-      const pill = Number(/Held in (\d+) entit/i.exec(t)?.[1] ?? NaN);
+    // THE COUNTS AGAINST THE BOOK AND THE ROWS, not against a literal. The bug
+    // this route was built for was a pill reading 1 above a table listing 2;
+    // the guard that caught it then asserted pill = account rows, which ENFORCED
+    // the next defect — counting accounts under the word "entities". The pill
+    // now counts MEMBERS, held to the book's own `ownerId`s, and its account
+    // count (named where the two differ) to the rows drawn.
+    ["the entity count is the members whose statements carry it, and the accounts are the rows drawn", (t, ctx) => {
+      const want = DUAL_KEY ? M2_BOOK?.entitiesOf(DUAL_KEY) : null;
+      const pill = ctx?.stockM2?.pill;
       const rows = ctx?.accountRows;
-      if (!Number.isFinite(pill)) return false;
+      if (!want || !pill) return false;
       // NOT an abstention: this route is the dually-reported holding, so a page
       // that drew no account rows at all is the failure this check exists for.
       if (!Number.isFinite(rows)) return false;
-      return rows === pill;
+      return pill.owners === want.owners && pill.accounts === want.accounts && rows === want.accounts;
     }],
     // Both rows show and the Total counts the holding once, so the column does
     // NOT add to its own footer — which is only honest because the page says so.
@@ -28875,6 +29108,32 @@ for (const theme of THEMES) {
         };
       });
       /**
+       * THE STOCK PAGE'S OTHER HANDLES (M2), read structurally: the scheme-return
+       * cells and whether each is refused, the unit note on the NAV, and the
+       * member / account counts on the held pill. A reason in a `title` is not in
+       * `innerText`, so each cell's hover is captured beside its text.
+       */
+      const stockM2 = FAST ? null : await page.evaluate(() => {
+        const txt = (el) => (el ? el.innerText.replace(/\s+/g, " ").trim() : null);
+        const tipOf = (el) => el?.getAttribute("title") ?? el?.querySelector("[title]")?.getAttribute("title") ?? null;
+        const num = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+        const pill = document.querySelector("[data-stock-owners]");
+        const unit = document.querySelector("[data-lt-unit-note]");
+        return {
+          schemeReturns: [...document.querySelectorAll("[data-scheme-return]")].map((td) => ({
+            period: td.getAttribute("data-scheme-return"),
+            refused: td.getAttribute("data-refused") === "1",
+            annualised: td.getAttribute("data-annualised") === "1",
+            text: txt(td),
+            reason: tipOf(td),
+          })),
+          refusedLine: num(document.querySelector("[data-scheme-returns-refused]")?.getAttribute("data-scheme-returns-refused")),
+          unitNote: unit ? { text: txt(unit), tip: unit.getAttribute("title") } : null,
+          pill: pill ? { owners: num(pill.getAttribute("data-stock-owners")), accounts: num(pill.getAttribute("data-stock-accounts")), text: txt(pill), tip: pill.getAttribute("title") } : null,
+          refusedTip: document.querySelector("[data-scheme-returns-refused]")?.getAttribute("title") ?? null,
+        };
+      });
+      /**
        * THE POLYCAB PAGE'S COMPANY-LEVEL CARDS, READ STRUCTURALLY.
        *
        * A count of rendered ROWS is a claim about what the page drew; a count
@@ -30401,7 +30660,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2 }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

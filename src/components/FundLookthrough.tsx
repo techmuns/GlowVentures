@@ -14,6 +14,7 @@ import {
   loadLookthrough, familyValue, disclosedWeight,
   type LookthroughState, type FundPortfolio,
 } from "@/lib/lookthrough";
+import { schemeReturns, breakAfter, stepWords } from "@/lib/schemeReturns";
 
 /**
  * ── THE SCHEME: ITS NAV, ITS RETURNS, AND WHAT IT HOLDS ─────────────────────
@@ -35,6 +36,9 @@ import {
  *     what the fund owns;
  *   • every return carries THE WINDOW IT ACTUALLY SPANS, because the source's
  *     label and its dates do not always agree;
+ *   • a return whose window spans a CHANGE IN THE UNIT is refused with the
+ *     step named, never shown and never adjusted — DSP's Gold ETF read −89% "in
+ *     a month" across a 1:10 split of its units (`schemeReturns`);
  *   • the weight is the AMC's own and the family's exposure beside it is
  *     DERIVED from it, labelled every time;
  *   • and nothing here is in any book total, because the fund's own value
@@ -55,7 +59,7 @@ const PART_TITLE = {
   holdings: "What the scheme holds",
 } as const;
 
-export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part }: {
+export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part, statementAsOf }: {
   securityKey: string;
   name: string;
   /** What the family's units are worth, for the derived exposure column. */
@@ -64,6 +68,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
   asOfHolding: string;
   /** Which half of the scheme to draw — see `PART_TITLE`. */
   part: keyof typeof PART_TITLE;
+  /**
+   * The EARLIEST date a statement behind this holding counts its units on —
+   * what a change in the scheme's unit is compared with. Where one statement
+   * predates the change, its mark is on the earlier unit.
+   */
+  statementAsOf?: string | null;
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
@@ -154,7 +164,20 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
   const { match } = state;
   const p = pf!;
   const weight = disclosedWeight(p);
-  const periods = Object.entries(p.returns);
+  /**
+   * THE SOURCE'S RETURNS, EACH MARKED ANNUALISED OR NOT AND REFUSED WHERE ITS
+   * WINDOW SPANS A UNIT EVENT. Rendered verbatim, DSP's Gold ETF printed
+   * 1M −89.3% · 3M −89.9% · 6M −90.4% · 1Y −86.1% · 3Y −36.9% p.a., and this
+   * card went on to call its returns complete. The store's own NAVs say the
+   * unit changed: 137.7268 on 3 Aug 2026, 14.7633 on 9 Sep 2026.
+   */
+  const sr = schemeReturns(p);
+  const periods = sr.rows;
+  const firstStep = sr.breaks[0] ?? null;
+  /** The step, where it falls AFTER the family's statement — which then counts
+   *  the scheme's EARLIER unit, so its mark and this NAV price different units. */
+  const countedOn = statementAsOf ?? asOfHolding;
+  const unitStep = breakAfter(sr.breaks, countedOn);
 
   return (
     <div data-fund-lookthrough={part}>
@@ -182,6 +205,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
           <div className="mt-1 text-[11px] text-slate-500">
             {p.nav.date ? fmtDate(p.nav.date) : "no NAV date"}
           </div>
+          {unitStep && (
+            <div className="mt-1 text-[11px] text-amber-300/90" data-lt-unit-note
+              title={`The NAV stepped from ${fmtNum(unitStep.from.nav, 4)} on ${fmtDate(unitStep.from.date)} to ${fmtNum(unitStep.to.nav, 4)} on ${fmtDate(unitStep.to.date)} — ${stepWords(unitStep)} in ${unitStep.days} days, which is a change in the unit rather than a market move. The family's statement of ${fmtDate(countedOn)} is dated before it and counts the earlier unit, so the statement's mark and this NAV are prices of different units and are not compared. Not adjusted — the source publishes no split factor.`}>
+              unit changed after your statement of {fmtDate(countedOn)}
+            </div>
+          )}
         </div>
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
           <div className="label-xs">NAV change</div>
@@ -232,6 +261,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
               title="The scheme's own returns, on this plan, from its published NAVs. Not this family's return, which depends on when they bought.">
               the scheme&rsquo;s, not this family&rsquo;s{p.returnsAsOf ? ` · to ${fmtDate(p.returnsAsOf)}` : ""}
             </span>
+            {sr.refused > 0 && firstStep && (
+              <span className="text-[11px] text-amber-300/90" data-scheme-returns-refused={sr.refused}
+                title={`The NAV steps ${stepWords(firstStep)} between ${fmtDate(firstStep.from.date)} and ${fmtDate(firstStep.to.date)} — a change in the unit, not a return — so every period whose window spans it is refused rather than shown or adjusted.`}>
+                {sr.refused} of {periods.length} refused — unit changed {fmtDate(firstStep.from.date)} → {fmtDate(firstStep.to.date)}
+              </span>
+            )}
           </div>
           <div className="overflow-x-auto">
             {/* Exempt, declared — the same class as `ReturnsTable`: one row,
@@ -241,15 +276,22 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
               data-table-static="one row of a source's own period sequence — there is nothing to sort and moving a period would break its order">
               <thead className="border-b border-ink-700">
                 <tr>
-                  {periods.map(([k]) => <th key={k} className="label-xs px-3 py-2 text-right font-medium">{k}</th>)}
+                  {periods.map((r) => <th key={r.period} className="label-xs px-3 py-2 text-right font-medium">{r.period}</th>)}
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  {periods.map(([k, r]) => (
-                    <td key={k} className={`px-3 py-2 text-right mono ${changeColor(r.value)}`}>
-                      {fmtPct(r.value, { sign: true, decimals: 1 })}
-                      {r.kind === "CAGR" && <span className="ml-1 text-[10px] text-slate-500">p.a.</span>}
+                  {periods.map((r) => (
+                    <td key={r.period} data-scheme-return={r.period} data-refused={r.refused ? "1" : "0"} data-annualised={r.annualised ? "1" : "0"}
+                      className={`px-3 py-2 text-right mono ${r.refused ? "" : changeColor(r.value)}`}>
+                      {r.refused
+                        ? <AbsentCell reason={r.refused} />
+                        : <>
+                            {fmtPct(r.value, { sign: true, decimals: 1 })}
+                            {/* The store writes `cagr`; testing for "CAGR" alone
+                                marked every annualised figure "Simple". */}
+                            {r.annualised && <span className="ml-1 text-[10px] text-slate-500">p.a.</span>}
+                          </>}
                     </td>
                   ))}
                 </tr>
@@ -258,10 +300,12 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
                     data they do not always agree — a "1M" here can span ten
                     weeks. Printed rather than trusted. */}
                 <tr>
-                  {periods.map(([k, r]) => (
-                    <td key={k} className="px-3 pb-2 text-right text-[10.5px] text-slate-500">
+                  {periods.map((r) => (
+                    <td key={r.period} className="px-3 pb-2 text-right text-[10.5px] text-slate-500">
                       {r.startDate && r.endDate
-                        ? <span title={`${r.kind === "CAGR" ? "Annualised" : "Simple"} return from NAV ${r.startNav ?? "—"} on ${r.startDate} to ${r.endNav ?? "—"} on ${r.endDate}.`}>
+                        ? <span title={r.refused
+                            ? `Not a return — this window, NAV ${r.startNav ?? "—"} on ${r.startDate} to ${r.endNav ?? "—"} on ${r.endDate}, spans a change in the scheme's unit.`
+                            : `${r.annualised ? "Annualised (CAGR)" : "Simple"} return from NAV ${r.startNav ?? "—"} on ${r.startDate} to ${r.endNav ?? "—"} on ${r.endDate}.`}>
                             {fmtDate(r.startDate)} → {fmtDate(r.endDate)}
                           </span>
                         : <AbsentCell reason="The source states no window for this period." />}
@@ -311,7 +355,9 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
            the Price & returns tab, not "above" — this half is its own tab. */
         <AbsentSection
           what={`${p.scheme ?? name} discloses no portfolio this store could read`}
-          needs="No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab." />
+          needs={sr.refused > 0
+            ? `No monthly portfolio disclosure for this scheme is in the store. Its NAV is on the Price & returns tab; ${sr.refused} of ${periods.length} of its returns there are refused — each spans a change in the unit.`
+            : "No monthly portfolio disclosure for this scheme is in the store; its NAV, change and returns are complete on the Price & returns tab."} />
       ) : shown.length === 0 ? (
         <AbsentSection what="Nothing matches that filter"
           needs={`The scheme discloses ${rows.length} holdings; none of their names, sectors, ratings, classes or ISINs contains "${q.trim()}".`} />
