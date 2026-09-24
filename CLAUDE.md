@@ -24429,9 +24429,11 @@ run on a repeated key.
 Founders ×2, Neo Infra and Transition Venture ×2; `BOOK-REPORT.md`: Delphi is the
 only family-declared category. No total moves.
 
-**Guards.** `statementNotes.test.ts`, cases in the existing suites, one new
-`check:pages` route (`stock-pretax`) and `scripts/dev/one-definition-bug.sh`,
-eighteen cases, each firing its own check.
+**Guards.** Five new suites in `test:family` (`statementNotes`, `valuedAt`,
+`navCard`, `schemeMatch`, `mandateCapital`) and one in `test:ingest`
+(`categoryWords`), cases in the existing suites, eleven new `check:pages` routes
+and `scripts/dev/one-definition-bug.sh`, eighteen cases, each firing its own
+check. Case 14 is the checker refusing to run on a repeated route key.
 
 **Not fixed, and why.** Which NAV to value Sanshi at is the family's call (about
 ₹11 Cr lower post-tax). Capturing each demat line's pledged balance needs a reader
