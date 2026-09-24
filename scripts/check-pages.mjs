@@ -727,7 +727,10 @@ const SECURITY_AXIS_BOOK = (() => {
     // filing before a row is placed: the book's own ISIN on a line, then the
     // book holding a share of the same company prefix, then the issuer name.
     const issuerOf = (i) => i.slice(0, 7).toUpperCase();
-    const equitySeries = (i) => /^IN[EF][A-Z0-9]{5}01/.test(i);
+    // Characters 8–9 are the security type and `01` is an equity share —
+    // four characters of issuer code after `IN` + the issuer type. `{5}`
+    // here (and on the page) matched no equity ISIN at all.
+    const equitySeries = (i) => /^IN[EF][A-Z0-9]{4}01/.test(i);
     const bookIssuer = new Map();
     {
       const cand = new Map();
@@ -740,7 +743,9 @@ const SECURITY_AXIS_BOOK = (() => {
       for (const [pre, m] of cand) {
         const ks = [...m.keys()];
         const eqs = ks.filter((k) => m.get(k));
-        const pick = ks.length === 1 ? ks[0] : eqs.length === 1 ? eqs[0] : null;
+        // Only a book SHARE stands for its issuer — never a warrant or a
+        // preference line (Borosil's warrant is the book's only INE666D ISIN).
+        const pick = eqs.length === 1 ? eqs[0] : null;
         if (pick) bookIssuer.set(pre, pick);
       }
     }
@@ -3468,6 +3473,82 @@ const FE_SECTOR_BOOK = (() => {
     };
   } catch { return null; }
 })();
+
+/**
+ * ── WHAT THE ENTITY BREAKDOWN ADDS TO, DERIVED FROM THE BOOK (FS-1, FS-4) ────
+ *
+ * Family & Entities divides each entity's weight by the entity rows' OWN total
+ * — every entity's statements as printed — and names, under the table, what
+ * separates that total from the consolidated book: the extra rows of each
+ * dedupeGroup two entities both report. Before, the weights were struck over
+ * the rows' total while the popover named the consolidated book, so it printed
+ * "this does not reproduce" on three of six rows.
+ *
+ * RE-EXPRESSED HERE, NEVER IMPORTED from the page or `analytics.ts`: a page
+ * that divided by one total and named another, or that deduped a per-entity
+ * figure (Bharat's 360 ONE row emptied, the trusts' Transition Venture folio
+ * counted once for two taxpayers), fails against the book rather than
+ * agreeing with itself. Owners are keyed on the registry's `ownerId`, and the
+ * page's rows are matched to them by VALUE, because a display name is a
+ * spelling and a value is a measurement.
+ */
+const FAMILY_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions) || !positions.length) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const ownerKey = (p) => { const a = acc.get(p.accountId); return a?.ownerId || a?.owner || "unattributed"; };
+    const sum = (a) => a.reduce((x, y) => x + y, 0);
+    const costed = (p) => typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && !p.costUnavailable;
+    const owners = new Map();
+    for (const p of positions) {
+      const k = ownerKey(p);
+      const o = owners.get(k) ?? { owner: k, mv: 0, count: 0, withoutCost: 0 };
+      o.mv += p.marketValue; o.count += 1;
+      if (!costed(p)) o.withoutCost += 1;
+      owners.set(k, o);
+    }
+    const seen = new Set();
+    const consolidated = sum(positions.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup);
+      return true;
+    }).map((p) => p.marketValue));
+    const groups = new Map();
+    for (const p of positions) if (p.dedupeGroup) groups.set(p.dedupeGroup, [...(groups.get(p.dedupeGroup) ?? []), p]);
+    const multi = [...groups.values()].filter((g) => g.length > 1);
+    return {
+      owners: [...owners.values()].sort((a, b) => b.mv - a.mv),
+      perStatement: sum(positions.map((p) => p.marketValue)),
+      consolidated,
+      overlapCount: multi.length,
+      // The FIRST row of a group is the one a consolidated sum keeps, so the
+      // rest are what a per-statement sum carries again.
+      overlapMV: sum(multi.map((g) => sum(g.slice(1).map((p) => p.marketValue)))),
+      costedOwners: [...owners.values()].filter((o) => o.count > o.withoutCost).length,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * The money figures in a popover's worked line, as a reader is shown them, each
+ * with half the last unit `fmtFromBase`'s compact INR prints at that magnitude —
+ * two decimals of a crore below ₹10 Cr, one above, one decimal of a lakh, whole
+ * rupees below that. A sign ATTACHED to ₹ is the figure's own; the arithmetic
+ * operator " − " stands apart from it and is not read as one.
+ */
+const FAMILY_RUPEE = /([+\-−]?)₹([\d,]+(?:\.\d+)?)(?:\s*(Cr|L)\b)?/g;
+function familyRupees(s) {
+  return [...String(s ?? "").matchAll(FAMILY_RUPEE)].map((m) => {
+    const n = Number(m[2].replace(/,/g, ""));
+    const scale = m[3] === "Cr" ? 1e7 : m[3] === "L" ? 1e5 : 1;
+    const half = m[3] === "Cr" ? (n >= 10 ? 0.05 : 0.005) * 1e7 : m[3] === "L" ? 0.05 * 1e5 : 0.5;
+    return { v: (m[1] === "-" || m[1] === "−" ? -1 : 1) * n * scale, half };
+  });
+}
 
 const PM_FOLIO_BOOK = (() => {
   try {
@@ -23472,6 +23553,149 @@ const INVARIANTS = {
       return navs.length >= 2 && navs.every(Number.isFinite)
         && navs.every((v, i) => i === 0 || navs[i - 1] >= v);
     }],
+    /**
+     * ── ONE BASIS FOR THE WEIGHTS, STATED, AND THE GAP TO THE BOOK NAMED ──────
+     *
+     * (FS-1, FS-4.) The weights are struck over the entity rows' own total and
+     * the popover used to name the consolidated book, so it printed "this does
+     * not reproduce" on three of six rows — the arithmetic a reader opens it to
+     * check. Four claims, none implying another, each against the BOOK:
+     *
+     *   • every weight reproduces against the total it divides by, and no
+     *     popover says it does not;
+     *   • that total is every entity's statements as printed — NOT deduped —
+     *     and each row is its entity's own statements (value and count);
+     *   • the footer's gap to the consolidated book is exactly the holdings two
+     *     entities both report, derived from the groups rather than by
+     *     subtracting the two totals;
+     *   • the sentence under the table and every weight popover say so, with
+     *     the figure the footer prints.
+     */
+    ["every entity weight reproduces against the total it divides by (FS-1)", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run (FAST, or no <main>)" };
+      const rows = L.rows ?? [];
+      const f = L.foot;
+      if (!rows.length || !f || !(f.perStatement > 0)) return false;
+      if (Math.abs(rows.reduce((s, r) => s + r.mv, 0) - f.perStatement) > 1) return false;
+      return rows.every((r) => {
+        const w = Number(/(-?\d+(?:\.\d+)?)%/.exec(r.weightText ?? "")?.[1]);
+        return !!r.weightWorked && !/does not reproduce/i.test(r.weightWorked)
+          && Number.isFinite(w) && Math.abs((r.mv / f.perStatement) * 100 - w) <= 0.05 + 1e-9;
+      });
+    }],
+    ["...and the weights add to the footer's 100%", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      const rows = L.rows ?? [];
+      const ws = rows.map((r) => Number(/(-?\d+(?:\.\d+)?)%/.exec(r.weightText ?? "")?.[1]));
+      if (!ws.length || !ws.every(Number.isFinite)) return false;
+      // Each printed weight is rounded to one decimal, so n rows carry n
+      // half-digits of rounding — the page's own precision, reproduced.
+      return Math.abs(ws.reduce((s, w) => s + w, 0) - 100) <= rows.length * 0.05 + 1e-9
+        && (L.foot?.cells ?? []).includes("100.0%");
+    }],
+    ["the entity rows are each entity's own statements, and their total is the book's per-statement sum", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      if (!FAMILY_BOOK) return false;
+      const rows = [...(L.rows ?? [])].sort((a, b) => b.mv - a.mv);
+      const want = FAMILY_BOOK.owners;
+      return rows.length === want.length
+        && rows.every((r, i) => Math.abs(r.mv - want[i].mv) <= 1 && r.count === want[i].count)
+        && Math.abs((L.foot?.perStatement ?? NaN) - FAMILY_BOOK.perStatement) <= 1;
+    }],
+    ["...and the footer's gap to the consolidated book is exactly the holdings two entities both report (FS-4)", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      const f = L.foot;
+      if (!f || !FAMILY_BOOK) return false;
+      return Math.abs(f.consolidated - FAMILY_BOOK.consolidated) <= 1
+        && Math.abs(f.overlapMV - FAMILY_BOOK.overlapMV) <= 1
+        && f.overlapCount === FAMILY_BOOK.overlapCount
+        // Two paths on the page: the gap from the groups, and the consolidated
+        // total from `consolidatedMarketValue`. They must tie.
+        && Math.abs(f.perStatement - f.consolidated - f.overlapMV) <= 1;
+    }],
+    ["...and the line under the table and every weight popover name both totals", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      const f = L.foot;
+      if (!f || !FAMILY_BOOK) return false;
+      const nav = f.cells?.[1] ?? "";
+      const n = FAMILY_BOOK.overlapCount;
+      const line = f.overlapText ?? "";
+      const hover = f.overlapTitle ?? "";
+      // THE FIGURES ON THE LINE'S FACE, THE SENTENCE IN ITS HOVER (Stage 10cp):
+      // both totals and the overlap are read where a reader sees them, and the
+      // holdings it is made of — with the entities that report each — where
+      // they went.
+      const lineOk = n > 0
+        ? /counted once/i.test(line) && (line.match(/₹/g) ?? []).length >= 3
+          && line.includes(nav) && (n === 1 ? /one holding/i.test(line) : line.includes(`${n} holdings`))
+          && hover.split(", under ").length - 1 === n && /the weights divide by/i.test(hover)
+        : /no holding reported twice/i.test(line) && /no holding is reported by two entities/i.test(hover);
+      return !!nav && lineOk && (L.rows ?? []).every((r) =>
+        (r.weightPlain ?? "").includes(nav)
+        && (n === 0 || /consolidated book/i.test(r.weightPlain ?? "")));
+    }],
+    /**
+     * ── THE P&L AND RETURN POPOVERS REPRODUCE THEIR OWN FIGURE (FS-2) ─────────
+     *
+     * A-02 moved both popovers onto the costed set; nothing on this page held
+     * them there. Each worked line is read as a reader is shown it and its
+     * arithmetic redone, to the precision the page prints — half the last digit
+     * of every figure in it, propagated through the division, never a
+     * tolerance widened until it fits. A row with no figure has no popover and
+     * is skipped; a book where no entity reports a cost would have nothing to
+     * check, and this one has.
+     */
+    ["every entity P&L popover reproduces the figure it prints (FS-2)", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      const withPnl = (L.rows ?? []).filter((r) => r.pnlWorked);
+      if (!withPnl.length) return FAMILY_BOOK?.costedOwners === 0 ? { notChecked: "no entity in this book reports a cost" } : false;
+      return withPnl.every((r) => {
+        const [a, b, c] = familyRupees(r.pnlWorked);
+        const shown = familyRupees(r.pnlText)[0];
+        return !!(a && b && c && shown) && !/—/.test(r.pnlWorked)
+          && Math.abs(a.v - b.v - c.v) <= a.half + b.half + c.half
+          && Math.abs(shown.v - c.v) <= shown.half + c.half;
+      });
+    }],
+    ["every entity return popover reproduces the figure it prints (FS-2)", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      const withRet = (L.rows ?? []).filter((r) => r.returnWorked);
+      if (!withRet.length) return FAMILY_BOOK?.costedOwners === 0 ? { notChecked: "no entity in this book reports a cost" } : false;
+      return withRet.every((r) => {
+        const w = r.returnWorked;
+        const x = Number(/=\s*([+\-−]?\d+(?:\.\d+)?)%\s*$/.exec(w)?.[1]?.replace("−", "-"));
+        const shown = Number(/([+\-−]?\d+(?:\.\d+)?)%/.exec(r.returnText ?? "")?.[1]?.replace("−", "-"));
+        const t4 = familyRupees(w);
+        // "(A − B + R) ÷ D" where anything was sold or realised, "(A − B) ÷ B" otherwise.
+        const [a, b, rr, d] = t4.length >= 4 ? t4 : [t4[0], t4[1], { v: 0, half: 0 }, t4[2]];
+        if (!(a && b && d) || !Number.isFinite(x) || !Number.isFinite(shown) || /—/.test(w) || !(d.v > 0)) return false;
+        const num = a.v - b.v + rr.v;
+        const bound = 100 * ((a.half + b.half + rr.half) / d.v + Math.abs(num) * d.half / (d.v * d.v)) + 0.005 + 1e-9;
+        return Math.abs((num / d.v) * 100 - x) <= bound && Math.abs(x - shown) <= 0.005 + 1e-9;
+      });
+    }],
+    // ...AND THE RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, as the P&L beside
+    // it does: on an entity some of whose statements report no cost, the figure
+    // covers only the costed part, and the popover must give the count.
+    ["...and where some of an entity's holdings report no cost, the return's popover gives the count it covers", (t, ctx) => {
+      const L = ctx.familyLayout;
+      if (!L) return { notChecked: "the layout probe did not run" };
+      if (!FAMILY_BOOK) return false;
+      const partial = FAMILY_BOOK.owners.filter((o) => o.withoutCost > 0 && o.count > o.withoutCost);
+      if (!partial.length) return { notChecked: "every entity with a cost reports it on every holding" };
+      return partial.every((o) => {
+        const r = (L.rows ?? []).find((x) => Math.abs(x.mv - o.mv) <= 1 && x.count === o.count);
+        const m = /Struck over the (\d+) of (\d+) holdings/.exec(r?.returnPlain ?? "");
+        return !!m && Number(m[1]) === o.count - o.withoutCost && Number(m[2]) === o.count;
+      });
+    }],
     // ── AND THE TWO CARDS SIT SIDE BY SIDE ──
     // A LAYOUT CLAIM IS STRUCK ON GEOMETRY. The page prints the same words
     // stacked or side by side, so only the boxes can see it: the table must END
@@ -30113,7 +30337,41 @@ for (const theme of THEMES) {
           rows: table ? [...table.querySelectorAll("tbody tr")].map((r) => ({
             cells: [...r.children].map((c) => clean(c.innerText)),
             entityTitle: r.children[0]?.getAttribute("title") ?? null,
+            // The figures the row is struck from, and the popovers' own worked
+            // lines — what a reader is shown when they open one — so the weight,
+            // P&L and return arithmetic is checked as printed.
+            mv: Number(r.getAttribute("data-entity-mv")),
+            count: Number(r.getAttribute("data-entity-count")),
+            weightWorked: r.querySelector("[data-weight-worked]")?.getAttribute("data-weight-worked") ?? null,
+            weightPlain: r.querySelector("[data-weight-plain]")?.getAttribute("data-weight-plain") ?? null,
+            weightText: clean(r.querySelector("[data-weight-worked]")?.innerText),
+            pnlWorked: r.querySelector("[data-pnl-worked]")?.getAttribute("data-pnl-worked") ?? null,
+            pnlText: clean(r.querySelector("[data-pnl-worked]")?.innerText),
+            returnWorked: r.querySelector("[data-return-worked]")?.getAttribute("data-return-worked") ?? null,
+            returnPlain: r.querySelector("[data-return-plain]")?.getAttribute("data-return-plain") ?? null,
+            returnText: clean(r.querySelector("[data-return-worked]")?.innerText),
           })) : [],
+          // The total row the weights divide by, and the line that names the gap
+          // from it to the consolidated book.
+          foot: (() => {
+            const f = table?.querySelector("[data-family-foot]");
+            if (!f) return null;
+            const num = (a) => Number(f.getAttribute(a));
+            return {
+              perStatement: num("data-per-statement-mv"), consolidated: num("data-consolidated-mv"),
+              overlapMV: num("data-overlap-mv"), overlapCount: num("data-overlap-count"),
+              cells: [...(f.querySelector("tr")?.children ?? [])].map((c) => clean(c.innerText)),
+              titles: [...f.querySelectorAll("[title]")].map((c) => c.getAttribute("title")),
+              // ONLY WHAT IS RENDERED. `innerText` on an element that is not
+              // being rendered returns its textContent, so a line hidden by
+              // `display: none` would read as present — the bug pass found it.
+              overlapText: (() => {
+                const el = f.querySelector("[data-family-overlap]");
+                return el && el.getClientRects().length ? clean(el.innerText) : "";
+              })(),
+              overlapTitle: f.querySelector("[data-family-overlap]")?.getAttribute("title") ?? "",
+            };
+          })(),
           // Where the two cards sit, and whether what they add up to fits.
           tableBox: tableCard ? box(tableCard) : null,
           pieBox: pieCard ? box(pieCard) : null,

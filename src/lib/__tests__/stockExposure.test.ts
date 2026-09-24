@@ -244,6 +244,83 @@ ok("...and every class on a company came off a filing, never a default",
   [...ex.byKey.values()].every((e) => e.classes.every((c) =>
     e.rows.some((r) => r.instruments.some((i) => i.assetClass === c)))));
 
+console.log("\n── the book's own SHARE names its issuer, whatever paper a fund filed ──");
+/**
+ * A CD IS EXPOSURE TO THE BANK THAT ISSUED IT. The funds file City Union Bank's,
+ * Indian Bank's and Karur Vysya Bank's certificates of deposit and not their
+ * shares, while the family's demat carries each bank's SHARE by ISIN — and the
+ * index keyed the paper on its own name, so ₹52 L of those banks sat under
+ * Unclassified as three rows of their own beside the same banks in Financials.
+ *
+ * RE-EXPRESSED, NOT IMPORTED: the issuer is characters 1–7 of an ISIN and the
+ * security type is characters 8–9, `01` an equity share. Every disclosed
+ * instrument of an issuer whose share the book carries by an equity-series ISIN
+ * must sit on that share's key — and the rule must actually DO something here,
+ * or a clean run and a deleted rule would read the same.
+ */
+const bookEquityIssuer = new Map<string, Set<string>>();
+for (const [i, k] of isinToBookKey) {
+  if (!/^IN[EF][A-Z0-9]{4}01/.test(i)) continue;
+  const pre = i.slice(0, 7);
+  (bookEquityIssuer.get(pre) ?? bookEquityIssuer.set(pre, new Set()).get(pre)!).add(k);
+}
+const strays: string[] = [];
+// Per issuer: what the funds filed of it, and whether ANY filing is an ISIN the
+// book itself carries. Where none is, only the book's own share can join the
+// paper to the company — the case this rule exists for.
+const filedOf = new Map<string, { onKey: Set<string>; value: number; bookIsinFiled: boolean }>();
+for (const e of ex.byKey.values()) {
+  for (const r of e.rows) for (const i of r.instruments) {
+    if (!i.isin) continue;
+    const I = i.isin.toUpperCase();
+    const pre = I.slice(0, 7);
+    const want = bookEquityIssuer.get(pre);
+    if (!want || want.size !== 1) continue;
+    const k = [...want][0];
+    if (e.key !== k) strays.push(`${i.name} (${I}) on ${e.key}, not ${k}`);
+    const f = filedOf.get(pre) ?? { onKey: new Set<string>(), value: 0, bookIsinFiled: false };
+    f.onKey.add(e.key); f.value += i.value; f.bookIsinFiled ||= isinToBookKey.has(I);
+    filedOf.set(pre, f);
+  }
+}
+ok("every filed instrument of an issuer whose share the book carries lands on that share's row",
+  strays.length === 0, strays.length ? strays.slice(0, 3).join("; ") : `${bookEquityIssuer.size} book equity issuers`);
+const onlyThroughBook = [...filedOf.entries()].filter(([, f]) => !f.bookIsinFiled);
+ok("...and the rule does work on this store: paper of an issuer no fund files the book's ISIN of joins through the book's share",
+  onlyThroughBook.length > 0 && onlyThroughBook.every(([pre, f]) => f.onKey.size === 1 && f.onKey.has([...bookEquityIssuer.get(pre)!][0])),
+  `${onlyThroughBook.length} issuers, ${CR(sum(onlyThroughBook.map(([, f]) => f.value)))}: ${onlyThroughBook.map(([pre]) => [...bookEquityIssuer.get(pre)!][0]).join(", ")}`);
+/**
+ * BOTH HALVES OF THE RULE, ON REAL FILINGS. No fund here files paper of an
+ * issuer the book holds only as a warrant or a preference line, so the refusal
+ * cannot be seen on the committed book alone. It is exercised by lending the
+ * book one synthetic ISIN at a time for an issuer the funds DO file in several
+ * instruments — LIC Housing, a share and its NCDs — and nothing else changes:
+ *
+ *   • an EQUITY-series ISIN of that issuer must pull every filed instrument onto
+ *     the synthetic key — the issuer rule;
+ *   • a WARRANT-series one (type 13) must pull none — a warrant is not the
+ *     equity, the join this repo refuses by name (Borosil's warrants and share).
+ */
+const lic = [...ex.byKey.values()].find((e) => e.rows.some((r) => r.instruments.some((i) => (i.isin ?? "").toUpperCase().startsWith("INE115A"))));
+if (!lic) ok("the store files LIC Housing, which the synthetic cases lend an ISIN to", false);
+else {
+  const lend = async (isin: string, key: string) => {
+    const m = new Map(isinToBookKey); m.set(isin, key);
+    const s = await loadStockExposure(vehicles, m, ringFenced);
+    return s.status === "ok" ? s : null;
+  };
+  const asShare = await lend("INE115A01999", "synthetic-lic-share");
+  const asWarrant = await lend("INE115A13999", "synthetic-lic-warrant");
+  const licPaper = (s: StockExposureState | null, key: string) => s && s.status === "ok"
+    ? [...s.byKey.values()].filter((e) => e.rows.some((r) => r.instruments.some((i) => (i.isin ?? "").toUpperCase().startsWith("INE115A"))))
+      .map((e) => e.key).filter((k, i, a) => a.indexOf(k) === i).join(",") === key
+    : false;
+  ok("a book SHARE of an issuer takes every instrument of it the funds filed", licPaper(asShare, "synthetic-lic-share"));
+  ok("...and a book WARRANT of it takes none of them",
+    !!asWarrant && ![...asWarrant.byKey.keys()].includes("synthetic-lic-warrant")
+      && licPaper(asWarrant, lic.key));
+}
+
 console.log("\n── the ring-fence reaches the derived side ──");
 ok("this book has a ring-fenced holding to test against", BOOK_POLYCAB.length > 0);
 const fencedKeys = new Set(BOOK_POLYCAB.map((p) => p.securityKey));

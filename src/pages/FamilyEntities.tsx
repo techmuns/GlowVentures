@@ -80,14 +80,48 @@ const ENTITY_PARAM = "entity";
 const ALL_ENTITIES = "All";
 
 /**
- * What this page's weights divide by, in the caller's own words.
+ * ── WHAT THE ENTITY WEIGHTS DIVIDE BY: ONE BASIS, AND IT IS STATED ──────────
  *
- * `weightFormula` takes the scope as a PARAMETER and its default names no set at
- * all, because a helper that guesses one for a caller that has not said is how a
- * wrong denominator got into the popover a reader opens precisely to check the
- * arithmetic. Both weights here are struck against `consolidatedMarketValue(p)`.
+ * The weights used to be struck by `bucketBy` over the entity rows' OWN total —
+ * every statement as printed, ₹716.46 Cr — while the popover named the
+ * CONSOLIDATED book, ₹713.29 Cr, as the denominator. So the popover a reader
+ * opens to check a weight printed "this does not reproduce" on three of the six
+ * rows. Neither total is wrong; the page used one and said the other.
+ *
+ * THE PER-STATEMENT TOTAL IS THE ONE, because it is the only one the column can
+ * add to. Each entity's row is its own statements as printed (§ "consolidated
+ * counts once, per-account does not"), and two holdings are reported by two
+ * entities each — 360 ONE Special Opportunities under Ajay's and Bharat's CRNs,
+ * Transition Venture Fund I under both trusts — so over the consolidated book
+ * the six weights would add to 100.4%. Over the rows' own total they add to
+ * 100%, and the gap to the book is NAMED under the table, with the holdings it
+ * is made of, rather than left for a reader to find by adding six NAVs.
+ *
+ * `weightFormula` takes the set as a PARAMETER because a helper that guesses one
+ * is how the wrong denominator got into the popover in the first place; the
+ * sentence here is built from the same figures the division uses.
  */
-const WEIGHT_OF = "the whole consolidated book — every account and every asset class, each dedupeGroup counted once";
+const weightOfEntities = (money: (n: number) => string, perStatement: number, consolidated: number, overlap: Overlap) =>
+  `every entity's own statements added up as printed — ${money(perStatement)}, the total in the division below`
+  + (overlap.names.length
+    ? `. It counts ${overlap.names.length === 1 ? "one holding" : `${overlap.names.length} holdings`} ${overlap.times}, because ${overlap.names.length === 1 ? "it is" : "they are"} ${overlap.how} (${overlap.names.join("; ")}); the consolidated book, counting each once, is ${money(consolidated)}`
+    : "; no holding is reported by two entities, so it is also the consolidated book");
+
+/**
+ * HOW THE OVERLAP IS WORDED IS READ OFF THE GROUPS, never assumed. "Reported by
+ * two entities each" and "counted twice" are true of this book — both of its
+ * duplicated holdings sit under exactly two entities — and would be false of a
+ * group spanning three statements, or two accounts of ONE entity. The sentence
+ * says only what the groups it names actually are.
+ */
+type Overlap = { names: string[]; times: string; how: string };
+const overlapWording = (groups: { owners: string[]; rows: number }[], names: string[]): Overlap => ({
+  names,
+  times: groups.every((g) => g.rows === 2) ? "twice" : "more than once",
+  how: groups.every((g) => g.owners.length === 2 && g.rows === 2) ? "reported by two entities each"
+    : groups.every((g) => g.owners.length > 1) ? "each reported by more than one entity"
+    : "each reported on more than one statement",
+});
 
 export function FamilyEntities() {
   const { portfolio, statementPortfolio, consolidated, fmtFromBase, displayCurrency, convertFromBase } = usePortfolio();
@@ -188,6 +222,37 @@ export function FamilyEntities() {
     );
     return { ...e, returnPct: fifo.returnPct, fifo };
   });
+  /**
+   * THE ENTITY ROWS' OWN TOTAL, AND WHAT SEPARATES IT FROM THE BOOK.
+   *
+   * `perStatementMV` is what the NAV column adds to and what the weights divide
+   * by (`weightOfEntities`). `totalMV` is the consolidated book. The difference
+   * is exactly the extra rows of each `dedupeGroup` that spans two entities —
+   * derived from the groups themselves, never by subtracting the two totals, so
+   * the sentence under the table names the holdings the gap is made of and the
+   * two figures are shown to tie rather than assumed to.
+   */
+  const perStatementMV = sum(entities.map((e) => e.mv));
+  const overlap = (() => {
+    const g = new Map<string, Position[]>();
+    for (const x of p) {
+      if (!x.dedupeGroup) continue;
+      const a = g.get(x.dedupeGroup);
+      if (a) a.push(x); else g.set(x.dedupeGroup, [x]);
+    }
+    return [...g.values()].filter((rows) => rows.length > 1).map((rows) => ({
+      name: rows[0].security,
+      owners: [...new Set(rows.map((x) => ownerOf(accIdx, x)))],
+      rows: rows.length,
+      // `dedupedPositions` keeps the FIRST row of a group; the rest are the
+      // amount a per-statement sum carries twice.
+      extra: sum(rows.slice(1).map((x) => x.marketValue)),
+    }));
+  })();
+  const overlapMV = sum(overlap.map((o) => o.extra));
+  const overlapNames = overlap.map((o) => `${o.name}, under ${o.owners.join(" and ")}`);
+  const overlapSaid = overlapWording(overlap, overlapNames);
+  const entityWeightOf = weightOfEntities((n) => money(n), perStatementMV, totalMV, overlapSaid);
   // The table's own order; the default is `byEntity`'s (largest first).
   const entityRows = sortRows(entities, entityView.sort, {
     entity: (e) => e.key,
@@ -727,10 +792,10 @@ export function FamilyEntities() {
                   <Tr view={entityView}>
                     <SortHeader col="entity" view={entityView} align="left">Entity</SortHeader>
                     <SortHeader col="nav" view={entityView}>NAV</SortHeader>
-                    <SortHeader col="weight" view={entityView}>Weight</SortHeader>
+                    <SortHeader col="weight" view={entityView} title="This entity's NAV over the entity rows' own total — each entity's statements as printed — so the column adds to 100%. The gap from that total to the consolidated book is named under the table.">Weight</SortHeader>
                     <SortHeader col="positions" view={entityView}>Positions</SortHeader>
                     <SortHeader col="pnl" view={entityView}>Unreal. P&L</SortHeader>
-                    <SortHeader col="return" view={entityView} title="Cumulative unrealized return on cost (holding-period, not annualized)">Return</SortHeader>
+                    <SortHeader col="return" view={entityView} title="FIFO over the holdings whose statement reports a cost: (unrealised + realised) ÷ the capital behind them — cumulative, not annualised. Its coverage is in each cell's popover.">Return</SortHeader>
                     <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
                     <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
                     {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
@@ -765,8 +830,26 @@ export function FamilyEntities() {
                     const coverNote = mwr.annPct == null ? undefined
                       : `Money-weighted, over ${mwr.windowDays} days — not annualised; ${fmtPct(mwr.annPct, { sign: true })} p.a. if it were. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} worth ${money(mwr.measuredMV)} on their own statements, each closed on its statement date${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
+                    // The popovers' own worked lines ride on their cells, so
+                    // `check:pages` reads the arithmetic a reader is shown rather
+                    // than a second computation of it.
+                    const wf = weightFormula(e.mv, perStatementMV, e.weight * 100, money, entityWeightOf);
+                    const pf = e.pnl == null ? null : {
+                      ...pnlFormula(e.fifo.marketValue, e.cost, e.pnl, money),
+                      ...(e.withoutCost > 0 ? { plain: `What the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${e.withoutCost} report no cost and are in NAV only — never counted at zero.` } : {}),
+                    };
+                    const rfBase = returnFormula(e.fifo.marketValue, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed });
+                    // THE RETURN SAYS WHICH HOLDINGS IT IS STRUCK OVER, as the P&L
+                    // beside it already does: over the costed holdings alone,
+                    // which on four of these rows are a fifth to a half short of
+                    // the NAV printed two cells to the left.
+                    const rf = e.returnPct == null ? null : {
+                      ...rfBase,
+                      ...(e.withoutCost > 0 ? { plain: `${rfBase.plain} Struck over the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost — ${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}; the other ${e.withoutCost} report no cost and are in NAV only, never counted at zero.` } : {}),
+                    };
                     return (
-                      <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}>
+                      <Tr view={entityView} key={e.key} className="cursor-pointer hover:bg-ink-700/40" onClick={() => setScope(e.key)}
+                        data-entity-mv={e.mv} data-entity-count={e.count}>
                         {/* The platform list the Custody column used to carry.
                             A hover is weaker than a column; what makes the trade
                             affordable is that this row is ALREADY a click target
@@ -777,7 +860,7 @@ export function FamilyEntities() {
                             across two lines. The Entity name legitimately wraps
                             and absorbs it. */}
                         <td className="px-4 py-2.5 text-right mono text-slate-200 whitespace-nowrap">{fmtFromBase(e.mv, { compact: true })}</td>
-                        <td className="px-4 py-2.5 text-right mono text-slate-400"><Auditable formula={weightFormula(e.mv, totalMV, e.weight * 100, money, WEIGHT_OF)}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
+                        <td className="px-4 py-2.5 text-right mono text-slate-400" data-weight-worked={wf.worked} data-weight-plain={wf.plain}><Auditable formula={wf}>{`${(e.weight * 100).toFixed(1)}%`}</Auditable></td>
                         <td className="px-4 py-2.5 text-right mono text-slate-400">{e.count}</td>
                         {/* THE POPOVER IS STRUCK ON THE SET ITS FIGURE IS (A-02). The
                             P&L and the return are over the holdings that report a
@@ -786,20 +869,19 @@ export function FamilyEntities() {
                             arithmetic that gives 37.4%. `e.fifo` is struck over
                             the costed holdings alone, so its value is the one the
                             figure divides. */}
-                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${e.pnl == null ? "text-slate-500" : changeColor(e.pnl)}`} data-entity-pnl-costed-value={e.fifo.marketValue}>
-                          {e.pnl == null
+                        <td className={`px-4 py-2.5 text-right mono whitespace-nowrap ${e.pnl == null ? "text-slate-500" : changeColor(e.pnl)}`} data-entity-pnl-costed-value={e.fifo.marketValue}
+                          data-pnl-worked={pf?.worked}>
+                          {pf == null
                             ? <AbsentCell reason="no statement behind this entity's holdings reports a cost, so there is no gain to strike — a depository records what is held and never what it was bought for" />
-                            : <Auditable formula={{
-                                ...pnlFormula(e.fifo.marketValue, e.cost, e.pnl, money),
-                                ...(e.withoutCost > 0 ? { plain: `What the ${e.count - e.withoutCost} of ${e.count} holdings whose statement reports a cost are worth today (${money(e.fifo.marketValue)} of the entity's ${money(e.mv)}), minus what they cost. The other ${e.withoutCost} report no cost and are in NAV only — never counted at zero.` } : {}),
-                              }}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable>}
+                            : <Auditable formula={pf}>{fmtFromBase(e.pnl, { compact: true, sign: true })}</Auditable>}
                         </td>
-                        <td className={`px-4 py-2.5 text-right mono ${e.returnPct == null ? "text-slate-500" : changeColor(e.returnPct)}`}>
-                          {e.returnPct == null
+                        <td className={`px-4 py-2.5 text-right mono ${e.returnPct == null ? "text-slate-500" : changeColor(e.returnPct)}`}
+                          data-return-worked={rf?.worked} data-return-plain={rf?.plain}>
+                          {rf == null
                             ? <AbsentCell reason={e.cost == null
                                 ? "no statement behind this entity's holdings reports a cost, so there is no return to strike"
                                 : "the capital behind this entity's costed holdings is not positive, so a return on it has nothing to divide"} />
-                            : <Auditable formula={returnFormula(e.fifo.marketValue, e.cost, e.returnPct, money, { realised: e.fifo.realised, deployed: e.fifo.deployed })}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
+                            : <Auditable formula={rf}>{fmtPct(e.returnPct, { sign: true })}</Auditable>}
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}>
                           {xirrPct == null
@@ -815,6 +897,48 @@ export function FamilyEntities() {
                     );
                   })}
                 </tbody>
+                {/* ── THE TOTAL THE WEIGHTS DIVIDE BY, AND THE GAP TO THE BOOK ──
+                    The six NAVs add to more than the book on this page's own
+                    custody card, and nothing used to say why. The total row is
+                    on the rows' basis — a plain sum of what is printed above it —
+                    and the line under it names the holdings two entities both
+                    report, which is the whole of the difference. The four
+                    columns a cross-entity total would double-count carry the
+                    reason, never a blank. */}
+                <tfoot className="border-t border-ink-700 bg-ink-900/40" data-family-foot
+                  data-per-statement-mv={perStatementMV} data-consolidated-mv={totalMV}
+                  data-overlap-mv={overlapMV} data-overlap-count={overlap.length}>
+                  <TrFoot view={entityView}
+                    className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300"
+                    label={<>Total</>}
+                    labelTitle={`${entities.length} entities, each on its own statements as printed.`}
+                    cells={{
+                      nav: <td key="nav" className="px-4 py-2.5 text-right mono text-slate-100 whitespace-nowrap">{money(perStatementMV)}</td>,
+                      weight: <td key="weight" className="px-4 py-2.5 text-right mono text-slate-300">{`${(sum(entities.map((e) => e.weight)) * 100).toFixed(1)}%`}</td>,
+                      positions: <td key="positions" className="px-4 py-2.5 text-right mono text-slate-300">{sum(entities.map((e) => e.count))}</td>,
+                      pnl: <td key="pnl" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason={overlap.length
+                        ? `not totalled across entities: summed, it would count the ${overlap.length === 1 ? "holding" : `${overlap.length} holdings`} two entities both report twice — the book's gain, counting each once, is Morning CIO's`
+                        : "not totalled here — the book's gain is Morning CIO's"} /></td>,
+                      return: <td key="return" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="each row is FIFO over that entity's own costed holdings; one return across the entities is the book's, struck once over the consolidated set as Morning CIO's Consolidated return" /></td>,
+                      toDate: <td key="toDate" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="each row pools only that entity's measurable accounts over its own window; the pooled rate across every such account is Morning CIO's money-weighted return" /></td>,
+                      ytd: <td key="ytd" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="not totalled across entities: each row's year-to-date return is struck over that entity's own opening value, and a sum or average of per-entity rates is not the book's" /></td>,
+                    }} />
+                  <tr>
+                    {/* THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp).
+                        The two totals and the overlap are what a reader adds up —
+                        a line of figures, not prose — and the holdings it is made
+                        of, and why the weights divide by the rows' own total, are
+                        its hover. */}
+                    <td colSpan={ENTITY_COLS.length} className="px-4 pb-2.5 pt-0 text-[11.5px] leading-snug text-slate-500" data-family-overlap
+                      title={overlap.length > 0
+                        ? `The entities add to ${money(perStatementMV)}; the book is ${money(totalMV)}, ${money(overlapMV)} less — ${overlap.length === 1 ? "one holding is" : `${overlap.length} holdings are`} ${overlapSaid.how} and counted once there: ${overlapNames.join("; ")}. Each entity's row is its own statements as printed, so the weights divide by ${money(perStatementMV)}, the total the rows add to.`
+                        : `No holding is reported by two entities, so the entities add to the book, ${money(totalMV)}, and the weights divide by it.`}>
+                      {overlap.length > 0
+                        ? <>Entities {money(perStatementMV)} · book {money(totalMV)} · {overlap.length === 1 ? "one holding" : `${overlap.length} holdings`} counted once, {money(overlapMV)}</>
+                        : <>Entities {money(perStatementMV)} = book · no holding reported twice</>}
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </Card>
