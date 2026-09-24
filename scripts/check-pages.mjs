@@ -13899,6 +13899,41 @@ const INVARIANTS = {
       return /remembered/i.test(R.cagrKept ?? "") && R.cagr.active.join() === "cagr" && R.cagr.source === "saved"
         && !/[?&]ret=/.test(R.cagr.url) && sameCols(R.cagr.cols, collapseReturns(R.s3.cols, "ret:cagr"));
     }],
+    /**
+     * ANOTHER BROWSER TAB shares this browser's memory: it opens the table as
+     * this one left it, and a move made there arrives here without a reload.
+     */
+    ["a second browser tab opens the table exactly as this one left it", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.tab2?.opened?.length || !R.cagr?.cols?.length) return false;
+      return sameCols(R.tab2.opened, R.cagr.cols);
+    }],
+    ["…and a column moved in that tab moves here too, without a reload", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.tab2?.moved?.length || !R.tab2.here?.length || !R.cagr?.cols?.length) return false;
+      return !sameCols(R.tab2.moved, R.cagr.cols) && sameCols(R.tab2.here, R.tab2.moved);
+    }],
+    /**
+     * HOLDINGS ↔ TRANSACTIONS IS A TAB TOO. Each table keeps its own
+     * arrangement across the switch, and neither disturbs the other's.
+     */
+    ["a column moved on the transactions table stays put, and is saved", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.t0?.cols?.length || !R.t1) return false;
+      return R.t0.cols.includes("value") && R.t0.cols.includes("unrealisedGain")
+        && sameCols(R.t1.cols, swapCols(R.t0.cols, "value", "unrealisedGain"))
+        && sameCols(R.t1.saved ?? [], R.t1.cols);
+    }],
+    ["…crossing back to Holdings draws the holdings table exactly as the reader left it", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.h1?.cols?.length || !R.tab2?.moved?.length) return false;
+      return R.h1.axis === "security" && sameCols(R.h1.cols, R.tab2.moved);
+    }],
+    ["…and crossing to Transactions again draws the reader's move there", (t, ctx) => {
+      const R = ctx.remember;
+      if (!R?.t1?.cols?.length || !R.t2) return false;
+      return sameCols(R.t2.cols, R.t1.cols);
+    }],
   ],
 
   "monitor-tranche": [
@@ -24880,6 +24915,62 @@ for (const theme of THEMES) {
         // A measure ticked afterwards takes the returns' place.
         R.cagrKept = await pick("cagr");
         R.cagr = await snap();
+        // ANOTHER BROWSER TAB. It shares this browser's memory, so it opens the
+        // table as this one left it, and a column moved there moves here too —
+        // through the `storage` event, with no reload. It gets no stand-in of
+        // its own for Glow Central Research (installing one resets the posts
+        // this walk records), so any request there is ABORTED instead.
+        {
+          const colsOf = (p) => p.evaluate(() => {
+            const t = document.querySelector("main table");
+            return t ? [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")) : [];
+          });
+          const other = await ctx.newPage();
+          try {
+            await other.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+            await other.route(RESEARCH_HOST, (r) => r.abort());
+            await other.goto(page.url(), { waitUntil: "load" }).catch(() => {});
+            await other.waitForSelector("main table thead [data-col]", { timeout: 15000 }).catch(() => {});
+            await other.waitForTimeout(900);
+            R.tab2 = { opened: await colsOf(other) };
+            const g = other.locator("main table").first().locator("thead [data-col-grip='mv']").first();
+            if (await g.count()) { await g.focus(); await other.keyboard.press("ArrowRight"); await other.waitForTimeout(400); }
+            R.tab2.moved = await colsOf(other);
+            await page.waitForTimeout(900);
+            R.tab2.here = (await snap()).cols;
+          } finally {
+            await other.close().catch(() => {});
+          }
+        }
+        // HOLDINGS ↔ TRANSACTIONS IS A TAB TOO, and each table keeps its own
+        // arrangement: move a column on the transactions table, cross back to
+        // Holdings, then cross again.
+        {
+          const datedSnap = () => page.evaluate(() => {
+            const t = document.querySelector("[data-dated-table]");
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem("glow:tableView:monitor-dated:v1") || "null")?.order ?? null; } catch { saved = "unreadable"; }
+            return { cols: t ? [...t.querySelectorAll("thead tr:last-child > *")].map((c) => c.getAttribute("data-col")) : [], saved };
+          });
+          const toView = async (v) => {
+            const b = page.locator(`button[data-monitor-view='${v}']`).first();
+            if (!(await b.count())) return false;
+            await b.click();
+            if (v === "transactions") {
+              await page.locator("[data-dated-table] thead [data-col]").first().waitFor({ timeout: 20000 }).catch(() => {});
+              await page.waitForTimeout(700);
+            } else await settle();
+            return true;
+          };
+          if (await toView("transactions")) {
+            R.t0 = await datedSnap();
+            const g = page.locator("[data-dated-table] thead [data-col-grip='value']").first();
+            if (await g.count()) { await g.focus(); await page.keyboard.press("ArrowLeft"); await page.waitForTimeout(350); }
+            R.t1 = await datedSnap();
+            if (await toView("holdings")) R.h1 = await snap();
+            if (await toView("transactions")) R.t2 = await datedSnap();
+          }
+        }
         REMEMBER = R;
       }
       if (name === "monitor-axis-switch") {

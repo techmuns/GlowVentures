@@ -2627,6 +2627,7 @@ export function PortfolioMonitor() {
           <div className="inline-flex w-fit items-center gap-0.5 rounded-lg border border-ink-700 bg-ink-800/60 p-0.5">
             {(["holdings", "transactions"] as const).map((m) => (
               <button key={m} type="button" onClick={() => setView(m)}
+                data-monitor-view={m} aria-pressed={view === m}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium transition-colors ${view === m ? "bg-champagne-500 text-ink-950 shadow-glow" : "text-slate-400 hover:bg-ink-700/60 hover:text-slate-200"}`}>
                 {m === "holdings" ? <Layers className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
                 {m === "holdings" ? "Holdings" : "Transactions"}
