@@ -51,7 +51,7 @@ function CurrencySwitch() {
 // Live-quote state, stated honestly. The dot used to be hard-coded green whenever
 // a book was loaded, which would now claim "Live" even with the feed down.
 function QuoteStatus() {
-  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive, quoteFeeds } = usePortfolio();
+  const { portfolio, quotesStatus, quotesAsOf, livePriced, notLive, liveWithheld, quoteFeeds } = usePortfolio();
   if (!portfolio) {
     return <><span className="inline-block h-2 w-2 rounded-full bg-slate-600" /><span className="text-slate-400">Awaiting data</span></>;
   }
@@ -81,10 +81,15 @@ function QuoteStatus() {
   // The count of unpriced holdings stays in the tooltip, not the header. Those
   // rows are already marked individually in the table, where the reader can see
   // which ones they are — a bare number up here just raised questions.
+  //
+  // THE TWO KINDS OF NOT-LIVE ARE NAMED APART (DL-9). A holding with no quote in
+  // this round and one whose quote the corporate-action check held back are
+  // both on their statement mark, for different reasons — and neither is on a
+  // "workbook" mark: every mark here is a statement's.
   return <>
     <span className="inline-block h-2 w-2 rounded-full bg-gain shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
-    <span className="text-slate-400"
-      title={`${livePriced} holdings priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}${notLive ? ` · ${notLive} on workbook marks — ETFs, warrants and securities the price feed does not carry` : ""}`}>
+    <span className="text-slate-400" data-quote-coverage
+      title={`${livePriced} holdings priced live${quoteFeeds.length ? ` via ${quoteFeeds.join(" and ")}` : ""}${notLive ? ` · ${notLive} got no quote in this round and are on their statement marks` : ""}${liveWithheld ? ` · ${liveWithheld} had a quote the corporate-action check held back, because the statement's share count may not match it, and are on their statement marks` : ""}`}>
       Live{clock ? ` ${clock}` : ""}
     </span>
   </>;

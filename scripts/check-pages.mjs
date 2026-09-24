@@ -5632,6 +5632,10 @@ const ROUTES = [
    * rows shut and every claim below fails by name.
    */
   ["monitor-open-all", "/monitor?group=category"],
+  // DL-9: the live fixture, its corporate-action capture answered and then never
+  // arriving, every row open — see WITHHELD_CHECKS.
+  ["monitor-withheld", "/monitor?group=category"],
+  ["monitor-withheld-loading", "/monitor?group=category"],
   // ...AND ONE SECTION FOLDED ON ITS BAND, which is the half of the standard a
   // reader uses to put a category out of the way without losing its totals.
   ["monitor-section-closed", "/monitor?group=category"],
@@ -7627,6 +7631,210 @@ const MARK_BY_SYMBOL = (() => {
   } catch { /* an unreadable book fails the route's own checks, loudly */ }
   return m;
 })();
+
+/**
+ * ── WHICH LINES THE CORPORATE-ACTION CHECK HOLDS BACK UNDER THE LIVE FIXTURE ──
+ *
+ * DL-9: a quote that ARRIVED and was held back is a different fact from one
+ * that never came, and the Monitor's price hover, its Day cell and the basis
+ * pill worded both as "no quote". These are the lines `installLiveMocks`
+ * quotes that the gate must still hold back, in two states:
+ *
+ *   • `answered` — the fixture's capture answers (verified through 23 Sep,
+ *     no events) and every quote is dated 13 Aug with no trade time, so a
+ *     company share is held back where its statement records sales after its
+ *     own date, or where the quote's day is before the statement's;
+ *   • `loading` — the capture has not arrived, so EVERY company share the
+ *     fixture quotes is held back, waiting for the evidence.
+ *
+ * RE-EXPRESSED FROM `applyCorporateActionQuotes` AND NEVER IMPORTED: a check
+ * that asked the gate which lines it held would agree with it by
+ * construction. Only a company share is gated (a fund goes straight to the
+ * quote overlay); `lines` is keyed `accountId|securityKey` over the current
+ * holdings the Monitor draws, `keys` are the securities with a held line and
+ * no line the fixture would price live, and `securities` counts them the way
+ * the basis pill does — over every statement line, current or not.
+ */
+const WITHHELD_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = statementBookPositions(src) ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    if (!positions.length || !accounts.length) return null;
+    const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    const QUOTE_DAY = "2026-08-13"; // installLiveMocks' `asOf`, with no `tradedAt`
+    const quoted = (p) => { const s = p.symbol || symbols[p.securityKey]; return !!s && MARK_BY_SYMBOL.has(s); };
+    const closed = (x) => FUND_VEHICLE_CLASSES.has(x.assetClass) && x.quantity === 0 && x.currentPrice != null;
+    const small = smallKeysOf(bookArray(src, "BOOK_POSITIONS") ?? []);
+    const current = (x) => !closed(x) && !small.has(x.securityKey);
+    const reasonOf = (p, loading) => {
+      if (p.assetClass !== "Equity" || !quoted(p)) return null;
+      if (loading) return "Waiting for corporate-action evidence before marking shares live";
+      const start = asOf.get(p.accountId) || "";
+      if ((Number(p.realizedLotsAfter) || 0) > 0) return "Sales are recorded after this statement";
+      if (!start || QUOTE_DAY < start) return "Quote predates the holding statement";
+      return null;
+    };
+    const build = (loading) => {
+      const lines = new Map(), byKey = new Map();
+      for (const p of positions) {
+        const why = reasonOf(p, loading);
+        const e = byKey.get(p.securityKey) ?? { held: 0, live: 0 };
+        if (why) e.held++; else if (quoted(p)) e.live++;
+        byKey.set(p.securityKey, e);
+        if (why && current(p)) lines.set(`${p.accountId}|${p.securityKey}`, why);
+      }
+      const keys = new Set([...byKey].filter(([, e]) => e.held > 0 && e.live === 0).map(([k]) => k));
+      const heldIn = (accountId) => [...lines.keys()].filter((k) => k.startsWith(`${accountId}|`)).length;
+      // The reasons a security's drawn lines carry, and every security with at
+      // least one held line — a row whose lines are PARTLY held (a name live in
+      // one account and held in another) is `heldAny` and not `keys`, and is
+      // asserted neither way on the row; measured, this book has none.
+      const reasonsByKey = new Map();
+      for (const [k, why] of lines) {
+        const key = k.slice(k.indexOf("|") + 1);
+        reasonsByKey.set(key, (reasonsByKey.get(key) ?? new Set()).add(why));
+      }
+      const heldAny = new Set(reasonsByKey.keys());
+      const mixed = [...heldAny].filter((k) => !keys.has(k)).length;
+      return { lines, keys, securities: keys.size, heldIn, reasonsByKey, heldAny, mixed };
+    };
+    return { answered: build(false), loading: build(true) };
+  } catch { return null; }
+})();
+
+/**
+ * ── A QUOTE THE CHECK HELD BACK SAYS SO, WHERE THE PRICE IS SHOWN (DL-9) ────
+ *
+ * Walked on the Portfolio Monitor with the live fixture in its two states — the
+ * capture answered (`monitor-withheld`) and never arriving
+ * (`monitor-withheld-loading`) — with every row open. Each claim is struck on
+ * the marker's own handle (`data-cmp-withheld`) and on the reason the gate
+ * gives, read off the cell's hover. Never on the price: a statement mark reads
+ * the same whether a quote was held back or never came, which is exactly why
+ * the two were worded alike for so long.
+ *
+ * A MISSING PROBE IS A FAILURE. These routes exist to read `quoteHold`; a walk
+ * that did not capture it has checked nothing.
+ */
+const WITHHELD_CHECKS = (mode) => {
+  // `always`: the claims that a marker is NOT where the book holds nothing run
+  // even when the book holds nothing at all — so a checker whose own
+  // re-derivation broke, and found no line held, fails on the page's markers
+  // rather than abstaining on every claim.
+  const ready = (ctx, always = false) => {
+    const B = WITHHELD_BOOK?.[mode] ?? null;
+    if (!B) return { fail: true };
+    if (!ctx?.tableRows || !ctx?.quoteHold) return FAST ? { skip: "the probe did not run" } : { fail: true };
+    if (!B.securities && !always) return { skip: "under this fixture the corporate-action check holds back no line" };
+    return { B, rows: ctx.tableRows, hold: ctx.quoteHold };
+  };
+  const out = (r) => (r.fail ? false : { notChecked: r.skip });
+  const heldTip = /corporate-action check held (it|back)/;
+  const reasonsIn = (tip, reasons) => !!reasons && reasons.size > 0 && [...reasons].every((why) => tip.includes(why));
+  const heldRows = (r) => r.rows.filter((x) => !x.mandate && x.securityKey && r.B.keys.has(x.securityKey));
+  return [
+    [`the live fixture quotes company shares the corporate-action check holds back, and the page draws them (${mode})`, (t, ctx) => {
+      const r = ready(ctx); if (!r.B) return out(r);
+      return heldRows(r).length > 0;
+    }],
+    ["every row whose quote the check held back says so on its price, in the check's own words — never \"no live price\"", (t, ctx) => {
+      const r = ready(ctx); if (!r.B) return out(r);
+      const held = heldRows(r);
+      if (!held.length) return false;
+      return held.every((x) => {
+        const tip = x.cellTitles?.[COL.cmp] ?? "";
+        return x.withheld && heldTip.test(tip) && reasonsIn(tip, r.B.reasonsByKey.get(x.securityKey)) && !/^no live price/i.test(tip);
+      });
+    }],
+    ["…and its Day cell says the check held the quote back, not that none arrived", (t, ctx) => {
+      const r = ready(ctx); if (!r.B) return out(r);
+      const held = heldRows(r);
+      if (!held.length) return false;
+      return held.every((x) => {
+        const tip = x.cellTitles?.[COL.day] ?? "";
+        return heldTip.test(tip) && reasonsIn(tip, r.B.reasonsByKey.get(x.securityKey)) && !/no live quote/i.test(tip);
+      });
+    }],
+    ["no row whose quotes the check did not hold back says it did", (t, ctx) => {
+      const r = ready(ctx, true); if (!r.B) return out(r);
+      const clean = r.rows.filter((x) => x.mandate
+        ? !!x.mandateAccount && r.B.heldIn(x.mandateAccount) === 0
+        : !!x.securityKey && !r.B.heldAny.has(x.securityKey));
+      if (!clean.length) return false;
+      return clean.every((x) => !x.withheld && ![COL.cmp, COL.day, COL.mv].some((i) => /corporate-action check/.test(x.cellTitles?.[i] ?? "")));
+    }],
+    ["every line a row opens into says whether ITS OWN quote was held back — the held lines, and only those", (t, ctx) => {
+      const r = ready(ctx, true); if (!r.B) return out(r);
+      const lines = r.hold.lines.filter((l) => l.account && l.key);
+      if (!lines.length) return false;
+      return lines.every((l) => {
+        const why = r.B.lines.get(`${l.account}|${l.key}`);
+        if (!!why !== l.withheld) return false;
+        return why ? heldTip.test(l.cmpTip) && l.cmpTip.includes(why) : !/corporate-action check/.test(l.cmpTip);
+      });
+    }],
+    ["a mandate some of whose shares were held back says how many, of how many, and why", (t, ctx) => {
+      const r = ready(ctx); if (!r.B) return out(r);
+      const ms = r.rows.filter((x) => x.mandate && x.mandateAccount && r.B.heldIn(x.mandateAccount) > 0);
+      if (!ms.length) return mode === "loading" ? false : { notChecked: "under this fixture no mandate's shares are held back" };
+      return ms.every((x) => {
+        const n = r.B.heldIn(x.mandateAccount);
+        const day = /held back the quotes that arrived for (\d+) of its (\d+) shares/.exec(x.cellTitles?.[COL.day] ?? "");
+        if (day) return Number(day[1]) === n && Number(day[2]) === x.holdings;
+        // Part of the mandate is live, so its Day cell is a figure: the hold is
+        // named on the value's own hover instead.
+        const mv = /held back the quotes that arrived for (\d+) of its shares/.exec(x.cellTitles?.[COL.mv] ?? "");
+        return !!mv && Number(mv[1]) === n;
+      });
+    }],
+    ["the top bar counts the held-back quotes apart from the ones that never came, and never says \"workbook\"", (t, ctx) => {
+      const r = ready(ctx); if (!r.B) return out(r);
+      const top = r.hold.top;
+      return top != null && top.includes(`${r.B.securities} had a quote the corporate-action check held back`) && !/workbook/i.test(top);
+    }],
+  ];
+};
+
+/**
+ * THE BASIS PILL, on the one live-basis page the sweep walks with the fixture
+ * (Performance). Two claims: the held-back quotes are their own count, and the
+ * four counts together are every security the live book carries, each once — a
+ * pill that folded the held-back quotes back into "no quote in this round"
+ * would count them twice.
+ */
+const PILL_UNIVERSE = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const ps = bookArray(src, "BOOK_POSITIONS");
+    return ps ? new Set(ps.map((p) => p.securityKey)).size : null;
+  } catch { return null; }
+})();
+const WITHHELD_PILL = [
+  ["the basis pill counts the quotes the corporate-action check held back apart from the ones that never came", (t, ctx) => {
+    const B = WITHHELD_BOOK?.answered;
+    if (!B) return false;
+    if (!ctx?.quoteHold) return FAST ? { notChecked: "the probe did not run" } : false;
+    const pill = ctx.quoteHold.pill;
+    if (pill == null) return false;
+    if (!B.securities) return { notChecked: "under this fixture the corporate-action check holds back no line" };
+    return pill.includes(`${B.securities} had a live quote that the corporate-action check held back`);
+  }],
+  ["…and its four counts are every security the live book carries, each once", (t, ctx) => {
+    if (!ctx?.quoteHold) return FAST ? { notChecked: "the probe did not run" } : false;
+    const pill = ctx.quoteHold.pill;
+    if (pill == null || PILL_UNIVERSE == null) return false;
+    const n = (re) => { const m = re.exec(pill); return m ? Number(m[1]) : 0; };
+    const parts = [
+      n(/(\d+) securities priced live/),
+      n(/(\d+) have a symbol but no quote in this round/),
+      n(/(\d+) had a live quote that the corporate-action check held back/),
+      n(/(\d+) have no listing at all/),
+    ];
+    return parts.reduce((a, b) => a + b, 0) === PILL_UNIVERSE;
+  }],
+];
 
 /**
  * HOW MANY NAMES THE MOCKED FEED CAN PRICE IN DIRECT EQUITY — the exact number
@@ -24753,6 +24961,8 @@ const INVARIANTS = {
    * inside a cell. Struck with everything open, so every claim has its subject
    * on one screen, and every one of them is a count or a width.
    */
+  "monitor-withheld": WITHHELD_CHECKS("answered"),
+  "monitor-withheld-loading": WITHHELD_CHECKS("loading"),
   "monitor-open-all": [
     ["Expand all opens every row that can open, and every section", (t, ctx) => {
       const tr = ctx?.treeState;
@@ -27326,7 +27536,7 @@ const INVARIANTS = {
       return d.rows.length > 0 && d.rows.every((r) => !!r.reason && CG_BOOK.reasons.includes(r.reason));
     }],
   ],
-  "performance-live": [...PERF_MW_LIVE, ...PERF_MW],
+  "performance-live": [...PERF_MW_LIVE, ...PERF_MW, ...WITHHELD_PILL],
   performance: [
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
     // to the statement book and the current value step by step, as on `cio-nav`.
@@ -27999,6 +28209,15 @@ for (const theme of THEMES) {
       PRICE_REQUESTS = [];
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
       if (name === "performance-live") await installLiveMocks(page);
+      if (name === "monitor-withheld" || name === "monitor-withheld-loading") await installLiveMocks(page);
+      // The capture never arrives on the loading walk: both of its doors are held
+      // open, registered AFTER the fixture so they win (Playwright runs the last
+      // matching route first).
+      if (name === "monitor-withheld-loading") {
+        const hold = (route) => new Promise(() => { void route; });
+        await page.route("**/api/corporate-actions?*", hold);
+        await page.route("**/data/corporate-actions.json", hold);
+      }
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench"
         || name === "stock-sold-after" || name === "corporate-actions-live") await installLiveMocks(page);
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
@@ -28040,7 +28259,7 @@ for (const theme of THEMES) {
        * intended. It waits for `load` instead, which is the state its
        * invariants are about: the page painted, the feeds still in flight.
        */
-      const settle = (name === "cio-loading" || name === "cio-index-loading" || name === "monitor-security-loading")
+      const settle = (name === "cio-loading" || name === "cio-index-loading" || name === "monitor-security-loading" || name === "monitor-withheld-loading")
         ? "load" : (FAST ? "load" : "networkidle");
       await page.goto(`${BASE}${path}`, { waitUntil: settle, timeout: 45000 });
       /**
@@ -28732,6 +28951,15 @@ for (const theme of THEMES) {
         }
       }
       if (name === "monitor-open-all") {
+        const all = page.locator("main [data-tree-expand-all]").first();
+        if (await all.count()) { await all.click(); await page.waitForTimeout(900); }
+      }
+      // The held-back marker waits on two fetches — the quotes and the capture's
+      // answer (or, on the loading walk, the quotes alone) — so the walk waits
+      // for it before opening every row. A marker that never comes times out
+      // here and fails by name below.
+      if (name === "monitor-withheld" || name === "monitor-withheld-loading") {
+        await page.waitForSelector("main [data-cmp-withheld]", { timeout: 20000 }).catch(() => {});
         const all = page.locator("main [data-tree-expand-all]").first();
         if (await all.count()) { await all.click(); await page.waitForTimeout(900); }
       }
@@ -30389,8 +30617,34 @@ for (const theme of THEMES) {
            */
           sector: tr.querySelector("[data-sector]")?.getAttribute("data-sector") ?? null,
           sectorWhy: tr.querySelector("[data-sector]")?.getAttribute("title") ?? null,
+          /**
+           * WHETHER THE ROW'S PRICE SAYS ITS QUOTE WAS HELD BACK (DL-9), off the
+           * marker's own handle rather than its words, and which account a
+           * mandate row is — so a claim about a mandate's shares can be struck
+           * on that account's lines.
+           */
+          withheld: !!tr.querySelector("[data-cmp-withheld]"),
+          mandateAccount: tr.getAttribute("data-mandate-account"),
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
+      /**
+       * THE HELD-BACK QUOTES, WHERE A READER MEETS THEM (DL-9): every statement
+       * line and every mandate share a row opens into — each with its own price
+       * hover and whether it carries the held-back marker — and the two
+       * book-wide counts, the basis pill's and the top bar's. Read on the routes
+       * whose fixture quotes the book, where there is something to hold back.
+       */
+      const quoteHold = (FAST || !/^(monitor-withheld|performance-live)/.test(name)) ? null : await page.evaluate((cmpAt) => ({
+        lines: [...document.querySelectorAll('tbody tr[data-tree-child="venue"], tbody tr[data-tree-child="constituent"]')].map((tr) => ({
+          kind: tr.getAttribute("data-tree-child"),
+          key: tr.getAttribute("data-venue-key") ?? tr.getAttribute("data-constituent"),
+          account: tr.getAttribute("data-venue-account") ?? tr.getAttribute("data-constituent-account"),
+          withheld: !!tr.querySelector("[data-cmp-withheld]"),
+          cmpTip: tr.cells[cmpAt]?.querySelector("[title]")?.getAttribute("title") ?? "",
+        })),
+        pill: document.querySelector("[data-basis-pill]")?.getAttribute("title") ?? null,
+        top: document.querySelector("[data-quote-coverage]")?.getAttribute("title") ?? null,
+      }), COL.cmp);
       /**
        * THE ENTITY FILTER AND THE REALISED FIGURES IT NARROWS, off their own
        * handles. `data-realised` is present only where a figure is printed, so
@@ -34016,7 +34270,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

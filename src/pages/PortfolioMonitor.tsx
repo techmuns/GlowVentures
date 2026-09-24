@@ -11,6 +11,7 @@ import { useStockExposure } from "@/lib/useStockExposure";
 import { companySectorIndex, type FundExposureRow } from "@/lib/lookthrough";
 import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
 import { symbolFor, symbolForKey } from "@/lib/quotes";
+import { liveWithheldReason } from "@/lib/corporateActions";
 import { fmtPct, changeColor, fmtNum, fmtDate } from "@/lib/format";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
@@ -620,7 +621,26 @@ const LIVE_CELL = "Recalculated from the live price. Quantity and cost come from
 const DERIVED_NOTE = "DERIVED, not a position: the AMC disclosed what the fund holds and this is your units' share of it, across every asset class the filing carries — shares, bonds, NCDs and commercial paper alike. It is no part of the book's NAV — the fund's own value already stands for it there — so this column is never summed into a book total.";
 
 export function PortfolioMonitor() {
-  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase } = usePortfolio();
+  const { portfolio, consolidated, basis, displayCurrency, fmtFromBase, corporateActionReturns } = usePortfolio();
+  /**
+   * WHY THE LIVE QUOTE ON THESE LINES WAS HELD BACK, OR NULL (DL-9).
+   *
+   * The corporate-action check withholds a quote that DID arrive wherever
+   * pairing it with the statement's share count could be wrong — sales recorded
+   * after the statement, an event the capture cannot allocate, the evidence
+   * still loading. The price hover and the Day cell said "no live price" about
+   * those too, which sends a reader to wait for a feed that already answered.
+   * `held` of `of` lines, in the check's own words (`liveWithheldReason`, the
+   * one helper the company page reads too).
+   */
+  const withheldOf = (ps: readonly Pick<Position, "accountId" | "securityKey">[]) => {
+    const reasons = ps.map((p) => liveWithheldReason(p, corporateActionReturns)).filter((x): x is string => !!x);
+    return reasons.length ? { reason: [...new Set(reasons)].join(". "), held: reasons.length, of: ps.length } : null;
+  };
+  /** The statement lines a row stands for: its own set, or a mandate's shares. */
+  const linesOf = (r: Row): Pick<Position, "accountId" | "securityKey">[] => r.mandate
+    ? r.mandate.holdings.map((h) => ({ accountId: r.mandate!.accountId, securityKey: h.securityKey }))
+    : r.trancheSet;
   /**
    * THE DATED CAPITAL BEHIND A ROW THAT IS WHOLE ACCOUNTS (`datedCapital.ts`).
    *
@@ -2640,14 +2660,25 @@ export function PortfolioMonitor() {
         investedOn: dateCell(h.investedOn, h.costNA
           ? "no statement reports what this share cost, so there is no payment to date"
           : "the manager's statement reports what this share cost but not the date it was bought"),
-        cmp: h.currentPrice === null ? <AbsentCell reason="marked at a total value, not a per-unit price" /> : fmtFromBase(h.currentPrice),
+        // A SHARE'S PRICE SAYS WHETHER IT IS LIVE, as every other price on this
+        // table does: a statement mark with no flag reads as today's price. And
+        // a quote the corporate-action check held back is named as that (DL-9).
+        cmp: h.currentPrice === null ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+          : h.live ? fmtFromBase(h.currentPrice)
+          : (() => {
+            const wh = withheldOf([{ accountId: m.accountId, securityKey: h.securityKey }]);
+            return <>{fmtFromBase(h.currentPrice)}
+              <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
+                title={`${wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The mark` : "No live price — the mark"} from the mandate's statement${h.valuedAt ? ` as of ${fmtDate(h.valuedAt)}` : ""}.`}
+                data-cmp-withheld={wh ? "1" : undefined}>◦</span></>;
+          })(),
         day: dayCell(h.live, h.dayChangePct),
         mv: fmtFromBase(h.marketValue, { compact: true }),
         weight: pctOfBook(h.marketValue),
         pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
         ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA }, measure),
         sector: isFundVehicle(h) ? <AbsentCell reason={fundSectorWhy(h.assetClass)} /> : sectorCell(h.sector, h.securityKey, [], true),
-      }, { "data-constituent": h.securityKey || h.security, "data-constituent-mv": h.marketValue })));
+      }, { "data-constituent": h.securityKey || h.security, "data-constituent-account": m.accountId, "data-constituent-mv": h.marketValue })));
       return out;
     }
     const info = trancheInfo.get(r.key);
@@ -2743,10 +2774,17 @@ export function PortfolioMonitor() {
                     + (v.depositoryWhy
                       ? ` No statement priced these units: they are ${v.depositoryWhy}.`
                       : "")
-                  // The line's OWN statement date (C-01), not the book's newest.
-                  : v.valuedAt
-                  ? `No live price — the mark from this statement as of ${fmtDate(v.valuedAt)}.`
-                  : "No live price — the marks its statements print, dated differently."}>◦</span>
+                  // The line's OWN statement date (C-01), not the book's newest —
+                  // and a quote the corporate-action check held back is named
+                  // as that, never as "no live price" (DL-9).
+                  : (() => {
+                    const wh = withheldOf(v.positions);
+                    const lead = wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The mark` : "No live price — the mark";
+                    return v.valuedAt
+                      ? `${lead} from this statement as of ${fmtDate(v.valuedAt)}.`
+                      : `${wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The marks` : "No live price — the marks"} its statements print, dated differently.`;
+                  })()}
+                data-cmp-withheld={withheldOf(v.positions) ? "1" : undefined}>◦</span>
             )}</>,
         day: dayCell(v.live, v.dayChangePct),
         mv: fmtFromBase(v.marketValue, { compact: true }),
@@ -3612,10 +3650,18 @@ export function PortfolioMonitor() {
                    * — the value the feed actually repriced.
                    */
                   const partLive = !!m && r.live && r.marketValue - r.liveMV > 1;
+                  /**
+                   * AND WAS A QUOTE THAT ARRIVED HELD BACK? (DL-9) Asked of a
+                   * row that is not live, and of a mandate part of which is not:
+                   * those lines keep their statement mark because the
+                   * corporate-action check would not pair the quote with the
+                   * statement's share count, not because no quote came.
+                   */
+                  const rowWithheld = !r.live || partLive ? withheldOf(linesOf(r)) : null;
                   // Only where it is actually true: a mandate every constituent
                   // of which is quoted is wholly live and says the ordinary thing.
                   const mixedBasisNote = partLive
-                    ? `Part live: ${money(r.liveMV)} of this mandate's ${money(r.marketValue)} is repriced from live quotes and the rest keeps its statement mark — a mandate's cash sleeve can never be quoted, and neither can a share whose NSE symbol does not resolve. Every figure on this row that market value feeds — value, weight, unrealised P&L and return — therefore blends the two bases, and has no single statement cell to trace to.`
+                    ? `Part live: ${money(r.liveMV)} of this mandate's ${money(r.marketValue)} is repriced from live quotes and the rest keeps its statement mark — a mandate's cash sleeve can never be quoted, and neither can a share whose NSE symbol does not resolve${rowWithheld ? `; and the corporate-action check held back the quotes that arrived for ${rowWithheld.held} of its shares — ${rowWithheld.reason}` : ""}. Every figure on this row that market value feeds — value, weight, unrealised P&L and return — therefore blends the two bases, and has no single statement cell to trace to.`
                     : LIVE_CELL;
                   /**
                    * A COST CARRIED THROUGH A FUND'S CLASS SWITCH SAYS SO, on the
@@ -3681,6 +3727,7 @@ export function PortfolioMonitor() {
                         {...(r.venues ? { "data-venues": String(r.venues.length) } : {})}
                         {...(m ? {
                           "data-mandate": m.name,
+                          "data-mandate-account": m.accountId,
                           "data-manager": m.manager,
                           "data-account": m.accountNo,
                           "data-holdings": String(m.holdings.length),
@@ -3851,9 +3898,15 @@ export function PortfolioMonitor() {
                                     // THE STATEMENT'S OWN DATE, never the book's newest (C-01): a
                                     // mark struck on 31 Jul captioned 29 Aug is a month-old price
                                     // passed off as current.
-                                    : r.valuedAt
-                                    ? `No live price for this security — showing the mark from its statement as of ${fmtDate(r.valuedAt)}.`
-                                    : "No live price for this security — showing the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date."}>◦</span></>}
+                                    // A QUOTE THE CORPORATE-ACTION CHECK HELD BACK is not
+                                    // "no live price" (DL-9): it arrived.
+                                    : (rowWithheld
+                                      ? `A live quote arrived for this security and the corporate-action check held it back — ${rowWithheld.reason}. `
+                                      : "No live price for this security — ")
+                                      + (r.valuedAt
+                                        ? `${rowWithheld ? "Showing" : "showing"} the mark from its statement as of ${fmtDate(r.valuedAt)}.`
+                                        : `${rowWithheld ? "Showing" : "showing"} the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date.`)}
+                                  data-cmp-withheld={rowWithheld ? "1" : undefined}>◦</span></>}
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null
@@ -3862,7 +3915,13 @@ export function PortfolioMonitor() {
                           {r.live && r.dayChangePct != null
                             ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
                             : <AbsentCell reason={m
-                                ? "no live quote for any share inside this mandate, so there is no previous close to move from"
+                                ? (rowWithheld
+                                  ? `no share inside this mandate is on a live price: the corporate-action check held back the quotes that arrived for ${rowWithheld.held} of its ${rowWithheld.of} shares — ${rowWithheld.reason} — so there is no previous close to move from`
+                                  : "no live quote for any share inside this mandate, so there is no previous close to move from")
+                                : rowWithheld
+                                ? (rowWithheld.held < rowWithheld.of
+                                  ? `the corporate-action check held back the live quote on ${rowWithheld.held} of this security's ${rowWithheld.of} lines — ${rowWithheld.reason} — so the row has no one move from a previous close; each line in its expansion carries its own`
+                                  : `a live quote arrived and the corporate-action check held it back — ${rowWithheld.reason} — so there is no previous close to move from`)
                                 : r.splitMarks && r.splitMarks.length > 1
                                 ? "no live quote for this security, and its statements mark it at different prices, so there is no one previous close to move from"
                                 : r.currentPrice === null
