@@ -5105,6 +5105,11 @@ const ROUTES = [
   // ...AND THE AXIS SWITCHED BY CLICK WITH A FILTER ALREADY SET, which is the
   // one way to reach the stale-filter defect. See the walk step of this name.
   ["monitor-axis-switch", "/monitor?group=category"],
+  // ...AND ONE MEMBER PICKED IN THE ENTITY FILTER, on the security axis where
+  // one row clubs several members' lots of a company — the one place a Realised
+  // figure keyed by security could carry another member's sales (MH-03). The
+  // member is derived from the book (`MEMBER_REALISED_BOOK`); see its walk step.
+  ["monitor-member", "/monitor?group=security"],
   // ...AND ONE MANDATE DRILL-DOWN, the page the family asked for three times: a
   // share a discretionary manager chose is shown inside that manager's mandate,
   // not beside the shares the family bought itself. Its ADDRESS IS RESOLVED FROM
@@ -7254,6 +7259,63 @@ const FIFO_BOOK = (() => {
       if (survivors !== null && (!worst || Math.abs(capitalRet - survivors) > Math.abs(worst.capitalRet - worst.survivors))) worst = row;
     }
     return { byAccountNo, worst, contributedOf };
+  } catch { return null; }
+})();
+
+/**
+ * ── UNDER THE ENTITY FILTER, A MEMBER'S REALISED IS THEIR OWN (MH-03) ─────────
+ *
+ * The audit found the Realised column keyed by SECURITY: picking Ankita kept
+ * every other member's sales of the same names, so her footer would have read
+ * +₹15.63 L where her own statements carry +₹5.25 L. Stage 10ca put realised on
+ * the HOLDING, so the figure is per account again — and nothing asserted it,
+ * which is how it broke the first time.
+ *
+ * Walked on the SECURITY axis, because that is where one row clubs several
+ * members' lots of one company and a security-keyed figure can differ from an
+ * owner's own. The member walked is the one on whom it would differ MOST —
+ * derived here, never typed, so the next drop picks its own worst case.
+ *
+ * Re-expressed rather than imported: a company share is `assetClass
+ * "Equity"`, a closed fund and a speck under the floor are on no row, and a
+ * holding's realised is its own `realizedPnL`. No mandate is whole on this
+ * axis (its cash sleeve is not a company share), so nothing is struck on a
+ * mandate's capital here.
+ */
+const MEMBER_REALISED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const owner = new Map(accounts.map((a) => [a.accountId, a.owner]));
+    const small = smallKeysOf(positions);
+    const shares = positions.filter((p) => p.assetClass === "Equity" && !small.has(p.securityKey));
+    // A holding two statements both report would need the dedupe policy here;
+    // no company share in this book carries one, and a drop that brings one
+    // must make this say so rather than count a holding twice.
+    if (shares.some((p) => p.dedupeGroup)) return null;
+    const num = (x) => (typeof x === "number" && Number.isFinite(x) ? x : null);
+    const everyone = new Map();
+    for (const p of shares) {
+      const r = num(p.realizedPnL);
+      if (r !== null) everyone.set(p.securityKey, (everyone.get(p.securityKey) ?? 0) + r);
+    }
+    let best = null;
+    for (const m of new Set(shares.map((p) => owner.get(p.accountId)).filter(Boolean))) {
+      const own = new Map();
+      for (const p of shares) {
+        if (owner.get(p.accountId) !== m) continue;
+        const r = num(p.realizedPnL);
+        if (!own.has(p.securityKey)) own.set(p.securityKey, null);
+        if (r !== null) own.set(p.securityKey, (own.get(p.securityKey) ?? 0) + r);
+      }
+      const vals = [...own.values()].filter((v) => v !== null);
+      const ownTotal = vals.length ? vals.reduce((a, b) => a + b, 0) : null;
+      const keyed = [...own.keys()].reduce((t, k) => t + (everyone.get(k) ?? 0), 0);
+      const gap = Math.abs(keyed - (ownTotal ?? 0));
+      if (!best || gap > best.gap) best = { member: m, own, ownTotal, keyed, gap };
+    }
+    return best;
   } catch { return null; }
 })();
 
@@ -11060,8 +11122,23 @@ const VALUE_WINDOW_BOOK = (() => {
     const ai = src.indexOf("export const BOOK_ACCOUNTS"), aa = src.indexOf("= [", ai), ab = src.indexOf("\n];", aa);
     const accounts = JSON.parse(src.slice(aa + 2, ab + 2));
     const asOf = new Map(accounts.map((a) => [a.accountId, a.asOf]));
+    /**
+     * THE POSITIONS A SECURITY ROW IS MADE OF ON THE ROUTE THAT READS THIS —
+     * `?ret=cagr`, the CATEGORY axis — which is not every position of the key.
+     * A share a discretionary manager holds rolls up into its MANDATE's row, so
+     * Crompton's LKP lot is a Direct Equity row of its own while the Crompton
+     * inside a PMS mandate is not on that row at all. Keyed over every account,
+     * the key carried two statement dates, `endOf` returned null, and the check
+     * failed a row whose CAGR correctly ends on LKP's own date. A closed fund and
+     * a speck under the floor are on no row either. Re-expressed here rather than
+     * imported: PMS is the engagement `holdingRoute` routes to a mandate.
+     */
+    const mandateAccounts = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
+    const small = smallKeysOf(positions);
+    const onRows = positions.filter((p) => !mandateAccounts.has(p.accountId) && !small.has(p.securityKey)
+      && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null));
     const byKey = new Map();
-    for (const p of positions) {
+    for (const p of onRows) {
       const d = p.navPriced && p.navDate ? p.navDate : asOf.get(p.accountId) ?? null;
       const e = byKey.get(p.securityKey) ?? { dates: new Set(), since: [] };
       e.dates.add(d);
@@ -22586,6 +22663,46 @@ const INVARIANTS = {
    * did change axis, because a switch that silently failed would also "pass"
    * a rows-only check by never having filtered anything.
    */
+  /**
+   * MH-03: UNDER THE ENTITY FILTER, EVERY REALISED FIGURE IS THE MEMBER'S OWN.
+   * `MEMBER_REALISED_BOOK` picks the member on whom a security-keyed figure
+   * would differ most and restates, from the book, what their own lots carry.
+   * The footer and every row are held to it — within a rupee, which is the
+   * printing precision of `data-realised` — and the bite is stated: if no
+   * member's figure could differ, the claim has no subject on this book.
+   */
+  "monitor-member": [
+    ["the entity filter is set to the member the book picks", (t, ctx) => {
+      const B = MEMBER_REALISED_BOOK;
+      if (!B) return { notChecked: "the book's company shares could not be read, or one carries a dedupe group this check does not model" };
+      const m = ctx?.monitorMember;
+      if (!m) return false;
+      return m.entity === B.member;
+    }],
+    ["under the entity filter the footer's Realised is the member's own, not every member's sales of the same names", (t, ctx) => {
+      const B = MEMBER_REALISED_BOOK;
+      if (!B) return { notChecked: "the book's company shares could not be read" };
+      if (!(B.gap > 1)) return { notChecked: "no member holds a company another member has realised a gain on, so the two figures cannot differ on this book" };
+      const m = ctx?.monitorMember;
+      if (!m?.footer) return false;
+      if (B.ownTotal === null) return m.foot === null;
+      const got = Number(m.foot);
+      return m.foot !== null && Math.abs(got - B.ownTotal) <= 1 && Math.abs(got - B.keyed) > 1;
+    }],
+    ["...and every row's Realised is that member's own lots of the company", (t, ctx) => {
+      const B = MEMBER_REALISED_BOOK;
+      if (!B) return { notChecked: "the book's company shares could not be read" };
+      const rows = (ctx?.monitorMember?.rows ?? []).filter((r) => r.key);
+      if (!rows.length) return false;
+      return rows.every((r) => {
+        // A row the member does not hold is a company only a fund discloses:
+        // it has no realised of anyone's.
+        if (!B.own.has(r.key)) return r.realised === null;
+        const want = B.own.get(r.key);
+        return want === null ? r.realised === null : r.realised !== null && Math.abs(Number(r.realised) - want) <= 1;
+      }) && [...B.own.keys()].every((k) => rows.some((r) => r.key === k));
+    }],
+  ],
   "monitor-axis-switch": [
     ["switching axis with a filter set leaves the table populated", (t, ctx) => {
       const rows = ctx?.tableRows;
@@ -26852,6 +26969,16 @@ for (const theme of THEMES) {
           }
         }
       }
+      if (name === "monitor-member" && MEMBER_REALISED_BOOK) {
+        // The entity select is found by its own handle, never by position among
+        // the page's selects — a position points at a different control the day
+        // the filter row gains one.
+        const sel = page.locator("select[data-entity-filter]").first();
+        if (await sel.count()) {
+          await sel.selectOption({ label: MEMBER_REALISED_BOOK.member }).catch(() => {});
+          await page.waitForTimeout(1200);
+        }
+      }
       /**
        * ── REMEMBERED ACROSS TABS, AND ACROSS VISITS (Stage 10cs) ─────────────
        *
@@ -27803,6 +27930,23 @@ for (const theme of THEMES) {
             td.querySelector("[title]")?.getAttribute("title") ?? td.getAttribute("title") ?? ""),
         })));
       const mandateRows = tableRows === null ? null : tableRows.filter((r) => r.mandate);
+      /**
+       * THE ENTITY FILTER AND THE REALISED FIGURES IT NARROWS, off their own
+       * handles. `data-realised` is present only where a figure is printed, so
+       * a row with no realised record reads `null` here rather than a zero.
+       */
+      const monitorMember = FAST ? null : await page.evaluate(() => {
+        const sel = document.querySelector("select[data-entity-filter]");
+        return {
+          entity: sel ? sel.value : null,
+          foot: document.querySelector("tfoot tr[data-footer-total] td[data-realised]")?.getAttribute("data-realised") ?? null,
+          footer: !!document.querySelector("tfoot tr[data-footer-total]"),
+          rows: [...document.querySelectorAll("tbody tr[data-bucket]")].map((tr) => ({
+            key: tr.getAttribute("data-security-key"),
+            realised: tr.querySelector("td[data-realised]")?.getAttribute("data-realised") ?? null,
+          })),
+        };
+      });
       /**
        * THE CLOSED-POSITION NOTE, and the redeemed markers on `/holdings`.
        *
@@ -31221,7 +31365,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2 }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
