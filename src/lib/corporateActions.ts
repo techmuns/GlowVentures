@@ -31,6 +31,44 @@ export function actionsFor(p: Position, feed: ActionFeed | null): ResearchAction
     .sort((a, b) => (a.exDate || "9999").localeCompare(b.exDate || "9999") || a.id.localeCompare(b.id));
 }
 
+const COVERAGE_GAP = "Event capture does not cover the valuation date";
+
+/**
+ * HOW FAR BEHIND THE VALUATION DATE A CAPTURE MAY BE AND STILL COVER ITS SHARE
+ * EVENTS — three calendar days: an overnight lag, or a Friday capture read on
+ * Monday.
+ *
+ * *"Why is this data not showing"* — 24 Sep 2026, 10:50 IST, Today's movers
+ * empty. Every company share needed a capture dated TODAY before it could be
+ * marked live. Glow Central Research captures once a day, after the market
+ * opens (04:43 UTC, 10:13 IST, that day), and the committed fallback was dated
+ * the day before. So every morning from the open until the new capture reached
+ * the browser — and all day wherever the live proxy did not answer — no company
+ * share in the book had a live price or a day move. The gate was right about
+ * WHAT it guards and wrong about how stale a capture must be to hide it.
+ *
+ * What it guards is a split or bonus pairing a pre-split quantity with a
+ * post-split price. Those cannot appear unannounced overnight: SEBI LODR
+ * Regulation 42(2) requires the record date to be notified to the exchange at
+ * least seven working days ahead, and the capture carries forthcoming share
+ * events — measured on the 24 Sep capture, six splits and bonuses 1 to 32 days
+ * ahead, and on the 23 Sep one, BUILDPRO's 8 Oct split. A split effective
+ * within three days of a capture was announced before it and is in it.
+ *
+ * A DIVIDEND IS NOT GIVEN THE SAME ROOM. It changes no quantity, only the
+ * total return, and a missing one would read as zero income — so the income
+ * side still needs a capture that covers the day, and the total return is
+ * withheld until one does.
+ */
+export const SHARE_EVENT_LEAD_DAYS = 3;
+
+/** Whole days between the capture's coverage and `through`; Infinity where it cannot say. */
+function captureLagDays(feed: ActionFeed, through: string): number {
+  if (!feed.verifiedThrough || !through || through > feed.requestedTo) return Infinity;
+  const days = (Date.parse(through) - Date.parse(feed.verifiedThrough)) / 86_400_000;
+  return Number.isFinite(days) ? Math.max(0, Math.round(days)) : Infinity;
+}
+
 /**
  * A forward projection of the statement's holdings, NOT a trading ledger.
  * Only events AFTER that account's dated closing are applied, exactly once.
@@ -50,10 +88,16 @@ export function projectActions(p: Position, statementDate: string, through: stri
   if (!statementDate || !through || through < statementDate) di.push("No comparable dated valuation");
   if (feed.symbols && !feed.symbols.includes(symbolFor(p) || "") && !feed.isins.includes(p.isin || "")) di.push("Security outside the saved feed's coverage");
   if (statementDate < feed.requestedFrom) di.push("Statement predates the available event history");
-  if (!feed.verifiedThrough || through > feed.verifiedThrough || through > feed.requestedTo) di.push("Event capture does not cover the valuation date");
+  const lag = captureLagDays(feed, through);
+  if (lag > 0) di.push(COVERAGE_GAP);
   // Missing coverage can hide a share event too, not only a dividend. Never
   // pair a potentially pre-split quantity with a post-split live price.
-  qi.push(...di);
+  //
+  // EXCEPT A CAPTURE A DAY OR TWO BEHIND, which cannot hide one. See
+  // `SHARE_EVENT_LEAD_DAYS`: a split or bonus is announced well before its
+  // ex-date and the capture lists it ahead, so a short lag withholds the
+  // DIVIDEND side (above, still in `di`) and not the live price.
+  qi.push(...di.filter((issue) => issue !== COVERAGE_GAP || lag > SHARE_EVENT_LEAD_DAYS));
   let quantity = p.quantity, cash = 0;
   const events = actionsFor(p, feed);
   const seen = new Map<string, ResearchAction>();

@@ -47,6 +47,15 @@ numeric company keys cannot masquerade as NSE tickers: the actual capture has
 `RECLTD` for Recode Studios as well as REC, so ticker matching alone is unsafe.
 The affected return is withheld and its evidence gap is visible.
 
+**A capture up to three days behind the quote still marks shares live**
+(`SHARE_EVENT_LEAD_DAYS`). A split or bonus must be notified to the exchange at
+least seven working days before its record date, and the capture lists
+forthcoming share events, so a short lag cannot hide one. Without this, every
+company share lost its live price each morning until Research's daily capture
+(taken after the open) arrived, and all day when only the dated fallback was
+available. Dividends get no such room: a lagging capture still withholds the
+entitlement and the total return.
+
 Incomplete event history, older per-source capture dates and failed source
 reads never become zero dividends. An event at/before the account's closing
 date is displayed as earlier evidence, never reapplied. Future actions remain

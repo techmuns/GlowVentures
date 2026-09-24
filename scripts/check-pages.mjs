@@ -4166,6 +4166,17 @@ const ROUTES = [
    */
   ["cio-live", "/cio"],
   /**
+   * ...AND THE SAME, WITH THE CORPORATE-ACTION CAPTURE ONE DAY BEHIND THE QUOTES.
+   *
+   * *"Why is this data not showing"* — 24 Sep 2026, Today's movers empty at
+   * 10:50 IST. Every company share needed a capture dated the quote's own day
+   * before it could be marked live, and the capture was a day old. The `cio-live`
+   * fixture could never see it: its capture is dated weeks AFTER its quotes. A
+   * capture a day behind must still let every priced name move (see
+   * `SHARE_EVENT_LEAD_DAYS` in `src/lib/corporateActions.ts`).
+   */
+  ["cio-live-capture-lag", "/cio"],
+  /**
    * ...AND THE SAME PAGE WITH THE FEED STILL FILLING.
    *
    * The one state in which Today's movers could draw a ranking over PART of its
@@ -6621,8 +6632,14 @@ async function installLiveMocks(page, opts = {}) {
   // and fully covered for its dated window, rather than letting a changing
   // external capture change the expected movers. The dedicated corporate-action
   // browser regression supplies split/dividend events and checks their effects.
-  const actionFeed = { version: 1, capturedAt: "2026-09-23T10:00:00.000Z", requestedFrom: "2020-01-01",
-    requestedTo: "2027-09-23", verifiedThrough: "2026-09-23", symbols: null, isins: [], rows: [],
+  //
+  // `captureLagDays` dates the capture that many days BEFORE the quotes' own
+  // day (2026-08-13), which is the 24 Sep 2026 incident: a capture one day old
+  // held every company share off its live price. See `cio-live-capture-lag`.
+  const lagged = typeof opts.captureLagDays === "number"
+    ? new Date(Date.parse("2026-08-13") - opts.captureLagDays * 86_400_000).toISOString().slice(0, 10) : null;
+  const actionFeed = { version: 1, capturedAt: lagged ? `${lagged}T10:00:00.000Z` : "2026-09-23T10:00:00.000Z", requestedFrom: "2020-01-01",
+    requestedTo: "2027-09-23", verifiedThrough: lagged ?? "2026-09-23", symbols: null, isins: [], rows: [],
     sourceUrl: "https://glow-central-research.tech-441.workers.dev/data/corporate-actions.json" };
   await page.route("**/api/corporate-actions?*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ok: true, feed: actionFeed }) }));
   await page.route("**/data/corporate-actions.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(actionFeed) }));
@@ -18526,6 +18543,24 @@ const INVARIANTS = {
         return /0 LOSERS/.test(t) ? !/^\s*[-+]?₹0\b/m.test(card) : true;
       }],
   ],
+  "cio-live-capture-lag": [
+    /**
+     * THE CARD FILLS WITH A CAPTURE A DAY OLD — the count, not the rows.
+     *
+     * Every fixture price is the mark × 1.10, so the gainer count IS the priced
+     * Direct Equity scope, derived from the book. On the old gate it read
+     * "No direct-equity holding carries a day change right now", which is what
+     * the family saw; a card that ranked some names and dropped others lands on
+     * a different count.
+     */
+    ["with a capture one day behind the quotes, every priced direct-equity name still moves",
+      (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
+    ["…and the day's move is still the fixture's exact +10.00%, 11.00 points over the Nifty 500",
+      (t) => {
+        const m = /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
+        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+      }],
+  ],
   "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
   /**
    * THE SAME PANEL SET AGAINST ANOTHER BENCHMARK, reached by URL like every
@@ -23203,6 +23238,7 @@ for (const theme of THEMES) {
       // nothing would be indistinguishable from one that worked.
       PRICE_REQUESTS = [];
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
+      if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
       // fixture is installed on the two that assert a quoted price; the no-feed

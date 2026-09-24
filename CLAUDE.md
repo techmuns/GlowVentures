@@ -24065,6 +24065,83 @@ in a separate worktree with its own preview, and it came back clean anyway.
   lines and fires main's checks, and this change edits neither, so the full
   sweep above is their control on this tree.
 
+### Stage 10cr — A CAPTURE A DAY OLD NO LONGER TAKES EVERY SHARE OFF ITS LIVE PRICE
+
+*"Why is this data not showing can you please fix quickly"* — a screenshot of
+Morning CIO at 10:50 IST on 24 Sep 2026: the index strip live, the top bar
+live, and Today's movers reading *"No direct-equity holding carries a day
+change right now"*.
+
+**ROOT CAUSE: THE CORPORATE-ACTION GATE (#84) NEEDED A CAPTURE DATED TODAY.**
+`applyCorporateActionQuotes` withholds the live price of a company share
+whenever the event capture's `verifiedThrough` is earlier than the quote's
+market day — to avoid pairing a pre-split quantity with a post-split price. The
+capture it reads is one of two:
+
+- **the live proxy** (`/api/corporate-actions`) over Glow Central Research's
+  capture, which Research takes once a day AFTER the open — 04:43 UTC,
+  10:13 IST, on 24 Sep; and
+- **the committed fallback** `public/data/corporate-actions.json`, dated
+  **23 Sep**.
+
+So from the 09:15 open until the day's capture reached the browser (up to about
+half an hour after Research took it, through the edge's 15-minute cache and the
+browser's own 15-minute poll), **no company share in the book had a live price
+or a day move — Direct Equity and every share inside a PMS mandate alike** —
+and wherever the live proxy did not answer, all day, every day after the
+fallback's date. ETFs and mutual funds were unaffected, which is why that tab
+of the card worked. Measured on the live proxy's own code: it parses an 8.4 MB
+capture and normalises 8,494 rows, about 140–250 ms of CPU a refresh, which a
+Workers plan capped at 10 ms would refuse. That is named here as a possible
+reason the proxy does not answer in production, not measured there — the site
+is behind its password.
+
+**`cio-live` COULD NEVER HAVE SEEN IT**, which is why the sweep stayed green: its
+fixture's capture is dated weeks AFTER its quotes.
+
+#### The fix: share events get a short lead, dividends do not
+
+`SHARE_EVENT_LEAD_DAYS = 3` in `src/lib/corporateActions.ts`. A capture up to
+three calendar days behind the quote still covers SHARE events, so the live
+price and every split or bonus the capture lists still apply. Two reasons:
+
+- **SEBI LODR Regulation 42(2)** requires the record date to be notified to the
+  exchange at least seven working days ahead.
+- **The capture lists forthcoming share events.** Measured on 24 Sep: six
+  splits and bonuses, 1 to 32 days ahead. The 23 Sep capture listed BUILDPRO's
+  8 Oct split.
+
+**A DIVIDEND DOES NOT GET THAT ROOM.** It changes no quantity, only the total
+return, and a missed one would read as zero income. So the coverage gap still
+goes on the INCOME side: the dividend entitlement and the total return are
+withheld until a capture covers the day, and the reason is named. A capture more
+than three days behind still withholds the live price, exactly as before.
+
+Three days covers an overnight lag and a Friday capture read on Monday. It does
+not cover a longer Research outage, which is the gate working as #84 designed.
+
+#### The checks
+
+- **`corporateActions.test.ts`** asserted that a capture ONE day behind blocks
+  the live price. That line was the defect written down as a rule, so it now
+  asserts the lead window from both sides:
+  - one day behind: live, with the listed split applied, and a day move;
+  - three days behind is still inside the window, and four is not;
+  - a capture with no verified date covers nothing;
+  - on a lagging capture the dividend entitlement and total return are null,
+    and the income side names why.
+- **The same test runs on the real book against the committed fallback.** The
+  shares live on the capture's own date must stay live on each of the next
+  three days, and none on the fourth.
+- **`check:pages` gains `cio-live-capture-lag`**: `cio-live` with the capture
+  one day behind the quotes. It must rank every priced direct-equity name and
+  show the day's move. Put the old gate back and it fails both checks with the
+  empty card the family saw, while `cio-live` stays clean.
+
+`build` · `test:family` (0 failed) · `check:pages` on `cio-live` and
+`cio-live-capture-lag` clean. `glowData.ts` is untouched: this is a
+presentation-layer gate.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
