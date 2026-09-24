@@ -125,7 +125,7 @@ ROUND="private-market-calls-off,monitor-absent-name,cio-alloc-basket,monitor-ass
 ALL="performance,capital-gains,capital-gains-missing,family,sectors,sectors-direct,ledger,history,upload,polycab,cio,cio-allocation,cio-nav,stock-market,corporate-actions"
 
 echo "════════ CONTROL: no patch"
-npm run build >/dev/null 2>&1 && THEMES=light SHOTS=0 ONLY="$ALL,cio-live,cio-movers-funds,stock-funds-only-market,stock-funds-only-research,$ROUND" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
+npm run build >/dev/null 2>&1 && THEMES=light SHOTS=0 ONLY="$ALL,polycab-dividends,polycab-promoter,cio-live,cio-movers-funds,stock-funds-only-market,stock-funds-only-research,$ROUND" npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
 
 # ── LINES COMING BACK, ON EVERY ROUTE ──────────────────────────────────────
 run_case "$ALL" "a card draws its subtitle as a line again" sub $CARD \
@@ -195,7 +195,10 @@ run_case "cio-movers-funds" "the drastic bound leaves the Move heading" sub $NM 
   'a move of ${DRASTIC_PCT}% or more in one published day is chipped drastic.`}>Move</SortHeader>' \
   'ranked.`}>Move</SortHeader>'
 
-run_case "polycab" "the Polycab card's sentence leaves its title's hover" sub $PC \
+# On the two tabs that HAVE a card sentence. The Holding tab has none, so a
+# case walked there patches nothing a reader could see and comes back clean —
+# which the first run of this harness did, and why it is recorded.
+run_case "polycab-dividends,polycab-promoter" "the Polycab card's sentence leaves its title's hover" sub $PC \
   '? <span data-polycab-card-sub title={cardSub}>{active.cardTitle}</span>' \
   '? <span data-polycab-card-sub>{active.cardTitle}</span>'
 
