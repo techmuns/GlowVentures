@@ -27,12 +27,12 @@
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
 import { accountIndex } from "@/lib/accounts";
 import {
-  currentHoldings, dedupedPositions, sum, publicPrivateSplit, marketSides,
+  currentHoldings, dedupedPositions, sum, publicPrivateSplit, marketSides, SIDE_NOTE,
   isPrivateClass, isUnplacedSide,
 } from "@/lib/analytics";
 import {
   marketSideOf, readAifCategory, readsAsPrivateEquity, categoriesNamedIn,
-  CATEGORY_I, CATEGORY_II, CATEGORY_III, FAMILY_MARKET_SIDE,
+  CATEGORY_I, CATEGORY_II, CATEGORY_III, FAMILY_MARKET_SIDE, MARKET_SIDE_UNPLACED,
 } from "@/lib/aifCategory";
 import { privateScope } from "@/lib/privateMarket";
 import { familyAssetClass } from "@/lib/familyTaxonomy";
@@ -381,6 +381,25 @@ const familyEntries = (p: { security: string }, acct: { strategy?: string | null
   ok("an all-listed book yields one side",
     marketSides(deduped.filter((p) => p.marketSide === "listed")).length === 1);
   ok("every side carries its own reason", marketSides(deduped).every((s) => s.why.length > 20));
+}
+
+// ── 9. ONE REASON PER SIDE, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5) ──────
+//
+// Upload History and Data Refresh print `marketSides`' reason; Morning CIO and
+// `/holdings` print `SIDE_NOTE`. The first used to describe the rule before
+// Stage 10bw — the SEBI category alone placing a fund — while the second named
+// the family's own placing first. They are one definition now, and the reason
+// must say the order `shared/aifCategory.mjs` applies.
+{
+  const sides = marketSides(deduped);
+  ok("every side's reason is the one SIDE_NOTE carries",
+    sides.length > 0 && sides.every((x) => x.why === SIDE_NOTE[x.key]), sides.map((x) => x.key).join(","));
+  ok("...and the listed and private reasons name the family's own placing first",
+    /family's own word/.test(SIDE_NOTE.listed) && /family's own word/.test(SIDE_NOTE.private));
+  ok("...and the not-placed reason says the family have not classified the fund either",
+    SIDE_NOTE.unplaced.includes(MARKET_SIDE_UNPLACED) && /family/.test(MARKET_SIDE_UNPLACED));
+  ok("...and none of them still says the category alone places a fund",
+    !Object.values(SIDE_NOTE).some((w) => /Category III AIFs whose own statements|whose statements print Category I or II/.test(w)));
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall market-side checks passed");

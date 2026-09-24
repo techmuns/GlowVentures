@@ -26,9 +26,8 @@
 // one level down.
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
-import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
+import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, SIDE_NOTE, sum } from "./analytics";
 import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
-import { MARKET_SIDE_UNPLACED } from "./aifCategory";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
  * allocation table can be grouped three ways, and a drill-down that re-derived
@@ -284,29 +283,12 @@ export type Drilldown = {
 };
 
 /**
- * ── WHAT EACH SIDE OF THE BOOK IS, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5) ──
- *
- * These read "the Category III AIFs … Category I or II" — the rule before Stage
- * 10bw, when the SEBI category alone placed a fund. The family have since
- * placed their funds themselves, and their word outranks the category: Motilal
- * Oswal's Founders Fund prints Category II and is on the LISTED side (it
- * invests in listed equities), Delphi prints none and is listed, and Neo Infra
- * prints none and is private. `shared/aifCategory.mjs` is the order — the
- * family's placing, then a fund whose own name says private equity or venture,
- * then the category its statement prints — and these say that order. Read by
- * the facets below and by Morning CIO's side tiles, so the two cannot describe
- * one side two ways.
+ * What each side of the book is: ONE definition, in `analytics.ts` beside the
+ * `marketSides` that Upload History and Data Refresh read, re-exported here for
+ * the facets below and Morning CIO's side tiles (CK-C5). A second copy here is
+ * how the two came to describe one side two ways.
  */
-export const SIDE_NOTE = {
-  listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
-    + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
-    + " statement prints where they have not said.",
-  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
-    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
-    + " or by the Category I or II its statement prints.",
-  unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
-    + " family, or the fund's own SEBI registration, would settle each one.",
-} as const;
+export { SIDE_NOTE };
 
 type Ctx = {
   portfolio: Portfolio;

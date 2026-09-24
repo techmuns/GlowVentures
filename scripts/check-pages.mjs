@@ -4220,6 +4220,56 @@ const FE_SECTOR_BOOK = (() => {
 })();
 
 /**
+ * ── THE MANDATE PAGE'S SECTOR COLUMN, RE-DERIVED FROM THE BOOK (DSM-C9) ──────
+ *
+ * That column read each row's own statement sector, so a share the manager's
+ * appraisal printed no industry for read "Unclassified" there while Sector
+ * Composition and every other page placed it through the shared tiers. It
+ * reads `companySectorIndex` now, with the fund tier off (this page asks no
+ * fund question, and `monitorSectors.test.ts` measures that the filings place
+ * nothing new for any company share this book holds). So a company share's
+ * sector is exactly tier 1 — the first sector any statement prints for that
+ * company, over the whole book — else tier 3, screener.in on the NSE symbol,
+ * else Unclassified. RE-EXPRESSED HERE off the committed files, never imported:
+ * a page that fell back to the row's own statement fails against the book. A
+ * row that is not a company share keeps its statement's own sector.
+ *
+ * `worst` is the mandate with the most rows the index places and the row's own
+ * statement does not — the account `mandate-sector` walks, so the claim always
+ * has a subject and the next drop picks its own.
+ */
+const MANDATE_SECTOR_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    if (!Array.isArray(positions) || !Array.isArray(accounts)) return null;
+    const nse = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    const vendor = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const placed = (x) => !!x && x !== "Unclassified";
+    const shares = positions.filter((p) => p.assetClass === "Equity");
+    const byKey = new Map();
+    for (const p of shares) { const a = byKey.get(p.securityKey) ?? []; a.push(p); byKey.set(p.securityKey, a); }
+    const expected = new Map();
+    for (const [k, xs] of byKey) {
+      const book = xs.find((x) => placed(x.sector))?.sector;
+      if (book) { expected.set(k, book); continue; }
+      const sym = xs.find((x) => x.symbol)?.symbol ?? nse[k] ?? null;
+      const hit = sym ? vendor[sym] : null;
+      expected.set(k, hit && placed(hit.gics) ? hit.gics : "Unclassified");
+    }
+    const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
+    const moved = new Map();
+    for (const p of shares) {
+      if (!pms.has(p.accountId)) continue;
+      if (!placed(p.sector) && placed(expected.get(p.securityKey))) moved.set(p.accountId, (moved.get(p.accountId) ?? 0) + 1);
+    }
+    const worst = [...moved].sort((a, b) => b[1] - a[1])[0] ?? null;
+    return { expected, worst: worst ? { accountId: worst[0], moved: worst[1] } : null };
+  } catch { return null; }
+})();
+
+/**
  * ── WHAT THE ENTITY BREAKDOWN ADDS TO, DERIVED FROM THE BOOK (FS-1, FS-4) ────
  *
  * Family & Entities divides each entity's weight by the entity rows' OWN total
@@ -4525,6 +4575,57 @@ const UNVALUED_KIND_LABELS = [
   [/^no HOLDING statement/i, "an account that sent only a transaction statement"],
 ];
 const unvaluedKindOf = (reason) => UNVALUED_KIND_LABELS.find(([re]) => re.test(String(reason ?? "")))?.[1] ?? null;
+
+/**
+ * WHAT EACH SIDE OF THE BOOK IS, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5).
+ *
+ * Upload History and Data Refresh read a side's reason from `marketSides`, and
+ * Morning CIO and `/holdings` from `SIDE_NOTE`. The first still said the SEBI
+ * category alone placed a fund — the rule before Stage 10bw — while the second
+ * said the family's own placing comes first. They are one definition now, and
+ * every surface that explains a side is held to the same two claims: each side
+ * the book has is explained on this page in the current rule's order, and no
+ * hover here still states the old one. Struck on `ctx.titles`, because a reason
+ * in a `title` is not in `innerText`. The sides are the checker's own
+ * (`SIDE_BOOK`), never `marketSides` read back.
+ */
+const SIDE_HOVER_CHECKS = [
+  ["each side of the book is explained by the rule the book follows now: the family's own placing first", (t, ctx) => {
+    if (!SIDE_BOOK) return { notChecked: "the sides could not be re-derived from glowData.ts" };
+    const titles = ctx?.titles ?? [];
+    const want = [
+      [SIDE_BOOK.listedMV, /Money invested in listed markets/, /the family's own word for each fund/],
+      [SIDE_BOOK.privateMV, /Private capital/, /the family's own word for each fund/],
+      [SIDE_BOOK.unplacedMV, /No statement for these funds prints a SEBI category/, /the family have not classified them/],
+    ].filter(([v]) => v !== 0);
+    if (!want.length) return { notChecked: "the book has no side to explain" };
+    return want.every(([, lead, rule]) => titles.some((x) => lead.test(x ?? "") && rule.test(x ?? "")));
+  }],
+  ["...and no hover still says the SEBI category alone places a fund", (t, ctx) =>
+    !(ctx?.titles ?? []).some((x) => /Category III AIFs whose own statements|AIFs whose statements\s+print Category I or II|so this book places them on neither\s+side\. They are in the total/.test(x ?? ""))],
+];
+
+/**
+ * THE MANDATE PAGE'S SECTOR COLUMN IS THE SHARED CLASSIFICATION (DSM-C9).
+ * Every company share it draws must show the sector `MANDATE_SECTOR_BOOK`
+ * re-derives, and render it as the cell's own text; a row that fell back to
+ * its own statement reads "Unclassified" where the book places the company.
+ * Run on every mandate route; `mandate-sector` walks the mandate the book says
+ * the index moves most, so the claim has a subject whatever the Monitor links.
+ */
+const MANDATE_SECTOR_CHECKS = [
+  ["every Sector cell shows the company's one sector — the shared tiers, never the row's own statement alone", (t, ctx) => {
+    const B = MANDATE_SECTOR_BOOK;
+    if (!B) return { notChecked: "the sectors could not be re-derived from glowData.ts" };
+    const cells = ctx?.mandateSectors;
+    if (!Array.isArray(cells)) return { notChecked: "the sector probe did not run" };
+    const shares = cells.filter((c) => B.expected.has(c.key));
+    if (!shares.length) return /\/mandate\//.test(ctx?.path ?? "") && B.worst && (ctx?.path ?? "").includes(encodeURIComponent(B.worst.accountId))
+      ? false
+      : { notChecked: "this page draws no company share" };
+    return shares.every((c) => c.sector === B.expected.get(c.key) && c.text === c.sector);
+  }],
+];
 
 /**
  * ── THE NOT-VALUED CARD, HELD TO THE BOOK (FS-16) ───────────────────────────
@@ -6599,6 +6700,10 @@ const ROUTES = [
   // publish none, so the plain `mandate` walk would assert the absence branch
   // and never see the table. Resolved from the book, like the fund one above.
   ["mandate-funded", () => (FUNDED_MANDATE ? `/mandate/${encodeURIComponent(FUNDED_MANDATE.accountId)}` : "/mandate/none-resolved-from-the-book")],
+  // THE MANDATE WITH THE MOST SHARES ITS OWN STATEMENT PRINTS NO SECTOR FOR and
+  // the shared tiers place (DSM-C9) — see `MANDATE_SECTOR_BOOK`. Derived from
+  // the book, never typed.
+  ["mandate-sector", () => (MANDATE_SECTOR_BOOK?.worst ? `/mandate/${encodeURIComponent(MANDATE_SECTOR_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
   // THE MANDATE WHERE FIFO AND THE SURVIVORS-ONLY RETURN DIFFER MOST — see
   // `FIFO_BOOK`. Derived from the book, never typed.
   ["mandate-fifo", () => (FIFO_BOOK?.worst ? `/mandate/${encodeURIComponent(FIFO_BOOK.worst.accountId)}` : "/mandate/none-resolved-from-the-book")],
@@ -21516,7 +21621,7 @@ const INVARIANTS = {
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
-  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN],
+  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
   "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-tiles-dense": [
@@ -21968,6 +22073,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-book": [
+    ...SIDE_HOVER_CHECKS,
     ...DRILLDOWN_CHROME_GONE,
     ...HB_DEPOSITORY,
     ...DRILLDOWN_FACET_NOTE,
@@ -29226,6 +29332,7 @@ const INVARIANTS = {
    * whole page was built to avoid, and nothing was watching for it.
    */
   mandate: [
+    ...MANDATE_SECTOR_CHECKS,
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
     ...mandateDateChecks(),
@@ -29375,7 +29482,9 @@ const INVARIANTS = {
    * the capital-based figure, and it is materially NOT the survivors-only one —
    * a tile that happened to agree with both would be checking nothing.
    */
+  "mandate-sector": [...MANDATE_SECTOR_CHECKS],
   "mandate-fifo": [
+    ...MANDATE_SECTOR_CHECKS,
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
     ...mandateDateChecks(),
@@ -30496,6 +30605,7 @@ const INVARIANTS = {
    * half contradicts. Every expectation is re-derived in `XA_BOOK`.
    */
   upload: [
+    ...SIDE_HOVER_CHECKS,
     ["Positions counts the current holdings Morning CIO counts, and names the rows it leaves out", (t, ctx) => {
       const c = XA_BOOK?.counts;
       if (!c) return { notChecked: "the book's holdings could not be re-derived from glowData.ts" };
@@ -30588,6 +30698,7 @@ const INVARIANTS = {
   ],
 
   history: [
+    ...SIDE_HOVER_CHECKS,
     /**
      * EVERY ONE OF THESE IS CASE-INSENSITIVE AND THE COLUMN ONES ARE STRUCK ON
      * THE HEADER ROW, both of which were found by reintroducing their bugs.
@@ -32324,6 +32435,12 @@ for (const theme of THEMES) {
        * 10co, its working the hover on the totals it explains, and `pmView`
        * counts its handle as absent.)
        */
+      /** Each Sector cell a mandate page draws, by its key (DSM-C9). */
+      const mandateSectors = FAST ? null : await page.$$eval("[data-mandate-sector-key]", (els) => els.map((e) => ({
+        key: e.getAttribute("data-mandate-sector-key") ?? "",
+        sector: e.getAttribute("data-mandate-sector") ?? "",
+        text: (e.textContent ?? "").trim(),
+      })));
       const foldsOnArrival = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main details[data-testid='aif-unvalued']")].map((d) => ({
           id: "aif-unvalued",
@@ -37747,7 +37864,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, mandateSectors, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT, quoteHold, monitorC, headerTitles, mgrT }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

@@ -5,6 +5,9 @@
 // this" are two different questions the account string cannot answer on its own.
 import type { Account, FundInvestment, Position, StartupInvestment } from "./types";
 import { accountIndex, custodyLabelOf, ownerOf } from "./accounts";
+// Straight from the shared read rather than through `./aifCategory`, which
+// imports `isMandateHeld` from here: the one sentence is all this file needs.
+import { MARKET_SIDE_UNPLACED } from "../../shared/aifCategory.mjs";
 
 export const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -141,24 +144,41 @@ export type MarketSideRow = {
   why: string;
 };
 
+/**
+ * ── WHAT EACH SIDE OF THE BOOK IS, IN THE RULE THE BOOK FOLLOWS NOW (CK-C5) ──
+ *
+ * ONE definition, read by every surface that says what a side is: the hovers on
+ * Upload History and Data Refresh (through `marketSides`), and the facets and
+ * side tiles on Morning CIO and `/holdings` (through `SIDE_NOTE`, which
+ * `drilldown.ts` re-exports). Two copies stood here once, and the one these
+ * hovers read still described the rule before Stage 10bw — "the Category III
+ * AIFs … Category I or II" — when the SEBI category alone placed a fund.
+ *
+ * The family have since placed their funds themselves, and their word outranks
+ * the category (`FAMILY_MARKET_SIDE`): Motilal Oswal's Founders Fund prints no
+ * category and invests in listed equities, so it is listed; Delphi is Category
+ * II by the family's own declaration and is listed; Neo Infra prints Category II
+ * on its registration line and is private. `shared/aifCategory.mjs` is the
+ * order — the family's placing, then a fund whose own name says private equity
+ * or venture, then the category its statement prints — and these say that order.
+ */
+export const SIDE_NOTE = {
+  listed: "Money invested in listed markets: company shares, mutual funds, ETFs, cash, and the AIFs that trade"
+    + " listed securities — placed there by the family's own word for each fund, or by the Category III its"
+    + " statement prints where they have not said.",
+  private: "Private capital: unlisted holdings, structured products, and the AIFs that invest privately — placed"
+    + " there by the family's own word for each fund, by a fund whose own name says private equity or venture,"
+    + " or by the Category I or II its statement prints.",
+  unplaced: `${MARKET_SIDE_UNPLACED}. These are in the total above and on neither side of it; one line from the`
+    + " family, or the fund's own SEBI registration, would settle each one.",
+} as const;
+
 export function marketSides(positions: Position[]): MarketSideRow[] {
   const s = publicPrivateSplit(positions);
   return ([
-    {
-      key: "listed", label: "Listed", value: s.listed,
-      why: "Money invested in listed markets — company shares, mutual funds, ETFs, cash, and the"
-        + " Category III AIFs whose own statements say they trade listed securities.",
-    },
-    {
-      key: "private", label: "Private", value: s.private,
-      why: "Private capital — unlisted holdings, structured products, and the AIFs whose statements"
-        + " print Category I or II or name their own discipline as private equity or venture.",
-    },
-    {
-      key: "unplaced", label: "Not placed", value: s.unplaced,
-      why: "No statement for these funds prints a SEBI category, so this book places them on neither"
-        + " side. They are in the total and on neither half of it.",
-    },
+    { key: "listed", label: "Listed", value: s.listed, why: SIDE_NOTE.listed },
+    { key: "private", label: "Private", value: s.private, why: SIDE_NOTE.private },
+    { key: "unplaced", label: "Not placed", value: s.unplaced, why: SIDE_NOTE.unplaced },
   ] as MarketSideRow[]).filter((r) => r.value !== 0);
 }
 

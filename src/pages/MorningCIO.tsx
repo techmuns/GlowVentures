@@ -1838,7 +1838,7 @@ export function MorningCIO() {
                         {i > 0 && " / "}
                         <ConcLink
                           to={drilldownHref("book", undefined, x.key)}
-                          title={`${SIDE_NOTE[x.key as keyof typeof SIDE_NOTE] ?? x.why} Opens the book\u2019s own drill-down with this side selected; the others are one toggle away.`}
+                          title={`${x.why} Opens the book\u2019s own drill-down with this side selected; the others are one toggle away.`}
                         >{x.label}</ConcLink>
                       </span>
                     ))}

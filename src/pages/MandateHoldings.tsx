@@ -9,7 +9,10 @@ import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf } from "@/lib/analytics";
+import { sum, sumOrNull, holdingRoute, holdingBucket, bucketLabel, ROUTE_LABEL, ROUTE_NOTE, MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, readerClassOf, isCompanyShare } from "@/lib/analytics";
+import { companySectorIndex } from "@/lib/lookthrough";
+import { useStockExposure } from "@/lib/useStockExposure";
+import { UNCLASSIFIED as UNCLASSIFIED_SECTOR } from "@/lib/sectors";
 import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
@@ -214,7 +217,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
+  const { portfolio, consolidated, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -237,6 +240,32 @@ export function MandateHoldings() {
   // no rows), and a hook that runs on some of them and not others is a
   // hooks-order error rather than a conditional table.
   const holdingsView = useTableView("mandate-holdings", MANDATE_COLS);
+  /**
+   * ONE SECTOR PER COMPANY, THE ONE SECTOR COMPOSITION GIVES IT (DSM-C9).
+   *
+   * The Sector column read `r.sector` — the statement's own, and nothing else.
+   * A manager's appraisal prints one for most of its shares, and every name it
+   * does not print one for read "Unclassified" here while Sector Composition,
+   * the Portfolio Monitor, Family & Entities and the company page placed the
+   * same company through the shared three tiers: the statement, then a fund's
+   * SEBI filing joined on the ISIN, then screener.in joined on the NSE symbol.
+   * `companySectorIndex` is that classification, built over every company share
+   * exactly as those pages build it — a company's sector does not depend on
+   * which account a reader opened.
+   *
+   * THE FUND TIER IS NOT LOADED HERE, and that costs nothing: for every company
+   * share this book holds, the filings place no sector the statement and
+   * screener.in do not already place, which `monitorSectors.test.ts` measures
+   * and fails on the day a drop brings one. This page asks no fund question, so
+   * it does not pay for 21 fetches to be told nothing new.
+   */
+  const exposure = useStockExposure(consolidated, false);
+  const companySectors = useMemo(
+    () => companySectorIndex(consolidated.filter(isCompanyShare), exposure),
+    [consolidated, exposure],
+  );
+  const sectorOf = (r: Position) =>
+    isCompanyShare(r) ? companySectors.get(r.securityKey)?.sector || UNCLASSIFIED_SECTOR : r.sector;
 
   const mv = sum(rows.map((r) => r.marketValue));
   // sumOrNull, not sum: a mandate whose statement reports no cost on some row
@@ -600,7 +629,7 @@ export function MandateHoldings() {
   // would rank a holding whose statement prints no cost among the cheapest.
   const sorted = sortRows([...shown].sort((a, b) => b.marketValue - a.marketValue), holdingsView.sort, {
     security: (r) => r.security,
-    sector: (r) => (readerClassOf(r) === "Cash" ? null : r.sector),
+    sector: (r) => (readerClassOf(r) === "Cash" ? null : sectorOf(r)),
     qty: (r) => r.quantity,
     avgCost: (r) => r.avgCost,
     invested: (r) => r.costBasis,
@@ -757,7 +786,7 @@ export function MandateHoldings() {
                         ? <span className="text-slate-500" title={isBalance
                             ? "A balance, not a share in a company — no sector applies."
                             : "A cash-equivalent fund, not a share in a company — no sector applies."}>—</span>
-                        : r.sector}
+                        : <span data-mandate-sector={sectorOf(r)} data-mandate-sector-key={r.securityKey}>{sectorOf(r)}</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-300">{fmtNum(r.quantity)}</td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
