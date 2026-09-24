@@ -24211,12 +24211,16 @@ state, seeded before the app boots. `private-market-returns` and
 `monitor-txn-returns` are the bare addresses now, a fresh reader, and assert the
 five by default. `monitor-remember` walks the family's own sequence — move a
 column, change axis, move another, change back, pick a return, leave through the
-nav, come back, reload, tick a measure — and holds every step to the one before
-it. `tableView.test.ts` covers the rules and the memory (`npm run test:family`).
+nav, come back, reload, tick a measure, open a second browser tab and move a
+column there, then cross to Transactions, move a column and cross back and
+forth — and holds every step to the one before it. `tableView.test.ts` covers
+the rules and the memory (`npm run test:family`).
 
-Five bugs were put back one at a time, and each fires its own checks: a save
+Seven bugs were put back one at a time, and each fires its own checks: a save
 keeping only the drawn columns, the two keys again, the old default, a pick that
-is never saved, and a new column sent to the far right.
+is never saved, a new column sent to the far right, a browser tab that never
+hears another's change, and a table that forgets its arrangement when it
+unmounts.
 
 ### Stage 10k — News & Announcements: REMOVED
 
