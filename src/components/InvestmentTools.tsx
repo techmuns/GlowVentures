@@ -160,10 +160,14 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
 
         {/* A HOLDING NO PRICE REACHES says so once, here, rather than four
             boxes each saying it — and only where a level is set, because an
-            empty card has nothing to warn about. */}
+            empty card has nothing to warn about. A STATUS on its face and the
+            reason in its hover (main's Stage 10cp rule): what a reader must
+            SEE is that these alerts will not fire here; why is one hover away,
+            and the price chip above says the same. */}
         {now.state === "none" && anyLevel && (
-          <p data-alert-unchecked-note className="mt-2.5 text-[11.5px] text-slate-500">
-            Saved, but this dashboard can&rsquo;t check these alerts: {now.reason}.
+          <p data-alert-unchecked-note title={`Saved in this browser, but this dashboard can’t check these alerts: ${now.reason}.`}
+            className="mt-2.5 text-[11.5px] text-slate-500">
+            Saved · not checked here — no price
           </p>
         )}
 

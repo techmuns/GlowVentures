@@ -5017,6 +5017,11 @@ const ROUTES = [
   ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
   // ...and its My targets tab, where the price alerts card is (Stage 10cq).
   ["stock-funds-only-targets", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=targets` : "/stock/no-company-held-only-inside-funds?tab=targets")],
+  // ...and an AIF's My targets tab WITH A LEVEL SAVED on it (Stage 10cq): the
+  // one state in which the card draws the note that its alerts cannot be
+  // checked here, so the one walk that puts that note under the page's own
+  // rules. The AIF is the seeded store's own, derived from the book.
+  ["stock-aif-targets", () => (ALERTS_BOOK?.aif ? `/stock/${encodeURIComponent(ALERTS_BOOK.aif)}?tab=targets` : "/stock/no-aif-with-an-alert?tab=targets")],
   ["capital-gains", "/capital-gains"],
   // …AND THE SAME PAGE WITH THE "NO CAPITAL GAIN STATEMENT" BAND OPENED BY ITS
   // OWN TOGGLE (Stage 10cp), so every account it names is a row the checks can
@@ -6507,12 +6512,17 @@ function expectedAlerts(feedUp) {
   });
 }
 
-/** The alerts, in the reader's browser before the app reads them. */
-async function installAlertStore(page) {
+/**
+ * The alerts, in the reader's browser before the app reads them — all of them,
+ * or only the holdings named in `keys` (the AIF walk seeds its own level alone,
+ * so nothing a listed share would send is in the browser at all).
+ */
+async function installAlertStore(page, keys = null) {
   if (!ALERTS_BOOK) return;
+  const seed = keys ? Object.fromEntries(keys.filter((k) => ALERTS_BOOK.seed[k]).map((k) => [k, ALERTS_BOOK.seed[k]])) : ALERTS_BOOK.seed;
   await page.addInitScript(([k, v]) => {
     try { localStorage.setItem(k, v); } catch { /* private mode — the route's own checks fail by name */ }
-  }, [ALERT_STORE_KEY, JSON.stringify(ALERTS_BOOK.seed)]);
+  }, [ALERT_STORE_KEY, JSON.stringify(seed)]);
 }
 
 /**
@@ -22341,6 +22351,42 @@ const INVARIANTS = {
    * Stage 10cn), and a claim left on the Position tab would have no card to
    * read — a check that stops running because its card moved behind a tab.
    */
+  /**
+   * ── AN ALERT NO PRICE REACHES SAYS SO, IN A STATUS (Stage 10cq) ───────────
+   *
+   * An AIF has no live price and publishes no daily NAV, so a level saved on
+   * one is kept and never checked — and the card must say so, or a reader
+   * waits for an alert that cannot fire. It says it the way every line on this
+   * site does since main's Stage 10cp: a few words on the face ("not checked
+   * here"), the reason in the hover. Struck on the note's own handle and on
+   * main's own bound (`PROSE_LINE_MAX`, `proseWords`), because the page-wide
+   * prose check would pass a card that simply stopped drawing the note.
+   *
+   * THE LEVEL IS THE SEEDED STORE'S OWN, so a card that lost what was typed
+   * fails here rather than drawing an empty card no check would question —
+   * and a missing AIF in the book is a FAILURE, never an abstention: the walk
+   * has no subject without one.
+   */
+  "stock-aif-targets": [
+    ...stockTabChecks("targets"),
+    ["the AIF's saved level is in its box", (t, ctx) => {
+      const want = ALERTS_BOOK?.alerts.find((a) => a.key === ALERTS_BOOK.aif);
+      const got = Number(String(ctx.stockPage?.targets?.values?.[ALERT_FIELD[want?.kind]] ?? "").replace(/[^\d.]/g, ""));
+      return !!want && Number.isFinite(got) && Math.abs(got - want.level) < 0.01;
+    }],
+    ["...its price chip says there is no price, never the statement's mark",
+      (t, ctx) => ctx.stockPage?.targets?.price === "none"],
+    ["...and the card says, in a short status, that its alerts are not checked here — the reason is the hover", (t, ctx) => {
+      const u = ctx.stockPage?.targets?.unchecked;
+      return !!u && /not checked here/.test(u.text) && !(u.text.length > PROSE_LINE_MAX && proseWords(u.text) >= PROSE_WORDS)
+        && /can’t check these alerts/.test(u.title) && /AIF has no live price/.test(u.title);
+    }],
+    ["...and its level stays here, said in a status: no NSE symbol for Glow Central Research to follow", (t, ctx) => {
+      const r = ctx.stockPage?.targets?.research;
+      return r?.kind === "local" && /no NSE symbol/.test(r.face) && !(r.face.length > PROSE_LINE_MAX && proseWords(r.face) >= PROSE_WORDS)
+        && /follows listed companies by their NSE symbol/.test(r.title);
+    }],
+  ],
   "stock-funds-only-targets": [
     ...stockTabChecks("targets", { fundsOnly: true }),
     ["the price alerts card is this tab, as on every holding", (t, ctx) => !!ctx.stockPage?.targets],
@@ -23162,6 +23208,7 @@ for (const theme of THEMES) {
       // fixture is installed on the two that assert a quoted price; the no-feed
       // walk deliberately gets none, because that is its whole subject.
       if (name === "cio-alerts" || name === "cio-alerts-nofeed" || name === "cio-alerts-badge") await installAlertStore(page);
+      if (name === "stock-aif-targets" && ALERTS_BOOK) await installAlertStore(page, [ALERTS_BOOK.aif]);
       if (name === "cio-alerts" || name === "cio-alerts-badge") await installLiveMocks(page);
       if (name === "private-market-calls") await installCallStore(page);
       const tileStore = {}, tilePosts = [];
@@ -26853,6 +26900,24 @@ for (const theme of THEMES) {
               // stops at a closed <details>, and a sentence under it is still
               // on the page for a reader who opens it.
               text: (c.textContent ?? "").replace(/\s+/g, " ").trim(),
+              // What each box holds, the price chip's state, the note that
+              // its alerts cannot be checked here, and the line saying where
+              // the levels went — each a FACE and a hover (main's Stage 10cp
+              // rule), so both halves are read.
+              values: Object.fromEntries([...c.querySelectorAll("[data-alert-input]")].map((i) => [i.getAttribute("data-alert-input"), i.value])),
+              price: c.querySelector("[data-alert-price]")?.getAttribute("data-alert-price") ?? null,
+              unchecked: (() => {
+                const n = c.querySelector("[data-alert-unchecked-note]");
+                return n ? { text: (n.textContent ?? "").replace(/\s+/g, " ").trim(), title: n.getAttribute("title") ?? "" } : null;
+              })(),
+              research: (() => {
+                const n = c.querySelector("[data-research-status]");
+                return n ? {
+                  kind: n.getAttribute("data-research-status"),
+                  face: (n.querySelector(":scope > span")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+                  title: n.getAttribute("title") ?? "",
+                } : null;
+              })(),
             } : null;
           })(),
           // THE FIGURES ON THE STRIP, so an absent tile can be told from a ₹0.
@@ -28493,7 +28558,12 @@ for (const theme of THEMES) {
        * every route, every theme and every width, because it can happen on any.
        */
       if (!["cio-alerts", "cio-alerts-nofeed", "cio-alerts-badge"].includes(name) && RESEARCH_POSTS.length) {
-        failed.push(`${RESEARCH_POSTS.length} request(s) to Glow Central Research from a browser with no level set`);
+        // The AIF walk DOES set a level — on a holding with no NSE symbol,
+        // which Glow Central Research cannot follow — so a send from it is a
+        // different defect and is named as one.
+        failed.push(name === "stock-aif-targets"
+          ? `${RESEARCH_POSTS.length} request(s) to Glow Central Research for a level on an AIF, which has no NSE symbol for it to follow`
+          : `${RESEARCH_POSTS.length} request(s) to Glow Central Research from a browser with no level set`);
       }
       report.push({
         theme, width, name, path,

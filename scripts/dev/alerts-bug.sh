@@ -389,5 +389,16 @@ ROUTES=$ROUTES,stock-targets,stock-funds-only-targets run_case "a holding's My t
 ROUTES=$ROUTES,stock-targets run_case "the card's line puts its whole sentence back on screen" "pages family" \
   patch $RST '>{line.text}</span>' '>{line.title}</span>'
 
+# …and the one line on the card that says its alerts cannot fire. It is drawn
+# only where a level is saved on a holding no price reaches, so the walk that
+# puts it under the page's rules is the AIF one, with its own level seeded.
+ROUTES=$ROUTES,stock-aif-targets run_case "an alert no price reaches says so in a sentence again" "pages" \
+  patch $IT '            Saved · not checked here — no price' \
+            '            Saved, but this dashboard can&rsquo;t check these alerts: {now.reason}.'
+
+ROUTES=$ROUTES,stock-aif-targets run_case "the card stops saying an alert no price reaches is not checked" "pages" \
+  patch $IT '        {now.state === "none" && anyLevel && (' \
+            '        {now.state === "none" && anyLevel && securityKey === "\u0000" && ('
+
 echo ""
 echo "════════ done"
