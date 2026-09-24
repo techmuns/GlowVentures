@@ -223,7 +223,7 @@ const SECTION_COPY: Record<BookSectionId, { title: string; marker: ReactNode; de
 };
 
 /** A row of figures in the shape the accessors read — a group, a section, a total or a folio. */
-type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "asOf">
+type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled" | "units" | "cost" | "value" | "returnPct" | "deployed" | "asOf">
   & {
     /** The fund whose entered calls this row's Capital call cell shows — none on a member row or a band. */
     callKey?: string | null;
@@ -242,7 +242,12 @@ type RowFigures = Pick<BookFigures, "committed" | "called" | "paid" | "uncalled"
  * cell prints "· 3 of 4" beside the rate and the sweep reads both counts off
  * the cell (Stage 10bw's footer rule, carried onto every band and total).
  */
-type RowReturn = MeasuredReturn & { pool?: { covers: number; of: number } };
+type RowReturn = MeasuredReturn & {
+  pool?: { covers: number; of: number };
+  /** The pooled records held under a year, and the pool without them (PM-D3). */
+  subYear?: { name: string; days: number }[];
+  withoutSubYear?: number | null;
+};
 
 const folioFigures = (f: BookFolio): RowFigures => ({
   committed: f.capital?.committed ?? null,
@@ -254,8 +259,16 @@ const folioFigures = (f: BookFolio): RowFigures => ({
   value: f.value,
   // The folio's own FIFO return — a redeemed unit's gain and cost stay in it.
   returnPct: f.position && f.cost != null && f.cost > 0 && f.pnl != null ? positionFifoReturn(f.position) : null,
+  // …and what it divides by: the cost of the units held plus what the units
+  // already redeemed cost (DL-16), null wherever the return is.
+  deployed: f.position && f.cost != null && f.cost > 0 && f.pnl != null && positionFifoReturn(f.position) != null
+    ? f.cost + (f.position.costOfUnitsSold ?? 0) : null,
   asOf: f.asOf ? [f.asOf] : [],
 });
+
+/** A small count in words, the way the page's sentences say it; a figure past ten stays a figure. */
+const countWord = (n: number): string =>
+  ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"][n] ?? String(n);
 
 /** A resolution with nothing to show — the fallback for a row that states no resolver. */
 const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is struck on this row" };
@@ -363,6 +376,14 @@ export function PrivateMarket() {
   const today = todayIso();
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * THE RUPEE AS THE STATEMENT PRINTS IT (PM-D2). A dated call is read against
+   * the fund's own letter, and compact rounding printed Sky Capital's ₹1,35,000
+   * drawdown as "₹1.4 L" — a figure that letter does not carry. A table of
+   * statement rows, and a hover that reconciles one amount against another,
+   * print the rupee; the tiles and the master table keep the compact figure.
+   */
+  const moneyFull = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: false, sign });
 
   const m = useMemo(() => {
     if (!portfolio) return null;
@@ -716,8 +737,16 @@ export function PrivateMarket() {
       id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
       value: <span className={changeColor(m.privPnL)}>{money(m.privPnL, true)}</span>,
       sub: retPct == null ? absentLine("No cost to measure against") : `${fmtPct(retPct, { sign: true, decimals: 1 })} return · FIFO`,
+      // THE RETURN BESIDE THE FIGURE IS FIFO, SO THE HOVER NAMES ITS
+      // DENOMINATOR (DL-16): the capital deployed, which is the cost the
+      // statements report for the units held plus what the units already
+      // redeemed cost — not the cost alone, which a reader would otherwise
+      // divide by and get a return this tile does not print.
       detail: m.privCost != null && m.privCost > 0
-        ? `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value.`
+        ? (m.privFifo.deployed != null && Math.abs(m.privFifo.deployed - m.privCost) > 1
+          ? `The return beside it is FIFO, over the ${money(m.privFifo.deployed)} deployed: the ${money(m.privCost)} these statements report as cost for the units still held, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value, and ${money(m.privFifo.deployed - m.privCost)} that the units already redeemed cost.`
+            + ((m.privFifo.realised ?? 0) !== 0 ? ` ${money(m.privFifo.realised, true)} of the gain is on units redeemed.` : "")
+          : `On the ${money(m.privCost)} these statements report as cost, covering ${money(m.costedMV)} of the ${money(m.privMV)} market value — FIFO, and no unit here has been redeemed, so that cost is all the return divides by.`)
         : "No statement here reports a cost to measure a gain against.",
     },
     /* *"How are you calculating this uncalled capital of 16 crores? …
@@ -829,8 +858,8 @@ export function PrivateMarket() {
         : `${m.realised.covered.length} of ${m.realised.of} holdings · ${m.realised.value === 0 ? "a measured nil" : "FIFO"}`,
       detail: [
         ...m.realised.covered.map(({ position: p, redeemed }) => redeemed.length
-          ? `${p.security}: ${fmtNum(Math.abs(redeemed.reduce((t, x) => t + (x.units ?? 0), 0)), 1)} units redeemed on ${redeemed.map((x) => fmtDate(x.date)).join(", ")} for ${money(sum(redeemed.map((x) => x.amount ?? 0)))}. FIFO books them at their cost of ${money(p.costOfUnitsSold ?? null)} — a realised gain of ${money(p.realizedPnL ?? null, true)}, measured off the fund's own dated record.`
-          : `${p.security}: a realised gain of ${money(p.realizedPnL ?? null, true)}, FIFO, off the fund's own dated record.`),
+          ? `${p.security}: ${fmtNum(Math.abs(redeemed.reduce((t, x) => t + (x.units ?? 0), 0)), 1)} units redeemed on ${redeemed.map((x) => fmtDate(x.date)).join(", ")} for ${moneyFull(sum(redeemed.map((x) => x.amount ?? 0)))}. FIFO books them at their cost of ${moneyFull(p.costOfUnitsSold ?? null)} — a realised gain of ${moneyFull(p.realizedPnL ?? null, true)}, measured off the fund's own dated record.`
+          : `${p.security}: a realised gain of ${moneyFull(p.realizedPnL ?? null, true)}, FIFO, off the fund's own dated record.`),
         m.realised.missing.length
           ? `The other ${m.realised.missing.length} carry no realised figure — `
             + m.realised.missing.map(({ position: p, why, redeemed }) => `${p.security}: ${why ?? "no realised figure is reported for its account"}`
@@ -906,7 +935,17 @@ export function PrivateMarket() {
       id: "raw", label: "Value as printed", icon: <Layers className="h-4 w-4" />,
       value: money(m.rawMV),
       sub: `Includes ${money(m.scope.doubleCounted)} double count`,
-      detail: `Every statement as printed. ${money(m.scope.doubleCounted)} of it is two holdings reported under two members each; Market value counts each once.`,
+      // THE HOLDINGS BEHIND THE DOUBLE COUNT ARE COUNTED OFF THE BOOK — the
+      // hover read "two holdings reported under two members each" as typed
+      // words, true of this book and of no other.
+      detail: m.scope.doubleCountedHoldings === 0
+        ? "Every statement as printed. No private holding here is reported on more than one statement, so this is Market value."
+        : `Every statement as printed. ${money(m.scope.doubleCounted)} of it is `
+          + `${countWord(m.scope.doubleCountedHoldings)} ${m.scope.doubleCountedHoldings === 1 ? "holding" : "holdings"} reported on `
+          + (new Set(m.scope.doubleCountedStatements).size === 1
+            ? `${countWord(m.scope.doubleCountedStatements[0])} statements${m.scope.doubleCountedHoldings === 1 ? "" : " each"}`
+            : "more than one statement each")
+          + "; Market value counts each once.",
     },
   ];
 
@@ -969,6 +1008,21 @@ export function PrivateMarket() {
     </tr>
   );
   const pct = (v: number | null) => (v == null || !(book.privateValue > 0) ? null : (v / book.privateValue) * 100);
+  /**
+   * BY OWNER THE WEIGHT COLUMN ADDS TO MORE THAN 100% (PM-D1), and its heading
+   * says by how much and where it comes back. Every member's statement is
+   * printed, over the one consolidated private value, so a holding two members'
+   * statements both report is weighed on both rows — the Counted once line at
+   * the foot of the section takes it back. The arithmetic is right; a column of
+   * shares that adds to 129.9% under "Weight" needs its own hover to say so.
+   */
+  const ownerOverlap = grouping === "owner" ? book.sections.private.overlap : null;
+  const ownerSum = ownerOverlap && ownerOverlap.value > 1 ? pct(ownerOverlap.printed) : null;
+  const ownerBack = ownerOverlap && ownerOverlap.value > 1 ? pct(ownerOverlap.value) : null;
+  const weightHeadTitle = "Of the private book: the row's value as a share of the private market value — the same denominator on every row."
+    + (ownerSum != null && ownerBack != null
+      ? ` By owner every statement is printed, so the members' rows add to ${ownerSum.toFixed(1)}%, and the Counted once line at the foot of the section takes back ${ownerBack.toFixed(1)}% — the holdings two members' statements both report.`
+      : "");
 
   // ── WHICH RETURN A ROW SHOWS, AND SAYING WHICH ──────────────────────────────
   //
@@ -1066,9 +1120,31 @@ export function PrivateMarket() {
           return { shown: false, tag, pool, reason: `the pooled flows span ${pooled.windowDays} days — under a year, so an annual rate would be a projection; the holding-period return is under HPR` };
         }
         const left = pooledOut.map((r) => `${r.name} — ${r.d?.gap ?? "its payout record is not carried"}`).join("; ");
+        /**
+         * A RECORD HELD UNDER A YEAR, INSIDE A POOL THAT IS ANNUALISED (PM-D3).
+         * Its own row refuses to annualise and shows its holding-period return;
+         * inside the pool its gain is compounded at the pool's annual rate, and
+         * on this book one 165-day holding carries half of the +21.1%. Not a
+         * rule break — the pool's window is over a year — but the hover names
+         * the record and what the pool reads without it, so a reader never
+         * takes the rate for years of that return.
+         */
+        const own = pooledIn.map((r) => ({ r, w: pooledFundXirr([r.d!]) }));
+        const subYear = own.filter((x) => x.w?.windowDays != null && x.w.windowDays < 365);
+        const rest = own.filter((x) => !subYear.includes(x)).map((x) => x.r.d!);
+        const without = subYear.length && rest.length ? pooledFundXirr(rest) : null;
+        const one = subYear.length === 1;
+        const subNote = subYear.length
+          ? ` ${subYear.map((x) => `${x.r.name} has been held ${x.w!.windowDays} days`).join("; ")} — under a year, so ${one ? "its own row shows its" : "their own rows show their"} holding-period return, while in this pool ${one ? "its gain is" : "their gains are"} compounded at the pool's annual rate.`
+            + (without?.pct != null && without.annualised
+              ? ` Without ${one ? "it" : "them"}, the pool reads ${fmtPct(without.pct, { sign: true, decimals: 1 })}.`
+              : "")
+          : "";
         return { shown: true, pct: pooled.pct, tag, pool,
+          subYear: subYear.map((x) => ({ name: x.r.name, days: x.w!.windowDays! })),
+          withoutSubYear: without?.pct != null && without.annualised ? without.pct : null,
           note: `Pooled across ${pooledIn.length} of ${recs.length} ${unit(recs.length)}: every dated call, every dated payout and each fund's own valuation date, annualised over the ${pooled.windowDays} days since the first call.`
-            + (pooledOut.length ? ` Not in it: ${left}.` : "") };
+            + (pooledOut.length ? ` Not in it: ${left}.` : "") + subNote };
       }
       return { shown: false, tag, reason: `${whose}: ${PM_AGG_NO_MEASURE[measure] ?? "no such figure applies"}` };
     };
@@ -1226,6 +1302,14 @@ export function PrivateMarket() {
       const res = r.ret ? r.ret(measure) : NO_RETURN;
       const off = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
       const part = res.pool && res.pool.covers < res.pool.of ? res.pool : null;
+      // WHAT AN HPR DIVIDES BY, WHERE IT IS NOT THE COST COLUMN (DL-16). FIFO
+      // strikes the gain over the capital deployed — the cost of the units held
+      // AND of the units already redeemed — so on a row holding a fund that
+      // redeemed units, Value − Cost over Cost is a third answer the row does
+      // not print. The denominator is a figure, so it sits on the figure; the
+      // two parts of it are its hover.
+      const dep = res.shown && res.tag === "HPR" && r.deployed != null && r.cost != null && Math.abs(r.deployed - r.cost) > 1
+        ? r.deployed : null;
       out[id] = (
         <td key={id} data-col-cell={id} data-return-cell={measure} data-return-tag={off ? res.tag : undefined}
           data-return-shown={res.shown ? "1" : "0"} data-return-pct={res.shown ? res.pct.toFixed(4) : undefined}
@@ -1234,12 +1318,20 @@ export function PrivateMarket() {
             "data-return-foot-covers": res.pool?.covers,
             "data-return-foot-of": res.pool?.of,
           } : {})}
+          data-return-subyear={res.shown && res.subYear?.length ? res.subYear.map((x) => `${x.days}`).join(" ") : undefined}
+          data-return-without-subyear={res.shown && res.withoutSubYear != null ? res.withoutSubYear.toFixed(4) : undefined}
           className={`${p} whitespace-nowrap text-right mono ${t}`}>
           {off && <span className="ret-tag mr-0.5">{res.tag}</span>}
           {res.shown
             ? <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true, decimals: 1 })}
                 {part && <span className="text-[10.5px] font-normal text-slate-500"> · {part.covers} of {part.of}</span>}</span>
             : <AbsentCell reason={res.reason} />}
+          {dep != null && (
+            <div className="text-[10.5px] font-normal text-slate-500" data-return-deployed={Math.round(dep)}
+              title={`FIFO divides the gain by the ${money(dep)} deployed: the ${money(r.cost)} the Cost column shows for the units still held, and ${money(dep - (r.cost ?? 0))} that the units already redeemed cost.`}>
+              on {money(dep)}
+            </div>
+          )}
         </td>
       );
     }
@@ -1758,7 +1850,7 @@ export function PrivateMarket() {
                     );
                   })}
                   <SortHeader col="weight" view={bookView} pad="px-2 py-2"
-                    title="Of the private book: the row's value as a share of the private market value — the same denominator on every row.">Weight</SortHeader>
+                    title={weightHeadTitle}>Weight</SortHeader>
                   <SortHeader col="asOf" view={bookView} pad="px-2 py-2" align="left">As of</SortHeader>
                   {/* THE COLUMN THAT REPLACED THE CAPITAL-CALL TIMELINE. Its hover
                       is where the reason it exists lives — no fund publishes a
@@ -1840,7 +1932,7 @@ export function PrivateMarket() {
                     <td className="px-4 py-2 text-slate-200">{c.fund}</td>
                     <td className="px-4 py-2 text-slate-400">{c.owner ?? DASH}</td>
                     <td className="px-4 py-2 text-slate-500">{c.label ?? DASH}</td>
-                    <td className="px-4 py-2 text-right mono text-slate-200">{money(c.amount)}</td>
+                    <td className="px-4 py-2 text-right mono text-slate-200">{moneyFull(c.amount)}</td>
                   </Tr>
                 ))}
               </tbody>
@@ -1848,7 +1940,7 @@ export function PrivateMarket() {
                 <TrFoot view={callView} className="border-t-2 border-ink-600 px-4 py-2.5 font-semibold text-slate-200"
                   label={<>Total · {callsShown.length} calls{needle ? ` of ${m.history.length}` : ""}</>}
                   cells={{
-                    amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{money(sum(callsShown.map((c) => c.amount)))}</td>,
+                    amount: <td key="amount" className="border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold text-slate-100">{moneyFull(sum(callsShown.map((c) => c.amount)))}</td>,
                   }} />
               </tfoot>
             </table>

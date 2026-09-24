@@ -100,6 +100,16 @@ export type PrivateScope = {
   accounts: Account[];
   /** What the rows on screen add to, less what the consolidated total counts. */
   doubleCounted: number;
+  /**
+   * WHAT THAT DOUBLE COUNT IS MADE OF — the holdings (dedupe groups) reported on
+   * more than one statement, and how many statements report each. Counted off
+   * the rows, so the tile that states the double count can say "two holdings"
+   * because the book has two, never because it had two when the words were
+   * typed.
+   */
+  doubleCountedHoldings: number;
+  /** Statements per double-counted holding, one entry per holding. */
+  doubleCountedStatements: number[];
 };
 
 export function privateScope(positions: Position[], accounts: Account[]): PrivateScope {
@@ -120,11 +130,16 @@ export function privateScope(positions: Position[], accounts: Account[]): Privat
     (a) => held.has(a.accountId)
       || (a.engagement === "AIF" && !holdsAnything.has(a.accountId) && accountFundSide(a) === "private"),
   );
+  const groups = new Map<string, number>();
+  for (const p of rows) if (p.dedupeGroup) groups.set(p.dedupeGroup, (groups.get(p.dedupeGroup) ?? 0) + 1);
+  const twice = [...groups.values()].filter((n) => n > 1);
   return {
     rows,
     dedupedRows,
     accounts: inScope,
     doubleCounted: sum(rows.map((p) => p.marketValue)) - sum(dedupedRows.map((p) => p.marketValue)),
+    doubleCountedHoldings: twice.length,
+    doubleCountedStatements: twice,
   };
 }
 

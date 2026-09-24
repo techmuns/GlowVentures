@@ -2558,6 +2558,8 @@ const CAPITAL_BOOK = (() => {
       paidOf: n("paid"),
       uncalledOf: n("undrawn"),
       callCount: cs.reduce((t, c) => t + (c.calls?.length ?? 0), 0),
+      /** Every dated call's own amount, in rupees, as the statement prints it (PM-D2). */
+      callAmounts: cs.flatMap((c) => (c.calls ?? []).map((k) => Number(k.amount))),
       /** Uncalled summed as printed, in Cr — the figure the client questioned. */
       uncalledCr: cs.reduce((t, c) => t + (c.undrawn ?? 0), 0) / 1e7,
       /** And the other path, over the accounts that print a called line only. */
@@ -3065,9 +3067,23 @@ const PM_RETURN_BOOK = (() => {
     const bookSold = costed.reduce((t, p) => t + fifoOf(p.costOfUnitsSold), 0);
     const bookPnL = costed.reduce((t, p) => t + Number(p.marketValue) - Number(p.costBasis), 0);
     const bookRealised = costed.reduce((t, p) => t + fifoOf(p.realizedPnL), 0);
+    // THE POOL'S RECORDS HELD UNDER A YEAR, and the pool without them (PM-D3):
+    // each record's own window is its first call to its own valuation.
+    const subYear = pooledIn.filter((f) => f.window != null && f.window < 365);
+    const restIn = pooledIn.filter((f) => !subYear.includes(f));
+    const restWindow = restIn.length
+      ? days(restIn.map((f) => f.flows.filter((x) => x.kind === "call").map((x) => x.date).sort()[0]).sort()[0],
+        restIn.map((f) => f.flows.filter((x) => x.kind === "value").map((x) => x.date).sort().pop()).sort().pop())
+      : null;
     return {
       funds, byKey: new Map(funds.map((f) => [f.key, f])),
       pooledCovers: pooledIn.length, pooled, pooledWindow,
+      subYear: subYear.map((f) => ({ key: f.key, security: f.security, days: f.window })),
+      pooledWithoutSubYear: subYear.length && restIn.length && restWindow >= 365
+        ? irr(restIn.flatMap((f) => f.flows)) : null,
+      /** FIFO's denominator over the whole private book, and the Cost column's part of it (DL-16). */
+      bookDeployed: bookCost + bookSold,
+      bookCost,
       footHpr: bookCost + bookSold > 0 ? ((bookPnL + bookRealised) / (bookCost + bookSold)) * 100 : null,
       footHprHeld: bookCost > 0 ? (bookPnL / bookCost) * 100 : null,
       /** Whether any private holding here has redeemed units — what makes the FIFO claims bite. */
@@ -13882,6 +13898,163 @@ const PM_OVERLAP_HINT = ["the 'Counted once' line says what it does in its hover
 
 
 /**
+ * ── [D] WHAT A FIGURE DIVIDES BY, ADDS TO AND ROUNDS TO ─────────────────────
+ *
+ * Four figures on this page were right and could not be checked by a reader
+ * from what the page printed. Each claim below is struck on the page's own
+ * handles and held to the book as `glowData.ts` states it — never to the
+ * helper that drew the figure.
+ */
+/** The shown HPR cell of a row — under the methodology or the Absolute column. */
+const pmHprCell = (cells) => Object.entries(cells ?? {})
+  .find(([col, c]) => /^ret:/.test(col) && c?.retShown === "1" && (c.retTag === "HPR" || col === "ret:absolute"))?.[1] ?? null;
+/**
+ * DL-16 — THE FOOTER'S HPR IS FIFO, SO ITS DENOMINATOR IS NOT A COLUMN. Its own
+ * columns gave ₹1.995 Cr ÷ ₹8.62 Cr = 23.1% beside a printed 22.8%, because
+ * FIFO also divides by what Neo Infra's redeemed units cost. The denominator is
+ * on the figure now, and its two parts are its hover: struck on the total, and
+ * — where the Absolute column is drawn — on every fund row, which must carry it
+ * exactly where the book says the fund redeemed units, and nowhere else.
+ */
+const PM_DEPLOYED_CHECK = ["an HPR struck over more than its Cost column names what it divides by, on the figure (DL-16)", (t, ctx) => {
+  const pv = ctx?.pmView, B = PM_RETURN_BOOK;
+  if (!pv || !B) return false;
+  if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units, so every HPR divides by its own Cost column" };
+  const near = (a, b) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 2;
+  const tc = pmHprCell((pv.totals ?? [])[0]?.cells);
+  if (!tc || !near(Number(tc.deployed), B.bookDeployed)) return false;
+  if (!pmClose(pmMoney(tc.deployedText), B.bookDeployed / 1e7)) return false;
+  const figs = [...String(tc.deployedTitle ?? "").matchAll(/₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/g)].map((x) => pmMoney(x[0]));
+  if (!/Cost column/i.test(tc.deployedTitle ?? "")
+    || !figs.some((v) => pmClose(v, B.bookCost / 1e7))
+    || !figs.some((v) => pmClose(v, (B.bookDeployed - B.bookCost) / 1e7))) return false;
+  // THE FUND ROWS, where the Absolute column is drawn: the marker exactly on
+  // the funds that redeemed units, at their own cost + cost of units sold.
+  if (!(pv.heads ?? []).includes("ret:absolute")) return true;
+  const rows = ctx?.pmReturn?.rows ?? [];
+  let redeemedChecked = 0;
+  const ok = rows.every((r) => {
+    const f = B.byKey.get(r.key);
+    const c = r.cells.find((x) => x.measure === "absolute");
+    if (!f || !c || !c.shown) return true;
+    const want = f.soldCost > 1 && f.cost != null ? f.cost + f.soldCost : null;
+    if (want == null) return c.deployed == null;
+    redeemedChecked++;
+    return near(Number(c.deployed), want);
+  });
+  return ok && redeemedChecked === B.funds.filter((f) => f.soldCost > 1 && f.cost != null && f.hpr != null).length
+    && redeemedChecked > 0;
+}];
+/** …and the Unrealised tile's hover names the same denominator (DL-16). */
+const PM_PNL_HOVER_CHECK = ["the Unrealised tile's hover names what its FIFO return divides by (DL-16)", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.pnl ?? "";
+  const B = PM_RETURN_BOOK;
+  if (!d || !B) return false;
+  if (!B.redeemed) return /no unit here has been redeemed/i.test(d);
+  const dep = cr(new RegExp(String.raw`over the\s*` + CR + String.raw`\s*deployed`, "i").exec(d)?.[1]);
+  const cost = cr(new RegExp(String.raw`the\s*` + CR + String.raw`\s*these statements report as cost`, "i").exec(d)?.[1]);
+  const sold = crU(...(/and\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*that the units already redeemed cost/i.exec(d) ?? []).slice(1));
+  return /FIFO/.test(d)
+    && pmClose(dep, B.bookDeployed / 1e7) && pmClose(cost, B.bookCost / 1e7)
+    && pmClose(sold, (B.bookDeployed - B.bookCost) / 1e7);
+}];
+/**
+ * PM-D1 — BY OWNER THE WEIGHT COLUMN ADDS TO MORE THAN 100%, AND ITS HEADING
+ * SAYS BY HOW MUCH. Members are printed over the one consolidated private value,
+ * so the column adds to printed ÷ consolidated and the Counted once line takes
+ * back the double count. Both percentages held to the book's own folios.
+ */
+const PM_WEIGHT_OWNERS_CHECK = ["by owner, the Weight heading says what its column adds to and what the Counted once line takes back (PM-D1)", (t, ctx) => {
+  const title = ctx?.pmView?.headTitles?.weight ?? "";
+  const F = PM_FOLIO_BOOK;
+  if (!F) return false;
+  if (!F.dup.length) return { notChecked: "no private holding in this book is reported twice, so the column adds to 100%" };
+  const printed = [...F.printed.values()].reduce((a, b) => a + b, 0);
+  const once = [...F.consolidated.values()].reduce((a, b) => a + b, 0);
+  const gap = F.dup.reduce((a, r) => a + r.gap, 0);
+  const sum = Number(/add to ([\d.]+)%/i.exec(title)?.[1]);
+  const back = Number(/takes back ([\d.]+)%/i.exec(title)?.[1]);
+  return once > 0 && Math.abs(sum - (printed / once) * 100) <= 0.06 && Math.abs(back - (gap / once) * 100) <= 0.06;
+}];
+/** …and on the fund view, where the fund rows add to 100%, it does not say so. */
+const PM_WEIGHT_FUNDS_CHECK = ["by fund, the Weight heading claims no column total above 100% (PM-D1)", (t, ctx) => {
+  const title = ctx?.pmView?.headTitles?.weight;
+  if (title == null) return false;
+  return /same denominator on every row/i.test(title) && !/add to [\d.]+%/i.test(title);
+}];
+/**
+ * PM-D2 — A DATED CALL IS PRINTED TO THE RUPEE. Sky Capital's ₹1,35,000 call
+ * read "₹1.4 L", a figure its own letter does not carry. Every row's amount
+ * must carry no compact suffix, and the rows are the book's own calls, amount
+ * for amount — a multiset, so a row printed twice and one dropped cannot pass
+ * by summing alike — with the footer their exact sum.
+ */
+const PM_CALL_RUPEES_CHECK = ["every dated call is printed to the rupee, and the rows are the book's own calls (PM-D2)", (t, ctx) => {
+  const pv = ctx?.pmView, C = CAPITAL_BOOK;
+  if (!pv || !C?.callAmounts) return false;
+  const texts = pv.callAmounts ?? [];
+  if (!texts.length || texts.length !== C.callAmounts.length) return false;
+  if (texts.some((x) => /\d\s*(?:Cr|L|K)\b/.test(x))) return false;
+  const rupees = (x) => Number(String(x).replace(/[^\d.]/g, ""));
+  const got = texts.map(rupees).sort((a, b) => a - b);
+  const want = [...C.callAmounts].map((v) => Math.round(v)).sort((a, b) => a - b);
+  if (!got.every((v, i) => Math.abs(v - want[i]) <= 1)) return false;
+  const foot = /₹([\d,]+(?:\.\d+)?)(?!\s*(?:Cr|L|K)\b)/.exec(pv.callFoot ?? "");
+  return !!foot && Math.abs(rupees(foot[1]) - want.reduce((a, b) => a + b, 0)) <= 1;
+}];
+/** …and the realised tile's hover reconciles a redemption in rupees, not in rounded lakh. */
+const PM_REALISED_RUPEES_CHECK = ["the realised hover reconciles each redemption to the rupee (PM-D2)", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.realised ?? "";
+  const B = PM_RETURN_BOOK;
+  if (!d || !B) return false;
+  if (!B.redeemed) return { notChecked: "no private holding in this book has redeemed units" };
+  const figs = [...d.matchAll(/(?:\bfor|cost of|gain of)\s*([+−-]?)₹([\d,]+(?:\.\d+)?)(\s*(?:Cr|L|K)\b)?/g)];
+  if (!figs.length || figs.some((x) => x[3])) return false;
+  const rupees = figs.map((x) => Number(x[2].replace(/,/g, "")));
+  // Each fund that redeemed units: the cost FIFO books them at, to the rupee.
+  return B.funds.filter((f) => f.soldCost > 1).every((f) => rupees.some((v) => Math.abs(v - Math.round(f.soldCost)) <= 1));
+}];
+/**
+ * PM-D3 — THE POOLED XIRR NAMES THE RECORD HELD UNDER A YEAR, AND THE POOL
+ * WITHOUT IT. On this book one 165-day holding carries half of the +21.1%; the
+ * pool is annualised (its window is over a year), so the figure stands, and
+ * its hover says whose it mostly is. Both halves held to the book's own flows.
+ */
+const PM_SUBYEAR_CHECK = ["the pooled XIRR names each record held under a year, and what the pool reads without it (PM-D3)", (t, ctx) => {
+  const pv = ctx?.pmView, B = PM_RETURN_BOOK;
+  if (!pv || !B) return false;
+  const c = (pv.totals ?? [])[0]?.cells?.["ret:xirr"];
+  if (!c) return false;
+  // NOTHING TO POOL is a fact about the book; a pool the checker could not
+  // solve is a finding. They are never the same abstention.
+  if (!B.pooledCovers) return { notChecked: "no private fund in this book carries a complete dated record, so nothing is pooled" };
+  if (B.pooled == null) return false;
+  if (B.pooledWindow < 365) return { notChecked: "the private book's pool spans under a year, so no annual rate is struck" };
+  if (!B.subYear.length) return c.subYear == null;
+  const days = (c.subYear ?? "").split(" ").filter(Boolean).map(Number).sort((a, b) => a - b);
+  const want = B.subYear.map((x) => x.days).sort((a, b) => a - b);
+  if (days.length !== want.length || !days.every((d, i) => d === want[i])) return false;
+  const title = c.title ?? "";
+  if (!B.subYear.every((x) => new RegExp(`has been held ${x.days} days`).test(title))) return false;
+  if (B.pooledWithoutSubYear == null) return c.withoutSub == null && !/Without (?:it|them), the pool reads/i.test(title);
+  const said = signedPctOf(/Without (?:it|them), the pool reads ([+\-−]?[\d.]+%)/i.exec(title)?.[1]);
+  return Math.abs(Number(c.withoutSub) - B.pooledWithoutSubYear) <= 0.06 && Math.abs(said - B.pooledWithoutSubYear) <= 0.06;
+}];
+/** The value-as-printed tile's count of the holdings behind the double count, off the book. */
+const PM_RAW_HOLDINGS_CHECK = ["the value-as-printed tile counts the holdings behind the double count off the book", (t, ctx) => {
+  const d = ctx?.tileStrip?.details?.raw ?? "";
+  const F = PM_FOLIO_BOOK;
+  if (!d || !F) return false;
+  if (!F.dup.length) return /No private holding here is reported on more than one statement/i.test(d);
+  const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+  const n = (w) => (WORDS.includes(w) ? WORDS.indexOf(w) : Number(w));
+  const m = /of it is (\w+) holdings? reported on (\w+) statements?/i.exec(d);
+  const each = [...new Set(F.dup.map((r) => r.statements))];
+  if (!m || n(m[1].toLowerCase()) !== F.dup.length) return false;
+  return each.length === 1 ? n(m[2].toLowerCase()) === each[0] : /more than one statement each/i.test(d);
+}];
+
+/**
  * ── A FUND THAT IS NOT PRIVATE MARKET IS NOT A ROW OF THIS TABLE ─────────────
  *
  *   "Sanshi, Buoyant and Carnelian. These are not private market investments.
@@ -23514,6 +23687,9 @@ const INVARIANTS = {
    * another rendering of itself.
    */
   "private-market": [
+    // [D] — DL-16, PM-D1, PM-D2 and the double count's holdings (the two tile
+    // claims are FULL_STRIP_ONLY: their tiles are not on the default strip).
+    PM_DEPLOYED_CHECK, PM_PNL_HOVER_CHECK, PM_WEIGHT_FUNDS_CHECK, PM_REALISED_RUPEES_CHECK, PM_RAW_HOLDINGS_CHECK,
     /**
      * ── THE CLIENT ASKED WHAT TWO OF THESE TILES MEAN, AND THEN ASKED FOR THE
      *    ANSWER TO BE SHORT ────────────────────────────────────────────────────
@@ -24657,6 +24833,7 @@ const INVARIANTS = {
    * fails the other.
    */
   "private-market-returns": [
+    PM_DEPLOYED_CHECK, PM_SUBYEAR_CHECK,
     /**
      * PM-C1 — THE HPR IS VALUE AGAINST WHAT THE UNITS COST, AND SAYS SO. Its
      * hovers said "over the capital paid in", which is a different figure on
@@ -24693,6 +24870,7 @@ const INVARIANTS = {
     PM_MEMBER_RETURN_CHECK,
   ],
   "private-market-owners": [
+    PM_WEIGHT_OWNERS_CHECK,
     PM_MEMBER_COVER_CHECK,
     ...pmViewChecks("owners"),
     ...PM_TABLE_CHECKS,
@@ -24757,6 +24935,7 @@ const INVARIANTS = {
    * there, which is an abstention and reads as a clean run.
    */
   "private-market-transactions": [
+    PM_CALL_RUPEES_CHECK,
     ...pmViewChecks("transactions"),
     /**
      * PM-4d — THE WINDOWS ARE GONE FROM THIS TAB, AND STAY GONE.
@@ -31378,6 +31557,8 @@ const FULL_STRIP_ONLY = new Set([
   "the distributions hover names each part on its own basis, and the letter it counts with another (B-10)",
   "the distributions hover reconciles with each fund's XIRR, in the XIRR's own figures (B-10)",
   "the multiple's refusal counts the accounts the distributions tile counts (B-10)",
+  "the realised hover reconciles each redemption to the rupee (PM-D2)",
+  "the value-as-printed tile counts the holdings behind the double count off the book",
 ]);
 
 /**
@@ -35794,6 +35975,17 @@ for (const theme of THEMES) {
               capCover: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-cover") ?? null,
               capUnit: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-unit") ?? null,
               asOfAttr: td.getAttribute("data-as-of"),
+              // A RETURN CELL'S OWN FIGURES (DL-16, PM-D3): what an HPR divides
+              // by where that is not the Cost column, and — on a pooled XIRR —
+              // the records held under a year and the pool without them.
+              retShown: td.getAttribute("data-return-shown"),
+              retPct: td.getAttribute("data-return-pct"),
+              retTag: td.getAttribute("data-return-tag"),
+              deployed: td.querySelector("[data-return-deployed]")?.getAttribute("data-return-deployed") ?? null,
+              deployedText: txt(td.querySelector("[data-return-deployed]")) || null,
+              deployedTitle: td.querySelector("[data-return-deployed]")?.getAttribute("title") ?? null,
+              subYear: td.getAttribute("data-return-subyear"),
+              withoutSub: td.getAttribute("data-return-without-subyear"),
             };
             i += span; width += span;
           }
@@ -35805,6 +35997,10 @@ for (const theme of THEMES) {
         const wrap = table?.parentElement;
         const foot = document.querySelector("main table[data-pm-table='transactions'] tfoot tr");
         return {
+          // EACH HEADING'S OWN HOVER, by the column it heads — where what a
+          // column adds to lives since the notes under the labels went (PM-D1).
+          headTitles: table ? Object.fromEntries([...table.querySelectorAll("thead tr:last-child > th")]
+            .map((th) => [th.getAttribute("data-col"), th.getAttribute("title")])) : {},
           views: [...document.querySelectorAll("main [data-pm-view]")]
             .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true", title: e.getAttribute("title") })),
           viewCount: Number(document.querySelector("main [data-pm-view-count]")?.getAttribute("data-pm-view-count") ?? NaN),
@@ -35983,6 +36179,8 @@ for (const theme of THEMES) {
               shown: td.getAttribute("data-return-shown") === "1",
               text: (td.innerText ?? "").replace(/\s+/g, " ").trim(),
               titles: titles(td),
+              // What an HPR divides by, where it is not the row's Cost (DL-16).
+              deployed: td.querySelector("[data-return-deployed]")?.getAttribute("data-return-deployed") ?? null,
             })),
           })),
           foot: [...document.querySelectorAll("main [data-return-foot]")].map((td) => ({
