@@ -61,8 +61,27 @@ export const returnFormula = (
    * formula is the familiar unrealised ÷ cost, which is what FIFO reduces to
    * where nothing was sold.
    */
-  fifo?: { realised?: number | null; costSold?: number | null; deployed?: number | null },
+  fifo?: {
+    realised?: number | null; costSold?: number | null; deployed?: number | null;
+    /**
+     * A WHOLE MANDATE'S CAPITAL BRIDGE (DL-7). Its return is (value + withdrawn
+     * − paid in) ÷ paid in — a return on CAPITAL, because a mandate's lots are
+     * not all on record — and this popover described lot FIFO over it. Where
+     * the row is a whole mandate the caller passes the bridge and the popover
+     * names what the figure is.
+     */
+    capital?: { value: number; contributed: number; withdrawn: number } | null;
+  },
 ): FormulaDef => {
+  const cap = fifo?.capital;
+  if (cap && cap.contributed > 0) {
+    return {
+      title: "Return on capital (whole mandate)",
+      excel: "= (Market value + Withdrawn − Capital paid in) ÷ Capital paid in × 100",
+      plain: "A mandate is an account, and its manager's statements carry its capital rather than every lot it has ever held — so its return is struck on the capital the family paid in since inception, not lot by lot. The gain therefore carries every sale the manager made and the income less fees. Cumulative, not annualised.",
+      worked: `= (${m(cap.value)} + ${m(cap.withdrawn)} − ${m(cap.contributed)}) ÷ ${m(cap.contributed)} × 100 = ${orDash(retPct, pct)}`,
+    };
+  }
   const realised = fifo?.realised ?? 0;
   const deployed = fifo?.deployed ?? (has(cost) ? (cost as number) + (fifo?.costSold ?? 0) : null);
   const sold = has(cost) && deployed !== null && Math.abs(deployed - (cost as number)) > 0.5;
