@@ -4,7 +4,7 @@ import { ChevronRight, Wallet, Coins, TrendingUp, Layers, Percent } from "lucide
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { Kpi } from "@/components/Kpi";
-import { BasisPill } from "@/components/BasisPill";
+import { investedReconciliation } from "@/lib/mandateCapital";
 import { SearchInput } from "@/components/SearchInput";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
 import { PageNav } from "@/components/PageNav";
@@ -214,7 +214,7 @@ const TRADE_COLS = ["security", "trades", "bought", "sold", "realized", "period"
 
 export function MandateHoldings() {
   const { accountId = "" } = useParams();
-  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency } = usePortfolio();
+  const { portfolio, statementPortfolio, basis, fmtFromBase, convertFromBase, displayCurrency, quotesStatus } = usePortfolio();
   const [q, setQ] = useState("");
 
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
@@ -260,6 +260,11 @@ export function MandateHoldings() {
     [rows, portfolio],
   );
   const ret = fifo.returnPct;
+  /** The cost held, tied to paid in − taken out + realised — or null. */
+  const reconcile = investedReconciliation({
+    costHeld: cost, uncostedRows: noCost, capital: account?.capital ?? null,
+    realised: fifo.realised ?? null, wholeMandate: fifo.wholeMandates.length > 0,
+  });
   /**
    * THE ACCOUNT'S OWN ROWS, SUMMED ON THE BOOK'S DERIVED BASIS — and that is the
    * whole of what this figure is. It is NOT the manager's printed total, which
@@ -630,13 +635,22 @@ export function MandateHoldings() {
                 arrive per account on their own schedule and `portfolio.asOf` is
                 only the latest of them; a mandate page dated by the book would
                 claim a currency this document does not have. */}
-            <Pill>
-              <span title={`Every figure on this page is as ${account.provider} printed it on ${account.asOf}. The book's newest statement is ${portfolio.asOf}; this account's own is what dates this page.`}>
-                statement as of {fmtDate(account.asOf)}
-              </span>
-            </Pill>
+            {(() => {
+              const liveN = rows.filter((r) => r.live).length;
+              const other = portfolio.asOf && portfolio.asOf !== account.asOf
+                ? ` The book's newest statement, ${fmtDate(portfolio.asOf)}, is another account's; this page is dated by its own.` : "";
+              const tip = liveN
+                ? `LIVE basis: ${liveN} of ${rows.length} holdings are marked to a live quote now and the rest keep ${account.provider}'s statement mark of ${fmtDate(account.asOf)}. Quantity, cost, realised gains, dividends and cash flows stay exactly as that statement prints them.${other}`
+                : `Every figure on this page is as ${account.provider} printed it on ${fmtDate(account.asOf)}${quotesStatus === "loading" ? " — live prices are still being fetched" : " — no live price reached any of these holdings"}.${other}`;
+              return (
+                <Pill tone="info">
+                  <span title={tip} data-mandate-asof={account.asOf} data-mandate-basis={liveN ? "live" : "statement"}>
+                    {liveN ? `LIVE · ${liveN} of ${rows.length} marked now · statement ${fmtDate(account.asOf)}` : `STATEMENT · as of ${fmtDate(account.asOf)}`}
+                  </span>
+                </Pill>
+              );
+            })()}
             {account.engagement && <Pill>{account.providerEngagement || account.engagement}</Pill>}
-            <BasisPill liveText={`marked now · statement ${fmtDate(account.asOf)}`} />
           </div>
         </div>
         <div className="text-right">
@@ -659,13 +673,20 @@ export function MandateHoldings() {
               ? <span className="text-slate-500">no row on this statement reports a cost</span>
               : noCost
                 ? <span className="text-slate-500">cost in · {noCost} of {rows.length} rows report none and are skipped</span>
-                : <span>cost in, whole mandate</span>}
+                : <span>cost of holdings</span>}
             {/* THE DATE, AND ITS ABSENCE IS NAMED RATHER THAN LEFT BLANK — a
                 tile that simply stops mentioning when tells a reader nothing
                 about whether to go and find the document. */}
             <span className="text-slate-500">
               {" · "}{fundedNote ?? "no statement dates what was paid in"}
             </span>
+            {reconcile && (
+              <span className="block text-slate-500" data-mandate-invested-reconcile
+                data-paid-in={reconcile.paidIn} data-taken-out={reconcile.takenOut} data-realised={reconcile.realised}
+                title={`What ${account.provider} holds now cost ${money(reconcile.costHeld)}: the ${money(reconcile.paidIn)} paid in, less the ${money(reconcile.takenOut)} taken out, plus the ${money(reconcile.realised, true)} the manager realised and kept invested — gains on shares sold, and income less fees. The capital card below dates every payment; the Return · FIFO tile is struck on what was paid in.`}>
+                = {money(reconcile.paidIn)} paid in{reconcile.takenOut ? <> − {money(reconcile.takenOut)} out</> : null} {reconcile.realised < 0 ? "−" : "+"} {money(Math.abs(reconcile.realised))} realised
+              </span>
+            )}
           </span>}
           icon={<Coins className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
@@ -746,7 +767,7 @@ export function MandateHoldings() {
                       {r.costBasis === null ? <AbsentCell reason="this statement reports no cost for the holding" /> : money(r.costBasis)}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-400">
-                      {price(r.currentPrice) ?? <AbsentCell reason="this holding is marked at a total value, with no per-unit price anywhere on the statement" />}
+                      {price(r.currentPrice) ?? <AbsentCell reason="the book carries this holding's value as a total, with no price per unit" />}
                     </td>
                     <td className="px-4 py-2.5 text-right mono text-slate-200">
                       {money(r.marketValue)}

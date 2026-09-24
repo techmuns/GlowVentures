@@ -5094,7 +5094,43 @@ const M2_BOOK = (() => {
     // AMFI's own published record for a key — the last one wins, as the page's index keeps it.
     const navStore = fundNavStore() ?? [];
     const navOf = (key) => { let hit = null; for (const e of navStore) if (e.securityKey === key) hit = e; return hit; };
-    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme, realisedOf, soldAfter, realisedFund, corporate, navOf };
+    /*
+     * A MANDATE'S OWN DATE AND ITS COST, PAID IN AND TAKEN OUT (DSM-C2, C6),
+     * off the account and its rows — never off the page's `fifoTotals`.
+     */
+    const newest = accounts.map((a) => a.asOf).filter(Boolean).sort().at(-1) ?? null;
+    const accountOf = (id) => acc.get(id) ?? null;
+    const mandateOf = (id) => {
+      const a = acc.get(id), ps = positions.filter((p) => p.accountId === id);
+      if (!a) return null;
+      const costed = ps.filter((p) => typeof p.costBasis === "number");
+      return { asOf: a.asOf, contributed: a.capital?.contributed ?? null, withdrawn: a.capital?.withdrawn ?? null,
+        cost: costed.reduce((x, p) => x + p.costBasis, 0), allCosted: ps.length > 0 && costed.length === ps.length };
+    };
+    /*
+     * THE DATE A HOLDING'S VALUE IS STRUCK AT (VD-17, DSM-C4), on a walk with no
+     * quote: AMFI's publication date on a row the published NAV values
+     * (`withPublishedNavs` marks it, the page's own overlay re-expressed), else
+     * the statement's own date — each dedupeGroup once, as the page's rows are.
+     * One date, or null where the rows disagree.
+     */
+    const valuedOf = (key) => {
+      const d = onceEach(byKey.get(key) ?? []);
+      if (!d.length) return null;
+      const dates = d.map((p) => (p.navPriced ? p.navDate : acc.get(p.accountId)?.asOf ?? null));
+      const kinds = new Set(d.map((p) => (p.navPriced ? "nav" : "statement")));
+      return { at: new Set(dates).size === 1 ? dates[0] : null, by: kinds.size === 1 ? [...kinds][0] : "mixed", dates: new Set(dates).size };
+    };
+    // A held scheme the fund store matched on its NAME, not on the holding's
+    // own ISIN — Active Momentum, whose rows carry none (DSM-C5, VD-19).
+    const nameMatched = held.filter(cardDrawn)
+      .filter((k) => idx.schemes[k]?.matchedVia && idx.schemes[k].matchedVia !== "isin")
+      .map((k) => ({ key: k, via: idx.schemes[k].matchedVia, isin: idx.schemes[k].isin ?? null, mv: mvOf(k),
+        bookIsin: (byKey.get(k) ?? []).some((p) => !!p.isin) }))
+      .filter((x) => !x.bookIsin)
+      .sort((a, b) => b.mv - a.mv)[0] ?? null;
+    return { entitiesOf, entities, unitBreak, schemeOf, cagrScheme, realisedOf, soldAfter, realisedFund, corporate, navOf,
+      newest, accountOf, mandateOf, valuedOf, nameMatched };
   } catch { return null; }
 })();
 
@@ -6048,6 +6084,10 @@ const ROUTES = [
    */
   ["stock-sold-after", () => (M2_BOOK?.soldAfter ? `/stock/${encodeURIComponent(M2_BOOK.soldAfter.key)}` : "/stock/no-company-sold-after-its-statement")],
   ["stock-realised-fund", () => (M2_BOOK?.realisedFund ? `/stock/${encodeURIComponent(M2_BOOK.realisedFund.key)}` : "/stock/no-fund-with-a-realised-figure")],
+  // ...AND A SCHEME MATCHED ON ITS NAME, whose rows carry no ISIN: the card must
+  // not claim the holding's ISIN, and the header must not say the provider
+  // reports none (DSM-C5, VD-19). On Price & returns, where the Plan tile is.
+  ["stock-scheme-name-match", () => (M2_BOOK?.nameMatched ? `/stock/${encodeURIComponent(M2_BOOK.nameMatched.key)}?tab=market` : "/stock/no-scheme-matched-on-its-name?tab=market")],
   // ...AND ONE THE BOOK HAS NO COST FOR. Its Avg cost and Unrealised P&L tiles
   // are correctly a dash and must SAY SO: they used to print "invested —" (a
   // second dash) and "on cost" (a basis the figure does not have), which is the
@@ -11761,6 +11801,25 @@ function realisedTileChecks(keyOf) {
         && (want.nothingSold ? claimsNothing && /measured zero/.test(r.tip ?? "") : !claimsNothing);
     }],
   ];
+}
+
+/**
+ * ── A MANDATE PAGE IS DATED BY ITS OWN STATEMENT (DSM-C2) ──────────────────
+ *
+ * The book-wide basis pill printed the book's newest date — another account's
+ * statement — and a count of the book's accounts behind it. The page carries
+ * one pill, on this account's own date, and neither of those facts about other
+ * accounts. The account is read off the route's own address.
+ */
+function mandateDateChecks() {
+  return [["the page is dated by its own account's statement, never the book's newest", (t, ctx) => {
+    const b = ctx?.stockM2?.mandateBasis;
+    const id = decodeURIComponent(((ctx?.url ?? "").split("/mandate/")[1] ?? "").split(/[?#]/)[0]);
+    const a = M2_BOOK?.accountOf(id);
+    if (!a || !b) return false;
+    return b.asOf === a.asOf && !/accounts behind/i.test(b.header ?? "")
+      && (a.asOf === M2_BOOK.newest || !(b.header ?? "").includes(M2_BOOK.newest));
+  }]];
 }
 
 /**
@@ -19818,8 +19877,20 @@ const INVARIANTS = {
       /holdings from (the AMC's own disclosure|an aggregator's copy)/i.test(t)],
     // Both as-of dates, since a monthly portfolio and a statement mark rarely
     // coincide.
-    ["both as-of dates are printed, the portfolio's and the holding's", (t) =>
-      /portfolio\s+\d{1,2} \w{3,} \d{4}\s*·\s*holding\s+\d{1,2} \w{3,} \d{4}/i.test(t)],
+    ["both dates are printed, the portfolio's and the date the holding is valued at", (t) =>
+      /portfolio\s+\d{1,2} \w{3,} \d{4}\s*·\s*your holding valued\s+\d{1,2} \w{3,} \d{4}/i.test(t)],
+    /**
+     * THE HOLDING IS DATED BY WHEN ITS VALUE IS STRUCK (DSM-C4). The pill said
+     * "holding 7 Aug 2026" — the statement's date — over a derived column
+     * struck on AMFI's NAV of weeks later. Re-derived off the book and AMFI's
+     * file: the NAV's date where that file values the holding, else the
+     * statement's own.
+     */
+    ["the family's holding is dated by the date its value is struck, and says by what", (t, ctx) => {
+      const v = ctx?.stockM2?.ltValued, want = MF_KEY ? M2_BOOK?.valuedOf(MF_KEY) : null;
+      if (!v || !want) return false;
+      return v.at === want.at && v.by === want.by;
+    }],
     /**
      * THE DERIVED COLUMN RECONSTRUCTS FROM THE PAGE'S OWN FIGURES — the
      * holding's value times the scheme's published weight. A column that
@@ -20002,6 +20073,36 @@ const INVARIANTS = {
       return !!r && M2_BOOK?.realisedFund?.fromRecord === true && /dated redemption record/.test(r.text ?? "") && r.unreconciled == null;
     }],
   ],
+  "stock-scheme-name-match": [
+    ...stockTabChecks("market"),
+    ["the book carries a held scheme the fund store matched on its name, whose rows print no ISIN", () => !!M2_BOOK?.nameMatched],
+    /**
+     * A MATCH ON THE NAME IS NOT A MATCH ON THE ISIN (DSM-C5). The pill read
+     * "matched on name+plan" and its hover "Matched from this holding's own
+     * ISIN", and the Plan tile said "from this holding's ISIN" — about a
+     * holding whose rows carry none. Each now says how the scheme was reached.
+     */
+    ["the match pill says how the scheme was reached, and claims no ISIN the holding lacks", (t, ctx) => {
+      const m = ctx?.stockM2?.ltMatch, want = M2_BOOK?.nameMatched;
+      if (!m || !want) return false;
+      return m.via === want.via && !/this holding's own ISIN/i.test(m.tip ?? "")
+        && /name/i.test(m.tip ?? "") && (!want.isin || (m.tip ?? "").includes(want.isin));
+    }],
+    ["...and the Plan tile says where its plan came from, never 'this holding's ISIN'", (t, ctx) => {
+      const m = ctx?.stockM2?.ltMatch, want = M2_BOOK?.nameMatched;
+      if (!m || !want) return false;
+      const fromName = /plan/i.test(want.via) ? /statement names/i : /scheme's name/i;
+      return !/this holding's ISIN/i.test(`${m.planSource} ${m.planTip}`) && fromName.test(m.planSource ?? "");
+    }],
+    /**
+     * "NO ISIN REPORTED" WAS FALSE (VD-19): the statement prints one and its
+     * reader did not capture it. What is true is that the BOOK carries none.
+     */
+    ["the header says the book carries no ISIN, never that the provider reports none", (t, ctx) => {
+      const e = ctx?.stockM2?.isinAbsent;
+      return !!e && /no ISIN in the book/i.test(e.text ?? "") && !/reports no ISIN/i.test(e.tip ?? "");
+    }],
+  ],
   "corporate-actions": corporateActionChecks(false),
   "corporate-actions-live": corporateActionChecks(true),
   "stock-entities": [
@@ -20031,10 +20132,20 @@ const INVARIANTS = {
     // tile's own line — read off its handle rather than off the page text.
     ["realised P&L and the price tile still state their own reasons",
       (t, ctx) => /no capital gain statement covers (this name|the accounts that hold it)/i.test(t)
-        && /no live quote|price feed|no NSE symbol|fetching live price|total value, not a price per unit|AMFI NAV|NAV on the statement|do not agree|held back|cannot be priced live/i
+        && /no live quote|price feed|no NSE symbol|fetching live price|no per-unit price in the book|AMFI NAV|NAV on the statement|do not agree|held back|cannot be priced live/i
           .test(ctx.stockMark?.caption ?? "")],
     ...realisedTileChecks(() => NO_COST_KEY),
     ...stockTabChecks("position"),
+    /**
+     * THE VALUE SAYS WHEN IT WAS STRUCK (VD-17). This holding sits on the ICICI
+     * NSDL statement of 31 March and the tile printed its value undated beside
+     * figures the live feed moves every minute.
+     */
+    ["the Holding value names the date its value is struck, and by what", (t, ctx) => {
+      const v = ctx?.stockM2?.valued, want = NO_COST_KEY ? M2_BOOK?.valuedOf(NO_COST_KEY) : null;
+      if (!v || !want || !want.at) return false;
+      return v.at === want.at && v.by === want.by && /statement mark ·/i.test(v.text ?? "") && /not today's/i.test(v.tip ?? "");
+    }],
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
@@ -27588,7 +27699,7 @@ const INVARIANTS = {
       (t, ctx) => ctx.stockMark?.state === "none" && /—/.test(ctx.stockMark.value)
         && !/₹\s*0(\D|$)/.test(ctx.stockMark.value)],
     ["...and names THAT cause rather than the disagreement one",
-      (t, ctx) => /total value, not a price per unit/i.test(ctx.stockMark?.caption ?? "")
+      (t, ctx) => /no per-unit price in the book/i.test(ctx.stockMark?.caption ?? "")
         && !/do not agree/i.test(ctx.stockMark?.caption ?? "")],
     ["the book carries a holding no statement marks per unit",
       () => !!CMP_BOOK.unmarkedKey],
@@ -27756,6 +27867,7 @@ const INVARIANTS = {
   mandate: [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ...mandateDateChecks(),
     /**
      * ── WHEN, BESIDE HOW MUCH ────────────────────────────────────────────────
      *
@@ -27905,6 +28017,25 @@ const INVARIANTS = {
   "mandate-fifo": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ...mandateDateChecks(),
+    /**
+     * WHAT THE COST HELD IS, AND HOW IT MEETS WHAT WAS PAID IN (DSM-C6). The
+     * Invested tile (the cost of what the manager holds) and the capital card
+     * (what the family paid in) are two figures and the page said nothing to
+     * tie them. The tile names its basis, and on a whole mandate prints paid in
+     * less taken out plus realised — each read here off the ACCOUNT and its
+     * rows, and required to add up to the tile.
+     */
+    ["the Invested tile names its basis, and adds it up from what was paid in", (t, ctx) => {
+      const w = FIFO_BOOK?.worst, m = w ? M2_BOOK?.mandateOf(w.accountId) : null, r = ctx?.stockM2?.mandateInvested;
+      if (!m) return false;
+      if (!m.allCosted) return { notChecked: "a row of this mandate reports no cost, so no reconciliation is printed" };
+      if (!r || m.contributed == null) return false;
+      const realised = m.cost + m.withdrawn - m.contributed;
+      return /cost of holdings/.test(r.sub ?? "")
+        && r.paidIn === m.contributed && r.takenOut === m.withdrawn && Math.abs(r.realised - realised) <= 1
+        && Math.abs(r.paidIn - r.takenOut + r.realised - m.cost) <= 1;
+    }],
     ["the Return · FIFO tile is the mandate's own capital return", (t) => {
       const w = FIFO_BOOK?.worst;
       if (!w) return false;
@@ -27922,6 +28053,7 @@ const INVARIANTS = {
   "mandate-funded": [
     ["the route resolves to a real mandate, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/This account is not a PMS mandate/i.test(t)],
+    ...mandateDateChecks(),
     /**
      * EVERY DATED CONTRIBUTION IS DRAWN, counted against the BOOK rather than
      * against the card's own header. The card computes both from one array, so
@@ -34381,6 +34513,35 @@ for (const theme of THEMES) {
           // The price tile's hover — where the corporate-action gate's reason is.
           markTip: document.querySelector("[data-stock-mark-note]")?.getAttribute("title") ?? null,
           refusedTip: document.querySelector("[data-scheme-returns-refused]")?.getAttribute("title") ?? null,
+          // The Holding value tile's date and source (VD-17).
+          valued: (() => {
+            const v = document.querySelector("[data-stock-valued-at]");
+            return v ? { at: v.getAttribute("data-stock-valued-at") || null, by: v.getAttribute("data-stock-valued-by") || null, text: txt(v), tip: v.getAttribute("title") } : null;
+          })(),
+          // The fund card's match and plan (DSM-C5), and the date its holding is valued (DSM-C4).
+          ltMatch: (() => {
+            const m = document.querySelector("[data-lt-matched-via]");
+            const pl = document.querySelector("[data-lt-plan-source]");
+            return m ? { via: m.getAttribute("data-lt-matched-via"), text: txt(m), tip: m.getAttribute("title"),
+              plan: txt(document.querySelector("[data-lt-plan]")), planSource: txt(pl), planTip: pl?.getAttribute("title") ?? null } : null;
+          })(),
+          ltValued: (() => {
+            const v = document.querySelector("[data-lt-valued-at]");
+            return v ? { at: v.getAttribute("data-lt-valued-at") || null, by: v.getAttribute("data-lt-valued-by") || null, text: txt(v) } : null;
+          })(),
+          isinAbsent: (() => { const e = document.querySelector("[data-stock-isin-absent]"); return e ? { text: txt(e), tip: e.getAttribute("title") } : null; })(),
+          // The mandate page's one basis pill and its header (DSM-C2), and the
+          // Invested tile's reconciliation (DSM-C6).
+          mandateBasis: (() => {
+            const e = document.querySelector("[data-mandate-asof]");
+            return e ? { asOf: e.getAttribute("data-mandate-asof"), basis: e.getAttribute("data-mandate-basis"), text: txt(e),
+              header: txt(document.querySelector("h1")?.parentElement) } : null;
+          })(),
+          mandateInvested: (() => {
+            const e = document.querySelector("[data-mandate-invested-reconcile]");
+            return e ? { paidIn: num(e.getAttribute("data-paid-in")), takenOut: num(e.getAttribute("data-taken-out")),
+              realised: num(e.getAttribute("data-realised")), text: txt(e), sub: txt(e.parentElement) } : null;
+          })(),
           // The fund card's NAV: whose it is, and the figure and date it prints.
           ltNav: (() => {
             const n = document.querySelector("[data-lt-nav-source]");

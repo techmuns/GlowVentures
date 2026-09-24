@@ -16,6 +16,8 @@ import {
 } from "@/lib/lookthrough";
 import { schemeReturns, breakAfter, stepWords } from "@/lib/schemeReturns";
 import { fundNavFor } from "@/lib/fundNavs";
+import { schemeMatchWords } from "@/lib/schemeMatch";
+import type { ValuedBy } from "@/lib/valuedAt";
 
 /**
  * ── THE SCHEME: ITS NAV, ITS RETURNS, AND WHAT IT HOLDS ─────────────────────
@@ -60,7 +62,7 @@ const PART_TITLE = {
   holdings: "What the scheme holds",
 } as const;
 
-export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part, statementAsOf }: {
+export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, part, statementAsOf, valuedAt, valuedBy, valuedDates }: {
   securityKey: string;
   name: string;
   /** What the family's units are worth, for the derived exposure column. */
@@ -75,6 +77,15 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
    * predates the change, its mark is on the earlier unit.
    */
   statementAsOf?: string | null;
+  /**
+   * WHEN AND BY WHAT `holdingValue` IS STRUCK (DSM-C4) — `holdingValuation` on
+   * the page — the date a reader must set the derived column against. The
+   * statement's date is not it wherever a published NAV or a live quote values
+   * the holding.
+   */
+  valuedAt?: string | null;
+  valuedBy?: ValuedBy | null;
+  valuedDates?: number;
 }) {
   const { fmtFromBase } = usePortfolio();
   const [state, setState] = useState<LookthroughState>({ status: "loading" });
@@ -164,6 +175,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 
   const { match } = state;
   const p = pf!;
+  const sm = schemeMatchWords(match.matchedVia, match.isin);
   /**
    * ONE NAV PER PAGE (DSM-B5). The page's price is AMFI's own published NAV
    * (`fundNavs.ts`, refreshed daily), and this card printed the fund store's
@@ -210,7 +222,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       subtitle={`${p.amfiSchemeName ?? p.scheme ?? name} — ${part === "nav" ? `${navShown.source === "amfi" ? "AMFI's daily NAV" : "the fund store's own NAV"} and the scheme's own returns` : `${p.amc ? `${p.amc}'s` : "the AMC's"} own monthly disclosure`}: published figures about the scheme, not a statement issued to this family.`}
       right={<div className="flex flex-wrap items-center justify-end gap-1.5">
         <Pill>not a statement issued to this family</Pill>
-        <Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>
+        <Pill tone="info"><span data-lt-matched-via={match.matchedVia} title={sm.pillTip}>{sm.pill}</span></Pill>
       </div>}>
 
       {part === "nav" && (<>
@@ -255,13 +267,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         </div>
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
           <div className="label-xs">Plan</div>
-          <div className="mt-1.5 text-[15px] font-semibold capitalize text-slate-100">
+          <div className="mt-1.5 text-[15px] font-semibold capitalize text-slate-100" data-lt-plan>
             {p.plan ?? DASH}{p.option ? <span className="text-slate-400"> · {p.option}</span> : null}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            <span title="Resolved from this holding's own ISIN, so the NAV above is this plan's. Plans differ in expense ratio, and therefore NAV — not in what the fund owns.">
-              from this holding's ISIN
-            </span>
+            <span data-lt-plan-source title={sm.planTip}>{sm.planSource}</span>
           </div>
         </div>
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
@@ -355,8 +365,11 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       {rows.length > 0 && (
       <div className="mb-3 flex flex-wrap items-center gap-2 text-[11.5px]">
         <Pill>
-          <span title="A scheme discloses its portfolio monthly; the family's units are valued on their own statement's date. The two rarely coincide, so both are shown rather than one standing for the other.">
-            portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · holding {fmtDate(asOfHolding)}
+          <span data-lt-valued-at={valuedAt ?? ""} data-lt-valued-by={valuedBy ?? ""}
+            title={`A scheme discloses its portfolio monthly; the family's units are valued ${valuedBy === "nav" ? "at AMFI's published NAV"
+              : valuedBy === "live" ? "at a live quote" : valuedBy === "statement" ? "at their statement's own mark" : "on their own dates"}${valuedAt ? ` of ${fmtDate(valuedAt)}` : ""}. The two rarely coincide, so both are shown rather than one standing for the other — and the look-through column is the family's value on that date times the portfolio's weights.`}>
+            portfolio {p.holdingsAsOf ? fmtDate(p.holdingsAsOf) : DASH} · your holding valued {valuedAt ? fmtDate(valuedAt)
+              : valuedDates && valuedDates > 1 ? `on ${valuedDates} dates` : fmtDate(asOfHolding)}{valuedBy === "nav" ? " (AMFI NAV)" : valuedBy === "live" ? " (live)" : valuedBy === "statement" ? " (statement)" : ""}
           </span>
         </Pill>
         {p.holdingsSource && (
