@@ -465,14 +465,21 @@ const canLookThrough = (r: { assetClass: string; securityKey: string }) =>
  * are written in, which is what `<Tr>` permutes from. Two sets, because the
  * SECURITY axis draws two more: a row there is a COMPANY rather than a holding,
  * so it carries the derived `Via funds` and the `Total exposure` that adds it
- * to the measured half. They are separate storage keys for the same reason the
- * sweep keeps `COL` and `COL_STOCK` apart — reconciling one set's saved order
- * against the other's columns would drop two columns on every axis switch.
+ * to the measured half.
+ *
+ * ONE ARRANGEMENT FOR EVERY AXIS TAB. *"remember the exact position and save it
+ * even when i am changing the tab i will not keep doing the same configuration
+ * again."* The two sets used to be saved under two keys, so a column moved on
+ * All Securities was not moved on Category. They share `monitor` now:
+ * `useTableView` saves the WHOLE arrangement, so the two columns only the
+ * security axis draws keep their places while Category is open. The old
+ * `monitor-stock` key is read only where nothing is saved under `monitor`.
  */
 const MONITOR_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
   "weight", "pnl", "realised", "return", "sector", "entity"] as const;
 const MONITOR_STOCK_COLS = ["security", "qty", "avgCost", "invested", "investedOn", "cmp", "day", "mv",
   "viaFunds", "totalExposure", "weight", "pnl", "realised", "return", "sector", "entity"] as const;
+const MONITOR_LEGACY_KEYS = ["monitor-stock"] as const;
 
 /**
  * WHAT EACH COLUMN IS WORTH ON A ROW, for the reader's own ranking. An absent
@@ -734,14 +741,16 @@ export function PortfolioMonitor() {
    *    return column side by side — a new column with that return name should be
    *    made, and also removed when we select or deselect returns."*
    *
-   * So this array is the COLUMN LIST. Default is `auto`, the methodology (equity
-   * under a year absolute, a year or more CAGR, fixed income XIRR) as one
-   * column; the reader can pin one or more concrete measures instead and each
-   * gets a column headed with its own name. Held in the URL (`?ret=`), so the
+   * So this array is the COLUMN LIST. The default is EVERY measure, one column
+   * each — *"make default All ratios showing coloumns as selected … and remeber
+   * it"* — and the reader's pick is saved for this page (Holdings and
+   * Transactions share it), so the next visit opens on it. `auto`, the
+   * methodology (equity under a year absolute, a year or more CAGR, fixed income
+   * XIRR) as one column, is one pick away. A `?ret=` address still wins, so the
    * guard-firing CAGR view is a shareable link and the sweep reaches it without
    * a click. See `useReturnMeasures` / `measuredReturn`.
    */
-  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
+  const [returnMeasures, setReturnMeasures, returnSource] = useReturnMeasures("monitor");
   /**
    * THE FUND LOOK-THROUGH — assembled by `useStockExposure`, which both this
    * page and Sector Composition's Consolidated view call.
@@ -776,7 +785,7 @@ export function PortfolioMonitor() {
   const holdCols = useMemo(
     () => withReturnCols(bySecurity ? MONITOR_STOCK_COLS : MONITOR_COLS, returnMeasures),
     [bySecurity, returnMeasures]);
-  const holdView = useTableView(bySecurity ? "monitor-stock" : "monitor", holdCols);
+  const holdView = useTableView("monitor", holdCols, { legacyKeys: MONITOR_LEGACY_KEYS });
   /**
    * AND THE ACCESSORS GAIN ONE PER MEASURE, so each return column sorts on the
    * figure it prints rather than on `returnPct` for all of them.
@@ -2736,7 +2745,7 @@ export function PortfolioMonitor() {
           holdings one only where the record lets it be: an XIRR is solved over
           the account's real dated purchases and redemptions here.
         */}
-        <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} />
+        <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} source={returnSource} />
         {/* EXPAND ALL — the standard's one control for every row the table can
             open. Beside the return picker, with the other controls that arrange
             the table rather than narrow it; absent on the security axis, where
