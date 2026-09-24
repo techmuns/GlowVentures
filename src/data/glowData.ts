@@ -10,7 +10,7 @@
 import type {
   Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,
   Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,
-  RealisedByClass, ShareMovement, StartupInvestment,
+  RealisedByClass, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,
 } from "@/lib/types";
 
 /** Newest report date across all accounts. Individual accounts can be older. */
@@ -304,7 +304,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-07-27",
     "inceptionDate": "2025-01-16",
-    "capitalRecordTo": "2026-06-30",
+    "capitalRecordTo": "2026-07-27",
     "custodian": "Green Lantern Capital LLP",
     "noPositionsReason": null,
     "capital": {
@@ -932,7 +932,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-13",
     "inceptionDate": "2025-07-30",
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-08-13",
     "custodian": "V.E.C Assago Capital Management LLP",
     "noPositionsReason": null,
     "capital": {
@@ -3443,9 +3443,9 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 6654.95,
     "marketValue": 6866.63,
     "unrealizedPnL": 211.68,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 3.18,
+    "realizedPnL": 283865.6,
+    "costOfUnitsSold": 5171018.41,
+    "returnPct": 5.49,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -4367,9 +4367,9 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": 6016.8,
     "marketValue": 6208.19,
     "unrealizedPnL": 191.39,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
-    "returnPct": 3.18,
+    "realizedPnL": 578366.03,
+    "costOfUnitsSold": 9917814.34,
+    "returnPct": 5.83,
     "stCostBasis": null,
     "ltCostBasis": null,
     "daysToLT": null,
@@ -5603,8 +5603,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "opening-position",
     "marketValue": 2325000,
     "unrealizedPnL": 551375,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
     "realizedLotsAfter": 1,
     "returnPct": 31.09,
     "stCostBasis": null,
@@ -5633,8 +5633,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "opening-position",
     "marketValue": 1160950,
     "unrealizedPnL": -82651.1,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
     "realizedLotsAfter": 2,
     "returnPct": -6.65,
     "stCostBasis": null,
@@ -5692,8 +5692,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "opening-position",
     "marketValue": 881500,
     "unrealizedPnL": -174612,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
     "realizedLotsAfter": 3,
     "returnPct": -16.53,
     "stCostBasis": null,
@@ -5722,8 +5722,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "opening-position",
     "marketValue": 788400,
     "unrealizedPnL": -619814.6,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
     "realizedLotsAfter": 2,
     "returnPct": -44.01,
     "stCostBasis": null,
@@ -5780,8 +5780,9 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasis": null,
     "marketValue": 17111.17,
     "unrealizedPnL": null,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
+    "realizedLotsAfter": 1,
     "returnPct": null,
     "stCostBasis": null,
     "ltCostBasis": null,
@@ -5867,8 +5868,8 @@ export const BOOK_POSITIONS: Position[] = [
     "costBasisSource": "opening-position",
     "marketValue": 1036935,
     "unrealizedPnL": -210247.11,
-    "realizedPnL": 0,
-    "costOfUnitsSold": 0,
+    "realizedPnL": null,
+    "costOfUnitsSold": null,
     "realizedLotsAfter": 1,
     "returnPct": -16.86,
     "stCostBasis": null,
@@ -11124,6 +11125,732 @@ export const BOOK_POSITIONS: Position[] = [
 ];
 
 /**
+ * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.
+ *
+ * One row per holding an account's authoritative holdings document reports with
+ * units and no market value: a fund that publishes no NAV, or a custodian that
+ * records a face value or no rate. `reason` is the row's own; `sameUnitsReportedBy`
+ * names the same owner's fund account whose own statement reports the identical units.
+ */
+export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = [
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67786137",
+    "ownerId": "bharat-jaisinghani-family-trust-3",
+    "securityKey": "swapeco-solutions",
+    "security": "SWAPECO SOLUTIONS PRIVATE LIMITED",
+    "isin": "INE2DT103015",
+    "assetClass": "Unlisted",
+    "quantity": 347,
+    "faceValue": 100,
+    "asOf": "2026-08-29",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-08-29 records 347 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "hdfc-bank-nsdl-demat-67786547",
+    "ownerId": "bharat-jaisinghani-family-trust-2",
+    "securityKey": "swapeco-solutions",
+    "security": "SWAPECO SOLUTIONS PRIVATE LIMITED",
+    "isin": "INE2DT103015",
+    "assetClass": "Unlisted",
+    "quantity": 347,
+    "faceValue": 100,
+    "asOf": "2026-08-29",
+    "sameUnitsReportedBy": null,
+    "reason": "the HDFC Bank (NSDL demat) statement of 2026-08-29 records 347 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "assetgro-fintech-private-limited-1-series-b-pref-25nv44",
+    "security": "ASSETGRO FINTECH PRIVATE LIMITED - 1% SERIES B PREF 25NV44",
+    "isin": "INE1BZY03142",
+    "assetClass": "Unlisted",
+    "quantity": 636,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 636 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "big-bang-boom-solutions-private-limited-0-001-pref-12sp44",
+    "security": "BIG BANG BOOM SOLUTIONS PRIVATE LIMITED - 0.001% PREF 12SP44",
+    "isin": "INE1BRB03089",
+    "assetClass": "Unlisted",
+    "quantity": 48,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 48 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "electromech-infraprojects",
+    "security": "ELECTROMECH INFRAPROJECTS LIMITED - EQ NEW FV RS.5/",
+    "isin": "INE1B3701036",
+    "assetClass": "Equity",
+    "quantity": 378788,
+    "faceValue": 5,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 378788 unit(s) at their face value of 5, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "esds-software-solution-limited-eq-new-fv-rs-1",
+    "security": "ESDS SOFTWARE SOLUTION LIMITED - EQ NEW FV RS .1/",
+    "isin": "INE0DRI01029",
+    "assetClass": "Equity",
+    "quantity": 330898,
+    "faceValue": 1,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 330898 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "everest-fleet",
+    "security": "EVEREST FLEET PRIVATE LIMITED - EQ NEW FV RS. 1/",
+    "isin": "INE0LTR01029",
+    "assetClass": "Unlisted",
+    "quantity": 710,
+    "faceValue": 1,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 710 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "everest-fleet-private-limited-0-001-series-b-new-pref-18ap43",
+    "security": "EVEREST FLEET PRIVATE LIMITED - 0.001% SERIES B NEW PREF 18AP43",
+    "isin": "INE0LTR03090",
+    "assetClass": "Unlisted",
+    "quantity": 100,
+    "faceValue": 1,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 100 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "india-sme-investments-aif-trust-ii-cl-a2-restricted-transferability",
+    "security": "INDIA SME INVESTMENTS AIF TRUST II - CL A2 - Restricted Transferability",
+    "isin": "INF0XAZ22055",
+    "assetClass": "AIF",
+    "quantity": 67500,
+    "faceValue": 1000,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 67500 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "infobay-ai-limited-0-01-pref-18ag44",
+    "security": "INFOBAY AI LIMITED - 0.01% PREF 18AG44",
+    "isin": "IN90SE903019",
+    "assetClass": "Unlisted",
+    "quantity": 107,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 107 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "innoviti-technologies",
+    "security": "INNOVITI TECHNOLOGIES PRIVATE LIMITED - EQ",
+    "isin": "INE0NV501016",
+    "assetClass": "Unlisted",
+    "quantity": 32017,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32017 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "integris-medtech",
+    "security": "INTEGRIS MEDTECH LIMITED - EQ NEW FV RE.1/",
+    "isin": "INE05GT01023",
+    "assetClass": "Equity",
+    "quantity": 177981,
+    "faceValue": 1,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 177981 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "matrix-gas-and-renewables",
+    "security": "MATRIX GAS AND RENEWABLES LIMITED - EQ",
+    "isin": "INE0PO201010",
+    "assetClass": "Equity",
+    "quantity": 75000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 75000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "national-stock-exchange-of-india",
+    "security": "NATIONAL STOCK EXCHANGE OF INDIA LTD - EQ NEW FV RE.1/",
+    "isin": "INE721I01024",
+    "assetClass": "Equity",
+    "quantity": 125000,
+    "faceValue": 1,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 125000 unit(s) at their face value of 1, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "oilmax-energy",
+    "security": "OILMAX ENERGY PRIVATE LIMITED - EQ",
+    "isin": "INE069601016",
+    "assetClass": "Unlisted",
+    "quantity": 17000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 17000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "onix-renewable",
+    "security": "ONIX RENEWABLE LIMITED - EQ",
+    "isin": "INE0TG701015",
+    "assetClass": "Equity",
+    "quantity": 90000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 90000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "radiant-innovative-manufacturing",
+    "security": "RADIANT INNOVATIVE MANUFACTURING LIMITED - EQ NEW FV RS. 10/",
+    "isin": "INE007Z01022",
+    "assetClass": "Equity",
+    "quantity": 71400,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 71400 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "rays-power-experts",
+    "security": "RAYS POWER EXPERTS PRIVATE LIMITED - EQ",
+    "isin": "INE0WSH01011",
+    "assetClass": "Unlisted",
+    "quantity": 59000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 59000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "sks-fasteners",
+    "security": "SKS FASTENERS LIMITED - EQ",
+    "isin": "INE593N01019",
+    "assetClass": "Equity",
+    "quantity": 24800,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 24800 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "sky-capital-rising-titans-fund-i-skycrtf-oncarea3-restricted-transferability",
+    "security": "SKY CAPITAL RISING TITANS FUND I - SKYCRTF ONCAREA3 - Restricted Transferability",
+    "isin": "INF1V9N22050",
+    "assetClass": "AIF",
+    "quantity": 15000,
+    "faceValue": 1000,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": "sky-capital-rising-titans-fund-SKY022",
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 15000 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "sotefin-bharat",
+    "security": "SOTEFIN BHARAT LIMITED - EQ",
+    "isin": "INE12Z301012",
+    "assetClass": "Equity",
+    "quantity": 171879,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 171879 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "spray-engineering-devices",
+    "security": "SPRAY ENGINEERING DEVICES LIMITED - EQ",
+    "isin": "INE528I01015",
+    "assetClass": "Equity",
+    "quantity": 165566,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 165566 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "urb-ventures",
+    "security": "URB VENTURES PRIVATE LIMITED - EQ",
+    "isin": "INE0Q8701015",
+    "assetClass": "Unlisted",
+    "quantity": 148000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 148000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "urb-ventures-private-limited-0-001-pref-07jl42",
+    "security": "URB VENTURES PRIVATE LIMITED - 0.001% PREF 07JL42",
+    "isin": "INE0Q8703029",
+    "assetClass": "Unlisted",
+    "quantity": 4000,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 4000 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "wevois-labs",
+    "security": "WEVOIS LABS PRIVATE LIMITED - EQ",
+    "isin": "INE0Z6Z01013",
+    "assetClass": "Unlisted",
+    "quantity": 55,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 55 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "icici-bank-nsdl-demat-49794950",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "zenith-leisure-holidays",
+    "security": "ZENITH LEISURE HOLIDAYS LIMITED - EQ",
+    "isin": "INE0ETS01014",
+    "assetClass": "Equity",
+    "quantity": 32791,
+    "faceValue": 10,
+    "asOf": "2026-03-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the ICICI Bank (NSDL demat) statement of 2026-03-31 records 32791 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "india-sme-investments-175962",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "isin": null,
+    "assetClass": "AIF",
+    "quantity": 81000,
+    "faceValue": null,
+    "asOf": "2026-06-30",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-06-30 reports 81000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "india-sme-investments-175964",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "isin": null,
+    "assetClass": "AIF",
+    "quantity": 27000,
+    "faceValue": null,
+    "asOf": "2026-06-30",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-06-30 reports 27000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "india-sme-investments-177302",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "isin": null,
+    "assetClass": "AIF",
+    "quantity": 27000,
+    "faceValue": null,
+    "asOf": "2026-06-30",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-06-30 reports 27000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "3p-india-equity-fund-1-class-b3",
+    "security": "3P India Equity Fund 1 — Class B3",
+    "isin": "INF0R4I22066",
+    "assetClass": "AIF",
+    "quantity": 1416918.692,
+    "faceValue": 100,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1416918.692 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "absl-bal-adv-growth",
+    "security": "ABSL BAL ADV-GROWTH",
+    "isin": "INF084M01AB8",
+    "assetClass": "Mutual Fund",
+    "quantity": 393095.951,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "baring-private-equity-india-fund-6-class-a1",
+    "security": "Baring Private Equity India Fund 6 — Class A1",
+    "isin": "INF15Q422013",
+    "assetClass": "AIF",
+    "quantity": 252.5,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "bavf-series-20-class-c6",
+    "security": "BAVF Series 20 — Class C6",
+    "isin": "INF0VGG22429",
+    "assetClass": "AIF",
+    "quantity": 856.736,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "buoyant-opportunities-strategy-class-a4",
+    "security": "Buoyant Opportunities Strategy — Class A4",
+    "isin": "INF0RRI22040",
+    "assetClass": "AIF",
+    "quantity": 1918953.2,
+    "faceValue": 100,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "buoyant-capital-103472",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 1918953.2 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "carnelian-bharat-amritkaal-fund-class-a2",
+    "security": "Carnelian Bharat Amritkaal Fund — Class A2",
+    "isin": "INF0ROG22363",
+    "assetClass": "AIF",
+    "quantity": 12993094.825,
+    "faceValue": 10,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "carnelian-bharat-amritkaal-fund-4551",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12993094.825 unit(s) at their face value of 10, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "cheelizza-ind",
+    "security": "CHEELIZZA IND-EQ1/",
+    "isin": "INE0MSX01027",
+    "assetClass": "Equity",
+    "quantity": 350980,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "clean-max-env",
+    "security": "CLEAN MAX ENV-EQ 1/",
+    "isin": "INE647U01026",
+    "assetClass": "Equity",
+    "quantity": 94967,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "india-sme-investments-fund-ii-class-a2",
+    "security": "India SME Investments Fund II — Class A2",
+    "isin": "INF0XAZ22055",
+    "assetClass": "AIF",
+    "quantity": 27000,
+    "faceValue": 1000,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "india-sme-investments-177302",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 27000 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "itf-class-a",
+    "security": "ITF — Class A",
+    "isin": "INF0RW922016",
+    "assetClass": "AIF",
+    "quantity": 78.686,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "mirae-lcf-d-grow",
+    "security": "MIRAE LCF D-GROW",
+    "isin": "INF769K01AX2",
+    "assetClass": "Mutual Fund",
+    "quantity": 0.003,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "motilal-oswal-founders-fund-series-ii-class-g1",
+    "security": "Motilal Oswal Founders Fund Series II — Class G1",
+    "isin": "INF0RRH22DW6",
+    "assetClass": "AIF",
+    "quantity": 9514997.798,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "motilal-oswal-founders-fund-90410016093",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "national-stock-ex",
+    "security": "NATIONAL STOCK EX-EQ",
+    "isin": "INE721I01024",
+    "assetClass": "Equity",
+    "quantity": 75000,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "pvc-ii-class-a1",
+    "security": "PVC-II — Class A1",
+    "isin": "INF0UXX22017",
+    "assetClass": "AIF",
+    "quantity": 16000,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "sanshi-fund-i-class-e",
+    "security": "Sanshi Fund-I — Class E",
+    "isin": "INF1ISW22079",
+    "assetClass": "AIF",
+    "quantity": 1820926.864,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "sanshi-fund-9069671554",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "tocf-i-class-a2",
+    "security": "TOCF-I — Class A2",
+    "isin": "INF0RSB22019",
+    "assetClass": "AIF",
+    "quantity": 12899.355,
+    "faceValue": 1000,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 12899.355 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "transition-venture-capital-fund-i-class-a1",
+    "security": "Transition Venture Capital Fund I — Class A1",
+    "isin": "INF0VIS22016",
+    "assetClass": "AIF",
+    "quantity": 2500,
+    "faceValue": 1000,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2500 unit(s) at their face value of 1000, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838316",
+    "ownerId": "ankita-jaisinghani",
+    "securityKey": "vof-i-class-a2",
+    "security": "VOF I — Class A2",
+    "isin": "INF2O4Z22020",
+    "assetClass": "AIF",
+    "quantity": 1225000,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090012838335",
+    "ownerId": "aarti-jaisinghani",
+    "securityKey": "absl-bal-adv-growth",
+    "security": "ABSL BAL ADV-GROWTH",
+    "isin": "INF084M01AB8",
+    "assetClass": "Mutual Fund",
+    "quantity": 242412.122,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 prints no rate for this holding, so it carries a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "3p-india-equity-fund-1-class-b3",
+    "security": "3P India Equity Fund 1 — Class B3",
+    "isin": "INF0R4I22066",
+    "assetClass": "AIF",
+    "quantity": 2053614.026,
+    "faceValue": 100,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 2053614.026 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "motilal-oswal-financial-services-demat-1201090037359311",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "buoyant-opportunities-strategy-class-a4",
+    "security": "Buoyant Opportunities Strategy — Class A4",
+    "isin": "INF0RRI22040",
+    "assetClass": "AIF",
+    "quantity": 3416657.416,
+    "faceValue": 100,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": "buoyant-capital-103473",
+    "reason": "the Motilal Oswal Financial Services (demat) statement of 2026-07-31 records 3416657.416 unit(s) at their face value of 100, the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sky-capital-rising-titans-fund-hudle-class-a1",
+    "security": "Sky Capital Rising Titans Fund — Hudle — Class A1",
+    "isin": "INF1V9N22019",
+    "assetClass": "AIF",
+    "quantity": 17000,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-07-31 reports 17000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY003",
+    "ownerId": "bharat-jaisinghani",
+    "securityKey": "sky-capital-rising-titans-fund-ted-class-a2",
+    "security": "Sky Capital Rising Titans Fund — TED — Class A2",
+    "isin": "INF1V9N22043",
+    "assetClass": "AIF",
+    "quantity": 285,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-07-31 reports 285 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY022",
+    "ownerId": "ajay-jaisinghani",
+    "securityKey": "sky-capital-rising-titans-fund-oncare-class-a3",
+    "security": "Sky Capital Rising Titans Fund — Oncare — Class A3",
+    "isin": "INF1V9N22050",
+    "assetClass": "AIF",
+    "quantity": 15000,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-07-31 reports 15000 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY023",
+    "ownerId": "bharat-jaisinghani-family-trust-2",
+    "securityKey": "sky-capital-rising-titans-fund-oncare-class-a3",
+    "security": "Sky Capital Rising Titans Fund — Oncare — Class A3",
+    "isin": "INF1V9N22050",
+    "assetClass": "AIF",
+    "quantity": 7500,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-07-31 reports 7500 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  },
+  {
+    "accountId": "sky-capital-rising-titans-fund-SKY024",
+    "ownerId": "bharat-jaisinghani-family-trust-3",
+    "securityKey": "sky-capital-rising-titans-fund-oncare-class-a3",
+    "security": "Sky Capital Rising Titans Fund — Oncare — Class A3",
+    "isin": "INF1V9N22050",
+    "assetClass": "AIF",
+    "quantity": 7500,
+    "faceValue": null,
+    "asOf": "2026-07-31",
+    "sameUnitsReportedBy": null,
+    "reason": "the fund's own statement of 2026-07-31 reports 7500 unit(s) and no NAV and no valuation — there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth"
+  }
+];
+
+/**
  * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter
  * holding, carried in the archive but summed into NO book total, split,
  * allocation, sector, entity or holdings table. It is deliberately ABSENT
@@ -11177,8 +11904,8 @@ export const BOOK_POLYCAB: Position[] = [
  *
  * `flowIn` is the net external capital that entered since the previous point,
  * so a reader can separate money added from value earned. `unreportedFlowValue`
- * is the value restated in that interval by an account publishing NO capital
- * record — the part of the move that cannot be proved to be performance.
+ * is the MOVE in that interval of accounts whose capital movement no statement
+ * establishes — the part of the change that cannot be proved to be performance.
  */
 export const BOOK_NAV_HISTORY: NavPoint[] = [
   {
@@ -11213,8 +11940,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 465733110.82,
     "accountsOnDate": 5,
     "accountsCarried": 2,
-    "flowIn": 0,
-    "unreportedFlowValue": 263639117,
+    "flowIn": -986,
+    "unreportedFlowValue": 0,
     "linkOpen": 434782762.27,
     "linkClose": 454484862.16,
     "linkAccounts": 6,
@@ -11278,8 +12005,8 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 1287047117.03,
     "accountsOnDate": 4,
     "accountsCarried": 9,
-    "flowIn": 0,
-    "unreportedFlowValue": 283164024.64,
+    "flowIn": -22945,
+    "unreportedFlowValue": 0,
     "linkOpen": 1278682507.9,
     "linkClose": 1287047117.03,
     "linkAccounts": 13,
@@ -11304,7 +12031,7 @@ export const BOOK_NAV_HISTORY: NavPoint[] = [
     "nav": 1282278705.95,
     "accountsOnDate": 1,
     "accountsCarried": 12,
-    "flowIn": 0,
+    "flowIn": -30690,
     "unreportedFlowValue": 0,
     "linkOpen": 1287047117.03,
     "linkClose": 1282278705.95,
@@ -11523,10 +12250,12 @@ export const BOOK_ACCOUNT_NAV_HISTORY: Record<string, NavPoint[]> = {
  * publishing none. A series over 17 of 49 accounts that does not say so is a
  * claim about the book; this is what lets the page name every exclusion.
  *
- * `flowBasis` per covered account: `reported` (a dated capital record exists),
- * `units-unchanged` (one security, identical unit count at every snapshot, so
- * the statement itself rules out a subscription or redemption), or
- * `unreported` (neither — a capital movement there would read as performance).
+ * `flowBasis` per covered account, over every step between two of its marks:
+ * `reported` (the statements' own printed capital totals settle each step, or
+ * a dated record does), `units-unchanged` (every step holds the same securities
+ * at the same unit counts, none of them cash, so nothing was bought or
+ * redeemed), or `unreported` (some step no statement settles — its move, never
+ * the account's value, is carried per point as `unreportedFlowValue`).
  */
 export const BOOK_NAV_COVERAGE: NavCoverage = {
   "covered": [
@@ -11600,7 +12329,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-08-06",
       "latestValue": 0,
       "bookValue": 0,
-      "flowBasis": "unreported"
+      "flowBasis": "units-unchanged"
     },
     {
       "accountId": "molecule-ventures-llp-7810404",
@@ -11609,7 +12338,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-31",
       "latestValue": 11597496.65,
       "bookValue": 11597496.65,
-      "flowBasis": "unreported"
+      "flowBasis": "reported"
     },
     {
       "accountId": "svan-investment-managers-llp-8710067",
@@ -11618,7 +12347,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-31",
       "latestValue": 164540939.64,
       "bookValue": 164540939.64,
-      "flowBasis": "unreported"
+      "flowBasis": "reported"
     },
     {
       "accountId": "svan-investment-managers-llp-8710090",
@@ -11627,7 +12356,7 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
       "last": "2026-07-31",
       "latestValue": 107025588.35,
       "bookValue": 107025588.35,
-      "flowBasis": "unreported"
+      "flowBasis": "reported"
     },
     {
       "accountId": "v-e-c-assago-capital-management-llp-128004",
@@ -11907,6 +12636,29 @@ export const BOOK_NAV_COVERAGE: NavCoverage = {
   "to": "2026-08-13",
   "panelCompleteFrom": "2026-07-10"
 };
+
+/**
+ * CAPITAL NO DATED ROW CARRIES — where an account's printed capital totals move
+ * between two of its marks by more than its dated record does over the same days.
+ * The NAV series nets it inside that step, which needs no date. A money-weighted
+ * return needs every flow on a day, so it names this amount rather than assuming
+ * one: never dated, never dropped.
+ */
+export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = [
+  {
+    "accountId": "carnelian-asset-management-and-advisors-pvt-ltd-3517383",
+    "from": "2026-07-10",
+    "to": "2026-08-10",
+    "printedNet": -30690,
+    "datedNet": 0,
+    "undated": -30690,
+    "evidence": [
+      "fact-sheet",
+      "performance-history",
+      "performance-summary"
+    ]
+  }
+];
 
 /**
  * RETURN ATTRIBUTION over each covered account's own dated window — the exact
@@ -19726,6 +20478,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "date": "2026-06-15",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 2504,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "green-lantern-capital-llp-510861",
     "date": "2026-06-25",
     "direction": "out",
@@ -19781,6 +20544,50 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-07-16",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 2810,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "green-lantern-capital-llp-510861",
+    "date": "2026-07-27",
+    "direction": "out",
+    "label": "TDS on Payout",
+    "amount": 3540,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "date": "2026-07-28",
+    "direction": "in",
+    "label": "Fund Deposit",
+    "amount": 106500000,
+    "invested": 106500000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "date": "2026-07-29",
+    "direction": "in",
+    "label": "Fund Deposit",
+    "amount": 5900000,
+    "invested": 5900000,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
     "accountId": "3p-investment-managers-3000048",
     "date": "2026-07-31",
     "direction": "out",
@@ -19808,6 +20615,17 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "direction": "out",
     "label": "Capital outflow",
     "amount": 2624,
+    "invested": null,
+    "units": null,
+    "security": null,
+    "securityKey": null
+  },
+  {
+    "accountId": "v-e-c-assago-capital-management-llp-128005",
+    "date": "2026-08-10",
+    "direction": "out",
+    "label": "TDS Trf to Capital A/c",
+    "amount": 6658,
     "invested": null,
     "units": null,
     "security": null,
@@ -23200,7 +24018,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 276881536,
-      "profit": 28381536
+      "profit": 28381536,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 276881536,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23218,7 +24051,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 0,
       "expenses": null,
       "closing": 276881535.58,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 0,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0.01,
+      "linesTotal": 276881535.57,
+      "withheldReason": null
     }
   ],
   "buoyant-capital-103473": [
@@ -23238,7 +24084,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 492981982,
-      "profit": 32981982
+      "profit": 32981982,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 492981982,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23256,7 +24117,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 0,
       "expenses": null,
       "closing": 492981982.01,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 0,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 492981982.01,
+      "withheldReason": null
     }
   ],
   "carnelian-asset-management-and-advisors-pvt-ltd-3517383": [
@@ -23276,7 +24150,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 395400367,
-      "profit": 65753702
+      "profit": 65753702,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 395400367,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23294,7 +24183,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 9881286.28,
       "expenses": null,
       "closing": 395400366.85,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 62750,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 395400366.85,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23312,7 +24214,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 1093771.47,
       "expenses": 263456.83,
       "closing": 395400366.85,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 62750,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": -0.01,
+      "linesTotal": 395400366.86,
+      "withheldReason": null
     }
   ],
   "goldstandard-wealth-private-limited-100022": [
@@ -23332,7 +24247,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 80336937,
-      "profit": 5372931
+      "profit": 5372931,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 80336937,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23350,7 +24280,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 532929.89,
       "expenses": null,
       "closing": 80336936.76,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 141700,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 80336936.76,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23368,7 +24311,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 236120.4,
       "expenses": 39068.53,
       "closing": 80336936.76,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 141700,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 80336936.76,
+      "withheldReason": null
     }
   ],
   "goldstandard-wealth-private-limited-100023": [
@@ -23388,7 +24344,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 188321031,
-      "profit": 13408666
+      "profit": 13408666,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 188321031,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23406,7 +24377,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 1244225.3,
       "expenses": null,
       "closing": 188321031.19,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 325150,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 188321031.19,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23424,7 +24408,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 551175.46,
       "expenses": 93584.04,
       "closing": 188321031.19,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 325150,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 188321031.19,
+      "withheldReason": null
     }
   ],
   "green-lantern-capital-llp-510854": [
@@ -23444,7 +24441,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 58062530,
-      "profit": 8114438
+      "profit": 8114438,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 58062530,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23462,7 +24474,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 855409.96,
       "expenses": null,
       "closing": 59711149.87,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 111809.2,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": -0.01,
+      "linesTotal": 59711149.88,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23480,7 +24505,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 118491.27,
       "expenses": 44697.99,
       "closing": 59711149.87,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 44382,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": -0.01,
+      "linesTotal": 59711149.88,
+      "withheldReason": null
     }
   ],
   "green-lantern-capital-llp-510861": [
@@ -23500,7 +24538,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 114674895,
-      "profit": 14784146
+      "profit": 14784146,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 114674895,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23518,7 +24571,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 1682623.64,
       "expenses": null,
       "closing": 117932700.44,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 221137.45,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 117932700.44,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23536,7 +24602,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 234014.65,
       "expenses": 88224.07,
       "closing": 117932700.44,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 86420.35,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0.01,
+      "linesTotal": 117932700.43,
+      "withheldReason": null
     },
     {
       "reportType": "investor-report",
@@ -23554,7 +24633,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 234014.65,
       "expenses": 21164.14,
       "closing": 116910162.17,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": -99317.1,
+      "otherExpenses": 50146,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0.01,
+      "linesTotal": 116910162.16,
+      "withheldReason": null
     }
   ],
   "molecule-ventures-llp-7810404": [
@@ -23574,7 +24666,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 11618948,
-      "profit": 1629962
+      "profit": 1629962,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 11618948,
+      "withheldReason": null
     }
   ],
   "svan-investment-managers-llp-8710067": [
@@ -23583,7 +24690,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "svan-investment-managers-llp-8710067-2026-07-31-investor-report",
       "periodFrom": "2026-07-01",
       "periodTo": "2026-07-31",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": 159942275.22,
       "contribution": 0,
       "withdrawal": 14367,
@@ -23594,7 +24701,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 0,
       "expenses": 2227,
       "closing": 164761718.64,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": 103749,
+      "otherExpenses": 4925.11,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0.01,
+      "linesTotal": 164761718.63,
+      "withheldReason": null
     }
   ],
   "svan-investment-managers-llp-8710090": [
@@ -23603,7 +24723,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "svan-investment-managers-llp-8710090-2026-07-31-investor-report",
       "periodFrom": "2026-07-01",
       "periodTo": "2026-07-31",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": 103890192.28,
       "contribution": 0,
       "withdrawal": 8578,
@@ -23614,7 +24734,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 0,
       "expenses": 1431,
       "closing": 107170992.85,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": 69084,
+      "otherExpenses": 3216.27,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 107170992.85,
+      "withheldReason": null
     }
   ],
   "sanshi-fund-9039671821": [
@@ -23623,7 +24756,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "sanshi-fund-9039671821-2026-06-30-unknown",
       "periodFrom": "2025-10-03",
       "periodTo": "2026-06-30",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": null,
       "contribution": 749962501.87,
       "withdrawal": null,
@@ -23634,7 +24767,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 976826519.91,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
     }
   ],
   "sanshi-fund-9039671854": [
@@ -23643,7 +24791,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "sanshi-fund-9039671854-2026-06-30-unknown",
       "periodFrom": "2025-10-06",
       "periodTo": "2026-06-30",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": null,
       "contribution": 149992500.37,
       "withdrawal": null,
@@ -23654,7 +24802,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 195688390.51,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
     }
   ],
   "sanshi-fund-9039671912": [
@@ -23663,7 +24826,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "sanshi-fund-9039671912-2026-06-30-unknown",
       "periodFrom": "2025-12-16",
       "periodTo": "2026-06-30",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": null,
       "contribution": 249987500.62,
       "withdrawal": null,
@@ -23674,7 +24837,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 293523824.82,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
     }
   ],
   "sanshi-fund-9069671554": [
@@ -23683,7 +24861,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "sanshi-fund-9069671554-2026-06-30-unknown",
       "periodFrom": "2025-03-21",
       "periodTo": "2026-06-30",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": null,
       "contribution": 219989000.54,
       "withdrawal": null,
@@ -23694,7 +24872,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 294202601.1,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
     }
   ],
   "sanshi-fund-9069671634": [
@@ -23703,7 +24896,7 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "source": "sanshi-fund-9069671634-2026-06-30-unknown",
       "periodFrom": "2025-04-30",
       "periodTo": "2026-06-30",
-      "basis": "financial-year-to-date",
+      "basis": "window",
       "opening": null,
       "contribution": 204989750.51,
       "withdrawal": null,
@@ -23714,7 +24907,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 284563122.95,
-      "profit": null
+      "profit": null,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": false,
+      "openingNil": false,
+      "residual": null,
+      "linesTotal": null,
+      "withheldReason": "The report prints no opening value for this window, so its lines cannot be added up to its closing value. It prints no realised gain, unrealised gain, income, profit / loss, fees or expenses line. Not read from this report: gain prior to takeover, other expenses, accrued income and change in accruals."
     }
   ],
   "v-e-c-assago-capital-management-llp-128004": [
@@ -23734,7 +24942,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 65152168,
-      "profit": 15189717
+      "profit": 15189717,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 65152168,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23752,7 +24975,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 899391.43,
       "expenses": null,
       "closing": 65152167.78,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 141588.5,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 65152167.78,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23770,7 +25006,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 292933.15,
       "expenses": 32333.48,
       "closing": 65152167.78,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 141588.5,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 65152167.78,
+      "withheldReason": null
     }
   ],
   "v-e-c-assago-capital-management-llp-128005": [
@@ -23790,7 +25039,22 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": null,
       "expenses": null,
       "closing": 203157768,
-      "profit": 15788461
+      "profit": 15788461,
+      "accruedIncome": null,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": null,
+      "unread": [
+        "accruedIncome",
+        "changeInAccruals",
+        "otherExpenses",
+        "gainPriorToTakeover"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 203157768,
+      "withheldReason": null
     },
     {
       "reportType": "performance-history",
@@ -23808,7 +25072,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 1356763.53,
       "expenses": null,
       "closing": 203157767.58,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 278128,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": true,
+      "residual": 0,
+      "linesTotal": 203157767.58,
+      "withheldReason": null
     },
     {
       "reportType": "performance-summary",
@@ -23826,7 +25103,20 @@ export const BOOK_ACCOUNT_BRIDGES: Record<string, AccountBridge[]> = {
       "fees": 432429.72,
       "expenses": 107403.81,
       "closing": 203157767.58,
-      "profit": null
+      "profit": null,
+      "accruedIncome": 278128,
+      "changeInAccruals": null,
+      "otherExpenses": null,
+      "gainPriorToTakeover": 0,
+      "unread": [
+        "changeInAccruals",
+        "otherExpenses"
+      ],
+      "ties": true,
+      "openingNil": false,
+      "residual": 0,
+      "linesTotal": 203157767.58,
+      "withheldReason": null
     }
   ]
 };

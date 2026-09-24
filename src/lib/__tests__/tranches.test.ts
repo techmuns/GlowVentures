@@ -92,7 +92,18 @@ ok("both directions are represented", ins.length > 0 && outs.length > 0, `${ins.
 // value). Stated as an inequality so it cannot go stale when the market moves.
 const valueOf = new Map<string, number>();
 for (const p of BOOK_POSITIONS) valueOf.set(p.accountId, (valueOf.get(p.accountId) ?? 0) + p.marketValue);
+// AN ACCOUNT NO STATEMENT VALUES HAS NO "HELD" TO SET THE CEILING ON. India
+// SME's and Sky Capital's folios print units and the capital drawn and no NAV,
+// so their value is ABSENT, not ₹0 — a ceiling of (0 + taken out) x 3 would fail
+// them for a measurement nobody made. They are NAMED here rather than checked.
+const ceilingNotChecked: string[] = [];
+let ceilingChecked = 0;
 for (const acct of new Set(ins.map((m) => m.accountId))) {
+  if (!valueOf.has(acct) && BOOK_ACCOUNTS.find((a) => a.accountId === acct)?.noPositionsReason) {
+    ceilingNotChecked.push(acct);
+    continue;
+  }
+  ceilingChecked++;
   const paid = ins.filter((m) => m.accountId === acct).reduce((a, m) => a + (m.amount ?? 0), 0);
   const held = valueOf.get(acct) ?? 0;
   const back = outs.filter((m) => m.accountId === acct).reduce((a, m) => a + (m.amount ?? 0), 0);
@@ -102,6 +113,11 @@ for (const acct of new Set(ins.map((m) => m.accountId))) {
   // across every account at once.
   ok(`capital in is not a summed balance — ${acct}`, paid <= (held + back) * 3,
     `paid ${Math.round(paid).toLocaleString("en-IN")} vs held+returned ${Math.round(held + back).toLocaleString("en-IN")}`);
+}
+ok("capital in is not a summed balance — the ceiling ran on the accounts a statement values", ceilingChecked > 0,
+  `${ceilingChecked} checked`);
+if (ceilingNotChecked.length) {
+  console.log(`NOT CHECKED capital in is not a summed balance — ${ceilingNotChecked.length} account(s) no statement values: ${ceilingNotChecked.join(", ")}`);
 }
 
 console.log("\n── the per-contribution breakdown ties to the position it expands ──");

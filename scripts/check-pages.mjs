@@ -5146,6 +5146,9 @@ const ROUTES = [
   // read. The plain walk above asserts it arrives CLOSED.
   ["capital-gains-missing", "/capital-gains"],
   ["performance", "/performance"],
+  // The same page with the quote feed live (`installLiveMocks`): nothing on
+  // its money-weighted table may move with it (CK-A3).
+  ["performance-live", "/performance"],
   ["returns", "/returns"],
   ["ledger", "/ledger"],
   ["audit", "/audit"],
@@ -5352,9 +5355,356 @@ const NAV_SERIES_BOOK = (() => {
       completePanelPoints: nav.filter((p) => p.panelComplete !== false).length,
       panelFirst: (nav[0]?.accountsOnDate ?? 0) + (nav[0]?.accountsCarried ?? 0),
       panelLast: (nav[nav.length - 1]?.accountsOnDate ?? 0) + (nav[nav.length - 1]?.accountsCarried ?? 0),
+      /**
+       * WHAT THE STATEMENTS DO NOT SETTLE, summed over the steps — a MOVE, never
+       * a value. Whether a step is settled is `navProof.test.ts`'s claim, held to
+       * the archive there; this carries the book's answer so the page can be
+       * held to it, in both directions: named where there is one, absent where
+       * there is none.
+       */
+      unprovenMove: nav.reduce((a, p) => a + (p.unreportedFlowValue ?? 0), 0),
+      unprovenAccounts: (cov.covered ?? []).filter((c) => c.flowBasis === "unreported").map((c) => c.accountId),
     };
   } catch { return null; }
 })();
+
+/**
+ * ── /performance, RE-DERIVED FROM THE BOOK (A-12, CK-A3, XA-14, XA-21) ──
+ *
+ * The value bridge and the money-weighted table, restated here off
+ * `glowData.ts` by the checker's own arithmetic — never by importing the page
+ * or `build-book`. A bridge column adds up where its own lines give its closing
+ * value within the statement's printing precision; a money-weighted row closes
+ * on the value its account's STATEMENT strikes, on that statement's date; and a
+ * pooled rate is re-solved here by bisection over the same flows. Null on any
+ * failure, so every claim struck on it FAILS rather than passing over nothing.
+ */
+const PERF_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const bridgesBy = bookObject(src, "BOOK_ACCOUNT_BRIDGES");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const stmt = statementBookPositions(src);
+    const live = bookArray(src, "BOOK_POSITIONS");
+    const flowsBy = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const commitments = bookArray(src, "BOOK_COMMITMENTS");
+    if (!bridgesBy || !accounts || !stmt || !live || !flowsBy || !moves || !commitments) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const num = (v) => typeof v === "number" && Number.isFinite(v);
+    const r2 = (v) => Math.round(v * 100) / 100;
+    // ── the bridge ──
+    const SIGN = { realized: 1, unrealized: 1, gainPriorToTakeover: 1, income: 1, profit: 1,
+      fees: -1, expenses: -1, otherExpenses: -1, accruedIncome: 1, changeInAccruals: 1 };
+    const OPTIONAL = ["gainPriorToTakeover", "profit", "expenses", "otherExpenses", "accruedIncome", "changeInAccruals"];
+    const basisOf = (b, inception) => {
+      if (inception && b.periodFrom === inception) return "since-inception";
+      const fy = /^(\d{4})-04-01$/.exec(b.periodFrom);
+      if (fy && b.periodTo >= b.periodFrom && b.periodTo <= `${Number(fy[1]) + 1}-03-31`) return "financial-year-to-date";
+      return "window";
+    };
+    // Whether a set of lines adds to its closing value — the same arithmetic
+    // for the book's figures and for the figures the page DRAWS.
+    const adds = (f, openingNil) => {
+      const opening = openingNil ? 0 : f.opening;
+      if (!num(f.closing) || !num(opening)) return { ties: false, residual: null };
+      const capital = num(f.netCapitalInOut) ? f.netCapitalInOut
+        : num(f.contribution) || num(f.withdrawal) ? (f.contribution ?? 0) - (f.withdrawal ?? 0) : null;
+      const signed = [opening, capital, ...Object.entries(SIGN).map(([k, s]) => (num(f[k]) ? s * f[k] : null))].filter(num);
+      const residual = r2(f.closing - signed.reduce((t, v) => t + v, 0));
+      const figs = [...signed, f.closing];
+      const unit = figs.some((v) => Math.abs(v - Math.round(v)) > 0.004) ? 0.01 : 1;
+      return { ties: Math.abs(residual) <= (figs.length * unit) / 2 + 1e-9, residual };
+    };
+    const cols = Object.entries(bridgesBy).flatMap(([accountId, bs]) => bs.map((b) => {
+      const basis = basisOf(b, acc.get(accountId)?.inceptionDate ?? null);
+      const openingNil = basis === "since-inception" && b.opening == null;
+      return { accountId, src: b.source, basis, openingNil, ...adds(b, openingNil), book: b };
+    }));
+    const optionalRows = new Map(Object.entries(bridgesBy).map(([id, bs]) =>
+      [id, new Set(OPTIONAL.filter((k) => bs.some((b) => num(b[k]) && b[k] !== 0)))]));
+    // ── the money-weighted table ──
+    const mvOf = (rows, id) => rows.filter((p) => p.accountId === id).reduce((t, p) => t + (Number(p.marketValue) || 0), 0);
+    const perAccount = new Map(accounts.map((a) => [a.accountId, {
+      stmtMV: mvOf(stmt, a.accountId), liveMV: mvOf(live, a.accountId), asOf: a.asOf,
+      unvalued: a.noPositionsReason ?? null, flows: (flowsBy[a.accountId] ?? []),
+      symbols: stmt.some((p) => p.accountId === a.accountId && p.symbol),
+    }]));
+    const measured = [...perAccount].filter(([, x]) => x.stmtMV > 0 && x.flows.length
+      && x.flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""))).map(([id]) => id);
+    const solve = (ids, valueOf) => {
+      const fl = ids.flatMap((id) => {
+        const x = perAccount.get(id);
+        return [...x.flows.map((f) => ({ t: Date.parse(f.date), a: f.amount })), { t: Date.parse(x.asOf), a: valueOf(x) }];
+      });
+      if (!fl.length) return null;
+      const t0 = Math.min(...fl.map((f) => f.t));
+      const npv = (r) => fl.reduce((s, f) => s + f.a / Math.pow(1 + r, (f.t - t0) / (365 * 864e5)), 0);
+      let lo = -0.99, hi = 20;
+      if (Math.sign(npv(lo)) === Math.sign(npv(hi))) return null;
+      for (let i = 0; i < 200; i++) { const mid = (lo + hi) / 2; if (Math.sign(npv(mid)) === Math.sign(npv(lo))) lo = mid; else hi = mid; }
+      return ((lo + hi) / 2) * 100;
+    };
+    const closes = measured.map((id) => perAccount.get(id).asOf).sort();
+    const windowStart = measured.flatMap((id) => perAccount.get(id).flows.map((f) => f.date)).sort()[0] ?? null;
+    // The family's dated capital record per account, as the Transactions card
+    // reads it: the statements' own capital movements, else a drawdown fund's
+    // dated calls.
+    const recorded = new Set(moves.map((m) => m.accountId));
+    const capitalRecord = new Set([...recorded,
+      ...commitments.filter((c) => !recorded.has(c.accountId) && (c.calls ?? []).some((x) => x.date && x.amount > 0)).map((c) => c.accountId)]);
+    // The accounts whose managers publish an ANNUALISED since-inception return
+    // of their own — what an extrapolated rate is set beside.
+    const returnsBy = bookObject(src, "BOOK_ACCOUNT_RETURNS") ?? {};
+    const managersOwn = new Set(Object.entries(returnsBy).filter(([, blocks]) => (blocks ?? []).some((blk) =>
+      (blk.series ?? []).some((x) => !x.isBenchmark && x.siAnnualised && num(x.si)))).map(([id]) => id));
+    return {
+      managersOwn,
+      statementBook: bookObject(src, "BOOK_SUMMARY")?.totalValue ?? null,
+      cols, optionalRows,
+      tied: cols.filter((c) => c.ties).length, all: cols.length,
+      perAccount, measured,
+      rateStatement: solve(measured, (x) => x.stmtMV),
+      firstClose: closes[0] ?? null, lastClose: closes[closes.length - 1] ?? null,
+      bookNewest: accounts.map((a) => a.asOf).filter(Boolean).sort().pop() ?? null,
+      capitalRecord,
+      measuredQuoted: measured.some((id) => perAccount.get(id).symbols),
+      navPricedGap: [...perAccount].filter(([, x]) => !x.unvalued && Math.abs(x.liveMV - x.stmtMV) > 1e5).map(([id]) => id),
+      basisLabel: { "since-inception": /^since inception/i, "financial-year-to-date": /^fy to date/i, "window": /^window/i },
+      adds,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * ── /performance's VALUE BRIDGE, HELD TO THE BOOK (A-12, XA-21) ────────────
+ *
+ * A column is drawn as a bridge only where its own lines add to its closing
+ * value; every other column is WITHHELD, and says so in its heading and in each
+ * of its cells. Struck on the figures the page DRAWS, re-added here by the
+ * checker's own arithmetic — so a page that dropped a line (the "Fees &
+ * expenses" row that read the fees alone) fails on the column it broke, and a
+ * page that drew a withheld column's figures fails on the column it drew.
+ * Declared before `INVARIANTS` so the spreads below can read it.
+ */
+const PERF_BRIDGE = [
+  ["every value-bridge column the book carries is drawn, under its own account, and the pill counts the ones that add up", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const drawn = new Set(d.cols.map((c) => `${c.account}|${c.src}`));
+    return d.cols.length === B.all && B.cols.every((c) => drawn.has(`${c.accountId}|${c.src}`))
+      && d.totals != null && d.totals.tied === B.tied && d.totals.all === B.all;
+  }],
+  ["the book's own tie flag is the checker's arithmetic, column by column", (t, ctx) => {
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    // An untied column's gap is the same on both sides — or absent on both,
+    // where the column has no opening or closing figure to add from.
+    return B.cols.every((c) => (c.book.ties !== false) === c.ties
+      && (c.ties || (c.book.residual == null && c.residual == null)
+        || (typeof c.book.residual === "number" && typeof c.residual === "number" && Math.abs(c.book.residual - c.residual) <= 0.01)));
+  }],
+  ["each column's heading names its window by the book's own dates — FY to date only for a financial year", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    if (!B.cols.some((c) => c.basis === "window")) return { notChecked: "no column in this book runs over a window that is neither a financial year nor since inception" };
+    const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
+    return B.cols.every((c) => {
+      const col = by.get(`${c.accountId}|${c.src}`);
+      return !!col && col.basis === c.basis && c.book.basis === c.basis && B.basisLabel[c.basis].test(col.head);
+    });
+  }],
+  ["a column that does not add up is withheld — its heading and every one of its cells say so, and none of its figures is drawn", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    if (B.tied === B.all) return { notChecked: "every bridge column in this book adds up" };
+    const by = new Map(d.cols.map((c) => [`${c.account}|${c.src}`, c]));
+    return B.cols.every((c) => {
+      const col = by.get(`${c.accountId}|${c.src}`);
+      if (!col) return false;
+      const cells = d.cells.filter((x) => x.account === c.accountId && x.of === c.src);
+      if (c.ties) return !col.withheld;
+      return col.withheld && /not drawn as a bridge/i.test(col.why ?? "") && cells.length > 0
+        && cells.every((x) => x.v === "" && /not drawn as a bridge/i.test(x.reason ?? ""));
+    });
+  }],
+  ["every column drawn as a bridge adds up from the figures on screen to its own closing value", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.tied) return false;
+    return B.cols.filter((c) => c.ties).every((c) => {
+      const fig = {};
+      for (const x of d.cells.filter((y) => y.account === c.accountId && y.of === c.src)) fig[x.row] = x.v === "" || x.v == null ? null : Number(x.v);
+      return B.adds(fig, false).ties;
+    });
+  }],
+  ["a since-inception column with no printed opening adds from a computed nil, and the cell says so", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    if (!B.cols.some((c) => c.ties && c.openingNil)) return { notChecked: "no since-inception column in this book prints no opening" };
+    return B.cols.filter((c) => c.ties).every((c) => {
+      const o = d.cells.find((x) => x.account === c.accountId && x.of === c.src && x.row === "opening");
+      if (!o) return false;
+      return c.openingNil ? o.computed && Number(o.v) === 0 && /nil · since inception/i.test(o.text) : !o.computed;
+    });
+  }],
+  ["a line a report does not print is absent with the true reason — 'not read' where the book never looked", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.tied) return false;
+    const blanks = B.cols.filter((c) => c.ties).flatMap((c) => d.cells
+      .filter((x) => x.account === c.accountId && x.of === c.src && x.v === "")
+      .map((x) => ({ x, unread: (c.book.unread ?? []).includes(x.row) })));
+    if (!blanks.length) return { notChecked: "every line of every column that adds up is printed" };
+    return blanks.every(({ x, unread }) => unread ? /is read from this/i.test(x.reason ?? "") : /prints no .* line/i.test(x.reason ?? ""));
+  }],
+  ["an optional line is a row exactly where one of the account's columns prints it, and every fixed line is always a row", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.all) return false;
+    const FIXED = ["opening", "contribution", "withdrawal", "netCapitalInOut", "realized", "unrealized", "income", "fees", "closing"];
+    const OPT = ["gainPriorToTakeover", "profit", "expenses", "otherExpenses", "accruedIncome", "changeInAccruals"];
+    return [...B.optionalRows].every(([id, want]) => {
+      const keys = new Set(d.rows.filter((r) => r.account === id).map((r) => r.key));
+      return FIXED.every((k) => keys.has(k)) && OPT.every((k) => keys.has(k) === want.has(k));
+    });
+  }],
+];
+
+/**
+ * ── /performance's MONEY-WEIGHTED TABLE, ON THE STATEMENT (CK-A3, XP-15, XA-14) ──
+ *
+ * Each account closes on the value its own STATEMENT strikes on its own date —
+ * never a live or NAV-priced figure dated to a statement weeks older — and the
+ * pooled window ends on the latest of those dates, never the book's newest.
+ * Expectations are the checker's own: the statement book off `glowData.ts`,
+ * and the pooled rate re-solved by bisection over the same flows.
+ */
+const PERF_MW = [
+  ["every account's row closes on its statement's own value, and one its statements value nothing keeps their reason", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B) return false;
+    if (!B.navPricedGap.length) return { notChecked: "no account's live value differs from its statement's in this book" };
+    if (d.xirr.length !== B.perAccount.size) return false;
+    return d.xirr.every((r) => {
+      const x = B.perAccount.get(r.id);
+      if (!x) return false;
+      if (x.unvalued) return r.mv === "" && r.mvReason === x.unvalued;
+      return Math.abs(Number(r.mv) - x.stmtMV) <= 1;
+    });
+  }],
+  ["the demat the live book values only in part keeps its statement's reason here — no depository-valued figure beside a statement date", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const C = CASH_INSTRUCTION_BOOK, B = PERF_BOOK;
+    if (!C || !B || !C.partialAccounts.length) return false;
+    return d.partialMarkers === 0 && C.partialAccounts.every((id) => {
+      const r = d.xirr.find((y) => y.id === id);
+      const why = B.perAccount.get(id)?.unvalued;
+      return !!r && !!why && r.mv === "" && r.mvReason === why;
+    });
+  }],
+  ["each row's terminal date is its own statement's, and the pooled close is the range of those dates — never the book's newest", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.lastClose) return false;
+    if (B.bookNewest === B.lastClose) return { notChecked: "the pool's latest close is the book's newest date" };
+    const rowsOk = d.xirr.every((r) => { const x = B.perAccount.get(r.id); return !!x && (!x.asOf || r.text.includes(x.asOf)); });
+    const range = B.firstClose === B.lastClose ? d.cons.terminal === B.lastClose
+      : d.cons.terminal.includes(B.firstClose) && d.cons.terminal.includes(B.lastClose);
+    return rowsOk && d.cons.first === B.firstClose && d.cons.last === B.lastClose && range && !d.cons.terminal.includes(B.bookNewest);
+  }],
+  ["the pooled rate is the same flows re-solved, over the accounts that carry an opening value, against the statements' own book", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || B.rateStatement == null || B.statementBook == null) return false;
+    const drawn = new Set(d.xirr.filter((r) => r.pct !== "").map((r) => r.id));
+    const measuredMV = B.measured.reduce((s, id) => s + B.perAccount.get(id).stmtMV, 0);
+    return drawn.size === B.measured.length && B.measured.every((id) => drawn.has(id))
+      && Math.abs(Number(d.cons.pct) - B.rateStatement) < 0.01
+      && Math.abs(Number(d.cons.mv) - measuredMV) <= 1
+      && Math.abs(Number(d.cons.book) - B.statementBook) <= 1 && /of the statements'/i.test(d.cons.text);
+  }],
+  ["a row with no flow series says why truly — one with a dated capital record points to the Transactions card", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B) return false;
+    const none = d.xirr.filter((r) => r.pct === "");
+    if (!none.some((r) => (B.perAccount.get(r.id)?.flows.length ?? 1) === 0 && B.capitalRecord.has(r.id))) {
+      return { notChecked: "no account in this book has a dated capital record and no flow series" };
+    }
+    return none.every((r) => {
+      const x = B.perAccount.get(r.id);
+      if (!x) return false;
+      if (x.flows.length === 0) {
+        return B.capitalRecord.has(r.id)
+          ? /on the transactions card/i.test(r.returnText) && /\d+ dated capital movements? (is|are)/i.test(r.returnText)
+            && !/no dated capital movements in this account's statements/i.test(r.returnText)
+          : /no dated capital movements in this account's statements/i.test(r.returnText);
+      }
+      return /no performance summary|nothing is valued|do not solve/i.test(r.returnText);
+    });
+  }],
+  ["a rate over less than a year is named an extrapolation beside the managers' own since-inception returns (XA-14, XA-29)", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d || !d.cons) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B) return false;
+    const sub = d.xirr.filter((r) => r.pct !== "" && Number(r.days) < 365);
+    if (!sub.length || !B.measured.some((id) => B.managersOwn.has(id))) return { notChecked: "no pooled account's window is under a year, beside a manager's own annualised rate" };
+    const rowsOk = sub.every((r) => /an extrapolation, not a rate earned/i.test(r.returnTitle ?? "")
+      && (!B.managersOwn.has(r.id) || /managers' own annualised since-inception returns/i.test(r.returnTitle ?? "")));
+    const consOk = Number(d.cons.days) >= 365 || (/an extrapolation, not a rate earned/i.test(d.cons.returnTitle ?? "")
+      && /managers' own annualised since-inception returns/i.test(d.cons.returnTitle ?? ""));
+    const tileOk = !!d.tileTitle && (Number(d.cons.days) >= 365 || /an extrapolation, not a rate earned/i.test(d.tileTitle));
+    return rowsOk && consOk && tileOk && !/>\s*100% p\.a\./i.test(t) && !/reads >100%/i.test(`${t} ${d.tileTitle}`);
+  }],
+  ["the money-weighted tile's hover names the pool's own close range and the statements' value, never the book's newest date", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || !B.lastClose || !d.tileTitle) return false;
+    if (B.bookNewest === B.lastClose) return { notChecked: "the pool's latest close is the book's newest date" };
+    const range = B.firstClose === B.lastClose ? `at ${B.lastClose}` : `between ${B.firstClose} and ${B.lastClose}`;
+    return d.tileTitle.includes(range) && !d.tileTitle.includes(B.bookNewest)
+      && /its own statement strikes on its own date/i.test(d.tileTitle);
+  }],
+];
+
+/**
+ * …AND WITH LIVE PRICES ON, NOTHING ON THAT TABLE MOVES. `performance-live`
+ * serves the quote feed at every mark × 1.10; the holdings tile must move with
+ * it (or the route has asserted nothing), and every money-weighted figure must
+ * not — a live value dated to a statement weeks older is the defect (CK-A3).
+ */
+const PERF_MW_LIVE = [
+  ["with live prices on, the holdings tile moves and the money-weighted table does not", (t, ctx) => {
+    const d = ctx?.perfDom;
+    if (!d) return FAST ? { notChecked: "the probe did not run" } : false;
+    const B = PERF_BOOK;
+    if (!B || B.statementBook == null || !B.measuredQuoted) return false;
+    const tile = d.tiles.find((x) => /current value of holdings/i.test(x.label));
+    const m = /₹([\d,]+(?:\.\d+)?)\s*(Cr|L)?/.exec(tile?.value ?? "");
+    const liveCr = m ? crU(m[1], m[2] ?? "Cr") : NaN;
+    return Number.isFinite(liveCr) && liveCr > (B.statementBook / 1e7) * 1.02;
+  }],
+];
 
 
 /**
@@ -11000,36 +11350,33 @@ const CIO_NAV = [
     // the figure it asserts on" failure this file already names twice.
     (t) => /NAV incl\.\s+₹[\d,.]+\s*(?:Cr|L|K)?\s+added/.test(t)],
   /**
-   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS.
+   * A MOVE THAT CANNOT BE SHOWN TO BE PERFORMANCE IS NAMED, WITH ITS ACCOUNTS —
+   * AND WHERE THE STATEMENTS SETTLE EVERY STEP, NOTHING IS.
    *
-   * Four covered accounts publish no dated capital record and hold more than one
-   * security. Silence there would present their whole restatement as a return.
+   * This required the paragraph unconditionally, over four accounts said to
+   * publish "no dated capital record", with ₹28.3 Cr beside it: their standing
+   * VALUE, ten times the ₹2.78 Cr they moved, and every one of them settled by
+   * its own statements (A-10). So it enforced the false claim. It is struck on
+   * the book now: the paragraph must name the book's own unproven MOVE and
+   * accounts where there are any, and must be ABSENT where there are none —
+   * which is this archive.
    */
-  ["the NAV card names the value whose move is not proven to be performance, and the accounts behind it",
+  ["the NAV card names the move whose capital the statements do not settle, and only where there is one",
     (t, ctx) => {
-      /**
-       * A DISCLOSURE, RE-HOMED RATHER THAN DROPPED. It was a paragraph under the
-       * chart; it is an amber pill beside the Book pill it qualifies, with the
-       * accounts in the hover. Both halves are required — a pill with no
-       * accounts behind it is a number a reader cannot act on, and a hover with
-       * no pill is a disclosure nobody will find.
-       */
-      /*
-       * AND RE-HOMED A SECOND TIME. The amber pill went with the rest of the
-       * headline at the family's request; the value and the accounts are one
-       * paragraph of the title's hover now. Both halves are still required,
-       * read off THAT PARAGRAPH alone — the hover carries other em dashes and
-       * other `·`s, and a name pattern struck across the whole of it would be
-       * satisfied by a sentence about something else.
-       */
       const head = navBasis(ctx);
       if (head == null) return navBasisMissing(ctx);
+      const book = NAV_SERIES_BOOK;
+      if (!book) return false;
       const why = head.split(/\n\n/).find((x) => /^Not proven to be performance:/.test(x)) ?? "";
-      return /^Not proven to be performance: ₹[\d,.]+\s*(?:Cr|L|K)? of the move\./.test(why)
-        && /publish no dated capital record/.test(why)
-        // …and it NAMES them. A sentence that said "4 accounts" and listed none
-        // would satisfy every word above while telling a reader nothing.
-        && /—\s*\S[^—]*·[^—]*—/.test(why);
+      if (book.unprovenMove <= 0) return why === "" && !/not proven/i.test(head);
+      const m = /^Not proven to be performance: ₹([\d,.]+)\s*(Cr|L|K)? of the move\./.exec(why);
+      if (!m) return false;
+      const scale = m[2] === "Cr" ? 1e7 : m[2] === "L" ? 1e5 : m[2] === "K" ? 1e3 : 1;
+      const shown = Number(m[1].replace(/,/g, "")) * scale;
+      // One printed decimal of the unit the page chose, and no more.
+      return Math.abs(shown - book.unprovenMove) <= Math.max(0.051 * scale, 1)
+        && book.unprovenAccounts.length > 0
+        && /—\s*\S[^—]*—/.test(why);
     }],
   /**
    * "…OR STATE THE ACCOUNTS THAT CANNOT SUPPLY ONE" — the other half of the ask,
@@ -23472,6 +23819,7 @@ const INVARIANTS = {
       return d.rows.length > 0 && d.rows.every((r) => !!r.reason && CG_BOOK.reasons.includes(r.reason));
     }],
   ],
+  "performance-live": [...PERF_MW_LIVE, ...PERF_MW],
   performance: [
     /**
      * "NOT ANNUALISED" IS A GUARD, AND IT STAYS ON THE FACE (Stage 10cp). The
@@ -23483,18 +23831,13 @@ const INVARIANTS = {
     ["the money-weighted return says on its face that it is not annualised — the tile and the per-account card",
       (t) => /to date · not annualised/i.test(t) && /money-weighted return to date, per account · not annualised/i.test(t)],
     /**
-     * A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. The demat that
-     * sent only a transaction statement now carries its cash-equivalent funds at
-     * AMFI's NAV, and a bare total beside it would read as the whole account.
+     * THE VALUE BRIDGE AND THE MONEY-WEIGHTED TABLE, HELD TO THE BOOK (A-12,
+     * CK-A3, XA-14, XA-21). This page is on the STATEMENT basis now, so
+     * the demat the live book values in part keeps its statement's own reason
+     * here rather than a "partial" figure — asserted, inverted, in PERF_MW.
      */
-    ["an account valued only in part says so beside its figure, and names what is not valued", (t, ctx) => {
-      const d = ctx?.cashDom;
-      if (!d) return { notChecked: "the probe did not run" };
-      const B = CASH_INSTRUCTION_BOOK;
-      if (!B) return false;
-      return d.partial.length === B.partialAccounts.length && d.partial.every((x) =>
-        /partial/.test(x.text) && /transaction statement and no holding statement/.test(x.title) && /not valued/.test(x.title));
-    }],
+    ...PERF_BRIDGE,
+    ...PERF_MW,
     ["the stale 'no valuation series' absence is gone", (t) =>
       !/No valuation series in this book/i.test(t)
       && !/two points are not a trajectory/i.test(t)],
@@ -23980,6 +24323,7 @@ for (const theme of THEMES) {
       // nothing would be indistinguishable from one that worked.
       PRICE_REQUESTS = [];
       if (name === "cio-live" || name === "cio-nav-live" || name === "cio-nav-bench") await installLiveMocks(page);
+      if (name === "performance-live") await installLiveMocks(page);
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
@@ -26361,6 +26705,70 @@ for (const theme of THEMES) {
         // cannot see a `title`.
         stockClassTitle: document.querySelector("[data-stock-class]")?.getAttribute("title") ?? null,
       }));
+      /**
+       * ── /performance's VALUE BRIDGE AND MONEY-WEIGHTED TABLE, AS STRUCTURE ──
+       *
+       * A bridge column that does not add up and one that does render the same
+       * kind of cells, and a money-weighted row closed on a NAV-priced value and
+       * one closed on its statement print the same kind of figure — so every
+       * claim about either is struck on the attributes the page writes beside
+       * them (A-12, CK-A3, XA-14, XA-21), and a reason in a `title` is
+       * read off the element because `innerText` cannot see it.
+       */
+      const perfDom = FAST ? null : await page.evaluate(() => {
+        const txt = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
+        const cols = [...document.querySelectorAll("th[data-bridge-col]")].map((th) => ({
+          src: th.getAttribute("data-bridge-col"), basis: th.getAttribute("data-bridge-basis"),
+          withheld: th.getAttribute("data-bridge-withheld") === "1", residual: th.getAttribute("data-bridge-residual"),
+          head: txt(th), why: th.querySelector("[data-bridge-withheld-note]")?.getAttribute("title") ?? null,
+          account: th.closest("table")?.getAttribute("data-bridge-table") ?? null,
+        }));
+        const cells = [...document.querySelectorAll("td[data-bridge-cell]")].map((td) => ({
+          row: td.getAttribute("data-bridge-cell"), of: td.getAttribute("data-bridge-of"),
+          account: td.closest("table")?.getAttribute("data-bridge-table") ?? null,
+          v: td.getAttribute("data-v"), text: txt(td),
+          computed: !!td.querySelector("[data-bridge-computed]"),
+          reason: td.querySelector("[title]")?.getAttribute("title") ?? null,
+        }));
+        const rows = [...document.querySelectorAll("tr[data-bridge-row]")].map((tr) => ({
+          key: tr.getAttribute("data-bridge-row"), account: tr.closest("table")?.getAttribute("data-bridge-table") ?? null,
+          label: txt(tr.cells[0]),
+        }));
+        const tot = document.querySelector("[data-bridge-totals]");
+        const xirr = [...document.querySelectorAll("tr[data-xirr-row]")].map((tr) => {
+          const c = [...tr.cells];
+          return {
+            id: tr.getAttribute("data-xirr-row"), mv: tr.getAttribute("data-xirr-mv"),
+            pct: tr.getAttribute("data-xirr-pct"), toDate: tr.getAttribute("data-xirr-todate"),
+            days: tr.getAttribute("data-xirr-days"), text: txt(tr),
+            flows: txt(c[1]), mvText: txt(c[2]), mvReason: c[2]?.querySelector("[title]")?.getAttribute("title") ?? null,
+            terminal: txt(c[3]), returnText: txt(c[4]),
+            returnTitle: c[4]?.querySelector("span[title]")?.getAttribute("title") ?? null,
+          };
+        });
+        const cons = document.querySelector("tr[data-xirr-consolidated]");
+        const consRet = cons?.cells[4]?.querySelector("span[title]") ?? null;
+        return {
+          cols, cells, rows,
+          totals: tot ? { tied: Number(tot.getAttribute("data-tied")), all: Number(tot.getAttribute("data-all")), text: txt(tot) } : null,
+          xirr,
+          cons: cons ? {
+            mv: cons.getAttribute("data-mv"), book: cons.getAttribute("data-book"), first: cons.getAttribute("data-first"),
+            last: cons.getAttribute("data-last"), pct: cons.getAttribute("data-pct"), toDate: cons.getAttribute("data-todate"),
+            days: cons.getAttribute("data-days"), text: txt(cons), terminal: txt(cons.cells[3]),
+            returnTitle: consRet?.getAttribute("title") ?? null,
+          } : null,
+          partialMarkers: document.querySelectorAll("[data-partial-valuation]").length,
+          tileTitle: [...document.querySelectorAll("[title]")].map((e) => e.getAttribute("title"))
+            .find((t) => /money-weighted return actually earned/i.test(t ?? "")) ?? null,
+          // Every figure tile on the page, by its label — the live premise on
+          // `performance-live` is struck on the holdings tile's own figure.
+          tiles: [...document.querySelectorAll("main .card [data-stat-value]")].map((v) => {
+            const card = v.closest(".card");
+            return { label: txt(card?.querySelector(".label-xs")), value: txt(v), title: card?.getAttribute("title") ?? null };
+          }),
+        };
+      });
       /**
        * ── THE AIF DRILL-DOWN'S SECTIONS, READ AS STRUCTURE ───────────────────
        *
@@ -29524,7 +29932,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);

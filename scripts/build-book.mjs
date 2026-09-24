@@ -24,10 +24,12 @@ import { resolveSector, UNCLASSIFIED } from "../shared/sectors.mjs";
 import { securityKeyOf } from "../shared/securityKey.mjs";
 import { marketSideOf, readAifCategory, readsAsPrivateEquity, fundMarketSideBasis } from "../shared/aifCategory.mjs";
 import { fifoForClass, fifoReturnPct, fifoFromCashFlows } from "../shared/fifo.mjs";
+import { lotGroupsOf, daySalesOf, settleSales, settledSecurityOf } from "../shared/lotSettlement.mjs";
 import { sourceFor } from "./ingest/precedence.mjs";
 import { AIF_UNITS, PROVIDER as CDSL_DEMAT_PROVIDER } from "./ingest/providers/motilalDemat.mjs";
 import { reclassificationsFrom, carryLotsThroughSwitches, carryCostThroughSwitches, UNIT_TIE } from "./lib/classSwitch.mjs";
 import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mjs";
+import { PROVIDER as HDFC_NSDL_PROVIDER } from "./ingest/providers/hdfcNsdl.mjs";
 
 /**
  * THE DEPOSITORY ACCOUNTS, BOTH OF THEM.
@@ -40,6 +42,16 @@ import { PROVIDER as NSDL_DEMAT_PROVIDER } from "./ingest/providers/nsdlDemat.mj
  * so a third depository is one entry rather than a second code path.
  */
 const DEPOSITORY_PROVIDERS = new Set([CDSL_DEMAT_PROVIDER, NSDL_DEMAT_PROVIDER]);
+
+/**
+ * CUSTODY ACCOUNTS — every depository whose statement this book reads, the two
+ * above and the trusts' HDFC Bank NSDL account. Used ONLY to word why a
+ * quantity-only row carries no value (a custodian records units, and a face
+ * value where it has no price; a fund's own statement that prints no NAV is a
+ * different fact with a different remedy). Deliberately NOT folded into
+ * `DEPOSITORY_PROVIDERS`, which decides what `dropDepositoryDuplicates` drops.
+ */
+const CUSTODY_PROVIDERS = new Set([...DEPOSITORY_PROVIDERS, HDFC_NSDL_PROVIDER]);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AUDIT_DIR = process.env.GLOW_AUDIT_DIR ?? path.join(ROOT, "public", "audit");
@@ -303,13 +315,12 @@ function datedRowsAcross(allIssues, kept, notes, label) {
  *    run on different clocks. Same reasoning as `pooledXirr`: each account
  *    closes on its own as-of.
  *
- * WHAT THIS STILL CANNOT DO, stated rather than papered over: ten of the
- * seventeen covered accounts publish NO dated capital record, so a subscription
- * or redemption inside one of them would read as performance. Where such an
- * account holds a SINGLE security whose unit count is identical at every
- * snapshot, the statement itself rules that out and the account is marked
- * `units-unchanged`; where it does not, the account is `unreported` and is NAMED
- * on screen with its share of the covered value.
+ * WHAT THIS STILL CANNOT DO, stated rather than papered over: a step between
+ * two marks that no statement settles — no printed capital total at both ends,
+ * no identical unit counts, no dated record — would carry a subscription or
+ * redemption as performance. Such a step is `unreported`, and what it cannot
+ * prove is the account's MOVE over it, named on screen; see `proveLink`. On
+ * this archive every step is settled by the statements themselves.
  */
 function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashFlows, positions, notes) {
   /**
@@ -380,12 +391,31 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
           // 765 of 765 to the paisa), so the split below has no residual.
           marketPrice: isNum(h.marketPrice) ? h.marketPrice : null,
           marketValue: h.marketValue,
+          // Only so the units-unchanged proof below can refuse a cash line: a
+          // deposit into a mandate lands in its cash, not in any unit count.
+          assetClass: h.assetClass ?? null,
           dedupeGroup: h.dedupeGroup ?? dedupeByAcctSec.get(`${key}|${h.securityKey}`)?.dedupeGroup ?? null,
         })),
       });
     }
 
-    if (snaps.length >= 2) snapshotsByAccount.set(accountId, { provider, accountNo: sample.accountNo, snaps });
+    // The capital a statement PRINTS as having moved over a window — see
+    // `proveLink` below. Read off every issue, superseded or not: a window's
+    // total is a dated fact about that window, not a snapshot another issue
+    // restates.
+    const anchors = [];
+    for (const d of allIssues) {
+      const f = d.flows;
+      if (!f?.periodFrom || !f?.periodTo) continue;
+      if (isNum(f.netCapitalInOut)) {
+        anchors.push({ reportType: d.reportType, kind: "net", from: f.periodFrom, to: f.periodTo, net: f.netCapitalInOut });
+      }
+      if (isNum(f.contribution) && isNum(f.withdrawal)) {
+        anchors.push({ reportType: d.reportType, kind: "cw", from: f.periodFrom, to: f.periodTo, net: f.contribution - f.withdrawal });
+      }
+    }
+
+    if (snaps.length >= 2) snapshotsByAccount.set(accountId, { provider, accountNo: sample.accountNo, snaps, anchors });
     else if (snaps.length === 1) single.push({ accountId, provider, accountNo: sample.accountNo, date: snaps[0].date });
     else unvalued.push({ accountId, provider, accountNo: sample.accountNo });
   }
@@ -401,7 +431,7 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     notes.push("navHistory is EMPTY: fewer than two accounts in this archive publish more than one dated valuation, "
       + "so there is no set over which a consolidated series holds its composition constant.");
     return {
-      navHistory: [], accountNavHistory,
+      navHistory: [], accountNavHistory, undatedCapital: [],
       coverage: {
         covered: [],
         single: single.map((x) => ({ ...x, bookValue: r2(bookValueOf.get(x.accountId) ?? 0) })),
@@ -471,23 +501,108 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     return total;
   };
 
-  // Rule 4 — the flow basis per account, measured rather than assumed.
+  /**
+   * RULE 4'S EVIDENCE — WHAT THE STATEMENTS THEMSELVES SAY MOVED BETWEEN TWO OF
+   * AN ACCOUNT'S MARKS. A step is proven by one of three things, strongest first:
+   *
+   *  · PRINTED TOTALS. A statement prints the capital that moved over a window —
+   *    a fact sheet's contribution and withdrawal since inception, a
+   *    performance summary's or history's net capital in/out, a SEBI investor
+   *    report's inflow and outflow for its month. Either ONE statement's window
+   *    is exactly the step, or TWO statements of one kind open on the same date
+   *    and close at the step's two ends, and their difference is what moved in
+   *    between. No date is needed and none is assumed: Carnelian's totals move
+   *    by ₹30,690 between 10 July and 10 August and no dated row carries it, so
+   *    it is netted here and NAMED where a rate needs a date (`undatedCapital`).
+   *  · UNITS UNCHANGED. The same securities at both marks with the same unit
+   *    counts, none of them cash: nothing was bought or redeemed, so no capital
+   *    moved. (It used to require a single security held unchanged at EVERY
+   *    snapshot, which left HDFC MF 16180583 — two schemes, nil at both ends —
+   *    "unproven" over a move of ₹0.)
+   *  · THE DATED RECORD the XIRR reads, where no printed total covers the step.
+   *
+   * Every printed total a step has must AGREE, ±₹1; two statements that
+   * disagree prove nothing. A step with none of the three is unproven, and what
+   * it cannot prove is the account's MOVE over the step — never its value.
+   *
+   * THIS USED TO READ `accountCashFlows` ALONE, which covers 8 accounts, and
+   * booked the whole MARKET VALUE of every other multi-security account as "not
+   * proven": ₹28.3 Cr on the NAV card, ten times the ₹2.78 Cr those four
+   * accounts actually moved, about accounts whose own statements settle it —
+   * SVAN's investor reports print ₹0 in and ₹23,931 out, Molecule's fact sheets
+   * the same contribution and withdrawal at both marks, HDFC MF nil at both
+   * ends (A-10, MNT-1). And SVAN's ₹23,931 went un-netted (MNT-22).
+   */
+  const dayAfter = (iso) => new Date(Date.parse(`${iso}T00:00:00Z`) + 86400000).toISOString().slice(0, 10);
+  const datedIn = (id, a, b) => {
+    const flows = (accountCashFlows[id] ?? []).filter((f) =>
+      !/^Opening portfolio value/i.test(f.description ?? "") && f.date > a && f.date <= b);
+    // `CashFlow.amount` is NEGATIVE for capital in (see types.ts), so capital in
+    // is the negated sum.
+    return -sum(flows.map((f) => f.amount));
+  };
+  const proveLink = (id, was, snap) => {
+    const { anchors } = snapshotsByAccount.get(id);
+    const a = was.date, b = snap.date;
+    const found = [];
+    for (const x of anchors) {
+      if (x.to !== b) continue;
+      if (x.from === dayAfter(a)) { found.push({ net: x.net, reportType: x.reportType }); continue; }
+      if (x.from > a) continue;
+      for (const y of anchors) {
+        if (y.reportType === x.reportType && y.kind === x.kind && y.from === x.from && y.to === a) {
+          found.push({ net: x.net - y.net, reportType: x.reportType });
+        }
+      }
+    }
+    if (found.length) {
+      const nets = found.map((f) => f.net);
+      if (Math.max(...nets) - Math.min(...nets) <= 1) {
+        return { basis: "printed-totals", net: r2(found[0].net), evidence: [...new Set(found.map((f) => f.reportType))].sort() };
+      }
+      return { basis: "unproven", why: `its printed capital totals over ${a} → ${b} disagree (${[...new Set(nets.map(r2))].join(" vs ")})` };
+    }
+    const keyed = (s) => new Map(s.rows.map((r) => [r.securityKey, r]));
+    const w = keyed(was), n = keyed(snap);
+    const unchanged = n.size > 0 && w.size === n.size && [...n].every(([k, r]) => {
+      const o = w.get(k);
+      return !!o && isNum(o.quantity) && isNum(r.quantity) && r.assetClass !== "Cash" && o.assetClass !== "Cash"
+        && Math.abs(o.quantity - r.quantity) < 1e-6;
+    });
+    if (unchanged) return { basis: "units-unchanged", net: 0, evidence: [] };
+    if ((accountCashFlows[id] ?? []).length) return { basis: "dated-record", net: r2(datedIn(id, a, b)), evidence: [] };
+    return { basis: "unproven", why: "no statement prints the capital that moved between these two marks" };
+  };
+
+  // Per account, over each of its own consecutive marks — exactly the steps the
+  // chain below nets, because every covered account's every mark is a series date.
   const flowBasis = {};
+  const undatedCapital = [];
   for (const id of covered) {
-    const flows = accountCashFlows[id] ?? [];
-    // The opening-portfolio-value entry is a STAKE, not a movement: it is how
-    // `accountCashFlows` states the window's starting position for the XIRR, and
-    // netting it out of a NAV interval would remove the account's whole value.
-    const movements = flows.filter((f) => !/^Opening portfolio value/i.test(f.description ?? ""));
-    if (flows.length) { flowBasis[id] = { basis: "reported", movements: movements.length }; continue; }
-    // No capital record. If the account holds ONE security and its unit count is
-    // identical at every snapshot, no units were subscribed or redeemed and the
-    // whole change is the fund's own mark — which the statement PROVES rather
-    // than the pipeline assuming.
     const snaps = snapshotsByAccount.get(id).snaps;
-    const oneRow = snaps.every((s) => s.rows.length === 1 && s.rows[0].quantity !== null);
-    const sameQty = oneRow && snaps.every((s) => Math.abs(s.rows[0].quantity - snaps[0].rows[0].quantity) < 1e-6);
-    flowBasis[id] = { basis: sameQty ? "units-unchanged" : "unreported", movements: 0 };
+    const proofs = [];
+    for (let i = 1; i < snaps.length; i++) {
+      const proof = proveLink(id, snaps[i - 1], snaps[i]);
+      proofs.push({ from: snaps[i - 1].date, to: snaps[i].date, ...proof });
+      // A PRINTED TOTAL THE DATED RECORD DOES NOT CARRY is named, never dated:
+      // the series nets it inside the step, and a rate that needs every flow on
+      // a day cannot, so it says what it is missing (VD-25).
+      if (proof.basis === "printed-totals" && (accountCashFlows[id] ?? []).length) {
+        const dated = r2(datedIn(id, snaps[i - 1].date, snaps[i].date));
+        if (Math.abs(dated - proof.net) > 1) {
+          undatedCapital.push({
+            accountId: id, from: snaps[i - 1].date, to: snaps[i].date,
+            printedNet: proof.net, datedNet: dated, undated: r2(proof.net - dated), evidence: proof.evidence,
+          });
+        }
+      }
+    }
+    const bases = new Set(proofs.map((p) => p.basis));
+    flowBasis[id] = {
+      basis: bases.has("unproven") ? "unreported"
+        : bases.size === 1 && bases.has("units-unchanged") ? "units-unchanged" : "reported",
+      proofs,
+    };
   }
 
   const navHistory = [];
@@ -520,15 +635,14 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     for (const id of common) {
       const snap = at(id, d);
       const was = at(id, prevDate);
-      // This account's mark MOVED in this interval — so its own flows since
-      // that earlier snapshot are what this interval's change contains.
+      // This account's mark MOVED in this interval — so the capital its own
+      // statements show moving since that earlier mark is what this interval's
+      // change contains.
       if (was.date === snap.date) continue;
-      const flows = (accountCashFlows[id] ?? []).filter((f) =>
-        !/^Opening portfolio value/i.test(f.description ?? "") && f.date > was.date && f.date <= snap.date);
-      // `CashFlow.amount` is NEGATIVE for capital in (see types.ts), so capital
-      // in is the negated sum.
-      flowIn += -sum(flows.map((f) => f.amount));
-      if (flowBasis[id].basis === "unreported") flowUnknownValue += snap.marketValue;
+      const proof = flowBasis[id].proofs.find((x) => x.from === was.date && x.to === snap.date);
+      if (proof && proof.basis !== "unproven") flowIn += proof.net;
+      // What an unproven step cannot show to be performance is its MOVE.
+      else flowUnknownValue += Math.abs(snap.marketValue - was.marketValue);
     }
 
     const point = {
@@ -539,7 +653,7 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
       accountsCarried: present.length - onDate,
       /** Net external capital in since the previous point, on each account's own clock. */
       flowIn: prevDate ? r2(flowIn) : 0,
-      /** Value restated in this interval by an account with no capital record. */
+      /** The move, in this interval, of accounts whose capital movement no statement establishes. */
       unreportedFlowValue: prevDate ? r2(flowUnknownValue) : 0,
       linkOpen: linkOpen === null ? null : r2(linkOpen),
       linkClose: linkClose === null ? null : r2(linkClose),
@@ -560,16 +674,40 @@ function navHistoryFrom(byAccount, keptAccountIds, dedupeByAcctSec, accountCashF
     + `The panel is complete from ${panelCompleteFrom}; before that each link is struck over the accounts valued at `
     + "BOTH its ends, so an account ARRIVING contributes 0.00% instead of a step. The raw NAV level is only a book "
     + "NAV from the date the panel completes, and is flagged per point.");
+  // HOW EACH ACCOUNT'S STEPS ARE PROVEN — printed even when every one is, so a
+  // run where the proof quietly stopped reaching an account says so.
+  const byProof = new Map();
+  for (const id of covered) {
+    for (const x of flowBasis[id].proofs) {
+      const k = x.basis === "printed-totals" ? `printed totals (${x.evidence.join(", ")})` : x.basis;
+      (byProof.get(k) ?? byProof.set(k, new Set()).get(k)).add(id);
+    }
+  }
+  notes.push(`navHistory: the capital moving between each covered account's marks is established by the statements `
+    + "themselves — "
+    + [...byProof.entries()].sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, ids]) => `${k}: ${[...ids].sort().join(", ")}`).join("; ")
+    + ". A step no statement settles is netted at nothing and its MOVE is carried as `unreportedFlowValue`.");
   const unreported = covered.filter((id) => flowBasis[id].basis === "unreported");
   if (unreported.length) {
-    notes.push(`navHistory: ${unreported.length} covered account(s) publish no dated capital record and hold more than `
-      + `one security, so a subscription or redemption inside them would read as performance: ${unreported.join(", ")}. `
-      + "Named on screen with their share of the covered value.");
+    for (const id of unreported) {
+      for (const x of flowBasis[id].proofs.filter((y) => y.basis === "unproven")) {
+        notes.push(`navHistory: ${id} ${x.from} → ${x.to} is NOT PROVEN to be performance — ${x.why}. `
+          + "Its move over the step is named on screen as the part of the return that might be capital.");
+      }
+    }
+  }
+  for (const u of undatedCapital) {
+    notes.push(`account ${u.accountId}: its printed capital totals (${u.evidence.join(", ")}) move by ${u.printedNet} `
+      + `between ${u.from} and ${u.to} and its dated record carries ${u.datedNet} over the same days — `
+      + `${u.undated} moved on a day no statement in this drop prints. The NAV series nets it inside that step, which `
+      + "needs no date; the money-weighted return cannot, and names it rather than assuming a day.");
   }
 
   return {
     navHistory,
     accountNavHistory,
+    undatedCapital,
     coverage: {
       covered: covered.map((id) => ({
         accountId: id,
@@ -1046,6 +1184,166 @@ function capitalMovesFrom(cashFlows, accountId, notes, label) {
 }
 
 
+/**
+ * ── THE FAMILY'S DATED CAPITAL IS PRINTED IN THREE PLACES, AND THIS READ ONE ──
+ *
+ * `capitalMovesFrom` reads the rows a statement TYPES as a contribution or a
+ * withdrawal. Two more records carry the family's dated capital:
+ *
+ *   · the DATED CAPITAL CALLS a drawdown fund prints (Stage 10ay) — India SME
+ *     ×3, Sky Capital ×4, Baring, Carnelian Bharat Amritkaal, Delphi and both
+ *     Founders folios. THESE ARE DELIBERATELY NOT MERGED HERE. They reach the
+ *     Transactions card at display time through `capitalMovesWithCalls` in
+ *     `src/lib/tranches.ts` (Stage 10cd), which adds them ONLY for an account
+ *     with no record of its own, marks them `fromCall`, and leaves `invested`
+ *     null because what bought units after the fund's charges is not printed
+ *     per call. Merged here they would turn every drawdown fund into a
+ *     "record" account — so `recordShortfall` would refuse its return against a
+ *     record-end no capital document states, its payouts would be treated as a
+ *     recorded fund's, and each call would carry an `invested` no statement
+ *     prints. One place joins the calls, and it is that one.
+ *   · a CAPITAL REGISTER's movements — V.E.C 128005's ₹10.65 Cr and ₹59 L Fund
+ *     Deposits of 28 and 29 July, which the XIRR has always netted and this
+ *     record never listed, and Green Lantern 510861's July TDS (₹6,350), which
+ *     is exactly the gap Stage 10cf found between its quarterly record and its
+ *     27 July value. Those are merged here.
+ *
+ * FOUR RULES, each a wrong record avoided:
+ *
+ * 1. A PAYMENT TWO DOCUMENTS BOTH PRINT IS ONE PAYMENT. A register is
+ *    aggregated per date and direction FIRST, because `capitalMovesFrom` is:
+ *    Green Lantern 510861's register prints two TDS rows on 2 April (₹1,339 and
+ *    ₹2,708) that its investor report prints as one ₹4,047 outflow. A register
+ *    movement on the same account, date and direction as a typed row, within
+ *    ₹1, is that payment printed again and is not added.
+ * 2. A REGISTER IS MERGED ONLY WHERE ITS OWN PRINTED BALANCES WITNESS IT: its
+ *    movements must carry its own Opening Balance to its own last printed
+ *    balance, to the rupee. A register that does not reproduce its balance is
+ *    withheld whole and named — a partial list reads exactly like a complete
+ *    one.
+ * 3. A CLASS SWITCH IS NOT CAPITAL. Buoyant 103473's register prints its 1 June
+ *    switch as "Security in" and "Security out" of ₹22.53 Cr. The fund's own
+ *    reclassification record witnesses it — same account, same date, same
+ *    rupees — so neither leg is money moving and neither is listed.
+ * 4. A REGISTER WHOSE ONLY MOVEMENTS ARE WITHDRAWALS, FOR AN ACCOUNT WITH NO
+ *    OTHER DATED CAPITAL, IS NOT LISTED. Goldstandard's, V.E.C 128004's and
+ *    Green Lantern 510854's registers carry nothing but TDS transfers out of
+ *    accounts funded before the register's window opened. Listed alone they
+ *    would present an account the family put crores into as one nothing was
+ *    paid into. They stay in `BOOK_ACCOUNT_CASH_FLOWS`, where the XIRR and the
+ *    NAV chain net them, and each is named in the notes. (A bank book's
+ *    Dep/With column is not merged at all: its running balance moves with every
+ *    trade, so nothing on the page witnesses that column alone — and the one in
+ *    this book, Carnelian's, is a single TDS row, which rule 4 would hold back
+ *    anyway.)
+ *
+ * Returns the moves to add and `witnessedTo` — the latest date a register whose
+ * balances tie reaches, where the account's record includes it. That is how far
+ * the combined record provably runs (`Account.capitalRecordTo`): a register that
+ * walks its own opening balance to its closing one says nothing else moved
+ * through its date, whether or not its rows were already on the typed record.
+ * A held-back register (rule 4) reaches nothing, because the account then has no
+ * record for it to extend — and a register that OPENS after the typed record
+ * ends reaches nothing either, because the days between the two are covered by
+ * neither and a reach claimed across them would hide exactly the gap
+ * `recordShortfall` exists to name. `existing` is this account's typed record
+ * and `typedReach` how far it runs on its own (the `capitalRecordTo` main's
+ * Stage 10cf computes from the documents carrying a typed payment row).
+ */
+function datedCapitalElsewhere({ accountId, allIssues, existing, typedReach, reclassificationsHere, notes, label }) {
+  const out = [];
+  const same = (m, date, direction, amount) => m.date === date && m.direction === direction
+    && isNum(m.amount) && Math.abs(m.amount - amount) <= 1;
+  const already = (date, direction, amount) =>
+    existing.some((m) => same(m, date, direction, amount)) || out.some((m) => same(m, date, direction, amount));
+  const clash = (date, direction) => existing.find((m) => m.date === date && m.direction === direction) ?? null;
+
+  // ── the capital register, witnessed by its own opening and closing balance ──
+  const rows = [];
+  const seenRow = new Set();
+  const witnessed = [];
+  for (const d of allIssues.filter((x) => x.reportType === "capital-register")) {
+    const reg = (d.cashFlows ?? []).filter((c) => c.kind === "capital-register" && c.date);
+    const open = reg.find((c) => /^opening balance/i.test(c.description ?? "") && isNum(c.balance));
+    const last = [...reg].reverse().find((c) => isNum(c.balance));
+    const moves = reg.filter((c) => c !== open && isNum(c.amount) && c.amount !== 0);
+    if (!moves.length) continue;
+    if (!open || !last) {
+      notes.push(`${label}: the ${d.asOf} capital register prints no opening and closing balance, so nothing `
+        + "witnesses its movements and they are not listed as dated capital");
+      continue;
+    }
+    const gap = last.balance - open.balance - sum(moves.map((c) => c.amount));
+    if (Math.abs(gap) > 1) {
+      notes.push(`${label}: the ${d.asOf} capital register's movements do not carry its opening balance `
+        + `(${open.balance}) to its closing one (${last.balance}) — ${r2(gap)} unaccounted — so they are withheld`);
+      continue;
+    }
+    // CONTIGUOUS WITH THE TYPED RECORD, OR THE REACH IS NOT CLAIMED: the register's
+    // own Opening Balance date is where its window starts, and the typed record
+    // must run at least to the day before it.
+    const opens = open.date;
+    const dayBefore = opens ? new Date(Date.parse(`${opens}T00:00:00Z`) - 86400000).toISOString().slice(0, 10) : null;
+    const contiguous = !existing.length || (!!typedReach && !!dayBefore && typedReach >= dayBefore);
+    if (d.asOf && contiguous) witnessed.push(d.asOf);
+    for (const c of moves) {
+      const k = `${c.date}|${c.description ?? ""}|${c.amount}|${c.balance ?? ""}`;
+      if (seenRow.has(k)) continue;
+      seenRow.add(k);
+      rows.push(c);
+    }
+  }
+  const switchLeg = (c) => reclassificationsHere.some((r) => r.date === c.date && Math.abs(r.amount - Math.abs(c.amount)) <= 1);
+  const legs = rows.filter(switchLeg);
+  const money = rows.filter((c) => !switchLeg(c));
+  if (legs.length) {
+    notes.push(`${label}: ${legs.length} capital-register row(s) (${[...new Set(legs.map((c) => c.description))].join(", ")}) `
+      + "are the legs of a class switch the fund's own reclassification record prints on the same date for the same "
+      + "rupees — not money moving, so not listed");
+  }
+  const byDay = new Map();
+  for (const c of money) {
+    const direction = c.amount > 0 ? "in" : "out";
+    const k = `${c.date}|${direction}`;
+    const cur = byDay.get(k) ?? { date: c.date, direction, amount: 0, label: c.description || (direction === "in" ? "Deposit" : "Withdrawal") };
+    cur.amount += Math.abs(c.amount);
+    byDay.set(k, cur);
+  }
+  const regMoves = [...byDay.values()].sort((a, b) => a.date.localeCompare(b.date) || a.direction.localeCompare(b.direction));
+  let heldBack = false;
+  if (regMoves.length) {
+    if (!existing.length && !regMoves.some((m) => m.direction === "in")) {
+      heldBack = true;
+      notes.push(`${label}: its capital register's only movements are ${regMoves.length} withdrawal(s) `
+        + `(${[...new Set(regMoves.map((m) => m.label))].join(", ")}, ${r2(sum(regMoves.map((m) => m.amount)))} in all) and it `
+        + "publishes no other dated capital, so they are not listed as the family's own: on their own they would present an "
+        + "account funded before the register's window as one nothing was paid into. The XIRR and the NAV chain still net them.");
+    } else {
+      for (const m of regMoves) {
+        if (already(m.date, m.direction, m.amount)) continue;
+        const other = clash(m.date, m.direction);
+        if (other) {
+          notes.push(`${label}: the register's ${m.date} ${m.direction === "in" ? "deposit" : "withdrawal"} of ${r2(m.amount)} `
+            + `and the ${r2(other.amount)} another statement prints that day disagree — the typed row is kept and the register's `
+            + "is not added a second time");
+          continue;
+        }
+        out.push({
+          accountId, date: m.date, direction: m.direction,
+          label: m.label,
+          amount: r2(m.amount),
+          // A register deposit is cash into the account; no charge is printed against it.
+          invested: m.direction === "in" ? r2(m.amount) : null,
+          units: null, security: null, securityKey: null,
+        });
+      }
+    }
+  }
+  const reaches = !heldBack && (existing.length > 0 || out.length > 0);
+  return { register: out, witnessedTo: reaches ? (witnessed.sort().at(-1) ?? null) : null };
+}
+
+
 /** Half of the last decimal a printed unit count carries — the tie a FIFO balance is held to. */
 function printedUnitTie(q) {
   if (!isNum(q)) return UNIT_TIE;
@@ -1055,6 +1353,18 @@ function printedUnitTie(q) {
 }
 
 /** The economic gain on one capital-gain lot: proceeds less what those units cost. */
+/**
+ * WHICH DOCUMENT A DAY'S SALE IS READ FROM, for settling capital-gain lots
+ * against it — the runtime ledger's own `AUTHORITATIVE.transactions` list
+ * (`src/lib/ledger.ts`), restated here because that module is the browser's.
+ * The first type an account publishes wins and the other is never read: a
+ * manager issuing both prints the same sale twice, and a day's sale summed
+ * across two documents would match no lot group at all.
+ */
+const SALE_AUTHORITY = ["transaction-statement", "investor-report"];
+/** The statement's own settlement figure, else its net, else its gross — the ledger's `settledAmount`. */
+const settledOf = (t) => t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
+
 function lotGain(l) {
   if (isNum(l.saleAmount) && isNum(l.purchaseAmount)) return { gain: l.saleAmount - l.purchaseAmount, cost: l.purchaseAmount };
   const g = (isNum(l.shortTerm) ? l.shortTerm : 0) + (isNum(l.longTerm) ? l.longTerm : 0);
@@ -1350,6 +1660,105 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
   return out;
 }
 
+// ── The value bridge: it adds up, or it is withheld (A-12) ───────────────────
+
+/**
+ * THE LINES A VALUE BRIDGE ADDS, WITH THEIR SIGNS — one identity for every
+ * report, because a report prints only the lines it prints and a line it does
+ * not print adds nothing. A fact sheet prints capital in and out and one
+ * Profit / loss; a performance summary or appraisal prints the net capital, the
+ * gains, income, fees, expenses and accrued income; the SEBI investor report
+ * prints gross capital, the gains, income, the change in accruals and three
+ * expense lines. Nothing here knows which report prints what: a line is counted
+ * where the book carries a figure for it, so a report that gains a line is
+ * tied on it the day its reader reads it.
+ *
+ * Capital is the net line where the report prints one and contributions less
+ * withdrawals otherwise, so no rupee of it is counted twice.
+ */
+const BRIDGE_TERMS = [
+  { key: "realized", sign: 1, words: "realised gain" },
+  { key: "unrealized", sign: 1, words: "unrealised gain" },
+  { key: "gainPriorToTakeover", sign: 1, words: "gain prior to takeover" },
+  { key: "income", sign: 1, words: "income" },
+  { key: "profit", sign: 1, words: "profit / loss" },
+  { key: "fees", sign: -1, words: "fees" },
+  { key: "expenses", sign: -1, words: "expenses" },
+  { key: "otherExpenses", sign: -1, words: "other expenses" },
+  { key: "accruedIncome", sign: 1, words: "accrued income" },
+  { key: "changeInAccruals", sign: 1, words: "change in accruals" },
+];
+/**
+ * The flow lines a reader sets ONLY where it reads them: absent means no reader
+ * looked, `null` means it looked and the report prints none. The distinction is
+ * what lets a column that does not tie say which of its lines were never read.
+ */
+const OPTIONAL_BRIDGE_FLOWS = ["accruedIncome", "changeInAccruals", "otherExpenses", "gainPriorToTakeover"];
+const joinWords = (xs, and = "and") => (xs.length <= 1 ? xs.join("")
+  : `${xs.slice(0, -1).join(", ")} ${and} ${xs[xs.length - 1]}`);
+
+/**
+ * THE WINDOW A COLUMN IS ON, BY ITS OWN DATES (XA-21). Since inception only
+ * where it starts on the account's own inception date; a financial year to date
+ * only where it starts on 1 April and ends inside that year; anything else is a
+ * window and is called one — a month, or the span a fund's account statement
+ * covers from its first contribution, is not a financial year.
+ */
+function bridgeBasisOf(from, to, inception) {
+  if (inception && from === inception) return "since-inception";
+  const fy = /^(\d{4})-04-01$/.exec(from);
+  if (fy && to >= from && to <= `${Number(fy[1]) + 1}-03-31`) return "financial-year-to-date";
+  return "window";
+}
+
+/**
+ * DOES THE COLUMN ADD UP? Opening + capital + every line it prints = closing,
+ * within the statement's own rounding — each printed figure is rounded to its
+ * last printed unit, so N figures and a closing can be (N + 1) half-units apart
+ * and no further. A column that does not add up is WITHHELD: the book keeps its
+ * figures as read, and the page shows none of them as a bridge, because a
+ * column whose parts do not make its total teaches a reader the wrong
+ * arithmetic however carefully it is labelled.
+ *
+ * A since-inception opening the report does not print is NIL by definition —
+ * nothing was held before inception — and is added as a computed zero. Any
+ * other opening the report does not print cannot be assumed, so that column
+ * cannot be tied and says so.
+ */
+function bridgeTieOf(b) {
+  const openingNil = b.basis === "since-inception" && b.opening == null;
+  const opening = openingNil ? 0 : b.opening;
+  const unread = b.unread ?? [];
+  const unreadWords = BRIDGE_TERMS.filter((t) => unread.includes(t.key)).map((t) => t.words);
+  const unreadClause = unreadWords.length
+    ? ` Not read from this report: ${joinWords(unreadWords)}.` : "";
+  if (!isNum(b.closing)) {
+    return { ties: false, openingNil, residual: null, linesTotal: null,
+      withheldReason: `The report prints no closing value, so its lines cannot be added up.${unreadClause}` };
+  }
+  if (!isNum(opening)) {
+    const printed = BRIDGE_TERMS.filter((t) => b[t.key] === null && !unread.includes(t.key)).map((t) => t.words);
+    return { ties: false, openingNil, residual: null, linesTotal: null,
+      withheldReason: "The report prints no opening value for this window, so its lines cannot be added up to its "
+        + `closing value.${printed.length ? ` It prints no ${joinWords(printed, "or")} line.` : ""}${unreadClause}` };
+  }
+  const capital = isNum(b.netCapitalInOut) ? b.netCapitalInOut
+    : isNum(b.contribution) || isNum(b.withdrawal) ? (b.contribution ?? 0) - (b.withdrawal ?? 0) : null;
+  const signed = [opening, capital, ...BRIDGE_TERMS.map((t) => (isNum(b[t.key]) ? t.sign * b[t.key] : null))]
+    .filter(isNum);
+  const linesTotal = signed.reduce((s, v) => s + v, 0);
+  const residual = r2(b.closing - linesTotal);
+  const figures = [...signed, b.closing];
+  const unit = figures.some((v) => Math.abs(v - Math.round(v)) > 0.004) ? 0.01 : 1;
+  const ties = Math.abs(residual) <= ((figures.length) * unit) / 2 + 1e-9;
+  if (ties) return { ties: true, openingNil, residual, linesTotal: r2(linesTotal), withheldReason: null };
+  const sameEnds = !openingNil && b.basis === "since-inception" && Math.abs(b.opening - b.closing) < 0.005;
+  return { ties: false, openingNil, residual, linesTotal: r2(linesTotal),
+    withheldReason: (sameEnds
+      ? "Its opening value is read as its closing value, though nothing is held before inception."
+      : "Its lines do not add to its closing value.") + unreadClause };
+}
+
 // ── Build ────────────────────────────────────────────────────────────────────
 
 function build(docs) {
@@ -1528,6 +1937,8 @@ function build(docs) {
   const fifoLotsByPosition = new Map();
   /** FIFO's cost for a holding a class SWITCH alone moved — checked against the switch carry, never applied. */
   const fifoSwitchOnly = [];
+  /** Holdings on an account with a capital gain statement whose realised half no window of it reaches — null, named. */
+  const realisedWithheld = [];
   /**
    * UNDRAWN CAPITAL — money the family OWES a fund on demand.
    *
@@ -1542,6 +1953,12 @@ function build(docs) {
    * Denying a figure is worse than omitting it: a reader plans around it.
    */
   const commitments = [];
+  /**
+   * HELD, AND VALUED BY NO STATEMENT — one row per holding the authoritative
+   * holdings document reports with a quantity and no market value. Emitted as
+   * `BOOK_UNVALUED_HOLDINGS`; see the push below and the post-loop pass.
+   */
+  const unvaluedHoldings = [];
 
   for (const [key, allIssues] of [...byAccount.entries()].sort()) {
     const group = newestPerReportType(allIssues, notes, `account ${key}`);
@@ -1813,27 +2230,122 @@ function build(docs) {
      * units twice — once as value, once as profit. A later sale belongs to a
      * later snapshot, and until one arrives it is named rather than added.
      */
+    /**
+     * A LOT BELONGS TO THE HOLDING WHOSE SALE IT SETTLED, however each document
+     * spells the security (DL-1).
+     *
+     * Green Lantern's capital gain statements print `Axis Liquid Fund - Direct
+     * Plan - Growth` where the same account's transaction statement and
+     * appraisal print `… - Growth Option`. Keyed on the lot's own spelling, 18
+     * lots and ₹8,62,231.63 of realised gain reached no holding, and the holding
+     * — seeing a capital gain statement for its account — wrote a MEASURED ₹0.
+     * `shared/lotSettlement.mjs` is the ONE rule, read by the runtime ledger
+     * too: a lot group settles a day's sale by identity, else by the same
+     * account and date with its summed proceeds equal to the sale to the printed
+     * precision — and where that happens under a different key the account gains
+     * an alias. Nothing is inferred from a name, and the archive keeps both
+     * spellings.
+     *
+     * A fund's own allotment or redemption already on the dated capital record
+     * is not a sale (same account, security and date, amount within ₹1 of the
+     * move's invested-or-amount) — the ledger's own exclusion.
+     */
+    const saleType = SALE_AUTHORITY.find((rt) => allIssues.some((d) => d.reportType === rt && (d.transactions ?? []).length)) ?? null;
+    const typeOfDoc = new Map(allIssues.map((d) => [d.docKey, d.reportType]));
+    const ownFundMoves = capitalMovesFrom(dated.cashFlows, accountId, [], `account ${accountNo}`);
+    const isOwnFundMove = (sale) => ownFundMoves.some((m) => m.securityKey === sale.securityKey && m.date === sale.date
+      && isNum(sale.amount) && isNum(m.invested ?? m.amount) && Math.abs((m.invested ?? m.amount) - sale.amount) <= 1);
+    const daySales = saleType ? daySalesOf(dated.transactions
+      .filter((t) => t.side === "sell" && t.date && t.securityKey && typeOfDoc.get(t.source) === saleType)
+      .map((t) => ({ accountNo, securityKey: t.securityKey, date: t.date, amount: settledOf(t) }))
+      .filter((x) => !isOwnFundMove(x))) : [];
+    const settlement = settleSales(lotGroupsOf(dated.capitalGains.filter((l) => l.securityKey).map((l) => ({
+      accountNo, securityKey: l.securityKey, saleDate: l.saleDate ?? null,
+      saleAmount: isNum(l.saleAmount) ? l.saleAmount : null, realised: lotGain(l)?.gain ?? null,
+    }))), daySales);
+    /**
+     * …AND WHERE THE SALE'S SPELLING IS STILL NOT THE HOLDING'S, THE ISIN IS.
+     *
+     * LKP prints its Liquid BeES lot and sale as `NIPPON INDIA ETF LIQUID BEES`
+     * and its depository holding as the clipped `NIP ETNF1D RTLIQBEES`, so the
+     * settlement joins lot to sale by identity and neither to the holding. The
+     * lot and the holding carry the SAME ISIN (INF732E01037) on the SAME account,
+     * which is an identifier, not a name: a lot whose settled key names no
+     * holding goes to the one holding of this account printing its ISIN, and to
+     * none if two do.
+     */
+    const heldByKey = new Set((holdingsDoc?.holdings ?? []).map((h) => h.securityKey).filter(Boolean));
+    const lotByIsin = [];
+    const lotHoldingKey = (l) => {
+      const k = settledSecurityOf(settlement.aliases, accountNo, l.securityKey);
+      if (heldByKey.has(k) || !l.isin) return k;
+      const byIsin = [...new Set((holdingsDoc?.holdings ?? []).filter((h) => h.isin === l.isin && h.securityKey).map((h) => h.securityKey))];
+      if (byIsin.length !== 1) return k;
+      if (!lotByIsin.some((x) => x.from === k)) lotByIsin.push({ from: k, to: byIsin[0], isin: l.isin });
+      return byIsin[0];
+    };
+    for (const [lot, saleKey] of [...settlement.aliases].sort()) {
+      notes.push(`account ${accountNo}: capital-gain lots printed as \`${lot.slice(lot.indexOf("|") + 1)}\` settle this account's `
+        + `sales of \`${saleKey}\` — same account and date, lot proceeds equal to each day's settled sale to the printed `
+        + "precision — so their realised gain is that holding's");
+    }
+    for (const c of settlement.conflicts) {
+      notes.push(`account ${accountNo}: lots printed as \`${c.lot.slice(c.lot.indexOf("|") + 1)}\` settle sales under `
+        + `${c.sales.length} different securities (${c.sales.join(", ")}), so they are aliased to none`);
+    }
+    // A lot group that settles no sale on the authoritative trade record AND
+    // names no holding this account carries reaches no figure at all — NAMED,
+    // because a realised gain that silently joins nothing looks exactly like a
+    // holding that sold nothing.
+    {
+      const heldKeys = new Set((holdingsDoc?.holdings ?? []).map((h) => h.securityKey).filter(Boolean));
+      const stray = settlement.unsettled.filter((g) => !heldKeys.has(settledSecurityOf(settlement.aliases, accountNo, g.securityKey)));
+      if (stray.length) {
+        notes.push(`account ${accountNo}: ${stray.length} capital-gain lot group(s) settle no sale on this account's `
+          + `${saleType ?? "(no)"} trade record and name no holding it carries — ${stray.map((g) => `${g.securityKey} sold ${g.date}`).join("; ")}`);
+      }
+    }
+
     const realisedByKey = new Map();
     let lotsAfterSnapshot = 0;
     let lotsUnreadable = 0;
     const hasCgStatement = dated.capitalGains.length > 0;
     for (const l of dated.capitalGains) {
       if (!l.securityKey) continue;
+      const k = lotHoldingKey(l);
       if (asOf && l.saleDate && l.saleDate > asOf) {
         lotsAfterSnapshot += 1;
-        const e = realisedByKey.get(l.securityKey) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
+        const e = realisedByKey.get(k) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
         e.after += 1;
-        realisedByKey.set(l.securityKey, e);
+        realisedByKey.set(k, e);
         continue;
       }
       const g = lotGain(l);
       if (!g) { lotsUnreadable += 1; continue; }
-      const e = realisedByKey.get(l.securityKey) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
+      const e = realisedByKey.get(k) ?? { gain: 0, cost: 0, lots: 0, after: 0 };
       e.gain += g.gain;
       e.cost += g.cost;
       e.lots += 1;
-      realisedByKey.set(l.securityKey, e);
+      realisedByKey.set(k, e);
     }
+    /**
+     * A ZERO IS A MEASUREMENT ONLY OVER A WINDOW THAT REACHES THE HOLDING (DL-2).
+     *
+     * LKP's holdings are dated 31 March and every lot on its capital gain
+     * statement for Belrise, Capri, Electronics Mart, Jyothy and Varun was sold
+     * after it — so the realised gain those holdings carry up to their own date
+     * was struck over no sale of theirs at all, and ₹0 there read as "sold
+     * nothing" beside a Capital Gains page showing +₹7 L. Where every lot for
+     * the name falls after the holding's date, or the record's window opens
+     * after it, the realised half is NULL — and `realisedReason` says which
+     * sales came later — never a zero.
+     */
+    for (const x of lotByIsin) {
+      notes.push(`account ${accountNo}: capital-gain lots of \`${x.from}\` belong to its holding \`${x.to}\` — the same `
+        + `ISIN (${x.isin}) on the same account, where the depository clips the name the lot and the sale print in full`);
+    }
+    const cgOpens = allIssues.filter((d) => (d.capitalGains ?? []).length).map((d) => d.periodFrom).filter(Boolean).sort()[0] ?? null;
+    const cgReachesHolding = hasCgStatement && !!asOf && !!cgOpens && cgOpens <= asOf;
     if (lotsAfterSnapshot) {
       notes.push(`account ${accountNo}: ${lotsAfterSnapshot} capital-gain lot(s) were sold after this account's holding statement of ${asOf}, `
         + "so the units they sold are still IN that statement's positions at its own mark. Their gain is on the capital gain "
@@ -1927,6 +2439,37 @@ function build(docs) {
      */
     const allHoldings = holdingsDoc?.holdings ?? [];
     const unvalued = allHoldings.filter((h) => !isNum(h.marketValue));
+    /**
+     * AND EVERY ONE OF THEM IS EMITTED, not only named in the report.
+     *
+     * The two notes below NAME these rows in docs/BOOK-REPORT.md and nothing on
+     * screen could read them: `Position` is the valued set, so an account holding
+     * some unvalued rows beside valued ones showed only the valued ones, and an
+     * account holding nothing BUT unvalued rows showed an empty account. So each
+     * row is carried as a quantity — never as a value, and never summed into any
+     * total — with the reason IT carries none. The reason is the ROW's, because
+     * the two causes send a reader to different documents: a custodian records
+     * units, and the face value they were allotted at where it holds no price; a
+     * fund's own statement that prints no NAV is a fact about the fund.
+     */
+    for (const h of unvalued) {
+      if (!h.securityKey) continue;
+      const custody = CUSTODY_PROVIDERS.has(provider);
+      const qty = isNum(h.quantity) ? h.quantity : null;
+      const fv = isNum(h.faceValue) ? h.faceValue : null;
+      const reason = custody
+        ? (fv !== null
+          ? `the ${provider} statement of ${holdingsDoc.asOf} records ${qty ?? "these"} unit(s) at their face value of ${fv}, `
+            + "the value they were allotted at — not a mark anybody struck, so they carry a quantity and no value"
+          : `the ${provider} statement of ${holdingsDoc.asOf} prints no rate for this holding, so it carries a quantity and no value`)
+        : `the fund's own statement of ${holdingsDoc.asOf} reports ${qty ?? "these"} unit(s) and no NAV and no valuation — `
+          + "there is nothing to value them at, and the capital drawn against them is what was paid, not what the stake is worth";
+      unvaluedHoldings.push({
+        accountId, ownerId, securityKey: h.securityKey, security: h.security, isin: h.isin || null,
+        assetClass: h.assetClass ?? null, quantity: qty, faceValue: fv, asOf: holdingsDoc.asOf ?? null,
+        sameUnitsReportedBy: null, reason,
+      });
+    }
     if (unvalued.length && unvalued.length === allHoldings.length) {
       notes.push(`account ${accountNo} (${provider}) contributes no market value: its statement of ${holdingsDoc.asOf} `
         + `carries ${unvalued.length} holding(s) with units and cost and NO NAV, so there is nothing to value them at. `
@@ -1988,8 +2531,15 @@ function build(docs) {
       let costOfUnitsSold = null;
       const rz = realisedByKey.get(h.securityKey);
       if (hasCgStatement) {
-        realizedPnL = rz?.lots ? r2(rz.gain) : 0;
-        costOfUnitsSold = rz?.lots ? r2(rz.cost) : 0;
+        if (rz?.lots) {
+          realizedPnL = r2(rz.gain);
+          costOfUnitsSold = r2(rz.cost);
+        } else if (cgReachesHolding && !rz?.after) {
+          realizedPnL = 0;
+          costOfUnitsSold = 0;
+        } else {
+          realisedWithheld.push({ accountId, security: h.security, after: rz?.after ?? 0, opens: cgOpens });
+        }
       }
       const realizedLotsAfter = rz?.after ?? 0;
       /**
@@ -2247,12 +2797,12 @@ function build(docs) {
         "realized", "unrealized", "income", "fees", "expenses", "corpus"]
         .filter((k) => isNum(f[k]));
       if (!has.length) continue;
-      bridges.push({
+      const bridge = {
         reportType: d.reportType,
         source: d.docKey,
         periodFrom: f.periodFrom,
         periodTo: f.periodTo,
-        basis: f.periodFrom === inception ? "since-inception" : "financial-year-to-date",
+        basis: bridgeBasisOf(f.periodFrom, f.periodTo, inception),
         opening: f.openingCorpus,
         contribution: f.contribution,
         withdrawal: f.withdrawal,
@@ -2264,7 +2814,25 @@ function build(docs) {
         expenses: f.expenses,
         closing: f.corpus,
         profit: f.profit,
-      });
+        // The lines a reader sets only where it reads them (A-12): a figure,
+        // `null` where it looked and the report prints none, and named in
+        // `unread` where no reader looked at all.
+        accruedIncome: f.accruedIncome ?? null,
+        changeInAccruals: f.changeInAccruals ?? null,
+        otherExpenses: f.otherExpenses ?? null,
+        gainPriorToTakeover: f.gainPriorToTakeover ?? null,
+        unread: OPTIONAL_BRIDGE_FLOWS.filter((k) => f[k] === undefined),
+      };
+      const tie = bridgeTieOf(bridge);
+      Object.assign(bridge, tie);
+      if (!tie.ties) {
+        notes.push(`account ${accountNo}: the ${d.reportType} value bridge ${f.periodFrom} → ${f.periodTo} is WITHHELD — `
+          + (tie.residual === null ? tie.withheldReason
+            : `its lines add to ${r2(tie.linesTotal).toLocaleString("en-IN")} against a closing value of `
+              + `${r2(bridge.closing).toLocaleString("en-IN")}, ${Math.abs(tie.residual).toLocaleString("en-IN")} apart. `
+              + tie.withheldReason));
+      }
+      bridges.push(bridge);
     }
     if (bridges.length) {
       // Widest window first, so the since-inception view leads.
@@ -2432,9 +3000,71 @@ function build(docs) {
     // register or the bank book; this reads the rows the statements type as a
     // contribution or a withdrawal, wherever they appear, and is the only place
     // in this book that answers "what did WE buy, and when".
-    capitalMoves.push(...capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+    const typedMoves = capitalMovesFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`);
     if (capitalRecordFromInception(dated.cashFlows)) capitalFromInception.add(accountId);
-    reclassifications.push(...reclassificationsFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`));
+    const switchesHere = reclassificationsFrom(dated.cashFlows, accountId, notes, `account ${accountNo}`);
+    reclassifications.push(...switchesHere);
+    /**
+     * …AND THE CAPITAL REGISTER `capitalMovesFrom` DOES NOT READ, merged onto it
+     * only where the register's own balances witness it and never a payment
+     * twice. A drawdown fund's dated CALLS are the other record it does not
+     * read, and they are joined at display time instead (`capitalMovesWithCalls`,
+     * one record per account). See `datedCapitalElsewhere`.
+     */
+    const commitmentsHere = commitments.filter((c) => c.accountId === accountId);
+    const merged = datedCapitalElsewhere({
+      accountId, allIssues, existing: typedMoves, typedReach: capitalRecordTo,
+      reclassificationsHere: switchesHere, notes, label: `account ${accountNo}`,
+    });
+    const elsewhere = merged.register;
+    capitalMoves.push(...typedMoves, ...elsewhere);
+    /**
+     * …AND THE RECORD NOW RUNS AS FAR AS THE REGISTER THAT WITNESSES IT. Stage
+     * 10cf's `capitalRecordTo` counts only documents carrying a TYPED payment
+     * row, so an account whose record the register completes would still read
+     * as stopping short: Green Lantern 510861's register walks its balance to
+     * 27 July, the date its value is struck, and carries the ₹6,350 of July TDS
+     * that were the whole of its shortfall. Extended only forward, and only by a
+     * register whose balances tie and whose window meets the typed record's.
+     */
+    if (merged.witnessedTo && (!capitalRecordTo || merged.witnessedTo > capitalRecordTo)) {
+      const acct = accounts.find((a) => a.accountId === accountId);
+      if (acct) {
+        notes.push(`account ${accountNo}: its dated capital record runs to ${merged.witnessedTo} — the capital register whose `
+          + `balances tie reaches that date${capitalRecordTo ? `, past the ${capitalRecordTo} its typed rows reach on their own` : ""}`);
+        acct.capitalRecordTo = merged.witnessedTo;
+      }
+    }
+    {
+      /**
+       * A RECORD BESIDE A FUND'S OWN CALLS IS HELD TO THE FUND'S TOTAL.
+       * `capitalMovesWithCalls` shows ONE record per account: where the account
+       * publishes its own, that record is what the page shows and the fund's
+       * calls are not added. So a record that disagrees with the fund's printed
+       * called/paid total is exactly what a reader would be shown, and it is
+       * named here — the check the date-and-amount dedupe cannot make when two
+       * documents print one payment on different dates. An account with no
+       * record of its own has nothing to hold: its calls are the record, and
+       * their reader already tied them to that total (`callsIfTheyTie`).
+       */
+      const withCalls = commitmentsHere.find((c) => (c.calls ?? []).length);
+      if (withCalls && typedMoves.length + elsewhere.length > 0) {
+        const printed = [withCalls.called, withCalls.paid, withCalls.drawn].find(isNum) ?? null;
+        const paidIn = sum([...typedMoves, ...elsewhere].filter((m) => m.direction === "in" && isNum(m.amount)).map((m) => m.amount));
+        if (printed !== null && Math.abs(paidIn - printed) > 1) {
+          notes.push(`account ${accountNo}: its dated capital in adds to ${r2(paidIn)} against the ${r2(printed)} its fund prints `
+            + "as called or paid — the record carries a payment the calls do not, or misses one they do");
+        }
+      }
+      const said = (xs, what) => (xs.length
+        ? [`${xs.length} ${what} (${r2(sum(xs.filter((m) => m.direction === "in").map((m) => m.amount)))} in, `
+          + `${r2(sum(xs.filter((m) => m.direction === "out").map((m) => m.amount)))} out)`] : []);
+      const parts = said(merged.register, "movement(s) from its capital register");
+      if (parts.length) {
+        notes.push(`account ${accountNo}: ${parts.join(" and ")} merged into its dated capital record — each witnessed by `
+          + "the register's own opening and closing balance, and none already on the account's typed record");
+      }
+    }
 
     /**
      * ── A MANDATE'S CAPITAL, SINCE INCEPTION, AT THE SAME DATE AS ITS HOLDINGS ──
@@ -2602,6 +3232,64 @@ function build(docs) {
   for (let i = positions.length - 1; i >= 0; i--) {
     if (RINGFENCED_SECURITY_KEYS.has(positions[i].securityKey)) positions.splice(i, 1);
   }
+
+  /**
+   * THE UNVALUED ROWS: FENCED, CROSS-REFERENCED, ORDERED.
+   *
+   * The fence is a decision about a SECURITY and holds wherever it is reported,
+   * so it applies to a quantity-only row exactly as to a valued one.
+   *
+   * A CUSTODIAN'S ROW MAY BE THE SAME UNITS A FUND'S OWN STATEMENT REPORTS. The
+   * demat statements list every fund unit the family owns, and for most of them
+   * the fund's own account is also in this book — valued (Buoyant, Sanshi) or
+   * not (India SME, Sky Capital). Listed from both sides, a screen of "held but
+   * not valued" would show one holding twice, or show a holding the fund's own
+   * statement values as if nothing valued it. So each custody row whose ISIN
+   * `AIF_UNITS` assigns to a reporting fund is checked the way
+   * `dropDepositoryDuplicates` checks a valued one — the SAME OWNER's account at
+   * that fund carrying the same unit count to the printed precision — and a
+   * match names it in `sameUnitsReportedBy`. Nothing is dropped: the row is
+   * still what the custodian printed. A count that does not match is NAMED, not
+   * paired, because two statements drawn on different dates describe different
+   * unit counts and neither may be assumed to contain the other.
+   */
+  for (let i = unvaluedHoldings.length - 1; i >= 0; i--) {
+    if (RINGFENCED_SECURITY_KEYS.has(unvaluedHoldings[i].securityKey)) unvaluedHoldings.splice(i, 1);
+  }
+  {
+    const accountById = new Map(accounts.map((a) => [a.accountId, a]));
+    const tie = (q, want) => isNum(q) && Math.abs(q - want) <= 0.0005 + Math.abs(want) * 1e-9;
+    for (const u of unvaluedHoldings) {
+      if (!CUSTODY_PROVIDERS.has(accountById.get(u.accountId)?.provider)) continue;
+      const entry = u.isin ? AIF_UNITS[u.isin] : null;
+      if (!entry?.reportedBy || !isNum(u.quantity)) continue;
+      const theirs = new Set(accounts
+        .filter((a) => a.provider === entry.reportedBy && a.ownerId === u.ownerId).map((a) => a.accountId));
+      const matches = [...new Set([
+        ...positions.filter((p) => theirs.has(p.accountId) && tie(p.quantity, u.quantity)).map((p) => p.accountId),
+        ...unvaluedHoldings.filter((x) => theirs.has(x.accountId) && tie(x.quantity, u.quantity)).map((x) => x.accountId),
+      ])];
+      if (matches.length === 1) { u.sameUnitsReportedBy = matches[0]; continue; }
+      // What the same owner's fund accounts DO carry, whatever they call it: a
+      // custodian and a fund spell one class differently, so a securityKey join
+      // here would report "no such holding" about a folio that holds it.
+      const held = [
+        ...positions.filter((p) => theirs.has(p.accountId)),
+        ...unvaluedHoldings.filter((x) => theirs.has(x.accountId)),
+      ];
+      notes.push(`the custodian reports ${u.quantity} unit(s) of ${u.security} on ${u.accountId} (${u.asOf}) with no value, and `
+        + (matches.length > 1
+          ? `${matches.length} of the same owner's ${entry.reportedBy} accounts carry that count — it is not paired with either`
+          : !theirs.size
+            ? `no ${entry.reportedBy} account of the same owner's is in this book`
+            : `the same owner's ${entry.reportedBy} account(s) carry ${held.length
+              ? held.map((x) => `${x.quantity ?? "no count of"} unit(s) of ${x.security} (${x.accountId})`).join("; ")
+              : "no holding"}`)
+        + ". Both are listed as printed: two statements that do not agree on a unit count are not assumed to describe one holding.");
+    }
+  }
+  unvaluedHoldings.sort((a, b) => a.accountId.localeCompare(b.accountId) || a.securityKey.localeCompare(b.securityKey)
+    || (a.quantity ?? 0) - (b.quantity ?? 0));
   /**
    * A RING-FENCED ROW THAT WAS HALF OF A DEDUPE PAIR WOULD MISDIAGNOSE ITS PARTNER.
    *
@@ -2811,7 +3499,7 @@ function build(docs) {
    * `navHistoryFrom` for what the archive actually carries and for the four
    * rules that keep the series from asserting a path nothing measured.
    */
-  const { navHistory, accountNavHistory, coverage: navCoverage, snapshotsByAccount } = navHistoryFrom(
+  const { navHistory, accountNavHistory, coverage: navCoverage, snapshotsByAccount, undatedCapital } = navHistoryFrom(
     byAccount, new Set(accounts.map((a) => a.accountId)), dedupeByAcctSec, accountCashFlows, positions, notes,
   );
   // Struck on the SAME snapshots the series is, so the bridge's opening and
@@ -2834,6 +3522,15 @@ function build(docs) {
         + "capital-account ledger (contributions, withdrawals, TDS transfers) and carries no purchase dates."
       : "unrealised short/long-term split is NULL on every position: it needs per-lot purchase dates, "
         + "and no statement in this drop carries a lot register.");
+    // A realised half withheld rather than written as a zero, NAMED, so the
+    // null is visibly a decision about a window and not a missing reader.
+    for (const w of realisedWithheld) {
+      notes.push(`realised is NULL, not ₹0, on ${w.security} (${w.accountId}): `
+        + (w.after
+          ? `every one of its ${w.after} capital-gain lot(s) was sold after the holding's own statement date, so the record holds no sale of it up to that date`
+          : `its account's capital gain record opens on ${w.opens ?? "a date it does not print"}, after the holding's own statement date`)
+        + " — a zero there would read as \"sold nothing\" where the record simply does not reach the holding.");
+    }
     // FIFO's restatements, NAMED with both figures, so any one can be checked
     // against the statement it overrides.
     for (const f of fifoRestated) {
@@ -2852,6 +3549,15 @@ function build(docs) {
         + "position. Splitting on them would put a tax basis on units the position does not contain, or treat "
         + "the uncovered cost as long-term when it is simply unknown.");
     }
+  }
+
+  {
+    // Said on every run, zeros included: a tie check that only speaks when it
+    // fires cannot be told, on a clean run, from one that was deleted.
+    const cols = Object.values(accountBridges).flat();
+    const held = cols.filter((b) => !b.ties).length;
+    notes.push(`value bridge: ${cols.length - held} of ${cols.length} column(s) add up to their closing value within the `
+      + `statement's own rounding; ${held} withheld, each named above with the lines it could not make add up`);
   }
 
   // Sorted by date so the emitted array is deterministic and the file
@@ -2892,8 +3598,8 @@ function build(docs) {
     accounts, positions, polycab, owners, capitalGains, accountCashFlows, entityCashFlows,
     capitalMoves, positionTranches, shareMovements,
     capitalFromInception: [...capitalFromInception].sort(),
-    navHistory, accountNavHistory, navCoverage, attribution,
-    excludedAccounts,
+    navHistory, accountNavHistory, navCoverage, undatedCapital, attribution,
+    excludedAccounts, unvaluedHoldings,
     // Sorted deterministically: classified first (biggest book first), the
     // unclassified remainder last. Insertion order would make the emitted file
     // depend on map iteration, and the book must regenerate byte-identically.
@@ -2970,7 +3676,7 @@ function emit(book) {
   L.push("import type {");
   L.push("  Account, AccountBridge, AccountReturnBlock, BookSummary, CapitalMove, CashFlow, Commitment,");
   L.push("  Attribution, CorporateAction, EntityCG, FundInvestment, NavCoverage, NavPoint, Position, PositionTranches,");
-  L.push("  RealisedByClass, ShareMovement, StartupInvestment,");
+  L.push("  RealisedByClass, ShareMovement, StartupInvestment, UndatedCapital, UnvaluedStatementHolding,");
   L.push('} from "@/lib/types";');
   L.push("");
   L.push(`/** Newest report date across all accounts. Individual accounts can be older. */`);
@@ -2985,6 +3691,16 @@ function emit(book) {
   L.push(`export const BOOK_OWNERS = ${j(book.owners)};`);
   L.push("");
   L.push(`export const BOOK_POSITIONS: Position[] = ${j(book.positions)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * HELD, AND VALUED BY NO STATEMENT — a QUANTITY, never a value, and in no total.");
+  L.push(" *");
+  L.push(" * One row per holding an account's authoritative holdings document reports with");
+  L.push(" * units and no market value: a fund that publishes no NAV, or a custodian that");
+  L.push(" * records a face value or no rate. `reason` is the row's own; `sameUnitsReportedBy`");
+  L.push(" * names the same owner's fund account whose own statement reports the identical units.");
+  L.push(" */");
+  L.push(`export const BOOK_UNVALUED_HOLDINGS: UnvaluedStatementHolding[] = ${j(book.unvaluedHoldings)};`);
   L.push("");
   L.push("/**");
   L.push(" * RING-FENCED PROMOTER STOCK — Polycab India, the family's own promoter");
@@ -3011,8 +3727,8 @@ function emit(book) {
   L.push(" *");
   L.push(" * `flowIn` is the net external capital that entered since the previous point,");
   L.push(" * so a reader can separate money added from value earned. `unreportedFlowValue`");
-  L.push(" * is the value restated in that interval by an account publishing NO capital");
-  L.push(" * record — the part of the move that cannot be proved to be performance.");
+  L.push(" * is the MOVE in that interval of accounts whose capital movement no statement");
+  L.push(" * establishes — the part of the change that cannot be proved to be performance.");
   L.push(" */");
   L.push(`export const BOOK_NAV_HISTORY: NavPoint[] = ${j(book.navHistory)};`);
   L.push("");
@@ -3028,12 +3744,23 @@ function emit(book) {
   L.push(" * publishing none. A series over 17 of 49 accounts that does not say so is a");
   L.push(" * claim about the book; this is what lets the page name every exclusion.");
   L.push(" *");
-  L.push(" * `flowBasis` per covered account: `reported` (a dated capital record exists),");
-  L.push(" * `units-unchanged` (one security, identical unit count at every snapshot, so");
-  L.push(" * the statement itself rules out a subscription or redemption), or");
-  L.push(" * `unreported` (neither — a capital movement there would read as performance).");
+  L.push(" * `flowBasis` per covered account, over every step between two of its marks:");
+  L.push(" * `reported` (the statements' own printed capital totals settle each step, or");
+  L.push(" * a dated record does), `units-unchanged` (every step holds the same securities");
+  L.push(" * at the same unit counts, none of them cash, so nothing was bought or");
+  L.push(" * redeemed), or `unreported` (some step no statement settles — its move, never");
+  L.push(" * the account's value, is carried per point as `unreportedFlowValue`).");
   L.push(" */");
   L.push(`export const BOOK_NAV_COVERAGE: NavCoverage = ${j(book.navCoverage)};`);
+  L.push("");
+  L.push("/**");
+  L.push(" * CAPITAL NO DATED ROW CARRIES — where an account's printed capital totals move");
+  L.push(" * between two of its marks by more than its dated record does over the same days.");
+  L.push(" * The NAV series nets it inside that step, which needs no date. A money-weighted");
+  L.push(" * return needs every flow on a day, so it names this amount rather than assuming");
+  L.push(" * one: never dated, never dropped.");
+  L.push(" */");
+  L.push(`export const BOOK_UNDATED_CAPITAL: UndatedCapital[] = ${j(book.undatedCapital)};`);
   L.push("");
   L.push("/**");
   L.push(" * RETURN ATTRIBUTION over each covered account's own dated window — the exact");
