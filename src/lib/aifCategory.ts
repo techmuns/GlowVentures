@@ -13,6 +13,7 @@ import type { Position } from "./types";
 import type { Account } from "./types";
 import { engagementOf, type AccountIndex } from "./accounts";
 import { isMandateHeld } from "./analytics";
+import { isMeasuredNilAccount } from "./navSeries";
 import {
   CATEGORY_I, CATEGORY_II, CATEGORY_III, AIF_CATEGORIES,
   categoriesNamedIn, readAifCategory as readAifCategoryText,
@@ -168,6 +169,14 @@ export function aifCategoryWhy(r: AifCategoryRead): string {
  * drill-down, 9 on Private Market, 7 in truth). It is here now because both
  * read it: `privateMarket.ts` imports this file, and this file cannot import it
  * back without a cycle.
+ *
+ * AND "REDEEMED" IS `isMeasuredNilAccount`, NOT A SECOND TEST OF ITS OWN. That
+ * predicate reads the clause `build-book` writes on an account whose statement
+ * struck a nil balance, and `navCard.test.ts` ties it to its generator. This
+ * matched the bare word "redeemed" instead, which agrees on this book (two
+ * accounts both ways) and would file any other reason that happens to say the
+ * word as a measured nil — so the NAV card and this page could have called one
+ * account two things.
  */
 export type UnvaluedKind = "no-nav" | "income-only" | "redeemed" | "other";
 
@@ -175,7 +184,7 @@ export function unvaluedKindOf(reason: string | null | undefined): UnvaluedKind 
   const r = reason ?? "";
   if (/publishes no NAV/i.test(r)) return "no-nav";
   if (/report income and distribution/i.test(r)) return "income-only";
-  if (/redeemed/i.test(r)) return "redeemed";
+  if (isMeasuredNilAccount({ noPositionsReason: r })) return "redeemed";
   return "other";
 }
 

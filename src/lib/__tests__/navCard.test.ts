@@ -17,6 +17,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { BOOK_NAV_HISTORY, BOOK_NAV_COVERAGE, BOOK_ACCOUNTS, BOOK_POSITIONS } from "@/data/glowData";
 import { navIndexSeries, isMeasuredNilAccount, MEASURED_NIL_CLAUSE } from "@/lib/navSeries";
+import { unvaluedKindOf } from "@/lib/aifCategory";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -72,6 +73,22 @@ const ROOT = process.env.GLOW_ROOT ?? process.cwd();
   ok("an account with no reason, or a reason naming a different cause, is not a measured nil",
     !isMeasuredNilAccount(null) && !isMeasuredNilAccount({ noPositionsReason: null })
     && !isMeasuredNilAccount({ noPositionsReason: "this fund publishes no NAV: its statement carries units and no valuation" }));
+}
+
+// ── 3. ONE ANSWER TO "IS THIS ACCOUNT A MEASURED NIL" ──────────────────────
+//
+// The NAV card reads `isMeasuredNilAccount`; Private Market and the AIF
+// drill-down read `unvaluedKindOf`. The second matched the bare word
+// "redeemed", which agreed on this book and would call any other reason that
+// says the word a measured nil. It reads the first now, so the two cannot name
+// one account two things.
+{
+  const disagree = BOOK_ACCOUNTS.filter((a) =>
+    (unvaluedKindOf(a.noPositionsReason) === "redeemed") !== isMeasuredNilAccount(a));
+  ok("every account the drill-downs call redeemed is the NAV card's measured nil, and no other",
+    disagree.length === 0, disagree.map((a) => a.accountNo).join(", "));
+  ok("...and a reason that says \"redeemed\" without the generator's clause is not one",
+    unvaluedKindOf("some units were redeemed during the period; the statement carries no valuation") !== "redeemed");
 }
 
 console.log(fails ? `\n${fails} FAILED` : "\nall NAV card checks passed");
