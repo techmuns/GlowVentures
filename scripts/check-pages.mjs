@@ -35,6 +35,7 @@ import { UPSTOX_INSTRUMENTS } from "../shared/upstoxInstruments.mjs";
 // below in `fundSideOf`, so this sweep and the book are two derivations of one
 // rule and can disagree.
 import { FAMILY_MARKET_SIDE } from "../shared/aifCategory.mjs";
+import { resolveSector } from "../shared/sectors.mjs";
 import { readRegister, partitionAgainstBook, REGISTER_PATH } from "./lib/registerRead.mjs";
 import * as XLSX from "xlsx";
 
@@ -799,6 +800,14 @@ const SECURITY_AXIS_BOOK = (() => {
         if (!prev || (!bookCompanyKeys.has(prev) && bookCompanyKeys.has(k))) nameToKey.set(l.k, k);
       }
     }
+    // WHAT THE DERIVED HALF IS MADE OF, AND WHEN IT IS FROM (FS-13, FS-15) —
+    // summed here from each filing's own lines, never read off the page: the
+    // class each line is filed as, the disclosure it comes from, and whether its
+    // fund is a liquid fund the holdings tables count as cash.
+    const derivedByDate = new Map();
+    const derivedByClass = { shares: 0, debt: 0, other: 0 };
+    let derivedInCashFunds = 0;
+    const fundsWithValue = new Set();
     let covered = 0, derived = 0, disclosedValue = 0, skippedValue = 0, aifCount = 0, aifValue = 0;
     // [C] MSX-14: the funds whose filing reached a company line, those read
     // from an aggregator's copy, and the non-AIF funds the store carries no
@@ -838,7 +847,13 @@ const SECURITY_AXIS_BOOK = (() => {
         seenHere.add(dedupeOn);
         derived += value;
         anyLine = true;
-        const e = derivedByKey.get(key) ?? { key, name: issuerName(h.name), value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map(), lineNames: new Set() };
+        derivedByDate.set(pf.holdingsAsOf ?? "", (derivedByDate.get(pf.holdingsAsOf ?? "") ?? 0) + value);
+        if (h.assetClass === "Equity") derivedByClass.shares += value;
+        else if (h.assetClass === "Debt") derivedByClass.debt += value;
+        else derivedByClass.other += value;
+        if (CASH_EQ_KEYS?.has(v.key)) derivedInCashFunds += value;
+        fundsWithValue.add(v.key);
+        const e = derivedByKey.get(key) ?? { key, name: issuerName(h.name), value: 0, funds: 0, classes: new Set(), instruments: 0, maxInFund: 0, hereN: new Map(), lineNames: new Set(), fundSector: new Map() };
         // EVERY issuer spelling the filings give this key — so a list that
         // offers a company the book holds a second time, under whichever of
         // them a page happened to pick, is caught whichever it picked.
@@ -859,6 +874,10 @@ const SECURITY_AXIS_BOOK = (() => {
         e.hereN.set(v.key, n);
         if (n > e.maxInFund) e.maxInFund = n;
         if (h.assetClass) e.classes.add(h.assetClass);
+        // THE ROW'S SECTOR IS THE FIRST LINE A FUND FILES AN INDUSTRY AGAINST —
+        // a debt line files a rating, which the store keeps apart — and the
+        // disclosure tier takes an issuer's sector only where every fund agrees.
+        if (h.sector && !e.fundSector.has(v.key)) e.fundSector.set(v.key, h.sector);
         derivedByKey.set(key, e);
       }
       if (anyLine) { withLines++; if (pf.holdingsSource?.kind === "aggregator") aggregatorLines++; }
@@ -874,6 +893,101 @@ const SECURITY_AXIS_BOOK = (() => {
       measuredKeys.set(p.securityKey, e);
     }
     const derivedOnly = [...derivedByKey.keys()].filter((k) => !measuredKeys.has(k)).length;
+    /**
+     * ── WHICH TIER PLACES EACH ROW, RE-EXPRESSED (FS-13, FS-14, FS-21) ────────
+     *
+     * `companyExposure`'s three tiers written out again, strongest first — the
+     * family's own statement, then the industry every fund filing agrees on,
+     * then screener.in by NSE symbol — over the SAME positions each view is
+     * built on: every company share for Consolidated, the family's own accounts
+     * for Direct Equity. `resolveSector` is the committed provider→GICS table
+     * both the page and build-book read; the ORDER and the fallbacks are what
+     * the page is held to, and they are written here rather than imported, so a
+     * page that miscounted a cause cannot agree with this by construction.
+     *
+     * A row is held as SHARES where a statement reports one or any fund files
+     * one, as DEBT PAPER where the only lines are debt, and as neither
+     * otherwise — the three things the donut's hover and the unplaced causes
+     * count.
+     */
+    const screener = JSON.parse(readFileSync(new URL("../src/data/screenerSectors.json", import.meta.url), "utf8"));
+    const placeOf = (k, ps) => {
+      const d = derivedByKey.get(k);
+      const cls = d?.classes ?? new Set();
+      const kind = ps.length || cls.has("Equity") ? "shares" : cls.has("Debt") ? "debt" : "other";
+      const bookSector = ps.find((p) => p.sector && p.sector !== "Unclassified")?.sector ?? null;
+      if (bookSector) return { kind, tier: "book", sector: bookSector };
+      const agreed = new Set();
+      for (const s of d?.fundSector?.values() ?? []) { const hit = resolveSector(s); if (hit?.matchedBy) agreed.add(hit.sector); }
+      if (agreed.size === 1) return { kind, tier: "disclosure", sector: [...agreed][0] };
+      const sym = ps.find((p) => p.symbol)?.symbol ?? nseSym[k] ?? null;
+      const g = sym ? screener[sym]?.gics : null;
+      if (g && g !== "Unclassified") return { kind, tier: "vendor", sector: g };
+      return { kind, tier: null, sector: "Unclassified", sym };
+    };
+    const psByKey = (rows) => {
+      const m = new Map();
+      for (const p of rows) (m.get(p.securityKey) ?? m.set(p.securityKey, []).get(p.securityKey)).push(p);
+      return m;
+    };
+    // `withDerived`: Consolidated values a row at its total exposure, Direct
+    // Equity at what the family's own statements report — and the unplaced
+    // figure each view prints is on that view's own basis.
+    const tiersOver = (keys, byKey, withDerived) => {
+      const out = {
+        book: 0, disclosure: 0, vendor: 0,
+        unplaced: { total: 0, debt: 0, other: 0, sharesNoSymbol: 0, sharesNoVendorSector: 0, mv: 0 },
+        mix: { shares: 0, debt: 0, other: 0 }, unclassMix: { shares: 0, debt: 0, other: 0 },
+        sectorOf: new Map(), totalOf: new Map(),
+      };
+      for (const k of keys) {
+        const ps = byKey.get(k) ?? [];
+        const pl = placeOf(k, ps);
+        const total = ps.reduce((a, p) => a + p.marketValue, 0) + (withDerived ? (derivedByKey.get(k)?.value ?? 0) : 0);
+        out.mix[pl.kind] += 1;
+        out.sectorOf.set(k, pl.sector);
+        out.totalOf.set(k, total);
+        if (pl.sector === "Unclassified") out.unclassMix[pl.kind] += 1;
+        if (pl.tier) { out[pl.tier] += 1; continue; }
+        const u = out.unplaced;
+        u.total += 1; u.mv += total;
+        if (pl.kind === "debt") u.debt += 1;
+        else if (pl.kind === "other") u.other += 1;
+        else if (!pl.sym) u.sharesNoSymbol += 1;
+        else u.sharesNoVendorSector += 1;
+      }
+      return out;
+    };
+    const consTiers = tiersOver(new Set([...measuredKeys.keys(), ...derivedByKey.keys()]), psByKey(stocks), true);
+    const ownStocks = stocks.filter((p) => ["Direct", "Execution"].includes(acc.get(p.accountId)?.engagement));
+    const ownPs = psByKey(ownStocks);
+    const directTiers = tiersOver(new Set(ownStocks.map((p) => p.securityKey)), ownPs, false);
+    // Each Consolidated sector's largest issuer by total exposure, and how many
+    // issuers it holds; each Direct Equity sector's largest own holding.
+    const topBySector = new Map();
+    const issuersBySector = new Map();
+    for (const [k, s] of consTiers.sectorOf) {
+      const v = consTiers.totalOf.get(k);
+      const cur = topBySector.get(s);
+      if (!cur || v > cur.total) topBySector.set(s, { key: k, total: v });
+      issuersBySector.set(s, (issuersBySector.get(s) ?? 0) + 1);
+    }
+    const ownTopBySector = new Map();
+    for (const p of ownStocks) {
+      const s = directTiers.sectorOf.get(p.securityKey);
+      const cur = ownTopBySector.get(s);
+      if (!cur || p.marketValue > cur.mv) ownTopBySector.set(s, { key: p.securityKey, mv: p.marketValue });
+    }
+    // Each fund a derived rupee comes from, valued at AMFI's NAV where one is
+    // published and at its statement's mark otherwise — the first of the two
+    // dates that meet in the derived half.
+    const fundMarks = new Map();
+    for (const p of ded) {
+      if (!fundsWithValue.has(p.securityKey)) continue;
+      const nav = !!(p.navPriced && p.navDate);
+      const k = `${nav ? "nav" : "stmt"}:${nav ? p.navDate : (acc.get(p.accountId)?.asOf ?? "")}`;
+      fundMarks.set(k, (fundMarks.get(k) ?? 0) + p.marketValue);
+    }
     // ── THE COMPANY THE ICICI FIX CLUBBED ───────────────────────────────────
     //
     // Derived, never named: the company share whose statements spell it the
@@ -982,6 +1096,18 @@ const SECURITY_AXIS_BOOK = (() => {
       // sweep to disagree with the page about a figure they both derive.
       derivedByKey,
       measuredByKey: measuredKeys,
+      // FS-13, FS-14, FS-15, FS-21: which tier places each row and why the rest
+      // are unplaced, what the rows are held as, each sector's largest, and what
+      // the derived half is made of and when it is from.
+      tiers: { consolidated: consTiers, direct: directTiers },
+      mix: consTiers.mix,
+      topBySector, issuersBySector, ownTopBySector,
+      ownHoldings: ownStocks.length, ownCompanies: ownPs.size,
+      derivedByDate, derivedByClass, derivedInCashFunds, fundMarks,
+      // What is neither a share, a fund nor cash — the "Not on this page" part
+      // the book carries none of today, and the page must still name if it did.
+      otherMV: sum(ded.filter((p) => p.assetClass !== "Equity" && p.assetClass !== "Cash"
+        && !["AIF", "Mutual Fund", "ETF"].includes(p.assetClass)).map((p) => p.marketValue)),
       // Every name the book's own statements print for a company share.
       bookRawNames: [...new Set(stocks.map((p) => p.security))],
       aifCount, aifValueCr: aifValue / 1e7,
@@ -1201,7 +1327,8 @@ const SECTOR_VIEW_BOOK = (() => {
  * ₹94.9 Cr. So each tier must be DOING WORK — a tier that placed nothing is
  * indistinguishable, on a rendered page, from a tier that was quietly unwired.
  */
-function sectorSourceChecks(bookCount) {
+function sectorSourceChecks(bookCount, view = "consolidated") {
+  const noun = view === "direct" ? "companies" : "issuers";
   return [
     ["...and so is where each sector came from, across all three tiers", (t, ctx) => {
       if (!SECTOR_VIEW_BOOK) return { notChecked: "the book could not be read on this run" };
@@ -1244,21 +1371,306 @@ function sectorSourceChecks(bookCount) {
      * page over. The reason is the actionable half: nothing keys the lookup
      * for a company with no NSE symbol, so no further pass would place it.
      */
-    ["…and the companies it could not place are named, at their value, with the reason", (t, ctx) => {
+    /*
+     * …AND EACH UNPLACED ROW BY THE CAUSE THAT IS TRUE OF IT (FS-13). The
+     * hover read "No NSE symbol resolves for these" over every unplaced row —
+     * true of a share nothing keys the screener.in lookup for, and false of the
+     * 107 issuers reached only through debt paper, whose filings print a credit
+     * rating where an industry would be: a T-bill is not a company missing a
+     * symbol. So the hover must count each cause, the causes must partition the
+     * unplaced, and the two it carries as attributes must be the ones it prints.
+     * The noun follows the view: Consolidated's rows are issuers, Direct
+     * Equity's are companies.
+     */
+    ["…and the rows it could not place are named, at their value, each with the cause that is true of it (FS-13)", (t, ctx) => {
       const src = ctx?.sectorSource;
       if (!src) return false;
-      if (!src.unplaced) return { notChecked: "every company on this page resolves a sector" };
-      const named = src.titles.some((x) =>
-        /no NSE symbol resolves/i.test(x ?? "")
-        && new RegExp(`\\b${src.unplaced} companies\\b`).test(x ?? "")
+      if (!src.unplaced) return { notChecked: "every row on this page resolves a sector" };
+      const x = src.unplacedTitle ?? "";
+      const head = `${src.unplaced} ${noun} placed by none of the three sources — `;
+      if (!x.startsWith(head) || /No NSE symbol resolves for these/i.test(x)) return false;
+      const colon = x.indexOf(": ", head.length);
+      if (colon < 0) return false;
+      const causes = x.slice(head.length, colon);
+      const num = (re) => Number(re.exec(causes)?.[1] ?? 0);
+      const debt = num(/(\d+) reached only through debt paper/);
+      const noSym = num(/(\d+) shares? for which no NSE symbol resolves/);
+      const noSector = num(/(\d+) shares? whose NSE symbol the committed screener\.in lookup gives no sector for/);
+      const other = num(/(\d+) lines? a fund's filing classes as neither equity nor debt/);
+      return debt + noSym + noSector + other === src.unplaced
+        && debt === src.debt && noSym === src.nosymbol
         // …and the names really are there, not merely promised by the count.
-        && (x ?? "").split(",").length >= src.unplaced);
-      return named
+        && x.slice(colon + 2).split(",").length >= src.unplaced
         && Number.isFinite(src.unplacedMV) && src.unplacedMV > 0
         && /unplaced\s*·\s*₹/i.test(src.text ?? "");
     }],
+    /*
+     * …AND THE TIERS AND THE CAUSES ARE THE BOOK'S (FS-13). The three checks
+     * above hold the page to itself — the four sources to its own donut, the
+     * causes to its own count — which is exactly what a page that miscounted
+     * consistently would pass. So every tier and both causes are held to the
+     * three tiers written out again off the book, the store and the committed
+     * screener map (`SECURITY_AXIS_BOOK.tiers`), on this view's own set, and
+     * the unplaced value to the same rows on this view's own basis.
+     */
+    ["…and every tier, both causes and the unplaced value are the book's own, counted again (FS-13)", (t, ctx) => {
+      const T = SECURITY_AXIS_BOOK?.tiers?.[view === "direct" ? "direct" : "consolidated"];
+      if (!T) return { notChecked: "the book could not be read on this run" };
+      const src = ctx?.sectorSource;
+      if (!src) return false;
+      const u = T.unplaced;
+      return src.book === T.book && src.disclosure === T.disclosure && src.vendor === T.vendor
+        && src.unplaced === u.total
+        && (u.total === 0 || (src.debt === u.debt && src.nosymbol === u.sharesNoSymbol))
+        && Math.abs(src.unplacedMV - Math.round(u.mv)) <= 1;
+    }],
   ];
 }
+
+/**
+ * ── WHAT A CONSOLIDATED ROW IS, COUNTED (FS-13) ─────────────────────────────
+ *
+ * Since Stage 10as a Consolidated row is an ISSUER, reached through a share, a
+ * bond, a CD or a bill alike, so "companies" is true of some rows and false of
+ * the rest — the Government of India's T-bills are a row. And the Unclassified
+ * reason read "These are shares in companies, so the sector exists" over 107
+ * issuers reached only through debt paper, where a fund's filing prints a
+ * credit RATING in the column a share's industry sits in. Both claims are held
+ * to the tiers written out again off the book and the store
+ * (`SECURITY_AXIS_BOOK.mix` / `.tiers`), never to the page's own counts, so a
+ * page that miscounted what its rows are cannot agree with this by
+ * construction. Spread into both routes that draw the Consolidated donut.
+ */
+function sectorIssuerChecks(route) {
+  return [
+    ["the donut counts issuers, and its hover says what they are held as — shares, debt paper, neither (FS-13)", (t, ctx) => {
+      const m = SECURITY_AXIS_BOOK?.mix;
+      if (!m) return { notChecked: "the book could not be read on this run" };
+      const d = ctx?.donut;
+      if (!d) return false;
+      const n = m.shares + m.debt + m.other;
+      const title = d.basisTitle ?? "";
+      return d.count === n
+        && new RegExp(`^${n} issuers$`, "i").test(d.text ?? "") && !/compan/i.test(d.text ?? "")
+        && d.shares === m.shares && d.debt === m.debt && d.other === m.other && d.companies === null
+        && title.includes(`${m.shares} reached through shares`)
+        && title.includes(`${m.debt} only through the debt paper a fund discloses`)
+        && (m.other > 0
+          ? title.includes(`${m.other} only through lines a fund's filing classes as neither equity nor debt`)
+          : !/classes as neither/i.test(title));
+    }],
+    ["...and the Unclassified hover counts its issuers by what they are held as, never calling them all shares (FS-13)", (t, ctx) => {
+      const u = SECURITY_AXIS_BOOK?.tiers?.consolidated?.unclassMix;
+      if (!u) return { notChecked: "the book could not be read on this run" };
+      const n = u.shares + u.debt + u.other;
+      if (!n) return { notChecked: "no issuer on this page is unclassified" };
+      const why = (ctx?.titles ?? []).filter((x) => /^Left unclassified rather than assigned a sector/.test(x ?? ""));
+      if (!why.length) return false;
+      const ok = why.every((x) => x.includes(`Of these ${n},`)
+        && (u.debt > 0 ? x.includes(`${u.debt} ${u.debt === 1 ? "is" : "are"} reached only through debt paper`) : !/reached only through debt paper/.test(x))
+        && (u.shares > 0 ? x.includes(`${u.shares} ${u.shares === 1 ? "is a share" : "are shares"}, whose sector exists and no source here reports`) : !/whose sector exists and no source here reports/.test(x))
+        && (u.other > 0 ? x.includes(`${u.other} ${u.other === 1 ? "is a line" : "are lines"} a fund's filing classes as neither equity nor debt`) : !/classes as neither equity nor debt/.test(x))
+        && !/These are shares in companies, so the sector exists/.test(x));
+      if (!ok) return false;
+      // …and on the table the Unclassified row counts exactly those issuers.
+      if (route !== "sectors") return true;
+      const row = (ctx?.sectorLayout?.returns ?? []).find((r) => r.key === "Unclassified");
+      return !!row && row.count === n;
+    }],
+  ];
+}
+
+/**
+ * ── EACH CONSOLIDATED SECTOR'S LARGEST, AND WHETHER IT IS A POSITION (FS-14) ─
+ *
+ * The column read "Largest company" over the sector's first statement row,
+ * while the sector itself was ranked by TOTAL exposure — so a sector whose
+ * largest exposure the family holds only inside a fund named some smaller
+ * holding as its largest. It is the largest issuer by total exposure now, and
+ * one held only inside a fund is marked derived: an exposure, not a position.
+ * Held per row to `topBySector` and `measuredByKey`, both derived off the book.
+ */
+const SECTOR_TOPS = [
+  ["each sector's Largest exposure is its largest issuer by total exposure, and one held only inside a fund says so (FS-14)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B?.topBySector) return { notChecked: "the book could not be read on this run" };
+    const L = ctx?.sectorLayout;
+    if (!L?.tops?.length) return false;
+    const head = (L.heads ?? []).find((h) => h.col === "top");
+    const count = (L.heads ?? []).find((h) => h.col === "count");
+    if (!head || !/largest exposure/i.test(head.text ?? "") || /compan/i.test(head.text ?? "")) return false;
+    if (!/only inside a fund/i.test(head.title ?? "") || !/derived/i.test(head.title ?? "")) return false;
+    if (!count || !/\bissuers\b/i.test(count.text ?? "") || /compan/i.test(count.text ?? "")) return false;
+    let derivedTops = 0;
+    const ok = L.tops.every((r) => {
+      const want = B.topBySector.get(r.sector);
+      if (!want) return false;
+      const derived = !B.measuredByKey.has(want.key);
+      if (derived) derivedTops += 1;
+      return r.key === want.key && r.derived === String(derived) && r.mark === derived
+        && (!derived || (/only inside their funds/i.test(r.title ?? "") && /no position of theirs/i.test(r.title ?? "")));
+    });
+    return ok && (derivedTops > 0 || { notChecked: "no sector's largest issuer is held only inside a fund on this book" });
+  }],
+];
+
+/**
+ * ── WHAT THE DERIVED HALF IS MADE OF, AND WHAT "NOT ON THIS PAGE" IS (FS-13, FS-15)
+ *
+ * The derived figure sat under nothing that said it is shares AND debt paper,
+ * that the liquid funds the holdings tables count as cash are in it, or that
+ * two dates meet in every derived rupee — the fund's value (AMFI's NAV where
+ * one is published) times what it held at its own portfolio disclosure, a
+ * month or two older. And "Not on this page" read "undisclosed vehicles,
+ * non-equity and cash" while ₹15 Cr of debt sat in the derived half ON the
+ * page. Every figure in both hovers is held to one summed here from each
+ * filing's own lines and the book (`SECURITY_AXIS_BOOK`), at the printing
+ * precision the page renders to; the parts of the rest must add to the rest.
+ */
+const SECTOR_M = String.raw`([+\-−]?₹[\d,]+(?:\.\d+)?(?:\s*(?:Cr|L)\b)?)`;
+const sectorNear = (s, want) => {
+  const r = familyRupees(s ?? "")[0];
+  return !!r && Math.abs(r.v - want) <= r.half + 1;
+};
+const SECTOR_DERIVED_REST = [
+  ["the derived half's hover says what it is made of, in shares and in debt paper, and the two dates that meet in it (FS-15)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B?.derivedByClass) return { notChecked: "the book could not be read on this run" };
+    const x = ctx?.sectorLayout?.derivedTitle;
+    if (!x) return false;
+    const grab = (re) => re.exec(x)?.[1] ?? null;
+    const c = B.derivedByClass;
+    if (!x.includes(`every instrument ${B.covered} of ${B.considered} funds disclose`)) return false;
+    const sh = grab(new RegExp(`— ${SECTOR_M} in shares`));
+    const db = grab(new RegExp(`, ${SECTOR_M} in bonds, CDs, commercial paper, bills`));
+    const ot = grab(new RegExp(`, ${SECTOR_M} in lines their filings class as neither`));
+    const ca = grab(new RegExp(`; ${SECTOR_M} of it is inside the liquid funds the holdings tables count as cash`));
+    if (!sectorNear(sh, c.shares) || !sectorNear(db, c.debt)) return false;
+    if (c.other > 0 ? !sectorNear(ot, c.other) : !!ot) return false;
+    if (B.derivedInCashFunds > 0 ? !sectorNear(ca, B.derivedInCashFunds) : !!ca) return false;
+    if (!/Two dates meet in it/.test(x)) return false;
+    const i0 = x.indexOf("each fund at "), i1 = x.indexOf(", times what it held at its own portfolio disclosure — ");
+    if (i0 < 0 || i1 < i0) return false;
+    const valued = x.slice(i0 + "each fund at ".length, i1);
+    const held = x.slice(i1 + ", times what it held at its own portfolio disclosure — ".length);
+    const dated = (iso) => (iso ? dmyRe(iso).source : "an undated disclosure");
+    // Each fund's mark: AMFI's NAV of its date, or its statement's mark, and
+    // the value behind each where there is more than one.
+    const marks = [...B.fundMarks.entries()];
+    const markOk = marks.every(([k, v]) => {
+      const kind = k.slice(0, k.indexOf(":")), iso = k.slice(k.indexOf(":") + 1);
+      const label = kind === "nav" ? "AMFI's NAV of" : "its statement's mark of";
+      // Neither label carries a regex metacharacter, so it stands as written.
+      const re = new RegExp(`${label} ${dated(iso)}${marks.length > 1 ? String.raw`\s*\((₹[^)]*)\)` : ""}`);
+      const hit = re.exec(valued);
+      return !!hit && (marks.length === 1 || sectorNear(hit[1], v));
+    }) && (valued.match(/AMFI's NAV of|its statement's mark of/g) ?? []).length === marks.length;
+    const dates = [...B.derivedByDate.entries()];
+    const heldOk = dates.every(([iso, v]) => {
+      const hit = new RegExp(`${dated(iso)}\\s*\\((₹[^)]*)\\)`).exec(held);
+      return !!hit && sectorNear(hit[1], v);
+    }) && (held.match(/\(₹/g) ?? []).length === dates.length;
+    return markOk && heldOk;
+  }],
+  ["\"Not on this page\" says what it is, and its parts are the book's and add up to it (FS-13)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B) return { notChecked: "the book could not be read on this run" };
+    const rest = ctx?.sectorLayout?.rest;
+    if (!rest) return false;
+    if (/non-equity/i.test(rest.face ?? "") || !/cash/i.test(rest.face ?? "")) return false;
+    const x = rest.title ?? "";
+    const a = x.indexOf("no sector applies to it: "), b = x.indexOf(". These three figures cover every rupee.");
+    if (a < 0 || b < a) return false;
+    const parts = x.slice(a + "no sector applies to it: ".length, b).split("; ");
+    const part = (re) => parts.find((p) => re.test(p)) ?? null;
+    const first = (p) => familyRupees(p ?? "")[0] ?? null;
+    const aif = part(/in funds whose portfolio this book cannot read/);
+    const aifN = Number(/— (\d+) AIF holdings?/.exec(aif ?? "")?.[1]);
+    const unresolvedWant = B.considered - B.covered - B.aifCount;
+    const unresolved = Number(/(\d+) schemes? the store does not resolve/.exec(aif ?? "")?.[1] ?? 0);
+    if (!aif || !sectorNear(aif, B.opaqueCr * 1e7) || aifN !== B.aifCount || unresolved !== unresolvedWant) return false;
+    const unacc = part(/of the disclosed funds that no line in their filings accounts for/);
+    if (!unacc || !sectorNear(unacc, B.unaccountedCr * 1e7)) return false;
+    const arb = first(part(/in the arbitrage funds the family counts as cash/));
+    const own = first(part(/of the book's own cash/));
+    const cashV = (arb?.v ?? 0) + (own?.v ?? 0), cashHalf = (arb?.half ?? 0) + (own?.half ?? 0);
+    if (Math.abs(cashV - B.cashCr * 1e7) > cashHalf + 1) return false;
+    const other = part(/neither a share nor a fund/);
+    if (B.otherMV > 0 ? !sectorNear(other, B.otherMV) : !!other) return false;
+    const floor = part(/under the ₹1,000 floor/);
+    if (B.smallDroppedValue > 0 ? !sectorNear(floor, B.smallDroppedValue) : !!floor) return false;
+    // NOTHING THE PARTS DO NOT NAME: a residual printed as "that none of these
+    // names" is the rest failing to account for itself.
+    if (/that none of these names/.test(x)) return false;
+    const total = first(rest.value);
+    if (!total) return false;
+    const figs = parts.map(first).filter(Boolean);
+    const sum = figs.reduce((s, f) => s + f.v, 0), halves = figs.reduce((s, f) => s + f.half, 0);
+    return Math.abs(sum - total.v) <= halves + total.half + 1;
+  }],
+];
+
+/**
+ * ── THE COMPARISON COUNTS ISSUERS, AND NAMES EACH SECTOR'S LARGEST (FS-14) ──
+ *
+ * "Companies" and "Largest company" over a Consolidated group whose rows are
+ * issuers ranked by total exposure — the same caption failure as the table's,
+ * one tab over. Each picked sector's count and its largest are held to the
+ * book's own, and a largest held only inside a fund must say derived.
+ */
+const SECTOR_COMPARE_ISSUERS = [
+  ["the comparison counts issuers and names each sector's largest exposure, marking one held only inside a fund as derived (FS-14)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B?.issuersBySector) return { notChecked: "the book could not be read on this run" };
+    const L = ctx?.sectorLayout;
+    const rows = L?.compareRows ?? [], cols = L?.compareCols ?? [];
+    if (!rows.length || !cols.length) return false;
+    const labels = rows.map((r) => r.label);
+    if (!labels.includes("Issuers") || !labels.includes("Largest exposure")
+      || labels.includes("Companies") || labels.includes("Largest company")) return false;
+    const iss = rows.find((r) => r.label === "Issuers"), top = rows.find((r) => r.label === "Largest exposure");
+    return cols.every((k, i) => {
+      const want = B.issuersBySector.get(k), tw = B.topBySector.get(k);
+      if (want == null || !tw) return false;
+      const derived = !B.measuredByKey.has(tw.key);
+      return Number(iss.cells[i]?.text) === want && /\bderived$/i.test(top.cells[i]?.text ?? "") === derived;
+    });
+  }],
+];
+
+/**
+ * ── DIRECT EQUITY COUNTS HOLDINGS, AND SAYS HOW MANY COMPANIES THEY ARE (FS-21)
+ *
+ * This view's rows are the family's own statement lines, so a company held in
+ * two of their own accounts is two holdings — and the hover said "each counted
+ * once — a company … is one row here", which is true of Consolidated and false
+ * here. Held to the own-account set derived off the book, and each sector's
+ * Largest holding to the largest own-account line in it, never a derived row.
+ */
+const SECTOR_DIRECT_HOLDINGS = [
+  ["the Direct Equity donut counts holdings, and its hover says how many companies they are (FS-21)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B || B.ownHoldings == null) return { notChecked: "the book could not be read on this run" };
+    const d = ctx?.donut;
+    if (!d) return false;
+    const N = B.ownHoldings, C = B.ownCompanies, title = d.basisTitle ?? "";
+    return d.count === N && new RegExp(`^${N} holdings$`, "i").test(d.text ?? "")
+      && d.companies === C && d.shares === null && d.debt === null && d.other === null
+      && title.includes(`${C} ${C === 1 ? "company" : "companies"} across these ${N}`) && /never two/i.test(title);
+  }],
+  ["each Direct Equity sector's Largest holding is its largest own-account holding, and none is marked derived (FS-14)", (t, ctx) => {
+    const B = SECURITY_AXIS_BOOK;
+    if (!B?.ownTopBySector) return { notChecked: "the book could not be read on this run" };
+    const L = ctx?.sectorLayout;
+    if (!L?.tops?.length) return false;
+    const head = (L.heads ?? []).find((h) => h.col === "top");
+    if (!head || !/largest holding/i.test(head.text ?? "")) return false;
+    return L.tops.every((r) => {
+      const want = B.ownTopBySector.get(r.sector);
+      return !!want && r.key === want.key && r.derived === "false" && !r.mark;
+    });
+  }],
+];
 
 /**
  * ── THE SAME PAGE ON A SHORT WINDOW ─────────────────────────────────────────
@@ -4029,6 +4441,260 @@ const FAMILY_MWR = (() => {
     return out;
   } catch { return null; }
 })();
+
+/**
+ * ── WHAT EACH ENTITY'S TWO RETURN COLUMNS CAN BE STRUCK ON, COUNTED (FS-12) ──
+ *
+ * The YTD column needs the entity's whole value on the financial year's first
+ * day, and the page names how many of the accounts it holds something in
+ * publish one; the to-date column pools only the accounts that carry an opening
+ * portfolio value, and where it has none it names how many publish a dated
+ * capital record instead. Both counts re-derived here off the book — the
+ * accounts each entity holds something in (`FAMILY_BOOK`'s own current rows),
+ * the opening flows dated on that day, and the capital record the Transactions
+ * tab strikes from (`CAPITAL_RECORD_BOOK`, itself re-expressed).
+ */
+const FAMILY_COVER = (() => {
+  try {
+    if (!FAMILY_BOOK || !CAPITAL_RECORD_BOOK) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const summary = bookObject(src, "BOOK_SUMMARY");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const cf = bookObject(src, "BOOK_ACCOUNT_CASH_FLOWS") ?? {};
+    const asOf = String(summary?.asOf ?? "");
+    const y = Number(asOf.slice(0, 4)), m = Number(asOf.slice(5, 7));
+    if (!(y > 0) || !Array.isArray(accounts)) return null;
+    const fyStart = `${m >= 4 ? y : y - 1}-04-01`;
+    const recorded = new Set(CAPITAL_RECORD_BOOK.moves.map((x) => x.accountId));
+    if (!recorded.size) return null;
+    const byOwner = new Map();
+    for (const o of FAMILY_BOOK.owners) {
+      const held = [...new Set(o.rows.map((r) => r.slice(r.lastIndexOf("@") + 1)))];
+      const opening = held.filter((id) => (cf[id] ?? []).some((f) =>
+        /^opening portfolio value/i.test(f.description ?? "") && String(f.date ?? "").slice(0, 10) === fyStart)).length;
+      const records = accounts.filter((a) => (a.ownerId || a.owner || "unattributed") === o.owner && recorded.has(a.accountId)).length;
+      byOwner.set(o.owner, { held: held.length, opening, records });
+    }
+    return { fyStart, byOwner };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT AN ENTITY'S NOT-VALUED CARD MUST LIST, RE-EXPRESSED (FS-16) ────────
+ *
+ * Every account of the entity that carries no valued position in the LIVE book
+ * (the model the page draws), each with the reason the book generated for it,
+ * and every account valued only in part — the one a depository reports cash
+ * funds on without a holding statement, whose rows carry `depositoryUnits`.
+ * Keyed on the registry's owner id; `name` is the display name the page's
+ * scope, and so its hover, reads.
+ */
+const FAMILY_UNVALUED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions)) return null;
+    const held = new Set(positions.map((p) => p.accountId));
+    // PARTLY VALUED IS THE TRANSACTION-ONLY KIND ALONE: a "no-rate" row (A-17)
+    // sits in an account that DID send a holding statement, and the page never
+    // marks that account partly valued — its lines are listed per account instead.
+    const partial = new Set(positions.filter((p) => p.depositoryUnits && p.depositoryUnits.kind !== "no-rate").map((p) => p.accountId));
+    const out = new Map();
+    for (const a of accounts) {
+      const id = a.ownerId || a.owner || "unattributed";
+      const e = out.get(id) ?? { name: a.owner, unvalued: [], partial: [] };
+      if (!held.has(a.accountId)) e.unvalued.push({ accountId: a.accountId, reason: a.noPositionsReason ?? null });
+      else if (partial.has(a.accountId)) e.partial.push(a.accountId);
+      out.set(id, e);
+    }
+    return out;
+  } catch { return null; }
+})();
+/**
+ * THE KINDS A NOT-VALUED LINE CAN BE, read off the reason the book generated —
+ * written out again rather than imported, so a page that named a kind its lines
+ * are not cannot agree with this by construction. A reason none of these names
+ * means the hover must name no kind at all.
+ */
+const UNVALUED_KIND_LABELS = [
+  [/^this fund publishes no NAV/i, "a fund that publishes no NAV"],
+  [/^this custody account values nothing/i, "units a custodian records at face value"],
+  [/has been redeemed — the balance is nil/i, "a balance redeemed to nil"],
+  [/report income and distributions only/i, "a folio that reports income only"],
+  [/^no HOLDING statement/i, "an account that sent only a transaction statement"],
+];
+const unvaluedKindOf = (reason) => UNVALUED_KIND_LABELS.find(([re]) => re.test(String(reason ?? "")))?.[1] ?? null;
+
+/**
+ * ── THE NOT-VALUED CARD, HELD TO THE BOOK (FS-16) ───────────────────────────
+ *
+ * The card's hover said every listed account "reports holdings that no
+ * statement … puts a value on" — false of a balance redeemed to nil (a
+ * measurement), of a folio that reports income only, and of an account valued
+ * in part, which DOES carry valued positions and was being counted among the
+ * accounts that carry none. So the lines must be exactly the book's, each with
+ * its own reason; the hover's count must be the accounts with no valued
+ * position alone; the partly valued get a clause of their own; and the kinds it
+ * names must be the kinds the lines are — or none, where a reason is one no
+ * kind describes. Parameterised on the entity, because two routes walk it.
+ */
+function familyUnvaluedChecks(ownerOf) {
+  const setup = (ctx) => {
+    const owner = ownerOf();
+    if (!owner) return { notChecked: "no entity for this route resolved from the book" };
+    const B = FAMILY_UNVALUED_BOOK?.get(owner);
+    if (!B) return { fail: true };
+    const U = ctx?.familyLayout?.unvalued ?? null;
+    // A-17: the card is also drawn for an entity whose only entries are lines a
+    // valued account's statement records with no value — not this check's subject.
+    const onlyLines = (UNPRICED_BOOK?.byOwner.get(B.name) ?? []).length > 0;
+    if (!B.unvalued.length && !B.partial.length) return U && !onlyLines ? { fail: true } : { notChecked: "this entity has no account the book leaves unvalued" };
+    return U ? { B, U } : { fail: true };
+  };
+  return [
+    ["the not-valued card lists exactly the accounts the book values nothing in, and the partly valued ones, each with its own reason (FS-16)", (t, ctx) => {
+      const s = setup(ctx);
+      if (s.notChecked) return s;
+      if (s.fail) return false;
+      const { B, U } = s;
+      const lines = U.lines ?? [];
+      const un = lines.filter((l) => !l.partial).map((l) => l.account).sort();
+      const pa = lines.filter((l) => l.partial).map((l) => l.account).sort();
+      const reasons = new Map(B.unvalued.map((u) => [u.accountId, u.reason]));
+      return U.total === B.unvalued.length && U.partial === B.partial.length
+        && un.join() === B.unvalued.map((u) => u.accountId).sort().join()
+        && pa.join() === [...B.partial].sort().join()
+        && lines.filter((l) => !l.partial).every((l) => (l.why ?? null) === (reasons.get(l.account) ?? null))
+        // a partly valued line keeps its own note, which says what is NOT valued
+        && lines.filter((l) => l.partial).every((l) => /not valued/i.test(l.why ?? ""));
+    }],
+    ["...and its hover counts only the accounts with no valued position, names the kinds they are, and gives the partly valued a clause of their own (FS-16)", (t, ctx) => {
+      const s = setup(ctx);
+      if (s.notChecked) return s;
+      if (s.fail) return false;
+      const { B, U } = s;
+      const hint = U.hint ?? "";
+      if (!hint.startsWith("None of these figures is in the ₹")) return false;
+      if (/puts a value on|no statement values these holdings|an account valued only in part/i.test(hint)) return false;
+      const nU = B.unvalued.length, nP = B.partial.length;
+      const unClause = nU > 0
+        ? hint.includes(`${nU === 1 ? "One account" : `${nU} accounts`} of ${B.name}'s ${nU === 1 ? "carries" : "carry"} no valued position in this book`)
+        : !/no valued position in this book/i.test(hint);
+      const lead = nU > 0 ? (nP === 1 ? "One more account" : `${nP} more accounts`) : (nP === 1 ? "One account" : `${nP} accounts`);
+      const paClause = nP > 0
+        ? hint.includes(`${lead} of ${B.name}'s ${nP === 1 ? "is" : "are"} valued only in part`)
+        : !/valued only in part/i.test(hint);
+      const kinds = B.unvalued.map((u) => unvaluedKindOf(u.reason));
+      const labels = UNVALUED_KIND_LABELS.map(([, l]) => l);
+      const kindsOk = kinds.length === 0 || kinds.some((k) => k === null)
+        ? labels.every((l) => !hint.includes(l))
+        : labels.every((l) => hint.includes(l) === kinds.includes(l));
+      return unClause && paClause && kindsOk && /is what was paid into a fund, not what the holding is worth/.test(hint);
+    }],
+  ];
+}
+
+/**
+ * ── THE TWO RETURN COLUMNS SAY WHAT THEY ARE STRUCK OVER (FS-11, FS-12) ─────
+ *
+ * Return (to date) read "+87.30% p.a." for a 134-day window, a claim about a
+ * year no flow covers; the YTD dash said "needs a per-entity NAV on 1 April"
+ * for an entity that publishes one on some of its accounts; and the to-date
+ * dash said a rate "needs one on both sides" where the entity's accounts
+ * publish a dated capital record the Transactions tab already strikes a return
+ * from. Every count and every figure here is the book's, re-derived above
+ * (`FAMILY_MWR`, `FAMILY_COVER`), and each row is matched to its entity by the
+ * value and the count it carries — never by its name.
+ */
+const familyRowOwner = (r) => FAMILY_BOOK?.owners.find((x) => Math.abs(x.mv - r.mv) <= 1 && x.count === r.count) ?? null;
+const FAMILY_RETURN_COLUMNS = [
+  ["Return (to date) is cumulative over each row's own window, never annualised under a year — and a year or more names its real annual rate (FS-11)", (t, ctx) => {
+    const L = ctx?.familyLayout;
+    if (!L) return { notChecked: "the layout probe did not run" };
+    if (!FAMILY_BOOK || !FAMILY_MWR) return false;
+    const head = L.headerTitles?.toDate ?? "";
+    if (!/cumulative/i.test(head) || !/never annualised under a year/i.test(head)) return false;
+    let measured = 0;
+    const ok = (L.rows ?? []).every((r) => {
+      const o = familyRowOwner(r);
+      if (!o) return false;
+      const want = FAMILY_MWR.get(o.owner);
+      if (!want) return true;
+      measured += 1;
+      const text = r.toDateText ?? "", title = r.toDateTitle ?? "";
+      if (/p\.\s?a\./i.test(text) || /p\.\s?a\./i.test(title)) return false;
+      const pcts = [...title.matchAll(/([+\-−]?\d+(?:\.\d+)?)%/g)].map((m) => Number(m[1].replace("−", "-")));
+      if (want.days < 365) {
+        return /never annualised/i.test(title) && !/a real annual rate/i.test(title)
+          // …and the rate the window would compound to is nowhere in it.
+          && (Math.abs(want.annual - want.toDate) < 0.02 || !pcts.some((p) => Math.abs(p - want.annual) <= 0.01));
+      }
+      return /a real annual rate/i.test(title) && pcts.some((p) => Math.abs(p - want.annual) <= 0.005 + 1e-4);
+    });
+    return ok && (measured > 0 || { notChecked: "no entity carries a money-weighted figure on this book" });
+  }],
+  ["each YTD dash says how many of the entity's accounts publish a value on the year's first day, and they are the book's (FS-12)", (t, ctx) => {
+    const L = ctx?.familyLayout;
+    if (!L) return { notChecked: "the layout probe did not run" };
+    if (!FAMILY_BOOK || !FAMILY_COVER) return false;
+    const fy = FAMILY_COVER.fyStart, re = dmyRe(fy);
+    if (!re.test(L.headerTitles?.ytd ?? "")) return false;
+    let dashes = 0;
+    const ok = (L.rows ?? []).every((r) => {
+      const o = familyRowOwner(r);
+      const c = o ? FAMILY_COVER.byOwner.get(o.owner) : null;
+      if (!c) return false;
+      if (Number(r.ytdHeld) !== c.held || Number(r.ytdOpening) !== c.opening) return false;
+      if (r.ytdText !== "—") return true;
+      dashes += 1;
+      const why = r.ytdTitle ?? "";
+      if (!/^not struck:/.test(why) || !re.test(why) || /per-entity NAV on 1 April/i.test(why)) return false;
+      // Whether Return (to date) beside it is struck over exactly those
+      // accounts, from that day — which is when the dash may say so.
+      const mw = FAMILY_MWR?.get(o.owner);
+      const struck = mw === undefined ? false : mw === null ? null : (mw.accounts.length === c.opening && mw.start === fy);
+      const clause = (s) => (struck === null ? true : struck ? why.includes(s) : !why.includes(s));
+      if (c.opening === 0) {
+        return why.includes(c.held === 1 ? "the one account it holds something in publishes none"
+          : `none of the ${c.held} accounts it holds something in publishes one`);
+      }
+      if (c.opening < c.held) {
+        return why.includes(`only ${c.opening} of the ${c.held} accounts it holds something in publish one, as an opening portfolio value`)
+          && clause(`Return (to date) beside it is struck from those ${c.opening} alone`);
+      }
+      return why.includes("every account it holds something in publishes a value on")
+        && clause(" — Return (to date) beside it covers the same window");
+    });
+    return ok && (dashes > 0 || { notChecked: "every entity strikes a YTD figure on this book" });
+  }],
+  ["each Return (to date) dash says why there is no rate, and names the dated capital record where the entity has one (FS-12)", (t, ctx) => {
+    const L = ctx?.familyLayout;
+    if (!L) return { notChecked: "the layout probe did not run" };
+    if (!FAMILY_BOOK || !FAMILY_COVER || !FAMILY_MWR) return false;
+    let dashes = 0;
+    const ok = (L.rows ?? []).every((r) => {
+      const o = familyRowOwner(r);
+      const c = o ? FAMILY_COVER.byOwner.get(o.owner) : null;
+      if (!c) return false;
+      if (Number(r.mwrRecords) !== c.records) return false;
+      const want = FAMILY_MWR.get(o.owner);
+      if (want) return true;
+      dashes += 1;
+      const why = r.toDateTitle ?? "";
+      if (/needs one on both sides/i.test(why)) return false;
+      if (want === null) {
+        return /^no rate: the dated flows of the (?:one account|\d+ accounts) that publish an opening portfolio value do not solve for one/.test(why);
+      }
+      if (!/^no rate here: this column pools only accounts whose statements publish an opening portfolio value for the year/.test(why)) return false;
+      return c.records > 0
+        ? why.includes(`${c.records === 1 ? "one of its accounts publishes" : `${c.records} of its accounts publish`} a dated capital record instead`)
+          && /Transactions tab/.test(why)
+        : why.includes("nor does any of its accounts publish a dated capital record");
+    });
+    return ok && (dashes > 0 || { notChecked: "every entity carries a money-weighted figure on this book" });
+  }],
+];
 
 /**
  * ── WHAT THE HOLDINGS TABLES FILE UNDER EACH SECTION, OUTSIDE COMPANY SHARES ─
@@ -24046,6 +24712,9 @@ const INVARIANTS = {
         && /never two/i.test(d.basisTitle ?? "");
     }],
     ...sectorSourceChecks((b) => b.companySharesWithBookSector),
+    ...sectorIssuerChecks("sectors"),
+    ...SECTOR_TOPS,
+    ...SECTOR_DERIVED_REST,
     /*
      * AND THE UNCLASSIFIED REASON IS ON THE ROW, worded for THIS view. Direct
      * Equity has one place to have looked and Consolidated has two, so a reason
@@ -24179,7 +24848,8 @@ const INVARIANTS = {
      * the other route — a page losing most of what the family actually asked
      * for, passing its own checks.
      */
-    ...sectorSourceChecks((b) => b.directNamesWithBookSector),
+    ...sectorSourceChecks((b) => b.directNamesWithBookSector, "direct"),
+    ...SECTOR_DIRECT_HOLDINGS,
 
     /**
      * ── THE FOOTER PARAGRAPH IS GONE, AND ITS TWO LOAD-BEARING FIGURES ARE NOT
@@ -24527,6 +25197,8 @@ const INVARIANTS = {
     // The donut and its source line are the Consolidated set's on this tab,
     // so the same three provenance claims hold here as on `sectors`.
     ...sectorSourceChecks((b) => b.companySharesWithBookSector),
+    ...sectorIssuerChecks("compare"),
+    ...SECTOR_COMPARE_ISSUERS,
   ],
   // "in the portfolio monitor I can see all kinds of investments being mixed" —
   // holdings are sectioned by BUCKET (who chose the position), the sections must
@@ -27536,6 +28208,7 @@ const INVARIANTS = {
    * reason to write them.
    */
   "family-entity": [
+    ...familyUnvaluedChecks(() => FAMILY_ENTITY),
     // The two routes are separate headings, and a mandate names itself between them.
     ["the drill-down sections by route, not by asset class alone",
       (t) => /DIRECT EQUITY/i.test(t) && /PMS MANDATES/i.test(t)],
@@ -28120,6 +28793,7 @@ const INVARIANTS = {
       });
       return ok && measured > 0;
     }],
+    ...FAMILY_RETURN_COLUMNS,
     // ── AND THE TWO CARDS SIT SIDE BY SIDE ──
     // A LAYOUT CLAIM IS STRUCK ON GEOMETRY. The page prints the same words
     // stacked or side by side, so only the boxes can see it: the table must END
@@ -29557,6 +30231,7 @@ const INVARIANTS = {
   ],
   "family-partial": [
     ...unvaluedLinesChecks(),
+    ...familyUnvaluedChecks(() => CASH_INSTRUCTION_BOOK?.partialOwner),
     // THE LINE SAYS "PARTLY VALUED" AND WHAT IS; THE NOTE IS THE HOVER ON ITS
     // NAME (Stage 10cf). What is NOT valued is read from that hover — a line
     // that dropped it would leave a reader taking the valued part for the whole.
@@ -35529,6 +36204,13 @@ for (const theme of THEMES) {
           basis: el.getAttribute("data-donut-basis"),
           basisTitle: el.getAttribute("title"),
           text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
+          // WHAT THE ROWS ARE HELD AS on Consolidated, and how many companies the
+          // holdings are on Direct Equity (FS-13, FS-21) — null where the view
+          // does not carry the attribute, which is itself asserted.
+          shares: el.hasAttribute("data-donut-shares") ? Number(el.getAttribute("data-donut-shares")) : null,
+          debt: el.hasAttribute("data-donut-debt") ? Number(el.getAttribute("data-donut-debt")) : null,
+          other: el.hasAttribute("data-donut-other") ? Number(el.getAttribute("data-donut-other")) : null,
+          companies: el.hasAttribute("data-donut-companies") ? Number(el.getAttribute("data-donut-companies")) : null,
         };
       });
       const sectorSource = FAST ? null : await page.evaluate(() => {
@@ -35543,6 +36225,11 @@ for (const theme of THEMES) {
           unplacedMV: n("data-unplaced-mv"),
           text: (el.innerText ?? "").replace(/\s+/g, " ").trim(),
           titles: [...el.querySelectorAll("[title]")].map((x) => x.getAttribute("title")),
+          // WHY each unplaced row is unplaced (FS-13): the counts the span carries
+          // by cause, and its hover — read by handle, never out of the line's text.
+          debt: (() => { const u = el.querySelector("[data-unplaced-debt]"); return u ? Number(u.getAttribute("data-unplaced-debt")) : null; })(),
+          nosymbol: (() => { const u = el.querySelector("[data-unplaced-debt]"); return u ? Number(u.getAttribute("data-unplaced-nosymbol")) : null; })(),
+          unplacedTitle: el.querySelector("[data-unplaced-debt]")?.getAttribute("title") ?? null,
         };
       });
       /**
@@ -35636,6 +36323,34 @@ for (const theme of THEMES) {
             const sc = t?.parentElement;
             return sc ? sc.scrollWidth - sc.clientWidth : null;
           })(),
+          // EACH SECTOR'S LARGEST, by its own handles (FS-14): which row, and
+          // whether the page says the family holds it only inside a fund.
+          tops: [...document.querySelectorAll("main [data-sector-row]")].map((r) => {
+            const c = r.querySelector('[data-cell="top"]');
+            return {
+              sector: r.getAttribute("data-sector-row"),
+              key: c?.getAttribute("data-top-key") ?? null,
+              derived: c?.getAttribute("data-top-derived") ?? null,
+              mark: !!c?.querySelector("[data-top-derived-mark]"),
+              text: (c?.innerText ?? "").replace(/\s+/g, " ").trim(),
+              title: c?.querySelector("[title]")?.getAttribute("title") ?? null,
+            };
+          }),
+          // The sector table's headings, each with its hover.
+          heads: [...document.querySelectorAll("main [data-sector-table] thead th[data-col]")].map((th) => ({
+            col: th.getAttribute("data-col"), text: (th.innerText ?? "").replace(/\s+/g, " ").trim(), title: th.getAttribute("title"),
+          })),
+          // THE DERIVED FIGURE'S HOVER, and the rest's face and hover (FS-13, FS-15).
+          derivedTitle: document.querySelector("main [data-sector-derived]")?.getAttribute("title") ?? null,
+          rest: (() => {
+            const el = document.querySelector("main [data-sector-rest]");
+            // …and the figure the rest's parts must add to: the "Not on this
+            // page" value, which sits in the line above the span's own.
+            return el ? {
+              face: (el.innerText ?? "").replace(/\s+/g, " ").trim(), title: el.getAttribute("title"),
+              value: (el.parentElement?.previousElementSibling?.innerText ?? "").replace(/\s+/g, " ").trim(),
+            } : null;
+          })(),
           docScroll: de.scrollHeight - de.clientHeight,
           mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
         };
@@ -35680,6 +36395,10 @@ for (const theme of THEMES) {
           pies: main.querySelectorAll(".recharts-pie").length,
           // The table's own columns, and each row's entity cell with its hover.
           headers: table ? [...table.querySelectorAll("thead th")].map((h) => clean(h.innerText)) : null,
+          // Each heading's hover, by its column id — what a return column says it
+          // is struck over (FS-11, FS-12).
+          headerTitles: table ? Object.fromEntries([...table.querySelectorAll("thead th[data-col]")]
+            .map((h) => [h.getAttribute("data-col"), h.getAttribute("title") ?? ""])) : null,
           rows: table ? [...table.querySelectorAll("tbody tr")].map((r) => ({
             cells: [...r.children].map((c) => clean(c.innerText)),
             entityTitle: r.children[0]?.getAttribute("title") ?? null,
@@ -35704,6 +36423,14 @@ for (const theme of THEMES) {
             mwrDays: r.querySelector("[data-mwr-accounts]")?.getAttribute("data-mwr-days") ?? null,
             toDateText: clean(r.querySelector("[data-mwr-accounts]")?.innerText),
             toDateTitle: r.querySelector("[data-mwr-accounts] [title]")?.getAttribute("title") ?? null,
+            // WHAT THE DASH OR FIGURE BESIDE IT COVERS (FS-11, FS-12): the entity's
+            // accounts on the Transactions tab's capital record, and the YTD
+            // cell's own coverage, text and reason.
+            mwrRecords: r.querySelector("[data-mwr-accounts]")?.getAttribute("data-mwr-records") ?? null,
+            ytdText: clean(r.querySelector("[data-entity-ytd]")?.innerText),
+            ytdTitle: r.querySelector("[data-entity-ytd] [title]")?.getAttribute("title") ?? null,
+            ytdHeld: r.querySelector("[data-entity-ytd]")?.getAttribute("data-ytd-held") ?? null,
+            ytdOpening: r.querySelector("[data-entity-ytd]")?.getAttribute("data-ytd-opening") ?? null,
           })) : [],
           // The total row the weights divide by, and the line that names the gap
           // from it to the consolidated book.
@@ -35738,6 +36465,23 @@ for (const theme of THEMES) {
           legend: pieCard ? [...pieCard.querySelectorAll("li")].map((li) => ({
             text: clean(li.innerText), title: li.getAttribute("title"),
           })) : [],
+          // THE NOT-VALUED CARD on an entity's own page (FS-16): its counts, the
+          // hover on its title, and each line's account and reason.
+          unvalued: (() => {
+            const ul = main.querySelector("[data-entity-unvalued]");
+            if (!ul) return null;
+            const card = ul.closest(".card");
+            return {
+              total: Number(ul.getAttribute("data-entity-unvalued")),
+              partial: Number(ul.getAttribute("data-entity-partial")),
+              hint: card?.querySelector("[data-card-title-hint]")?.getAttribute("title") ?? null,
+              lines: [...ul.querySelectorAll("li[data-unvalued-account]")].map((li) => ({
+                account: li.getAttribute("data-unvalued-account"),
+                partial: li.hasAttribute("data-partial-account"),
+                why: li.querySelector("[data-unvalued-reason]")?.getAttribute("title") ?? null,
+              })),
+            };
+          })(),
         };
       });
       /**

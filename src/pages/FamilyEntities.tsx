@@ -27,17 +27,54 @@ import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, measuredAccountsReturn, entityYtdPct } from "@/lib/returns";
+import { moneyWeightedReturn } from "@/lib/bucketXirr";
+import { capitalMovesWithCalls } from "@/lib/tranches";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS } from "@/data/glowData";
 import { fmtNum, fmtPct, changeColor, fmtCurrency, fmtDate } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
+import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
+import { Auditable } from "@/components/Auditable";
+import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
 
 /** The entity table's columns, in the order its rows write their cells. */
 const ENTITY_COLS = ["entity", "nav", "weight", "positions", "pnl", "return", "toDate", "ytd"] as const;
 /** ...and the holdings table beneath it. */
 const FE_HOLDING_COLS = ["security", "heldVia", "sector", "value", "return"] as const;
-import { chartTooltipStyle, chartTooltipLabelStyle, chartTooltipItemStyle, CHART_COLORS } from "@/lib/chartTheme";
-import { Auditable } from "@/components/Auditable";
-import { pnlFormula, returnFormula, weightFormula } from "@/lib/auditFormulas";
+/**
+ * THE ACCOUNTS THAT PUBLISH A DATED CAPITAL RECORD — the Portfolio Monitor's
+ * Transactions tab's own set, from the same call on the same inputs
+ * (`CAPITAL_RECORD` there). An entity whose Return (to date) is a dash names
+ * how many of its accounts are on that tab instead (FS-12).
+ */
+const CAPITAL_RECORD_ACCOUNTS = new Set(
+  capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS).map((m) => m.accountId));
+/**
+ * WHAT KINDS OF ACCOUNT A "NOT VALUED" CARD LISTS (FS-16) — read off each
+ * account's own reason, which the book generates from what its statement is.
+ * The card's hover said every listed account "reports holdings that no
+ * statement … puts a value on", which is false of a balance redeemed to nil (a
+ * measurement) and of a folio that reports income only. So the hover names the
+ * kinds its lines actually are — and names none where any line's reason is one
+ * this list does not recognise, rather than a list that is not true of it.
+ */
+const UNVALUED_KINDS: readonly [RegExp, string][] = [
+  [/^this fund publishes no NAV/i, "a fund that publishes no NAV"],
+  [/^this custody account values nothing/i, "units a custodian records at face value"],
+  [/has been redeemed — the balance is nil/i, "a balance redeemed to nil"],
+  [/report income and distributions only/i, "a folio that reports income only"],
+  [/^no HOLDING statement/i, "an account that sent only a transaction statement"],
+];
+function unvaluedKinds(reasons: readonly (string | null | undefined)[]): string | null {
+  const kinds: string[] = [];
+  for (const r of reasons) {
+    const k = UNVALUED_KINDS.find(([re]) => re.test(r ?? ""))?.[1];
+    if (!k) return null;
+    if (!kinds.includes(k)) kinds.push(k);
+  }
+  if (!kinds.length) return null;
+  return kinds.length === 1 ? kinds[0] : `${kinds.slice(0, -1).join(", ")} or ${kinds[kinds.length - 1]}`;
+}
 
 /**
  * Sections in reading order, mirroring Portfolio Monitor's: what the entity
@@ -231,6 +268,40 @@ export function FamilyEntities() {
   }
   const accountsOfOwner = (owner: string) =>
     (statementPortfolio ?? portfolio).accounts.filter((a) => accountsByOwner.get(owner)?.has(a.accountId));
+  /**
+   * ── WHY A ROW'S RETURN (TO DATE) OR YTD IS A DASH — the true cause (FS-12) ──
+   *
+   * Both dashes named a cause that was not the cause. YTD said no statement
+   * carries a per-entity value on 1 April — beside a Return (to date) struck
+   * from the 1 April opening portfolio values four of Ajay's and three of
+   * Ankita's statements DO carry. Return (to date) said a money-weighted
+   * return "needs" an opening value on both sides — false of a capital record
+   * that starts at inception, which Aarti's, Bharat's and both trusts'
+   * accounts publish and the Transactions tab strikes a return on. What is
+   * true, counted here off the same data the figures are struck from:
+   *
+   *   • YTD needs the entity's WHOLE value on the year's first day, and only an
+   *     account whose flows open with an opening portfolio value dated that day
+   *     has one — so the dash says how many of the accounts it holds something
+   *     in do;
+   *   • Return (to date) pools only those accounts, so an entity none of whose
+   *     accounts publishes one has no figure here — and where it publishes a
+   *     dated capital record instead, the dash says so and where it is.
+   */
+  const fyStartIso = (() => {
+    const y = Number(portfolio.asOf.slice(0, 4)), m = Number(portfolio.asOf.slice(5, 7));
+    return y > 0 ? `${m >= 4 ? y : y - 1}-04-01` : null;
+  })();
+  const fyLabel = fyStartIso ? fmtDate(fyStartIso) : "the year's first day";
+  const coverageOf = (owner: string) => {
+    const held = new Set(p.filter((x) => ownerOf(accIdx, x) === owner).map((x) => x.accountId));
+    const flows = (statementPortfolio ?? portfolio).accountCashFlows ?? {};
+    const opening = [...held].filter((id) => (flows[id] ?? []).some((f) =>
+      /^opening portfolio value/i.test(f.description ?? "") && f.date.slice(0, 10) === fyStartIso)).length;
+    const records = portfolio.accounts.filter((a) => CAPITAL_RECORD_ACCOUNTS.has(a.accountId)
+      && ownerOf(accIdx, { accountId: a.accountId } as Position) === owner).length;
+    return { held: held.size, opening, records };
+  };
   // Declared here because the captions below build their sentences from them —
   // money through `fmtFromBase`, never a hard-coded symbol, and a class list
   // through `assetClassLabel` so "Equity" reads as Company Shares everywhere.
@@ -494,6 +565,23 @@ export function FamilyEntities() {
   const partlyValued = selected
     ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
     : [];
+  /** The kinds those lines are, off their own reasons — or null (FS-16). A
+   *  partly valued account is not one of them: it DOES carry valued positions,
+   *  so the card's hover gives it a clause of its own rather than counting it
+   *  among the accounts that carry none. */
+  const unvaluedKind = unvaluedKinds(unvalued.map((u) => u.reason));
+  const nU = unvalued.length;
+  const nP = partlyValued.length;
+  const unvaluedHint = [
+    `None of these figures is in the ${money(selMV)} above.`,
+    nU > 0
+      ? `${nU === 1 ? "One account" : `${nU} accounts`} of ${scope}'s ${nU === 1 ? "carries" : "carry"} no valued position in this book, each for the reason its line's hover gives${unvaluedKind ? ` — ${unvaluedKind}` : ""} — so ${nU === 1 ? "it stands" : "they stand"} in no table above.`
+      : null,
+    nP > 0
+      ? `${nU > 0 ? (nP === 1 ? "One more account" : `${nP} more accounts`) : (nP === 1 ? "One account" : `${nP} accounts`)} of ${scope}'s ${nP === 1 ? "is" : "are"} valued only in part: ${nP === 1 ? "its" : "their"} cash-equivalent funds are in the ${money(selMV)}, at AMFI's NAV, and the rest of what ${nP === 1 ? "it holds" : "they hold"} stands in no table above — ${nP === 1 ? "its own note, the hover on its line," : "each one's own note, the hover on its line,"} says which is which.`
+      : null,
+    "A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.",
+  ].filter(Boolean).join(" ");
   /**
    * AND THE LINES A STATEMENT RECORDS THAT NOTHING VALUES, inside an account
    * the table above DOES value (A-17). The ICICI NSDL demat's par-value rows,
@@ -513,6 +601,12 @@ export function FamilyEntities() {
     // way (Aarti's ABSL units) has nothing to list and draws no line at all.
     .map((g) => ({ ...g, live: g.lines.filter((l) => l.valuedLive).length, lines: g.lines.filter((l) => !l.valuedLive) }))
     .filter((g) => g.lines.length > 0);
+  /** …and the clause the hover adds for them (A-17): an account the table
+   *  above DOES value can still record lines nothing values, so the hint that
+   *  counts only accounts with no valued position (FS-16) names these apart. */
+  const unvaluedLinesHint = unvaluedLines.length > 0
+    ? `${unvaluedLines.length === 1 ? "One account" : `${unvaluedLines.length} accounts`} the table above values ${unvaluedLines.length === 1 ? "records" : "record"} further holdings with a quantity and no value; open ${unvaluedLines.length === 1 ? "it" : "one"} for the lines.`
+    : null;
   /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
    *
@@ -876,8 +970,8 @@ export function FamilyEntities() {
                     <SortHeader col="positions" view={entityView}>Positions</SortHeader>
                     <SortHeader col="pnl" view={entityView}>Unreal. P&L</SortHeader>
                     <SortHeader col="return" view={entityView} title="FIFO over the holdings whose statement reports a cost: (unrealised + realised) ÷ the capital behind them — cumulative, not annualised. Its coverage is in each cell's popover.">Return</SortHeader>
-                    <SortHeader col="toDate" view={entityView} title="Money-weighted return earned to date (Excel XIRR, de-annualised to the window) over dated cash flows">Return (to date)</SortHeader>
-                    <SortHeader col="ytd" view={entityView} title="Financial-year-to-date return (since 1 Apr), flow-adjusted">YTD</SortHeader>
+                    <SortHeader col="toDate" view={entityView} title="Money-weighted return (Excel XIRR) over the accounts that publish an opening portfolio value — cumulative over each row's own window, from its first dated flow to its latest statement, and never annualised under a year. Each figure's hover names its accounts and its dates.">Return (to date)</SortHeader>
+                    <SortHeader col="ytd" view={entityView} title={`Financial-year-to-date return since ${fyLabel}, over the entity's whole value. It needs that whole value on ${fyLabel}; each dash says how many of the entity's accounts publish one.`}>YTD</SortHeader>
                     {/* THE CUSTODY COLUMN IS GONE — it was the widest cell in the
                         table (one entity holds through fourteen platforms) and it
                         is what made this table too wide to sit beside the pie.
@@ -921,8 +1015,32 @@ export function FamilyEntities() {
                     const closes = mwParts.firstClose && mwParts.firstClose !== mwParts.lastClose
                       ? `each closed on its own statement date, ${fmtDate(mwParts.firstClose)} to ${fmtDate(mwParts.lastClose ?? "")}`
                       : `each closed on its own statement date`;
+                    /**
+                     * NEVER ANNUALISED UNDER A YEAR (FS-11). The cell is the
+                     * return over its window; a 134-day return compounded onto a
+                     * year read +87.30% p.a. beside Ajay's +25.91%, a claim about a
+                     * year no flow covers. `moneyWeightedReturn` is the one place
+                     * that decides: the annual rate is named only where the window
+                     * reaches a year, and then it is a real one.
+                     */
+                    const mw = moneyWeightedReturn(mwr.annPct, mwr.windowDays);
+                    const basisNote = mw.annualised
+                      ? `cumulative over that window; ${fmtPct(mw.annualPct, { sign: true })} a year, a real annual rate because the window reaches a year`
+                      : "cumulative over that window and never annualised: a rate for a year the window has not seen would be an extrapolation";
                     const coverNote = mwr.annPct == null ? undefined
-                      : `Money-weighted, over ${mwr.windowDays} days — ${fmtDate(mwParts.windowStart ?? "")}, the first dated flow, to ${fmtDate(mwParts.lastClose ?? "")}, the latest statement it closes on — not annualised; ${fmtPct(mwr.annPct, { sign: true })} p.a. if it were. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} — ${coveredNames.join(", ")} — worth ${money(mwr.measuredMV)} on their own statements, ${closes}${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
+                      : `Money-weighted, over ${mwr.windowDays} days — ${fmtDate(mwParts.windowStart ?? "")}, the first dated flow, to ${fmtDate(mwParts.lastClose ?? "")}, the latest statement it closes on — ${basisNote}. Covers ${mwr.covered} ${mwr.covered === 1 ? "account" : "accounts"} — ${coveredNames.join(", ")} — worth ${money(mwr.measuredMV)} on their own statements, ${closes}${mwr.excluded.length ? `; ${mwr.excluded.length === 1 ? "account" : "accounts"} ${mwr.excluded.join(", ")} carry no opening portfolio value and are excluded on both sides` : ""}.`;
+                    const cov = coverageOf(e.key);
+                    const noRateWhy = mwParts.parts.length > 0
+                      ? `no rate: the dated flows of the ${mwParts.parts.length === 1 ? "one account" : `${mwParts.parts.length} accounts`} that publish an opening portfolio value do not solve for one`
+                      : `no rate here: this column pools only accounts whose statements publish an opening portfolio value for the year, and none of this entity's accounts that hold something does${cov.records > 0
+                        ? ` — ${cov.records === 1 ? "one of its accounts publishes" : `${cov.records} of its accounts publish`} a dated capital record instead, and the Portfolio Monitor's Transactions tab strikes each one's return from it, since its first payment, where the account is valued`
+                        : "; nor does any of its accounts publish a dated capital record"}`;
+                    const struckFromOpening = mwParts.parts.length === cov.opening && mwParts.windowStart === fyStartIso;
+                    const ytdWhy = cov.opening === 0
+                      ? `not struck: a year-to-date return needs the entity's whole value on ${fyLabel}, and ${cov.held === 1 ? "the one account it holds something in publishes none" : `none of the ${cov.held} accounts it holds something in publishes one`}`
+                      : cov.opening < cov.held
+                        ? `not struck: a year-to-date return needs the entity's whole value on ${fyLabel}, and only ${cov.opening} of the ${cov.held} accounts it holds something in publish one, as an opening portfolio value${struckFromOpening ? ` — Return (to date) beside it is struck from those ${cov.opening} alone` : ""}`
+                        : `not struck: every account it holds something in publishes a value on ${fyLabel}, but no entity-wide series is assembled from them${struckFromOpening ? " — Return (to date) beside it covers the same window" : ""}`;
                     const ytdPct = entityYtdPct(portfolio, e.key, e.mv);
                     // The popovers' own worked lines ride on their cells, so
                     // `check:pages` reads the arithmetic a reader is shown rather
@@ -979,14 +1097,16 @@ export function FamilyEntities() {
                         </td>
                         <td className={`px-4 py-2.5 text-right mono ${xirrPct == null ? "text-slate-500" : changeColor(xirrPct)}`}
                           data-mwr-accounts={mwParts.parts.map((pt) => pt.accountNo).join(",")}
-                          data-mwr-start={mwParts.windowStart ?? ""} data-mwr-end={mwParts.lastClose ?? ""} data-mwr-days={mwr.windowDays ?? ""}>
+                          data-mwr-start={mwParts.windowStart ?? ""} data-mwr-end={mwParts.lastClose ?? ""} data-mwr-days={mwr.windowDays ?? ""}
+                          data-mwr-records={cov.records}>
                           {xirrPct == null
-                            ? <AbsentCell reason="no account for this entity carries an opening portfolio value — a money-weighted return needs one on both sides, and closing the whole entity value against a subset would overstate it" />
+                            ? <AbsentCell reason={noRateWhy} />
                             : <span title={coverNote}>{fmtPct(xirrPct, { sign: true })}</span>}
                         </td>
-                        <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}>
+                        <td className={`px-4 py-2.5 text-right mono ${ytdPct == null ? "text-slate-500" : changeColor(ytdPct)}`}
+                          data-entity-ytd data-ytd-held={cov.held} data-ytd-opening={cov.opening}>
                           {ytdPct == null
-                            ? <AbsentCell reason="needs a per-entity NAV on 1 April; no statement in this book carries one" />
+                            ? <AbsentCell reason={ytdWhy} />
                             : fmtPct(ytdPct, { sign: true })}
                         </td>
                       </Tr>
@@ -1017,7 +1137,9 @@ export function FamilyEntities() {
                         : "not totalled here — the book's gain is Morning CIO's"} /></td>,
                       return: <td key="return" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="each row is FIFO over that entity's own costed holdings; one return across the entities is the book's, struck once over the consolidated set as Morning CIO's Consolidated return" /></td>,
                       toDate: <td key="toDate" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="each row pools only that entity's measurable accounts over its own window; the pooled rate across every such account is Morning CIO's money-weighted return" /></td>,
-                      ytd: <td key="ytd" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason="not totalled across entities: each row's year-to-date return is struck over that entity's own opening value, and a sum or average of per-entity rates is not the book's" /></td>,
+                      ytd: <td key="ytd" className="px-4 py-2.5 text-right mono text-slate-500"><AbsentCell reason={entityRows.some((e) => entityYtdPct(portfolio, e.key, e.mv) != null)
+                        ? "not totalled across entities: each row's year-to-date return is struck over that entity's own opening value, and a sum or average of per-entity rates is not the book's"
+                        : `not totalled: a year-to-date return across the entities needs the whole book's value on ${fyLabel}, and no row above strikes one`} /></td>,
                     }} />
                   <tr>
                     {/* THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp).
@@ -1352,7 +1474,7 @@ export function FamilyEntities() {
             // with every other line under a card title, and this card sits
             // directly under one that sums. The sentence is the title's hover.
             <Card className="mt-5" title={`${scope} — held, not valued, in no total`}
-              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""}${unvaluedLines.length > 0 ? ` ${unvaluedLines.length === 1 ? "One account" : `${unvaluedLines.length} accounts`} the table above values ${unvaluedLines.length === 1 ? "records" : "record"} further holdings with a quantity and no value; open ${unvaluedLines.length === 1 ? "it" : "one"} for the lines.` : ""} Hover an account for why it carries no figure.`}>
+              subtitle={[unvaluedHint, unvaluedLinesHint].filter(Boolean).join(" ")}>
               <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}
                 data-entity-unvalued-lines={unvaluedLines.reduce((n, g) => n + g.lines.length, 0)}>
                 {/* A PARTLY VALUED ACCOUNT says so on its line, and its own note —
