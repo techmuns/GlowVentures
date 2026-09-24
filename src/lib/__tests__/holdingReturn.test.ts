@@ -335,6 +335,12 @@ console.log("\n── 8. the window ends at the valuation ──");
      valueDateOf({ navPriced: true, navDate: "2026-09-22" }, "2026-07-31", nowMs) === "2026-09-22");
   ok("a statement mark is dated on its statement's date, never on the clock",
      valueDateOf({}, "2026-07-31", nowMs) === "2026-07-31");
+  // VD-17: a statement that prices its balances on another day is struck on
+  // the pricing day — and only a statement mark is; a NAV or a quote keeps its own.
+  ok("a statement mark is dated on the day its statement prices, where it names one",
+     valueDateOf({ priceAsOf: "2026-03-30" }, "2026-03-31", nowMs) === "2026-03-30"
+     && valueDateOf({ priceAsOf: "2026-03-30", navPriced: true, navDate: "2026-09-22" }, "2026-03-31", nowMs) === "2026-09-22"
+     && valueDateOf({ priceAsOf: "2026-03-30", live: true, quoteAgeS: 0 }, "2026-03-31", nowMs) === "2026-09-23");
   ok("one date across a set is that date; two dates are none; no dates are none",
      commonValueDate(["2026-07-31", "2026-07-31"]) === "2026-07-31"
      && commonValueDate(["2026-07-31", "2026-08-13"]) === null

@@ -99,8 +99,12 @@ const navMV = (p: Position) => { const e = navOf(p); return e ? p.quantity * e.n
  * NAV they were valued at when the page built them. Null for a statement mark.
  */
 const navDateOf = (p: Position) => navOf(p)?.date ?? (p.depositoryUnits ? p.navDate ?? null : null);
-/** The date a line's value is struck: AMFI's date for a NAV, else its own statement's. */
-const valueDateOfLine = (p: Position) => navDateOf(p) ?? ACC.get(p.accountId)?.asOf ?? null;
+/**
+ * The date a line's value is struck: AMFI's date for a NAV, else the day its own
+ * statement prices — `priceAsOf` where the statement names one apart from its
+ * balances' date (VD-17: ICICI's NSDL statement of 31 Mar prices at 30 Mar).
+ */
+const valueDateOfLine = (p: Position) => navDateOf(p) ?? p.priceAsOf ?? ACC.get(p.accountId)?.asOf ?? null;
 /** A fund vehicle the fund still prices while the family holds none of its units. */
 const FUND = new Set(["AIF", "Mutual Fund", "ETF"]);
 const redeemed = (p: Position) => FUND.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
@@ -566,7 +570,8 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
 {
   const asOfLine = String(holdings.getRow(headerRowOf(holdings) - 1).getCell(1).value ?? "");
   const lines = firstOfGroup(NAV_SET.held);
-  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => ACC.get(p.accountId)?.asOf ?? "").filter(Boolean).sort();
+  // Each statement line's own value date — the day its statement PRICES (VD-17).
+  const stmtDates = lines.filter((p) => !navDateOf(p)).map((p) => valueDateOfLine(p) ?? "").filter(Boolean).sort();
   const navDates = [...new Set(lines.map((p) => navDateOf(p)).filter((d): d is string => !!d))].sort();
   ok("the line under the title dates the figures: the statement range, the NAV date, and no live quote",
      stmtDates.length > 0 && navDates.length > 0

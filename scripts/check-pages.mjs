@@ -6078,9 +6078,17 @@ const M2_BOOK = (() => {
     const valuedOf = (key) => {
       const d = onceEach(byKey.get(key) ?? []);
       if (!d.length) return null;
-      const dates = d.map((p) => (p.navPriced ? p.navDate : acc.get(p.accountId)?.asOf ?? null));
+      // …and a statement mark on the day its statement PRICES, where that is
+      // named apart from the balances' date (`priceAsOf`, VD-17).
+      const dates = d.map((p) => (p.navPriced ? p.navDate : p.priceAsOf ?? acc.get(p.accountId)?.asOf ?? null));
       const kinds = new Set(d.map((p) => (p.navPriced ? "nav" : "statement")));
-      return { at: new Set(dates).size === 1 ? dates[0] : null, by: kinds.size === 1 ? [...kinds][0] : "mixed", dates: new Set(dates).size };
+      // The balances' own date, where a statement prices on another day — the
+      // one date the page must name BESIDE the one the value is struck at.
+      const drawn = new Set(d
+        .filter((p) => !p.navPriced && p.priceAsOf && p.priceAsOf !== acc.get(p.accountId)?.asOf)
+        .map((p) => acc.get(p.accountId)?.asOf).filter(Boolean));
+      return { at: new Set(dates).size === 1 ? dates[0] : null, by: kinds.size === 1 ? [...kinds][0] : "mixed", dates: new Set(dates).size,
+        balances: drawn.size === 1 ? [...drawn][0] : null };
     };
     // A held scheme the fund store matched on its NAME, not on the holding's
     // own ISIN — Active Momentum, whose rows carry none (DSM-C5, VD-19).
@@ -15488,7 +15496,9 @@ const VALUE_WINDOW_BOOK = (() => {
       && !(FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null));
     const byKey = new Map();
     for (const p of onRows) {
-      const d = p.navPriced && p.navDate ? p.navDate : asOf.get(p.accountId) ?? null;
+      // A statement mark is struck on the day it PRICES — `priceAsOf` where the
+      // statement names one apart from its balances' date (VD-17).
+      const d = p.navPriced && p.navDate ? p.navDate : p.priceAsOf ?? asOf.get(p.accountId) ?? null;
       const e = byKey.get(p.securityKey) ?? { dates: new Set(), since: [] };
       e.dates.add(d);
       if (p.heldSince) e.since.push(p.heldSince);
@@ -18445,6 +18455,18 @@ const PRETAX_KEY = (() => {
   return s[0]?.securityKey ?? null;
 })();
 const PLEDGED_ABSL = NOTE_BOOK.some((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320" && p.marketValue > 0);
+/**
+ * How many valued statement rows PRICE on another day than their balances are
+ * drawn (VD-17) — ICICI's NSDL statement of 31 Mar prices at the 30 Mar close —
+ * off the book's own `priceAsOf` and each account's as-of, never typed.
+ */
+const PRICED_OTHER_DAY = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const asOf = new Map((bookArray(src, "BOOK_ACCOUNTS") ?? []).map((a) => [a.accountId, a.asOf]));
+    return NOTE_BOOK.filter((p) => p.priceAsOf && !p.navPriced && p.marketValue > 0 && p.priceAsOf !== asOf.get(p.accountId)).length;
+  } catch { return 0; }
+})();
 
 const INVARIANTS = {
   /**
@@ -22419,8 +22441,13 @@ const INVARIANTS = {
     ["the Holding value names the date its value is struck, and by what", (t, ctx) => {
       const v = ctx?.stockM2?.valued, want = NO_COST_KEY ? M2_BOOK?.valuedOf(NO_COST_KEY) : null;
       if (!v || !want || !want.at) return false;
-      return v.at === want.at && v.by === want.by && /statement mark ·/i.test(v.text ?? "") && /not today's/i.test(v.tip ?? "");
+      // A statement that prices on another day than its balances says both
+      // (ICICI NSDL: balances 31 Mar, prices 30 Mar), never one standing for both.
+      const both = !want.balances || (/counts its balances at/i.test(v.tip ?? "") && /prices them as of/i.test(v.tip ?? ""));
+      return v.at === want.at && v.by === want.by && /statement mark ·/i.test(v.text ?? "") && /not today's/i.test(v.tip ?? "") && both;
     }],
+    ["this holding's statement prices on another day than its balances, so the tile has both to name (VD-17)", () =>
+      !!(NO_COST_KEY && M2_BOOK?.valuedOf(NO_COST_KEY)?.balances)],
   ],
   /**
    * `/stock/<the ring-fenced key>` LANDS ON THE POLYCAB PAGE, NOT ON A ₹0.
@@ -26568,6 +26595,17 @@ const INVARIANTS = {
     // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
     // say so in the CMP marker's hover on the category table. The premise is
     // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
+    /**
+     * A MARK PRICED ON ANOTHER DAY THAN ITS BALANCES SAYS BOTH (VD-17). The
+     * ICICI NSDL statement counts shares at 31 Mar and prices them at the
+     * 30 Mar close; the CMP marker's hover names both, derived from the book's
+     * own `priceAsOf` rather than typed. A book with no such row has no
+     * subject, and says so rather than passing.
+     */
+    ["a statement mark priced on another day than its balances names both dates in the CMP marker's hover (VD-17)", (t, ctx) => {
+      if (!PRICED_OTHER_DAY) return { notChecked: "no statement in this book prices on another day than its balances" };
+      return (ctx?.titles ?? []).some((x) => /as of \d{1,2} \w{3,4} \d{4}, priced as of \d{1,2} \w{3,4} \d{4}/.test(x));
+    }],
     ["a pre-tax NAV and a pledged cash line say so in the CMP marker's hover (VD-16, VD-18)", (t, ctx) => {
       if (!PRETAX_KEY || !PLEDGED_ABSL) return false;
       const ts = ctx?.titles ?? [];

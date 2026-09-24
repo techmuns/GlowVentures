@@ -42,6 +42,16 @@ console.log("── constructed ──");
   ok("one date by two routes is that date, and says it is mixed", v.at === "2026-09-22" && v.by === "mixed" && v.dates === 1);
 }
 {
+  // A statement that prices its balances on another day (VD-17): the value is
+  // struck on the PRICING day, and the hover names the balances' own day too.
+  const v = holdingValuation([{ accountId: "a", priceAsOf: "2026-03-30" }], () => "2026-03-31", NOW);
+  ok("a statement mark is struck on the day its statement prices, and names the balances' day",
+    v.at === "2026-03-30" && v.by === "statement" && v.words === `statement mark · ${fmtDate("2026-03-30")}`
+    && v.why.includes(`counts its balances at ${fmtDate("2026-03-31")} and prices them as of ${fmtDate("2026-03-30")}`), v.why);
+  const same = holdingValuation([{ accountId: "a", priceAsOf: "2026-07-31" }], () => "2026-07-31", NOW);
+  ok("…and says nothing of it where the two days agree", same.at === "2026-07-31" && !/counts its balances/.test(same.why), same.why);
+}
+{
   const v = holdingValuation([{ accountId: "a" }, { accountId: "b" }], (id) => (id === "a" ? "2026-07-31" : "2026-08-10"), NOW);
   ok("two statement dates give no date, and the words count them", v.at === null && v.dates === 2 && v.words === "valued on 2 dates"
     && /2 different dates/.test(v.why), v.words ?? "");
@@ -52,8 +62,9 @@ const book: Position[] = applyFundNavs(BOOK_POSITIONS.map((p) => ({ ...p })));
 const byKey = new Map<string, Position[]>();
 for (const p of book) (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)!).push(p);
 // Re-expressed: no quote reaches a headless suite, so a row is its NAV's date if
-// the NAV priced it, else its own statement's.
-const expectedDate = (p: Position) => (p.navPriced && p.navDate ? p.navDate : stmt(p.accountId));
+// the NAV priced it, else the day its own statement prices — `priceAsOf` where
+// the statement names one apart from its balances' date (VD-17).
+const expectedDate = (p: Position) => (p.navPriced && p.navDate ? p.navDate : p.priceAsOf ?? stmt(p.accountId));
 let checked = 0, wrong: string[] = [];
 for (const [key, ps] of byKey) {
   const v = holdingValuation(ps, stmt, NOW);
@@ -76,9 +87,16 @@ ok("every held security is dated and sourced exactly as its rows' own dates say"
   if (!icici || !own) ok("the ICICI Bank NSDL demat holds a company this suite can date", false);
   else {
     const v = holdingValuation(own, stmt, NOW);
-    ok("an ICICI Bank NSDL holding says its value is that statement's mark, on that statement's date",
-      v.by === "statement" && v.at === icici.asOf && v.words === `statement mark · ${fmtDate(icici.asOf)}`
-      && /that day's prices, not today's/.test(v.why), `${own[0].securityKey}: ${v.words}`);
+    // THE STATEMENT PRICES ITS 31 MAR BALANCES "as on 30-Mar-2026" (VD-17), so
+    // the value is struck on the 30th — and this case is load-bearing only while
+    // the book carries that pricing date apart from the balance date.
+    const priced = own[0].priceAsOf ?? null;
+    ok("the ICICI Bank NSDL statement names a pricing date apart from its balance date",
+      !!priced && priced !== icici.asOf && own.every((p) => p.priceAsOf === priced), `${priced} vs ${icici.asOf}`);
+    ok("an ICICI Bank NSDL holding says its value is that statement's mark, on the day it prices",
+      v.by === "statement" && v.at === priced && v.words === `statement mark · ${fmtDate(priced ?? "")}`
+      && /that day's prices, not today's/.test(v.why)
+      && v.why.includes(`counts its balances at ${fmtDate(icici.asOf)}`), `${own[0].securityKey}: ${v.words} · ${v.why}`);
   }
 }
 {

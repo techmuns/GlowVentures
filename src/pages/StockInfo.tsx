@@ -831,6 +831,15 @@ export function StockInfo() {
    */
   const markedRow = rows.find((r) => r.currentPrice != null);
   const markDate = markedRow ? accIdx.get(markedRow.accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /**
+   * THE DAY THE MARK IS PRICED, where the statement prices its balances on
+   * another day (VD-17): ICICI's NSDL statement counts shares at 31 Mar 2026
+   * and values them "Prices as on 30-Mar-2026". The line gives the pricing day
+   * — the one the price is of — and the hover names both.
+   */
+  const markPriced = markedRow?.priceAsOf && markedRow.priceAsOf !== markDate ? markedRow.priceAsOf : null;
+  const markLineDate = markPriced ? fmtDate(markPriced) : markDate;
+  const markPricedClause = markPriced ? `, at its ${fmtDate(markPriced)} prices` : "";
   const priceNote: { line: string; tip: string } = exited
     ? unchecked
       ? { line: "no direct holding", tip: "No statement in this book reports a current holding in this name, so none marks it today — and whether your funds hold it could not be checked." }
@@ -876,8 +885,8 @@ export function StockInfo() {
         // did not price. "No NSE symbol" is true of it and beside the point: no
         // fund was ever going to have an intraday quote, so the line says whose
         // NAV this is instead of why a quote is missing.
-        line: `the NAV on the statement of ${markDate}`,
-        tip: `The NAV the manager struck, as the statement of ${markDate} prints it. A fund resolves no NSE trading symbol, so it never carries a live quote — and this one has no daily NAV in AMFI's published file either.`,
+        line: `the NAV on the statement of ${markDate}${markPriced ? `, priced ${markLineDate}` : ""}`,
+        tip: `The NAV the manager struck, as the statement of ${markDate} prints it${markPricedClause}. A fund resolves no NSE trading symbol, so it never carries a live quote — and this one has no daily NAV in AMFI's published file either.`,
       }
     : (() => {
         // WHY IT IS NOT LIVE, and the causes are different facts: a name with
@@ -897,8 +906,8 @@ export function StockInfo() {
           : quotesStatus === "unavailable" ? ["price feed down", "the price feed did not respond"]
           : ["no live quote", `the price feed returned no quote for ${sym}`];
         return {
-          line: `statement mark, ${markDate} · ${short}`,
-          tip: `The mark the statement of ${markDate} prints — not a live quote, because ${why}.`,
+          line: `statement mark, ${markLineDate} · ${short}`,
+          tip: `The mark the statement of ${markDate} prints${markPricedClause} — not a live quote, because ${why}.`,
         };
       })();
   // WHAT THE STATEMENT SAYS ABOUT THIS MARK AND THE MARK DOES NOT (VD-16,
@@ -1045,7 +1054,11 @@ export function StockInfo() {
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — and their value is those units at this NAV.`
                 : r.navPriced
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
-                : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
+                : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}${
+                    // The day its prices are of, where the statement names one
+                    // apart from its balances' (VD-17).
+                    r.priceAsOf && r.priceAsOf !== accIdx.get(r.accountId)?.asOf ? `, at its ${fmtDate(r.priceAsOf)} prices` : ""}.`}
+                data-cmp-priced={r.priceAsOf && r.priceAsOf !== accIdx.get(r.accountId)?.asOf ? r.priceAsOf : undefined}>
                 {price(r.currentPrice)}
               </span>}
         </td>

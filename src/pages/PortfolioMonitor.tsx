@@ -2971,12 +2971,13 @@ export function PortfolioMonitor() {
                       : "")
                   // The line's OWN statement date (C-01), not the book's newest —
                   // and a quote the corporate-action check held back is named
-                  // as that, never as "no live price" (DL-9).
+                  // as that, never as "no live price" (DL-9). A statement that
+                  // prices on another day than its balances says both (VD-17).
                   : (() => {
                     const wh = withheldOf(v.positions);
                     const lead = wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The mark` : "No live price — the mark";
                     return v.valuedAt
-                      ? `${lead} from this statement as of ${fmtDate(v.valuedAt)}.`
+                      ? statementMarkNote(`${lead} from this statement`, v.valuedAt, v.positions, accIdx)
                       : `${wh ? `A live quote arrived and the corporate-action check held it back — ${wh.reason}. The marks` : "No live price — the marks"} its statements print, dated differently.`;
                   })()}
                 data-cmp-withheld={withheldOf(v.positions) ? "1" : undefined}>◦</span>
@@ -4133,7 +4134,7 @@ export function PortfolioMonitor() {
                                       ? `A live quote arrived for this security and the corporate-action check held it back — ${rowWithheld.reason}. `
                                       : "No live price for this security — ")
                                       + (r.valuedAt
-                                        ? `${rowWithheld ? "Showing" : "showing"} the mark from its statement as of ${fmtDate(r.valuedAt)}.`
+                                        ? statementMarkNote(`${rowWithheld ? "Showing" : "showing"} the mark from its statement`, r.valuedAt, r.trancheSet, accIdx)
                                         : `${rowWithheld ? "Showing" : "showing"} the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date.`))}
                                   data-cmp-withheld={rowWithheld ? "1" : undefined}
                                   data-statement-note={statementNoteForSet(r.trancheSet)?.short}>◦</span></>}
@@ -4826,6 +4827,24 @@ export function PortfolioMonitor() {
  * agree by construction and this is the one a figure is struck over.
  */
 /** A fund's unit class out of a security name — `A1` — or null where it prints none. */
+/**
+ * THE ◦ MARKER'S SENTENCE FOR A STATEMENT MARK (VD-17). The mark is struck on
+ * its statement's PRICING day (`valueDateOf`), and where that is not the day
+ * the statement draws its balances, both are named: ICICI's NSDL statement
+ * counts shares at 31 Mar 2026 and prices them at the 30 Mar close. Dated by
+ * the pricing day alone it would read "its statement as of 30 Mar" about a
+ * statement of 31 Mar; dated by the balance day, a price a day older than said.
+ */
+function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position[], accIdx: AccountIndex): string {
+  const drawn = [...new Set(ps
+    .filter((x) => !x.live && !x.navPriced && x.priceAsOf && x.priceAsOf !== accIdx.get(x.accountId)?.asOf)
+    .map((x) => accIdx.get(x.accountId)?.asOf)
+    .filter((d): d is string => !!d))];
+  return drawn.length === 1
+    ? `${lead} as of ${fmtDate(drawn[0])}, priced as of ${fmtDate(valuedAt)}.`
+    : `${lead} as of ${fmtDate(valuedAt)}.`;
+}
+
 function classOfName(security: string | null | undefined): string | null {
   return security ? (splitFundClass(security)?.cls ?? null) : null;
 }
