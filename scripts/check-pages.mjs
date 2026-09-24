@@ -11482,12 +11482,14 @@ const MWR_BOOK = (() => {
     const flows = [];
     let lastClose = "";
     let pooled = 0;
+    const accountIds = new Set();
     for (const a of accounts) {
       const fl = cf[a.accountId] ?? [];
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
       const mv = positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
       if (!(mv > 0)) continue;
       pooled++;
+      accountIds.add(a.accountId);
       for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });
       flows.push({ t: Date.parse(`${a.asOf}T00:00:00Z`), amount: mv });
       if (a.asOf > lastClose) lastClose = a.asOf;
@@ -11501,7 +11503,7 @@ const MWR_BOOK = (() => {
     const annual = ((lo + hi) / 2) * 100;
     const windowDays = Math.round((t1 - t0) / DAY_MS);
     const toDate = windowDays >= 365 ? annual : ((1 + annual / 100) ** (windowDays / 365) - 1) * 100;
-    return { annual, windowDays, toDate, lastClose, accounts: pooled, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
+    return { annual, windowDays, toDate, lastClose, accounts: pooled, accountIds, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
   } catch { return null; }
 })();
 
@@ -12754,6 +12756,177 @@ const FUND_CLASS_BOOK = (() => {
     };
   } catch { return null; }
 })();
+
+/**
+ * ── WHAT EACH DRILL-DOWN LEFT OUT, SET BY SET (XP-13) ──────────────────────
+ *
+ * Every `/holdings` page named the WHOLE book's closed and sub-₹1,000 rows in
+ * its footer's hover, so the PMS mandates page said five closed positions were
+ * not listed when none of its rows had closed. Each set now counts the dropped
+ * rows its own test would have kept: the three 3P classes on the AIF row, HDFC
+ * Liquid on Cash, HDFC Small Cap on Mutual Fund, the two tiny shares on Direct
+ * Equity, and nothing at all on the PMS mandates, the ETFs or the private side.
+ *
+ * RE-EXPRESSED OFF `glowData.ts`, NEVER IMPORTED — the rule this file keeps
+ * for every set it checks. The closed test is `FUND_CLASS_BOOK`'s, the floor is
+ * `smallKeysOf`, a row's category is `holdingBucket`'s rules written out, its
+ * basket and family asset class are the family's committed map read as DATA
+ * (`FAMILY_TAXONOMY`, parsed like `CASH_EQUIVALENT_KEYS`), and every other set
+ * is the generated field it is defined on. `droppedFor` returns null for an
+ * address it cannot place, and a null is a FAILURE: a check that abstained on
+ * an unplaced address would pass the very page it exists for.
+ */
+const DROPPED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(accounts) || !Array.isArray(positions) || !CASH_EQ_KEYS) return null;
+    const tsrc = readFileSync(new URL("../src/lib/familyTaxonomy.ts", import.meta.url), "utf8");
+    const ti = tsrc.indexOf("export const FAMILY_TAXONOMY"), te = tsrc.indexOf("\n};", ti);
+    if (ti < 0 || te < 0) return null;
+    const TAX = new Map([...tsrc.slice(ti, te).matchAll(/"([a-z]+:[^"]+)":\s*\{\s*assetClass:\s*"([^"]+)",\s*basket:\s*"([^"]+)"/g)]
+      .map((m) => [m[1], { assetClass: m[2], basket: m[3] }]));
+    const um = /export const UNCLASSIFIED = "([^"]+)"/.exec(tsrc);
+    if (!TAX.size || !um) return null;
+    const UNCLASSIFIED = um[1];
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const eng = (p) => acc.get(p.accountId)?.engagement;
+    const mandate = (p) => eng(p) === "PMS";
+    const cashEq = (p) => CASH_EQ_KEYS.has(p.securityKey);
+    const hit = (p) => TAX.get(mandate(p) ? `mandate:${p.accountId}` : `sec:${p.securityKey}`);
+    const axisKey = {
+      bucket: (p) => {
+        if (mandate(p)) return "PMS mandates";
+        if (cashEq(p)) return "Cash";
+        if (p.assetClass === "Equity") return eng(p) === "Direct" || eng(p) === "Execution" ? "Direct Equity" : "Equity — how it is held is not stated";
+        return p.assetClass;
+      },
+      basket: (p) => {
+        if (!mandate(p) && cashEq(p)) return "Liquidity";
+        const h = hit(p);
+        if (h) return h.basket;
+        return !mandate(p) && p.assetClass === "Equity" ? "Thematic & Tactical" : UNCLASSIFIED;
+      },
+      "family-class": (p) => {
+        if (!mandate(p) && cashEq(p)) return "Cash";
+        const h = hit(p);
+        if (h) return h.assetClass;
+        return p.assetClass === "Equity" ? "Equity" : p.assetClass === "Cash" ? "Cash" : UNCLASSIFIED;
+      },
+    };
+    const nil = (p) => FUND_VEHICLE_CLASSES.has(p.assetClass) && p.quantity === 0 && p.currentPrice != null;
+    const seen = new Set();
+    const ded = positions.filter((p) => {
+      if (!p.dedupeGroup) return true;
+      if (seen.has(p.dedupeGroup)) return false;
+      seen.add(p.dedupeGroup); return true;
+    });
+    const small = smallKeysOf(positions);
+    const droppedOf = (pool) => ({
+      closed: pool.filter(nil),
+      negligible: pool.filter((p) => !nil(p) && small.has(p.securityKey)),
+    });
+    const current = ded.filter((p) => !nil(p) && !small.has(p.securityKey));
+    // The two derived sets, over what is held NOW, as the page decides them.
+    const byKey = new Map();
+    for (const p of current) byKey.set(p.securityKey, (byKey.get(p.securityKey) ?? 0) + p.marketValue);
+    const top = new Set([...byKey.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k]) => k));
+    const owners = new Map();
+    for (const p of current) {
+      const set = owners.get(p.securityKey) ?? new Set();
+      set.add(acc.get(p.accountId)?.owner || "Unattributed");
+      owners.set(p.securityKey, set);
+    }
+    const shared = new Set([...owners].filter(([, v]) => v.size >= 2).map(([k]) => k));
+    const reportsCost = (p) => p.costBasis != null && !p.costUnavailable;
+    return {
+      deduped: droppedOf(ded), raw: droppedOf(positions),
+      axisKey, top, shared, reportsCost,
+      bookClosed: droppedOf(ded).closed.length, bookNegligible: droppedOf(ded).negligible.length,
+    };
+  } catch { return null; }
+})();
+
+/**
+ * THE SET AN ADDRESS NAMES, as a test on one row and the pool its rows come
+ * from — then what that test keeps of the dropped rows. The legacy addresses
+ * resolve as `parseDrilldown` resolves them, and an absent facet is the
+ * scope's first, as `withFacets` picks it.
+ */
+function droppedFor(url) {
+  const D = DROPPED_BOOK;
+  if (!D || !url) return null;
+  let u;
+  try { u = new URL(url); } catch { return null; }
+  if (u.pathname !== "/holdings") return null;
+  const LEGACY = { listed: ["book", "listed"], private: ["book", "private"], invested: ["book", "costed"], "no-cost": ["book", "no-cost"] };
+  let of = u.searchParams.get("of") ?? "", facet = u.searchParams.get("facet") ?? "";
+  const key = u.searchParams.get("key") ?? "";
+  if (LEGACY[of]) [of, facet] = LEGACY[of];
+  let test = null, pool = "deduped";
+  switch (of) {
+    case "bucket": case "basket": case "family-class":
+      test = (p) => D.axisKey[of](p) === key; break;
+    case "measured": {
+      if (!MWR_BOOK?.accountIds) return null;
+      pool = "raw";
+      test = (facet || "covered") === "covered" ? (p) => MWR_BOOK.accountIds.has(p.accountId) : (p) => !MWR_BOOK.accountIds.has(p.accountId);
+      break;
+    }
+    case "top-names": test = (p) => D.top.has(p.securityKey); break;
+    case "cross-held": test = (p) => D.shared.has(p.securityKey); break;
+    case "winners": case "losers": {
+      const win = of === "winners";
+      test = (facet || of) === "neither"
+        ? (p) => !!p.costUnavailable || (p.returnPct ?? 0) === 0
+        : (p) => !p.costUnavailable && (win ? (p.returnPct ?? 0) > 0 : (p.returnPct ?? 0) < 0);
+      break;
+    }
+    case "book": {
+      const f = facet || "all";
+      test = f === "all" ? () => true
+        : f === "listed" ? (p) => p.marketSide === "listed"
+        : f === "private" ? (p) => p.marketSide === "private"
+        : f === "unplaced" ? (p) => (p.marketSide ?? null) === null
+        : f === "costed" ? D.reportsCost
+        : f === "no-cost" ? (p) => !D.reportsCost(p)
+        : null;
+      break;
+    }
+    default: return null;
+  }
+  if (!test) return null;
+  const d = D[pool];
+  const negligible = d.negligible.filter(test);
+  return {
+    closed: d.closed.filter(test).length,
+    negligible: negligible.length,
+    negligibleValue: negligible.reduce((t, p) => t + p.marketValue, 0),
+  };
+}
+
+/**
+ * ...AND THE CHECK, spread into every drill-down route that draws a footer.
+ * Struck on the footer's own handles AND on the hover a reader sees, because
+ * either can be right while the other is not; a set with nothing dropped must
+ * say nothing at all.
+ */
+const DROPPED_PER_SET = [
+  ["the footer names only the closed and sub-₹1,000 rows this set left out (XP-13)", (t, ctx) => {
+    const want = droppedFor(ctx?.url ?? "");
+    const f = ctx?.drilldown?.foot;
+    if (!want || !f) return false;
+    const closedSaid = /(\d+) closed positions? (?:is|are) not listed/i.exec(f.title);
+    const smallSaid = /(\d+) holdings? worth under ₹?[\d,.]+\s*(?:Cr|L|K)? (?:is|are) dropped automatically, ₹([\d,]+(?:\.\d+)?)/i.exec(f.title);
+    return f.closed === want.closed && f.negligible === want.negligible
+      && Math.abs(f.negligibleValue - want.negligibleValue) < 0.01
+      && (want.closed ? Number(closedSaid?.[1]) === want.closed : !closedSaid)
+      && (want.negligible
+        ? Number(smallSaid?.[1]) === want.negligible && Math.abs(Number(smallSaid[2].replace(/,/g, "")) - want.negligibleValue) < 1
+        : !smallSaid);
+  }],
+];
 
 /**
  * ── A HOLDING OPENS THE SAME WAY WHICHEVER AXIS IT IS FILED UNDER ──────────
@@ -21669,6 +21842,7 @@ const INVARIANTS = {
    * holdings is invisible from either screen alone and obvious from both.
    */
   "holdings-row": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     /**
      * ── A WHOLE MANDATE'S INVESTED IS WHAT WAS PAID INTO IT ────────────────
@@ -21826,6 +22000,7 @@ const INVARIANTS = {
    * to prevent.
    */
   "holdings-alloc-row": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     /**
      * IT OPENED THE SECTION MORNING CIO'S AXIS ACTUALLY DREW.
@@ -21895,6 +22070,7 @@ const INVARIANTS = {
    * check on the page could see it.
    */
   "holdings-aif": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ["it opened the AIF row Morning CIO linked", (t, ctx) => {
       // A ROUTE THAT RESOLVED NOTHING LANDS ON THE NOT-FOUND STATE, which has no
@@ -22073,6 +22249,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-book": [
+    ...DROPPED_PER_SET,
     ...SIDE_HOVER_CHECKS,
     ...DRILLDOWN_CHROME_GONE,
     ...HB_DEPOSITORY,
@@ -22492,6 +22669,7 @@ const INVARIANTS = {
    * link to a page listing the wrong set passes the first and fails a reader.
    */
   "holdings-crossheld": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ["its name count reproduces the Cross-held figure", (t) => {
       const there = CIO_FIGURES.get("crossHeld"), c = drilldownCounts(t);
@@ -22518,6 +22696,7 @@ const INVARIANTS = {
    * page prints — the rows it shows, the ones it filtered out, and the set.
    */
   "holdings-book-filter": [
+    ...DROPPED_PER_SET,
     ["the walk narrowed the table to the rows its search matches", (t, ctx) => {
       const f = ctx?.drilldown?.filter;
       if (!FILTER_BOOK || !f) return false;
@@ -22543,6 +22722,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-topnames": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ["its value reproduces the Top-10 concentration share", (t) => {
       const pct = CIO_FIGURES.get("top10Pct"), nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
@@ -22564,6 +22744,7 @@ const INVARIANTS = {
    * showing the wrong half passes a check that only looks at its own figure.
    */
   "holdings-listed": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
@@ -22611,6 +22792,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-private": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
@@ -22728,6 +22910,7 @@ const INVARIANTS = {
    * under test by construction.
    */
   "holdings-unplaced": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     ["it lists exactly the funds no statement places", (t) => {
@@ -22765,6 +22948,7 @@ const INVARIANTS = {
    * left for a reader to discover by subtracting.
    */
   "holdings-winners": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     ["its count reproduces the Winners figure", (t) => {
@@ -22806,6 +22990,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-losers": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_FACET_NOTE,
     ["its count reproduces the losers figure", (t) => {
       const there = CIO_FIGURES.get("losers"), c = drilldownCounts(t);
@@ -22833,6 +23018,7 @@ const INVARIANTS = {
    * the mistake is invisible, and why the page says which basis it is on.
    */
   "holdings-measured": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
@@ -22977,6 +23163,7 @@ const INVARIANTS = {
    * all, and the toggle that now reaches the other half is the only route to it.
    */
   "holdings-invested": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
@@ -23085,6 +23272,7 @@ const INVARIANTS = {
    * the rows are worth what the tile's own address shows.
    */
   "holdings-invested-legacy": [
+    ...DROPPED_PER_SET,
     ["the old address opens the value page on the holdings that report a cost", (t, ctx) => {
       if (!ctx?.facets) return false;
       const on = ctx.facets.filter((f) => f.active);
@@ -23098,6 +23286,7 @@ const INVARIANTS = {
     }],
   ],
   "holdings-nocost": [
+    ...DROPPED_PER_SET,
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
     /**
@@ -35106,6 +35295,17 @@ for (const theme of THEMES) {
             return el ? Number(el.getAttribute("data-hb-return")) : null;
           })(),
           costedLabels: [...document.querySelectorAll("main [data-costed-label]")].map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim()),
+          // WHAT THIS SET LEFT OUT (XP-13), off the footer cell's own handles
+          // and the hover beside them.
+          foot: (() => {
+            const el = document.querySelector("main [data-hb-foot-rows]");
+            return el ? {
+              closed: Number(el.getAttribute("data-hb-closed")),
+              negligible: Number(el.getAttribute("data-hb-negligible")),
+              negligibleValue: Number(el.getAttribute("data-hb-negligible-value")),
+              title: el.getAttribute("title") ?? "",
+            } : null;
+          })(),
           // THE FOLIOS VALUED BY NO STATEMENT (DSM-A4), each line as a reader
           // sees it — read here rather than off `aifSections`, which is the AIF
           // drill-down's own probe.

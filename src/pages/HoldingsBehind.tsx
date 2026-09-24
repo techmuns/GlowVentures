@@ -1444,7 +1444,10 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, capitalGap,
     <tfoot data-hb-foot={mv}>
       <TrFoot view={view} className="border-t-2 border-ink-600 px-4 py-2.5 text-left font-semibold text-slate-200"
         label={
-          <span title={leftOut || undefined} data-hb-foot-rows>
+          <span title={leftOut || undefined} data-hb-foot-rows
+            // WHAT THIS SET LEFT OUT, as handles beside the hover that says it —
+            // counted over this set, never the book's (XP-13).
+            data-hb-closed={closedExcluded} data-hb-negligible={negligible.count} data-hb-negligible-value={negligible.value}>
             Total · {label}
             {hidden > 0 && <span className="ml-2 text-[11px] font-normal text-slate-500">{hidden} filtered out and not counted here</span>}
           </span>

@@ -34,6 +34,7 @@ FILES=(
   "src/pages/PortfolioMonitor.tsx"
   "src/pages/MandateHoldings.tsx"
   "src/pages/MorningCIO.tsx"
+  "src/pages/HoldingsBehind.tsx"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -51,6 +52,7 @@ trap restore EXIT
 
 SIDES=upload,history,holdings-book,cio-allocation
 MANDATES=mandate,mandate-sector,mandate-fifo
+DROPS=cio-allocation,holdings-row-1,holdings-row-3,holdings-aif,holdings-winners,holdings-listed,holdings-book
 
 sweep() {
   THEMES=light ONLY="$1" npm run check:pages 2>&1 | tr -d '\000' \
@@ -118,7 +120,7 @@ OLD_UNPLACED='No statement for these funds prints a SEBI category, so this book 
 
 if [ -z "${CASES:-}" ]; then
   echo "════════ CONTROL: no patch"
-  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES"; else echo "   the committed tree does not build"; fi
+  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES,$DROPS"; else echo "   the committed tree does not build"; fi
   suite
 fi
 
@@ -177,3 +179,14 @@ run_case 9 "cio-allocation" no "the CK-C12 check compares the card with the regi
   sub scripts/check-pages.mjs \
     'const committed = CAPITAL_BOOK.once?.committedCr ?? CAPITAL_BOOK.committedCr;' \
     'const committed = CAPITAL_BOOK.committedCr;'
+
+# ── 10 ── every drill-down counts the BOOK's closed and sub-₹1,000 rows (XP-13)
+run_case 10 "$DROPS" no "each drill-down's footer counts the whole book's dropped rows again" \
+  subs src/lib/drilldown.ts \
+    'const negligible = d.negligible.filter(belongs);' 'const negligible = d.negligible;' \
+    'closedExcluded: d.closed.filter(belongs).length,' 'closedExcluded: d.closed.length,'
+
+# ── 11 ── the footer loses the handle the count is read by — a finding, never an abstention
+run_case 11 "$DROPS" no "the footer's dropped-row handle is gone" \
+  sub src/pages/HoldingsBehind.tsx \
+    'data-hb-closed={closedExcluded} ' ''
