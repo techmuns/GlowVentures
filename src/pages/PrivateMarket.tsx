@@ -21,7 +21,7 @@ import {
   sum, sumOrNull, consolidatedMarketValue, returnMeasureDef, isPrivateClass, dedupedPositions,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
-import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
+import { BOOK_CORPORATE_ACTIONS, BOOK_CAPITAL_MOVES, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
   countedOnceNote,
@@ -275,8 +275,8 @@ const NO_RETURN: RowReturn = { shown: false, tag: "—", reason: "no return is s
  */
 const aggHprNote = (held: BookFolio[]): string =>
   held.some((f) => (f.position?.costOfUnitsSold ?? 0) > 0)
-    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over the capital paid in for both. The principal returned on redeemed units is in it; income, equalisation and any payout that redeemed no units are not — XIRR counts those."
-    : "FIFO, not annualised: the gain on the units held, over the capital paid in for them. Cash the funds have paid back is not in it — XIRR counts it.";
+    ? "FIFO, not annualised: the gain on the units held plus the gain on units redeemed, over what those units cost — not a return on Paid in. The principal returned on redeemed units is in it; income, equalisation and any payout that redeemed no units are not — XIRR counts those."
+    : "FIFO, not annualised: the gain on the units held, over what they cost — not a return on Paid in. Cash the funds have paid back is not in it — XIRR counts it.";
 
 /** One set of accessors for every row kind, so a column sorts parents and their folios alike. */
 const bookAccessors = (
@@ -496,6 +496,58 @@ export function PrivateMarket() {
        */
       calledPaidSameSet: schemes.every((r) => (r.called == null) === (r.paid == null)),
       owned: new Set(portfolio.positions.map((p) => p.accountId)),
+      /**
+       * ── WHAT THE PRIVATE HOLDINGS REALISED, AND WHY THE REST CARRY NOTHING ──
+       *
+       * DL-13. Struck on the holdings the table counts. A realised figure the
+       * book carries is FIFO off the fund's own dated record — Neo Infra's
+       * 14,162.8 units redeemed at their cost, a measured nil — and is shown for
+       * those; each of the rest names its account's own reason, verbatim from
+       * the book's capital-gain record, and whether any redemption of its units
+       * is on record at all. Never "no statement covers any private account"
+       * over a holding the book measured.
+       */
+      realised: (() => {
+        const rows = scope.dedupedRows;
+        const cg = new Map((portfolio.capitalGains ?? []).map((e) => [e.accountId, e]));
+        const redeemed = (p: (typeof rows)[number]) => BOOK_CAPITAL_MOVES.filter((x) => x.accountId === p.accountId
+          && x.securityKey === p.securityKey && x.direction === "out" && x.units != null && x.units < 0);
+        return {
+          value: sumOrNull(rows.map((p) => p.realizedPnL ?? null)),
+          of: rows.length,
+          covered: rows.filter((p) => p.realizedPnL != null).map((p) => ({ position: p, redeemed: redeemed(p) })),
+          missing: rows.filter((p) => p.realizedPnL == null).map((p) => ({
+            position: p, why: cg.get(p.accountId)?.absent ?? null, redeemed: redeemed(p),
+          })),
+        };
+      })(),
+      /**
+       * ── UNITS A DEPOSITORY HOLDS BEYOND THE FUND'S OWN STATEMENT (VD-6) ──
+       *
+       * Joined on the ISIN, the holder and the date, never on a name: a
+       * depository window for the same ISIN in another account of the SAME
+       * holder that runs past the fund statement's own date and closes on a
+       * different unit count. Baring's 31 Mar statement prints 202.5 units, and
+       * Ankita's Motilal Oswal demat holds 252.5 at 31 Jul — so the row is a
+       * statement the depository has since overtaken, and says so.
+       */
+      newerUnits: (() => {
+        const out = new Map<string, { accountId: string; closing: number; periodFrom: string; periodTo: string; held: number; asOf: string | null }>();
+        const windows = Object.values(BOOK_SHARE_MOVEMENTS);
+        for (const p of scope.dedupedRows) {
+          if (!p.isin) continue;
+          const own = accIdx.get(p.accountId);
+          const asOf = own?.asOf ?? null;
+          for (const w of windows) {
+            if (w.isin !== p.isin || w.accountId === p.accountId || w.closing == null || !w.periodFrom || !w.periodTo) continue;
+            if (accIdx.get(w.accountId)?.ownerId !== own?.ownerId) continue;
+            if (asOf && w.periodTo <= asOf) continue;
+            if (Math.abs(w.closing - p.quantity) < 0.0005) continue;
+            out.set(p.securityKey, { accountId: w.accountId, closing: w.closing, periodFrom: w.periodFrom, periodTo: w.periodTo, held: p.quantity, asOf });
+          }
+        }
+        return out;
+      })(),
       byFund: privateBook(all, "fund"),
       byOwner: privateBook(all, "owner"),
     };
@@ -618,6 +670,25 @@ export function PrivateMarket() {
       + (late > 1 ? `${eq > 1 ? ", and" : " —"} ${money(late)} less: the part of its distribution total paid after that date, which is inside the value the XIRR closes on` : "")
       + ".";
   }).filter((x): x is string => !!x);
+  /**
+   * WHAT THE TABLE DRAWS, counted off the table's own model (PM-C5) — so the
+   * Funds and Folios tiles describe the rows a reader sees under them, never a
+   * narrower set of valued ones under a caption that does not say so.
+   */
+  const tableCounts = (() => {
+    const priv = m.byFund.sections.private.groups;
+    const unv = m.byFund.sections.unvalued.groups;
+    const lines = (gs: BookGroup[]) => gs.flatMap((g) => g.folios);
+    return {
+      funds: priv.length + unv.length,
+      valuedFunds: priv.length,
+      noNavFunds: unv.length,
+      folios: lines(priv).length + lines(unv).length,
+      valuedLines: lines(priv).filter((f) => f.position).length,
+      views: lines(priv).filter((f) => f.viewOf).length,
+      noNavLines: lines(unv).length,
+    };
+  })();
   const tileMetrics: TileMetric[] = [
     {
       id: "value", label: "Market value", icon: <Handshake className="h-4 w-4" />,
@@ -630,12 +701,16 @@ export function PrivateMarket() {
         + (Math.abs(m.privLive - m.privMV) <= 1
           ? "Its private side is exactly these rows: they are each fund's own statement mark, and no quote or NAV moves a private holding. "
           : `Its private side reads ${money(m.privLive)}; the rows here stay on their statements' own marks, ${money(Math.abs(m.privLive - m.privMV))} apart. `)
-        + `Across this page's ${m.scope.accounts.length} private accounts · each holding counted once.`,
+        // PM-C5: the value is NOT struck over every account named here — the
+        // hover says which of them carry it and how many value nothing.
+        + `Across this page's ${m.scope.accounts.length} private accounts · each holding counted once: `
+        + `the value is the ${m.scope.rows.length} statements that value a private holding — ${m.scope.dedupedRows.length} holdings — `
+        + `and the other ${m.scope.accounts.length - new Set(m.scope.rows.map((p) => p.accountId)).size} accounts value none.`,
     },
     {
       id: "cost", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       value: money(m.privCost),
-      detail: `The cost these statements report · ${m.costedCount} of ${m.scope.dedupedRows.length} folio rows report one.`,
+      detail: `The cost of the units held, as these statements report it · ${m.costedCount} of ${m.scope.dedupedRows.length} holdings report one, each holding counted once.`,
     },
     {
       id: "pnl", label: "Unrealised P&L", icon: <TrendingUp className="h-4 w-4" />,
@@ -692,7 +767,7 @@ export function PrivateMarket() {
       id: "called", label: "Called", icon: <Banknote className="h-4 w-4" />,
       value: m.cc.called == null ? <AbsentValue /> : money(m.cc.called),
       sub: m.cc.called == null ? absentLine("No statement prints it") : "Asked for so far",
-      detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line.`
+      detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts carry a called figure: the fund's own called line where its statement prints one, and otherwise the capital drawn plus any call it prints as unpaid.`
         + (m.calledPaidSameSet
           ? " Paid in covers the same accounts."
           : " It covers a different set of accounts from Paid in, so the two must never be subtracted.")
@@ -748,9 +823,22 @@ export function PrivateMarket() {
         and the full reason and what would fill it is the hover. */
     {
       id: "realised", label: "Realised gain", icon: <Coins className="h-4 w-4" />,
-      value: <AbsentValue />,
-      sub: absentLine("No statement reports it"),
-      detail: "No capital gain statement covers any private account in this drop. Every AIF-engagement account carries that absence verbatim in the book's capital-gain record. Their redemptions are real; what they realised was never reported to this book, so it is absent rather than nil.",
+      value: m.realised.value == null ? <AbsentValue />
+        : <span className={changeColor(m.realised.value)}>{money(m.realised.value, true)}</span>,
+      sub: m.realised.value == null ? absentLine("No statement reports it")
+        : `${m.realised.covered.length} of ${m.realised.of} holdings · ${m.realised.value === 0 ? "a measured nil" : "FIFO"}`,
+      detail: [
+        ...m.realised.covered.map(({ position: p, redeemed }) => redeemed.length
+          ? `${p.security}: ${fmtNum(Math.abs(redeemed.reduce((t, x) => t + (x.units ?? 0), 0)), 1)} units redeemed on ${redeemed.map((x) => fmtDate(x.date)).join(", ")} for ${money(sum(redeemed.map((x) => x.amount ?? 0)))}. FIFO books them at their cost of ${money(p.costOfUnitsSold ?? null)} — a realised gain of ${money(p.realizedPnL ?? null, true)}, measured off the fund's own dated record.`
+          : `${p.security}: a realised gain of ${money(p.realizedPnL ?? null, true)}, FIFO, off the fund's own dated record.`),
+        m.realised.missing.length
+          ? `The other ${m.realised.missing.length} carry no realised figure — `
+            + m.realised.missing.map(({ position: p, why, redeemed }) => `${p.security}: ${why ?? "no realised figure is reported for its account"}`
+              + (redeemed.length ? ", though its record redeems units" : ", and no redemption of its units is on record")).join("; ")
+            + " — so each is absent rather than nil."
+          : "",
+        "Income a fund pays out is not a realised gain here; it is under Distributions.",
+      ].filter(Boolean).join(" "),
     },
     {
       id: "multiple", label: "TVPI / DPI", icon: <Handshake className="h-4 w-4" />,
@@ -761,13 +849,19 @@ export function PrivateMarket() {
     /* Counts of sets this page already draws, so none is a new measurement. */
     {
       id: "funds", label: "Funds", icon: <Handshake className="h-4 w-4" />,
-      value: fmtNum(m.funds.length),
-      detail: "Each fund counted once however many members hold it.",
+      value: fmtNum(tableCounts.funds),
+      sub: `${tableCounts.valuedFunds} valued · ${tableCounts.noNavFunds} with no NAV`,
+      detail: `Every fund row the table draws: the ${tableCounts.valuedFunds} under Private funds, each counted once however many folios hold it, and the ${tableCounts.noNavFunds} under Not valued, which publish no NAV.`,
     },
     {
       id: "folios", label: "Folios", icon: <Layers className="h-4 w-4" />,
-      value: fmtNum(m.folios.length),
-      detail: `One per statement line — ${m.folios.length - m.funds.length} more than the fund count, because a fund held in several folios is one fund row.`,
+      value: fmtNum(tableCounts.folios),
+      sub: `${tableCounts.valuedLines} valued`
+        + (tableCounts.views ? ` · ${tableCounts.views} income-only` : "")
+        + ` · ${tableCounts.noNavLines} with no NAV`,
+      detail: `Every folio line under those rows: the ${tableCounts.valuedLines} statements that value a holding`
+        + (tableCounts.views ? `, the ${tableCounts.views} income-only ${tableCounts.views === 1 ? "folio whose units are" : "folios whose units are"} valued on another line` : "")
+        + `, and the ${tableCounts.noNavLines} under Not valued.`,
     },
     {
       id: "owners", label: "Owners", icon: <Users className="h-4 w-4" />,
@@ -903,9 +997,18 @@ export function PrivateMarket() {
   const noValueReturn = (why: string) => (measure: ReturnMeasure): MeasuredReturn =>
     ({ shown: false, tag: measure === "auto" ? "AUTO" : returnMeasureDef(measure).tag, reason: why });
   const NO_VALUE_RETURN = "no value to strike a return on — nothing here values the holding";
-  const groupRet = (g: BookGroup) => (g.kind !== "fund" || g.value == null
-    ? (g.kind === "fund" ? noValueReturn(NO_VALUE_RETURN) : aggRet(g.folios, false, "member"))
-    : (measure: ReturnMeasure) => fundMeasuredReturn(g, fundDated.get(g.securityKey ?? ""), measure, moneyN, fmtDate));
+  const groupRet = (g: BookGroup) => {
+    if (g.kind === "fund") {
+      return g.value == null ? noValueReturn(NO_VALUE_RETURN)
+        : (measure: ReturnMeasure) => fundMeasuredReturn(g, fundDated.get(g.securityKey ?? ""), measure, moneyN, fmtDate);
+    }
+    // A MEMBER WHO HOLDS ONE FUND IS THAT FOLIO (PM-C10): the row's figures are
+    // that folio's, so its return is resolved the folio's own way — an
+    // aggregate reason ("spans their funds") would be false of it, and a
+    // refused pool beside the folio's own HPR would contradict the line below.
+    const held = g.folios.filter((f) => f.position);
+    return held.length === 1 ? folioRet(held[0]) : aggRet(g.folios, false, "member");
+  };
   const folioRet = (f: BookFolio) => (f.value == null ? noValueReturn(f.viewOf
     ? `an income-only folio holds no units of its own to strike a return on — the ${accName(f.viewOf)} line carries them, and the fund row carries the return`
     : NO_VALUE_RETURN)
@@ -995,10 +1098,23 @@ export function PrivateMarket() {
    * capital accounts than the row holds. ON ITS OWN LINE under the figure, so
    * the column is as wide as the figure and not as wide as the caveat.
    */
-  const covered = (n: number, of: number, k: CellKind) =>
-    (k === "total" || k === "section") && of > 0 && n < of
-      ? <div className="text-[10px] font-normal leading-tight text-slate-500" data-covered={`${n}/${of}`}>{n} of {of} accounts</div>
-      : null;
+  const covered = (n: number, of: number, k: CellKind, cc?: BookFigures["capitalCover"]) => {
+    const lines = (k === "total" || k === "section") && of > 0 && n < of;
+    // PM-C6: WHERE THE ROW'S CAPITAL COLUMNS COVER FEWER OF ITS FUNDS (OR
+    // FOLIOS) THAN IT CARRIES — Paid in beside a Cost and a Value struck over a
+    // different set is a pair a reader would divide.
+    const wider = k !== "folio" && !!cc && cc.with > 0 && cc.with < cc.of;
+    if (!lines && !wider) return null;
+    return (
+      <div className="text-[10px] font-normal leading-tight text-slate-500">
+        {lines && <span data-covered={`${n}/${of}`}>{n} of {of} accounts</span>}
+        {lines && wider && " · "}
+        {wider && <span data-cap-cover={`${cc!.with}/${cc!.of}`} data-cap-unit={cc!.unit}
+          title={`Committed, Called, Paid in and Still to call add the ${cc!.with} ${cc!.unit}s on this row that send a capital account; the other ${cc!.of - cc!.with} ${cc!.of - cc!.with === 1 ? "sends" : "send"} none, so these columns cover a different set from Cost and Value beside them.`}>
+          {cc!.with} of {cc!.of} {cc!.unit}s</span>}
+      </div>
+    );
+  };
 
   const figureCells = (r: RowFigures & Partial<BookFigures>, k: CellKind, ctx: {
     /** Why the row carries no capital account at all. Absent means it carries one. */
@@ -1052,7 +1168,7 @@ export function PrivateMarket() {
         : v == null ? absent(col, why)
           : td(col, <>{ctx.capAlso
             ? <span className="text-amber-400" data-pm-capital-also={ctx.capAlso.id}>{money(v)}</span>
-            : money(v)}{of && covered(of[0], of[1], k)}</>);
+            : money(v)}{covered(of?.[0] ?? 0, of?.[1] ?? 0, k, r.capitalCover)}</>);
     const out: Cells = {
       committed: cap("committed", r.committed, "no commitment on this statement"),
       called: cap("called", r.called,
@@ -1070,7 +1186,7 @@ export function PrivateMarket() {
               : <span className="text-amber-400">{money(r.uncalled)}</span>}
             {ctx.ties === true && <span className="ml-1 text-[10px] text-gain" title="checked: committed − called = still to call, to the rupee, on this statement" data-ties="true">✓</span>}
             {ctx.ties === false && <span className="ml-1 text-[10px] text-amber-400" title="the statement disagrees with itself: committed − called ≠ the still-to-call it prints" data-ties="false">≠</span>}
-            {covered(r.uncalledOf ?? 0, r.capitalAccounts ?? 0, k)}
+            {covered(r.uncalledOf ?? 0, r.capitalAccounts ?? 0, k, r.capitalCover)}
           </>),
     };
     const asOfCell = () => {
@@ -1142,6 +1258,31 @@ export function PrivateMarket() {
   const inOrder = (c: Cells, k: CellKind) =>
     bookCols.slice(1).map((col) => c[col] ?? <td key={col} className={pad(k)} />);
 
+  /**
+   * ── A STATEMENT THE DEPOSITORY HAS SINCE OVERTAKEN (VD-6) ────────────────
+   * One short line on the row and on its folio, the working in the hover: the
+   * units the depository holds beyond the statement's, and the statement that
+   * would show them. Never a figure for the units the statement does not carry.
+   */
+  const nextQuarterEnd = (iso: string) => {
+    const d = new Date(`${iso}T00:00:00Z`);
+    const q = Math.floor(d.getUTCMonth() / 3);
+    let end = new Date(Date.UTC(d.getUTCFullYear(), q * 3 + 3, 0)).toISOString().slice(0, 10);
+    if (end <= iso) end = new Date(Date.UTC(d.getUTCFullYear(), q * 3 + 6, 0)).toISOString().slice(0, 10);
+    return end;
+  };
+  const newerUnitsNote = (securityKey: string | null, accountId?: string) => {
+    const nu = securityKey ? m.newerUnits.get(securityKey) : undefined;
+    if (!nu || (accountId && accountId !== m.scope.dedupedRows.find((p) => p.securityKey === securityKey)?.accountId)) return null;
+    const dep = m.accIdx.get(nu.accountId);
+    const more = nu.closing - nu.held;
+    return (
+      <span className="text-amber-400" data-pm-newer-units={nu.closing} data-pm-newer-account={nu.accountId}
+        title={`${dep ? `${dep.owner}'s ${dep.provider} ${dep.accountNo}` : nu.accountId} holds ${fmtNum(nu.closing, 3)} units of this fund at ${fmtDate(nu.periodTo)} — ${fmtNum(Math.abs(more), 3)} ${more > 0 ? "more" : "fewer"} than the ${nu.asOf ? fmtDate(nu.asOf) : "fund's"} statement this row is struck on; the depository recorded the change between ${fmtDate(nu.periodFrom)} and ${fmtDate(nu.periodTo)}. This row's units, value and capital account are that statement's, and the change is in none of them. A newer statement from the fund${nu.asOf ? ` — its quarter ending ${fmtDate(nextQuarterEnd(nu.asOf))} or later —` : ""} is needed.`}>
+        depository holds {fmtNum(nu.closing, 1)} units · newer statement needed
+      </span>
+    );
+  };
   /** The words under a fund's or a member's name: what it is, never a figure another column holds. */
   const groupSub = (g: BookGroup): ReactNode => {
     const bits: ReactNode[] = [];
@@ -1157,12 +1298,16 @@ export function PrivateMarket() {
     if (g.status === "no-nav") bits.push(<span key="st" className="text-amber-400">no NAV published</span>);
     if (g.status === "income-only") bits.push("income-only folios");
     if (g.status === "redeemed") bits.push("redeemed to nil");
+    const newer = g.kind === "fund" ? newerUnitsNote(g.securityKey) : null;
+    if (newer) bits.push(<Fragment key="nu">{newer}</Fragment>);
     return bits.map((b, i) => <Fragment key={i}>{i > 0 && " · "}{b}</Fragment>);
   };
 
-  const noCapitalWhy = (section: BookSectionId, kind: "group" | "folio") =>
+  const noCapitalWhy = (section: BookSectionId, kind: "group" | "member" | "folio") =>
     kind === "folio"
       ? "this account sends no capital-account statement — it reports the holding without a commitment"
+      : kind === "member"
+        ? "none of this member's folios here sends a capital-account statement — the holdings are reported without a commitment"
       : section === "private"
         ? "no folio of this fund sends a capital-account statement — the holding is reported without a commitment"
         : "no capital-account statement for these folios";
@@ -1212,7 +1357,7 @@ export function PrivateMarket() {
             sub={groupSub(g)} />
           {inOrder({
             ...figureCells({ ...g, ret: groupRet(g) }, "group", {
-            noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, "group") : undefined,
+            noCapital: g.capitalAccounts === 0 ? noCapitalWhy(g.section, g.kind === "owner" ? "member" : "group") : undefined,
             noValue: valueWhy(g.status, g.folios[0]?.reason ?? null),
             nil: g.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
             noHolding: g.holdings === 0 ? "no valued holding on these statements" : undefined,
@@ -1258,6 +1403,9 @@ export function PrivateMarket() {
                   {/* ONE HOLDING ON TWO STATEMENTS — said on the line, in the
                       colour the "Counted once" row below it uses, rather than
                       as a chip that doubles the row's height. */}
+                  {f.position && newerUnitsNote(f.position.securityKey, f.accountId) && (
+                    <> · {newerUnitsNote(f.position.securityKey, f.accountId)}</>
+                  )}
                   {f.alsoCount > 1 && (
                     <> · <span className="text-amber-400" data-pm-also={f.alsoReportedUnder.join(",")}>
                       also reported under {f.alsoReportedUnder.map(ownerDisplayName).join(", ") || "another account"}
@@ -1476,9 +1624,11 @@ export function PrivateMarket() {
     // ACCOUNT (Stage 10bw): where the two cover different accounts the hover on
     // the Called total says not to subtract them, and where they cover one set
     // it says they may — a warning about a valid subtraction would be false.
+    // AND IT NEVER SAYS EVERY ACCOUNT PRINTS A CALLED LINE (PM-C4): one does;
+    // the rest carry the capital drawn plus any call printed as unpaid.
     called: [
       m.calledPaidSameSet
-        ? `Asked for by the funds so far, over the ${m.cc.calledOf} accounts that print a called line — the same accounts Paid in covers.`
+        ? `Asked for by the funds so far, over the ${m.cc.calledOf} accounts that carry a called figure — the fund's own called line where its statement prints one, and otherwise the capital drawn plus any call it prints as unpaid — the same accounts Paid in covers.`
         : `Called and Paid in cover different accounts and must not be subtracted from each other: the ${m.cc.count - m.cc.calledOf} account${m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first ${m.cc.count - m.cc.calledOf === 1 ? "is" : "are"} present in the second.`,
       alsoClause(m.alsoCc.called, "called"),
     ].filter(Boolean).join(" "),

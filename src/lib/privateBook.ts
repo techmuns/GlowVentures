@@ -244,6 +244,16 @@ export type BookFigures = {
   asOf: string[];
   /** Every capital account's committed − called = still to call. Null where none can be struck. */
   ties: boolean | null;
+  /**
+   * WHAT THE CAPITAL COLUMNS COVER, AGAINST THE ROW (PM-C6). A row adds its
+   * capital columns over its capital accounts and its holding columns over its
+   * holdings, and the two sets differ: a fund can report a holding and send no
+   * capital account (360 ONE), and a member's row can hold one fund that sends
+   * one and one that does not. `with` of `of` count the row's funds (counted
+   * once) or folios (as printed) that send a capital account, of those carrying
+   * any figure on it — so a cell can say so wherever the two differ.
+   */
+  capitalCover: { with: number; of: number; unit: "fund" | "folio" };
 };
 
 export type BookGroup = BookFigures & {
@@ -647,6 +657,21 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
   const costedValue = sum(held.filter((f) => f.cost != null).map((f) => f.value ?? 0));
   const funds = new Set(held.map((f) => f.fundKey));
   const ties = caps.map((c) => c.uncalledTies).filter((t): t is boolean => t != null);
+  /**
+   * THE FOLIOS THAT CARRY A FIGURE ON THIS ROW — a holding it counts, a capital
+   * account it counts, or a statement carrying neither on a folio of its own;
+   * never an income-only view, which carries none. On a consolidated row a
+   * second statement of a holding counted once carries nothing, so its date is
+   * not a date the row's figures are struck at (PM-C7): the 360 ONE fund row is
+   * CRN37702's 31 Jul mark, not "30 Jun → 31 Jul".
+   */
+  const carries = folios.filter((f) => !f.viewOf && (!consolidated
+    || (f.position != null && f.counted) || (f.capital != null && f.capitalCounted)
+    || (f.position == null && f.capital == null)));
+  const withCap = carries.filter((f) => f.capital != null && (!consolidated || f.capitalCounted));
+  const capitalCover = consolidated
+    ? { with: new Set(withCap.map((f) => f.fundKey)).size, of: new Set(carries.map((f) => f.fundKey)).size, unit: "fund" as const }
+    : { with: withCap.length, of: carries.length, unit: "folio" as const };
   return {
     committed: caps.length ? sum(caps.map((c) => c.committed)) : null,
     called: sumOrNull(caps.map((c) => c.called)),
@@ -680,10 +705,12 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     returnPct: cost != null && cost > 0 && pnl != null && value != null && value > 0
       && costedValue >= value * COST_COVERAGE_MIN
       ? fifoTotals(held.map((f) => f.position!)).returnPct : null,
-    // An income-only VIEW contributes no figure to the row, so its letter's
-    // date is not a date any figure on the row is struck at.
-    asOf: [...new Set(folios.filter((f) => !f.viewOf).map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
+    // Only the folios that carry a figure here — never an income-only VIEW,
+    // and on a consolidated row never the second statement of a holding
+    // counted once (PM-C7).
+    asOf: [...new Set(carries.map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
     ties: ties.length ? ties.every(Boolean) : null,
+    capitalCover,
   };
 }
 

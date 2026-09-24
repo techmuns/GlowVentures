@@ -2316,8 +2316,9 @@ const DIST_BOOK = (() => {
       parts: once.filter((r) => r.amount != null).map((r) => ({ basis: r.basis, amount: r.amount, accountNo: r.accountNo ?? null })),
       xirr,
     };
-  } catch { return null; }
+  } catch (e) { console.error("DIST_BOOK could not be derived:", e?.message ?? e); return null; }
 })();
+
 
 /**
  * THE PRIVATE ACCOUNTS NOTHING VALUES — the private-market table's "Not valued ·
@@ -2376,6 +2377,104 @@ const UNVALUED_BOOK = (() => {
       redeemed: un.filter(redeemed).length,
     };
   } catch { return null; }
+})();
+
+/**
+ * ── THE PRIVATE BOOK'S OWN ANSWERS TO THE [C] CLAIMS ─────────────────────────
+ *
+ * Re-derived off `glowData.ts` by the checker's own rules — never through
+ * `privateBook.ts` or the page's memo — for the claims each tile, band, row and
+ * hover makes about which set it is struck on:
+ *
+ *   statements / holdings / valueNone  the value tile's own breakdown (PM-C5);
+ *   funds / folios                     what the table draws (PM-C5);
+ *   bandCover / totalCover / members   what the capital columns cover (PM-C6);
+ *   fundDates                          the statements a fund row counts (PM-C7);
+ *   realised                           the realised figure and its reasons (DL-13);
+ *   newer                              units a depository holds beyond a fund's statement (VD-6).
+ *
+ * "Kept" is the dedupe rule itself: the FIRST member of a group in book order.
+ */
+const PM_C_BOOK = (() => {
+  try {
+    if (!CAPITAL_BOOK || !UNVALUED_BOOK) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const gains = bookArray(src, "BOOK_CAPITAL_GAINS");
+    const commitments = bookArray(src, "BOOK_COMMITMENTS");
+    const shares = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    if (![accounts, positions, moves, gains, commitments].every(Array.isArray) || !shares) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const priv = positions.filter((p) => p.marketSide === "private" && (Number(p.quantity) || 0) > 0);
+    const kept = (() => {
+      const seen = new Set();
+      return priv.filter((p) => {
+        if (!p.dedupeGroup) return true;
+        if (seen.has(p.dedupeGroup)) return false;
+        seen.add(p.dedupeGroup); return true;
+      });
+    })();
+    const capIds = new Set(CAPITAL_BOOK.ids);
+    const leftOut = new Set(CAPITAL_BOOK.once.leftOut.map((x) => x.accountId));
+    const heldFunds = new Set(priv.map((p) => p.securityKey));
+    const capFunds = new Set(priv.filter((p) => capIds.has(p.accountId) && !leftOut.has(p.accountId)).map((p) => p.securityKey));
+    const unvaluedFunds = new Set(commitments.filter((c) => UNVALUED_BOOK.ids.includes(c.accountId)).map((c) => c.name));
+    const valuedAccounts = new Set(priv.map((p) => p.accountId));
+    // EACH MEMBER'S PRIVATE STATEMENTS, as printed: the holding folios they
+    // hold (never an income-only view), and which of those send a capital account.
+    const members = new Map();
+    for (const p of priv) {
+      const owner = acc.get(p.accountId)?.owner ?? p.accountId;
+      const m = members.get(owner) ?? { of: 0, with: 0 };
+      m.of++; if (capIds.has(p.accountId)) m.with++;
+      members.set(owner, m);
+    }
+    const cg = new Map(gains.filter((e) => e.accountId).map((e) => [e.accountId, e]));
+    const redeemed = (p) => moves.filter((x) => x.accountId === p.accountId && x.securityKey === p.securityKey
+      && x.direction === "out" && x.units != null && x.units < 0);
+    const withRz = kept.filter((p) => p.realizedPnL != null);
+    const newer = [];
+    for (const p of kept) {
+      if (!p.isin) continue;
+      const own = acc.get(p.accountId);
+      for (const w of Object.values(shares)) {
+        if (w.isin !== p.isin || w.accountId === p.accountId || w.closing == null || !w.periodTo) continue;
+        if (acc.get(w.accountId)?.ownerId !== own?.ownerId) continue;
+        if (own?.asOf && w.periodTo <= own.asOf) continue;
+        if (Math.abs(Number(w.closing) - Number(p.quantity)) < 0.0005) continue;
+        newer.push({ securityKey: p.securityKey, accountId: p.accountId, closing: Number(w.closing),
+          depositoryNo: String(acc.get(w.accountId)?.accountNo ?? ""), statementAsOf: own?.asOf ?? null });
+      }
+    }
+    return {
+      statements: priv.length,
+      holdings: kept.length,
+      valuedAccounts: valuedAccounts.size,
+      valueNone: UNVALUED_BOOK.accounts + UNVALUED_BOOK.views.length,
+      funds: { valued: heldFunds.size, noNav: unvaluedFunds.size },
+      folios: { valued: priv.length, views: UNVALUED_BOOK.views.length, noNav: UNVALUED_BOOK.accounts },
+      bandCover: `${capFunds.size}/${heldFunds.size}`,
+      totalCover: `${capFunds.size + unvaluedFunds.size}/${heldFunds.size + unvaluedFunds.size}`,
+      members,
+      fundDates: new Map([...heldFunds].map((k) => {
+        const dates = new Set(kept.filter((p) => p.securityKey === k).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean));
+        for (const p of priv.filter((q) => q.securityKey === k && capIds.has(q.accountId) && !leftOut.has(q.accountId))) {
+          const d = acc.get(p.accountId)?.asOf; if (d) dates.add(d);
+        }
+        return [k, [...dates].sort().join(" ")];
+      })),
+      realised: {
+        value: withRz.length ? withRz.reduce((t, p) => t + Number(p.realizedPnL), 0) : null,
+        covered: withRz.length,
+        of: kept.length,
+        units: withRz.map((p) => Math.abs(redeemed(p).reduce((t, x) => t + Number(x.units), 0))),
+        missing: kept.filter((p) => p.realizedPnL == null).map((p) => ({ securityKey: p.securityKey, why: cg.get(p.accountId)?.absent ?? null })),
+      },
+      newer,
+    };
+  } catch (e) { console.error("PM_C_BOOK could not be derived:", e?.message ?? e); return null; }
 })();
 
 /**
@@ -5281,6 +5380,7 @@ const ROUTES = [
    */
   ["private-market-folios", "/private-market"],
   ["private-market-owners", "/private-market?view=owners"],
+  ["private-market-owners-returns", "/private-market?view=owners&ret=absolute,cagr,xirr,ytd,calendar"],
   /**
    * THE THIRD TAB. The capital calls were a card of their own, with a timeline
    * card beside it; they are the Transactions tab of the one table now, and the
@@ -15749,6 +15849,57 @@ const unvaluedLinesChecks = () => [
 const noRateSentenceOk = (x, line) => typeof x === "string" && /records and prints no rate for/.test(x)
   && !!line.witnessOwner && x.includes(line.witnessOwner) && !!line.witnessNo && x.includes(line.witnessNo)
   && !!line.asOf && x.includes(line.asOf) && !/no holding statement/.test(x);
+/**
+ * PM-C6, BY OWNER — A MEMBER'S CAPITAL COLUMNS SAY WHAT THEY COVER. Ajay's
+ * row adds Neo Infra's capital account beside a Cost and a Value that also
+ * carry his 360 ONE holding, which sends none: "1 of 2 folios". Held to each
+ * member's own statements in the book, on every member row in the private
+ * section — the cover where the two sets differ, and none where they agree.
+ */
+const PM_MEMBER_COVER_CHECK = ["a member's capital cells say what they cover against the row (PM-C6)", (t, ctx) => {
+  const pv = ctx?.pmView;
+  if (!pv) return false;
+  if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+  const rows = (pv.groups ?? []).filter((g) => g.kind === "owner" && g.section === "private");
+  if (!rows.length) return false;
+  let subject = false;
+  const ok = rows.every((g) => {
+    const m = PM_C_BOOK.members.get(g.key.replace(/^owner:/, ""));
+    if (!m) return false;
+    const want = m.with > 0 && m.with < m.of ? `${m.with}/${m.of}` : null;
+    if (want) subject = true;
+    return ["committed", "called", "paid", "uncalled"].every((c) => {
+      const cell = g.cells?.[c];
+      if (!cell || /—/.test(cell.text ?? "")) return true;
+      return want == null ? cell.capCover == null : cell.capCover === want && cell.capUnit === "folio";
+    });
+  });
+  return ok && subject;
+}];
+
+/**
+ * PM-C10 — A MEMBER WHO HOLDS ONE FUND IS THAT FOLIO. The two family trusts'
+ * rows refused an XIRR over a 165-day pool while the one folio under each
+ * showed its HPR in the same column, and their CAGR dash said "a private book
+ * has no one date the money went in" of one ₹75 L call. Every return column of
+ * such a member row must read exactly what its folio's reads.
+ */
+const PM_MEMBER_RETURN_CHECK = ["a member holding one fund shows its folio's own return in every column (PM-C10)", (t, ctx) => {
+  const pv = ctx?.pmView;
+  if (!pv) return false;
+  const members = (pv.groups ?? []).filter((g) => g.kind === "owner" && g.section === "private");
+  if (!members.length) return false; // the owners view drew no member row: its subject is gone, a finding
+  const single = members.map((g) => ({ g, kids: (pv.children ?? []).filter((c) => c.group === g.key && c.value != null && !c.viewOf) }))
+    .filter((x) => x.kids.length === 1);
+  if (!single.length) return notChecked("no member here holds exactly one fund");
+  const cols = Object.keys(single[0].g.cells ?? {}).filter((c) => c.startsWith("ret:"));
+  if (!cols.length) return false;
+  const sameCells = single.every(({ g, kids: [f] }) => cols.every((c) =>
+    (g.cells?.[c]?.text ?? "") === (f.cells?.[c]?.text ?? "") && (g.cells?.[c]?.title ?? "") === (f.cells?.[c]?.title ?? "")));
+  const noFalseReason = !(ctx?.titles ?? []).some((x) => /a private book has no one date the money went in/i.test(x));
+  return sameCells && noFalseReason;
+}];
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -20912,7 +21063,15 @@ const INVARIANTS = {
     ["no tile's line merely repeats its heading", (t, ctx) => {
       const st = ctx?.tileStrip;
       if (!st?.slots) return false;
-      return ["cost", "funds", "folios"].filter((id) => st.ids.includes(id)).every((id) => !st.subs?.[id]);
+      // A LINE THAT STATES A FIGURE THE HEADING DOES NOT IS NOT A RESTATEMENT.
+      // PM-C5 gave Funds and Folios one: the count now spans every fund row the
+      // table draws, so the line says how many of them are valued. What must
+      // not come back is a line with no figure in it — the label said again.
+      const RESTATED = /^(?:cost of these holdings|distinct funds held|statement lines)$/i;
+      return ["cost", "funds", "folios"].filter((id) => st.ids.includes(id)).every((id) => {
+        const sub = st.subs?.[id]?.text?.trim();
+        return !sub || (/\d/.test(sub) && !RESTATED.test(sub));
+      });
     }],
     /**
      * ...AND NO LABEL IS CUT OFF. "PRIVATE MARKET VAL…" and "STILL TO CALL
@@ -21029,7 +21188,7 @@ const INVARIANTS = {
       const tile = ctx?.tileStrip?.texts?.distributed ?? "";
       const m = /₹\s*([\d,]+(?:\.(\d+))?)\s*(Cr|L|K)?/i.exec(tile);
       if (!m) return false;
-      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      if (!DIST_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
       const unit = (m[3] ?? "").toUpperCase();
       const scale = unit === "CR" ? 1 : unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1e-7;
       const shown = cr(m[1]) * scale;
@@ -21048,7 +21207,7 @@ const INVARIANTS = {
     ["the distributions hover names each part on its own basis, and the letter it counts with another (B-10)", (t, ctx) => {
       const d = ctx?.tileStrip?.details?.distributed ?? "";
       if (!d) return false;
-      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      if (!DIST_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
       const n = (re) => (d.match(re) ?? []).length;
       const letters = DIST_BOOK.parts.filter((x) => x.basis === "letter");
       const caps = DIST_BOOK.parts.filter((x) => x.basis === "capital-account");
@@ -21073,7 +21232,7 @@ const INVARIANTS = {
     ["the distributions hover reconciles with each fund's XIRR, in the XIRR's own figures (B-10)", (t, ctx) => {
       const d = ctx?.tileStrip?.details?.distributed ?? "";
       if (!d) return false;
-      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      if (!DIST_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
       const fig = (s) => {
         const m = /₹\s*([\d,]+(?:\.(\d+))?)\s*(Cr|L|K)?/i.exec(s ?? "");
         if (!m) return null;
@@ -21102,7 +21261,7 @@ const INVARIANTS = {
       const d = ctx?.tileStrip?.details?.multiple ?? "";
       const m = /Only (\d+) of the (\d+) private-market accounts/i.exec(d);
       if (!m) return false;
-      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      if (!DIST_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
       return Number(m[1]) === DIST_BOOK.reportedOf && Number(m[2]) === DIST_BOOK.accountsOf;
     }],
 
@@ -21118,13 +21277,85 @@ const INVARIANTS = {
       && !/\bSTATEMENT\s*·\s*as of/i.test(t)
       && !/\d+\s+accounts? behind/i.test(t)
       && !/\d+ funds\s*·\s*\d+ accounts/i.test(t)],
-    ["the private value tile names how many accounts it spans", (t, ctx) => {
-      // IN THE HOVER NOW. The tile keeps its share of the book, which is the
-      // one fact about its breadth a reader acts on at a glance.
+    /**
+     * PM-C5 — …AND WHICH OF THEM ITS VALUE IS STRUCK ON. "Across this page's 15
+     * private accounts" read as the value spanning fifteen; it comes from the
+     * six statements that value a holding — four holdings counted once — and
+     * the other nine accounts value nothing. Every count is held to the book.
+     */
+    ["the private value tile names how many accounts it spans, and which of them its value is struck on (PM-C5)", (t, ctx) => {
       const detail = ctx?.tileStrip?.details?.value;
       if (!detail) return false;
-      const m = /across this page['\u2019]s (\d+) private accounts · each holding counted once/i.exec(detail);
-      return !!m && Number(m[1]) > 0;
+      const m = /across this page['\u2019]s (\d+) private accounts · each holding counted once: the value is the (\d+) statements that value a private holding — (\d+) holdings — and the other (\d+) accounts value none/i.exec(detail);
+      if (!m) return false;
+      if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      const [all, statements, holdings, others] = m.slice(1).map(Number);
+      return statements === PM_C_BOOK.statements && holdings === PM_C_BOOK.holdings
+        && others === PM_C_BOOK.valueNone && all === PM_C_BOOK.valuedAccounts + others;
+    }],
+    /**
+     * PM-C6 — THE CAPITAL COLUMNS SAY WHAT THEY COVER AGAINST THE ROW. The
+     * band's Committed and Paid in add three of its four funds (360 ONE sends
+     * no capital account) beside a Cost and a Value struck over all four; the
+     * total's add five of the table's six. Held to the book's own count, on
+     * every capital cell that prints a figure, and on no cell where the two
+     * sets are the same.
+     */
+    ["the capital cells say what they cover against the row — on the band and the total (PM-C6)", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv || !PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      const band = pv.sections?.find((s) => s.id === "private");
+      const total = pv.totals?.[0];
+      if (!band || !total) return false;
+      const capCols = ["committed", "called", "paid", "uncalled"];
+      const says = (row, want) => capCols.every((c) => {
+        const cell = row.cells?.[c];
+        if (!cell || /—/.test(cell.text ?? "")) return true;
+        return want == null ? cell.capCover == null : cell.capCover === want && cell.capUnit === "fund";
+      });
+      const [bw, bo] = PM_C_BOOK.bandCover.split("/").map(Number);
+      const [tw, to] = PM_C_BOOK.totalCover.split("/").map(Number);
+      return says(band, bw < bo ? PM_C_BOOK.bandCover : null) && says(total, tw < to ? PM_C_BOOK.totalCover : null)
+        // …and the claim has a subject on this book, or it passes over nothing.
+        && (bw < bo || tw < to);
+    }],
+    /**
+     * PM-C7 — A FUND ROW IS DATED BY THE STATEMENTS IT COUNTS. The 360 ONE row
+     * read "30 Jun → 31 Jul 2026" while its value is CRN37702's 31 Jul mark
+     * alone — the 30 Jun date belongs to the second statement, which the row
+     * does not count. Held to the book: the kept holding's report date and any
+     * capital account the row counts.
+     */
+    ["each fund row is dated by the statements it counts (PM-C7)", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return false;
+      if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      const rows = (pv.groups ?? []).filter((g) => g.kind === "fund" && g.section === "private");
+      if (!rows.length) return false;
+      return rows.every((g) => (g.cells?.asOf?.asOfAttr ?? "") === (PM_C_BOOK.fundDates.get(g.key) ?? "__none__"))
+        // The fund this finding was about must be on the page to be checked.
+        && rows.some((g) => (CAPITAL_BOOK?.twiceKeys ?? []).includes(g.key));
+    }],
+    /**
+     * VD-6 — A STATEMENT THE DEPOSITORY HAS SINCE OVERTAKEN SAYS SO, ON THE
+     * ROW. Baring's 31 Mar statement prints 202.5 units; Ankita's Motilal Oswal
+     * demat holds 252.5 at 31 Jul. The row must carry the depository's count,
+     * name the account, and say a newer statement is needed — and no other row
+     * may claim it. Joined on the ISIN and the holder, never a name.
+     */
+    ["a fund row the depository has overtaken says so, and what would show it (VD-6)", (t, ctx) => {
+      const pv = ctx?.pmView;
+      if (!pv) return false;
+      if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      if (!PM_C_BOOK.newer.length) return notChecked("no depository holds units beyond a fund's own statement on this book");
+      const rows = (pv.groups ?? []).filter((g) => g.kind === "fund" && g.section === "private");
+      const want = new Map(PM_C_BOOK.newer.map((n) => [n.securityKey, n]));
+      return rows.every((g) => {
+        const n = want.get(g.key);
+        if (!n) return g.newer == null;
+        return Number(g.newer) === n.closing && (g.newerTitle ?? "").includes(n.depositoryNo)
+          && /newer statement from the fund/i.test(g.newerTitle ?? "") && /newer statement needed/i.test(g.text ?? "");
+      }) && [...want.keys()].every((k) => rows.some((g) => g.key === k));
     }],
     /**
      * ── A REDEEMED FUND IS NOT A PRIVATE HOLDING EITHER ─────────────────────
@@ -21218,9 +21449,51 @@ const INVARIANTS = {
      * request — so it is the hover on the Capital call COLUMN that replaced it,
      * which is exactly where a reader wondering why calls are typed in looks.
      */
-    ["the realised-gain and forward-schedule absences survive it", (t, ctx) =>
-      /no capital gain statement covers any private account/i.test(ctx?.tileStrip?.details?.realised ?? "")
-      && /No fund in this book publishes a forward drawdown schedule/i.test(ctx?.pmView?.callHead?.title ?? "")],
+    ["the forward-schedule absence survives it, on the Capital call column", (t, ctx) =>
+      /No fund in this book publishes a forward drawdown schedule/i.test(ctx?.pmView?.callHead?.title ?? "")],
+    /**
+     * DL-13 — THE REALISED TILE IS THE BOOK'S, AND SO IS EVERY REASON ON IT.
+     * It read "No capital gain statement covers any private account" over a
+     * holding the book MEASURED: Neo Infra's 14,162.8 units redeemed at their
+     * cost, a realised gain of ₹0 off the fund's own dated record. The figure,
+     * its coverage, the units redeemed and each missing holding's own reason are
+     * held to glowData; the old sentence must stay gone.
+     */
+    ["the realised tile states what the book realised, over the holdings it covers, and why the rest carry none (DL-13)", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.realised ?? "";
+      const d = ctx?.tileStrip?.details?.realised ?? "";
+      if (!tile || !d) return false;
+      if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      const r = PM_C_BOOK.realised;
+      if (/no capital gain statement covers any private account/i.test(d)) return false;
+      if (r.value == null) return /—/.test(tile) && /No statement reports it/i.test(tile);
+      const shown = pmMoney(/₹[\d,.]+\s*(?:Cr|L|K)?/.exec(tile)?.[0] ?? "");
+      const cov = new RegExp(String.raw`\b${r.covered} of ${r.of} holdings`, "i").test(tile);
+      const units = r.units.every((u) => d.includes(`${u.toLocaleString("en-IN", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} units redeemed`));
+      const reasons = r.missing.every((x) => x.why && d.includes(x.why));
+      return Number.isFinite(shown) && pmClose(shown, r.value / 1e7) && cov && units && reasons
+        && (r.value !== 0 || /measured nil/i.test(tile));
+    }],
+    /**
+     * PM-C5 — FUNDS AND FOLIOS COUNT WHAT THE TABLE DRAWS. They counted the
+     * valued funds alone under captions that did not say so, beside a table of
+     * six fund rows and fifteen folio lines. Held to the table's own section
+     * bands AND to the book's parts, so neither can drift from the other.
+     */
+    ["the Funds and Folios tiles count what the table draws, and say what each part is (PM-C5)", (t, ctx) => {
+      const st = ctx?.tileStrip, pv = ctx?.pmView;
+      if (!st || !pv) return false;
+      if (!PM_C_BOOK) return false; // the checker could not state its own expectation — a finding, never an abstention
+      const n = (s) => Number(/^\D*?(\d[\d,]*)/.exec(String(s ?? "").replace(/^(FUNDS|FOLIOS)/i, ""))?.[1]?.replace(/,/g, ""));
+      const bands = pv.sections ?? [];
+      const sumOf = (f) => bands.reduce((t, s) => t + (Number.isFinite(s[f]) ? s[f] : 0), 0);
+      const F = PM_C_BOOK.funds, L = PM_C_BOOK.folios;
+      return n(st.texts?.funds) === sumOf("funds") && n(st.texts?.folios) === sumOf("folios")
+        && n(st.texts?.funds) === F.valued + F.noNav
+        && n(st.texts?.folios) === L.valued + L.views + L.noNav
+        && new RegExp(`${F.valued} valued · ${F.noNav} with no NAV`, "i").test(st.texts?.funds ?? "")
+        && new RegExp(`${L.valued} valued${L.views ? ` · ${L.views} income-only` : ""} · ${L.noNav} with no NAV`, "i").test(st.texts?.folios ?? "");
+    }],
 
     // PM-2. What the page shows plus what it says it left out must reconstruct
     // the whole book. Narrowing on the wrong axis moves one side and not the other.
@@ -21337,7 +21610,7 @@ const INVARIANTS = {
       // The coverage and the costed value were the tiles' captions and are
       // their hovers now — read there, or this check could only ever abstain.
       const cov = cr(new RegExp(String.raw`covering\s*` + CR, "i").exec(ctx?.tileStrip?.details?.pnl ?? "")?.[1]);
-      const n = /(\d+) of (\d+) folio rows report one/i.exec(ctx?.tileStrip?.details?.cost ?? "");
+      const n = /(\d+) of (\d+) holdings report one, each holding counted once/i.exec(ctx?.tileStrip?.details?.cost ?? "");
       if (![inv, pnl, cov].every(Number.isFinite) || !n) return false;
       if (Math.abs(inv + pnl - cov) > Math.max(0.6, cov * 0.002)) return false;
       if (!SIDE_BOOK) return notChecked("the book's own sides could not be derived");
@@ -21636,7 +21909,11 @@ const INVARIANTS = {
       if (!st) return false;
       const want = { committed: /^COMMITTED\s*₹/, called: /^CALLED\s*₹/, paid: /^PAID IN\s*₹/, due: /^DUE NOW\s*₹/ };
       if (!Object.entries(want).every(([id, re]) => re.test(st.texts?.[id] ?? ""))) return false;
-      const called = /(\d+) of (\d+) capital accounts print a called line/i.exec(st.details?.called ?? "");
+      // PM-C4: ONE of these statements prints a called line. The rest are the
+      // capital drawn (plus any call printed as unpaid), and the hover says so
+      // rather than claiming a line nine of them never print.
+      if (/print a called line/i.test(st.details?.called ?? "")) return false;
+      const called = /(\d+) of (\d+) capital accounts carry a called figure: the fund's own called line where its statement prints one, and otherwise the capital drawn/i.exec(st.details?.called ?? "");
       const paid = /(\d+) of (\d+) capital accounts · cash that has actually left/i.exec(st.details?.paid ?? "");
       if (!called || !paid || !CAPITAL_BOOK) return false;
       /**
@@ -21866,6 +22143,23 @@ const INVARIANTS = {
    * fails the other.
    */
   "private-market-returns": [
+    /**
+     * PM-C1 — THE HPR IS VALUE AGAINST WHAT THE UNITS COST, AND SAYS SO. Its
+     * hovers said "over the capital paid in", which is a different figure on
+     * this very row: Transition Venture's +128.6% is ₹1.71 Cr on a ₹75 L cost,
+     * where the row's own Paid in reads ₹1.5 Cr. Struck on every HPR cell and
+     * the footer's, and on every hover on the page, so the old wording cannot
+     * come back through the column's own hint either.
+     */
+    ["every HPR hover says it is struck on what the units cost, never on the capital paid in (PM-C1)", (t, ctx) => {
+      const pr = ctx?.pmReturn;
+      if (!pr) return false;
+      const cells = pr.rows.flatMap((r) => r.cells).filter((c) => c.shown && (c.tag === "HPR" || c.measure === "absolute"));
+      const foot = (pr.foot ?? []).filter((c) => c.measure === "absolute");
+      if (!cells.length || !foot.length) return false;
+      return !(ctx?.titles ?? []).some((x) => /over the capital paid in/i.test(x))
+        && [...cells, ...foot].every((c) => /over what (?:those units|they) cost/i.test(c.titles ?? ""));
+    }],
     ...pmViewChecks("funds"),
     ...PRIVATE_SCOPE_CHECKS,
     // The methodology column is not ticked here, so its own claim runs on the
@@ -21879,7 +22173,13 @@ const INVARIANTS = {
       return rs.active.join(",") === "absolute,cagr,xirr,ytd,calendar";
     }],
   ],
+  "private-market-owners-returns": [
+    ...pmViewChecks("owners"),
+    PM_MEMBER_COVER_CHECK,
+    PM_MEMBER_RETURN_CHECK,
+  ],
   "private-market-owners": [
+    PM_MEMBER_COVER_CHECK,
     ...pmViewChecks("owners"),
     ...PM_TABLE_CHECKS,
     ...PRIVATE_SCOPE_CHECKS,
@@ -21959,6 +22259,21 @@ const INVARIANTS = {
      * that were real are on the page elsewhere and are held there: Due now is a
      * tile (on the full strip) and the undated money is Still to call.
      */
+    /**
+     * PM-C9 — THE TAB SAYS WHAT IT SHOWS. Its subtitle read "What the funds can
+     * still ask for, and every capital call they have made" and its toggle's
+     * hover "What can still be called…" — over a tab that shows the call
+     * history alone since the windows went. The subtitle has since gone with
+     * every card subtitle (Stage 10co), so the claim is struck on the toggle's
+     * own hover, which `innerText` cannot see, and on the band the tab draws.
+     */
+    ["the Transactions tab says it is the call history, and claims nothing it does not show (PM-C9)", (t, ctx) => {
+      const tab = (ctx?.pmView?.views ?? []).find((v) => v.key === "transactions");
+      if (!tab) return false;
+      const claims = /can still (?:ask for|be called)/i;
+      return !claims.test(t) && !claims.test(tab.title ?? "")
+        && /Every capital call/i.test(tab.title ?? "") && /Every capital call made/i.test(t);
+    }],
     ["the 'what can still be called' windows stay removed from this tab", (t, ctx) => {
       const buckets = ctx?.callBuckets;
       if (!Array.isArray(buckets)) return { notChecked: "the call-bucket probe did not run" };
@@ -28339,7 +28654,8 @@ const INVARIANTS = {
 const FULL_STRIP_ONLY = new Set([
   "the distributions tile says what it is, and the two things a reader would get wrong",
   "the tile carries the client's own word for it, and the answer under it",
-  "the realised-gain and forward-schedule absences survive it",
+  "the realised tile states what the book realised, over the holdings it covers, and why the rest carry none (DL-13)",
+  "the Funds and Folios tiles count what the table draws, and say what each part is (PM-C5)",
   "the due-now figure states the accounts it covers",
   "committed, called and invested are three separate tiles, each stating its coverage",
   "the paid-in-but-never-valued tile is the missing-data section's own paid-in, and in no value",
@@ -28519,6 +28835,7 @@ function tilePickerChecks({ defaults, mustOffer, minMenu }) {
 function headingsWhole(st) {
   return ["clipped", "brokenWords", "needlessWrap"].every((k) => Array.isArray(st?.[k]) && st[k].length === 0);
 }
+
 const TILE_PICKER_CHECKS = tilePickerChecks({
   defaults: ["value", "cost", "pnl", "uncalled"],
   mustOffer: ["value", "cost", "pnl", "uncalled", "realised", "multiple"],
@@ -29572,7 +29889,7 @@ for (const theme of THEMES) {
        * control: a button wired to nothing leaves the sections closed and the
        * folio checks fail by name.
        */
-      if (name === "private-market-folios" || name === "private-market-owners") {
+      if (name === "private-market-folios" || name === "private-market-owners" || name === "private-market-owners-returns") {
         const all = page.locator("[data-tree-expand-all]").first();
         if (await all.count()) { await all.click(); await page.waitForTimeout(500); }
       }
@@ -32499,10 +32816,18 @@ for (const theme of THEMES) {
             const col = heads[i];
             if (col) cells[col] = {
               text: txt(td),
-              title: td.querySelector("[title]")?.getAttribute("title") ?? td.getAttribute("title") ?? null,
+              // THE CELL'S OWN HOVER FIRST — where a total's working lives since
+              // Stage 10co — and only then a titled child: a coverage span with
+              // a hover of its own (PM-C6) must not shadow the cell's working.
+              title: td.getAttribute("title") ?? td.querySelector("[title]")?.getAttribute("title") ?? null,
               covered: td.querySelector("[data-covered]")?.getAttribute("data-covered") ?? null,
               ties: td.querySelector("[data-ties]")?.getAttribute("data-ties") ?? null,
               nil: !!td.querySelector("[data-pm-nil]"),
+              // What a capital cell covers against its row (PM-C6), and the
+              // dates the As of cell is struck at (PM-C7).
+              capCover: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-cover") ?? null,
+              capUnit: td.querySelector("[data-cap-cover]")?.getAttribute("data-cap-unit") ?? null,
+              asOfAttr: td.getAttribute("data-as-of"),
             };
             i += span; width += span;
           }
@@ -32515,7 +32840,7 @@ for (const theme of THEMES) {
         const foot = document.querySelector("main table[data-pm-table='transactions'] tfoot tr");
         return {
           views: [...document.querySelectorAll("main [data-pm-view]")]
-            .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true" })),
+            .map((e) => ({ key: e.getAttribute("data-pm-view"), active: e.getAttribute("aria-selected") === "true", title: e.getAttribute("title") })),
           viewCount: Number(document.querySelector("main [data-pm-view-count]")?.getAttribute("data-pm-view-count") ?? NaN),
           tables: [...document.querySelectorAll("main table[data-pm-table]")].map((e) => e.getAttribute("data-pm-table")),
           // THE OLD CARDS, BY THEIR OWN HANDLES — a scheme table and a folio
@@ -32546,6 +32871,9 @@ for (const theme of THEMES) {
             // The pair-pending note under the name (PM-A1).
             pending: !!e.querySelector("[data-pm-pending]"),
             views: num(e.querySelector("[data-pm-views]") ?? e, "data-pm-views"),
+            // A statement the depository has since overtaken (VD-6).
+            newer: e.querySelector("[data-pm-newer-units]")?.getAttribute("data-pm-newer-units") ?? null,
+            newerTitle: e.querySelector("[data-pm-newer-units]")?.getAttribute("title") ?? null,
             text: txt(e), ...cellsOf(e) })),
           children: rows("tr[data-pm-folio-row]").map((e) => ({
             group: e.getAttribute("data-pm-folio-row"), section: e.getAttribute("data-pm-row-section"),
@@ -32562,6 +32890,7 @@ for (const theme of THEMES) {
             viewNote: !!e.querySelector("[data-pm-view-note]"),
             alsoNote: e.querySelector("[data-pm-capital-also]")?.getAttribute("data-pm-capital-also") ?? null,
             cap: capOf(e),
+            newer: e.querySelector("[data-pm-newer-units]")?.getAttribute("data-pm-newer-units") ?? null,
             text: txt(e), ...cellsOf(e) })),
           overlaps: rows("tr[data-pm-overlap]").map((e) => ({
             key: e.getAttribute("data-pm-overlap"), printed: num(e, "data-printed"),

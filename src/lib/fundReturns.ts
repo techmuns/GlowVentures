@@ -275,6 +275,15 @@ const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
  */
 export type FundReturnInput = Pick<FundRow, "returnPct" | "cost">;
 
+/**
+ * WHAT A FALLBACK TO THE HOLDING-PERIOD RETURN IS STRUCK ON, said once (PM-C1).
+ * A CAGR or XIRR cell that falls back to the HPR shows that figure under another
+ * measure's heading, so its hover has to say what the figure is over — the cost
+ * of the units, never the Paid in column beside it, which differs wherever a
+ * row's capital accounts and its holdings are not the same set.
+ */
+const HPR_IS = "the holding-period return — the gain over what those units cost, not a return on Paid in";
+
 export function fundMeasuredReturn(
   f: FundReturnInput,
   d: FundDated | undefined,
@@ -303,7 +312,7 @@ export function fundMeasuredReturn(
 
   if (measure === "absolute") {
     if (hpr == null) return { shown: false, tag, reason: noHpr };
-    return { shown: true, pct: hpr, tag, note: `FIFO: the gain on the units held plus the gain on any units redeemed, over the capital paid in for both — not annualised.${paidNote}` };
+    return { shown: true, pct: hpr, tag, note: `FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — the cost of the units held plus the cost of any redeemed — not annualised, and not a return on Paid in.${paidNote}` };
   }
 
   if (measure === "calendar") {
@@ -332,7 +341,7 @@ export function fundMeasuredReturn(
     if (days < YEAR_DAYS) {
       return {
         shown: true, pct: hpr, tag: "HPR",
-        note: `Paid in ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so this is the holding-period return, not an annual rate.`,
+        note: `Paid in ${days} days before the ${date(d.valuedAt!)} valuation — under a year, so this is not an annual rate but ${HPR_IS}.`,
       };
     }
     const growth = 1 + hpr / 100;
@@ -375,7 +384,7 @@ export function fundMeasuredReturn(
     if (x.shown && x.tag === "XIRR") return { ...x, note: `${why}, so the methodology uses XIRR. ${x.note ?? ""}`.trim() };
     return {
       shown: true, pct: hpr, tag: "HPR",
-      note: `${why}, so the methodology would use XIRR — which cannot be struck here because ${x.shown ? "its window is under a year" : x.reason}. This is the holding-period return.${paidNote}`,
+      note: `${why}, so the methodology would use XIRR — which cannot be struck here because ${x.shown ? "its window is under a year" : x.reason}. This is ${HPR_IS}.${paidNote}`,
     };
   }
   const days = daysBetween(d.firstCall!, d.valuedAt!);
@@ -423,7 +432,7 @@ function xirrOf(f: FundReturnInput, d: FundDated | undefined, money: Money, date
   if (d.tranches === 1 && d.paidOut === 0 && f.returnPct != null) {
     return {
       shown: true, pct: f.returnPct, tag: "HPR",
-      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With one call and nothing paid back, the money-weighted return over that window is the holding-period return.`,
+      note: `The money went in ${pooled.windowDays} days before the valuation — under a year, so an annual rate would be a projection. With one call and nothing paid back, the money-weighted return over that window equals ${HPR_IS}.`,
     };
   }
   return {
@@ -468,7 +477,7 @@ export function fundReturnColumnMeta(measure: ReturnMeasure, cells: MeasuredRetu
  * single purchase date nor a year-end valuation.
  */
 export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
-  cagr: "a private book has no one date the money went in — its funds were paid in over years, so compounding from any single date would credit money with time it was not invested. The pooled XIRR is under XIRR.",
+  cagr: "a compound annual rate needs one date the money went in, and a row that spans several holdings has one per holding — compounding from any single date would credit some of the money with time it was not invested. The pooled XIRR is under XIRR.",
   ytd: "a year-to-date return needs the book's value on 1 January, and no statement here values a fund on that date.",
   calendar: "a calendar-year return needs a valuation at both ends of the year, and no statement here values a fund at a year end.",
 };
@@ -480,7 +489,7 @@ export const PM_AGG_NO_MEASURE: Partial<Record<ReturnMeasure, string>> = {
  */
 export const PM_RETURN_HINTS: Partial<Record<ReturnMeasure, string>> = {
   auto: "One call, held under a year: holding-period return. One call held a year or more: CAGR. More than one dated call, or cash paid back: XIRR. Each cell says which one it is.",
-  absolute: "FIFO: the gain on the units held plus the gain on any units redeemed, over the capital paid in for both — not annualised. Income a fund has paid out is not in it — XIRR counts that.",
+  absolute: "FIFO: the gain on the units held plus the gain on any units redeemed, over what those units cost — not annualised, and not a return on Paid in. Income a fund has paid out is not in it — XIRR counts that.",
   cagr: "The return on cost annualised — only for a fund paid in one call at least a year ago that has paid nothing back. A fund paid in several calls is money-weighted instead.",
   xirr: "Money-weighted across every dated call, every dated payout and the value on the fund's statement date — each fund's own capital account prints every one.",
   ytd: "The fund's own return since 1 January — measurable only where it was entered during the year, because no statement here values a fund on 1 January.",
