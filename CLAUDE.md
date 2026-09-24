@@ -24008,35 +24008,30 @@ sentence back on screen (50), the can't-be-checked note back as a sentence
 
 #### The verification
 
-Every result below is from the tree that ships: this change merged with #94
-(main `9d51cad`), and each was run again there rather than carried across.
+Every result below is from the tree that ships: this change merged with #95
+(main `9dd55a6`), and each was run again there rather than carried across. The
+code that ships is `13a023c`; every commit after it changes only these notes
+and the route list of #91's bug harness.
 
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
 neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (49 suites,
-2,668 checks, 0 failed — `priceAlerts.test.ts` and `researchLevels.test.ts`
-among them; its four NOT CHECKED lines are main's: three managers' bridges with
-no performance history on their capital's own date, and the fund-NAV basis
-gate) · `check:family` **124/0**, which is #94's own 93 plus this change's 31 ·
-`check:pages` **298 combinations clean, 0 invariant failures** · `npm run
-build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY:
-a price level is the family's own input and never reaches the book. CI (`build`)
-and Cloudflare Pages are green on the final commit.
+2,686 checks, 0 failed — main's 2,500, plus 52 in `priceAlerts.test.ts` and
+134 in `researchLevels.test.ts`; its four NOT CHECKED lines are main's: three
+managers' bridges with no performance history on their capital's own date, and
+the fund-NAV basis gate) · `check:family` **126/0**, which is #95's own 93 plus
+this change's 33 · `check:pages` **302 combinations clean, 0 invariant
+failures** · `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY: a price level is the family's own input
+and never reaches the book. CI (`build`) and Cloudflare Pages are green on the
+final commit.
 
-**`test:family` HAS TWO CHECKS FEWER THAN ON THE TREE MERGED WITH #91, AND BOTH
-WERE #94's TO REMOVE.** #94 took the sides line off Private Market, and
-`pageScopeNote` with it, so the two `marketSide.test.ts` checks that read that
-note went too: *"the sides on the page rebuild its stated book total"* and *"the
-scope note no longer carries the removed card's fund lists"*. A third was
-reworded, not removed. The two runs were compared check by check, and nothing
-else differs.
-
-**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10co records 288 combinations
-clean on main. This change adds five routes — `cio-alerts`,
-`cio-alerts-nofeed`, `cio-alerts-empty`, `cio-alerts-badge` and
-`stock-funds-only-targets` — each walked in both themes, which makes 298. The
-fourteen invariants not checked were read out of the log by route, and all
-fourteen are main's claims:
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cp records 290 combinations
+clean on main. This change adds six routes — `cio-alerts`,
+`cio-alerts-nofeed`, `cio-alerts-empty`, `cio-alerts-badge`,
+`stock-funds-only-targets` and `stock-aif-targets` — each walked in both themes,
+which makes 302. The fourteen invariants not checked were read out of the log by
+route, and all fourteen are main's claims:
 
 - **ten KPI-tile lines** (every tile on this book carries a figure), one per
   Morning CIO route: main's six, and this change's four alerts routes;
@@ -24044,29 +24039,31 @@ fourteen are main's claims:
 - **one redeemed-account line** on `private-market-folios`;
 - **one crumb** on `holdings-unknown`.
 
-None of this change's own checks abstains. The sweep ran with no harness beside
-it, on a build made after the last edit to any file it serves and with the
-checker as committed. #94 made the Transactions walks wait for their table
-rather than pause a fixed 1.2 s — the cause of the load failures Stage 10cn
-records — and all nine Transactions routes passed.
+None of this change's own checks abstains, and #95's prose check passes on every
+route, this change's six included. The sweep served the working copy's own
+build; for its last seventeen minutes the alerts bug pass was running beside it,
+in a separate worktree with its own preview, and it came back clean anyway.
 
-**THE BUG HARNESSES WERE DRY-RUN ON THIS TREE AND NOT RE-RUN**, for the reasons
-in the seventh merge note above: all 49 of `alerts-bug.sh`'s patches, all 27 of
-#91's `stock-tabs-bug.sh` and all 27 of #94's `pm-prose-bug.sh` apply to the
-merged files, and #94 changed none of the lines they patch or the checks they
-fire. Their last full runs were on the tree merged with #91, one after the
-other, in a separate worktree with its own preview:
+**THE BUG HARNESSES, ON THIS TREE:**
 
-- `alerts-bug.sh`, all 49 cases, after a control that came back clean (its five
-  routes clean, `check:family` 124/0, every suite clean). The table above is
-  that run. Every row but 48 and 49 reads as it did on the tree merged with #85.
-- #91's `stock-tabs-bug.sh`, the four cases whose checks run on the My targets
-  tab: 1 (every tab drawn at once) fires on all 36 stock routes, 4 (the tabs
-  reordered) on all 36, 5 (a tile dropped) on the 31 that draw tiles, and 14
-  (the plan-view sentence, now under the closed More) on `stock-targets`. The
-  other 23 cases patch code that merge did not change.
-
-The full sweep above is the control for all three on this tree.
+- **`alerts-bug.sh`, all 52 cases**, after a control that came back clean (its
+  five routes clean, `check:family` 126/0, both suites clean). The table above
+  is that run. Every row but 40–42 reads as it did on the tree merged
+  with #91, and 50–52 are new.
+- **#91's `stock-tabs-bug.sh`**: the four cases whose checks run on the My
+  targets tab ran again, now over 37 stock routes with `stock-aif-targets` added:
+  1 (every tab drawn at once) fires on all 37, 4 (the tabs reordered) on all 37,
+  5 (a tile dropped) on the 32 that draw tiles, and 14 (the plan-view sentence,
+  under the closed More) on `stock-targets`. The other 23 were dry-run on the
+  merged files, and 22 apply. None of those 22 patches the alert card, so the
+  full sweep above is their control. The 23rd is case 11 — every mandate listed
+  under a holding's name — and it does not apply on MAIN either: #95 rewrote the
+  line it anchors on and did not move the anchor. That is main's harness to
+  fix, and it is named here rather than fixed in a merge.
+- **#95's `pages-prose-bug.sh` (42 cases) and #94's `pm-prose-bug.sh` (27)**
+  were dry-run on the merged files, and every patch applies. Each patches main's
+  lines and fires main's checks, and this change edits neither, so the full
+  sweep above is their control on this tree.
 
 ### Stage 10k — News & Announcements: REMOVED
 
