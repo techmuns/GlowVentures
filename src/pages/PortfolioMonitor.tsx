@@ -1155,8 +1155,11 @@ export function PortfolioMonitor() {
    *
    * IT MOVES NO MONEY. Measured on this book: 5 rows across 2 accounts, every
    * one of them ₹0 of market value and no reported cost. What changes is the row
-   * count and the section counts, and the rows are NAMED under the table rather
-   * than silently gone — this book shows what it can and names the rest.
+   * count and the section counts. They are not named on this table — the note
+   * that named them went at Stage 10ax, and the sweep asserts it stays gone —
+   * but they are not silently gone either: `/holdings` counts what it leaves
+   * out in its row-count hover, and the money a redemption returned is on
+   * Transactions under Sells (MH-17).
    */
 
   const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped, realisedFacts, dupCost, dupPnl, markDates } = useMemo(() => {
@@ -1181,7 +1184,13 @@ export function PortfolioMonitor() {
      * reader can only find by accident.
      */
     const small = droppedHoldings(positions).negligible;
-    const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)) };
+    /* WHAT THE FLOOR TAKES FROM WHICH TOTAL (MSX-23). On the Security view the
+       row totals are company shares alone, so only the specks that ARE company
+       shares leave them; the weight base and the partition leave out all of
+       it. "Every total beside it" said the whole amount of both. */
+    const smallShares = small.filter(isCompanyShare);
+    const smallDropped = { count: small.length, value: sum(small.map((x) => x.marketValue)),
+      shareCount: smallShares.length, shareValue: sum(smallShares.map((x) => x.marketValue)) };
     if (entity !== "All") base = base.filter((p) => ownerOf(accIdx, p) === entity);
     if (sector !== "All") base = base.filter((p) => sectorOfPos(p) === sector);
     /**
@@ -1397,9 +1406,10 @@ export function PortfolioMonitor() {
        * different decisions about one company and must read as two rows — one
        * under Direct Equity, one under the mandate that chose it — rather than
        * silently landing under whichever route the first lot happened to take.
-       * No name in this drop is held both ways (measured: zero of 175 distinct
-       * equity names), so nothing on screen moves today; the key is what stops a
-       * future drop merging them without a word.
+       * ICICI Bank is held both ways in this drop — Ankita's own demat and
+       * Goldstandard's Aristos mandate — and it is two rows, one under Direct
+       * Equity and one inside the mandate, which is this key doing its job. It
+       * carries no realised figure, so no money moves between them (MH-17).
        */
       /**
        * ── ONE ROW PER FUND, NOT PER UNIT CLASS ──────────────────────────────
@@ -2780,7 +2790,12 @@ export function PortfolioMonitor() {
       e.mv += v.marketValue; e.n += 1;
       return acc.set(v.route, e);
     }, new Map<string, { route: string; mv: number; n: number }>()).values()].sort((a, b) => b.mv - a.mv);
-    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${g.route}${g.n === 1 || g.route === ROUTE_LABEL.unknown ? "" : "s"}`);
+    // "2 manager's mandates" is not a plural (MH-17): two mandates are
+    // "discretionary mandates" — never "managers'", which would claim two
+    // managers where one manager runs both (Goldstandard's Aristos for two members).
+    const routeWord = (route: string, n: number) => n === 1 || route === ROUTE_LABEL.unknown ? route
+      : route === ROUTE_LABEL.mandate ? "discretionary mandates" : `${route}s`;
+    const parts = by.map((g) => `${money(g.mv)} through ${g.n === 1 ? "" : `${g.n} `}${routeWord(g.route, g.n)}`);
     const joined = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
     const gap = sum(vs.map((v) => v.marketValue)) - r.marketValue;
     return `: ${joined}${gap >= 1 ? `, as the statements print it, of which ${money(gap)} is one holding reported twice` : ""}`;
@@ -4394,7 +4409,11 @@ export function PortfolioMonitor() {
                 <TrFoot view={holdView} className="px-2 py-1.5 text-slate-200"
                   data-footer-total=""
                   labelTitle={(smallDropped.count > 0
-                        ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total, which is what this figure and every total beside it leave out. Nothing is missing: the book still carries them and the statements still report them.`
+                        ? `Total · ${rows.length} rows. ${smallDropped.count} holding${smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} ${smallDropped.count === 1 ? "is" : "are"} dropped automatically at the family's instruction — ${fmtFromBase(smallDropped.value)} in total${bySecurity
+                          ? `. On this view that is what the weight base and the Total exposure partition leave out; the company-share totals on this row leave out ${smallDropped.shareCount
+                              ? `only the ${fmtFromBase(smallDropped.shareValue)} of it that is company shares (${smallDropped.shareCount} holding${smallDropped.shareCount === 1 ? "" : "s"}), because the rest are funds, which are not rows here`
+                              : "none of it, because every one of them is a fund, which is not a row here"}`
+                          : ", which is what this figure and every total beside it leave out"}. Nothing is missing: the book still carries them and the statements still report them.`
                         : `Total · ${rows.length} rows. No holding in this book falls under the ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)} floor.`)
                     + (dupGap > 0
                         ? ` The rows above are each member's statement as printed, so they add to ${money(rawMV)}; this total counts a holding two members both report once, at ${money(totMV)} — a ${money(dupGap)} overlap.`

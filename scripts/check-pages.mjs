@@ -1074,6 +1074,12 @@ const SECURITY_AXIS_BOOK = (() => {
        */
       smallDroppedCount: smallRows.length,
       smallDroppedValue: smallValue,
+      // [D] MSX-23: the part of the floor that is company shares — all a
+      // company-share total can leave out.
+      smallDroppedShares: {
+        count: smallRows.filter((p) => p.assetClass === "Equity").length,
+        value: smallRows.filter((p) => p.assetClass === "Equity").reduce((a, p) => a + p.marketValue, 0),
+      },
       smallDroppedKeys: [...smallKeys],
       measured, measuredCr: measured / 1e7,
       derived, derivedCr: derived / 1e7,
@@ -10959,6 +10965,63 @@ const CHILD_REALISED_C = [
   }],
 ];
 
+/**
+ * ── [D] THE FLOOR SAYS WHICH TOTALS IT TAKES FROM, ON THIS VIEW (MSX-23) ────
+ * On the Security view the row totals are company shares alone, so only the
+ * specks that are company shares leave them, while the weight base and the
+ * partition leave out all of it. Every figure is `SECURITY_AXIS_BOOK`'s.
+ */
+const floorReachChecks = (axis) => [
+  [`[D] the footer's floor sentence says which totals leave the specks out on this view (MSX-23, ${axis})`, (t, ctx) => {
+    const b = SECURITY_AXIS_BOOK;
+    if (!b) return false;
+    if (!b.smallDroppedCount) return { notChecked: "no holding in this book falls under the floor" };
+    const tt = (ctx?.titles ?? []).find((x) => /dropped automatically at the family's instruction/i.test(x ?? "")) ?? "";
+    const m = /(\d+) holdings? worth under .*? (?:is|are) dropped automatically at the family's instruction — ₹([\d,]+(?:\.\d+)?) in total/i.exec(tt);
+    if (!m || Number(m[1]) !== b.smallDroppedCount || Math.abs(Number(m[2].replace(/,/g, "")) - b.smallDroppedValue) >= 1) return false;
+    if (axis === "category") return /which is what this figure and every total beside it leave out/i.test(tt);
+    const sh = b.smallDroppedShares;
+    if (/every total beside it/i.test(tt) || !/weight base and the Total exposure partition leave out/i.test(tt)) return false;
+    if (!sh.count) return /leave out none of it, because every one of them is a fund/i.test(tt);
+    const s2 = /leave out only the ₹([\d,]+(?:\.\d+)?) of it that is company shares \((\d+) holdings?\)/i.exec(tt);
+    return !!s2 && Number(s2[2]) === sh.count && Math.abs(Number(s2[1].replace(/,/g, "")) - sh.value) < 1;
+  }],
+];
+/**
+ * ── [D] A ROUTE HELD MORE THAN ONCE IS A PLURAL IN WORDS (MH-17) ────────────
+ * The chevron's hover read "₹1 Cr through 2 manager's mandates" — a possessive
+ * with an "s" stuck on. Two mandates are "discretionary mandates", never
+ * "managers'", which would claim two managers where one runs both. Load-bearing:
+ * the book must hold a company through two or more mandates, counted here from
+ * `glowData.ts`, or the claim has no subject.
+ */
+const MULTI_MANDATE_COMPANIES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    if (!accounts.length || !positions.length) return null;
+    const pms = new Set(accounts.filter((a) => a.engagement === "PMS").map((a) => a.accountId));
+    const small = smallKeysOf(positions);
+    const by = new Map();
+    for (const p of positions) {
+      if (p.assetClass !== "Equity" || small.has(p.securityKey) || !pms.has(p.accountId)) continue;
+      if (!by.has(p.securityKey)) by.set(p.securityKey, new Set());
+      by.get(p.securityKey).add(p.accountId);
+    }
+    return [...by.values()].filter((s) => s.size >= 2).length;
+  } catch { return null; }
+})();
+const ROUTE_WORDS_D = [
+  ["[D] a route held more than once is pluralised in words — never \"2 manager's mandates\" (MH-17)", (t, ctx) => {
+    if (MULTI_MANDATE_COMPANIES === null) return false;
+    const tips = (ctx?.titles ?? []).filter((x) => /^(Held through \d+ accounts?:|Show how this name is held|Hide how this name is held)/.test(x ?? ""));
+    if (!tips.length) return false;
+    if (tips.some((x) => /\b\d+ manager's mandates\b/.test(x))) return false;
+    if (!MULTI_MANDATE_COMPANIES) return { notChecked: "no company in this book is held through two or more mandates" };
+    return tips.some((x) => /\b\d+ discretionary mandates\b/.test(x));
+  }],
+];
 /**
  * ── ONE NOUN PER COUNT (MH-06) ──────────────────────────────────────────────
  *
@@ -27004,7 +27067,7 @@ const INVARIANTS = {
     // ── WHAT THE FOOTER AND THE BANDS ARE STRUCK OVER, AND THE SECTOR COLUMN
     // (MH-04, MH-05, MH-06, MH-07) — every expectation `MONITOR_BASIS_BOOK`'s.
     ...footBasisChecks("all"),
-    ...footCChecks("all"), ...FOOT_C_NO_OVERLAP, ...ROW_REASONS_C,
+    ...footCChecks("all"), ...FOOT_C_NO_OVERLAP, ...ROW_REASONS_C, ...floorReachChecks("category"),
     ...SECTION_REALISED,
     ...SECTION_COUNTS,
     ...sectionTotalsTie("category"),
@@ -27878,7 +27941,7 @@ const INVARIANTS = {
     // ── THE FOOTER ON THIS AXIS IS STRUCK OVER THE COMPANY SHARES THE ROWS ARE,
     // and names that set; the Sector column is the shared index (MH-04 – MH-07).
     ...footBasisChecks("companies"),
-    ...footCChecks("companies"), ...DERIVED_ONLY_C,
+    ...footCChecks("companies"), ...DERIVED_ONLY_C, ...floorReachChecks("security"), ...ROUTE_WORDS_D,
     ...sectorCellChecks("security"),
   ],
   /**
