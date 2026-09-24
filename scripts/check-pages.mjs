@@ -2202,6 +2202,99 @@ const CAPITAL_BOOK = (() => {
 })();
 
 /**
+ * ── WHAT THE PRIVATE FUNDS PAID BACK, COUNTED ONCE (B-10) ──────────────────
+ *
+ * Re-derived here off `glowData.ts`, never through `distributionOf`,
+ * `bookFolios` or `INCOME_ONLY_VIEWS` — a check that calls the code it is
+ * checking agrees with it by construction.
+ *
+ *   - a CAPITAL ACCOUNT's distribution is its own printed total, or, where it
+ *     prints none, the gross of its dated payouts other than equalisation (the
+ *     statements print equalisation apart, and it is not a distribution);
+ *   - an INCOME-ONLY folio's is the sum of its distribution letters. Which
+ *     holding a letter belongs to is re-derived by its HOLDER and its FUND — the
+ *     private position the letter account's own owner holds whose key begins
+ *     with the fund the letter names — never by the committed view table the
+ *     page uses, so the two paths meet only if both are right;
+ *   - COUNTED ONCE on the page's own rule: a capital account PM-A2 leaves out is
+ *     left out here too (`CAPITAL_BOOK.once.leftOut`), and of the letters on two
+ *     views of one holding counted once, the one on the view of the member a
+ *     consolidated figure KEEPS — the first of its group in book order — stands.
+ *
+ * `xirr` is each fund's other set of the same cash, for the tile's reconciliation
+ * against the return column: every payout dated on or before the fund's own
+ * valuation date, equalisation included.
+ */
+const DIST_BOOK = (() => {
+  try {
+    if (!CAPITAL_BOOK) return null;
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const whole = bookArray(src, "BOOK_COMMITMENTS");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    const cas = bookArray(src, "BOOK_CORPORATE_ACTIONS");
+    if (![whole, accounts, positions, cas].every(Array.isArray)) return null;
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const onPage = new Set(CAPITAL_BOOK.ids);
+    const left = new Set(CAPITAL_BOOK.once.leftOut.map((x) => x.accountId));
+    const own = (c) => c.distributed != null ? Number(c.distributed)
+      : Array.isArray(c.payouts) ? c.payouts.filter((x) => x.kind !== "equalisation").reduce((t, x) => t + Number(x.gross), 0)
+      : null;
+    const caps = whole.filter((c) => onPage.has(c.accountId)).map((c) => ({
+      accountId: c.accountId, name: c.name, counted: !left.has(c.accountId), amount: own(c),
+    }));
+    // THE LETTERS, and whose holding each is a view of.
+    const priv = positions.filter((p) => p.marketSide === "private" && (Number(p.quantity) || 0) > 0);
+    const held = new Set(positions.map((p) => p.accountId));
+    const letterAccts = [...new Set(cas.filter((x) => x.kind === "distribution" && x.amount != null && !held.has(x.accountId))
+      .map((x) => x.accountId))];
+    const letters = [];
+    for (const id of letterAccts) {
+      const mine = cas.filter((x) => x.kind === "distribution" && x.amount != null && x.accountId === id);
+      const keys = [...new Set(mine.map((x) => x.securityKey))];
+      if (keys.length !== 1) continue;
+      const owner = acc.get(id)?.ownerId;
+      const views = priv.filter((p) => acc.get(p.accountId)?.ownerId === owner && String(p.securityKey).startsWith(keys[0]));
+      if (views.length !== 1) continue;
+      letters.push({ accountId: id, accountNo: String(acc.get(id)?.accountNo ?? ""), view: views[0], amount: mine.reduce((t, x) => t + Number(x.amount), 0) });
+    }
+    // Of two letters on views of ONE holding counted once, the kept member's stands.
+    const keptOf = (p) => p.dedupeGroup ? priv.find((q) => q.dedupeGroup === p.dedupeGroup) : p;
+    const byGroup = new Map();
+    for (const l of letters) {
+      const g = l.view.dedupeGroup ?? `${l.view.accountId}|${l.view.securityKey}`;
+      byGroup.set(g, [...(byGroup.get(g) ?? []), l]);
+    }
+    for (const ls of byGroup.values()) {
+      const kept = ls.find((l) => keptOf(l.view) === l.view) ?? ls[0];
+      for (const l of ls) { l.counted = l === kept; l.countedAs = l === kept ? null : kept.accountNo; }
+    }
+    const rows = [...caps.map((c) => ({ ...c, basis: "capital-account" })), ...letters.map((l) => ({ ...l, basis: "letter" }))];
+    const once = rows.filter((r) => r.counted);
+    const sumOf = (rs) => rs.filter((r) => r.amount != null).reduce((t, r) => t + r.amount, 0);
+    // THE XIRR'S SET OF THE SAME CASH, per counted capital account with a dated payout record.
+    const xirr = whole.filter((c) => onPage.has(c.accountId) && !left.has(c.accountId) && Array.isArray(c.payouts) && c.payouts.length)
+      .map((c) => {
+        const valuedAt = acc.get(c.accountId)?.asOf ?? null;
+        const by = (k) => c.payouts.filter((x) => x.kind === k && (!valuedAt || x.date <= valuedAt)).reduce((t, x) => t + Number(x.gross), 0);
+        const inside = c.payouts.filter((x) => !valuedAt || x.date <= valuedAt).reduce((t, x) => t + Number(x.gross), 0);
+        return { accountId: c.accountId, name: c.name, valuedAt, paidOut: inside, equalisation: by("equalisation"), tile: own(c) };
+      })
+      .filter((x) => x.tile != null && Math.abs(x.paidOut - x.tile) > 1);
+    return {
+      once: sumOf(once),
+      printed: sumOf(rows),
+      reportedOf: once.filter((r) => r.amount != null).length,
+      accountsOf: once.filter((r) => r.basis === "capital-account" || r.amount != null).length,
+      letters: letters.map((l) => ({ accountNo: l.accountNo, amount: l.amount, counted: l.counted, countedAs: l.countedAs })),
+      /** Every counted part, by basis — what the hover must name. */
+      parts: once.filter((r) => r.amount != null).map((r) => ({ basis: r.basis, amount: r.amount, accountNo: r.accountNo ?? null })),
+      xirr,
+    };
+  } catch { return null; }
+})();
+
+/**
  * THE PRIVATE ACCOUNTS NOTHING VALUES — the private-market table's "Not valued ·
  * missing data" section, derived off `glowData.ts` by the rule the page is meant
  * to apply (an AIF-engagement account that reports no holding at all, anywhere
@@ -18993,6 +19086,100 @@ const INVARIANTS = {
       if (!tile) return false;
       return /^DISTRIBUTIONS\b/.test(tile) && /cash paid back/i.test(tile);
     }],
+    /**
+     * B-10 — WHAT THE FUNDS PAID BACK, EACH DISTRIBUTION ONCE, ON THE TABLE'S
+     * OWN COUNTED-ONCE BASIS.
+     *
+     * The tile summed the capital accounts' distribution totals alone, so the
+     * ₹7,15,619 360 ONE's letters report paying on the Special Opportunities
+     * units was in no figure — and the two letters, one per CRN on one holding
+     * counted once, are a pair the tile must count ONCE. `DIST_BOOK` re-derives
+     * the figure off glowData by a second path (the letter's own holder and
+     * fund, never the view table), and the bound is the tile's own printing
+     * precision reproduced — half its last printed digit, never a tolerance.
+     * The letter counted twice reads ₹64 L, the letters dropped ₹50 L, and
+     * equalisation folded in ₹66 L; each lands outside it.
+     */
+    ["the distributions tile is each fund's distribution once, letters included (B-10)", (t, ctx) => {
+      const tile = ctx?.tileStrip?.texts?.distributed ?? "";
+      const m = /₹\s*([\d,]+(?:\.(\d+))?)\s*(Cr|L|K)?/i.exec(tile);
+      if (!m) return false;
+      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      const unit = (m[3] ?? "").toUpperCase();
+      const scale = unit === "CR" ? 1 : unit === "L" ? 0.01 : unit === "K" ? 0.0001 : 1e-7;
+      const shown = cr(m[1]) * scale;
+      const bound = 0.5 * 10 ** -(m[2]?.length ?? 0) * scale;
+      return Math.abs(shown - DIST_BOOK.once / 1e7) <= bound + 1e-9
+        // …and the pair is real on this book, or "once" and "as printed" are one figure.
+        && DIST_BOOK.printed - DIST_BOOK.once > 1;
+    }],
+    /**
+     * …AND THE HOVER NAMES EVERY PART ON ITS OWN PAPER'S BASIS. A letter says
+     * what was REMITTED, after the fund's expenses and TDS; a capital account's
+     * total is income and principal BEFORE TDS — two different figures a reader
+     * would add as one. Counted against the book's own parts, and the letter it
+     * counts with another must name both account numbers.
+     */
+    ["the distributions hover names each part on its own basis, and the letter it counts with another (B-10)", (t, ctx) => {
+      const d = ctx?.tileStrip?.details?.distributed ?? "";
+      if (!d) return false;
+      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      const n = (re) => (d.match(re) ?? []).length;
+      const letters = DIST_BOOK.parts.filter((x) => x.basis === "letter");
+      const caps = DIST_BOOK.parts.filter((x) => x.basis === "capital-account");
+      if (!letters.length) return notChecked("no distribution letter on this book");
+      const cov = /(\d+) of the (\d+) private-market accounts that could report one/i.exec(d);
+      return n(/distribution letter says was remitted, after the fund's expenses and TDS/gi) === letters.length
+        && letters.every((l) => d.includes(` ${l.accountNo}'s distribution letter`))
+        && n(/its capital account(?: reports no distribution|'s distribution total)/gi) === caps.length
+        && /Equalisation is not a distribution/i.test(d)
+        && DIST_BOOK.letters.filter((l) => !l.counted).every((l) =>
+          d.includes(` ${l.accountNo} reports`) && d.includes(`counted with`) && d.includes(`${l.countedAs}'s`))
+        && !!cov && Number(cov[1]) === DIST_BOOK.reportedOf && Number(cov[2]) === DIST_BOOK.accountsOf;
+    }],
+    /**
+     * …AND IT MEETS EACH FUND'S XIRR IN THE XIRR'S OWN FIGURES. The return
+     * column counts every payout dated on or before the fund's valuation,
+     * equalisation included; the tile counts the distribution total. The hover
+     * walks from one to the other, fund by fund — struck against `DIST_BOOK`'s
+     * own per-fund payout sums, so a reconciliation that dropped a fund, or
+     * named the wrong figure for one, fails rather than reading plausibly.
+     */
+    ["the distributions hover reconciles with each fund's XIRR, in the XIRR's own figures (B-10)", (t, ctx) => {
+      const d = ctx?.tileStrip?.details?.distributed ?? "";
+      if (!d) return false;
+      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      const fig = (s) => {
+        const m = /₹\s*([\d,]+(?:\.(\d+))?)\s*(Cr|L|K)?/i.exec(s ?? "");
+        if (!m) return null;
+        const u = (m[3] ?? "").toUpperCase();
+        const scale = u === "CR" ? 1e7 : u === "L" ? 1e5 : u === "K" ? 1e3 : 1;
+        return { v: cr(m[1]) * scale, bound: 0.5 * 10 ** -(m[2]?.length ?? 0) * scale };
+      };
+      const said = [...d.matchAll(/its XIRR counts (₹[\d,.]+\s*(?:Cr|L|K)?) paid back by its [^.]*? valuation(?: — (₹[\d,.]+\s*(?:Cr|L|K)?) of equalisation more than this tile)?/gi)]
+        .map((m) => ({ paid: fig(m[1]), eq: m[2] ? fig(m[2]) : null }));
+      if (said.length !== DIST_BOOK.xirr.length) return false;
+      const want = [...DIST_BOOK.xirr].sort((a, b) => a.paidOut - b.paidOut);
+      const got = [...said].sort((a, b) => (a.paid?.v ?? 0) - (b.paid?.v ?? 0));
+      return want.every((w, i) => {
+        const g = got[i];
+        if (!g.paid || Math.abs(g.paid.v - w.paidOut) > g.paid.bound + 1e-6) return false;
+        if (w.equalisation > 1) return !!g.eq && Math.abs(g.eq.v - w.equalisation) <= g.eq.bound + 1e-6;
+        return !g.eq;
+      });
+    }],
+    /**
+     * …AND THE MULTIPLE REFUSES ON THE SAME ACCOUNTS. TVPI divides what came
+     * back by what went in, so its refusal counts the accounts the distributions
+     * tile counts — the same N of M, from the book, never a second count.
+     */
+    ["the multiple's refusal counts the accounts the distributions tile counts (B-10)", (t, ctx) => {
+      const d = ctx?.tileStrip?.details?.multiple ?? "";
+      const m = /Only (\d+) of the (\d+) private-market accounts/i.exec(d);
+      if (!m) return false;
+      if (!DIST_BOOK) return notChecked("the distributions could not be re-derived from the book");
+      return Number(m[1]) === DIST_BOOK.reportedOf && Number(m[2]) === DIST_BOOK.accountsOf;
+    }],
 
     /**
      * ── THE HEADER PROSE AND BOTH PILLS ARE GONE ────────────────────────────
@@ -19139,14 +19326,29 @@ const INVARIANTS = {
      * exactly the NAV overlay. Struck on the page's own printed
      * "N% of the ₹X Cr book", the claim is about this page's own
      * consistency, which is what it was always for.
+     *
+     * AND SINCE B-01 THAT DENOMINATOR IS THE TOP BAR'S OWN BOOK. The tile and
+     * the sides line divide by the live consolidated book the top bar prints,
+     * while the ROWS stay on each fund's statement mark (§6) — no quote or
+     * published NAV moves a private holding, so the private side is the same
+     * figure on both bases. This check still reads the page's own printed
+     * denominator; the one beneath it holds that denominator to the top bar.
      */
     /*
      * ...AND THE LINE THAT STATED THE SIDES IS GONE, at the family's request,
      * so the tile is held to the BOOK rather than to a sentence: its figure is
      * the book's own private side and its "of the ₹X book" is the book's own
-     * consolidated total on the STATEMENT basis this page reads (see
-     * `statementTotalMV`) — two figures `SIDE_BOOK` derives off `glowData.ts`
-     * by a path this page does not take. Both are on the tile a reader sees.
+     * consolidated total — two figures `SIDE_BOOK` derives off `glowData.ts` by
+     * a path this page does not take. Both are on the tile a reader sees.
+     *
+     * THE BOOK IS THE LIVE ONE, THE ONE THE TOP BAR PRINTS (B-01), and not the
+     * statement total (`statementTotalMV`): this page's rows are the funds' own
+     * statement marks (§6), but the "book" a share is OF is the one a reader
+     * sees an inch above it, and two books on one screen ₹X apart was the
+     * defect. `totalMV` is the checker's live model — the published NAVs laid
+     * over the statements and the depository's cash valued, as `bookArray`
+     * builds it — and the private side is the same on either basis, because no
+     * private holding resolves a quote or a scheme NAV (asserted elsewhere).
      */
     ["the private tile is the book's private side, and its share is of the whole book", (t, ctx) => {
       const text = ctx?.tileStrip?.texts?.value ?? "";
@@ -19156,7 +19358,47 @@ const INVARIANTS = {
       // THE BOUND IS THE PRINTING PRECISION, NOT A FRACTION OF THE NAV. Every
       // figure prints to one decimal in Cr.
       return Math.abs(priv - SIDE_BOOK.privateMV / 1e7) <= 0.15
-        && Math.abs(nav - SIDE_BOOK.statementTotalMV / 1e7) <= 0.15;
+        && Math.abs(nav - SIDE_BOOK.totalMV / 1e7) <= 0.15;
+    }],
+    /**
+     * B-01 — ONE BOOK ON THE SCREEN, THE ONE THE TOP BAR PRINTS.
+     *
+     * The value tile's "of the ₹X book" must be the top bar's own figure: a
+     * reader sees the two an inch apart, and a page that struck its share on
+     * the STATEMENT book printed a second "book" ₹3 Cr away from the first the
+     * day every fund took its published NAV. Compared as PRINTED strings,
+     * because the claim is about what a reader sees — two figures that round
+     * alike are one figure to them, and two that do not are two books. A
+     * missing top bar is a failure: the page would then have no book to be
+     * consistent with. (The sides line that printed the same Total went at
+     * Stage 10co; the check above holds the figure to the book itself, this one
+     * to the top bar, and neither implies the other.)
+     */
+    ["the tile's book is the top bar's own figure (B-01)", (t, ctx) => {
+      const fig = (s) => /₹\s*[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?/i.exec(s ?? "")?.[0]?.replace(/\s+/g, "") ?? null;
+      const top = fig(ctx?.pmView?.topBarValue);
+      const tileBook = fig(/of the (₹[\d,.]+\s*(?:Cr|L|K)?) book/i.exec(ctx?.tileStrip?.texts?.value ?? "")?.[1]);
+      if (!top || !tileBook) return false;
+      return tileBook === top;
+    }],
+    /**
+     * …AND THE HOVER SAYS WHICH BOOK THAT IS, AND THAT THE PRIVATE SIDE IS THESE
+     * ROWS. The rows are the funds' own statement marks and the book is the live
+     * one; the hover is where a reader learns the two meet — "exactly these
+     * rows" where no quote moves a private holding, or the gap named where one
+     * does. Struck against the book's own sides: the sentence must be the one
+     * that is TRUE of this book, never both, never neither.
+     */
+    ["the value tile's hover names the top bar's book and whether its private side is these rows (B-01)", (t, ctx) => {
+      const d = ctx?.tileStrip?.details?.value ?? "";
+      if (!/consolidated book the top bar shows/i.test(d)) return false;
+      const exact = /private side is exactly these rows/i.test(d);
+      const gap = /private side reads/i.test(d);
+      if (exact === gap) return false;
+      if (!SIDE_BOOK) return notChecked("the book's own sides could not be derived");
+      // No private holding resolves an NSE symbol or a scheme NAV on this book
+      // (asserted elsewhere every run), so the live private side IS the rows.
+      return exact;
     }],
     // PM-3. Invested and Unrealised are struck over the rows that HAVE a cost, so
     // they add to the COSTED market value and not to the whole private book. The
@@ -25641,6 +25883,10 @@ const FULL_STRIP_ONLY = new Set([
   "committed, called and invested are three separate tiles, each stating its coverage",
   "the paid-in-but-never-valued tile is the missing-data section's own paid-in, and in no value",
   "the capital-account counts partition rather than crossing two sets",
+  "the distributions tile is each fund's distribution once, letters included (B-10)",
+  "the distributions hover names each part on its own basis, and the letter it counts with another (B-10)",
+  "the distributions hover reconciles with each fund's XIRR, in the XIRR's own figures (B-10)",
+  "the multiple's refusal counts the accounts the distributions tile counts (B-10)",
 ]);
 
 /**
@@ -29755,6 +30001,13 @@ for (const theme of THEMES) {
           // THE REMOVED BLOCKS' OWN HANDLES — the drop-down, the sides line and
           // the line under the total's label — so their absence is counted.
           working: document.querySelectorAll("main [data-pm-working], main [data-pm-sides], main [data-pm-total-sub]").length,
+          /**
+           * THE TOP BAR'S PRINTED FIGURE (B-01), off its own handle outside
+           * `main`. The value tile's "of the ₹X book" and the sides line's
+           * Total must BE this figure as a reader sees it an inch above the
+           * page — never a second book on a different basis.
+           */
+          topBarValue: (document.querySelector("[title='Current Value of Holdings']")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
           /**
            * ── THE CAPITAL-CALL COLUMN, READ STRUCTURALLY ──────────────────────
            *

@@ -19,9 +19,10 @@ import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import {
-  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef,
+  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef, isPrivateClass, dedupedPositions,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
+import { BOOK_CORPORATE_ACTIONS } from "@/data/glowData";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
   privateCapital, countedOnceNote,
@@ -318,7 +319,15 @@ const rangeStart = (a: string, b: string) =>
   a.slice(0, 4) === b.slice(0, 4) ? fmtDate(a).replace(/\s\d{4}$/, "") : fmtDate(a);
 
 export function PrivateMarket() {
-  const { statementPortfolio: portfolio, fmtFromBase } = usePortfolio();
+  /**
+   * TWO BASES, EACH WHERE IT BELONGS (B-01). The ROWS are statement marks — a
+   * reader checks them against each fund's own capital account (§6), and no
+   * private holding resolves a symbol a quote could move. The BOOK every "of the
+   * book" is struck against is the one the top bar shows (`live`): every holding
+   * at its current value, a live price where a quote has landed and each mutual
+   * fund at its published NAV. One figure, one value, on one screen.
+   */
+  const { statementPortfolio: portfolio, portfolio: live, fmtFromBase } = usePortfolio();
   const [q, setQ] = useState("");
   /**
    * WHICH TAB. In the URL like every other view in this app, so a tab is a link
@@ -439,7 +448,11 @@ export function PrivateMarket() {
     // gain stays in the private book's return rather than leaving it.
     const privFifo = fifoTotals(costedRows);
     const costedMV = sum(funds.map((f) => f.costedMV));
-    const bookMV = consolidatedMarketValue(portfolio.positions);
+    // THE TOP BAR'S BOOK — the same consolidated figure, from the same positions.
+    const bookPositions = live?.positions ?? portfolio.positions;
+    const bookMV = live?.totalValue ?? consolidatedMarketValue(portfolio.positions);
+    // …and the private side OF that book, to say on screen that it is these rows.
+    const privLive = sum(dedupedPositions(bookPositions).filter(isPrivateClass).map((p) => p.marketValue));
     // RAW — every statement as printed. Never the same number, by design.
     const rawMV = sum(scope.rows.map((p) => p.marketValue));
 
@@ -447,6 +460,9 @@ export function PrivateMarket() {
     const all = bookFolios({
       positions: current, allPositions: portfolio.positions, accounts: portfolio.accounts,
       commitments, accIdx, schemes,
+      // The funds' own distribution letters — 360 ONE's two income-only folios
+      // report theirs nowhere else (B-10).
+      distributions: BOOK_CORPORATE_ACTIONS,
     });
 
     return {
@@ -455,6 +471,10 @@ export function PrivateMarket() {
       privMV, privCost, privPnL, privFifo, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
+      // THE PRIVATE SIDE OF THE TOP BAR'S BOOK, for the value tile's hover to
+      // say it is these rows (B-01). The sides line that also printed it went
+      // at the family's request (Stage 10co); the tile states the page's share.
+      privLive,
       /**
        * THE CAPITAL ACCOUNTS OF PUBLIC-MARKET FUNDS — left out of every figure
        * on this page and named, in one clause, under the table.
@@ -482,7 +502,7 @@ export function PrivateMarket() {
       byFund: privateBook(all, "fund"),
       byOwner: privateBook(all, "owner"),
     };
-  }, [portfolio]);
+  }, [portfolio, live]);
 
   if (!portfolio || !m) return null;
 
@@ -563,12 +583,56 @@ export function PrivateMarket() {
    */
   const alsoNote = (extra: number | null | undefined, what: string) =>
     countedOnceNote(m.counting, accName, (n) => money(n), extra, what);
+  const moneyN = (n: number) => money(n);
+  /** Per FUND, over the fund rows' own deduped positions — the record Stage 10bw built. */
+  const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, m.accIdx, moneyN, fmtDate);
+  /**
+   * ── WHAT THE FUNDS PAID BACK, AND HOW IT MEETS THE XIRR (B-10) ───────────
+   *
+   * The tile sums what each fund's own papers report as a DISTRIBUTION, on the
+   * table's own counted-once basis: a capital account's distribution total
+   * (income and principal, before TDS; never equalisation, which the statements
+   * print apart) and an income-only folio's distribution letters (the amount the
+   * letter says was remitted). Each fund's XIRR counts a different set of the
+   * same cash — every payout dated on or before its own valuation, equalisation
+   * included — so the tile's hover walks from one to the other, fund by fund,
+   * in the XIRR's own figures rather than a restatement of them.
+   */
+  const distFig = m.byFund.privateTotal;
+  const distParts = m.byFund.folios
+    .filter((f) => f.distributed != null && f.distributionCounted)
+    .sort((a, b) => (b.distributed ?? 0) - (a.distributed ?? 0));
+  const distLeftOut = m.byFund.folios.filter((f) => f.distributed != null && !f.distributionCounted && f.distributedBasis != null);
+  const distWords = (f: BookFolio) => f.distributedBasis === "letter"
+    ? `${money(f.distributed)} — the amount ${f.provider} ${f.accountNo}'s distribution letter says was remitted, after the fund's expenses and TDS`
+    : f.distributed === 0
+      ? `${money(0)} — its capital account reports no distribution, a measured nil`
+      : `${money(f.distributed)} — its capital account's distribution total: income and principal, before TDS`;
+  const distReconcile = distParts.filter((f) => f.distributedBasis === "capital-account" && f.securityKey).map((f) => {
+    const d = fundDated.get(f.securityKey!);
+    if (!d || d.payouts !== "measured" || !d.valuedAt) return null;
+    const eq = d.paidOutByKind.equalisation;
+    // What the distribution total holds that the XIRR leaves inside the value:
+    // payments after the valuation that the statement's own total already runs to.
+    const late = (f.distributed ?? 0) - d.paidOutByKind.income - d.paidOutByKind.capital;
+    if (Math.abs(d.paidOut - (f.distributed ?? 0)) <= 1) return null;
+    return `${f.fundName}: its XIRR counts ${money(d.paidOut)} paid back by its ${fmtDate(d.valuedAt)} valuation`
+      + (eq > 1 ? ` — ${money(eq)} of equalisation more than this tile` : "")
+      + (late > 1 ? `${eq > 1 ? ", and" : " —"} ${money(late)} less: the part of its distribution total paid after that date, which is inside the value the XIRR closes on` : "")
+      + ".";
+  }).filter((x): x is string => !!x);
   const tileMetrics: TileMetric[] = [
     {
       id: "value", label: "Market value", icon: <Handshake className="h-4 w-4" />,
       value: money(m.privMV),
       sub: `${share(m.privMV, m.bookMV, 1)} of the ${money(m.bookMV)} book`,
-      detail: `${money(m.privMV)} ÷ ${money(m.bookMV)} = ${share(m.privMV, m.bookMV, 2)} of the consolidated book. `
+      // THE BOOK IS THE TOP BAR'S (B-01), and the hover says what that book is
+      // and that its private side is these rows — never a second book.
+      detail: `${money(m.privMV)} ÷ ${money(m.bookMV)} = ${share(m.privMV, m.bookMV, 2)} of the consolidated book the top bar shows: `
+        + "every holding at its current value, a live price where a quote has landed and each mutual fund at its published NAV. "
+        + (Math.abs(m.privLive - m.privMV) <= 1
+          ? "Its private side is exactly these rows: they are each fund's own statement mark, and no quote or NAV moves a private holding. "
+          : `Its private side reads ${money(m.privLive)}; the rows here stay on their statements' own marks, ${money(Math.abs(m.privLive - m.privMV))} apart. `)
         + `Across this page's ${m.scope.accounts.length} private accounts · each holding counted once.`,
     },
     {
@@ -662,11 +726,26 @@ export function PrivateMarket() {
     },
     /* *"what is distributions?"* — the label is the client's own word and the
         short line under it is the answer. */
+    /* WHAT IT SUMS IS WHAT IT SAYS (B-10, VD-22): distributions as each fund's
+        own papers report them — income and principal — and never equalisation,
+        which the statements print apart. Counted once, like every figure on this
+        strip; and the hover walks to each fund's XIRR, which counts a different
+        set of the same cash. */
     {
       id: "distributed", label: "Distributions", icon: <Coins className="h-4 w-4" />,
-      value: money(m.ct.distributed),
-      sub: "Cash paid back so far",
-      detail: `${m.ct.distributedOf} of ${m.ct.count} capital accounts have a distribution total this book reads. Not part of the value above, and it does not reduce what a fund can still call.`,
+      value: distFig.distributed == null ? <AbsentValue /> : money(distFig.distributed),
+      sub: distFig.distributed == null ? absentLine("No fund reports one") : "Cash paid back · income + principal",
+      detail: (distFig.distributed == null
+        ? "No private-market fund's papers in this book report a distribution. "
+        : `Income and principal the funds' own papers report paying back, each counted once: `
+          + distParts.map((f) => `${f.fundName} ${distWords(f)}`).join("; ") + ". ")
+        + `${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report one do; the rest print no distribution line and are skipped, never counted as nil. `
+        + "Equalisation is not a distribution — the statements print it apart — and is not in this figure. "
+        + (distReconcile.length ? distReconcile.join(" ") + " " : "")
+        + (distLeftOut.length
+          ? distLeftOut.map((f) => `${f.provider} ${f.accountNo} reports ${money(f.distributed)} too, on the second statement of a holding counted once; it is counted with ${f.distributionCountedAs ? accName(f.distributionCountedAs) : "the first"}'s and not again — pending the family's answer on whether the two are one investment or two${(f.distributed ?? 0) > 0 ? `; if two, add ${money(f.distributed)}` : ""}.`).join(" ") + " "
+          : "")
+        + "Not part of the value above, and it does not reduce what a fund can still call.",
     },
     /* ── THE TWO THAT ARE ABSENT BY MEASUREMENT ──────────────────────────────
         Offered like every other metric: the answer to both is a fact about this
@@ -682,7 +761,7 @@ export function PrivateMarket() {
       id: "multiple", label: "TVPI / DPI", icon: <Handshake className="h-4 w-4" />,
       value: <AbsentValue />,
       sub: absentLine("Too few distribution figures"),
-      detail: `Only ${m.ct.distributedOf} of ${m.ct.count} capital accounts have a distribution total this book reads. A multiple divides what has come back plus what is still inside by what went in; for the other ${m.ct.count - m.ct.distributedOf} this book carries no distribution total — the statement prints none, or prints one no reader here captures yet — and reading those as nil would report a fund that has returned nothing when its statement does not say so.`,
+      detail: `Only ${distFig.distributedOf} of the ${distFig.distributionAccounts} private-market accounts that could report a distribution do. A multiple divides what has come back plus what is still inside by what went in; for the other ${distFig.distributionAccounts - distFig.distributedOf} this book carries no distribution total — the statement prints none, or prints one no reader here captures yet — and reading those as nil would report a fund that has returned nothing when its statement does not say so.`,
     },
     /* Counts of sets this page already draws, so none is a new measurement. */
     {
@@ -821,9 +900,7 @@ export function PrivateMarket() {
   //   member, the   on cost under HPR and the methodology, a POOLED money-weighted
   //   total         return under XIRR, and CAGR, YTD and CY absent with the reason
   //                 — a set of funds has no one date the money went in.
-  const moneyN = (n: number) => money(n);
-  /** Per FUND, over the fund rows' own deduped positions — the record Stage 10bw built. */
-  const fundDated = fundDatedRecords(m.scope.dedupedRows, m.commitments, m.accIdx, moneyN, fmtDate);
+  /** Per FUND — `fundDated`, built above the tiles, which reconcile against it. */
   /** Per FOLIO — one statement's own holding and its own capital account. */
   const folioDated = new Map(m.byFund.folios.filter((f) => f.position).map((f) =>
     [f.key, fundDatedRecords([f.position!], m.commitments, m.accIdx, moneyN, fmtDate).get(f.position!.securityKey)]));
