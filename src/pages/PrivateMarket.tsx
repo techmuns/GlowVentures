@@ -83,7 +83,7 @@ type BookCol = string;
  *
  * `call` IS THE FAMILY'S OWN COLUMN, and LAST, because it is the one column a
  * reader writes to rather than reads — and a stored arrangement that predates
- * it gets it appended rather than losing it (`useTableView`).
+ * it gets it placed after the column it is declared after (`useTableView`).
  */
 const CALL_COLUMN_TITLE = "Upcoming capital calls, entered by the family and saved for everyone who opens this dashboard. "
   + "No fund in this book publishes a forward drawdown schedule, so a call a fund has announced is entered here. "
@@ -330,16 +330,15 @@ export function PrivateMarket() {
   /** Open sections — the private funds start open, the marked one closed. */
   const sections = useExpanded(BOOK_SECTIONS.filter((s) => SECTION_COPY[s].defaultOpen));
   /**
-   * WHICH RETURN(S) THE TABLE SHOWS — the Monitor's own picker and its own
-   * `?ret=` param (Stage 10bw), so "send me the XIRR view" is a link and the
+   * WHICH RETURN(S) THE TABLE SHOWS — the Monitor's own picker (Stage 10bw):
+   * every measure by default, the reader's pick remembered for this page, and a
+   * `?ret=` address still winning, so "send me the XIRR view" is a link and the
    * sweep reaches each measure by address. One column per ticked measure,
    * expanded from the `return` placeholder exactly as on the Monitor.
    *
-   * MEMOISED ON THE MEASURES, NOT REBUILT PER RENDER: `useTableView` keys its
-   * reconciliation on the column array's identity, and a fresh array every
-   * render re-runs it every render.
+   * MEMOISED ON THE MEASURES, NOT REBUILT PER RENDER.
    */
-  const [returnMeasures, setReturnMeasures] = useReturnMeasures();
+  const [returnMeasures, setReturnMeasures, returnSource] = useReturnMeasures("private-market");
   const measureKey = returnMeasures.join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bookCols = useMemo(() => withReturnCols(BOOK_COLS, returnMeasures), [measureKey]);
@@ -1344,7 +1343,7 @@ export function PrivateMarket() {
                 says the statements carry no per-holding cash flows, which is
                 false of a drawdown fund. */}
             {view !== "transactions" && (
-              <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} />
+              <ReturnMeasureSelect measures={returnMeasures} onChange={setReturnMeasures} hints={PM_RETURN_HINTS} source={returnSource} />
             )}
             {view !== "transactions" && <ExpandAllButton allOpen={allOpen} onClick={toggleAll} />}
           </div>

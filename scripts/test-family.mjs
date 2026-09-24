@@ -32,6 +32,7 @@ const SUITES = [
   ["capital calls", "src/lib/__tests__/capitalCalls.test.ts"],
   ["capital-call store", "src/lib/__tests__/enteredCalls.test.ts"],
   ["tile-layout store", "src/lib/__tests__/tileSets.test.ts"],
+  ["table arrangement & return pick", "src/lib/__tests__/tableView.test.ts"],
   ["transaction rollup", "src/lib/__tests__/txnRollup.test.ts"],
   ["dated record merge", "src/lib/__tests__/txnLedger.test.ts"],
   ["transaction sections", "src/lib/__tests__/txnAxis.test.ts"],
@@ -69,6 +70,8 @@ const SUITES = [
   ["review gaps", "src/lib/__tests__/reviewGaps.test.ts"],
   ["Polycab live record", "src/lib/__tests__/polycabLive.test.ts"],
   ["Polycab function", "src/lib/__tests__/polycabFunction.test.ts"],
+  ["price alerts", "src/lib/__tests__/priceAlerts.test.ts"],
+  ["price levels sent to Glow Central Research", "src/lib/__tests__/researchLevels.test.ts"],
 ];
 
 let failed = 0;

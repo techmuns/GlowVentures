@@ -16,6 +16,7 @@
 //   node scripts/dev/check-family-inputs.mjs
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
+import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 
 /**
  * One generated array out of `glowData.ts`, without importing the module — a
@@ -88,6 +89,51 @@ const check = (name, ok, detail = "") => {
 
 const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-sandbox"] });
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
+
+/**
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cq) ──────────────────────
+ *
+ * Every price level saved in this dashboard is also sent to Glow Central
+ * Research. This suite types levels on real holdings, so without this the walk
+ * would post them to the family's LIVE list from localhost. The host is routed
+ * for the whole run, to a stand-in that follows the receiving side's rules (set
+ * replaces, seed only where it has never heard of the company, clear is kept)
+ * and records every request — and `RESEARCH.mode = "down"` answers 404, as the
+ * live one does until its route is deployed.
+ */
+const RESEARCH = { mode: "ok", posts: [], held: new Map() };
+await page.route(/glow-central-research\.tech-441\.workers\.dev/, async (route) => {
+  const req = route.request();
+  const cors = { "access-control-allow-origin": req.headers()["origin"] ?? "*", vary: "origin" };
+  if (req.method() === "OPTIONS") {
+    return route.fulfill({ status: 204, headers: { ...cors, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" } });
+  }
+  let intents = null;
+  if (req.method() === "POST") {
+    try { intents = JSON.parse(req.postData() ?? "{}").intents ?? null; } catch { intents = null; }
+    RESEARCH.posts.push({ origin: req.headers()["origin"] ?? null, intents });
+  }
+  if (RESEARCH.mode === "down") {
+    return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ error: "Not implemented" }) });
+  }
+  const names = ["buyAt", "sellAt", "stopLoss", "target", "alertAbove"];
+  const outcomes = (Array.isArray(intents) ? intents : []).map((i) => {
+    const had = RESEARCH.held.get(i.ticker);
+    if (i.op === "clear") {
+      if (had?.state !== "set") return { ticker: i.ticker, op: "clear", outcome: "unchanged" };
+      RESEARCH.held.set(i.ticker, { ...had, state: "cleared" });
+      return { ticker: i.ticker, op: "clear", outcome: "cleared" };
+    }
+    if (i.op === "seed" && had) return { ticker: i.ticker, op: "seed", outcome: "unchanged" };
+    RESEARCH.held.set(i.ticker, { state: "set", levels: { ...i.levels }, isin: i.isin });
+    return { ticker: i.ticker, op: i.op, outcome: i.op === "seed" ? "seeded" : "set" };
+  });
+  const companies = [...RESEARCH.held.entries()].filter(([, h]) => h.state === "set").map(([ticker, h]) => ({
+    ticker, levels: Object.fromEntries(names.map((n) => [n, h.levels[n] == null ? null : { value: h.levels[n] }])),
+  }));
+  return route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" },
+    body: JSON.stringify({ ok: true, outcomes, companies, count: companies.length, hits: [] }) });
+});
 
 await page.goto(BASE, { waitUntil: "domcontentloaded" });
 // The edge gate, when one is set. Locally there is none and this is a no-op.
@@ -763,28 +809,460 @@ check("...and names the mandates this book does carry",
 // typed. The same treatment `deals.ts` and `household.ts` got in Stage 10f, and
 // the same reason `announcements.ts` stayed when `/news` went.
 //
-// So the surviving surface is asserted here: a name's own company page still
-// writes to the store. The address is taken off the monitor rather than typed,
-// like every other route this suite follows.
-await page.goto(`${BASE}/monitor`, { waitUntil: "networkidle" });
-await page.waitForTimeout(900);
-const watched = page.locator('a[href^="/stock/"]').first();
-if (await watched.count()) {
-  await watched.click();
-  await page.waitForTimeout(1200);
-  // THE PANEL IS ON ITS OWN TAB NOW. The position page became five tabs with no
-  // long scroll, and the family's own judgements are "My targets" — so the walk
-  // opens that tab the way a reader does, by its KEY rather than its label. A
-  // missing tab is a finding: the panel then has no way to be reached at all.
-  const targetsTab = page.locator('[data-stock-tab-key="targets"]');
-  check("a company page offers the My targets tab", (await targetsTab.count()) === 1);
-  if (await targetsTab.count()) { await targetsTab.click(); await page.waitForTimeout(600); }
-  text = await page.locator("body").innerText();
-  check("a company page still carries the Investment tools panel", /investment tools/i.test(text));
-  check("...with the judgement fields the watchlist store holds",
-    /target price/i.test(text) && /fair value/i.test(text) && /valuation method/i.test(text));
-} else {
-  check("a company page still carries the Investment tools panel", false, "no /stock/ link on Portfolio Monitor");
+// WHERE A HOLDING'S ALERT BOXES ARE: the My targets tab of its own page (main's
+// Stage 10cn made the position page five tabs), with `#alerts` so the card
+// scrolls itself into view. Re-expressed here rather than imported from
+// `priceAlerts.ts`, so a link built there that drifted from this address fails
+// rather than agreeing with itself (Stage 10cq).
+const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alerts`;
+
+// A LINE THAT READS AS A SENTENCE — main's Stage 10cp rule: past 60 characters
+// AND ten or more lower-case words. The alert card's line under its boxes is a
+// STATUS on its face (a few words) with the sentence in its hover, so its face
+// is held to this. Re-expressed rather than imported from `researchLevels.ts`,
+// so a rule that drifted there fails here instead of agreeing with itself
+// (Stage 10cq). The line's FACE is its first `<span>` — the icon is an svg and
+// the date is the second span — and each probe below reads it in the page.
+const readsAsSentence = (x) => String(x).length > 60 && (String(x).match(/(?<![\p{L}\d])[a-z][a-z’'-]+/gu) ?? []).length >= 10;
+
+// So the surviving surface is asserted here: a holding's own page still writes
+// to the store, and — since Stage 10cq — Morning CIO's All alerts tab READS it.
+//
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cq) ──
+//
+// *"Does these alerts actually work … in morning CIO can you make an ALL alerts
+// tab where … whenever the alerts which have been set are triggered they show."*
+//
+// That question is about WIRING, which is what this suite is for. The
+// arithmetic is `priceAlerts.test.ts`'s and the rendering of a SEEDED store is
+// `check:pages`'s, and neither can see a box that writes to a field the tab
+// does not read. So a reader's whole path is driven here:
+//
+//   type a Target the price has passed and a Stop loss it has not → the boxes
+//   say reached / watching → the store holds both, with the page's name → a
+//   typed "abc" is refused and erases nothing → the card's own link opens
+//   Morning CIO → All alerts → both rows, and the badge says 1 → one removed in
+//   TWO clicks, never one → the badge goes → the pencil opens the holding's
+//   boxes → the last level cleared → the store drops the entry (a name alone
+//   does not keep it) → the tab is empty again → its finder offers only
+//   holdings an alert can actually be checked on.
+//
+// ON A FUND THE PUBLISHED NAV PRICES, deliberately: that is committed data, so
+// its alerts are checkable on a preview that serves no quote feed — which is
+// exactly the state this suite runs in. A share's alert could only ever read
+// "not checked" here, and a path that ends there proves nothing about the tab.
+// The fund is DERIVED — the largest the committed NAV file may value — so the
+// next drop picks its own.
+{
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const navSrc = readFileSync(new URL("../../src/data/fundNavs.ts", import.meta.url), "utf8");
+  const symbols = JSON.parse(readFileSync(new URL("../../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const navs = (bookArray(navSrc, "BOOK_FUND_NAVS") ?? []).filter((e) => e.usableForValue && e.nav > 0);
+  const valueOf = (k) => positions.filter((p) => p.securityKey === k).reduce((s, p) => s + (Number(p.marketValue) || 0), 0);
+  const held = (k) => positions.some((p) => p.securityKey === k && Number(p.quantity) > 0);
+  const fund = navs.filter((e) => held(e.securityKey)).sort((a, b) => valueOf(b.securityKey) - valueOf(a.securityKey))[0];
+  const STORE = "glow:watchlist/v1";
+  const readStore = () => page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) ?? "{}"); } catch { return {}; } }, STORE);
+  const r2 = (x) => Math.round(x * 100) / 100;
+
+  if (!fund) {
+    check("a holding's page carries the price alerts card", false, "no fund in this book has a usable published NAV to drive the alert path on");
+  } else {
+    const key = fund.securityKey;
+    const card = page.locator("[data-alerts-card]");
+    // THE CARD IS ON ITS OWN TAB. The position page is five tabs (main's Stage
+    // 10cn) and the family's own levels are "My targets", so the page is opened
+    // the way a reader opens it — on its first tab — and My targets is picked by
+    // its KEY rather than its label. A missing tab is a finding: the card then
+    // has no way to be reached at all.
+    await page.goto(`${BASE}/stock/${encodeURIComponent(key)}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    const targetsTab = page.locator('[data-stock-tab-key="targets"]');
+    check("a holding's page offers the My targets tab", (await targetsTab.count()) === 1);
+    if (await targetsTab.count()) { await targetsTab.click(); await page.waitForTimeout(1200); }
+
+    // THE CARD, STRUCTURALLY. The four levels an investor acts at lead, in the
+    // order a reader meets them, and EVERY field the store holds is still on the
+    // page — under More if not in the main row — because the store surviving is
+    // only worth anything if a reader can still reach what they typed.
+    const layout = await page.evaluate(() => {
+      const c = document.querySelector("[data-alerts-card]");
+      const more = c?.querySelector("[data-alert-more]");
+      return c ? {
+        main: [...c.querySelectorAll("[data-alert-box]")].filter((b) => !more?.contains(b)).map((b) => b.getAttribute("data-alert-box")),
+        underMore: [...(more?.querySelectorAll("[data-alert-box]") ?? [])].map((b) => b.getAttribute("data-alert-box")),
+        inputs: [...c.querySelectorAll("[data-alert-input]")].map((i) => i.getAttribute("data-alert-input")).sort(),
+        plan: [...c.querySelectorAll("[data-plan-field]")].map((i) => i.getAttribute("data-plan-field")).sort(),
+        note: !!c.querySelector("[data-alert-note]"),
+        moreOpen: !!more?.open,
+        price: c.querySelector("[data-alert-price]")?.getAttribute("data-alert-price") ?? null,
+      } : null;
+    });
+    check("a holding's page carries the price alerts card", !!layout, key);
+    check("...leading with Buy at, Sell at, Stop loss and Target, with Alert above one click down under More",
+      !!layout && layout.main.join() === "entry,exit,below,target" && layout.underMore.join() === "above", layout ? `${layout.main} | ${layout.underMore}` : "");
+    check("...and every field the store holds is still on the page — the five levels, fair value, the plan fields and the note",
+      !!layout && layout.inputs.join() === "alertAbove,alertBelow,entryPrice,exitPrice,fairValue,targetPrice"
+        && layout.plan.join() === "fairValueRefYear,targetWeightPct,valuationMethod" && layout.note,
+      layout ? `${layout.inputs} · ${layout.plan}` : "");
+    check("...with More closed on a holding where nothing under it is set", !!layout && layout.moreOpen === false);
+    check("...and a fund's alerts are checked against its published NAV, with no quote feed at all",
+      layout?.price === "nav", layout?.price ?? "no chip");
+
+    // TYPE TWO LEVELS. Saved on Enter, exactly as a reader would.
+    const target = r2(fund.nav * 0.95), stop = r2(fund.nav * 0.5);
+    const typeLevel = async (field, v) => {
+      await page.fill(`[data-alerts-card] [data-alert-input="${field}"]`, String(v));
+      await page.press(`[data-alerts-card] [data-alert-input="${field}"]`, "Enter");
+      await page.waitForTimeout(250);
+    };
+    await typeLevel("targetPrice", target);
+    await typeLevel("alertBelow", stop);
+    const boxState = (kind) => page.$eval(`[data-alerts-card] [data-alert-box="${kind}"]`, (b) => ({
+      status: b.getAttribute("data-alert-status"), line: (b.querySelector("[data-alert-line]")?.textContent ?? "").trim(),
+    })).catch(() => null);
+    const tBox = await boxState("target"), sBox = await boxState("below");
+    check("a Target the NAV has passed says so in its own box, as it is typed",
+      tBox?.status === "reached" && /target reached/i.test(tBox.line), tBox ? `${tBox.status} · ${tBox.line}` : "");
+    check("...and a Stop loss it has not reached says how far is still to go",
+      sBox?.status === "watching" && /% to go/.test(sBox.line), sBox ? `${sBox.status} · ${sBox.line}` : "");
+    let store = await readStore();
+    const pageName = (await page.locator("main h1").first().innerText().catch(() => "")).trim();
+    check("the store holds both levels, with the page's own name beside them",
+      store[key]?.targetPrice === target && store[key]?.alertBelow === stop && !!store[key]?.name,
+      store[key] ? `target ${store[key].targetPrice} · stop ${store[key].alertBelow} · "${store[key].name}" (page "${pageName}")` : "no entry");
+
+    // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
+    // companies by their ticker — cannot take its levels. They stay here, the
+    // card says so in words, and NOTHING is sent (Stage 10cq).
+    await page.waitForTimeout(1200);
+    const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
+      kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(), title: el.getAttribute("title") ?? "",
+      face: (el.querySelector(":scope > span")?.textContent ?? "").trim(),
+    })).catch(() => null);
+    // The face is a STATUS (main's Stage 10cp rule) and the sentence is its
+    // hover, so both are read: the face names the missing symbol, the hover
+    // says Glow Central Research follows listed companies by it.
+    check("a fund's levels stay in this dashboard, and the card says why — no NSE symbol for Glow Central Research to follow",
+      fundLine?.kind === "local" && /no NSE symbol/.test(fundLine.text) && /follows listed companies by their NSE symbol/.test(fundLine.title)
+        && RESEARCH.posts.length === 0,
+      fundLine ? `${fundLine.kind} · ${RESEARCH.posts.length} sent · "${fundLine.text}"` : "no line");
+    check("...in a short status, not a sentence — the sentence is its hover",
+      !!fundLine?.face && !readsAsSentence(fundLine.face) && fundLine.title.length > fundLine.face.length,
+      fundLine ? `face "${fundLine.face}" · hover ${fundLine.title.length} chars` : "no line");
+
+    // A TYPO IS REFUSED, NEVER SAVED AS A DELETE. The old parser read "abc" as
+    // blank and silently erased whatever level was in the box.
+    await typeLevel("exitPrice", 321);
+    await typeLevel("exitPrice", "abc");
+    const bad = await page.$eval('[data-alerts-card] [data-alert-box="exit"] [data-alert-line]', (el) => el.textContent ?? "").catch(() => "");
+    store = await readStore();
+    check("a typed 'abc' is refused with a message, and the level that was there is kept",
+      /type a price/i.test(bad) && store[key]?.exitPrice === 321, `line "${bad.trim()}" · stored ${store[key]?.exitPrice}`);
+    await page.fill('[data-alerts-card] [data-alert-input="exitPrice"]', "");
+    await page.press('[data-alerts-card] [data-alert-input="exitPrice"]', "Enter");
+    await page.waitForTimeout(250);
+    store = await readStore();
+    check("...and a blank box clears it", store[key]?.exitPrice === null, `stored ${store[key]?.exitPrice}`);
+
+    // THE CARD'S OWN LINK OPENS THE TAB. Followed, not typed: a link that
+    // pointed anywhere else would still leave this suite able to goto the tab.
+    const link = card.locator('a[href="/cio?tab=alerts"]');
+    check("the card links straight to Morning CIO → All alerts", (await link.count()) === 1);
+    if (await link.count()) await link.first().click();
+    else await page.goto(`${BASE}/cio?tab=alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    const readTab = () => page.evaluate(() => ({
+      path: location.pathname + location.search,
+      rows: [...document.querySelectorAll("tr[data-alert-row]")].map((tr) => ({
+        id: tr.getAttribute("data-alert-row"), status: tr.getAttribute("data-alert-status"), source: tr.getAttribute("data-alert-source"),
+      })),
+      badge: document.querySelector("[data-cio-alert-badge]")?.getAttribute("data-cio-alert-badge") ?? null,
+      empty: !!document.querySelector("[data-alerts-empty]"),
+    }));
+    let tab = await readTab();
+    const rowIds = (t) => t.rows.map((r) => `${r.id}=${r.status}/${r.source}`).join(", ");
+    check("the All alerts tab shows both — the fired one first, checked on the NAV — and the badge counts it",
+      tab.path === "/cio?tab=alerts"
+        && rowIds(tab) === `${key}:target=reached/nav, ${key}:below=watching/nav` && tab.badge === "1",
+      `${tab.path} · ${rowIds(tab)} · badge ${tab.badge}`);
+
+    // REMOVING TAKES TWO CLICKS. One stray click must not delete a level the
+    // family set — there is no undo.
+    await page.click(`tr[data-alert-row="${key}:target"] [data-alert-remove]`);
+    await page.waitForTimeout(200);
+    tab = await readTab();
+    const confirmShown = await page.locator(`tr[data-alert-row="${key}:target"] [data-alert-remove-confirm]`).count();
+    check("one click on the cross asks, and removes nothing", confirmShown === 1 && tab.rows.length === 2);
+    await page.click(`tr[data-alert-row="${key}:target"] [data-alert-remove-confirm]`);
+    await page.waitForTimeout(300);
+    tab = await readTab();
+    store = await readStore();
+    check("...the second removes that alert only, and the badge goes with it",
+      rowIds(tab) === `${key}:below=watching/nav` && tab.badge === null && store[key]?.targetPrice === null && store[key]?.alertBelow === stop,
+      `${rowIds(tab)} · badge ${tab.badge}`);
+
+    // THE PENCIL OPENS THE HOLDING'S OWN BOXES, scrolled to them.
+    await page.click(`tr[data-alert-row="${key}:below"] [data-alert-edit]`);
+    await page.waitForTimeout(1200);
+    const landed = await page.evaluate(() => {
+      const c = document.querySelector("[data-alerts-card]");
+      const top = c ? c.getBoundingClientRect().top : null;
+      return { at: location.pathname + location.search + location.hash, top, h: window.innerHeight };
+    });
+    check("the pencil opens the holding's alert boxes on My targets, scrolled into view",
+      landed.at === ALERT_BOXES_AT(key) && landed.top !== null && landed.top >= -2 && landed.top < landed.h,
+      `${landed.at} · card top ${landed.top}`);
+
+    // WHAT IS UNDER MORE OPENS ITSELF once something there is set — nothing the
+    // family typed is ever hidden — and a fair value says how far today's price
+    // is from it.
+    await page.evaluate(() => { const d = document.querySelector("[data-alerts-card] [data-alert-more]"); if (d) d.open = true; });
+    await typeLevel("fairValue", r2(fund.nav * 1.2));
+    const gap = await page.$eval("[data-alerts-card] [data-fair-value-gap]", (el) => el.textContent ?? "").catch(() => "");
+    check("a fair value says how far today's price is from it", /\+\d+(\.\d)?% from today/.test(gap), gap.trim());
+    await page.reload({ waitUntil: "networkidle" });
+    await page.waitForTimeout(1000);
+    check("...and More opens by itself on a holding where something under it is set",
+      await page.$eval("[data-alerts-card] [data-alert-more]", (d) => d.open).catch(() => false));
+    await typeLevel("fairValue", "");
+
+    // CLEAR THE LAST LEVEL, AND THE ENTRY GOES. The name saved beside it is a
+    // fallback label, never a reason to keep an empty entry alive.
+    await page.click('[data-alerts-card] [data-alert-clear="below"]');
+    await page.waitForTimeout(300);
+    store = await readStore();
+    check("clearing the last level drops the entry — the saved name alone does not keep it", !(key in store),
+      key in store ? JSON.stringify(store[key]) : "gone");
+
+    await page.goto(`${BASE}/cio?tab=alerts`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(700);
+    tab = await readTab();
+    check("...and the All alerts tab is empty again, with no badge", tab.empty && tab.rows.length === 0 && tab.badge === null);
+
+    // THE FINDER OFFERS ONLY WHAT AN ALERT CAN BE CHECKED ON: a holding the
+    // quote feed can price, or one with a published NAV. An alert on an AIF
+    // would sit there saying it can never be checked.
+    const checkable = new Set([
+      ...positions.filter((p) => p.symbol || symbols[p.securityKey]).map((p) => p.securityKey),
+      ...navs.map((e) => e.securityKey),
+    ]);
+    await page.click("[data-alert-add-input]");
+    await page.waitForTimeout(300);
+    const offered = await page.$$eval("[data-alert-add-option]", (els) => els.map((e) => e.getAttribute("data-alert-add-option")));
+    check("the New alert finder offers holdings, and only ones an alert can be checked on",
+      offered.length > 0 && offered.every((k) => checkable.has(k)), `${offered.length} offered · ${offered.filter((k) => !checkable.has(k)).join(", ") || "none unchecked"}`);
+    await page.press("[data-alert-add-input]", "Enter");
+    await page.waitForTimeout(900);
+    const to = await page.evaluate(() => location.pathname + location.search + location.hash);
+    check("...and picking one opens that holding's alert boxes, on My targets", !!offered[0] && to === ALERT_BOXES_AT(offered[0]), to);
+  }
+}
+
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cq) ───
+//
+// *"when the user puts target price inside the dashboard, it should
+// automatically also go to the Glow Central Research dashboard."*
+//
+// The whole path, on a real listed holding: type a Target → it is SENT, as a
+// `set` under the company's NSE symbol with the ISIN of the instrument that
+// symbol is → the card says it is in Glow Central Research → with the receiving
+// side not deployed yet, the next level is attempted and the card says it has
+// not arrived AND why → a reload with the receiving side back sends it on its own
+// → clearing the last level sends a CLEAR, so the other app stops alerting on it.
+//
+// The share is DERIVED — the largest company share whose symbol Upstox's own
+// instrument map knows — so the next drop picks its own.
+const RESEARCH_SHARE = (() => {
+  const src = readFileSync(new URL("../../src/data/glowData.ts", import.meta.url), "utf8");
+  const symbols = JSON.parse(readFileSync(new URL("../../src/data/nseSymbols.json", import.meta.url), "utf8"));
+  const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+  const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+  const isinOf = (sym) => { const k = UPSTOX_INSTRUMENTS[sym]?.key; return k?.startsWith("NSE_EQ|") ? k.slice(7) : null; };
+  const byKey = new Map();
+  for (const p of positions) byKey.set(p.securityKey, [...(byKey.get(p.securityKey) ?? []), p]);
+  const value = (k) => byKey.get(k).reduce((s2, p) => s2 + (Number(p.marketValue) || 0), 0);
+  const share = [...byKey.keys()]
+    .filter((k) => byKey.get(k).every((p) => p.assetClass === "Equity") && byKey.get(k).some((p) => Number(p.quantity) > 0))
+    .map((k) => ({ key: k, ticker: byKey.get(k).map(symOf).find(Boolean) ?? null }))
+    .filter((x) => x.ticker && isinOf(x.ticker))
+    .sort((a, b) => value(b.key) - value(a.key))[0];
+  if (!share) return null;
+  const mark = byKey.get(share.key).find((p) => Number(p.currentPrice) > 0)?.currentPrice ?? 100;
+  return { ...share, isin: isinOf(share.ticker), mark, name: byKey.get(share.key)[0].security };
+})();
+{
+  const share = RESEARCH_SHARE;
+  if (!share) {
+    check("a level on a listed share goes to Glow Central Research", false, "no company share in this book has an NSE symbol Upstox's map knows");
+  } else {
+    const { key, ticker, isin, mark } = share;
+    const r2 = (x) => Math.round(x * 100) / 100;
+    const target = r2(mark * 1.5), stop = r2(mark * 0.6);
+    const line = () => page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
+      kind: el.getAttribute("data-research-status"), ticker: el.getAttribute("data-research-ticker"), text: (el.textContent ?? "").trim(),
+      title: el.getAttribute("title") ?? "", face: (el.querySelector(":scope > span")?.textContent ?? "").trim(),
+    })).catch(() => null);
+    const typeLevel = async (field, v) => {
+      await page.fill(`[data-alerts-card] [data-alert-input="${field}"]`, String(v));
+      await page.press(`[data-alerts-card] [data-alert-input="${field}"]`, "Enter");
+    };
+    /** Wait for the sender: it pauses a moment after a save so a burst of edits goes as one request. */
+    const settle = async (want) => {
+      for (let i = 0; i < 40; i++) {
+        const l = await line();
+        if (l && want.includes(l.kind)) return l;
+        await page.waitForTimeout(250);
+      }
+      return line();
+    };
+
+    await page.goto(`${BASE}${ALERT_BOXES_AT(key)}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(800);
+    const before = RESEARCH.posts.length;
+    await typeLevel("targetPrice", target);
+    const sent = await settle(["sent", "failed"]);
+    const posted = RESEARCH.posts.slice(before).flatMap((p) => p.intents ?? []);
+    const setOne = posted.find((i) => i.ticker === ticker);
+    check("a Target typed on a listed share is sent to Glow Central Research as a SET, under its NSE symbol and ISIN",
+      !!setOne && setOne.op === "set" && setOne.isin === isin && setOne.levels?.target === target
+        && ["buyAt", "sellAt", "stopLoss", "alertAbove"].every((n) => setOne.levels?.[n] === null),
+      setOne ? JSON.stringify(setOne) : `${posted.length} intents, none for ${ticker}`);
+    check("...from this page's own address", RESEARCH.posts.slice(before).every((p) => p.origin === new URL(BASE).origin));
+    check("...and the card says it is saved there too",
+      sent?.kind === "sent" && sent.ticker === ticker && /Saved here and in Glow Central Research/.test(sent.text)
+        && /alerts there too when a level is reached/.test(sent.title),
+      sent ? `${sent.kind} · "${sent.text}"` : "no line");
+
+    RESEARCH.mode = "down";
+    await typeLevel("alertBelow", stop);
+    const failed = await settle(["failed"]);
+    // A STATUS ON THE FACE (waiting, and until when) and the sentence in the
+    // hover — main's Stage 10cp rule — so both halves are held.
+    check("with Glow Central Research not taking levels yet, the card says the new level has not arrived, and why",
+      failed?.kind === "failed" && /waiting until it's ready/.test(failed.text)
+        && /not taking price levels yet/.test(failed.title) && /automatically/.test(failed.title),
+      failed ? `${failed.kind} · "${failed.text}" · hover "${failed.title}"` : "no line");
+    // …AND BOTH LINES ARE A STATUS, NOT A SENTENCE. Checked on the two states a
+    // family actually meets — sent, and waiting — so a face that grew back into
+    // the sentence it replaced fails here, whichever state it grew in.
+    const faces = [sent, failed];
+    check("...each of those lines is a short status, and its sentence is the hover",
+      faces.every((l) => !!l?.face && !readsAsSentence(l.face) && l.title.length > l.face.length),
+      faces.map((l) => (l ? `"${l.face}"` : "no line")).join(" · "));
+
+    RESEARCH.mode = "ok";
+    await page.reload({ waitUntil: "networkidle" });
+    const back = await settle(["sent"]);
+    check("...and once it is back, the next page load sends it on its own",
+      back?.kind === "sent" && RESEARCH.held.get(ticker)?.levels?.stopLoss === stop && RESEARCH.held.get(ticker)?.levels?.target === target,
+      `${back?.kind ?? "no line"} · held ${JSON.stringify(RESEARCH.held.get(ticker)?.levels ?? null)}`);
+
+    // AND THE MOMENT THE BROWSER IS BACK ONLINE — no reload, and no edit.
+    RESEARCH.mode = "down";
+    const stop2 = r2(mark * 0.55);
+    await typeLevel("alertBelow", stop2);
+    const failed2 = await settle(["failed"]);
+    RESEARCH.mode = "ok";
+    await page.evaluate(() => window.dispatchEvent(new Event("online")));
+    const online = await settle(["sent"]);
+    check("...and a browser coming back online sends what was waiting, with no reload and no edit",
+      failed2?.kind === "failed" && online?.kind === "sent" && RESEARCH.held.get(ticker)?.levels?.stopLoss === stop2,
+      `${failed2?.kind ?? "no line"} → ${online?.kind ?? "no line"} · held ${JSON.stringify(RESEARCH.held.get(ticker)?.levels ?? null)}`);
+
+    const beforeClear = RESEARCH.posts.length;
+    await page.click('[data-alerts-card] [data-alert-clear="target"]');
+    await page.waitForTimeout(300);
+    await page.click('[data-alerts-card] [data-alert-clear="below"]');
+    await page.waitForTimeout(2000);
+    const cleared = RESEARCH.posts.slice(beforeClear).flatMap((p) => p.intents ?? []);
+    check("clearing the last level sends a CLEAR, so Glow Central Research stops alerting on it",
+      cleared.some((i) => i.op === "clear" && i.ticker === ticker) && RESEARCH.held.get(ticker)?.state === "cleared",
+      cleared.map((i) => `${i.op} ${i.ticker}`).join(", ") || "nothing sent");
+    const after = await line();
+    check("...and the card goes back to saying there is nothing saved", after?.kind === "none", after ? `${after.kind} · "${after.text}"` : "no line");
+  }
+}
+
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cq) ───
+//
+// Until Glow Central Research's route is deployed every send is refused as NOT
+// READY, and the sender asks again every fifteen minutes on its own — a
+// dashboard left open all day must not need a reload for a level to arrive once
+// the other side is up. Fifteen minutes cannot be waited out in a suite, so this
+// page runs on Playwright's clock: the timers are the page's own, and the test
+// moves time forward instead of sleeping. Its OWN browser context, so the fake
+// clock touches nothing else in this run.
+//
+// Three claims, and the middle one is what stops a sender that retries in a
+// tight loop from passing: a failed send is NOT repeated before its wait is up.
+{
+  const share = RESEARCH_SHARE;
+  if (!share) {
+    check("a failed send to Glow Central Research is tried again by itself", false, "no listed share to put a level on");
+  } else {
+    const ctx2 = await browser.newContext({ viewport: { width: 1500, height: 1000 } });
+    const p2 = await ctx2.newPage();
+    let mode = "down";
+    const posts = [];
+    await p2.route(/glow-central-research\.tech-441\.workers\.dev/, async (route) => {
+      const req = route.request();
+      const cors = { "access-control-allow-origin": req.headers()["origin"] ?? "*", vary: "origin" };
+      if (req.method() === "OPTIONS") {
+        return route.fulfill({ status: 204, headers: { ...cors, "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" } });
+      }
+      let intents = [];
+      if (req.method() === "POST") {
+        try { intents = JSON.parse(req.postData() ?? "{}").intents ?? []; } catch { intents = []; }
+        posts.push({ mode, intents });
+      }
+      if (mode === "down") {
+        return route.fulfill({ status: 404, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ error: "Not implemented" }) });
+      }
+      const outcomes = intents.map((i) => ({ ticker: i.ticker, op: i.op, outcome: i.op === "seed" ? "seeded" : i.op === "clear" ? "unchanged" : "set" }));
+      return route.fulfill({ status: 200, headers: { ...cors, "content-type": "application/json" }, body: JSON.stringify({ ok: true, outcomes, companies: [], count: 0, hits: [] }) });
+    });
+    // A Target typed on this browser before it ever sent anything.
+    const entry = {
+      securityKey: share.key, watching: false, targetPrice: Math.round(share.mark * 150) / 100, fairValue: null,
+      entryPrice: null, exitPrice: null, alertAbove: null, alertBelow: null, targetWeightPct: null,
+      fairValueRefYear: "", valuationMethod: "", note: "", name: share.name, updatedAt: "2026-09-01T00:00:00.000Z",
+    };
+    await p2.addInitScript(([k, v]) => { try { if (!localStorage.getItem(k)) localStorage.setItem(k, v); } catch { /* */ } },
+      ["glow:watchlist/v1", JSON.stringify({ [share.key]: entry })]);
+    await p2.clock.install({ time: Date.parse("2026-09-23T04:00:00.000Z") });
+    await p2.goto(`${BASE}${ALERT_BOXES_AT(share.key)}`, { waitUntil: "load" });
+    const kind = () => p2.$eval("[data-alerts-card] [data-research-status]", (el) => el.getAttribute("data-research-status")).catch(() => null);
+    /** Poll in REAL time, nudging the page's own clock half a second each turn. */
+    const until = async (want, nudge = 500) => {
+      for (let i = 0; i < 40; i++) {
+        const k = await kind();
+        if (want.includes(k)) return k;
+        if (nudge) await p2.clock.runFor(nudge);
+        await new Promise((r) => setTimeout(r, 150));
+      }
+      return kind();
+    };
+    const first = await until(["failed"]);
+    const refused = posts.length;
+    check("with Glow Central Research not taking levels yet, the first send is attempted and refused",
+      first === "failed" && refused >= 1 && posts.every((p) => p.mode === "down"), `${first} · ${refused} request(s)`);
+
+    await p2.clock.fastForward(10 * 60_000);
+    await new Promise((r) => setTimeout(r, 1500));
+    check("...and it is NOT asked again before its fifteen-minute wait is up — a refusal is never hammered",
+      posts.length === refused && (await kind()) === "failed", `${posts.length - refused} more request(s) inside ten minutes`);
+
+    mode = "ok";
+    await p2.clock.fastForward(6 * 60_000);
+    const later = await until(["sent"], 0);
+    const landed = posts.filter((p) => p.mode === "ok").flatMap((p) => p.intents);
+    check("...then, with Glow Central Research up, it goes by itself on the sender's own timer — no reload, no edit",
+      later === "sent" && landed.some((i) => i.ticker === share.ticker && i.op === "seed" && i.levels?.target === entry.targetPrice),
+      `${later} · ${landed.map((i) => `${i.op} ${i.ticker}`).join(", ") || "nothing sent"}`);
+    await ctx2.close();
+  }
 }
 
 // ── AN ENTITY'S HOLDINGS THIS BOOK CANNOT VALUE ARE NAMED, NOT DROPPED ─────

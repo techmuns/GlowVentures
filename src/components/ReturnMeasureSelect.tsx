@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronDown, Check } from "lucide-react";
-import { RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure } from "@/lib/analytics";
+import { RETURN_MEASURES, returnMeasureDef, type ReturnMeasure } from "@/lib/analytics";
+import { useMemory, writeMemory } from "@/lib/viewMemory";
+import {
+  MEASURE_KEYS, DEFAULT_RETURN_MEASURES, normaliseMeasures, resolveReturnMeasures, returnMeasuresKey, parseSavedMeasures,
+} from "@/lib/returnMeasures";
 
 // ── THE RETURN-METHODOLOGY PICKER, SHARED ───────────────────────────────────
 //
@@ -9,7 +13,8 @@ import { RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure 
 // Private Market fund table too — *"The customer is confused about what kind of
 // return this is"* — and a second copy of a control is a second chance for one
 // page to offer a measure the other words differently. So this is the ONE
-// picker, and its state lives in the URL (`?ret=`) on whichever page it sits.
+// picker; its state is the reader's saved pick per page, which a `?ret=`
+// address overrides (`resolveReturnMeasures`).
 //
 // WHAT A PAGE MAY OVERRIDE IS THE HINT, AND ONLY WHERE THE MONITOR'S WORDING IS
 // FALSE OF IT. The XIRR hint says the statements "do not carry per holding"
@@ -18,35 +23,40 @@ import { RETURN_MEASURES, returnMeasureDef, isReturnMeasure, type ReturnMeasure 
 // first. Private Market passes its own sentence for exactly the measures where
 // that is so; the labels, tags, order and mutual exclusion stay one definition.
 
-/** The picker's option keys, in reading order — `auto` first. */
-export const MEASURE_KEYS = RETURN_MEASURES.map((m) => m.key);
+export { MEASURE_KEYS, DEFAULT_RETURN_MEASURES } from "@/lib/returnMeasures";
 
 /**
- * WHICH RETURN(S) THE ONE RETURN COLUMN SHOWS — held in the URL (`?ret=`) like
- * every other view on the page it sits on, so "send me the CAGR view" is a link.
+ * WHICH RETURN(S) THE TABLE SHOWS — one column each (`withReturnCols`).
  *
- * `auto` is the methodology and the param-free default, so `/monitor` stays one
- * URL — and `/private-market` likewise. It is MUTUALLY EXCLUSIVE with the concrete measures: picking Absolute or
- * CAGR means "show me that one", not "that one on top of the rule", so a concrete
- * selection replaces auto and clearing everything falls back to it. The concrete
- * measures multi-select — the family can pin Absolute AND CAGR side by side, each
- * labelled, which is the "always have a CAGR column" ask answered without a
- * second column.
+ * REMEMBERED, per page, in this browser. It used to live in the URL alone
+ * (`?ret=`), so the sidebar, a breadcrumb or any link without the param put the
+ * table back on the methodology and the reader had to pick again every visit.
+ * A pick now saves to `viewMemory` and takes any `?ret=` off the address (with
+ * `replace`, so Back does not step through picker states), because an address
+ * that still named the old pick would outrank the new one on the next load.
+ *
+ * `auto` is MUTUALLY EXCLUSIVE with the concrete measures: picking Absolute or
+ * CAGR means "show me that one", not "that one on top of the rule", so a
+ * concrete selection replaces auto and clearing everything falls back to it.
  */
-export function useReturnMeasures(): [ReturnMeasure[], (next: ReturnMeasure[]) => void] {
+export function useReturnMeasures(page: string): [ReturnMeasure[], (next: ReturnMeasure[]) => void, "address" | "saved" | "default"] {
   const [sp, setSp] = useSearchParams();
-  const set = new Set((sp.get("ret") ?? "").split(",").map((s) => s.trim()).filter(isReturnMeasure));
-  // Concrete measures win over auto, in canonical order; empty → auto.
-  const concrete = MEASURE_KEYS.filter((k) => k !== "auto" && set.has(k));
-  const measures = concrete.length ? concrete : (["auto"] as ReturnMeasure[]);
+  const param = sp.get("ret");
+  const saved = useMemory(returnMeasuresKey(page), parseSavedMeasures);
+  const { measures, from } = resolveReturnMeasures(param, saved);
+  const key = measures.join(",");
+  // A STABLE ARRAY, so a column list built from it is not rebuilt every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stable = useMemo(() => [...measures], [key]);
   const setMeasures = useCallback((next: ReturnMeasure[]) => {
-    const clean = MEASURE_KEYS.filter((k) => k !== "auto" && next.includes(k));
-    const nextSp = new URLSearchParams(sp);
-    if (clean.length === 0) nextSp.delete("ret");
-    else nextSp.set("ret", clean.join(","));
-    setSp(nextSp);
-  }, [sp, setSp]);
-  return [measures, setMeasures];
+    writeMemory(returnMeasuresKey(page), normaliseMeasures(next) ?? ["auto"]);
+    if (sp.has("ret")) {
+      const nextSp = new URLSearchParams(sp);
+      nextSp.delete("ret");
+      setSp(nextSp, { replace: true });
+    }
+  }, [page, sp, setSp]);
+  return [stable, setMeasures, from];
 }
 
 /**
@@ -59,11 +69,13 @@ export function useReturnMeasures(): [ReturnMeasure[], (next: ReturnMeasure[]) =
  * tick on and off together. It is never empty — unticking the last one falls back
  * to auto — because an empty selection is not a state a reader means to be in.
  */
-export function ReturnMeasureSelect({ measures, onChange, hints }: {
+export function ReturnMeasureSelect({ measures, onChange, hints, source }: {
   measures: ReturnMeasure[];
   onChange: (m: ReturnMeasure[]) => void;
   /** Per-measure hint text where this page's truth differs from the Monitor's. */
   hints?: Partial<Record<ReturnMeasure, string>>;
+  /** Where the ticked measures came from — `useReturnMeasures`' third value. */
+  source?: "address" | "saved" | "default";
 }) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -83,12 +95,15 @@ export function ReturnMeasureSelect({ measures, onChange, hints }: {
     set.has(k) ? set.delete(k) : set.add(k);
     onChange(MEASURE_KEYS.filter((m) => m !== "auto" && set.has(m)));
   };
+  const all = !isAuto && DEFAULT_RETURN_MEASURES.every((k) => measures.includes(k));
   const label = isAuto ? "Return · by methodology"
+    : all ? "Returns · all"
     : measures.length === 1 ? returnMeasureDef(measures[0]).label
     : `${measures.length} return types`;
   return (
     <div ref={wrapRef} className="relative"
-      data-return-measures={MEASURE_KEYS.join(",")} data-return-active={measures.join(",")}>
+      data-return-measures={MEASURE_KEYS.join(",")} data-return-active={measures.join(",")}
+      data-return-source={source ?? ""}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="listbox"
         title="Which return to show — the methodology, or pick one or more explicitly. Every cell is labelled with the return it is showing."
         className="flex w-fit items-center gap-1.5 rounded-md border border-ink-700 bg-ink-800 px-2 py-1 text-xs text-slate-200 ring-focus">
@@ -111,7 +126,7 @@ export function ReturnMeasureSelect({ measures, onChange, hints }: {
             {RETURN_MEASURES.map((m) => {
               const on = ticked(m.key);
               return (
-                <li key={m.key} role="option" aria-selected={on}
+                <li key={m.key} role="option" aria-selected={on} data-return-option={m.key}
                   onMouseDown={(e) => { e.preventDefault(); toggle(m.key); }}
                   className={`flex cursor-pointer items-start gap-2 px-3 py-1.5 text-sm hover:bg-ink-700/60 ${on ? "text-slate-100" : "text-slate-300"}`}>
                   <span className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded border ${on ? "border-champagne-500 bg-champagne-500/20 text-champagne-400" : "border-ink-600 text-transparent"}`}>
@@ -128,6 +143,10 @@ export function ReturnMeasureSelect({ measures, onChange, hints }: {
               );
             })}
           </ul>
+          {/* WHERE THE PICK IS KEPT — a status, never a sentence (Stage 10cp). */}
+          <div className="border-t border-ink-700 px-3 py-1.5 text-[11px] text-slate-500" data-return-kept>
+            {source === "address" ? "Set by this link · a pick here is remembered" : "Remembered in this browser"}
+          </div>
         </div>
       )}
     </div>
