@@ -626,7 +626,7 @@ export type StockExposureState =
       /** Value of the funds it could not — the AIF block, and any unresolved scheme. */
       skippedValue: number;
       /**
-       * `disclosedValue - total`: the part of a disclosed fund that NO LINE in
+       * `disclosedValue - total - fencedValue`: the part of a disclosed fund that NO LINE in
        * the filing accounted for — its cash sleeve, a gold or silver ETF's
        * metal, a line carrying neither an ISIN nor a usable name, and the
        * disclosure's own rounding.
@@ -641,6 +641,16 @@ export type StockExposureState =
        * every caller inherits it.
        */
       unaccountedValue: number;
+      /**
+       * THE FAMILY'S SHARE OF A DISCLOSED LINE THE RING-FENCE KEEPS OUT (PC-11).
+       * A fund this family holds discloses the ring-fenced holding's own
+       * company, and the fence is about a security wherever it is reported — so
+       * that line reaches no row. It is still a LINE of the filing, so it is not
+       * part of what `unaccountedValue` says no line accounts for (a scheme's
+       * cash, a metal ETF's metal, rounding), which is where it used to sit. A
+       * caller counts it as its own term and never names it.
+       */
+      fencedValue: number;
     };
 
 /**
@@ -878,9 +888,9 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  *     fund's own value already stands for it in the book, so summing both counts
  *     the same money twice — the rule this whole store is fenced by. A caller
  *     that shows it beside the book's own figure must say which is which.
- *   • IT IS EQUITY-ONLY AND PARTIAL. `skipped`, `skippedValue` and
- *     `unaccountedValue` are returned so a caller can state exactly what it does
- *     not cover, rather than implying completeness.
+ *   • IT IS PARTIAL. `skipped`, `skippedValue`, `unaccountedValue` and
+ *     `fencedValue` are returned so a caller can state exactly what it does not
+ *     cover, rather than implying completeness.
  *   • IT IS DATED DIFFERENTLY FROM THE BOOK. A disclosure is monthly; a holding
  *     is valued on its own statement's date. Both ride on every row.
  *
@@ -1146,6 +1156,7 @@ export async function loadStockExposure(
   let total = 0;
   let disclosedValue = 0;
   let skippedValue = 0;
+  let fencedValue = 0;
 
   for (const { f, pf, skip } of loaded) {
     if (!pf) {
@@ -1175,7 +1186,16 @@ export async function loadStockExposure(
       const isin = (h.isin ?? "").trim().toUpperCase() || null;
       const nameKey = securityKeyOf(h.name);
       if (!nameKey && !isin) continue;
-      if (fenced(isin, h.name)) continue;
+      if (fenced(isin, h.name)) {
+        // THE FENCED LINE IS ITS OWN TERM (PC-11), counted on the same rules as
+        // any line here — a positive share, the same ISIN once per fund — and
+        // drawn in no row. It is left out of `total` and out of
+        // `unaccountedValue` both.
+        const fencedOn = isin ?? `name:${nameKey}`;
+        const v = familyValue(f.marketValue, h.pctAum);
+        if (v > 0 && !seenHere.has(fencedOn)) { seenHere.add(fencedOn); fencedValue += v; }
+        continue;
+      }
       const issuerKey = issuerKeyOf(h.name);
       const key = isin
         ? isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? issuerKey
@@ -1277,6 +1297,7 @@ export async function loadStockExposure(
     skipped,
     disclosedValue,
     skippedValue,
-    unaccountedValue: disclosedValue - total,
+    unaccountedValue: disclosedValue - total - fencedValue,
+    fencedValue,
   };
 }

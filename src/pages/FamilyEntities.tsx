@@ -12,7 +12,7 @@ import { StockLink } from "@/components/StockLink";
 import type { Position } from "@/lib/types";
 import {
   byEntity, byCustodian, bucketBy, sum, sumOrNull, consolidatedMarketValue, dedupedPositions,
-  isCompanyShare, isFundVehicle, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
+  isCompanyShare, isFundVehicle, isCashEquivalent, isDirectEquity, isMandateHeld, excludedClasses, assetClassLabel,
   holdingBucket, bucketLabel, holdingRoute, mandateLabel, ROUTE_LABEL, ROUTE_NOTE,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR,
   DIRECT_EQUITY_BUCKET, MANDATE_BUCKET, UNROUTED_EQUITY_BUCKET,
@@ -229,6 +229,22 @@ export function FamilyEntities() {
   );
   /** This page's one answer to "what sector is this row in", for chart and table alike. */
   const sectorOf = (x: Position) => companySectors.get(x.securityKey)?.sector || UNCLASSIFIED;
+  /**
+   * WHY A ROW HAS NO SECTOR, SAID OF THAT ROW (FS-20). A cash line — a
+   * balance, a mandate's cash sleeve, a TDS line — fell through to `sectorOf`
+   * and printed "Unclassified", which is the word for a company no tier could
+   * place, about a row that is not a company at all; and every fund's reason
+   * said this book "does not carry" its scheme's disclosure, which is false of
+   * the mutual funds whose filings the look-through reads. Each kind now says
+   * what is true of it. Null for a company share, which names its sector.
+   */
+  const sectorAbsentWhy = (x: Position): string | null => {
+    if (isCompanyShare(x)) return null;
+    if (x.assetClass === "Cash" || isCashEquivalent(x)) return "counted as cash — money rather than a company, so it has no sector";
+    if (x.assetClass === "AIF") return "a fund is not a company, so it has no sector of its own — and an AIF files no portfolio this book can join, so what it holds is not placed anywhere";
+    if (isFundVehicle(x)) return "a fund is not a company, so it has no sector of its own — any company its filing discloses is placed on Sector Composition's Consolidated view";
+    return "not a share in a company, so no sector is read for it";
+  };
   if (!portfolio) return null;
   /**
    * ── CURRENT HOLDINGS, THE SET EVERY OTHER ALLOCATION SURFACE DRAWS (FS-5) ──
@@ -666,17 +682,18 @@ export function FamilyEntities() {
    * `excludedClasses` groups by `assetClass` — what a holding IS. The holdings
    * table below groups by `holdingBucket` — who chose it — and a MANDATE takes
    * its whole account, cash sleeve included, because that is what the manager
-   * runs and what the statement totals. The two therefore disagree, and on this
-   * book they disagree on exactly one class: CASH. The caption named an entity's
-   * whole cash figure and then sent the reader to a Cash section holding only
-   * the one row outside a mandate — a measured nil — and, for a member whose
-   * only cash row IS a mandate's sleeve, to a table with no Cash section at all.
+   * runs and what the statement totals. The two therefore disagree: on a
+   * mandate's cash sleeve, which is Cash by class and PMS mandates by section,
+   * and on a liquid or arbitrage fund, which is a Mutual Fund or an ETF by class
+   * and Cash by section (`readerClassOf`, Stages 10av and 10ce). The caption
+   * once named an entity's whole cash figure and sent the reader to a Cash
+   * section holding only the one row outside a mandate — a measured nil.
    *
-   * So the caption keeps `excludedClasses` (the chart's own axis: a sector is a
-   * property of a company, and a class is what makes a holding not one) and
-   * NAMES where the rest of it went, rather than pointing at a grouping it is
-   * not keyed on. Derived per class, so a drop where a mandate holds a fund says
-   * so without an edit here.
+   * So the caption's TOTAL and COUNT stay `excludedClasses` — the chart's own
+   * axis: a sector is a property of a company, and a class is what makes a
+   * holding not one — while its LIST names the sections the table draws and the
+   * sleeve by where it is counted (FS-6, below). Both are derived, so a drop
+   * where a mandate holds a fund says so without an edit here.
    */
   const selSleeve = selRows.filter((x) => !isCompanyShare(x) && isMandateHeld(engagementOf(accIdx, x) || null));
   const selSleeveMV = sum(selSleeve.map((x) => x.marketValue));
@@ -843,6 +860,7 @@ export function FamilyEntities() {
      * own `visNoCost` counts, so the row and the total now name the same set.
      */
     const noCost = !!h.costUnavailable || h.costBasis === null || h.costBasis === undefined;
+    const noSector = sectorAbsentWhy(h);
     return (
       <Tr view={holdView} key={h.securityKey + "@" + h.accountId} className="hover:bg-ink-700/40"
         data-fe-holding-key={h.securityKey} data-fe-holding-account={h.accountId}>
@@ -860,7 +878,7 @@ export function FamilyEntities() {
               </Link>
             : <span title={ROUTE_NOTE[route]}>{ROUTE_LABEL[route]}</span>}
         </td>
-        {/* A FUND HAS NO SECTOR, AND "Unclassified" IS THE WRONG WAY TO SAY SO:
+        {/* A FUND OR A CASH LINE HAS NO SECTOR, AND "Unclassified" IS THE WRONG WAY TO SAY SO (FS-20):
             it reads as a sector the pipeline failed to map, which is the cell a
             directly-held share gets when no tier could place it.
 
@@ -877,9 +895,7 @@ export function FamilyEntities() {
             comparison would fail a correct page on an entity whose company
             shares happen to be fully placed. */}
         <td className="px-4 py-2.5 text-slate-400" data-fe-sector-cell={isCompanyShare(h) ? sectorOf(h) : ""}>
-          {isFundVehicle(h)
-            ? <AbsentCell reason="a fund holds many sectors and its statement prints none; the look-through would need the scheme's own portfolio disclosure, which this book does not carry for this folio" />
-            : sectorOf(h)}
+          {noSector ? <AbsentCell reason={noSector} /> : sectorOf(h)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{fmtFromBase(h.marketValue, { compact: true })}</td>
         <td className={`px-4 py-2.5 text-right mono ${noCost ? "text-slate-500" : changeColor(h.returnPct)}`}>{noCost ? <AbsentCell reason="this statement reports a value and no cost, so there is no basis to strike a return on — the row is left out of the total below rather than counted as zero" /> : <Auditable formula={returnFormula(h.marketValue, h.costBasis, h.returnPct, money, { realised: h.realizedPnL, costSold: h.costOfUnitsSold })}>{fmtPct(h.returnPct, { sign: true })}</Auditable>}</td>
@@ -1252,7 +1268,7 @@ export function FamilyEntities() {
                       <XAxis dataKey="name" stroke="#6b6880" fontSize={10} interval={0} angle={-25} textAnchor="end" height={60} />
                       <YAxis stroke="#6b6880" fontSize={11} tickFormatter={axisFmt} width={84} />
                       <Tooltip contentStyle={chartTooltipStyle} labelStyle={chartTooltipLabelStyle} itemStyle={chartTooltipItemStyle}
-                        formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "NAV"]} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
+                        formatter={(v: number) => [fmtCurrency(v, displayCurrency, { compact: true }), "Company-share value"]} cursor={{ fill: "rgba(99,102,241,0.08)" }} />
                       <Bar dataKey="value" radius={[3, 3, 0, 0]}>
                         {selSectors.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                       </Bar>

@@ -813,6 +813,7 @@ const SECURITY_AXIS_BOOK = (() => {
     // from an aggregator's copy, and the non-AIF funds the store carries no
     // filing for — re-derived here, never read back off the page.
     let withLines = 0, aggregatorLines = 0, notInStore = 0;
+    let fencedValue = 0;
     for (const v of vehicles.values()) {
       const pf = portfolios.get(v.key) ?? null;
       if (!pf) {
@@ -835,7 +836,15 @@ const SECURITY_AXIS_BOOK = (() => {
         const isin = (h.isin ?? "").trim().toUpperCase() || null;
         const nameKey = securityKeyOf(h.name);
         if (!nameKey && !isin) continue;
-        if (isFenced(isin, h.name)) continue;
+        if (isFenced(isin, h.name)) {
+          // THE FENCED LINE IS ITS OWN TERM (PC-11): counted on the loader's
+          // rules — a positive share, the same ISIN once per fund — and never a
+          // part of what no line accounts for.
+          const on = isin ?? `name:${nameKey}`;
+          const fv = (v.mv * h.pctAum) / 100;
+          if (fv > 0 && !seenHere.has(on)) { seenHere.add(on); fencedValue += fv; }
+          continue;
+        }
         const ik = issuerKey(h.name);
         const key = isin ? (isinToBookKey.get(isin) ?? prefixKey.get(issuerOf(isin)) ?? ik) : (nameToKey.get(ik) ?? ik);
         const dedupeOn = isin ?? `name:${nameKey}`;
@@ -1074,7 +1083,9 @@ const SECURITY_AXIS_BOOK = (() => {
       // whole monthly filing now, so a scheme's debt sleeve is INSIDE `derived`
       // and this remainder is what NO LINE in the filing accounted for — its
       // cash, a metal ETF's metal, and the disclosure's own rounding.
-      unaccountedCr: (disclosedValue - derived) / 1e7,
+      unaccountedCr: (disclosedValue - derived - fencedValue) / 1e7,
+      // …AND THE RING-FENCED LINE A FUND DISCLOSES, A TERM OF ITS OWN (PC-11).
+      fencedValue, fencedCr: fencedValue / 1e7,
       cashCr: cash / 1e7,
       cashRuleCr: cashRule / 1e7, liquidThroughCr: liquidThrough / 1e7,
       mandateCashCr: mandateCash / 1e7, categoryCashCr: categoryCash / 1e7,
@@ -1591,6 +1602,11 @@ const SECTOR_DERIVED_REST = [
     if (!aif || !sectorNear(aif, B.opaqueCr * 1e7) || aifN !== B.aifCount || unresolved !== unresolvedWant) return false;
     const unacc = part(/of the disclosed funds that no line in their filings accounts for/);
     if (!unacc || !sectorNear(unacc, B.unaccountedCr * 1e7)) return false;
+    // THE FENCED LINE A FUND DISCLOSES IS ITS OWN PART, AND IS NEVER NAMED
+    // (PC-11): it is a line of the filing, not something no line accounts for.
+    if (/polycab/i.test(x)) return false;
+    const fencedPart = part(/a fund discloses of the one holding the family keep out of every portfolio total/);
+    if (B.fencedValue > 0 ? !sectorNear(fencedPart, B.fencedValue) : !!fencedPart) return false;
     const arb = first(part(/in the arbitrage funds the family counts as cash/));
     const own = first(part(/of the book's own cash/));
     const cashV = (arb?.v ?? 0) + (own?.v ?? 0), cashHalf = (arb?.half ?? 0) + (own?.half ?? 0);
@@ -4814,6 +4830,56 @@ const FAMILY_RETURN_COLUMNS = [
 ];
 
 /**
+ * ── A ROW THAT IS NOT A COMPANY SHARE SAYS WHY IT HAS NO SECTOR (FS-20, FS-23) ─
+ *
+ * A cash line fell through to the page's sector lookup and printed
+ * "Unclassified" — the word for a company no tier could place — and every
+ * fund's dash said this book "does not carry" its scheme's disclosure, false of
+ * the mutual funds whose filings the look-through reads. And the sector mix's
+ * bar tooltip labelled every bar "NAV" over a chart of company shares only.
+ *
+ * Each row is matched to the book by its own `key@account` handle, and what it
+ * IS comes from the book and the committed cash map, never from the page.
+ */
+const FE_ROW_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions) || !CASH_EQ_KEYS) return null;
+    return new Map(positions.map((p) => [`${p.securityKey}@${p.accountId}`,
+      { cls: p.assetClass, cash: p.assetClass === "Cash" || CASH_EQ_KEYS.has(p.securityKey) }]));
+  } catch { return null; }
+})();
+const FE_SECTOR_CELLS = [
+  ["every holding that is not a company share renders its Sector as an absence naming why — cash as cash, an AIF as a fund with no portfolio to join, never \"Unclassified\" (FS-20)", (t, ctx) => {
+    if (!FE_ROW_BOOK) return { notChecked: "the book could not be read on this run" };
+    const cells = ctx?.feSectors?.sectorCells;
+    if (!Array.isArray(cells) || !cells.length) return false;
+    let nonShares = 0, cash = 0;
+    const ok = cells.every((c) => {
+      const b = FE_ROW_BOOK.get(`${c.key}@${c.account}`);
+      if (!b) return false;
+      if (b.cls === "Equity") return c.text !== "—" && !c.title;
+      nonShares += 1;
+      if (c.text !== "—" || !c.title || /does not carry/i.test(c.title)) return false;
+      if (b.cash) { cash += 1; return /^counted as cash — money rather than a company, so it has no sector$/.test(c.title); }
+      if (b.cls === "AIF") return /^a fund is not a company, so it has no sector of its own — and an AIF files no portfolio this book can join/.test(c.title);
+      if (b.cls === "Mutual Fund" || b.cls === "ETF") return /^a fund is not a company, so it has no sector of its own — any company its filing discloses is placed on Sector Composition's Consolidated view$/.test(c.title);
+      return /^not a share in a company/.test(c.title);
+    });
+    if (!ok) return false;
+    if (!nonShares) return { notChecked: "this entity holds company shares only" };
+    return cash > 0 || { notChecked: "this entity's table carries no cash line" };
+  }],
+  ["the sector mix's bar tooltip names what the bars are — company-share value, never the entity's NAV (FS-23)", (t, ctx) => {
+    const fe = ctx?.feSectors;
+    if (!fe) return false;
+    // The walk hovers the first bar; a chart of company shares must answer.
+    if (typeof fe.barTip !== "string" || !fe.barTip) return false;
+    return /Company-share value/.test(fe.barTip) && !/\bNAV\b/.test(fe.barTip);
+  }],
+];
+/**
  * ── WHAT THE HOLDINGS TABLES FILE UNDER EACH SECTION, OUTSIDE COMPANY SHARES ─
  *
  * (FS-7.) Sector Composition's Direct Equity card names what it leaves out;
@@ -6841,6 +6907,10 @@ const ROUTES = [
   // and neither is the set this page used to show — a check on one says nothing
   // about the other.
   ["sectors-direct", "/sectors?view=direct"],
+  // …AND THE SAME VIEW WITH THE QUOTE FEED FULFILLED (FS-24): a live-priced
+  // figure's hover — where its cost comes from — only renders where a quote
+  // has landed, and the plain walk serves no feed.
+  ["sectors-direct-live", "/sectors?view=direct"],
   // …AND THE THIRD TAB, which is not a third set: it reads both at once, so the
   // claims about it — the default pick, the two sets' figures tying — have no
   // subject on either of the other two addresses.
@@ -9278,6 +9348,8 @@ const CALL_POSTS = [];
 let CALL_WALK = null;
 /** The Research card's sub-tabs, clicked in turn — see `stock-research`. */
 let RESEARCH_WALK = null;
+/** The sector mix's bar tooltip on Family & Entities, read under the pointer (FS-23). */
+let FE_BAR_TIP = null;
 /**
  * EVERY allocation row's address, in the order Morning CIO drew them.
  *
@@ -25536,10 +25608,24 @@ const INVARIANTS = {
       return !!cash && crU(cash[1], cash[2]) + 0.1 >= B.arbMV / 1e7;
     }],
     // WHY THE CLASSES ARE LEFT OUT IS THE LIST'S HOVER since Stage 10cp, and
-    // the sentence is gone from its face.
-    ["the excluded card says why in its hover, not on its face", (t, ctx) =>
-      !/excluded rather than folded in/i.test(t) && !/none has a sector of its own/i.test(t)
-      && (ctx?.titles ?? []).some((x) => /^Excluded rather than folded in — a fund holds many companies, so none has a sector of its own/.test(x))],
+    // the sentence is gone from its face. …AND IT IS TRUE OF WHAT THE CARD
+    // CARRIES (FS-24): "a fund holds many companies" was said over a list whose
+    // largest part is Cash, so each class the face lists needs its own clause.
+    ["the excluded card says why in its hover, not on its face — a reason true of every class it lists (FS-24)", (t, ctx) => {
+      if (/excluded rather than folded in/i.test(t) || /none has a sector of its own/i.test(t)) return false;
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*([^\n]*)/i.exec(t);
+      if (!card) return false;
+      const x = (ctx?.titles ?? []).find((s) => /^Excluded rather than folded in — /.test(s));
+      if (!x || !/, so none has a sector of its own\.$/.test(x) || /a fund holds many companies/.test(x)) return false;
+      const face = card[1];
+      const fund = /\b(?:AIF|Mutual Fund|ETF) ₹/.test(face);
+      // Cash on the face, or the arbitrage funds the book says it must carry
+      // there (the check above holds the face to that).
+      const cash = /\bCash ₹/.test(face) || /inside\s+the PMS mandates/i.test(face) || (CASH_INSTRUCTION_BOOK?.arbMV ?? 0) > 0;
+      return (fund || cash)
+        && (!fund || x.includes("a fund's units are a share of a portfolio rather than of one company"))
+        && (!cash || x.includes("what the family counts as cash is money"));
+    }],
     ["the excluded card's total ties to the classes it lists", (t) => {
       const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*([^\n]*)/i.exec(t);
       if (!card) return false;
@@ -25625,6 +25711,14 @@ const INVARIANTS = {
    * comparison keyed to the wrong sector, or to the wrong set, renders perfectly
    * well-formed cells — only the relations between them can see it.
    */
+  "sectors-direct-live": [
+    ["a live-priced figure says where its cost comes from — the statements, never a ledger or a workbook cell (FS-24)", (t, ctx) => {
+      const live = (ctx?.titles ?? []).filter((x) => /^Recalculated from live prices/.test(x));
+      // The quote feed is fulfilled on this route, so a live figure must be drawn.
+      if (!live.length) return false;
+      return live.every((x) => /the statements'/.test(x) && !/ledger|workbook/i.test(x));
+    }],
+  ],
   "sectors-compare": [
     ...sectorLayoutChecks("compare"),
     ["the left half is the donut and its picker, and neither the sector table nor the partition is drawn on this tab", (t, ctx) => {
@@ -28772,6 +28866,7 @@ const INVARIANTS = {
    */
   "family-entity": [
     ...familyUnvaluedChecks(() => FAMILY_ENTITY),
+    ...FE_SECTOR_CELLS,
     // The two routes are separate headings, and a mandate names itself between them.
     ["the drill-down sections by route, not by asset class alone",
       (t) => /DIRECT EQUITY/i.test(t) && /PMS MANDATES/i.test(t)],
@@ -30836,6 +30931,7 @@ const INVARIANTS = {
   "family-partial": [
     ...unvaluedLinesChecks(),
     ...familyUnvaluedChecks(() => CASH_INSTRUCTION_BOOK?.partialOwner),
+    ...FE_SECTOR_CELLS,
     // THE LINE SAYS "PARTLY VALUED" AND WHAT IS; THE NOTE IS THE HOVER ON ITS
     // NAME (Stage 10cf). What is NOT valued is read from that hover — a line
     // that dropped it would leave a reader taking the valued part for the whole.
@@ -31990,6 +32086,7 @@ for (const theme of THEMES) {
         || name === "stock-sold-after" || name === "corporate-actions-live") await installLiveMocks(page);
       if (name === "cio-live-capture-lag") await installLiveMocks(page, { captureLagDays: 1 });
       if (name === "cio-nav-bench-wrong") await installLiveMocks(page, { wrongName: { "^NSMIDCP": "NIFTY MIDCAP 50" } });
+      if (name === "sectors-direct-live") await installLiveMocks(page);
       // THE ALERTS WALKS. The store is seeded before the app boots, and the live
       // fixture is installed on the two that assert a quoted price; the no-feed
       // walk deliberately gets none, because that is its whole subject.
@@ -32816,6 +32913,28 @@ for (const theme of THEMES) {
       }
       if (name === "returns") {
         await page.waitForSelector('[data-returns-sector-source]:not([data-status="loading"])', { timeout: 20000 }).catch(() => {});
+      }
+      /**
+       * THE SECTOR MIX'S BAR TOOLTIP, READ WHERE A READER SEES IT (FS-23). It
+       * labelled every bar "NAV" over a chart of company shares only — a figure
+       * the card's own title says is not the entity's NAV. A tooltip exists
+       * only under the pointer, so the walk hovers the first bar, reads what the
+       * tooltip says, and moves the pointer away again.
+       */
+      FE_BAR_TIP = null;
+      if (name === "family-entity" || name === "family-partial") {
+        const bar = page.locator("main .recharts-bar-rectangle").first();
+        if (await bar.count()) {
+          await bar.hover({ force: true }).catch(() => {});
+          await page.waitForTimeout(350);
+          FE_BAR_TIP = await page.evaluate(() => {
+            const w = [...document.querySelectorAll("main .recharts-tooltip-wrapper")]
+              .find((e) => getComputedStyle(e).visibility !== "hidden" && (e.textContent ?? "").trim());
+            return w ? (w.textContent ?? "").replace(/\s+/g, " ").trim() : null;
+          });
+          await page.mouse.move(0, 0);
+          await page.waitForTimeout(150);
+        }
       }
       /**
        * THE RESEARCH CARD'S SUB-TABS, CLICKED THE WAY A READER DOES.
@@ -35935,9 +36054,18 @@ for (const theme of THEMES) {
             return { list, sleeve: Number(el.getAttribute("data-fe-sleeve-mv")),
               title: el.getAttribute("title") ?? el.closest("[title]")?.getAttribute("title") ?? "" };
           })(),
+          // Each holdings row's Sector cell as a reader sees it (FS-20): the
+          // text, and the reason a dash carries in its hover.
+          sectorCells: [...document.querySelectorAll("main table tr[data-fe-holding-key]")].map((tr) => {
+            const td = tr.querySelector("[data-fe-sector-cell]");
+            return { key: tr.getAttribute("data-fe-holding-key"), account: tr.getAttribute("data-fe-holding-account"),
+              text: (td?.textContent ?? "").trim(),
+              title: td?.querySelector("[title]")?.getAttribute("title") ?? td?.getAttribute("title") ?? null };
+          }),
           footNote: document.querySelector("main [data-fe-foot-note]")?.getAttribute("title") ?? null,
         };
       });
+      if (feSectors) feSectors.barTip = FE_BAR_TIP;
       /**
        * THE PRIVATE BOOK'S VIEW TOGGLE, AND WHICH TABLE IT DREW.
        *
