@@ -716,5 +716,19 @@ ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `$
   ok("...and more than one family asset class", new Set(cCells.map(String)).size > 1);
 }
 
+// ── 11. …AND THE PAGE HANDS THE SHEET THE LOADER'S WHOLE ANSWER (MSX-19) ────
+// Sections 8 and 9 hold the builder to both cases, and neither can see what the
+// page passes it. Handed `data?.txns ?? []`, the sheet loses the window and the
+// accounts it states, and an archive that did not answer exports as "no trades
+// were handed to this export" rather than as the failure it is. A source check,
+// crude on purpose: the download is not on any screen a sweep can read.
+{
+  const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
+  const page = readFileSync(path.join(ROOT, "src/pages/PortfolioMonitor.tsx"), "utf8");
+  const call = /exportPortfolioExcel\(\s*positions\s*,\s*portfolio\.accounts\s*,\s*([^)]*)\)/.exec(page);
+  ok("the Portfolio Monitor's Export hands the sheet the loader's whole answer, null included",
+     !!call && call[1].trim() === "data", call ? call[1].trim() : "no exportPortfolioExcel call found");
+}
+
 console.log(fails ? `\n${fails} failed` : "\nall checks passed");
 process.exit(fails ? 1 : 0);

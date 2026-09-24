@@ -3066,8 +3066,12 @@ export function PortfolioMonitor() {
     if (allOpen) setExpanded(new Set());
     else { setExpanded(new Set(expandableKeys)); setClosedSections(new Set()); }
   };
-  // Export the whole tab (all holdings + the full transaction tape, unfiltered) to a
-  // styled workbook. exceljs is code-split so it only loads on demand.
+  // Export the tab to a styled workbook: the current holdings, and the managers'
+  // dealing the transaction statements print. The loader's WHOLE answer goes to
+  // the sheet, not its rows alone: it carries the window and the accounts the
+  // sheet states (MSX-19), and a `null` — the archive did not answer — must export
+  // as that, never as a tape with no rows, which reads like a quarter nobody
+  // traded. exceljs is code-split so it only loads on demand.
   const handleExport = async () => {
     if (exporting) return;
     setExporting(true);
@@ -3076,7 +3080,7 @@ export function PortfolioMonitor() {
         import("@/lib/exportPortfolioExcel"),
         loadTransactions(),
       ]);
-      await exportPortfolioExcel(positions, portfolio.accounts, data?.txns ?? []);
+      await exportPortfolioExcel(positions, portfolio.accounts, data);
     } catch (e) {
       console.error("Excel export failed", e);
     } finally {
