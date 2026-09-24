@@ -51,6 +51,7 @@ import { sum, sumOrNull } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals,
   unvaluedAccounts, unvaluedDrawn, COST_COVERAGE_MIN, capitalScope, distributionOf,
+  capitalCountedOnce, incomeOnlyViewOf, INCOME_ONLY_VIEWS,
 } from "@/lib/privateMarket";
 import type { Commitment, Position } from "@/lib/types";
 
@@ -300,5 +301,46 @@ const mixed = fundRollup(mixedRows, accIdx, mixedRows)[0];
 ok("a fund whose cost covers only half its value shows NO return", mixed.returnPct == null,
   "a percentage across two different sets of holdings is the contradiction this refuses");
 near("…and its cost is the costed row alone", mixed.cost, priced.costBasis as number);
+
+console.log("\n── a capital account counted once with its holding: every branch, on constructed inputs ──");
+{
+  /**
+   * `capitalCountedOnce` has branches this book cannot reach — a group whose
+   * KEPT member carries no capital account, an account holding two funds — so
+   * each is exercised here on constructed rows rather than left unproven.
+   */
+  const pos = (accountId: string, securityKey: string, dedupeGroup?: string) =>
+    ({ ...BOOK_POSITIONS[0], accountId, securityKey, dedupeGroup }) as Position;
+  const com = (accountId: string) => ({ ...BOOK_COMMITMENTS[0], accountId }) as Commitment;
+  const ids = (xs: Commitment[]) => xs.map((c) => c.accountId).sort();
+  // 1. Both members carry capital: the kept (first) member's counts, the other's is named.
+  const a = capitalCountedOnce([com("A"), com("B")], [pos("A", "f", "g"), pos("B", "f", "g")]);
+  eq("both members carry capital: the first stands for the group", ids(a.counted), ["A"]);
+  eq("…and the second is named with who it is counted as", a.alsoReported.map((x) => [x.commitment.accountId, x.countedAs]), [["B", "A"]]);
+  // 2. The kept member carries none: the group's capital is still counted ONCE, never zero times.
+  const b = capitalCountedOnce([com("B")], [pos("A", "f", "g"), pos("B", "f", "g")]);
+  eq("the kept member carries no capital: the other member's is counted, never dropped", ids(b.counted), ["B"]);
+  // 3. An account holding a second fund is not one holding's view — its capital stays counted.
+  const c = capitalCountedOnce([com("A"), com("B")], [pos("A", "f", "g"), pos("B", "f", "g"), pos("B", "h")]);
+  eq("an account holding two funds keeps its capital counted", ids(c.counted), ["A", "B"]);
+  // 4. No duplicate at all: every capital account counts.
+  const d = capitalCountedOnce([com("A"), com("B")], [pos("A", "f"), pos("B", "h")]);
+  eq("no dedupe group: every capital account counts", ids(d.counted), ["A", "B"]);
+  eq("…and none is left out", d.alsoReported.length, 0);
+}
+
+console.log("\n── an income-only folio folds only where its units tie ──");
+{
+  const v = INCOME_ONLY_VIEWS[0];
+  const acc = BOOK_ACCOUNTS.find((x) => x.accountId === v.accountId)!;
+  const real = BOOK_POSITIONS.filter((p) => p.securityKey === v.securityKey);
+  ok("the join finds the valued holding on the book", incomeOnlyViewOf(acc, real, accIdx) != null);
+  // One unit off, and the join refuses rather than folding a folio under a holding it does not describe.
+  const off = real.map((p) => ({ ...p, quantity: p.quantity + 1 }));
+  eq("a unit count that does not tie folds nothing", incomeOnlyViewOf(acc, off, accIdx), null);
+  // Another member's holding of the same fund is not this folio's.
+  const other = real.filter((p) => accIdx.get(p.accountId)?.ownerId !== acc.ownerId);
+  eq("another member's holding of the fund is never this folio's", incomeOnlyViewOf(acc, other, accIdx), null);
+}
 
 process.exit(fails ? 1 : 0);

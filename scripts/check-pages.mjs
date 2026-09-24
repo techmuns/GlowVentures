@@ -1904,9 +1904,21 @@ const AIF_BOOK = (() => {
     }
     // AND THE FOLIOS THAT VALUE NOTHING, by the same axis — the only place a
     // Category I AIF appears in this book at all.
+    //
+    // A-15 — HELD AND VALUED BY NO STATEMENT: capital went in, and nothing values
+    // what it bought. Derived here from the CAPITAL REGISTER — an account holding
+    // no position at all whose own capital account records capital drawn — and
+    // never through `isValuedByNoStatement`, the page's predicate. This list
+    // used to be every AIF-engagement account holding nothing, which counted 10:
+    // it took in the two 360 ONE income-only folios, whose units ARE valued under
+    // another account, and Motilal Oswal's Hedged Equity strategy, redeemed to
+    // nil. The truth is 7, and Private Market's "Not valued" section is the same 7.
     const withPositions = new Set(positions.map((p) => p.accountId));
-    const unvalued = accounts
-      .filter((a) => a.engagement === "AIF" && !withPositions.has(a.accountId))
+    const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+    const drewCapital = new Set(commitments.filter((c) => (Number(c.drawn) || 0) > 0).map((c) => c.accountId));
+    const unvaluedAccs = accounts
+      .filter((a) => a.engagement === "AIF" && !withPositions.has(a.accountId) && drewCapital.has(a.accountId));
+    const unvalued = unvaluedAccs
       .map((a) => {
         const named = cats(a.providerEngagement);
         return isPE(null, a) ? "Private Equity" : named.length === 1 ? named[0] : "Category not stated";
@@ -1926,6 +1938,9 @@ const AIF_BOOK = (() => {
       declaredRows: [...declaredRows].sort(),
       unvaluedSections: [...new Set(unvalued)],
       unvaluedCount: unvalued.length,
+      /** The accounts themselves, so Private Market's section can be held to the SAME set. */
+      unvaluedIds: unvaluedAccs.map((a) => a.accountId).sort(),
+      unvaluedAccountNos: unvaluedAccs.map((a) => String(a.accountNo)),
       /** True where the book carries a Category I AIF that no statement values. */
       catIOnlyUnvalued: !sections.has("Category I") && unvalued.includes("Category I"),
     };
@@ -2106,6 +2121,77 @@ const CAPITAL_BOOK = (() => {
       committedCr: cs.reduce((t, c) => t + (c.committed ?? 0), 0) / 1e7,
       calledCr: cs.filter((c) => c.called != null).reduce((t, c) => t + c.called, 0) / 1e7,
       paidCr: cs.filter((c) => c.paid != null).reduce((t, c) => t + c.paid, 0) / 1e7,
+      /** Each capital account's own figures, in rupees, as its statement prints them. */
+      byAccount: new Map(cs.map((c) => [c.accountId, {
+        committed: c.committed ?? null, called: c.called ?? null, paid: c.paid ?? null, undrawn: c.undrawn ?? null,
+      }])),
+      /** Which accounts hold each current private fund — a fund row's accounts, off the book. */
+      accountsByFund: (() => {
+        const m = new Map();
+        for (const p of bookArray(src, "BOOK_POSITIONS") ?? []) {
+          if (p.marketSide !== "private" || !((Number(p.quantity) || 0) > 0)) continue;
+          m.set(p.securityKey, [...(m.get(p.securityKey) ?? []), p.accountId]);
+        }
+        return m;
+      })(),
+      /** The private funds a second statement also reports — the pairs pending the family's answer. */
+      twiceKeys: [...new Set((bookArray(src, "BOOK_POSITIONS") ?? [])
+        .filter((p) => p.marketSide === "private" && (Number(p.quantity) || 0) > 0 && p.dedupeGroup)
+        .map((p) => p.securityKey))].sort(),
+      /**
+       * ── EACH CAPITAL ACCOUNT ONCE WITH ITS HOLDING (PM-A2) ─────────────────
+       *
+       * Everything above is AS PRINTED — every statement, which is what the
+       * Transactions tab and the folio lines show, and what Morning CIO's capital
+       * card still reads. The page's tiles and its total COUNT a capital account
+       * on the basis its holding is counted, so a holding two statements report
+       * (Transition Venture Fund I, under both family trusts) brings ONE capital
+       * account into them, not two.
+       *
+       * Derived here by the dedupe rule itself — the FIRST member of a group in
+       * book order is the one a consolidated figure keeps — and never through
+       * `capitalCountedOnce`: of the members carrying a capital account, the
+       * kept one stands for the group (or the first that carries one), and an
+       * account holding more than one private fund is never one holding's view.
+       */
+      once: (() => {
+        const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+        const priv = positions.filter((p) => p.marketSide === "private" && (Number(p.quantity) || 0) > 0);
+        const ids = new Set(cs.map((c) => c.accountId));
+        const holds = new Map();
+        for (const p of priv) holds.set(p.accountId, (holds.get(p.accountId) ?? 0) + 1);
+        const leftOut = [];
+        for (const g of new Set(priv.map((p) => p.dedupeGroup).filter(Boolean))) {
+          const members = priv.filter((p) => p.dedupeGroup === g);
+          const withCap = members.filter((p) => ids.has(p.accountId) && holds.get(p.accountId) === 1);
+          const stand = withCap.find((p) => p === members[0]) ?? withCap[0];
+          for (const p of withCap) if (p !== stand) leftOut.push({
+            accountId: p.accountId, countedAs: stand.accountId,
+            accountNo: String(acc.get(p.accountId)?.accountNo ?? ""), countedAsNo: String(acc.get(stand.accountId)?.accountNo ?? ""),
+          });
+        }
+        const out = new Set(leftOut.map((x) => x.accountId));
+        const on = cs.filter((c) => !out.has(c.accountId));
+        const gone = cs.filter((c) => out.has(c.accountId));
+        const sumCr = (rows, f) => rows.filter((c) => c[f] != null).reduce((t, c) => t + Number(c[f]), 0) / 1e7;
+        return {
+          count: on.length,
+          leftOut,
+          pendingOf: on.filter((c) => c.pending != null).length,
+          uncalledOf: on.filter((c) => c.undrawn != null).length,
+          calledOf: on.filter((c) => c.called != null).length,
+          paidOf: on.filter((c) => c.paid != null).length,
+          uncalledCr: sumCr(on, "undrawn"),
+          committedCr: sumCr(on, "committed"),
+          calledCr: sumCr(on, "called"),
+          paidCr: sumCr(on, "paid"),
+          callCount: on.reduce((t, c) => t + (c.calls?.length ?? 0), 0),
+          /** What the left-out statements would add, were each pair two investments. */
+          goneCommittedCr: sumCr(gone, "committed"),
+          gonePaidCr: sumCr(gone, "paid"),
+          goneUncalledCr: sumCr(gone, "undrawn"),
+        };
+      })(),
     };
   } catch { return null; }
 })();
@@ -2132,10 +2218,39 @@ const UNVALUED_BOOK = (() => {
      */
     const un = accounts.filter((a) => a.engagement === "AIF" && !held.has(a.accountId)
       && fundSideOf(a.strategy ?? a.provider, a) === "private");
+    /**
+     * A-15 — WHICH OF THEM NOTHING VALUES, and which only VIEW a holding another
+     * account values. Derived off the CAPITAL REGISTER, never through the page's
+     * `isValuedByNoStatement`: capital drawn into an account that holds nothing
+     * is money no statement values; an account holding nothing that drew none is
+     * an income-only folio (it reports earnings on units counted elsewhere), and
+     * the table folds it under the holding it reports rather than calling it
+     * unvalued. The section must be the SAME set the AIF drill-down names.
+     */
+    const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+    const drew = new Set(commitments.filter((c) => (Number(c.drawn) || 0) > 0).map((c) => c.accountId));
+    const redeemed = (a) => /redeemed/i.test(a.noPositionsReason ?? "");
+    const noValue = un.filter((a) => drew.has(a.accountId) || redeemed(a));
+    const views = un.filter((a) => !drew.has(a.accountId) && !redeemed(a));
+    /**
+     * WHERE EACH VIEW BELONGS: the same member's valued holding of the fund the
+     * account's own strategy names — read off the account and the positions, so
+     * the fold is held to the book rather than to the join table that makes it.
+     */
+    const norm = (s) => String(s ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const viewOf = new Map(views.map((a) => {
+      const home = positions.find((p) => p.marketSide === "private" && p.accountId !== a.accountId
+        && accounts.find((x) => x.accountId === p.accountId)?.ownerId === a.ownerId
+        && norm(p.security).startsWith(norm(a.strategy)));
+      return [a.accountId, home ? { accountId: home.accountId, securityKey: home.securityKey } : null];
+    }));
     return {
-      accounts: un.length,
+      accounts: noValue.length,
+      ids: noValue.map((a) => a.accountId).sort(),
+      views: views.map((a) => a.accountId).sort(),
+      viewOf,
       /** Redeemed to nil — a MEASURED zero, which the table must print as ₹0 and never as a dash. */
-      redeemed: un.filter((a) => /redeemed/i.test(a.noPositionsReason ?? "")).length,
+      redeemed: un.filter(redeemed).length,
     };
   } catch { return null; }
 })();
@@ -9929,18 +10044,115 @@ const PM_TABLE_CHECKS = [
     // A band with no capital account prints a dash, which contributes NOTHING
     // — skipped, as `sumOrNull` skips it, never read as a zero.
     const sum = (vals) => vals.filter(Number.isFinite).reduce((a, b) => a + b, 0);
+    /**
+     * PM-A2 — A MEMBER'S BAND IS ON THE PRINTED BASIS, AND ITS "COUNTED ONCE"
+     * LINE TAKES IT BACK. By owner the private band prints both trusts' capital;
+     * the total counts the capital account once with its holding, and the band's
+     * own adjust line is the difference — in rupees, off its handle.
+     */
+    const bandAdj = (c) => {
+      const o = pv.overlaps.find((x) => x.key === "section-private");
+      const v = o?.adj?.[c];
+      return Number.isFinite(v) ? v / 1e7 : 0;
+    };
     const ok = ["committed", "paid"].every((c) =>
-      pmClose(sum([col(band.private, c), col(band.unvalued, c)]), col(tot, c)));
+      pmClose(sum([col(band.private, c), col(band.unvalued, c)]) - bandAdj(c), col(tot, c)));
+    const once = CAPITAL_BOOK.once;
     // A caveat under Called only where some account prints no called line —
     // "11 of 11 accounts" would be a caveat about nothing.
-    const calledCov = CAPITAL_BOOK.calledOf < CAPITAL_BOOK.count ? `${CAPITAL_BOOK.calledOf}/${CAPITAL_BOOK.count}` : null;
+    const calledCov = once.calledOf < once.count ? `${once.calledOf}/${once.count}` : null;
     const fund = pv.groups.every((g) => g.kind === "fund");
     return ok
-      && pmClose(col(tot, "committed"), CAPITAL_BOOK.committedCr)
-      && pmClose(col(tot, "paid"), CAPITAL_BOOK.paidCr)
-      && pmClose(col(tot, "called"), CAPITAL_BOOK.calledCr)
+      && pmClose(col(tot, "committed"), once.committedCr)
+      && pmClose(col(tot, "paid"), once.paidCr)
+      && pmClose(col(tot, "called"), once.calledCr)
       && (tot.cells.called?.covered ?? null) === calledCov
       && (!fund || pmClose(col(band.private, "value"), col(tot, "value")));
+  }],
+  /**
+   * PM-A2 — ONE BASIS PER ROW, capital included. Transition Venture Fund I is
+   * one `dedupeGroup` under both family trusts, and its fund row counted the
+   * HOLDING once (7,500 units, ₹75 L cost) beside BOTH trusts' capital — ₹3 Cr
+   * committed and ₹1.5 Cr paid in. Every figure was a real statement's, and the
+   * row described two different sets. So a fund row's capital must be the
+   * capital of the accounts whose holding it counts — the book's own counted-
+   * once set, `CAPITAL_BOOK.once`, derived off `glowData.ts` rather than off
+   * the page — and every folio line must print its OWN statement's capital, so
+   * the lines add to the row through its Counted once line.
+   *
+   * A TIE BETWEEN THE LINES AND THE ROW ALONE COULD NOT SEE THE BUG: the old
+   * row printed both statements' capital AND its lines did, so they tied. The
+   * claim that bites is the row's capital against the BOOK's counted set.
+   */
+  ["every fund row counts each capital account once with its holding, and its lines tie to it through the Counted once line", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    if (!CAPITAL_BOOK) return false;
+    const fundRows = pv.groups.filter((g) => g.kind === "fund");
+    // A FUND VIEW WITH NO FUND ROW HAS LOST ITS SUBJECT: a finding, never an
+    // abstention. Only an address drawing another view stands down, and says which.
+    if (!fundRows.length) {
+      const view = pv.views?.find((v) => v.active)?.key ?? null;
+      if (view === "owners") return { notChecked: "this address draws members, not funds" };
+      if (view === "transactions") return { notChecked: "this address draws the call history, not funds" };
+      // The fund view stands down only where the BOOK holds no private fund.
+      return SIDE_BOOK && !SIDE_BOOK.privateRows ? { notChecked: "this book holds no private fund" } : false;
+    }
+    const left = new Set(CAPITAL_BOOK.once.leftOut.map((x) => x.accountId));
+    const book = CAPITAL_BOOK.byAccount;
+    const near = (a, b) => Math.abs((a ?? 0) - (b ?? 0)) <= 1;
+    const add = (vs) => vs.reduce((a, b) => a + b, 0);
+    let bit = 0;
+    for (const g of fundRows.filter((x) => x.section === "private")) {
+      // THE ROW'S ACCOUNTS, OFF THE BOOK — every account holding this fund.
+      const accs = [...new Set(CAPITAL_BOOK.accountsByFund.get(g.key) ?? [])].filter((a) => book.has(a));
+      if (accs.some((a) => left.has(a))) bit++;
+      for (const k of ["committed", "called", "paid", "uncalled"]) {
+        const f = k === "uncalled" ? "undrawn" : k;
+        // The row counts only the accounts the book's counted-once set keeps.
+        const want = accs.filter((a) => !left.has(a)).map((a) => book.get(a)[f]).filter((v) => v != null);
+        const got = g.cap?.[k];
+        if (want.length ? !near(got, add(want)) : Number.isFinite(got)) return false;
+        // WHERE THE ROW IS OPEN, its lines and its Counted once line are held too.
+        const lines = pv.children.filter((c) => c.group === g.key);
+        if (!lines.length) continue;
+        for (const c of lines) {
+          // Each line prints its OWN statement's capital, as the book carries it.
+          if (!c.capital) { if (Number.isFinite(c.cap?.[k])) return false; continue; }
+          const b = book.get(c.capital)?.[f];
+          if (b == null ? Number.isFinite(c.cap?.[k]) : !near(c.cap?.[k], b)) return false;
+        }
+        const gone = accs.filter((a) => left.has(a)).map((a) => book.get(a)[f]).filter((v) => v != null && v > 1);
+        const adj = pv.overlaps.find((x) => x.key === g.key)?.adj?.[k];
+        if (gone.length ? !near(adj, add(gone)) : Number.isFinite(adj)) return false;
+      }
+    }
+    // THE PAIR IS ON THIS BOOK, so the claim must have bitten on one of its rows.
+    return CAPITAL_BOOK.once.leftOut.length === 0 || bit > 0;
+  }],
+  /**
+   * PM-A1 — THE PAIR IS THE FAMILY'S TO CALL, AND THE ROW SAYS SO. Every fund
+   * row a second statement also reports — a `dedupeGroup` on the book's own
+   * private positions, derived here — carries the pending note under its name,
+   * and no other row does.
+   */
+  ["every fund reported twice says, on its row, that the pair is pending the family's answer", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    if (!CAPITAL_BOOK?.twiceKeys) return false;
+    const fundRows = pv.groups.filter((g) => g.kind === "fund" && g.section === "private");
+    // A FUND VIEW WITH NO FUND ROW HAS LOST ITS SUBJECT: a finding, never an
+    // abstention. Only an address drawing another view stands down, and says which.
+    if (!fundRows.length) {
+      const view = pv.views?.find((v) => v.active)?.key ?? null;
+      if (view === "owners") return { notChecked: "this address draws members, not funds" };
+      if (view === "transactions") return { notChecked: "this address draws the call history, not funds" };
+      // The fund view stands down only where the BOOK holds no private fund.
+      return SIDE_BOOK && !SIDE_BOOK.privateRows ? { notChecked: "this book holds no private fund" } : false;
+    }
+    if (!CAPITAL_BOOK.twiceKeys.length) return fundRows.every((g) => !g.pending);
+    return CAPITAL_BOOK.twiceKeys.every((k) => fundRows.some((g) => g.key === k && g.pending))
+      && fundRows.every((g) => g.pending === CAPITAL_BOOK.twiceKeys.includes(g.key));
   }],
 ];
 
@@ -10025,6 +10237,60 @@ const PM_EXPANDED_CHECKS = [
       && new Set(ids).size === ids.length
       && CAPITAL_BOOK.ids.every((id) => ids.includes(id))
       && ids.every((id) => !CAPITAL_BOOK.elsewhereIds.includes(id));
+  }],
+  /**
+   * PM-A2 — EACH FOLIO LINE SAYS WHETHER THE ROWS ABOVE COUNT ITS CAPITAL, and
+   * the book decides which. The statement a counted-once holding's second
+   * statement carries is named, on its own line, with the account it is
+   * counted with — so a reader adding the lines is never surprised by the row.
+   */
+  ["each folio says whether its capital is counted, exactly as the book's counted-once set says", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    if (!CAPITAL_BOOK) return false;
+    const left = new Map(CAPITAL_BOOK.once.leftOut.map((x) => [x.accountId, x.countedAs]));
+    const withCap = pv.children.filter((c) => c.capital);
+    if (!withCap.length) return false;
+    return withCap.every((c) => left.has(c.capital)
+      ? c.capitalCounted === "false" && c.capitalCountedAs === left.get(c.capital) && c.alsoNote === left.get(c.capital)
+      : c.capitalCounted === "true" && !c.alsoNote);
+  }],
+  /**
+   * A-15 — "NOT VALUED" IS THE SAME SET THE AIF DRILL-DOWN NAMES. Both are held
+   * to `AIF_BOOK.unvaluedIds` — an account holding nothing whose own capital
+   * account records capital drawn, derived off `glowData.ts` — so the two pages
+   * cannot list different folios. They said 10 and 9 while the truth was 7.
+   */
+  ["the Not valued section is exactly the folios no statement values — the AIF drill-down's own set (A-15)", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    if (!AIF_BOOK || !UNVALUED_BOOK) return false;
+    const got = pv.children.filter((c) => c.section === "unvalued").map((c) => c.account).sort();
+    if (!got.length && !AIF_BOOK.unvaluedIds.length) return { notChecked: "every private account in this book is valued" };
+    return JSON.stringify(got) === JSON.stringify(AIF_BOOK.unvaluedIds)
+      && JSON.stringify(got) === JSON.stringify(UNVALUED_BOOK.ids);
+  }],
+  /**
+   * …AND AN INCOME-ONLY FOLIO IS A LINE OF THE HOLDING IT REPORTS, never "not
+   * valued": its units are valued under another account. Each is drawn under
+   * that holding, names the account whose line values it, carries no value,
+   * and — By owner, where a folio line is a fund level — no second call cell.
+   */
+  ["each income-only folio is a line of the holding it reports, with no value and no call cell of its own", (t, ctx) => {
+    const pv = ctx?.pmView;
+    if (!pv) return { notChecked: "the private-view probe did not run" };
+    if (!UNVALUED_BOOK) return false;
+    const views = pv.children.filter((c) => c.viewOf);
+    if (!UNVALUED_BOOK.views.length) return views.length === 0 || false;
+    const byFund = pv.groups.some((g) => g.kind === "fund");
+    const callRows = new Set((pv.callCells ?? []).map((c) => c.rowAccount).filter(Boolean));
+    return JSON.stringify(views.map((c) => c.account).sort()) === JSON.stringify(UNVALUED_BOOK.views)
+      && views.every((c) => {
+        const home = UNVALUED_BOOK.viewOf.get(c.account);
+        return !!home && c.viewOf === home.accountId && c.section === "private" && c.viewNote
+          && c.value == null && (!byFund || c.group === home.securityKey)
+          && !callRows.has(c.account);
+      });
   }],
 ];
 
@@ -17050,6 +17316,27 @@ const INVARIANTS = {
         && /drawn/i.test(t) && /no NAV|valued by no statement/i.test(t);
     }],
     /**
+     * A-15 — THE SAME SET THE PRIVATE MARKET PAGE CALLS "NOT VALUED". This list
+     * named 10 folios while Private Market named 9, and the truth was 7. Both are
+     * now held to ONE set derived off `glowData.ts` (`AIF_BOOK.unvaluedIds`) —
+     * each line naming a folio of that set by the account number its own
+     * statement prints, and no line naming anything else.
+     */
+    ["the folios it names as valued by no statement are exactly the book's, and Private Market's (A-15)", (t, ctx) => {
+      if (!AIF_BOOK) return false;
+      if (!AIF_BOOK.unvaluedCount) return { notChecked: "every AIF folio in this book carries a valued position" };
+      const lines = ctx?.aifSections?.unvaluedText;
+      if (!lines?.length) return false;
+      const nos = AIF_BOOK.unvaluedAccountNos;
+      // Each line names exactly one of the book's folios, and each folio is named once.
+      // A whole token, so account 1759 can never be read inside 175962.
+      const has = (line, no) => line.split(/[\s·]+/).includes(no);
+      const named = lines.map((l) => nos.filter((n) => has(l, n)));
+      return lines.length === nos.length
+        && named.every((m) => m.length === 1)
+        && new Set(named.map((m) => m[0])).size === nos.length;
+    }],
+    /**
      * ── …AND THEY ARE A DROPDOWN, SHUT ON ARRIVAL, WHOSE SUMMARY STILL SAYS
      * WHAT IS INSIDE IT ─────────────────────────────────────────────────────
      *
@@ -18494,17 +18781,44 @@ const INVARIANTS = {
       // THE WORKING IS THE HOVER ON THE TOTAL IT PROVES — the drop-down that
       // carried it under the table went at the family's request.
       const said = new RegExp(String.raw`summed exactly as each fund prints it[^₹]*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*over\s*the\s*(\d+) accounts`, "i").exec(cell?.title ?? "");
-      if (!Number.isFinite(tile) || !cell || !said || !Number.isFinite(total?.capitalAccounts)) return false;
+      if (!Number.isFinite(tile) || !cell || !said || !Number.isFinite(total?.capitalCounted)) return false;
       if (/summed exactly as each fund prints it/i.test(t)) return false;
-      // No caveat under the figure means it covers every account the row holds.
+      // No caveat under the figure means it covers every account the row COUNTS
+      // — each capital account once with its holding (PM-A2), so the book's own
+      // counted-once set is the denominator, never the page's.
+      const once = CAPITAL_BOOK.once;
       const [have, of] = cell.covered
         ? String(cell.covered).split("/").map(Number)
-        : [total.capitalAccounts, total.capitalAccounts];
+        : [total.capitalCounted, total.capitalCounted];
       return pmClose(pmMoney(cell.text), tile) && pmClose(crU(said[1], said[2]), tile)
-        && pmClose(tile, CAPITAL_BOOK.uncalledCr)
-        && have === CAPITAL_BOOK.uncalledOf && of === CAPITAL_BOOK.count
-        && of === total.capitalAccounts
+        && pmClose(tile, once.uncalledCr)
+        && have === once.uncalledOf && of === once.count
+        && of === total.capitalCounted
+        // …and the statements it leaves out are the ones the book says it does.
+        && total.capitalAccounts - total.capitalCounted === once.leftOut.length
         && Number(said[3]) === have;
+    }],
+    /**
+     * PM-A2 — EVERY CAPITAL TILE SAYS WHICH STATEMENT IT COUNTS ONCE, WHAT IT
+     * WOULD ADD, AND THAT THE PAIR IS THE FAMILY'S TO CALL. A capital figure
+     * that quietly left ₹75 L out is a figure a reader cannot reconcile to the
+     * statements in their hand; each hover names the account by the number its
+     * own statement prints, and the rupee amount is the book's, per tile.
+     */
+    ["each capital tile names the statement it counts once, what it would add, and that the pair is pending the family's answer", (t, ctx) => {
+      if (!CAPITAL_BOOK) return false;
+      const once = CAPITAL_BOOK.once;
+      const d = ctx?.tileStrip?.details ?? {};
+      const tiles = { uncalled: once.goneUncalledCr, committed: once.goneCommittedCr, paid: once.gonePaidCr };
+      const drawn = Object.keys(tiles).filter((k) => d[k]);
+      if (!drawn.length) return { notChecked: "no capital tile is on this strip" };
+      if (!once.leftOut.length) return drawn.every((k) => !/pending the family/i.test(d[k]));
+      return drawn.every((k) => {
+        const add = /if two, add ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(d[k]);
+        return once.leftOut.every((x) => d[k].includes(x.accountNo) && d[k].includes(x.countedAsNo))
+          && /pending the family['’]s answer/i.test(d[k])
+          && !!add && pmClose(crU(add[1], add[2]), tiles[k]);
+      });
     }],
     // PM-4b. THE CLIENT'S OWN QUESTION, CHECKED AS ARITHMETIC. *"How are you
     // calculating this uncalled capital of 16 crores?"* — the page answers with
@@ -18661,8 +18975,8 @@ const INVARIANTS = {
         && !/Nothing scheduled/i.test(t)
         && !/Promised, no date/i.test(t)
         // The undated uncalled total, still on the default tile, to the page's
-        // own printing precision.
-        && Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6;
+        // own printing precision — counted once with each holding (PM-A2).
+        && Math.abs(tile - CAPITAL_BOOK.once.uncalledCr) <= 0.6;
     }],
     PM_CALL_COLUMN_CHECK,
     /**
@@ -18712,7 +19026,8 @@ const INVARIANTS = {
       // the total widens the coverage to every row and leaves the figure at ₹0,
       // so the count is the only thing that moves — and `N <= M` is satisfied by
       // the bug. The book says how many statements print the line.
-      return Number(m[1]) === CAPITAL_BOOK.pendingOf && Number(m[2]) === CAPITAL_BOOK.count
+      // Over the capital accounts the tiles COUNT — each once with its holding.
+      return Number(m[1]) === CAPITAL_BOOK.once.pendingOf && Number(m[2]) === CAPITAL_BOOK.once.count
         && /^DUE NOW\s*₹/i.test(shown) && /Called, not yet paid/i.test(shown)
         && /a measured figure, not an assumption/i.test(detail)
         && /never counted as nil/i.test(detail);
@@ -18743,8 +19058,9 @@ const INVARIANTS = {
        * line under the scheme table.
        */
       const different = !CAPITAL_BOOK.calledPaidSameSet;
-      return Number(called[1]) === CAPITAL_BOOK.calledOf && Number(called[2]) === CAPITAL_BOOK.count
-        && Number(paid[1]) === CAPITAL_BOOK.paidOf && Number(paid[2]) === CAPITAL_BOOK.count
+      const once = CAPITAL_BOOK.once;
+      return Number(called[1]) === once.calledOf && Number(called[2]) === once.count
+        && Number(paid[1]) === once.paidOf && Number(paid[2]) === once.count
         // On the Called TOTAL's hover, where a reader doing that subtraction is.
         && /must not be subtracted from each other/i.test(
           ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.called?.title ?? "") === different
@@ -18864,12 +19180,21 @@ const INVARIANTS = {
       const priv = pv.groups.filter((g) => g.section === "private");
       if (priv.length !== PM_FOLIO_BOOK.funds) return false;
       const kids = pv.children.filter((c) => c.section === "private");
+      // …PLUS THE INCOME-ONLY FOLIOS THAT REPORT IT (A-15): a line each under
+      // the holding whose units they report, derived off the book in
+      // `UNVALUED_BOOK` — never counted among its holding statements.
+      const viewsOf = (key) => [...(UNVALUED_BOOK?.viewOf ?? new Map()).values()].filter((h) => h?.securityKey === key).length;
+      const allViews = [...(UNVALUED_BOOK?.viewOf ?? new Map()).values()].filter(Boolean).length;
       return priv.every((g) => {
-        const want = PM_FOLIO_BOOK.statements.get(g.key);
+        const held = PM_FOLIO_BOOK.statements.get(g.key);
+        const want = held == null ? null : held + viewsOf(g.key);
         const tog = pv.toggles.find((x) => x.key === g.key);
+        const lines = kids.filter((c) => c.group === g.key);
         return want != null && g.folios === want && tog?.rows === want && tog.open
-          && kids.filter((c) => c.group === g.key).length === want;
-      }) && kids.length === PM_FOLIO_BOOK.rows;
+          && lines.length === want
+          && lines.filter((c) => !c.viewOf).length === held
+          && (viewsOf(g.key) === 0 || g.views === viewsOf(g.key));
+      }) && kids.length === PM_FOLIO_BOOK.rows + allViews;
     }],
     /**
      * PM-1 — THE LINES ADD TO MORE THAN THE ROW, BY THE DOUBLE COUNT THE
@@ -18979,10 +19304,14 @@ const INVARIANTS = {
     ["by owner, the Capital call cell is on every member's line in a fund and on no member row", (t, ctx) => {
       const pv = ctx?.pmView;
       if (!pv) return { notChecked: "the private-view probe did not run" };
-      const kids = pv.children;
+      // EVERY LINE THAT HOLDS UNITS — never an income-only VIEW of a holding
+      // another line values, which would put a second editor for one fund under
+      // one member (the views are derived off the book in `UNVALUED_BOOK`).
+      const views = new Set(UNVALUED_BOOK?.views ?? []);
+      const kids = pv.children.filter((c) => !views.has(c.account));
       if (!kids.length || !pv.callHead) return false;
       return pv.callCells.length === kids.length
-        && pv.callCells.every((c) => c.on === "folio")
+        && pv.callCells.every((c) => c.on === "folio" && !views.has(c.rowAccount))
         && pv.groups.every((g) => g.kind === "owner" && !g.callCell);
     }],
     ["the member rows add to the printed total, and the 'Counted once' line takes it to the consolidated one", (t, ctx) => {
@@ -19055,7 +19384,7 @@ const INVARIANTS = {
         && !/Next (?:1|3|6) months?/i.test(t)
         && !/Promised, no date/i.test(t)
         && !/Nothing scheduled/i.test(t)
-        && pmClose(tile, CAPITAL_BOOK.uncalledCr);
+        && pmClose(tile, CAPITAL_BOOK.once.uncalledCr);
     }],
     /**
      * PM-4f, THE HISTORY HALF — the rows, the tab's own count and the footer are
@@ -19154,9 +19483,11 @@ const INVARIANTS = {
       const tile = crU(...(/^STILL TO CALL\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(ctx?.tileStrip?.texts?.uncalled ?? "") ?? []).slice(1));
       // THE MASTER TABLE'S OWN STILL TO CALL TOTAL — the working line that
       // printed it went at the family's request, and the total is the figure.
+      // Counted once with each holding (PM-A2), on the tile and the total alike.
       const foot = pmMoney(ctx?.pmView?.totals?.find((x) => x.key === "private")?.cells?.uncalled?.text);
       if (!Number.isFinite(tile) || !Number.isFinite(foot) || !CAPITAL_BOOK) return false;
-      return Math.abs(tile - CAPITAL_BOOK.uncalledCr) <= 0.6 && Math.abs(foot - CAPITAL_BOOK.uncalledCr) <= 0.6;
+      const u = CAPITAL_BOOK.once.uncalledCr;
+      return Math.abs(tile - u) <= 0.6 && Math.abs(foot - u) <= 0.6;
     }],
   ],
   /**
@@ -27471,6 +27802,9 @@ for (const theme of THEMES) {
         // in this book is one of these, so without them a category-clubbed page
         // tells a reader they hold no Category I at all.
         unvalued: [...document.querySelectorAll("[data-aif-unvalued]")].map((e) => e.getAttribute("data-aif-unvalued")),
+        // …and each line's own words, which name the folio's account number — how
+        // the list is held to the SAME set Private Market's "Not valued" draws.
+        unvaluedText: [...document.querySelectorAll("[data-aif-unvalued]")].map((e) => (e.textContent ?? "").replace(/\s+/g, " ").trim()),
         // …which the family asked to see as a DROPDOWN: the container itself,
         // whether it is a `<details>`, whether it opened on arrival, and what its
         // summary line says while it is shut.
@@ -28468,6 +28802,7 @@ for (const theme of THEMES) {
         };
         const rows = (sel) => (table ? [...table.querySelectorAll(sel)] : []);
         const num = (e, a) => { const v = e.getAttribute(a); return v == null ? NaN : Number(v); };
+        const capOf = (e) => Object.fromEntries(["committed", "called", "paid", "uncalled"].map((k) => [k, num(e, `data-pm-${k}`)]));
         const wrap = table?.parentElement;
         const foot = document.querySelector("main table[data-pm-table='transactions'] tfoot tr");
         return {
@@ -28497,6 +28832,12 @@ for (const theme of THEMES) {
             costAbsent: e.hasAttribute("data-pm-cost-absent"), returnAbsent: e.hasAttribute("data-pm-return-absent"),
             securityKey: e.querySelector("a[href^='/stock/']") ? e.getAttribute("data-pm-group") : null,
             callCell: e.querySelector("[data-pm-call-cell]")?.getAttribute("data-pm-call-cell") ?? null,
+            // The row's capital in RUPEES off its handles, so a basis check is
+            // exact rather than read through a compact ₹1.5 Cr.
+            cap: capOf(e),
+            // The pair-pending note under the name (PM-A1).
+            pending: !!e.querySelector("[data-pm-pending]"),
+            views: num(e.querySelector("[data-pm-views]") ?? e, "data-pm-views"),
             text: txt(e), ...cellsOf(e) })),
           children: rows("tr[data-pm-folio-row]").map((e) => ({
             group: e.getAttribute("data-pm-folio-row"), section: e.getAttribute("data-pm-row-section"),
@@ -28505,17 +28846,30 @@ for (const theme of THEMES) {
             // The capital account this folio row carries, if any — one account
             // on one folio of its own account, never deduped.
             capital: e.getAttribute("data-pm-capital-account"),
+            // Whether the consolidated rows COUNT it, and with whom if not.
+            capitalCounted: e.getAttribute("data-pm-capital-counted"),
+            capitalCountedAs: e.getAttribute("data-pm-capital-counted-as"),
+            // An income-only VIEW of a holding another line values (A-15).
+            viewOf: e.getAttribute("data-pm-view-of"),
+            viewNote: !!e.querySelector("[data-pm-view-note]"),
+            alsoNote: e.querySelector("[data-pm-capital-also]")?.getAttribute("data-pm-capital-also") ?? null,
+            cap: capOf(e),
             text: txt(e), ...cellsOf(e) })),
           overlaps: rows("tr[data-pm-overlap]").map((e) => ({
             key: e.getAttribute("data-pm-overlap"), printed: num(e, "data-printed"),
             hint: e.querySelector("td")?.getAttribute("title") ?? null,
             consolidated: num(e, "data-consolidated"), overlap: num(e, "data-overlap"),
+            // What the line takes back in each column, in rupees.
+            adj: Object.fromEntries([...e.querySelectorAll("[data-pm-adjust]")]
+              .map((td) => [td.getAttribute("data-col-cell"), Number(td.getAttribute("data-pm-adjust"))])),
             text: txt(e), ...cellsOf(e) })),
           totals: rows("tr[data-pm-total]").map((e) => ({
             key: e.getAttribute("data-pm-total"),
             // How many capital accounts the row's capital columns add up — the
             // count the named public-market ones are the complement of.
             capitalAccounts: num(e, "data-pm-capital-accounts"),
+            // …and how many of them its capital columns COUNT (PM-A2).
+            capitalCounted: num(e, "data-pm-capital-counted"),
             text: txt(e), ...cellsOf(e) })),
           toggles: [...document.querySelectorAll("main [data-pm-folio-toggle]")].map((e) => ({
             key: e.getAttribute("data-pm-folio-toggle"),
@@ -28576,6 +28930,8 @@ for (const theme of THEMES) {
             return {
               key: td.getAttribute("data-pm-call-cell"),
               on: tr?.hasAttribute("data-pm-fund") ? "fund" : tr?.hasAttribute("data-pm-folio-row") ? "folio" : "other",
+              // The account a folio-level cell sits on — so a view folio can be held to carrying none.
+              rowAccount: tr?.hasAttribute("data-pm-folio-row") ? tr.getAttribute("data-account") : null,
               state: el?.getAttribute("data-pm-call-state") ?? null,
               amount: el?.hasAttribute("data-call-amount") ? Number(el.getAttribute("data-call-amount")) : null,
               date: el?.getAttribute("data-call-date") ?? null,
