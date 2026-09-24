@@ -24452,7 +24452,7 @@ words were right and the figure beside them was not quite. Stacked on Stage 10cv
 | | Was | Now |
 | --- | --- | --- |
 | VD-24 | Sanshi's cost was the statement's net of stamp duty, and a reader who paid ₹75 Cr read ₹74,99,62,501.87 | the cost is every rupee paid (`costBasisSource: "gross-paid"`); the statement's net and the charges are in the cell's hover. 3P's realised is struck on the same basis: ₹2,56,09,033.87 → ₹2,55,82,835.17 |
-| VD-17 | ICICI's NSDL statement counts shares at 31 Mar and prices them at the 30 Mar close; the page named one date for both | the value is struck on the pricing day (`priceAsOf`, carried where the statement prints it), and the tile, the Monitor's marker and each statement line name both |
+| VD-17 | ICICI's NSDL statement counts shares at 31 Mar and prices them at the 30 Mar close; the page named one date for both | the value is struck on the pricing day (`priceAsOf`, carried where the statement prints it), and the tile, the Monitor's price cell and each statement line name both |
 | VD-25, XA-23 | a class switch's legs read as dated flows; capital no dated row carries was silent beside the rate it is missing from | the switch is not a flow; the missing capital is named beside the rate |
 | DL-16, PM-D1 – D3 | Private Market figures that did not say what they divide by or round to | each says so, in its hover |
 | FS-20, FS-23, FS-24, PC-11 | a fund's Sector read "Unclassified"; the bar tooltip called company-share value the entity's NAV | a fund says it has no sector; the tooltip names the value it draws |

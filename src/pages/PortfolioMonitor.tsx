@@ -2958,7 +2958,7 @@ export function PortfolioMonitor() {
         cmp: v.splitMarks.length > 1
           ? <span data-cmp-split={v.splitMarks.length}><AbsentCell reason={splitMarkReason(v.splitMarks.map((x) => fmtFromBase(x)))} /></span>
           : v.currentPrice === null
-          ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+          ? <AbsentCell reason={totalValueNote(v.valuedAt, v.positions, accIdx)} />
           : <>{fmtFromBase(v.currentPrice)}{!v.live && (
               <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                 title={v.navPriced
@@ -4115,7 +4115,7 @@ export function PortfolioMonitor() {
                             : r.splitMarks && r.splitMarks.length > 1
                             ? <span data-cmp-split={r.splitMarks.length}><AbsentCell reason={splitMarkReason(r.splitMarks.map((v) => fmtFromBase(v)))} /></span>
                             : r.currentPrice === null
-                            ? <AbsentCell reason="marked at a total value, not a per-unit price" />
+                            ? <AbsentCell reason={totalValueNote(r.valuedAt, r.trancheSet, accIdx)} />
                             : r.live
                             ? fmtFromBase(r.currentPrice)
                             : <>{fmtFromBase(r.currentPrice)}
@@ -4843,6 +4843,17 @@ function statementMarkNote(lead: string, valuedAt: string, ps: readonly Position
   return drawn.length === 1
     ? `${lead} as of ${fmtDate(drawn[0])}, priced as of ${fmtDate(valuedAt)}.`
     : `${lead} as of ${fmtDate(valuedAt)}.`;
+}
+
+/**
+ * THE PRICE CELL OF A HOLDING MARKED AT A TOTAL VALUE (VD-17). An NSDL
+ * statement prints a value and no rate, so the row has no per-unit mark and no
+ * ◦ marker to carry its date. The absence says when that value was struck, and
+ * names both days where the statement prices on another day than its balances.
+ */
+function totalValueNote(valuedAt: string | null, ps: readonly Position[], accIdx: AccountIndex): string {
+  const base = "marked at a total value, not a per-unit price";
+  return valuedAt ? `${base}. ${statementMarkNote("Its statement values it", valuedAt, ps, accIdx)}` : base;
 }
 
 function classOfName(security: string | null | undefined): string | null {

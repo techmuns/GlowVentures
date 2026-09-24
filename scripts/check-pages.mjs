@@ -26596,13 +26596,15 @@ const INVARIANTS = {
     // say so in the CMP marker's hover on the category table. The premise is
     // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
     /**
-     * A MARK PRICED ON ANOTHER DAY THAN ITS BALANCES SAYS BOTH (VD-17). The
+     * A VALUE PRICED ON ANOTHER DAY THAN ITS BALANCES SAYS BOTH (VD-17). The
      * ICICI NSDL statement counts shares at 31 Mar and prices them at the
-     * 30 Mar close; the CMP marker's hover names both, derived from the book's
-     * own `priceAsOf` rather than typed. A book with no such row has no
-     * subject, and says so rather than passing.
+     * 30 Mar close. It prints a value and no rate, so its rows have no ◦
+     * marker: the date rides on the price cell's own absence, and a row with
+     * a per-unit mark carries it on the marker. Either hover names both days,
+     * derived from the book's own `priceAsOf` rather than typed. A book with
+     * no such row has no subject, and says so rather than passing.
      */
-    ["a statement mark priced on another day than its balances names both dates in the CMP marker's hover (VD-17)", (t, ctx) => {
+    ["a statement value priced on another day than its balances names both dates in its price cell's hover (VD-17)", (t, ctx) => {
       if (!PRICED_OTHER_DAY) return { notChecked: "no statement in this book prices on another day than its balances" };
       return (ctx?.titles ?? []).some((x) => /as of \d{1,2} \w{3,4} \d{4}, priced as of \d{1,2} \w{3,4} \d{4}/.test(x));
     }],

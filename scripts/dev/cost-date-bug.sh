@@ -118,8 +118,8 @@ run_case 7 "stock" no "the Holding value tile's hover names one date for both" \
     'const priced = drawn.length === 1 ? ` The statement counts its balances at ${fmtDate(drawn[0])} and prices them as of ${d}.` : "";' \
     'const priced = "";'
 
-# ── 8 ── the Monitor's CMP marker names one date for both
-run_case 8 "monitor" no "the Monitor's CMP marker stops saying the mark was priced on another day" \
+# ── 8 ── the Monitor's price cell names one date for both
+run_case 8 "monitor" no "the Monitor's price cell stops saying the value was priced on another day" \
   sub src/pages/PortfolioMonitor.tsx \
     '    ? `${lead} as of ${fmtDate(drawn[0])}, priced as of ${fmtDate(valuedAt)}.`' \
     '    ? `${lead} as of ${fmtDate(valuedAt)}.`'
