@@ -464,8 +464,9 @@ cash holding's genuinely-zero return both match, and both are correct.
   `src/lib/useResearchSync.ts` — EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW
   CENTRAL RESEARCH, which checks it against its own live price and raises it in
   its All Alerts and AI Alerts. The first decides what is sent — NSE symbol, ISIN
-  and the five levels, as a seed, a set or a clear — what an answer means, and
-  how the All alerts footer words the count (`summaryLine`), all PURE; the second
+  and the five levels, as a seed, a set or a clear — what an answer means, how
+  the All alerts footer words the count (`summaryLine`) and how a card words
+  where its levels went (`researchLine`), all PURE; the second
   sends it and remembers what arrived (`glow:research-levels/v1`, never inside
   the store); the third is the one mount, in the app shell. A fund or an AIF has
   no NSE symbol, so its levels stay here and its card says so. See Stage 10cq.
@@ -23325,6 +23326,13 @@ failure. The flag it set is kept on every save.
 position page five tabs, and every link that opens it — the All alerts pencil,
 the row's name and the New alert finder — reads one address, `alertBoxesHref`.
 
+**NOTHING ON IT READS AS A SENTENCE** — main's Stage 10cp rule for every page.
+What the card does is its title's hover, and the way to All alerts is a short
+link beside the price chip rather than a line under the title. Where a level is
+saved on a holding no price reaches — an AIF, or a company held only inside
+funds — the card says *"Saved · not checked here — no price"*, and why is the
+hover, because a reader must SEE that these alerts cannot fire.
+
 #### Morning CIO → All alerts
 
 A fourth tab, LAST, so the three the family arranged keep their places and the
@@ -23347,6 +23355,10 @@ row per alert, because two levels on one holding fire separately:
   price inline, so there is ONE form for a level.
 - The table is a standard table (Stage 10bh): every heading sorts, every column
   but the first moves, and an absent price sorts last, never as zero.
+- **NO LINE UNDER THE TITLE** (main's Stage 10cp): the counts — *reached ·
+  watching · checking · not checked* — sit beside the title, what the card is
+  is the title's hover, and an empty tab says *"No price alerts yet"* with the
+  how-to as that headline's hover and one short line naming New alert.
 
 #### The store tells everyone
 
@@ -23458,24 +23470,31 @@ and mixing them would let a failed send look like a changed level.
 
 **AND THE SCREEN NEVER SAYS "SENT" FOR WHAT DID NOT ARRIVE.** The line under a
 holding's alert boxes says exactly one of: saved here and in Glow Central Research
-/ sending / not there yet and why / held back because another device's levels are
-there (or were removed there) / refused because its list is full / the other
-entry's levels were sent / stays here only, and why. The All alerts footer COUNTS
-it — *"Glow Central Research: 2 of 2 companies sent · 3 stay here (no NSE
-symbol)"* — against what the receiving side acknowledged, never against what was
-attempted.
+/ sending / not there yet, and until when / held back because another device's
+levels are there (or were removed there) / refused because its list is full / the
+other entry's levels were sent / stays here only, and why. Each is a STATUS of a
+few words on the line's face — *"Saved here and in Glow Central Research"*,
+*"Saved here · Glow Central Research: waiting until it's ready"*, *"Saved here
+only · no NSE symbol for Glow Central Research"* — and the sentence behind it is
+the line's hover (main's Stage 10cp rule). `researchLine` in `researchLevels.ts`
+decides both, and `readsAsSentence` is the rule it is held to. The All alerts
+footer COUNTS it — *"Glow Central Research: 2 of 2 companies sent · 3 stay here
+(no NSE symbol)"* — against what the receiving side acknowledged, never against
+what was attempted.
 
 **THE FOOTER IS TWO SHORT LINES, AND THE SENTENCES ARE THEIR HOVERS** — Stage
 10ci's rule for a note under a table, which landed on main while this waited and
 failed the first version at 281 and 450 characters. The first line says where the
-prices came from (*"Live prices from Upstox, updated … · funds on their
-published NAV · saved in this browser"*); its hover says why a statement's own
-price is never used. The second is the count above; its hover says what Glow
-Central Research does with a level and, for each number on the line, why. That
-second line and its hover come from one function, `summaryLine` in
-`researchLevels.ts`, which keeps the line to at most 150 characters on any day:
-where every kind of outcome happens at once, the reasons drop to the hover and
-the COUNTS stay. Two things it had to get right that the long version got wrong:
+prices came from (*"Live prices · Upstox · <when> · Funds on published NAV ·
+Saved in this browser"*); its hover says why a statement's own price is never
+used. The second is the count above; its hover says what Glow Central Research
+does with a level and, for each number on the line, why. That second line and
+its hover come from one function, `summaryLine` in `researchLevels.ts`, which
+keeps the line to at most 150 characters on any day AND never lets it read as a
+sentence (main's Stage 10cp): the reasons drop to the hover ONE AT A TIME —
+why some stay here, why one was refused, why one was held back, and last why the
+rest have not gone — until it fits, and the COUNTS never drop. Two things it had
+to get right that the long version got wrong:
 
 - **A LEVEL KEPT HERE AS TOO HIGH IS NOT "NO NSE SYMBOL".** The old footer put
   *"(no NSE symbol)"* after every level that stayed here, and a level above ₹1
@@ -23487,13 +23506,14 @@ the COUNTS stay. Two things it had to get right that the long version got wrong:
 **WHAT IS TRUE TODAY, STATED RATHER THAN IMPLIED:**
 
 - **Until PR #1283 is merged and deployed, the live Worker answers 404 on the
-  route**, so every card reads "Glow Central Research is not taking price levels
-  yet — they will go automatically once it is". Nothing needs doing on this side
+  route**, so every card reads *"Saved here · Glow Central Research: waiting
+  until it's ready"*, and its hover says it is not taking price levels yet and
+  that they will go automatically once it is. Nothing needs doing on this side
   when it is: the next retry, page load or edit sends everything.
 - **It writes only from the production origin.** The receiving side accepts a
   write from its own origin and from `PRICE_LEVEL_ORIGINS` (this dashboard's
-  `pages.dev` address); a preview deployment is refused and its cards SAY so,
-  naming the address.
+  `pages.dev` address); a preview deployment is refused and its cards SAY so —
+  *"— live site only"* — with the address in the hover.
 - **No credential crosses.** The POST is `credentials: "omit"` — no cookie of this
   dashboard's edge gate goes to another site — and no token was added here.
 - **Anyone who can open Glow Central Research can read the list**, the standing
@@ -23864,8 +23884,119 @@ once in a copy of the tree, so none would report NOT A RESULT. None was re-run:
   but the checker, and none of its checks there: they are on Private Market and
   `monitor-arrange`, and this change's walks are elsewhere.
 
-So the full sweep below is the control for all three, the treatment Stage 10cl
-gave #88.
+So the full sweep on that tree was the control for all three, the treatment
+Stage 10cl gave #88.
+
+#### …and an eighth time: #95 took `10cp`, and its rule reached the alert card
+
+#95 takes the explainer lines off every page but Private Market: a card's
+subtitle, a tile's hint, a page's subtitle and an absence's paragraph become
+hovers, and a new check on every route fails any line that reads as a
+sentence. It landed while the #94 merge was being verified, and took `10cp`.
+Both sections were inserted after `10co`, so git marked the conflict. Main
+keeps `10cp` and comes first, and this section is **`10cq`**. The headings
+were compared against main's tip: the merged file differs from main's by
+`10cq` alone, main's historical duplicates are unchanged, and nothing on main
+names `10cq`.
+
+Every line naming `10cp` was placed by whether main's own copy of its file
+carries it:
+
+- #95's 2 lines here stay (its heading and its Conventions pointer), and so do
+  115 of its 117 code comments. The other 2 were on main's old alert card, in
+  `InvestmentTools.tsx`, which this change replaces (below).
+- This section's heading, its two Layout pointers, the note at its top and its
+  36 code comments moved to `10cq`.
+- The four lines of the #94 merge note that name `10cp` keep it, because they
+  record the letter this section held then.
+- The 20 comments this merge writes about #95's rule cite it as main's Stage
+  10cp, because that is the stage they describe.
+
+Four files conflicted:
+
+- **`InvestmentTools.tsx`.** #95 edited main's OLD card, the one this change
+  replaced: it cut the "Plan — …" caption to one word and moved the
+  target-weight footnote into that label's hover. This change's card is kept,
+  and the rule is applied to it instead. Its subtitle is a string now, so it
+  is the title's hover. The link to All alerts, which sat inside that
+  subtitle, is a short *"All alerts →"* beside the price chip. The target
+  weight's meaning was already that box's hover, with *"0 = hold none · blank
+  = not decided"* a short status under it.
+- **`check-pages.mjs`**, on the `ctx` literal alone. It is the union: main's
+  104 keys (#95 added `cgMissing`) plus `alertsTab` and `researchPosts:
+  [...RESEARCH_POSTS]`, 106, none duplicated, every one declared.
+- **`stock-tabs-bug.sh`** (#91's). #95 re-anchored its case 14 onto main's old
+  card's one-word "Plan" label, which this card does not have. The case keeps
+  this change's anchor: the plan-view sentence put back under the closed
+  More, the harder place for the check to find it.
+- **This file** — main's section first.
+
+`MorningCIO.tsx`, `StockInfo.tsx`, `searchIndex.ts` and `App.tsx` merged
+without a marker and were read. Each differs from main by this change's own
+lines alone: the All alerts tab and its count, the My targets tab's card, the
+search entry and the sender's mount.
+
+**#95's RULE APPLIED TO THIS CHANGE'S OWN LINES, AND NO CONFLICT COULD SHOW
+IT.** Its check runs on every route, this change's included, and fails a
+visible line past 60 characters that carries ten or more lower-case words.
+Measured against that rule, six lines this change drew were sentences:
+
+| Line | Characters · lower-case words |
+| --- | --- |
+| the card's research line, once sent | 122 · 13 |
+| the same line, while Glow Central Research is not deployed | 185 · 21 |
+| the All alerts price line, live | 106 · 11 |
+| the same line, with no live prices | 137 · 21 |
+| the empty tab's how-to | 147 · 26 |
+| the card's can't-be-checked note | 114 · 19 |
+
+Two subtitles also carried JSX — the card's link, and the tab's counts — where
+#95's `Card` now takes only a string. Each became a short status with its
+sentence in the hover:
+
+- **`researchLine` moved into `researchLevels.ts`, pure**, with `failShort`
+  beside `failSentence`. The card's line says *"Saved here and in Glow Central
+  Research"* (39 characters, 3 lower-case words), or *"Saved here · Glow
+  Central Research: waiting until it's ready"* (60 · 5), and the sentence is
+  the line's hover.
+- **`readsAsSentence` is #95's rule written again on purpose**, twice: in
+  `researchLevels.ts`, so the card and the footer pick, before they draw, a
+  form the check will never flag; and in `check-family-inputs.mjs`, so the
+  walk that reads the card is not the code under test.
+- **`summaryLine` drops the footer's reasons one at a time** until its line is
+  short AND not a sentence. The counts never drop.
+- **The price line is items**: *"Live prices · Upstox · <when> · Funds on
+  published NAV · Saved in this browser"* (90 · 6), with why a statement's
+  price is never used as its hover.
+- **The tab's counts moved up beside its title**, because a hover carries only
+  a string and the counts are figures.
+- **The empty tab's how-to is its headline's hover**, with *"Set one with New
+  alert above."* on the face.
+- **The can't-be-checked note is a status**: *"Saved · not checked here — no
+  price"* (35 · 5), with the reason as its hover.
+
+**THAT LAST NOTE WAS ON NO WALK, SO THE PROSE CHECK COULD NOT HAVE FOUND IT.**
+It shows only where a level is set on a holding no price reaches, and every
+alert route walks a priced one. So a new route, `stock-aif-targets`, sets a
+level on the book's largest AIF (`ALERTS_BOOK.aif`, derived) and holds four
+claims there beside #91's tab checks: the level is in its box; the price chip
+says there is no price and never shows the statement's mark; the note is a
+short status whose hover names the reason; and the level stays here, with a
+status saying why. Putting the old sentence back fails both that route's note
+check and #95's prose check.
+
+**THE CHECKS FOLLOWED THE WORDS TO THE HOVERS.** Every check that read a
+sentence off the card or the tab reads the face and the hover apart now, and
+requires both: a face that is a status, and a hover that says why. In
+`check:family` that is two new rows — the fund card's line, and the sent and
+waiting lines — so it has 126 rows, not 124. In `test:family`, the Glow
+Central Research suite has 134 checks, not 116: every face the card or the
+footer can draw is held to `readsAsSentence`. No other suite's count moved.
+
+The alerts bug harness gained three cases — the card's line putting its whole
+sentence back on screen (50), the can't-be-checked note back as a sentence
+(51), and that note gone (52) — and three were re-anchored onto the new faces
+(10, 42 and 43).
 
 #### The verification
 
