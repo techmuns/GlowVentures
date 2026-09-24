@@ -5943,7 +5943,7 @@ const M2_BOOK = (() => {
       });
       const annualised = periods.filter((k) => /^cagr$/i.test(f.returns[k].kind ?? ""));
       const statementAsOf = [...new Set((byKey.get(key) ?? []).map((p) => acc.get(p.accountId)?.asOf).filter(Boolean))].sort()[0] ?? null;
-      return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null,
+      return { key, schemecode: e.schemecode, periods, crossing, annualised, steps, statementAsOf, nav: f.nav ?? null, plan: f.plan ?? null, option: f.option ?? null,
         holdingsN: Array.isArray(f.holdings) ? f.holdings.length : null };
     };
     const held = Object.keys(idx.schemes ?? {}).filter((k) => byKey.has(k));
@@ -13485,6 +13485,21 @@ function mandateDateChecks() {
 }
 
 /**
+ * ── A DASH ON A STATEMENT ROW SAYS WHY (DSM-D4) ────────────────────────────
+ *
+ * Position by account printed a bare dash for a row's Invested and Unrealised
+ * wherever the statement reports no cost — `money()` returns a bare dash for a
+ * null, and §2 forbids one. Every dashed cell on a statement row must carry its
+ * cause, and the route must draw at least one, or the check asserts nothing.
+ */
+const rowDashChecks = () => [
+  ["every dash on a statement row of Position by account names its cause", (t, ctx) => {
+    const d = ctx?.stockM2?.posDash;
+    return Array.isArray(d) && d.length > 0 && d.every((x) => typeof x === "string" && /\S/.test(x));
+  }],
+];
+
+/**
  * ── /corporate-actions: CURRENT HOLDINGS, AND EVERY DASH SAYS WHY (DL-15) ────
  *
  * The page drew two company shares under the ₹1,000 floor, printed a computed
@@ -13863,7 +13878,7 @@ const qtyChecks = (keyOf) => [
   // with what that means, is the title's hover — the phrase under the table
   // is gone, and asserted gone so a rewording cannot bring the line back.
   ["the table says these are depository movements and not trades — the kind in its title, the caveat in its hover",
-    (t, ctx) => /Depository quantity through the year/i.test(t)
+    (t, ctx) => /Depository quantity over the statement window/i.test(t)
       && !/depository movements, not trades/i.test(t)
       && (ctx?.titles ?? []).some((x) => /depository movements, not trades/i.test(x) && /no\s+price, amount or gain/i.test(x))],
   /**
@@ -22031,6 +22046,17 @@ const INVARIANTS = {
         && /change in the unit/i.test(ctx.stockM2.refusedTip ?? "")],
     ["the card no longer calls its returns complete", (t) => !/returns (above )?are complete/i.test(t)],
     /**
+     * AN OPTION THE STORE DOES NOT STATE IS SAID AS THAT (DSM-D5). The Plan
+     * tile printed the store's placeholder — "Regular · Unknown" — as though it
+     * were the scheme's option. Re-derived off the scheme file itself.
+     */
+    ["an option the fund store does not state reads as not stated, never as the word 'unknown'", (t, ctx) => {
+      const m = ctx?.stockM2?.ltMatch, ub = M2_BOOK?.unitBreak;
+      if (!m || !ub) return false;
+      if (!/^unknown$/i.test(ub.option ?? "")) return { notChecked: "the store states this scheme's option" };
+      return /option not stated/i.test(m.plan ?? "") && !/unknown/i.test(m.plan ?? "");
+    }],
+    /**
      * ONE NAV PER PAGE (DSM-B5). AMFI's daily file carries no NAV for this
      * holding's ISIN, so the card falls back to the fund store's own — and must
      * say whose it is rather than calling it AMFI's.
@@ -22186,6 +22212,7 @@ const INVARIANTS = {
         && /no live quote|price feed|no NSE symbol|fetching live price|no per-unit price in the book|AMFI NAV|NAV on the statement|do not agree|held back|cannot be priced live/i
           .test(ctx.stockMark?.caption ?? "")],
     ...realisedTileChecks(() => NO_COST_KEY),
+    ...rowDashChecks(),
     ...stockTabChecks("position"),
     /**
      * THE VALUE SAYS WHEN IT WAS STRUCK (VD-17). This holding sits on the ICICI
@@ -29664,6 +29691,10 @@ const INVARIANTS = {
   "monitor-security-picklist": pickListChecks("the security axis", true),
   "stock-qty": [
     ...qtyChecks(() => QTY_BOOK?.tableKey),
+    // DSM-D7 — the card covers the statement's window (1 Apr → 31 Jul on every
+    // window this book carries), not a year, and says so in its title.
+    ["the quantity card is titled for the statement window it covers, never 'the year'", (t, ctx) =>
+      !/quantity through the year/i.test(t) && /Depository quantity over the statement window/i.test(t)],
     ...stockTabChecks("activity"),
     ...stockActivityChecks(),
     // A ROUTE THAT RESOLVED NOTHING MUST NOT PASS. With no window in the book
@@ -36980,6 +37011,10 @@ for (const theme of THEMES) {
             return v ? { at: v.getAttribute("data-lt-valued-at") || null, by: v.getAttribute("data-lt-valued-by") || null, text: txt(v) } : null;
           })(),
           isinAbsent: (() => { const e = document.querySelector("[data-stock-isin-absent]"); return e ? { text: txt(e), tip: e.getAttribute("title") } : null; })(),
+          // Every dashed cell on a statement row of Position by account, and
+          // the cause it names — null where the dash names none (DSM-D4).
+          posDash: [...document.querySelectorAll("tr[data-account-row] td")]
+            .filter((td) => (td.innerText ?? "").trim() === "—").map((td) => tipOf(td)),
           // The mandate page's one basis pill and its header (DSM-C2), and the
           // Invested tile's reconciliation (DSM-C6).
           mandateBasis: (() => {

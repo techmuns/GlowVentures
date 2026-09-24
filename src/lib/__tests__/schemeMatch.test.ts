@@ -1,6 +1,6 @@
 // HOW A HOLDING WAS JOINED TO ITS SCHEME, SAID AS IT HAPPENED.   npm run test:family
 //
-// DSM-C5 and VD-19 in the audit. The fund card claimed a match on "this
+// DSM-C5, VD-19 and D5 in the audit. The fund card claimed a match on "this
 // holding's own ISIN" for a scheme the store matched on its name and plan, and
 // the header said the provider reports no ISIN — on a statement that prints one.
 //
@@ -10,7 +10,7 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import path from "node:path";
 import { BOOK_POSITIONS } from "@/data/glowData";
-import { isinAbsentWords, schemeMatchWords } from "@/lib/schemeMatch";
+import { isinAbsentWords, optionWords, schemeMatchWords } from "@/lib/schemeMatch";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -43,6 +43,10 @@ console.log("── constructed ──");
     && isinAbsentWords(false, "INF247L01EP5").tip.includes("INF247L01EP5"));
   ok("…while a company only a fund holds keeps the filing's own words", isinAbsentWords(true).text === "no ISIN reported");
 }
+{
+  ok("the store's placeholder option reads as not stated", optionWords("unknown")?.text === "option not stated"
+    && optionWords("Unknown")?.text === "option not stated" && optionWords("growth")?.text === "growth" && optionWords(null) === null);
+}
 
 console.log("── the committed fund store, the book and the archive ──");
 const LT = "public/lookthrough";
@@ -73,6 +77,16 @@ for (const [key, e] of named) {
   ok(`${key}: its own statement prints ${e.isin ?? "an ISIN"}, so the header must not say none was reported`,
     !!printed && isinAbsentWords(false, e.isin).text !== "no ISIN reported", `${docs.length} document(s)`);
 }
+
+let unknown = 0, rendered = 0;
+for (const [, e] of schemes) {
+  const f = path.join(LT, `${e.schemecode}.json`);
+  if (!existsSync(f)) continue;
+  const o = JSON.parse(readFileSync(f, "utf8")).option;
+  if (/^unknown$/i.test(String(o ?? ""))) unknown++;
+  if (/unknown/i.test(optionWords(o)?.text ?? "")) rendered++;
+}
+ok("no scheme's option renders as the word 'unknown'", rendered === 0 && unknown > 0, `${unknown} scheme(s) the store leaves unknown`);
 
 console.log(fails ? `\n${fails} failed` : "\nall passed");
 if (fails) process.exit(1);

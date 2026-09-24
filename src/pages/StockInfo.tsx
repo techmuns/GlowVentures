@@ -1051,10 +1051,20 @@ export function StockInfo() {
           data-cost-printed={r.costBasisSource === "carried-through-switch" ? r.printedCostBasis : undefined}>
           {r.costBasisSource === "carried-through-switch"
             ? <span title={carriedCostNote(carriedCostOf([r], BOOK_POSITION_TRANCHES)!, (v) => money(v))}>{money(r.costBasis)}</span>
+            : r.costBasis === null
+            /* `money()` returns a BARE dash for a null, and §2 forbids one
+               (DSM-D4): the row names whose statement reports no cost. */
+            ? <AbsentCell reason={`no cost on the ${providerOf(accIdx, r)} statement for this holding`} />
             : money(r.costBasis)}
         </td>
         <td className="px-4 py-2.5 text-right mono text-slate-200">{money(r.marketValue)}</td>
-        <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>{money(r.unrealizedPnL, true)}</td>
+        <td className={`px-4 py-2.5 text-right mono ${changeColor(r.unrealizedPnL)}`}>
+          {r.unrealizedPnL === null
+            ? <AbsentCell reason={r.costBasis === null
+                ? `needs a cost — no cost on the ${providerOf(accIdx, r)} statement for this holding`
+                : "the statement reports no unrealised figure for this holding"} />
+            : money(r.unrealizedPnL, true)}
+        </td>
         {/* WHICH RETURN, stated in the cell. `measuredReturn` is the one place
             the methodology lives (Stage 10af). */}
         <td className="px-4 py-2.5 text-right mono" data-stock-return
