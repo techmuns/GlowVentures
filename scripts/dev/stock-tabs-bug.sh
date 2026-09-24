@@ -43,7 +43,7 @@ restore() {
 trap restore EXIT
 
 # Every stock route, because every one asserts the same tab layout. The last,
-# stock-funds-only-targets, is Stage 10cp's: the alert card's own reason on a
+# stock-funds-only-targets, is Stage 10cq's: the alert card's own reason on a
 # company held only inside funds, on the My targets tab that draws it.
 ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research,stock-funds-only-targets
 WANT="${CASES:-}"
@@ -218,7 +218,7 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, '  const measuredFootShown = measuredFootRows.length > 0;', 1))
 PY
 
-# Re-anchored when Stage 10cp's price alerts card merged in: that card has no
+# Re-anchored when Stage 10cq's price alerts card merged in: that card has no
 # "Plan —" caption, and keeps the plan fields under a "More" that is closed on a
 # holding where nothing there is set. The sentence goes THERE, the harder place
 # — out of `innerText` — which is why the check reads the card's whole text.

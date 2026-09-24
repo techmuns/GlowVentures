@@ -48,7 +48,10 @@ try {
     const expected = 2 / target.currentPrice * 100;
     const text = await page.locator(selector).innerText();
     assert.ok(text.includes(expected.toFixed(2) + "%"), `Rendered return must include exactly one gross dividend: ${text}`);
-    assert.match(await page.locator("main").innerText(), /entitlements, not confirmed cash receipts/);
+    // The caveat is the dividend column heading's hover since Stage 10cp, and
+    // no longer a sentence above the table.
+    assert.match(await page.locator('th[data-col="dividends"]').first().getAttribute("title") ?? "", /entitlements, not confirmed cash receipts/);
+    assert.doesNotMatch(await page.locator("main").innerText(), /entitlements, not confirmed cash receipts/);
     await page.getByRole("textbox", { name: "Search corporate action holdings" }).fill(target.security);
     const filtered = await page.locator("[data-corporate-return-row]").count();
     assert.ok(filtered > 0 && filtered < BOOK_POSITIONS.length);
@@ -63,7 +66,9 @@ try {
     // sentence. The page draws one tab at a time (Stage 10cn).
     await page.goto(`${base}/stock/${target.securityKey}?tab=market`);
     await page.locator("[data-corporate-return-table]").waitFor();
-    assert.match(await page.locator("main").innerText(), /Since each statement date, not since purchase/);
+    // …and the window's basis is the card title's hover (Stage 10cp).
+    assert.ok(await page.locator('main [title*="Since each statement date, not since purchase"]').count() > 0);
+    assert.doesNotMatch(await page.locator("main").innerText(), /Since each statement date, not since purchase/);
     await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto(`${base}/corporate-actions`);
     await page.locator(selector).waitFor();

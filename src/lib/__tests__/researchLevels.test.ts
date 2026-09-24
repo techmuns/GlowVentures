@@ -1,7 +1,7 @@
 /**
  * ── THE FAMILY'S LEVELS, SENT TO GLOW CENTRAL RESEARCH ─────────────────────
  *
- * Stage 10cp. Three halves, and each is here because the other two cannot see it:
+ * Stage 10cq. Three halves, and each is here because the other two cannot see it:
  *
  *   1. THE RULES (`researchLevels.ts`) — what is sent, seed against set, what
  *      an answer means. Pure, so every rule is struck on constructed inputs.
@@ -20,10 +20,11 @@ import { applyFundNavs } from "../fundNavs";
 import { symbolFor, symbolForKey } from "../quotes";
 import {
   EMPTY_SENT, FOOTER_LINE_MAX, LEVEL_NAMES, RESEARCH_BATCH, RESEARCH_ISIN_RE, RESEARCH_LEVELS_URL, RESEARCH_NAME,
-  RESEARCH_SYMBOL_RE, applyOutcomes, batchesOf, failSentence, failShort, fingerprint, intentsFor, levelsOf,
-  pruneSent, researchLevelsFrom, retryDelayMs, statusFor, summaryLine, syncSummary, withSeeds,
+  RESEARCH_SYMBOL_RE, SENTENCE_LINE_MAX, SENTENCE_WORDS, applyOutcomes, batchesOf, failSentence, failShort, fingerprint,
+  intentsFor, levelsOf, lowerWords, pruneSent, readsAsSentence, researchLevelsFrom, researchLine, retryDelayMs, statusFor,
+  summaryLine, syncSummary, withSeeds,
   type FailCode, type HeldCompany, type Intent, type Levels, type Outcome, type ResearchLevel, type Resolve,
-  type SentState, type SyncSummary,
+  type SentState, type SyncStatus, type SyncSummary,
 } from "../researchLevels";
 import { researchSnapshot, syncResearchLevels, type ResearchState } from "../researchSync";
 import { EMPTY_ENTRY, type WatchEntry, type Watchlist } from "../watchlist";
@@ -225,7 +226,8 @@ console.log("── what the card says ──");
   ok("one not acknowledged yet, with no failure, reads SENDING", statusFor("xyz", d, sent, null).kind === "sending");
   const failed = statusFor("xyz", d, sent, { at: "t", ok: false, code: "not-ready", retryAt: null });
   ok("...and after a failure names the CAUSE", failed.kind === "failed" && failed.code === "not-ready");
-  ok("a fund reads LOCAL, with its reason", statusFor("fund", d, sent, null).kind === "local");
+  const fund = statusFor("fund", d, sent, null);
+  ok("a fund reads LOCAL, with its reason", fund.kind === "local" && fund.reason === "no-symbol");
   ok("an entry with nothing to send reads nothing", statusFor("nope", d, sent, null).kind === "none");
   const changed = { ...sent, acked: { ABC: "an older fingerprint" } };
   ok("a level changed since it was acknowledged is SENDING again, never still 'sent'", statusFor("abc", d, changed, null).kind === "sending");
@@ -241,6 +243,63 @@ console.log("── what the card says ──");
     retryDelayMs("unreachable", 1) === 30_000 && retryDelayMs("unreachable", 2) === 60_000 && retryDelayMs("unreachable", 40) === 30 * 60_000);
   ok("a receiving side not switched on yet is asked again every fifteen minutes", retryDelayMs("not-ready", 9) === 15 * 60_000);
   ok("the receiving side's batch size is honoured", batchesOf(Array.from({ length: 81 }, (_, i) => i)).map((b) => b.length).join(",") === "40,40,1");
+}
+
+console.log("── the card's line under a holding's alert boxes ──");
+{
+  // Main's Stage 10cp rule, for every page: a line is a STATUS, and the sentence
+  // that explains it is its hover. Every kind of status the card can draw is
+  // held to the page check's own rule (`readsAsSentence`), and the date beside
+  // it is its own item, so the face with the date added must pass too.
+  const CODES: FailCode[] = ["offline", "unreachable", "not-ready", "not-allowed", "rate-limited", "invalid", "error"];
+  const date = "· last changed 23 Sep 2026, 10:15";
+  const all: SyncStatus[] = [
+    { kind: "none" },
+    { kind: "sent", ticker: "ICICIBANK" },
+    { kind: "sending", ticker: "ICICIBANK" },
+    ...CODES.map((code) => ({ kind: "failed" as const, ticker: "ICICIBANK", code })),
+    { kind: "declined", ticker: "ICICIBANK", why: "elsewhere" },
+    { kind: "declined", ticker: "ICICIBANK", why: "removed" },
+    { kind: "refused", ticker: "ICICIBANK" },
+    { kind: "shadowed", ticker: "ICICIBANK", byName: "State Bank of India" },
+    // The two reasons as `researchLevelsFrom` words them, so the hover is held
+    // to a real sentence rather than to a placeholder shorter than the face.
+    { kind: "local", reason: "no-symbol", why: `${RESEARCH_NAME} follows listed companies by their NSE symbol, and this dashboard has no NSE symbol for this holding` },
+    { kind: "local", reason: "too-high", why: `${RESEARCH_NAME} reads a level above ₹1 crore a share as a typo and would refuse it` },
+  ];
+  const faces = all.map((st) => ({ st, l: researchLine(st, false, "http://localhost:4173") }));
+  ok("the rule is the page check's own: past 60 characters, ten lower-case words make a sentence",
+    SENTENCE_LINE_MAX === 60 && SENTENCE_WORDS === 10
+    && readsAsSentence("Saved in this browser · not in Glow Central Research yet: it is not taking price levels yet")
+    && !readsAsSentence("Glow Central Research: 2 of 2 companies sent · 3 stay here (no NSE symbol)"));
+  const talky = faces.filter(({ l }) => readsAsSentence(l.text) || lowerWords(`${l.text} ${date}`) >= SENTENCE_WORDS);
+  ok("no status the card can draw reads as a sentence — not even with its date beside it",
+    talky.length === 0, talky.map(({ st, l }) => `${st.kind}: "${l.text}"`).join(" | "));
+  ok("...and every one carries its whole sentence in its hover",
+    faces.every(({ l }) => l.title.length > l.text.length && /\.$/.test(l.title)));
+  const sentLine = researchLine({ kind: "sent", ticker: "X" }, false);
+  ok("sent says it is saved here and there, and the hover says the other side alerts too",
+    sentLine.text === `Saved here and in ${RESEARCH_NAME}` && /alerts there too when a level is reached/.test(sentLine.title));
+  for (const code of CODES) {
+    const l = researchLine({ kind: "failed", ticker: "X", code }, false, "http://localhost:4173");
+    ok(`${code}: the card says it is waiting and until when, and the whole reason in its hover`,
+      l.tone === "warn" && l.text.includes(`waiting ${failShort(code)}`) && l.title.includes(failSentence(code, "http://localhost:4173"))
+      && !/\bsent\b/.test(l.text.replace(/not sent/, "")));
+  }
+  ok("a send in flight never names the last failure",
+    researchLine({ kind: "failed", ticker: "X", code: "unreachable" }, true).text.includes("sending")
+    && !researchLine({ kind: "failed", ticker: "X", code: "unreachable" }, true).title.includes(failSentence("unreachable")));
+  ok("a fund says there is no NSE symbol on its face, and the reason in full in its hover",
+    /no NSE symbol/.test(researchLine({ kind: "local", reason: "no-symbol", why: "the reason" }, false).text)
+    && /the reason\.$/.test(researchLine({ kind: "local", reason: "no-symbol", why: "the reason" }, false).title));
+  ok("...and a level too high never reads as a missing symbol",
+    !/NSE symbol/.test(researchLine({ kind: "local", reason: "too-high", why: "x" }, false).text)
+    && /too high/.test(researchLine({ kind: "local", reason: "too-high", why: "x" }, false).text));
+  ok("held back is worded for both ways it happens, and the ticker is in the hover",
+    ["elsewhere", "removed"].every((why) => {
+      const l = researchLine({ kind: "declined", ticker: "ICICIBANK", why: why as "elsewhere" | "removed" }, false);
+      return /held back/.test(l.text) && /another device/.test(l.text) && l.title.includes("ICICIBANK");
+    }));
 }
 
 console.log("── the line under the All alerts table ──");
@@ -268,13 +327,15 @@ console.log("── the line under the All alerts table ──");
 
   ok("every cause has its own short wording", new Set(CODES.map(failShort)).size === CODES.length);
   ok("...and each short wording says what happens next, so 'not sent' never reads as the family's to fix",
-    CODES.every((c) => /retrying|automatically|once it is|when it is back|change a level|live dashboard/.test(failShort(c))));
+    CODES.every((c) => /retrying|until|change a level|live site only/.test(failShort(c))));
+  ok("...in three lower-case words at most, so it stays a status (main's Stage 10cp rule)",
+    CODES.every((c) => lowerWords(failShort(c)) <= 3), CODES.map((c) => `${c}: ${lowerWords(failShort(c))}`).join(", "));
 
   for (const code of CODES) {
     const line = summaryLine(sum({ companies: 3, sent: 1, waiting: 2, code, local: 2 }), false, "http://localhost:4173");
     ok(`${code}: the line names the cause on screen, and the whole sentence in its hover`,
-      line !== null && line.text.includes(failShort(code)) && line.title.includes(failSentence(code, "http://localhost:4173"))
-      && line.text.length <= FOOTER_LINE_MAX, `${line?.text.length} chars`);
+      line !== null && line.text.includes(`2 waiting ${failShort(code)}`) && line.title.includes(failSentence(code, "http://localhost:4173"))
+      && line.text.length <= FOOTER_LINE_MAX && !readsAsSentence(line.text), `${line?.text.length} chars · ${line ? lowerWords(line.text) : 0} words`);
   }
   const busy = summaryLine(sum({ companies: 3, sent: 1, waiting: 2, code: "unreachable" }), true);
   ok("while a send is in flight the rest read 'sending', and no earlier failure is named",
@@ -296,6 +357,39 @@ console.log("── the line under the All alerts table ──");
   const mixed = summaryLine(sum({ companies: 1, sent: 1, local: 3, tooHigh: 1 }), false);
   ok("...and where the two reasons are mixed the line names neither, and the hover names both",
     mixed !== null && /3 stay here$/.test(mixed.text) && /no NSE symbol/.test(mixed.title) && /typo/.test(mixed.title));
+  // EVERY COMBINATION the footer can draw — each failure and none, in flight or
+  // not, with and without held-back, refused and kept-here companies, and both
+  // reasons for keeping one here — is a status by the page check's own rule and
+  // fits one short line, and never drops a COUNT to get there.
+  const grid: string[] = [];
+  let tried = 0;
+  for (const code of [null, ...CODES] as (FailCode | null)[]) {
+    for (const busyNow of [false, true]) {
+      for (const declined of [0, 1, 12]) {
+        for (const refused of [0, 1]) {
+          for (const [local, tooHigh] of [[0, 0], [3, 0], [1, 1], [4, 2]]) {
+            const waiting = code ? 7 : 0;
+            const sm = sum({ companies: 40, sent: 40 - waiting - declined - refused, waiting, code, declined, refused, local, tooHigh });
+            const l = summaryLine(sm, busyNow, "http://localhost:4173");
+            tried++;
+            const counts = [`${sm.sent} of 40 companies sent`, ...(waiting ? [`${waiting} ${busyNow ? "sending" : "waiting"}`] : []),
+              ...(declined ? [`${declined} held back`] : []), ...(refused ? [`${refused} refused`] : []),
+              ...(local ? [`${local} ${local === 1 ? "stays" : "stay"} here`] : [])];
+            if (!l || readsAsSentence(l.text) || l.text.length > FOOTER_LINE_MAX || !counts.every((c) => l.text.includes(c))) {
+              grid.push(`${code}/${busyNow}/${declined}/${refused}/${local}/${tooHigh}: "${l?.text}"`);
+            }
+          }
+        }
+      }
+    }
+  }
+  ok("no footer the table can draw reads as a sentence, runs past one line, or loses a count",
+    grid.length === 0 && tried > 300, grid.length ? grid.slice(0, 3).join(" | ") : `${tried} combinations`);
+  const nofeed = summaryLine(sum({ companies: 2, sent: 0, waiting: 2, code: "not-ready", local: 3 }), false);
+  ok("the day the other side is not taking levels, the cause stays on screen and why some stay here goes to the hover",
+    nofeed !== null && nofeed.text === `${RESEARCH_NAME}: 0 of 2 companies sent · 2 waiting until it's ready · 3 stay here`
+    && /no NSE symbol/.test(nofeed.title), nofeed?.text);
+
   const held = summaryLine(sum({ companies: 2, sent: 1, declined: 1 }), false);
   ok("a held-back level is described in words true of BOTH ways it happens — set there, or removed there",
     held !== null && /set there, or removed there/.test(held.title) && !/levels are there/.test(held.text));

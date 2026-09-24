@@ -91,7 +91,7 @@ const browser = await chromium.launch({ executablePath: CHROME, args: ["--no-san
 const page = await browser.newPage({ viewport: { width: 1500, height: 1200 } });
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cp) ──────────────────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR (Stage 10cq) ──────────────────────
  *
  * Every price level saved in this dashboard is also sent to Glow Central
  * Research. This suite types levels on real holdings, so without this the walk
@@ -813,13 +813,22 @@ check("...and names the mandates this book does carry",
 // Stage 10cn made the position page five tabs), with `#alerts` so the card
 // scrolls itself into view. Re-expressed here rather than imported from
 // `priceAlerts.ts`, so a link built there that drifted from this address fails
-// rather than agreeing with itself (Stage 10cp).
+// rather than agreeing with itself (Stage 10cq).
 const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alerts`;
 
+// A LINE THAT READS AS A SENTENCE — main's Stage 10cp rule: past 60 characters
+// AND ten or more lower-case words. The alert card's line under its boxes is a
+// STATUS on its face (a few words) with the sentence in its hover, so its face
+// is held to this. Re-expressed rather than imported from `researchLevels.ts`,
+// so a rule that drifted there fails here instead of agreeing with itself
+// (Stage 10cq). The line's FACE is its first `<span>` — the icon is an svg and
+// the date is the second span — and each probe below reads it in the page.
+const readsAsSentence = (x) => String(x).length > 60 && (String(x).match(/(?<![\p{L}\d])[a-z][a-z’'-]+/gu) ?? []).length >= 10;
+
 // So the surviving surface is asserted here: a holding's own page still writes
-// to the store, and — since Stage 10cp — Morning CIO's All alerts tab READS it.
+// to the store, and — since Stage 10cq — Morning CIO's All alerts tab READS it.
 //
-// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cp) ──
+// ── AND AN ALERT TYPED ON A HOLDING'S PAGE REACHES MORNING CIO (Stage 10cq) ──
 //
 // *"Does these alerts actually work … in morning CIO can you make an ALL alerts
 // tab where … whenever the alerts which have been set are triggered they show."*
@@ -926,14 +935,22 @@ const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alert
 
     // A FUND HAS NO NSE SYMBOL, so Glow Central Research — which follows listed
     // companies by their ticker — cannot take its levels. They stay here, the
-    // card says so in words, and NOTHING is sent (Stage 10cp).
+    // card says so in words, and NOTHING is sent (Stage 10cq).
     await page.waitForTimeout(1200);
     const fundLine = await page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
-      kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(),
+      kind: el.getAttribute("data-research-status"), text: (el.textContent ?? "").trim(), title: el.getAttribute("title") ?? "",
+      face: (el.querySelector(":scope > span")?.textContent ?? "").trim(),
     })).catch(() => null);
+    // The face is a STATUS (main's Stage 10cp rule) and the sentence is its
+    // hover, so both are read: the face names the missing symbol, the hover
+    // says Glow Central Research follows listed companies by it.
     check("a fund's levels stay in this dashboard, and the card says why — no NSE symbol for Glow Central Research to follow",
-      fundLine?.kind === "local" && /NSE symbol/.test(fundLine.text) && RESEARCH.posts.length === 0,
+      fundLine?.kind === "local" && /no NSE symbol/.test(fundLine.text) && /follows listed companies by their NSE symbol/.test(fundLine.title)
+        && RESEARCH.posts.length === 0,
       fundLine ? `${fundLine.kind} · ${RESEARCH.posts.length} sent · "${fundLine.text}"` : "no line");
+    check("...in a short status, not a sentence — the sentence is its hover",
+      !!fundLine?.face && !readsAsSentence(fundLine.face) && fundLine.title.length > fundLine.face.length,
+      fundLine ? `face "${fundLine.face}" · hover ${fundLine.title.length} chars` : "no line");
 
     // A TYPO IS REFUSED, NEVER SAVED AS A DELETE. The old parser read "abc" as
     // blank and silently erased whatever level was in the box.
@@ -1043,7 +1060,7 @@ const ALERT_BOXES_AT = (k) => `/stock/${encodeURIComponent(k)}?tab=targets#alert
   }
 }
 
-// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cp) ───
+// ── A LEVEL ON A LISTED SHARE GOES TO GLOW CENTRAL RESEARCH (Stage 10cq) ───
 //
 // *"when the user puts target price inside the dashboard, it should
 // automatically also go to the Glow Central Research dashboard."*
@@ -1085,6 +1102,7 @@ const RESEARCH_SHARE = (() => {
     const target = r2(mark * 1.5), stop = r2(mark * 0.6);
     const line = () => page.$eval("[data-alerts-card] [data-research-status]", (el) => ({
       kind: el.getAttribute("data-research-status"), ticker: el.getAttribute("data-research-ticker"), text: (el.textContent ?? "").trim(),
+      title: el.getAttribute("title") ?? "", face: (el.querySelector(":scope > span")?.textContent ?? "").trim(),
     })).catch(() => null);
     const typeLevel = async (field, v) => {
       await page.fill(`[data-alerts-card] [data-alert-input="${field}"]`, String(v));
@@ -1113,15 +1131,26 @@ const RESEARCH_SHARE = (() => {
       setOne ? JSON.stringify(setOne) : `${posted.length} intents, none for ${ticker}`);
     check("...from this page's own address", RESEARCH.posts.slice(before).every((p) => p.origin === new URL(BASE).origin));
     check("...and the card says it is saved there too",
-      sent?.kind === "sent" && sent.ticker === ticker && /Saved here and in Glow Central Research/.test(sent.text),
+      sent?.kind === "sent" && sent.ticker === ticker && /Saved here and in Glow Central Research/.test(sent.text)
+        && /alerts there too when a level is reached/.test(sent.title),
       sent ? `${sent.kind} · "${sent.text}"` : "no line");
 
     RESEARCH.mode = "down";
     await typeLevel("alertBelow", stop);
     const failed = await settle(["failed"]);
+    // A STATUS ON THE FACE (waiting, and until when) and the sentence in the
+    // hover — main's Stage 10cp rule — so both halves are held.
     check("with Glow Central Research not taking levels yet, the card says the new level has not arrived, and why",
-      failed?.kind === "failed" && /not taking price levels yet/.test(failed.text) && /automatically/.test(failed.text),
-      failed ? `${failed.kind} · "${failed.text}"` : "no line");
+      failed?.kind === "failed" && /waiting until it's ready/.test(failed.text)
+        && /not taking price levels yet/.test(failed.title) && /automatically/.test(failed.title),
+      failed ? `${failed.kind} · "${failed.text}" · hover "${failed.title}"` : "no line");
+    // …AND BOTH LINES ARE A STATUS, NOT A SENTENCE. Checked on the two states a
+    // family actually meets — sent, and waiting — so a face that grew back into
+    // the sentence it replaced fails here, whichever state it grew in.
+    const faces = [sent, failed];
+    check("...each of those lines is a short status, and its sentence is the hover",
+      faces.every((l) => !!l?.face && !readsAsSentence(l.face) && l.title.length > l.face.length),
+      faces.map((l) => (l ? `"${l.face}"` : "no line")).join(" · "));
 
     RESEARCH.mode = "ok";
     await page.reload({ waitUntil: "networkidle" });
@@ -1156,7 +1185,7 @@ const RESEARCH_SHARE = (() => {
   }
 }
 
-// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cp) ───
+// ── A SEND THAT FAILED IS TRIED AGAIN BY ITSELF, ON A TIMER (Stage 10cq) ───
 //
 // Until Glow Central Research's route is deployed every send is refused as NOT
 // READY, and the sender asks again every fifteen minutes on its own — a
@@ -1303,8 +1332,14 @@ const RESEARCH_SHARE = (() => {
         && !text.includes("sent a transaction statement and no holding statement"));
     // AND THE MONEY IS IN NO TOTAL. A contribution is what was PAID, never what
     // the stake is worth, and this card sits directly under one that sums.
+    // …ON ITS FACE, IN THE TITLE ("in no total"), and the sentence naming the
+    // figure it is not in is the title's hover — the family asked for the line
+    // under every card title to go (Stage 10cp), and a `title` is not in the
+    // page text, so it is read where it went.
+    const cardHints = await page.$$eval("[data-card-title-hint]", (els) => els.map((e) => e.getAttribute("title") ?? ""));
     check("...and the card says none of it is in the value above",
-      /None of these figures is in the/i.test(text));
+      /held, not valued, in no total/i.test(text)
+        && cardHints.some((h) => /None of these figures is in the/i.test(h)));
   }
 }
 

@@ -65,6 +65,14 @@ const Z_CA = "A measured zero: no bonus, split, merger or scheme redemption touc
 const Z_PLEDGE = "A measured zero: this statement prints the encumbrance rows — a pledge, an unpledge, an early pay-in earmark — and none of them touched this holding in this window.";
 const T_CA = "The security itself changing — a bonus, a split, a merger, a scheme redeeming its units. Not a decision anybody made, which is why it is its own column rather than a purchase or a sale.";
 const T_PLEDGE = "A pledge, an unpledge or an early pay-in earmark moves units between this account's free and encumbered balances. Nothing enters or leaves the account, so these are COUNTED and are in no column to the left — folding them in would report the holding at twice its size.";
+/**
+ * WHAT THIS IS NOT (Stage 10cp). Without it a reader takes "units in" for a
+ * purchase, and a depository movement names no price, no counterparty and no
+ * consideration. It was a phrase under the table; it is the card title's own
+ * hover now, and "Depository" is IN the title, so the kind of record is still
+ * on the face.
+ */
+const NOT_TRADES = "These are depository movements, not trades: a demat credit or debit carries units and nothing else, so no price, amount or gain is shown here. Only the accounts whose custodian issues a transaction statement appear.";
 
 /** The columns, in the order this table's rows write their cells. */
 const QTY_COLS = ["account", "opening", "in", "out", "ca", "closing", "pledge"] as const;
@@ -144,10 +152,10 @@ export function QuantityMovement(
 
   return (
     <Card className="mt-5" pad={false}
-      title="Quantity through the year"
-      subtitle={movements.length
-        ? "Opening, in, out and closing — as the depository statement prints them"
-        : "What this holding's depository statement says about its quantity"}
+      title={<span data-qty-title>Depository quantity through the year</span>}
+      subtitle={`${movements.length
+        ? "Opening, in, out and closing — as the depository statement prints them."
+        : "What this holding's depository statement says about its quantity."} ${NOT_TRADES}`}
       right={window ? <Pill>{window}</Pill> : undefined}>
       {movements.length > 0 && (
       <div className="overflow-x-auto">
@@ -252,14 +260,6 @@ export function QuantityMovement(
             Opening + units in − units out + corporate action = closing
           </span>
         )}
-        {movements.length > 0 && " · "}
-        {/* WHAT THIS IS NOT. Without it a reader takes "units in" for a
-            purchase, and a depository movement names no price, no
-            counterparty and no consideration. */}
-        <span data-qty-not-trades
-          title="A demat credit or debit carries units and nothing else, so no price, amount or gain is shown here. Only the accounts whose custodian issues a transaction statement appear.">
-          depository movements, not trades
-        </span>
         {/* A HOLDING WITH NO BLOCK IS THE STATEMENT SAYING IT DID NOT MOVE, and
             a reader who is shown nothing cannot tell that from a gap. No
             opening balance is invented for it: every figure in the table above

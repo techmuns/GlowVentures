@@ -501,17 +501,20 @@ export function SectorComposition() {
           : exposure.status === "unreachable" ? <span className="text-amber-400/80">The look-through store did not answer
             — a fact about the fetch, not the book.</span>
           /* "DERIVED, not a position" and "no part of the book's NAV" are the
-             fence, in words rather than a tooltip. */
-          : <>DERIVED, not a position — their units&rsquo; share of what {exposure.covered} of
-            {" "}{exposure.considered} funds disclose. <span className="text-slate-300">No part of the book&rsquo;s NAV.</span></>}
+             fence, in words rather than a tooltip — and they are ALL the line
+             says now (Stage 10cp); how it is derived is its hover. */
+          : <span title={`Their units' share of what ${exposure.covered} of ${exposure.considered} funds disclose.`}>
+              DERIVED, not a position · <span className="text-slate-300">no part of the book&rsquo;s NAV</span>
+            </span>}
       </Figure>
       <Figure label="Not on this page"
         value={exposure.status === "ok"
           ? fmtFromBase(portfolio.totalValue - measuredMV - derivedMV, { compact: true })
           : <span className="text-slate-500">—</span>}>
         {exposure.status === "ok"
-          ? <>The rest of the {fmtFromBase(portfolio.totalValue, { compact: true })} book — undisclosed vehicles,
-            non-equity and cash. No sector applies. These three figures cover every rupee.</>
+          ? <span title={`The rest of the ${fmtFromBase(portfolio.totalValue, { compact: true })} book. No sector applies to it. These three figures cover every rupee.`}>
+              Undisclosed vehicles, non-equity and cash
+            </span>
           : <>Measurable once the funds&rsquo; disclosures answer.</>}
       </Figure>
     </>
@@ -521,28 +524,35 @@ export function SectorComposition() {
         value={ownRows.length > 0
           ? fmtFromBase(ownMV, { compact: true })
           : <AbsentCell reason="No company share on this page was bought in the family's own demat or broking account. Such accounts may still be in the book — this view counts only their company shares, not the fund or ETF units one may hold." />}>
+        {/* THE COUNT ON ITS FACE; WHAT THE HOLDINGS TABLES CALL IT IS ITS
+            HOVER (Stage 10cp). */}
         {ownRows.length > 0
-          ? <>{ownRows.length} holdings across {ownAccounts} of their own {ownAccounts === 1 ? "account" : "accounts"} ·
-            the holdings tables call this &ldquo;{DIRECT_EQUITY_BUCKET}&rdquo;</>
+          ? <span title={`The holdings tables call this “${DIRECT_EQUITY_BUCKET}”.`}>
+              {ownRows.length} holdings across {ownAccounts} of their own {ownAccounts === 1 ? "account" : "accounts"}</span>
           : <>No own-account company share in this book.</>}
       </Figure>
       <Figure label="Left out by this view" value={fmtFromBase(mandateMV + otherMV, { compact: true })}>
-        {mandateRows.length} shares a manager chose across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}
-        {otherRows.length > 0 && <>, {otherRows.length} with no stated route</>} · real exposure, shown in{" "}
-        <span className="text-slate-300">Consolidated</span>
+        <span title="Real exposure — the manager chose these shares, and they are counted in the Consolidated view.">
+          {mandateRows.length} shares a manager chose across {mandateAccounts} {mandateAccounts === 1 ? "mandate" : "mandates"}
+          {otherRows.length > 0 && <>, {otherRows.length} with no stated route</>} · shown in{" "}
+          <span className="text-slate-300">Consolidated</span></span>
       </Figure>
       {/* EACH CLASS WITH ITS OWN VALUE, on ONE line — the total alone cannot
           tell a reader whether the excluded money is one wrapper or a dozen, and
           `check:pages` strikes the reconstruction on these labelled figures. */}
+      {/* THE CLASSES ON ITS FACE, WHY THEY ARE LEFT OUT IN ITS HOVER (Stage
+          10cp) — the line read "excluded rather than folded in — … · a fund
+          holds many companies, so none has a sector of its own". */}
       <Figure label="Not a company share" value={fmtFromBase(excludedMV, { compact: true })}>
-        excluded rather than folded in —{" "}
-        {excluded.length === 0 ? "none" : excluded.map((c, i) => (
-          <Fragment key={c.key}>
-            {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
-            <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
-          </Fragment>
-        ))}
-        {" "}· a fund holds many companies, so none has a sector of its own
+        <span data-sector-excluded
+          title="Excluded rather than folded in — a fund holds many companies, so none has a sector of its own.">
+          {excluded.length === 0 ? "none" : excluded.map((c, i) => (
+            <Fragment key={c.key}>
+              {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
+              <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
+            </Fragment>
+          ))}
+        </span>
       </Figure>
     </>
   );
@@ -641,8 +651,9 @@ export function SectorComposition() {
 
         {/* RIGHT — the sector table, or the comparison. */}
         {view === "compare" ? (
-          <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false} title="Compare sectors"
-            subtitle={`${compare.length} of ${MAX_COMPARE} picked — each set's figures side by side`}>
+          <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
+            title={<span data-card-title-hint title="Each set's figures side by side.">Compare sectors
+              <span className="ml-2 font-normal normal-case tracking-normal text-slate-500" data-compare-picked>{compare.length} of {MAX_COMPARE} picked</span></span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto px-2 pb-3">
               {compare.length === 0 ? (
                 <p className="px-3 py-10 text-center text-[12.5px] text-slate-500">
@@ -730,10 +741,10 @@ export function SectorComposition() {
             </div>
           </Card>
         ) : (
-          <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false} title="Sector breakdown"
-            subtitle={consolidatedView
-              ? "Click a sector for the companies in it — what the statements report and what the funds disclose"
-              : "Click a sector for its holdings"}>
+          <Card className="flex min-h-0 flex-col lg:max-h-full lg:self-start" pad={false}
+            title={<span data-card-title-hint title={consolidatedView
+              ? "Click a sector for the companies in it — what the statements report and what the funds disclose."
+              : "Click a sector for its holdings."}>Sector breakdown</span>}>
             <div className="mt-3 min-h-0 flex-1 overflow-auto">
               <table className="min-w-full text-[13px]" data-sector-table>
                 <thead className="sticky top-0 z-10 bg-ink-800">

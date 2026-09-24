@@ -4,7 +4,7 @@
  * *"when the user puts target price inside the dashboard, it should
  * automatically also go to the Glow Central Research dashboard. When the target
  * price is met, it should show in All Alerts as an alert, and automatically come
- * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10cp)
+ * to the AI Alert section in the Glow Central Research dashboard."* (Stage 10cq)
  *
  * Glow Central Research is a separate app on its own server, so a level kept in
  * this browser's `localStorage` can never reach it on its own. It keeps ONE
@@ -357,7 +357,7 @@ export type Attempt = { at: string; ok: boolean; code: FailCode | null; retryAt:
 
 export type SyncStatus =
   | { kind: "none" }
-  | { kind: "local"; why: string }
+  | { kind: "local"; reason: Unsendable["reason"]; why: string }
   | { kind: "shadowed"; ticker: string; byName: string }
   | { kind: "sent"; ticker: string }
   | { kind: "sending"; ticker: string }
@@ -368,7 +368,7 @@ export type SyncStatus =
 /** One saved entry's standing with the shared list. */
 export function statusFor(securityKey: string, d: Derived, sent: SentState, attempt: Attempt | null): SyncStatus {
   const local = d.unsendable.find((u) => u.securityKey === securityKey);
-  if (local) return { kind: "local", why: local.why };
+  if (local) return { kind: "local", reason: local.reason, why: local.why };
   const shadow = d.shadowed.find((s) => s.securityKey === securityKey);
   if (shadow) return { kind: "shadowed", ticker: shadow.ticker, byName: shadow.byName };
   const l = d.send.find((x) => x.securityKey === securityKey);
@@ -429,20 +429,97 @@ export function failSentence(code: FailCode, origin = ""): string {
 }
 
 /**
- * THE SAME CAUSE, SHORT ENOUGH FOR A LINE UNDER A TABLE. A note under a table is
- * one short line (Stage 10ci), so the All alerts footer names the cause in a few
- * words and carries `failSentence` in its hover. Each still says what happens
- * next, because "not sent" alone reads as something the family has to fix.
+ * THE SAME CAUSE, SHORT ENOUGH TO STAY A STATUS. It follows "N waiting" on the
+ * All alerts footer and on a holding's card, and it is THREE LOWER-CASE WORDS
+ * AT MOST, so neither line ever reads as a sentence (below). `failSentence` is
+ * the hover. Each still says what happens next — "until it's ready", "retrying"
+ * — because "not sent" alone reads as something the family has to fix.
  */
 export function failShort(code: FailCode): string {
   switch (code) {
-    case "offline": return "this browser is offline, they go when it is back";
-    case "unreachable": return "no answer, retrying automatically";
-    case "not-ready": return "not taking levels yet, they go automatically once it is";
-    case "not-allowed": return "it takes levels from the live dashboard only";
-    case "rate-limited": return "asked for a pause, retrying in a minute";
-    case "invalid": return "it could not read them, change a level to resend";
-    default: return "not saved there, retrying automatically";
+    case "offline": return "until back online";
+    case "unreachable": return "— no answer, retrying";
+    case "not-ready": return "until it's ready";
+    case "not-allowed": return "— live site only";
+    case "rate-limited": return "— paused, retrying";
+    case "invalid": return "— unreadable, change a level";
+    default: return "— not saved, retrying";
+  }
+}
+
+/**
+ * WHEN A LINE READS AS A SENTENCE — the page check's own rule (Stage 10cp),
+ * written a second time here ON PURPOSE. The check stays independent of this
+ * code, which is what keeps this honest; this copy is what lets the footer and
+ * the card pick, before they draw, a form the check will never flag. Past 60
+ * characters, a line with ten or more lower-case words is a note ABOUT the page
+ * rather than a figure ON it; a line of counts and names is not.
+ */
+export const SENTENCE_LINE_MAX = 60;
+export const SENTENCE_WORDS = 10;
+export const lowerWords = (x: string): number => (x.match(/(?<![\p{L}\d])[a-z][a-z’'-]+/gu) ?? []).length;
+export function readsAsSentence(text: string): boolean {
+  return text.length > SENTENCE_LINE_MAX && lowerWords(text) >= SENTENCE_WORDS;
+}
+
+/**
+ * ONE ENTRY'S LINE UNDER ITS ALERT BOXES — a STATUS on its face, the sentence
+ * in its hover (main's Stage 10cp rule). What it says is a few words: saved here
+ * and there; waiting, and until when; held back, and by what. It never says
+ * "sent" for a level the other side has not acknowledged. Pure — the origin is
+ * handed in — so the suite holds every face to `readsAsSentence`.
+ */
+export type ResearchTone = "ok" | "busy" | "warn" | "note";
+export function researchLine(s: SyncStatus, busy: boolean, origin = ""): { tone: ResearchTone; text: string; title: string } {
+  const sending = {
+    tone: "busy" as const,
+    text: `Saved here · sending to ${RESEARCH_NAME}…`,
+    title: `Saved in this browser, and on its way to ${RESEARCH_NAME}.`,
+  };
+  switch (s.kind) {
+    case "sent":
+      return {
+        tone: "ok", text: `Saved here and in ${RESEARCH_NAME}`,
+        title: `Saved in this browser and in ${RESEARCH_NAME}, which alerts there too when a level is reached.`,
+      };
+    case "sending":
+      return sending;
+    case "failed":
+      return busy ? sending : {
+        tone: "warn", text: `Saved here · ${RESEARCH_NAME}: waiting ${failShort(s.code)}`,
+        title: `Saved in this browser · not in ${RESEARCH_NAME} yet: ${failSentence(s.code, origin)}.`,
+      };
+    case "declined":
+      return s.why === "elsewhere"
+        ? {
+          tone: "warn", text: "Saved here · held back: another device's levels",
+          title: `Saved in this browser · not sent: ${RESEARCH_NAME} already has levels for ${s.ticker} from another device. Change a level here to replace them with these.`,
+        }
+        : {
+          tone: "warn", text: "Saved here · held back: removed on another device",
+          title: `Saved in this browser · not sent: the levels for ${s.ticker} were removed in ${RESEARCH_NAME} from another device. Change a level here to send these again.`,
+        };
+    case "refused":
+      return {
+        tone: "warn", text: `Saved here · not sent: ${RESEARCH_NAME}'s list is full`,
+        title: `Saved in this browser · not sent: ${RESEARCH_NAME}'s list of companies is full.`,
+      };
+    case "shadowed":
+      return {
+        tone: "note", text: `Saved here · ${s.byName}'s levels were sent instead`,
+        title: `Saved in this browser · ${RESEARCH_NAME} keeps one set of levels per company, and the ones saved on ${s.byName} were sent for ${s.ticker}.`,
+      };
+    case "local":
+      return {
+        tone: "note",
+        text: s.reason === "too-high" ? "Saved here only · a level too high to send" : `Saved here only · no NSE symbol for ${RESEARCH_NAME}`,
+        title: `Saved in this browser only · ${s.why}.`,
+      };
+    default:
+      return {
+        tone: "note", text: "No alert level set",
+        title: `A level typed in the boxes above is saved in this browser, and one on a listed share also goes to ${RESEARCH_NAME}.`,
+      };
   }
 }
 
@@ -452,9 +529,13 @@ export const FOOTER_LINE_MAX = 150;
 /**
  * THE ALL ALERTS FOOTER'S SECOND LINE — what reached Glow Central Research,
  * COUNTED — and its hover, which carries the sentences the line has no room for.
- * Written out in full where that fits in one short line; where it does not (a
- * bad day that has every kind of outcome at once) the reasons drop to the hover
- * and only the counts stay. `null` where no level is saved at all.
+ * The line is a STATUS: the counts, each with at most a few words of reason.
+ * It is written out as fully as it can be without reading as a sentence (main's
+ * Stage 10cp rule, `readsAsSentence`) or running past one short line (Stage
+ * 10ci); otherwise the reasons drop to the hover ONE AT A TIME, least urgent
+ * first — why some stay here, why one was refused, why one was held back, and
+ * last of all why the rest have not gone — until only the counts are left. The
+ * counts never drop. `null` where no level is saved at all.
  */
 export function summaryLine(s: SyncSummary, busy: boolean, origin = ""): { text: string; title: string } | null {
   if (s.companies === 0 && s.local === 0) return null;
@@ -462,22 +543,30 @@ export function summaryLine(s: SyncSummary, busy: boolean, origin = ""): { text:
   // Why they stay, on screen only where ONE reason covers them all: "(no NSE
   // symbol)" over a level that stays because it is too high would be a caption
   // claiming something of a count it is not true of.
-  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high to send)" : "";
-  const build = (full: boolean): string => {
+  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high)" : "";
+  type Keep = { stay: boolean; refused: boolean; held: boolean; cause: boolean };
+  const build = (k: Keep): string => {
     if (s.companies === 0) {
-      return `${RESEARCH_NAME} follows listed shares only · ${stay(s.local)}${full ? stayWhy : ""}`;
+      return `${RESEARCH_NAME} follows listed shares only · ${stay(s.local)}${k.stay ? stayWhy : ""}`;
     }
     const parts = [`${RESEARCH_NAME}: ${s.sent} of ${s.companies} ${s.companies === 1 ? "company" : "companies"} sent`];
     if (s.waiting > 0) {
-      parts.push(busy || !s.code ? `${s.waiting} sending` : `${s.waiting} waiting${full ? ` — ${failShort(s.code)}` : ""}`);
+      parts.push(busy || !s.code ? `${s.waiting} sending` : `${s.waiting} waiting${k.cause ? ` ${failShort(s.code)}` : ""}`);
     }
-    if (s.declined > 0) parts.push(`${s.declined} held back${full ? " — changed there from another device" : ""}`);
-    if (s.refused > 0) parts.push(`${s.refused} refused${full ? " — its list is full" : ""}`);
-    if (s.local > 0) parts.push(`${stay(s.local)}${full ? stayWhy : ""}`);
+    if (s.declined > 0) parts.push(`${s.declined} held back${k.held ? " by another device" : ""}`);
+    if (s.refused > 0) parts.push(`${s.refused} refused${k.refused ? " — its list is full" : ""}`);
+    if (s.local > 0) parts.push(`${stay(s.local)}${k.stay ? stayWhy : ""}`);
     return parts.join(" · ");
   };
-  const full = build(true);
-  const text = full.length <= FOOTER_LINE_MAX ? full : build(false);
+  const forms: Keep[] = [
+    { stay: true, refused: true, held: true, cause: true },
+    { stay: false, refused: true, held: true, cause: true },
+    { stay: false, refused: false, held: true, cause: true },
+    { stay: false, refused: false, held: false, cause: true },
+    { stay: false, refused: false, held: false, cause: false },
+  ];
+  const fits = (t: string) => t.length <= FOOTER_LINE_MAX && !readsAsSentence(t);
+  const text = forms.map(build).find(fits) ?? build(forms[forms.length - 1]);
   const why: string[] = [
     `Alerts on listed shares also go to ${RESEARCH_NAME}, which checks each level against its own live price`
       + " and raises it in its All Alerts and AI Alerts when it is reached.",

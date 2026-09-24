@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VERIFY THE PRICE-ALERT CHECKS BY REINTRODUCING THE BUG EACH EXISTS FOR
-# (Stage 10cp).
+# (Stage 10cq).
 #
 # A check nobody has watched fail is a check nobody knows can fail. Each bug
 # below is applied on its own, rebuilt, run through the layer that should
@@ -184,7 +184,8 @@ run_case "the pencil opens the holding's page but not its alert boxes" "pages fa
             '                const href = `/stock/${encodeURIComponent(r.securityKey)}`;'
 
 run_case "the note under the table says live prices whatever the feed did" "pages" \
-  patch $AA '  const feedLine = quotesStatus === "live"' '  const feedLine = true'
+  patch $AA '      : quotesStatus === "loading" ? "Fetching live prices…" : "No live prices · Shares unchecked",' \
+            '      : quotesStatus === "loading" ? "Fetching live prices…" : "Live prices",'
 
 run_case "the empty tab draws an empty table instead of saying there are no alerts" "pages family" \
   patch $AA '      {rows.length === 0 ? (' '      {rows.length < 0 ? ('
@@ -328,10 +329,10 @@ run_case "SENDER: the footer's hover sentences are put back on screen" "pages" \
   patch $RST '      {line.text}' '      {line.text} {line.title}'
 
 run_case "SENDER: the reasons never drop to the hover, so a bad day runs past one line" "suite" \
-  patch $RL '  const text = full.length <= FOOTER_LINE_MAX ? full : build(false);' '  const text = full;'
+  patch $RL '  const text = forms.map(build).find(fits) ?? build(forms[forms.length - 1]);' '  const text = build(forms[0]);'
 
 run_case "SENDER: a level kept here as too high is said to have no NSE symbol" "suite" \
-  patch $RL '  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high to send)" : "";' \
+  patch $RL '  const stayWhy = s.tooHigh === 0 ? " (no NSE symbol)" : s.tooHigh === s.local ? " (a level too high)" : "";' \
             '  const stayWhy = " (no NSE symbol)";'
 
 # ── A COMPANY HELD ONLY INSIDE THE FAMILY'S FUNDS (#88's page) ──────────────
@@ -378,6 +379,15 @@ ST=src/pages/StockInfo.tsx
 ROUTES=$ROUTES,stock-targets,stock-funds-only-targets run_case "a holding's My targets tab draws no alert card" "pages family" \
   patch $ST '            <InvestmentTools securityKey={securityKey} name={name} />' \
             '            {securityKey === "\u0000" && <InvestmentTools securityKey={securityKey} name={name} />}'
+
+# ── THE CARD'S LINE IS A STATUS, NOT A SENTENCE (main's Stage 10cp) ────────
+# Main's rule for every page: a line that reads as a sentence is a note about
+# the page, and its sentence goes in the hover. The line under a holding's
+# alert boxes says a few words — saved here and there, or waiting and until
+# when — and the sentence behind it is the line's `title`. This puts the
+# sentence back on the face, which is exactly what the rule was written against.
+ROUTES=$ROUTES,stock-targets run_case "the card's line puts its whole sentence back on screen" "pages family" \
+  patch $RST '>{line.text}</span>' '>{line.title}</span>'
 
 echo ""
 echo "════════ done"

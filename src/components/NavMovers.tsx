@@ -256,14 +256,20 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
             </span>
           </div>
         </div>
-        <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500 sm:text-right" data-testid="navmovers-coverage">
-          on {fmtFromBase(model.coveredValue, { compact: true })} of the {fmtFromBase(model.scopeValue, { compact: true })} held,
-          across {model.rows.length} scheme{model.rows.length === 1 ? "" : "s"} behind {model.scopeNames} name{model.scopeNames === 1 ? "" : "s"}
-          {model.skipped.length > 0
-            ? ` — ${model.skipped.length} holding${model.skipped.length === 1 ? "" : "s"}${
-                skippedNames === model.skipped.length ? "" : ` across ${skippedNames} name${skippedNames === 1 ? "" : "s"}`
-              } worth ${fmtFromBase(skippedValue, { compact: true })} resolve no scheme and are not counted either way`
-            : ""}
+        {/* THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp) —
+            the family asked for the lines that explain a card to go. What the
+            move stands on is still on screen, in rupees and in schemes; what the
+            store could not price is counted on the face and named below. */}
+        <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500 sm:text-right" data-testid="navmovers-coverage"
+          title={`The move is struck on ${fmtFromBase(model.coveredValue, { compact: true })} of the ${fmtFromBase(model.scopeValue, { compact: true })} held, across ${model.rows.length} scheme${model.rows.length === 1 ? "" : "s"} behind ${model.scopeNames} name${model.scopeNames === 1 ? "" : "s"}${
+            model.skipped.length > 0
+              ? ` — ${model.skipped.length} holding${model.skipped.length === 1 ? "" : "s"}${
+                  skippedNames === model.skipped.length ? "" : ` across ${skippedNames} name${skippedNames === 1 ? "" : "s"}`
+                } worth ${fmtFromBase(skippedValue, { compact: true })} resolve no scheme and are not counted either way`
+              : ""}.`}>
+          {fmtFromBase(model.coveredValue, { compact: true })} of {fmtFromBase(model.scopeValue, { compact: true })} held
+          {" "}· {model.rows.length} scheme{model.rows.length === 1 ? "" : "s"} · {model.scopeNames} name{model.scopeNames === 1 ? "" : "s"}
+          {model.skipped.length > 0 ? ` · ${model.skipped.length} not priced` : ""}
         </p>
       </div>
 
@@ -273,7 +279,8 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
             <Tr view={view} className="border-b border-ink-700">
               <SortHeader col="scheme" view={view} align="left" pad="py-1.5 pr-2">Scheme</SortHeader>
               <SortHeader col="nav" view={view} pad="py-1.5 pr-3">NAV</SortHeader>
-              <SortHeader col="move" view={view} pad="py-1.5 pr-3">Move</SortHeader>
+              <SortHeader col="move" view={view} pad="py-1.5 pr-3"
+                title={`The scheme's own published move, NAV against the one before it. Every scheme with a published move is listed; a move of ${DRASTIC_PCT}% or more in one published day is chipped drastic.`}>Move</SortHeader>
               <SortHeader col="impact" view={view} pad="py-1.5 pr-3" title="The scheme's move applied to what this book values the holding at. Derived — the two sides are dated differently.">&#8377; on holding</SortHeader>
               <SortHeader col="held" view={view} pad="py-1.5" title="What this book values these holdings at, on the statement that reports them.">Held</SortHeader>
             </Tr>
@@ -296,7 +303,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
                 </td>
                 <td className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.changePct)}`}>
                   {fmtPct(r.changePct, { sign: true })}
-                  {isDrastic(r) && <span className="ml-1.5 align-middle"><Pill tone={r.changePct > 0 ? "gain" : "loss"}>drastic</Pill></span>}
+                  {isDrastic(r) && <span className="ml-1.5 align-middle" title={`A move of ${DRASTIC_PCT}% or more in one published day. The chip labels a row and never decides which rows are drawn.`}><Pill tone={r.changePct > 0 ? "gain" : "loss"}>drastic</Pill></span>}
                 </td>
                 <td className={`py-1.5 pr-3 text-right tabular ${rank === "impact" ? "font-semibold" : ""} ${changeColor(r.move)}`}>
                   {fmtFromBase(r.move, { compact: true, sign: true })}
@@ -329,14 +336,9 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
           ))}
         </div>
       )}
-      {/* ONE LINE — the family asked for the notes under the tables to go. The
-          bound stays on screen because the chip is struck against it; how the
-          list is ranked and that the chip never decides which rows are drawn
-          are the hover. */}
-      <p className="mt-1.5 text-[11px] text-slate-500" data-testid="navmovers-drastic-note"
-        title={`Every scheme with a published move is listed, ranked by ${rank === "pct" ? "the size of the move" : "its rupee effect"}. The chip labels a row and never decides which rows are drawn.`}>
-        Every scheme is listed · a move of {DRASTIC_PCT}% or more in one published day is chipped <em>drastic</em>
-      </p>
+      {/* THE "Every scheme is listed · … chipped drastic" LINE UNDER THE TABLE
+          IS GONE (Stage 10cp): the bound is the Move heading's hover and each
+          chip's own, where a reader looking at a chip asks what it means. */}
     </Card>
   );
 }

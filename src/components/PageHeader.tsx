@@ -17,8 +17,11 @@ import { navEntry } from "@/lib/nav";
  * looking at, not an action on it, and putting it here retires a whole toolbar
  * row. `right` keeps its meaning — status and basis, hard against the far edge.
  *
- * The subtitle takes `w-full` so it wraps to its own line under both, which is
- * what a sentence needs and what a chip beside a heading must never do.
+ * THE SUBTITLE IS THE TITLE'S HOVER (Stage 10cp). It was a sentence on its own
+ * line under the headline on seven pages — "Time-weighted returns as each
+ * manager publishes them…", "Provenance and status of the ingested book…" —
+ * and the family asked for every such line to go. A string, for the same
+ * reason `Card`'s is.
  *
  * ── AND THE EYEBROW IS NOW THE CRUMB, NOT A SECOND LABEL BESIDE IT ──────────
  *
@@ -39,7 +42,7 @@ import { navEntry } from "@/lib/nav";
  * page the nav does not list, which today is `/upload` alone.
  */
 export function PageHeader({ eyebrow, title, subtitle, beside, right, trail }: {
-  eyebrow?: string; title: string; subtitle?: ReactNode; beside?: ReactNode; right?: ReactNode;
+  eyebrow?: string; title: string; subtitle?: string; beside?: ReactNode; right?: ReactNode;
   /**
    * An explicit trail, for a page opened INTO rather than navigated to — where
    * the last segment names the figure or the holding, not the route. Given one,
@@ -60,11 +63,10 @@ export function PageHeader({ eyebrow, title, subtitle, beside, right, trail }: {
     <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
       <PageNav trail={steps} />
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-        <h1 className="font-display text-xl font-bold tracking-tight text-slate-100">{title}</h1>
+        <h1 className="font-display text-xl font-bold tracking-tight text-slate-100" title={subtitle || undefined}>{title}</h1>
         {beside}
       </div>
       {right}
-      {subtitle && <p className="w-full max-w-2xl text-sm text-slate-400">{subtitle}</p>}
     </div>
   );
 }

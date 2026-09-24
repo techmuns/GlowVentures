@@ -69,10 +69,11 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
   }
   if (!insider || !insider.ok) {
     return (
-      <p className="py-3 text-[12.5px] leading-relaxed text-slate-500" data-insider-deals="unavailable">
+      <p className="py-3 text-[12.5px] leading-relaxed text-slate-500" data-insider-deals="unavailable"
+        title={insider && insider.reason === "not_configured" ? "It activates once the data-service token is configured." : undefined}>
         {insider && insider.reason === "not_configured"
-          ? "The insider feed isn't switched on yet — it activates once the data-service token is configured."
-          : "The insider feed didn't respond for this security."}
+          ? "The insider feed isn't switched on yet"
+          : "The insider feed didn't respond for this security"}
       </p>
     );
   }
@@ -81,7 +82,8 @@ export function InsiderDeals({ ticker, name }: { ticker: string; name: string })
   }
   return (
     <div className="max-h-[420px] overflow-auto" data-insider-deals="ok">
-      <p className="mb-2 text-[11.5px] text-slate-500">Insider trading disclosures from the exchange feed — dealing by the company&rsquo;s insiders, not by this family.</p>
+      {/* THE FENCE ON THE FACE, WHERE IT CAME FROM IN THE HOVER (Stage 10cp). */}
+      <p className="mb-2 text-[11.5px] text-slate-500" title="Insider trading disclosures from the exchange feed.">Dealing by the company&rsquo;s insiders, not by this family</p>
       <table className="min-w-full whitespace-nowrap text-[12.5px]">
         <thead className="sticky top-0 bg-ink-800 border-b border-ink-700">
           <Tr view={view}>

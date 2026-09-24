@@ -155,10 +155,10 @@ export function CashFlowPanel({
               </tbody>
             </table>
           </div>
-          <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500">
-            Rounded to three significant figures BY THE SOURCE — the cell tooltip shows exactly what it printed.
-            Nothing is derived from these: a margin or a growth rate computed on three-figure inputs would come out
-            looking as precise as the arithmetic rather than as precise as the data.
+          {/* ONE LINE, THE REST ITS HOVER (Stage 10cp). */}
+          <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500"
+            title="The cell tooltip shows exactly what the source printed. Nothing is derived from these: a margin or a growth rate computed on three-figure inputs would come out looking as precise as the arithmetic rather than as precise as the data.">
+            Rounded to three significant figures by the source
           </p>
         </div>
       )}
@@ -183,9 +183,9 @@ export function CashFlowPanel({
               <Estimate label="Revenue" low={cal.revenueLow} avg={cal.revenueAverage} high={cal.revenueHigh}
                 fmt={(v) => money(v) ?? ""} />
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">
-              An estimate is a forecast, not a measurement — it is what analysts expect, and it is shown here because
-              the calendar it sits beside is the only place on this dashboard that looks forward.
+            <p className="mt-2 text-[11px] text-slate-500"
+              title="It is what analysts expect, and it is shown here because the calendar it sits beside is the only place on this dashboard that looks forward.">
+              A forecast, not a measurement
             </p>
           </div>
         )}

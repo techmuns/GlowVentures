@@ -136,12 +136,23 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
 
   return (
     <div ref={card} id="alerts" data-alerts-card className="mt-5 scroll-mt-4">
+      {/* WHAT THE CARD DOES IS THE TITLE'S HOVER, AND THE WAY TO ALL ALERTS IS
+          A LINK BESIDE THE PRICE (Stage 10cp's rule — main's letter — that no
+          card draws a line under its title). The sentence used to be that line,
+          with the link inside it; a hover can carry only a string, so the link
+          is its own short control now, where the price chip already is. */}
       <Card
         title="Price alerts"
-        subtitle={<>Type the price you would act at. When the price gets there, it shows on{" "}
-          <Link to="/cio?tab=alerts" className="font-medium text-champagne-400 transition-colors hover:text-slate-200">
-            Morning CIO → All alerts</Link>.</>}
-        right={<PriceNowChip now={now} perUnit={perUnit} feeds={quoteFeeds} asOf={quotesAsOf} />}>
+        subtitle="Type the price you would act at. When the price gets there, it shows on Morning CIO → All alerts."
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+            <PriceNowChip now={now} perUnit={perUnit} feeds={quoteFeeds} asOf={quotesAsOf} />
+            <Link to="/cio?tab=alerts" data-alerts-card-link
+              title="Every alert you have set, on Morning CIO — the ones that have fired first."
+              className="whitespace-nowrap text-[12px] font-medium text-champagne-400 transition-colors hover:text-slate-200">
+              All alerts →</Link>
+          </div>
+        }>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {MAIN_KINDS.map(levelBox)}
@@ -230,7 +241,7 @@ export function InvestmentTools({ securityKey, name }: { securityKey: string; na
           </div>
         </details>
 
-        {/* WHERE THESE LEVELS WENT (Stage 10cp): every save is also sent to
+        {/* WHERE THESE LEVELS WENT (Stage 10cq): every save is also sent to
             Glow Central Research, which alerts there too — and this line says
             whether it arrived, or why not and what happens next. */}
         <ResearchStatusLine securityKey={securityKey} updatedAt={entry.updatedAt} />

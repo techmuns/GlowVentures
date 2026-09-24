@@ -184,7 +184,7 @@ const CIO_TABS = [
   { key: "allocation", label: "Allocation & Risk", title: "How the book is split, what is still to be called, and where it is concentrated" },
   { key: "nav", label: "NAV vs Nifty 500", title: "The book's own dated valuation series against the index, net of capital in and out" },
   /**
-   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cp). *"in morning
+   * ...AND A FOURTH, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq). *"in morning
    * CIO can you make an ALL alerts tab where … whenever the alerts which have
    * been set are triggered they show simply."* It goes LAST so the three the
    * family arranged keep their places and the default stays the movers panel;
@@ -1640,10 +1640,13 @@ export function MorningCIO() {
                     those are figures a reader acts on. */}
                 {allocAxis !== "category" && (
                   <div className="mt-3 space-y-0.5 text-[11px] leading-relaxed text-slate-500">
+                    {/* ONE SHORT LINE (Stage 10cp): whose taxonomy it is and the
+                        value their direct-stock rule placed are the figures; how
+                        the review states it is the hover. */}
                     <p data-testid="alloc-taxonomy-source"
-                      title={`No statement in the archive carries ${GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"}; nothing here is inferred from what the instrument is.${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}`}>
-                      Grouped by the family&rsquo;s own {GROUP_NOUN[allocAxis].one}, as their consolidated review states it
-                      {ruleMV > 0 && <> · {money(ruleMV)} placed by their direct-stock rule</>}
+                      title={`Grouped by the family's own ${GROUP_NOUN[allocAxis].one}, as their consolidated review states it, product by product. No statement in the archive carries ${GROUP_NOUN[allocAxis].one === "basket" ? "a basket" : "one"}; nothing here is inferred from what the instrument is.${ruleMV > 0 ? ` ${money(ruleMV)} of the ${money(m.totalValue)} above is placed by their stated rule instead — "all the direct stocks" belong to Thematic & Tactical — because the review does not name those holdings individually.` : ""}`}>
+                      The family&rsquo;s own {GROUP_NOUN[allocAxis].many}
+                      {ruleMV > 0 && <> · {money(ruleMV)} by their direct-stock rule</>}
                     </p>
                     {/* THE OTHER RULE, NAMED AS ITSELF. Their review files its
                         arbitrage funds as Debt; the family have said arbitrage is
@@ -1652,9 +1655,8 @@ export function MorningCIO() {
                         about the wrong rule. */}
                     {cashRuleMV > 0 && (
                       <p data-testid="alloc-cash-rule" data-cash-rule-mv={cashRuleMV}
-                        title="Their consolidated review files its arbitrage funds as Debt, and the family's instruction overrules it.">
-                        {money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their instruction
-                        that arbitrage and liquid funds are cash
+                        title="Placed by the family's instruction that arbitrage and liquid funds are cash. Their consolidated review files its arbitrage funds as Debt, and the instruction overrules it.">
+                        {money(cashRuleMV)} is {allocAxis === "basket" ? "Liquidity" : "Cash"} by their cash instruction
                       </p>
                     )}
                   </div>
@@ -1663,7 +1665,9 @@ export function MorningCIO() {
           </Card>
 
           <div className="grid gap-5 content-start lg:col-span-1">
-            <Card title="Capital deployment" subtitle="Private-market funds: commitments &amp; uncalled capital">
+            {/* WHAT THE CARD COVERS IS ITS TITLE'S HOVER (Stage 10cp) — the line
+                under the title restated it, and the family asked for those to go. */}
+            <Card title={<span title="Private-market funds: commitments & uncalled capital — the same capital accounts the Private Market page counts." data-card-title-hint>Capital deployment</span>}>
               {hasCommitments ? (
                 <>
                   {/*

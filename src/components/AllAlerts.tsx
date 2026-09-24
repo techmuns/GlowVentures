@@ -90,41 +90,62 @@ export function AllAlerts() {
     setConfirming(null);
   };
 
-  // TWO SHORT LINES UNDER THE TABLE, and the reasoning in their hovers — a note
-  // under a table is one short line (Stage 10ci). The first says where the
-  // prices came from; the second (`ResearchSummaryLine`) what reached Glow
-  // Central Research.
-  const feedLine = quotesStatus === "live"
-    ? `Live prices${quoteFeeds.length ? ` from ${quoteFeeds.join(" and ")}` : ""}${quotesAsOf ? `, updated ${fmtDateTime(quotesAsOf)}` : ""} · funds on their published NAV · saved in this browser`
-    : quotesStatus === "loading" ? "Fetching live prices… · funds on their published NAV · saved in this browser"
-      : "Live prices are not reaching the dashboard, so share alerts can't be checked · funds still on their published NAV · saved in this browser";
-  const feedWhy = "A share's alert is checked against its live price, and a fund's against the NAV it publishes once a day."
+  // TWO SHORT STATUS LINES UNDER THE TABLE, and the sentences in their hovers —
+  // a note under a table is one short line (Stage 10ci), and no line on any
+  // page reads as a sentence (main's Stage 10cp, `readsAsSentence`). The first
+  // says where the prices came from, how funds are priced and where the alerts
+  // are kept; the second (`ResearchSummaryLine`) what reached Glow Central
+  // Research. Each is a few words per item, capitalised as items, and the WHY
+  // is the hover.
+  const feedLine = [
+    quotesStatus === "live"
+      ? `Live prices${quoteFeeds.length ? ` · ${quoteFeeds.join(" + ")}` : ""}${quotesAsOf ? ` · ${fmtDateTime(quotesAsOf)}` : ""}`
+      : quotesStatus === "loading" ? "Fetching live prices…" : "No live prices · Shares unchecked",
+    "Funds on published NAV",
+    "Saved in this browser",
+  ].join(" · ");
+  const feedState = quotesStatus === "live"
+    ? `Share alerts are checked against live prices${quoteFeeds.length ? ` from ${quoteFeeds.join(" and ")}` : ""}${quotesAsOf ? `, updated ${fmtDateTime(quotesAsOf)}` : ""}.`
+    : quotesStatus === "loading" ? "Live prices are still being fetched, so share alerts read as checking until they arrive."
+      : "Live prices are not reaching the dashboard, so share alerts can't be checked until they do.";
+  const feedWhy = `${feedState} A share's alert is checked against its live price, and a fund's against the NAV it publishes once a day.`
     + " A statement's own price is never used — it can be weeks old."
     + " Alerts are saved in this browser, so another device keeps its own.";
 
+  // NO LINE UNDER THE TITLE (Stage 10cp's rule — main's letter). What the card
+  // is goes on the title's hover, which can carry only a string; the COUNTS are
+  // figures, so they move up beside the title rather than into the hover.
   return (
-    <Card pad={false} title="Your price alerts"
-      subtitle={counts.total === 0
-        ? "Set a level on any holding and it shows here the moment the price gets there."
-        : (
+    <Card pad={false}
+      title={<>
+        Your price alerts
+        {counts.total > 0 && (
           <span data-alert-summary data-reached={counts.reached} data-watching={counts.watching}
-            data-checking={counts.checking} data-unchecked={counts.unchecked} data-total={counts.total}>
+            data-checking={counts.checking} data-unchecked={counts.unchecked} data-total={counts.total}
+            className="ml-2 font-sans text-[12px] font-normal text-slate-400">
             <span className={counts.reached ? "font-semibold text-slate-100" : ""}>{counts.reached} reached</span>
             {" · "}{counts.watching} watching
             {counts.checking > 0 && <> · {counts.checking} checking</>}
             {counts.unchecked > 0 && <> · {counts.unchecked} not checked</>}
           </span>
         )}
+      </>}
+      subtitle={counts.total === 0
+        ? "Set a level on any holding and it shows here the moment the price gets there."
+        : "Every level set on a holding, the ones that have fired first. A share is checked on its live price and a fund on the NAV it publishes."}
       right={<AddAlert />}>
       {rows.length === 0 ? (
         <div data-alerts-empty className="flex flex-col items-center gap-2 px-6 pb-12 pt-6 text-center">
           <div className="grid h-12 w-12 place-items-center rounded-2xl border border-champagne-500/30 bg-champagne-500/10 text-champagne-400">
             <Bell className="h-5 w-5" />
           </div>
-          <div className="mt-2 text-sm font-medium text-slate-200">No price alerts yet</div>
+          {/* THE HOW-TO IS THE HEADLINE'S HOVER (Stage 10cp's rule): the short line
+              under it names the one control a reader needs. */}
+          <div className="mt-2 text-sm font-medium text-slate-200" data-alerts-empty-how
+            title="Find a holding with New alert above, then type the price you would buy at, sell at, or your stop loss. When the price gets there, it shows up here.">
+            No price alerts yet</div>
           <p className="max-w-md text-xs leading-relaxed text-slate-400">
-            Find a holding with <span className="font-medium text-slate-200">New alert</span> above, then type the
-            price you would buy at, sell at, or your stop loss. When the price gets there, it shows up here.
+            Set one with <span className="font-medium text-slate-200">New alert</span> above.
           </p>
         </div>
       ) : (

@@ -4286,7 +4286,7 @@ const ROUTES = [
   ["cio-nav-bench", "/cio?tab=nav&bench=sensex"],
   ["cio-nav-bench-wrong", "/cio?tab=nav&bench=nifty-next-50"],
   /**
-   * ...AND THE FOURTH PANEL, THE FAMILY'S OWN PRICE ALERTS (Stage 10cp), walked
+   * ...AND THE FOURTH PANEL, THE FAMILY'S OWN PRICE ALERTS (Stage 10cq), walked
    * FOUR ways because an alert's whole claim depends on the state around it:
    *
    *   `cio-alerts`         seven alerts seeded (`ALERTS_BOOK`) with the live
@@ -5015,9 +5015,13 @@ const ROUTES = [
   ["stock-funds-only-activity", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=activity` : "/stock/no-company-held-only-inside-funds?tab=activity")],
   ["stock-funds-only-market", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=market` : "/stock/no-company-held-only-inside-funds?tab=market")],
   ["stock-funds-only-research", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=research` : "/stock/no-company-held-only-inside-funds?tab=research")],
-  // ...and its My targets tab, where the price alerts card is (Stage 10cp).
+  // ...and its My targets tab, where the price alerts card is (Stage 10cq).
   ["stock-funds-only-targets", () => (HELD_BOOK?.fundsOnly ? `/stock/${encodeURIComponent(HELD_BOOK.fundsOnly.key)}?tab=targets` : "/stock/no-company-held-only-inside-funds?tab=targets")],
   ["capital-gains", "/capital-gains"],
+  // …AND THE SAME PAGE WITH THE "NO CAPITAL GAIN STATEMENT" BAND OPENED BY ITS
+  // OWN TOGGLE (Stage 10cp), so every account it names is a row the checks can
+  // read. The plain walk above asserts it arrives CLOSED.
+  ["capital-gains-missing", "/capital-gains"],
   ["performance", "/performance"],
   ["returns", "/returns"],
   ["ledger", "/ledger"],
@@ -6408,7 +6412,7 @@ async function installCallStoreOff(page) {
  *
  * *"Does these alerts actually work … in morning CIO can you make an ALL alerts
  * tab where … whenever the alerts which have been set are triggered they show
- * simply."* (Stage 10cp.)
+ * simply."* (Stage 10cq.)
  *
  * The store is the reader's own browser, so a walk that seeded nothing would
  * only ever see the empty state — and every claim worth making is about what a
@@ -6512,7 +6516,7 @@ async function installAlertStore(page) {
 }
 
 /**
- * ── GLOW CENTRAL RESEARCH, STOOD IN FOR ON EVERY WALK (Stage 10cp) ───────────
+ * ── GLOW CENTRAL RESEARCH, STOOD IN FOR ON EVERY WALK (Stage 10cq) ───────────
  *
  * *"when the user puts target price inside the dashboard, it should
  * automatically also go to the Glow Central Research dashboard."* Every saved
@@ -7608,13 +7612,18 @@ const NAV_MOVERS = [
   ["its coverage names the value it stands on, and the schemes it cannot price", (t, ctx) => {
     const nm = ctx?.navMovers;
     if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
+    // THE FIGURES ON THE LINE'S FACE, THE SENTENCE IN ITS HOVER (Stage 10cp).
     const cov = nm.coverage ?? "";
-    const schemesNamed = new RegExp(`\\b${NAV_MOVERS_BOOK.schemes}\\s+schemes?\\b`).test(cov);
-    // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER DROPPED IN SILENCE.
+    const why = nm.coverageTitle ?? "";
+    const schemesNamed = new RegExp(`\\b${NAV_MOVERS_BOOK.schemes}\\s+schemes?\\b`).test(cov)
+      && new RegExp(`across ${NAV_MOVERS_BOOK.schemes} schemes?\\b`).test(why);
+    // A HOLDING THE STORE CANNOT PRICE IS NAMED, NEVER DROPPED IN SILENCE —
+    // counted on the face, and why in the hover.
     const skipNamed = NAV_MOVERS_BOOK.skipped === 0
-      ? !/resolve no scheme/i.test(cov)
-      : (/resolve no scheme/i.test(cov) && !!nm.skipped);
-    return schemesNamed && skipNamed && /₹|Cr|L\b/.test(cov);
+      ? !/not priced/i.test(cov) && !/resolve no scheme/i.test(why)
+      : (/\d+ not priced/i.test(cov) && /resolve no scheme/i.test(why) && !!nm.skipped);
+    return schemesNamed && skipNamed && /₹|Cr|L\b/.test(cov) && /^The move is struck on ₹/.test(why)
+      && !/across \d+ schemes?/.test(cov);
   }],
   /**
    * ── "DRASTIC" LABELS AND NEVER DECIDES ───────────────────────────────────
@@ -7628,11 +7637,12 @@ const NAV_MOVERS = [
     const nm = ctx?.navMovers;
     if (!nm || nm.loading || !NAV_MOVERS_BOOK) return false;
     const chipped = /\bdrastic\b/i.test(t);
-    // The note explaining the bound always renders; the CHIP renders only
-    // where the book has a row past it.
-    const noteOnly = /move of \d+% or more/i.test(t);
-    return noteOnly && nm.rows.length === NAV_MOVERS_BOOK.schemes
-      && (NAV_MOVERS_BOOK.anyDrastic ? chipped : true);
+    // THE BOUND IS THE MOVE HEADING'S HOVER (Stage 10cp), and the line that
+    // said it under the table is gone; the CHIP renders only where the book
+    // has a row past it.
+    const bound = (ctx?.titles ?? []).some((x) => /a move of \d+% or more in one published day is chipped drastic/i.test(x));
+    return bound && !/Every scheme is listed/i.test(t) && nm.rows.length === NAV_MOVERS_BOOK.schemes
+      && (NAV_MOVERS_BOOK.anyDrastic ? chipped : !chipped);
   }],
   /**
    * THE RANKING DEFAULTS TO THE PERCENTAGE, matching the card above it and the
@@ -7737,8 +7747,15 @@ const ALLOC_AXIS = [
  * swept into whichever section happens to be first.
  */
 const ALLOC_FAMILY_AXIS = [
+  // Whose taxonomy it is stays ON the face; how their review states it is the
+  // line's hover since Stage 10cp — so both halves are read, each where it is.
   ["a family axis says whose taxonomy it is",
-    (t) => /Grouped by the family’s own (basket|asset class), as their consolidated review states it/.test(t)],
+    (t, ctx) => {
+      const src = ctx?.cashDom?.allocSource;
+      if (!src) return false;
+      return /^The family’s own (baskets|asset classes)\b/.test(src.text)
+        && /Grouped by the family's own (basket|asset class), as their consolidated review states it/.test(src.title);
+    }],
   /**
    * AN UNPLACED ROW NAMES ITS CAUSE. Gated on the row EXISTING, because a later
    * review that names everything is a book with no such row — and a check that
@@ -7865,11 +7882,16 @@ const axisChecks = (axis, expected) => [
   // 5. AN UNCLASSIFIED SECTION NAMES ITS CAUSE. "Other" would read as a bucket
   //    the family chose. If the axis ever classifies everything this passes
   //    vacuously and correctly — there is nothing to disclose.
+  // The heading names the cause and the clause beside it says what is missing;
+  // the sentence naming the review and what would fill it is that clause's
+  // hover since Stage 10cp.
   [`an unclassified ${axis} section says the review does not list it`, (t, ctx) => {
     const secs = ctx?.sectionRows;
     if (!secs?.length) return { notChecked: "no section headings on this run" };
     const un = secs.find((x) => x.key === UNCLASSIFIED_KEY);
-    return !un || /review does not list/i.test(un.text);
+    return !un || (/not classified in the family.s review/i.test(un.text)
+      && new RegExp(`no ${axis === "basket" ? "basket" : "asset class"} stated`, "i").test(un.text)
+      && (ctx.titles ?? []).some((x) => /review \(30 June 2026\) does not list this holding/.test(x ?? "")));
   }],
   // 6. AND A SECTION FILLED BY THE FAMILY'S RULE SAYS HOW MUCH. The review
   //    naming a product and a rule covering a class are different claims, and
@@ -8569,9 +8591,13 @@ const qtyChecks = (keyOf) => [
       && (ctx?.titles ?? []).some((x) => /pledge, unpledge or early pay-in earmark is counted and is in none of these columns/i.test(x))],
   // WHAT THIS IS NOT. Without it "units in" reads as a purchase, and a
   // depository movement names no price, no counterparty and no consideration.
-  ["the table says these are depository movements and not trades",
-    (t, ctx) => /depository movements, not trades/i.test(t)
-      && (ctx?.titles ?? []).some((x) => /no\s+price, amount or gain/i.test(x))],
+  // "Depository" is in the card's TITLE since Stage 10cp, and "not trades",
+  // with what that means, is the title's hover — the phrase under the table
+  // is gone, and asserted gone so a rewording cannot bring the line back.
+  ["the table says these are depository movements and not trades — the kind in its title, the caveat in its hover",
+    (t, ctx) => /Depository quantity through the year/i.test(t)
+      && !/depository movements, not trades/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /depository movements, not trades/i.test(x) && /no\s+price, amount or gain/i.test(x))],
   /**
    * AN OPENING BALANCE IS A CLAIM ABOUT A DATE. Without the window on screen,
    * "opening 4,875" is a figure with no period attached and a reader cannot
@@ -9732,7 +9758,10 @@ const CIO_MOVERS = [
   ["with no quote feed, Today's movers states the cause and prints no day change",
     (t, ctx) => {
       const card = sliceBetween(ctx?.cioLayout?.text ?? "", "Today’s movers");
-      if (!/No direct-equity holding carries a day change/.test(card)) return false;
+      // The headline names the failed feed since Stage 10cp ("No direct-equity
+      // move today — the quote feed did not respond"): the reason under it is
+      // the box's hover now.
+      if (!/No direct-equity (?:holding carries a day change|move today)/.test(card)) return false;
       if (!/quote feed did not respond|can never have one/.test(card)) return false;
       return !/DIRECT EQUITY · TODAY/i.test(card);
     }],
@@ -9747,7 +9776,7 @@ const CIO_MOVERS = [
    */
   ["Today's movers names its scope in the heading and on the tile",
     (t) => /Today’s movers\s*·\s*Direct Equity/i.test(t)
-      && /DIRECT EQUITY · TODAY|No direct-equity holding carries a day change/i.test(t)],
+      && /DIRECT EQUITY · TODAY|No direct-equity (?:holding carries a day change|move today)/i.test(t)],
   /**
    * ...AND THE MOVERS TOGGLE OFFERS EXACTLY THE TWO BRANCHES THE FAMILY NAMED.
    *
@@ -10631,9 +10660,13 @@ const CIO_NAV = [
       const card = navBasis(ctx);
       if (card == null) return navBasisMissing(ctx);
       const cov = /(\d+) of (\d+) accounts/.exec(card);
-      const ex = /The (\d+) accounts that cannot supply a series/.exec(t);
-      const parts = /(\d+) publish exactly one dated valuation/.exec(t);
-      const none = /(\d+) publish no valuation at all/.exec(t);
+      // "Not in the series: N accounts · ₹X" on the fold's face (Stage 10cp);
+      // the sentence and the split are its hover, and each list's heading
+      // inside keeps its count.
+      const ex = /Not in the series:\s*(\d+) accounts/.exec(t);
+      if (/that cannot supply a\s+series —/.test(t)) return false;
+      const parts = /(\d+) publish exactly one dated valuation/i.exec(t);  // `label-xs` is uppercase in innerText
+      const none = /(\d+) publish no valuation at all/i.exec(t);
       if (!cov || !ex || !parts || !none) return false;
       // The COUNTS have to partition…
       if (Number(parts[1]) + Number(none[1]) !== Number(ex[1])) return false;
@@ -10670,7 +10703,7 @@ const CIO_NAV = [
  */
 const CIO_TAB_CONTROL = [
   /**
-   * FOUR SINCE Stage 10cp: *"in morning CIO can you make an ALL alerts tab."* It
+   * FOUR SINCE Stage 10cq: *"in morning CIO can you make an ALL alerts tab."* It
    * goes LAST, so the three the family arranged keep their places and the
    * default is still the movers panel — which is why the order is asserted
    * rather than the membership alone.
@@ -10937,11 +10970,15 @@ function alertRowChecks(feedUp) {
       if (ALERT_PROBE(ctx) == null) return notChecked("the alerts probe did not run on this pass");
       const p = panelOf(ctx);
       if (!p) return false;
+      // THE FACE IS A STATUS (main's Stage 10cp rule): live prices or none,
+      // funds on their published NAV, saved in this browser. The sentences —
+      // that the feed is not reaching the dashboard, that a statement's own
+      // price is never used, that another device keeps its own alerts — are
+      // the hover, which is read here so they cannot quietly go missing.
       return (feedUp ? p.feed === "live" && /live prices/i.test(p.feedText)
-        : p.feed === "unavailable" && /not reaching/i.test(p.feedText))
+        : p.feed === "unavailable" && /no live prices/i.test(p.feedText) && /shares unchecked/i.test(p.feedText)
+          && /not reaching the dashboard/i.test(p.feedTitle ?? ""))
         && /published NAV/i.test(p.feedText) && /saved in this browser/i.test(p.feedText)
-        // ...and the reasoning moved to its hover, not away: a statement's own
-        // price is never used, and another device keeps its own alerts.
         && /statement's own price is never used/i.test(p.feedTitle ?? "") && /another device/i.test(p.feedTitle ?? "");
     }],
   ];
@@ -10998,7 +11035,7 @@ const CIO_ALERTS_BADGE = [
 ];
 
 /**
- * ── WHAT WENT TO GLOW CENTRAL RESEARCH (Stage 10cp) ──────────────────────────
+ * ── WHAT WENT TO GLOW CENTRAL RESEARCH (Stage 10cq) ──────────────────────────
  *
  * *"when the user puts target price inside the dashboard, it should
  * automatically also go to the Glow Central Research dashboard."*
@@ -11073,9 +11110,11 @@ function researchChecks(mode) {
         const r = research(ctx);
         if (!r || !RESEARCH_BOOK) return false;
         const n = RESEARCH_BOOK.send.length;
+        // The face is a STATUS (main's Stage 10cp rule) — the count, and until
+        // when — and the whole sentence is its hover.
         return r.sent === 0 && r.waiting === n && r.code === "not-ready"
-          && /not taking (?:price )?levels yet/.test(r.text) && /automatically/.test(r.text)
-          && !/did not answer|could not save|no answer|not saved there/.test(r.text)
+          && new RegExp(`\\b${n} waiting until it's ready`).test(r.text)
+          && !/did not answer|could not save|no answer|not saved/.test(r.text)
           && /is not taking price levels yet — they will go automatically once it is/.test(r.title ?? "");
       }],
   ];
@@ -11638,6 +11677,53 @@ const FILTER_ROW = (holdings) => [
  * family's request (Stage 10ci, #90), so the check runs where the sentence
  * still is rather than failing two pages for obeying that request.
  */
+/**
+ * ── HOW LONG ONE SHORT LINE IS (Stage 10cp) ─────────────────────────────────
+ *
+ * Private Market's own bounds (`PM_NO_PROSE`, Stage 10co), applied to every
+ * route: past 60 characters outside a table, or 120 inside one, a block that
+ * reads as a SENTENCE (below) is a note about the page rather than a figure on
+ * it. Private Market holds the stricter form — any block past the bound, sentence
+ * or not — which it has met since Stage 10co.
+ */
+const PROSE_LINE_MAX = 60;
+const PROSE_CELL_MAX = 120;
+/**
+ * …AND A SENTENCE HAS SMALL WORDS IN IT. A line of figures — "Listed ₹766.4 Cr
+ * · Private ₹10.6 Cr · Total ₹777 Cr" — or an account's identity and state is
+ * long and is not prose; what the family asked to be rid of reads as a sentence.
+ * Lower-case words of two letters or more are what a sentence is made of and a
+ * row of names, figures and labels is not: every removed footnote carried ten or
+ * more, and no line of figures on a cleaned page carries that many.
+ */
+const PROSE_WORDS = 10;
+const proseWords = (x) => (String(x).match(/(?<![\p{L}\d])[a-z][a-z’'-]+/gu) ?? []).length;
+
+/**
+ * ── WHICH ACCOUNTS PUBLISH NO CAPITAL GAIN STATEMENT (Stage 10cp) ───────────
+ *
+ * Read off `BOOK_CAPITAL_GAINS` as committed data rather than off the page: an
+ * account whose entry carries an `absent` reason is one the Capital Gains page
+ * must file under its closed "missing data" band, and every other account must
+ * stand as a row with a figure. Null on any failure, so a caller FAILS rather
+ * than reading an unreadable book as one where every account reported.
+ */
+const CG_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const cg = bookArray(src, "BOOK_CAPITAL_GAINS");
+    if (!Array.isArray(cg) || !cg.length) return null;
+    const missing = cg.filter((c) => c.absent);
+    return {
+      total: cg.length,
+      missing: missing.length,
+      reported: cg.length - missing.length,
+      missingEntities: missing.map((c) => c.entity).sort(),
+      reasons: [...new Set(missing.map((c) => c.absent))],
+    };
+  } catch { return null; }
+})();
+
 const MONITOR_IN_FULL = [
   ["the link saying Portfolio Monitor carries this in full opens its Category view", (t, ctx) => {
     const l = ctx?.monitorInFull;
@@ -11884,8 +11970,11 @@ const CASH_HEADING_COUNTS = [
     if (!inc) return { notChecked: "the probe did not run" };
     const B = CASH_INSTRUCTION_BOOK;
     if (!B) return false;
+    // The count is on the heading; that the family counts them as cash, and
+    // why, is the count's own hover since Stage 10cp.
     return inc.length === 1 && inc[0] === `${B.liquid.length}/${B.arb.length}`
-      && /includes \d+ liquid and \d+ arbitrage funds? the family counts as cash/i.test(t);
+      && /includes \d+ liquid and \d+ arbitrage funds?\b/i.test(t)
+      && (ctx.titles ?? []).some((x) => /^Cash is liquid and arbitrage — the family's own instruction/.test(x ?? ""));
   }],
 ];
 /**
@@ -11904,7 +11993,8 @@ const CASH_RULE_HEADINGS = (axis) => [
     if (!B) return false;
     const sec = secs.find((x) => x.key === cashSection(axis));
     return !!sec && sec.cashRuleMV != null && Math.abs(sec.cashRuleMV - B.arbMV) <= 1
-      && /counted as cash by the family.s instruction/i.test(sec.text);
+      && /by the family.s cash instruction/i.test(sec.text)
+      && (ctx.titles ?? []).some((x) => /by the family's instruction that arbitrage and liquid funds are cash/.test(x ?? ""));
   }],
   ["...and no heading credits them to the direct-stock rule, or the cash instruction to anything else", (t, ctx) => {
     const secs = ctx?.cashDom?.sections;
@@ -11921,8 +12011,11 @@ const ALLOC_CASH_RULE = (axis) => [
     const B = CASH_INSTRUCTION_BOOK;
     if (!B) return false;
     const c = d.allocCashRule;
+    // The value and the rule's name are on the face; what the instruction says
+    // is the line's hover since Stage 10cp.
     return !!c && Math.abs(c.mv - B.arbMV) <= 1
-      && new RegExp(`is ${cashSection(axis)} by their instruction that arbitrage and liquid funds are cash`, "i").test(c.text);
+      && new RegExp(`is ${cashSection(axis)} by their cash instruction$`, "i").test(c.text)
+      && /instruction that arbitrage and liquid funds are cash/i.test(c.title ?? "");
   }],
 ];
 /**
@@ -11950,10 +12043,12 @@ const HB_DEPOSITORY = [
     if (B.depositoryCount === 0) return !d.hbDepository;
     const h = d.hbDepository;
     // THE LINE SAYS WHAT THEY ARE; ITS HOVER SAYS WHY (Stage 10cf). The source is
-    // on screen — a reader must see these are valued at AMFI's NAV and not by a
-    // statement — and the sentence behind it is read from the hover, which
-    // `textContent` cannot see.
-    return !!h && h.n === B.depositoryCount && /AMFI/.test(h.text) && /not a statement mark/.test(h.text)
+    // on screen — a reader must see these are valued at AMFI's NAV — and the
+    // sentence behind it is read from the hover, which `textContent` cannot see.
+    // Since Stage 10cp the face is the count and the source alone ("5 holdings
+    // at AMFI's NAV"); the old "valued from depository units …" line must not
+    // come back.
+    return !!h && h.n === B.depositoryCount && /AMFI.s NAV/.test(h.text) && !/valued\s+from depository units/.test(h.text)
       && /transaction statement and no holding statement/.test(h.title) && /not\s+in that figure/.test(h.title);
   }],
 ];
@@ -12360,9 +12455,13 @@ const INVARIANTS = {
     ["the group's holding and pledge say in words that they are the group's, not the family's demat", (t, ctx) => {
       const n = ctx?.polycabDom?.noteOf;
       if (!n) return { notChecked: "the DOM probe did not run" };
+      // The column notes say it ON SCREEN ("group, not this demat"); the card's
+      // sentence is its title's hover since Stage 10cp, read off
+      // `data-polycab-card-sub` — and gone from the face.
       return /group/i.test(n.groupHolding ?? "")
         && /group/i.test(n.groupPledge ?? "") && /not this demat/i.test(n.groupPledge ?? "")
-        && /not a statement about the family[’']s own demat/i.test(t);
+        && /not a statement about the family[’']s own demat/i.test(ctx?.polycabDom?.cardSub ?? "")
+        && !/not a statement about the family[’']s own demat/i.test(t);
     }],
     POLYCAB_SOURCES_CHECK,
   ],
@@ -13304,10 +13403,14 @@ const INVARIANTS = {
        * `uppercase`, and which once failed a check reading "Listed NAV" against
        * a page rendering "LISTED NAV".
        */
-      const note = a.note.toLowerCase();
+      // The name is on the face and the two sentences are its hover since
+      // Stage 10cp, so each is read where it is — and the face alone must not
+      // carry them, or the note is the paragraph back.
+      const tips = (a.noteTips ?? []).join(" \n ").toLowerCase();
       return a.named.includes(g.name)
-        && note.includes(g.why.toLowerCase())
-        && note.includes(g.ask.toLowerCase());
+        && tips.includes(g.why.toLowerCase())
+        && tips.includes(g.ask.toLowerCase())
+        && !a.note.toLowerCase().includes(g.ask.toLowerCase());
     }],
     ["…and it names no figure, because the review is not a source", (t, ctx) => {
       const a = ctx.absentName?.byName;
@@ -13319,7 +13422,8 @@ const INVARIANTS = {
        * this holding is worth ₹15.46 Cr and that figure may never sit beside
        * figures every one of which traces to the institution that struck it.
        */
-      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note)
+      const all = `${a.note} \n ${(a.noteTips ?? []).join(" \n ")}`;
+      return !/₹/.test(all) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(all)
         && /review/i.test(a.note);
     }],
     ["…and the family's own spelling of the name finds it too", (t, ctx) => {
@@ -14372,7 +14476,8 @@ const INVARIANTS = {
      * takes ANY noun between them, whatever the next round calls the set.
      */
     ["...and asserts neither an empty book nor a failed feed while it is in flight",
-      (t) => !/\bNo\b[^\n]{0,80}?carries a day change/i.test(t)
+      // "…move today" is the failed-feed headline since Stage 10cp.
+      (t) => !/\bNo\b[^\n]{0,80}?(?:carries a day change|move today)/i.test(t)
         && !/did not respond/i.test(t)],
 
   ],
@@ -14513,14 +14618,17 @@ const INVARIANTS = {
       if (a.rows.some((x) => x.kind !== "ask") || a.empty !== true || !a.note) return false;
       // Case-folded: `innerText` returns the TRANSFORMED text, and the note
       // capitalises each sentence the report prints in lower case.
-      const note = a.note.toLowerCase();
-      return a.named.includes(g.name) && note.includes(g.why.toLowerCase()) && note.includes(g.ask.toLowerCase());
+      // Why and what would close it are the name's hover since Stage 10cp.
+      const tips = (a.noteTips ?? []).join(" \n ").toLowerCase();
+      return a.named.includes(g.name) && tips.includes(g.why.toLowerCase()) && tips.includes(g.ask.toLowerCase())
+        && !a.note.toLowerCase().includes(g.ask.toLowerCase());
     }],
     ["…and the note names no figure, because the review is not a source", () => {
       if (!REVIEW_GAP_BOOK) return { notChecked: "no review gap to search for" };
       const a = SEARCH?.results?.gap;
       if (!a?.note) return false;
-      return !/₹/.test(a.note) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(a.note) && /review/i.test(a.note);
+      const all = `${a.note} \n ${(a.noteTips ?? []).join(" \n ")}`;
+      return !/₹/.test(all) && !/\b\d[\d,]*\.?\d*\s*(Cr|Lakh)\b/.test(all) && /review/i.test(a.note);
     }],
     ["…and the family's own spelling of the name finds it too", () => {
       const g = REVIEW_GAP_BOOK;
@@ -14691,6 +14799,19 @@ const INVARIANTS = {
       () => {
         if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
         return CACHED.body === false && CACHED.saysLoading === false;
+      }],
+    /**
+     * …AND IT SAYS THE FIGURES ARE THE LAST COMPLETE ROUND, IN THE HOVER.
+     * This walk holds the live round open over a complete snapshot, which is
+     * exactly when the line renders — so its absence here is a finding. Two
+     * words on the face since Stage 10cp; what they mean for the figures below
+     * is the line's hover, and required there.
+     */
+    ["...while the live round is in flight, a short line says so, and its hover says the figures are the last complete round",
+      () => {
+        if (!CACHED) return { notChecked: "the cached-reload walk did not run on this pass" };
+        const r = CACHED.refreshing;
+        return !!r && r.text === "Refreshing prices" && /last complete round of prices/i.test(r.title);
       }],
   ],
 
@@ -14948,6 +15069,13 @@ const INVARIANTS = {
      * period label rendered alone is the one figure on this card a reader could
      * not check, so the count of windows must match the count of periods.
      */
+    // WHOSE RETURN IT IS: the scheme's, never this family's — on the face in a
+    // few words since Stage 10cp, and why the two differ in its hover.
+    ["the scheme's returns say they are the scheme's and not this family's, and why in the hover", (t, ctx) => {
+      if (!/SCHEME RETURNS/i.test(t)) return notChecked("this scheme carries no returns in the store on this run");
+      return /the scheme’s, not this family’s/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /Not this family's return, which depends on when they bought/i.test(x));
+    }],
     ["every return period prints the window it really covers", (t) => {
       const i = t.search(/SCHEME RETURNS/i);
       if (i < 0) return notChecked("this scheme carries no returns in the store on this run");
@@ -15065,7 +15193,7 @@ const INVARIANTS = {
       return a.sameSize && a.nextCell && !a.sameRow && a.lastCell;
     }],
   ],
-  // THE ALERTS PANEL (Stage 10cp). `CIO_SHARED` and the tab control ride on all
+  // THE ALERTS PANEL (Stage 10cq). `CIO_SHARED` and the tab control ride on all
   // four, because the strip, the header and the control are on every panel and
   // a seeded store must not move any of them.
   "cio-alerts": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALERTS_SEEDED, ...researchChecks("ok")],
@@ -15278,8 +15406,9 @@ const INVARIANTS = {
      */
     /* THE PROVENANCE LINE WENT WITH THE LEAD PARAGRAPH, and it is not lost:
        Morning CIO's allocation card — the surface this page is opened FROM —
-       states it on the family's two axes ("Grouped by the family's own basket,
-       as their consolidated review states it"), and that is asserted on the
+       states it on the family's two axes ("The family's own baskets", with
+       "as their consolidated review states it" its hover since Stage 10cp),
+       and that is asserted on the
        `cio-alloc-basket` / `cio-alloc-class` routes. A reader reaches these
        rows through that card, so the judgement is named before they arrive.
        Asserted here as an ABSENCE so the removal is recorded rather than the
@@ -16152,11 +16281,20 @@ const INVARIANTS = {
      * is a claim a reader acts on. A card that kept the title and lost the
      * per-account terminal date would pass a title check and mislead.
      */
-    ["the money-weighted derivation says how the rate is struck", (t) =>
-      /find r where/i.test(t) && /\(1 \+ r\)/.test(t)
-      && /its own report date/i.test(t)
-      && /compounded up to a yearly rate/i.test(t)
-      && /not a flow/i.test(t)],
+    // One line per rule since Stage 10cp, each sentence the line's hover —
+    // so both are required: the rule on the face, and what it means in the
+    // hover a reader opens it by.
+    ["the money-weighted derivation says how the rate is struck — each rule on the face, its sentence in the hover",
+      (t, ctx) => {
+        const tips = ctx?.titles ?? [];
+        return /find r where/i.test(t) && /\(1 \+ r\)/.test(t)
+          && /its own report date/i.test(t)
+          && /Under a year: the return over that window, not annualised/i.test(t)
+          && /not a flow/i.test(t)
+          && tips.some((x) => /credit the earlier ones with standing still/i.test(x))
+          && tips.some((x) => /never compounded up to a yearly rate/i.test(x))
+          && tips.some((x) => /Only money the family put in or took out counts/i.test(x));
+      }],
     /**
      * ...OVER THE ACCOUNT COUNT THE PAGE'S OWN TILE REPORTS. The card states how
      * many accounts the rate is struck on, and a number typed into prose is the
@@ -16184,7 +16322,7 @@ const INVARIANTS = {
       return c.tableTop < c.derivationTop;
     }],
     ["...on the same account count its own tile reports", (t) => {
-      const card = Number(/in or out of the\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
+      const card = Number(/dated flows of\s+([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
       const tile = Number(/·\s*([\d,]+)\s+accounts?\b/i.exec(t)?.[1]?.replace(/,/g, "") ?? NaN);
       return Number.isFinite(card) && Number.isFinite(tile) && card > 0 && card === tile;
     }],
@@ -17894,7 +18032,7 @@ const INVARIANTS = {
        * which is what it did on the first sweep after the merge.
        */
       const leftOut = cr(new RegExp(String.raw`Left out by this view\s*\n\s*` + CR, "i").exec(t)?.[1]);
-      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*([^\n]*)/i.exec(t);
       if (!card) return false;
       const parts = [...card[1].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
       if (![nav, covered, leftOut].every(Number.isFinite) || parts.length < 2) return false;
@@ -17930,13 +18068,18 @@ const INVARIANTS = {
     ["the excluded card files the arbitrage funds under Cash, never under Mutual Fund", (t) => {
       const B = CASH_INSTRUCTION_BOOK;
       if (!B) return false;
-      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      const card = /Not a company share\s*\n\s*₹[^\n]*\n\s*([^\n]*)/i.exec(t);
       if (!card) return false;
       const cash = /Cash ₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/.exec(card[1]);
       return !!cash && crU(cash[1], cash[2]) + 0.1 >= B.arbMV / 1e7;
     }],
+    // WHY THE CLASSES ARE LEFT OUT IS THE LIST'S HOVER since Stage 10cp, and
+    // the sentence is gone from its face.
+    ["the excluded card says why in its hover, not on its face", (t, ctx) =>
+      !/excluded rather than folded in/i.test(t) && !/none has a sector of its own/i.test(t)
+      && (ctx?.titles ?? []).some((x) => /^Excluded rather than folded in — a fund holds many companies, so none has a sector of its own/.test(x))],
     ["the excluded card's total ties to the classes it lists", (t) => {
-      const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*excluded rather than folded in —([^\n]*)/i.exec(t);
+      const card = /Not a company share\s*\n\s*₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?\s*\n\s*([^\n]*)/i.exec(t);
       if (!card) return false;
       const total = crU(card[1], card[2]);
       const parts = [...card[3].matchAll(/₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/g)].map((x) => crU(x[1], x[2]));
@@ -18258,7 +18401,13 @@ const INVARIANTS = {
      * figure printed at 22px.
      */
     ["the day-move tile names its own coverage, in rupees and in names",
-      (t) => /on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held,\s*\n?\s*across \d+ of \d+ direct-equity names/.test(t)],
+      // THE FIGURES ON ITS FACE, THE SENTENCE IN ITS HOVER (Stage 10cp): the
+      // face is "₹X of ₹Y held · N of M names", and why the rest are not
+      // counted is the line's own `title`. Both halves are required — a face
+      // that dropped the names, or a hover that stopped naming the scope, fails.
+      (t, ctx) => /₹[\d,.]+\s*(?:Cr|L|K)? of ₹[\d,.]+\s*(?:Cr|L|K)? held\s*·\s*\d+ of \d+ names/.test(t)
+        && (ctx?.titles ?? []).some((x) => /^The move is struck on ₹[\d,.]+\s*(?:Cr|L|K)? of the ₹[\d,.]+\s*(?:Cr|L|K)? held, across \d+ of \d+ direct-equity names — the rest carry no live quote/.test(x))
+        && !/across \d+ of \d+ direct-equity names/.test(t)],
     /**
      * ALL FOUR INDICES, EACH WITH A LEVEL AND A MOVE — the family named these
      * four. An index that resolved but printed no level would satisfy a check
@@ -18304,11 +18453,15 @@ const INVARIANTS = {
      * the bucket this round removed and a footer that quietly dropped them from
      * its own list would hide exactly what changed.
      */
-    ["the card names the buckets it does not cover, with their value", (t) => {
-      if (!/Direct equity only\. Also moved today and not counted here:/.test(t)) return false;
+    ["the card names the buckets it does not cover, with their value", (t, ctx) => {
+      // "Not counted: N <label> ₹X · …" on its face, and whose scope it is —
+      // "Direct equity only" — in its hover (Stage 10cp). The old sentence is
+      // asserted gone, so a rewording that brought it back fails.
+      if (!/Not counted:/.test(t) || /Also moved today and not counted here/.test(t)) return false;
+      if (!(ctx?.titles ?? []).some((x) => /^Direct equity only — these also moved today and are in none of the figures above/.test(x))) return false;
       if (!MOVERS_EXCLUDED) return { notChecked: "the book could not be read" };
       // Each entry is "N <label> ₹X" — a count AND a value, never a bare label.
-      const line = /Also moved today and not counted here:([^\n]*)/.exec(t)?.[1] ?? "";
+      const line = /Not counted:([^\n]*)/.exec(t)?.[1] ?? "";
       const parts = [...line.matchAll(/(\d+)\s+(.+?)\s+₹([\d,.]+)\s*(Cr|L|K)?/g)];
       if (!parts.length) return false;
       // THE SCOPE ITSELF IS NEVER ONE OF THEM — a card listing Direct Equity
@@ -21549,14 +21702,16 @@ const INVARIANTS = {
      */
     ["the Total ties to the account's own statement total", (t) => {
       const foot = new RegExp(String.raw`^Total\b[^\n]*₹([\d,.]+)\s*(Cr|L|K)?\s*100\.0\s?%`, "m").exec(t);
-      const stmt = /₹([\d,.]+)\s*(Cr|L|K)?\s+is\s+this account.s own statement total/i.exec(t);
+      // "Statement total ₹X" since Stage 10cp — the figure on the face, what
+      // it is in the line's hover.
+      const stmt = /Statement total ₹([\d,.]+)\s*(Cr|L|K)?/.exec(t);
       if (!foot || !stmt) return false;
       const [total, printed] = [crU(foot[1], foot[2]), crU(stmt[1], stmt[2])];
       if (![total, printed].every(Number.isFinite)) return false;
       if (Math.abs(total - printed) <= 0.005) return true;
       // On LIVE basis the Total has moved and the statement figure has not. The
       // page must say so; a silent difference is a total that ties to nothing.
-      return /The Total shown is .* because live prices are applied/i.test(t);
+      return /Total at live prices ₹/.test(t);
     }],
     /**
      * AND IT AGREES WITH THE MONITOR ROW THAT LINKS HERE. Two pages printing two
@@ -21704,6 +21859,18 @@ const INVARIANTS = {
   ],
   "mandate-fund": [
     ...MONITOR_IN_FULL,
+    /**
+     * A RETURN UNDER A YEAR SAYS SO ON ITS FACE (Stage 10g(ii)'s guard, kept on
+     * the face through Stage 10cp): four words beside the figure, the sentence
+     * behind them in their hover. A sub-year return read as a rate is the +99%
+     * error, and a hover alone is not read by a reader scanning the figure.
+     */
+    ["a return under a year says so beside the figure — not annualised — and why in its hover", (t, ctx) => {
+      if (!/HPR on what was paid/i.test(t)) return notChecked("this folio's summary prints no holding-period return");
+      if (/XIRR money-weighted/i.test(t) || /no XIRR:/i.test(t)) return notChecked("this folio's return is money-weighted or refused, not under a year");
+      return /HPR on what was paid · under a year, not annualised/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /In under a year, so no annual rate is struck/i.test(x));
+    }],
     ["the address resolved to a fund folio this book carries, not the not-found state",
       (t) => !/Mandate not found/i.test(t) && !/No account "/i.test(t)],
     /**
@@ -21808,6 +21975,16 @@ const INVARIANTS = {
     // to its named absence and the chart never mounts — `SeriesChart` is held up
     // by the build instead, which is why the gate is build AND sweep.
     ["price card resolves or names its absence", (t) => /Price history & returns/i.test(t)],
+    /**
+     * …AND AN ABSENCE NAMES ITS CAUSE IN THE HEADLINE (Stage 10cp). The reason
+     * under an absence is the box's hover now, so the headline itself must say
+     * whether the SERVICE failed or the security has no history. This harness
+     * serves no price feed, so the card must blame the service — "No price
+     * history for this security" over a failed call would teach a reader
+     * something false about the company.
+     */
+    ["with no price feed, the price card blames the service, not the security", (t) =>
+      /The price service (?:did not answer|timed out)/.test(t) && !/No price history for this security/.test(t)],
     ["the retired 'no chart is possible' claim is gone", (t) => !/four-row|no path to plot/i.test(t)],
     /**
      * THE TRADING RANGE CARD IS GONE, AND WHAT IT CARRIED IS NOT. It printed the
@@ -21889,7 +22066,7 @@ const INVARIANTS = {
    */
   "stock-targets": [
     ...stockTabChecks("targets"),
-    /* STRUCK ON THE CARD'S HANDLES since Stage 10cp. The card is "Price
+    /* STRUCK ON THE CARD'S HANDLES since Stage 10cq. The card is "Price
        alerts" now, its Target box says "Target", and fair value's neighbours
        sit under a "More" that is closed on a holding where nothing there is
        set — so the words this claim used to match are not on screen. What it
@@ -21905,7 +22082,7 @@ const INVARIANTS = {
        keeps the plan fields under a "More" that is closed on a holding where
        nothing there is set, and `innerText` does not read inside a closed
        <details> — so a sentence there would pass a page-text match while a
-       reader who opens More reads it (Stage 10cp). Whether the card is drawn
+       reader who opens More reads it (Stage 10cq). Whether the card is drawn
        at all is the claim above's; this one only asks what it says. */
     ["no sentence points at a Portfolio Monitor view that no longer exists",
       (t, ctx) => !/plan view/i.test(t) && !/plan view/i.test(ctx.stockPage?.targets?.text ?? "")],
@@ -21989,6 +22166,16 @@ const INVARIANTS = {
         return !!m && !!MANY_MANDATES && m.count === MANY_MANDATES.count && m.links === 0
           && m.height <= m.lineHeight * 1.6;
       }],
+    // THE COUNT IS THE WHOLE LINE, AND WHERE EACH MANDATE IS LINKED IS ITS
+    // HOVER (Stage 10cp): "each linked from its row on the Position tab" is a
+    // sentence about the page, so it may not be on the face — and a line that
+    // lost it from both places would leave a reader no way to find the links.
+    ["...and where each mandate is linked is the line's hover, not its face",
+      (t, ctx) => {
+        const m = ctx.stockPage?.mandates;
+        return !!m && /^Held through \d+ discretionary mandates$/.test(m.text)
+          && /linked from its own row on the Position tab/i.test(m.title);
+      }],
     ["...and every one of those mandates is linked from its own row",
       (t, ctx) => !!MANY_MANDATES
         && new Set((ctx?.hrefs ?? []).filter((h) => /^\/mandate\/./.test(h))).size === MANY_MANDATES.count],
@@ -22010,8 +22197,12 @@ const INVARIANTS = {
   ],
   "stock-cash-market": [
     ...stockTabChecks("market"),
+    // The headline carries the verdict on its face and the reason is the
+    // absence box's hover since Stage 10cp, so the two halves are read where
+    // each now is — a `title` is not in `innerText`.
     ["a cash line's price tab says there is no market price, and why",
-      (t) => /not applicable to a cash line/i.test(t) && /a balance, not a priced security/i.test(t)],
+      (t, ctx) => /not applicable to a cash line/i.test(t) && /No market price — a cash line is a balance/.test(t)
+        && (ctx.titles ?? []).some((x) => /a balance, not a priced security/i.test(x ?? ""))],
     ["the book carries a cash line held through three or more mandates", () => !!MANY_MANDATES?.cash],
   ],
   // The same route serving a FUND. `/stock/:securityKey` is right to serve every
@@ -22123,18 +22314,23 @@ const INVARIANTS = {
     // statement names has had no NSE symbol looked up, so there is no price
     // history to chart — and an empty chart frame reads as a feed that failed.
     ["a company held only inside funds says once why no price history is drawn — and draws no empty chart instead",
-      (t, ctx) => ctx.heldTable?.research === "funds-only" && /Price history is looked up by/i.test(t)
+      // The line says it on its face; WHY is its hover since Stage 10cp.
+      (t, ctx) => ctx.heldTable?.research === "funds-only"
+        && (ctx?.titles ?? []).some((x) => /Price history is looked up by/i.test(x))
         && /held only inside your funds/i.test(t) && !/No price history for this security/i.test(t)
         && ctx.stockPage?.corporate === 0],
   ],
   "stock-funds-only-research": [
     ...stockTabChecks("research", { fundsOnly: true }),
     ["a company held only inside funds says once why its research is absent, instead of seven empty panels",
-      (t, ctx) => ctx.heldTable?.research === "funds-only" && /Research is looked up by/i.test(t)
-        && /not a feed being down/i.test(t) && (ctx.stockPage?.research ?? []).length === 0],
+      // The line says it on its face; WHY — and that it is not a feed being
+      // down — is its hover since Stage 10cp.
+      (t, ctx) => ctx.heldTable?.research === "funds-only" && /held only inside your funds/i.test(t)
+        && (ctx?.titles ?? []).some((x) => /Research is looked up by/i.test(x) && /not a feed being down/i.test(x))
+        && (ctx.stockPage?.research ?? []).length === 0],
   ],
   /**
-   * ── THE ALERT CARD MUST NOT CONTRADICT THE BADGE ABOVE IT (Stage 10cp) ───
+   * ── THE ALERT CARD MUST NOT CONTRADICT THE BADGE ABOVE IT (Stage 10cq) ───
    *
    * The page says "Held only inside your funds", and the card's reason for
    * having no price read "not held in this book" — two claims about one
@@ -22179,9 +22375,10 @@ const INVARIANTS = {
      */
     ["an AIF renders no look-through table",
       (t, ctx) => !!ctx.stockPage && ctx.stockPage.lookthrough.length === 0 && ctx.stockPage.researchNA === "fund"],
+    // The WHY is the class line's hover since Stage 10cp — one line on the
+    // face says what the holding is, and this is the sentence behind it.
     ["...and says why: an AIF publishes no monthly portfolio disclosure", (t, ctx) =>
-      /publishes no such disclosure/i.test(t)
-      && (ctx?.titles ?? []).some((x) => /Category II or III/i.test(x))],
+      (ctx?.titles ?? []).some((x) => /publishes no such disclosure/i.test(x) && /Category II or III/i.test(x))],
   ],
   /**
    * AN AIF'S PRICE TAB STATES ITS ABSENCE ONCE. No exchange price, no daily NAV,
@@ -22218,8 +22415,16 @@ const INVARIANTS = {
     }],
     // Both rows show and the Total counts the holding once, so the column does
     // NOT add to its own footer — which is only honest because the page says so.
-    ["the rows-vs-total gap is named where a holding is reported twice",
-      (t) => /reported on\s+each of the \d+ statements listed/i.test(t)],
+    // One line of figures since Stage 10cp — the statement count, the rows'
+    // own sum and the Total — and the reason is that line's hover. The count
+    // is held to the account rows drawn, so a line naming a different number
+    // of statements than the table lists fails.
+    ["the rows-vs-total gap is named where a holding is reported twice — its figures on the face, its reason in the hover",
+      (t, ctx) => {
+        const m = /One holding on (\d+) statements · rows ₹[\d,.]+\s*(?:Cr|L|K)? · counted once in the Total, ₹[\d,.]+/i.exec(t);
+        return !!m && Number(m[1]) === ctx?.accountRows
+          && (ctx?.titles ?? []).some((x) => /Both rows are shown as printed, and the Total counts the holding once/i.test(x));
+      }],
     // A holding its statement marks at a TOTAL value has no per-unit price. This
     // headline read "₹0" for exactly that reason (`currentPrice ?? 0`), which is
     // a figure produced by a default over a ₹1.47 Cr position.
@@ -22242,7 +22447,8 @@ const INVARIANTS = {
     // none, and would pass over no input, which is what `golden.mjs` refuses.
     ["every wrapper class the page names has its own attribution row", (t) => {
       const i = t.search(/SECTOR \/ CLASS/i);
-      const named = /Bucketed by class here:\s*([^.]+)\./i.exec(t)?.[1] ?? "";
+      // "Funds by class: …" since Stage 10cp — the line is the classes alone.
+      const named = /Funds by class:\s*([^\n]+)/i.exec(t)?.[1] ?? "";
       const classes = named.split(",").map((x) => x.trim()).filter(Boolean);
       if (i < 0 || classes.length === 0) return false;
       const end = t.indexOf("Total", i);
@@ -22351,11 +22557,13 @@ const INVARIANTS = {
   ],
   "stock-arbitrage-research": [
     ...stockTabChecks("research"),
-    ["an arbitrage fund's own page says it is Cash — an arbitrage fund the family counts as cash", (t, ctx) => {
+    // "Cash — an arbitrage fund" on the face; that the FAMILY counts it as cash
+    // is the line's hover since Stage 10cp, and is required there.
+    ["an arbitrage fund's own page says it is Cash — an arbitrage fund, the family's instruction in its hover", (t, ctx) => {
       const d = ctx?.cashDom;
       if (!d) return { notChecked: "the probe did not run" };
-      return d.stockClass === "Cash" && /arbitrage fund/i.test(d.stockClassText ?? "")
-        && /counts as cash/i.test(d.stockClassText ?? "");
+      return d.stockClass === "Cash" && /is Cash — an arbitrage fund$/i.test(d.stockClassText ?? "")
+        && /family counts an arbitrage or liquid fund as cash/i.test(d.stockClassTitle ?? "");
     }],
     /**
      * …AND DRAWS NO LOOK-THROUGH. Struck on the fund card's own handle rather than
@@ -22381,17 +22589,84 @@ const INVARIANTS = {
     ...stockTabChecks("market"),
     ["an arbitrage fund's price tab draws the scheme's price half and never its holdings", (t, ctx) =>
       !!ctx.stockPage && ctx.stockPage.lookthrough.join() === "nav"],
-    ["...and a scheme the fund store never saw is not said to be named in the store's report", (t) => {
+    ["...and a scheme the fund store never saw is not said to be named in the store's report", (t, ctx) => {
       const key = CASH_INSTRUCTION_BOOK?.largestArb;
       if (!key) return false;
       let idx = null;
       try { idx = JSON.parse(readFileSync(new URL("../public/lookthrough/index.json", import.meta.url), "utf8")); } catch { return false; }
       const unseen = !idx?.schemes?.[key] && !(idx?.unresolved ?? []).some((u) => u.securityKey === key);
       if (!unseen) return { notChecked: "the fund store carries or names this scheme, so its own report applies" };
-      return /has no entry for this holding/i.test(t) && !/FUND-LOOKTHROUGH\.md names every one/.test(t);
+      // The reason is the absence box's hover since Stage 10cp, so it is read
+      // there — and the false claim must be in neither the face nor a hover.
+      const tips = (ctx?.titles ?? []).join(" \n ");
+      return /has no entry for this holding/i.test(tips)
+        && !/FUND-LOOKTHROUGH\.md names every one/.test(t) && !/FUND-LOOKTHROUGH\.md names every one/.test(tips);
+    }],
+  ],
+  /**
+   * ── THE ACCOUNTS WITH NO CAPITAL GAIN STATEMENT ARE ONE CLOSED BAND ───────
+   *
+   * *"If this is missing data this needs to be like a hidden drop down clearly
+   * marked"* (Stage 10bx), applied to the Capital Gains page at Stage 10cp:
+   * forty-four rows each reading "— no capital gain statement issued for this
+   * account in this drop" sat under the seven that carry a figure. They are one
+   * band now, marked, closed on arrival, and every account in it is named one
+   * click in. Every expectation is `CG_BOOK`, read off the generated book, so a
+   * band that dropped an account — or kept a reporting one in it — fails.
+   */
+  "capital-gains": [
+    ["the accounts with no capital gain statement are one band, marked missing data, closed on arrival", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK) return false;
+      if (CG_BOOK.missing === 0) return d.band === null;
+      const n = Number(/no capital gain statement\s*·\s*(\d+)\s+accounts?/i.exec(d.face ?? "")?.[1]);
+      return d.band === CG_BOOK.missing && n === CG_BOOK.missing && /missing data/i.test(d.face ?? "")
+        && d.toggle === "closed" && d.rows.length === 0;
+    }],
+    ["...its hover says why they carry no figure, and that none is counted as zero", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK || CG_BOOK.missing === 0) return { notChecked: "every account in this book publishes a capital gain statement" };
+      return /no capital gain statement/i.test(d.hint ?? "") && /never counted as zero/i.test(d.hint ?? "");
+    }],
+    ["every account with a statement is a row of its own, and none without one is among them", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK) return false;
+      const missing = new Set(CG_BOOK.missingEntities);
+      return d.reported.length === CG_BOOK.reported && d.reported.every((e) => !missing.has(e));
+    }],
+    ["no row reads the old 'no capital gain statement issued' line on its face",
+      (t) => !/no capital gain statement issued for this account/i.test(t)],
+  ],
+  "capital-gains-missing": [
+    ["the band opens by its own chevron, and names every account it holds", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK) return false;
+      if (CG_BOOK.missing === 0) return { notChecked: "every account in this book publishes a capital gain statement" };
+      const drawn = d.rows.map((r) => r.entity).sort();
+      return d.toggle === "open" && drawn.length === CG_BOOK.missing
+        && drawn.every((e, i) => e === CG_BOOK.missingEntities[i]);
+    }],
+    ["...and each named account's dash carries its reason in the hover", (t, ctx) => {
+      const d = ctx?.cgMissing;
+      if (!d) return { notChecked: "the probe did not run" };
+      if (!CG_BOOK || CG_BOOK.missing === 0) return { notChecked: "every account in this book publishes a capital gain statement" };
+      return d.rows.length > 0 && d.rows.every((r) => !!r.reason && CG_BOOK.reasons.includes(r.reason));
     }],
   ],
   performance: [
+    /**
+     * "NOT ANNUALISED" IS A GUARD, AND IT STAYS ON THE FACE (Stage 10cp). The
+     * family asked for every explainer line to go; this is not one. Stage
+     * 10g(ii) refuses to compound a sub-year window onto a year and the CALLER
+     * must say so — a hover would satisfy the letter and lose the reader, and a
+     * +28% read as a yearly rate is exactly the +99% the tile once printed.
+     */
+    ["the money-weighted return says on its face that it is not annualised — the tile and the per-account card",
+      (t) => /to date · not annualised/i.test(t) && /money-weighted return to date, per account · not annualised/i.test(t)],
     /**
      * A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. The demat that
      * sent only a transaction statement now carries its cash-equivalent funds at
@@ -22867,7 +23142,7 @@ for (const theme of THEMES) {
       // minutes to seconds.
       await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
       // GLOW CENTRAL RESEARCH IS STOOD IN FOR ON EVERY WALK, so no walk can post
-      // a level to the family's live list (Stage 10cp). The no-feed alerts walk
+      // a level to the family's live list (Stage 10cq). The no-feed alerts walk
       // gets the not-deployed answer: everything external is down on that walk.
       const researchDown = name === "cio-alerts-nofeed";
       await installResearchMock(page, researchDown ? "down" : "ok");
@@ -22961,7 +23236,13 @@ for (const theme of THEMES) {
           // given on the `cio-loading` invariant: the card's absent-state
           // wording carries the active scope's name, and a probe pinned to one
           // spelling reports "no claim on screen" whether or not one is there.
-          body: /\bNo\b[^\n]{0,80}?carries a day change/i.test(document.body.innerText),
+          body: /\bNo\b[^\n]{0,80}?(?:carries a day change|move today)/i.test(document.body.innerText),
+          // The line that says a newer round is in flight (Stage 10cp): two
+          // words on the face, what that means for the figures in its hover.
+          refreshing: (() => {
+            const e = document.querySelector("[data-movers-refreshing]");
+            return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
+          })(),
         }));
       }
       if (name === "cio-tiles-saved") {
@@ -23047,6 +23328,10 @@ for (const theme of THEMES) {
               // The review-gap note's own node, so the claim is not struck on
               // prose the component is free to reword.
               note: document.querySelector("[data-testid='smart-search-panel'] [data-absent-from-book]")?.innerText ?? null,
+              // …and its hovers: why each name is absent and what would close
+              // it are the name's own `title` since Stage 10cp.
+              noteTips: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-absent-from-book] [title]")]
+                .map((n) => n.getAttribute("title") ?? ""),
               named: [...document.querySelectorAll("[data-testid='smart-search-panel'] [data-review-gap]")]
                 .map((n) => n.getAttribute("data-review-gap")),
             }));
@@ -23624,6 +23909,13 @@ for (const theme of THEMES) {
         const all = page.locator("[data-tree-expand-all]").first();
         if (await all.count()) { await all.click(); await page.waitForTimeout(500); }
       }
+      // THE "NO CAPITAL GAIN STATEMENT" BAND, OPENED BY ITS OWN CHEVRON (Stage
+      // 10cp) — pressing the control rather than asserting a state, so a toggle
+      // wired to nothing leaves the band closed and the rows check fails by name.
+      if (name === "capital-gains-missing") {
+        const t = page.locator("[data-cg-missing-toggle]").first();
+        if (await t.count()) { await t.click(); await page.waitForTimeout(400); }
+      }
       /**
        * ADD, EDIT AND DELETE, IN THAT ORDER, EACH WAITED ON BY WHAT THE STORE
        * ANSWERED. The editor stays open on the last fund so the light-mode
@@ -23889,6 +24181,8 @@ for (const theme of THEMES) {
             // The note's own node, so the claim is not struck on prose the
             // component is free to reword.
             note: el.querySelector("[data-absent-from-book]")?.innerText ?? null,
+            // …and its hovers (Stage 10cp): why and what would close it.
+            noteTips: [...el.querySelectorAll("[data-absent-from-book] [title]")].map((n) => n.getAttribute("title") ?? ""),
             named: [...el.querySelectorAll("[data-review-gap]")].map((n) => n.getAttribute("data-review-gap")),
             options: el.querySelectorAll("[data-option]").length,
           }));
@@ -24780,7 +25074,7 @@ for (const theme of THEMES) {
             // for a note under a table), so the probe reads both.
             feedTitle: sec.querySelector("[data-alert-feed]")?.getAttribute("title") ?? "",
             // WHERE THE LEVELS WENT — the footer's own count of what reached
-            // Glow Central Research, and the one reason any did not (Stage 10cp).
+            // Glow Central Research, and the one reason any did not (Stage 10cq).
             research: (() => {
               const r = sec.querySelector("[data-research-summary]");
               return r ? {
@@ -25020,9 +25314,13 @@ for (const theme of THEMES) {
         })),
         allocCashRule: (() => {
           const e = document.querySelector("[data-testid=alloc-cash-rule]");
-          return e ? { mv: Number(e.getAttribute("data-cash-rule-mv")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+          return e ? { mv: Number(e.getAttribute("data-cash-rule-mv")), text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+            title: e.getAttribute("title") ?? "" } : null;
         })(),
-        allocSource: (document.querySelector("[data-testid=alloc-taxonomy-source]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+        allocSource: (() => {
+          const e = document.querySelector("[data-testid=alloc-taxonomy-source]");
+          return e ? { text: (e.textContent ?? "").replace(/\s+/g, " ").trim(), title: e.getAttribute("title") ?? "" } : null;
+        })(),
         hbDepository: (() => {
           const e = document.querySelector("[data-hb-depository]");
           // The line carries a count and a short clause; the SENTENCE naming why
@@ -25042,6 +25340,9 @@ for (const theme of THEMES) {
         })),
         stockClass: document.querySelector("[data-stock-class]")?.getAttribute("data-stock-class") ?? null,
         stockClassText: (document.querySelector("[data-stock-class]")?.textContent ?? "").replace(/\s+/g, " ").trim() || null,
+        // Why it is Cash is the line's hover since Stage 10cp; `textContent`
+        // cannot see a `title`.
+        stockClassTitle: document.querySelector("[data-stock-class]")?.getAttribute("title") ?? null,
       }));
       /**
        * ── THE AIF DRILL-DOWN'S SECTIONS, READ AS STRUCTURE ───────────────────
@@ -25126,6 +25427,8 @@ for (const theme of THEMES) {
         })(),
         asOf: document.querySelector("[data-testid='navmovers-asof']")?.innerText ?? null,
         coverage: document.querySelector("[data-testid='navmovers-coverage']")?.innerText ?? null,
+        // The sentence behind the coverage line is its HOVER since Stage 10cp.
+        coverageTitle: document.querySelector("[data-testid='navmovers-coverage']")?.getAttribute("title") ?? null,
         // THE BASIS IS THE TILE'S HOVER since the "What this measures" panel was
         // removed at the family's request. Read off the attribute, because a
         // `title` is not in `innerText` — and the panel's own handle is read too,
@@ -26236,6 +26539,10 @@ for (const theme of THEMES) {
        * explanation — a document's own title, an absent state's reason — and it
        * has to be declared at the element, where a reviewer sees it.
        */
+      // The probe collects every leaf block over 60 characters outside a table
+      // and every cell over 120 inside one — Private Market's own, stricter
+      // bounds (`PM_NO_PROSE`) — and the route-wide check below applies the
+      // looser `PROSE_LINE_MAX` / `PROSE_CELL_MAX` to the same lists.
       const prose = FAST ? null : await page.evaluate(() => {
         const main = document.querySelector("main");
         if (!main) return null;
@@ -26248,8 +26555,24 @@ for (const theme of THEMES) {
         const cells = [];
         for (const el of main.querySelectorAll("*")) {
           if (!BLOCK.has(el.tagName) || !visible(el) || el.closest("[data-prose-ok]")) continue;
+          // An upstream document's own table (`data-table-static`) prints the
+          // source's words, which are its content and not this app's notes.
+          if (el.closest("table[data-table-static]")) continue;
           if ([...el.querySelectorAll("*")].some((d) => BLOCK.has(d.tagName))) continue;
-          const text = clean(el);
+          /**
+           * A FLEX OR GRID ROW OF ITEMS IS NOT ONE LINE OF TEXT (Stage 10cp). An
+           * entity picker, a legend, a strip of chips or of counts lays out
+           * each child as its own item, and joined they read as a 150-character
+           * "line" nobody wrote. So such a row is measured ITEM BY ITEM — each
+           * child element, and each bare text run between them — and a sentence
+           * inside one of its items is still measured whole.
+           */
+          const disp = getComputedStyle(el).display;
+          const strip = /flex|grid/.test(disp) && el.children.length >= 2;
+          const units = strip
+            ? [...el.childNodes].map((n) => (n.nodeType === 3 ? n.textContent : n.nodeType === 1 && visible(n) ? n.innerText : ""))
+                .map((x) => (x ?? "").replace(/\s+/g, " ").trim()).filter(Boolean)
+            : [clean(el)];
           /**
            * TWO BOUNDS, BECAUSE A CELL AND A PARAGRAPH ARE DIFFERENT THINGS. A
            * fund's own name runs to 70-odd characters and is not prose; a
@@ -26257,8 +26580,10 @@ for (const theme of THEMES) {
            * longer than a tile's one line, so 60 is well clear of every figure
            * and label and well under the shortest removed footnote.
            */
-          if (el.closest("table")) { if (text.length > 120) cells.push(text.slice(0, 160)); }
-          else if (text.length > 60) blocks.push(text.slice(0, 160));
+          for (const text of units) {
+            if (el.closest("table")) { if (text.length > 120) cells.push(text.slice(0, 160)); }
+            else if (text.length > 60) blocks.push(text.slice(0, 160));
+          }
         }
         return {
           subtitles: [...main.querySelectorAll("[data-card-subtitle]")].filter(visible).map(clean),
@@ -26277,6 +26602,23 @@ for (const theme of THEMES) {
        * words. Read in the page off the computed style rather than off the
        * class name, which says nothing about what was painted.
        */
+      // THE CAPITAL GAINS "MISSING DATA" BAND (Stage 10cp): its count, its face,
+      // its hover, whether it is open, and every row it and the table draw.
+      const cgMissing = FAST ? null : await page.evaluate(() => {
+        const band = document.querySelector("main [data-cg-missing]");
+        const toggle = document.querySelector("main [data-cg-missing-toggle]");
+        return {
+          band: band ? Number(band.getAttribute("data-cg-missing")) : null,
+          face: band ? (band.innerText ?? "").replace(/\s+/g, " ").trim() : null,
+          hint: band?.querySelector("td")?.getAttribute("title") ?? null,
+          toggle: toggle?.getAttribute("data-cg-missing-toggle") ?? null,
+          rows: [...document.querySelectorAll("main [data-cg-missing-row]")].map((tr) => ({
+            entity: tr.getAttribute("data-cg-missing-row"),
+            reason: tr.querySelector("[title]")?.getAttribute("title") ?? null,
+          })),
+          reported: [...document.querySelectorAll("main [data-cg-account]")].map((tr) => tr.getAttribute("data-cg-account")),
+        };
+      });
       const statHints = FAST ? null : await page.evaluate(() =>
         [...document.querySelectorAll("main [data-stat-hint]")].map((el) => {
           const tile = el.closest(".card");
@@ -26493,9 +26835,11 @@ for (const theme of THEMES) {
             links: mandates.querySelectorAll('a[href^="/mandate/"]').length,
             height: mandates.getBoundingClientRect().height,
             lineHeight: parseFloat(getComputedStyle(mandates).lineHeight) || 18,
+            text: mandates.innerText.replace(/\s+/g, " ").trim(),
+            title: mandates.getAttribute("title") ?? "",
           } : null,
           sector: document.querySelector("[data-stock-sector]")?.getAttribute("data-stock-sector") ?? null,
-          // THE FAMILY'S OWN LEVELS (Stage 10cp): the price alerts card on My
+          // THE FAMILY'S OWN LEVELS (Stage 10cq): the price alerts card on My
           // targets, read by its handles. Its title is "Price alerts", and a
           // closed "More" keeps fair value's neighbours out of `innerText`, so
           // no text match can say what the card holds.
@@ -26693,7 +27037,8 @@ for (const theme of THEMES) {
           },
           sources: txt("main [data-polycab-sources]"),
           shareActionsText: txt("main [data-polycab-share-actions]"),
-          cardSub: txt("main [data-polycab-card-sub]"),
+          // The sentence is the card title's HOVER since Stage 10cp.
+          cardSub: document.querySelector("main [data-polycab-card-sub]")?.getAttribute("title") ?? null,
           docScroll: de.scrollHeight - de.clientHeight,
           mainScroll: m ? m.scrollHeight - m.clientHeight : 0,
         };
@@ -28043,6 +28388,44 @@ for (const theme of THEMES) {
         for (const f of foldsOnArrival ?? []) {
           if (f.open) invariants.push(`the "${f.id}" fold is closed on arrival — a fold that opens itself is the paragraph back`);
         }
+        // ── NO EXPLAINER LINES, ON EVERY ROUTE (Stage 10cp) ─────────────────
+        //
+        //   *"We have such random one-liners, two-liners, and footnotes
+        //    everywhere across the product. Please go hunt and remove all of
+        //    this … The customer is literally looking at the table and seeing
+        //    the values inside it."*
+        //
+        // STRUCK ON STRUCTURE, NEVER ON WORDING — a rewording that keeps a
+        // paragraph is exactly how one comes back. `Card` and `PageHeader` no
+        // longer draw a subtitle and `StatTile` no longer draws a hint, so any
+        // of their handles is the line back; and no visible text outside a
+        // table runs past one short line (`PROSE_LINE_MAX`), nor a cell inside
+        // one past a long name (`PROSE_CELL_MAX`). A line a reader must SEE — a
+        // tax caveat, a provenance, a measured zero's reason, a list that IS
+        // the content — declares `data-prose-ok` with its reason, so each
+        // exemption is on the page it excuses rather than in this file.
+        if (prose) {
+          if (prose.subtitles.length) {
+            invariants.push(`no card carries a line under its title — ${prose.subtitles.length} do: ${prose.subtitles[0].slice(0, 90)}…`);
+          }
+          if ((statHints ?? []).length) {
+            invariants.push(`no tile carries a line under its figure's own — ${statHints.length} do: ${statHints[0].text.slice(0, 90)}…`);
+          }
+          const longBlocks = prose.blocks.filter((b) => b.length > PROSE_LINE_MAX && proseWords(b) >= PROSE_WORDS);
+          if (longBlocks.length) {
+            invariants.push(`no explainer line outside a table — ${longBlocks.length} sentence(s) run past ${PROSE_LINE_MAX} characters, e.g. ${longBlocks[0].slice(0, 110)}…`);
+          }
+          const longCells = prose.cells.filter((c) => c.length > PROSE_CELL_MAX && proseWords(c) >= PROSE_WORDS);
+          // `PROSE_DUMP=1` prints every flagged line rather than the first, for
+          // a pass that fixes them all at once.
+          if (process.env.PROSE_DUMP) {
+            for (const x of longBlocks) console.log(`    PROSE line  [${name}] ${x}`);
+            for (const x of longCells) console.log(`    PROSE cell  [${name}] ${x}`);
+          }
+          if (longCells.length) {
+            invariants.push(`no explainer line inside a table — ${longCells.length} cell(s) run past ${PROSE_CELL_MAX} characters as a sentence, e.g. ${longCells[0].slice(0, 110)}…`);
+          }
+        }
       }
       // THE FUND NOTICE NEVER SAYS "SHOWN ABOVE" UNCONDITIONALLY (Stage 10cg). On
       // a scheme that resolves no disclosure (Liquid BeES) or discloses no
@@ -28094,7 +28477,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS] }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS] }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
