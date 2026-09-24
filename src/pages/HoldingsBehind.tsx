@@ -1123,7 +1123,9 @@ export function HoldingsBehind() {
                                   count under a column of percentages, which is the
                                   caption-does-not-describe-its-figure failure one
                                   row down. The quantity is the Value cell's hover. */}
-                              <td className="px-4 py-1.5 text-right mono text-slate-500">{weight(x.marketValue) ?? DASH}</td>
+                              <td className="px-4 py-1.5 text-right mono text-slate-500">
+                                {weight(x.marketValue) ?? <AbsentCell reason="This set is worth nothing, so a share of it cannot be struck — a 0.0% here would read as a measured weight." />}
+                              </td>
                               <td className="px-4 py-1.5 text-right mono text-slate-500">
                                 {g.capital
                                   ? <AbsentCell reason="This mandate enters Invested at the capital paid into it, and a mandate's capital is not divided among its shares — so a single share has no part of it to show." />

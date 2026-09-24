@@ -16318,6 +16318,42 @@ const NAV_RECON = [
 ];
 
 /**
+ * THE NAV CARD'S BASIS HOVER, CLAIM BY CLAIM (MNT-24, MNT-25). The statement
+ * book is `glowData.ts`'s own, deduped here, and the current value is the live
+ * book `COSTED_BOOK` already carries — never the component's own figure, which
+ * is the thing under test.
+ */
+const NAV_BASIS = [
+  ["the NAV card's share of the book is struck on the statement book, with the current value named apart (MNT-25)", (t, ctx) => {
+    const head = navBasis(ctx);
+    if (head == null) return navBasisMissing(ctx);
+    if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
+    const m = /accounts, ₹[\d,.]+\s*(?:Cr|L|K)? of the (₹[\d,.]+\s*(?:Cr|L|K)?) the statements value( \(the current value of holdings, (₹[\d,.]+\s*(?:Cr|L|K)?), is on today's prices\))?/.exec(head);
+    if (!m) return false;
+    const stmt = money2cr(m[1]);
+    const book = NAV_RECON_BOOK.once / 1e7, live = COSTED_BOOK.totalValue / 1e7;
+    if (!(Math.abs(stmt - book) <= compactTieCr(book))) return false;
+    // Load-bearing only where the two books differ, which they do on this one
+    // (the published NAVs and the depository's cash funds): a card struck on
+    // the live book prints the live figure where the statement one belongs.
+    if (Math.abs(live - book) <= 2 * compactTieCr(book)) {
+      return m[2] ? false : notChecked("the statement and live books agree on this run, so the two bases cannot be told apart");
+    }
+    return !!m[2] && Math.abs(money2cr(m[3]) - live) <= compactTieCr(live);
+  }],
+  ["the NAV card's panel steps hold each account at its latest mark, never 'valued at both of its ends' (MNT-24)", (t, ctx) => {
+    if (!NAV_SERIES_BOOK) return notChecked("the book's NAV series could not be read on this run");
+    if (NAV_SERIES_BOOK.panelFirst >= NAV_SERIES_BOOK.panelLast) {
+      return notChecked("this book's panel does not grow inside the series");
+    }
+    const why = (ctx?.titles ?? []).find((x) => /The panel grows from/i.test(x));
+    if (!why) return false;
+    return !/valued at both of its ends/i.test(why)
+      && /measured over the accounts in the panel at both of its ends — each held at its most recent mark on or before that date, so a step in which none of them published a new statement is flat/.test(why);
+  }],
+];
+
+/**
  * EACH RANGE SAYS WHAT IT DRAWS (MNT-13): a dated range starts its length
  * before the book's last statement date and runs to the index's own latest
  * close. The dates are re-derived here from `BOOK_NAV_HISTORY` and the
@@ -22179,7 +22215,7 @@ const INVARIANTS = {
   // surface more than equity, and state the listed/private split.
   cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
   "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN, ...SIDE_HOVER_CHECKS],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_RANGE_HOVERS],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-tiles-dense": [
     /**
@@ -23120,6 +23156,16 @@ const INVARIANTS = {
       const c = drilldownCounts(t);
       const said = Number(/The (\d+) largest names/i.exec(t)?.[1] ?? NaN);
       return c != null && Number.isFinite(said) && c.names === said;
+    }],
+    /**
+     * ...TO THE DECIMAL BOTH PRINT (DL-17). The card printed 61% over a page
+     * printing 60.5%; it prints one decimal now, and the two must be one figure.
+     */
+    ["its share of the book is the Top-10 figure, to the decimal both print (DL-17)", (t, ctx) => {
+      const pct = CIO_FIGURES.get("top10Pct"), sh = ctx?.drilldown?.share;
+      if (!Number.isFinite(pct) || !sh) return false;
+      const m = /^([\d.]+)% of the/.exec(sh.text);
+      return !!m && m[1].includes(".") && Number(m[1]) === pct;
     }],
   ],
   /**
@@ -26085,9 +26131,13 @@ const INVARIANTS = {
         // The SUBJECT of that sentence is the scope's own — a sentence reading
         // "Stocks and ETFs" over a set that no longer holds the ETFs would be
         // the caption-that-widens failure this card has already paid for.
-        const m = /Direct equity is\s*([+-]\d+\.\d+)%\s*against the\s*\n?\s*Nifty 500 today/.exec(t)
-          ?? /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
-        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+        // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20). The sign may be
+        // a real U+2212 minus, which `[+-]` alone does not match; and a gap
+        // printed as "%" — which reads as a return — fails rather than passing.
+        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the\s*\n?\s*Nifty 500 today/.exec(t);
+        if (!m) return false;
+        const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
+        return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
       }],
     /**
      * THE MOVERS SET IS DIRECT EQUITY, CHECKED ON A COUNT RATHER THAN ON NAMES.
@@ -26220,8 +26270,13 @@ const INVARIANTS = {
       (t, ctx) => moversGainersAreDirectEquity(ctx?.cioLayout?.text)],
     ["…and the day's move is still the fixture's exact +10.00%, 11.00 points over the Nifty 500",
       (t) => {
-        const m = /Direct equity is\s*([+-]\d+\.\d+)%/.exec(t);
-        return !!m && Math.abs(Number(m[1]) - 11) < 0.03;
+        // A GAP BETWEEN TWO PERCENTAGES IS IN POINTS (MNT-20), as on `cio-live`:
+        // the same sentence, so the same reading — a real U+2212 minus allowed,
+        // and a gap printed as "%", which reads as a return, a failure.
+        const m = /Direct equity is\s*([+−-]?)(\d+\.\d+)\s*pts\s*against the/.exec(t);
+        if (!m) return false;
+        const v = (m[1] === "−" || m[1] === "-" ? -1 : 1) * Number(m[2]);
+        return Math.abs(v - 11) < 0.03 && !/Direct equity is\s*[+−-]?\d+\.\d+%/.test(t);
       }],
   ],
   "cio-nav-live": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...CIO_LIVE_NAV, ...NAV_BENCH, ...NAV_BENCH_LIVE],
@@ -31296,8 +31351,8 @@ const INVARIANTS = {
   performance: [
     // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
     // to the statement book and the current value step by step, as on `cio-nav`,
-    // and its range hovers say the same things there.
-    ...NAV_RECON, ...NAV_RANGE_HOVERS,
+    // and its basis hover and range hovers say the same things there.
+    ...NAV_RECON, ...NAV_BASIS, ...NAV_RANGE_HOVERS,
     // XA-12: the basis pill reads STATEMENT over a Current Value tile that
     // carries AMFI's published NAV on every fund it prices.
     ...xaNavBasisChecks(),
@@ -37678,7 +37733,9 @@ for (const theme of THEMES) {
         // the figure a reader clicked rather than to a literal written here.
         const num = (label, re) => { const v = Number(re.exec(text)?.[1] ?? NaN); if (Number.isFinite(v)) CIO_FIGURES.set(label, v); };
         num("crossHeld", /Cross-held\s*\n?\s*([\d,]+)/i);
-        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+)%/i);
+        // ONE DECIMAL NOW (DL-17): the tile printed 61% over a page printing
+        // 60.5%. Captured to the decimal so the drill-down is held to it.
+        num("top10Pct", /Top-10 conc\.?\s*\n?\s*(\d+(?:\.\d+)?)%/i);
         const wl = /Winners\s*\/\s*losers\s*\n?\s*([\d,]+)\s*\/\s*([\d,]+)/i.exec(text);
         if (wl) { CIO_FIGURES.set("winners", cr(wl[1])); CIO_FIGURES.set("losers", cr(wl[2])); }
         grab("listed", new RegExp(String.raw`^Listed (₹[\d,.]+\s*(?:Cr|L|K)?)`, "im"));

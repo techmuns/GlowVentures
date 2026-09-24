@@ -35,7 +35,7 @@ const ALLOC_COLS = ["section", "invested", "current", "return", "weight"] as con
 import { useTableView, sortRows } from "@/lib/tableView";
 import { fmtPct, fmtCurrency, changeColor, fmtFyPeriod, fmtNum } from "@/lib/format";
 import { type XirrResult, fundXirr, startupXirr } from "@/lib/bucketXirr";
-import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } from "@/lib/fifo";
+import { fifoTotals, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
 import { countedOnceNote, commitmentTotals } from "@/lib/privateMarket";
@@ -1016,6 +1016,23 @@ export function MorningCIO() {
   const sideShare = (v: number) => (m.totalValue > 0 ? ` — ${((v / m.totalValue) * 100).toFixed(1)}% of the book` : "");
   const cashBucket = m.buckets.find((b) => b.key === "Cash") ?? null;
   /**
+   * WHY INVESTED IS NOT THE COST OF WHAT IS HELD, IN THIS TABLE'S OWN TERMS
+   * (DL-18). `investedBasisNote` is worded for the Portfolio Monitor, which
+   * carries Unrealised and Realised columns — "Unrealised P&L is struck on
+   * that", "Invested + Unrealised + Realised comes to…" — and this table and
+   * these tiles carry neither, so a reader was pointed at columns that are not
+   * here. Same three figures, off the same FIFO totals, without them.
+   */
+  const capitalNote = (f: FifoTotals | null) => {
+    if (!f || !f.wholeMandates.length) return "";
+    const n = f.wholeMandates.length;
+    return [
+      `${n === 1 ? "One whole PMS mandate enters" : `${n} whole PMS mandates enter`} at the capital paid in, ${money(f.wholeContributed)} — what ${n === 1 ? "its" : "their"} return is divided by`,
+      `the cost of the shares ${n === 1 ? "it holds" : "they hold"} now is ${money(f.wholeCostHeld)}`,
+      f.wholeWithdrawn > 0 ? `${money(f.wholeWithdrawn)} has been withdrawn from ${n === 1 ? "it" : "them"} since inception` : "",
+    ].filter(Boolean).join(" · ");
+  };
+  /**
    * WHAT THE TWO COUNTS COUNT, IN THEIR OWN UNITS (CK-C8). The Positions hover
    * called 358 "one row per statement line" — it is the CONSOLIDATED count,
    * each holding two statements both report once — and both hovers promised
@@ -1124,7 +1141,7 @@ export function MorningCIO() {
     {
       id: "invested", label: "Capital invested", icon: <Wallet className="h-4 w-4" />,
       href: drilldownHref("book", undefined, "costed"),
-      hrefTitle: `Open the holdings whose statement reports a cost — the set this figure is summed over — on the Current Value of Holdings page. ${fmtNum(m.noCostCount)} holding${m.noCostCount === 1 ? "" : "s"} report none and sit outside it, a toggle away.`,
+      hrefTitle: `Open the holdings whose statement reports a cost — the set this figure is summed over — on the Current Value of Holdings page. ${fmtNum(m.noCostCount)} holding${m.noCostCount === 1 ? "" : "s"} report none and sit outside it, a toggle away.${(() => { const note = capitalNote(m.bookWhole); return note ? ` ${note}.` : ""; })()}`,
       value: m.totalInvested == null ? <AbsentValue /> : fmtFromBase(m.totalInvested, { compact: true }),
       sub: m.totalInvested == null ? absentWhy("no statement in this book reports a cost basis") : undefined,
     },
@@ -1171,7 +1188,7 @@ export function MorningCIO() {
       id: "top-10", label: `Top-${TOP_NAMES} concentration`, icon: <PieChart className="h-4 w-4" />,
       href: drilldownHref("top-names"),
       hrefTitle: `Open the ${TOP_NAMES} largest names and the accounts holding them — their share of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings.`,
-      value: m.top10Pct == null ? <AbsentValue /> : `${m.top10Pct.toFixed(0)}%`,
+      value: m.top10Pct == null ? <AbsentValue /> : `${m.top10Pct.toFixed(1)}%`,
       sub: m.top10Pct == null ? absentWhy("the book carries no holding to rank") : undefined,
     },
     {
@@ -1620,7 +1637,7 @@ export function MorningCIO() {
                         <td className="px-2 py-2.5 text-right mono text-slate-400 whitespace-nowrap"
                           title={[
                             b.invested != null && b.withoutCost > 0 ? investedCoverage(b) : "",
-                            (b.investedFifo && investedBasisNote(b.investedFifo, (n) => money(n))) || "",
+                            (b.investedFifo && capitalNote(b.investedFifo)) || "",
                           ].filter(Boolean).join(" · ") || undefined}
                           data-invested-covers={b.invested != null && b.withoutCost > 0 ? `${b.count - b.withoutCost}/${b.count}` : undefined}
                           data-invested-capital={b.investedFifo?.wholeMandates.length ? b.invested ?? undefined : undefined}>
@@ -1648,7 +1665,7 @@ export function MorningCIO() {
                       invested: <td key="invested" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-300 whitespace-nowrap"
                         title={[
                           `Invested covers ${fmtNum(m.p.length - m.noCostCount)} of the ${fmtNum(m.p.length)} holdings — ${fmtNum(m.noCostCount)} report no cost and are in Current only.`,
-                          investedBasisNote(m.bookWhole, (n) => money(n)),
+                          capitalNote(m.bookWhole),
                         ].filter(Boolean).join(" · ")}
                         data-invested-capital={m.bookWhole.wholeMandates.length ? m.totalInvested ?? undefined : undefined}>{money(m.totalInvested)}</td>,
                       current: <td key="current" className="border-t-2 border-ink-600 px-2 py-2.5 text-right mono font-semibold text-slate-100 whitespace-nowrap">{money(m.totalValue)}</td>,
@@ -1823,7 +1840,7 @@ export function MorningCIO() {
                 <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title={`${POSITIONS_WHAT}${m.smallDropped.count > 0 ? ` It leaves out ${m.smallDropped.count} holding${m.smallDropped.count === 1 ? "" : "s"} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, ${fmtFromBase(m.smallDropped.value)} in total, dropped automatically at the family's instruction.` : ""}`}>Positions</ConcLink><span className="mono text-slate-100">{fmtNum(m.p.length)}</span></div>
                 <div className="flex items-center justify-between py-2"><ConcLink to={drilldownHref("book")} title={NAMES_WHAT}>Distinct names</ConcLink><span className="mono text-slate-100">{fmtNum(m.distinctNames)}</span></div>
                 <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("cross-held")} title="Open the securities two or more entities each hold. This is NOT the duplicate policy: a cross-held name is two members each genuinely owning some of it, counted once per member; a duplicate is one holding that two statements both report, and the consolidated set has already collapsed those.">Cross-held</ConcLink><span className="mono text-slate-100" title="Securities held by two or more entities">{fmtNum(m.crossHeld)}</span></div>
-                <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them — their share of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings.`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(0)}%`}</span></div>
+                <div className="flex items-center justify-between border-t border-ink-700/60 py-2"><ConcLink to={drilldownHref("top-names")} title={`Open the ${TOP_NAMES} largest names and the accounts holding them — their share of the ${fmtFromBase(m.totalValue, { compact: true })} current value of holdings.`}>Top-10 conc.</ConcLink><span className="mono text-slate-100">{m.top10Pct == null ? DASH : `${m.top10Pct.toFixed(1)}%`}</span></div>
                 <div className="col-span-2 flex items-center justify-between border-t border-ink-700/60 py-2">
                   {/* ONE LINK PER SIDE, AND THE LABELS IN THE SAME ORDER AS
                       THE FIGURES. Each opens the book's own drill-down with
