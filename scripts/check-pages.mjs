@@ -2677,34 +2677,70 @@ const NAV_MOVERS_BOOK = (() => {
     const scope = ded.filter((p) => ["ETF", "Mutual Fund"].includes(p.assetClass)
       && acc.get(p.accountId)?.engagement !== "PMS"
       && !cashEq.has(p.securityKey));
+    /**
+     * AMFI'S DAILY FILE FIRST, THE LOOK-THROUGH STORE ONLY WHERE IT HAS NONE
+     * (B-02). The card read the look-through store's NAVs (9 Sep) while every
+     * other surface prices the same schemes on AMFI's file (22 Sep), so a
+     * scheme showed two NAVs and, for Helios, a day's move of the opposite sign
+     * one page apart. `BOOK_FUND_NAVS` is read as committed DATA and the
+     * precedence re-expressed here rather than imported from `navMovers.ts`.
+     */
+    const amfi = (() => {
+      try {
+        const f = readFileSync(new URL("../src/data/fundNavs.ts", import.meta.url), "utf8");
+        const i = f.indexOf("export const BOOK_FUND_NAVS"), a = f.indexOf("= [", i), b = f.indexOf("\n];", a);
+        if (i < 0 || a < 0 || b < 0) return null;
+        return new Map(JSON.parse(f.slice(a + 2, b + 2)).map((e) => [e.securityKey, e]));
+      } catch { return null; }
+    })();
+    if (!amfi) return null;
     const bySchemecode = new Map();
     let skipped = 0, skippedValue = 0;
     for (const p of scope) {
-      const m = idx.schemes[p.securityKey];
-      const nav = m?.nav;
-      if (!m || nav?.value == null || nav?.prev == null || nav?.changePct == null) {
+      const a = amfi.get(p.securityKey);
+      const m = a ? null : idx.schemes[p.securityKey];
+      const rec = a
+        ? { id: `amfi:${a.schemecode}`, nav: a.nav, date: a.date, prev: a.prev, prevDate: a.prevDate, pct: a.changePct }
+        : m ? { id: `lookthrough:${m.schemecode}`, nav: m.nav?.value, date: m.nav?.date, prev: m.nav?.prev,
+                prevDate: m.nav?.prevDate, pct: m.nav?.changePct } : null;
+      if (!rec || rec.nav == null || rec.date == null || rec.prev == null || rec.prevDate == null || rec.pct == null) {
         skipped++; skippedValue += Number(p.marketValue) || 0; continue;
       }
-      const e = bySchemecode.get(m.schemecode) ?? { value: 0, pct: nav.changePct, date: nav.date };
+      const e = bySchemecode.get(rec.id) ?? { value: 0, qty: 0, pct: rec.pct, date: rec.date, nav: rec.nav,
+        code: rec.id.split(":")[1], source: rec.id.split(":")[0] };
       e.value += Number(p.marketValue) || 0;
-      bySchemecode.set(m.schemecode, e);
+      e.qty += Number(p.quantity) || 0;
+      bySchemecode.set(rec.id, e);
     }
     const rows = [...bySchemecode.values()];
-    const coveredValue = rows.reduce((t, r) => t + r.value, 0);
-    const move = rows.reduce((t, r) => t + (r.value * r.pct) / 100, 0);
     const dates = [...new Set(rows.map((r) => r.date))].sort().reverse();
+    // THE DAY'S FIGURE IS ONE DAY'S MOVE (MNT-11): a scheme last published on
+    // an earlier day is listed with its own date and kept OUT of the tile's
+    // aggregate, which would otherwise add two different days together.
+    const day = rows.filter((r) => r.date === dates[0]);
+    const coveredValue = day.reduce((t, r) => t + r.value, 0);
+    const move = day.reduce((t, r) => t + (r.value * r.pct) / 100, 0);
     return {
       schemes: rows.length,
       names: new Set(scope.map((p) => p.securityKey)).size,
       coveredValue, scopeValue: scope.reduce((t, p) => t + (Number(p.marketValue) || 0), 0),
       move, changePct: coveredValue > 0 ? (move / coveredValue) * 100 : null,
       skipped, skippedValue,
+      olderRows: rows.length - day.length,
       newestNavDate: dates[0] ?? null,
       spansDates: dates.length > 1,
       /** The largest single published move, which is what "drastic" ranks on. */
       topPct: rows.reduce((t, r) => Math.max(t, Math.abs(r.pct)), 0),
       /** Every scheme's own move, so a row showing a neighbour's can be caught. */
       pcts: rows.map((r) => r.pct),
+      /**
+       * WHOSE NAV EACH ROW IS ON (B-02), and which rows' units are on another
+       * basis from their NAV (MNT-3) — the book's own mark per unit against the
+       * published NAV, outside the factor of two a scheme cannot move by
+       * between two statement dates. Keyed by schemecode, as the rows are.
+       */
+      sourceOf: Object.fromEntries(rows.map((r) => [r.code, r.source])),
+      basisDiffers: rows.filter((r) => r.qty > 0 && r.nav > 0 && ((r.value / r.qty) / r.nav > 2 || (r.value / r.qty) / r.nav < 0.5)).map((r) => r.code),
       /** True where at least one scheme is past the card's stated 2% bound. */
       anyDrastic: rows.some((r) => Math.abs(r.pct) >= 2),
     };
@@ -7354,6 +7390,138 @@ const MOVERS_EXCLUDED = (() => {
 })();
 
 /**
+ * THE DIRECT-EQUITY NAMES THE MOVERS CARD COUNTS, OVER THE CURRENT HOLDINGS
+ * (MNT-6). The card said "of 37 direct-equity names" while the Direct Equity
+ * drill-down it sits beside lists 35: a redeemed row and the sub-₹1,000 specks
+ * are not holdings anywhere else on the site. Re-expressed here — the closed
+ * test and `smallKeysOf` — rather than imported from `currentHoldings`.
+ */
+const DE_CURRENT_NAMES = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const engagement = new Map(accounts.map((a) => [a.accountId, a.engagement]));
+    const small = smallKeysOf(positions);
+    const all = new Set(), current = new Set();
+    for (const p of positions) {
+      const e = engagement.get(p.accountId);
+      if (p.assetClass !== "Equity" || (e !== "Direct" && e !== "Execution")) continue;
+      all.add(p.securityKey);
+      if (small.has(p.securityKey)) continue;
+      if (FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null) continue;
+      current.add(p.securityKey);
+    }
+    return current.size ? { current: current.size, all: all.size } : null;
+  } catch { return null; }
+})();
+
+/**
+ * THE SET THE WHOLE-BOOK RETURN IS STRUCK OVER (B-07), and the book it is a
+ * part of. The rule is Stage 10ca's: the whole-book return on cost is struck
+ * over the holdings whose statement reports a cost, and every surface that
+ * prints it — Morning CIO's Consolidated return tile, the allocation table's
+ * Total row, the page both open — names that set on its face. Re-expressed
+ * here off `glowData.ts`, on the live model the pages draw (`bookArray`: the
+ * published NAV overlaid, the depository cash added), and never imported from
+ * `costedBookSet`, which is the helper under test:
+ *   • each `dedupeGroup` counted once, the first row winning, as the
+ *     consolidated set keeps it;
+ *   • a fund vehicle at nil units with a published NAV is closed, and a
+ *     security worth under ₹1,000 in all is a speck — the current-holdings rule;
+ *   • a cost is one the statement reports AND the page may use.
+ */
+const COSTED_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = bookArray(src, "BOOK_POSITIONS");
+    if (!Array.isArray(positions) || !positions.length) return null;
+    const seen = new Set();
+    const ded = [];
+    for (const p of positions) {
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) continue; seen.add(p.dedupeGroup); }
+      ded.push(p);
+    }
+    const small = smallKeysOf(ded);
+    const current = ded.filter((p) => !(FUND_VEHICLE_CLASSES.has(p.assetClass) && Number(p.quantity) === 0 && p.currentPrice != null)
+      && !small.has(p.securityKey));
+    const costed = current.filter((p) => typeof p.costBasis === "number" && Number.isFinite(p.costBasis) && !p.costUnavailable);
+    const mv = (xs) => xs.reduce((t, p) => t + p.marketValue, 0);
+    /* THE RETURN ITSELF, FIFO over that set — Stage 10ca's one aggregate,
+       written out here rather than called: a PMS mandate the set holds WHOLE
+       (every current holding of the account reports a cost) is struck on its
+       own capital, `value + withdrawn − contributed` over `contributed`; every
+       other holding is its unrealised gain plus what it realised, over its
+       cost held plus the cost of the units it sold. Summed, then divided. */
+    const accounts = bookArray(src, "BOOK_ACCOUNTS") ?? [];
+    const byAcct = new Map(accounts.map((a) => [a.accountId, a]));
+    const keysIn = new Map();
+    for (const q of costed) {
+      if (!keysIn.has(q.accountId)) keysIn.set(q.accountId, new Set());
+      keysIn.get(q.accountId).add(q.securityKey);
+    }
+    const whole = new Set();
+    for (const [acct, keys] of keysIn) {
+      const a = byAcct.get(acct);
+      if (a?.engagement !== "PMS" || !a.capital || !(a.capital.contributed > 0)) continue;
+      const all = current.filter((q) => q.accountId === acct);
+      if (all.length && all.every((q) => keys.has(q.securityKey))) whole.add(acct);
+    }
+    const fin = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+    let gain = 0, deployed = 0, invested = 0;
+    for (const q of costed) {
+      if (whole.has(q.accountId)) continue;
+      gain += q.marketValue - q.costBasis + fin(q.realizedPnL);
+      deployed += q.costBasis + fin(q.costOfUnitsSold);
+      invested += q.costBasis;
+    }
+    for (const acct of whole) {
+      const cap = byAcct.get(acct).capital;
+      gain += mv(costed.filter((q) => q.accountId === acct)) + cap.withdrawn - cap.contributed;
+      deployed += cap.contributed;
+      invested += cap.contributed;
+    }
+    return current.length
+      ? {
+        holdings: current.length, costedCount: costed.length, costedValue: mv(costed), bookValue: mv(current),
+        // THE ONE BOOK: every deduped position, as the top bar sums it.
+        totalValue: mv(ded),
+        pct: deployed > 0 ? (gain / deployed) * 100 : null, gain, deployed, invested, wholeMandates: whole.size,
+      }
+      : null;
+  } catch { return null; }
+})();
+
+/**
+ * THE WORDS THE WHOLE-BOOK RETURN'S SET IS NAMED IN (B-07), read back.
+ *
+ * Every surface that prints the whole-book return on cost prints its set as
+ * "on the ₹X of ₹Y that reports a cost · N of M holdings" (`costedSetLabel`).
+ * Each is held to COSTED_BOOK here: the two counts exactly, the two values to
+ * the compact figure's own printing precision — `fmtFromBase` prints one
+ * decimal of a crore from ₹10 Cr, two below it, one of a lakh below ₹1 Cr and
+ * whole rupees below ₹1 L, so the bound is half of that last digit. Never a
+ * tolerance widened until the figure fits.
+ */
+const COSTED_LABEL_RE = /^on the (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) of (₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?) that reports a cost · ([\d,]+) of ([\d,]+) holdings$/;
+const compactTieCr = (vCr) => (vCr >= 10 ? 0.05 : vCr >= 1 ? 0.005 : vCr >= 0.01 ? 0.0005 : 5e-8) + 1e-9;
+const costedLabelIsTheBooks = (label) => {
+  if (!COSTED_BOOK) return false;
+  const m = COSTED_LABEL_RE.exec(String(label ?? "").replace(/\s+/g, " ").trim());
+  if (!m) return false;
+  const costedV = money2cr(m[1]), bookV = money2cr(m[2]);
+  return Number(m[3].replace(/,/g, "")) === COSTED_BOOK.costedCount
+    && Number(m[4].replace(/,/g, "")) === COSTED_BOOK.holdings
+    && Math.abs(costedV - COSTED_BOOK.costedValue / 1e7) <= compactTieCr(costedV)
+    && Math.abs(bookV - COSTED_BOOK.bookValue / 1e7) <= compactTieCr(bookV);
+};
+/** A compact rupee figure with its sign, in ₹ Cr — "−₹2.5 Cr" is −2.5. */
+const signedCr = (s) => {
+  const v = money2cr(s);
+  return /[−-]\s*₹/.test(String(s ?? "")) ? -v : v;
+};
+
+/**
  * THE FOLIOS VALUED BY NO STATEMENT (DSM-A4), on the terms the AIF drill-down's
  * own invariant holds that card to (A-15): an AIF account that holds no
  * position at all AND whose capital account records capital drawn. Never "every
@@ -8639,11 +8807,13 @@ const MWR_BOOK = (() => {
     const DAY_MS = 86400000;
     const flows = [];
     let lastClose = "";
+    let pooled = 0;
     for (const a of accounts) {
       const fl = cf[a.accountId] ?? [];
       if (!fl.some((f) => /^opening portfolio value/i.test(f.description ?? ""))) continue;
       const mv = positions.filter((p) => p.accountId === a.accountId).reduce((t, p) => t + p.marketValue, 0);
       if (!(mv > 0)) continue;
+      pooled++;
       for (const f of fl) flows.push({ t: Date.parse(`${f.date}T00:00:00Z`), amount: f.amount });
       flows.push({ t: Date.parse(`${a.asOf}T00:00:00Z`), amount: mv });
       if (a.asOf > lastClose) lastClose = a.asOf;
@@ -8657,7 +8827,7 @@ const MWR_BOOK = (() => {
     const annual = ((lo + hi) / 2) * 100;
     const windowDays = Math.round((t1 - t0) / DAY_MS);
     const toDate = windowDays >= 365 ? annual : ((1 + annual / 100) ** (windowDays / 365) - 1) * 100;
-    return { annual, windowDays, toDate, lastClose, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
+    return { annual, windowDays, toDate, lastClose, accounts: pooled, bookNewest: accounts.reduce((m, a) => (a.asOf > m ? a.asOf : m), "") };
   } catch { return null; }
 })();
 
@@ -9437,6 +9607,30 @@ const NAV_MOVERS = [
    *
    * So the card must PRINT ITS DATE and must not call it today.
    */
+  /**
+   * ── ONE NAV SOURCE, AND IT IS THE ONE EVERY OTHER SURFACE PRICES FROM (B-02)
+   *
+   * The card read the look-through store's NAVs (9 Sep) while the Monitor, the
+   * stock page and the top bar value the same schemes on AMFI's daily file
+   * (22 Sep). Every row must be on AMFI's NAV wherever that file carries the
+   * scheme, and a row on the look-through store must SAY so on its own line.
+   * AND WHERE THE BOOK'S UNITS ARE ON ANOTHER BASIS FROM THE NAV (MNT-3) — the
+   * DSP ETFs, ~10× — the row says only the percentage is applied, never
+   * units × NAV. Both sets are the book's own, re-derived above.
+   */
+  ["every NAV row is on AMFI's file where it carries the scheme, and says so where not (B-02, MNT-3)", (t, ctx) => {
+    const nm = ctx?.navMovers;
+    if (!nm || nm.loading || !NAV_MOVERS_BOOK?.sourceOf) return false;
+    if (!nm.rows.length) return false;
+    const srcOk = nm.rows.every((r) => r.source === NAV_MOVERS_BOOK.sourceOf[r.schemecode]);
+    const ltOk = nm.rows.filter((r) => r.source === "lookthrough").every((r) => /look-through NAV/.test(r.note));
+    const amfiQuiet = nm.rows.filter((r) => r.source === "amfi").every((r) => !/look-through/.test(r.note));
+    const basis = new Set(NAV_MOVERS_BOOK.basisDiffers);
+    const basisOk = nm.rows.every((r) => basis.has(r.schemecode)
+      ? /another basis/.test(r.note) && /never units × NAV/.test(r.noteWhy)
+      : !/another basis/.test(r.note));
+    return srcOk && ltOk && amfiQuiet && basisOk;
+  }],
   ["the NAV card is dated, and never called today", (t, ctx) => {
     const nm = ctx?.navMovers;
     if (!nm || nm.loading || !NAV_MOVERS_BOOK?.newestNavDate) return false;
@@ -11604,7 +11798,7 @@ const CIO_SHARED = [
     if (!ctx?.kpiTiles) return { notChecked: "the KPI strip was not found on this run" };
     const value = ctx.kpiTiles.find((x) => x.slot === "value");
     if (!value) return false;
-    return /^Invested ₹[\d,.]+\s*(?:Cr|L|K)?$/.test(value.second ?? "")
+    return /^Invested ₹[\d,.]+\s*(?:Cr|L|K)?(?: · \d+ of \d+ reports? a cost)?$/.test(value.second ?? "")
       && !ctx.kpiTiles.some((x) => /^capital invested$/i.test(x.label))
       && ctx.kpiTiles.every((x) => x.links.every((h) => !/[?&]of=invested\b/.test(h)));
   }],
@@ -11963,6 +12157,26 @@ const CIO_MOVERS = [
 ];
 
 /**
+ * ── THE CONSOLIDATED RETURN TILE NAMES ITS SET ON ITS FACE (B-07) ──────────
+ *
+ * The whole-book return on cost is struck over the holdings whose statement
+ * reports a cost (Stage 10ca), and the tile says which on its face: "on the ₹X
+ * of ₹Y that reports a cost · N of M holdings". Walked on `cio` and
+ * `cio-allocation` only — the live-mocked walks price every quote ×1.10, which
+ * moves the figure off the statement book `COSTED_BOOK` is struck on.
+ */
+const CIO_BOOK_RETURN = [
+  ["the Consolidated return tile is the book's costed set's return, and names that set (B-07)", (t, ctx) => {
+    if (!ctx?.kpiTiles) return false;
+    if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
+    const tile = ctx.kpiTiles.find((x) => x.slot === "return");
+    if (!tile) return false;   // on the default strip, which is what these two walks open
+    const p = pctIn(tile.value);
+    return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie && costedLabelIsTheBooks(tile.second);
+  }],
+];
+
+/**
  * ── THE "N HELD" PILL (CK-C11) ────────────────────────────────────────────
  * Counts the sections the axis NAMES and names the not-classified row beside
  * the count. Struck on the rows' own labels, read cell by cell.
@@ -12217,7 +12431,12 @@ const CIO_ALLOC = [
      * is an em dash.
      */
     ["every allocation row's return ties to its own Invested and Current, or is absent", (t) => {
-      const rows = [...t.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*([+-]\d+\.\d)%/g)];
+      // THE TOTAL ROW IS NOT A SECTION (B-07): its return is struck over the
+      // holdings that report a cost and names that set under it, so it does
+      // not divide its own Invested and Current — the invariant after this one
+      // holds it to the set it names instead.
+      const body = t.replace(/(^|\n)Total\t[^\n]*/g, "$1");
+      const rows = [...body.matchAll(/₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*₹([\d,.]+)\s*(Cr|L|K)?\s*\t?\s*([+-]\d+\.\d)%/g)];
       if (!rows.length) return true;   // layout changed; the other invariants still bind
       const u = (n, s) => cr(n) * (s === "L" ? 0.01 : s === "K" ? 0.0001 : 1);
       return rows.every((m) => {
@@ -12420,15 +12639,50 @@ const CIO_ALLOC = [
         && /pending the family's answer/i.test(h);
       return names(tile.hover ?? "") && /if two, add ₹/i.test(tile.hover ?? "") && names(hint);
     }],
-    // And the allocation table's own footer must tie to its own two columns —
-    // it carried a money-weighted rate in a column of return-on-cost figures,
-    // so Invested and Current printed one answer and the Total cell another.
-    ["the allocation total ties to its own Invested and Current columns", (t) => {
-      const row = new RegExp(String.raw`Total\s+` + CR + String.raw`\s+` + CR + String.raw`\s+([+-])([\d.]+)%`).exec(t);
-      if (!row) return true;   // layout changed; the other invariants still bind
-      const [, inv, cur, sign, pct] = row;
-      const expect = ((cr(cur) - cr(inv)) / cr(inv)) * 100;
-      return Math.abs((sign === "-" ? -Number(pct) : Number(pct)) - expect) <= 0.6;
+    /**
+     * AND THE TOTAL ROW'S RETURN TIES TO THE SET IT NAMES (B-07).
+     *
+     * It carried a money-weighted rate in a column of return-on-cost figures
+     * once, and then a bare "—" while the tile beside the table printed the
+     * figure. It is the whole-book return on cost now, struck over the holdings
+     * that report a cost, with that set named under it. So it ties to its own
+     * Invested and to the value of the set its label names — "(value − Invested)
+     * ÷ Invested" within the FIFO realised term, the same ±0.6 point bound this
+     * check always allowed — and never to the Current beside it, which is every
+     * holding's value.
+     */
+    ["the allocation total ties to its own Invested and the value of the set its label names (B-07)", (t, ctx) => {
+      const f = ctx?.allocTable?.foot;
+      if (!f) return false;
+      const p = pctIn(f.retText), inv = money2cr(f.invested);
+      const m = COSTED_LABEL_RE.exec(f.label ?? "");
+      if (!p || !Number.isFinite(inv) || !(inv > 0) || !m) return false;
+      const costed = money2cr(m[1]);
+      return Math.abs(p.v - ((costed - inv) / inv) * 100) <= 0.6;
+    }],
+    /**
+     * ── ONE WHOLE-BOOK RETURN, OVER ONE SET, WITH ONE LABEL (B-07) ──────────
+     *
+     * The Consolidated return tile printed the figure, the allocation Total row
+     * refused it with a bare "—", and the Portfolio Monitor's footer printed it
+     * again: one quantity gated on one surface and not on the others. The rule
+     * is one now — struck over the holdings that report a cost — and the tile
+     * and the Total row print the SAME figure with the SAME words naming that
+     * set. Both are held to `COSTED_BOOK`, re-derived off `glowData.ts`, never
+     * to each other alone: two surfaces agreeing on a wrong set would pass that.
+     */
+    ["the Total row's return is the book's costed set's, with the tile's words (B-07)", (t, ctx) => {
+      const f = ctx?.allocTable?.foot;
+      if (!f || !COSTED_BOOK || COSTED_BOOK.pct == null) return false;
+      if (f.ret == null || f.ret === "") return false;
+      const raw = Number(f.ret), printed = pctIn(f.retText);
+      const tile = (ctx?.kpiTiles ?? []).find((x) => x.slot === "return");
+      return Number.isFinite(raw) && Math.abs(raw - COSTED_BOOK.pct) < 0.005
+        && !!printed && Math.abs(printed.v - COSTED_BOOK.pct) <= printed.tie
+        && costedLabelIsTheBooks(f.label)
+        // The tile is on the default strip; where an address picked other tiles
+        // there is nothing to compare, and the book comparison above still binds.
+        && (!tile || (tile.second === f.label && tile.value === f.retText));
     }],
     /**
      * ── THE "N HELD" PILL COUNTS THE AXIS'S OWN SECTIONS (CK-C11) ────────────
@@ -12459,6 +12713,69 @@ const CIO_ALLOC = [
       ];
       return texts.every(([label, href]) => links.some((l) => label.test(l.text) && l.href === href));
     }],
+];
+
+/**
+ * ── THE NAV CARD'S RECONCILIATION ADDS ITS OWN PARTS (MNT-4) ──────────────
+ *
+ * The line read "₹713.6 Cr, above the ₹713.3 Cr current value by the value two
+ * members both report": a per-account STATEMENT sum set against a NAV-overlaid
+ * total, their ₹0.3 Cr gap named as the double count — which is ₹3.17 Cr — and
+ * on live prices the sign flipped. It is three steps now, each with its own
+ * figure: the per-account sum, less the double count, is the statement book;
+ * that book plus the published NAVs and the depository's cash funds is the
+ * current value. The statement sums are re-derived off `glowData.ts` as
+ * generated, and the current value off the checker's own live model. Walked on
+ * `cio-nav` alone: the live-mocked walks price every quote ×1.10, which moves
+ * the current value off the model `COSTED_BOOK` is struck on.
+ */
+const NAV_RECON_BOOK = (() => {
+  try {
+    const ps = statementBookPositions(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"));
+    if (!Array.isArray(ps) || !ps.length) return null;
+    const raw = ps.reduce((t, p) => t + p.marketValue, 0);
+    const seen = new Set();
+    const keys = new Set();
+    let once = 0;
+    for (const p of ps) {
+      if (p.dedupeGroup) { if (seen.has(p.dedupeGroup)) { keys.add(p.securityKey); continue; } seen.add(p.dedupeGroup); }
+      once += p.marketValue;
+    }
+    return { raw, once, doubled: raw - once, keys: [...keys].sort() };
+  } catch { return null; }
+})();
+const NAV_RECON = [
+  ["the NAV card's lists, its statement book and the current value reconcile step by step (MNT-4)", (t, ctx) => {
+    if (!NAV_RECON_BOOK || !COSTED_BOOK) return false;
+    const h = (ctx?.titles ?? []).find((x) => /^As each statement prints them, the three lists sum to ₹/.test(x));
+    if (!h) return false;
+    // The gap between a statement sum and the current value, named as the
+    // double count, is the defect itself.
+    if (/above the current value/i.test(h)) return false;
+    const rupees = (x) => (x == null ? NaN : Number(String(x).replace(/[₹,\s]/g, "")));
+    const per = rupees(/the three lists sum to (₹[\d,.]+)/.exec(h)?.[1]);
+    const m = /Counting once the (₹[\d,.]+) that two accounts both report gives the consolidated statement book, (₹[\d,.]+); that is (\d+) holdings?, each on two accounts' statements\./.exec(h);
+    const cur = rupees(/The current value of holdings, (₹[\d,.]+),/.exec(h)?.[1]);
+    if (!m || !Number.isFinite(per) || !Number.isFinite(cur)) return false;
+    const doubled = rupees(m[1]), book = rupees(m[2]);
+    // …AND THE GAP IS NAMED FROM ITS CAUSE: the holdings the footer says two
+    // accounts both report are exactly the book's own reported-twice holdings,
+    // and the hover counts them. A footer that inferred the gap by subtraction
+    // and named nobody satisfied every figure above.
+    const keys = (ctx?.navListRows?.twiceKeys ?? "").split(" ").filter(Boolean);
+    if (!NAV_RECON_BOOK.keys.length || Number(m[3]) !== NAV_RECON_BOOK.keys.length
+      || keys.join(" ") !== NAV_RECON_BOOK.keys.join(" ")) return false;
+    // The steps from the book to the current value, each as its figure prints.
+    const nav = /that book plus ([+−-]?₹[\d,.]+\s*(?:Cr|L|K)?) from AMFI/.exec(h)?.[1];
+    const dep = /(₹[\d,.]+\s*(?:Cr|L|K)?) of \d+ cash-equivalent funds?/.exec(h)?.[1];
+    const steps = [nav, dep].filter(Boolean);
+    const tie = steps.reduce((a, x) => a + compactTieCr(Math.abs(money2cr(x))), 0) + 1e-6;
+    return Math.abs(per - NAV_RECON_BOOK.raw) <= 0.01
+      && Math.abs(doubled - NAV_RECON_BOOK.doubled) <= 0.01
+      && Math.abs(book - NAV_RECON_BOOK.once) <= 0.01
+      && Math.abs(cur - COSTED_BOOK.totalValue) <= 1
+      && Math.abs(book / 1e7 + steps.reduce((a, x) => a + signedCr(x), 0) - cur / 1e7) <= tie;
+  }],
 ];
 
 const CIO_NAV = [
@@ -17855,9 +18172,9 @@ const INVARIANTS = {
   ],
   // "on the dashboard there's only one asset class" — the CIO allocation must
   // surface more than equity, and state the listed/private split.
-  cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER],
-  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC],
-  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE],
+  cio: [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_MOVERS, ...CIO_TILE_PICKER, ...CIO_BOOK_RETURN],
+  "cio-allocation": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_ALLOC, ...CIO_BOOK_RETURN],
+  "cio-nav": [...CIO_SHARED, ...CIO_TAB_CONTROL, ...CIO_NAV, ...NAV_BENCH, ...NAV_BENCH_OFFLINE, ...NAV_RECON],
   "cio-tiles-saved": CIO_TILES_SAVED,
   "cio-tiles-dense": [
     /**
@@ -18590,13 +18907,43 @@ const INVARIANTS = {
       if (!Number.isFinite(pos) || !Number.isFinite(names)) return notChecked("Morning CIO's concentration counts did not parse on this run");
       return c != null && c.holdings === pos && c.names === names;
     }],
-    // THE WHOLE-BOOK RETURN STAYS REFUSED. 60 positions are in Value and in no
-    // Invested, so a percentage across the two columns would divide one set of
-    // holdings by another — which is the contradiction the allocation footer
-    // was fixed for, arriving one click deeper.
-    ["no whole-book return is struck where the cost side does not cover it", (t, ctx) =>
-      footCell(ctx, "ret") === "—"
-      && (ctx?.titles ?? []).some((x) => /divide one set of holdings by another/i.test(x))],
+    /**
+     * THE WHOLE-BOOK RETURN IS STRUCK, OVER ONE SET, WITH THAT SET'S NAME (B-07).
+     *
+     * It used to stay refused here — a bare "—" — because 54 holdings are in
+     * Value and in no Invested, while the Consolidated return tile that opens
+     * this page printed the figure: one quantity gated on one surface and not
+     * the other. The rule is one now. The footer and the headline print the
+     * tile's figure over the holdings that report a cost, with the tile's own
+     * words naming that set, and the old refusal's reason — Value ÷ Invested is
+     * not this figure — is the cell's hover. Held to `COSTED_BOOK` AND to the
+     * tile, because two surfaces agreeing with each other on the wrong set would
+     * pass a check against either alone.
+     */
+    ["the whole-book return is the tile's, over the set the tile names (B-07)", (t, ctx) => {
+      if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
+      const p = pctIn(footCell(ctx, "ret"));
+      const tilePct = CIO_FIGURES.get("bookReturnPct"), tileLabel = CIO_FIGURES.get("bookReturnLabel");
+      // The tile this page opens from must have printed it: that is the claim.
+      if (!Number.isFinite(tilePct) || !tileLabel) return false;
+      const labels = ctx?.drilldown?.costedLabels ?? [];
+      const head = ctx?.drilldown?.headReturn;
+      return !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie && Math.abs(p.v - tilePct) < 1e-9
+        && Number.isFinite(head) && Math.abs(head - COSTED_BOOK.pct) < 0.005
+        && labels.length >= 2 && labels.every((l) => l === tileLabel) && costedLabelIsTheBooks(tileLabel)
+        && (ctx?.titles ?? []).some((x) => /Value ÷ Invested is not this figure/.test(x));
+    }],
+    /**
+     * THE BOOK IS ONE FIGURE (B-01): the share line divides by the current value
+     * of holdings the top bar and the tile print, re-derived here.
+     */
+    ["its share line is struck over the one current value of holdings (B-01)", (t, ctx) => {
+      const sh = ctx?.drilldown?.share;
+      if (!sh || !COSTED_BOOK) return false;
+      const nav = CIO_FIGURES.get("nav");
+      return Math.abs(sh.book - COSTED_BOOK.totalValue) <= 1
+        && (!Number.isFinite(nav) || Math.abs(sh.book / 1e7 - nav) <= compactTieCr(nav));
+    }],
     // Its footer is summed FROM its rows, so the two must agree. A footer
     // computed beside its table rather than from it is the tautology this repo
     // found on the Private Market page, where the rows carried a double count
@@ -18963,6 +19310,40 @@ const INVARIANTS = {
   "holdings-measured": [
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
+    /**
+     * THE RATE THE READER CLICKED IS ON THE PAGE IT OPENS (B-06). The tile prints
+     * a money-weighted rate over the accounts carrying an opening value; this
+     * page listed their holdings and printed only a return on cost — two
+     * measures of two things. The rate, its window and its accounts are the
+     * book's, re-solved here by bisection, and the tile's to the decimal.
+     */
+    ["the money-weighted rate is the tile's, over the same accounts and window (B-06)", (t, ctx) => {
+      if (!MWR_BOOK) return false;
+      const w = ctx?.drilldown?.mwr;
+      if (!w || w.pct == null) return false;
+      const tile = CIO_FIGURES.get("mwrPct");
+      if (!Number.isFinite(tile)) return false;
+      return Math.abs(w.pct - MWR_BOOK.toDate) <= 0.05
+        && w.days === MWR_BOOK.windowDays && w.to === MWR_BOOK.lastClose && w.accounts === MWR_BOOK.accounts
+        && Math.abs(Math.round(w.pct * 10) / 10 - tile) < 1e-9
+        && (MWR_BOOK.windowDays >= 365 || /not annualised/.test(w.text));
+    }],
+    /**
+     * ...AND ITS SHARE LINE NAMES THE ONE BOOK (B-01). This per-statement scope
+     * used to divide by the per-statement sum and print THAT as "the book" —
+     * ₹3.17 Cr larger than any book another surface shows. The denominator is the
+     * current value of holdings; the numerator counts a holding two statements
+     * both report once.
+     */
+    ["its share line is over the one current value of holdings, not a per-statement sum (B-01)", (t, ctx) => {
+      const sh = ctx?.drilldown?.share;
+      if (!sh || !COSTED_BOOK) return false;
+      const m = /^([\d.]+)% of the (₹[\d,.]+\s*(?:Cr|L|K)?) book$/.exec(sh.text);
+      if (!m) return false;
+      const v = money2cr(m[2]);
+      return Math.abs(sh.book - COSTED_BOOK.totalValue) <= 1 && Math.abs(v - COSTED_BOOK.totalValue / 1e7) <= compactTieCr(v)
+        && /counts a holding two statements both report once/.test(sh.title);
+    }],
     ["it covers part of the book and says so, rather than all of it", (t) => {
       const nav = CIO_FIGURES.get("nav"), here = drilldownTotal(t);
       if (!Number.isFinite(nav)) return notChecked("Morning CIO's NAV tile did not parse on this run");
@@ -19073,6 +19454,20 @@ const INVARIANTS = {
   "holdings-invested": [
     ...DRILLDOWN_CHROME_GONE,
     ...DRILLDOWN_FACET_NOTE,
+    /**
+     * THE COSTED FACET IS THE SET THE WHOLE-BOOK RETURN IS STRUCK OVER (B-07),
+     * so its headline return is that figure and its label is the tile's.
+     */
+    ["its return is the whole-book return on cost, with the tile's words (B-07)", (t, ctx) => {
+      if (!COSTED_BOOK || COSTED_BOOK.pct == null) return false;
+      const head = ctx?.drilldown?.headReturn, labels = ctx?.drilldown?.costedLabels ?? [];
+      const p = pctIn(footCell(ctx, "ret"));
+      const tileLabel = CIO_FIGURES.get("bookReturnLabel");
+      return Number.isFinite(head) && Math.abs(head - COSTED_BOOK.pct) < 0.005
+        && !!p && Math.abs(p.v - COSTED_BOOK.pct) <= p.tie
+        && labels.length >= 1 && labels.every((l) => costedLabelIsTheBooks(l))
+        && (!tileLabel || labels.every((l) => l === tileLabel));
+    }],
     ["its market value covers the holdings that report a cost", (t) => {
       const c = drilldownCounts(t);
       return c != null && c.holdings > 0;
@@ -21422,6 +21817,22 @@ const INVARIANTS = {
       if (!MOVERS_EXCLUDED.pmsAccounts) return !bare;
       const m = /(\d+)\s+holdings?\s+in\s+(\d+)\s+PMS mandates?\s+₹/.exec(line);
       return !bare && !!m && Number(m[1]) === MOVERS_EXCLUDED.pmsNames && Number(m[2]) === MOVERS_EXCLUDED.pmsAccounts;
+    }],
+    /**
+     * ...AND THE TILE COUNTS THE NAMES THE DRILL-DOWN LISTS (MNT-6): its
+     * denominator is the Direct Equity names among the CURRENT holdings — the
+     * closed rows and the sub-₹1,000 specks are not holdings anywhere else.
+     * Load-bearing where the book has such rows: the whole-set count differs.
+     */
+    ["the day-move tile's name count is over the current holdings (MNT-6)", (t, ctx) => {
+      if (!DE_CURRENT_NAMES) return false;
+      // BOTH PLACES THE COUNT IS PRINTED: the face ("… held · N of M names")
+      // and the sentence in its hover ("across N of M direct-equity names"),
+      // which Stage 10cp moved there. Each must count the current holdings.
+      const face = /held\s*·\s*\d+ of (\d+) names/.exec(t);
+      const hover = (ctx?.titles ?? []).map((x) => /^The move is struck on .*?across \d+ of (\d+) direct-equity names/.exec(x)).find(Boolean);
+      return !!face && !!hover
+        && Number(face[1]) === DE_CURRENT_NAMES.current && Number(hover[1]) === DE_CURRENT_NAMES.current;
     }],
     /**
      * ...AND THE MOVERS TOGGLE IS THERE WITH A FEED TOO.
@@ -26096,6 +26507,9 @@ const INVARIANTS = {
   ],
   "performance-live": [...PERF_MW_LIVE, ...PERF_MW],
   performance: [
+    // THE SAME NAV CARD AS MORNING CIO'S (PERF-3): its lists' footer reconciles
+    // to the statement book and the current value step by step, as on `cio-nav`.
+    ...NAV_RECON,
     /**
      * "NOT ANNUALISED" IS A GUARD, AND IT STAYS ON THE FACE (Stage 10cp). The
      * family asked for every explainer line to go; this is not one. Stage
@@ -28982,6 +29396,8 @@ for (const theme of THEMES) {
       const navListRows = FAST ? null : await page.evaluate(() => ({
         single: document.querySelectorAll('[data-testid="nav-single-list"] li').length,
         unvalued: document.querySelectorAll('[data-testid="nav-unvalued-list"] li').length,
+        // The holdings the lists' footer names as reported twice (MNT-4).
+        twiceKeys: document.querySelector('[data-testid="nav-excluded-recon"]')?.getAttribute("data-reported-twice-keys") ?? null,
       }));
       /**
        * ── THE NAV CHART, MEASURED — BECAUSE ITS TEXT WAS ALWAYS RIGHT ──────
@@ -29402,6 +29818,8 @@ for (const theme of THEMES) {
           // The row's own second line — where a row struck on an OLDER day than
           // the heading says so. Read off its handle, not out of the cell text.
           note: (tr.querySelector("[data-scheme-note]")?.textContent ?? "").trim(),
+          noteWhy: tr.querySelector("[data-scheme-note]")?.getAttribute("title") ?? "",
+          source: tr.querySelector("[data-navmover-source]")?.getAttribute("data-navmover-source") ?? null,
         })),
         // The RANKING control's offer and its live choice, off the attribute
         // rather than the button labels — "By % move" is exactly the prose a
@@ -31715,6 +32133,20 @@ for (const theme of THEMES) {
         if (wl) { CIO_FIGURES.set("winners", cr(wl[1])); CIO_FIGURES.set("losers", cr(wl[2])); }
         grab("listed", new RegExp(String.raw`^Listed (₹[\d,.]+\s*(?:Cr|L|K)?)`, "im"));
         grab("private", new RegExp(String.raw`Private (₹[\d,.]+\s*(?:Cr|L|K)?)`, "i"));
+        /**
+         * THE WHOLE-BOOK RETURN AND ITS SET, off the tile AND the allocation
+         * table's Total row (B-07), so the page both open is held to the figure
+         * a reader clicked and to the words that name its set. Read off their
+         * own handles, never off the page text: the two print the same words.
+         */
+        const pctOf = (v) => Number(/([+\-−]?\d+(?:\.\d+)?)\s*%/.exec(v ?? "")?.[1]?.replace("−", "-"));
+        const retTile = (kpiTiles ?? []).find((x) => /^consolidated return$/i.test(x.label));
+        if (retTile && Number.isFinite(pctOf(retTile.value))) {
+          CIO_FIGURES.set("bookReturnPct", pctOf(retTile.value));
+          CIO_FIGURES.set("bookReturnLabel", retTile.second ?? "");
+        }
+        const mwTile = (kpiTiles ?? []).find((x) => /^money-weighted return$/i.test(x.label));
+        if (mwTile && Number.isFinite(pctOf(mwTile.value))) CIO_FIGURES.set("mwrPct", pctOf(mwTile.value));
       }
       const zeros = !FAST && theme === "light" && width === WIDTHS[0]
         ? [...text.matchAll(ZEROISH)].map((m) => {

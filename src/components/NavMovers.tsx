@@ -8,7 +8,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex } from "@/lib/accounts";
 import { currentHoldings } from "@/lib/analytics";
 import { loadFundNavs, type SchemeMatch } from "@/lib/lookthrough";
-import { navMoverModel, isDrastic, DRASTIC_PCT, type NavMover } from "@/lib/navMovers";
+import { navMoverModel, isDrastic, unitBasisDiffers, DRASTIC_PCT, type NavMover } from "@/lib/navMovers";
 import { fmtPct, changeColor, DASH } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -33,10 +33,11 @@ import { useTableView, sortRows } from "@/lib/tableView";
 //
 // ── THE DATE IS ON THE CARD, NOT THE WORD "TODAY" ───────────────────────────
 //
-// A published NAV is as recent as the last `npm run build-lookthrough`, and the
-// schemes do not all publish on the same day — this book spans two dates. So
-// the heading carries the newest date, a row carries its own, and a row struck
-// on an older date than the newest says so. Calling any of it "today" would be
+// A published NAV is as recent as the last `npm run build-fund-navs` (AMFI's
+// file, refreshed every morning) — or, for the few schemes that file does not
+// carry, the last `npm run build-lookthrough`. So the heading carries the newest
+// date, a row carries its own, and a row struck on an older date than the newest
+// says so and is kept out of the tile's one-day figure. Calling any of it "today" would be
 // the defect `/api/indices` already cost this repo: a real figure under the
 // wrong day, which is the kind a reader cannot catch.
 
@@ -85,7 +86,12 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
   }, []);
 
   const model = useMemo(() => {
-    if (!portfolio || !schemes) return null;
+    // THE LOOK-THROUGH STORE IS A FALLBACK NOW (B-02), so a store that did not
+    // answer no longer blanks the card: every scheme AMFI's file carries is still
+    // priced, and the few that only the store could have priced are named with
+    // that reason. Only a store still in flight holds the card, so it renders
+    // once rather than redrawing when the fallback lands.
+    if (!portfolio || schemes === undefined) return null;
     const accts = accountIndex(portfolio.accounts);
     // CURRENT HOLDINGS, on the CONSOLIDATED set — the same two filters every
     // allocation surface applies. A scheme redeemed to nil still publishes a
@@ -114,19 +120,11 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
       </Card>
     );
   }
-  if (schemes === null) {
-    return (
-      <Card className="lg:col-span-3" title={title} right={scopeToggle}>
-        <AbsentSection what="The NAV store did not respond"
-          needs="These moves come from the committed AMFI NAV store rather than the live quote feed, and the request for it failed. Nothing has been substituted: every holding is showing its statement mark elsewhere on this page." />
-      </Card>
-    );
-  }
   if (!model || model.rows.length === 0) {
     return (
       <Card className="lg:col-span-3" title={title} right={scopeToggle}>
         <AbsentSection what="No ETF or mutual-fund holding has a published NAV move"
-          needs={`The store answered and carries no scheme with two published NAVs for any of the ${model?.scopeNames ?? 0} names held here. A move needs a NAV and the one before it; run \`npm run build-lookthrough\` against the AmfiBeas checkout to refresh the store.`} />
+          needs={`Neither AMFI's daily NAV file nor the look-through store carries a scheme with two published NAVs for any of the ${model?.scopeNames ?? 0} names held here. A move needs a NAV and the one before it; \`npm run build-fund-navs\` refreshes AMFI's file and accumulates the previous day.`} />
       </Card>
     );
   }
@@ -187,6 +185,7 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
       : `struck between ${model.oldestNavDate} and ${model.newestNavDate}; a scheme does not publish on a non-business day, so the rows do not share one date.`}`,
     "That is a different measurement from the Direct Equity branch of this card, which is a live intraday price against the previous session's close — the two are never added together.",
     "The rupee figure is derived: the scheme's move applied to what this book values the holding at, whose mark is its own statement's.",
+    "Each scheme's NAV is AMFI's own daily file — the same NAV the rest of the dashboard values the fund at. A scheme that file does not carry is on the look-through store's NAV, and its row says so.",
     "AIF folios are not here — no alternative fund publishes a daily NAV.",
   ].join("\n\n");
 
@@ -298,7 +297,8 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
                   <SchemeNote row={r} newest={model.newestNavDate} />
                 </td>
                 <td className="py-1.5 pr-3 text-right tabular text-slate-400"
-                    title={`${r.prevNavDate} ${r.prevNav} → ${r.navDate} ${r.nav}`}>
+                    data-navmover-source={r.source}
+                    title={`${r.prevNavDate} ${r.prevNav} → ${r.navDate} ${r.nav} · ${r.source === "amfi" ? "AMFI's daily NAV file" : "the look-through store (AMFI's daily file does not carry this scheme)"}`}>
                   {r.nav}
                 </td>
                 <td className={`py-1.5 pr-3 text-right tabular ${rank === "pct" ? "font-semibold" : ""} ${changeColor(r.changePct)}`}>
@@ -349,7 +349,10 @@ export function NavMovers({ scopeToggle }: { scopeToggle?: React.ReactNode }) {
  * it is true of is information.
  */
 function SchemeNote({ row, newest }: { row: NavMover; newest: string | null }) {
+  // ONE SHORT LINE ON THE ROW, THE WHY IN ITS HOVER — a note on a table is one
+  // line, and the DSP Gold row carried four clauses running to 228 characters.
   const bits: string[] = [];
+  const why: string[] = [];
   // Only where the book holds BOTH plans of one fund, which is what makes two
   // rows of one scheme name legitimate rather than a duplicate.
   if (row.plan) bits.push(`${row.plan} plan`);
@@ -360,7 +363,18 @@ function SchemeNote({ row, newest }: { row: NavMover; newest: string | null }) {
   if (newest && row.navDate !== newest) bits.push(`NAV ${row.navDate}`);
   // The store's own tier, surfaced only where it is NOT the ISIN — an exact
   // identifier needs no disclosure and a name match does.
-  if (row.matchedVia !== "isin") bits.push(`scheme matched on ${row.matchedVia}, not an ISIN`);
+  if (row.matchedVia !== "isin") { bits.push(`matched on ${row.matchedVia}`); why.push(`The scheme was matched on its ${row.matchedVia}, not an ISIN.`); }
+  // WHOSE NAV (B-02): only where it is not AMFI's file, which every other
+  // surface prices from.
+  if (row.source === "lookthrough") { bits.push("look-through NAV"); why.push("AMFI's daily NAV file does not carry this scheme, so its NAV is the fund look-through store's."); }
+  // THE UNIT BASES DIFFER (MNT-3). The book's units and this NAV are not one
+  // unit — ₹151 a unit on the statement beside a ₹14.76 NAV — so `units × NAV`
+  // would be an order of magnitude out. Said on the row, never left for a
+  // reader to multiply.
+  if (unitBasisDiffers(row) && row.unitRatio != null) {
+    bits.push("units on another basis · % move only");
+    why.push(`The book's units are on another basis from this NAV (its mark is ${row.unitRatio.toFixed(1)}× the NAV), so only the percentage move is applied — never units × NAV.`);
+  }
   if (!bits.length) return null;
-  return <div className="text-[10.5px] text-slate-500" data-scheme-note>{bits.join(" · ")}</div>;
+  return <div className="text-[10.5px] text-slate-500" data-scheme-note title={why.length ? why.join(" ") : undefined}>{bits.join(" · ")}</div>;
 }

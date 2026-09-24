@@ -6,7 +6,7 @@ import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
-import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
+import { holdingBucket, bucketLabel, currentHoldings, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { symbolCoverage, symbolsFor } from "@/lib/quotes";
@@ -182,7 +182,16 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
      */
     const inScope = (p: typeof consolidated[number]) =>
       (SCOPE.buckets as readonly string[]).includes(holdingBucket(p, engagementOf(accts, p)));
-    const scope = consolidated.filter(inScope);
+    /**
+     * CURRENT HOLDINGS, THROUGH THE ONE HELPER (MNT-6). This read `consolidated`
+     * whole, so the scope counted the two sub-₹1,000 specks the family's floor
+     * removes everywhere else — 37 direct-equity names here against the 35 the
+     * Direct Equity drill-down lists, one click away. The funds branch of this
+     * same card already read `currentHoldings`; the two branches now agree on
+     * what the family holds.
+     */
+    const held = currentHoldings(consolidated);
+    const scope = held.filter(inScope);
     /**
      * WHAT THE NARROWING LEAVES OUT, NAMED RATHER THAN DROPPED.
      *
@@ -192,7 +201,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
      * card and does not need excusing.
      */
     const excluded = new Map<string, { mv: number; names: Set<string>; accounts: Set<string>; mandate: boolean }>();
-    for (const p of consolidated) {
+    for (const p of held) {
       if (inScope(p)) continue;
       if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
       const bucket = holdingBucket(p, engagementOf(accts, p));
