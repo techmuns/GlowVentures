@@ -15572,7 +15572,12 @@ const CIO_ALLOC = [
       const m = /Called [\d.]+%\s*of the (₹[\d,.]+\s*(?:Cr|L|K)?) committed\s*Undrawn [\d.]+%/.exec(t);
       if (!m || !CAPITAL_BOOK) return false;
       const v = money2cr(m[1]);
-      return Math.abs(v - CAPITAL_BOOK.committedCr) <= compactTieCr(v);
+      // On the card's own basis: each capital account ONCE with its holding, as
+      // its "Fund commitments" figure is counted (Stage 10ct). The register as
+      // printed carries the second Transition Venture trust and reads ₹1.5 Cr
+      // high against a card that is right.
+      const committed = CAPITAL_BOOK.once?.committedCr ?? CAPITAL_BOOK.committedCr;
+      return Math.abs(v - committed) <= compactTieCr(v);
     }],
     /**
      * ...AND EVERY CONCENTRATION FIGURE OPENS ITS OWN SET. The other half of the
