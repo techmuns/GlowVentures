@@ -27,15 +27,30 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
   // hardcoded"): STCG u/s 111A, LTCG u/s 112A.
   const ST = 0.2, LT = 0.125;
   const reported = BOOK_CAPITAL_GAINS.filter((c) => c.realisedST !== null || c.realisedLT !== null);
-  const perOwner = new Map<string, { st: number; lt: number }>();
+  // The financial year the newest window closes in, written out again rather
+  // than read from `financialYearStart`: 1 April of the year a date in April or
+  // later falls in, else of the year before.
+  const newest = reported.map((c) => c.periodTo ?? "").sort().at(-1) ?? "";
+  const fy = newest ? `${Number(newest.slice(5, 7)) >= 4 ? newest.slice(0, 4) : Number(newest.slice(0, 4)) - 1}-04-01` : "";
+  const perOwner = new Map<string, { st: number; lt: number; oneYear: boolean }>();
   for (const c of reported) {
     if (!c.ownerId) continue;
-    const e = perOwner.get(c.ownerId) ?? { st: 0, lt: 0 };
+    const e = perOwner.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
     e.st += c.realisedST ?? 0; e.lt += c.realisedLT ?? 0;
+    if (!c.periodFrom || c.periodFrom < fy) e.oneYear = false;
     perOwner.set(c.ownerId, e);
   }
-  let expected = 0;
-  for (const e of perOwner.values()) expected += Math.max(0, e.st) * ST + Math.max(0, e.lt) * LT;
+  // s.70(2): a short-term loss sets off against the same person's long-term
+  // gain; s.70(3): a long-term loss never against a short-term gain.
+  const withSetOff = (e: { st: number; lt: number; oneYear: boolean }) => {
+    const off = e.oneYear && e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0;
+    return Math.max(0, e.st + off) * ST + Math.max(0, e.lt - off) * LT;
+  };
+  let expected = 0, noSetOff = 0;
+  for (const e of perOwner.values()) {
+    expected += withSetOff(e);
+    noSetOff += Math.max(0, e.st) * ST + Math.max(0, e.lt) * LT;
+  }
   const sumST = reported.reduce((s, c) => s + (c.realisedST ?? 0), 0);
   const sumLT = reported.reduce((s, c) => s + (c.realisedLT ?? 0), 0);
   const pooled = Math.max(0, sumST) * ST + Math.max(0, sumLT) * LT;
@@ -62,6 +77,36 @@ const inr = (n: number | null | undefined) => (n == null ? "null" : `₹${n.toFi
     Math.abs(pooled - expected) > 1e5, `pooled ${inr(pooled)} · per taxpayer ${inr(expected)}`);
   ok("the helper reports the pooled figure it replaced, for the page to state", near(est.pooled, pooled));
   ok("no reported account is left without a canonical owner on this book", est.unattributed.length === 0);
+
+  // THE SET-OFF (A-13). LOAD-BEARING: the book must carry a person whose own
+  // short-term loss sits beside their own long-term gain inside one year, or the
+  // figure above would pass just as well without the set-off.
+  const paired = [...perOwner.entries()].filter(([, e]) => e.oneYear && e.st < 0 && e.lt > 0);
+  ok("the book carries a taxpayer whose short-term loss sits beside their own long-term gain, in one year",
+    paired.length > 0, paired.map(([o]) => o).join(", "));
+  ok("…so the set-off moves the estimate, by more than a lakh",
+    Math.abs(noSetOff - expected) > 1e5, `without ${inr(noSetOff)} · with ${inr(expected)}`);
+  ok("…and the helper names the amount it set off for each such person",
+    paired.every(([o, e]) => near(est.byTaxpayer.find((t) => t.ownerId === o)?.setOff, Math.min(-e.st, e.lt))));
+  ok("a long-term loss never absorbs a short-term gain",
+    [...perOwner.entries()].filter(([, e]) => e.lt < 0 && e.st > 0).every(([o, e]) =>
+      near(est.byTaxpayer.find((t) => t.ownerId === o)?.tax, e.st * ST)));
+
+  // A LOSS CARRIES FORWARD, NEVER BACK. Constructed, because on this book the
+  // one taxpayer whose windows span two years has nothing to set off: a
+  // short-term loss beside a long-term gain whose windows reach into an earlier
+  // year is not set off, and the helper says why.
+  const row = (entity: string, ownerId: string, st: number, lt: number, from: string, to: string) =>
+    ({ ...reported[0], entity, ownerId, realisedST: st, realisedLT: lt, periodFrom: from, periodTo: to });
+  const spans = estimateRealisedTax([
+    row("x · A", "x", -100_000, 400_000, "2025-04-01", "2026-07-31"),
+    row("y · B", "y", -100_000, 400_000, "2026-04-01", "2026-07-31"),
+  ]);
+  const x = spans.byTaxpayer.find((t) => t.ownerId === "x"), y = spans.byTaxpayer.find((t) => t.ownerId === "y");
+  ok("windows that span financial years strike no set-off, and say so",
+    !!x && x.setOff === 0 && x.setOffWithheld && near(x.tax, 400_000 * LT), x ? `${inr(x.tax)}` : "missing");
+  ok("…while the same figures inside one year do",
+    !!y && near(y.setOff, 100_000) && !y.setOffWithheld && near(y.tax, 300_000 * LT), y ? `${inr(y.tax)}` : "missing");
 }
 
 process.exit(fails ? 1 : 0);

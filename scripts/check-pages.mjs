@@ -5708,15 +5708,24 @@ const XA_BOOK = (() => {
     // statutory rates are the one literal a check may carry.
     const cg = bookArray(src, "BOOK_CAPITAL_GAINS") ?? [];
     const reported = cg.filter((c) => c.realisedST !== null || c.realisedLT !== null);
+    // The year the newest window closes in (1 April – 31 March): a short-term
+    // loss is set off against the same person's long-term gain (s.70(2)) only
+    // where every window of theirs sits inside it, since a loss carries forward
+    // and never back (A-13).
+    const newest = reported.map((c) => c.periodTo ?? "").sort().at(-1) ?? "";
+    const fy = newest ? `${Number(newest.slice(5, 7)) >= 4 ? newest.slice(0, 4) : Number(newest.slice(0, 4)) - 1}-04-01` : "";
     const per = new Map();
     for (const c of reported) {
       if (!c.ownerId) continue;
-      const e = per.get(c.ownerId) ?? { st: 0, lt: 0 };
+      const e = per.get(c.ownerId) ?? { st: 0, lt: 0, oneYear: true };
       e.st += c.realisedST ?? 0; e.lt += c.realisedLT ?? 0;
+      if (!c.periodFrom || c.periodFrom < fy) e.oneYear = false;
       per.set(c.ownerId, e);
     }
     const taxOn = (st, lt) => Math.max(0, st) * 0.2 + Math.max(0, lt) * 0.125;
-    const perTaxpayer = [...per.values()].reduce((a, e) => a + taxOn(e.st, e.lt), 0);
+    const offOf = (e) => (e.oneYear && e.st < 0 && e.lt > 0 ? Math.min(-e.st, e.lt) : 0);
+    const perTaxpayer = [...per.values()].reduce((a, e) => a + taxOn(e.st + offOf(e), e.lt - offOf(e)), 0);
+    const noSetOff = [...per.values()].reduce((a, e) => a + taxOn(e.st, e.lt), 0);
     const pooled = taxOn(reported.reduce((a, c) => a + (c.realisedST ?? 0), 0), reported.reduce((a, c) => a + (c.realisedLT ?? 0), 0));
     // ── Snapshot History: each point's like-for-like change (XA-2), struck
     // straight off the point's own link fields — (close − capital in) ÷ open —
@@ -5734,7 +5743,7 @@ const XA_BOOK = (() => {
       const joined = Math.max(0, (n.accountsOnDate ?? 0) + (n.accountsCarried ?? 0) - (n.linkAccounts ?? 0));
       return { date: n.date, link, level, joined };
     });
-    return { tax: reported.length ? { perTaxpayer, pooled, taxpayers: per.size } : null, history };
+    return { tax: reported.length ? { perTaxpayer, pooled, noSetOff, taxpayers: per.size } : null, history };
   } catch { return null; }
 })();
 /** A compact rupee figure as the page prints it (`₹33.1 L`, `−₹4.3 L`, `₹713.3 Cr`), in rupees. NaN when absent. */
@@ -25340,6 +25349,18 @@ const INVARIANTS = {
       // One decimal of lakh is the tile's printing precision (±₹5,000).
       return Math.abs(v - perTaxpayer) <= 1 && Math.abs(shown - v) <= 5100
         && Math.abs(pooled - perTaxpayer) > 1e5 && Math.abs(shown - pooled) > 5100;
+    }],
+    // A-13: per taxpayer is not the whole of it — Ajay's own short-term loss
+    // absorbs his own long-term gain inside one year, and the tile printed
+    // ₹33.1 L without it. The book must be one where the set-off moves the
+    // figure, or the equality above would pass without it.
+    ["…with each person's short-term loss set off against their own long-term gain, and the tile says so", (t, ctx) => {
+      const el = xaEl(ctx, "cg-tax");
+      if (!XA_BOOK?.tax || !el) return false;
+      const shown = xaRupees(el.text);
+      const { perTaxpayer, noSetOff } = XA_BOOK.tax;
+      return Math.abs(noSetOff - perTaxpayer) > 1e5 && Math.abs(shown - noSetOff) > 5100
+        && (ctx.titles ?? []).some((x) => /short-term loss is set off against that person's own long-term gain/i.test(x));
     }],
     ["and says so on the tile, naming each taxpayer's own figure", (t, ctx) => {
       const el = xaEl(ctx, "cg-tax");
