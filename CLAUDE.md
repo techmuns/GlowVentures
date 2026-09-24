@@ -23061,7 +23061,7 @@ the COUNTS stay. Two things it had to get right that the long version got wrong:
   separate `git worktree` with its own preview (`BASE=`): the pass takes about
   an hour, and for all of it the files it patches carry a bug.
 
-**ALL 47 FIRE THEIR OWN CHECKS**, on the tree merged with #85, after a no-patch
+**ALL 49 FIRE THEIR OWN CHECKS**, on the tree merged with #91, after a no-patch
 control that came back clean:
 
 | # | Bug put back | Fires |
@@ -23113,6 +23113,8 @@ control that came back clean:
 | 45 | SENDER: a holding this dashboard has no symbol for is said to have none | 1 `researchLevels` check |
 | 46 | the price line's hover is dropped, taking its reasons with it | 1 page check on 2 routes |
 | 47 | SENDER: nothing is ever sent — the sender is not mounted | 5 page checks on 2 routes · 9 `check:family` rows |
+| 48 | the alert boxes' address names no tab, so it opens Position | 1 page check on 2 routes · 1 `check:family` row |
+| 49 | a holding's My targets tab draws no alert card | 3 page checks on 2 routes · 5 `check:family` rows |
 
 Case 41 is ONE check, #90's note guard, firing on both routes it runs on. The
 guard prints each route's own measured line, so the run lists it twice.
@@ -23242,13 +23244,14 @@ What else the merge touched:
 
 #### …and a sixth time: #91 took `10cn`, and put the alert card behind a tab
 
-#91 makes a holding's page five tabs — Position, Activity, Market, Research and
-My targets — the same five on every holding, at `?tab=`. It landed while the
-notes for the #86 merge were being written, and took `10cn`. Both sections were
-inserted after `10cm`, so git marked the conflict. Main keeps `10cn` and comes
-first, and this section is **`10co`**. The headings were compared against
-main's tip: the merged file differs from main's by `10co` alone, main's
-historical duplicates are unchanged, and nothing on main names `10co`.
+#91 makes a holding's page five tabs — Position, Transactions, Price & returns,
+Research and My targets — the same five on every holding, at `?tab=`. It landed
+while the notes for the #86 merge were being written, and took `10cn`. Both
+sections were inserted after `10cm`, so git marked the conflict. Main keeps
+`10cn` and comes first, and this section is **`10co`**. The headings were
+compared against main's tip: the merged file differs from main's by `10co`
+alone, main's historical duplicates are unchanged, and nothing on main names
+`10co`.
 
 Every line naming `10cn` was placed by whether main's own copy of its file
 carries it:
@@ -23309,12 +23312,13 @@ and 49 so the numbers above do not move: the helper naming no tab, and the My
 targets tab drawing no card. In #91's `stock-tabs-bug.sh`, case 14 (the
 plan-view sentence) anchored on a caption this card does not have. It now puts
 the sentence under the closed More, the harder place, which is what the
-strengthened check is for.
+strengthened check is for. It also walks `stock-funds-only-targets` now, because
+every stock route carries #91's tab checks.
 
 #### The verification
 
-Every result below is from the tree that ships: this change merged with #86
-(main `d72c5a4`), and each was run again there rather than carried across.
+Every result below is from the tree that ships: this change merged with #91
+(main `090c7e1`), and each was run again there rather than carried across.
 
 `build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
 35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
@@ -23322,26 +23326,47 @@ neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (49 suites
 2,670 checks, 0 failed — `priceAlerts.test.ts` and `researchLevels.test.ts`
 among them; its four NOT CHECKED lines are main's: three managers' bridges with
 no performance history on their capital's own date, and the fund-NAV basis
-gate) · `check:family` **123/0**, which is #86's own 92 plus this change's 31 ·
-`check:pages` **266 combinations clean, 0 invariant failures** · `npm run
+gate) · `check:family` **124/0**, which is #91's own 93 plus this change's 31 ·
+`check:pages` **298 combinations clean, 0 invariant failures** · `npm run
 build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md` BYTE-IDENTICALLY:
 a price level is the family's own input and never reaches the book. CI (`build`)
 and Cloudflare Pages are green on the final commit.
 
-**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cm records 258 combinations
-clean on main. This change adds four routes — `cio-alerts`, `cio-alerts-nofeed`,
-`cio-alerts-empty` and `cio-alerts-badge` — each walked in both themes, which
-makes 266. The fourteen invariants not checked were read out of the log by
-route, and all fourteen are main's claims:
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cn records 288 combinations
+walked on main. This change adds five routes — `cio-alerts`,
+`cio-alerts-nofeed`, `cio-alerts-empty`, `cio-alerts-badge` and
+`stock-funds-only-targets` — each walked in both themes, which makes 298. The
+fourteen invariants not checked were read out of the log by route, and all
+fourteen are main's claims:
 
-- **ten KPI-tile lines** (every tile on this book carries a figure). Main's
-  sweep carries six, one per Morning CIO route. This change adds four Morning
-  CIO routes and the same claim runs on each, so there are ten.
+- **ten KPI-tile lines** (every tile on this book carries a figure), one per
+  Morning CIO route: main's six, and this change's four alerts routes;
 - **two Private Market cost lines** (every private holding reports a cost);
 - **one redeemed-account line** on `private-market-folios`;
 - **one crumb** on `holdings-unknown`.
 
-None of this change's own checks abstains.
+None of this change's own checks abstains. Stage 10cn records two Transactions
+walks (`monitor-txn-drill`, `monitor-txn-in`) failing under load and passing
+alone; this sweep ran with no harness beside it, and both passed.
+
+**THE SWEEP RAN WITH A CHECKER READ BEFORE ITS LAST EDIT**, so the two routes
+that edit touched — `stock-targets` and `stock-funds-only-targets` — were walked
+again afterwards with the committed checker, in both themes: 4 combinations
+clean.
+
+**BOTH BUG HARNESSES RAN ON THIS TREE**, one after the other, in a separate
+worktree with its own preview:
+
+- `alerts-bug.sh`, all 49 cases, after a control that came back clean (its five
+  routes clean, `check:family` 124/0, every suite clean). The table above is
+  that run. Every row but 48 and 49 reads as it did on the tree merged with #85.
+- #91's `stock-tabs-bug.sh`, the four cases whose checks run on the My targets
+  tab: 1 (every tab drawn at once) fires on all 36 stock routes, 4 (the tabs
+  reordered) on all 36, 5 (a tile dropped) on the 31 that draw tiles, and 14
+  (the plan-view sentence, now under the closed More) on `stock-targets`. The
+  other 23 cases patch code this merge did not change, and all 27 of its
+  patches were checked to still apply to the merged files. The full sweep above
+  is the control for its routes.
 
 ### Stage 10k — News & Announcements: REMOVED
 
