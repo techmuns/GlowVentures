@@ -298,6 +298,16 @@ cash holding's genuinely-zero return both match, and both are correct.
   percentages, and a PMS mandate the set holds whole is struck on its own
   capital since inception. Every return on every page goes through one of the
   two. See Stage 10ca.
+- `src/lib/clubbedFigures.ts` — ONE ROW OVER SEVERAL STATEMENT LINES: cost, the
+  units and value it covers and the gain on it struck together (`costedFigures`),
+  and one mark or none (`commonMark`). See Stage 10ct.
+- `shared/lotSettlement.mjs` — which sale a capital-gain lot settles, read by
+  the ledger and by `build-book`. See Stage 10ct.
+- `src/lib/schemeReturns.ts` — a fund's published return is refused across a
+  step in its NAV series (a unit split). See Stage 10ct.
+- `src/lib/taxEstimate.ts` — the tax on realised gains, per taxpayer, with the
+  Act's set-off of a short-term loss against the same person's long-term gain
+  inside one financial year. See Stage 10ct.
 - `src/lib/returns.ts` + `src/lib/xirr.ts` — money-weighted returns (XIRR, YTD).
 - `src/lib/navSeries.ts` — the DATED NAV series' presentation half: the chained
   flow-adjusted index, the nearest-EARLIER alignment against an index series, and
@@ -24221,6 +24231,62 @@ keeping only the drawn columns, the two keys again, the old default, a pick that
 is never saved, a new column sent to the far right, a browser tab that never
 hears another's change, and a table that forgets its arrangement when it
 unmounts.
+
+### Stage 10ct — THE FIGURE AUDIT, PART A: THE MONEY FIGURES THAT WERE WRONG
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+`docs/FIGURE-AUDIT.md` is the audit, run on `main` at `20a3f15`: every figure the
+dashboard shows, where it appears and how it is computed, checked against nine
+rules and against the statements' own text. It found 17 wrong money figures (A),
+15 disagreements between pages (B), 12 themes of wrong labels or bases (C) and 58
+cosmetic items (D). This stage is the A group; B, C and D follow as Stages
+10cu–10cw, one PR each. It prints no PAN.
+
+| | Was wrong | Now |
+| --- | --- | --- |
+| A-01 | every return window ended on the book's newest date, 29 Aug — two quantity-only demats | it ends where its value is struck (`valueDateOf`); money-weighted +30.1% over 150 days → +26.5% over 134 |
+| A-02 | a row clubbing several statements set the costed cost against every unit and rupee | `clubbedFigures.ts` strikes cost, units, value and gain on one set: ICICI Bank avg cost ₹438.34 → ₹1,346.33, unrealised +₹2.06 Cr → +₹5.98 L |
+| A-03 | one lot's mark printed over every lot's units, on the Monitor and in Excel | one mark, or an absence naming the marks |
+| A-04 | Neo Infra's cost | fixed on main by FIFO (Stage 10ca) before these fixes began; its HPR is 13.83%, not the audit row's 14.2% (value against the cost still held) |
+| A-05 | Buoyant's own subscriptions counted as the manager's trades | capital, not trades; Bought ₹70.4 Cr → ₹35.4 Cr; the reader places columns by header |
+| A-06 | dated capital that never reached Transactions; an unvalued account at ₹0 | the dated calls reached it on main (Stage 10cd); V.E.C 128005's July deposits and Green Lantern's small flows are dated capital now; an unvalued account shows no value, gain or return |
+| A-07 | a date preset struck a gain on part of a record | withheld, with the reason |
+| A-08 | capital-gain lots joined to no sale, or to another member | `shared/lotSettlement.mjs`, read by the ledger and the book; the Transactions realised ties to the statements' total |
+| A-09 | one company drawn as two or three | the key merges landed on main (Stage 10cc); a bank's CD, NCD or CP now joins its share (₹52 L out of Unclassified) |
+| A-10 | "₹28.3 Cr not proven" was market value, not movement, and false | NAV steps are proven from printed totals; no pill on this book |
+| A-11 | Snapshot History's change counted accounts joining | the like-for-like link |
+| A-12 | the value bridge opened where it closed; Sanshi closed on its contributions | each column ties on its own lines (29 of 34) or is withheld with the reason (5) |
+| A-13 | the tax estimate netted one member's loss against another's gains | per taxpayer, with the Act's set-off of a short-term loss against the same person's long-term gain inside one year (s.70(2)): ₹18,19,256.53 → ₹24,18,681.36 |
+| A-14 | ₹0 where nothing was reported: Cash invested, the chat's accounts | absent with the reason; a redeemed account keeps its measured 0 |
+| A-15 | counts over the wrong set | members, not accounts; 7 unvalued AIF folios, not 10; "N holdings in M mandates"; Family weights over the rows' own total |
+| A-16 | DSP Gold and Silver "returns" across a 1:10 unit split | `schemeReturns.ts` refuses a window across a 2× step |
+| A-17 | ABSL Balanced Advantage units a statement records with no rate were on no screen | valued live at AMFI's NAV behind six gates; every unvalued line named on Family & Entities |
+
+**CAPITAL IS COUNTED ONCE, WITH ITS HOLDING.** Transition Venture Fund I is one
+holding under both family trusts, and the second trust's capital was added
+beside it. Private Market and Morning CIO read one set now (`privateCapital`):
+still to call ₹15.98 → ₹15.23 Cr, committed ₹42.73 → ₹41.23 Cr. Whether the
+trusts hold one investment or two is the family's to say (§4c); the hovers say
+what the second statement would add.
+
+**WHAT MOVED IN THE BOOK.** `BOOK_SUMMARY` did not move. In `glowData.ts`:
+- realised ₹3,87,67,064.88 → ₹3,96,29,296.51 — the Axis Liquid lots now settle
+  Green Lantern's sales (₹2,83,865.60 and ₹5,78,366.03), returns 3.18% → 5.49% and
+  5.83%;
+- six LKP holdings' realised 0 → absent: their sales are dated after the holding
+  statement, so those units are still in it;
+- capital moves 138 → 144, and `capitalRecordTo` for Green Lantern 510861 and
+  V.E.C 128005;
+- the NAV series' flows on three dates; nothing left unproven;
+- new: `BOOK_UNVALUED_HOLDINGS` (55 lines) and `BOOK_UNDATED_CAPITAL`.
+
+Both reconciliation reports were regenerated: they were stale on main.
+
+**Guards.** Eleven new suites in `test:family` and `test:ingest`, nine new
+`check:pages` routes, and `scripts/dev/unpriced-units-bug.sh`. Each guard was
+proven by putting its bug back.
 
 ### Stage 10k — News & Announcements: REMOVED
 
