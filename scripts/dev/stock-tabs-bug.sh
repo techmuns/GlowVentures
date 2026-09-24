@@ -42,7 +42,11 @@ restore() {
 }
 trap restore EXIT
 
-ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research
+# Every stock route, because every one asserts the same tab layout. The last
+# two are Stage 10cq's: stock-funds-only-targets, the alert card's own reason on
+# a company held only inside funds, and stock-aif-targets, the card's status on
+# an AIF no price reaches — each on the My targets tab that draws the card.
+ROUTES=stock,stock-activity,stock-market,stock-research,stock-targets,stock-fund,stock-fund-market,stock-arbitrage,stock-arbitrage-research,stock-arbitrage-market,stock-mf-lookthrough,stock-mf-holdings,stock-nocost,stock-aif-dual,stock-qty,stock-unmoved,stock-pledge,stock-sold-elsewhere,stock-cagr,stock-carried,stock-cmp-split,stock-cmp-agree,stock-cmp-unmarked,stock-cmp-nav,stock-mandates-many,stock-cash-market,stock-capital,stock-fifo,stock-held,stock-held-managers,stock-held-funds,stock-funds-only,stock-funds-only-activity,stock-funds-only-market,stock-funds-only-research,stock-funds-only-targets,stock-aif-targets
 WANT="${CASES:-}"
 N=0
 
@@ -215,13 +219,17 @@ if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, '  const measuredFootShown = measuredFootRows.length > 0;', 1))
 PY
 
+# Re-anchored when Stage 10cq's price alerts card merged in: that card has no
+# "Plan —" caption, and keeps the plan fields under a "More" that is closed on a
+# holding where nothing there is set. The sentence goes THERE, the harder place
+# — out of `innerText` — which is why the check reads the card's whole text.
 run_case "the plan-view sentence comes back on My targets" py <<'PY'
 import sys
 p = "src/components/InvestmentTools.tsx"
 s = open(p, encoding="utf-8").read()
-old = "          Plan\n"
-if old not in s: sys.exit(1)
-open(p, "w", encoding="utf-8").write(s.replace(old, "          Plan — these fill the Target weight and Valuation method columns on Portfolio Monitor's plan view.\n", 1))
+old = '          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">\n            {levelBox("above")}\n'
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, '          <p className="mt-2 text-[11px] text-slate-500">Plan — these fill the Target weight and Valuation method columns on Portfolio Monitor&rsquo;s plan view.</p>\n' + old, 1))
 PY
 
 run_case "a mutual fund's holdings drawn on its Price & returns tab too" py <<'PY'

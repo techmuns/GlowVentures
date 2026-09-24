@@ -452,6 +452,24 @@ cash holding's genuinely-zero return both match, and both are correct.
   made here the store never confirmed, then the shared layout. See Stage 10cb.
   A tile is ADDED from the strip's own last cell, the ADD TILE card, and saved
   the same way — see Stage 10cl.
+- `src/lib/priceAlerts.ts` + `src/lib/usePriceAlerts.ts` — WHETHER A PRICE ALERT
+  HAS FIRED, decided once for a holding's alert boxes and Morning CIO's All
+  alerts tab: which price (a live quote, then a fund's published NAV, NEVER a
+  statement mark), which way each of the five kinds fires, and four states —
+  reached, watching, checking, unchecked — of which only the first two are
+  verdicts. The levels are the family's own, in `watchlist.ts`, per browser.
+  `alertBoxesHref` is the ONE address of a holding's alert boxes — its My
+  targets tab — read by every link that opens them. See Stage 10cq.
+- `src/lib/researchLevels.ts` + `src/lib/researchSync.ts` +
+  `src/lib/useResearchSync.ts` — EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW
+  CENTRAL RESEARCH, which checks it against its own live price and raises it in
+  its All Alerts and AI Alerts. The first decides what is sent — NSE symbol, ISIN
+  and the five levels, as a seed, a set or a clear — what an answer means, how
+  the All alerts footer words the count (`summaryLine`) and how a card words
+  where its levels went (`researchLine`), all PURE; the second
+  sends it and remembers what arrived (`glow:research-levels/v1`, never inside
+  the store); the third is the one mount, in the app shell. A fund or an AIF has
+  no NSE symbol, so its levels stay here and its card says so. See Stage 10cq.
 - ...and `BOOK_POLYCAB` — the RING-FENCED promoter holding, a real position kept
   out of `BOOK_POSITIONS` and therefore out of every total, split, allocation and
   holdings table. `src/pages/Polycab.tsx` is its ONLY reader and reads it
@@ -23217,6 +23235,835 @@ checks, 0 failed; its four NOT CHECKED lines are main's) · `check:family`
 
 `npm run build-book` regenerates `glowData.ts` and `docs/BOOK-REPORT.md`
 byte-identically. Moving a sentence into a hover does not change the book.
+
+### Stage 10cq — PRICE ALERTS THAT FIRE WHERE A READER LOOKS, AN ALL ALERTS TAB, AND EVERY LEVEL SENT TO GLOW CENTRAL RESEARCH
+
+*"Does these alerts actually work, can you make this much simpler to fill in for
+the customer and also in morning CIO can you make an ALL alerts tab where in a
+beautiful table format whenever the alerts which have been set are triggered they
+show simply and ofcourse should look like an alert for entry exit or whatever
+think like the investor using this dashboard and keep it extremely simple and
+clean ui."* · *"Please note that when the user puts target price inside the
+dashboard, it should automatically also go to the Glow Central Research
+dashboard. When the target price is met, it should show in All Alerts as an
+alert, and automatically come to the AI Alert section in the Glow Central
+Research dashboard."*
+
+(Written as `10bz`. While it waited, main took every letter from `10by` to
+`10cp` — its `10bz` is *"Ask Muns is off the top bar"*, its `10cg` is *"Glow
+Central Research's fonts and colours"*, its `10ck` is #88's company page, which
+landed the hour the family said to merge, its `10cl` is #85's ADD TILE card,
+which landed while that merge was being verified, its `10cm` is #86's All
+Securities view, which landed while this change's final checks were running, its
+`10cn` is #91's five-tab position page, which landed while the notes for the #86
+merge were being written, its `10co` is #94's Private Market cut and
+whole-column drag, which landed before the notes for the #91 merge could be
+pushed, and its `10cp` is #95's cut of the explainer lines on every other page,
+which landed while the #94 merge was being verified — so this is **`10cq`**, the
+first free one. This work's own references
+moved with it each time, in code and here, and main's were counted against
+main's copy of each file and left alone. Some of main's `10cg`
+code comments describe Stage 10ci's work rather than the fonts — the
+corporate-action card, the Portfolio Monitor's route split, and their checks.
+Those are main's to repoint.)
+
+#### The honest answer was "half", and each missing half was a real defect
+
+Measured on the old `InvestmentTools` card before a line changed:
+
+1. **AN ALERT WAS SEEN ONLY ON ITS OWN STOCK'S PAGE.** `firedAlerts` ran inside
+   that one card and nowhere else, so an alert "fired" for a reader who happened
+   to open that company and for nobody else. That is a note, not an alert.
+2. **THE BUY LEVEL NEVER FIRED.** `entryPrice` was stored and labelled "the level
+   at which we would add" — and missing from `firedAlerts`. A buy level that
+   reaches its price and says nothing is the alert a buyer cares about most.
+3. **IT FIRED ON A STALE MARK.** With no live quote it compared the level against
+   the STATEMENT's own price, weeks old, and admitted it in a parenthesis. That is
+   exactly what "The alert engine — silence is read as all-clear" forbids: a rule
+   whose inputs are incomplete does not fire, and does not pass either.
+
+#### `src/lib/priceAlerts.ts` — which price, and whether it fired, decided once
+
+The stock page's boxes and Morning CIO's table both call it, so they cannot
+disagree about one alert. PURE — every input is an argument.
+
+- **WHICH PRICE, STRONGEST FIRST:** the intraday QUOTE where the feed priced the
+  holding; the fund's own published NAV where AMFI priced it (a fund has no
+  intraday price, so its NAV IS its price — Stage 10bn); otherwise NOTHING, with a
+  reason worded by what the holding is ("an AIF has no live price — it is valued
+  only on its statement" sends nobody to wait for a feed). **A statement mark is
+  never checked.**
+- **FOUR STATES, AND ONLY TWO ARE VERDICTS.** `reached` and `watching` need a
+  price. `checking` is the feed still answering — saying "no price" then would be
+  Today's movers' Stage 10r defect in a new table. `unchecked` is no price at all,
+  and it is never `watching`: a check never made must not read as one that held.
+- **THE FIVE KINDS ARE THE FIVE LEVELS THE STORE ALREADY HOLDS**, under an
+  investor's words — Buy at (`entryPrice`), Sell at (`exitPrice`), Stop loss
+  (`alertBelow`), Target (`targetPrice`), Alert above (`alertAbove`). Nothing the
+  family typed moves; "Entry price" is "Buy at" and now fires. Fair value is NOT
+  an alert — it is a valuation.
+- **REACHED IS INCLUSIVE** — a level the price touches exactly must fire.
+- **DISTANCE IS SAID THE WAY AN INVESTOR SAYS IT:** "↓ 18.2% to go" while
+  watching (as a share of the price NOW), "4.8% past" once fired (as a share of
+  the LEVEL).
+- **A TYPO IS REFUSED, NEVER SAVED AS A DELETE.** `parseLevel` reads Indian
+  grouping and the ₹ sign and refuses anything that is not a positive number. The
+  old parser read "abc" as blank and silently erased the level in the box.
+
+#### The card: four boxes, and everything else one click down
+
+The card led with ten fields in four rows and a "Plan" block naming columns on a
+Portfolio Monitor view that had been removed. It leads now with the four levels
+an investor acts at — Buy at, Sell at, Stop loss, Target — each saying UNDER
+ITSELF whether the price got there or how far is left. Alert above, fair value,
+target weight, fair value year and valuation method sit under **More**, which
+**opens by itself** when anything in it is set, so nothing the family typed is
+ever hidden. The "Add to watchlist" star is gone: its page was removed at Stage
+10w, and a control whose only effect is invisible is the control-that-looks-alive
+failure. The flag it set is kept on every save.
+
+**IT IS ON THE HOLDING'S MY TARGETS TAB** since main's Stage 10cn made the
+position page five tabs, and every link that opens it — the All alerts pencil,
+the row's name and the New alert finder — reads one address, `alertBoxesHref`.
+
+**NOTHING ON IT READS AS A SENTENCE** — main's Stage 10cp rule for every page.
+What the card does is its title's hover, and the way to All alerts is a short
+link beside the price chip rather than a line under the title. Where a level is
+saved on a holding no price reaches — an AIF, or a company held only inside
+funds — the card says *"Saved · not checked here — no price"*, and why is the
+hover, because a reader must SEE that these alerts cannot fire.
+
+#### Morning CIO → All alerts
+
+A fourth tab, LAST, so the three the family arranged keep their places and the
+default stays the movers panel. (Main's Stage 10by names the third tab after the
+chosen benchmark; the two changes met on the one line that draws a tab's label
+and both are kept — the benchmark's name, and the alerts count beside it.) One
+row per alert, because two levels on one holding fire separately:
+
+- **WHAT HAS FIRED COMES FIRST AND LOOKS LIKE AN ALERT** — a bell, the alert's own
+  words ("Stop loss hit", "Buy level reached"), its colour and a tinted row with a
+  bar at its edge; then what is still being checked; then what is watched,
+  closest first; then what cannot be checked, with the reason in its hovers.
+- **THE TAB CARRIES A COUNT OF FIRED ALERTS ON EVERY PANEL**, because that is how
+  a reader who never opens the tab learns something fired. A quiet day adds
+  nothing — never a `0` pill.
+- **REMOVING TAKES TWO CLICKS** ("×" then "Remove?"). A level the family set is
+  their own record and there is no undo.
+- **"NEW ALERT" OFFERS ONLY HOLDINGS AN ALERT CAN BE CHECKED ON** — a quote
+  symbol or a published NAV — and opens that holding's boxes rather than taking a
+  price inline, so there is ONE form for a level.
+- The table is a standard table (Stage 10bh): every heading sorts, every column
+  but the first moves, and an absent price sorts last, never as zero.
+- **NO LINE UNDER THE TITLE** (main's Stage 10cp): the counts — *reached ·
+  watching · checking · not checked* — sit beside the title, what the card is
+  is the title's hover, and an empty tab says *"No price alerts yet"* with the
+  how-to as that headline's hover and one short line naming New alert.
+
+#### The store tells everyone
+
+`watchlist.ts` keeps ONE cached snapshot, replaced (never edited in place) on a
+save, and tells every subscriber — `useSyncExternalStore` in `usePriceAlerts.ts`
+— so a level typed on a stock page is on the All alerts tab and in the badge with
+no reload; a save in ANOTHER browser tab arrives through the `storage` event. A
+saved NAME rides with each entry so an alert on a holding since sold still says
+what it is about; a name alone never keeps an empty entry alive.
+
+**THE LEVELS ARE STILL PER BROWSER**, which is recorded rather than glossed: the
+store is `localStorage`, exactly as it was, so a level typed on the laptop is not
+on the phone's All alerts tab. Stage 10cb moved the KPI tile layouts into the
+shared `GLOW_STORE` for exactly this complaint; the same move for the levels is
+the next step, and is named rather than taken here because it changes what a
+level IS (the family's shared record instead of one device's) and the family has
+not been asked.
+
+#### …AND EVERY LEVEL ON A LISTED SHARE ALSO GOES TO GLOW CENTRAL RESEARCH
+
+Glow Central Research is a separate app on its own Cloudflare Worker, so a level
+in this browser's `localStorage` can never reach it on its own. The work is in
+TWO repositories and only this half is here:
+
+- **`techmuns/Glow-Central-Research` PR #1283 — open and NOT merged**, because
+  merging it deploys. It adds ONE shared list of the family's price levels
+  (`/api/price-levels`, a Durable Object), checks every level against ITS OWN live
+  price (the Upstox token it already holds) once a minute while the market is
+  open, and turns a reached level into a row in its All Alerts and a card in its
+  AI Alerts. Its own `CLAUDE.md` and `docs/GLOW-TEMPLATE-SYNC.md` carry that half.
+- **This repo SENDS.** `src/lib/researchLevels.ts` decides what is sent and how an
+  answer is read (PURE); `src/lib/researchSync.ts` sends it and remembers what
+  arrived; `src/lib/useResearchSync.ts` holds the hooks and the ONE mount. Nothing
+  here reads Glow Central Research's alerts back — a level reached is shown here
+  by this app's own check, on this app's own price.
+
+**WHAT IS SENT, AND WHAT STAYS HERE.**
+
+- **ONLY A HOLDING WITH AN NSE SYMBOL.** Glow Central Research follows listed
+  companies by their NSE ticker and nothing else. A mutual fund or an AIF has no
+  ticker, so its levels stay here and its card says so — a send that can never
+  arrive must not look like one that is waiting.
+- **THE ISIN RIDES WITH THE TICKER**, because the receiving side keys its quote on
+  it (`NSE_EQ|<ISIN>`) and refuses a quote that does not echo both. Taken first
+  from Upstox's own instrument for that symbol (`shared/upstoxInstruments.mjs` —
+  the instrument the receiving side will ask about), then from the book's own.
+  Never from a name. Measured on the real book with a level on every holding:
+  **161 companies sendable, 160 carrying an ISIN.**
+- **THE FIVE LEVELS UNDER THE NAMES BOTH APPS USE** — `buyAt`, `sellAt`,
+  `stopLoss`, `target`, `alertAbove` — never this app's field names, mapped once
+  off `ALERT_DEF` so the sender cannot drift from the boxes. `null` is not set.
+- **A LEVEL THE OTHER SIDE WOULD REFUSE IS NAMED HERE** — above ₹1 crore a share
+  it reads as a typo — because the receiving side refuses a whole batch of 40
+  for one malformed edit, and one typo must not hold back every other company.
+- **TWO ENTRIES FOR ONE TICKER SEND ONE ROW**: the one saved most recently speaks,
+  and the other card says its levels were not the ones sent.
+
+**SEED, SET AND CLEAR — the receiving side's own shared-watchlist rules.** A
+level typed AFTER this browser started sending is a `set` and replaces what the
+shared list held. A level this browser already held BEFORE it ever sent is a
+`seed`, taken only where the shared list has never heard of the company — so a
+laptop opened after a month cannot overwrite a level set yesterday on a phone.
+Removing the last level on a company this browser had sent is a `clear`, which
+the list keeps as a record so a stale device cannot put it back. Only what this
+browser had sent is ever cleared: a declined seed was never its to clear.
+
+**"BEFORE" IS JUDGED ON THE LEVELS, NOT ON THE SAVE TIME, and the first version
+of this got it wrong.** A seed was any level whose entry was last saved before
+the sender started — and a note, or a tick on Watching, saves the entry. So a
+month-old level with a note typed under it today went as a `set` and overwrote a
+newer level from another device. It is live exactly in the rollout window, when
+every send is refused and the family goes on editing. `seeds` in the sent state
+records the levels this browser held when it started, as first seen; a set now
+needs BOTH a save since then AND levels that differ from those. Either alone is a
+wrong answer — the save time moves on a note, and a recorded seed cannot see a
+level that only became sendable later.
+
+**WHAT AN ANSWER MEANS.** `set`/`seeded` → acknowledged. `full` → refused, not
+retried until something changes. `unchanged` means three things and is decided by
+the list's OWN copy, returned with the answer: on a set it already held exactly
+this; on a clear there was nothing left; on a seed it had heard of the company —
+acknowledged if what it holds is exactly this (another tab of this browser sent
+it a moment ago), otherwise DECLINED, as another device's levels or as removed
+there, and not offered again until the family changes a level here.
+
+**A FAILURE SAYS WHICH FAILURE.** `offline`, `unreachable`, `not-ready` (the route
+answers 404 — the receiving side is not deployed yet, which is not an outage),
+`not-allowed` (an origin it refuses), `rate-limited`, `invalid`, `error` — each
+worded apart, because each sends a reader somewhere different. A refused origin
+carries no CORS header, so the browser sees a bare network error; an opaque
+failure is followed by ONE plain GET, which the list answers to every origin, to
+tell "refused" from "unreachable". The wait is chosen by cause: fifteen minutes
+for not-ready, one for offline or a rate limit, never on a timer for a refusal
+trying again cannot fix, and otherwise 30 s doubling to at most 30 minutes.
+
+**AUTOMATIC, AND ONE SENDER.** `<ResearchLevelSync />` is mounted once in the app
+shell (`App.tsx`), so a level saved on ANY page goes 700 ms later (a burst of
+edits goes as one request), a page load sends what did not arrive last time,
+and a failed send is tried again when its wait is over, the moment the browser
+comes back online, and when the tab is shown again. It is keyed on what would be
+SENT — tickers, ISINs, levels — never on the book object, which changes on every
+quote poll, and never on the save time, which a note moves. The Web Locks API
+makes one sender across tabs, and a call while a send is running is folded into
+one more send with the latest levels.
+
+**WHAT ARRIVED IS KEPT BESIDE THE STORE**, at `glow:research-levels/v1`, never in
+it: the levels are the family's, the acknowledgement is a fact about another app,
+and mixing them would let a failed send look like a changed level.
+
+**AND THE SCREEN NEVER SAYS "SENT" FOR WHAT DID NOT ARRIVE.** The line under a
+holding's alert boxes says exactly one of: saved here and in Glow Central Research
+/ sending / not there yet, and until when / held back because another device's
+levels are there (or were removed there) / refused because its list is full / the
+other entry's levels were sent / stays here only, and why. Each is a STATUS of a
+few words on the line's face — *"Saved here and in Glow Central Research"*,
+*"Saved here · Glow Central Research: waiting until it's ready"*, *"Saved here
+only · no NSE symbol for Glow Central Research"* — and the sentence behind it is
+the line's hover (main's Stage 10cp rule). `researchLine` in `researchLevels.ts`
+decides both, and `readsAsSentence` is the rule it is held to. The All alerts
+footer COUNTS it — *"Glow Central Research: 2 of 2 companies sent · 3 stay here
+(no NSE symbol)"* — against what the receiving side acknowledged, never against
+what was attempted.
+
+**THE FOOTER IS TWO SHORT LINES, AND THE SENTENCES ARE THEIR HOVERS** — Stage
+10ci's rule for a note under a table, which landed on main while this waited and
+failed the first version at 281 and 450 characters. The first line says where the
+prices came from (*"Live prices · Upstox · <when> · Funds on published NAV ·
+Saved in this browser"*); its hover says why a statement's own price is never
+used. The second is the count above; its hover says what Glow Central Research
+does with a level and, for each number on the line, why. That second line and
+its hover come from one function, `summaryLine` in `researchLevels.ts`, which
+keeps the line to at most 150 characters on any day AND never lets it read as a
+sentence (main's Stage 10cp): the reasons drop to the hover ONE AT A TIME —
+why some stay here, why one was refused, why one was held back, and last why the
+rest have not gone — until it fits, and the COUNTS never drop. Two things it had
+to get right that the long version got wrong:
+
+- **A LEVEL KEPT HERE AS TOO HIGH IS NOT "NO NSE SYMBOL".** The old footer put
+  *"(no NSE symbol)"* after every level that stayed here, and a level above ₹1
+  crore stays for a different reason. The summary counts the two apart
+  (`tooHigh`), and the line names a reason only where one covers them all.
+- **"HELD BACK" IS WORDED FOR BOTH WAYS IT HAPPENS** — the other side already had
+  levels for that company from another device, or they were removed there.
+
+**WHAT IS TRUE TODAY, STATED RATHER THAN IMPLIED:**
+
+- **Until PR #1283 is merged and deployed, the live Worker answers 404 on the
+  route**, so every card reads *"Saved here · Glow Central Research: waiting
+  until it's ready"*, and its hover says it is not taking price levels yet and
+  that they will go automatically once it is. Nothing needs doing on this side
+  when it is: the next retry, page load or edit sends everything.
+- **It writes only from the production origin.** The receiving side accepts a
+  write from its own origin and from `PRICE_LEVEL_ORIGINS` (this dashboard's
+  `pages.dev` address); a preview deployment is refused and its cards SAY so —
+  *"— live site only"* — with the address in the hover.
+- **No credential crosses.** The POST is `credentials: "omit"` — no cookie of this
+  dashboard's edge gate goes to another site — and no token was added here.
+- **Anyone who can open Glow Central Research can read the list**, the standing
+  its own shared watchlist already has. A level is a price; it names no account,
+  no holding size and no member.
+
+#### The checks, and what the bug pass proved
+
+- `npm run test:family` — `priceAlerts.test.ts`: every state, both original
+  defects asserted AS defects, the store's notify/snapshot/deletion rules, and a
+  book-anchored half (every NAV-priced fund checkable with the feed DOWN; a
+  quotable share `checking` before the feed answers; an AIF never checkable).
+  `researchLevels.test.ts` (134 checks): the rules on constructed inputs
+  (including the note under an old level and every shape of the footer line — the
+  count, the short cause per failure, the worst day, the too-high reason — each
+  face held to `readsAsSentence`, main's Stage 10cp rule written again), a REAL
+  send against a stand-in that follows the receiving
+  side's rules — seeds, a set, a clear, a seed declined because another device
+  holds the company, a note typed while the other side was down, each failure
+  cause and its wait, 45 companies in two batches resuming after the second
+  fails, two calls folded into one more send — and the real book: every ticker
+  passes the receiving side's own symbol rule and the largest batch with a level
+  on every holding is about 7 KB against its 32 KB limit.
+- `npm run check:pages` — a Glow Central Research stand-in on EVERY walk, so no
+  test can ever reach the real one. `cio-alerts` (answering) and
+  `cio-alerts-nofeed` (not deployed) assert what was SENT, read off the requests
+  rather than the screen: the two quoted shares as seeds, each under its symbol
+  and ISIN with exactly its levels, from this page's own origin as JSON; nothing
+  without an NSE symbol; the footer's count; and the footer's WORDS against its
+  own attributes, because a sentence reading "2 of 2 sent" over attributes
+  counting none passes every check that reads only the attributes. The two
+  footer lines' HOVERS are read too, because the sentences moved there and a
+  hover that went missing would take them with it. Every other route must send
+  nothing, and a request from one fails that route by name.
+- `npm run check:family` — the whole path on a real listed share, derived from
+  the book: a typed Target goes as a SET under its symbol and ISIN → the card
+  says it is there → with the receiving side down the next level fails and the
+  card says why → a reload sends it → down again, and the browser coming back
+  ONLINE sends it with no reload → clearing both levels sends a CLEAR → the card
+  says nothing is saved. Then a separate browser context on **Playwright's fake
+  clock**, because fifteen minutes cannot be waited out: the first send is
+  refused, NOT asked again inside ten minutes, and sent BY THE TIMER once the
+  other side is up — the one path a dashboard left open all day depends on.
+- `scripts/dev/alerts-bug.sh` reintroduces 29 alert bugs and 23 sender bugs
+  (`CASES=SENDER` for the sender's alone), each through the layers that can see
+  it, restoring by copy on a trap and rebuilding on the way out. It runs in a
+  separate `git worktree` with its own preview (`BASE=`): the pass takes about
+  an hour, and for all of it the files it patches carry a bug.
+
+**ALL 52 FIRE THEIR OWN CHECKS**, on the tree merged with #95, after a no-patch
+control that came back clean:
+
+| # | Bug put back | Fires |
+| --- | --- | --- |
+| 1 | the Buy level never fires — the old check left it out | 6 page checks on 3 routes · 4 `priceAlerts` checks |
+| 2 | an alert with no live price is checked against the statement mark | 7 page checks on 3 routes · 11 `priceAlerts` checks |
+| 3 | a Stop loss fires on the way UP | 5 page checks on 2 routes · 4 `priceAlerts` checks |
+| 4 | the distance still to go is struck against the level, not the price now | 1 page check on 1 route · 2 `priceAlerts` checks |
+| 5 | fired alerts sort nearest-first instead of furthest past | 1 page check on 1 route · 1 `priceAlerts` check |
+| 6 | an alert on a sold holding loses the name saved with it | 1 page check on 2 routes · 1 `priceAlerts` check |
+| 7 | a fired alert carries no bell | 1 page check on 2 routes |
+| 8 | every row is tinted, fired or not | 1 page check on 2 routes |
+| 9 | the pencil opens the holding's page but not its alert boxes | 1 page check on 2 routes · 1 `check:family` row |
+| 10 | the note under the table says live prices whatever the feed did | 1 page check on 1 route |
+| 11 | the empty tab draws an empty table instead of saying there are no alerts | 1 page check on 1 route · 1 `check:family` row |
+| 12 | the badge counts every alert, not the ones that have fired | 2 page checks on 3 routes |
+| 13 | a quiet day shows a 0 badge | 1 page check on 1 route |
+| 14 | the badge shows only while the alerts tab is already open | 1 page check on 1 route |
+| 15 | All alerts is added FIRST, moving the default panel | 7 page checks on 5 routes |
+| 16 | a save tells nobody — the boxes and the tab go stale | 6 `check:family` rows · 2 `priceAlerts` checks |
+| 17 | a saved name alone keeps an empty entry alive | 1 `check:family` row · 1 `priceAlerts` check |
+| 18 | a typed 'abc' is read as blank and erases the level | 1 `check:family` row · 2 `priceAlerts` checks |
+| 19 | the Target box writes to the Alert above field | 3 `check:family` rows |
+| 20 | one click on the cross removes the alert | 1 `check:family` row |
+| 21 | More never opens by itself, hiding what was typed under it | 1 `check:family` row |
+| 22 | the New alert finder offers holdings an alert can never be checked on | 1 `check:family` row |
+| 23 | SENDER: every level goes as a SET, overwriting another device's newer one | 1 page check on 2 routes · 7 `researchLevels` checks |
+| 24 | SENDER: a note typed under an old level turns it into a SET | 2 `researchLevels` checks |
+| 25 | SENDER: the first send records no seeds | 5 `researchLevels` checks |
+| 26 | SENDER: the ISIN is not sent, so the other side cannot check its price | 1 page check on 2 routes · 1 `check:family` row · 3 `researchLevels` checks |
+| 27 | SENDER: the book's ISIN is preferred to the instrument the symbol IS | 1 `researchLevels` check |
+| 28 | SENDER: a holding with no NSE symbol is sent under its own slug | 4 page checks on 2 routes · 1 `check:family` row · 8 `researchLevels` checks |
+| 29 | SENDER: a level the other side reads as a typo sinks the whole batch | 3 `researchLevels` checks |
+| 30 | SENDER: the other side's batch size is ignored | 2 `researchLevels` checks |
+| 31 | SENDER: another device's levels answering a seed are read as ours — saved | 4 `researchLevels` checks |
+| 32 | SENDER: what already arrived is sent again every time | 6 `researchLevels` checks |
+| 33 | SENDER: removing the last level never clears it there, so it goes on alerting | 1 `check:family` row · 2 `researchLevels` checks |
+| 34 | SENDER: a level still on its way reads SENT | 1 `check:family` row · 2 `researchLevels` checks |
+| 35 | SENDER: the other side not deployed yet reads as an outage | 1 page check on 1 route · 2 `check:family` rows · 2 `researchLevels` checks |
+| 36 | SENDER: the send carries this dashboard's cookies to another site | 1 page check on 1 route · 1 `researchLevels` check |
+| 37 | SENDER: a refusal is asked again at once instead of in fifteen minutes | 1 `check:family` row · 2 `researchLevels` checks |
+| 38 | SENDER: a failed send is never tried again on its timer | 1 `check:family` row |
+| 39 | SENDER: a browser coming back online does not send what was waiting | 1 `check:family` row |
+| 40 | SENDER: the footer says every company was sent, whatever arrived | 1 page check on 1 route · 3 `researchLevels` checks |
+| 41 | SENDER: the footer's hover sentences are put back on screen | #90's note guard and #95's prose check, each on 2 routes |
+| 42 | SENDER: the reasons never drop to the hover, so a bad day runs past one line | 11 `researchLevels` checks |
+| 43 | SENDER: a level kept here as too high is said to have no NSE symbol | 2 `researchLevels` checks |
+| 44 | a company held only inside funds is said to be not held in this book | 1 page check on 1 route |
+| 45 | SENDER: a holding this dashboard has no symbol for is said to have none | 1 `researchLevels` check |
+| 46 | the price line's hover is dropped, taking its reasons with it | 1 page check on 2 routes |
+| 47 | SENDER: nothing is ever sent — the sender is not mounted | 5 page checks on 2 routes · 9 `check:family` rows |
+| 48 | the alert boxes' address names no tab, so it opens Position | 1 page check on 2 routes · 1 `check:family` row |
+| 49 | a holding's My targets tab draws no alert card | 3 page checks on 2 routes · 5 `check:family` rows |
+| 50 | the card's line puts its whole sentence back on screen | 1 page check on 1 route · 4 `check:family` rows |
+| 51 | an alert no price reaches says so in a sentence again | 2 page checks on 1 route |
+| 52 | the card stops saying an alert no price reaches is not checked | 1 page check on 1 route |
+
+Case 41 is TWO checks now, #90's note guard and #95's prose check, each firing
+on both routes it runs on. Each prints its route's own measured line, so the run
+lists four. Rows 40 and 42 fire more checks than on the tree merged with #91,
+because the Glow Central Research suite now holds every face the footer can draw
+to `readsAsSentence`. Every other row from 1 to 49 reads as it did there, and
+rows 50–52 are the three cases the #95 merge added.
+
+#### Merged with main, and one check main itself was failing
+
+Main moved from `20a3f15` to `3a5b4d1` while this branch was open — nine PRs
+and a data refresh, eight stage letters — and two files conflicted:
+
+- **`MorningCIO.tsx`**, on the line that draws a tab's label: main names the
+  third tab after the chosen benchmark, this change puts the fired-alerts count
+  beside the fourth. Both kept.
+- **`check-pages.mjs`**: the routes, `installLiveMocks(page, opts)`, the invariant
+  blocks and the `ctx` literal — resolved as a mechanical UNION: main's 92 keys
+  and this change's `alertsTab` and `researchPosts`, 94, none duplicated, every
+  one then confirmed to name a declared probe.
+
+**AND TWO `check:family` ROWS FAILED ON MAIN ITSELF.** #84 added
+`/corporate-actions` to the Extras group without updating the suite's list of
+what Extras holds. This branch fixed it with one list, `EXTRAS_PAGES`, that both
+rows read. Main then fixed the same thing the same way (#92, Stage 10cj), so on
+the second merge main's version is kept whole.
+
+#### Merged with main a second time: four PRs, and a rule that failed the footer
+
+Main moved from `3a5b4d1` to `f55b19b` while the family's go-ahead was awaited:
+#87 (Stage 10cg, fonts and colours), #89 (Stage 10ch, notes), #90 (Stage 10ci,
+the notes around every table cut to one short line) and #92 (Stage 10cj, the
+Private Market FIFO checks and the fifth Extras page). Two files conflicted:
+
+- **`check-pages.mjs`** — the `ctx` literal is the union again: main's 94 keys
+  (which dropped `fundExposure` and added `fundLines`, `tableNotes` and
+  `foldsOnArrival`) and this change's `alertsTab` and `researchPosts`, 96, none
+  duplicated, every one naming a declared probe.
+- **`check-family-inputs.mjs`** — the Extras rows, where main's version is kept.
+
+**AND #90's GUARD FAILED THIS CHANGE'S FOOTER**, which no conflict marker could
+show: `cio-alerts` and `cio-alerts-nofeed` wrote 281 and 450 characters under the
+All alerts table, over the two lines of 150 the guard allows. The two short lines
+above are the fix. The two harness cases whose code moved were re-anchored and
+four new ones added — see the bug pass.
+
+#### Merged a third time: #88 took `10ck`, and its new page showed the card saying two false things
+
+#88 — one company page however the company is held, including a page for a
+company the family holds only inside its funds — landed the hour the family said
+to merge, and took `10ck`, the letter this section held then. Of the lines naming
+`10ck`, 26 code comments and 3 lines here were this change's and moved; #88's 2
+code comments and 4 lines here stayed.
+
+- **The `ctx` literal is the union**: #88's `heldTable` beside `alertsTab` and
+  `researchPosts`, 97 keys, none duplicated, every one declared.
+- **`StockInfo.tsx` merged without a marker**, so it was read by hand.
+  `<InvestmentTools>` renders on every company page, #88's new ones included.
+
+**AND ON #88's NEW PAGE THE ALERT CARD CONTRADICTED THE BADGE ABOVE IT.** That
+page is badged *"Held only inside your funds"*. With no statement row, the card's
+price chip said the company was *"not held in this book"*, and a level saved there
+said the company *"has none"* — no NSE symbol. Both are false of a listed company
+the family reaches through a fund. What is true is narrower:
+
+- no STATEMENT in this book holds it, so this dashboard fetches no price for it;
+- this dashboard has no NSE symbol for it.
+
+The card says exactly that now, and so does the All alerts footer's hover.
+`researchLevels.test.ts` and a check on `stock-funds-only` hold the words. Two
+harness cases put the old words back, one on each side, and both fire.
+
+#### …and a fourth time: #85 took `10cl`
+
+#85 — an ADD TILE card on both KPI strips, and Capital Call cells that say why
+saving is off — landed while the #88 merge was being verified, and took `10cl`.
+Main keeps it, and this section became **`10cm`**. Of the lines naming `10cl`, 22 are
+#85's and stay: 6 lines here, 13 comments in the checker, 2 in its own harness
+and 1 in `Kpi.tsx`. This change's 26 code comments and 3 lines here moved.
+
+- **The `ctx` literal conflicted and is the union**: #85's `tileAdd` and
+  `callOff` beside `alertsTab` and `researchPosts`, 99 keys, none duplicated,
+  every one naming a declared identifier.
+- **Nothing else overlapped.** #85 changed the KPI strips, the capital-call store
+  and Private Market. This change touches none of them, #85 did not touch
+  `MorningCIO.tsx`, and neither side touched a generated file.
+- **The ADD TILE card sits on the KPI strip above all four Morning CIO panels,
+  All alerts included**, so the alerts routes were walked again rather than
+  assumed — see below.
+
+#### …and a fifth time: #86 took `10cm`, and a count of headings could not see it
+
+#86 is the Portfolio Monitor opening on All Securities, first in its axis
+control. It landed while this change's final checks were running, and took
+`10cm`. **Both files then carried exactly ONE `10cm` heading, so comparing how
+many times each letter appears found nothing.** Only the TITLES differ. That is
+the rule Stage 10ce's fourth collision taught — compare headings, not letter
+counts — and this time it was the only thing that could have caught it. Git
+marked the conflict in this file only because both sections were inserted after
+`10cl`. Main keeps `10cm` and comes first, and this section became **`10cn`**.
+
+Every line naming `10cm` was placed by whether main's own copy of its file
+carries it:
+
+- #86's 9 stay: 5 lines here, and 4 code comments (two in the checker, one in
+  its own harness and one in `MandateHoldings.tsx`).
+- This change's 26 code comments and its lines here moved.
+- One line of this section's history keeps `10cm`, because it records the
+  letter it held then.
+
+What else the merge touched:
+
+- **The `ctx` literal conflicted and is the union**: #86's `holdingsDropdown`,
+  `pickedFund`, `filterRow` and `monitorInFull` beside `alertsTab` and
+  `researchPosts`, 103 keys, none duplicated, every one naming a declared
+  identifier.
+- **`searchIndex.ts` merged without a marker, and was read.** #86 renamed the
+  security view "All Securities" and added "Holdings by category"; this change
+  adds "All alerts". They are different entries, and both are kept.
+- **`check-family-inputs.mjs` merged without a marker too.** #86's rows are a
+  Monitor block that runs before this change's blocks, and each of this change's
+  blocks opens its own address, so none of them starts on #86's page.
+- **#86 changes none of the 11 files the alerts bug harness patches.** It does
+  change the two checkers the harness runs, so both diffs were read. Its page
+  checks are on the Portfolio Monitor's routes and one mandate page. Its walk
+  code reads the Monitor's own controls. Its `check:family` rows are a Monitor
+  block of their own. Not one line of either diff names an alert, a price level
+  or Glow Central Research. None of the checks the harness fires moved, so its
+  pass on the tree merged with #85 still stands. The full checks on this tree
+  are its control — the treatment Stage 10cl gave #88.
+
+#### …and a sixth time: #91 took `10cn`, and put the alert card behind a tab
+
+#91 makes a holding's page five tabs — Position, Transactions, Price & returns,
+Research and My targets — the same five on every holding, at `?tab=`. It landed
+while the notes for the #86 merge were being written, and took `10cn`. Both
+sections were inserted after `10cm`, so git marked the conflict. Main keeps
+`10cn` and comes first, and this section became **`10co`**. The headings were
+compared against main's tip: the merged file differs from main's by `10co`
+alone, main's historical duplicates are unchanged, and nothing on main names
+`10co`.
+
+Every line naming `10cn` was placed by whether main's own copy of its file
+carries it:
+
+- #91's 13 lines here stay, and so do main's 4 code comments naming it (one
+  each in `check-corporate-actions.mjs`, `cmp-bug.sh`, `held-through-bug.sh` and
+  `look-bug.sh`).
+- This section's heading, its two Layout pointers and its 26 code comments
+  moved to `10co`.
+- Three lines of this section's history keep `10cn`, because they record the
+  letter #91 took and the one this section held then.
+- The comments this merge writes cite the stage they describe: the six about
+  #91's tabs say `10cn`, and the ones about the alerts said `10co`, this
+  section's letter then.
+
+**THE MERGE WOULD HAVE BROKEN THE ALL ALERTS PENCIL, AND NO CONFLICT SAID SO.**
+The pencil, a row's name and the New alert finder all opened
+`/stock/<key>#alerts`. After #91, an address with no `?tab=` opens Position,
+which draws no alert boxes — so the pencil would open the right holding and not
+its alerts. `AllAlerts.tsx` merged without a marker, because #91 never touched
+it. All three links now read one address, `alertBoxesHref` in `priceAlerts.ts`:
+`/stock/<key>?tab=targets#alerts`. The page check and the `check:family` rows
+hold every link to it.
+
+The five files that conflicted, each resolved by intent:
+
+- **`StockInfo.tsx`** — #91's five-tab layout is taken whole. On My targets the
+  card is called with the key and the name alone: this change's card works out
+  its own price (`usePriceNow`), and #91's call still passed `rows[0]`'s
+  statement mark, which an alert is never checked against.
+- **`InvestmentTools.tsx`** — this change's card is kept. #91's edit there cut a
+  caption that sent a reader to a Portfolio Monitor "plan view" that no longer
+  exists, and this card never carried that sentence.
+- **`check-pages.mjs`**:
+  - #91's `stock-targets` check matched the old card's words — "Investment
+    tools", "target price", "valuation method". The card is "Price alerts" now,
+    and valuation method sits under a closed More, so the words are not on
+    screen. The claim is unchanged and is struck on the card's own handles: a
+    `targets` field on #91's `stockPage` probe reads the card's boxes, inputs
+    and plan fields.
+  - #91's check that no sentence points at the removed plan view read the
+    page's `innerText`, which stops at a closed `<details>` — so a sentence under
+    More would have passed it. It reads the card's whole text too now.
+  - This change's check that the card's reason agrees with the funds-only badge
+    was on the Position tab, which no longer draws the card. It moved to a new
+    route, `stock-funds-only-targets`, with #91's own tab checks spread in.
+  - The `ctx` literal is the union: #91's `stockPage` beside this change's keys,
+    104 in all, none duplicated, every one declared.
+- **`check-family-inputs.mjs`** — this change's walk replaces the block #91 had
+  edited. It opens a holding's page by its bare address, requires the My
+  targets tab (#91's row, kept as "a holding's page offers the My targets tab"),
+  and clicks it by its key.
+- **This file** — main's section first.
+
+**BOTH HARNESSES WERE FITTED TO THE TABS.** In `alerts-bug.sh`, case 9 (the
+pencil) patches the helper's call now, case 44 walks `stock-funds-only-targets`,
+and `StockInfo.tsx` joins the files it restores. Two cases are new, numbered 48
+and 49 so the numbers above do not move: the helper naming no tab, and the My
+targets tab drawing no card. In #91's `stock-tabs-bug.sh`, case 14 (the
+plan-view sentence) anchored on a caption this card does not have. It now puts
+the sentence under the closed More, the harder place, which is what the
+strengthened check is for. It also walks `stock-funds-only-targets` now, because
+every stock route carries #91's tab checks.
+
+#### …and a seventh time: #94 took `10co`, and its whole-column drag reached this table
+
+#94 removes Private Market's explainer lines and makes a dragged column lift
+whole on every table. It landed before the notes for the #91 merge could be
+pushed, and took `10co`. Both sections were inserted after `10cn`, so git marked
+the conflict. Main keeps `10co` and comes first, and this section became **`10cp`**.
+The headings were compared against main's tip: the merged file differed from
+main's by `10cp` alone, main's historical duplicates were unchanged, and nothing
+on main named `10cp` yet.
+
+Every line naming `10co` was placed by whether main's own copy of its file
+carries it:
+
+- #94's 5 lines here stay (its heading, its pointers in Layout and Conventions,
+  and two lines of its own letter note), and so do its 2 comments in
+  `check-pages.mjs`.
+- This section's heading, its two Layout pointers, the note at its top and its
+  36 code comments moved to `10cp`.
+- The five lines of the #91 merge note that name `10co` keep it, because they
+  record the letter this section held then. Two of them were reworded to say
+  so: "this section became", and the alert comments "said" it.
+
+What the merge touched:
+
+- **`check-pages.mjs` conflicted on the `ctx` literal alone**, and it is the
+  union: #94's `prose` beside `alertsTab` and `researchPosts`, 105 keys, none
+  duplicated, every one declared. **The first resolution kept a key and lost
+  its value.** It wrote `researchPosts` as a bare name, but this change's entry
+  is `researchPosts: [...RESEARCH_POSTS]`, and no variable is called
+  `researchPosts`, so every check on every route would have thrown. The check
+  that every key names a declaration caught it before a build. A union of keys
+  has to keep each key's value, not only its name.
+- **`check-family-inputs.mjs` merged without a marker, and was read.** It is
+  this branch's file plus exactly #94's 19 changed lines (its band-hover rows),
+  and the 7 renamed comments.
+- **#94's drag reaches the All alerts table, and it was driven there.** That
+  table declares its columns through `SortHeader`, so it gets the whole-column
+  drag with no change of its own. #94 checks the drag on `monitor-arrange`
+  alone. A real mouse drag on this tree, read mid-air, carried Price now past
+  Alert: one copy, of that column, holding its heading and all six rows' cells,
+  the seven source cells dimmed, and the drop bar showing. After the drop the
+  column sat before Alert, every body cell had followed its heading, nothing
+  was left behind, and nothing sorted. That was a scratch script with a
+  screenshot, not a permanent check — the way #94 measured its drag on the
+  white theme.
+- **ONE HOVER STILL GAVE THE OLD INSTRUCTIONS, AND NO CONFLICT COULD SHOW IT.**
+  #94 rewrote `SortHeader`'s own hover, because the whole heading drags now
+  rather than the handle: *"drag it, or focus the handle and press ← or →, to
+  move it"*. The All alerts Edit column passes a hover of its own, and it still
+  said *"drag the handle, or focus it and press ← or →"*. It uses #94's words
+  now. #94 never touched `AllAlerts.tsx`, so the merge could not flag it.
+
+**THE THREE BUG HARNESSES WERE DRY-RUN ON THE MERGED FILES, AND EVERY PATCH
+APPLIES**: this change's 49, #91's 27 and #94's 27. Each anchor was found exactly
+once in a copy of the tree, so none would report NOT A RESULT. None was re-run:
+
+- `alerts-bug.sh` — #94 changed two of the 17 files it restores, the two
+  checkers, and none of the lines its cases patch or the checks they fire. The
+  one component #94 changed that the All alerts table draws with is
+  `SortHeader`, and no alert check reads the header's markup. The drag on that
+  table was driven directly, above.
+- `stock-tabs-bug.sh` (#91's) — #94 changed none of the four page files it
+  patches, and none of its checks.
+- `pm-prose-bug.sh` (#94's) — this change touches none of the files it patches
+  but the checker, and none of its checks there: they are on Private Market and
+  `monitor-arrange`, and this change's walks are elsewhere.
+
+So the full sweep on that tree was the control for all three, the treatment
+Stage 10cl gave #88.
+
+#### …and an eighth time: #95 took `10cp`, and its rule reached the alert card
+
+#95 takes the explainer lines off every page but Private Market: a card's
+subtitle, a tile's hint, a page's subtitle and an absence's paragraph become
+hovers, and a new check on every route fails any line that reads as a
+sentence. It landed while the #94 merge was being verified, and took `10cp`.
+Both sections were inserted after `10co`, so git marked the conflict. Main
+keeps `10cp` and comes first, and this section is **`10cq`**. The headings
+were compared against main's tip: the merged file differs from main's by
+`10cq` alone, main's historical duplicates are unchanged, and nothing on main
+names `10cq`.
+
+Every line naming `10cp` was placed by whether main's own copy of its file
+carries it:
+
+- #95's 2 lines here stay (its heading and its Conventions pointer), and so do
+  115 of its 117 code comments. The other 2 were on main's old alert card, in
+  `InvestmentTools.tsx`, which this change replaces (below).
+- This section's heading, its two Layout pointers, the note at its top and its
+  36 code comments moved to `10cq`.
+- The four lines of the #94 merge note that name `10cp` keep it, because they
+  record the letter this section held then.
+- The 20 comments this merge writes about #95's rule cite it as main's Stage
+  10cp, because that is the stage they describe.
+
+Four files conflicted:
+
+- **`InvestmentTools.tsx`.** #95 edited main's OLD card, the one this change
+  replaced: it cut the "Plan — …" caption to one word and moved the
+  target-weight footnote into that label's hover. This change's card is kept,
+  and the rule is applied to it instead. Its subtitle is a string now, so it
+  is the title's hover. The link to All alerts, which sat inside that
+  subtitle, is a short *"All alerts →"* beside the price chip. The target
+  weight's meaning was already that box's hover, with *"0 = hold none · blank
+  = not decided"* a short status under it.
+- **`check-pages.mjs`**, on the `ctx` literal alone. It is the union: main's
+  104 keys (#95 added `cgMissing`) plus `alertsTab` and `researchPosts:
+  [...RESEARCH_POSTS]`, 106, none duplicated, every one declared.
+- **`stock-tabs-bug.sh`** (#91's). #95 re-anchored its case 14 onto main's old
+  card's one-word "Plan" label, which this card does not have. The case keeps
+  this change's anchor: the plan-view sentence put back under the closed
+  More, the harder place for the check to find it.
+- **This file** — main's section first.
+
+`MorningCIO.tsx`, `StockInfo.tsx`, `searchIndex.ts` and `App.tsx` merged
+without a marker and were read. Each differs from main by this change's own
+lines alone: the All alerts tab and its count, the My targets tab's card, the
+search entry and the sender's mount.
+
+**#95's RULE APPLIED TO THIS CHANGE'S OWN LINES, AND NO CONFLICT COULD SHOW
+IT.** Its check runs on every route, this change's included, and fails a
+visible line past 60 characters that carries ten or more lower-case words.
+Measured against that rule, six lines this change drew were sentences:
+
+| Line | Characters · lower-case words |
+| --- | --- |
+| the card's research line, once sent | 122 · 13 |
+| the same line, while Glow Central Research is not deployed | 185 · 21 |
+| the All alerts price line, live | 106 · 11 |
+| the same line, with no live prices | 137 · 21 |
+| the empty tab's how-to | 147 · 26 |
+| the card's can't-be-checked note | 114 · 19 |
+
+Two subtitles also carried JSX — the card's link, and the tab's counts — where
+#95's `Card` now takes only a string. Each became a short status with its
+sentence in the hover:
+
+- **`researchLine` moved into `researchLevels.ts`, pure**, with `failShort`
+  beside `failSentence`. The card's line says *"Saved here and in Glow Central
+  Research"* (39 characters, 3 lower-case words), or *"Saved here · Glow
+  Central Research: waiting until it's ready"* (60 · 5), and the sentence is
+  the line's hover.
+- **`readsAsSentence` is #95's rule written again on purpose**, twice: in
+  `researchLevels.ts`, so the card and the footer pick, before they draw, a
+  form the check will never flag; and in `check-family-inputs.mjs`, so the
+  walk that reads the card is not the code under test.
+- **`summaryLine` drops the footer's reasons one at a time** until its line is
+  short AND not a sentence. The counts never drop.
+- **The price line is items**: *"Live prices · Upstox · <when> · Funds on
+  published NAV · Saved in this browser"* (90 · 6), with why a statement's
+  price is never used as its hover.
+- **The tab's counts moved up beside its title**, because a hover carries only
+  a string and the counts are figures.
+- **The empty tab's how-to is its headline's hover**, with *"Set one with New
+  alert above."* on the face.
+- **The can't-be-checked note is a status**: *"Saved · not checked here — no
+  price"* (35 · 5), with the reason as its hover.
+
+**THAT LAST NOTE WAS ON NO WALK, SO THE PROSE CHECK COULD NOT HAVE FOUND IT.**
+It shows only where a level is set on a holding no price reaches, and every
+alert route walks a priced one. So a new route, `stock-aif-targets`, sets a
+level on the book's largest AIF (`ALERTS_BOOK.aif`, derived) and holds four
+claims there beside #91's tab checks: the level is in its box; the price chip
+says there is no price and never shows the statement's mark; the note is a
+short status whose hover names the reason; and the level stays here, with a
+status saying why. Putting the old sentence back fails both that route's note
+check and #95's prose check.
+
+**THE CHECKS FOLLOWED THE WORDS TO THE HOVERS.** Every check that read a
+sentence off the card or the tab reads the face and the hover apart now, and
+requires both: a face that is a status, and a hover that says why. In
+`check:family` that is two new rows — the fund card's line, and the sent and
+waiting lines — so it has 126 rows, not 124. In `test:family`, the Glow
+Central Research suite has 134 checks, not 116: every face the card or the
+footer can draw is held to `readsAsSentence`. No other suite's count moved.
+
+The alerts bug harness gained three cases — the card's line putting its whole
+sentence back on screen (50), the can't-be-checked note back as a sentence
+(51), and that note gone (52) — and three were re-anchored onto the new faces
+(10, 42 and 43).
+
+#### The verification
+
+Every result below is from the tree that ships: this change merged with #95
+(main `9dd55a6`), and each was run again there rather than carried across. The
+code that ships is `13a023c`; every commit after it changes only these notes
+and the route list of #91's bug harness.
+
+`build` · `tsc` · `test:ingest` (parseNum 49, layout 31, pipeline 84, altFund
+35, buoyant 42, classSwitch 44, capitalCalls 30, payouts 29, hdfcOwner 22,
+neoFlows 8, golden 140 — 2 not checked, 0 blocked) · `test:family` (49 suites,
+2,686 checks, 0 failed — main's 2,500, plus 52 in `priceAlerts.test.ts` and
+134 in `researchLevels.test.ts`; its four NOT CHECKED lines are main's: three
+managers' bridges with no performance history on their capital's own date, and
+the fund-NAV basis gate) · `check:family` **126/0**, which is #95's own 93 plus
+this change's 33 · `check:pages` **302 combinations clean, 0 invariant
+failures** · `npm run build-book` regenerates `glowData.ts` and
+`docs/BOOK-REPORT.md` BYTE-IDENTICALLY: a price level is the family's own input
+and never reaches the book. CI (`build`) and Cloudflare Pages are green on the
+final commit.
+
+**THE SWEEP RECONCILES WITH MAIN'S OWN.** Stage 10cp records 290 combinations
+clean on main. This change adds six routes — `cio-alerts`,
+`cio-alerts-nofeed`, `cio-alerts-empty`, `cio-alerts-badge`,
+`stock-funds-only-targets` and `stock-aif-targets` — each walked in both themes,
+which makes 302. The fourteen invariants not checked were read out of the log by
+route, and all fourteen are main's claims:
+
+- **ten KPI-tile lines** (every tile on this book carries a figure), one per
+  Morning CIO route: main's six, and this change's four alerts routes;
+- **two Private Market cost lines** (every private holding reports a cost);
+- **one redeemed-account line** on `private-market-folios`;
+- **one crumb** on `holdings-unknown`.
+
+None of this change's own checks abstains, and #95's prose check passes on every
+route, this change's six included. The sweep served the working copy's own
+build; for its last seventeen minutes the alerts bug pass was running beside it,
+in a separate worktree with its own preview, and it came back clean anyway.
+
+**THE BUG HARNESSES, ON THIS TREE:**
+
+- **`alerts-bug.sh`, all 52 cases**, after a control that came back clean (its
+  five routes clean, `check:family` 126/0, both suites clean). The table above
+  is that run. Every row but 40–42 reads as it did on the tree merged
+  with #91, and 50–52 are new.
+- **#91's `stock-tabs-bug.sh`**: the four cases whose checks run on the My
+  targets tab ran again, now over 37 stock routes with `stock-aif-targets` added:
+  1 (every tab drawn at once) fires on all 37, 4 (the tabs reordered) on all 37,
+  5 (a tile dropped) on the 32 that draw tiles, and 14 (the plan-view sentence,
+  under the closed More) on `stock-targets`. The other 23 were dry-run on the
+  merged files, and 22 apply. None of those 22 patches the alert card, so the
+  full sweep above is their control. The 23rd is case 11 — every mandate listed
+  under a holding's name — and it does not apply on MAIN either: #95 rewrote the
+  line it anchors on and did not move the anchor. That is main's harness to
+  fix, and it is named here rather than fixed in a merge.
+- **#95's `pages-prose-bug.sh` (42 cases) and #94's `pm-prose-bug.sh` (27)**
+  were dry-run on the merged files, and every patch applies. Each patches main's
+  lines and fires main's checks, and this change edits neither, so the full
+  sweep above is their control on this tree.
 
 ### Stage 10k — News & Announcements: REMOVED
 

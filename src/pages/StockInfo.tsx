@@ -1915,12 +1915,14 @@ export function StockInfo() {
             {/* The family's OWN judgements — a target price or a review date is as
                 meaningful against a fund as against a company — so this tab is
                 the same for every holding. */}
-            <InvestmentTools
-              securityKey={securityKey}
-              name={name}
-              price={rows[0]?.currentPrice ?? null}
-              priceIsLive={live}
-            />
+            {/* THE CARD WORKS OUT ITS OWN PRICE (`usePriceNow`), from the live
+                quote or the fund's published NAV and never from `rows[0]` — the
+                first array element's mark, which on a holding its statements
+                price differently is one statement's figure standing for all of
+                them (the header's own price stopped doing that at Stage 10bm). A
+                statement mark is never what an alert is checked against. See
+                `priceAlerts.ts` (Stage 10cq). */}
+            <InvestmentTools securityKey={securityKey} name={name} />
           </div>
         )}
       </div>

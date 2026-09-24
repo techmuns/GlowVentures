@@ -135,6 +135,8 @@ console.log("── the words people use ──");
     top("polycab dividend")?.label);
   ok("'direct equity' still opens the Direct Equity holdings, not the sector tab",
     top("direct equity")?.kind === "category", `${top("direct equity")?.kind}:${top("direct equity")?.label}`);
+  ok("'alerts' opens Morning CIO's All alerts tab", top("alerts")?.href === "/cio?tab=alerts", top("alerts")?.label);
+  ok("…and so does 'stop loss', the word the alert boxes use", top("stop loss")?.href === "/cio?tab=alerts", top("stop loss")?.label);
   ok("'uncalled' opens the Private Market page", top("uncalled")?.href === "/private-market");
   ok("'dry powder' reaches uncalled capital", top("dry powder")?.id === "fig:uncalled");
   ok("'tax' opens Capital Gains", top("tax")?.href === "/capital-gains");
