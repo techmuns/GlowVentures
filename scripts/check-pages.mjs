@@ -7006,6 +7006,8 @@ const ROUTES = [
   // ...and the largest holding SEVERAL statements report at ONE agreed mark —
   // the only place the Total row's own mark has a subject, since a holding one
   // account reports draws no Total row at all (a total of one row is the row).
+  // VD-16: the largest Sanshi Fund-I line, whose statement marks it at pre-tax NAV.
+  ["stock-pretax", () => { const k = PRETAX_KEY; return k ? `/stock/${encodeURIComponent(k)}` : "/stock/no-sanshi-holding-in-the-book"; }],
   ["stock-cmp-agree", () => (CMP_BOOK.agreedKey ? `/stock/${encodeURIComponent(CMP_BOOK.agreedKey)}` : "/stock/no-holding-several-statements-mark-alike-in-the-book")],
   // ...and the holding the most mandates hold, where the line under the name
   // must collapse to a count rather than list every mandate (`MANY_MANDATES`).
@@ -17945,6 +17947,17 @@ const PM_MEMBER_RETURN_CHECK = ["a member holding one fund shows its folio's own
   return sameCells && noFalseReason;
 }];
 
+// VD-16 / VD-18 subjects, off the book: the largest Sanshi Fund-I line, and
+// the ABSL Liquid line on Bharat's Motilal demat.
+const NOTE_BOOK = (() => {
+  try { return bookArray(readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8"), "BOOK_POSITIONS") ?? []; } catch { return []; }
+})();
+const PRETAX_KEY = (() => {
+  const s = NOTE_BOOK.filter((p) => /^sanshi-fund-i/.test(p.securityKey) && p.marketValue > 0).sort((a, b) => b.marketValue - a.marketValue);
+  return s[0]?.securityKey ?? null;
+})();
+const PLEDGED_ABSL = NOTE_BOOK.some((p) => p.securityKey === "absl-liqf-d-growth" && p.accountId === "motilal-oswal-financial-services-demat-1201090012838320" && p.marketValue > 0);
+
 const INVARIANTS = {
   /**
    * THE RING-FENCED PROMOTER HOLDING RENDERS HERE — the other half of the
@@ -25874,6 +25887,14 @@ const INVARIANTS = {
   "cio-alloc-class": [...ALLOC_AXIS, ...ALLOC_FAMILY_AXIS, ...ALLOC_CASH_RULE("assetClass"), ...ALLOC_HELD_PILL, ...ALLOC_DERIVED],
 
   monitor: [
+    // VD-16 / VD-18: a pre-tax mark and a cash line whose every unit is pledged
+    // say so in the CMP marker's hover on the category table. The premise is
+    // the BOOK's: it holds Sanshi, and the ABSL Liquid line on Bharat's demat.
+    ["a pre-tax NAV and a pledged cash line say so in the CMP marker's hover (VD-16, VD-18)", (t, ctx) => {
+      if (!PRETAX_KEY || !PLEDGED_ABSL) return false;
+      const ts = ctx?.titles ?? [];
+      return ts.some((x) => /pre-tax NAV/.test(x) && /post-tax NAV/.test(x)) && ts.some((x) => /under pledge or earmark/.test(x));
+    }],
     /**
      * ── ONE MARK OR NONE (A-03) ──────────────────────────────────────────────
      *
@@ -30040,6 +30061,16 @@ const INVARIANTS = {
    * holding draws no Total row at all, this is the route where the claim has a
    * subject. Derived (`CMP_BOOK.agreedKey`), largest by value.
    */
+  "stock-pretax": [
+    ...stockTabChecks("position"),
+    // VD-16: Sanshi is valued at the pre-tax NAV its statement prints beside a
+    // lower post-tax one. The price tile says which, in a few words; its hover
+    // carries the statement's own sentence. A missing subject is a failure.
+    ["the price tile names the pre-tax NAV basis, and its hover the post-tax NAV the statement also prints (VD-16)", (t, ctx) => {
+      if (!PRETAX_KEY) return false;
+      return /pre-tax NAV/.test(t) && (ctx?.titles ?? []).some((x) => /post-tax NAV/.test(x) && /pre-tax NAV/.test(x));
+    }],
+  ],
   "stock-cmp-agree": [
     ...stockTabChecks("position"),
     ...stockLayoutChecks(),

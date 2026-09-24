@@ -36,6 +36,8 @@ FILES=(
   "src/pages/MorningCIO.tsx"
   "src/pages/HoldingsBehind.tsx"
   "src/pages/CapitalGains.tsx"
+  "src/pages/StockInfo.tsx"
+  "src/lib/statementNotes.ts"
   "scripts/check-pages.mjs"
 )
 SNAP=$(mktemp -d)
@@ -54,6 +56,7 @@ trap restore EXIT
 SIDES=upload,history,holdings-book,cio-allocation
 MANDATES=mandate,mandate-sector,mandate-fifo
 CG=capital-gains,capital-gains-missing
+NOTES=stock-pretax,monitor
 DROPS=cio-allocation,holdings-row-1,holdings-row-3,holdings-aif,holdings-winners,holdings-listed,holdings-book
 
 sweep() {
@@ -122,7 +125,7 @@ OLD_UNPLACED='No statement for these funds prints a SEBI category, so this book 
 
 if [ -z "${CASES:-}" ]; then
   echo "════════ CONTROL: no patch"
-  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES,$DROPS,$CG"; else echo "   the committed tree does not build"; fi
+  if npm run build >/dev/null 2>&1; then sweep "$SIDES,$MANDATES,$DROPS,$CG,$NOTES"; else echo "   the committed tree does not build"; fi
   suite
 fi
 
@@ -213,3 +216,27 @@ run_case 14 "$CG" no "INVARIANTS gains a second \"capital-gains\" block" \
     'const INVARIANTS = {
   "capital-gains": [],
 '
+
+# ── 15 ── the price tile keeps the note in its hover and drops it from its line (VD-16)
+run_case 15 "stock-pretax" no "the price tile no longer says pre-tax NAV on its face" \
+  sub src/pages/StockInfo.tsx \
+    '{priceNote.line}{markNote ? ` · ${markNote.short}` : ""}</span>}' \
+    '{priceNote.line}</span>}'
+
+# ── 16 ── a clubbed fund row's price dash drops the note (VD-16)
+run_case 16 "monitor" no "Sanshi's clubbed row no longer says its mark is pre-tax" \
+  sub src/pages/PortfolioMonitor.tsx \
+    'reason={`${statementNoteForSet(r.trancheSet)?.note ? `${statementNoteForSet(r.trancheSet)!.note} ` : ""}Each unit class' \
+    'reason={`Each unit class'
+
+# ── 17 ── the pledge note cites words its statement does not print (VD-18)
+run_case 17 - yes "the pledge note's citation no longer matches its statement" \
+  sub src/lib/statementNotes.ts \
+    '"ABSL LIQF D-GROWTH 0.000 264720.521"' \
+    '"ABSL LIQF D-GROWTH 264720.521 0.000"'
+
+# ── 18 ── the not-live marker's hover drops the note (VD-18)
+run_case 18 "monitor" no "the pledged cash line's marker no longer says it is pledged" \
+  sub src/pages/PortfolioMonitor.tsx \
+    'title={(statementNoteForSet(r.trancheSet)?.note ? `${statementNoteForSet(r.trancheSet)!.note} ` : "") + (r.navPriced' \
+    'title={(r.navPriced'

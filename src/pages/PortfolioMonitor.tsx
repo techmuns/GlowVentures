@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, useCallback, type ReactNode } from "react";
+import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, ChevronRight, Layers, ArrowLeftRight, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -4081,7 +4082,7 @@ export function PortfolioMonitor() {
                             : r.measuredNA
                             ? <AbsentCell reason={DERIVED_ONLY_WHY} />
                             : r.fundClasses.length
-                            ? <AbsentCell reason={`each unit class of this fund is marked at its OWN NAV — ${r.fundClasses.join(", ")} — so there is no one price for the row. Open it for each class's own mark.`} />
+                            ? <AbsentCell reason={`${statementNoteForSet(r.trancheSet)?.note ? `${statementNoteForSet(r.trancheSet)!.note} ` : ""}Each unit class of this fund is marked at its OWN NAV — ${r.fundClasses.join(", ")} — so there is no one price for the row. Open it for each class's own mark.`} />
                             : r.splitMarks && r.splitMarks.length > 1
                             ? <span data-cmp-split={r.splitMarks.length}><AbsentCell reason={splitMarkReason(r.splitMarks.map((v) => fmtFromBase(v)))} /></span>
                             : r.currentPrice === null
@@ -4090,7 +4091,7 @@ export function PortfolioMonitor() {
                             ? fmtFromBase(r.currentPrice)
                             : <>{fmtFromBase(r.currentPrice)}
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
-                                  title={r.navPriced
+                                  title={(statementNoteForSet(r.trancheSet)?.note ? `${statementNoteForSet(r.trancheSet)!.note} ` : "") + (r.navPriced
                                     ? `AMFI's published NAV for this scheme, as of ${r.navDate}. A fund resolves no NSE trading symbol so it can never carry an intraday quote; this is the industry's own daily figure, refreshed every day, and it is NEWER than the statement mark it replaced.`
                                       + (r.depositoryWhy
                                         ? ` Some of these units carry no statement mark at all: they are ${r.depositoryWhy}, valued at this NAV.`
@@ -4105,8 +4106,9 @@ export function PortfolioMonitor() {
                                       : "No live price for this security — ")
                                       + (r.valuedAt
                                         ? `${rowWithheld ? "Showing" : "showing"} the mark from its statement as of ${fmtDate(r.valuedAt)}.`
-                                        : `${rowWithheld ? "Showing" : "showing"} the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date.`)}
-                                  data-cmp-withheld={rowWithheld ? "1" : undefined}>◦</span></>}
+                                        : `${rowWithheld ? "Showing" : "showing"} the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date.`))}
+                                  data-cmp-withheld={rowWithheld ? "1" : undefined}
+                                  data-statement-note={statementNoteForSet(r.trancheSet)?.short}>◦</span></>}
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null

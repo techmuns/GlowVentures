@@ -24,6 +24,7 @@ const SUITES = [
   ["corporate-action feed", "src/lib/__tests__/corporateActionsFunction.test.ts"],
   ["corporate-action live gate", "src/lib/__tests__/liveWithheld.test.ts"],
   ["stock realised tile", "src/lib/__tests__/stockRealised.test.ts"],
+  ["statement notes on a mark", "src/lib/__tests__/statementNotes.test.ts"],
   ["scheme returns", "src/lib/__tests__/schemeReturns.test.ts"],
   ["holding value date", "src/lib/__tests__/valuedAt.test.ts"],
   ["scheme match words", "src/lib/__tests__/schemeMatch.test.ts"],

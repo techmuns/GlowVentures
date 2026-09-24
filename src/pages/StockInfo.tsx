@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { statementNoteForSet } from "@/lib/statementNotes";
 import { Link, useParams } from "react-router-dom";
 import { Wallet, Layers, TrendingUp, Coins, Activity, Tag } from "lucide-react";
 import { Card } from "@/components/Card";
@@ -897,6 +898,10 @@ export function StockInfo() {
           tip: `The mark the statement of ${markDate} prints — not a live quote, because ${why}.`,
         };
       })();
+  // WHAT THE STATEMENT SAYS ABOUT THIS MARK AND THE MARK DOES NOT (VD-16,
+  // VD-18): a pre-tax NAV, or units that are all pledged. A few words on the
+  // line, the statement's sentence in the hover; no figure of its own.
+  const markNote = statementNoteForSet(rows);
   const buys = (led?.txns ?? []).filter((t) => t.side === "Buy");
   const firstBought = buys.length ? buys[buys.length - 1].date : null;
   const lastAdded = buys.length ? buys[0].date : null;
@@ -1622,7 +1627,8 @@ export function StockInfo() {
         <Kpi label={fundVehicle ? "NAV" : "CMP"}
           value={<span data-stock-mark={cmpSplit ? "split" : cmp === null ? "none" : "one"}>{cmp ?? <AbsentValue />}</span>}
           delta={live && !cmpSplit ? dayPct : null}
-          sub={<span className="text-slate-500" data-stock-mark-note title={priceNote.tip}>{priceNote.line}</span>}
+          sub={<span className="text-slate-500" data-stock-mark-note data-statement-note={markNote?.short}
+            title={markNote ? `${priceNote.tip} ${markNote.note}` : priceNote.tip}>{priceNote.line}{markNote ? ` · ${markNote.short}` : ""}</span>}
           icon={<Tag className="h-4 w-4" />} />
         <Kpi label="Unrealised P&L"
           value={pnl === null ? <AbsentValue /> : <span className={changeColor(pnl)}>{fmtFromBase(pnl, { compact: true, sign: true })}</span>}
