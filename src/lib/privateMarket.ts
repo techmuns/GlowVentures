@@ -54,7 +54,7 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { fifoTotals } from "./fifo";
 import {
@@ -592,4 +592,50 @@ export function capitalCountedOnce(commitments: readonly Commitment[], positions
     else counted.push(c);
   }
   return { counted, alsoReported };
+}
+
+/**
+ * ── THE CAPITAL EVERY CONSOLIDATED FIGURE COUNTS, FOR EVERY PAGE THAT PRINTS ONE ─
+ *
+ * Private Market's capital tiles and Morning CIO's Capital deployment card and
+ * its Uncalled capital and Committed tiles open onto one another, so they are
+ * struck over ONE set: the private-market funds' capital accounts
+ * (`capitalScope`), each counted once with its holding (`capitalCountedOnce`)
+ * over the current private holdings in book order. Once Private Market counted
+ * Transition Venture Fund I's second trust once, Morning CIO still counted it
+ * twice — ₹15.98 Cr still to call over a page printing ₹15.23 Cr, one click
+ * apart. Both read this now, so they cannot disagree.
+ */
+export function privateCapital(
+  commitments: readonly Commitment[],
+  accounts: readonly Account[],
+  positions: readonly Position[],
+) {
+  const cap = capitalScope([...commitments], [...accounts]);
+  const counting = capitalCountedOnce(cap.onPage, currentHoldings(positions).filter(isPrivateClass));
+  return { ...cap, counting };
+}
+
+/**
+ * THE SENTENCE A CAPITAL FIGURE COUNTED ONCE OWES ITS READER, written once for
+ * every page that prints one: which statements' capital is left out, whose it
+ * is counted with, that the pair is pending the family's answer (§4c, PM-A1),
+ * and what it would add if it is two investments. Empty where nothing is left
+ * out.
+ */
+export function countedOnceNote(
+  counting: CapitalCounting,
+  accountName: (accountId: string) => string,
+  money: (n: number) => string,
+  extra: number | null | undefined,
+  what: string,
+): string {
+  const also = counting.alsoReported;
+  if (!also.length) return "";
+  const one = also.length === 1;
+  const names = also.map((x) => accountName(x.commitment.accountId)).join(" and ");
+  const withs = [...new Set(also.map((x) => accountName(x.countedAs)))].join(" and ");
+  return ` ${names} ${one ? "is the second statement" : "are second statements"} of a holding counted once, so ${one ? "its" : "their"} ${what} is counted with ${withs} and not again`
+    + ` — pending the family's answer on whether ${one ? "the two are" : "each pair is"} one investment or two`
+    + (extra != null && extra > 0 ? `; if two, add ${money(extra)}.` : ".");
 }

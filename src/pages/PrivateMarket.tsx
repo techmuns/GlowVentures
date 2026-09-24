@@ -19,12 +19,12 @@ import { accountIndex } from "@/lib/accounts";
 import { ownerDisplayName } from "@/lib/owners";
 import { stockHref } from "@/lib/auditFormulas";
 import {
-  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef, isPrivateClass,
+  sum, sumOrNull, consolidatedMarketValue, currentHoldings, returnMeasureDef,
   type MeasuredReturn, type ReturnMeasure,
 } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  capitalScope, capitalCountedOnce,
+  privateCapital, countedOnceNote,
 } from "@/lib/privateMarket";
 import { isValuedByNoStatement } from "@/lib/aifCategory";
 import {
@@ -381,7 +381,7 @@ export function PrivateMarket() {
      * Founders Fund folios, which call capital and invest in listed equity — are
      * NAMED under the table with their figures, never dropped.
      */
-    const cap = capitalScope(portfolio.commitments ?? [], portfolio.accounts);
+    const cap = privateCapital(portfolio.commitments ?? [], portfolio.accounts, portfolio.positions);
     const commitments = cap.onPage;
 
     const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
@@ -397,7 +397,7 @@ export function PrivateMarket() {
      * group is the capital of the member whose holding does. The accounts it
      * leaves out are NAMED in each capital tile's hover with their figures.
      */
-    const counting = capitalCountedOnce(commitments, current.filter(isPrivateClass));
+    const counting = cap.counting;
     const countedIds = new Set(counting.counted.map((c) => c.accountId));
     const ct = commitmentTotals(counting.counted);
     /**
@@ -561,16 +561,8 @@ export function PrivateMarket() {
    * investments of the same size is theirs to say, and §4c's counted-once
    * policy stands until they do).
    */
-  const alsoNote = (extra: number | null | undefined, what: string) => {
-    const also = m.counting.alsoReported;
-    if (!also.length) return "";
-    const one = also.length === 1;
-    const names = also.map((x) => accName(x.commitment.accountId)).join(" and ");
-    const withs = [...new Set(also.map((x) => accName(x.countedAs)))].join(" and ");
-    return ` ${names} ${one ? "is the second statement" : "are second statements"} of a holding counted once, so ${one ? "its" : "their"} ${what} is counted with ${withs} and not again`
-      + ` — pending the family's answer on whether ${one ? "the two are" : "each pair is"} one investment or two`
-      + (extra != null && extra > 0 ? `; if two, add ${money(extra)}.` : ".");
-  };
+  const alsoNote = (extra: number | null | undefined, what: string) =>
+    countedOnceNote(m.counting, accName, (n) => money(n), extra, what);
   const tileMetrics: TileMetric[] = [
     {
       id: "value", label: "Market value", icon: <Handshake className="h-4 w-4" />,

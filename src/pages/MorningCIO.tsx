@@ -39,7 +39,7 @@ import { xirrPct, moneyWeightedReturn, type XirrResult, fundXirr, startupXirr } 
 import { fifoTotals, investedBasisNote, investedWithCapital, type FifoTotals } from "@/lib/fifo";
 import { type PrivateSheet, stockHref } from "@/lib/auditFormulas";
 import { netMultiple, netMultipleKind } from "@/lib/privateValue";
-import { capitalScope, distributionOf } from "@/lib/privateMarket";
+import { privateCapital, countedOnceNote, commitmentTotals, distributionOf } from "@/lib/privateMarket";
 import { AbsentCell, AbsentSection, AbsentValue, DASH } from "@/components/Absent";
 import { costedFigures, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { NavVsIndex } from "@/components/NavVsIndex";
@@ -338,16 +338,25 @@ export function MorningCIO() {
      *
      * The distribution figure is `distributionOf`, the same function the
      * page's own tile sums, for the same reason.
+     *
+     * AND EACH CAPITAL ACCOUNT IS COUNTED ONCE WITH ITS HOLDING, as the page's
+     * tiles count it (`privateCapital`, the one set both read). Transition
+     * Venture Fund I is one holding under both family trusts (§4c), so its
+     * second trust's capital is in no figure here either: still to call reads
+     * the page's ₹15.23 Cr, not the ₹15.98 Cr both statements add to. The
+     * hovers name what is left out and what it would add.
      */
-    const commitments = capitalScope(portfolio.commitments ?? [], portfolio.accounts).onPage;
+    const cap = privateCapital(portfolio.commitments ?? [], portfolio.accounts, portfolio.positions);
+    const commitments = cap.onPage;
+    const counted = cap.counting.counted;
     const fundDeploy = fundTotals([...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]);
     const deploy = commitments.length
       ? {
-        committed: sum(commitments.map((c) => c.committed)) + fundDeploy.committed,
-        drawn: sumOrNull([...commitments.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
-        distributed: sumOrNull([...commitments.map(distributionOf), fundDeploy.distributed]) ?? 0,
+        committed: sum(counted.map((c) => c.committed)) + fundDeploy.committed,
+        drawn: sumOrNull([...counted.map((c) => c.drawn), fundDeploy.drawn]) ?? 0,
+        distributed: sumOrNull([...counted.map(distributionOf), fundDeploy.distributed]) ?? 0,
         currentValue: fundDeploy.currentValue,
-        unfunded: sumOrNull([...commitments.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
+        unfunded: sumOrNull([...counted.map((c) => c.undrawn), fundDeploy.unfunded]) ?? 0,
         tvpi: fundDeploy.tvpi,
         dpi: fundDeploy.dpi,
       }
@@ -885,6 +894,8 @@ export function MorningCIO() {
       footerPct, costedMV, costCoversBook,
       sides,
       privateNet, privateGain, privateTotalGain, privateDistributed, deploy, commitments,
+      capitalCounting: cap.counting,
+      capitalAlso: commitmentTotals(cap.counting.alsoReported.map((x) => x.commitment)),
       privateCount, fundCount,
       closedInvested: closedF.drawn, closedDistributed: closedF.distributed,
       buckets, bucketsByAxis,
@@ -903,6 +914,17 @@ export function MorningCIO() {
   if (!portfolio || !model) return null;
   const m = model;
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
+  /**
+   * THE CAPITAL COUNTED ONCE WITH ITS HOLDING, said the way the Private Market
+   * tiles say it — the same function writes both, so the two pages cannot
+   * describe the pair pending the family's answer two ways.
+   */
+  const accName = (id: string) => {
+    const a = portfolio.accounts.find((x) => x.accountId === id);
+    return a ? `${a.provider} ${a.accountNo}` : id;
+  };
+  const onceNote = (extra: number | null | undefined, what: string) =>
+    countedOnceNote(m.capitalCounting, accName, (n) => money(n), extra, what);
   const axisFmt = (v: number) => fmtCurrency(v, displayCurrency, { compact: true });
   /**
    * THE SECTIONS THE CARD IS CURRENTLY DRAWING. All three are built in the
@@ -1032,7 +1054,8 @@ export function MorningCIO() {
     {
       id: "uncalled", label: "Uncalled capital", icon: <Fuel className="h-4 w-4" />,
       href: hasCommitments ? "/private-market" : undefined,
-      hrefTitle: "Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down.",
+      hrefTitle: "Open the capital accounts behind it — committed, called and still to call, folio by folio. Undrawn capital is not a holding and has no row in the book's positions, so it is on the Private Market page rather than in the holdings drill-down."
+        + onceNote(m.capitalAlso.undrawn, "uncalled balance"),
       value: hasCommitments ? <span className="text-amber-400">{fmtFromBase(m.deploy.unfunded, { compact: true })}</span> : <AbsentValue />,
       sub: hasCommitments ? undefined : absentWhy("no statement in this book reports a capital commitment"),
     },
@@ -1062,7 +1085,8 @@ export function MorningCIO() {
     {
       id: "committed", label: "Committed to funds", icon: <Landmark className="h-4 w-4" />,
       href: hasCommitments ? "/private-market" : undefined,
-      hrefTitle: "Open the capital accounts behind it — the full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value.",
+      hrefTitle: "Open the capital accounts behind it — the full amount signed for, whether or not the fund has asked for it yet. Not money spent, and in no market value."
+        + onceNote(m.capitalAlso.committed, "commitment"),
       value: hasCommitments ? fmtFromBase(m.deploy.committed, { compact: true }) : <AbsentValue />,
       sub: hasCommitments ? undefined : absentWhy("no statement in this book reports a capital commitment"),
     },
@@ -1643,7 +1667,7 @@ export function MorningCIO() {
           <div className="grid gap-5 content-start lg:col-span-1">
             {/* WHAT THE CARD COVERS IS ITS TITLE'S HOVER (Stage 10cp) — the line
                 under the title restated it, and the family asked for those to go. */}
-            <Card title={<span title="Private-market funds: commitments & uncalled capital — the same capital accounts the Private Market page counts." data-card-title-hint>Capital deployment</span>}>
+            <Card title={<span title={"Private-market funds: commitments & uncalled capital — the same capital accounts the Private Market page counts, each counted once with its holding." + onceNote(null, "capital")} data-card-title-hint>Capital deployment</span>}>
               {hasCommitments ? (
                 <>
                   {/*

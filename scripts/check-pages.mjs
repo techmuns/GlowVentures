@@ -11586,8 +11586,54 @@ const CIO_ALLOC = [
       if (Math.abs(CAPITAL_BOOK.wholeCommittedCr - CAPITAL_BOOK.committedCr) <= 0.15) {
         return notChecked("every capital account in this book belongs to a private-market fund, so the two scopes coincide");
       }
-      return Math.abs(committed - CAPITAL_BOOK.committedCr) <= 0.06
-        && Math.abs(uncalled - CAPITAL_BOOK.uncalledCr) <= 0.06;
+      // On the page's own basis: each capital account ONCE with its holding —
+      // see the claim below, which holds the two bases apart.
+      return Math.abs(committed - CAPITAL_BOOK.once.committedCr) <= 0.06
+        && Math.abs(uncalled - CAPITAL_BOOK.once.uncalledCr) <= 0.06;
+    }],
+    /**
+     * ── …AND COUNTS EACH CAPITAL ACCOUNT ONCE WITH ITS HOLDING, AS THAT PAGE DOES ─
+     *
+     * Private Market counts a capital account on the basis its holding is
+     * counted (PM-A2): Transition Venture Fund I is one holding under both
+     * family trusts, so its second trust's capital is in none of that page's
+     * tiles. This card and the Uncalled capital tile open that page, and summed
+     * as printed they read ₹15.98 Cr still to call over a page printing
+     * ₹15.23 Cr. Struck against `CAPITAL_BOOK.once`, derived off the book by
+     * the dedupe rule itself — and the as-printed register must genuinely
+     * differ, or a card that ignored the rule would pass as one that applied it.
+     */
+    ["the Uncalled capital tile and the Capital deployment card count each capital account once with its holding, as the page they open does", (t, ctx) => {
+      const once = CAPITAL_BOOK?.once;
+      if (!once) return false;
+      if (!once.leftOut.length) return notChecked("no private holding in this book is reported by two statements, so counted once and as printed coincide");
+      const tile = ctx?.kpiTiles?.find((x) => x.slot === "uncalled");
+      const card = ctx?.deployLink;
+      if (!tile || !card) return false;
+      const money = (txt) => { const m = /₹([\d,]+(?:\.\d+)?)\s*(Cr|L|K)?/i.exec(txt ?? ""); return m ? crU(m[1], m[2]) : NaN; };
+      const fig = (label) => money(new RegExp(label + String.raw`\s*(₹[\d,]+(?:\.\d+)?\s*(?:Cr|L|K)?)`, "i").exec(card.text)?.[1]);
+      const near = (a, b) => Number.isFinite(a) && Math.abs(a - b) <= 0.06;
+      const differs = Math.abs(CAPITAL_BOOK.uncalledCr - once.uncalledCr) > 0.15;
+      return differs && near(money(tile.value), once.uncalledCr)
+        && near(fig("uncalled capital"), once.uncalledCr) && near(fig("Fund commitments"), once.committedCr);
+    }],
+    /**
+     * ...AND EACH SAYS WHAT IT LEFT OUT. A figure counted once is a decision the
+     * family has not yet made (§4c), so the tile and the card name the second
+     * statement, whose capital it is counted with, that the pair is pending
+     * their answer — and, on the tile, what it would add if it is two
+     * investments. The same function writes Private Market's hovers.
+     */
+    ["...and the tile and the card name the statement they leave out, pending the family's answer", (t, ctx) => {
+      const once = CAPITAL_BOOK?.once;
+      if (!once) return false;
+      if (!once.leftOut.length) return notChecked("no private holding in this book is reported by two statements");
+      const tile = ctx?.kpiTiles?.find((x) => x.slot === "uncalled");
+      const hint = ctx?.deployLink?.hint ?? "";
+      if (!tile) return false;
+      const names = (h) => once.leftOut.every((x) => h.includes(x.accountNo) && h.includes(x.countedAsNo))
+        && /pending the family's answer/i.test(h);
+      return names(tile.hover ?? "") && /if two, add ₹/i.test(tile.hover ?? "") && names(hint);
     }],
     // And the allocation table's own footer must tie to its own two columns —
     // it carried a money-weighted rate in a column of return-on-cost figures,
@@ -27158,7 +27204,11 @@ for (const theme of THEMES) {
        */
       const deployLink = FAST ? null : await page.evaluate(() => {
         const a = document.querySelector("main a[data-cio-deploy-link]");
-        return a ? { href: a.getAttribute("href") ?? "", text: (a.textContent ?? "").replace(/\s+/g, " ").trim() } : null;
+        return a ? {
+          href: a.getAttribute("href") ?? "", text: (a.textContent ?? "").replace(/\s+/g, " ").trim(),
+          // The card's own title hover, where what it counts is stated.
+          hint: a.closest(".card")?.querySelector("[data-card-title-hint]")?.getAttribute("title") ?? null,
+        } : null;
       });
       /**
        * THE ORDER CONTROL, READ AS STRUCTURE.
