@@ -24288,6 +24288,17 @@ Both reconciliation reports were regenerated: they were stale on main.
 `check:pages` routes, and `scripts/dev/unpriced-units-bug.sh`. Each guard was
 proven by putting its bug back.
 
+**Verification**, on this branch merged with `main` at `f99e738a`: `build` ·
+`test:ingest` (every suite passes; golden 140 passed, 2 not checked, 0 blocked)
+· `test:family` (64 suites, 3,061 checks, 0 failed; its four not-checked lines
+are main's) · `check:family` **126/0** · `check:pages` **324 combinations
+clean**: 162 routes in two themes, main's 153 and this change's nine. Of the 16
+invariants not checked, 14 are main's four claims with no subject on this book.
+The other 2 are this change's counted-once checks on `private-market-owners`,
+which draws members, not funds; they pass on the fund routes · `build-book`
+twice, byte-identical · every `replay:*`, `rekey:archive` and
+`reconcile:review` a no-op with `--check`.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to
