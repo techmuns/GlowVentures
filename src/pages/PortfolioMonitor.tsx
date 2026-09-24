@@ -4770,6 +4770,25 @@ const DATED_COLS = ["name", "how", "committed", "in", "out", "realisedGain", "un
  */
 const CAPITAL_RECORD = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS);
 
+/**
+ * WHAT EACH RETURN COLUMN MEASURES ON THIS TABLE — its own words (MT-6 / B-11).
+ *
+ * The header hover read `returnMeasureDef(m).hint`, which is the HOLDINGS tab's
+ * definition — "FIFO return on deployed capital" — over a column struck on
+ * something else: here a return is on the family's own money PAID IN, against
+ * what came back and what the account is worth. On a whole PMS mandate the two
+ * tabs land on one figure; on a fund whose cost is net of stamp duty, or carries
+ * a reinvested distribution, they can differ, so each hover says which it is.
+ */
+const TXN_MEASURE_HINT: Record<ReturnMeasure, string> = {
+  auto: "A return on the capital the family paid in — what came back plus what the account is worth, against what was paid — never on a figure with appreciation inside its denominator. The family's rule picks the measure: under a year, the holding-period return; a year or more, CAGR for one purchase and XIRR where the money went in over several dates. Every cell says which. The Holdings tab strikes a single holding on its FIFO cost instead; the two agree on a whole PMS mandate.",
+  absolute: "Holding Period Return on the capital paid in: appreciation — value today plus what came back, less what was paid — divided by what was paid. Not annualised. The Holdings tab's HPR is FIFO on a holding's cost; the two agree on a whole PMS mandate and can differ where a fund's cost is net of stamp duty or carries a reinvested distribution.",
+  cagr: "The capital paid in, compounded: ONE purchase annualised over the years since it was made, against what came back and what the account is worth. An account funded over several dates has no single start to compound from — its rate is the XIRR.",
+  xirr: "A money-weighted rate on the capital paid in, solved over each dated purchase and redemption and the account's value on its own statement date.",
+  ytd: "The return on the capital paid in since 1 January — measurable only where the first purchase is inside the current year, so there was nothing to value then.",
+  calendar: "A past calendar year's return on the capital paid in — it needs the account's value at the start and end of that year, and no statement here values an account at a past year-end.",
+};
+
 /** The column note and hover for one return measure on this table — counted, never claimed. */
 function txnReturnColumnMeta(measure: ReturnMeasure, cov: ReturnType<typeof capitalReturnCoverage>): { note: string; title: string } | null {
   if (measure === "auto") return null;
@@ -5161,6 +5180,27 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
    * where they were dragged to.
    */
   const datedCols = useMemo(() => withReturnCols(DATED_COLS, returnMeasures), [returnMeasures]);
+  /**
+   * ── A HOLDING TWO ACCOUNTS HERE BOTH REPORT IS IN A PER-ACCOUNT SUM TWICE (MT-7)
+   *
+   * Transition Venture's two family trusts each report the same 7,500 units of
+   * Fund I, and the book tags the pair one `dedupeGroup`. Capital is never
+   * deduped — both trusts' calls are real money — but the VALUE footer sums the
+   * accounts, so the holding is in it twice where the Holdings table counts it
+   * once. Whether the trusts hold one investment or two is the family's to say;
+   * this table keeps its figures and NAMES the doubling on the totals it is in.
+   */
+  const doubled = useMemo(() => {
+    const ids = new Set(rows.filter((r) => r.kind === "account" && r.value != null && r.accountId).map((r) => r.accountId as string));
+    const inView = positionsReg.filter((p) => ids.has(p.accountId));
+    const byGroup = new Map<string, Position[]>();
+    for (const p of inView) if (p.dedupeGroup) (byGroup.get(p.dedupeGroup) ?? byGroup.set(p.dedupeGroup, []).get(p.dedupeGroup)!).push(p);
+    const groups = [...byGroup.values()].filter((ps) => new Set(ps.map((p) => p.accountId)).size > 1);
+    const excess = sum(inView.map((p) => p.marketValue)) - sum(dedupedPositions(inView).map((p) => p.marketValue));
+    const unrealisedToo = groups.filter((ps) => ps.every((p) => rows.find((r) => r.accountId === p.accountId)?.capital?.unrealised != null));
+    return { groups, excess, unrealisedToo };
+  }, [rows, positionsReg]);
+
   /** What each return column covers, over EVERY row drawn — a manager's dealing carries no return on the family's money. */
   const retCov = (measure: ReturnMeasure) => {
     const caps = rows.map((r) => r.capital).filter((c): c is CapitalGroup => !!c);
@@ -5180,6 +5220,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
 
   const money = (v: number) => fmtFromBase(v, { compact: true });
   const period = (a: string, b: string) => (a && b ? (a === b ? fmtDate(a) : `${fmtDate(a)} → ${fmtDate(b)}`) : "");
+  const doubledNames = doubled.groups.map((ps) =>
+    `${ps[0].security} — reported by ${ps.map((p) => { const a = accIdx.get(p.accountId); return a ? `${a.owner} (${a.accountNo}, ${money(p.marketValue)})` : p.accountId; }).join(" and ")}`);
   /**
    * WHOSE MONEY A ROW IS. An ACCOUNT row takes the registry's canonical owner,
    * which is the name the entity filter offers; a SECURITY row is an instrument
@@ -5329,9 +5371,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   const meta = txnReturnColumnMeta(measure, retCov(measure));
                   return (
                     <SortHeader key={measure} col={`ret:${measure}`} view={dv} pad="px-3 py-2.5"
-                      title={measure === "auto"
-                        ? "The family's rule: under a year, the holding-period return; a year or more, CAGR for one purchase and XIRR where the money went in over several dates. Every cell says which. Never struck on a figure with appreciation inside its denominator."
-                        : def.hint}
+                      title={TXN_MEASURE_HINT[measure]}
                       note={meta?.note} noteTitle={meta?.title}>
                       {measure === "auto" ? "Return" : def.tag}
                     </SortHeader>
@@ -5797,7 +5837,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                     unrealisedGain: (
                       <td key="unrealisedGain" className={`px-3 py-2.5 text-right mono font-medium whitespace-nowrap ${totals.unrealisedGain == null ? "text-slate-600" : changeColor(totals.unrealisedGain)}`}
                         data-foot-unrealised-gain={totals.unrealisedGain ?? undefined} data-foot-unrealised-gain-of={totals.unrealisedGainOf}
-                        title={`Summed over the ${totals.unrealisedGainOf} of ${totals.rows} rows that publish an unrealised figure.`}>
+                        title={`Summed over the ${totals.unrealisedGainOf} of ${totals.rows} rows that publish an unrealised figure.`
+                          + (doubled.unrealisedToo.length ? ` It is a per-account sum, so a holding two accounts here both report is in it once per account: ${doubled.unrealisedToo.map((ps) => ps[0].security).join(", ")}. Whether those are one investment or two is the family's to say.` : "")}>
                         {totals.unrealisedGain === null
                           ? <AbsentCell reason="no row in view publishes an unrealised figure" />
                           : fmtFromBase(totals.unrealisedGain, { compact: true, sign: true })}
@@ -5820,8 +5861,14 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                        rather than an account and has no account value to add,
                        so a total over "every row" would name a denominator this
                        column does not have. */
-                    value: <td key="value" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap"
-                      title={`Summed over the ${totals.valueOf} of ${totals.rows} rows that are an account. A security row is an instrument dealt across however many accounts carried it, so it contributes no account value here.`}>
+                    value: <td key="value" data-foot-cell="value" className="px-3 py-2.5 text-right mono font-medium text-slate-100 whitespace-nowrap"
+                      data-foot-value-doubled={doubled.excess > 0.5 ? Math.round(doubled.excess * 100) / 100 : undefined}
+                      title={[
+                        `Summed over the ${totals.valueOf} of ${totals.rows} rows that are an account. A security row is an instrument dealt across however many accounts carried it, so it contributes no account value here.`,
+                        doubled.groups.length
+                          ? `It is a per-account sum, so a holding two accounts here both report is in it once per account: ${doubledNames.join("; ")}. That puts ${money(doubled.excess)} more in this total than the Holdings table, which counts a holding two statements both report once. Whether that is one investment reported twice or two investments is the family's to say, so the figures here are left as each statement prints them.`
+                          : null,
+                      ].filter(Boolean).join(" ")}>
                       {totals.value === null ? <AbsentCell reason="no row in view is an account, so there is no account value to total" /> : money(totals.value)}
                     </td>,
                     /*

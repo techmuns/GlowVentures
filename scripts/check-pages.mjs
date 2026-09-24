@@ -6745,6 +6745,140 @@ const TXN_SECTIONS = (() => {
 })();
 
 /**
+ * ── WHAT THE TRANSACTIONS TABLE MUST SAY, DERIVED FROM THE BOOK (MT-6, MT-7) ──
+ *
+ * The Transactions tab's return headers borrowed the Holdings tab's FIFO
+ * basis (MT-6), and its Value total said nothing of a holding two account
+ * rows both report (MT-7). Every check that
+ * holds the page to the truth needs the truth from somewhere the PAGE cannot
+ * move — `glowData.ts` and the audit archive — re-expressed here rather than
+ * imported, for the reason this sweep applies to `holdingBucket`: a check that
+ * calls the helper it is checking agrees with it by construction.
+ *
+ * The tape is read the way `ledger.ts` reads it — per account the FIRST
+ * authoritative report type present, and a row repeated across two issues of
+ * one account counted once (the `datedRows` rule: a repeat WITHIN a document is
+ * data, a repeat ACROSS two is a duplicate).
+ *
+ * Null on any failure, so every check that reads it FAILS rather than passes.
+ */
+const TXN_T_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    // THE STATEMENT BOOK — the Transactions view reads `statementPortfolio`,
+    // so a value here is the statement's, never a published NAV's.
+    const positions = statementBookPositions(src);
+    if (![accounts, positions].every(Array.isArray) || !CAPITAL_RECORD_BOOK) return null;
+    const idOf = new Map(accounts.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
+    const acc = new Map(accounts.map((a) => [a.accountId, a]));
+    const pms = (id) => acc.get(id)?.engagement === "PMS";
+    // ── the tape: per account the FIRST authoritative type present ──────────
+    const root = new URL("../public/audit/", import.meta.url);
+    const manifest = JSON.parse(readFileSync(new URL("manifest.json", root), "utf8"));
+    const doc = (k) => JSON.parse(readFileSync(new URL(`${k}/document.json`, root), "utf8"));
+    const perAcct = (types) => {
+      const by = new Map();
+      for (const d of manifest) { const k = `${d.provider}|${d.accountNo ?? ""}`; (by.get(k) ?? by.set(k, []).get(k)).push(d); }
+      const out = [];
+      for (const ds of by.values()) { const w = types.find((t) => ds.some((d) => d.reportType === t)); if (w) out.push(...ds.filter((d) => d.reportType === w)); }
+      return out;
+    };
+    /**
+     * Rows of one kind across every issue, a cross-issue repeat counted once —
+     * keyed on the row's own dated fields (a `source` back-reference differs
+     * between two issues printing one trade, so it cannot be part of the key).
+     */
+    const ROW_ID = ["date", "saleDate", "purchaseDate", "securityKey", "side", "kind", "quantity",
+      "unitPrice", "ratePerUnit", "gross", "charges", "net", "netAmount", "saleAmount", "purchaseAmount"];
+    const unionRows = (docs, field) => {
+      const kept = new Map();
+      for (const d of docs) {
+        const x = doc(d.docKey);
+        const seen = new Map();
+        for (const r of x[field] ?? []) {
+          const id = `${d.provider}|${d.accountNo}|${ROW_ID.map((f) => String(r[f] ?? "")).join("\u0001")}`;
+          const n = (seen.get(id) ?? 0) + 1;
+          seen.set(id, n);
+          const k = `${id}#${n}`;
+          if (!kept.has(k)) kept.set(k, { d, x, r });
+        }
+      }
+      return [...kept.values()];
+    };
+    const tapeDocs = perAcct(["transaction-statement", "investor-report"]);
+    let tapeFrom = null, tapeTo = null;
+    for (const d of tapeDocs) {
+      const x = doc(d.docKey);
+      const pf = x.periodFrom ?? d.periodFrom ?? null, pt = x.periodTo ?? d.periodTo ?? null;
+      if (pf && (!tapeFrom || pf < tapeFrom)) tapeFrom = pf;
+      if (pt && (!tapeTo || pt > tapeTo)) tapeTo = pt;
+    }
+    const tape = unionRows(tapeDocs, "transactions")
+      .filter(({ r }) => r.date && r.securityKey && (r.side === "buy" || r.side === "sell"))
+      .map(({ d, r }) => ({ accountId: idOf.get(`${d.provider}|${d.accountNo}`) ?? null, acct: `${d.provider}|${d.accountNo}`,
+        key: r.securityKey, date: r.date, sell: r.side === "sell", isin: r.isin ?? null }));
+    if (!tape.length || !tapeFrom || !tapeTo) return null;
+    // ── MT-7: a holding two ACCOUNT rows both report ─────────────────────────
+    const rowAccounts = new Set([...CAPITAL_RECORD_BOOK.moves.map((m) => m.accountId), ...tape.filter((t) => pms(t.accountId)).map((t) => t.accountId)]);
+    const inView = positions.filter((p) => rowAccounts.has(p.accountId));
+    const groups = new Map();
+    for (const p of inView) if (p.dedupeGroup) (groups.get(p.dedupeGroup) ?? groups.set(p.dedupeGroup, []).get(p.dedupeGroup)).push(p);
+    const doubled = [...groups.values()].filter((ps) => new Set(ps.map((p) => p.accountId)).size > 1).map((ps) => {
+      const mvs = ps.map((p) => p.marketValue);
+      const sum = mvs.reduce((a, b) => a + b, 0);
+      return { security: ps[0].security, accountNos: ps.map((p) => acc.get(p.accountId)?.accountNo).filter(Boolean),
+        excessMin: sum - Math.max(...mvs), excessMax: sum - Math.min(...mvs) };
+    });
+    return { doubled };
+  } catch { return null; }
+})();
+
+/**
+ * ── THE CHECKS THAT HOLD THOSE LABELS TO THE BOOK ─────────────────────────
+ *
+ * Every one reads `ctx.txnT` — the
+ * cells by column, each with the reason its dash carries — and sets it against
+ * `TXN_T_BOOK`. A missing probe or a missing derivation FAILS: these routes
+ * exist to draw the table, and a check that abstained there would report a
+ * page that lost it as clean. Every claim returns a boolean or
+ * `{ notChecked }`, never a string, which the harness reads as a pass.
+ */
+const txnTReady = (ctx) => !!ctx?.txnT && !!TXN_T_BOOK;
+
+/** On the default view: the whole table, collapsed. */
+const txnTTableChecks = () => [
+  /**
+   * MT-6. The Holdings tab's HPR is FIFO on a holding's cost; this table's is
+   * struck on the capital paid in. They agree on a whole mandate and can differ
+   * on a fund, so every return header says which basis it is — and never the
+   * Holdings tab's own words, which this table used to borrow.
+   */
+  ["every return column says it is struck on the capital paid in — never the Holdings tab's FIFO basis", (t, ctx) => {
+    if (!txnTReady(ctx)) return false;
+    const rh = ctx.txnT.heads.filter((h) => /^ret:/.test(h.col ?? ""));
+    return rh.length > 0 && rh.every((h) => /capital (?:the family )?paid in/i.test(h.title)
+      && !/FIFO return on deployed capital/i.test(`${h.title} ${h.noteTitle}`));
+  }],
+  /**
+   * MT-7 — a family question, so the figures stand as each statement prints
+   * them; what may not stand is a per-account sum that says nothing about a
+   * holding two of its rows both report. The excess is struck off the book.
+   */
+  ["the Value total names the holding two account rows both report, and how much more it counts than the Holdings table", (t, ctx) => {
+    if (!txnTReady(ctx) || !ctx.txnT.foot) return false;
+    const D = TXN_T_BOOK.doubled;
+    if (!D.length) return { notChecked: "no holding is reported by two account rows on this book" };
+    const v = ctx.txnT.foot.cells?.value;
+    const min = D.reduce((a, d) => a + d.excessMin, 0), max = D.reduce((a, d) => a + d.excessMax, 0);
+    const got = Number(ctx.txnT.foot.doubled);
+    return !!v && Number.isFinite(got) && got >= min - 1 && got <= max + 1
+      && D.every((d) => d.accountNos.length > 1 && d.accountNos.every((n) => v.title.includes(n)))
+      && /Holdings table/.test(v.title) && /family's to say/.test(v.title);
+  }],
+];
+
+/**
  * ── WHAT A CLUBBED ROW MAY STATE, DERIVED FROM THE BOOK (A-02, A-03, A-14) ───
  *
  * Re-expressed here rather than imported from `clubbedFigures.ts`: a check that
@@ -15887,6 +16021,8 @@ const INVARIANTS = {
      */
 
 
+    // ── THE LABELS AND REASONS, HELD TO THE BOOK (MT-6, MT-7) ────────────────
+    ...txnTTableChecks(),
   ],
 
   /**
@@ -16194,6 +16330,8 @@ const INVARIANTS = {
           && v != null && Math.abs(Number(r.unrealisedGain) - (v - (bought - principal))) <= 1;
       });
     }],
+    // MT-6, on every measure at once: each return header names its basis.
+    ...txnTTableChecks().filter(([d]) => /capital paid in/.test(d)),
   ],
   "monitor-txn-secaxis": [
     ...txnMergedChecks(),
@@ -30368,6 +30506,44 @@ for (const theme of THEMES) {
         };
       });
       /**
+       * ── THE TRANSACTIONS TABLE'S HEADERS AND ITS FOOTER (MT-6, MT-7) ──
+       *
+       * Each return header is read with its own `title`, and each footer cell by
+       * its `data-foot-cell` handle with the reason its dash carries. A reason lives
+       * in a `title`, which `innerText` never returns, so a check struck on page
+       * text could not see either claim below. Null where no dated table is drawn,
+       * which the checks read as a failure.
+       */
+      const txnT = FAST ? null : await page.evaluate(() => {
+        const table = document.querySelector("[data-dated-table]");
+        if (!table) return null;
+        const t = (e) => (e?.innerText ?? "").replace(/\s+/g, " ").trim();
+        const ti = (e) => e?.getAttribute?.("title") ?? "";
+        /** The reason the dash in `el` carries — "" for a dash with none, null for no dash. */
+        const dashOf = (el) => {
+          if (!el) return null;
+          const d = [el, ...el.querySelectorAll("*")].find((x) => x.children.length === 0 && x.textContent.trim() === "—");
+          if (!d) return null;
+          for (let x = d; x && x !== el.parentElement; x = x.parentElement) { const v = ti(x).trim(); if (v) return v; }
+          return "";
+        };
+        const heads = [...(table.tHead?.rows[0]?.cells ?? [])].map((th) => ({
+          col: th.getAttribute("data-col"), text: t(th), title: ti(th),
+          note: t(th.querySelector("[data-col-note]")), noteTitle: ti(th.querySelector("[data-col-note]")),
+        }));
+        const foot = table.querySelector("tr[data-dated-total]");
+        const footCells = foot ? Object.fromEntries([...foot.querySelectorAll("[data-foot-cell]")].map((td) =>
+          [td.getAttribute("data-foot-cell"), { text: t(td), title: ti(td), dash: dashOf(td) }])) : null;
+        return {
+          heads,
+          foot: foot ? {
+            label: { text: t(foot.cells[0]), title: ti(foot.cells[0]) },
+            cells: footCells,
+            doubled: foot.querySelector("[data-foot-value-doubled]")?.getAttribute("data-foot-value-doubled") ?? null,
+          } : null,
+        };
+      });
+      /**
        * ── WHICH ROWS OFFER A CONTRIBUTION HISTORY, AND HOW MANY ─────────────
        *
        * Counted off the rows' own `data-tranche-rows`, which is what each row
@@ -33368,7 +33544,7 @@ for (const theme of THEMES) {
           // `path` is what was REQUESTED; `url` is where the app actually
           // landed. A redirect invariant needs the second — asserting on the
           // first would test the harness's own input rather than the app.
-          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot }); }
+          try { r = test(text, { hrefs, titles, links, main: mainText, metrics, navListRows, navChart, attrib, tableRows, mandateRows, closedNote, hbRedeemed, aifSections, navMovers, pageNav, tileStrip, tileMenu: TILE_MENU.get(name) ?? null, tilePick: TILE_PICK.get(name) ?? null, tileAdd: TILE_ADD.get(name) ?? null, callOff: CALL_OFF, tileSaved: TILE_SAVED, hbCostShares, tableView, sideFilter, txnCounter, mineRows, managerRows, trancheToggles, trancheRowsOffered, tranchePanel, treeState, axisDrill: AXIS_DRILL, fundDrill: FUND_DRILL, arrange: ARRANGE, mineHead, categoryTotals, sectionRows, returnSelect, returnCells, returnHead, tableWidth, txnMerged, returnDropdown: RETURN_DROPDOWN, axisButtons, axisControl, datedTable, sectionFilter, footerCells, drilldown, selectLabels, buttonLabels, capitalMoves: capital?.rows ?? null, capitalTotal: capital, capitalHow: capital?.how ?? null, fundLines, stockCoverage, colNotes, donut, sectorSource, sectorLayout, shortWindow, feSectors, accountRows, pmFunds, pmView, qtyTable, posTable, heldTable, stockMark, polycabDom, callBuckets, callRows, statHints, cgMissing, kpiTiles, familyLayout, deployLink, txnSort, facets, formula, allocTable, moverScopes, movers, cioTabs, cioLayout, absentName: ABSENT_NAME, costCarried, pmReturn, quotePriority: QUOTE_PRIORITY, hbCapital, priceRequests: [...PRICE_REQUESTS], dematElsewhere, pickOptions: PICK_OPTIONS[name] ?? null, cashDom, perfDom, path, url: page.url(), tableNotes, foldsOnArrival, stockPage, holdingsDropdown: HOLDINGS_DROPDOWN, pickedFund: PICKED_FUND, filterRow, monitorInFull, prose, alertsTab, researchPosts: [...RESEARCH_POSTS], remember: REMEMBER, xa, stockM2, monitorMember, monitorFoot, txnT }); }
           catch (e) { invariants.push(`${desc} — the check itself threw: ${e.message}`); continue; }
           if (r && typeof r === "object" && typeof r.notChecked === "string") notCheckedHere.push(`${desc} — ${r.notChecked}`);
           else if (!r) invariants.push(desc);
