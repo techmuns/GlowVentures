@@ -7403,11 +7403,16 @@ const UNPRICED_BOOK = (() => {
 /**
  * HOW MANY HOLDINGS CAN HONESTLY CARRY AN INVESTED-ON DATE.
  *
- * Two sources, and both are the HOLDING'S OWN: a lot register's acquisition date
- * (`heldSince`), or the fund's own dated allotments against that very folio
- * (`BOOK_POSITION_TRANCHES`, keyed on account + security). An ACCOUNT's first
- * contribution is deliberately not a third tier — that is when the family funded
- * the account, not when a manager bought the share a row is about.
+ * Three sources, and all are the HOLDING'S OWN: a lot register's acquisition
+ * date (`heldSince`), the fund's own dated allotments against that very folio
+ * (`BOOK_POSITION_TRANCHES`, keyed on account + security), or a drawdown fund's
+ * dated calls where the account carries no other line with money in it, the
+ * line is an AIF, the statement's paid-in covers every call and nothing is
+ * printed as called and unpaid (Stage 10cx). Re-expressed here rather than
+ * imported from `callDatesByHolding`, which is the code under test. An
+ * ACCOUNT's first contribution is deliberately not a fourth tier — that is when
+ * the family funded the account, not when a manager bought the share a row is
+ * about.
  *
  * Measured here so the column's coverage is checked against the BOOK rather than
  * against the page's own count of what it drew, which would agree with itself
@@ -7418,13 +7423,27 @@ const INVESTED_ON_BOOK = (() => {
     const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
     const positions = bookArray(src, "BOOK_POSITIONS") ?? [];
     const tranches = bookObject(src, "BOOK_POSITION_TRANCHES") ?? {};
+    const commitments = bookArray(src, "BOOK_COMMITMENTS") ?? [];
+    const called = new Set();
+    const calledAccounts = [];
+    for (const c of commitments) {
+      const calls = (c.calls ?? []).filter((x) => x.date && x.amount > 0);
+      if (!calls.length) continue;
+      const money = positions.filter((p) => p.accountId === c.accountId
+        && (p.marketValue !== 0 || (p.costBasis ?? 0) !== 0));
+      if (money.length !== 1 || money[0].assetClass !== "AIF") continue;
+      const total = calls.reduce((a, x) => a + x.amount, 0);
+      if (c.paid == null || c.paid + 1 < total || (c.pending ?? 0) > 0) continue;
+      called.add(`${c.accountId}|${money[0].securityKey}`);
+      calledAccounts.push(c.accountId);
+    }
     const dated = new Set();
     for (const p of positions) {
       const own = tranches[`${p.accountId}|${p.securityKey}`];
       const ins = (own?.moves ?? []).filter((m) => m.direction === "in");
-      if (ins.length || p.heldSince) dated.add(p.securityKey);
+      if (ins.length || p.heldSince || called.has(`${p.accountId}|${p.securityKey}`)) dated.add(p.securityKey);
     }
-    return { keys: [...dated] };
+    return { keys: [...dated], calledAccounts };
   } catch { return null; }
 })();
 

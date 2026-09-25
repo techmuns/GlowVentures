@@ -39,10 +39,10 @@
 // other artefact in this repo can confirm.
 import fs from "node:fs";
 import path from "node:path";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS } from "@/data/glowData";
 import {
   trancheTable, trancheKey, trancheCoverage,
-  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn,
+  contributionsAreComplete, capitalRollup, capitalTotals, capitalReturn, callDatesByHolding,
 } from "@/lib/tranches";
 import type { Position } from "@/lib/types";
 
@@ -422,6 +422,61 @@ ok("no figure in the moves is non-finite",
     (m.amount == null || Number.isFinite(m.amount))
     && (m.invested == null || Number.isFinite(m.invested))
     && (m.units == null || Number.isFinite(m.units))));
+
+console.log("\n── a drawdown fund's own calls date the one holding they bought (Stage 10cx) ──");
+// "Invested on" takes a fund's dated calls only where the account holds that
+// fund and nothing else, its paid-in covers every call and nothing is printed as
+// unpaid. On this book that is five folios; each date list must be the fund's
+// own call dates, and the refusals are exercised on constructed accounts, since
+// nothing in this book trips them.
+{
+  const byHolding = callDatesByHolding(BOOK_COMMITMENTS, BOOK_POSITIONS);
+  const expected = [
+    "baring-private-equity-india-fund-AIFM_BPEPF6_0584",
+    "carnelian-bharat-amritkaal-fund-4551",
+    "motilal-oswal-delphi-equity-fund-9049241536",
+    "motilal-oswal-founders-fund-90410016093",
+    "motilal-oswal-founders-fund-90410016104",
+  ];
+  const got = [...byHolding.keys()].map((k) => k.split("|")[0]).sort();
+  const covered = new Set(got);
+  // Accounts with a dated record of their own already date their holding; the
+  // calls tier only has to answer for the rest, so those are the ones asserted.
+  ok("the five single-fund drawdown folios with no allotment record are dated by their calls",
+    expected.every((a) => covered.has(a)), got.join(", "));
+  for (const [k, dates] of byHolding) {
+    const [acct, key] = k.split("|");
+    const c = BOOK_COMMITMENTS.find((x) => x.accountId === acct)!;
+    ok(`${acct.slice(-12)}: the dates are the fund's own calls, oldest first`,
+      JSON.stringify(dates) === JSON.stringify(c.calls.map((x) => x.date).sort()));
+    ok(`${acct.slice(-12)}: the holding is the account's only line carrying money`,
+      BOOK_POSITIONS.filter((p) => p.accountId === acct && (p.marketValue !== 0 || (p.costBasis ?? 0) !== 0))
+        .map((p) => p.securityKey).join() === key);
+  }
+  ok("no account without dated calls is given a date",
+    [...byHolding.keys()].every((k) => BOOK_COMMITMENTS.some((c) => c.accountId === k.split("|")[0] && c.calls.length)));
+
+  const base = BOOK_POSITIONS.find((p) => p.accountId === expected[0])!;
+  const cm = BOOK_COMMITMENTS.find((c) => c.accountId === expected[0])!;
+  const acct = "acct-calls-x";
+  const fund = { ...base, accountId: acct, securityKey: "fund-x" };
+  const commit = { ...cm, accountId: acct };
+  ok("constructed: a single-fund folio with paid calls is dated",
+    callDatesByHolding([commit], [fund]).has(trancheKey(acct, "fund-x")));
+  const share = { ...base, accountId: acct, securityKey: "share-y", assetClass: "Equity" as const };
+  ok("constructed: an account also holding a share gets no date — the calls did not buy that share",
+    callDatesByHolding([commit], [fund, share]).size === 0);
+  ok("constructed: a cash sleeve at ₹0 with no cost does not stop it",
+    callDatesByHolding([commit], [fund, { ...share, marketValue: 0, costBasis: null }]).size === 1);
+  ok("constructed: a holding that is not an AIF gets no date",
+    callDatesByHolding([commit], [{ ...fund, assetClass: "Equity" as const }]).size === 0);
+  ok("constructed: calls the statement has not seen paid get no date",
+    callDatesByHolding([{ ...commit, paid: (commit.paid ?? 0) - 1e5 }], [fund]).size === 0);
+  ok("constructed: a call printed as unpaid gets no date",
+    callDatesByHolding([{ ...commit, pending: 1e5 }], [fund]).size === 0);
+  ok("constructed: no paid-in line at all gets no date",
+    callDatesByHolding([{ ...commit, paid: null }], [fund]).size === 0);
+}
 
 console.log(fails ? `\n${fails} FAILED` : "\nall passed");
 process.exit(fails ? 1 : 0);
