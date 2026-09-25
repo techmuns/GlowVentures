@@ -8744,6 +8744,7 @@
   "sourcePath": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -8753,6 +8754,12 @@
   "fy": "2026-08-06",
   "source": "source/august-2026/ANKITA JAISINGHANI - Active Momentum Fund.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",
@@ -8774,6 +8781,7 @@
   "sourcePath": "source/august-2026/Helios - Ajay.pdf",
   "pages": 2,
   "sections": [
+   "transactions",
    "pages"
   ],
   "status": "partial",
@@ -8783,6 +8791,12 @@
   "fy": "2026-08-07",
   "source": "source/august-2026/Helios - Ajay.pdf",
   "sheets": [
+   {
+    "key": "transactions",
+    "name": "transactions",
+    "rows": 2,
+    "cols": 8
+   },
    {
     "key": "pages",
     "name": "Raw page text",

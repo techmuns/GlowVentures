@@ -1651,11 +1651,34 @@ function positionTranchesFrom(capitalMoves, reclassifications, positions, notes,
           + `for the position and a per-contribution return would be struck on part of it`);
       continue;
     }
+    // WHICH OF TWO PRINTED FIGURES IS WHAT THE UNITS COST IS THE STATEMENT'S TO
+    // SAY, AND ITS OWN COST COLUMN SAYS IT. A contribution carries the gross that
+    // left the bank and the net that bought units. Sanshi's statement strikes the
+    // holding's cost on the net — the stamp duty is a charge beside it — so the
+    // tranches keep the net, as they always have. An AMC's folio statement counts
+    // the gross: stamp duty is part of what the units cost, and its summary's
+    // cost is the gross to the paisa (Helios, Active Momentum). A breakdown under
+    // a row must add to that row, so where the gross ties to the position's
+    // printed cost and the net does not, each tranche is costed at its gross.
+    // Copies, never the capital moves themselves: the dated record keeps both
+    // figures as the statement printed them.
+    const costOf = (f) => sum(moves.map(f));
+    const grossTies = held[0].costBasis != null && moves.every((m) => isNum(m.amount) && isNum(m.invested))
+      && Math.abs(costOf((m) => m.invested) - held[0].costBasis) > 0.01
+      && Math.abs(costOf((m) => m.amount) - held[0].costBasis) <= 0.01;
+    if (grossTies) {
+      notes.push(`${securityKey} in ${accountId}: each contribution is costed at the gross it paid, `
+        + "because the statement's own cost column counts the charges it levied as part of the units' cost");
+    }
     // Rounded to the 3 decimals a unit count is PRINTED to, so the emitted file
     // carries no float residue and regenerates byte-identically. It stays an
     // independently-summed figure rather than a copy of `quantity`, which would
     // make any check comparing the two a tautology.
-    out[k] = { accountId, securityKey, moves, units: Math.round(allotted * 1e3) / 1e3 };
+    out[k] = {
+      accountId, securityKey,
+      moves: grossTies ? moves.map((m) => ({ ...m, invested: m.amount })) : moves,
+      units: Math.round(allotted * 1e3) / 1e3,
+    };
   }
   return out;
 }

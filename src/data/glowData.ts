@@ -375,7 +375,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-07",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-08-07",
     "custodian": "Helios Mutual Fund",
     "noPositionsReason": null
   },
@@ -494,7 +494,7 @@ export const BOOK_ACCOUNTS: Account[] = [
     "members": [],
     "asOf": "2026-08-06",
     "inceptionDate": null,
-    "capitalRecordTo": null,
+    "capitalRecordTo": "2026-08-06",
     "custodian": "Motilal Oswal Active Momentum Fund",
     "noPositionsReason": null
   },
@@ -20621,6 +20621,28 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
     "securityKey": null
   },
   {
+    "accountId": "helios-mutual-fund-10355977",
+    "date": "2026-08-06",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 310000000,
+    "invested": 309984500.77,
+    "units": 19123041.38,
+    "security": "Helios Flexi Cap Fund - Direct Growth",
+    "securityKey": "helios-flexi-cap-fund-direct-growth"
+  },
+  {
+    "accountId": "motilal-oswal-active-momentum-fund-904168868444",
+    "date": "2026-08-06",
+    "direction": "in",
+    "label": "Purchase",
+    "amount": 214200000,
+    "invested": 214189290.54,
+    "units": 15245765.959,
+    "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
+    "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
+  },
+  {
     "accountId": "v-e-c-assago-capital-management-llp-128005",
     "date": "2026-08-10",
     "direction": "out",
@@ -20642,7 +20664,9 @@ export const BOOK_CAPITAL_MOVES: CapitalMove[] = [
  */
 export const BOOK_CAPITAL_FROM_INCEPTION: string[] = [
   "3p-investment-managers-3000048",
-  "buoyant-capital-103473"
+  "buoyant-capital-103473",
+  "helios-mutual-fund-10355977",
+  "motilal-oswal-active-momentum-fund-904168868444"
 ];
 
 /**
@@ -20878,6 +20902,42 @@ export const BOOK_POSITION_TRANCHES: Record<string, PositionTranches> = {
       }
     ],
     "units": 3416657.417
+  },
+  "helios-mutual-fund-10355977|helios-flexi-cap-fund-direct-growth": {
+    "accountId": "helios-mutual-fund-10355977",
+    "securityKey": "helios-flexi-cap-fund-direct-growth",
+    "moves": [
+      {
+        "accountId": "helios-mutual-fund-10355977",
+        "date": "2026-08-06",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 310000000,
+        "invested": 310000000,
+        "units": 19123041.38,
+        "security": "Helios Flexi Cap Fund - Direct Growth",
+        "securityKey": "helios-flexi-cap-fund-direct-growth"
+      }
+    ],
+    "units": 19123041.38
+  },
+  "motilal-oswal-active-momentum-fund-904168868444|motilal-oswal-active-momentum-fund-direct-plan-growth-option": {
+    "accountId": "motilal-oswal-active-momentum-fund-904168868444",
+    "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option",
+    "moves": [
+      {
+        "accountId": "motilal-oswal-active-momentum-fund-904168868444",
+        "date": "2026-08-06",
+        "direction": "in",
+        "label": "Purchase",
+        "amount": 214200000,
+        "invested": 214200000,
+        "units": 15245765.959,
+        "security": "Motilal Oswal Active Momentum Fund - Direct Plan Growth Option",
+        "securityKey": "motilal-oswal-active-momentum-fund-direct-plan-growth-option"
+      }
+    ],
+    "units": 15245765.959
   },
   "sanshi-fund-9039671821|sanshi-fund-i-open-ended-aif-cat-iii-class-e": {
     "accountId": "sanshi-fund-9039671821",

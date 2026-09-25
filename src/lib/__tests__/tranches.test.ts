@@ -246,6 +246,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(AUDIT, "manifest.json"), "
   { docKey: string; accountNo: string }[];
 let navChecked = 0;
 let navCarried = 0;
+let grossCosted = 0;
 for (const k of keys) {
   const tr = BOOK_POSITION_TRANCHES[k];
   const p = posOf(tr.accountId, tr.securityKey);
@@ -266,6 +267,22 @@ for (const k of keys) {
     // silent skip below, whose comment ("this issuer prints no NAV column")
     // would be false of it: Buoyant prints every NAV.
     if (r.move.carriedFrom) { navCarried++; continue; }
+    // A TRANCHE COSTED AT ITS GROSS — the statement's own cost column counts the
+    // stamp duty as part of what the units cost (build-book's `grossTies`) — has
+    // an entry cost per unit no page prints: the NAV the units were allotted at
+    // is struck on the NET. So the net, from the dated record the tranche was
+    // copied from, is what must reproduce the printed NAV. Counted apart and
+    // FAILED where the page does not carry it, never let into the silent skip
+    // below, whose comment would be false of it.
+    const rec = BOOK_CAPITAL_MOVES.find((m) => m.accountId === r.move.accountId && m.date === r.move.date
+      && m.direction === "in" && m.units === r.move.units);
+    if (rec && rec.invested != null && r.move.invested === r.move.amount && rec.invested !== rec.amount) {
+      const netNav = (rec.invested / r.move.units!).toFixed(4);
+      grossCosted++;
+      ok(`${acctNo} ${r.date} costed at its gross — its net ÷ units, ${netNav}, is the NAV the page prints`,
+        raw.includes(netNav));
+      continue;
+    }
     // The statement prints its NAV to four decimals, so that is the precision
     // the derived figure is held to — the document's own, never a widened one.
     const printed = r.navAtEntry.toFixed(4);
@@ -282,6 +299,18 @@ ok("the archive actually witnessed some entry NAVs", navChecked >= 10, `${navChe
 const carriedInBook = keys.reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.filter((m) => m.carriedFrom).length, 0);
 ok("every tranche carried through a class switch was set aside for carriedCost.test.ts, and only those",
   navCarried === carriedInBook, `${navCarried} set aside, ${carriedInBook} in the book`);
+// ...and the gross-costed ones are the ones whose position's printed cost is the
+// gross: exactly the positions whose tranche invested sums to the cost basis
+// while the dated record's net does not. LOAD-BEARING on this book (Helios and
+// Active Momentum), so the branch above cannot pass by never running.
+const grossInBook = keys.filter((k) => {
+  const tr = BOOK_POSITION_TRANCHES[k];
+  return tr.moves.some((m) => m.invested === m.amount && BOOK_CAPITAL_MOVES.some((c) =>
+    c.accountId === m.accountId && c.date === m.date && c.direction === "in" && c.units === m.units
+    && c.invested != null && c.invested !== c.amount));
+}).reduce((a, k) => a + BOOK_POSITION_TRANCHES[k].moves.length, 0);
+ok("every tranche costed at its gross had its printed NAV checked through the net",
+  grossCosted === grossInBook && grossCosted > 0, `${grossCosted} checked, ${grossInBook} in the book`);
 
 console.log("\n── the completeness gate, on inputs this book does not contain ──");
 // EVERY FUNDED ACCOUNT IN THIS BOOK PASSES THE GATE — seven by units, three

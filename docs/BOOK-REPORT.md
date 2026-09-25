@@ -116,19 +116,21 @@ Together **1,23,51,24,19,665**, excluded from the 7,10,38,79,231.16 consolidated
 
 ## The family's own dated investments
 
-**2** of those account(s) print a running unit balance that starts from zero on every class's first allotment, which proves their record reaches inception: 3p-investment-managers-3000048, buoyant-capital-103473.
+**4** of those account(s) print a running unit balance that starts from zero on every class's first allotment, which proves their record reaches inception: 3p-investment-managers-3000048, buoyant-capital-103473, helios-mutual-fund-10355977, motilal-oswal-active-momentum-fund-904168868444.
 
-**44** dated contribution(s) totalling **3,08,59,00,000** and **100** withdrawal(s) totalling **31,23,00,531.02**, across **15 of 51** account(s).
+**46** dated contribution(s) totalling **3,61,01,00,000** and **100** withdrawal(s) totalling **31,23,00,531.02**, across **17 of 51** account(s).
 
-These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 36 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
+These are movements the STATEMENTS type as a contribution or a withdrawal — what the family put in and took out — and not the trades their managers made inside a mandate. The other 34 account(s) publish no dated capital record at all: their subscription happened, and no statement in this drop says when.
 
-A per-contribution breakdown is published for **10** position(s), of which **5** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
+A per-contribution breakdown is published for **12** position(s), of which **5** were bought over more than one date. That needs UNITS allotted per contribution, and the allotted units accounting for every unit held — without both, a tranche's value today cannot be struck, and a return on part of a position would read as a return on all of it.
 
 | Position | Account | Contributions | Units | Invested |
 | --- | --- | ---: | ---: | ---: |
 | Neo Infra Income Opportunities Fund I — Class A5 | neo-infra-income-opportunities-fund-9039920536 | 6 | 4,85,837.2 | 4,85,83,720 |
 | BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 | buoyant-capital-103472 | 5 | 19,18,953.2 | 24,85,00,000 |
 | BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 | buoyant-capital-103473 | 5 | 34,16,657.417 | 46,00,58,861.66 |
+| Helios Flexi Cap Fund - Direct Growth | helios-mutual-fund-10355977 | 1 | 1,91,23,041.38 | 31,00,00,000 |
+| Motilal Oswal Active Momentum Fund - Direct Plan Growth Option | motilal-oswal-active-momentum-fund-904168868444 | 1 | 1,52,45,765.959 | 21,42,00,000 |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9039671821 | 1 | 60,45,934.485 | 74,99,62,501.87 |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class E | sanshi-fund-9039671854 | 1 | 12,11,186.597 | 14,99,92,500.37 |
 | Sanshi Fund-I (Open Ended AIF CAT-III) — Class A2 | sanshi-fund-9039671912 | 1 | 23,41,480.851 | 24,99,87,500.62 |
@@ -473,6 +475,8 @@ never guessed into the nearest plausible bucket.
 - the 2026-03-31 switch from 3P India Equity Fund 1 - Class B2 into 3P India Equity Fund 1 - Class B3 in 3p-investment-managers-3000048 carries 1 dated contribution(s) through it, at the switch's own ratio of 292748.872 unit(s) allotted for 282737.451 redeemed — the money keeps the date it was paid and the amount it cost
 - the 2026-06-01 switch from Buoyant Opportunities Strategy — Category III — Class A1 into Buoyant Opportunities Strategy — Category III — Class A4 in buoyant-capital-103473 carries 4 dated contribution(s) through it, at the switch's own ratio of 1619755.8012 unit(s) allotted for 1489474.0032 redeemed — the money keeps the date it was paid and the amount it cost
 - no per-contribution breakdown for 3p-india-equity-fund-1-class-b3 in 3p-investment-managers-3000048: the 2053614.026 unit(s) allotted are no longer held and the position stands at zero, so there is nothing left to value a tranche at. The contributions and the redemption that closed it are both carried.
+- helios-flexi-cap-fund-direct-growth in helios-mutual-fund-10355977: each contribution is costed at the gross it paid, because the statement's own cost column counts the charges it levied as part of the units' cost
+- motilal-oswal-active-momentum-fund-direct-plan-growth-option in motilal-oswal-active-momentum-fund-904168868444: each contribution is costed at the gross it paid, because the statement's own cost column counts the charges it levied as part of the units' cost
 - cost carried through the class switch for BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 in buoyant-capital-103472: 248500000 was paid for these units, against the 249410446.32 the statement's cost column prints, which restarts cost at the switch-day NAV. The 910446.32 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (910446.38) — and it is part of this holding's unrealised gain, because no money left the fund.
 - cost carried through the class switch for BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 in buoyant-capital-103473: 460058861.66 was paid for these units, against the 475353990.9 the statement's cost column prints, which restarts cost at the switch-day NAV. The 15295129.24 between them is gain the fund booked as realised when it moved the units — the account's own performance appraisal prints exactly that as Realized Gain (15295129.24) — and it is part of this holding's unrealised gain, because no money left the fund.
 - FIFO agrees with the class-switch carry on BUOYANT OPPORTUNITIES STRATEGY - CATEGORY III - CLASS A4 (buoyant-capital-103472): both hold 24,85,00,000 of cost in the units still held, and the unit record shows none sold.
