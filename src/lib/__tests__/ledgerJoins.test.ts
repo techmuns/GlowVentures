@@ -1,0 +1,214 @@
+// THE DATED RECORD'S JOINS, ON THE COMMITTED ARCHIVE.  npm run test:family
+//
+// A-05, A-07 and A-08 in docs/FIGURE-AUDIT.md. The runtime ledger reads
+// `public/audit/` in the browser; this suite serves that directory off disk and
+// runs the REAL loaders over it, then holds what they return to evidence taken
+// by a different path — the book's own capital-gain total (built by
+// `build-book`'s `datedRowsAcross`, not by the ledger), the archive's documents
+// read directly, and the dated capital record in `glowData.ts`.
+//
+//   A-05  a fund's own statement printing the family's purchase of its units is
+//         the family's CAPITAL, not its manager's dealing;
+//   A-08  every capital-gain lot settles the sale it belongs to, even where the
+//         two statements spell the security differently;
+//   A-07  a date window that cuts an account's record withholds its gain and
+//         return rather than striking them over part of it.
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { BOOK_CAPITAL_GAINS, BOOK_CAPITAL_MOVES, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION } from "@/data/glowData";
+import { capitalRollup, capitalReturn } from "@/lib/tranches";
+import type { Position, CapitalMove } from "@/lib/types";
+
+let fails = 0;
+const ok = (name: string, pass: boolean, detail = "") => {
+  if (!pass) { fails++; console.log(`FAIL ${name}${detail ? `: ${detail}` : ""}`); }
+  else console.log(`ok   ${name}${detail ? ` — ${detail}` : ""}`);
+};
+const rupees = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+const paise = (n: number) => Math.round(n * 100);
+
+// ── the archive, served off disk ─────────────────────────────────────────────
+const ROOT = path.join(process.env.GLOW_FIXTURES ?? "src/lib/__tests__/fixtures", "../../../..");
+const PUB = path.join(ROOT, "public");
+(globalThis as { fetch?: unknown }).fetch = async (u: unknown) => {
+  const rel = String(u).replace(/^\/+/, "");
+  try {
+    const t = readFileSync(path.join(PUB, rel), "utf8");
+    return { ok: true, status: 200, json: async () => JSON.parse(t) };
+  } catch {
+    return { ok: false, status: 404, json: async () => null };
+  }
+};
+// `import.meta.env` is Vite's, and this runs in node.
+(import.meta as { env?: Record<string, string> }).env ??= { BASE_URL: "/" };
+
+const L = await import("@/lib/ledger");
+const txn = await L.loadTransactions();
+const sales = await L.loadSales();
+const lotsData = await L.loadRealisedLots();
+const docs = await L.loadArchive();
+ok("the committed archive loads through the real loaders", !!txn && !!sales && !!lotsData && !!docs);
+if (!txn || !sales || !lotsData || !docs) process.exit(1);
+
+// The archive read DIRECTLY — no ledger code — for the independent sides.
+type Doc = { docKey: string; accountNo: string; provider: string; reportType: string };
+const manifest = JSON.parse(readFileSync(path.join(PUB, "audit/manifest.json"), "utf8")) as Doc[];
+const docOf = (k: string) => JSON.parse(readFileSync(path.join(PUB, "audit", k, "document.json"), "utf8"));
+
+console.log("\n── A-08: every lot settles its sale ──");
+{
+  const book = (BOOK_CAPITAL_GAINS as { realisedST: number | null; realisedLT: number | null; lots: number }[]);
+  const bookTotal = book.reduce((t, e) => t + (e.realisedST ?? 0) + (e.realisedLT ?? 0), 0);
+  const bookLots = book.reduce((t, e) => t + (e.lots ?? 0), 0);
+  const tape = txn.txns.reduce((t, x) => t + (x.realized ?? 0), 0);
+  ok("the tape's realised is the capital-gain statements' own total, to the paisa",
+    paise(tape) === paise(bookTotal), `tape ${rupees(tape)} vs the book's ${rupees(bookTotal)} over ${bookLots} lots`);
+  ok("no lot is left unattributed", sales.unattributedLots === 0 && sales.statementRealized !== null
+    && paise(sales.totalRealized ?? NaN) === paise(sales.statementRealized),
+    `${sales.unattributedLots} unattributed; sales ${rupees(sales.totalRealized ?? NaN)} vs statements ${rupees(sales.statementRealized ?? NaN)}`);
+  ok("the realised-lots list sums to the same total",
+    paise(lotsData.lots.reduce((t, l) => t + l.gain, 0)) === paise(bookTotal), `${lotsData.lots.length} lots`);
+
+  // LOAD-BEARING: by identity alone, some lots reach no sale — so the amount
+  // pass is doing real work on this archive, and a build that dropped it fails
+  // the equality above rather than passing it by luck.
+  const groups = L.lotGroups(docs);
+  const saleKeys = new Set(L.daySales(docs).map((s) => `${s.accountNo}|${s.securityKey}@${s.date}`));
+  const byIdentityOnly = [...groups.values()].filter((g) => !saleKeys.has(g.key));
+  ok("identity alone leaves lots unsettled (the amount pass is load-bearing)", byIdentityOnly.length > 0,
+    `${byIdentityOnly.length} lot groups, ${rupees(byIdentityOnly.reduce((t, g) => t + g.realised, 0))}`);
+
+  const settled = L.settleSales(docs);
+  ok("no two days disagree on which sale a lot key belongs to", settled.conflicts.length === 0, JSON.stringify(settled.conflicts));
+  // An alias joins two spellings inside ONE account, and its target is a key
+  // that account's own statements print — never a key invented here.
+  const printedKeys = new Map<string, Set<string>>();
+  for (const d of manifest) {
+    const doc = docOf(d.docKey);
+    const set = printedKeys.get(d.accountNo) ?? new Set<string>();
+    for (const arr of [doc.holdings, doc.transactions]) for (const x of arr ?? []) if (x?.securityKey) set.add(x.securityKey);
+    printedKeys.set(d.accountNo, set);
+  }
+  const bad = [...settled.aliases].filter(([a, to]) => !printedKeys.get(a.slice(0, a.indexOf("|")))?.has(to));
+  ok("every alias lands on a key its own account's statements print", bad.length === 0 && settled.aliases.size > 0,
+    `${settled.aliases.size} aliases${bad.length ? `; unprinted: ${JSON.stringify(bad)}` : ""}`);
+
+  // DL-1, runtime half: the stock page's realised for Axis Liquid. Summed here
+  // off the raw documents — a lot repeated across two issues of one account's
+  // statement counted once, a repeat inside one document kept (the rule
+  // `datedRowsAcross` applies) — never through the ledger.
+  const axisKeys = [...settled.aliases].filter(([, to]) => /axis-liquid/.test(to));
+  if (!axisKeys.length) ok("the Axis Liquid alias is on this book", false, "the case this guards has left the archive; re-derive it");
+  else {
+    const target = axisKeys[0][1];
+    const want = new Map<string, number>(); // account|identity → max count in one doc
+    const gainOf = new Map<string, number>();
+    for (const d of manifest.filter((m) => m.reportType === "capital-gain")) {
+      const doc = docOf(d.docKey);
+      const count = new Map<string, number>();
+      for (const l of doc.capitalGains ?? []) {
+        const alias = settled.aliases.get(`${d.accountNo}|${l.securityKey}`) ?? l.securityKey;
+        if (alias !== target) continue;
+        const id = `${d.accountNo}|${l.securityKey}|${l.saleDate}|${l.purchaseDate}|${l.quantity}|${l.saleAmount}`;
+        count.set(id, (count.get(id) ?? 0) + 1);
+        gainOf.set(id, (l.shortTerm ?? 0) + (l.longTerm ?? 0));
+      }
+      for (const [id, n] of count) want.set(id, Math.max(want.get(id) ?? 0, n));
+    }
+    const expect = [...want].reduce((t, [id, n]) => t + n * (gainOf.get(id) ?? 0), 0);
+    const led = await L.loadStockLedger(target);
+    ok("the Axis Liquid holding's realised reaches it through the settlement (DL-1)",
+      !!led && led.realizedProfit !== null && paise(led.realizedProfit) === paise(expect) && expect > 0,
+      `${rupees(led?.realizedProfit ?? 0)} vs ${rupees(expect)} off the documents`);
+  }
+}
+
+console.log("\n── A-05: a fund's own allotment is capital, not dealing ──");
+{
+  const accountId = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
+  const moves = (BOOK_CAPITAL_MOVES as CapitalMove[]).filter((m) => m.securityKey);
+  // The statement's own settlement figure first — the order the ledger reads it in.
+  const settledOf = (t: { printed?: { settlementAmount?: number | null } | null; net?: number | null; gross?: number | null }) =>
+    t.printed?.settlementAmount ?? t.net ?? t.gross ?? null;
+  const expected = new Set<string>();
+  for (const d of manifest.filter((m) => m.reportType === "transaction-statement")) {
+    const id = accountId.get(`${d.provider}|${d.accountNo}`);
+    if (!id) continue;
+    for (const t of docOf(d.docKey).transactions ?? []) {
+      const a = settledOf(t);
+      if (a === null || !t.date) continue;
+      const dir = t.side === "sell" ? "out" : "in";
+      if (moves.some((m) => m.accountId === id && m.securityKey === t.securityKey && m.date === t.date
+        && m.direction === dir && Math.abs((m.invested ?? m.amount ?? NaN) - a) <= 1)) {
+        expected.add(`${d.accountNo}|${t.securityKey}@${t.date}`);
+      }
+    }
+  }
+  const got = new Set(txn.ownAllotments.map((t) => `${t.accountNo}|${t.securityKey}@${t.date}`));
+  ok("the ledger names exactly the rows the capital record already carries", expected.size > 0
+    && expected.size === got.size && [...expected].every((k) => got.has(k)),
+    `${expected.size} expected (load-bearing: must be > 0), ${got.size} named`);
+  const leaked = txn.txns.filter((t) => expected.has(`${t.accountNo}|${t.securityKey}@${t.date}`));
+  ok("none of them is counted as the manager's dealing", leaked.length === 0,
+    leaked.map((t) => `${t.accountNo} ${t.date} ${t.amount}`).join("; "));
+  const own = txn.ownAllotments.reduce((t, x) => t + (x.amount ?? 0), 0);
+  const bought = txn.txns.filter((t) => t.side === "Buy").reduce((t, x) => t + (x.amount ?? 0), 0);
+  ok("the managers' Bought no longer carries the family's own subscriptions", own > 0,
+    `Bought ${rupees(bought)}; the family's own ${rupees(own)} is in the capital record`);
+}
+
+console.log("\n── A-07: a window that cuts a record withholds its gain ──");
+{
+  const moves = BOOK_CAPITAL_MOVES as CapitalMove[];
+  const positions = BOOK_POSITIONS as Position[];
+  const accounts = BOOK_ACCOUNTS;
+  const opts = { commitments: BOOK_COMMITMENTS, fromInception: BOOK_CAPITAL_FROM_INCEPTION };
+  const roll = (ms: CapitalMove[], windowed: boolean) =>
+    capitalRollup(ms, accounts, positions, BOOK_POSITION_TRANCHES, "all", "recent", { ...opts, windowed });
+  const hpr = (g: ReturnType<typeof roll>[number] | undefined) => (g ? capitalReturn(g, "absolute") : null);
+  const whole = roll(moves, false);
+  const byAcct = new Map<string, CapitalMove[]>();
+  for (const m of moves) byAcct.set(m.accountId, [...(byAcct.get(m.accountId) ?? []), m]);
+  // THE CASE THE DEFECT BIT, chosen off the book, never typed: an account and a
+  // window holding some but not all of its dated movements, where the page —
+  // if it forgot to say a window is on — would still print a return, and a
+  // different one from the record's (Sanshi 9069671554 once read HPR 194.20%
+  // against its record's 33.73%). An account whose record the window cuts
+  // below its own inception loses its return either way, so the search skips it.
+  let pickId = "", from = "", to = "", n = 0;
+  let inView: CapitalMove[] = [];
+  search: for (const [id, ms] of [...byAcct].sort((a, b) => b[1].length - a[1].length)) {
+    const ds = [...new Set(ms.map((m) => m.date))].sort();
+    const full = hpr(whole.find((g) => g.accountId === id));
+    if (ds.length < 2 || !full?.shown) continue;
+    for (let i = 1; i < ds.length; i++) {
+      const view = moves.filter((m) => m.date >= ds[i]);
+      const u = hpr(roll(view, false).find((g) => g.accountId === id));
+      if (u?.shown && Math.abs(u.pct - full.pct) > 1) {
+        pickId = id; from = ds[i]; to = ds[ds.length - 1]; n = ds.length; inView = view; break search;
+      }
+    }
+  }
+  if (!pickId) {
+    // Main's completeness test (Stage 10cd: the record must reach inception)
+    // may refuse every such window on its own; then the flag is belt and
+    // braces, and this says so rather than passing over nothing.
+    console.log("  NOT CHECKED  no window on this book prints a different return unflagged — completeness alone refuses them");
+  } else {
+    const w = roll(inView, true).find((g) => g.accountId === pickId);
+    const u = hpr(roll(inView, false).find((g) => g.accountId === pickId));
+    const full = hpr(whole.find((g) => g.accountId === pickId));
+    ok("the whole record prints a return (the case is measurable)", !!full?.shown, `${pickId}: ${n} dated movements`);
+    const wr = hpr(w);
+    ok("under a window that cuts it, the row is marked windowed and withholds its return, saying why",
+      !!w && w.windowed && w.appreciation === null && !!wr && !wr.shown
+        && /dates are filtered to part of this account's record/i.test(wr.shown ? "" : wr.reason), `${from} → ${to}`);
+    ok("…where, unflagged, the same window would print a different return (load-bearing)",
+      !!u?.shown && !!full?.shown && Math.abs(u.pct - full.pct) > 1,
+      `${u?.shown ? u.pct.toFixed(2) : "—"}% against the record's ${full?.shown ? full.pct.toFixed(2) : "—"}%`);
+  }
+  ok("with no window, no row is windowed", whole.every((g) => !g.windowed));
+}
+
+console.log(fails ? `\n${fails} failed` : "\nall ledger-join checks passed");
+process.exit(fails ? 1 : 0);

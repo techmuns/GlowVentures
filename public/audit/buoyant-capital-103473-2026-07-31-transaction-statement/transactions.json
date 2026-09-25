@@ -3,11 +3,11 @@
  "rows": [
   [
    "settleDate",
-   "exchange",
    "description",
    "tranDate",
    "security",
    "quantity",
+   "unitPrice",
    "brokerage",
    "stt",
    "settlement"

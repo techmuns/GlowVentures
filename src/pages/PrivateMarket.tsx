@@ -24,8 +24,9 @@ import {
 } from "@/lib/analytics";
 import {
   privateScope, fundRollup, folioRows, ownerRollup, commitmentTotals, unvaluedAccounts, unvaluedDrawn,
-  capitalScope,
+  privateCapital, countedOnceNote,
 } from "@/lib/privateMarket";
+import { isValuedByNoStatement } from "@/lib/aifCategory";
 import {
   fundDatedRecords, fundMeasuredReturn, fundReturnColumnMeta, pooledFundXirr,
   PM_AGG_NO_MEASURE, PM_RETURN_HINTS, type FundDated,
@@ -380,13 +381,25 @@ export function PrivateMarket() {
      * Founders Fund folios, which call capital and invest in listed equity — are
      * NAMED under the table with their figures, never dropped.
      */
-    const cap = capitalScope(portfolio.commitments ?? [], portfolio.accounts);
+    const cap = privateCapital(portfolio.commitments ?? [], portfolio.accounts, portfolio.positions);
     const commitments = cap.onPage;
 
     const funds = fundRollup(scope.dedupedRows, accIdx, scope.rows);
     const folios = folioRows(scope.rows, accIdx);
     const owners = ownerRollup(scope.rows, accIdx);
-    const ct = commitmentTotals(commitments);
+    /**
+     * ── EACH CAPITAL ACCOUNT ONCE WITH ITS HOLDING ────────────────────────────
+     *
+     * The tiles and the table's total count a capital account on the basis its
+     * holding is counted — `capitalCountedOnce`, the one rule `privateBook.ts`
+     * applies to every consolidated row. Struck over the same private holdings
+     * the table draws, in book order, so the capital that stands for a dedupe
+     * group is the capital of the member whose holding does. The accounts it
+     * leaves out are NAMED in each capital tile's hover with their figures.
+     */
+    const counting = cap.counting;
+    const countedIds = new Set(counting.counted.map((c) => c.accountId));
+    const ct = commitmentTotals(counting.counted);
     /**
      * THE CAPITAL ACCOUNTS, per scheme — read ONCE and handed to the table, the
      * tiles and the Transactions tab alike, so they cannot describe different
@@ -397,13 +410,23 @@ export function PrivateMarket() {
       (c) => c.name,
       (c) => (c.ownerId ? ownerDisplayName(c.ownerId) : null),
     );
-    const cc = callTotals(schemes);
+    // Money totals over the COUNTED capital accounts; the dated history below is
+    // every call as its own statement prints it, a per-account record.
+    const cc = callTotals(schemes.filter((s) => countedIds.has(s.accountId)));
+    // …AND WHAT THE ACCOUNTS LEFT OUT WOULD ADD, so every hover can say it in
+    // rupees: "if these are two investments, add ₹X".
+    const alsoIds = new Set(counting.alsoReported.map((x) => x.commitment.accountId));
+    const alsoCt = commitmentTotals(counting.alsoReported.map((x) => x.commitment));
+    const alsoCc = callTotals(schemes.filter((s) => alsoIds.has(s.accountId)));
     const history = callHistory(schemes);
     // PRIVATE-MARKET ACCOUNTS ONLY, by the same rule as the capital register:
     // Motilal Oswal's Hedged Equity strategy is an AIF holding nothing too, and
-    // it is not a private-market fund.
+    // it is not a private-market fund. AND ONLY THE ONES HELD AND VALUED BY NO
+    // STATEMENT — `isValuedByNoStatement`, the definition the AIF drill-down
+    // reads too: an income-only folio's units are valued under another account,
+    // and a redeemed one holds nothing to value.
     const unvalued = unvaluedAccounts(portfolio.accounts, portfolio.positions, commitments)
-      .filter((u) => u.side === "private");
+      .filter((u) => u.side === "private" && isValuedByNoStatement(u.account));
 
     // CONSOLIDATED — each dedupeGroup once — SUMMED FROM THE FUND ROWS, never
     // struck independently: a total must tie to its own columns.
@@ -428,7 +451,7 @@ export function PrivateMarket() {
 
     return {
       accIdx, scope, funds, folios, owners, ct, unvalued, commitments,
-      schemes, cc, history,
+      schemes, cc, history, counting, alsoCt, alsoCc,
       privMV, privCost, privPnL, privFifo, costedMV, costedCount: costedRows.length, bookMV, rawMV,
       unvaluedDrawn: unvaluedDrawn(unvalued),
       unvaluedNoNav: unvalued.filter((u) => u.kind === "no-nav"),
@@ -522,6 +545,24 @@ export function PrivateMarket() {
   const retPct = m.privFifo.returnPct;
   const share = (a: number, b: number, decimals: number) => (b > 0 ? fmtPct((a / b) * 100, { decimals }) : DASH);
   const absentLine = (why: string) => <span className="text-slate-500">{why}</span>;
+  /** An account as a reader finds it on its own statement: the platform and the number it prints. */
+  const accName = (id: string) => {
+    const a = m.accIdx.get(id);
+    return a ? `${a.provider} ${a.accountNo}` : id;
+  };
+  /**
+   * ── THE CAPITAL ACCOUNT COUNTED ONCE WITH ITS HOLDING, SAID IN EVERY HOVER ─
+   *
+   * A capital tile counts a capital account on the basis its holding is counted
+   * (`capitalCountedOnce`). Where two statements report one holding, the second
+   * statement's capital is left out — and every tile that sums capital NAMES
+   * it, says what it would add, and says the pair is pending the family's
+   * answer (PM-A1: whether it is one investment reported twice or two
+   * investments of the same size is theirs to say, and §4c's counted-once
+   * policy stands until they do).
+   */
+  const alsoNote = (extra: number | null | undefined, what: string) =>
+    countedOnceNote(m.counting, accName, (n) => money(n), extra, what);
   const tileMetrics: TileMetric[] = [
     {
       id: "value", label: "Market value", icon: <Handshake className="h-4 w-4" />,
@@ -561,12 +602,14 @@ export function PrivateMarket() {
        */
       detail: "Money promised to these funds that they have not yet asked for — a bill that can arrive any day, "
         + "not an asset, and never added to a value on this page. "
-        + `Across ${m.ct.count} capital accounts of private-market funds`
+        + `Across ${m.commitments.length} capital accounts of private-market funds`
         + (m.capOutside > 0 ? `, ${m.capOutside} of them in funds this page does not carry` : "")
         + (m.capElsewhere.length > 0
           ? `; the ${m.capElsewhere.length} in public-market funds are not counted`
           : "")
-        + ". A fund whose capital account nobody sent contributes nothing, so this is a floor.",
+        + "."
+        + alsoNote(m.alsoCt.undrawn, "uncalled balance")
+        + " A fund whose capital account nobody sent contributes nothing, so this is a floor.",
     },
     /* ── COMMITTED vs CALLED vs PAID IN — three figures, not two ─────────────
         *"Capital committed, or is it capital invested? … I would commit 10
@@ -577,11 +620,12 @@ export function PrivateMarket() {
       id: "committed", label: "Committed", icon: <Landmark className="h-4 w-4" />,
       value: money(m.ct.committed),
       sub: "Total promised to funds",
-      detail: `${m.ct.committedOf} of ${m.ct.count} capital accounts of private-market funds`
+      detail: `${m.ct.committedOf} of ${m.ct.count} capital accounts of private-market funds counted`
         + (m.capElsewhere.length > 0
           ? ` — ${m.capElsewhere.length} more, in public-market funds, are not counted`
           : "")
-        + ". The full amount signed for, whether or not the fund has asked for it yet — not money spent, and in no market value on this page.",
+        + ". The full amount signed for, whether or not the fund has asked for it yet — not money spent, and in no market value on this page."
+        + alsoNote(m.alsoCt.committed, "commitment"),
     },
     {
       id: "called", label: "Called", icon: <Banknote className="h-4 w-4" />,
@@ -590,13 +634,15 @@ export function PrivateMarket() {
       detail: `${m.cc.calledOf} of ${m.cc.count} capital accounts print a called line.`
         + (m.calledPaidSameSet
           ? " Paid in covers the same accounts."
-          : " It covers a different set of accounts from Paid in, so the two must never be subtracted."),
+          : " It covers a different set of accounts from Paid in, so the two must never be subtracted.")
+        + alsoNote(m.alsoCc.called, "call"),
     },
     {
       id: "paid", label: "Paid in", icon: <Wallet className="h-4 w-4" />,
       value: m.cc.paid == null ? <AbsentValue /> : money(m.cc.paid),
       sub: m.cc.paid == null ? absentLine("No statement prints it") : "Cash sent to funds",
-      detail: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank. Not the same set as Capital invested, which is the cost of the holdings in the table below.`,
+      detail: `${m.cc.paidOf} of ${m.cc.count} capital accounts · cash that has actually left the family's bank. Not the same set as Capital invested, which is the cost of the holdings in the table below.`
+        + alsoNote(m.alsoCc.paid, "payment"),
     },
     {
       id: "due", label: "Due now", icon: <CalendarClock className="h-4 w-4" />,
@@ -657,7 +703,9 @@ export function PrivateMarket() {
     },
     {
       id: "accounts", label: "Capital accounts", icon: <Landmark className="h-4 w-4" />,
-      value: fmtNum(m.ct.count),
+      // EVERY STATEMENT, whichever the capital figures count: this tile is a
+      // count of documents, and each of them is real paper the family holds.
+      value: fmtNum(m.commitments.length),
       sub: "Drawdown statements",
       /**
        * THE SAME CROSSED FRACTION THE UNCALLED TILE WAS FIXED FOR: three of
@@ -665,16 +713,25 @@ export function PrivateMarket() {
        * two counts PARTITION the tile's own figure — the only form in which both
        * can be printed together.
        */
-      detail: `${m.ct.count - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
+      detail: `${m.commitments.length - m.capOutside} of this page's ${m.scope.accounts.length} private accounts send one`
         + (m.capOutside > 0 ? ` · ${m.capOutside} more come from funds this page does not carry` : "")
         + (m.capElsewhere.length > 0 ? ` · ${m.capElsewhere.length} more, in public-market funds, are not counted` : "")
-        + ". A capital account is the statement that prints a commitment and what has been called against it.",
+        + ". A capital account is the statement that prints a commitment and what has been called against it."
+        + (m.counting.alsoReported.length
+          ? ` The capital tiles count ${m.ct.count} of them:` + alsoNote(null, "capital")
+          : ""),
     },
     {
+      // AS PRINTED, like the Transactions tab it summarises — a count of dated
+      // calls, each as its own statement prints it.
       id: "calls", label: "Capital calls", icon: <CalendarClock className="h-4 w-4" />,
-      value: fmtNum(m.cc.callCount),
+      value: fmtNum(m.history.length),
       sub: "Dated calls so far",
-      detail: `Across ${m.ct.count} capital accounts, every one reconciled against its own statement's printed total.`,
+      detail: `Across ${m.commitments.length} capital accounts, every one reconciled against its own statement's printed total — each call as its statement prints it, listed on the Transactions tab.`
+        + (m.counting.alsoReported.length
+          ? ` The Called tile leaves out ${m.alsoCc.callCount} of them: `
+            + `${m.counting.alsoReported.map((x) => accName(x.commitment.accountId)).join(" and ")} ${m.counting.alsoReported.length === 1 ? "is the second statement" : "are second statements"} of a holding counted once, pending the family's answer.`
+          : ""),
     },
     /* THE RAW TOTAL, and it never appears without its own double count named. */
     {
@@ -777,7 +834,9 @@ export function PrivateMarket() {
   const groupRet = (g: BookGroup) => (g.kind !== "fund" || g.value == null
     ? (g.kind === "fund" ? noValueReturn(NO_VALUE_RETURN) : aggRet(g.folios, false, "member"))
     : (measure: ReturnMeasure) => fundMeasuredReturn(g, fundDated.get(g.securityKey ?? ""), measure, moneyN, fmtDate));
-  const folioRet = (f: BookFolio) => (f.value == null ? noValueReturn(NO_VALUE_RETURN)
+  const folioRet = (f: BookFolio) => (f.value == null ? noValueReturn(f.viewOf
+    ? `an income-only folio holds no units of its own to strike a return on — the ${accName(f.viewOf)} line carries them, and the fund row carries the return`
+    : NO_VALUE_RETURN)
     : (measure: ReturnMeasure) => fundMeasuredReturn(
       { returnPct: folioFigures(f).returnPct, cost: f.cost }, folioDated.get(f.key), measure, moneyN, fmtDate));
   /**
@@ -898,18 +957,30 @@ export function PrivateMarket() {
      * where a reader who asks "how is this calculated?" already is.
      */
     titles?: Partial<Record<string, string>>;
+    /**
+     * A CAPITAL ACCOUNT THE TOTALS COUNT WITH ANOTHER STATEMENT'S (PM-A2). Said
+     * on the figure — the capital cells in the Counted once line's amber, the
+     * reason in their hover — rather than as words on the line under the name,
+     * which main keeps to the counts a reader scans.
+     */
+    capAlso?: { id: string; title: string };
   }): Cells => {
     const p = pad(k);
     const t = tone(k);
     const holdingRow = k === "group" || k === "folio";
+    const capCols = new Set(["committed", "called", "paid", "uncalled"]);
     const td = (col: string, body: ReactNode, extra = "") => (
-      <td key={col} data-col-cell={col} title={ctx.titles?.[col]} className={`${p} whitespace-nowrap text-right mono ${t} ${extra}`}>{body}</td>
+      <td key={col} data-col-cell={col}
+        title={ctx.titles?.[col] ?? (ctx.capAlso && capCols.has(col) ? ctx.capAlso.title : undefined)}
+        className={`${p} whitespace-nowrap text-right mono ${t} ${extra}`}>{body}</td>
     );
     const absent = (col: string, why: string) => td(col, <AbsentCell reason={why} />);
     const cap = (col: string, v: number | null | undefined, why: string, of?: [number, number]) =>
       ctx.noCapital ? absent(col, ctx.noCapital)
         : v == null ? absent(col, why)
-          : td(col, <>{money(v)}{of && covered(of[0], of[1], k)}</>);
+          : td(col, <>{ctx.capAlso
+            ? <span className="text-amber-400" data-pm-capital-also={ctx.capAlso.id}>{money(v)}</span>
+            : money(v)}{of && covered(of[0], of[1], k)}</>);
     const out: Cells = {
       committed: cap("committed", r.committed, "no commitment on this statement"),
       called: cap("called", r.called,
@@ -1003,9 +1074,14 @@ export function PrivateMarket() {
   const groupSub = (g: BookGroup): ReactNode => {
     const bits: ReactNode[] = [];
     if (g.kind === "fund" && g.category) bits.push(g.category);
-    bits.push(`${g.folios.length} ${g.folios.length === 1 ? "folio" : "folios"}`);
+    const views = g.folios.filter((f) => f.viewOf).length;
+    const held = g.folios.length - views;
+    bits.push(`${held} ${held === 1 ? "folio" : "folios"}`);
+    if (views > 0) bits.push(<span key="vw" data-pm-views={views}>{views} income-only {views === 1 ? "folio" : "folios"}</span>);
     if (g.calls > 0) bits.push(`${g.calls} ${g.calls === 1 ? "call" : "calls"}`);
-    if (g.overlap) bits.push(<span key="ov" className="text-amber-400">reported twice · counted once</span>);
+    // THE PAIR IS THE FAMILY'S TO CALL (PM-A1): counted once under §4c's policy
+    // until they say whether it is one investment reported twice or two.
+    if (g.overlap) bits.push(<span key="ov" className="text-amber-400" data-pm-pending>reported twice · counted once, pending the family&rsquo;s answer</span>);
     if (g.status === "no-nav") bits.push(<span key="st" className="text-amber-400">no NAV published</span>);
     if (g.status === "income-only") bits.push("income-only folios");
     if (g.status === "redeemed") bits.push("redeemed to nil");
@@ -1045,7 +1121,8 @@ export function PrivateMarket() {
           {...(g.kind === "fund" ? { "data-pm-fund": g.key } : { "data-pm-owner": g.key })}
           data-pm-folios={g.folios.length} data-pm-value={g.value ?? undefined}
           data-pm-cost-absent={g.cost == null ? "" : undefined} data-pm-return-absent={g.returnPct == null ? "" : undefined}
-          data-pm-committed={g.committed ?? undefined} data-pm-uncalled={g.uncalled ?? undefined}>
+          data-pm-committed={g.committed ?? undefined} data-pm-uncalled={g.uncalled ?? undefined}
+          data-pm-called={g.called ?? undefined} data-pm-paid={g.paid ?? undefined}>
           <TreeNameCell depth={0} open={open} onToggle={toggle}
             toggleLabel={open ? "Hide the folios behind this row" : `Show the ${g.folios.length} ${g.folios.length === 1 ? "folio" : "folios"} behind this row`}
             toggleData={{ "data-pm-folio-toggle": g.key, "data-pm-folio-rows": g.folios.length, "data-pm-folio-gap": Math.round(g.overlap?.value ?? 0) }}
@@ -1078,14 +1155,22 @@ export function PrivateMarket() {
         {fundCall && callEditorRow(fundRowId, fundCall, g.label)}
         {open && kids.map(({ f, fig }, i) => {
           const s = scheme(f);
-          // BY OWNER the folio is the fund level, so the call cell is here.
-          const folioCall = grouping === "owner" ? folioCallKey(f) : null;
+          // BY OWNER the folio is the fund level, so the call cell is here — on
+          // the folio that holds the units, never on an income-only view of it,
+          // which would put a second editor for one fund under one member.
+          const folioCall = grouping === "owner" && !f.viewOf ? folioCallKey(f) : null;
           const folioRowId = `owner:${g.key}:${f.key}`;
+          const viewOfLine = f.viewOf ? accName(f.viewOf) : null;
           return (
             <Fragment key={f.key}>
             <Tr view={bookView} className={TREE_ROW.child}
               data-pm-folio-row={g.key} data-pm-row-section={g.section} data-account={f.accountId}
               data-pm-capital-account={f.capital?.accountId ?? undefined}
+              data-pm-capital-counted={f.capital ? (f.capitalCounted ? "true" : "false") : undefined}
+              data-pm-capital-counted-as={f.capitalCountedAs ?? undefined}
+              data-pm-view-of={f.viewOf ?? undefined}
+              data-pm-committed={fig.committed ?? undefined} data-pm-called={fig.called ?? undefined}
+              data-pm-paid={fig.paid ?? undefined} data-pm-uncalled={fig.uncalled ?? undefined}
               data-pm-value={f.value ?? undefined} data-pm-counted={f.counted ? "" : undefined}
               data-calls={s ? s.calls.length : undefined}>
               <TreeNameCell depth={1} last={i === kids.length - 1 && !(grouping === "fund" && g.overlap)}
@@ -1093,6 +1178,11 @@ export function PrivateMarket() {
                 sub={<>
                   {f.provider} {f.accountNo}
                   {s && s.calls.length > 0 && <> · {s.calls.length} {s.calls.length === 1 ? "call" : "calls"}</>}
+                  {/* AN INCOME-ONLY VIEW OF A HOLDING ANOTHER LINE VALUES — said
+                      on the line, so a reader never looks for its units here. */}
+                  {viewOfLine && <> · <span className="text-slate-400" data-pm-view-note={f.viewOf}
+                    title={`An income-only folio: its documents report earnings and distributions and no valuation. Its units are valued on the ${viewOfLine} line, and counting them here too would count them twice.`}>
+                    income-only · units valued on the {m.accIdx.get(f.viewOf!)?.accountNo ?? viewOfLine} line</span></>}
                   {/* ONE HOLDING ON TWO STATEMENTS — said on the line, in the
                       colour the "Counted once" row below it uses, rather than
                       as a chip that doubles the row's height. */}
@@ -1104,15 +1194,27 @@ export function PrivateMarket() {
                 </>} />
               {inOrder({
                 ...figureCells(fig, "folio", {
-                noCapital: s ? undefined : noCapitalWhy(g.section, "folio"),
-                noValue: valueWhy(f.status, f.reason),
+                noCapital: s ? undefined
+                  : viewOfLine ? "an income-only folio — its documents report earnings and distributions, and no commitment"
+                    : noCapitalWhy(g.section, "folio"),
+                noValue: viewOfLine
+                  ? `income-only folio — its documents report earnings and distributions and no valuation; these units are valued on the ${viewOfLine} line, and counting them here too would count them twice`
+                  : valueWhy(f.status, f.reason),
                 nil: f.status === "redeemed" ? valueWhy("redeemed", null) : undefined,
-                noHolding: f.position ? undefined : "no valued holding on this statement",
+                noHolding: f.position ? undefined
+                  : viewOfLine ? `income-only folio — the units are counted on the ${viewOfLine} line, not here`
+                    : "no valued holding on this statement",
                 weight: inPrivate ? pct(f.value) : null,
                 weightWhy: weightWhy(g.section),
                 stale: s?.staleDays ?? null,
                 ties: s?.uncalledTies ?? null,
                 implied: s?.impliedUncalled ?? null,
+                capAlso: f.capital && !f.capitalCounted && f.capitalCountedAs
+                  ? {
+                    id: f.capitalCountedAs,
+                    title: `Counted once, with ${accName(f.capitalCountedAs)}'s capital account (${m.accIdx.get(f.capitalCountedAs)?.accountNo ?? "the other statement"}): the fund's row and the totals do not add this statement's capital again, pending the family's answer on whether the two are one investment or two.`,
+                  }
+                  : undefined,
                 }),
                 ...(folioCall ? { call: callCell(folioRowId, folioCall, f.fundName) } : {}),
               }, "folio")}
@@ -1128,27 +1230,44 @@ export function PrivateMarket() {
 
   /**
    * THE "COUNTED ONCE" LINE — the arithmetic that makes the lines above add to
-   * the row. In the columns it adjusts and empty in the ones it does not: the
-   * capital accounts are separate statements and are never deduped.
+   * the row, in EVERY column it adjusts: the holding's units, cost and value,
+   * and — since a capital account is counted once with its holding — the second
+   * statement's commitment, calls and still-to-call too. Empty in a column with
+   * no difference, never a "−₹0" standing for one.
    */
-  // A RETURN IS NOT AN ADJUSTMENT: the line is arithmetic on the holding
-  // columns, so every return column is an empty cell here, whichever are picked.
-  const overlapRow = (o: Overlap, key: string, statements: number, weigh: boolean) => (
-    <Tr view={bookView} key={`${key}-overlap`} className={TREE_ROW.adjust}
-      data-pm-overlap={key} data-printed={Math.round(o.printed)} data-consolidated={Math.round(o.consolidated)} data-overlap={Math.round(o.value)}>
-      <TreeNameCell depth={1} last
-        title={<span className="text-amber-400">Counted once</span>}
-        hint={grouping === "fund"
-          ? `The same holding is reported on ${statements} statements; the row above counts it once, and this line takes the overlap out so the folios add to the row.`
-          : `${statements} statements report the same holdings twice between them; the total counts each once, and this line takes the overlap out.`} />
-      {inOrder({
-        units: <td key="units" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.units != null ? `−${fmtNum(o.units, 3)}` : ""}</td>,
-        cost: <td key="cost" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{o.cost != null ? `−${money(o.cost)}` : ""}</td>,
-        value: <td key="value" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`} data-col-cell="value">−{money(o.value)}</td>,
-        weight: <td key="weight" className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>{weigh && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : ""}</td>,
-      }, "folio")}
-    </Tr>
-  );
+  // A RETURN IS NOT AN ADJUSTMENT: the line is arithmetic on the columns above,
+  // so every return column is an empty cell here, whichever are picked.
+  // NO LINE UNDER "Counted once" (Stage 10co): what the line does is its hover.
+  const overlapRow = (o: Overlap, key: string, statements: number, weigh: boolean) => {
+    const adj = (col: string, v: number | null, body?: string) => (
+      <td key={col} data-col-cell={col} data-pm-adjust={v != null ? Math.round(v) : undefined}
+        className={`${pad("folio")} whitespace-nowrap text-right mono text-amber-400`}>
+        {v != null ? body ?? `−${money(v)}` : ""}
+      </td>
+    );
+    const capital = [o.committed, o.called, o.paid, o.uncalled].some((v) => v != null);
+    return (
+      <Tr view={bookView} key={`${key}-overlap`} className={TREE_ROW.adjust}
+        data-pm-overlap={key} data-printed={Math.round(o.printed)} data-consolidated={Math.round(o.consolidated)} data-overlap={Math.round(o.value)}>
+        <TreeNameCell depth={1} last
+          title={<span className="text-amber-400">Counted once</span>}
+          hint={grouping === "fund"
+            ? `The same holding is reported on ${statements} statements; the row above counts it once${capital ? " — and its capital account once too" : ""}, and this line takes the overlap out so the folios add to the row.`
+            : `${statements} statements report the same holdings twice between them; the total counts each once${capital ? " — and each capital account once too" : ""}, and this line takes the overlap out.`} />
+        {inOrder({
+          committed: adj("committed", o.committed),
+          called: adj("called", o.called),
+          paid: adj("paid", o.paid),
+          uncalled: adj("uncalled", o.uncalled),
+          units: adj("units", o.units, o.units != null ? `−${fmtNum(o.units, 3)}` : undefined),
+          cost: adj("cost", o.cost),
+          value: adj("value", o.value > 0 ? o.value : null),
+          weight: adj("weight", weigh && o.value > 0 && pct(o.value) != null ? o.value : null,
+            weigh && o.value > 0 && pct(o.value) != null ? `−${pct(o.value)!.toFixed(1)}%` : undefined),
+        }, "folio")}
+      </Tr>
+    );
+  };
 
   /** A section band — heading, marker, and the section's own totals in their columns. */
   const renderSection = (id: BookSectionId) => {
@@ -1209,7 +1328,11 @@ export function PrivateMarket() {
     titles?: Partial<Record<string, string>>;
     attrs?: Record<`data-${string}`, string | undefined>;
   } = {}) => (
-    <TrFoot view={bookView} key="private" data-pm-total="private" data-pm-capital-accounts={fig.capitalAccounts}
+    <TrFoot view={bookView} key="private" data-pm-total="private"
+      // EVERY capital-account statement the row's capital draws on, and the
+      // ones its capital columns COUNT — the second is what the tiles add to,
+      // the first is what the named public-market accounts complement.
+      data-pm-capital-accounts={fig.capitalAccounts + fig.capitalAlso} data-pm-capital-counted={fig.capitalAccounts}
       {...(extra.attrs ?? {})}
       className={`${TREE_ROW.total} border-t-2 border-ink-600 ${TREE_CELL.parent} font-semibold text-slate-200`}
       label={label} labelTitle={extra.labelTitle}
@@ -1261,24 +1384,42 @@ export function PrivateMarket() {
       + ".";
   })();
   const capCount = book.privateTotal.capitalAccounts;
+  /**
+   * THE SECOND STATEMENT OF A HOLDING COUNTED ONCE (PM-A2): its capital is left
+   * out of these totals, and each total's hover says, in rupees, what it would
+   * add — the same clause every capital tile's hover carries.
+   */
+  const alsoNames = m.counting.alsoReported.map((x) => accName(x.commitment.accountId)).join(" and ");
+  const alsoClause = (v: number | null | undefined, what: string) =>
+    m.counting.alsoReported.length && v != null && v > 0
+      ? `${alsoNames} ${m.counting.alsoReported.length === 1 ? "is the second statement" : "are second statements"} of a holding counted once and would add ${money(v)} ${what} — pending the family's answer on whether each pair is one investment or two.`
+      : null;
   const capTitles: Partial<Record<string, string>> = {
     committed: [
-      `Promised across the ${capCount} private-market capital account${capCount === 1 ? "" : "s"} on this page.`,
+      `Promised across the ${capCount} private-market capital account${capCount === 1 ? "" : "s"} this total counts.`,
+      alsoClause(m.alsoCt.committed, "committed"),
       capElsewhereClause,
     ].filter(Boolean).join(" "),
     // WHETHER CALLED AND PAID IN MAY BE SET AGAINST EACH OTHER IS MEASURED PER
     // ACCOUNT (Stage 10bw): where the two cover different accounts the hover on
     // the Called total says not to subtract them, and where they cover one set
     // it says they may — a warning about a valid subtraction would be false.
-    called: m.calledPaidSameSet
-      ? `Asked for by the funds so far, over the ${m.cc.calledOf} accounts that print a called line — the same accounts Paid in covers.`
-      : `Called and Paid in cover different accounts and must not be subtracted from each other: the ${m.cc.count - m.cc.calledOf} account${m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first ${m.cc.count - m.cc.calledOf === 1 ? "is" : "are"} present in the second.`,
+    called: [
+      m.calledPaidSameSet
+        ? `Asked for by the funds so far, over the ${m.cc.calledOf} accounts that print a called line — the same accounts Paid in covers.`
+        : `Called and Paid in cover different accounts and must not be subtracted from each other: the ${m.cc.count - m.cc.calledOf} account${m.cc.count - m.cc.calledOf === 1 ? "" : "s"} missing from the first ${m.cc.count - m.cc.calledOf === 1 ? "is" : "are"} present in the second.`,
+      alsoClause(m.alsoCc.called, "called"),
+    ].filter(Boolean).join(" "),
+    paid: alsoClause(m.alsoCc.paid, "paid in") ?? undefined,
     uncalled: [
       `Summed exactly as each fund prints it — ${money(m.cc.uncalled)} over the ${m.cc.uncalledOf} accounts that print the line — and never derived from committed − called, because a fund that prints no uncalled figure has not said it has nothing left to call.`,
       m.cc.called != null && m.cc.committedWhereCalled != null
         ? `The same figure the other way: committed ${money(m.cc.committedWhereCalled)} less called ${money(m.cc.called)} is ${money(m.cc.committedWhereCalled - m.cc.called)}, both struck over the same ${m.cc.calledOf} accounts.`
         : null,
-      `${m.cc.count - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what the funds can still call, never the ceiling.`,
+      alsoClause(m.alsoCt.undrawn, "still to call"),
+      // EVERY STATEMENT, not the counted set: a second statement of a holding
+      // counted once is still an account that sends one.
+      `${m.schemes.length - m.capOutside} of this page’s ${m.scope.accounts.length} private accounts send a capital-account statement, and the family’s own investment register names funds with no statement in this book at all — so ${money(m.cc.uncalled)} is the floor of what the funds can still call, never the ceiling.`,
     ].filter(Boolean).join(" "),
   };
 
@@ -1415,15 +1556,24 @@ export function PrivateMarket() {
               </tbody>
               <tfoot>
                 {totalRow(book.privateTotal, "Private market total", {
-                  labelTitle: `Each holding counted once, and the ${capCount} capital account${capCount === 1 ? "" : "s"} on this page — what the capital tiles add to.`,
+                  // NO LINE UNDER THE LABEL (Stage 10co): what the row counts,
+                  // and the capital a pair reported twice leaves out, pending
+                  // the family's answer (PM-A2), is the label's hover.
+                  labelTitle: `Each holding, and its capital account, counted once, and the ${capCount} capital account${capCount === 1 ? "" : "s"} it counts on this page — what the capital tiles add to.`
+                    + (book.privateTotal.capitalAlso > 0
+                      ? ` ${book.privateTotal.capitalAlso} more ${book.privateTotal.capitalAlso === 1 ? "statement reports a holding" : "statements report holdings"} counted once; ${book.privateTotal.capitalAlso === 1 ? "its" : "their"} capital is not added, pending the family's answer on whether each pair is one investment or two.`
+                      : ""),
                   titles: capTitles,
                   // THE ACCOUNTS ONLY NAMED, on the row whose Committed total
                   // names them — the ids, and the clause itself, so the sweep
                   // reads what the hover says rather than a paragraph.
-                  attrs: m.capElsewhere.length ? {
-                    "data-pm-cap-elsewhere": m.capElsewhere.map((x) => x.commitment.accountId).join(" "),
-                    "data-pm-cap-elsewhere-text": capElsewhereClause ?? undefined,
-                  } : undefined,
+                  attrs: {
+                    "data-pm-total-also": String(book.privateTotal.capitalAlso),
+                    ...(m.capElsewhere.length ? {
+                      "data-pm-cap-elsewhere": m.capElsewhere.map((x) => x.commitment.accountId).join(" "),
+                      "data-pm-cap-elsewhere-text": capElsewhereClause ?? undefined,
+                    } : {}),
+                  },
                 })}
               </tfoot>
             </table>
@@ -1457,7 +1607,10 @@ export function PrivateMarket() {
                 <tr className={TREE_ROW.section} data-pm-call-section="history">
                   <TreeSectionCell colSpan={callView.order.length} title="Every capital call made"
                     sub={`${m.history.length} calls`}
-                    hint="A fund's calls are listed only where they reproduce the total its own statement prints — otherwise none of that fund's are shown." />
+                    hint={"A fund's calls are listed only where they reproduce the total its own statement prints — otherwise none of that fund's are shown."
+                      + (m.counting.alsoReported.length
+                        ? ` The Called tile leaves out ${money(m.alsoCc.called)} of these: ${m.counting.alsoReported.map((x) => accName(x.commitment.accountId)).join(" and ")} ${m.counting.alsoReported.length === 1 ? "is the second statement" : "are second statements"} of a holding counted once, pending the family's answer.`
+                        : "")} />
                 </tr>
                 {callsShown.map((c, i) => (
                   <Tr view={callView} key={`${c.accountId}-${c.date}-${i}`} className="hover:bg-ink-700/40" data-call-row={c.date}>

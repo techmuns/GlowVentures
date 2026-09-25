@@ -32,7 +32,7 @@ import XLSX from "xlsx";
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
 import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, valuedFromDepository } from "@/lib/reviewGaps";
-import { depositoryCashHoldings } from "@/lib/fundNavs";
+import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { securityKeyOf } from "@/lib/securityKey";
 
 let fails = 0;
@@ -223,7 +223,7 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
 // purchase of that exact line is a credit the depository makes to that ISIN,
 // unit for unit, within a settlement's days of the date the review prints.
 {
-  const live = depositoryCashHoldings();
+  const live = [...depositoryCashHoldings(), ...unpricedStatementUnits()];
   ok("the depository-valued table has a subject", REVIEW_LINE_ISINS.size > 0, `${REVIEW_LINE_ISINS.size}`);
 
   const flat = (k: string) => k.replace(/-/g, "");
@@ -241,6 +241,10 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx");
   type Buy = { product: string; date: string; units: number };
   const buys: Buy[] = [];
+  // …and its CLOSING rows, which is what witnesses a holding statement that
+  // records units with no rate (A-17): the review closes each holder at the
+  // statement's own balance.
+  const closings: Buy[] = [];
   if (existsSync(REVIEW)) {
     const wb = XLSX.readFile(REVIEW);
     const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
@@ -249,6 +253,11 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
       : [];
     const excelDate = (n: number) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
     for (const r of rows) {
+      const j = r.findIndex((c) => /^closing$/i.test(String(c).trim()));
+      if (j >= 1) {
+        const units = Number(r[j + 2]);
+        if (Number.isFinite(units) && units > 0) closings.push({ product: String(r[j - 1]), date: excelDate(Number(r[j + 1])), units });
+      }
       const i = r.findIndex((c) => /^purchase$/i.test(String(c).trim()));
       if (i < 1) continue;
       const units = Number(r[i + 2]);
@@ -271,16 +280,28 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     const gap = REVIEW_GAPS.find((g) => g.name === name);
     ok(`${name}: a line the gap list carries — an entry naming none is dead`, !!gap);
     const row = live.find((p) => p.isin?.trim().toUpperCase() === isin);
-    ok(`${name}: the live book values ${isin} from a depository balance`, !!row && row.marketValue > 0);
+    ok(`${name}: the live book values ${isin} from units no statement prices`, !!row && row.marketValue > 0);
     ok(`${name}: a search for its own name is told nothing about it`,
       !reviewGapsFor(name).some((g) => g.name === name) && (!gap || valuedFromDepository(gap)));
     // LOAD-BEARING: without this tier the name tier would have claimed it, or
     // the entry protects nothing and the check above passes over a no-op.
     ok(`${name}: …and the name tier alone would have claimed it absent`, !related(name));
-    const tied = buys.filter((b) => b.product === name).find((b) =>
-      credits.some((c) => c.isin === isin && Math.abs(c.quantity - b.units) < 0.0005 && days(c.date, b.date) <= 5));
-    ok(`${name}: the review's own purchase is a depository credit to ${isin}, unit for unit`, !!tied,
-      tied ? `${tied.units} units on ${tied.date}` : "no purchase of this line ties to a credit");
+    const rows = live.filter((p) => p.isin?.trim().toUpperCase() === isin);
+    if (rows.every((p) => p.depositoryUnits?.kind === "no-rate")) {
+      // A holding statement that records the units with no rate: every live row
+      // is witnessed by a review closing of exactly its own balance.
+      const unwitnessed = rows.filter((p) =>
+        !closings.some((c) => c.product === name && Math.abs(c.units - p.quantity) < 0.0005));
+      ok(`${name}: the review closes each holder at the statement's own balance of ${isin}, unit for unit`,
+        rows.length > 0 && unwitnessed.length === 0,
+        unwitnessed.length ? `unwitnessed: ${unwitnessed.map((p) => `${p.accountId} ${p.quantity}`).join("; ")}`
+          : rows.map((p) => `${p.quantity} u`).join(" + "));
+    } else {
+      const tied = buys.filter((b) => b.product === name).find((b) =>
+        credits.some((c) => c.isin === isin && Math.abs(c.quantity - b.units) < 0.0005 && days(c.date, b.date) <= 5));
+      ok(`${name}: the review's own purchase is a depository credit to ${isin}, unit for unit`, !!tied,
+        tied ? `${tied.units} units on ${tied.date}` : "no purchase of this line ties to a credit");
+    }
   }
 }
 

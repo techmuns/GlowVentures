@@ -6,7 +6,7 @@ import { Pill } from "@/components/Pill";
 import { AbsentSection } from "@/components/Absent";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { accountIndex, engagementOf } from "@/lib/accounts";
-import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET } from "@/lib/analytics";
+import { holdingBucket, bucketLabel, DIRECT_EQUITY_BUCKET, MANDATE_BUCKET } from "@/lib/analytics";
 import { fetchIndices, STRIP_INDEX_IDS, type IndexFeed } from "@/lib/indices";
 import { fmtPct, fmtNum, changeColor, DASH } from "@/lib/format";
 import { symbolCoverage, symbolsFor } from "@/lib/quotes";
@@ -191,17 +191,30 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
      * looking at. A bucket with no priceable name in it never showed on this
      * card and does not need excusing.
      */
-    const excluded = new Map<string, { mv: number; names: Set<string> }>();
+    const excluded = new Map<string, { mv: number; names: Set<string>; accounts: Set<string>; mandate: boolean }>();
     for (const p of consolidated) {
       if (inScope(p)) continue;
       if (typeof p.dayChange !== "number" || !Number.isFinite(p.dayChange)) continue;
-      const key = bucketLabel(holdingBucket(p, engagementOf(accts, p)));
-      const e = excluded.get(key) ?? { mv: 0, names: new Set<string>() };
-      e.mv += p.marketValue; e.names.add(p.securityKey);
+      const bucket = holdingBucket(p, engagementOf(accts, p));
+      const key = bucketLabel(bucket);
+      const e = excluded.get(key) ?? { mv: 0, names: new Set<string>(), accounts: new Set<string>(), mandate: bucket === MANDATE_BUCKET };
+      e.mv += p.marketValue; e.names.add(p.securityKey); e.accounts.add(p.accountId);
       excluded.set(key, e);
     }
+    /**
+     * A COUNT AND ITS NOUN AGREE (MNT-17). The count is distinct SECURITIES, and
+     * with the bucket label as its noun "131 PMS mandates" read as 131 mandates
+     * where there are ten. Each entry is now "N holdings in K PMS mandates" or
+     * "N ETF holdings" — the count first, the label inside the phrase it
+     * qualifies.
+     */
     const excludedRows = [...excluded.entries()]
-      .map(([label, v]) => ({ label, mv: v.mv, names: v.names.size }))
+      .map(([label, v]) => ({
+        label, mv: v.mv, names: v.names.size, accounts: v.accounts.size,
+        phrase: v.mandate
+          ? `${v.names.size} holding${v.names.size === 1 ? "" : "s"} in ${v.accounts.size} ${label.replace(/s$/, "")}${v.accounts.size === 1 ? "" : "s"}`
+          : `${v.names.size} ${label} holding${v.names.size === 1 ? "" : "s"}`,
+      }))
       .sort((a, b) => b.mv - a.mv);
 
     // CONSOLIDATED: each dedupeGroup once, because this is a whole-book figure.
@@ -509,7 +522,7 @@ export function TodaysMovers({ scopeToggle }: { scopeToggle?: React.ReactNode })
               Not counted:{" "}
               {model.excludedRows.map((e, i) => (
                 <span key={e.label}>
-                  {i > 0 ? " · " : ""}{e.names} {e.label} {fmtFromBase(e.mv, { compact: true })}
+                  {i > 0 ? " · " : ""}{e.phrase} {fmtFromBase(e.mv, { compact: true })}
                 </span>
               ))}.
             </p>

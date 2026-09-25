@@ -320,8 +320,19 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
   const dir = path.join(process.cwd(), "public/audit");
   const lots = fs.readdirSync(dir).filter((d) => d.startsWith(id) && d.endsWith("capital-gain"))
     .flatMap((d) => JSON.parse(fs.readFileSync(path.join(dir, d, "document.json"), "utf8")).capitalGains ?? []) as
-    { securityKey: string; saleDate: string }[];
-  const after = new Set(lots.filter((l) => asOf && l.saleDate > asOf).map((l) => l.securityKey));
+    { securityKey: string; saleDate: string; isin?: string | null }[];
+  // A lot belongs to the holding carrying its own key or, where none does, to the
+  // ONE holding on this account printing the lot's ISIN — an identifier join on
+  // the same account, re-expressed here rather than read from the builder, and
+  // refused where two holdings qualify. Liquid BeES is why: its lots and its
+  // holding spell the security differently and share one ISIN.
+  const rows = accountsOf(id);
+  const holdingOf = (l: { securityKey: string; isin?: string | null }) => {
+    if (rows.some((p) => p.securityKey === l.securityKey) || !l.isin) return l.securityKey;
+    const hits = [...new Set(rows.filter((p) => p.isin === l.isin).map((p) => p.securityKey))];
+    return hits.length === 1 ? hits[0] : l.securityKey;
+  };
+  const after = new Set(lots.filter((l) => asOf && l.saleDate > asOf).map(holdingOf));
   const held = accountsOf(id).filter((p) => p.quantity > 0);
   if (!asOf || !after.size) skip("C5 LKP", "no capital gain lot dated after the holding statement");
   else {
@@ -329,7 +340,8 @@ for (const id of ["buoyant-capital-103472", "buoyant-capital-103473"]) {
     ok("C5 LKP: every holding sold after its statement's date is flagged",
       held.every((p) => ((p.realizedLotsAfter ?? 0) > 0) === after.has(p.securityKey)),
       `${flagged.length} flagged of ${held.length}`);
-    ok("C5 …and carries no realised gain from those later sales", flagged.every((p) => p.realizedPnL === 0));
+    ok("C5 …and carries no realised gain from those later sales — absent, never a measured ₹0",
+      flagged.every((p) => p.realizedPnL === null && p.costOfUnitsSold === null));
     ok("C5 …and its empty realised cell says why", flagged.every((p) => /after its statement's date/.test(realisedReason(p))));
   }
 }

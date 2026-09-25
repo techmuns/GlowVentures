@@ -68,9 +68,11 @@
   "income": 898050,
   "expenses": null,
   "fees": 1244225.3,
+  "accruedIncome": 325150,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 188321031.19,
-  "openingCorpus": 188321031.19,
+  "openingCorpus": null,
   "periodFrom": "2025-12-26",
   "periodTo": "2026-08-11",
   "source": "goldstandard-wealth-private-limited-100023-2026-08-11-performance-history"

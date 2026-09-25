@@ -3,9 +3,10 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { AbsentSection, DASH } from "@/components/Absent";
+import { AbsentSection, AbsentCell, DASH } from "@/components/Absent";
 import { fmtDate, fmtPct } from "@/lib/format";
 import { dedupedPositions, marketSides } from "@/lib/analytics";
+import { navIndexSeries } from "@/lib/navSeries";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -51,10 +52,41 @@ export function UploadHistory() {
    * holdings, and wrong in the direction that DENIES a figure.
    */
   const sides = marketSides(dedupedPositions(portfolio.positions));
+  /**
+   * THE CHANGE IS THE LINK, NEVER THE LEVEL.
+   *
+   * This read `nav / previous nav − 1` on the raw level — and the level is a
+   * GROWING panel: accounts join the series on the date they first publish, so
+   * 25 Jun read +68.18%, 6 Jul +33.92% and 10 Jul +105.63% with ₹0 of capital
+   * beside each and a footnote calling the whole step a change in value. Every
+   * one of those was accounts ARRIVING (Green Lantern, V.E.C, Carnelian and the
+   * two Goldstandards), and like for like each interval moved 0.00%.
+   *
+   * Each point already carries the interval ending at it, struck over the
+   * accounts valued at BOTH its ends (`linkOpen`, `linkClose`) — the link the NAV
+   * chart chains. `navIndexSeries` is the one place that chains it, so this
+   * column and that chart cannot state two returns for one interval. An interval
+   * with nothing to strike it over is a dash with its reason, never 0.00%.
+   */
+  const index = navIndexSeries(nav);
   const rows = nav.map((n, i) => {
-    const prev = i > 0 ? nav[i - 1].nav : null;
-    const growth = prev ? (n.nav / prev - 1) * 100 : null;
-    return { ...n, growth, flowIn: n.flowIn ?? 0, latest: i === nav.length - 1 };
+    const open = i > 0 ? (n.linkOpen ?? nav[i - 1].nav) : null;
+    // An account in the link that was NOT re-marked on this date is carried at
+    // its earlier mark, so its contribution to the link is 1 by construction.
+    // Where every account in the link is carried, the interval measured nothing
+    // — a dash with its reason, never a 0.00% that reads as "the value held".
+    const remarked = (n.linkAccounts ?? 0) - (n.accountsCarried ?? 0);
+    const growth = i > 0 && open != null && open > 0 && remarked > 0 && index[i] && index[i - 1]
+      ? (index[i].index / index[i - 1].index - 1) * 100 : null;
+    const why = i === 0 ? "the first point has nothing before it to change from"
+      : !(open != null && open > 0) ? "no account is valued on both this date and the one before, so there is nothing to strike a change over"
+      : remarked <= 0 ? `no account valued on both this date and the one before was re-marked on this one — the ${n.accountsCarried ?? 0} in the link are held at their earlier marks, so this interval measured no change at all`
+      : null;
+    const levelChange = i > 0 && nav[i - 1].nav > 0 ? (n.nav / nav[i - 1].nav - 1) * 100 : null;
+    // How many accounts the level carries that the link does not: the ones that
+    // published for the first time on this date.
+    const joined = i > 0 ? Math.max(0, (n.accountsOnDate ?? 0) + (n.accountsCarried ?? 0) - (n.linkAccounts ?? 0)) : 0;
+    return { ...n, growth, why, levelChange, joined, flowIn: n.flowIn ?? 0, latest: i === nav.length - 1 };
   }).reverse();
   // Newest first is this page's own order and stays the default; a third click
   // on any heading hands it back.
@@ -101,7 +133,8 @@ export function UploadHistory() {
                   does not narrow, which is the same failure as one that widens
                   it (see Morning CIO's Capital invested tile). */}
               <SortHeader col="nav" view={view} pad="px-5 py-3">Covered NAV</SortHeader>
-              <SortHeader col="change" view={view} pad="px-5 py-3">Change</SortHeader>
+              <SortHeader col="change" view={view} pad="px-5 py-3"
+                title="Like for like: the change in value over the accounts valued at BOTH this date and the one before, net of the capital they took in — the link the NAV chart chains. An account publishing for the first time adds to the Covered NAV and to none of this.">Change · like for like</SortHeader>
               {/* AND A STEP IS NOT ALL PERFORMANCE. `flowIn` is the external
                   capital the covered accounts took in since the previous point;
                   a +8% step with ₹11.2 Cr of deposits behind it is money added,
@@ -125,11 +158,20 @@ export function UploadHistory() {
                   {/* Signed both ways: a green up-arrow on a fall is a lie the
                       reader has no way to catch from the number beside it. */}
                   {r.growth != null ? (
-                    <span className={`mono inline-flex items-center gap-1 ${r.growth >= 0 ? "text-gain" : "text-loss"}`}>
+                    <span className={`mono inline-flex items-center gap-1 ${r.growth >= 0 ? "text-gain" : "text-loss"}`}
+                      data-xa="history-change" data-date={r.date} data-link={r.growth}
+                      data-level={r.levelChange ?? ""} data-joined={r.joined}
+                      title={r.joined > 0
+                        ? `${r.joined} account${r.joined === 1 ? "" : "s"} published for the first time on this date, so the Covered NAV beside this steps by ${r.levelChange == null ? "their value" : `${fmtPct(r.levelChange, { decimals: 2 })} with them in it`} — an arrival, not a return. This figure is struck over the ${r.linkAccounts ?? 0} accounts valued on both dates.`
+                        : `Struck over the ${r.linkAccounts ?? 0} accounts valued on both dates, net of the capital they took in.`}>
                       {r.growth >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                       {fmtPct(r.growth, { decimals: 2 })}
                     </span>
-                  ) : <span className="text-slate-600" title="the first point has nothing before it to change from">{DASH}</span>}
+                  ) : <span data-xa="history-change" data-date={r.date} data-link="" data-joined={r.joined}>
+                      <AbsentCell reason={`${r.why ?? "no change can be struck over this interval"}${r.joined > 0
+                        ? `. ${r.joined} account${r.joined === 1 ? "" : "s"} published for the first time on this date — the Covered NAV beside this steps with ${r.joined === 1 ? "it" : "them"} in it, an arrival rather than a return`
+                        : ""}.`} />
+                    </span>}
                 </td>
                 <td className="px-5 py-3.5 text-right mono">
                   {/* A ZERO HERE IS MEASURED — no capital moved — and a dash is

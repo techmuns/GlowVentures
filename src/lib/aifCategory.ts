@@ -145,6 +145,53 @@ export function aifCategoryWhy(r: AifCategoryRead): string {
 }
 
 /**
+ * ── WHY AN AIF ACCOUNT HOLDS NOTHING — ONE CLASSIFIER, READ BY BOTH PAGES ────
+ *
+ * An account can hold no valued position for four different reasons, and a
+ * reader acts differently on each — only one of them is money this book cannot
+ * value:
+ *
+ *   no-nav       the fund publishes no NAV: its statement carries units and the
+ *                capital drawn against a commitment, and no valuation
+ *   income-only  the folio's documents report earnings and distributions; its
+ *                units are valued under ANOTHER account (the reason says so)
+ *   redeemed     the balance is nil — a measurement, not a gap
+ *   other        anything else, which is named by its own reason
+ *
+ * Read off `Account.noPositionsReason`, the book's own sentence for the account
+ * (`build-book` writes it), and never re-worded here. It lived in
+ * `privateMarket.ts` for the Private Market page alone, while the AIF
+ * drill-down kept a second answer of its own — every AIF account holding
+ * nothing — and the two pages disagreed about one set of folios (10 on the
+ * drill-down, 9 on Private Market, 7 in truth). It is here now because both
+ * read it: `privateMarket.ts` imports this file, and this file cannot import it
+ * back without a cycle.
+ */
+export type UnvaluedKind = "no-nav" | "income-only" | "redeemed" | "other";
+
+export function unvaluedKindOf(reason: string | null | undefined): UnvaluedKind {
+  const r = reason ?? "";
+  if (/publishes no NAV/i.test(r)) return "no-nav";
+  if (/report income and distribution/i.test(r)) return "income-only";
+  if (/redeemed/i.test(r)) return "redeemed";
+  return "other";
+}
+
+/**
+ * ── HELD, AND VALUED BY NO STATEMENT — THE ONE DEFINITION ──────────────────
+ *
+ * An account whose fund publishes no NAV: it holds units, bought with capital
+ * the family paid in, and nothing in the book values them. That is the set the
+ * AIF drill-down names under its table and Private Market draws in its closed
+ * "Not valued" section — ONE predicate, so the two cannot list different
+ * folios. The other three kinds are not in it: an income-only folio's units ARE
+ * valued, under the account its reason names; a redeemed account holds nothing
+ * to value; and an unrecognised reason is not a claim that units are held.
+ */
+export const isValuedByNoStatement = (a: Pick<Account, "noPositionsReason">): boolean =>
+  unvaluedKindOf(a.noPositionsReason) === "no-nav";
+
+/**
  * ── THE FOLIOS THAT PUBLISH NO NAV, BY THE SAME AXIS ────────────────────────
  *
  * The family expect to see all three categories — *"these are cat two AIFs,
@@ -162,6 +209,16 @@ export function aifCategoryWhy(r: AifCategoryRead): string {
  * THE MONEY IS IN NO TOTAL ON THE PAGE, and must not be: a contribution is what
  * was PAID and not what the stake is WORTH, and the drill-down's own total is
  * market value. It is reported as drawn capital, under its own heading.
+ *
+ * ── AND ONLY THE FOLIOS THE SENTENCE IS TRUE OF ─────────────────────────────
+ *
+ * This listed EVERY AIF-engagement account holding nothing — ten on this book —
+ * under a sentence saying each "reports units and the capital drawn against a
+ * commitment and no NAV anywhere". Three of the ten were not that: 360 ONE
+ * Alternates' two income-only folios are views of a holding 360 ONE Private
+ * Wealth values at ₹1.47 Cr IN THE TABLE ABOVE, and Motilal Oswal's Hedged
+ * Equity strategy is redeemed to nil and reports no units at all. So the list
+ * is `isValuedByNoStatement` now — the definition Private Market reads too.
  */
 export type UnvaluedAifFolio = {
   section: string;
@@ -184,10 +241,13 @@ export function unvaluedAifFolios(
   for (const a of accounts) {
     // SCOPED BY THE ACCOUNT'S OWN ENGAGEMENT, which is the only axis available
     // here: an account holding nothing has no position to read an asset class
-    // off. That is the same reason Private Market scopes its own unvalued list
-    // this way and not on `isPrivateClass`.
+    // off. Private Market starts from the same engagement and then keeps the
+    // private-market funds' accounts alone (Stage 10bw); on this book every
+    // folio this list names is one of those, so the two surfaces list one set.
     if (a.engagement !== "AIF") continue;
     if (positionsByAccount.has(a.accountId)) continue;
+    // HELD AND VALUED BY NOTHING — the one definition both pages read.
+    if (!isValuedByNoStatement(a)) continue;
     const pe = readsAsPrivateEquity({ security: "" }, a);
     const cats = categoriesNamedIn(a.providerEngagement);
     const section = pe ? PRIVATE_EQUITY_SECTION

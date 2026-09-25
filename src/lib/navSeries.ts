@@ -20,12 +20,14 @@
 // already gates for on that very account — a rupee-left-alone figure cannot see
 // a deposit and a NAV can — arriving one measurement over.
 //
-// AND THE ADJUSTMENT IS ONLY CLAIMED WHERE IT WAS MEASURED. Four covered
-// accounts publish no dated capital record and hold more than one security, so a
-// subscription inside one of them would read here as performance. Their value is
-// carried in `unreportedFlowValue` per point and named on screen. That is not a
-// disclaimer bolted on: it is the difference between "the book returned +0.54%"
-// and "the book's marks moved +0.54% and ₹28.3 Cr of that move is unproven".
+// AND THE ADJUSTMENT IS ONLY CLAIMED WHERE IT WAS MEASURED. A step between two
+// of an account's marks that no statement settles — no printed capital total at
+// both ends, no identical unit counts, no dated record — would carry a
+// subscription as performance, so its MOVE is carried in `unreportedFlowValue`
+// per point and named on screen. It said "₹28.3 Cr of that move is unproven"
+// here for as long as the builder read one table for proof: that was the VALUE
+// of four accounts, ten times what they moved, and their own statements settle
+// every step (A-10). On this archive no step is unproven.
 import type { NavPoint, NavCoverage, Portfolio } from "./types";
 import type { Point } from "./series";
 
@@ -292,9 +294,8 @@ export type NavCoverageStats = {
    * rather than let a reader find it by adding.
    */
   consolidatedValue: number;
-  /** Covered accounts whose capital movements are not reported anywhere. */
+  /** Covered accounts with a step no statement settles — see `NavPoint.unreportedFlowValue` for its move. */
   unreportedFlowAccounts: string[];
-  unreportedFlowValue: number;
 };
 
 export function navCoverageStats(coverage: NavCoverage, portfolio: Portfolio | null): NavCoverageStats {
@@ -314,7 +315,6 @@ export function navCoverageStats(coverage: NavCoverage, portfolio: Portfolio | n
     perAccountValue: coveredValue + singleValue + unvaluedValue,
     consolidatedValue: portfolio?.totalValue ?? 0,
     unreportedFlowAccounts: unreported.map((c) => c.accountId),
-    unreportedFlowValue: sum(unreported.map((c) => c.bookValue)),
   };
 }
 

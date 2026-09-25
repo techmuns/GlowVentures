@@ -31,6 +31,8 @@
   "income": 300787.5,
   "expenses": 39068.53,
   "fees": 236120.4,
+  "accruedIncome": 141700,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 80336936.76,
   "openingCorpus": 66656491.25,

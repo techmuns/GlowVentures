@@ -47,7 +47,7 @@ repaid (its own `LOAN RETURNED BACK` column), and the `WRITE OFF - EXIT` sheet c
 
 ## C. THE HEADLINE — the costless positions, and whether the register covers them
 
-The book reports a cost on **311 of 371** positions. The other **60**, worth
+The book reports a cost on **312 of 371** positions. The other **59**, worth
 **₹165.94 Cr** of market value, carry none — and every one of them sits in a
 DEPOSITORY account, which is not an accident and not a defect:
 
@@ -56,7 +56,7 @@ DEPOSITORY account, which is not an accident and not a defect:
 | Motilal Oswal Financial Services (demat) | 43 | ₹102.16 Cr |
 | ICICI Bank (NSDL demat) | 11 | ₹63.78 Cr |
 | LKP Securities | 1 | ₹0.00 Cr |
-| 3P Investment Managers | 3 | ₹0.00 Cr |
+| 3P Investment Managers | 2 | ₹0.00 Cr |
 | HDFC Mutual Fund | 2 | ₹0.00 Cr |
 
 **A DEPOSITORY DOES NOT KNOW WHAT SHARES COST.** It holds them; it did not buy them.
@@ -64,7 +64,7 @@ That is why the cell is `—` and not `₹0`: a zero cost reports the whole mark
 profit at an infinite return. The register is the first document in this corpus that
 could supply the missing side.
 
-**IT COVERS 7 OF THE 60.**
+**IT COVERS 7 OF THE 59.**
 
 | Costless book position | Custodian | Market value | Register line | Paid | Joined |
 | --- | --- | ---: | --- | ---: | --- |
@@ -119,7 +119,7 @@ have to be true first, and none of them can be established from the register alo
 3. **It must not double-count a cost the book already has.** Several of these names are
    also held in a PMS mandate that DOES report a cost.
 
-**AND 53 OF THE 60 ARE NOT IN THE REGISTER AT ALL** — ₹138.60 Cr of market
+**AND 52 OF THE 59 ARE NOT IN THE REGISTER AT ALL** — ₹138.60 Cr of market
 value whose cost no document in this corpus reports. Largest first:
 
 | Costless book position | Custodian | Market value |
@@ -144,7 +144,7 @@ value whose cost no document in this corpus reports. Largest first:
 | WOC MAAF D-GROW | Motilal Oswal Financial Services (demat) | ₹2.10 Cr |
 | ICICI BANK-EQ | Motilal Oswal Financial Services (demat) | ₹2.00 Cr |
 | ABSL BAL ADV-GROWTH | Motilal Oswal Financial Services (demat) | ₹1.99 Cr |
-| *… and 33 more* | | |
+| *… and 32 more* | | |
 
 ### D0. Near misses — the same holding under two names, for a human to confirm
 

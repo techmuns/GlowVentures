@@ -25,12 +25,13 @@
 import {
   BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
 } from "@/data/glowData";
-import { depositoryCashHoldings } from "./fundNavs";
+import { depositoryCashHoldings, unpricedStatementUnits } from "./fundNavs";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
   topByValue, sum,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
+import { accountEmptiness } from "@/lib/searchIndex";
 import type { Position } from "@/lib/types";
 
 /** How many rows of each list to send. Enough to answer, small enough to fit. */
@@ -138,11 +139,28 @@ export function buildDashboardContext(): ContextBlock[] {
       total: BOOK_ACCOUNTS.length,
       rows: BOOK_ACCOUNTS.map((a) => {
         const held = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+        /**
+         * ── AN ACCOUNT WITH NO VALUED HOLDING IS ONE OF TWO FACTS ───────────
+         *
+         * NULL where no statement values it, never 0 (SC-A1): India SME, Sky
+         * Capital, the income-only 360 ONE folios and the face-value custody
+         * accounts are ABSENCES, and a model handed `0` reports them as worth
+         * nothing — "what is my India SME investment worth?" answered with a
+         * zero. But 0 where every holding is REDEEMED TO NIL: 3P, the HDFC
+         * folio, Motilal demat 37436848 and the Hedged Equity strategy print a
+         * nil balance, and that is a MEASUREMENT. Both carry `valueNote` —
+         * the reason travels WITH the figure, so null and 0 cannot be read
+         * as one thing, which is the whole of this book's founding rule.
+         */
+        const empty = accountEmptiness(a, held);
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,
           strategy: a.strategy, engagement: a.engagement, asOf: a.asOf,
-          holdings: held.length, valueCr: cr(sum(held.map((p) => p.marketValue))),
-          noPositionsReason: a.noPositionsReason ?? null,
+          holdings: held.length,
+          valueCr: empty?.kind === "unvalued" ? null : empty?.kind === "redeemed" ? 0 : cr(sum(held.map((p) => p.marketValue))),
+          valueNote: empty
+            ? `${empty.kind === "redeemed" ? "A measured nil" : "Not valued — no figure"}: ${empty.reason}`
+            : null,
         };
       }).sort((x, y) => (y.valueCr ?? 0) - (x.valueCr ?? 0)).slice(0, TOP_ACCOUNTS),
     },
@@ -184,6 +202,29 @@ export function buildDashboardContext(): ContextBlock[] {
       rows: depositoryCashHoldings().map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
         unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR.
+     *
+     * NOT CASH — a hybrid fund, kept out of the block above on purpose. The
+     * dashboard values these at AMFI's NAV only because a sibling statement at
+     * the same depository, on the same date, prices the same scheme on the same
+     * basis (A-17). Told only the statement-basis blocks, a model asked "how
+     * much ABSL Balanced Advantage do I hold" would answer "none" and contradict
+     * the screen.
+     */
+    {
+      kind: "fund_units_a_statement_records_without_a_rate",
+      note: "These fund units are on a holding statement that records them and prints no rate, so no statement "
+        + "values them and they are NOT in the statement-basis totals above. The dashboard values them at AMFI's "
+        + "published NAV because another account at the same depository, on the same date, prices the same scheme "
+        + "on the same basis (pricedLikeAccountId). They are not cash. No cost is reported for them.",
+      totalCr: cr(sum(unpricedStatementUnits().map((p) => p.marketValue))),
+      rows: unpricedStatementUnits().map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, pricedLikeAccountId: p.depositoryUnits?.witnessAccountId ?? null,
+        valueCr: cr(p.marketValue),
       })),
     },
     /**

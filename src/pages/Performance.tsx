@@ -12,7 +12,7 @@ import { useTableView, sortRows } from "@/lib/tableView";
 
 /** The XIRR table's columns, in the order its rows write their cells. */
 const XIRR_COLS = ["account", "flows", "mv", "terminal", "return"] as const;
-import { xirrWithTerminal, pooledXirr, totalReturnFromXirr } from "@/lib/bucketXirr";
+import { totalReturnFromXirr } from "@/lib/bucketXirr";
 import { Auditable } from "@/components/Auditable";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentSection, AbsentCell, absentTile, DASH } from "@/components/Absent";
@@ -20,6 +20,9 @@ import { NavVsIndex } from "@/components/NavVsIndex";
 import { fifoTotals } from "@/lib/fifo";
 import { BOOK_ACCOUNT_RETURNS, BOOK_ACCOUNT_BRIDGES } from "@/data/glowData";
 import type { AccountBridge, ReturnSeries } from "@/lib/types";
+import { measuredAccountsReturn, accountHasOpeningValue } from "@/lib/returns";
+import { BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS } from "@/data/glowData";
+import { capitalMovesWithCalls } from "@/lib/tranches";
 
 // NAV & Performance — built from what these statements actually carry.
 //
@@ -59,24 +62,77 @@ const PERIODS = [
   { key: "si" as const, label: "Since inception", title: "Since the account's own inception date" },
 ];
 
-/** The bridge rows, in the order the money moves. */
+/**
+ * The bridge rows, in the order the money moves — EVERY LINE A STATEMENT
+ * PRINTS, each on its own row (A-12). "Fees & expenses" read the fees alone
+ * and dropped the expenses (Carnelian's financial year ₹10.9 L against the
+ * ₹13.57 L it prints; SVAN's ₹2,227 read as nothing), and there was no row for
+ * accrued income at all — so no financial-year column added up to its own
+ * closing value. An `optional` row is drawn only where one of an account's
+ * columns prints a figure other than nil, because a row of dashes under every
+ * account for a line one report prints says nothing to anyone else.
+ */
 const BRIDGE_ROWS = [
-  { key: "opening" as const, label: "Opening value", tone: 0 },
-  { key: "contribution" as const, label: "Contributions", tone: 1 },
-  { key: "withdrawal" as const, label: "Withdrawals", tone: -1 },
-  { key: "netCapitalInOut" as const, label: "Net capital in / out", tone: 0 },
-  { key: "realized" as const, label: "Realised gain", tone: 0 },
-  { key: "unrealized" as const, label: "Unrealised gain", tone: 0 },
-  { key: "income" as const, label: "Income received", tone: 1 },
-  { key: "fees" as const, label: "Fees & expenses", tone: -1 },
-  { key: "closing" as const, label: "Closing value", tone: 0 },
+  { key: "opening" as const, label: "Opening value", tone: 0, words: "opening value", optional: false },
+  { key: "contribution" as const, label: "Contributions", tone: 1, words: "contributions", optional: false },
+  { key: "withdrawal" as const, label: "Withdrawals", tone: -1, words: "withdrawals", optional: false },
+  { key: "netCapitalInOut" as const, label: "Net capital in / out", tone: 0, words: "net capital", optional: false },
+  { key: "realized" as const, label: "Realised gain", tone: 0, words: "realised gain", optional: false },
+  { key: "unrealized" as const, label: "Unrealised gain", tone: 0, words: "unrealised gain", optional: false },
+  { key: "gainPriorToTakeover" as const, label: "Gain prior to takeover", tone: 0, words: "gain prior to takeover", optional: true },
+  { key: "income" as const, label: "Income received", tone: 1, words: "income", optional: false },
+  { key: "profit" as const, label: "Profit / loss", tone: 0, words: "profit / loss", optional: true },
+  { key: "fees" as const, label: "Fees", tone: -1, words: "fees", optional: false },
+  { key: "expenses" as const, label: "Expenses", tone: -1, words: "expenses", optional: true },
+  { key: "otherExpenses" as const, label: "Other expenses", tone: -1, words: "other expenses", optional: true },
+  { key: "accruedIncome" as const, label: "Accrued income", tone: 1, words: "accrued income", optional: true },
+  { key: "changeInAccruals" as const, label: "Change in accruals", tone: 0, words: "change in accruals", optional: true },
+  { key: "closing" as const, label: "Closing value", tone: 0, words: "closing value", optional: false },
 ];
+/** A column's window, in words, from the book's own reading of its dates (XA-21). */
+const BRIDGE_BASIS_LABEL: Record<AccountBridge["basis"], string> = {
+  "since-inception": "Since inception",
+  "financial-year-to-date": "FY to date",
+  "window": "Window",
+};
+/** The report a bridge column came from, in words. */
+const bridgeReportName = (t: string) => ({
+  "fact-sheet": "fact sheet", "performance-history": "performance history",
+  "performance-summary": "performance summary", "investor-report": "SEBI investor report",
+} as Record<string, string>)[t] ?? "account statement";
+/**
+ * WHY A COLUMN IS WITHHELD. The book names the lines it could not make add up
+ * (`withheldReason`); the gap itself is struck here, in the reader's display
+ * currency, because a figure typed into the book's prose would not convert.
+ */
+const bridgeWithheldWhy = (b: AccountBridge, money: (n: number) => string): string =>
+  (b.residual == null || b.linesTotal == null
+    ? "Not drawn as a bridge. "
+    : `Not drawn as a bridge: its lines add to ${money(b.linesTotal)} against a closing value of `
+      + `${money(b.closing ?? 0)}, ${money(Math.abs(b.residual))} apart. `)
+  + (b.withheldReason ?? "");
+/** How many of the book's bridge columns add up, and of how many — counted, never typed. */
+const bridgeTotalsOf = (accounts: readonly { accountId: string }[]) => {
+  const cols = accounts.flatMap((a) => BOOK_ACCOUNT_BRIDGES[a.accountId] ?? []);
+  return { all: cols.length, tied: cols.filter((b) => b.ties !== false).length };
+};
 
+/**
+ * WHAT A "NO FLOWS" ROW MAY SAY. This page's rate is struck on a flow series
+ * that starts from an opening portfolio value (a performance summary's), and
+ * most accounts print none — but a dozen of them carry a dated CAPITAL RECORD
+ * the Transactions card reads (a fund's own allotments, a mandate's register, a
+ * drawdown fund's calls). "No dated capital movements in this account's
+ * statements" was false of every one of those rows. The count is struck on the
+ * one record that card reads, never on a second copy of it.
+ */
+const CAPITAL_RECORD_COUNT = capitalMovesWithCalls(BOOK_CAPITAL_MOVES, BOOK_COMMITMENTS, BOOK_ACCOUNTS)
+  .reduce<Record<string, number>>((m, x) => { m[x.accountId] = (m[x.accountId] ?? 0) + 1; return m; }, {});
 const acctLabel = (a: { owner?: string | null; provider: string; accountNo: string }) =>
   `${a.owner ?? a.accountNo} · ${a.provider.split(" ")[0]} ${a.accountNo}`;
 
 export function Performance() {
-  const { portfolio, consolidated, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, consolidated, fmtFromBase } = usePortfolio();
   const xirrView = useTableView("performance-xirr", XIRR_COLS);
 
   const p = portfolio?.positions ?? [];
@@ -109,8 +165,6 @@ export function Performance() {
    */
   const bookFifo = fifoTotals(priced.filter((x) => x.costBasis != null), { accounts, universe: consolidated });
   const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0 ? bookFifo.returnPct : null;
-  const mvOf = (accountId: string) =>
-    sum(p.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
 
   // ── Money-weighted return, per account and consolidated ──
   //
@@ -119,20 +173,55 @@ export function Performance() {
   // closed against that account's market value on its own report date. An
   // account whose flows carry no opening value cannot produce a return over the
   // window, and says which document it is missing rather than showing a zero.
+  /**
+   * ON THE STATEMENT, EACH ACCOUNT AT ITS OWN DATE (CK-A3, XP-15, XA-27).
+   * `measuredAccountsReturn` is the one function Morning CIO's tile and every
+   * Family & Entities member row strike this rate through, and this page kept
+   * a copy of it that differed in the two places that decide the figure: it
+   * closed each account on its LIVE value — AMFI's published NAV on every
+   * scheme it prices, a quote on the deployment — dated to a statement weeks
+   * older (Active Momentum's ₹22.3 Cr is its 22 Sep NAV value, beside a
+   * terminal date of 6 Aug where its statement strikes ₹21.4 Cr), and it
+   * carried its own copy of the opening-value test. The flows are complete
+   * only to each statement's date, so each account closes on what its
+   * statement values on that date, and the pooled window ends on the LATEST
+   * of those dates — never on the book's newest date, which is no pooled
+   * account's.
+   */
+  const statement = statementPortfolio ?? portfolio;
+  const statementMvOf = (accountId: string) =>
+    sum(statement.positions.filter((x) => x.accountId === accountId).map((x) => x.marketValue));
+  // The statement registry's own account — on this basis an account the
+  // statements do not value keeps the reason they give, and the live figure a
+  // published NAV puts on part of it is no figure here.
+  const statementAccount = new Map(statement.accounts.map((a) => [a.accountId, a]));
   const xirrByAccount = accounts.map((a) => {
-    const flows = portfolio.accountCashFlows?.[a.accountId] ?? [];
-    const hasOpening = flows.some((f) => /^opening portfolio value/i.test(f.description ?? ""));
-    const mv = mvOf(a.accountId);
+    const flows = statement.accountCashFlows?.[a.accountId] ?? [];
+    const mv = statementMvOf(a.accountId);
+    const one = measuredAccountsReturn(statement, [a]);
+    const part = one.parts.length > 0;
+    const recorded = CAPITAL_RECORD_COUNT[a.accountId] ?? 0;
     return {
       account: a,
+      unvalued: statementAccount.get(a.accountId)?.noPositionsReason ?? a.noPositionsReason ?? null,
       mv,
       flows: flows.length,
-      pct: hasOpening && flows.length
-        ? xirrWithTerminal(flows.map((f) => ({ date: new Date(f.date), amount: f.amount })), mv, new Date(a.asOf))
+      pct: part ? one.annPct : null,
+      toDate: part ? one.toDatePct : null,
+      windowDays: part ? one.windowDays : null,
+      reason: !flows.length
+        ? recorded > 0
+          ? `no opening-value flow series here · its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card`
+          : "no dated capital movements in this account's statements"
+        : !accountHasOpeningValue(statement, a.accountId) ? "no performance summary for the window, so no opening value to measure against"
+        : !(mv > 0) ? "nothing is valued on this account's statement, so there is nothing to close its flows against"
+        : one.annPct == null ? "its flows and its statement value do not solve for a single rate"
         : null,
-      reason: !flows.length ? "no dated capital movements in this account's statements"
-        : !hasOpening ? "no performance summary for the window, so no opening value to measure against"
-        : null,
+      // The long form, on the reason's own hover: the visible line is capped
+      // at one short line inside a table (Stage 10cp).
+      reasonTitle: !flows.length && recorded > 0
+        ? `This rate is struck on a flow series that starts from an opening portfolio value, which only a performance summary prints, and this account's statements print none. Its ${recorded} dated capital movement${recorded === 1 ? " is" : "s are"} on the Transactions card — the fund's own allotments, the mandate's register or a drawdown fund's dated calls.`
+        : undefined,
     };
   });
   // THE CONSOLIDATED FIGURE COVERS ONLY THE ACCOUNTS THAT CAN BE MEASURED.
@@ -146,70 +235,71 @@ export function Performance() {
   // blended in as zero.
   //
   // So the consolidated row is over the measurable accounts, its market value is
-  // theirs alone, and the excluded account is named on screen.
+  // theirs alone, and the excluded account is named on screen — all of it
+  // decided once, by `measuredAccountsReturn`, and each account closing on its
+  // own report date (`pooledXirr`).
+  const mw = measuredAccountsReturn(statement, accounts);
+  const measuredIds = new Set(mw.parts.map((x) => x.accountId));
   const xirrRows = sortRows(xirrByAccount, xirrView.sort, {
     account: (x) => acctLabel(x.account),
     flows: (x) => x.flows,
-    mv: (x) => (x.account.noPositionsReason ? null : x.mv),
+    mv: (x) => (x.unvalued ? null : x.mv),
     terminal: (x) => x.account.asOf ?? null,
-    return: (x) => (x.pct == null ? null : totalReturnFromXirr(x.pct, daysTo(x.account.asOf))),
+    return: (x) => x.toDate,
   });
-  const measurable = xirrByAccount.filter((x) => x.pct !== null);
-  const unmeasurable = xirrByAccount.filter((x) => x.pct === null);
-  const measuredFlows = measurable.flatMap((x) => (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
-    .map((f) => ({ date: new Date(f.date), amount: f.amount })));
-  const measuredMV = sum(measurable.map((x) => x.mv));
+  const measurable = xirrByAccount.filter((x) => measuredIds.has(x.account.accountId));
+  const unmeasurable = xirrByAccount.filter((x) => !measuredIds.has(x.account.accountId));
+  const measuredFlows = mw.parts.flatMap((x) => x.flows);
+  const measuredMV = mw.measuredMV;
+  // The book the measured value is a share of, on the SAME basis — the
+  // statement's own consolidated value, never a NAV-overlaid total.
+  const statementBookMV = consolidatedMarketValue(statement.positions);
+  const consolidatedXirr = mw.annPct;
+  const xirrMissing = mw.excluded;
   /**
-   * EACH ACCOUNT CLOSES ON ITS OWN REPORT DATE.
-   *
-   * This pooled every account's flows and closed the lot on `portfolio.asOf`,
-   * the NEWEST date in the book. Green Lantern values at 25 June and the others
-   * at 10 July, so that gave its ₹11.69 Cr fifteen days of standing still — and
-   * over a one-quarter window the annualised pool rate came out points below the
-   * same accounts measured one at a time. Two pages, two numbers, one book.
-   *
-   * `pooledXirr` dates each account's terminal inflow at the moment its value
-   * was measured, which is what a money-weighted return means.
+   * THE WINDOW THE LABEL NAMES MUST BE THE WINDOW THE RATE MEASURED — first
+   * pooled flow to the LATEST close, and a RANGE of closes where the pool's
+   * report dates differ, because each account closes on its own.
    */
-  const consolidatedXirr = pooledXirr(measurable.map((x) => ({
-    flows: (portfolio.accountCashFlows?.[x.account.accountId] ?? [])
-      .map((f) => ({ date: new Date(f.date), amount: f.amount })),
-    terminalValue: x.mv,
-    asOf: new Date(x.account.asOf),
-  })));
-  const xirrMissing = unmeasurable.map((x) => x.account.accountNo);
-  /**
-   * THE WINDOW THE LABEL NAMES MUST BE THE WINDOW THE RATE MEASURED.
-   *
-   * This closed the stated window on `portfolio.asOf` — one date — while
-   * `pooledXirr` directly above closes each account on ITS OWN as-of. The rate
-   * was right and its caption was not: it read "2026-04-01 → 2026-07-10
-   * (100 days)" for a pool in which Green Lantern actually closes on 25 June,
-   * fifteen days earlier. A reader checking the annualisation against the window
-   * on screen would not reproduce the number, which is the same defect as the
-   * one the comment above describes — just moved from the arithmetic into the
-   * sentence beside it.
-   *
-   * So the caption states a RANGE whenever the pool's report dates differ, and a
-   * single date when they agree.
-   */
-  const windowStart = measuredFlows.reduce<string | null>((a, f) => {
-    const iso = f.date.toISOString().slice(0, 10);
-    return !a || iso < a ? iso : a;
-  }, null);
-  const closeDates = [...new Set(measurable.map((x) => x.account.asOf))].sort();
-  const firstClose = closeDates[0] ?? portfolio.asOf;
-  const lastClose = closeDates[closeDates.length - 1] ?? portfolio.asOf;
+  const windowStart = mw.windowStart;
+  const firstClose = mw.firstClose ?? portfolio.asOf;
+  const lastClose = mw.lastClose ?? portfolio.asOf;
+  const closeRange = !mw.lastClose ? null
+    : mw.firstClose === mw.lastClose ? `at ${mw.lastClose}` : `between ${mw.firstClose} and ${mw.lastClose}`;
   const daysTo = (d: string) => (windowStart ? Math.round((Date.parse(d) - Date.parse(windowStart)) / 864e5) : null);
   const windowNote = !windowStart
     ? "to date"
     : firstClose === lastClose
       ? `over ${windowStart} → ${lastClose} (${daysTo(lastClose)} days)`
       : `over ${windowStart} → ${firstClose}–${lastClose} (${daysTo(firstClose)}–${daysTo(lastClose)} days) — each account closes on its own report date`;
+  /**
+   * AN ANNUALISED RATE OVER LESS THAN A YEAR IS AN EXTRAPOLATION, AND SAYS SO
+   * (Stage 10g(ii), XA-14) — beside the managers' OWN annualised
+   * since-inception returns for the same accounts, which is what exposes a
+   * +200% "p.a." for the projection it is. Read off the book, never typed.
+   */
+  const managersOwn = (ids: readonly string[]) => {
+    const xs = ids.flatMap((id) => (BOOK_ACCOUNT_RETURNS[id] ?? []).flatMap((blk) => (blk.series as ReturnSeries[])
+      .filter((x) => !x.isBenchmark && x.siAnnualised && typeof x.si === "number").map((x) => x.si as number)));
+    return xs.length ? { lo: Math.min(...xs), hi: Math.max(...xs) } : null;
+  };
+  const annualisedNote = (pct: number | null, days: number | null, ids: readonly string[]) => {
+    if (pct == null) return undefined;
+    const rate = `${fmtPct(pct, { sign: true, decimals: 1 })} p.a.`;
+    if (days != null && days >= 365) return `${rate}, annualised over ${days} days.`;
+    const own = managersOwn(ids);
+    return `${rate} only if ${days != null ? `this ${days}-day window` : "this window"} were compounded over a whole year — an extrapolation, not a rate earned`
+      + (own ? `; the managers' own annualised since-inception returns for ${ids.length === 1 ? "this account" : "these accounts"} ${own.lo === own.hi ? `are ${fmtPct(own.lo, { decimals: 2 })}` : `run ${fmtPct(own.lo, { decimals: 2 })} to ${fmtPct(own.hi, { decimals: 2 })}`}` : "")
+      + ".";
+  };
+  const bridgeTotals = bridgeTotalsOf(accounts);
   // The headline is the money-weighted return actually EARNED to date, not the
-  // XIRR annualised — an annualised quarter reads >100% p.a. and misleads on a
-  // cockpit. De-annualised over the window the pool closes on; the p.a. rate is
-  // kept in the hint. Matches the Morning CIO, so the two pages state one number.
+  // XIRR annualised — a sub-year window compounded onto a year reads as a yearly
+  // rate nobody earned (XA-29: this book's pool annualises to ~89% p.a. over
+  // about four months). De-annualised over the window the pool closes on; the
+  // p.a. rate is kept in the hover, named an extrapolation beside the managers'
+  // own since-inception rates. Matches the Morning CIO, so the two pages state
+  // one number.
   const consWindowDays = daysTo(lastClose);
   const consolidatedTotalReturn = totalReturnFromXirr(consolidatedXirr, consWindowDays);
 
@@ -277,9 +367,12 @@ export function Performance() {
             // (Stage 10cp), where `hint` now lands.
             sub={`to date · not annualised${consWindowDays ? ` · ${consWindowDays} days` : ""}`}
             hint={`${xirrMissing.length ? `Over ${measurable.length} of ${accounts.length} accounts` : "Over every account"}, ${windowNote}.`}
+            // Each account at its OWN statement date and value (XP-15): the
+            // close is a range where the pool's report dates differ, and never
+            // the book's newest date, which is no pooled account's.
             title={`${xirrMissing.length
-              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, closed against THEIR market value (${money(measuredMV)}) at ${portfolio.asOf}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
-              : `Over all ${accounts.length} accounts' dated flows, closed against the current market value at ${portfolio.asOf}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}; the annualised XIRR${consolidatedXirr != null ? ` is ${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a.` : ""}, kept off the tile because a >100% annualised quarter reads as a sustained yearly rate.`}
+              ? `Over the ${measurable.length} of ${accounts.length} accounts whose statements carry an opening portfolio value, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}. ${xirrMissing.length === 1 ? "Account" : "Accounts"} ${xirrMissing.join(", ")} ${xirrMissing.length === 1 ? "is" : "are"} excluded on both sides — counting ${xirrMissing.length === 1 ? "its value without its" : "their value without their"} opening stake would overstate this figure.`
+              : `Over all ${measurable.length} accounts' dated flows, each closed against the value its own statement strikes on its own date — ${money(measuredMV)} in all, ${closeRange ?? "on no date"}.`} This is the money-weighted return actually earned over the window${consWindowDays ? ` (${consWindowDays} days)` : ""}, and it stays off a yearly scale on the tile: the annualised XIRR is ${annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId)) ?? "not struck."}`}
             icon={<Percent className="h-4 w-4" />} />
         )}
 
@@ -371,11 +464,24 @@ export function Performance() {
       </Card>
 
       {/* ── Value bridge ── */}
+      {/* A COLUMN IS DRAWN ONLY WHERE ITS PARTS MAKE ITS TOTAL (A-12). Nine
+          since-inception columns printed an opening equal to their closing, the
+          five Sanshi columns closed on their contributions, and no financial-year
+          column added up — every figure real, and every column teaching a reader
+          wrong arithmetic. The book ties each column on its own lines
+          (`ties`, `withheldReason`); one that does not is WITHHELD: its heading
+          says so and why, and none of its figures is drawn as a bridge. */}
       <Card className="mt-5" title="Value bridge"
-        subtitle="Opening value to closing value, per account — every component read from the statements">
+        subtitle={`Opening value to closing value, per account — every line read from the statements. ${bridgeTotals.tied} of ${bridgeTotals.all} columns add up to their closing value within the statement's own rounding${bridgeTotals.all > bridgeTotals.tied ? `; the other ${bridgeTotals.all - bridgeTotals.tied} are withheld, and each heading says why` : ""}.`}
+        right={bridgeTotals.all > 0 ? <Pill tone="info"><span data-bridge-totals data-tied={bridgeTotals.tied} data-all={bridgeTotals.all}>
+          {bridgeTotals.tied} of {bridgeTotals.all} add up</span></Pill> : undefined}>
         <div className="space-y-6">
           {accounts.map((a) => {
             const bridges = bridgeOf(a.accountId);
+            // A line one of this account's columns prints is a row; an optional
+            // line none of them prints (or prints as nil) is not drawn at all.
+            const rows = BRIDGE_ROWS.filter((row) => !row.optional
+              || bridges.some((b) => { const v = b[row.key]; return typeof v === "number" && v !== 0; }));
             return (
               <div key={a.accountId}>
                 <div className="mb-1.5 flex flex-wrap items-baseline gap-2">
@@ -389,29 +495,54 @@ export function Performance() {
                     {/* Exempt, declared: TRANSPOSED — its rows are the bridge's
                         fixed components and its columns are the statements that
                         publish them. */}
-                    <table className="w-full text-[12.5px]"
+                    <table className="w-full text-[12.5px]" data-bridge-table={a.accountId}
                       data-table-static="transposed — the rows are a fixed component list rather than records, and the columns are the statements that publish them">
                       <thead className="label-xs border-b border-ink-700">
                         <tr>
                           <th className="px-3 py-1.5 text-left">Component</th>
-                          {bridges.map((b) => (
-                            <th key={b.source} className="px-3 py-1.5 text-right">
-                              {b.basis === "since-inception" ? "Since inception" : "FY to date"}
-                              <div className="font-normal normal-case tracking-normal text-slate-600">{b.periodFrom} → {b.periodTo}</div>
-                            </th>
-                          ))}
+                          {bridges.map((b) => {
+                            const withheld = b.ties === false;
+                            return (
+                              <th key={b.source} className="px-3 py-1.5 text-right" data-bridge-col={b.source}
+                                data-bridge-basis={b.basis} data-bridge-withheld={withheld ? "1" : "0"}
+                                data-bridge-residual={b.residual ?? ""}>
+                                {BRIDGE_BASIS_LABEL[b.basis] ?? b.basis}
+                                <div className="font-normal normal-case tracking-normal text-slate-600">{b.periodFrom} → {b.periodTo}</div>
+                                <div className="font-normal normal-case tracking-normal text-slate-600">{bridgeReportName(b.reportType)}</div>
+                                {withheld && (
+                                  <div className="cursor-help font-normal normal-case tracking-normal text-amber-400"
+                                    data-bridge-withheld-note title={bridgeWithheldWhy(b, money)}>withheld · does not add up</div>
+                                )}
+                              </th>
+                            );
+                          })}
                         </tr>
                       </thead>
                       <tbody>
-                        {BRIDGE_ROWS.map((row) => (
-                          <tr key={row.key} className="border-t border-ink-700/60">
+                        {rows.map((row) => (
+                          <tr key={row.key} className="border-t border-ink-700/60" data-bridge-row={row.key}>
                             <td className="px-3 py-1.5 text-slate-300">{row.label}</td>
                             {bridges.map((b) => {
                               const v = b[row.key];
+                              const nilOpening = row.key === "opening" && b.openingNil === true;
                               return (
-                                <td key={b.source} className="px-3 py-1.5 text-right mono">
-                                  {v === null
-                                    ? <AbsentCell reason={`the ${b.reportType} does not print this component`} />
+                                <td key={b.source} className="px-3 py-1.5 text-right mono" data-bridge-cell={row.key}
+                                  data-bridge-of={b.source}
+                                  data-v={b.ties === false ? "" : nilOpening ? 0 : typeof v === "number" ? v : ""}>
+                                  {b.ties === false
+                                    ? <AbsentCell reason={bridgeWithheldWhy(b, money)} />
+                                    : nilOpening
+                                    /* NIL BY DEFINITION, AND SAID IN THE CELL: nothing
+                                       is held before inception, so the report prints
+                                       no opening and the bridge adds from zero. A
+                                       computed zero, never a printed one. */
+                                    ? <span data-bridge-computed title="Since inception: nothing was held before the account's inception, so its opening value is a computed zero the report does not print.">
+                                        {money(0)}<span className="block text-[10px] font-sans text-slate-500">nil · since inception</span>
+                                      </span>
+                                    : typeof v !== "number"
+                                    ? <AbsentCell reason={(b.unread ?? []).includes(row.key)
+                                        ? `no ${row.words} line is read from this ${bridgeReportName(b.reportType)}`
+                                        : `the ${bridgeReportName(b.reportType)} prints no ${row.words} line`} />
                                     : <span className={row.tone === -1 ? "text-loss" : row.tone === 1 ? "text-gain" : "text-slate-200"}>
                                           {money(v)}
                                         </span>}
@@ -436,62 +567,72 @@ export function Performance() {
           the caller must say so on screen. The line under the title went with
           every other; how the rate is struck is the title's hover. */}
       <Card className="mt-5" title="Money-weighted return to date, per account · not annualised"
-        subtitle="From each account's own dated capital movements, closed against its current market value — the return earned to date, not annualised.">
+        subtitle="From each account's own dated capital movements, closed against the value its own statement strikes on its own date — the return earned to date, not annualised.">
         <div className="overflow-x-auto">
           <table className="w-full text-[12.5px]">
             <thead className="label-xs border-b border-ink-700">
               <Tr view={xirrView}>
                 <SortHeader col="account" view={xirrView} align="left" pad="px-3 py-2">Account</SortHeader>
                 <SortHeader col="flows" view={xirrView} pad="px-3 py-2">Dated flows</SortHeader>
-                <SortHeader col="mv" view={xirrView} pad="px-3 py-2">Market value</SortHeader>
+                <SortHeader col="mv" view={xirrView} pad="px-3 py-2" title="The value each account's own statement strikes on its terminal date — what its flows close against, never a live or NAV-priced figure.">Market value</SortHeader>
                 <SortHeader col="terminal" view={xirrView} pad="px-3 py-2">Terminal date</SortHeader>
                 <SortHeader col="return" view={xirrView} pad="px-3 py-2" title="Money-weighted return earned to date — the annualised XIRR de-annualised to the account's window.">Return (to date)</SortHeader>
               </Tr>
             </thead>
             <tbody>
               {xirrRows.map((x) => (
-                <Tr view={xirrView} key={x.account.accountId} className="border-t border-ink-700/60">
+                <Tr view={xirrView} key={x.account.accountId} className="border-t border-ink-700/60"
+                  data-xirr-row={x.account.accountId} data-xirr-mv={x.unvalued ? "" : x.mv}
+                  data-xirr-pct={x.pct ?? ""} data-xirr-todate={x.toDate ?? ""} data-xirr-days={x.windowDays ?? ""}>
                   <td className="px-3 py-2.5 font-medium text-slate-100">{acctLabel(x.account)}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.flows}</td>
                   <td className="px-3 py-2.5 text-right mono text-slate-200">
                     {/* `₹0` on an account nobody valued is a claim, not a
-                        measurement — see Account.noPositionsReason. */}
-                    {x.account.noPositionsReason
-                      ? <AbsentCell reason={x.account.noPositionsReason} />
-                      : x.account.partialValuation
-                      /* A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST.
-                         The depository's cash-equivalent units are valued on the
-                         live basis; the account's other holdings are not, and a
-                         bare total here would read as the whole account. */
-                      ? <span data-partial-valuation title={x.account.partialValuation}>
-                          {money(x.mv)}<span className="ml-1 cursor-help text-[10px] text-amber-400/80">partial</span>
-                        </span>
+                        measurement — see Account.noPositionsReason. ON THE
+                        STATEMENT BASIS, and an account whose statements value
+                        nothing keeps THEIR reason: the cash-equivalent funds a
+                        published NAV values on part of one are no figure beside
+                        a statement's terminal date (XA-14). */}
+                    {x.unvalued
+                      ? <AbsentCell reason={x.unvalued} />
                       : money(x.mv)}
                   </td>
                   <td className="px-3 py-2.5 text-right mono text-slate-400">{x.account.asOf}</td>
                   <td className="px-3 py-2.5 text-right mono">
                     {x.pct == null
-                      ? <span className="text-[11px] text-slate-500">{DASH} {x.reason}</span>
-                      : (() => { const tr = totalReturnFromXirr(x.pct, daysTo(x.account.asOf)); return <span className={(tr ?? 0) >= 0 ? "text-gain" : "text-loss"} title={`${fmtPct(x.pct, { sign: true, decimals: 1 })} p.a. annualised`}>{fmtPct(tr, { sign: true, decimals: 1 })}</span>; })()}
+                      ? <span className="text-[11px] text-slate-500" title={x.reasonTitle}>{DASH} {x.reason}</span>
+                      : <>
+                          <span className={(x.toDate ?? 0) >= 0 ? "text-gain" : "text-loss"}
+                            title={annualisedNote(x.pct, x.windowDays, [x.account.accountId])}>{fmtPct(x.toDate, { sign: true, decimals: 1 })}</span>
+                        </>}
                   </td>
                 </Tr>
               ))}
-              <tr className="border-t-2 border-ink-600 font-semibold">
+              <tr className="border-t-2 border-ink-600 font-semibold" data-xirr-consolidated
+                data-mv={measuredMV} data-book={statementBookMV} data-first={mw.firstClose ?? ""} data-last={mw.lastClose ?? ""}
+                data-pct={consolidatedXirr ?? ""} data-todate={consolidatedTotalReturn ?? ""} data-days={consWindowDays ?? ""}>
                 <td className="px-3 py-2.5 text-slate-200">
                   Consolidated
                   {unmeasurable.length > 0 && (
                     <div className="text-[10.5px] font-normal text-slate-500">
-                      {measurable.length} of {accounts.length} accounts · {money(measuredMV)} of {money(listedMV)}
+                      {measurable.length} of {accounts.length} accounts · {money(measuredMV)} of the statements' {money(statementBookMV)}
                     </div>
                   )}
                 </td>
                 <td className="px-3 py-2.5 text-right mono text-slate-400">{measuredFlows.length}</td>
                 <td className="px-3 py-2.5 text-right mono text-slate-200">{money(measuredMV)}</td>
-                <td className="px-3 py-2.5 text-right mono text-slate-400">{portfolio.asOf}</td>
+                <td className="px-3 py-2.5 text-right mono text-slate-400"
+                  title={mw.firstClose && mw.firstClose !== mw.lastClose ? "Each account closes on its own statement date." : undefined}>
+                  {!mw.lastClose ? DASH : mw.firstClose === mw.lastClose ? mw.lastClose : `${mw.firstClose} → ${mw.lastClose}`}
+                </td>
                 <td className="px-3 py-2.5 text-right mono">
                   {consolidatedTotalReturn == null
-                    ? <span className="text-slate-500">{DASH}</span>
-                    : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"} title={consolidatedXirr != null ? `${fmtPct(consolidatedXirr, { sign: true, decimals: 1 })} p.a. annualised` : undefined}>{fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
+                    ? <AbsentCell reason={!mw.parts.length
+                        ? "no account's statements carry both dated flows and an opening portfolio value to measure against"
+                        : "the pooled flows and their statement values do not solve for a single rate"} />
+                    : <span className={consolidatedTotalReturn >= 0 ? "text-gain" : "text-loss"}
+                        title={annualisedNote(consolidatedXirr, consWindowDays, mw.parts.map((x) => x.accountId))}>
+                        {fmtPct(consolidatedTotalReturn, { sign: true, decimals: 1 })}</span>}
                 </td>
               </tr>
             </tbody>

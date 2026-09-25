@@ -296,8 +296,8 @@ most actionable thing here, because the two halves need different documents.
 | | |
 | --- | ---: |
 | Review, invested at cost (its own tab totals) | **₹1,076.01 Cr** |
-| Book, invested at cost | **₹470.30 Cr** |
-| **Shortfall** | **₹605.71 Cr** |
+| Book, invested at cost | **₹470.16 Cr** |
+| **Shortfall** | **₹605.85 Cr** |
 
 Per tab, so the shortfall can be attributed rather than asserted:
 
@@ -321,12 +321,12 @@ does not hold in general. Split on exactly that line:
 
 | Cause | Invested | NAV | Size |
 | --- | :---: | :---: | ---: |
-| **A. Held, valued, and no cost reported** — 60 of 369 positions | understated | **not affected** | ₹165.94 Cr of market value already in NAV |
+| **A. Held, valued, and no cost reported** — 59 of 369 positions | understated | **not affected** | ₹165.94 Cr of market value already in NAV |
 | **B. Not in the book at all** — section D | understated | understated | ₹367.78 Cr at the review's marks |
 | **C. An aggregate block the review itemises nowhere** | understated | understated | ₹136.16 Cr at the review's marks |
 
 **CAUSE A IS THE WHOLE OF WHY INVESTED CAPITAL LOOKS WRONG WITHOUT NAV LOOKING WRONG.**
-Every one of those 60 positions is in a DEPOSITORY account:
+Every one of those 59 positions is in a DEPOSITORY account:
 
 | Account | Costless rows | Their market value |
 | --- | ---: | ---: |
@@ -335,7 +335,7 @@ Every one of those 60 positions is in a DEPOSITORY account:
 | Motilal Oswal Financial Services (demat) 1201090012838320 | 14 | ₹32.83 Cr |
 | Motilal Oswal Financial Services (demat) 1201090012838335 | 6 | ₹30.95 Cr |
 | LKP Securities 98245 | 1 | ₹0.00 Cr |
-| 3P Investment Managers 3000048 | 3 | ₹0.00 Cr |
+| 3P Investment Managers 3000048 | 2 | ₹0.00 Cr |
 | HDFC Mutual Fund 16180583 | 2 | ₹0.00 Cr |
 
 A depository holds the shares; it did not buy them, so its statement prints ISIN, quantity,

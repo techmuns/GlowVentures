@@ -370,8 +370,24 @@ export type Position = {
    * valued at AMFI's published NAV. `asOf` is that statement's closing date and
    * `source` its docKey. Such a position has no statement mark at all, so it is
    * never in `statementPortfolio`, and a page says so wherever it shows one.
+   *
+   * `kind` says WHICH absence of a mark it is, because the two need different
+   * sentences and a page that used one for both would be false about the other:
+   *   - `closing-balance` (or unset): the account sent no holding statement, and
+   *     the units are its transaction statement's closing balance;
+   *   - `no-rate` (the figure audit, A-17): the account's holding statement
+   *     records the units and prints no rate for them, and `witnessAccountId`
+   *     is the account whose statement — same depository, same day — prices the
+   *     same scheme, which is what proves the units are on the NAV's basis.
+   * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
+   * chosen.
    */
-  depositoryUnits?: { asOf: string | null; source: string | null };
+  depositoryUnits?: {
+    asOf: string | null;
+    source: string | null;
+    kind?: "closing-balance" | "no-rate";
+    witnessAccountId?: string | null;
+  };
 };
 
 /**
@@ -605,7 +621,12 @@ export type AccountBridge = {
   source: string;
   periodFrom: string;
   periodTo: string;
-  basis: "since-inception" | "financial-year-to-date";
+  /**
+   * The window, by its own dates (XA-21): since inception only where it starts
+   * on the account's inception date; a financial year to date only where it
+   * starts on 1 April and ends inside that year; any other span is a `window`.
+   */
+  basis: "since-inception" | "financial-year-to-date" | "window";
   opening: number | null;
   contribution: number | null;
   withdrawal: number | null;
@@ -617,6 +638,29 @@ export type AccountBridge = {
   expenses: number | null;
   closing: number | null;
   profit: number | null;
+  /**
+   * ── A-12: the lines a reader sets only where it reads them, and the tie ──
+   * Each is a figure, `null` where the reader looked and the report prints
+   * none, and named in `unread` where no reader looked at all.
+   */
+  accruedIncome?: number | null;
+  changeInAccruals?: number | null;
+  otherExpenses?: number | null;
+  gainPriorToTakeover?: number | null;
+  unread?: string[];
+  /**
+   * Whether opening + capital + every printed line makes the closing value,
+   * within the statement's own rounding. A column that does not is WITHHELD:
+   * the page draws none of its figures as a bridge and says why.
+   */
+  ties?: boolean;
+  /** A since-inception opening the report does not print: nil by definition, added as a computed zero. */
+  openingNil?: boolean;
+  /** closing − (opening + every line), and that sum; null where the opening is unknown. */
+  residual?: number | null;
+  linesTotal?: number | null;
+  /** Why a withheld column does not add up, in words — the gap itself is struck by the page. */
+  withheldReason?: string | null;
 };
 
 /**
@@ -1030,3 +1074,59 @@ export type RealisedByClass = {
  * independent cross-check it was always allowed to be, and never a source for
  * the book. See the `/register` redirect in `App.tsx`.
  */
+
+/**
+ * A HOLDING THE BOOK CARRIES AS A QUANTITY AND NOTHING ELSE (`BOOK_UNVALUED_HOLDINGS`).
+ *
+ * Every row an account's authoritative holdings document reports with units and
+ * no market value — a fund that publishes no NAV (India SME, Sky Capital), or a
+ * custodian that records a face value or prints no rate (the NSDL and CDSL
+ * statements). It is never a `Position`, because `Position.marketValue` is a
+ * measurement and there is none; it is never summed into any total; and it is
+ * never valued at its face value, which is what a security was allotted at and
+ * not a mark anybody struck.
+ *
+ * `reason` is the ROW's own cause, worded for the document it came from.
+ * `sameUnitsReportedBy` is set where the row is a custodian's view of units the
+ * SAME owner's fund account also reports, to the printed precision — the same
+ * holding seen from two sides, so a screen listing these must not list it twice.
+ * `faceValue` is set only where the statement prints one.
+ *
+ * NAMED APART FROM `UnvaluedHolding` in `accounts.ts`, which is an ACCOUNT that
+ * carries no position (Stage 10bp). This is one statement LINE — a security and
+ * its units — inside an account that may carry positions besides.
+ */
+export type UnvaluedStatementHolding = {
+  accountId: string;
+  ownerId: string;
+  securityKey: string;
+  security: string;
+  isin: string | null;
+  assetClass: AssetClass | null;
+  quantity: number | null;
+  faceValue: number | null;
+  /** The holdings statement's own date — the quantity is as of this day. */
+  asOf: string | null;
+  sameUnitsReportedBy: string | null;
+  reason: string;
+};
+
+/**
+ * CAPITAL NO DATED ROW CARRIES. An account's printed capital totals (a fact
+ * sheet since inception, a performance summary or history) move between two of
+ * its marks by `printedNet`; its dated record — what the XIRR reads — carries
+ * `datedNet` over the same days. `undated` is the difference: money that moved
+ * on a day no statement in the drop prints. The NAV series nets it inside the
+ * step (no date needed); a money-weighted return cannot, so a page names it
+ * beside that account's rate rather than assuming a day for it.
+ */
+export type UndatedCapital = {
+  accountId: string;
+  from: string;
+  to: string;
+  printedNet: number;
+  datedNet: number;
+  undated: number;
+  /** The report types whose printed totals settled the step. */
+  evidence: string[];
+};

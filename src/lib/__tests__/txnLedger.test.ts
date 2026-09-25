@@ -27,7 +27,7 @@
 // holds" fails here rather than on screen.
 import { mergeDatedRecords, datedTotals, datedSectionRollup } from "@/lib/txnLedger";
 import { rollup, acctKey } from "@/lib/txnRollup";
-import { capitalRollup } from "@/lib/tranches";
+import { capitalRollup, capitalTotals } from "@/lib/tranches";
 import type { Txn } from "@/lib/ledger";
 import type { Account, CapitalMove, Position } from "@/lib/types";
 import { BOOK_CAPITAL_MOVES, BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_POSITION_TRANCHES } from "@/data/glowData";
@@ -238,6 +238,35 @@ const valueOf = (id: string) => (id === "gl" ? 114_000_000 : 0);
   const size = mergeDatedRecords(big, small, sectionOf, valueOf, "size");
   ok("largest first ranks the bigger block first", size[0].trades !== null,
     size.map((r) => (r.capital ? `cap ${r.capital.paidIn}` : `trd ${r.trades?.bought}`)).join(" / "));
+}
+
+// ── AN ACCOUNT NO STATEMENT VALUES IS UNVALUED, NOT WORTH ₹0 (A-06) ────────
+// India SME's and Sky Capital's folios print the capital drawn and no NAV, so
+// they carry no position at all. Summed over nothing the account read ₹0, and
+// the appreciation struck against it was every rupee paid in, reported as a
+// −100% return. Constructed, because the book this suite runs against may carry
+// no such account on the day it runs — and a guard that passes over nothing
+// claims confidence nobody earned. (Main's Stage 10cd model: `value` is null and
+// `appreciation` withheld with `appreciationReason`.)
+{
+  // The record reaches the statement date (`capitalRecordTo`), so the reason
+  // that fires is the one this block is about, not the record's shortfall.
+  const a = acct({ noPositionsReason: "this fund publishes no NAV; the statement reports the capital drawn and the units it bought", capitalRecordTo: "2026-07-27" } as Partial<typeof BOOK_ACCOUNTS[number]>);
+  const cap = capitalRollup([move({})], [a], [], {}, "all", "recent");
+  ok("an account with no position row rolls up to one row", cap.length === 1, `${cap.length}`);
+  ok("...whose value is ABSENT, never ₹0", cap[0]?.value === null, `${cap[0]?.value}`);
+  ok("...so it carries no appreciation and no split", cap[0]?.appreciation === null && cap[0]?.realised === null && cap[0]?.unrealised === null,
+    `appreciation ${cap[0]?.appreciation} · realised ${cap[0]?.realised} · unrealised ${cap[0]?.unrealised}`);
+  ok("...and says why, in the account's own words", /publishes no NAV/.test(cap[0]?.appreciationReason ?? ""), cap[0]?.appreciationReason ?? "");
+  // LOAD-BEARING: the same account holding a MEASURED zero keeps its zero, so
+  // the rule is about a missing row, not a small figure.
+  const zero = capitalRollup([move({})], [a], [pos({ marketValue: 0, quantity: 0 })], {}, "all", "recent");
+  ok("a measured ₹0 (redeemed to nil) keeps its zero", zero[0]?.value === 0, `${zero[0]?.value}`);
+  ok("...and is not given the unvalued account's reason", !/publishes no NAV/.test(zero[0]?.appreciationReason ?? ""), zero[0]?.appreciationReason ?? "");
+  const t = capitalTotals([...cap]);
+  ok("a set of unvalued accounts has no value total, never ₹0", t.value === null, `${t.value}`);
+  const both = capitalTotals([...cap, ...zero]);
+  ok("...and one beside a valued account adds nothing rather than ₹0", both.value === 0, `${both.value}`);
 }
 
 // ── ANCHORED ON THE GENERATED BOOK: one definition of what an account holds ──

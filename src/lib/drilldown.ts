@@ -37,7 +37,7 @@ import { MARKET_SIDE_UNPLACED } from "./aifCategory";
  * rather than paraphrased.
  */
 import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
-import { accountHasOpeningValue } from "./returns";
+import { measuredAccountsReturn } from "./returns";
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
 export const DRILLDOWN_PATH = "/holdings";
@@ -400,9 +400,10 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
        * happen to agree today — which is exactly the condition under which the
        * mistake is invisible, and why it is written down rather than tested for.
        */
-      const ids = portfolio.accounts
-        .filter((a) => accountHasOpeningValue(portfolio, a.accountId))
-        .map((a) => a.accountId);
+      // The rate's own account set — `measuredAccountsReturn`, the function the
+      // tile's figure comes from — so this page cannot list an account the rate
+      // left out, nor leave out one it covered.
+      const ids = measuredAccountsReturn(portfolio, portfolio.accounts).parts.map((x) => x.accountId);
       const keep = new Set(ids);
       const rows = livePositions.filter((p) => keep.has(p.accountId));
       const outside = livePositions.filter((p) => !keep.has(p.accountId));

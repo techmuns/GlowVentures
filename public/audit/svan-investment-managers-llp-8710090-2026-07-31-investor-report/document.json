@@ -1903,6 +1903,8 @@
   "income": 93553,
   "expenses": 1431,
   "fees": 0,
+  "changeInAccruals": 69084,
+  "otherExpenses": 3216.27,
   "profit": null,
   "corpus": 107170992.85,
   "openingCorpus": 103890192.28,

@@ -30,8 +30,12 @@
 //
 //   private    the private side of the book with a value — open.
 //   unvalued   private accounts whose statement carries NO value: a fund that
-//              publishes no NAV, an income-only folio, an account redeemed to
-//              nil. *"If this is missing data this needs to be like a hidden
+//              publishes no NAV, an income-only folio no valued holding can be
+//              shown to be a view of, an account redeemed to nil. On this book
+//              that is the funds that publish no NAV alone — the set the AIF
+//              drill-down names too (`isValuedByNoStatement`), because an
+//              income-only folio that ties to a holding is a line of that
+//              holding's row. *"If this is missing data this needs to be like a hidden
 //              drop down clearly marked."* Their capital figures are real and
 //              are in the capital totals; their value is absent, never ₹0.
 //
@@ -58,15 +62,41 @@
 // figure never dedupes), and the section carries the same "counted once" line at
 // its foot. Both views then close on the same private total.
 //
-// The CAPITAL columns are never deduped, in either view: each capital account is
-// a separate statement with its own commitment and its own dated calls, and the
-// book's commitment register counts every one. Where a holding is counted once
-// but its two capital accounts are both counted, the fund row says so.
+// ── AND A CAPITAL ACCOUNT IS COUNTED ONCE WHERE ITS HOLDING IS ─────────────
+//
+// The capital columns used to be every statement as printed on EVERY row, while
+// the holding columns beside them counted a dedupe group once. On Transition
+// Venture Capital Fund I — reported by both family trusts — the fund row then
+// read ₹3 Cr committed and ₹1.5 Cr paid in beside ONE holding's 7,500 units,
+// ₹75 L cost and ₹1.71 Cr value: a reader dividing the value by its own Paid in
+// got +14.3% against a printed +128.6%. One half of that row was wrong whichever
+// way the family answers whether the two trusts hold one investment or two.
+//
+// So a CONSOLIDATED row counts a capital account once with its holding
+// (`capitalCountedOnce` in `privateMarket.ts`, the one rule the tiles read too),
+// and a PRINTED row — each folio line, each family member — shows every
+// statement's own capital. The "Counted once" line under a fund carries the
+// capital difference as well as the holding difference, so the folios add to
+// the fund row through it in EVERY column, and the family's answer moves both
+// halves together: take the `dedupeGroup` off the pair and both holdings and
+// both capital accounts are counted, with no change here.
+//
+// ── AN INCOME-ONLY FOLIO IS A LINE UNDER THE HOLDING IT IS A VIEW OF ────────
+//
+// 360 ONE Alternates' two folios report the income a fund distributed and no
+// valuation; their units ARE valued, by 360 ONE Private Wealth, in the Private
+// funds section. They used to stand in "Not valued" as a fund of their own —
+// one fund in two sections, and a capital call keyed two ways. They are lines
+// of the valued row now (`incomeOnlyViewOf`, a committed join checked against
+// the book's own unit count), carrying no holding figure of their own: their
+// units are already counted on the line above.
 import type { Account, Commitment, Position } from "./types";
 import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
-import { COST_COVERAGE_MIN, unvaluedAccounts, type UnvaluedKind } from "./privateMarket";
+import {
+  COST_COVERAGE_MIN, unvaluedAccounts, incomeOnlyViewOf, capitalCountedOnce, type UnvaluedKind,
+} from "./privateMarket";
 import type { SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 
@@ -107,6 +137,21 @@ export type BookFolio = {
   alsoReportedUnder: string[];
   // ── THE CAPITAL ACCOUNT — null where the account sends none ──
   capital: SchemeCall | null;
+  /**
+   * WHETHER A CONSOLIDATED FIGURE COUNTS THIS FOLIO'S CAPITAL ACCOUNT — false
+   * only where its holding is the second statement of a dedupe group whose
+   * capital another folio's account already carries (`capitalCountedOnce`).
+   * A printed figure — a folio line, a family member — counts it regardless.
+   */
+  capitalCounted: boolean;
+  /** The account whose capital account stands for this one's, where it is not counted. */
+  capitalCountedAs: string | null;
+  /**
+   * AN INCOME-ONLY VIEW: the account whose statement values these units. Set
+   * only on a folio folded under the valued holding it is a view of; it carries
+   * no holding figure of its own, because its units are that line's.
+   */
+  viewOf: string | null;
   /** The book's own words for why nothing values this folio. Never re-worded. */
   reason: string | null;
 };
@@ -120,6 +165,13 @@ export type BookFigures = {
   uncalled: number | null;
   /** How many capital accounts sit under this row, and how many print each line. */
   capitalAccounts: number;
+  /**
+   * Capital accounts under this row that a CONSOLIDATED figure leaves out,
+   * because each is the second statement of a holding counted once. Always 0 on
+   * a printed row. Counted apart so a caption can say "10 capital accounts, 1
+   * more reported twice" rather than a fraction of a set that does not exist.
+   */
+  capitalAlso: number;
   calledOf: number;
   paidOf: number;
   pendingOf: number;
@@ -174,6 +226,15 @@ export type Overlap = {
   units: number | null;
   cost: number | null;
   value: number;
+  /**
+   * THE CAPITAL THE CONSOLIDATED ROW LEAVES OUT — the second statement's own
+   * commitment, calls and still-to-call, where its holding is counted once.
+   * Null where the gap has no such capital, never 0 standing for "none".
+   */
+  committed: number | null;
+  called: number | null;
+  paid: number | null;
+  uncalled: number | null;
   /** As printed, and counted once — the two figures the overlap is the gap between. */
   printed: number;
   consolidated: number;
@@ -258,16 +319,30 @@ export function bookFolios(args: {
   const counted = new Set(dedupedPositions(inScope));
   const groupSize = new Map<string, number>();
   for (const p of inScope) if (p.dedupeGroup) groupSize.set(p.dedupeGroup, (groupSize.get(p.dedupeGroup) ?? 0) + 1);
+  /**
+   * WHICH CAPITAL ACCOUNTS A CONSOLIDATED FIGURE COUNTS — struck over the same
+   * holdings, in the same book order, as `counted` above, so the capital that
+   * stands for a dedupe group is the capital of the member whose holding does.
+   */
+  const alsoCapital = new Map(capitalCountedOnce(commitments, inScope).alsoReported
+    .map((x) => [x.commitment.accountId, x.countedAs]));
 
   const out: BookFolio[] = [];
   const attached = new Set<string>();
+  const capitalOf = (accountId: string) => {
+    const cap = !attached.has(accountId) ? schemeOf.get(accountId) ?? null : null;
+    if (cap) attached.add(accountId);
+    return {
+      capital: cap,
+      capitalCounted: !!cap && !alsoCapital.has(accountId),
+      capitalCountedAs: cap ? alsoCapital.get(accountId) ?? null : null,
+    };
+  };
   // Largest first, so an account holding two funds hands its capital account to
   // the larger — none does on this book, and the choice is stated rather than
   // left to array order.
   for (const p of [...inScope].sort((a, b) => b.marketValue - a.marketValue)) {
     const a = accIdx.get(p.accountId);
-    const cap = !attached.has(p.accountId) ? schemeOf.get(p.accountId) ?? null : null;
-    if (cap) attached.add(p.accountId);
     out.push({
       key: `${p.accountId}|${p.securityKey}`,
       section: sectionOf(p)!,
@@ -289,7 +364,8 @@ export function bookFolios(args: {
       counted: counted.has(p),
       alsoCount: p.dedupeGroup ? groupSize.get(p.dedupeGroup) ?? 1 : 1,
       alsoReportedUnder: p.alsoReportedUnder ?? [],
-      capital: cap,
+      ...capitalOf(p.accountId),
+      viewOf: null,
       reason: null,
     });
   }
@@ -301,25 +377,59 @@ export function bookFolios(args: {
   // Hedged Equity strategy is an AIF holding nothing too, and it is not one.
   for (const u of unvaluedAccounts(accounts, allPositions, commitments).filter((x) => x.side === "private")) {
     const a = u.account;
+    /**
+     * AN INCOME-ONLY FOLIO THAT TIES TO A VALUED HOLDING IS A LINE OF THAT
+     * HOLDING'S ROW — its fund, its section, its capital-call key — and carries
+     * no holding figure: the units are counted on the valued line. One that does
+     * not tie stays in "Not valued" with its own reason, never under a row it no
+     * longer ties to.
+     */
+    const view = u.kind === "income-only" ? incomeOnlyViewOf(a, inScope, accIdx) : null;
+    if (view) {
+      const p = view.position;
+      out.push({
+        key: `${a.accountId}|view`,
+        section: sectionOf(p)!,
+        status: "income-only",
+        accountId: a.accountId,
+        owner: a.owner,
+        provider: a.provider,
+        accountNo: a.accountNo,
+        asOf: a.asOf ?? null,
+        fundKey: p.securityKey,
+        fundName: p.security,
+        securityKey: p.securityKey,
+        category: p.assetClass === "AIF" ? aifSectionOf(accIdx, p) : null,
+        position: null,
+        units: null,
+        cost: null,
+        value: null,
+        pnl: null,
+        counted: false,
+        alsoCount: 1,
+        alsoReportedUnder: [],
+        ...capitalOf(a.accountId),
+        viewOf: p.accountId,
+        reason: u.reason,
+      });
+      continue;
+    }
     const c = commitmentOf.get(a.accountId);
     const name = c?.name || a.strategy || a.provider;
-    const cap = !attached.has(a.accountId) ? schemeOf.get(a.accountId) ?? null : null;
-    if (cap) attached.add(a.accountId);
-    out.push(unvaluedFolio(a, name, u.kind, u.reason, cap, accIdx));
+    out.push(unvaluedFolio(a, name, u.kind, u.reason, capitalOf(a.accountId), accIdx));
   }
   for (const s of schemes) {
     if (attached.has(s.accountId)) continue;
     const a = accIdx.get(s.accountId);
-    attached.add(s.accountId);
     out.push(unvaluedFolio(a, s.fund, "other",
-      a?.noPositionsReason ?? "this capital account's statement carries no current holding", s, accIdx, s));
+      a?.noPositionsReason ?? "this capital account's statement carries no current holding", capitalOf(s.accountId), accIdx, s));
   }
   return out;
 }
 
 function unvaluedFolio(
   a: Account | undefined, name: string, status: UnvaluedKind, reason: string | null,
-  capital: SchemeCall | null, accIdx: AccountIndex, s?: SchemeCall,
+  capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs">, accIdx: AccountIndex, s?: SchemeCall,
 ): BookFolio {
   const accountId = a?.accountId ?? s?.accountId ?? "";
   return {
@@ -343,7 +453,8 @@ function unvaluedFolio(
     counted: false,
     alsoCount: 1,
     alsoReportedUnder: [],
-    capital,
+    ...capital,
+    viewOf: null,
     reason,
   };
 }
@@ -351,9 +462,11 @@ function unvaluedFolio(
 /**
  * WHAT A SET OF FOLIOS ADDS TO.
  *
- * `consolidated` decides the HOLDING columns only: counted once per dedupe group,
- * or every statement as printed. The capital columns are the same either way —
- * see the note at the top of this file.
+ * `consolidated` decides the basis of EVERY column: counted once per dedupe
+ * group, or every statement as printed — the holding columns by `counted`, the
+ * capital columns by `capitalCounted`, so a consolidated row never pairs one
+ * holding with two statements' capital (PM-A2). See the note at the top of
+ * this file.
  *
  * Every total is `sumOrNull`: a folio whose statement prints no uncalled line
  * contributes nothing, and the coverage count says how many did. A `?? 0` here
@@ -361,7 +474,12 @@ function unvaluedFolio(
  */
 export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigures {
   const held = folios.filter((f) => f.position && (!consolidated || f.counted));
-  const caps = folios.map((f) => f.capital).filter((c): c is SchemeCall => c != null);
+  // THE CAPITAL ON THE SAME BASIS AS THE HOLDING: every statement's own on a
+  // printed row, each capital account once with its holding on a consolidated
+  // one — see the note at the top of this file.
+  const caps = folios.filter((f) => f.capital && (!consolidated || f.capitalCounted))
+    .map((f) => f.capital!);
+  const capitalAlso = consolidated ? folios.filter((f) => f.capital && !f.capitalCounted).length : 0;
   const of = (g: (c: SchemeCall) => number | null) => caps.filter((c) => g(c) != null).length;
   const cost = sumOrNull(held.map((f) => f.cost));
   const value = held.length ? sum(held.map((f) => f.value ?? 0)) : null;
@@ -376,6 +494,7 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     pending: sumOrNull(caps.map((c) => c.pending)),
     uncalled: sumOrNull(caps.map((c) => c.uncalled)),
     capitalAccounts: caps.length,
+    capitalAlso,
     calledOf: of((c) => c.called),
     paidOf: of((c) => c.paid),
     pendingOf: of((c) => c.pending),
@@ -398,26 +517,41 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     returnPct: cost != null && cost > 0 && pnl != null && value != null && value > 0
       && costedValue >= value * COST_COVERAGE_MIN
       ? fifoTotals(held.map((f) => f.position!)).returnPct : null,
-    asOf: [...new Set(folios.map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
+    // An income-only VIEW contributes no figure to the row, so its letter's
+    // date is not a date any figure on the row is struck at.
+    asOf: [...new Set(folios.filter((f) => !f.viewOf).map((f) => f.asOf).filter((d): d is string => !!d))].sort(),
     ties: ties.length ? ties.every(Boolean) : null,
   };
 }
 
-/** The gap between a set's printed holding figures and its counted-once ones. */
+/**
+ * The gap between a set's printed figures and its counted-once ones — the
+ * holding columns AND the capital columns, so the lines under a row add to it
+ * in every column through one "Counted once" line.
+ */
 function overlapOf(folios: BookFolio[]): Overlap | null {
   const printed = figuresOf(folios, false);
   const once = figuresOf(folios, true);
-  if (printed.value == null || once.value == null) return null;
-  const gap = printed.value - once.value;
-  // Above a rupee, so float noise is never a claim.
-  if (gap <= 1) return null;
+  const gap = (a: number | null, b: number | null) => (a != null && b != null ? a - b : null);
+  // Above a rupee, so float noise is never a claim — and null, never 0, where a
+  // column carries no difference.
+  const real = (n: number | null) => (n != null && n > 1 ? n : null);
+  const value = gap(printed.value, once.value) ?? 0;
+  const capital = {
+    committed: real(gap(printed.committed, once.committed)),
+    called: real(gap(printed.called, once.called)),
+    paid: real(gap(printed.paid, once.paid)),
+    uncalled: real(gap(printed.uncalled, once.uncalled)),
+  };
+  if (value <= 1 && Object.values(capital).every((v) => v == null)) return null;
   return {
     statements: folios.filter((f) => f.position && f.alsoCount > 1).length,
-    units: printed.units != null && once.units != null ? printed.units - once.units : null,
-    cost: printed.cost != null && once.cost != null ? printed.cost - once.cost : null,
-    value: gap,
-    printed: printed.value,
-    consolidated: once.value,
+    units: printed.units != null && once.units != null && printed.units - once.units > 0 ? printed.units - once.units : null,
+    cost: real(gap(printed.cost, once.cost)),
+    value: value > 1 ? value : 0,
+    ...capital,
+    printed: printed.value ?? 0,
+    consolidated: once.value ?? 0,
   };
 }
 
@@ -452,7 +586,9 @@ export function privateBook(folios: BookFolio[], grouping: BookGrouping): Privat
         section: id,
         securityKey: grouping === "fund" ? first.securityKey : null,
         category: grouping === "fund" ? first.category : null,
-        status: statuses.size === 1 ? first.status : "other",
+        // A row with ANY valued folio is a valued row: an income-only view folded
+        // under it adds a line, never a doubt about whether the row is valued.
+        status: sorted.some((f) => f.status === "valued") ? "valued" : statuses.size === 1 ? first.status : "other",
         folios: sorted,
         overlap: grouping === "fund" ? overlapOf(sorted) : null,
         // The row is stale only where EVERY capital account under it is: one

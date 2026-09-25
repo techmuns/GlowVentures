@@ -28,8 +28,16 @@
 //     Two of the five accounts have none, so their sells carry no realised
 //     figure — absent, not zero.
 import { securityLabel } from "./securityLabel";
+import {
+  daySaleKey, lotGroupsOf, daySalesOf, settleSales as settleSalesShared, settledSecurityOf,
+  type LotGroup, type DaySale,
+} from "../../shared/lotSettlement.mjs";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES } from "../data/glowData";
 
-const BASE = import.meta.env.BASE_URL;
+// Read when a document is fetched, not when the module loads: the family test
+// suites import this module in node, where Vite's `import.meta.env` is set by
+// the suite itself (see ledgerJoins.test.ts).
+const base = () => import.meta.env.BASE_URL;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The archive: manifest + one normalised document per statement.
@@ -143,7 +151,7 @@ const AUTHORITATIVE = {
 
 async function fetchJson<T>(path: string): Promise<T | null> {
   try {
-    const r = await fetch(`${BASE}audit/${path}`, { cache: "no-store" });
+    const r = await fetch(`${base()}audit/${path}`, { cache: "no-store" });
     if (!r.ok) return null;
     return (await r.json()) as T;
   } catch {
@@ -312,6 +320,12 @@ export type Txn = {
 };
 export type TxnData = {
   asOf: string; txns: Txn[]; buys: number; sells: number;
+  /**
+   * Rows a fund's OWN transaction statement prints for the family's purchase or
+   * redemption of the fund's units — already in the dated capital record, and
+   * therefore NOT the manager's dealing (A-05). Named, never silently dropped.
+   */
+  ownAllotments: Txn[];
   /** The window the statements cover — NOT the holding period. */
   periodFrom: string | null; periodTo: string | null;
   /** Accounts that issued a transaction statement, and how many did not. */
@@ -335,25 +349,80 @@ export type TxnData = {
 // key rewrite here: a presentation layer that repairs identity hides the defect
 // from the reconciler, which is the one thing that would have caught it.
 
-/** Realised gain per (account, securityKey, saleDate), from the capital gain
- *  statements. Keyed by ACCOUNT too: the same name sold on the same day in two
- *  accounts is two separate determinations, and pooling them would credit one
- *  account's sell with the other's gain. */
-function realisedIndex(docs: ArchiveDoc[]): Map<string, number> {
-  const m = new Map<string, number>();
-  for (const { doc, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
-    if (!l.saleDate) continue;
-    const k = `${doc.accountNo}|${l.securityKey}@${l.saleDate}`;
-    m.set(k, (m.get(k) ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0));
+/**
+ * ── WHICH LOTS SETTLE WHICH DAY'S SALE (A-08) ────────────────────────────────
+ *
+ * `shared/lotSettlement.mjs` is the one definition — identity first (account,
+ * security, date), then account, date and the printed sale amount within the
+ * precision both statements print it to — read here and by `build-book`, so a
+ * sale's realised gain on the tape and a holding's FIFO realised in the book
+ * cannot be joined two ways. See the long note there: Axis Liquid's lots print
+ * `… Growth` where the sells print `… Growth Option`, and 19 lots and
+ * ₹8,65,685.59 of realised gain reached no sale while the join was on the key.
+ */
+
+/**
+ * ── A FUND'S OWN ALLOTMENT IS THE FAMILY'S CAPITAL, NOT ITS MANAGER'S DEALING ──
+ *
+ * A-05. Buoyant 103473 is a Category III AIF folio whose reporting system also
+ * issues a TRANSACTION statement, and that statement prints the family buying
+ * the fund's own units: ₹10,00,58,861.66 of Class A1 on 1 Apr and ₹25 Cr of
+ * Class A4 on 1 Jun. Read as trading, ₹35.01 Cr was counted twice — once in the
+ * dated capital record, where those allotments already are, and again as the
+ * manager's purchases (Bought ₹70.4 Cr where the managers bought ₹35.4 Cr).
+ *
+ * The test is a JOIN, not a rule about which accounts are funds: a row is the
+ * family's own allotment where the dated capital record carries a movement for
+ * the SAME account, the SAME security (unit class) and the SAME date whose
+ * amount invested equals the row's settled amount to the rupee. Nothing is
+ * inferred from a name, and a fund that ever prints real dealing on the same
+ * statement keeps those rows.
+ */
+const ACCOUNT_ID = new Map(BOOK_ACCOUNTS.map((a) => [`${a.provider}|${a.accountNo}`, a.accountId]));
+const ALLOTMENTS = (() => {
+  const m = new Map<string, number[]>();
+  for (const c of BOOK_CAPITAL_MOVES) {
+    const v = c.invested ?? c.amount;
+    // A movement with no printed amount can match nothing — never a zero.
+    if (!c.securityKey || v === null) continue;
+    const k = `${c.accountId}|${c.securityKey}@${c.date}|${c.direction}`;
+    (m.get(k) ?? m.set(k, []).get(k)!).push(v);
   }
   return m;
+})();
+function isOwnAllotment(d: { provider: string; accountNo: string }, t: ArchiveTxn): boolean {
+  const id = ACCOUNT_ID.get(`${d.provider}|${d.accountNo}`);
+  const a = settledAmount(t);
+  if (!id || !t.date || a == null) return false;
+  const amounts = ALLOTMENTS.get(`${id}|${t.securityKey}@${t.date}|${t.side === "sell" ? "out" : "in"}`);
+  return !!amounts && amounts.some((x) => Math.abs(x - a) <= 1);
+}
+
+/** The deduped capital-gain lots, grouped per (account, security, sale date). */
+export function lotGroups(docs: ArchiveDoc[]): Map<string, LotGroup> {
+  return lotGroupsOf(datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains").map(({ doc, row: l }) => ({
+    accountNo: doc.accountNo, securityKey: l.securityKey, saleDate: l.saleDate ?? null,
+    saleAmount: l.saleAmount, realised: (l.shortTerm ?? 0) + (l.longTerm ?? 0),
+  })));
+}
+
+/** Every day's sale on the tape — the manager's dealing only, never a fund's own allotment (A-05). */
+export function daySales(docs: ArchiveDoc[]): DaySale[] {
+  return daySalesOf(datedRows(docs, AUTHORITATIVE.transactions, "transactions")
+    .filter(({ doc: d, row: t }) => t.side === "sell" && !!t.date && !isOwnAllotment(d, t))
+    .map(({ doc: d, row: t }) => ({ accountNo: d.accountNo, securityKey: t.securityKey, date: t.date ?? null, amount: settledAmount(t) })));
+}
+
+/** Each day's sale → the lot group that settles it, the aliases that join, and what no sale settles. */
+export function settleSales(docs: ArchiveDoc[], sales: DaySale[] = daySales(docs)) {
+  return settleSalesShared(lotGroups(docs), sales);
 }
 
 export async function loadTransactions(): Promise<TxnData | null> {
   const docs = await loadArchive();
   if (!docs) return null;
   const src = of(docs, AUTHORITATIVE.transactions);
-  const realised = realisedIndex(docs);
+  const { bySale: realised } = settleSales(docs, daySales(docs));
   const txns: Txn[] = [];
   let periodFrom: string | null = null, periodTo: string | null = null;
   // A DAY'S SALE, NOT A ROW'S.
@@ -367,6 +436,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
   // own −₹1.93 Cr. So each (account, security, date) is attributed ONCE, to the
   // first row of that sale; the rest say where their figure went.
   const claimed = new Set<string>();
+  const ownAllotments: Txn[] = [];
 
   for (const d of src) {
     if (d.periodFrom && (!periodFrom || d.periodFrom < periodFrom)) periodFrom = d.periodFrom;
@@ -375,10 +445,24 @@ export async function loadTransactions(): Promise<TxnData | null> {
   for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
     const account = accountLabel(d);
     if (!t.date) continue;
+    if (isOwnAllotment(d, t)) {
+      const amount = settledAmount(t);
+      ownAllotments.push({
+        date: t.date, security: securityLabel(t.securityKey, t.security), securityKey: t.securityKey,
+        account, provider: d.provider, accountNo: d.accountNo, ownerId: d.ownerId,
+        assetClass: t.assetClass ?? null, side: t.side === "sell" ? "Sell" : "Buy",
+        // The quantity and price as the capital record states them would need a
+        // second join; the tape's own fields are the reader's (see G1a), so only
+        // the settled amount — the figure the join is struck on — is carried.
+        qty: t.quantity ?? 0, price: null, amount, realized: null,
+        realizedNote: "the family's own purchase of this fund's units — already in the dated capital record, not the manager's dealing",
+      });
+      continue;
+    }
     const side = t.side === "sell" ? "Sell" : "Buy";
     const qty = t.quantity ?? 0;
     const amount = settledAmount(t);
-    const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
+    const key = daySaleKey(d.accountNo, t.securityKey, t.date);
     // A sell's realised gain exists only where that account's manager issued
     // a capital gain statement. Null renders "—", never 0.
     let realized: number | null = null;
@@ -386,12 +470,13 @@ export async function loadTransactions(): Promise<TxnData | null> {
     if (side === "Sell") {
       const v = realised.get(key);
       if (v === undefined) {
-        realizedNote = "no capital gain lot in the statements matches this sale";
+        realizedNote = "no capital gain lot in the statements matches this sale — not on its name, nor on its account, date and amount";
       } else if (claimed.has(key)) {
         realizedNote = "this sale's realised gain is shown on its first row for the day — the capital gain statement settles the day's sale, not each printed row";
       } else {
         claimed.add(key);
-        realized = v;
+        realized = v.realised;
+        if (v.by === "amount") realizedNote = "matched to its capital gain lots on account, date and the sale amount both statements print, to the paisa — the two statements spell the security differently";
       }
     }
     txns.push({
@@ -411,7 +496,7 @@ export async function loadTransactions(): Promise<TxnData | null> {
   const allAccounts = new Map<string, string>();
   for (const d of docs) allAccounts.set(d.accountNo, accountLabel(d));
   return {
-    asOf: newestAsOf(docs), txns,
+    asOf: newestAsOf(docs), txns, ownAllotments,
     buys: txns.filter((t) => t.side === "Buy").length,
     sells: txns.filter((t) => t.side === "Sell").length,
     periodFrom, periodTo,
@@ -475,12 +560,18 @@ export async function loadRealisedLots(): Promise<LotData | null> {
     }
   }
   const lots: Lot[] = [];
+  // A lot is filed under the holding its sale settles (A-08, DL-1): Green
+  // Lantern's Axis Liquid lots print "… Growth" where the holding and its sells
+  // print "… Growth Option", and filed under their own key they linked to a
+  // company page that does not exist and joined no asset class.
+  const { aliases } = settleSales(docs);
   for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
     const account = accountLabel(d);
     const st = l.shortTerm ?? 0, lt = l.longTerm ?? 0;
+    const key = settledSecurityOf(aliases, d.accountNo, l.securityKey);
     lots.push({
-      securityKey: l.securityKey, security: securityLabel(l.securityKey, l.security), account,
-      assetClass: classOf.get(l.securityKey) ?? null,
+      securityKey: key, security: securityLabel(key, l.security), account,
+      assetClass: classOf.get(key) ?? classOf.get(l.securityKey) ?? null,
       purchaseDate: l.purchaseDate, saleDate: l.saleDate, quantity: l.quantity,
       purchaseAmount: l.purchaseAmount, saleAmount: l.saleAmount, daysHeld: l.daysHeld,
       shortTerm: l.shortTerm, longTerm: l.longTerm, gain: st + lt,
@@ -653,7 +744,7 @@ export async function loadSales(): Promise<SalesData | null> {
   for (const d of newestOf(docs, AUTHORITATIVE.holdings)) {
     for (const h of d.holdings ?? []) held.set(h.securityKey, (held.get(h.securityKey) ?? 0) + (h.quantity ?? 0));
   }
-  const realised = realisedIndex(docs);
+  const { bySale: realised, unsettled } = settleSales(docs, daySales(docs));
 
   const m = new Map<string, SaleRow & { hasRealised: boolean }>();
   let periodFrom: string | null = null, periodTo: string | null = null;
@@ -665,7 +756,8 @@ export async function loadSales(): Promise<SalesData | null> {
     if (d.periodTo && (!periodTo || d.periodTo > periodTo)) periodTo = d.periodTo;
   }
   for (const { doc: d, row: t } of datedRows(docs, AUTHORITATIVE.transactions, "transactions")) {
-    if (t.side !== "sell" || !t.date) continue;
+    // A fund's own redemption is capital out, not a sale of dealing (A-05).
+    if (t.side !== "sell" || !t.date || isOwnAllotment(d, t)) continue;
     let e = m.get(t.securityKey);
     if (!e) {
       e = {
@@ -677,10 +769,10 @@ export async function loadSales(): Promise<SalesData | null> {
     }
     e.soldQty += t.quantity ?? 0;
     e.proceeds += settledAmount(t) ?? 0;
-    const key = `${d.accountNo}|${t.securityKey}@${t.date}`;
+    const key = daySaleKey(d.accountNo, t.securityKey, t.date);
     if (claimed.has(key)) continue;
     const r = realised.get(key);
-    if (r !== undefined) { claimed.add(key); e.realized = (e.realized ?? 0) + r; e.hasRealised = true; }
+    if (r !== undefined) { claimed.add(key); e.realized = (e.realized ?? 0) + r.realised; e.hasRealised = true; }
   }
 
   const rows = [...m.values()];
@@ -690,11 +782,13 @@ export async function loadSales(): Promise<SalesData | null> {
   const exits = rows.filter((e) => e.exited).length;
   // Which statement lots the tape never carried, so the gap between the two
   // totals is a named set of securities rather than a residual.
+  // The lots no sale on the tape settles — by name or by account, date and amount.
+  const unsettledKeys = new Set(unsettled.map((g) => g.key));
   const unattributed = [];
   const lotRows = datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains");
   for (const { doc: d, row: l } of lotRows) {
     if (!l.saleDate) continue;
-    if (claimed.has(`${d.accountNo}|${l.securityKey}@${l.saleDate}`)) continue;
+    if (!unsettledKeys.has(daySaleKey(d.accountNo, l.securityKey, l.saleDate))) continue;
     unattributed.push(l);
   }
   const allLots = lotRows.map(({ row }) => row);
@@ -754,8 +848,11 @@ export async function loadStockLedger(securityKey: string): Promise<StockLedger 
 
   let realized: number | null = null;
   const lotDates: string[] = [];
-  for (const { row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
-    if (l.securityKey !== securityKey) continue;
+  // A lot belongs to this holding where the settlement says so — its own key,
+  // or the key of the sale its account, date and amount settle (A-08, DL-1).
+  const { aliases } = settleSales(docs);
+  for (const { doc: d, row: l } of datedRows(docs, AUTHORITATIVE.capitalGains, "capitalGains")) {
+    if (settledSecurityOf(aliases, d.accountNo, l.securityKey) !== securityKey) continue;
     if (name === securityKey) name = securityLabel(l.securityKey, l.security);
     realized = (realized ?? 0) + (l.shortTerm ?? 0) + (l.longTerm ?? 0);
     if (l.purchaseDate) lotDates.push(l.purchaseDate);
