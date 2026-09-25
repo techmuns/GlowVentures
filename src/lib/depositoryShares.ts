@@ -26,10 +26,25 @@
 // ISIN (`NSE_EQ|<ISIN>`, which the quote feed must echo back). The row takes
 // the book's key for that symbol where exactly one book key carries it, so a
 // company held here and in a mandate is one company on every screen.
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
-import { applyQuotes, symbolFor, type QuoteFeed } from "./quotes";
+//
+// ── AND THE SHARES A HOLDING STATEMENT RECORDS WITH NO USABLE PRICE ─────────
+//
+// The same question arrives from a second direction. Two holding statements
+// record a LISTED share and print no price this book may use: Ankita's Motilal
+// Oswal demat prints Clean Max Enviro Energy at a rate of 0.000, and Ajay's
+// ICICI NSDL statement records ESDS Software Solution at the face value it was
+// allotted at, which is not a mark (§"the value column is a mark on 14 rows and
+// par on 24"). Each carries a quantity and no value, and each is now an NSE
+// listing by its own ISIN — so the live quote values it on the same terms as
+// the shares above: only while the feed prices it, never at a guessed price,
+// and never in `statementPortfolio`. Its `depositoryUnits.kind` is `no-price`,
+// because its account DID send a holding statement and the sentence a page
+// shows must say so.
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { applyQuotes, symbolFor, symbolForKey, type QuoteFeed } from "./quotes";
 import { securityLabel } from "./securityLabel";
-import type { Account, Position, ShareMovement } from "./types";
+import { displayDepositoryName } from "./format";
+import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { UPSTOX_INSTRUMENTS } from "../../shared/upstoxInstruments.mjs";
 
 /**
@@ -47,6 +62,38 @@ const SYMBOL_BY_ISIN: ReadonlyMap<string, string> = (() => {
   }
   return m;
 })();
+
+const isinOf = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+
+/**
+ * THE NSE SYMBOL FOR AN ISIN, BY IDENTIFIER AND NEVER BY NAME. Three tiers, and
+ * where two answer they must agree — a disagreement yields NO symbol, the rule
+ * `build-symbols` applies to its own ISIN tier:
+ *   1. a book position carrying the same ISIN (the symbol the quote feed
+ *      already prices that company by);
+ *   2. the committed bridge for the record's own key (`nseSymbols.json`, which
+ *      `build-symbols` resolves ISIN-first against NSE's own masters);
+ *   3. Upstox's own instrument for the ISIN (`NSE_EQ|<ISIN>`).
+ * Measured on this book, no candidate has two tiers that disagree.
+ */
+function symbolByIdentifier(isin: string, securityKey: string, positions: readonly Position[]): string | null {
+  const answers = new Set<string>();
+  const fromBook = positions.filter((p) => isinOf(p) === isin).map((p) => symbolFor(p)).find(Boolean);
+  if (fromBook) answers.add(fromBook);
+  const fromKey = symbolForKey(securityKey);
+  if (fromKey) answers.add(fromKey);
+  const fromUpstox = SYMBOL_BY_ISIN.get(isin);
+  if (fromUpstox) answers.add(fromUpstox);
+  return answers.size === 1 ? [...answers][0] : null;
+}
+
+/** The book's key for a company: the one carrying this ISIN, else the one carrying this symbol, and only where exactly one does. */
+function bookRowFor(isin: string, symbol: string, positions: readonly Position[]): Position | undefined {
+  const sameIsin = positions.find((p) => isinOf(p) === isin);
+  if (sameIsin) return sameIsin;
+  const keysBySymbol = [...new Set(positions.filter((p) => symbolFor(p) === symbol).map((p) => p.securityKey))];
+  return keysBySymbol.length === 1 ? positions.find((p) => p.securityKey === keysBySymbol[0]) : undefined;
+}
 
 /**
  * The shares a transaction-only account closes above nil, as rows with NO
@@ -68,22 +115,17 @@ export function depositoryShareCandidates(
   if (!VALUE_DEPOSITORY_SHARE_UNITS) return [];
   const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
   const withPositions = new Set(positions.map((p) => p.accountId));
-  const isinOf = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
   const out: Position[] = [];
   for (const w of Object.values(movements)) {
     if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;          // gate 1
     if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue; // gate 2
     const isin = isinOf(w);
     if (!isin || !isin.startsWith("INE")) continue;                                    // gate 3
-    const sameIsin = positions.filter((p) => isinOf(p) === isin);
-    const symbol = sameIsin.map((p) => symbolFor(p)).find(Boolean) ?? SYMBOL_BY_ISIN.get(isin) ?? null;
+    const symbol = symbolByIdentifier(isin, w.securityKey, positions);
     if (!symbol) continue;                                                             // gate 4
     const closing = w.closing;
-    if (sameIsin.some((p) => Math.abs(p.quantity - closing) < 0.0005)) continue;       // gate 5
-    // The book's key for this company: the one carrying this ISIN, else the one
-    // carrying this symbol, and only where exactly one does.
-    const keysBySymbol = [...new Set(positions.filter((p) => symbolFor(p) === symbol).map((p) => p.securityKey))];
-    const book = sameIsin[0] ?? (keysBySymbol.length === 1 ? positions.find((p) => p.securityKey === keysBySymbol[0]) : undefined);
+    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - closing) < 0.0005)) continue; // gate 5
+    const book = bookRowFor(isin, symbol, positions);
     const securityKey = book?.securityKey ?? w.securityKey;
     out.push({
       securityKey,
@@ -120,7 +162,88 @@ export function depositoryShareCandidates(
   return out;
 }
 
-const CANDIDATES = depositoryShareCandidates();
+/**
+ * The listed shares a HOLDING statement records with no usable price — no rate,
+ * or only the face value they were allotted at — as rows with NO price yet.
+ * Five gates:
+ *   1. an EQUITY line of `BOOK_UNVALUED_HOLDINGS` with an `INE…` ISIN and
+ *      units — the statement's own record that the account holds it;
+ *   2. not the depository's copy of units another statement reports
+ *      (`sameUnitsReportedBy`);
+ *   3. its own account carries no position of that ISIN already;
+ *   4. no account of the SAME OWNER carries the same ISIN at the same units —
+ *      one holding caught on two statements mid-transfer reads exactly like
+ *      that, and must not be counted twice;
+ *   5. an NSE symbol resolves for the ISIN, by identifier (`symbolByIdentifier`).
+ *
+ * CLEAN MAX IS THE CASE GATE 4 WAS WRITTEN AROUND. Ajay's ICICI NSDL statement
+ * carries 94,967 shares of it and Ankita's Motilal Oswal statement another
+ * 94,967, at a rate of 0.000. Same ISIN and same count, so it had to be settled
+ * whether these are one holding or two — and the family's own review carries
+ * 1,89,934 across "ICICI Bank / MOPWM", exactly twice 94,967. Two owners, two
+ * statements, two holdings; a transfer between two accounts of ONE owner would
+ * be refused.
+ */
+export function unpricedStatementShareCandidates(
+  unvalued: readonly UnvaluedStatementHolding[] = BOOK_UNVALUED_HOLDINGS,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  positions: readonly Position[] = BOOK_POSITIONS,
+): Position[] {
+  if (!VALUE_DEPOSITORY_SHARE_UNITS) return [];
+  const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+  const out: Position[] = [];
+  for (const u of unvalued) {
+    const isin = isinOf(u);
+    const qty = u.quantity;
+    if (u.assetClass !== "Equity" || !isin || !isin.startsWith("INE")
+      || !(typeof qty === "number" && qty > 0)) continue;                                   // gate 1
+    if (u.sameUnitsReportedBy) continue;                                                     // gate 2
+    if (positions.some((p) => p.accountId === u.accountId && isinOf(p) === isin)) continue;  // gate 3
+    const owner = ownerOf.get(u.accountId) ?? u.ownerId;
+    if (positions.some((p) => isinOf(p) === isin && Math.abs(p.quantity - qty) < 0.0005
+      && (ownerOf.get(p.accountId) ?? null) === owner)) continue;                            // gate 4
+    const symbol = symbolByIdentifier(isin, u.securityKey, positions);
+    if (!symbol) continue;                                                                   // gate 5
+    const book = bookRowFor(isin, symbol, positions);
+    const securityKey = book?.securityKey ?? u.securityKey;
+    out.push({
+      securityKey,
+      // The book's own name for the company where it holds it; otherwise the
+      // statement's, with the depository's `- EQ NEW FV …` furniture off.
+      security: securityLabel(securityKey, book?.security ?? displayDepositoryName(u.security)),
+      isin: u.isin,
+      symbol,
+      accountId: u.accountId,
+      memberId: null,
+      sector: book?.sector ?? "Unclassified",
+      providerSector: null,
+      assetClass: "Equity",
+      marketSide: "listed",
+      quantity: qty,
+      marketValue: 0,
+      costBasis: null,
+      costUnavailable: true,
+      unrealizedPnL: null,
+      returnPct: null,
+      avgCost: null,
+      currentPrice: null,
+      stCostBasis: null,
+      ltCostBasis: null,
+      daysToLT: null,
+      heldSince: null,
+      dividendReceived: null,
+      accruedIncome: null,
+      positionIrrPct: null,
+      depositoryUnits: { asOf: u.asOf, source: null, kind: "no-price" },
+    });
+  }
+  return out;
+}
+
+const CANDIDATES = [...depositoryShareCandidates(), ...unpricedStatementShareCandidates()];
+
+/** Every share either route could value, priced or not — for a page naming what is not valued. */
+export const shareCandidates = (): readonly Position[] => CANDIDATES;
 
 /** The symbols the quote feed must be asked about for these shares. */
 export const depositoryShareSymbols = (): string[] =>

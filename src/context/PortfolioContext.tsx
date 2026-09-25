@@ -439,8 +439,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
      * of this one, so the live copy carries `partialValuation` instead — what is
      * valued, from what, and how many holdings on the same statement are not.
      */
+    // ONLY THE CLOSING-BALANCE KIND makes an account "partly valued": a `no-price`
+    // share (Clean Max, ESDS) sits in an account that DID send a holding
+    // statement, where "this account sent no holding statement" would be false —
+    // the A-17 rule above, for shares.
     const accounts = withPartialValuation(basePortfolio.accounts,
-      partialValuationNotes([...DEPOSITORY_FUNDS, ...depositoryShares]));
+      partialValuationNotes([...DEPOSITORY_FUNDS,
+        ...depositoryShares.filter((p) => (p.depositoryUnits?.kind ?? "closing-balance") === "closing-balance")]));
     // COUNT ONCE, AND SPLIT BY CLASS — the two ways this NAV has been wrong.
     //
     // `publicPrivateSplit` dedupes first (each dedupeGroup once — the 360 ONE AIF

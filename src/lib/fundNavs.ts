@@ -423,6 +423,9 @@ export function describeDepositoryUnits(
   d: NonNullable<Position["depositoryUnits"]>,
   accounts: readonly Account[] | ReadonlyMap<string, Account> = BOOK_ACCOUNTS,
 ): string {
+  if (d.kind === "no-price") {
+    return `shares the depository's holding statement of ${d.asOf ?? "its date"} records with no usable price — no rate, or only the face value they were allotted at`;
+  }
   if (d.kind === "no-rate") {
     const id = d.witnessAccountId;
     const w = !id ? undefined
@@ -441,11 +444,15 @@ export function describeDepositoryUnits(
  * statement.
  */
 export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUnits">[]): string {
-  const kinds = new Set(rows.flatMap((r) => r.depositoryUnits ? [r.depositoryUnits.kind === "no-rate" ? "no-rate" : "closing-balance"] : []));
-  const closing = "a depository's own closing balance, on an account that sent a transaction statement and no holding statement";
-  const noRate = "units a depository's holding statement records and prints no rate for";
-  if (kinds.has("no-rate") && kinds.has("closing-balance")) return `either ${closing}, or ${noRate}`;
-  return kinds.has("no-rate") ? noRate : closing;
+  const kinds = new Set(rows.flatMap((r) => r.depositoryUnits ? [r.depositoryUnits.kind ?? "closing-balance"] : []));
+  const phrase = {
+    "closing-balance": "a depository's own closing balance, on an account that sent a transaction statement and no holding statement",
+    "no-rate": "units a depository's holding statement records and prints no rate for",
+    "no-price": "shares a depository's holding statement records with no usable price",
+  } as const;
+  const present = (["closing-balance", "no-rate", "no-price"] as const).filter((k) => kinds.has(k)).map((k) => phrase[k]);
+  if (present.length <= 1) return present[0] ?? phrase["closing-balance"];
+  return `either ${present.slice(0, -1).join(", ")}, or ${present[present.length - 1]}`;
 }
 
 /**
@@ -532,6 +539,11 @@ export function partialValuationNotes(
 ): Map<string, string> {
   const by = new Map<string, Position[]>();
   for (const p of valued) {
+    // Every sentence below is about an account that sent a transaction statement
+    // and NO holding statement. A row valued on an account that did send one —
+    // a fund it prints no rate for, a share it prints no usable price for — is
+    // not that account, and the note would say something false about it.
+    if ((p.depositoryUnits?.kind ?? "closing-balance") !== "closing-balance") continue;
     const list = by.get(p.accountId) ?? [];
     list.push(p);
     by.set(p.accountId, list);

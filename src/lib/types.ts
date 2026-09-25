@@ -362,14 +362,16 @@ export type Position = {
   navPriced?: boolean;
   navDate?: string;           // AMFI's own publication date for that NAV
   /**
-   * WHERE THE QUANTITY CAME FROM, when it is not a holding statement.
+   * WHERE THE QUANTITY CAME FROM, when no statement puts a price on it.
    *
-   * Set only on a position the LIVE portfolio values from a depository's own
-   * closing balance — an account that sent a TRANSACTION statement and no
-   * holding one (`Account.transactionsOnly`), whose cash-equivalent funds are
-   * valued at AMFI's published NAV. `asOf` is that statement's closing date and
-   * `source` its docKey. Such a position has no statement mark at all, so it is
-   * never in `statementPortfolio`, and a page says so wherever it shows one.
+   * Set only on a position the LIVE portfolio values without a statement mark:
+   * a depository's own closing balance on an account that sent a TRANSACTION
+   * statement and no holding one (`Account.transactionsOnly`) — its funds at
+   * AMFI's published NAV, its listed shares at the live quote — or units a
+   * holding statement records with no usable price (see `kind`). `asOf` is that
+   * statement's date and `source` its docKey where one is known. Such a
+   * position has no statement mark at all, so it is never in
+   * `statementPortfolio`, and a page says so wherever it shows one.
    *
    * `kind` says WHICH absence of a mark it is, because the two need different
    * sentences and a page that used one for both would be false about the other:
@@ -378,14 +380,18 @@ export type Position = {
    *   - `no-rate` (the figure audit, A-17): the account's holding statement
    *     records the units and prints no rate for them, and `witnessAccountId`
    *     is the account whose statement — same depository, same day — prices the
-   *     same scheme, which is what proves the units are on the NAV's basis.
+   *     same scheme, which is what proves the units are on the NAV's basis;
+   *   - `no-price` (Stage 10cx): a LISTED SHARE the account's holding statement
+   *     records with no usable price — no rate, or only the face value it was
+   *     allotted at — valued at the live quote, and only while the feed prices
+   *     it (`src/lib/depositoryShares.ts`).
    * `describeDepositoryUnits` in `fundNavs.ts` is the one place the sentence is
    * chosen.
    */
   depositoryUnits?: {
     asOf: string | null;
     source: string | null;
-    kind?: "closing-balance" | "no-rate";
+    kind?: "closing-balance" | "no-rate" | "no-price";
     witnessAccountId?: string | null;
   };
 };

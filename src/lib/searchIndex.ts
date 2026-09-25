@@ -482,10 +482,11 @@ export function buildSearchIndex(input: {
       id: `account:${a.accountId}`, kind: "account", chip: "Account",
       label: `${a.provider} · ${a.accountNo}`,
       // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST. On the live
-      // basis a transaction-only demat values the cash-equivalent funds its
-      // depository reports and nothing else on that statement (Stage 10ce), so
-      // its total must not read as the account's — the words lead, because
-      // this line is truncated to one row.
+      // basis a transaction-only demat values what a published NAV or a live
+      // quote can price — its funds, and its listed shares while the feed prices
+      // them — and nothing else on that statement (Stages 10ce, 10cx), so its
+      // total must not read as the account's — the words lead, because this
+      // line is truncated to one row.
       detail: `${a.owner} · ${allClosed ? "every holding redeemed — the money is on Transactions"
         : rows.length ? `${a.partialValuation ? "partly valued · " : ""}${rows.length} holding${rows.length === 1 ? "" : "s"} · ${money(mv)}` : "holds no valued position"}`
         + (a.asOf ? ` · as of ${a.asOf}` : ""),

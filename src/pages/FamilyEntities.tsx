@@ -19,7 +19,7 @@ import {
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
 import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { depositoryBalancesOf } from "@/lib/fundNavs";
-import { depositoryShareCandidates } from "@/lib/depositoryShares";
+import { shareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -87,7 +87,7 @@ const ALL_ENTITIES = "All";
  * hook sits after this page's early return.
  */
 const SHARE_CANDIDATES = new Map(
-  depositoryShareCandidates().map((p) => [`${p.accountId}|${(p.isin ?? "").toUpperCase()}`, p] as const));
+  shareCandidates().map((p) => [`${p.accountId}|${(p.isin ?? "").toUpperCase()}`, p] as const));
 
 /**
  * ── WHAT THE ENTITY WEIGHTS DIVIDE BY: ONE BASIS, AND IT IS STATED ──────────
@@ -506,7 +506,19 @@ export function FamilyEntities() {
     // is not LISTED here — it IS in the figure above. It is counted in its
     // account's hover, and an account whose every recorded line is valued that
     // way (Aarti's ABSL units) has nothing to list and draws no line at all.
-    .map((g) => ({ ...g, live: g.lines.filter((l) => l.valuedLive).length, lines: g.lines.filter((l) => !l.valuedLive) }))
+    .map((g) => ({
+      ...g,
+      live: g.lines.filter((l) => l.valuedLive).length,
+      // Two prices, two sentences: a fund at AMFI's NAV, a listed share at the
+      // live quote (Stage 10cx, `no-price`).
+      liveQuote: g.lines.filter((l) => l.valuedLive?.depositoryUnits?.kind === "no-price").length,
+      lines: g.lines.filter((l) => !l.valuedLive).map((l) => ({
+        ...l,
+        // A LISTED share the live quote would value, and the feed has not
+        // priced: its reason says the statement's half and this half both.
+        quoteOnly: SHARE_CANDIDATES.has(`${g.account.accountId}|${(l.row.isin ?? "").toUpperCase()}`),
+      })),
+    }))
     .filter((g) => g.lines.length > 0);
   /**
    * THE SECTOR MIX IS COMPANY SHARES, BECAUSE NOTHING ELSE HAS A SECTOR.
@@ -1334,13 +1346,16 @@ export function FamilyEntities() {
                     with a quantity and no value, each line's reason its hover. */}
                 {unvaluedLines.map((g) => {
                   const live = g.live;
+                  const liveQuote = g.liveQuote;
+                  const liveNav = live - liveQuote;
                   const notValued = g.lines.length;
                   return (
                     <li key={`lines-${g.account.accountId}`} data-unvalued-lines-account={g.account.accountId}
-                      data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-elsewhere={g.reportedElsewhere}>
+                      data-unvalued-lines={notValued} data-unvalued-lines-live={live} data-unvalued-lines-live-quote={liveQuote}
+                      data-unvalued-lines-elsewhere={g.reportedElsewhere}>
                       <details>
                         <summary className="flex cursor-pointer items-baseline justify-between gap-3"
-                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${live ? ` ${live} more ${live === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${live === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
+                          title={`The ${g.account.provider} statement for ${g.account.accountNo} records ${notValued} holding${notValued === 1 ? "" : "s"} with a quantity and no value, which nothing in this book values.${liveNav ? ` ${liveNav} more ${liveNav === 1 ? "is" : "are"} recorded the same way and valued here at AMFI's published NAV — a sibling statement from the same depository proves the units are on its basis — so ${liveNav === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${liveQuote ? ` ${liveQuote} more ${liveQuote === 1 ? "is a listed share" : "are listed shares"} recorded the same way and valued here at the live quote, only while the quote feed prices ${liveQuote === 1 ? "it" : "them"} — so ${liveQuote === 1 ? "it is" : "they are"} in the figure above and not listed.` : ""}${g.reportedElsewhere ? ` ${g.reportedElsewhere} more ${g.reportedElsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, and ${g.reportedElsewhere === 1 ? "is" : "are"} in the table above through that fund.` : ""}`}>
                           <span className="text-slate-300">
                             {g.account.provider}
                             <span className="text-slate-500"> · {g.account.accountNo}</span>
@@ -1352,7 +1367,11 @@ export function FamilyEntities() {
                         <ul className="mt-1 space-y-0.5 pl-3 text-[12px]">
                           {g.lines.map((l) => (
                             <li key={`${l.row.securityKey}-${l.row.isin ?? ""}`} data-unvalued-line={l.row.securityKey}
-                              className="flex items-baseline justify-between gap-3" title={l.row.reason ?? undefined}>
+                              data-unvalued-line-quote-only={l.quoteOnly ? "" : undefined}
+                              className="flex items-baseline justify-between gap-3"
+                              title={[l.row.reason ? `${l.row.reason.charAt(0).toUpperCase()}${l.row.reason.slice(1)}.` : null,
+                                l.quoteOnly ? "A listed share: valued at the live quote only while the quote feed prices it, and the feed has not priced it." : null]
+                                .filter(Boolean).join(" ") || undefined}>
                               <span className="text-slate-400">{l.row.security}</span>
                               <span className="mono whitespace-nowrap text-slate-500">
                                 {l.row.quantity == null ? DASH : `${fmtNum(l.row.quantity, Number.isInteger(l.row.quantity) ? 0 : 3)} units`}

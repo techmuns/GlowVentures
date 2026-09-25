@@ -219,8 +219,9 @@ function bookArray(src, name) {
   // NAV overlaid, and the depository's fund units that the live book values on
   // an account that sent no holding statement. NOT its listed shares (Stage
   // 10cx): those are rows only while the quote feed prices them, and a walk
-  // with no feed draws none — `withDepositoryShares` adds them where a walk
-  // serves a feed.
+  // with no feed draws none. `DEPOSITORY_SHARE_BOOK` re-expresses both routes
+  // to them — a transaction-only demat's closing balances, and a holding
+  // statement's shares with no usable price — for the walks that serve a feed.
   return name === "BOOK_POSITIONS"
     ? withPublishedNavs([...out, ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
     : out;
@@ -6884,18 +6885,28 @@ const MARK_BY_SYMBOL = (() => {
 })();
 
 /**
- * ── THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cx) ────────
+ * ── THE LISTED SHARES A DEPOSITORY REPORTS WITH NO PRICE (Stage 10cx) ───────
  *
- * `depositoryShareCandidates` (src/lib/depositoryShares.ts) RE-EXPRESSED, never
- * imported — its five gates written again off the committed data: an account
- * that sent a transaction statement and no holding statement and carries no
- * position; a block that walked to its printed closing, with shares left; an
- * equity ISIN; an NSE symbol reached by that ISIN — a book position of the same
- * ISIN, else Upstox's own `NSE_EQ|<ISIN>` instrument, never a name; and no book
- * position of the same ISIN at the same units. The page makes a ROW of one only
- * while the quote feed prices it, so this is the set the live walks must add
- * where their fixture prices the symbol — and the plain walks, which serve no
- * feed, add none.
+ * `depositoryShareCandidates` and `unpricedStatementShareCandidates`
+ * (src/lib/depositoryShares.ts) RE-EXPRESSED, never imported — their gates
+ * written again off the committed data.
+ *
+ * The transaction-only half: an account that sent a transaction statement and
+ * no holding statement and carries no position; a block that walked to its
+ * printed closing, with shares left; an equity ISIN; and no book position of
+ * the same ISIN at the same units.
+ *
+ * The holding-statement half: an equity line of `BOOK_UNVALUED_HOLDINGS` with
+ * units, not another statement's copy (`sameUnitsReportedBy`), its own account
+ * holding no position of that ISIN, and no account of the SAME OWNER carrying
+ * the ISIN at the same units.
+ *
+ * Both need an NSE symbol reached BY IDENTIFIER — a book position of the same
+ * ISIN, the committed bridge for the record's own key, or Upstox's own
+ * `NSE_EQ|<ISIN>` instrument — and where two answer they must agree. The page
+ * makes a ROW of one only while the quote feed prices it, so this is the set
+ * the live walks must add where their fixture prices the symbol — and the
+ * plain walks, which serve no feed, add none.
  */
 const DEPOSITORY_SHARE_BOOK = (() => {
   try {
@@ -6903,8 +6914,9 @@ const DEPOSITORY_SHARE_BOOK = (() => {
     const positions = statementBookPositions(src);
     const accounts = bookArray(src, "BOOK_ACCOUNTS");
     const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const unvalued = bookArray(src, "BOOK_UNVALUED_HOLDINGS");
     const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
-    if (!Array.isArray(positions) || !Array.isArray(accounts) || !movements) return null;
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !movements || !Array.isArray(unvalued)) return null;
     const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
     const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
     const symByIsin = new Map();
@@ -6913,6 +6925,20 @@ const DEPOSITORY_SHARE_BOOK = (() => {
       const i = String(v.key).split("|")[1]?.trim().toUpperCase();
       if (i) symByIsin.set(i, sym);
     }
+    const symbolOf = (isin, key) => {
+      const answers = new Set([
+        positions.filter((p) => I(p) === isin).map(symOf).find(Boolean),
+        symbols[key],
+        symByIsin.get(isin),
+      ].filter(Boolean));
+      return answers.size === 1 ? [...answers][0] : null;
+    };
+    const keyOf = (isin, symbol, fallback) => {
+      const same = positions.find((p) => I(p) === isin);
+      if (same) return same.securityKey;
+      const bySym = [...new Set(positions.filter((p) => symOf(p) === symbol).map((p) => p.securityKey))];
+      return bySym.length === 1 ? bySym[0] : fallback;
+    };
     const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
     const withPositions = new Set(positions.map((p) => p.accountId));
     const out = [];
@@ -6921,13 +6947,26 @@ const DEPOSITORY_SHARE_BOOK = (() => {
       if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue;
       const isin = I(w);
       if (!isin || !isin.startsWith("INE")) continue;
-      const same = positions.filter((p) => I(p) === isin);
-      const symbol = same.map(symOf).find(Boolean) ?? symByIsin.get(isin) ?? null;
+      const symbol = symbolOf(isin, w.securityKey);
       if (!symbol) continue;
-      if (same.some((p) => Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
-      const bySym = [...new Set(positions.filter((p) => symOf(p) === symbol).map((p) => p.securityKey))];
-      const securityKey = same[0]?.securityKey ?? (bySym.length === 1 ? bySym[0] : w.securityKey);
-      out.push({ securityKey, isin, symbol, accountId: w.accountId, quantity: w.closing });
+      if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
+      out.push({ securityKey: keyOf(isin, symbol, w.securityKey), isin, symbol, accountId: w.accountId,
+        quantity: w.closing, kind: "closing-balance" });
+    }
+    const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+    for (const u of unvalued) {
+      const isin = I(u);
+      const qty = Number(u.quantity);
+      if (u.assetClass !== "Equity" || !isin || !isin.startsWith("INE") || !(qty > 0)) continue;
+      if (u.sameUnitsReportedBy) continue;
+      if (positions.some((p) => p.accountId === u.accountId && I(p) === isin)) continue;
+      const owner = ownerOf.get(u.accountId) ?? u.ownerId;
+      if (positions.some((p) => I(p) === isin && Math.abs(Number(p.quantity) - qty) < 0.0005
+        && (ownerOf.get(p.accountId) ?? null) === owner)) continue;
+      const symbol = symbolOf(isin, u.securityKey);
+      if (!symbol) continue;
+      out.push({ securityKey: keyOf(isin, symbol, u.securityKey), isin, symbol, accountId: u.accountId,
+        quantity: qty, kind: "no-price" });
     }
     return out;
   } catch { return null; }
@@ -7225,7 +7264,7 @@ const CASH_INSTRUCTION_BOOK = (() => {
     // (units a holding statement records with no rate) are depository-valued
     // too, but their accounts DID send a holding statement and are not partly
     // valued, so they are counted apart (`unpriced`) and never folded in here.
-    const depository = positions.filter((p) => p.depositoryUnits && p.depositoryUnits.kind !== "no-rate");
+    const depository = positions.filter((p) => p.depositoryUnits && (p.depositoryUnits.kind ?? "closing-balance") === "closing-balance");
     const unpriced = positions.filter((p) => p.depositoryUnits?.kind === "no-rate");
     const partialAccounts = [...new Set(depository.map((p) => p.accountId))];
     const largestArb = outside.filter(isArb).sort((a, b) => b.marketValue - a.marketValue)[0]?.securityKey ?? null;

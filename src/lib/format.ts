@@ -163,6 +163,12 @@ const NAME_ACRONYMS = new Set([
    * name, not an expansion of one; title-cased it read "Nlc India".
    */
   "NLC",
+  /**
+   * ESDS — `ESDS Software Solution Limited`, which Ajay's ICICI NSDL statement
+   * prints in capitals (Stage 10cx). The company's own name; title-cased it
+   * read "Esds Software".
+   */
+  "ESDS",
 ]);
 /**
  * A BRAND THAT IS NOT AN ACRONYM AND STILL KEEPS ITS CAPITALS. "ONE" is a word
@@ -290,9 +296,15 @@ export function displayDepositoryName(name: string): string {
   const at = name.indexOf("#");
   const head = (at < 0 ? name : name.slice(0, at)).trim();
   const tail = at < 0 ? "" : name.slice(at + 1).trim();
-  // Equity furniture, whether after the `#` or glued on with a dash.
+  // Equity furniture, whether after the `#` or glued on with a dash. The dashed
+  // form reaches past what `stripDepositoryTail` cuts: NSDL prints ESDS as
+  // `… LIMITED - EQ NEW FV RS .1/`, and the space inside `RS .1` is outside
+  // that pattern — which stays as it is, because it also takes the KEY.
   const EQUITY = /^[\s#-]*(NEW\s+)?(EQUITY|EQTY|EQ)\b.*$/i;
-  const stripEquity = (s: string) => s.replace(/[\s-]*(NEW\s+)?(EQUITY|EQTY|EQ)\s+SHARES?\b.*$/i, "").trim();
+  const stripEquity = (s: string) => s
+    .replace(/[\s-]*(NEW\s+)?(EQUITY|EQTY|EQ)\s+SHARES?\b.*$/i, "")
+    .replace(/\s*-\s*(EQUITY|EQTY|EQ)\b[^#]*$/i, "")
+    .trim();
   // A fund house (an AMC) or an AIF's own trust or fund — `BUOYANT CAPITAL AIF`,
   // `INDIA SME INVESTMENTS AIF TRUST II` — whose scheme after the `#` IS the name.
   const fundHouse = /\b(AMC|AM|ASSET\s+(MGMNT|MANAGEMENT)(\s+CO(MPANY)?)?)\s+(LTD|LIMITED)\.?$|\b(TRUST|FUND|AIF)(\s+[IVX]+)?$/i;

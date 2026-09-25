@@ -17,7 +17,12 @@ import {
   depositoryCashHoldings, depositoryFundHoldings, depositoryBalancesOf, partialValuationNotes,
   VALUE_DEPOSITORY_CASH_UNITS, VALUE_DEPOSITORY_FUND_UNITS, isArbitrageFund,
 } from "../fundNavs";
-import { depositoryShareCandidates, depositoryShareHoldings, VALUE_DEPOSITORY_SHARE_UNITS } from "../depositoryShares";
+import {
+  depositoryShareCandidates, depositoryShareHoldings, unpricedStatementShareCandidates, shareCandidates,
+  VALUE_DEPOSITORY_SHARE_UNITS,
+} from "../depositoryShares";
+import { describeDepositoryUnits, depositoryUnitsGist } from "../fundNavs";
+import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import type { QuoteFeed } from "../quotes";
 import { isCashEquivalent } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
@@ -418,6 +423,69 @@ ok("...and counts one fewer holding as not valued",
     const m = (t: string) => Number(/(\d+) other holding/.exec(t)?.[1] ?? 0);
     return m(notes.get(one?.accountId ?? "") ?? "") - m(withShare) === 1;
   })());
+
+/**
+ * ── …AND THE LISTED SHARES A HOLDING STATEMENT PRINTS NO USABLE PRICE FOR ───
+ *
+ * Two accounts DID send a holding statement and still put no price on a listed
+ * share: Ankita's Motilal demat prints Clean Max at a rate of 0.000, and Ajay's
+ * ICICI NSDL statement records ESDS Software at the Re 1 face value it was
+ * allotted at. Both are NSE listings by their own ISIN, so the one price either
+ * can have is the market's — the live quote, and no row where the feed did not
+ * price it. The review is the witness that Clean Max is two holdings and not one
+ * counted twice: it carries 1,89,934 across ICICI Bank and MOPWM, which is the
+ * 94,967 on Ajay's ICICI row plus the 94,967 on Ankita's Motilal one.
+ */
+console.log("── a holding statement's listed shares with no usable price (Stage 10cx) ──");
+const NP = unpricedStatementShareCandidates();
+const npOf = (isin: string) => NP.find((p) => p.isin?.toUpperCase() === isin);
+const cleanMax = npOf("INE647U01026");
+const esds = npOf("INE0DRI01029");
+ok("Clean Max on Ankita's Motilal demat is a candidate at the 94,967 shares its statement prints, under the book's own key",
+  !!cleanMax && cleanMax.accountId === "motilal-oswal-financial-services-demat-1201090012838316"
+    && cleanMax.quantity === 94967 && cleanMax.symbol === "CLEANMAX"
+    && cleanMax.securityKey === "clean-max-enviro-energy-solutions",
+  cleanMax ? `${cleanMax.accountId} ${cleanMax.quantity} ${cleanMax.symbol} ${cleanMax.securityKey}` : "missing");
+ok("ESDS on Ajay's ICICI NSDL account is a candidate at its 330,898 shares, named without the depository's furniture",
+  !!esds && esds.accountId === "icici-bank-nsdl-demat-49794950" && esds.quantity === 330898 && esds.symbol === "ESDS"
+    && esds.security === "ESDS Software Solution Limited",
+  esds ? `${esds.accountId} ${esds.quantity} ${esds.symbol} "${esds.security}"` : "missing");
+ok("every such candidate is an equity ISIN a holding statement records with no price, and says so in its kind",
+  NP.length > 0 && NP.every((p) => p.depositoryUnits?.kind === "no-price" && !txOnly.has(p.accountId)
+    && BOOK_UNVALUED_HOLDINGS.some((u) => u.accountId === p.accountId && u.isin?.toUpperCase() === p.isin?.toUpperCase()
+      && u.quantity === p.quantity && u.assetClass === "Equity")),
+  NP.map((p) => `${p.symbol} ${p.accountId}`).join("; "));
+ok("...and none carries a price, a cost or a NAV before a feed answers",
+  NP.every((p) => p.currentPrice === null && p.costBasis === null && p.costUnavailable === true && !p.navPriced && p.marketValue === 0));
+ok("the page's list of what is not valued reads both routes' candidates",
+  shareCandidates().length === CAND.length + NP.length);
+// Gate 4, on a constructed case: the same units of the same ISIN under the SAME
+// owner in another account is one holding moved, not a second one.
+const ajayMain = "motilal-oswal-financial-services-demat-1201090012539150";
+const cmRow = BOOK_UNVALUED_HOLDINGS.find((u) => u.isin?.toUpperCase() === "INE647U01026");
+const movedSameOwner = cmRow ? unpricedStatementShareCandidates([{ ...cmRow, accountId: ajayMain, ownerId: "ajay-jaisinghani" }]) : [];
+ok("the same units under the SAME owner in another account are refused — one holding, not two",
+  !!cmRow && movedSameOwner.length === 0, movedSameOwner.map((p) => p.accountId).join("; "));
+const kept = cmRow ? unpricedStatementShareCandidates([cmRow]) : [];
+ok("...while the real row, under a different owner, is kept", kept.length === 1);
+const npFeed = (sym: string, price: number): QuoteFeed => ({
+  quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
+    marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
+  asOf: "2026-09-25T10:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
+});
+const esdsPriced = depositoryShareHoldings(npFeed("ESDS", 400));
+ok("a feed pricing ESDS makes it a row at its statement's units × the quote, live, with no cost",
+  esdsPriced.length === 1 && esdsPriced[0].isin === "INE0DRI01029" && esdsPriced[0].marketValue === 330898 * 400
+    && esdsPriced[0].live === true && esdsPriced[0].costBasis === null,
+  esdsPriced.map((p) => `${p.symbol} ${p.marketValue}`).join("; "));
+ok("...and the account-level note for a transaction-only account is never written for it",
+  !partialValuationNotes(esdsPriced).has("icici-bank-nsdl-demat-49794950"));
+const esdsWords = esds ? describeDepositoryUnits(esds.depositoryUnits!) : "";
+ok("its hover says the statement recorded it with no usable price, and never that no holding statement was sent",
+  /holding statement of 2026-03-31 records with no usable price/.test(esdsWords) && !/no holding statement/.test(esdsWords), esdsWords);
+const gist = depositoryUnitsGist([...(esdsPriced as Position[]), ...FUNDS]);
+ok("a list mixing a closing balance and a no-price share names both sources",
+  /closing balance/.test(gist) && /no usable price/.test(gist) && /^either /.test(gist), gist);
 
 /**
  * ── THE UNIT-BASIS WITNESS, FROM THE FAMILY'S OWN DOCUMENT ──────────────────

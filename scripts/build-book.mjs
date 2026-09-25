@@ -2894,9 +2894,10 @@ function build(docs) {
           ? `no HOLDING statement for this account is in the drop — only its ${[...new Set(allIssues.map((d) => d.reportType))].sort().join(", ")} statement(s). The tape's closing balances are in the archive as quantities at ${allIssues.map((d) => d.asOf).filter(Boolean).sort().pop() ?? "its own date"} and carry no rate, so nothing here can be valued. What would fill it is that account's own holding statement from its custodian`
           : `no statement for this account carries a valuation; its documents report income and distributions only. Where these units are marked, another account holds them.`;
         /**
-         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values a
-         * cash-equivalent fund on such an account from the depository's own
-         * closing balance and AMFI's published NAV, and it must find those
+         * AND SAID IN A FIELD, NOT ONLY IN THAT SENTENCE. The dashboard values
+         * the funds on such an account from the depository's own closing
+         * balance and AMFI's published NAV, and its listed shares at the live
+         * quote (Stage 10cx), and it must find those
          * accounts structurally — a rule that matched the prose above would stop
          * matching the first time somebody reworded it. It is set on exactly the
          * case the sentence describes: no holding statement in the drop, and a
