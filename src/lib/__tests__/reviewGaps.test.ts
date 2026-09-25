@@ -32,7 +32,7 @@ import XLSX from "xlsx";
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
 import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, valuedFromDepository } from "@/lib/reviewGaps";
-import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
+import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { securityKeyOf } from "@/lib/securityKey";
 
 let fails = 0;
@@ -223,7 +223,10 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
 // purchase of that exact line is a credit the depository makes to that ISIN,
 // unit for unit, within a settlement's days of the date the review prints.
 {
-  const live = [...depositoryCashHoldings(), ...unpricedStatementUnits()];
+  // Every fund the live book values from a depository's balance — the cash
+  // equivalents (Stage 10ce) and the other mutual funds on the same statement
+  // (Stage 10cx) — plus the units a holding statement records with no rate.
+  const live = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
   ok("the depository-valued table has a subject", REVIEW_LINE_ISINS.size > 0, `${REVIEW_LINE_ISINS.size}`);
 
   const flat = (k: string) => k.replace(/-/g, "");
@@ -297,10 +300,17 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
         unwitnessed.length ? `unwitnessed: ${unwitnessed.map((p) => `${p.accountId} ${p.quantity}`).join("; ")}`
           : rows.map((p) => `${p.quantity} u`).join(" + "));
     } else {
+      // A depository's closing balance: witnessed by the review's own purchase
+      // of that line credited unit for unit — or, where the review carries no
+      // purchase the depository's window reaches back to, by the review closing
+      // the holder at EXACTLY the balance the depository closes the demat at
+      // (Stage 10cx: ICICI India Opportunities and ICICI Equity Savings).
       const tied = buys.filter((b) => b.product === name).find((b) =>
         credits.some((c) => c.isin === isin && Math.abs(c.quantity - b.units) < 0.0005 && days(c.date, b.date) <= 5));
-      ok(`${name}: the review's own purchase is a depository credit to ${isin}, unit for unit`, !!tied,
-        tied ? `${tied.units} units on ${tied.date}` : "no purchase of this line ties to a credit");
+      const closed = closings.find((c) => c.product === name && rows.some((p) => Math.abs(c.units - p.quantity) < 0.0005));
+      ok(`${name}: the review's own purchase is a depository credit to ${isin}, or it closes the holder at the depository's balance, unit for unit`,
+        !!tied || !!closed,
+        tied ? `${tied.units} units bought on ${tied.date}` : closed ? `closed at ${closed.units} units on ${closed.date}` : "no purchase or closing of this line ties to the depository");
     }
   }
 }

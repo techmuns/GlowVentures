@@ -25,10 +25,10 @@
 import {
   BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
 } from "@/data/glowData";
-import { depositoryCashHoldings, unpricedStatementUnits } from "./fundNavs";
+import { depositoryCashHoldings, depositoryFundHoldings, unpricedStatementUnits } from "./fundNavs";
 import {
   dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
-  topByValue, sum,
+  topByValue, sum, isCashEquivalent,
 } from "@/lib/analytics";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { accountEmptiness } from "@/lib/searchIndex";
@@ -200,6 +200,29 @@ export function buildDashboardContext(): ContextBlock[] {
         + "its Cash line and in its current value of holdings. Their units date from the statement's close.",
       totalCr: cr(sum(depositoryCashHoldings().map((p) => p.marketValue))),
       rows: depositoryCashHoldings().map((p) => ({
+        fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
+        unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
+      })),
+    },
+    /**
+     * THE OTHER FUNDS ON THE SAME DEPOSITORY STATEMENT (Stage 10cx).
+     *
+     * NOT CASH — equity and hybrid schemes on the demat that sent a transaction
+     * statement and no holding statement, valued the same way as the block
+     * above. Told only the statement-basis blocks, a model asked "how much
+     * Bandhan Large & Mid Cap do I hold" would miss the units on this demat and
+     * contradict the screen. The same statement's listed shares are valued at
+     * the live quote only while the feed prices them, so they are not listed
+     * here: this context is committed data, and a quote is not.
+     */
+    {
+      kind: "funds_valued_from_depository_units",
+      note: "These mutual funds are held on an account that sent a transaction statement and no holding "
+        + "statement, so no statement values them and they are NOT in the statement-basis totals above. The "
+        + "dashboard values them at the depository's closing units × AMFI's published NAV. They are not cash. "
+        + "No cost is reported for them. Their units date from the statement's close.",
+      totalCr: cr(sum(depositoryFundHoldings().filter((p) => !isCashEquivalent(p)).map((p) => p.marketValue))),
+      rows: depositoryFundHoldings().filter((p) => !isCashEquivalent(p)).map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
         unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
       })),

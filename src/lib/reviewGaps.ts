@@ -17,7 +17,7 @@
 // sentences, and its generator throws rather than emit a number.
 import { BOOK_POSITIONS } from "@/data/glowData";
 import { securityKeyOf } from "@/lib/securityKey";
-import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
+import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { REVIEW_GAPS, REVIEW_AS_OF, type ReviewGap } from "@/data/reviewGaps";
 
 export type { ReviewGap };
@@ -58,18 +58,20 @@ const BOOK_KEYS = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security
  *
  * Stage 10ce values the cash-equivalent funds a depository reports on an
  * account that sent a transaction statement and no holding statement — at
- * units × AMFI's published NAV, on the LIVE basis only — so `BOOK_POSITIONS`
- * above never carries them, and the name tier cannot see them either: the
- * depository prints the AMC's name in front of the scheme's. Two of them are
- * lines the family's review prints, and left claimable, a search that empties
- * a narrowed page would say "no statement reports it … no value or quantity"
- * beside the Cash row that values it.
+ * units × AMFI's published NAV, on the LIVE basis only — and Stage 10cx the
+ * other mutual funds on the same statement. So `BOOK_POSITIONS` above never
+ * carries them, and the name tier cannot see them either: the depository
+ * prints the AMC's name in front of the scheme's. Seven of them are lines the
+ * family's review prints, and left claimable, a search that empties a narrowed
+ * page would say "no statement reports it … no value or quantity" beside the
+ * row that values it.
  *
  * JOINED BY ISIN THROUGH A HAND-CHECKED TABLE, never by a name rule, and each
  * entry says what ties the review's line to the depository's balance. Keyed on
  * what the live book ACTUALLY carries rather than on the table alone, so
- * switching that valuation off (`VALUE_DEPOSITORY_CASH_UNITS`) brings the
- * sentence back — which is then true again.
+ * switching that valuation off (`VALUE_DEPOSITORY_CASH_UNITS`,
+ * `VALUE_DEPOSITORY_FUND_UNITS`) brings the sentence back — which is then true
+ * again.
  */
 export const REVIEW_LINE_ISINS: ReadonlyMap<string, string> = new Map([
   // The review's transaction sheet records Ajay buying 1,63,08,407.445 units at
@@ -88,9 +90,22 @@ export const REVIEW_LINE_ISINS: ReadonlyMap<string, string> = new Map([
   // Left claimable, a search for the review's spelling would say "no statement
   // reports it" about a holding three statements report.
   ["Aditya Birla SL Balanced Advantage Fund(G)", "INF084M01AB8"],
+  // Stage 10cx — the other mutual funds on Ajay's transaction-only demat. Each
+  // is tied by units, never by name. The review's own purchases are depository
+  // credits unit for unit: twelve weekly Bandhan purchases (1,27,182.131 on
+  // 2 Apr 2026 onward), seven Kotak Multicap purchases, and the 34,045.997
+  // Kotak Large & Midcap units bought on 2 Apr 2026. For ICICI India
+  // Opportunities and ICICI Equity Savings the review closes Ajay on 30 June at
+  // 48,50,206.378 and 93,20,249.865 units, and the depository closes the demat
+  // at exactly those balances on 31 July.
+  ["Bandhan Large & Mid Cap Fund - Direct Plan - Growth", "INF194K01V89"],
+  ["ICICI Pru India Opportunities Fund", "INF109KC1RH9"],
+  ["ICICI Prudential Equity Savings Fund - Direct Plan", "INF109KA11J9"],
+  ["Kotak Large & Midcap Fund - Direct- Growth", "INF174K01LF9"],
+  ["Kotak Multicap Fund-Direct Plan-Growth", "INF174KA1HV3"],
 ]);
 const DEPOSITORY_VALUED = new Set(
-  [...depositoryCashHoldings(), ...unpricedStatementUnits()]
+  [...depositoryFundHoldings(), ...unpricedStatementUnits()]
     .map((p) => p.isin?.trim().toUpperCase()).filter((x): x is string => !!x));
 /**
  * Whether the live book values this review line from units no statement

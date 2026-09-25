@@ -46,11 +46,11 @@
  * family asked to see.
  */
 import { BOOK_FUND_NAVS, FUND_NAV_AS_OF, type FundNav } from "@/data/fundNavs";
-import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_CAPITAL_MOVES, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { isCashEquivalent } from "./analytics";
 import { composeSchemeLabel, holdingLabel, schemeNameFor } from "./schemeLabel";
 import { securityLabel } from "./securityLabel";
-import type { Account, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
+import type { Account, CapitalMove, Position, ShareMovement, UnvaluedStatementHolding } from "./types";
 import { fifoReturnPct } from "../../shared/fifo.mjs";
 
 export { FUND_NAV_AS_OF };
@@ -131,14 +131,19 @@ export function isArbitrageFund(p: Pick<Position, "securityKey"> & { isin?: stri
 }
 
 /**
- * ── THE ONE SWITCH ──────────────────────────────────────────────────────────
+ * ── THE TWO SWITCHES ────────────────────────────────────────────────────────
  *
- * Whether the dashboard values a depository's own closing units for the
- * family's cash-equivalent funds (below). It adds real holdings to the live
- * book — about ₹64 Cr on this drop — so it is one constant, and `false` takes
- * every one of them out of every page at once.
+ * Whether the dashboard values a depository's own closing units (below): the
+ * family's cash-equivalent funds (about ₹64 Cr on this drop), and every other
+ * mutual-fund scheme on the same statement (about ₹85 Cr — Stage 10cx). Each
+ * adds real holdings to the live book, so each is one constant, and `false`
+ * takes its rows out of every page at once.
  */
 export const VALUE_DEPOSITORY_CASH_UNITS = true;
+export const VALUE_DEPOSITORY_FUND_UNITS = true;
+
+/** AMFI files the scheme as an ETF — whose units can split, so a count and a NAV may not share a basis. */
+const isEtfNav = (e: FundNav): boolean => /\bETFs?\b/i.test(e.category ?? "");
 
 /** `Direct Plan` → `Direct`; an option is named only where it is not Growth. */
 function labelFromAmfi(e: FundNav): string {
@@ -191,9 +196,12 @@ function labelFromAmfi(e: FundNav): string {
  *      valuing those would reverse a decision the book made and recorded;
  *   2. the block reconciled, and something is left at the close;
  *   3. AMFI publishes a NAV for the ISIN that may value a holding;
- *   4. the family's cash rule admits it (`isCashEquivalent`) — this is the
- *      family's CASH, and only their cash, because that is what they asked to
- *      see. The account's other funds and shares are not valued here;
+ *   4. it is a mutual-fund scheme and not an ETF — the family's cash (liquid
+ *      and arbitrage funds, `isCashEquivalent`) under the first switch, every
+ *      other scheme under the second. A share has no NAV (gate 3) and an ETF's
+ *      units can split, so neither is valued here. Stage 10ce took only the
+ *      cash; Stage 10cx took the rest, because the family asked for the data
+ *      their statements carry to be on the screen;
  *   5. no position the book carries holds the SAME units of the same ISIN,
  *      which is `dropDepositoryDuplicates`' own test: an exact unit match is
  *      one holding reported twice, never two holdings.
@@ -206,12 +214,12 @@ function labelFromAmfi(e: FundNav): string {
  * `statementPortfolio` — a page that ties to the PDFs does not see them, and a
  * page that shows one names where its units came from.
  */
-export function depositoryCashHoldings(
+export function depositoryFundHoldings(
   accounts: readonly Account[] = BOOK_ACCOUNTS,
   positions: readonly Position[] = BOOK_POSITIONS,
   movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
 ): Position[] {
-  if (!VALUE_DEPOSITORY_CASH_UNITS) return [];
+  if (!VALUE_DEPOSITORY_CASH_UNITS && !VALUE_DEPOSITORY_FUND_UNITS) return [];
   const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
   const withPositions = new Set(positions.map((p) => p.accountId));
   const bookByIsin = new Map<string, Position>();
@@ -229,7 +237,10 @@ export function depositoryCashHoldings(
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;                      // gate 3
     const book = bookByIsin.get(isin);
     const securityKey = book?.securityKey ?? w.securityKey;
-    if (!isCashEquivalent({ securityKey })) continue;                                 // gate 4
+    const admitted = isCashEquivalent({ securityKey })
+      ? VALUE_DEPOSITORY_CASH_UNITS
+      : VALUE_DEPOSITORY_FUND_UNITS && !isEtfNav(nav);
+    if (!admitted) continue;                                                          // gate 4
     const closing = w.closing;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin
       && Math.abs(p.quantity - closing) < 0.0005)) continue;                         // gate 5
@@ -275,6 +286,19 @@ export function depositoryCashHoldings(
     });
   }
   return out.sort((a, b) => b.marketValue - a.marketValue);
+}
+
+/**
+ * THE CASH HALF OF `depositoryFundHoldings` — the liquid and arbitrage funds the
+ * family counts as cash. One function filtered, never a second walk, so the two
+ * cannot disagree about which balance is which.
+ */
+export function depositoryCashHoldings(
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  positions: readonly Position[] = BOOK_POSITIONS,
+  movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
+): Position[] {
+  return depositoryFundHoldings(accounts, positions, movements).filter((p) => isCashEquivalent(p));
 }
 
 /**
@@ -425,6 +449,70 @@ export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUni
 }
 
 /**
+ * WHAT A TRANSACTION-ONLY ACCOUNT'S STATEMENT RECORDS, BALANCE BY BALANCE.
+ *
+ * Every holding the depository closes above nil, sorted into exactly one of
+ * three: VALUED by a live row (a fund at AMFI's NAV, or a listed share at the
+ * live quote), REPORTED ELSEWHERE (the depository's copy of units a fund's own
+ * statement reports), or NOT VALUED. One definition, read by the account's note
+ * below and by the page that lists the balances nothing values (Family &
+ * Entities), so the two cannot count them differently.
+ *
+ * "REPORTED ELSEWHERE" NEEDS A UNIT WITNESS, NEVER A NAME. Either another
+ * account carries the same ISIN at the same units, or the same owner's AIF
+ * position's own dated unit record — every allotment and redemption its fund
+ * printed — sums to the depository's balance to the third decimal. The second
+ * is Neo Infra: its statement prints 4,85,837 whole units and no ISIN, and its
+ * dated record (five calls less one 14,162.8-unit redemption) is the
+ * depository's 4,85,837.200 exactly. Listed as not valued, the page would say
+ * the family holds units nothing values while the table above values them.
+ */
+export type DepositoryBalance = {
+  window: ShareMovement;
+  /** The live row that values this balance, where one does. */
+  valued: Position | null;
+  /** The book position that already reports these very units, where one does. */
+  reportedBy: Position | null;
+};
+
+export function depositoryBalancesOf(
+  accountId: string,
+  valued: readonly Position[],
+  positions: readonly Position[] = BOOK_POSITIONS,
+  movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
+  accounts: readonly Account[] = BOOK_ACCOUNTS,
+  moves: readonly CapitalMove[] = BOOK_CAPITAL_MOVES,
+): DepositoryBalance[] {
+  const isin = (x: { isin?: string | null }) => x.isin?.trim().toUpperCase() || null;
+  const tie = (a: number, b: number) => Math.abs(a - b) < 0.0005;
+  const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+  const owner = ownerOf.get(accountId);
+  // The units each (account, security) holds by its own dated record. Only a
+  // record whose every row names its units counts — a sum over a gap is not one.
+  const recorded = new Map<string, number | null>();
+  for (const m of moves) {
+    if (!m.securityKey) continue;
+    const k = `${m.accountId}\u0000${m.securityKey}`;
+    const prev = recorded.has(k) ? recorded.get(k)! : 0;
+    recorded.set(k, prev === null || typeof m.units !== "number" ? null : prev + m.units);
+  }
+  return Object.values(movements)
+    .filter((w) => w.accountId === accountId && typeof w.closing === "number" && w.closing > 0)
+    .map((w) => {
+      const i = isin(w);
+      const closing = w.closing as number;
+      const v = valued.find((p) => p.accountId === accountId && !!i && isin(p) === i) ?? null;
+      const rep = v ? null : positions.find((p) => p.accountId !== accountId && (
+        (!!i && isin(p) === i && tie(p.quantity, closing))
+        || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
+          && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, closing)))) ?? null;
+      return { window: w, valued: v, reportedBy: rep };
+    })
+    .sort((a, b) => Number(!!b.valued) - Number(!!a.valued) || Number(!!a.reportedBy) - Number(!!b.reportedBy)
+      || (a.window.security ?? a.window.securityKey).localeCompare(b.window.security ?? b.window.securityKey));
+}
+
+/**
  * THE SENTENCE AN ACCOUNT CARRIES ONCE SOME OF ITS HOLDINGS ARE VALUED THIS WAY.
  *
  * `noPositionsReason` says "nothing here can be valued", which stops being true
@@ -432,10 +520,15 @@ export function depositoryUnitsGist(rows: readonly Pick<Position, "depositoryUni
  * of an account's holdings must name the rest. So the live copy of the account
  * carries this instead: what is valued, from what, and how many holdings on the
  * same statement are not.
+ *
+ * It names each KIND that is valued, because they come from different prices: a
+ * fund at the NAV AMFI published after a close, a listed share at the live quote
+ * — which exists only while the feed prices it, so the sentence says so.
  */
 export function partialValuationNotes(
   valued: readonly Position[],
   movements: Readonly<Record<string, ShareMovement>> = BOOK_SHARE_MOVEMENTS,
+  positions: readonly Position[] = BOOK_POSITIONS,
 ): Map<string, string> {
   const by = new Map<string, Position[]>();
   for (const p of valued) {
@@ -444,14 +537,25 @@ export function partialValuationNotes(
     by.set(p.accountId, list);
   }
   const notes = new Map<string, string>();
+  const n = (k: number, one: string, many = `${one}s`) => `${k} ${k === 1 ? one : many}`;
+  const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
   for (const [accountId, rows] of by) {
-    const held = Object.values(movements).filter((w) => w.accountId === accountId
-      && typeof w.closing === "number" && w.closing > 0).length;
-    const rest = Math.max(0, held - rows.length);
+    const balances = depositoryBalancesOf(accountId, rows, positions, movements);
+    const funds = rows.filter((r) => r.navPriced);
+    const cash = funds.filter((r) => isCashEquivalent(r));
+    const shares = rows.filter((r) => !r.navPriced);
+    const notValued = balances.filter((b) => !b.valued && !b.reportedBy).length;
+    const elsewhere = balances.filter((b) => b.reportedBy).length;
     const asOf = rows.map((r) => r.depositoryUnits?.asOf).filter(Boolean).sort().pop() ?? "its statement date";
-    const navDate = rows.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
+    const navDate = funds.map((r) => r.navDate).filter(Boolean).sort().pop() ?? "its publication date";
+    const parts: string[] = [];
+    if (funds.length) parts.push(`its ${n(funds.length, "fund")}${cash.length ? ` (${cash.length === funds.length ? (cash.length === 1 ? "a liquid or arbitrage fund" : "all liquid and arbitrage funds") : `${cash.length} of them liquid and arbitrage funds`} the family counts as cash)` : ""} ${funds.length === 1 ? "is" : "are"} valued at the depository's own closing units (${asOf}) × AMFI's published NAV (${navDate})`);
+    if (shares.length) parts.push(`its ${n(shares.length, "listed share")} ${shares.length === 1 ? "is" : "are"} valued at the same closing units × the live quote, and only while the quote feed prices ${shares.length === 1 ? "it" : "them"}`);
+    const rest: string[] = [];
+    if (notValued) rest.push(`${n(notValued, "other holding")} on that statement ${notValued === 1 ? "has" : "have"} no price this book can use and ${notValued === 1 ? "is" : "are"} not valued`);
+    if (elsewhere) rest.push(`${n(elsewhere, "more balance")} ${elsewhere === 1 ? "is" : "are"} the depository's copy of units a fund's own statement reports, valued there`);
     notes.set(accountId,
-      `this account sent a transaction statement and no holding statement. Its ${rows.length} cash-equivalent fund${rows.length === 1 ? "" : "s"} — the liquid and arbitrage funds the family counts as cash — ${rows.length === 1 ? "is" : "are"} valued at the depository's own closing units (${asOf}) × AMFI's published NAV (${navDate}); ${rest === 0 ? "nothing else on that statement is held" : `its other ${rest} holding${rest === 1 ? "" : "s"} on that statement carr${rest === 1 ? "ies" : "y"} no rate and ${rest === 1 ? "is" : "are"} not valued on this account`}. What would value all of it is the account's own holding statement from its custodian`);
+      `this account sent a transaction statement and no holding statement. ${cap(parts.join("; "))}${rest.length ? `; ${rest.join("; ")}` : "; nothing else on that statement is held"}. What would value all of it is the account's own holding statement from its custodian`);
   }
   return notes;
 }

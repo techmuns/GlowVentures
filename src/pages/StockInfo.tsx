@@ -924,7 +924,13 @@ export function StockInfo() {
         <td className="px-4 py-2.5 text-right mono text-slate-400" data-cmp={r.currentPrice ?? ""}>
           {r.currentPrice === null
             ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
-            : <span title={r.depositoryUnits
+            : <span title={r.depositoryUnits && !r.navPriced
+                /* A LISTED SHARE A DEPOSITORY REPORTS (Stage 10cx) has no NAV:
+                   its price is the live quote, and the row exists only while
+                   the feed prices it. Saying "AMFI's NAV" here would name a
+                   source that never priced it. */
+                ? `${price(r.currentPrice)} — the live quote. No statement prices these shares — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — so their value is those shares at this quote, shown only while the quote feed prices them.`
+                : r.depositoryUnits
                 /* NO STATEMENT MARKS THESE UNITS, so the sentence that says a
                    NAV "replaces" one would be false here. Which of the two
                    reasons applies is `describeDepositoryUnits`'s to say. */

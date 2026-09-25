@@ -18,6 +18,8 @@ import {
 } from "@/lib/analytics";
 import { DIRECT, accountIndex, custodyLabelOf, engagementOf, isDirect, ownerOf, unvaluedHoldingsOf, unvaluedStatementLinesOf } from "@/lib/accounts";
 import { BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
+import { depositoryBalancesOf } from "@/lib/fundNavs";
+import { depositoryShareCandidates } from "@/lib/depositoryShares";
 import { fifoTotals } from "@/lib/fifo";
 import { companySectorIndex } from "@/lib/lookthrough";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -26,7 +28,7 @@ import { ownerDisplayName } from "@/lib/owners";
 import { BasisPill } from "@/components/BasisPill";
 import { AbsentCell, AbsentFromBook, AbsentSection, DASH } from "@/components/Absent";
 import { ownerMeasuredReturn, entityYtdPct } from "@/lib/returns";
-import { fmtNum, fmtPct, changeColor, fmtCurrency } from "@/lib/format";
+import { displayDepositoryName, fmtNum, fmtPct, changeColor, fmtCurrency } from "@/lib/format";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
 
@@ -78,6 +80,14 @@ const bucketOrd = (b: string) => { const i = BUCKET_ORDER.indexOf(b); return i <
  */
 const ENTITY_PARAM = "entity";
 const ALL_ENTITIES = "All";
+/**
+ * THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cx), by account
+ * and ISIN — the rows the live quote values while the feed prices them. Built
+ * once at module scope, because it reads only the generated book, and so no
+ * hook sits after this page's early return.
+ */
+const SHARE_CANDIDATES = new Map(
+  depositoryShareCandidates().map((p) => [`${p.accountId}|${(p.isin ?? "").toUpperCase()}`, p] as const));
 
 /**
  * ── WHAT THE ENTITY WEIGHTS DIVIDE BY: ONE BASIS, AND IT IS STATED ──────────
@@ -444,6 +454,41 @@ export function FamilyEntities() {
   const partlyValued = selected
     ? portfolio.accounts.filter((a) => a.owner === scope && a.partialValuation)
     : [];
+  /**
+   * …AND WHAT IN IT IS NOT VALUED, BALANCE BY BALANCE (Stage 10cx). The note
+   * counted them; the family asked to SEE them. `depositoryBalancesOf` is the
+   * one classifier the note itself reads, so a balance cannot be counted there
+   * and listed differently here. The depository's copy of units a fund's own
+   * statement reports is left out: it is in the table above, through the fund.
+   */
+  const partlyValuedBalances = partlyValued.map((a) => {
+    const valued = portfolio.positions.filter((p) => p.accountId === a.accountId && p.depositoryUnits);
+    const balances = depositoryBalancesOf(a.accountId, valued);
+    return {
+      account: a,
+      notValued: balances.filter((b) => !b.valued && !b.reportedBy).map((b) => {
+        const isin = (b.window.isin ?? "").toUpperCase();
+        const share = SHARE_CANDIDATES.get(`${a.accountId}|${isin}`);
+        return {
+          window: b.window,
+          // THE BOOK'S OWN NAME for the company where it carries one — the
+          // share's label, else a holding of the same ISIN — and otherwise
+          // the depository's own, with its `#` furniture taken off. Never the
+          // statement's capitals (Stage 10cc).
+          name: share?.security
+            ?? (isin ? portfolio.positions.find((p) => (p.isin ?? "").toUpperCase() === isin)?.security : undefined)
+            ?? displayDepositoryName(b.window.security ?? b.window.securityKey),
+          // Why nothing values it, per balance: a listed share the live quote
+          // prices only while the feed answers, or a holding nothing prices.
+          reason: share
+            ? "A listed share — valued at the live quote only while the quote feed prices it, and the feed has not priced it."
+            : isin.startsWith("INE")
+            ? "The depository prints units and no rate, and this book has no NSE symbol to fetch a live quote with — no statement prices it."
+            : "The depository prints units and no rate, and no published price reaches it — no statement prices it.",
+        };
+      }),
+    };
+  });
   /**
    * AND THE LINES A STATEMENT RECORDS THAT NOTHING VALUES, inside an account
    * the table above DOES value (A-17). The ICICI NSDL demat's par-value rows,
@@ -1246,7 +1291,7 @@ export function FamilyEntities() {
             // with every other line under a card title, and this card sits
             // directly under one that sums. The sentence is the title's hover.
             <Card className="mt-5" title={`${scope} — held, not valued, in no total`}
-              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The cash-equivalent funds a partly valued account's note names ARE in that figure, valued at AMFI's NAV; the rest of the account is not." : ""}${unvaluedLines.length > 0 ? ` ${unvaluedLines.length === 1 ? "One account" : `${unvaluedLines.length} accounts`} the table above values ${unvaluedLines.length === 1 ? "records" : "record"} further holdings with a quantity and no value; open ${unvaluedLines.length === 1 ? "it" : "one"} for the lines.` : ""} Hover an account for why it carries no figure.`}>
+              subtitle={`None of these figures is in the ${money(selMV)} above — no statement values these holdings. ${unvalued.length + partlyValued.length === 1 ? "One account" : `${unvalued.length + partlyValued.length} accounts`} ${scope} holds ${unvalued.length + partlyValued.length === 1 ? "reports" : "report"} holdings that no statement in this book puts a value on, so they stand in no table above${partlyValued.length > 0 ? " — all of an account, or the part of one its own note names" : ""}. A contribution is what was paid into a fund, not what the holding is worth, and adding the two would report a valuation nobody struck.${partlyValued.length > 0 ? " The funds and shares a partly valued account's note names ARE in that figure — each fund at AMFI's NAV, each listed share at the live quote; the rest of the account is not, and opens under it." : ""}${unvaluedLines.length > 0 ? ` ${unvaluedLines.length === 1 ? "One account" : `${unvaluedLines.length} accounts`} the table above values ${unvaluedLines.length === 1 ? "records" : "record"} further holdings with a quantity and no value; open ${unvaluedLines.length === 1 ? "it" : "one"} for the lines.` : ""} Hover an account for why it carries no figure.`}>
               <ul className="space-y-1.5 text-sm" data-entity-unvalued={unvalued.length} data-entity-partial={partlyValued.length}
                 data-entity-unvalued-lines={unvaluedLines.reduce((n, g) => n + g.lines.length, 0)}>
                 {/* A PARTLY VALUED ACCOUNT says so on its line, and its own note —
@@ -1254,14 +1299,34 @@ export function FamilyEntities() {
                     its name, where every other account on this card keeps its
                     reason. */}
                 {partlyValued.map((a) => (
-                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}>
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
-                        {a.provider}
-                        <span className="text-slate-500"> · {a.accountNo}</span>
-                      </span>
-                      <span className="text-[11px] text-amber-400/80 whitespace-nowrap">partly valued — only its cash-equivalent funds</span>
-                    </div>
+                  <li key={a.accountId} data-unvalued-account={a.accountId} data-partial-account={a.accountId}
+                    data-partial-not-valued={partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued.length ?? 0}>
+                    {/* The balances nothing values open under the account, each
+                        with its units and its reason as the line's hover — the
+                        same shape as a valued account's unvalued lines below. */}
+                    <details>
+                      <summary className="flex cursor-pointer items-baseline justify-between gap-3">
+                        <span className="text-slate-300" title={a.partialValuation ?? undefined} data-unvalued-reason={a.partialValuation ? "" : undefined}>
+                          {a.provider}
+                          <span className="text-slate-500"> · {a.accountNo}</span>
+                        </span>
+                        <span className="text-[11px] text-amber-400/80 whitespace-nowrap">
+                          {`partly valued · ${partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued.length ?? 0} held, not valued`}
+                        </span>
+                      </summary>
+                      <ul className="mt-1 space-y-0.5 pl-3 text-[12px]">
+                        {(partlyValuedBalances.find((x) => x.account.accountId === a.accountId)?.notValued ?? []).map((b) => (
+                          <li key={`${b.window.securityKey}-${b.window.isin ?? ""}`} data-partial-line={b.window.securityKey}
+                            data-partial-units={b.window.closing ?? undefined}
+                            className="flex items-baseline justify-between gap-3" title={b.reason}>
+                            <span className="text-slate-400">{b.name}</span>
+                            <span className="mono whitespace-nowrap text-slate-500">
+                              {`${fmtNum(b.window.closing as number, Number.isInteger(b.window.closing) ? 0 : 3)} units`}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
                   </li>
                 ))}
                 {/* A VALUED ACCOUNT WHOSE STATEMENT RECORDS MORE THAN IS VALUED —

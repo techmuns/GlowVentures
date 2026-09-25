@@ -19,7 +19,7 @@
 // Every expectation is derived from `glowData.ts` on the run.
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB } from "@/data/glowData";
 import { currentHoldings, dedupedPositions, negligibleKeys, isMandateHeld, isRedeemedToNil, isCashEquivalent, sum } from "@/lib/analytics";
-import { depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { depositoryFundHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
 import { parseDrilldown } from "@/lib/drilldown";
 import { NAV } from "@/lib/nav";
 import { buildSearchIndex, searchEntries, scoreText, looksLikeQuestion, normSearch } from "@/lib/searchIndex";
@@ -201,19 +201,20 @@ console.log("── on the LIVE book: a cash equivalent is named Cash, and a par
 {
   /**
    * The top bar searches what the PAGE is handed — the live portfolio, which
-   * carries the cash-equivalent funds a depository reports on an account that
-   * sent no holding statement (Stage 10ce). Everything above builds from
-   * `BOOK_POSITIONS`, which never holds those rows, so it cannot see either
-   * rule below. The registry is the one `PortfolioContext` builds, through the
-   * same helper, rather than a copy of it.
+   * carries the funds a depository reports on an account that sent no holding
+   * statement (Stage 10ce's cash equivalents, Stage 10cx's other funds).
+   * Everything above builds from `BOOK_POSITIONS`, which never holds those
+   * rows, so it cannot see either rule below. The rows and the registry are
+   * the ones `PortfolioContext` builds, through the same helpers, rather than
+   * copies of them.
    */
-  const dep = depositoryCashHoldings();
+  const dep = depositoryFundHoldings();
   const livePositions = [...BOOK_POSITIONS, ...dep];
   const liveAccounts = withPartialValuation(BOOK_ACCOUNTS, partialValuationNotes(dep));
   const live = buildSearchIndex({ positions: livePositions, consolidated: dedupedPositions(livePositions), accounts: liveAccounts, money });
   // A missing premise is a FAILURE, never an abstention: an empty set would
   // let every assertion below pass by asserting nothing.
-  ok("the live book carries depository-valued cash equivalents to search", dep.length > 0, `${dep.length} rows`);
+  ok("the live book carries depository-valued cash equivalents to search", dep.some((p) => isCashEquivalent(p)), `${dep.length} rows`);
   ok("…and every one of them is findable", dep.every((p) => live.some((e) => e.id === `holding:${p.securityKey}`)),
     dep.filter((p) => !live.some((e) => e.id === `holding:${p.securityKey}`)).map((p) => p.security).join("; "));
   const cashEntries = live.filter((e) => e.kind === "holding" && isCashEquivalent({ securityKey: e.id.slice("holding:".length) }));

@@ -216,10 +216,13 @@ function bookArray(src, name) {
   let out;
   try { out = JSON.parse(src.slice(start + 2, end + 2)); } catch { return null; }
   // THE CHECKER'S MODEL OF THE BOOK IS THE ONE THE PAGES RENDER — the published
-  // NAV overlaid, and the depository's cash-equivalent units that the live book
-  // values on an account that sent no holding statement.
+  // NAV overlaid, and the depository's fund units that the live book values on
+  // an account that sent no holding statement. NOT its listed shares (Stage
+  // 10cx): those are rows only while the quote feed prices them, and a walk
+  // with no feed draws none — `withDepositoryShares` adds them where a walk
+  // serves a feed.
   return name === "BOOK_POSITIONS"
-    ? withPublishedNavs([...out, ...withDepositoryCash(src, out), ...withUnpricedStatementUnits(src, out)])
+    ? withPublishedNavs([...out, ...withDepositoryFunds(src, out), ...withUnpricedStatementUnits(src, out)])
     : out;
 }
 
@@ -293,27 +296,31 @@ function fundNavStore() {
 }
 
 /**
- * ── THE DEPOSITORY'S CASH, RE-EXPRESSED ─────────────────────────────────────
+ * ── THE DEPOSITORY'S FUNDS, RE-EXPRESSED ────────────────────────────────────
  *
  *   "Arbitrage funds or holdings into that cash as well, because arbitrage
  *    funds are nothing but basically cash."
  *
  * The three arbitrage funds this family holds are no POSITION in `glowData.ts`:
  * they are a depository's closing balances on an account that sent a
- * transaction statement and no holding statement. `PortfolioContext` values
- * them at AMFI's published NAV on the LIVE basis, so every page that reads the
- * live portfolio carries five rows the generated book does not — and every
+ * transaction statement and no holding statement — and so, since Stage 10cx,
+ * are the five other mutual funds on the same statement. `PortfolioContext`
+ * values them at AMFI's published NAV on the LIVE basis, so every page that
+ * reads the live portfolio carries rows the generated book does not — and every
  * derivation here that reconciles against a rendered figure has to carry them
  * too, or it compares two different books.
  *
- * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `depositoryCashHoldings` AND NEVER
+ * RE-EXPRESSED FROM `src/lib/fundNavs.ts`'s `depositoryFundHoldings` AND NEVER
  * IMPORTED — the same five gates, written a second time off the committed
  * data: a transaction-only account with no position of its own; a block that
  * walked to its printed closing, with units left; a NAV AMFI publishes and the
- * builder cleared for value; a cash equivalent by the committed map; and no
- * book position of the same ISIN and the same units.
+ * builder cleared for value; a cash equivalent by the committed map, or a fund
+ * AMFI does not file as an ETF (a depository's ETF units may not be on its
+ * NAV's basis, and there is no statement mark here to test them against); and
+ * no book position of the same ISIN and the same units. It deliberately does
+ * not read the page's switches, so turning one off fails a check by name.
  */
-function withDepositoryCash(src, positions) {
+function withDepositoryFunds(src, positions) {
   const accounts = bookArray(src, "BOOK_ACCOUNTS");
   const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
   const store = fundNavStore();
@@ -335,7 +342,7 @@ function withDepositoryCash(src, positions) {
     if (!nav || !nav.usableForValue || !(nav.nav > 0)) continue;
     const book = bookByIsin.get(isin);
     const securityKey = book?.securityKey ?? w.securityKey;
-    if (!CASH_EQ_KEYS.has(securityKey)) continue;
+    if (!CASH_EQ_KEYS.has(securityKey) && /\bETFs?\b/i.test(nav.category ?? "")) continue;
     if (positions.some((p) => p.isin?.trim().toUpperCase() === isin && Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
     out.push({
       securityKey, security: book?.security ?? w.security ?? securityKey, isin: w.isin,
@@ -6877,6 +6884,56 @@ const MARK_BY_SYMBOL = (() => {
 })();
 
 /**
+ * ── THE LISTED SHARES A TRANSACTION-ONLY DEMAT REPORTS (Stage 10cx) ────────
+ *
+ * `depositoryShareCandidates` (src/lib/depositoryShares.ts) RE-EXPRESSED, never
+ * imported — its five gates written again off the committed data: an account
+ * that sent a transaction statement and no holding statement and carries no
+ * position; a block that walked to its printed closing, with shares left; an
+ * equity ISIN; an NSE symbol reached by that ISIN — a book position of the same
+ * ISIN, else Upstox's own `NSE_EQ|<ISIN>` instrument, never a name; and no book
+ * position of the same ISIN at the same units. The page makes a ROW of one only
+ * while the quote feed prices it, so this is the set the live walks must add
+ * where their fixture prices the symbol — and the plain walks, which serve no
+ * feed, add none.
+ */
+const DEPOSITORY_SHARE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const positions = statementBookPositions(src);
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const symbols = JSON.parse(readFileSync(new URL("../src/data/nseSymbols.json", import.meta.url), "utf8"));
+    if (!Array.isArray(positions) || !Array.isArray(accounts) || !movements) return null;
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const symOf = (p) => p.symbol || symbols[p.securityKey] || null;
+    const symByIsin = new Map();
+    for (const [sym, v] of Object.entries(UPSTOX_INSTRUMENTS)) {
+      if (!String(v.key).startsWith("NSE_EQ|")) continue;
+      const i = String(v.key).split("|")[1]?.trim().toUpperCase();
+      if (i) symByIsin.set(i, sym);
+    }
+    const txOnly = new Set(accounts.filter((a) => a.transactionsOnly === true).map((a) => a.accountId));
+    const withPositions = new Set(positions.map((p) => p.accountId));
+    const out = [];
+    for (const w of Object.values(movements)) {
+      if (!txOnly.has(w.accountId) || withPositions.has(w.accountId)) continue;
+      if (w.reason != null || !(typeof w.closing === "number" && w.closing > 0)) continue;
+      const isin = I(w);
+      if (!isin || !isin.startsWith("INE")) continue;
+      const same = positions.filter((p) => I(p) === isin);
+      const symbol = same.map(symOf).find(Boolean) ?? symByIsin.get(isin) ?? null;
+      if (!symbol) continue;
+      if (same.some((p) => Math.abs(Number(p.quantity) - w.closing) < 0.0005)) continue;
+      const bySym = [...new Set(positions.filter((p) => symOf(p) === symbol).map((p) => p.securityKey))];
+      const securityKey = same[0]?.securityKey ?? (bySym.length === 1 ? bySym[0] : w.securityKey);
+      out.push({ securityKey, isin, symbol, accountId: w.accountId, quantity: w.closing });
+    }
+    return out;
+  } catch { return null; }
+})();
+
+/**
  * HOW MANY NAMES THE MOCKED FEED CAN PRICE IN DIRECT EQUITY — the exact number
  * of gainers the card must show on the `cio-live` walk.
  *
@@ -6936,8 +6993,14 @@ const PRICED_DIRECT_EQUITY_NAMES = (() => {
         if (!sym || !MARK_BY_SYMBOL.has(sym)) continue;       // the fixture cannot price it
         names.add(p.securityKey);
       }
+      // The depository's listed shares (Stage 10cx) are the family's own Direct
+      // Equity, and a row on this walk wherever the fixture prices the symbol.
+      if (keys.includes(DIRECT_EQUITY_BUCKET)) {
+        for (const d of DEPOSITORY_SHARE_BOOK ?? []) if (MARK_BY_SYMBOL.has(d.symbol)) names.add(d.securityKey);
+      }
       return names.size;
     };
+    if (!DEPOSITORY_SHARE_BOOK) return null;
     return count([DIRECT_EQUITY_BUCKET]);
   } catch { return null; }
 })();
@@ -6972,6 +7035,10 @@ const DIRECT_EQUITY_SYMBOLS = (() => {
       const sym = p.symbol || symbols[p.securityKey];
       if (sym) out.add(sym);
     }
+    // …and the listed shares a transaction-only demat reports (Stage 10cx),
+    // which the page asks about in the same priority round.
+    if (!DEPOSITORY_SHARE_BOOK) return null;
+    for (const d of DEPOSITORY_SHARE_BOOK) out.add(d.symbol);
     return out.size || null;
   } catch { return null; }
 })();
@@ -7181,6 +7248,57 @@ const CASH_INSTRUCTION_BOOK = (() => {
       // line: the security and the account it sits in.
       depositoryLines: depository.map((p) => `${p.securityKey}@${p.accountId}`),
     };
+  } catch { return null; }
+})();
+
+/**
+ * ── WHAT A PARTLY VALUED ACCOUNT RECORDS AND NOTHING VALUES (Stage 10cx) ────
+ *
+ * `depositoryBalancesOf` (src/lib/fundNavs.ts) RE-EXPRESSED, never imported:
+ * every balance the depository closes above nil on the account, sorted into
+ * valued (a row of the checker's own live model — which, on a walk that serves
+ * no quote feed, holds the funds and none of the shares), reported elsewhere
+ * (another account's position at the same ISIN and units, or the same owner's
+ * AIF whose own dated unit record sums to the balance) or NOT VALUED. The page
+ * lists the last kind under the account; this is how many it must list, and
+ * which securities.
+ */
+const PARTIAL_BALANCE_BOOK = (() => {
+  try {
+    const src = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+    const live = bookArray(src, "BOOK_POSITIONS");
+    const stmt = statementBookPositions(src);
+    const accounts = bookArray(src, "BOOK_ACCOUNTS");
+    const movements = bookObject(src, "BOOK_SHARE_MOVEMENTS");
+    const moves = bookArray(src, "BOOK_CAPITAL_MOVES");
+    const acc = CASH_INSTRUCTION_BOOK?.partialAccounts?.[0];
+    if (!acc || !Array.isArray(live) || !Array.isArray(stmt) || !Array.isArray(accounts) || !movements || !Array.isArray(moves)) return null;
+    const I = (x) => (x?.isin ? String(x.isin).trim().toUpperCase() : null);
+    const tie = (a, b) => Math.abs(Number(a) - Number(b)) < 0.0005;
+    const ownerOf = new Map(accounts.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+    const owner = ownerOf.get(acc);
+    const recorded = new Map();
+    for (const m of moves) {
+      if (!m.securityKey) continue;
+      const k = `${m.accountId}\u0000${m.securityKey}`;
+      const prev = recorded.has(k) ? recorded.get(k) : 0;
+      recorded.set(k, prev === null || typeof m.units !== "number" ? null : prev + m.units);
+    }
+    const valued = live.filter((p) => p.accountId === acc && p.depositoryUnits);
+    const notValued = [];
+    let reported = 0;
+    for (const w of Object.values(movements)) {
+      if (w.accountId !== acc || !(typeof w.closing === "number" && w.closing > 0)) continue;
+      const i = I(w);
+      if (i && valued.some((p) => I(p) === i)) continue;
+      const rep = stmt.some((p) => p.accountId !== acc && (
+        (!!i && I(p) === i && tie(p.quantity, w.closing))
+        || (p.assetClass === "AIF" && !!owner && ownerOf.get(p.accountId) === owner
+          && tie(recorded.get(`${p.accountId}\u0000${p.securityKey}`) ?? NaN, w.closing))));
+      if (rep) { reported++; continue; }
+      notValued.push({ key: w.securityKey, units: w.closing });
+    }
+    return { account: acc, notValued, reported, valued: valued.length };
   } catch { return null; }
 })();
 
@@ -25056,8 +25174,35 @@ const INVARIANTS = {
       if (!d) return { notChecked: "the probe did not run" };
       const B = CASH_INSTRUCTION_BOOK;
       if (!B || !B.partialOwner) return false;
+      // What IS valued is the note's to say, and since Stage 10cx it is more than
+      // the cash-equivalent funds — so the status names the part that is NOT,
+      // and the hover names both.
       return d.partialAccounts.length === B.partialAccounts.length && d.partialAccounts.every((x) =>
-        /partly valued/.test(x.text) && /cash-equivalent fund/.test(x.text) && /not valued/.test(x.why));
+        /partly valued/.test(x.status) && /not valued/.test(x.status)
+        && /AMFI/.test(x.why) && /\bfunds?\b/.test(x.why) && /not valued/.test(x.why));
+    }],
+    /**
+     * ── …AND WHAT IN IT NOTHING VALUES OPENS UNDER IT, BALANCE BY BALANCE ────
+     *
+     * The note counted them; the family asked to SEE them (Stage 10cx). The
+     * count on the status line, the count on the handle and the lines listed
+     * must all be the book's own — `PARTIAL_BALANCE_BOOK`, re-derived here — and
+     * each line must carry its units and a reason. The depository's copy of
+     * units a fund's own statement reports is NOT listed: it is valued through
+     * that fund, and listing it would say the family holds units nothing values.
+     */
+    ["…and every balance nothing values is listed under it, with its units and why", (t, ctx) => {
+      const d = ctx?.cashDom;
+      if (!d) return { notChecked: "the probe did not run" };
+      const P = PARTIAL_BALANCE_BOOK;
+      if (!P) return false;
+      const x = d.partialAccounts.find((a) => a.account === P.account);
+      if (!x) return false;
+      const n = P.notValued.length;
+      const m = /·\s*(\d+)\s+held, not valued/.exec(x.status);
+      const want = new Map(P.notValued.map((b) => [b.key, b.units]));
+      return n > 0 && x.notValued === n && !!m && Number(m[1]) === n && x.lines.length === n
+        && x.lines.every((l) => want.has(l.key) && Math.abs(want.get(l.key) - l.units) < 0.0005 && l.why.length > 20);
     }],
   ],
   /**
@@ -28262,6 +28407,16 @@ for (const theme of THEMES) {
         })),
         partialAccounts: [...document.querySelectorAll("[data-partial-account]")].map((e) => ({
           text: (e.textContent ?? "").replace(/\s+/g, " ").trim(),
+          // Stage 10cx: the account's status line, its count of what nothing
+          // values, and those balances, each with its reason as its hover — read
+          // whether or not the fold is open (a closed <details> keeps them).
+          account: e.getAttribute("data-partial-account"),
+          status: (e.querySelector("summary")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+          notValued: Number(e.getAttribute("data-partial-not-valued")),
+          lines: [...e.querySelectorAll("[data-partial-line]")].map((l) => ({
+            key: l.getAttribute("data-partial-line"), units: Number(l.getAttribute("data-partial-units")),
+            why: l.getAttribute("title") ?? "",
+          })),
           // The account's own note — what is valued and what is not — is the
           // hover on its name, where every other account on that card keeps its
           // reason (Stage 10cf). `innerText` cannot see a `title`.

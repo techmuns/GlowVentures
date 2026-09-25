@@ -14,11 +14,16 @@ import path from "node:path";
 import XLSX from "xlsx";
 import {
   applyFundNavs, fundNavFor, FUND_NAV_COUNT,
-  depositoryCashHoldings, partialValuationNotes, VALUE_DEPOSITORY_CASH_UNITS, isArbitrageFund,
+  depositoryCashHoldings, depositoryFundHoldings, depositoryBalancesOf, partialValuationNotes,
+  VALUE_DEPOSITORY_CASH_UNITS, VALUE_DEPOSITORY_FUND_UNITS, isArbitrageFund,
 } from "../fundNavs";
+import { depositoryShareCandidates, depositoryShareHoldings, VALUE_DEPOSITORY_SHARE_UNITS } from "../depositoryShares";
+import type { QuoteFeed } from "../quotes";
 import { isCashEquivalent } from "../analytics";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
+import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SHARE_MOVEMENTS, BOOK_CAPITAL_MOVES } from "@/data/glowData";
+import NSE_SYMBOLS from "@/data/nseSymbols.json";
+import { UPSTOX_INSTRUMENTS } from "../../../shared/upstoxInstruments.mjs";
 import type { Position } from "../types";
 
 let pass = 0;
@@ -253,19 +258,166 @@ const nonCash = blocks.filter((w) => txOnly.has(w.accountId) && w.reason === nul
   && w.isin && navByIsin.get(w.isin)?.usableForValue && !isCashEquivalent({ securityKey: keyOf(w) }));
 ok("the same account holds priced funds that are not cash, so the cash gate has something to refuse",
   nonCash.length > 0, `${nonCash.length} balance(s), ${crs(nonCash.reduce((a, w) => a + (w.closing ?? 0) * (navByIsin.get(w.isin ?? "")?.nav ?? 0), 0))} at AMFI's NAV`);
-ok("...and none of them is valued",
+ok("...and the CASH rows value none of them — the cash gate still refuses what is not cash",
   nonCash.every((w) => !DEP.some((p) => p.isin === w.isin)));
 
+/**
+ * ── …AND THE OTHER FUNDS ON THAT STATEMENT ARE VALUED TOO (Stage 10cx) ─────
+ *
+ * *"We need to make sure that we are not missing out on any data that the
+ * statement has already given us."* The same demat's closing balances carry
+ * five more mutual funds AMFI prices — Bandhan Large & Mid Cap, ICICI India
+ * Opportunities, ICICI Equity Savings, Kotak Multicap, Kotak Large & Midcap —
+ * and they are valued now, under a switch of their own, on the same five gates
+ * with only the cash question changed. An ETF from a depository is still NOT
+ * valued: its units and its NAV can be on different bases (DSP Gold's ten-fold
+ * break), and a depository balance carries no mark to test the basis against.
+ */
+console.log("── the depository's other funds, valued at the published NAV (Stage 10cx) ──");
+const FUNDS = depositoryFundHoldings();
+const isEtfIsin = (isin: string | null | undefined) => /\bETFs?\b/i.test(navByIsin.get(isin ?? "")?.category ?? "");
+ok("the fund switch is on, so the non-cash rows below are what the live book adds",
+  VALUE_DEPOSITORY_FUND_UNITS === true);
+ok("the cash rows are exactly the fund rows that are cash equivalents — one builder, two views",
+  DEP.length === FUNDS.filter((p) => isCashEquivalent(p)).length
+  && DEP.every((p) => FUNDS.some((f) => f.isin === p.isin && f.accountId === p.accountId)));
+const nonCashFunds = nonCash.filter((w) => !isEtfIsin(w.isin));
+ok("every non-cash fund the cash gate refused is valued here, at AMFI's NAV",
+  nonCashFunds.length > 0 && nonCashFunds.every((w) => FUNDS.some((p) => p.isin === w.isin && p.accountId === w.accountId)),
+  `${nonCashFunds.length} fund(s), ${crs(FUNDS.filter((p) => !isCashEquivalent(p)).reduce((a, p) => a + p.marketValue, 0))}`);
+ok("...and no ETF a depository reports is valued unless it is cash — its units may not be on its NAV's basis",
+  FUNDS.every((p) => isCashEquivalent(p) || !isEtfIsin(p.isin)));
+const offUnitsF = FUNDS.filter((p) => {
+  const w = blocks.filter((b) => b.accountId === p.accountId && b.isin === p.isin);
+  return w.length !== 1 || w[0].reason !== null || w[0].closing !== p.quantity;
+});
+ok("every fund row's units are the depository's own reconciled closing balance",
+  offUnitsF.length === 0, offUnitsF.map((p) => p.securityKey).join("; "));
+const offValueF = FUNDS.filter((p) => {
+  const e = p.isin ? navByIsin.get(p.isin) : undefined;
+  return !e || !e.usableForValue || p.currentPrice !== e.nav || p.marketValue !== p.quantity * e.nav || p.navDate !== e.date;
+});
+ok("...its value exactly those units × AMFI's NAV, dated as AMFI dated it",
+  offValueF.length === 0, offValueF.map((p) => p.securityKey).join("; "));
+ok("...with no cost, and saying where it came from",
+  FUNDS.every((p) => p.costBasis === null && p.unrealizedPnL === null && p.costUnavailable === true
+    && p.navPriced === true && !!p.depositoryUnits?.asOf && !!p.depositoryUnits?.source));
+const doubledF = FUNDS.filter((p) => BOOK_POSITIONS.some((b) =>
+  b.isin && p.isin && b.isin.toUpperCase() === p.isin.toUpperCase() && Math.abs(b.quantity - p.quantity) < 0.0005));
+ok("...and none repeats a book position of the same ISIN and units",
+  doubledF.length === 0, doubledF.map((p) => p.securityKey).join("; "));
+
+/**
+ * ── THE DEPOSITORY'S COPY OF AN AIF THE FUND ITSELF REPORTS ─────────────────
+ *
+ * The same demat carries 4,85,837.2 units of Neo Infra, and those units are no
+ * new holding: Neo Infra's own statement reports them, on Ajay's own folio.
+ * Its record of units bought and redeemed adds to exactly the depository's
+ * closing balance — derived here from `BOOK_CAPITAL_MOVES`, the fund's dated
+ * record, never from the classifier. Counted as "not valued" it would tell a
+ * reader a holding the table already carries is missing.
+ */
+console.log("── a depository's copy of units a fund's own statement reports ──");
+const ownerOfAcct = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.ownerId ?? a.owner]));
+const recordedUnits = new Map<string, number | null>();
+for (const m of BOOK_CAPITAL_MOVES) {
+  if (!m.securityKey) continue;
+  const k = `${m.accountId}|${m.securityKey}`;
+  const prev = recordedUnits.has(k) ? recordedUnits.get(k)! : 0;
+  recordedUnits.set(k, prev === null || typeof m.units !== "number" ? null : prev + m.units);
+}
+const tie = (a: number | null | undefined, b: number) => typeof a === "number" && Math.abs(a - b) < 0.0005;
+/** Balances on `id` that another account's own statement already reports. */
+const reportedElsewhere = (id: string, valuedIsins: Set<string>) => blocks.filter((w) =>
+  w.accountId === id && (w.closing ?? 0) > 0 && !valuedIsins.has((w.isin ?? "").toUpperCase())
+  && BOOK_POSITIONS.some((b) => b.accountId !== id && (
+    (!!w.isin && b.isin?.toUpperCase() === w.isin.toUpperCase() && tie(b.quantity, w.closing as number))
+    || (b.assetClass === "AIF" && ownerOfAcct.get(b.accountId) === ownerOfAcct.get(id)
+      && tie(recordedUnits.get(`${b.accountId}|${b.securityKey}`), w.closing as number)))));
+const depAccount = FUNDS[0]?.accountId ?? "";
+const fundIsins = new Set(FUNDS.filter((p) => p.accountId === depAccount).map((p) => (p.isin ?? "").toUpperCase()));
+const elsewhere = reportedElsewhere(depAccount, fundIsins);
+ok("the account holds at least one such balance, so the rule below has a subject",
+  elsewhere.length > 0, elsewhere.map((w) => `${w.securityKey} ${w.closing}`).join("; "));
+const cls = depositoryBalancesOf(depAccount, FUNDS.filter((p) => p.accountId === depAccount));
+ok("...and the classifier files every one as reported elsewhere, never as not valued",
+  elsewhere.every((w) => cls.some((b) => b.window.isin === w.isin && !!b.reportedBy && !b.valued)));
+
 /** THE ACCOUNT STOPS SAYING IT VALUES NOTHING, AND NAMES WHAT IT DOES NOT. */
-const notes = partialValuationNotes(DEP);
+const notes = partialValuationNotes(FUNDS);
 const held = (id: string) => blocks.filter((w) => w.accountId === id && (w.closing ?? 0) > 0).length;
 ok("every account a row came from carries a partial-valuation sentence",
-  [...new Set(DEP.map((p) => p.accountId))].every((id) => (notes.get(id) ?? "").length > 40));
+  [...new Set(FUNDS.map((p) => p.accountId))].every((id) => (notes.get(id) ?? "").length > 40));
 ok("...naming how many of its holdings are NOT valued, so a partial figure cannot read as the whole account",
   [...notes.entries()].every(([id, n]) => {
-    const rest = held(id) - DEP.filter((p) => p.accountId === id).length;
-    return rest === 0 ? /nothing else/.test(n) : n.includes(`other ${rest} holding`);
-  }), [...notes.values()].join(" | ").slice(0, 300));
+    const valuedHere = FUNDS.filter((p) => p.accountId === id);
+    const away = reportedElsewhere(id, new Set(valuedHere.map((p) => (p.isin ?? "").toUpperCase()))).length;
+    const rest = held(id) - valuedHere.length - away;
+    return (rest === 0 ? !/other holding/.test(n) : n.includes(`${rest} other holding`))
+      && (away === 0 ? !/more balance/.test(n) : n.includes(`${away} more balance`));
+  }), [...notes.values()].join(" | ").slice(0, 400));
+ok("...and names how many of its funds are the family's cash",
+  [...notes.entries()].every(([id, n]) => {
+    const f = FUNDS.filter((p) => p.accountId === id);
+    const c = f.filter((p) => isCashEquivalent(p)).length;
+    return c === 0 || c === f.length ? true : n.includes(`${c} of them liquid and arbitrage funds`);
+  }));
+
+/**
+ * ── A LISTED SHARE THE DEPOSITORY REPORTS: THE LIVE QUOTE, OR NOT A ROW ─────
+ *
+ * The same statement closes above nil on listed shares — IFB Industries,
+ * Onesource, Vedanta Aluminium Metal and more. A share has no NAV, and the
+ * statement prints no rate, so its only price is the market's: it is valued at
+ * the LIVE QUOTE, and where the feed did not price it, it is NOT a row. These
+ * are struck on constructed feeds, because the live feed is not in this suite.
+ */
+console.log("── a depository's listed shares: the live quote, or no row (Stage 10cx) ──");
+const CAND = depositoryShareCandidates();
+ok("the share switch is on", VALUE_DEPOSITORY_SHARE_UNITS === true);
+ok("the same statement carries listed shares a quote could price, so the claims below have a subject",
+  CAND.length > 0, CAND.map((p) => `${p.symbol} ${p.quantity}`).join("; "));
+ok("every candidate is an equity ISIN on a transaction-only account, at the depository's own reconciled closing",
+  CAND.every((p) => txOnly.has(p.accountId) && /^INE/i.test(p.isin ?? "")
+    && blocks.some((w) => w.accountId === p.accountId && w.isin === p.isin && w.reason === null && w.closing === p.quantity)));
+const symbolOfKey = NSE_SYMBOLS as Record<string, string>;
+const upstox = UPSTOX_INSTRUMENTS as Record<string, { key: string }>;
+const unIdentified = CAND.filter((p) =>
+  !BOOK_POSITIONS.some((b) => b.isin?.toUpperCase() === p.isin?.toUpperCase() && (b.symbol ?? symbolOfKey[b.securityKey]) === p.symbol)
+  && upstox[p.symbol ?? ""]?.key !== `NSE_EQ|${(p.isin ?? "").toUpperCase()}`);
+ok("every candidate's NSE symbol is reached by its ISIN — a book holding of that ISIN, or Upstox's own instrument for it — never by a name",
+  unIdentified.length === 0, unIdentified.map((p) => `${p.symbol} ${p.isin}`).join("; "));
+const noSymbol = blocks.filter((w) => txOnly.has(w.accountId) && w.reason === null && (w.closing ?? 0) > 0
+  && /^INE/i.test(w.isin ?? "") && !CAND.some((p) => p.isin === w.isin)
+  && !BOOK_POSITIONS.some((b) => b.isin?.toUpperCase() === w.isin?.toUpperCase() && Math.abs(b.quantity - (w.closing as number)) < 0.0005));
+ok("an equity balance no identifier resolves to a symbol is no candidate — nothing could price it, and it stays named as not valued",
+  noSymbol.every((w) => !upstox[Object.keys(upstox).find((k) => upstox[k].key === `NSE_EQ|${(w.isin ?? "").toUpperCase()}`) ?? ""]),
+  noSymbol.map((w) => w.securityKey).join("; "));
+ok("no candidate carries a price or a cost before a feed answers",
+  CAND.every((p) => p.currentPrice === null && p.costBasis === null && p.costUnavailable === true && !p.navPriced));
+ok("with no feed, no share is a row — never at a zero or a guessed price",
+  depositoryShareHoldings(null).length === 0);
+const one = CAND[0];
+const feedOf = (sym: string, price: number): QuoteFeed => ({
+  quotes: { [sym]: { price, prevClose: price / 1.01, open: null, dayLow: null, dayHigh: null, low52: null, high52: null,
+    marketCap: null, volume: null, yearChangePct: null, ageS: 0, source: "upstox" } },
+  asOf: "2026-09-25T10:00:00Z", missing: [], pending: [], fresh: 1, stale: 0,
+});
+const priced = one?.symbol ? depositoryShareHoldings(feedOf(one.symbol, 250)) : [];
+ok("a feed that prices one share makes exactly that share a row",
+  priced.length === 1 && priced[0].isin === one?.isin, priced.map((p) => p.symbol).join("; "));
+ok("...at its closing units × the quote, live, with no cost and no NAV",
+  priced.length === 1 && priced[0].marketValue === (one?.quantity ?? 0) * 250 && priced[0].live === true
+    && priced[0].costBasis === null && priced[0].unrealizedPnL === null && !priced[0].navPriced);
+const notesShare = partialValuationNotes([...FUNDS, ...priced]);
+const withShare = notesShare.get(one?.accountId ?? "") ?? "";
+ok("the account's note names the share and that it is valued only while the quote feed prices it",
+  /1 listed share is valued at the same closing units × the live quote, and only while the quote feed prices it/.test(withShare), withShare.slice(0, 200));
+ok("...and counts one fewer holding as not valued",
+  (() => {
+    const m = (t: string) => Number(/(\d+) other holding/.exec(t)?.[1] ?? 0);
+    return m(notes.get(one?.accountId ?? "") ?? "") - m(withShare) === 1;
+  })());
 
 /**
  * ── THE UNIT-BASIS WITNESS, FROM THE FAMILY'S OWN DOCUMENT ──────────────────

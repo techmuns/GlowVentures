@@ -18,7 +18,7 @@ import fs from "node:fs";
 import XLSX from "xlsx";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY, BOOK_SHARE_MOVEMENTS } from "@/data/glowData";
 import { BOOK_FUND_NAVS } from "@/data/fundNavs";
-import { depositoryCashHoldings, isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryCashHoldings, depositoryFundHoldings, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import {
   holdingBucket, MANDATE_BUCKET, dedupedPositions,
@@ -45,7 +45,10 @@ const isM = (p: (typeof BOOK_POSITIONS)[number]) =>
 // it was meant for simply falls into "not classified" and the section still
 // reads correctly. This is the check that makes the map maintainable.
 {
-  const live = new Set(BOOK_POSITIONS.map((p) => productKeyOf(p, isM(p))));
+  // The book AND the depository's funds the live book values (Stage 10cx): two
+  // schemes are held only on the transaction-only demat, so they are no
+  // position of the generated book and their entries match a live row.
+  const live = new Set([...BOOK_POSITIONS, ...depositoryFundHoldings()].map((p) => productKeyOf(p, isM(p))));
   const dead = Object.keys(FAMILY_TAXONOMY).filter((k) => !live.has(k));
   ok("every map entry matches a holding in the book — a typo would show here",
      dead.length === 0, dead.length ? dead.join(", ") : `${Object.keys(FAMILY_TAXONOMY).length} entries`);
