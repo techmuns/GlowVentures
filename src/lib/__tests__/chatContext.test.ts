@@ -20,6 +20,7 @@
 import { BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS } from "@/data/glowData";
 import { dedupedPositions, doubleCountedValue, publicPrivateSplit, sum } from "@/lib/analytics";
 import { buildDashboardContext, contextPreamble, contextTickers } from "@/lib/chatContext";
+import { depositoryCashHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 
 let fails = 0;
 const ok = (name: string, pass: boolean, detail = "") => {
@@ -142,6 +143,68 @@ ok("the context is a non-empty set of named blocks",
   const c = block<{ count: number; note: string; rows: { undrawnCr: number | null }[] }>("undrawn_commitments");
   ok("every commitment in the book reaches the context", c.count === BOOK_COMMITMENTS.length, String(c.count));
   ok("...and is flagged as NOT a holding", /never summed into NAV/i.test(c.note));
+}
+
+// ── AN ACCOUNT NO STATEMENT VALUES IS NULL; A REDEEMED ONE IS A MEASURED 0 ─
+//
+// SC-A1: the payload used to say `valueCr: 0` for every account with no
+// position row — India SME's three folios, Sky Capital's four, the income-only
+// 360 ONE pair, the face-value custody accounts — so "what is my India SME
+// investment worth?" was answered with a zero. The finiteness walk below cannot
+// see that: 0 is finite. So the two facts are re-derived HERE, from the book's
+// own rows and reasons by a different expression from the builder's, and held
+// to the payload account by account.
+{
+  const acc = block<{ rows: { accountNo: string; provider: string; valueCr: number | null; valueNote: string | null }[] }>("accounts");
+  const byNo = new Map(acc.rows.map((r) => [`${r.provider}|${r.accountNo}`, r]));
+  const absent: string[] = [], nil: string[] = [], wrong: string[] = [];
+  for (const a of BOOK_ACCOUNTS) {
+    const r = byNo.get(`${a.provider}|${a.accountNo}`);
+    if (!r) continue;
+    const rows = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+    // A measured nil: every row at nil units against a published price, or no
+    // row at all because the statement's balance is nil (its own words).
+    const measuredNil = rows.length
+      ? rows.every((p) => p.quantity === 0 && p.currentPrice != null)
+      : /balance is nil/i.test(a.noPositionsReason ?? "");
+    if (rows.length === 0 && !measuredNil) {
+      absent.push(a.accountNo);
+      if (r.valueCr !== null || !r.valueNote) wrong.push(`${a.accountNo} should be null with a reason, got ${r.valueCr}`);
+    } else if (measuredNil) {
+      nil.push(a.accountNo);
+      if (r.valueCr !== 0 || !/measured nil/i.test(r.valueNote ?? "")) wrong.push(`${a.accountNo} should be a measured 0, got ${r.valueCr} / ${r.valueNote}`);
+    } else if (typeof r.valueCr !== "number" || r.valueNote !== null) {
+      wrong.push(`${a.accountNo} holds a valued position, got ${r.valueCr} / ${r.valueNote}`);
+    }
+  }
+  ok("an account no statement values is null with its reason, a redeemed one a measured 0 with its reason",
+    wrong.length === 0, wrong.slice(0, 4).join("; "));
+  // LOAD-BEARING: both kinds exist on this book, or the check passes over nothing.
+  ok("...and this book has both kinds, so the check is not vacuous",
+    absent.length > 0 && nil.length > 0, `${absent.length} not valued, ${nil.length} measured nil`);
+}
+
+// ── A-17: units a statement records with no rate are named, and are not cash ──
+//
+// The dashboard values ABSL Balanced Advantage at AMFI's NAV where a sibling
+// statement proves the basis. The context must carry those rows in a block of
+// their own — never inside the cash block, because the fund is not cash.
+{
+  type Row = { fund: string; accountId: string; units: number; valueCr: number | null; pricedLikeAccountId: string | null };
+  const b = block<{ rows: Row[]; totalCr: number | null }>("fund_units_a_statement_records_without_a_rate");
+  const want = unpricedStatementUnits();
+  const cash = block<{ rows: { accountId: string; fund: string }[] }>("cash_valued_from_depository_units");
+  ok("the context names the fund units a statement records and prints no rate for",
+    !!b && Array.isArray(b.rows) && b.rows.length === want.length
+      && want.every((p) => b.rows.some((r) => r.accountId === p.accountId && r.units === p.quantity)),
+    `${b?.rows?.length ?? "no block"} vs ${want.length}`);
+  ok("...each names the account whose statement prices the scheme",
+    !!b && b.rows.every((r) => typeof r.pricedLikeAccountId === "string" && r.pricedLikeAccountId.length > 0));
+  ok("...and none of them is filed as cash",
+    !!cash && want.every((p) => !cash.rows.some((r) => r.accountId === p.accountId && r.fund === p.security))
+      && cash.rows.length === depositoryCashHoldings().length);
+  // LOAD-BEARING: this book has such a row, or the three checks pass over nothing.
+  ok("...and this book has at least one such row", want.length > 0, `${want.length} row(s)`);
 }
 
 // ── NO FABRICATED ZEROS ANYWHERE IN THE CONTEXT ────────────────────────────

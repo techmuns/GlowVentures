@@ -14,17 +14,18 @@ import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare,
   holdingRoute, ROUTE_LABEL,
   mandateLabel, MANDATE_BUCKET,
-  measuredReturn, returnCoverage, returnMeasureDef,
+  measuredReturn, returnCoverage, returnMeasureDef, valueDateOf, commonValueDate,
   type ReturnMeasure, type ReturnInput, type RowCapital,
   costCoversSet,
   currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, isCashEquivalent,
 } from "@/lib/analytics";
-import { isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryUnitsGist, describeDepositoryUnits, isArbitrageFund } from "@/lib/fundNavs";
 import { accountIndex, ownerOf, type AccountIndex, engagementOf } from "@/lib/accounts";
 import { splitFundClass } from "../../shared/securityKey.mjs";
 import { ownerDisplayName } from "@/lib/owners";
 import { loadTransactions, type Txn } from "@/lib/ledger";
 import { fifoTotals, fifoBasisNote, investedBasisNote, investedWithCapital, realisedReason, type FifoTotals } from "@/lib/fifo";
+import { costedFigures, commonMark, costCoverNote, markKey, splitMarkReason, VACUOUS_COST_REASON, type CostedFigures } from "@/lib/clubbedFigures";
 import { rollup, type GroupRow } from "@/lib/txnRollup";
 import {
   trancheTable, trancheKey, capitalRollup, capitalMovesWithCalls, capitalReturn, capitalReturnCoverage,
@@ -120,6 +121,8 @@ type Venue = {
   isMandate: boolean;
   quantity: number; marketValue: number;
   costBasis: number | null; unrealizedPnL: number | null; returnPct: number | null; costNA: boolean;
+  /** The date this line's value is struck at — where its return window ends. */
+  valuedAt: string | null;
   /** This venue's share of the name as PRINTED across the statements. */
   share: number;
   /**
@@ -136,6 +139,10 @@ type Venue = {
    */
   positions: Position[];
   avgCost: number | null; currentPrice: number | null;
+  /** Where this line's own statement lines disagree on a mark, the marks (A-03). */
+  splitMarks: number[];
+  /** Cost, and the units and value it covers — `costedFigures` (A-02). */
+  costCover: CostedFigures;
   navPriced: boolean; navDate?: string;
   /**
    * The closing date of a depository's own balance, where this line's units
@@ -143,6 +150,12 @@ type Venue = {
    * statement — so the NAV beside it replaced no statement mark at all.
    */
   depositoryAsOf: string | null;
+  /**
+   * WHY NO STATEMENT PRICES THIS LINE'S UNITS, in words — a depository's
+   * closing balance on an account with no holding statement, or units a holding
+   * statement records and prints no rate for (A-17). `fundNavs.ts` chooses it.
+   */
+  depositoryWhy: string | null;
   live: boolean; dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
   investedOn: { first: string; last: string; payments: number } | null;
@@ -160,6 +173,8 @@ type MandateHolding = {
   /** For the row's own Day, Invested on and return cells — see `Venue`. */
   dayChangePct: number | null;
   heldSince: string | null; assetClass: string;
+  /** The date this share's value is struck at — where its return window ends. */
+  valuedAt: string | null;
   investedOn: { first: string; last: string; payments: number } | null;
 };
 /**
@@ -255,11 +270,25 @@ type Row = {
   /** The price above is AMFI's published NAV, not the statement's mark. */
   navPriced?: boolean; navDate?: string;
   /**
+   * WHERE THE LINES BEHIND A CLUBBED ROW DISAGREE ON A MARK, the marks — and
+   * `currentPrice` is null (A-03): one line's price printed over every line's
+   * units is a figure no statement struck. Empty on every other row.
+   */
+  splitMarks?: number[];
+  /**
+   * The row's cost, and the units and value it covers (A-02). Cost, average
+   * cost and unrealised P&L are struck over ONE set — the lines whose statement
+   * reports a cost — never a costed line's cost against every line's units.
+   */
+  costCover?: CostedFigures;
+  /**
    * The closing date of a depository's own balance, where some of this row's
    * units come from an account that sent a transaction statement and no holding
    * statement — so no statement marks them at all (`fundNavs.ts`).
    */
   depositoryAsOf?: string | null;
+  /** Which kind of unpriced units those are, in words (`depositoryUnitsGist`). */
+  depositoryWhy?: string | null;
   /**
    * THE UNIT CLASSES THIS ROW CLUBS, on a row that clubs more than one.
    *
@@ -294,6 +323,12 @@ type Row = {
    * applied to a date: one missing input makes the answer unknown, not older.
    */
   heldSince: string | null;
+  /**
+   * The ONE date this row's value is struck at (`commonValueDate`), where its
+   * return window ends; null where its holdings are valued on different dates,
+   * which refuses an annualised figure rather than picking one of the dates.
+   */
+  valuedAt: string | null;
   /**
    * ── WHEN THE MONEY WENT IN, AND DELIBERATELY NOT `heldSince` ───────────────
    *
@@ -545,6 +580,13 @@ type BucketTotals = {
   heldCount: number;
   /** The section's FIFO totals — its return and its realised, struck on its own positions. */
   fifo: FifoTotals;
+  /**
+   * The section's only costed lines are nil balances while the rest carries
+   * value — `cost` and `pnl` are null and the cells say why (A-14). The Cash
+   * section is the case: two nil sleeves reporting a cost of ₹0 beside ₹14.2 Cr
+   * of liquid funds no statement costs printed Invested ₹0 and P&L ₹0.
+   */
+  vacuous: boolean;
 };
 
 /**
@@ -831,6 +873,16 @@ export function PortfolioMonitor() {
   const accIdx = useMemo(() => accountIndex(portfolio.accounts), [portfolio.accounts]);
   const owner = (p: Position) => ownerOf(accIdx, p);
   /**
+   * WHERE EVERY RETURN WINDOW ON THIS PAGE ENDS — the date the holding's value
+   * is struck: a live quote's own day, AMFI's NAV date, or the account's own
+   * statement date. It used to be `portfolio.asOf`, the book's NEWEST date
+   * (29 Aug 2026 — two quantity-only trust demats), so every CAGR here was
+   * annualised over days nobody measured: Crompton read −19.65% over 543 days
+   * where its own window is 392 days and −26.14%. See `valueDateOf`.
+   */
+  const nowMs = useMemo(() => Date.now(), []);
+  const valueDate = (x: Position) => valueDateOf(x, accIdx.get(x.accountId)?.asOf, nowMs);
+  /**
    * The canonical owner of an ACCOUNT, for surfaces that hold an accountId
    * rather than a position — the contribution history is one. Falls back to the
    * id rather than to a blank: an unnamed holder beside a real rupee figure is
@@ -1007,7 +1059,7 @@ export function PortfolioMonitor() {
    * than silently gone — this book shows what it can and names the rest.
    */
 
-  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
+  const { rows, totMV, totCost, totPnL, totFifo, totFifoCosted, footCover, rawMV, weightBase, weightCount, bucketTotals, smallDropped } = useMemo(() => {
     // Closed positions first, so nothing downstream has to remember to exclude
     // them: the filters, the weight base, the footer and every section subtotal
     // are struck over what the family actually holds.
@@ -1135,11 +1187,14 @@ export function PortfolioMonitor() {
     const mandateRows: Row[] = [...mandateOf.entries()].map(([accountId, ps]) => {
       const acc = accIdx.get(accountId);
       const mv = sum(ps.map((x) => x.marketValue));
-      // `sumOrNull` on both sides: a constituent whose statement carries no cost
-      // contributes nothing rather than a zero, which would report its whole
-      // market value as profit. Every PMS row in this drop reports one.
-      const cost = sumOrNull(ps.map((x) => x.costBasis));
-      const pnl = sumOrNull(ps.map((x) => x.unrealizedPnL));
+      // Cost and its gain over ONE set — the constituents that report a cost —
+      // through the same helper every clubbed row uses (A-02). A constituent
+      // whose statement carries no cost contributes nothing rather than a zero,
+      // which would report its whole market value as profit. Every PMS row in
+      // this drop reports one, so on this book the two constructions agree.
+      const cf = costedFigures(ps);
+      const cost = cf.cost;
+      const pnl = cf.unrealised;
       const costNA = cost === null || (cost === 0 && mv > 0);
       // The day figure is struck over the LIVE-PRICED constituents only, and the
       // row carries that value separately: a mandate whose shares are half
@@ -1159,6 +1214,7 @@ export function PortfolioMonitor() {
         // in any one share, so it carries no per-contribution breakdown either.
         // That money is on the Transactions card, in Capital in and out.
         heldSince: null,
+        valuedAt: commonValueDate(ps.map(valueDate)),
         // NOR AN INVESTED-ON DATE, AND FOR THE SAME REASON ONE LEVEL UP. A
         // mandate is an ACCOUNT; the family funded it on dates the statements do
         // report, but those dates belong to the account and not to any share in
@@ -1191,6 +1247,7 @@ export function PortfolioMonitor() {
         securityKey: "", sector: "", assetClass: "",
         entities: [...new Set(ps.map((x) => ownerOf(accIdx, x)))],
         quantity: null, avgCost: null, currentPrice: null,
+        costCover: cf,
         costBasis: cost, marketValue: mv, unrealizedPnL: costNA ? null : pnl,
         // FIFO: a whole mandate on its capital since inception, a filtered one
         // holding by holding — never the survivors' unrealised over their cost.
@@ -1220,6 +1277,7 @@ export function PortfolioMonitor() {
             returnPct: x.returnPct, costNA: !!x.costUnavailable || x.costBasis === null, live: !!x.live,
             dayChangePct: x.dayChangePct ?? null,
             heldSince: x.heldSince, assetClass: x.assetClass, investedOn: investedOnOf([x]),
+            valuedAt: valueDate(x),
           })).sort((a, b) => b.marketValue - a.marketValue),
           accountMV: whole?.mv ?? mv, accountCount: whole?.count ?? ps.length,
         },
@@ -1316,12 +1374,25 @@ export function PortfolioMonitor() {
         // several DIFFERENT accounts still sums all of them.
         const dps = dedupedPositions(ps);
         const mv = sum(dps.map((x) => x.marketValue));
-        // `sumOrNull`: a lot with no reported cost contributes nothing rather
-        // than a zero that would understate the consolidated basis.
-        const cost = sumOrNull(dps.map((x) => x.costBasis));
+        /**
+         * COST, ITS UNITS, ITS VALUE AND ITS GAIN ARE STRUCK OVER ONE SET (A-02).
+         *
+         * This was `sumOrNull(cost)` set against EVERY unit and EVERY rupee of
+         * value: ICICI Bank's 7,000 costed shares' ₹94.2 L divided by all
+         * 21,500 printed an average cost of ₹438.34 where those shares cost
+         * ₹1,346.33 each, and its P&L read +₹2.06 Cr where the costed shares
+         * had gained +₹5.98 L. `costedFigures` strikes all three over the lines
+         * that report a cost and names the rest in the cells' hovers.
+         */
+        const cf = costedFigures(dps);
+        const cost = cf.cost;
         const qty = sum(dps.map((x) => x.quantity));
         const costNA = cost === null || (cost === 0 && mv > 0);
-        const pnl = costNA ? null : mv - (cost as number);
+        const pnl = costNA ? null : cf.unrealised;
+        // ONE MARK OR NONE (A-03): DSP Gold's two statements mark it at ₹151.10
+        // and ₹141.24, and the first printed over all 14,00,000 units read as a
+        // ₹21.15 Cr holding beside the row's own ₹19.98 Cr.
+        const mark = commonMark(dps, markKey);
         // A security is live only if every lot of it is — they share one quote,
         // so in practice this is all-or-nothing.
         const live = dps.every((x) => x.live);
@@ -1354,10 +1425,13 @@ export function PortfolioMonitor() {
           securityKey: ps[0].securityKey, sector: ps[0].sector, assetClass: ps[0].assetClass,
           fundClasses,
           entities: Array.from(new Set(ps.map((x) => ownerOf(accIdx, x)))), quantity: perUnit ? qty : null,
-          avgCost: perUnit && !costNA && qty > 0 ? (cost as number) / qty : null,
-          currentPrice: perUnit ? ps[0].currentPrice : null,
+          avgCost: perUnit && !costNA ? cf.avgCost : null,
+          currentPrice: perUnit ? mark.price : null,
+          splitMarks: perUnit && mark.price === null && mark.values.length > 1 ? mark.values : [],
+          costCover: cf,
           navPriced: perUnit && !!ps[0].navPriced, navDate: ps[0].navDate,
           depositoryAsOf: ps.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
+          depositoryWhy: ps.some((x) => x.depositoryUnits) ? depositoryUnitsGist(ps) : null,
           costBasis: cost, marketValue: mv, unrealizedPnL: pnl,
           // FIFO over the row's own deduped holdings: the realised gain on
           // units already sold stays in the return (`fifoTotals`).
@@ -1367,6 +1441,9 @@ export function PortfolioMonitor() {
           weight: weightBase > 0 ? mv / weightBase : 0,
           costNA,
           heldSince,
+          // The deduped set's ONE value date, or null where its lines are marked
+          // on different dates — that row refuses to annualise rather than pick.
+          valuedAt: commonValueDate(dps.map(valueDate)),
           // A fund's row over its WHOLE folios is those accounts, and carries
           // their dated record's money-weighted rate; a share inside an account
           // is not an account and carries none. The deduped set, like every
@@ -1415,7 +1492,7 @@ export function PortfolioMonitor() {
            * Measured: 75 consolidated rows on a non-security axis, 12 held
            * through more than one account, 2 carrying that overlap.
            */
-          venues: venuesOf(ps, accIdx),
+          venues: venuesOf(ps, accIdx, valueDate),
           isin: ps.find((x) => x.isin)?.isin ?? null,
         };
       });
@@ -1427,12 +1504,14 @@ export function PortfolioMonitor() {
         entities: [ownerOf(accIdx, p)], fundClasses: [], quantity: p.quantity, avgCost: p.avgCost, currentPrice: p.currentPrice,
         navPriced: !!p.navPriced, navDate: p.navDate,
         depositoryAsOf: p.depositoryUnits?.asOf ?? null,
+        depositoryWhy: p.depositoryUnits ? describeDepositoryUnits(p.depositoryUnits, portfolio.accounts) : null,
         costBasis: p.costBasis, marketValue: p.marketValue, unrealizedPnL: p.unrealizedPnL,
         returnPct: p.returnPct, weight: weightBase > 0 ? p.marketValue / weightBase : 0,
         realised: p.realizedPnL ?? null,
         fifo: fifoTotals([p], fifoOpts),
         costNA: !!p.costUnavailable || p.costBasis === null,
         heldSince: p.heldSince,
+        valuedAt: valueDate(p),
         // One statement line that is the whole folio IS the account.
         capital: datedCap?.behind([p], fifoOpts.universe) ?? undefined,
         investedOn: investedOnOf([p]),
@@ -1547,6 +1626,7 @@ export function PortfolioMonitor() {
             weight: weightBase > 0 ? e.total / weightBase : 0,
             costNA: true,
             heldSince: null,
+            valuedAt: null,
             // A DERIVED ROW HOLDS NO POSITION AT ALL — the family reach this
             // company through somebody else's portfolio, and no document reports
             // a quantity, a cost or a purchase date for it. Absent, like every
@@ -1631,7 +1711,7 @@ export function PortfolioMonitor() {
     for (const x of db) {
       const k = groupKeyFor(groupAxis, accIdx, x);
       let t = bucketTotals.get(k);
-      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, fifo: fifoTotals([]) }));
+      if (!t) bucketTotals.set(k, (t = { mv: 0, cost: null, pnl: null, costedMV: 0, costedCount: 0, heldCount: 0, fifo: fifoTotals([]), vacuous: false }));
       t.mv += x.marketValue;
       t.heldCount += 1;
       // `sumOrNull` semantics, accumulated: a statement that reports no cost
@@ -1640,14 +1720,21 @@ export function PortfolioMonitor() {
       if (x.costBasis != null) { t.cost = (t.cost ?? 0) + x.costBasis; t.costedMV += x.marketValue; t.costedCount += 1; }
       if (x.unrealizedPnL != null) t.pnl = (t.pnl ?? 0) + x.unrealizedPnL;
     }
-    // Each section's FIFO totals, over exactly the positions its totals row sums.
+    // Each section's FIFO totals, over exactly the positions its totals row sums
+    // — and the one test for a cost total over nothing (`costedFigures`, A-14).
     for (const [k, t] of bucketTotals) {
-      t.fifo = fifoTotals(db.filter((x) => groupKeyFor(groupAxis, accIdx, x) === k), fifoOpts);
+      const inSection = db.filter((x) => groupKeyFor(groupAxis, accIdx, x) === k);
+      t.fifo = fifoTotals(inSection, fifoOpts);
+      if (costedFigures(inSection).vacuous) { t.vacuous = true; t.cost = null; t.pnl = null; }
     }
+    // The footer on the same rule: a filter that leaves only a section like Cash
+    // in view must not print Invested ₹0 over what no statement costs.
+    const footCover = costedFigures(db);
     return {
       rows: out, totMV: totalMV,
-      totCost: sumOrNull(db.map((x) => x.costBasis)),
-      totPnL: sumOrNull(db.map((x) => x.unrealizedPnL)),
+      totCost: footCover.cost,
+      totPnL: footCover.unrealised,
+      footCover,
       totFifo: fifoTotals(db, fifoOpts),
       /**
        * THE FOOTER'S RETURN IS OVER THE HOLDINGS THAT REPORT A COST — the set its
@@ -1805,17 +1892,17 @@ export function PortfolioMonitor() {
       let count = 0;
       if (r.venues) {
         for (const v of r.venues) {
-          const t = trancheTable(v.positions, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+          const t = trancheTable(v.positions, BOOK_POSITION_TRANCHES, "cagr", valueDate);
           if (t) { byVenue.set(`${v.securityKey}@${v.accountId}`, t); count += t.rows.length; }
         }
       } else if (r.trancheSet.length) {
-        direct = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", portfolio.asOf);
+        direct = trancheTable(r.trancheSet, BOOK_POSITION_TRANCHES, "cagr", valueDate);
         count = direct?.rows.length ?? 0;
       }
       if (count) out.set(r.key, { byVenue, direct, count });
     }
     return out;
-  }, [rows, portfolio.asOf]);
+  }, [rows, accIdx, nowMs]);
   // NULL when the visible rows carry no cost between them — the total-return
   // cell then renders `—` instead of a 0.00% nobody measured.
   // FIFO over the footer's own COSTED positions — the same `fifoTotals` every
@@ -2178,7 +2265,7 @@ export function PortfolioMonitor() {
         // so it is the one place a CAGR is genuinely strikable — through the same
         // guard, so a four-month contribution still reads as its holding-period
         // return and says so.
-        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, assetClass, costNA: false }, measure),
+        ret: (measure) => childReturn({ returnPct: x.returnPct, heldSince: x.date, valuedAt: x.valuedAt, assetClass, costNA: false }, measure),
       }, {
         "data-tranche-row": parentKey, "data-tranche-folio": folioKey, "data-tranche-class": cls ?? "",
         // THE HOLDING-PERIOD RETURN, whatever the cell shows: "cheaper entry,
@@ -2398,7 +2485,7 @@ export function PortfolioMonitor() {
         mv: fmtFromBase(h.marketValue, { compact: true }),
         weight: pctOfBook(h.marketValue),
         pnl: h.costNA ? <AbsentCell reason={NO_COST_LINE} /> : signed(h.unrealizedPnL),
-        ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, assetClass: h.assetClass, costNA: h.costNA }, measure),
+        ret: (measure) => childReturn({ returnPct: h.returnPct, heldSince: h.heldSince, valuedAt: h.valuedAt, assetClass: h.assetClass, costNA: h.costNA }, measure),
         sector: h.sector,
       }, { "data-constituent": h.securityKey || h.security, "data-constituent-mv": h.marketValue })));
       return out;
@@ -2482,7 +2569,9 @@ export function PortfolioMonitor() {
         investedOn: dateCell(v.investedOn, v.costNA
           ? "no statement reports what this holding cost, so there is no payment to date — a depository records what is held and never what was paid for it"
           : "this account's statement reports the holding's cost but not the date it was bought"),
-        cmp: v.currentPrice === null
+        cmp: v.splitMarks.length > 1
+          ? <span data-cmp-split={v.splitMarks.length}><AbsentCell reason={splitMarkReason(v.splitMarks.map((x) => fmtFromBase(x)))} /></span>
+          : v.currentPrice === null
           ? <AbsentCell reason="marked at a total value, not a per-unit price" />
           : <>{fmtFromBase(v.currentPrice)}{!v.live && (
               <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
@@ -2491,10 +2580,13 @@ export function PortfolioMonitor() {
                     // A DEPOSITORY LINE IS NOT A STATEMENT MARK REPLACED, and
                     // says so on the one line it is: no statement priced these
                     // units at all (Stage 10ce).
-                    + (v.depositoryAsOf
-                      ? ` These units are a depository's own closing balance of ${v.depositoryAsOf}, on an account that sent a transaction statement and no holding statement — no statement priced them.`
+                    + (v.depositoryWhy
+                      ? ` No statement priced these units: they are ${v.depositoryWhy}.`
                       : "")
-                  : `No live price — the mark from this statement as of ${portfolio.asOf}.`}>◦</span>
+                  // The line's OWN statement date (C-01), not the book's newest.
+                  : v.valuedAt
+                  ? `No live price — the mark from this statement as of ${fmtDate(v.valuedAt)}.`
+                  : "No live price — the marks its statements print, dated differently."}>◦</span>
             )}</>,
         day: dayCell(v.live, v.dayChangePct),
         mv: fmtFromBase(v.marketValue, { compact: true }),
@@ -2503,7 +2595,7 @@ export function PortfolioMonitor() {
         // A line that is one WHOLE folio is that account, and carries its dated
         // record's money-weighted rate — Buoyant's two folios under the row
         // pooling both, each at the rate its own fact sheet prints.
-        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, assetClass: v.assetClass, costNA: v.costNA,
+        ret: (measure) => childReturn({ returnPct: v.returnPct, heldSince: v.heldSince, valuedAt: v.valuedAt, assetClass: v.assetClass, costNA: v.costNA,
           capital: datedCap?.behind(v.positions, holdingsUniverse) ?? undefined }, measure),
         entity: v.owner,
       }, {
@@ -3024,12 +3116,16 @@ export function PortfolioMonitor() {
                               const arb = eq.filter((r) => isArbitrageFund(r)).length;
                               const liq = eq.length - arb;
                               const fromDepository = eq.filter((r) => r.depositoryAsOf).length;
+                              // EACH ROW'S OWN REASON, distinct — the two kinds are
+                              // different sentences, and only one of them is an
+                              // account with no holding statement (A-17).
+                              const depositoryWhy = [...new Set(eq.map((r) => r.depositoryWhy).filter(Boolean))].join("; or ");
                               const parts = [liq ? `${liq} liquid` : null, arb ? `${arb} arbitrage` : null].filter(Boolean).join(" and ");
                               return (
                                 <>{" "}<span data-cash-includes={`${liq}/${arb}`}
                                   title={`Cash is liquid and arbitrage — the family's own instruction, which they have given twice: arbitrage funds "need not be classified into any other category except for cash". The liquid funds are named on the Cash sheet of their consolidated review (30 June 2026); its arbitrage funds are on its Debt tab, and the family's instruction overrules that. Each arbitrage fund is identified by AMFI's own SEBI category against its ISIN, not by its name. The issuing documents type these Mutual Fund or ETF, and that is what the archive still records: this is the dashboard answering "how much of this book is cash", not a change to what any statement said. A liquid sleeve held inside a PMS mandate stays with the mandate, whose row has to tie to its own statement.`
                                     + (fromDepository
-                                      ? ` ${fromDepository} of these ${fromDepository === 1 ? "is" : "are"} valued from a depository's own closing units at AMFI's published NAV: the account sent a transaction statement and no holding statement, so no statement marks them.`
+                                      ? ` ${fromDepository} of these ${fromDepository === 1 ? "is" : "are"} valued at AMFI's published NAV from units no statement prices — ${depositoryWhy}.`
                                       : "")}>
                                   · includes {parts} {eq.length === 1 ? "fund" : "funds"}
                                 </span></>
@@ -3162,7 +3258,8 @@ export function PortfolioMonitor() {
                        * records as worse than a blank cell.
                        */
                       const retWhy =
-                        tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
+                        tot.vacuous ? `${VACUOUS_COST_REASON}, and a return on cost has nothing to divide`
+                        : tot.cost === null ? `no statement behind ${label} reports a cost, so there is nothing to measure a return against`
                         : tot.mv <= 0 ? `${label} is measured at nil — every statement behind it reports a zero balance — so there is no value to measure a return on`
                         : tot.pnl === null ? `no holding in ${label} reports an unrealised gain, so there is no numerator to divide`
                         : tot.cost <= 0 ? `${label} reports a cost of zero, and a return on cost has nothing to divide by`
@@ -3200,7 +3297,7 @@ export function PortfolioMonitor() {
                           </td>
                           <td className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
                             {tot.cost === null
-                              ? <AbsentCell reason={`no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
+                              ? <AbsentCell reason={tot.vacuous ? `in ${label}, ${VACUOUS_COST_REASON}` : `no statement behind ${label} reports a cost — these are depository holdings, which record what is held and never what it was bought for. A ₹0 here would report the whole category as profit.`} />
                               : <span title={[capitalWhy, uncostedMV > 1 ? costCover : ""].filter(Boolean).join(" · ") || undefined}
                                   data-invested-capital={capitalWhy ? totInvested ?? undefined : undefined}
                                   data-invested-cost-held={capitalWhy ? tot.cost ?? undefined : undefined}>
@@ -3242,7 +3339,7 @@ export function PortfolioMonitor() {
                           </td>
                           <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${tot.pnl === null ? "text-slate-500" : changeColor(tot.pnl)}`}>
                             {tot.pnl === null
-                              ? <AbsentCell reason={`an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
+                              ? <AbsentCell reason={tot.vacuous ? `an unrealised gain is market value less cost, and in ${label}, ${VACUOUS_COST_REASON}` : `an unrealised gain is market value less cost, and no statement behind ${label} reports a cost`} />
                               : <span title={uncostedMV > 1 ? costCover : undefined}>
                                   {fmtFromBase(tot.pnl, { compact: true, sign: true })}
                                   {uncostedMV > 1 && <span className="ml-1 text-[10px] font-normal text-amber-400/80">◦</span>}
@@ -3365,6 +3462,20 @@ export function PortfolioMonitor() {
                    */
                   const carried = r.costNA ? null : carriedCostOf(r.trancheSet, BOOK_POSITION_TRANCHES);
                   const carriedWhy = carried ? carriedCostNote(carried, (v) => fmtFromBase(v, { compact: true })) : "";
+                  /**
+                   * WHAT A PARTLY COSTED ROW'S COST FIGURES COVER (A-02), and why
+                   * an uncosted one has none — in the cell, never a bare dash.
+                   * ICICI Bank is the book's case: 7,000 of 21,500 shares carry a
+                   * cost, so Avg cost, Invested and P&L are struck over those and
+                   * say so, and the other 14,500 are in Market value only.
+                   */
+                  const cover = r.costCover;
+                  const coverNote = cover && !r.costNA
+                    ? costCoverNote(cover, (v) => fmtFromBase(v, { compact: true }), fmtNum) : "";
+                  const noCostWhy = cover?.vacuous
+                    ? VACUOUS_COST_REASON
+                    : "no statement behind this holding reports what it cost — a depository records what is held and never what was paid for it. A ₹0 here would report the whole holding as profit";
+                  const pnlValue = cover ? cover.costedValue : r.marketValue;
                   // A WHOLE MANDATE'S INVESTED IS ITS CAPITAL PAID IN, and the
                   // cell names the cost of the shares it holds beside it.
                   const capitalNote = r.kind === "mandate" && r.fifo && r.invested !== undefined
@@ -3499,8 +3610,9 @@ export function PortfolioMonitor() {
                           {m ? <AbsentCell reason="an average cost per unit needs one security; this row rolls up the mandate's holdings, each with a cost of its own" />
                             : r.fundClasses.length
                             ? <AbsentCell reason={`an average cost per unit needs one unit, and this row clubs ${r.fundClasses.length} unit classes allotted at NAVs of their own. The money below it is additive across classes; a per-unit figure is not.`} />
-                            : r.costNA ? "—"
+                            : r.costNA ? <AbsentCell reason={noCostWhy} />
                             : r.avgCost === null ? <AbsentCell reason="this provider prints no per-unit cost for the holding" />
+                            : coverNote ? <span title={coverNote} data-avg-cost-costed={r.avgCost}>{fmtFromBase(r.avgCost)}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
                             : fmtFromBase(r.avgCost)}
                         </td>
                         {/* THE INVESTED CELL CARRIED A SECOND CHEVRON, opening the
@@ -3517,11 +3629,13 @@ export function PortfolioMonitor() {
                           data-cost-printed={carried ? carried.printed : undefined}
                           data-invested-capital={capitalNote ? investedOf(r) ?? undefined : undefined}
                           data-invested-cost-held={capitalNote ? r.costBasis ?? undefined : undefined}>
-                          {r.costNA ? "—"
+                          {r.costNA ? <AbsentCell reason={noCostWhy} />
                             : capitalNote
                             ? <span title={capitalNote}>{fmtFromBase(investedOf(r), { compact: true })}</span>
                             : carriedWhy
                             ? <span title={carriedWhy}>{fmtFromBase(r.costBasis, { compact: true })}</span>
+                            : coverNote
+                            ? <span title={coverNote}>{fmtFromBase(r.costBasis, { compact: true })}<span className="ml-1 text-[10px] text-amber-400/80">◦</span></span>
                             : fmtFromBase(r.costBasis, { compact: true })}
                         </td>
                         {/*
@@ -3557,6 +3671,8 @@ export function PortfolioMonitor() {
                             ? <AbsentCell reason="a mandate has no price per unit — it is an account, not a security" />
                             : r.fundClasses.length
                             ? <AbsentCell reason={`each unit class of this fund is marked at its OWN NAV — ${r.fundClasses.join(", ")} — so there is no one price for the row. Open it for each class's own mark.`} />
+                            : r.splitMarks && r.splitMarks.length > 1
+                            ? <span data-cmp-split={r.splitMarks.length}><AbsentCell reason={splitMarkReason(r.splitMarks.map((v) => fmtFromBase(v)))} /></span>
                             : r.currentPrice === null
                             ? <AbsentCell reason="marked at a total value, not a per-unit price" />
                             : r.live
@@ -3565,10 +3681,15 @@ export function PortfolioMonitor() {
                                 <span className="ml-1 cursor-help text-[10px] text-amber-400/80"
                                   title={r.navPriced
                                     ? `AMFI's published NAV for this scheme, as of ${r.navDate}. A fund resolves no NSE trading symbol so it can never carry an intraday quote; this is the industry's own daily figure, refreshed every day, and it is NEWER than the statement mark it replaced.`
-                                      + (r.depositoryAsOf
-                                        ? ` Some of these units carry no statement mark at all: they are a depository's own closing balance of ${r.depositoryAsOf}, on an account that sent a transaction statement and no holding statement, valued at this NAV.`
+                                      + (r.depositoryWhy
+                                        ? ` Some of these units carry no statement mark at all: they are ${r.depositoryWhy}, valued at this NAV.`
                                         : "")
-                                    : `No live price for this security — showing the mark from its statement as of ${portfolio.asOf}.`}>◦</span></>}
+                                    // THE STATEMENT'S OWN DATE, never the book's newest (C-01): a
+                                    // mark struck on 31 Jul captioned 29 Aug is a month-old price
+                                    // passed off as current.
+                                    : r.valuedAt
+                                    ? `No live price for this security — showing the mark from its statement as of ${fmtDate(r.valuedAt)}.`
+                                    : "No live price for this security — showing the mark its statements print; they are dated differently, and each line in the row's expansion carries its own date."}>◦</span></>}
                         </td>
                         <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.live && r.dayChangePct != null ? changeColor(r.dayChangePct) : "text-slate-600"}`}
                           title={r.live && r.dayChangePct != null
@@ -3578,6 +3699,8 @@ export function PortfolioMonitor() {
                             ? `${r.dayChangePct >= 0 ? "+" : ""}${r.dayChangePct.toFixed(2)}%`
                             : <AbsentCell reason={m
                                 ? "no live quote for any share inside this mandate, so there is no previous close to move from"
+                                : r.splitMarks && r.splitMarks.length > 1
+                                ? "no live quote for this security, and its statements mark it at different prices, so there is no one previous close to move from"
                                 : r.currentPrice === null
                                 ? "this holding is marked at a total value, not a per-unit price, so it has no day move"
                                 : "no live quote for this security, so there is no previous close to move from"} />}
@@ -3624,10 +3747,14 @@ export function PortfolioMonitor() {
                                       worked: `= ${money(bySecurity ? (r.totalExposure ?? r.marketValue) : r.marketValue)} ÷ ${money(weightBase)} × 100 = ${(r.weight * 100).toFixed(1)}%`,
                                     }}>{(r.weight * 100).toFixed(1)}%</Auditable>}
                         </td>
-                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`} title={r.live && !r.costNA ? mixedBasisNote : undefined}>
-                          {r.costNA ? "—"
-                            : r.live ? fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })
-                            : <Auditable formula={pnlFormula(r.marketValue, r.costBasis, r.unrealizedPnL, money)}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>}
+                        <td className={`px-2 py-1.5 text-right mono whitespace-nowrap ${r.costNA ? "text-slate-500" : changeColor(r.unrealizedPnL)}`}
+                          title={r.live && !r.costNA ? [mixedBasisNote, coverNote].filter(Boolean).join(" · ") : undefined}>
+                          {r.costNA ? <AbsentCell reason={`an unrealised gain is market value less cost, and ${noCostWhy}`} />
+                            : r.live ? <span data-pnl-costed-value={pnlValue}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}{coverNote && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>
+                            : <span data-pnl-costed-value={pnlValue} title={coverNote || undefined}><Auditable formula={{
+                                ...pnlFormula(pnlValue, r.costBasis, r.unrealizedPnL, money),
+                                ...(coverNote ? { plain: `What the shares whose statement reports a cost are worth today, minus what they cost. ${coverNote}` } : {}),
+                              }}>{fmtFromBase(r.unrealizedPnL, { compact: true, sign: true })}</Auditable>{coverNote && <span className="ml-1 text-[10px] text-amber-400/80">◦</span>}</span>}
                         </td>
                         {/* REALISED, MATCHED FIFO, ON THE ROW'S OWN HOLDINGS —
                             a whole mandate carries everything its capital shows
@@ -3697,7 +3824,7 @@ export function PortfolioMonitor() {
                           const value = !res.shown
                             ? <AbsentCell reason={res.reason} />
                             : res.tag === "HPR" && !r.live
-                              ? <Auditable formula={returnFormula(r.marketValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
+                              ? <Auditable formula={returnFormula(pnlValue, r.costBasis, r.returnPct, money, r.fifo ? { realised: r.fifo.realised, deployed: r.fifo.deployed } : undefined)}><span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span></Auditable>
                               : <span className={changeColor(res.pct)} title={res.note}>{fmtPct(res.pct, { sign: true })}</span>;
                           /**
                            * TAG UNLESS THE HEADER ALREADY NAMES IT.
@@ -3718,6 +3845,8 @@ export function PortfolioMonitor() {
                           const offMeasure = measure === "auto" || res.tag !== returnMeasureDef(measure).tag;
                           return (
                             <td key={measure} data-return-cell={measure} data-return-tag={offMeasure ? res.tag : undefined}
+                              data-return-valued-at={r.valuedAt ?? undefined}
+                              data-return-note={res.shown ? res.note : undefined}
                               /* WHICH ACCOUNTS THE ROW IS, where it is whole accounts
                                  (`datedCapital.ts`) — the sweep re-solves the rate over
                                  them from the book, and holds each to being whole in
@@ -3839,7 +3968,13 @@ export function PortfolioMonitor() {
                         : "")}
                   label={<>Total · {rows.length} rows</>}
                   cells={{
-                    invested: (
+                    invested: totCost === null ? (
+                    <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap">
+                      <AbsentCell reason={footCover.vacuous
+                        ? `across the holdings in view, ${VACUOUS_COST_REASON}`
+                        : "no statement behind the holdings in view reports a cost — a depository records what is held and never what it was bought for, and a ₹0 here would report the whole table as profit"} />
+                    </td>
+                    ) : (
                     <td key="invested" className="px-2 py-1.5 text-right mono text-slate-300 whitespace-nowrap"
                       data-invested-capital={totFifo.wholeMandates.length ? investedWithCapital(totCost, totFifo) ?? undefined : undefined}><Auditable formula={{
                         title: "Total invested",
@@ -3964,10 +4099,24 @@ export function PortfolioMonitor() {
                         : <AbsentCell reason="the book this weight would divide by is empty" />}
                     </td>
                     ),
-                    pnl: (
-                    <td key="pnl" className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}>
+                    pnl: totPnL === null ? (
+                    <td key="pnl" className="px-2 py-1.5 text-right mono whitespace-nowrap text-slate-500">
+                      <AbsentCell reason={footCover.vacuous
+                        ? `an unrealised gain is market value less cost, and across the holdings in view, ${VACUOUS_COST_REASON}`
+                        : "an unrealised gain is market value less cost, and no statement behind the holdings in view reports a cost"} />
+                    </td>
+                    ) : (
+                    <td key="pnl" className={`px-2 py-1.5 text-right mono whitespace-nowrap ${changeColor(totPnL)}`} title={feedLive ? LIVE_CELL : undefined}
+                      data-pnl-costed-value={footCover.costedValue}>
                       {feedLive ? fmtFromBase(totPnL, { compact: true, sign: true })
-                                : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost)", plain: "Every holding's on-paper gain or loss, added up.", worked: `= ${money(totPnL, true)}`,  }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
+                                : <Auditable formula={{ title: "Total unrealised P&L", excel: "= Σ (Market value − Cost), over the holdings whose statement reports a cost",
+                                    // A CAPTION THAT WIDENS ITS FIGURE IS THE SAME FAILURE AS ONE THAT
+                                    // NARROWS IT: this is struck over the costed holdings only, which
+                                    // is what makes it tie to the Invested cell beside it.
+                                    plain: footCover.complete
+                                      ? "Every holding's on-paper gain or loss, added up."
+                                      : `The on-paper gain or loss of the ${footCover.lines - footCover.uncosted.lines} of ${footCover.lines} holdings whose statement reports a cost, added up. The other ${footCover.uncosted.lines} hold ${money(footCover.uncosted.value)} and report no cost, so they are in Market value and not here — never counted at zero.`,
+                                    worked: `= ${money(footCover.costedValue)} − ${money(totCost)} = ${money(totPnL, true)}` }}>{fmtFromBase(totPnL, { compact: true, sign: true })}</Auditable>}
                     </td>
                     ),
                     /* THE FOOTER'S REALISED IS THE SUM OF THE SECTIONS', which
@@ -4210,7 +4359,7 @@ function clubbedClassesOf(ps: Position[]): string[] {
   return cls.size > 1 ? [...cls].sort() : [];
 }
 
-function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
+function venuesOf(ps: Position[], accIdx: AccountIndex, valueDate: (p: Position) => string | null): Venue[] {
   const m = new Map<string, Position[]>();
   /**
    * KEYED ON (SECURITY, ACCOUNT), NOT ON THE ACCOUNT ALONE.
@@ -4229,12 +4378,14 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
     const accountId = xs[0].accountId;
     const acc = accIdx.get(accountId);
     const marketValue = sum(xs.map((x) => x.marketValue));
-    // `sumOrNull` on the cost, as everywhere: a lot whose statement reports none
-    // contributes nothing rather than a zero that would read as free shares.
-    const costBasis = sumOrNull(xs.map((x) => x.costBasis));
+    // Cost, its units and its gain over ONE set — the same helper the row above
+    // uses, so a line and the row it opens from agree in every column (A-02).
+    const cf = costedFigures(xs);
+    const costBasis = cf.cost;
     const costNA = costBasis === null || (costBasis === 0 && marketValue > 0) || xs.some((x) => x.costUnavailable);
-    const pnl = costNA ? null : marketValue - (costBasis as number);
+    const pnl = costNA ? null : cf.unrealised;
     const quantity = sum(xs.map((x) => x.quantity));
+    const mark = commonMark(xs, markKey);
     return {
       accountId, accountNo: acc?.accountNo ?? "",
       cls: splitFundClass(xs[0].security)?.cls ?? null,
@@ -4254,17 +4405,24 @@ function venuesOf(ps: Position[], accIdx: AccountIndex): Venue[] {
       // DERIVED as cost ÷ units, exactly as the consolidated row above derives
       // its own — so a line and the row it opens from are on one basis in the
       // one column they share.
-      avgCost: !costNA && quantity > 0 ? (costBasis as number) / quantity : null,
+      avgCost: !costNA ? cf.avgCost : null,
       // One security per line, so one mark — the line's OWN, which on a clubbed
-      // fund is the class's NAV the row above has to leave absent.
-      currentPrice: xs[0].currentPrice ?? null,
+      // fund is the class's NAV the row above has to leave absent. Where two
+      // statements of ONE account disagree, it has none either (A-03).
+      currentPrice: mark.price,
+      splitMarks: mark.price === null && mark.values.length > 1 ? mark.values : [],
+      costCover: cf,
       navPriced: !!xs[0].navPriced, navDate: xs[0].navDate,
       depositoryAsOf: xs.find((x) => x.depositoryUnits)?.depositoryUnits?.asOf ?? null,
+      depositoryWhy: xs.length === 1 && xs[0].depositoryUnits
+        ? describeDepositoryUnits(xs[0].depositoryUnits, accIdx)
+        : xs.some((x) => x.depositoryUnits) ? depositoryUnitsGist(xs) : null,
       live: xs.every((x) => x.live),
       dayChangePct: xs[0].dayChangePct ?? null,
       heldSince: xs.every((x) => x.heldSince)
         ? xs.reduce((a: string, x) => (x.heldSince! < a ? x.heldSince! : a), xs[0].heldSince!)
         : null,
+      valuedAt: commonValueDate(xs.map(valueDate)),
       assetClass: xs[0].assetClass,
       investedOn: investedOnOf(xs),
     };
@@ -5086,6 +5244,7 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                           data-dated-section={sec.key} data-dated-label={r.label}
                           data-dated-first={r.first} data-dated-last={r.last}
                           data-mine-row={cap ? r.accountId : undefined}
+                          data-mine-windowed={cap?.windowed ? "" : undefined}
                           data-mine-contributions={cap ? cap.contributions : undefined}
                           data-mine-withdrawals={cap ? cap.withdrawals : undefined}
                           data-mine-section={cap ? sec.key : undefined}
@@ -5415,6 +5574,8 @@ function TransactionsView({ selected, sector, entity, sectorByKey, axis, section
                   data-foot-contributions={totals.contributions} data-foot-withdrawals={totals.withdrawals}
                   data-foot-trades={totals.trades} data-foot-sells={totals.sells}
                   data-foot-realised-of={totals.realizedOf}
+                  data-foot-realised={totals.realized ?? undefined}
+                  data-foot-bought={totals.bought ?? undefined}
                   className="px-3 py-2.5 text-slate-200"
                   labelTitle={`${totals.accounts} of this book's ${accountsReg.length} accounts publish a dated capital record or a fund's dated capital calls. The other ${accountsReg.length - totals.accounts} were funded as well — the managed mandates issue a capital-account ledger rather than dated allotments, and a depository records what is held and never what was paid for it — so the Purchase total is not the whole of what the family has paid in.`}
                   label={<>Total · {fmtNum(totals.rows)} {totals.rows === 1 ? "row" : "rows"} · {totals.accounts} of {accountsReg.length} accounts</>}

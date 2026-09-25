@@ -338,7 +338,10 @@ export function NavVsIndex() {
       ? `The panel grows from ${panelFirst} to ${panelLast} accounts over the window and is complete from ${completeFrom}. Each step is measured over the accounts valued at both of its ends, so an account arriving contributes nothing — and the dashed NAV line starts where the panel does.`
       : "",
     unproven.length > 0
-      ? `Not proven to be performance: ${fmtFromBase(Math.max(...unproven.map((u) => u.unreportedFlowValue)), { compact: true })} of the move. ${stats.unreportedFlowAccounts.length} covered account(s) publish no dated capital record and hold more than one security — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — so a subscription or redemption inside one of them would appear in the book's return. The other covered accounts either publish a capital register or hold a single security whose unit count is identical at every snapshot, which rules a movement out from the statement itself.`
+      // A MOVE, SUMMED OVER THE STEPS — never an account's standing value, and
+      // never the largest single step: this printed ₹28.3 Cr, the VALUE of four
+      // accounts, beside the ₹2.78 Cr they moved (A-10).
+      ? `Not proven to be performance: ${fmtFromBase(unproven.reduce((a, u) => a + u.unreportedFlowValue, 0), { compact: true })} of the move. ${stats.unreportedFlowAccounts.length} covered account(s) — ${stats.unreportedFlowAccounts.map(nameOf).join(", ")} — have a step between two of their marks that no statement settles: no printed capital total at both of its ends, no identical unit counts, no dated record. A subscription or redemption inside such a step would appear in the book's return. Every other step is settled by the statements themselves.`
       : "",
   ].filter(Boolean).join("\n\n");
 

@@ -707,7 +707,7 @@ against what the statement printed, per row.
 | Check | Rows | Ties out | Rounding | Material |
 | --- | ---: | ---: | ---: | ---: |
 | bank book running balance | 1051 | 1051 | 0 | 0 |
-| transaction settlement | 823 | 634 | 60 | **2** |
+| transaction settlement | 825 | 634 | 60 | **2** |
 | realised gain: lots vs statement | 7 | 7 | 0 | 0 |
 
 | Document | Check | Row | Derived | Printed | Delta |
@@ -991,7 +991,7 @@ PDFs found 254 · fully parsed 199 · partial 62 · failed 3
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_AccountStatement5004CT (2).pdf` — 
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_CapitalRegister1173CT.pdf` — columns-not-matched: notes
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_PortfolioAppraisal675CT (1).pdf` — unparseable-cell: (continuation) · pctAssets = "(Cost)"; equity-subtotal-not-found: no unlabelled subtotal closed the Equity section
-- `source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf` — columns-not-matched: unitPrice; transaction-side-unknown: 2026-06-01 · "Security in"; transaction-side-unknown: 2026-06-01 · "Security out"
+- `source/_extracted/august-2026-d/MOTILAL REPORTS/Buoyant/I83_103473_TransactionStatement_India94CT.pdf` — columns-not-matched: exchange; transaction-side-unknown: 2026-06-01 · "Security in"; transaction-side-unknown: 2026-06-01 · "Security out"
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Carnelian _4551_06082026162230819762.pdf` — statement-basis: the family's consolidated review files this fund under Equity / Thematic-Tactical — its EXPOSURE, where `assetClass` records its legal form as a Category III AIF. Its units stay whole either way; it is never spread across the sectors it invests in
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Delphi Emerging Equity Fund ΓÇô_9049241536_10072026143812407917.pdf` — statement-basis: the family's consolidated review carries this holding under the name of what it OWNS — `Fund of Funds (VEC + Carnelian + Girik Cap + Insightful)` — and files it under Equity / Multi Cap. Same units (99,995) and same NAV; its closing value differs by ₹100 only because the review rounds the NAV to two decimals. It is a FUND OF FUNDS, so the family holds V.E.C and Carnelian both directly and through this; nothing is looked through and nothing is counted twice
 - `source/_extracted/august-2026-d/MOTILAL REPORTS/Demat/H19119_Ajay Jaisinghani_Holding.pdf` — aif-units-carry-face-value-not-nav: 2 AIF holding(s) are carried with units and NO market value, because the rate this statement prints for them is the FACE VALUE the units were issued at rather than a NAV — 3P India Equity Fund 1 — Class B3 (2053614.026 units at a face value of 100); Buoyant Opportunities Strategy — Class A4 (3416657.416 units at a face value of 100). Where the fund itself issues a statement in this book, that is where the valuation comes from.; field-not-in-document-contract: Motilal Oswal Financial Services (demat) returned printedTotalValuation, which makeDocument does not carry — the value is discarded. Add it to lib/document.mjs.

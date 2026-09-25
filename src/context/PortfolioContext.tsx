@@ -12,7 +12,7 @@ import { dedupedPositions, publicPrivateSplit, holdingBucket, DIRECT_EQUITY_BUCK
 import { accountIndex, engagementOf } from "@/lib/accounts";
 import { SUPPORTED_DISPLAY_CURRENCIES, type DisplayCurrency, DEFAULT_INR_PER_USD, fetchInrPerUsd } from "@/lib/fx";
 import { fetchQuotes, symbolsFor, applyQuotes, symbolFor, pendingAmong, quoteFeedNames, type QuoteFeed } from "@/lib/quotes";
-import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, withPartialValuation } from "@/lib/fundNavs";
+import { applyFundNavs, depositoryCashHoldings, partialValuationNotes, unpricedStatementUnits, withPartialValuation } from "@/lib/fundNavs";
 import { applyCorporateActionQuotes, fetchCorporateActions, savedCorporateActions, type ActionFeed, type ActionReturn } from "@/lib/corporateActions";
 import { readCachedQuotes, writeCachedQuotes } from "@/lib/quoteCache";
 import { fmtCurrency } from "@/lib/format";
@@ -33,6 +33,16 @@ import {
  */
 const DEPOSITORY_CASH = depositoryCashHoldings();
 const DEPOSITORY_NOTES = partialValuationNotes(DEPOSITORY_CASH);
+/**
+ * UNITS A HOLDING STATEMENT RECORDS AND PRICES NOWHERE (the figure audit, A-17)
+ * — ABSL Balanced Advantage on two Motilal demats, priced by the same scheme's
+ * row on a third account's statement from the same depository and day. Valued
+ * at AMFI's NAV on the LIVE basis only, exactly like the depository's cash, and
+ * deliberately NOT fed to `partialValuationNotes`: those accounts sent a holding
+ * statement and are valued, so "this account sent no holding statement" would
+ * be false of them.
+ */
+const UNPRICED_UNITS = unpricedStatementUnits();
 
 // Re-export so components can keep importing these from the context module.
 export { SUPPORTED_DISPLAY_CURRENCIES } from "@/lib/fx";
@@ -411,7 +421,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     // The statement's own rows come through the corporate-action layer, which
     // prices them; the depository's cash rows are funds, which that layer would
     // only price the same way, so they take the quote overlay directly.
-    const positions = applyFundNavs([...corporateActionLayer.positions, ...applyQuotes(DEPOSITORY_CASH, quotes)]);
+    const positions = applyFundNavs([...corporateActionLayer.positions, ...applyQuotes([...DEPOSITORY_CASH, ...UNPRICED_UNITS], quotes)]);
     /**
      * AN ACCOUNT SOME OF WHOSE HOLDINGS ARE NOW VALUED NO LONGER "VALUES NOTHING".
      * Its generated `noPositionsReason` is true of the statement basis and false

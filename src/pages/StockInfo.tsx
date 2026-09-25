@@ -7,7 +7,7 @@ import { Kpi } from "@/components/Kpi";
 import { usePortfolio } from "@/context/PortfolioContext";
 import {
   sum, sumOrNull, consolidatedMarketValue, dedupedPositions, isFundVehicle, isCompanyShare, assetClassLabel,
-  measuredReturn, type RowCapital,
+  measuredReturn, valueDateOf, type RowCapital,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE,
   holdingBucket, bucketLabel, isMandateHeld, mandateLabel,
   MANDATE_BUCKET, DIRECT_EQUITY_BUCKET, UNROUTED_EQUITY_BUCKET, isCashEquivalent,
@@ -15,7 +15,7 @@ import {
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor, DASH } from "@/lib/format";
 import { fifoBasisNote } from "@/lib/fifo";
 import { AbsentValue, AbsentCell, AbsentSection } from "@/components/Absent";
-import { fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
+import { depositoryUnitsGist, describeDepositoryUnits, fundNavFor, isArbitrageFund } from "@/lib/fundNavs";
 import { carriedCostOf, carriedCostNote } from "@/lib/tranches";
 import { BOOK_POSITION_TRANCHES } from "@/data/glowData";
 import type { Position } from "@/lib/types";
@@ -74,14 +74,17 @@ import {
  * `measuredReturn`, and a second line repeating the HPR would be one number
  * under two names.
  */
-function ReturnCells({ p, asOf, capital }: { p: Position; asOf: string; capital?: RowCapital | null }) {
-  const hpr = measuredReturn(p, "absolute", asOf);
-  const cagr = measuredReturn({ ...p, capital }, "cagr", asOf);
+function ReturnCells({ p, valuedAt, capital }: { p: Position; valuedAt: string | null; capital?: RowCapital | null }) {
+  // The window ends on the date THIS line's value is struck — its own
+  // statement, its NAV or its live quote — never the book's newest date (A-01).
+  const at = { ...p, valuedAt };
+  const hpr = measuredReturn(at, "absolute", valuedAt ?? "");
+  const cagr = measuredReturn({ ...at, capital }, "cagr", valuedAt ?? "");
   // Only where the guard actually annualised. `cagr` falls back to the
   // holding-period figure under a year and tags it HPR — printing that as a
   // second line would show one number twice under two names.
   const annual = cagr.shown && cagr.tag === "CAGR" ? cagr : null;
-  const xirr = capital?.dated ? measuredReturn({ ...p, capital }, "xirr", asOf) : null;
+  const xirr = capital?.dated ? measuredReturn({ ...at, capital }, "xirr", valuedAt ?? "") : null;
   const money = xirr && xirr.shown && xirr.tag === "XIRR" ? xirr : null;
   return (
     <>
@@ -287,6 +290,7 @@ export function StockInfo() {
   // page shows any holding, AIF units included, and those are not listed.
   const bookMV = useMemo(() => (portfolio ? consolidatedMarketValue(portfolio.positions) : 0), [portfolio]);
   const accIdx = useMemo(() => accountIndex(portfolio?.accounts ?? []), [portfolio]);
+  const nowMs = useMemo(() => Date.now(), []);
   // The demat statements' own opening-to-closing quantity account for this
   // name, one row per account that issues a transaction statement.
   const moves = useMemo(() => movementsFor(securityKey), [securityKey]);
@@ -635,10 +639,21 @@ export function StockInfo() {
    * CONSOLIDATED value below is right to dedupe, and a count of the entities
    * that report this name is not a consolidated figure — it is the answer to
    * "whose statements is this on", and the answer is two.
+   *
+   * AND AN ENTITY IS A MEMBER, NOT AN ACCOUNT. The count above was of ACCOUNTS
+   * under the word "entities", so the family's Cash read "Held in 12 entities"
+   * over three members, and State Bank of India "4" where the Portfolio
+   * Monitor's own Entities column says 2. The pill counts the MEMBERS whose
+   * statements carry the name — `ownerId`, the registry's one identity per
+   * person or trust — and names the account count beside it wherever the two
+   * differ, since "which statements" is still a real question. An account the
+   * registry attributes to nobody counts as its own entity rather than
+   * vanishing into another's.
    */
-  const held = new Set(rows.map((r) => r.accountId)).size;
+  const heldAccounts = new Set(rows.map((r) => r.accountId)).size;
+  const heldOwners = new Set(rows.map((r) => accIdx.get(r.accountId)?.ownerId ?? `account:${r.accountId}`)).size;
   // NO ROW IS NOT THE SAME AS EXITED — see `fundOnly` above.
-  const exited = held === 0 && !fundOnly && !resolving;
+  const exited = heldAccounts === 0 && !fundOnly && !resolving;
   /**
    * What the account rows carry that the (consolidated) footer beneath them does
    * not. Non-zero only where this name is reported under more than one member,
@@ -743,11 +758,13 @@ export function StockInfo() {
     ? {
         line: `AMFI NAV, ${navMark.date}${navMark.changePct == null ? "" : ` · ${navMark.changePct >= 0 ? "+" : ""}${navMark.changePct.toFixed(2)}% on its day`}`,
         tip: `AMFI's published NAV for ${navMark.scheme}, ${navMark.date}. A fund resolves no NSE trading symbol, so this is the industry's own daily NAV rather than an intraday quote — and its move is against the NAV before it, on its own date, not today's.${
-          // NO STATEMENT PRICES A DEPOSITORY'S OWN CLOSING UNITS, so the tip
-          // says whose count they are rather than implying a statement mark
-          // that the NAV replaced.
+          // NO STATEMENT PRICES THESE UNITS, so the tip says whose count they
+          // are rather than implying a statement mark that the NAV replaced —
+          // and which KIND of count, because a depository's closing balance
+          // on an account with no holding statement and units a holding
+          // statement records with no rate are two different reasons (A-17).
           rows.some((r) => r.depositoryUnits)
-            ? ` ${rows.every((r) => r.depositoryUnits) ? "These units are" : "Some units here are"} a depository's own closing balance, on an account that sent no holding statement, so no statement prices them.`
+            ? ` ${rows.every((r) => r.depositoryUnits) ? "These units are" : "Some units here are"} ${depositoryUnitsGist(rows)}, so no statement prices them.`
             : ""}`,
       }
     : live
@@ -791,6 +808,10 @@ export function StockInfo() {
   // drawn at zero, which would read as "none of this is long-term".
   const ltPct = ltCost !== null && cost !== null && cost > 0 ? (ltCost / cost) * 100 : null;
   const holdingAsOf = rows[0] ? accIdx.get(rows[0].accountId)?.asOf ?? portfolio.asOf : portfolio.asOf;
+  /** The EARLIEST statement date behind this holding — what a change in a
+   *  scheme's unit is compared with, since a statement drawn before the change
+   *  counts the earlier unit (DSM-A2, `FundLookthrough`). */
+  const statementAsOfEarliest = [...new Set(rows.map((r) => accIdx.get(r.accountId)?.asOf).filter((d): d is string => !!d))].sort()[0] ?? null;
 
   /**
    * ── THE POSITION TABLE, BY ROUTE ───────────────────────────────────────────
@@ -905,8 +926,9 @@ export function StockInfo() {
             ? <AbsentCell reason="this statement reports the holding at a total value, not a price per unit, so there is no mark to show" />
             : <span title={r.depositoryUnits
                 /* NO STATEMENT MARKS THESE UNITS, so the sentence that says a
-                   NAV "replaces" one would be false here. */
-                ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units: they are the depository's own closing balance of ${r.depositoryUnits.asOf ?? "its statement date"} on an account that sent a transaction statement and no holding statement, and their value is those units at this NAV.`
+                   NAV "replaces" one would be false here. Which of the two
+                   reasons applies is `describeDepositoryUnits`'s to say. */
+                ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}. No statement prices these units — they are ${describeDepositoryUnits(r.depositoryUnits, portfolio.accounts)} — and their value is those units at this NAV.`
                 : r.navPriced
                 ? `${price(r.currentPrice)} — AMFI's published NAV for this scheme as of ${r.navDate}, which is newer than the ${providerOf(accIdx, r)} statement's own mark and replaces it. Only the value moves: quantity, cost and every dated figure stay as the statement printed them.`
                 : `Marked at ${price(r.currentPrice)} by the ${providerOf(accIdx, r)} statement${accIdx.get(r.accountId)?.asOf ? ` of ${accIdx.get(r.accountId)!.asOf}` : ""}.`}>
@@ -926,7 +948,7 @@ export function StockInfo() {
             the methodology lives (Stage 10af). */}
         <td className="px-4 py-2.5 text-right mono" data-stock-return
           data-capital={rowCap ? (rowCap.dated ? "dated" : "undated") : undefined}>
-          <ReturnCells p={r} asOf={portfolio.asOf} capital={rowCap} />
+          <ReturnCells p={r} valuedAt={valueDateOf(r, accIdx.get(r.accountId)?.asOf, nowMs)} capital={rowCap} />
         </td>
       </Tr>
     );
@@ -1373,7 +1395,16 @@ export function StockInfo() {
             ? <Pill tone="info"><span data-stock-held="funds-only"
                 title="No statement issued to this family reports this company, so there is no account, quantity or cost for it. The family holds it through the funds listed on the Position tab — derived from each fund's own monthly filing, and no part of the book's own value.">
                 Held only inside your funds</span></Pill>
-            : !resolving && <Pill>{unchecked ? "No direct holding" : exited ? "Position closed" : `Held in ${held} ${held === 1 ? "entity" : "entities"}`}</Pill>}
+            : !resolving && <Pill>{unchecked ? "No direct holding" : exited ? "Position closed" : (
+                // AN ENTITY IS A MEMBER, NOT AN ACCOUNT (DSM-A3) — see
+                // `heldOwners`. The account count rides beside it wherever the
+                // two differ, and what each counts is the hover.
+                <span data-stock-owners={heldOwners} data-stock-accounts={heldAccounts}
+                  title={heldAccounts === heldOwners
+                    ? `${heldOwners === 1 ? "One member's statement reports" : `${heldOwners} members' statements report`} this holding — ${heldAccounts === 1 ? "one account" : `one account each`}.`
+                    : `${heldOwners} ${heldOwners === 1 ? "member holds" : "members hold"} this across ${heldAccounts} accounts — an entity is a member of the family or a trust, and one member can hold a name in several accounts. Each account is a row of the Position table.`}>
+                  {`Held in ${heldOwners} ${heldOwners === 1 ? "entity" : "entities"}`}{heldAccounts !== heldOwners ? ` · ${heldAccounts} accounts` : ""}
+                </span>)}</Pill>}
           {/* ...AND THE OTHER ROUTE, BESIDE IT, where a company is held both
               ways: a reader who sees "Held in 3 entities" has otherwise no hint
               that ten funds hold it too until they open the table. */}
@@ -1827,7 +1858,7 @@ export function StockInfo() {
                 <CorporateActionReturns securityKey={securityKey} />
               </>
             ) : schemeHalves ? (
-              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
+              <FundLookthrough part="nav" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
             ) : (
               <Card className="mt-5" title={`Price history & returns — not applicable to ${notACompanyLabel}`}>
                 <AbsentSection
@@ -1862,7 +1893,7 @@ export function StockInfo() {
                     resolves. It answers the question the card below has to refuse
                     for a company-shaped page: "what am I holding through this". */}
                 {lookThroughHoldings && (
-                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} />
+                  <FundLookthrough part="holdings" securityKey={securityKey} name={name} holdingValue={mv} asOfHolding={holdingAsOf} statementAsOf={statementAsOfEarliest} />
                 )}
                 {/* ONE SHORT CARD, BY DECISION. A fund or a balance has no PE, no
                     balance sheet, no concall and no insider filing — absent

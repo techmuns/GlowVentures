@@ -15,7 +15,9 @@
 // catching all produce a PLAUSIBLE number:
 //
 //   • a rate solved over a record that stops short of the value it is set
-//     against (Green Lantern 510861's record ends a month before its statement);
+//     against (Green Lantern 510861's typed record ends a month before its
+//     statement — now closed by its register, and checked on a constructed
+//     shortfall; see §2);
 //   • a rate on a row holding only PART of an account;
 //   • a ₹0 cash line splitting an account that is whole in every rupee;
 //   • a sub-year window compounded onto a year;
@@ -91,32 +93,72 @@ console.log("\n── the IRR Buoyant's fact sheet prints ──");
 
 // ── 2. A RECORD THAT STOPS SHORT OF ITS VALUE CARRIES NO RATE ────────────────
 //
-// Green Lantern 510861's dated record comes from a QUARTERLY report ending 30
-// June, and its value is struck on 27 July — so the withdrawals between the two
-// are in the value and not in the record. `recordShortfall` is what refuses it,
-// and the case is LOAD-BEARING: the same account with a record that reached its
-// statement would be rated, so nothing else is doing the refusing.
+// Green Lantern 510861's typed record comes from a QUARTERLY report ending 30
+// June, and its value is struck on 27 July. Stage 10cf named the gap — ₹6,350
+// of July TDS, in the value and not in the record — and refused the rate
+// (`recordShortfall`). THE CASE HAS SINCE MOVED, because the gap was closed at
+// its source: the book builder now merges the account's capital REGISTER, whose
+// balances walk to 27 July and which carries exactly those two TDS rows
+// (₹2,810 + ₹3,540), and `capitalRecordTo` runs as far as that witnessed
+// register. So no real account in this book stops short any more.
+//
+// The refusal is still LOAD-BEARING and is still checked here — on a
+// CONSTRUCTED shortfall: the same account with its record's reach set back to
+// what its typed rows reach on their own, run through the REAL
+// `recordShortfall`, `buildDatedCapital` and `behind`. And the control is
+// flipped: the real book, whose record reaches the statement, RATES it — so the
+// reach is the only thing doing the refusing, in both directions.
 console.log("\n── the record must reach the value it is set against ──");
 {
   const gl = BOOK_ACCOUNTS.find((a) => a.accountId === GL);
-  ok("the book carries the account whose record stops short", !!gl && !!gl.asOf && !!gl.capitalRecordTo
-    && gl.capitalRecordTo < gl.asOf, gl ? `${gl.capitalRecordTo} < ${gl.asOf}` : "missing");
-  const why = recordShortfall(gl);
-  ok("…and recordShortfall refuses it, naming both dates", !!why && why.includes(String(gl?.capitalRecordTo)) && why.includes(String(gl?.asOf)),
-    why ?? "no reason");
-  ok("…so the Monitor rates none of it", dc.of(GL) === null);
+  // How far the TYPED rows reach on their own — re-expressed off the archive
+  // (the documents that print a contribution or a withdrawal row), not read
+  // back out of the builder.
+  const AUDIT = path.join(process.cwd(), "public", "audit");
+  const typedReach = fs.readdirSync(AUDIT)
+    .map((dir) => path.join(AUDIT, dir, "document.json"))
+    .filter((f) => fs.existsSync(f))
+    .map((f) => JSON.parse(fs.readFileSync(f, "utf8")))
+    .filter((d) => d.provider === gl?.provider && d.accountNo === gl?.accountNo)
+    .filter((d) => (d.cashFlows ?? []).some((c: { date?: string; kind?: string }) => c.date && (c.kind === "contribution" || c.kind === "withdrawal")))
+    .map((d) => (d.periodTo ?? d.asOf) as string)
+    .filter(Boolean).sort().at(-1) ?? null;
+  ok("the account's typed rows alone stop short of its statement", !!gl?.asOf && !!typedReach && typedReach < gl.asOf,
+    `${typedReach} < ${gl?.asOf}`);
+  ok("the real record reaches its statement: capitalRecordTo is the as-of, past the typed rows",
+    !!gl?.capitalRecordTo && gl.capitalRecordTo === gl.asOf && !!typedReach && gl.capitalRecordTo > typedReach,
+    `runs to ${gl?.capitalRecordTo}, statement ${gl?.asOf}, typed rows ${typedReach}`);
+  // What closed it is the gap Stage 10cf named, and nothing more: the record's
+  // rows past the typed reach are withdrawals only, adding to ₹6,350.
+  const past = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === GL && !!typedReach && m.date > typedReach);
+  const pastOut = past.filter((m) => m.direction === "out").reduce((a, m) => a + (m.amount ?? 0), 0);
+  ok("…and what reaches it is the July TDS the gap was: withdrawals only, ₹6,350",
+    past.length > 0 && past.every((m) => m.direction === "out") && Math.abs(pastOut - 6350) <= 1,
+    `${past.length} row(s), ${pastOut} out`);
+  ok("so the real book RATES the account, over a record running to its own statement",
+    recordShortfall(gl) === null && dc.of(GL) !== null, `rated ${dc.of(GL) !== null}`);
   const glCap = dc.behind(own(GL), universe);
-  ok("…and a row that is the whole mandate is marked undated, with the reason", !!glCap && !glCap.dated
-    && /ends .* before the .* statement/.test(glCap.reason), JSON.stringify(glCap));
-  // THE CONTROL: the same record, the same value, the reach stated as met.
+  ok("…and a row that is the whole mandate is dated, closing on the statement its record reaches",
+    !!glCap && glCap.dated && glCap.to === gl?.asOf, JSON.stringify(glCap));
+
+  // THE CONSTRUCTED SHORTFALL: the same account, its reach set back to the
+  // typed rows' own. Everything below is the real code.
+  const short = gl && typedReach ? { ...gl, capitalRecordTo: typedReach } : undefined;
+  const why = recordShortfall(short);
+  ok("a record set back to its typed reach is refused, naming both dates",
+    !!why && why.includes(String(typedReach)) && why.includes(String(gl?.asOf)), why ?? "no reason");
+  const spoofed = BOOK_ACCOUNTS.map((a) => (a.accountId === GL && short ? short : a));
+  const shortDc = buildDatedCapital({ ...book, accounts: spoofed });
+  ok("…so the Monitor rates none of it", shortDc.of(GL) === null);
+  const shortCap = shortDc.behind(own(GL), universe);
+  ok("…and a row that is the whole mandate is marked undated, with the reason", !!shortCap && !shortCap.dated
+    && /ends .* before the .* statement/.test(shortCap.reason), JSON.stringify(shortCap));
+  // The inception half is not what refuses it: the record reaches back to
+  // inception on its own terms, so the reach is the only refusal.
   const moves = BOOK_CAPITAL_MOVES.filter((m) => m.accountId === GL);
   ok("the record reaches back to inception on its own terms",
     contributionsAreComplete(GL, [...moves], [...BOOK_POSITIONS], BOOK_POSITION_TRANCHES, gl?.inceptionDate, null,
       BOOK_CAPITAL_FROM_INCEPTION.includes(GL)) === null);
-  const spoofed = BOOK_ACCOUNTS.map((a) => (a.accountId === GL ? { ...a, capitalRecordTo: a.asOf } : a));
-  const control = buildDatedCapital({ ...book, accounts: spoofed });
-  ok("…and with a record that reached its statement it WOULD be rated — the reach is the only refusal",
-    control.of(GL) !== null);
   // …and the other direction, on the whole book: every record-sourced rated
   // account's record reaches its own statement.
   const recorded = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId));

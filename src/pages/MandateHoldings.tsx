@@ -18,6 +18,8 @@ import { rollup, acctKey } from "@/lib/txnRollup";
 import { capitalRollup, capitalMovesWithCalls, capitalReturn } from "@/lib/tranches";
 import { fifoTotals, fifoBasisNote } from "@/lib/fifo";
 import { BOOK_CAPITAL_MOVES, BOOK_POSITION_TRANCHES, BOOK_COMMITMENTS, BOOK_CAPITAL_FROM_INCEPTION, BOOK_ACCOUNTS } from "@/data/glowData";
+/** How many accounts publish a dated capital record — COUNTED, never typed (it read "Eleven" for a book carrying more). */
+const DATED_ACCOUNTS = new Set(BOOK_CAPITAL_MOVES.map((m) => m.accountId)).size;
 import { fmtCurrency, fmtNum, fmtPct, fmtDate, changeColor } from "@/lib/format";
 import type { Account, Position } from "@/lib/types";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
@@ -927,7 +929,7 @@ function CapitalIn({ account }: { account: Account }) {
       <Card className="mt-5" title={title}>
         <AbsentSection
           what={`${account.provider} does not date what was paid into account ${account.accountNo}`}
-          needs={`The account was funded — it holds ${account.strategy ? "this mandate" : "a position"} — and no statement in this drop says on which dates or in how many payments. A managed mandate issues a capital-account ledger (contributions, withdrawals, TDS) rather than dated unit allotments, and a depository records what is held and never what was paid for it. What would fill this is a contribution or capital-account statement from ${account.provider} carrying a date against each payment. Eleven of this book's accounts publish one; this is not among them.`}
+          needs={`The account was funded — it holds ${account.strategy ? "this mandate" : "a position"} — and no statement in this drop says on which dates or in how many payments. A managed mandate issues a capital-account ledger (contributions, withdrawals, TDS) rather than dated unit allotments, and a depository records what is held and never what was paid for it. What would fill this is a contribution or capital-account statement from ${account.provider} carrying a date against each payment. ${DATED_ACCOUNTS} of this book's accounts publish one; this is not among them.`}
         />
       </Card>
     );

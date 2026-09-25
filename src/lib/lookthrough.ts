@@ -878,6 +878,19 @@ const skipReason = (f: HeldFund, indexReason: string | null): string =>
  * joining it. The caller counts those and says so.
  */
 /**
+ * AN ISIN'S CHARACTERS 8–9 ARE ITS SECURITY TYPE, AND `01` IS AN EQUITY SHARE.
+ * `INE491A01021` is City Union Bank's share; `INE491A16169` is one of its
+ * certificates of deposit — same issuer (`INE491A`, characters 1–7, see
+ * `issuerOf`), different instrument. This is the test for "the ISIN that stands
+ * for the COMPANY", and it is written once because two copies of it drifted:
+ * `rankIsin` below carried `[A-Z0-9]{5}01`, which puts the `01` one place too
+ * far right and so matched NO equity ISIN at all — its whole middle tier was
+ * dead. Four characters of issuer code after `IN` + the issuer type, then the
+ * type code.
+ */
+const isEquitySeries = (isin: string): boolean => /^IN[EF][A-Z0-9]{4}01/.test(isin);
+
+/**
  * How well an ISIN identifies its ISSUER rather than one of its instruments.
  * Lower is better: one the book itself carries, then the equity series, then
  * anything else. It never invents an identifier — every candidate was filed.
@@ -888,7 +901,7 @@ const compareScore = (a: readonly (number | string)[], b: readonly (number | str
   return 0;
 };
 const rankIsin = (isin: string, book: ReadonlyMap<string, string>): number =>
-  book.has(isin) ? 0 : /^IN[EF][A-Z0-9]{5}01/.test(isin) ? 1 : 2;
+  book.has(isin) ? 0 : isEquitySeries(isin) ? 1 : 2;
 
 export async function loadStockExposure(
   funds: HeldFund[],
@@ -1035,7 +1048,10 @@ export async function loadStockExposure(
   const fenced = (isin: string | null, name: string): boolean =>
     (!!isin && ringFenced.isins.has(isin))
     || ringFenced.keys.has(securityKeyOf(name)) || ringFenced.keys.has(issuerKeyOf(name));
-  const isEquitySeries = (isin: string): boolean => /^IN[EF][A-Z0-9]{5}01/.test(isin);
+  // `isEquitySeries` is the module's own — ONE test for "the ISIN that stands
+  // for the company". A local copy here carried `[A-Z0-9]{5}01`, which puts
+  // the type code one place too far right and matched no equity ISIN at all, so
+  // the equity-first order below and the pick beside it never ran.
 
   // 2. The book's own issuers — the prefix of every company ISIN the book carries.
   const bookIssuer = new Map<string, string>();
@@ -1048,10 +1064,21 @@ export async function loadStockExposure(
       m.set(key, (m.get(key) ?? false) || isEquitySeries(isin));
       cand.set(pre, m);
     }
+    /**
+     * ONLY A BOOK SHARE STANDS FOR ITS ISSUER. A book ISIN that is not the
+     * company's equity (security type `01`, characters 8–9) must not take the
+     * issuer's paper: the book carries Borosil Renewables by its WARRANT
+     * (`INE666D13019`) and holds the equity only through a mandate that prints
+     * no ISIN, so a fund's Borosil share keyed on the prefix alone would land on
+     * the warrant's row — a warrant is not the equity, and this repo refuses
+     * that join by name. With no equity key the prefix falls through to the
+     * filings' own issuer name, which joins the mandate's share by its key.
+     * Measured on this book: no fund files an `INE666D` line today, so no
+     * figure moves; `stockExposure.test.ts` holds the rule on a synthetic one.
+     */
     for (const [pre, m] of cand) {
-      const keys = [...m.keys()];
-      const equity = keys.filter((k) => m.get(k));
-      const pick = keys.length === 1 ? keys[0] : equity.length === 1 ? equity[0] : null;
+      const equity = [...m.keys()].filter((k) => m.get(k));
+      const pick = equity.length === 1 ? equity[0] : null;
       if (pick) bookIssuer.set(pre, pick);
     }
   }

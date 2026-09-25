@@ -68,9 +68,11 @@
   "income": 3226436.1,
   "expenses": null,
   "fees": 9452772.59,
+  "accruedIncome": 369650,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 400475677.94,
-  "openingCorpus": 400475677.94,
+  "openingCorpus": null,
   "periodFrom": "2025-01-06",
   "periodTo": "2026-07-10",
   "source": "carnelian-asset-management-and-advisors-pvt-ltd-3517383-2026-07-10-performance-history"

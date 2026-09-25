@@ -149,9 +149,16 @@ export function extract({ grid, meta }) {
     assetClass: "AIF",
     quantity: units,
     marketPrice: nav,
-    // Contribution is capital IN, which is this holding's cost basis: the
-    // statement carries no other cost figure and the fund reports contribution
-    // net of the stamp duty it deducted at allotment.
+    // The summary row's Contribution Amount is this holding's cost basis, and
+    // it is NET of the 0.005% stamp duty the fund deducted at allotment — the
+    // ledger below prints the GROSS it was deducted from ("Initial Contribution
+    // 75,00,00,000.00", then "Stamp Duty @ 0.005% (37,498.13)"), so the
+    // statement does carry the amount the family paid; this reader does not
+    // take it. Every other fund reader here (Helios, Active Momentum, Founders,
+    // Delphi) takes the gross its statement prints, so the book states cost on
+    // two bases (the figure audit's VD-24). Changing it here alone would break
+    // the tie between this cost and the FIFO lots `build-book` strikes from the
+    // capital record's net `invested`, so the basis moves in both places at once.
     totalCost: contribution,
     marketValue: printedValuation,
     source,
@@ -179,9 +186,13 @@ export function extract({ grid, meta }) {
       date,
       description: desc,
       security,
-      // A contribution is money the family PUT IN; the statement prints stamp
-      // duty as a parenthesised negative on its own line, which parseNum reads
-      // as negative — so the sign is the statement's, never imposed here.
+      // A contribution is money the family PUT IN. The statement prints stamp
+      // duty as a parenthesised negative on its own line — "(37,498.13)" — but
+      // TXN_ROW's parentheses sit OUTSIDE the captured group, so parseNum never
+      // sees them and the amount is stored as a MAGNITUDE: +37,498.13, typed
+      // `expense`. The kind is what carries the direction, and `build-book`
+      // reads a charge as `Math.abs` for exactly that reason. (This comment used
+      // to say parseNum read the sign off the page; it never did.)
       kind: /redemption|redeem/i.test(desc) ? "redemption"
         : /stamp\s*duty|expense|fee/i.test(desc) ? "expense"
         : "contribution",
@@ -194,7 +205,12 @@ export function extract({ grid, meta }) {
 
   const flows = makeFlows({
     contribution,
-    corpus: contribution,
+    // The window closes at the fund's own printed VALUATION — the figure the
+    // holding carries. This read `corpus: contribution`, which made every
+    // Sanshi value bridge close at the money paid in: ₹157.49 Cr across the
+    // five folios against the ₹204.48 Cr the fund values them at, so a reader
+    // saw contributions equal to the closing value and read a 0% return.
+    corpus: printedValuation,
     periodFrom: cashFlows.length ? cashFlows.map((c) => c.date).sort()[0] : null,
     periodTo: asOf,
     source,

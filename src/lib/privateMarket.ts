@@ -54,13 +54,15 @@
 // the same rule that places its holding (`fundMarketSideOf`), and the page
 // NAMES the ones it leaves out rather than dropping them.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
 import { type AccountIndex, ownerOf, providerOf } from "./accounts";
 import { fifoTotals } from "./fifo";
 import {
-  fundMarketSideOf, fundMarketSideBasis,
-  type AifCategory, type MarketSide, type MarketSideBasis,
+  fundMarketSideOf, fundMarketSideBasis, unvaluedKindOf,
+  type AifCategory, type MarketSide, type MarketSideBasis, type UnvaluedKind,
 } from "./aifCategory";
+
+export type { UnvaluedKind };
 
 /**
  * THE SIDE OF THE FUND AN ACCOUNT HOLDS, read off the account alone — for an
@@ -384,11 +386,11 @@ export function distributionOf(c: Commitment): number | null {
 }
 
 /**
- * Why an account in this book holds nothing. The three are never conflated —
- * a reader acts differently on each, and only one of them is a defect.
+ * Why an account in this book holds nothing — `UnvaluedKind`, which lives in
+ * `aifCategory.ts` since the AIF drill-down reads the same classifier (see its
+ * note there). The kinds are never conflated: a reader acts differently on
+ * each, and only one of them is money this book cannot value.
  */
-export type UnvaluedKind = "no-nav" | "income-only" | "redeemed" | "other";
-
 export type UnvaluedAccount = {
   account: Account;
   /**
@@ -404,14 +406,6 @@ export type UnvaluedAccount = {
   /** Capital actually paid against this folio, where a capital account states it. */
   drawn: number | null;
   undrawn: number | null;
-};
-
-const kindOf = (reason: string | null | undefined): UnvaluedKind => {
-  const r = reason ?? "";
-  if (/publishes no NAV/i.test(r)) return "no-nav";
-  if (/report income and distribution/i.test(r)) return "income-only";
-  if (/redeemed/i.test(r)) return "redeemed";
-  return "other";
 };
 
 /**
@@ -434,7 +428,7 @@ export function unvaluedAccounts(
     .map((a) => ({
       account: a,
       side: accountFundSide(a),
-      kind: kindOf(a.noPositionsReason),
+      kind: unvaluedKindOf(a.noPositionsReason),
       reason: a.noPositionsReason ?? null,
       drawn: byAccount.get(a.accountId)?.drawn ?? null,
       undrawn: byAccount.get(a.accountId)?.undrawn ?? null,
@@ -451,3 +445,197 @@ export function unvaluedAccounts(
  */
 export const unvaluedDrawn = (unvalued: UnvaluedAccount[]): number | null =>
   sumOrNull(unvalued.map((u) => u.drawn));
+
+/**
+ * ── AN INCOME-ONLY FOLIO IS A VIEW OF A HOLDING ANOTHER ACCOUNT VALUES ──────
+ *
+ * 360 ONE Alternates issues two folios — 1000632 (Ajay) and 1000633 (Bharat) —
+ * whose documents report the income a fund distributed and nothing else: no
+ * valuation, and in the book's own words "Where these units are marked, another
+ * account holds them." They are the fund manager's view of 360 ONE Special
+ * Opportunities Fund – Series 8, Class A3: the holding 360 ONE Private Wealth
+ * values under CRN37702 (Ajay) and CRN60117 (Bharat).
+ *
+ * The Private Market page drew them in its closed "Not valued · missing data"
+ * section as a fund of their own — so one fund stood in two sections, valued at
+ * ₹1.47 Cr in one and "missing data" in the other, and a capital call typed on
+ * one row could never reach the other (the two keyed the store differently).
+ * The AIF drill-down went further and said their units were valued by no
+ * statement. They are lines UNDER the valued row now, carrying no figure of
+ * their own: their units are already counted, on the line above them.
+ *
+ * ── A COMMITTED JOIN, CHECKED RATHER THAN TRUSTED ───────────────────────────
+ *
+ * The folio and the holding sit in different accounts at different issuers,
+ * and nothing in the book links them: the names differ ("Series 8 Class A3"
+ * against "SERIES 8 - CLASS A3 (AIF CATEGORY II)[DISTAIF887]") and this book
+ * never joins on a name. So the join is a table, cited — the standing
+ * `BENEFICIAL_OWNER_BY_DP_ACCOUNT` has in the ingest — and, like the depository
+ * reader's `AIF_UNITS`, it is CHECKED rather than trusted: a row folds only
+ * where the book carries that holding for the SAME owner at EXACTLY the units
+ * the folio's own Statement of Earnings prints. A drop where either moves
+ * leaves the folio in the Not valued section with its own reason, never under a
+ * row it no longer ties to. `privateBook.test.ts` holds every row of the table
+ * to the archive's own statement.
+ *
+ * THE DURABLE HOME IS `build-book`, which could carry the link on the account
+ * itself; until it does, this is the one place it is made.
+ */
+export type IncomeOnlyView = {
+  /** The income-only folio. */
+  accountId: string;
+  /** The holding its units ARE — a `securityKey` another account values. */
+  securityKey: string;
+  /** The units outstanding its own Statement of Earnings prints — the witness. */
+  units: number;
+  /** Where the join comes from, in words. */
+  evidence: string;
+};
+
+export const INCOME_ONLY_VIEWS: readonly IncomeOnlyView[] = [
+  {
+    accountId: "360-one-alternates-asset-management-1000632",
+    securityKey: "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    units: 990429.684,
+    evidence: "360 ONE Alternates' Statement of Earnings of 4 Jun 2026 for folio 1000632 prints Class A3, 9,90,429.684 units outstanding — the units 360 ONE Private Wealth's CRN37702 statement marks for the same holder",
+  },
+  {
+    accountId: "360-one-alternates-asset-management-1000633",
+    securityKey: "360-one-special-opportunities-fund-series-8-class-a3-aif-category-ii",
+    units: 990429.684,
+    evidence: "360 ONE Alternates' Statement of Earnings of 4 Jun 2026 for folio 1000633 prints Class A3, 9,90,429.684 units outstanding — the units 360 ONE Private Wealth's CRN60117 statement marks for the same holder",
+  },
+];
+
+/**
+ * The valued holding an income-only folio is a view of — or null where the
+ * table names none, or the book no longer carries that holding, for the same
+ * owner, at exactly the folio's units. Half of the third decimal both sides
+ * print, the tolerance the depository reader holds its own unit join to.
+ */
+export function incomeOnlyViewOf(
+  account: Account,
+  positions: readonly Position[],
+  accIdx: AccountIndex,
+): { view: IncomeOnlyView; position: Position } | null {
+  const view = INCOME_ONLY_VIEWS.find((v) => v.accountId === account.accountId);
+  if (!view || !account.ownerId) return null;
+  const position = positions.find((p) => p.securityKey === view.securityKey
+    && p.accountId !== account.accountId
+    && accIdx.get(p.accountId)?.ownerId === account.ownerId
+    && Math.abs(p.quantity - view.units) < 0.0005);
+  return position ? { view, position } : null;
+}
+
+/**
+ * ── A CAPITAL ACCOUNT IS COUNTED ONCE WHERE ITS HOLDING IS ─────────────────
+ *
+ * Two family trusts' statements report Transition Venture Capital Fund I —
+ * Class A1: 7,500 units each, a ₹1.5 Cr commitment each, ₹75 L paid on 17 Oct
+ * 2025 each. The book's policy (§4c) is that the two report ONE holding, so
+ * every consolidated figure counts it once — and until now every consolidated
+ * figure counted its CAPITAL ACCOUNT twice. The fund row printed ₹3 Cr committed
+ * and ₹1.5 Cr paid in beside one holding's 7,500 units, ₹75 L cost and ₹1.71 Cr
+ * value, so a reader dividing the value by the paid in got +14.3% beside a
+ * printed +128.6%. Under EITHER answer to the family's question one half of that
+ * row was wrong: if it is one investment the capital was doubled, and if it is
+ * two the holding was halved.
+ *
+ * So the capital follows the HOLDING'S dedupe group — the one decision §4c keeps
+ * in one place — and the family's answer moves both halves together: the day
+ * `dedupeGroup` comes off the pair, both holdings and both capital accounts are
+ * counted, with no change here. The two folio lines still print each trust's
+ * own capital account; a per-account figure never drops one.
+ *
+ * ── THE RULE, IN FULL ────────────────────────────────────────────────────────
+ *
+ * A capital account is left out of a consolidated figure only where (1) its
+ * account holds exactly one position in the set, (2) that position is in a
+ * dedupe group, and (3) the group's capital is already counted under another
+ * member — the member the consolidated set counts (`dedupedPositions` keeps the
+ * FIRST), or, where that member's account sends no capital account, the first
+ * member whose account does. Anything less certain stays counted: a capital
+ * account is never dropped on a guess.
+ *
+ * Takes the positions the page counts from (current holdings), in book order —
+ * the order `dedupedPositions` is struck in, so the member whose capital stands
+ * for the group is the member whose holding does.
+ */
+export type CapitalCounting = {
+  /** The capital accounts a consolidated figure counts. */
+  counted: Commitment[];
+  /** Those it leaves out, each with the account whose capital account stands for it. */
+  alsoReported: { commitment: Commitment; countedAs: string; dedupeGroup: string }[];
+};
+
+export function capitalCountedOnce(commitments: readonly Commitment[], positions: readonly Position[]): CapitalCounting {
+  const withCapital = new Set(commitments.map((c) => c.accountId));
+  const held = new Map<string, Position[]>();
+  for (const p of positions) held.set(p.accountId, [...(held.get(p.accountId) ?? []), p]);
+  const standsFor = new Map<string, string>();
+  for (const p of positions) {
+    const g = p.dedupeGroup;
+    if (!g || standsFor.has(g)) continue;
+    const members = positions.filter((x) => x.dedupeGroup === g);
+    const who = withCapital.has(members[0].accountId)
+      ? members[0].accountId
+      : members.find((x) => withCapital.has(x.accountId))?.accountId;
+    if (who) standsFor.set(g, who);
+  }
+  const counted: Commitment[] = [];
+  const alsoReported: CapitalCounting["alsoReported"] = [];
+  for (const c of commitments) {
+    const mine = held.get(c.accountId) ?? [];
+    const g = mine.length === 1 ? mine[0].dedupeGroup : undefined;
+    const who = g ? standsFor.get(g) : undefined;
+    if (g && who && who !== c.accountId) alsoReported.push({ commitment: c, countedAs: who, dedupeGroup: g });
+    else counted.push(c);
+  }
+  return { counted, alsoReported };
+}
+
+/**
+ * ── THE CAPITAL EVERY CONSOLIDATED FIGURE COUNTS, FOR EVERY PAGE THAT PRINTS ONE ─
+ *
+ * Private Market's capital tiles and Morning CIO's Capital deployment card and
+ * its Uncalled capital and Committed tiles open onto one another, so they are
+ * struck over ONE set: the private-market funds' capital accounts
+ * (`capitalScope`), each counted once with its holding (`capitalCountedOnce`)
+ * over the current private holdings in book order. Once Private Market counted
+ * Transition Venture Fund I's second trust once, Morning CIO still counted it
+ * twice — ₹15.98 Cr still to call over a page printing ₹15.23 Cr, one click
+ * apart. Both read this now, so they cannot disagree.
+ */
+export function privateCapital(
+  commitments: readonly Commitment[],
+  accounts: readonly Account[],
+  positions: readonly Position[],
+) {
+  const cap = capitalScope([...commitments], [...accounts]);
+  const counting = capitalCountedOnce(cap.onPage, currentHoldings(positions).filter(isPrivateClass));
+  return { ...cap, counting };
+}
+
+/**
+ * THE SENTENCE A CAPITAL FIGURE COUNTED ONCE OWES ITS READER, written once for
+ * every page that prints one: which statements' capital is left out, whose it
+ * is counted with, that the pair is pending the family's answer (§4c, PM-A1),
+ * and what it would add if it is two investments. Empty where nothing is left
+ * out.
+ */
+export function countedOnceNote(
+  counting: CapitalCounting,
+  accountName: (accountId: string) => string,
+  money: (n: number) => string,
+  extra: number | null | undefined,
+  what: string,
+): string {
+  const also = counting.alsoReported;
+  if (!also.length) return "";
+  const one = also.length === 1;
+  const names = also.map((x) => accountName(x.commitment.accountId)).join(" and ");
+  const withs = [...new Set(also.map((x) => accountName(x.countedAs)))].join(" and ");
+  return ` ${names} ${one ? "is the second statement" : "are second statements"} of a holding counted once, so ${one ? "its" : "their"} ${what} is counted with ${withs} and not again`
+    + ` — pending the family's answer on whether ${one ? "the two are" : "each pair is"} one investment or two`
+    + (extra != null && extra > 0 ? `; if two, add ${money(extra)}.` : ".");
+}

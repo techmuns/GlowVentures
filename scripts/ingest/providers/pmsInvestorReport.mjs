@@ -381,6 +381,13 @@ export function extract({ grid, meta }) {
     unrealized: labelled(flat, "Unrealized Gain\\s*\\/?\\s*Loss"),
     fees: labelled(flat, "Management Fee"),
     expenses: labelled(flat, "Expenses at actual"),
+    // Two lines of the same bridge that were read nowhere, so it did not add
+    // up: SVAN 8710067, July — opening 15,99,42,275.22 − outflow 14,367 +
+    // dividend 1,43,670 + CHANGE IN ACCRUALS 1,03,749 − expenses 2,227 − OTHER
+    // EXPENSES 4,925.11 + realised 8,65,083.24 + unrealised 37,28,460.28 =
+    // 16,47,61,718.63 against a printed closing of 16,47,61,718.64.
+    changeInAccruals: labelled(flat, "Change in accruals"),
+    otherExpenses: labelled(flat, "Other expenses"),
     periodFrom, periodTo,
     source,
   });

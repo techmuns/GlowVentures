@@ -50,9 +50,11 @@
   "income": 0,
   "expenses": null,
   "fees": 0,
+  "accruedIncome": 0,
+  "gainPriorToTakeover": 0,
   "profit": null,
   "corpus": 276881535.58,
-  "openingCorpus": 276881535.58,
+  "openingCorpus": null,
   "periodFrom": "2024-06-01",
   "periodTo": "2026-07-31",
   "source": "buoyant-capital-103472-2026-07-31-performance-history"

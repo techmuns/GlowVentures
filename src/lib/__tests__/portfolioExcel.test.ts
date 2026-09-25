@@ -34,7 +34,8 @@
 import ExcelJS from "exceljs";
 import { BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_SUMMARY } from "@/data/glowData";
 import { buildPortfolioWorkbook } from "@/lib/exportPortfolioExcel";
-import { DASH } from "@/lib/format";
+import { DASH, displaySecurity } from "@/lib/format";
+import type { Position } from "@/lib/types";
 import type { Txn } from "@/lib/ledger";
 
 let fails = 0;
@@ -159,6 +160,85 @@ const dashRows = columnUnder(holdings, "Avg Cost (₹)", dataLast).filter((v) =>
 ok("cost-less rows carry an em dash rather than an empty cell", dashRows > 0, `${dashRows} rows`);
 ok("no cell under Avg Cost is null or blank",
    columnUnder(holdings, "Avg Cost (₹)", dataLast).every((v) => v != null && v !== ""));
+
+
+// ── 3b. ONE MARK OR NONE, AND COST OVER THE COSTED LINES (A-03) ─────────────
+// A row that clubs several statement lines prints a per-unit mark only where
+// every line carries the SAME mark, and its average cost and P&L over the lines
+// that report a cost. Re-expressed from the book, never by calling the helpers
+// (`commonMark`, `costedFigures`) the export uses: a check that calls the helper
+// it checks agrees with it by construction.
+{
+  const ACC = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a]));
+  const hs = headersOf(holdings);
+  const ROWS: Record<string, unknown>[] = [];
+  for (let r = 4; r <= dataLast; r++) {
+    const row = holdings.getRow(r);
+    const rec: Record<string, unknown> = {};
+    hs.forEach((h, i) => { rec[h] = row.getCell(i + 1).value; });
+    ROWS.push(rec);
+  }
+  const firstOfGroup = (ps: Position[]) => {
+    const seen = new Set<string>();
+    return ps.filter((p) => !p.dedupeGroup || (!seen.has(p.dedupeGroup) && (seen.add(p.dedupeGroup), true)));
+  };
+  // Subjects: a security held in two or more of the family's own accounts, of
+  // one class and one engagement — one row by construction — whose name no
+  // other security shares.
+  const byKey = new Map<string, Position[]>();
+  for (const p of BOOK_POSITIONS) {
+    if (ACC.get(p.accountId)?.engagement === "PMS") continue;
+    (byKey.get(p.securityKey) ?? byKey.set(p.securityKey, []).get(p.securityKey)!).push(p);
+  }
+  const keysOfName = new Map<string, Set<string>>();
+  for (const [key, ps] of byKey) for (const p of ps) {
+    const n = displaySecurity(p.security);
+    (keysOfName.get(n) ?? keysOfName.set(n, new Set()).get(n)!).add(key);
+  }
+  let split = 0, single = 0;
+  const bad: string[] = [];
+  for (const [key, ps0] of byKey) {
+    const ps = firstOfGroup(ps0);
+    if (ps.length < 2) continue;
+    if (new Set(ps.map((p) => p.assetClass)).size !== 1 || new Set(ps.map((p) => ACC.get(p.accountId)?.engagement)).size !== 1) continue;
+    const names = new Set(ps.map((p) => displaySecurity(p.security)));
+    if (names.size !== 1 || keysOfName.get([...names][0])!.size !== 1) continue;
+    const marks = [...new Set(ps.filter((p) => typeof p.currentPrice === "number").map((p) => (p.currentPrice as number).toFixed(2)))];
+    const row = ROWS.filter((r) => r["Security"] === [...names][0] && r["Mandate"] === DASH);
+    if (row.length !== 1) { bad.push(`${key}: ${row.length} rows`); continue; }
+    if (marks.length > 1) {
+      split++;
+      if (row[0]["CMP (₹)"] !== DASH) bad.push(`${key}: CMP ${row[0]["CMP (₹)"]} over marks ${marks.join(" / ")}`);
+    } else if (marks.length === 1) {
+      single++;
+      if (typeof row[0]["CMP (₹)"] !== "number" || (row[0]["CMP (₹)"] as number).toFixed(2) !== marks[0]) {
+        bad.push(`${key}: CMP ${row[0]["CMP (₹)"]} where every line is marked ${marks[0]}`);
+      }
+    }
+  }
+  ok("a row whose lines disagree on a mark prints no CMP; one whose lines agree prints it",
+     split > 0 && bad.length === 0, bad.join("; ") || `${split} split, ${single} agreeing`);
+
+  // COST OVER THE COSTED LINES, on a constructed pair — this book's partly
+  // costed holdings all sit across a mandate and a demat, which the sheet
+  // splits into rows of their own, so the case can only be exercised here.
+  const direct = BOOK_ACCOUNTS.filter((a) => a.engagement === "Direct").slice(0, 2);
+  const base = { securityKey: "test-partly-costed", security: "Test Partly Costed Ltd", assetClass: "Equity",
+    sector: "Industrials", providerSector: null, isin: null, symbol: null, marketSide: "listed" } as unknown as Position;
+  const pair: Position[] = [
+    { ...base, accountId: direct[0].accountId, quantity: 100, costBasis: 10000, avgCost: 100, currentPrice: 120,
+      marketValue: 12000, unrealizedPnL: 2000, returnPct: 20, realizedPnL: null } as unknown as Position,
+    { ...base, accountId: direct[1].accountId, quantity: 300, costBasis: null, avgCost: null, currentPrice: 120,
+      marketValue: 36000, unrealizedPnL: null, returnPct: null, realizedPnL: null } as unknown as Position,
+  ];
+  const pw = buildPortfolioWorkbook(pair, BOOK_ACCOUNTS, []).getWorksheet("Holdings")!;
+  const ph = headersOf(pw);
+  const at = (h: string) => pw.getRow(4).getCell(ph.indexOf(h) + 1).value;
+  ok("a partly costed row's average cost and P&L are struck over the costed units alone",
+     direct.length === 2 && String(pw.getRow(5).getCell(1).value).startsWith("Total ·")
+       && at("Avg Cost (₹)") === 100 && at("Unreal. P&L (₹)") === 2000 && at("CMP (₹)") === 120,
+     `${at("Avg Cost (₹)")} / ${at("Unreal. P&L (₹)")} / ${at("CMP (₹)")}`);
+}
 
 // ── 4. THE TRANSACTIONS TAPE, SAME TEST ─────────────────────────────────────
 eq("the tape's Entity column carries the account label",

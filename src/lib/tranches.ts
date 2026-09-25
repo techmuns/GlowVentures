@@ -81,6 +81,8 @@ export type TrancheRow = {
   value: number;
   /** Return on what this tranche actually invested. */
   returnPct: number;
+  /** The date `value` is struck at — where this tranche's window ends. */
+  valuedAt: string;
   /** Absolute or annualised, through the book's one guard. */
   ret: HoldingReturn;
 };
@@ -91,7 +93,8 @@ export type TrancheTable = {
   units: number;
   invested: number;
   value: number;
-  returnPct: number;
+  /** FIFO over every unit bought; null only where nothing was deployed. */
+  returnPct: number | null;
   /** The position's own figures, so a caller can state the tie rather than assume it. */
   positionUnits: number;
   positionValue: number;
@@ -135,7 +138,17 @@ export function trancheTable(
   positions: Position[],
   index: Record<string, PositionTranches>,
   mode: ReturnMode,
-  asOf: string,
+  /**
+   * The date each position's value is struck at — `valueDateOf` with the
+   * account's statement date — which is where every tranche's window ENDS.
+   *
+   * It was the book's newest date for every row, 29 Aug 2026 (two quantity-only
+   * trust demats), so a Buoyant contribution held 364 days to its 31 Jul
+   * valuation was annualised as though it had crossed a year, and Sanshi's
+   * three annualised tranches read +39.50 / +38.34 / +44.11% where their own
+   * windows give +45.61 / +45.66 / +51.72%.
+   */
+  valueDate: (p: Position) => string | null,
 ): TrancheTable | null {
   if (!positions.length) return null;
 
@@ -153,6 +166,9 @@ export function trancheTable(
     // A position marked at a total with no unit count cannot price a tranche —
     // there is no per-unit figure to multiply.
     if (!(p.quantity > 0)) return null;
+    // A value with no date cannot close a window — refuse rather than guess one.
+    const end = valueDate(p);
+    if (!end) return null;
     const navNow = p.marketValue / p.quantity;
     for (const m of tr.moves) {
       // Both are required for a tranche to be a measurement at all. A move with
@@ -165,10 +181,10 @@ export function trancheTable(
         move: m, date: m.date, label: m.label, amount: m.amount,
         invested: m.invested, units: m.units,
         navAtEntry: m.invested / m.units,
-        value, returnPct,
+        value, returnPct, valuedAt: end,
         // This tranche's OWN contribution date, which is the whole reason a
         // tranche can annualise where the position around it cannot.
-        ret: holdingReturn({ returnPct, heldSince: m.date }, mode, asOf),
+        ret: holdingReturn({ returnPct, heldSince: m.date, valuedAt: end }, mode, end),
       });
     }
     positionUnits += p.quantity;
@@ -187,7 +203,8 @@ export function trancheTable(
     rows, units, invested, value,
     // The position's own FIFO return: every lot still held, plus what the lots
     // already sold realised, over every rupee that bought a unit.
-    returnPct: fifoReturnPct(value, invested, realised, costSold) ?? 0,
+    // Never `?? 0`: a return nobody could strike is not a flat one.
+    returnPct: fifoReturnPct(value, invested, realised, costSold),
     positionUnits, positionValue, positionCost,
   };
 }

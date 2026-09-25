@@ -77,6 +77,7 @@
 // `golden.mjs`: a case with no valid input is never reported as a pass.
 import { xirr } from "@/lib/xirr";
 import { moneyWeightedReturn, MIN_ANNUALISE_DAYS } from "@/lib/bucketXirr";
+import { measuredAccountsReturn } from "@/lib/returns";
 import { BOOK_ACCOUNTS, BOOK_ACCOUNT_CASH_FLOWS, BOOK_ACCOUNT_RETURNS, BOOK_POSITIONS, BOOK_AS_OF } from "@/data/glowData";
 
 let fails = 0;
@@ -268,7 +269,14 @@ for (const g of flowGated) {
   }).flat();
   const r = xirr(parts);
   const start = parts.reduce((m, f) => (f.date < m ? f.date : m), parts[0].date);
-  const days = Math.round((Date.parse(BOOK_AS_OF) - start.getTime()) / 864e5);
+  // THE WINDOW ENDS WHERE THE POOL CLOSES — its latest account's statement date
+  // — never at `BOOK_AS_OF`. This test ended it on the book's newest date (29
+  // Aug 2026, two quantity-only trust demats), and so enforced the defect it
+  // was written beside: the tile read +30.1% over 150 days where the pool
+  // closes on 13 Aug, 134 days, and +26.5%. Section "the window ends where the
+  // pool closes" below guards it.
+  const end = parts.reduce((m, f) => (f.date > m ? f.date : m), parts[0].date);
+  const days = Math.round((end.getTime() - start.getTime()) / 864e5);
   const mw = moneyWeightedReturn(r == null ? null : r * 100, days);
 
   ok("this book's flows really do span less than a year", days < MIN_ANNUALISE_DAYS, `${days} days`);
@@ -301,6 +309,55 @@ for (const g of flowGated) {
   eq("exactly one year annualises", moneyWeightedReturn(20, 365).annualised, true);
   eq("one day short does not", moneyWeightedReturn(20, 364).annualised, false);
   eq("no rate in, no rate out", moneyWeightedReturn(null, 132).pct, null);
+}
+
+// ── THE WINDOW ENDS WHERE THE POOL CLOSES, ON STATEMENT VALUES ─────────────
+//
+// Morning CIO, /performance and each Family & Entities member row all strike
+// this rate through `measuredAccountsReturn` now. Re-expressed here from the
+// generated book by a second path — each measurable account's own flows, its
+// own statement value, its own statement date — and the helper must agree.
+console.log("\n── the window ends where the pool closes ──");
+{
+  const stmt = { accounts: BOOK_ACCOUNTS, positions: BOOK_POSITIONS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS } as never;
+  const got = measuredAccountsReturn(stmt, BOOK_ACCOUNTS);
+  const mine = measurable.filter((a) => accountMV(a.accountId) > 0);
+  const flows = mine.flatMap((a) => [
+    ...(BOOK_ACCOUNT_CASH_FLOWS[a.accountId] ?? []).map((f) => ({ date: new Date(f.date), amount: f.amount })),
+    { date: new Date(a.asOf), amount: accountMV(a.accountId) },
+  ]);
+  const ann = xirr(flows);
+  const lastClose = mine.reduce((m, a) => (a.asOf > m ? a.asOf : m), "");
+  const firstFlow = flows.reduce((m, f) => (f.date < m ? f.date : m), flows[0].date);
+  const days = Math.round((Date.parse(lastClose) - firstFlow.getTime()) / 864e5);
+  eq("the helper covers exactly the accounts with an opening value and a value to close on",
+    got.parts.map((x) => x.accountId).sort(), mine.map((a) => a.accountId).sort());
+  ok("its annual rate is the pooled XIRR of those accounts, each on its own date",
+    ann != null && got.annPct != null && Math.abs(got.annPct - ann * 100) < 1e-6,
+    `${got.annPct?.toFixed(4)} vs ${(ann ?? NaN) * 100}`);
+  eq("its window runs from the first flow to the LATEST close", [got.windowDays, got.lastClose], [days, lastClose]);
+  const mw = moneyWeightedReturn(got.annPct, got.windowDays);
+  ok("and the tile's figure is that rate de-annualised over that window",
+    mw.pct != null && got.toDatePct != null && Math.abs(mw.pct - got.toDatePct) < 1e-9, `${mw.pct?.toFixed(2)}%`);
+  // LOAD-BEARING: the book's newest date must lie after the pool's last close,
+  // or ending the window on it would change nothing and this would pass against
+  // the defect.
+  ok("the book's newest date lies after the pool's last close, so the rule is doing work",
+    BOOK_AS_OF > lastClose, `${BOOK_AS_OF} vs ${lastClose}`);
+  const wrongDays = Math.round((Date.parse(BOOK_AS_OF) - firstFlow.getTime()) / 864e5);
+  const wrong = moneyWeightedReturn(got.annPct, wrongDays);
+  ok("...and ending it there would move the figure by more than a point",
+    mw.pct != null && wrong.pct != null && Math.abs(wrong.pct - mw.pct) > 1,
+    `${wrong.pct?.toFixed(2)}% over ${wrongDays} days vs ${mw.pct?.toFixed(2)}% over ${got.windowDays}`);
+  // THE TERMINAL VALUE IS THE STATEMENT'S. A value struck today, dated to a
+  // statement weeks old, is two measurements in one flow: priced at x1.10 the
+  // helper must be handed the STATEMENT portfolio and so not move at all.
+  const lifted = { accounts: BOOK_ACCOUNTS, accountCashFlows: BOOK_ACCOUNT_CASH_FLOWS,
+    positions: BOOK_POSITIONS.map((p) => ({ ...p, marketValue: p.marketValue * 1.1 })) } as never;
+  const liftedR = measuredAccountsReturn(lifted, BOOK_ACCOUNTS);
+  ok("a portfolio priced away from its statements gives a DIFFERENT rate — so callers must pass the statement one",
+    liftedR.annPct != null && got.annPct != null && Math.abs(liftedR.annPct - got.annPct) > 5,
+    `${liftedR.annPct?.toFixed(1)}% vs ${got.annPct?.toFixed(1)}%`);
 }
 
 process.exit(fails ? 1 : 0);
