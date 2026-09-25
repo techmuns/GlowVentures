@@ -5,6 +5,22 @@ The book is assembled offline from **PDF statements issued by several wealth
 platforms** and baked into `src/data/glowData.ts`; the display layer converts INR
 (the base currency) into the selected display currency.
 
+## How to ship — read this first
+
+*"this is a live dashboard and main will keep moving but the code will not
+unless something is pushed … i want things pushed"* — the family, 24 Sep 2026.
+
+- **Default: push, open the PR, and merge it to `main` yourself** as soon as
+  `build` and the checks for what you changed are green. Do not leave a fix
+  waiting on a PR. Hold a PR open only when the user says so in that request
+  (for example "do not merge until I tell you").
+- **Be quick.** Run the checks that cover the change: `build`, the relevant
+  suite, and `ONLY=<routes>` for the pages you touched. A full `check:pages`
+  sweep is not needed before every merge. Keep the stage notes in this file
+  short.
+- Before merging, `git fetch origin main` and check that no other change has
+  taken your stage letter.
+
 ## The standing rule
 
 **No figure is ever fabricated.** If the source doesn't carry a number, the UI
@@ -370,7 +386,14 @@ cash holding's genuinely-zero return both match, and both are correct.
   metric grid, a fixed list of facts. See Stage 10bh. The DRAG itself is
   `src/lib/columnDrag.ts`, called from `SortHeader`: a pointer gesture that
   lifts the WHOLE column — heading and every visible cell — rather than
-  HTML5's picture of the heading. See Stage 10co.
+  HTML5's picture of the heading. See Stage 10co. What a reader arranged is
+  remembered in `src/lib/viewMemory.ts` — read before the first paint, one copy
+  per key, kept in step across tables and browser tabs — and a saved order keeps
+  the columns a tab does not draw, so arranging one tab never loses another's.
+  See Stage 10cs.
+- `src/lib/returnMeasures.ts` — WHICH RETURNS A TABLE SHOWS: a `?ret=` address,
+  then the reader's saved pick for that page, then the default, which is every
+  measure (HPR, CAGR, XIRR, YTD, CY), one column each. See Stage 10cs.
 - `src/components/TreeTable.tsx` — THE STANDARD FOR A TABLE WHOSE ROWS OPEN
   INTO OTHER ROWS. A row opens into ROWS OF THE SAME TABLE, in the same columns
   — never into a table drawn inside a cell, whose columns cannot line up with
@@ -24064,6 +24087,140 @@ in a separate worktree with its own preview, and it came back clean anyway.
   were dry-run on the merged files, and every patch applies. Each patches main's
   lines and fires main's checks, and this change edits neither, so the full
   sweep above is their control on this tree.
+
+### Stage 10cr — A CAPTURE A DAY OLD NO LONGER TAKES EVERY SHARE OFF ITS LIVE PRICE
+
+*"Why is this data not showing can you please fix quickly"* — a screenshot of
+Morning CIO at 10:50 IST on 24 Sep 2026: the index strip live, the top bar
+live, and Today's movers reading *"No direct-equity holding carries a day
+change right now"*.
+
+**ROOT CAUSE: THE CORPORATE-ACTION GATE (#84) NEEDED A CAPTURE DATED TODAY.**
+`applyCorporateActionQuotes` withholds the live price of a company share
+whenever the event capture's `verifiedThrough` is earlier than the quote's
+market day — to avoid pairing a pre-split quantity with a post-split price. The
+capture it reads is one of two:
+
+- **the live proxy** (`/api/corporate-actions`) over Glow Central Research's
+  capture, which Research takes once a day AFTER the open — 04:43 UTC,
+  10:13 IST, on 24 Sep; and
+- **the committed fallback** `public/data/corporate-actions.json`, dated
+  **23 Sep**.
+
+So from the 09:15 open until the day's capture reached the browser (up to about
+half an hour after Research took it, through the edge's 15-minute cache and the
+browser's own 15-minute poll), **no company share in the book had a live price
+or a day move — Direct Equity and every share inside a PMS mandate alike** —
+and wherever the live proxy did not answer, all day, every day after the
+fallback's date. ETFs and mutual funds were unaffected, which is why that tab
+of the card worked. Measured on the live proxy's own code: it parses an 8.4 MB
+capture and normalises 8,494 rows, about 140–250 ms of CPU a refresh, which a
+Workers plan capped at 10 ms would refuse. That is named here as a possible
+reason the proxy does not answer in production, not measured there — the site
+is behind its password.
+
+**`cio-live` COULD NEVER HAVE SEEN IT**, which is why the sweep stayed green: its
+fixture's capture is dated weeks AFTER its quotes.
+
+#### The fix: share events get a short lead, dividends do not
+
+`SHARE_EVENT_LEAD_DAYS = 3` in `src/lib/corporateActions.ts`. A capture up to
+three calendar days behind the quote still covers SHARE events, so the live
+price and every split or bonus the capture lists still apply. Two reasons:
+
+- **SEBI LODR Regulation 42(2)** requires the record date to be notified to the
+  exchange at least seven working days ahead.
+- **The capture lists forthcoming share events.** Measured on 24 Sep: six
+  splits and bonuses, 1 to 32 days ahead. The 23 Sep capture listed BUILDPRO's
+  8 Oct split.
+
+**A DIVIDEND DOES NOT GET THAT ROOM.** It changes no quantity, only the total
+return, and a missed one would read as zero income. So the coverage gap still
+goes on the INCOME side: the dividend entitlement and the total return are
+withheld until a capture covers the day, and the reason is named. A capture more
+than three days behind still withholds the live price, exactly as before.
+
+Three days covers an overnight lag and a Friday capture read on Monday. It does
+not cover a longer Research outage, which is the gate working as #84 designed.
+
+#### The checks
+
+- **`corporateActions.test.ts`** asserted that a capture ONE day behind blocks
+  the live price. That line was the defect written down as a rule, so it now
+  asserts the lead window from both sides:
+  - one day behind: live, with the listed split applied, and a day move;
+  - three days behind is still inside the window, and four is not;
+  - a capture with no verified date covers nothing;
+  - on a lagging capture the dividend entitlement and total return are null,
+    and the income side names why.
+- **The same test runs on the real book against the committed fallback.** The
+  shares live on the capture's own date must stay live on each of the next
+  three days, and none on the fourth.
+- **`check:pages` gains `cio-live-capture-lag`**: `cio-live` with the capture
+  one day behind the quotes. It must rank every priced direct-equity name and
+  show the day's move. Put the old gate back and it fails both checks with the
+  empty card the family saw, while `cio-live` stays clean.
+
+`build` · `test:family` (0 failed) · `check:pages` on `cio-live` and
+`cio-live-capture-lag` clean. `glowData.ts` is untouched: this is a
+presentation-layer gate.
+
+### Stage 10cs — EVERY RETURN COLUMN BY DEFAULT, AND AN ARRANGEMENT THAT SURVIVES A TAB
+
+*"make default All ratios showing coloumns as selected. So tick holding period,
+cagr, xirr, YTD, calendar year etc and remeber it the next time user always
+comes. Also when i am drag and drop rearranging the coloumns then the system
+needs to remeber the exact position and save it even when i am changing the tab
+… make this across all tabs and tables"*
+
+**THE PICK LIVED ONLY IN THE ADDRESS.** `?ret=` was the whole memory, so any
+link without it — the nav, a breadcrumb, a bookmark — reopened the table on the
+methodology column. Now `src/lib/returnMeasures.ts` decides, in one pure rule:
+the address, then the reader's saved pick for that page
+(`glow:returnMeasures:<page>:v1`), then the default — **all five measures, one
+column each**. A pick saves itself and takes `?ret=` out of the address, so the
+next link cannot undo it. The picker reads "Returns · all" and its footer says
+where the pick is kept. Portfolio Monitor and Private Market each keep their own.
+
+**THE ORDER LOST WHAT A TAB DID NOT DRAW.** Three causes, each fixed where it
+lives (`src/lib/tableView.ts`):
+
+- **The Monitor's axes saved under two keys** (`monitor`, `monitor-stock`), so
+  a column moved on Category was not moved on All Securities. One key now; an
+  arrangement saved under the old one is still read.
+- **A save kept only the columns drawn at the time**, so arranging Category
+  forgot where the reader had put Via funds and Total exposure, and they came
+  back at the far right. The saved order now keeps every column the reader ever
+  placed, drawn or not.
+- **A column never placed was appended at the end.** It now goes beside its own
+  family — a newly ticked return beside the other returns — or right after the
+  column it is declared after (Via funds follows Market value wherever it is).
+
+With nothing saved, a table still draws its declared order exactly. The memory
+(`src/lib/viewMemory.ts`) is read before the first paint, so a table never opens
+in the default order and jumps; two tables on one key, and another browser tab,
+see a change at once. Every table in the app reads it the same way.
+
+**IT IS PER BROWSER**, like the nav's width. Following the reader to another
+device needs the shared `GLOW_STORE` binding (Stage 10cl), which is not
+connected yet.
+
+**THE SWEEP.** Most routes were written against ONE return column, so every
+route but three starts as a reader who saved "by methodology" — a real saved
+state, seeded before the app boots. `private-market-returns` and
+`monitor-txn-returns` are the bare addresses now, a fresh reader, and assert the
+five by default. `monitor-remember` walks the family's own sequence — move a
+column, change axis, move another, change back, pick a return, leave through the
+nav, come back, reload, tick a measure, open a second browser tab and move a
+column there, then cross to Transactions, move a column and cross back and
+forth — and holds every step to the one before it. `tableView.test.ts` covers
+the rules and the memory (`npm run test:family`).
+
+Seven bugs were put back one at a time, and each fires its own checks: a save
+keeping only the drawn columns, the two keys again, the old default, a pick that
+is never saved, a new column sent to the far right, a browser tab that never
+hears another's change, and a table that forgets its arrangement when it
+unmounts.
 
 ### Stage 10k — News & Announcements: REMOVED
 
