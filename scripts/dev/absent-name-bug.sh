@@ -18,6 +18,10 @@
 # A PATCH THAT DOES NOT APPLY, OR A BUILD THAT FAILS, IS REPORTED AS NOT A
 # RESULT rather than as a clean run. A sweep that cannot build is not a sweep
 # that passed.
+#
+# `CASES=11,13` runs chosen cases alone (the control always runs first). The
+# sweep honours `BASE=`, so the whole pass can run in a `git worktree` with its
+# own `vite preview`, leaving the working copy clean for as long as it runs.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -48,10 +52,20 @@ trap restore EXIT
 
 ROUTES=monitor-absent-name
 
+# Cases are numbered in the order they are listed; `CASES` picks some of them.
+N=0
+want() {
+  N=$((N + 1))
+  [ -z "${CASES:-}" ] && return 0
+  case ",$CASES," in *",$N,"*) return 0 ;; esac
+  return 1
+}
+
 run_case() {
   local name="$1"; shift
+  want || return 0
   echo ""
-  echo "════════ BUG: $name"
+  echo "════════ BUG $N: $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
   if ! npm run build >/dev/null 2>&1; then
     echo "   NOT A RESULT — the bugged tree does not build"
@@ -65,8 +79,9 @@ run_case() {
 # but does not produce. Each patches the generator and re-runs it.
 run_gen_case() {
   local name="$1"; shift
+  want || return 0
   echo ""
-  echo "════════ BUG (generated): $name"
+  echo "════════ BUG $N (generated): $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
   if ! npm run reconcile:review >/dev/null 2>&1; then
     echo "   NOT A RESULT — the generator refused (which may itself be the guard firing)"
@@ -99,9 +114,27 @@ run_suite_body() {
 
 run_suite_case() {
   local name="$1"; shift
+  want || return 0
   echo ""
-  echo "════════ BUG (suite): $name"
+  echo "════════ BUG $N (suite): $name"
   if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
+  run_suite_body
+  for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done
+}
+
+# …and the cases a page check AND the suite should each catch, from their two
+# ends: the page reads what renders, the suite reads the rule.
+run_both_case() {
+  local name="$1"; shift
+  want || return 0
+  echo ""
+  echo "════════ BUG $N (page + suite): $name"
+  if ! "$@"; then echo "   NOT A RESULT — the patch did not apply"; for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done; return; fi
+  if ! npm run build >/dev/null 2>&1; then
+    echo "   NOT A RESULT — the bugged tree does not build"
+  else
+    ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
+  fi
   run_suite_body
   for f in "${FILES[@]}"; do cp "$SNAP/$f" "$f"; done
 }
@@ -113,6 +146,9 @@ py() { python3 - "$@"; }
 # checks.
 echo "════════ CONTROL: no patch"
 npm run build >/dev/null 2>&1 && ONLY=$ROUTES npm run check:pages 2>&1 | grep -E 'INVARIANT|^✓|^✗' | sed 's/^/   /'
+# …and the suite, because several cases below read it too: a suite already
+# failing would report each of them as "fired".
+if node scripts/test-family.mjs >/dev/null 2>&1; then echo "   SUITE clean"; else echo "   SUITE FAILS WITH NO PATCH — every suite verdict below is void"; fi
 
 # ── 1. THE ORIGINAL DEFECT ──────────────────────────────────────────────────
 # The empty state says only "No holdings match", which is what the family saw.
@@ -120,7 +156,7 @@ run_case "the holdings search stops explaining itself" py <<'PY'
 import sys
 p = "src/pages/PortfolioMonitor.tsx"
 s = open(p, encoding="utf-8").read()
-old = '\n          emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />'
+old = '\n            emptyNote={(q) => <AbsentFromBook query={q} className="mt-2" />} />'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, " />", 1))
 PY
@@ -239,6 +275,107 @@ s = open(p, encoding="utf-8").read()
 old = '                      <AbsentFromBook query={holdingsQ} className="mx-auto mt-3 max-w-xl" />\n'
 if old not in s: sys.exit(1)
 open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# ── 11–17. A LINE A STATEMENT REPORTS IS NEVER CLAIMED ABSENT (Stage 10cx) ──
+# The note says "no statement reports it", which is a claim about the
+# STATEMENTS. The page check derives every review line a statement reports on
+# its own, from the review workbook and the statements, and types each one; the
+# suite holds the hand-checked table to its witnesses.
+
+# A line only a depository WINDOW reports: Zepto's preference shares sit on
+# Ajay's transaction-only demat on the review's date and convert in July.
+run_case "the ISIN table forgets Zepto" py <<'PY'
+import sys
+p = "src/lib/reviewGaps.ts"
+s = open(p, encoding="utf-8").read()
+old = '  ["Zepto", ["INE143403066", "INE143401029"]],\n'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# A line the book VALUES under a depository's clipped name (`WOC MAAF D-GROW`):
+# the worst form, a note denying the row the table is valuing.
+run_case "the ISIN table forgets WhiteOak" py <<'PY'
+import sys
+p = "src/lib/reviewGaps.ts"
+s = open(p, encoding="utf-8").read()
+old = '  ["WhiteOak Capital Multi Asset Allocation Fund-Direct(G)", ["INF03VN01761"]],\n'
+if old not in s: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, "", 1))
+PY
+
+# THE ORIGINAL DEFECT: the note keyed on what the LIVE BOOK VALUES rather than
+# on what the statements report. IFB, NLC and Zepto are on a statement and
+# valued by no fund NAV, so they come back as "no statement reports it".
+run_both_case "the note is keyed on what this book values again" py <<'PY'
+import sys
+p = "src/lib/reviewGaps.ts"
+s = open(p, encoding="utf-8").read()
+imp = 'import { BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";\n'
+old = ("    ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0).map((u) => u.isin),\n"
+       "    ...Object.values(BOOK_SHARE_MOVEMENTS).filter((w) => w.reason == null).map((w) => w.isin),\n")
+if imp not in s or old not in s: sys.exit(1)
+s = s.replace(imp, imp + 'import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";\n'
+              "void BOOK_SHARE_MOVEMENTS; void BOOK_UNVALUED_HOLDINGS;\n", 1)
+s = s.replace(old, "    ...[...depositoryFundHoldings(), ...unpricedStatementUnits()].map((p) => p.isin),\n", 1)
+open(p, "w", encoding="utf-8").write(s)
+PY
+
+# HOPE INDIA TRUST's own folio statements report four review Cash lines; the
+# book keeps the trust out by decision, and the note must not ask the family
+# for statements they already sent.
+run_both_case "the folios this book keeps out are ignored" py <<'PY'
+import sys
+p = "src/lib/reviewGaps.ts"
+s = open(p, encoding="utf-8").read()
+old = ("  (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i))\n"
+       "  || REVIEW_LINES_KEPT_OUT.has(g.name);")
+if old not in s: sys.exit(1)
+new = "  (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i));"
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# The rule wired to nothing: every line it withholds is claimed again.
+run_both_case "the statement rule is wired to nothing" py <<'PY'
+import sys
+p = "src/lib/reviewGaps.ts"
+s = open(p, encoding="utf-8").read()
+old = ("export const reportedByStatement = (g: ReviewGap) =>\n"
+       "  (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i))\n"
+       "  || REVIEW_LINES_KEPT_OUT.has(g.name);")
+if old not in s: sys.exit(1)
+new = ("export const reportedByStatement = (g: ReviewGap) => g.name === \"\\u0000\" && (\n"
+       "  (REVIEW_LINE_ISINS.get(g.name) ?? []).some((i) => STATEMENT_REPORTED.has(i))\n"
+       "  || REVIEW_LINES_KEPT_OUT.has(g.name));")
+open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+PY
+
+# THE CHECKER'S OWN GUARD. Joined on units and holder alone, a round number of
+# shares ties the review's Deepak Fertilisers to unrelated holdings, and the
+# check then demands silence on a line nothing reports. Here the PAGE is right,
+# so the check must FAIL — which is what says the guard is load-bearing.
+run_case "the page check's round-number guard is dropped" py <<'PY'
+import sys
+p = "scripts/check-pages.mjs"
+s = open(p, encoding="utf-8").read()
+a = "\n          && (!Number.isInteger(c.units) || shareWord(c.product, b.security)))) reported.add(c.product);"
+b = "\n          && (!Number.isInteger(b.units) || shareWord(b.product, c.security)))) reported.add(b.product);"
+if s.count(a) != 1 or s.count(b) != 1: sys.exit(1)
+s = s.replace(a, ")) reported.add(c.product);", 1).replace(b, ")) reported.add(b.product);", 1)
+open(p, "w", encoding="utf-8").write(s)
+PY
+
+# The witness struck on each closing's own row date rather than the review's:
+# Zepto's closing is dated July 2025, when the review last marked it, so its
+# balance that day is on no statement this dashboard reads.
+run_suite_case "the suite's witness reads each closing's own row date" py <<'PY'
+import sys
+p = "src/lib/__tests__/reviewGaps.test.ts"
+s = open(p, encoding="utf-8").read()
+old = ".flatMap((c) => balancesOn(reviewOn, isins)"
+if s.count(old) != 1: sys.exit(1)
+open(p, "w", encoding="utf-8").write(s.replace(old, ".flatMap((c) => balancesOn(c.date, isins)", 1))
 PY
 
 echo ""
