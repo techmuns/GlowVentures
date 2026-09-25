@@ -29,9 +29,9 @@
 import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import XLSX from "xlsx";
-import { BOOK_POSITIONS } from "@/data/glowData";
+import { BOOK_ACCOUNTS, BOOK_POSITIONS, BOOK_SHARE_MOVEMENTS, BOOK_UNVALUED_HOLDINGS } from "@/data/glowData";
 import { REVIEW_GAPS, REVIEW_AS_OF } from "@/data/reviewGaps";
-import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, valuedFromDepository } from "@/lib/reviewGaps";
+import { reviewGapsFor, claimableGaps, REVIEW_LINE_ISINS, REVIEW_LINES_KEPT_OUT, reportedByStatement } from "@/lib/reviewGaps";
 import { depositoryFundHoldings, unpricedStatementUnits } from "@/lib/fundNavs";
 import { securityKeyOf } from "@/lib/securityKey";
 
@@ -211,23 +211,30 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
     reviewGapsFor("BSE").length === 1);
 }
 
-// ── 6c. …NOR ONE THE LIVE BOOK VALUES FROM A DEPOSITORY'S BALANCE ──────────
+// ── 6c. …NOR ONE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES IT ────
 //
-// Stage 10ce values the cash-equivalent funds a depository reports on a demat
-// that sent a transaction statement and no holding statement — at AMFI's NAV,
-// on the LIVE basis only — so the name tier above, keyed on `BOOK_POSITIONS`,
-// cannot see them, and neither can a name rule: the depository prints the AMC's
-// name in front of the scheme's. `REVIEW_LINE_ISINS` joins two review lines to
-// those rows BY ISIN, by hand. Five claims per entry, and the last is what
-// licenses the join rather than a comment asserting it: the review's own
-// purchase of that exact line is a credit the depository makes to that ISIN,
-// unit for unit, within a settlement's days of the date the review prints.
+// The note says "no statement reports it", and that is a claim about the
+// STATEMENTS. Measured, it was false for sixteen lines no name rule reaches: a
+// depository prints the AMC's name in front of the scheme's or clips it, and it
+// prints an unlisted company's instrument in full where the review writes a
+// brand.
+// `REVIEW_LINE_ISINS` joins each line to the ISINs a statement reports it
+// under, BY HAND. Five claims per entry, and the last is what licenses the join
+// rather than a comment asserting it: the review's own units for that line are
+// a statement's own units of that ISIN — a closing that is the statement's
+// balance on the review's own date, or a purchase the depository credits unit
+// for unit.
 {
-  // Every fund the live book values from a depository's balance — the cash
-  // equivalents (Stage 10ce) and the other mutual funds on the same statement
-  // (Stage 10cx) — plus the units a holding statement records with no rate.
-  const live = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
-  ok("the depository-valued table has a subject", REVIEW_LINE_ISINS.size > 0, `${REVIEW_LINE_ISINS.size}`);
+  ok("the statement-reported table has a subject", REVIEW_LINE_ISINS.size > 0, `${REVIEW_LINE_ISINS.size}`);
+
+  // The ISINs the statements report, re-derived here rather than read from the
+  // module, so a module that stopped reading one of the three sources fails.
+  const up = (x: string | null | undefined) => (x ?? "").trim().toUpperCase();
+  const statementIsins = new Set([
+    ...BOOK_POSITIONS.filter((p) => p.quantity > 0).map((p) => up(p.isin)),
+    ...BOOK_UNVALUED_HOLDINGS.filter((u) => (u.quantity ?? 0) > 0).map((u) => up(u.isin)),
+    ...Object.values(BOOK_SHARE_MOVEMENTS).filter((w) => w.reason == null).map((w) => up(w.isin)),
+  ].filter(Boolean));
 
   const flat = (k: string) => k.replace(/-/g, "");
   const bookKeys = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
@@ -237,17 +244,14 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
       bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
   };
 
-  // The review's own purchases, read the way `fundNavs.test.ts` reads them, and
-  // the depository's own dated credits, read from the archive document each live
-  // row names as its source — never from the review.
+  // The review's own purchases and closings, each with its holder, date, units
+  // and the rate it prices the line at. Read the way `fundNavs.test.ts` reads
+  // them; the review is the claim being checked, never the witness.
   const REVIEW = path.join(process.cwd(), "source", "august-2026-d",
     "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx");
-  type Buy = { product: string; date: string; units: number };
-  const buys: Buy[] = [];
-  // …and its CLOSING rows, which is what witnesses a holding statement that
-  // records units with no rate (A-17): the review closes each holder at the
-  // statement's own balance.
-  const closings: Buy[] = [];
+  type Row = { holder: string; product: string; date: string; units: number; rate: number };
+  const buys: Row[] = [];
+  const closings: Row[] = [];
   if (existsSync(REVIEW)) {
     const wb = XLSX.readFile(REVIEW);
     const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
@@ -256,63 +260,184 @@ const REPORT = readFileSync("docs/REVIEW-RECONCILIATION.md", "utf8");
       : [];
     const excelDate = (n: number) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
     for (const r of rows) {
-      const j = r.findIndex((c) => /^closing$/i.test(String(c).trim()));
-      if (j >= 1) {
+      for (const [kind, into] of [["closing", closings], ["purchase", buys]] as const) {
+        const j = r.findIndex((c) => String(c).trim().toLowerCase() === kind);
+        if (j < 1) continue;
         const units = Number(r[j + 2]);
-        if (Number.isFinite(units) && units > 0) closings.push({ product: String(r[j - 1]), date: excelDate(Number(r[j + 1])), units });
+        if (Number.isFinite(units) && units > 0)
+          into.push({ holder: String(r[0]), product: String(r[j - 1]), date: excelDate(Number(r[j + 1])), units, rate: Number(r[j + 3]) });
       }
-      const i = r.findIndex((c) => /^purchase$/i.test(String(c).trim()));
-      if (i < 1) continue;
-      const units = Number(r[i + 2]);
-      if (Number.isFinite(units) && units > 0) buys.push({ product: String(r[i - 1]), date: excelDate(Number(r[i + 1])), units });
     }
   }
-  ok("the family's review is on disk to witness the join", buys.length > 0, REVIEW);
-  type Credit = { isin: string; date: string; quantity: number };
-  const credits: Credit[] = [];
-  for (const src of new Set(live.map((p) => p.depositoryUnits?.source).filter(Boolean) as string[])) {
-    const f = path.join(process.cwd(), "public", "audit", src, "document.json");
-    if (!existsSync(f)) continue;
-    const doc = JSON.parse(readFileSync(f, "utf8")) as { transactions?: { isin?: string | null; date?: string; quantity?: number | null }[] };
-    for (const t of doc.transactions ?? [])
-      if (t.isin && t.date && typeof t.quantity === "number" && t.quantity > 0) credits.push({ isin: t.isin, date: t.date, quantity: t.quantity });
-  }
-  const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+  ok("the family's review is on disk to witness the joins", closings.length > 0 && buys.length > 0, REVIEW);
 
-  for (const [name, isin] of REVIEW_LINE_ISINS) {
+  // A CLOSING IS THE REVIEW'S HOLDING ON THE REVIEW'S OWN DATE, whatever date
+  // its row carries: the review is struck on one day, and its Zepto closing is
+  // dated 31 July 2025, the last time it marked the unlisted share. So every
+  // closing is set against the statements' balance on the latest date the
+  // sheet closes on — the review's own as-of.
+  const reviewOn = closings.reduce((m, c) => (c.date > m ? c.date : m), "");
+  ok("the review's closings name the review's own date", reviewOn === "2026-06-30", reviewOn);
+
+  // A statement's own units of one ISIN on a date: a depository window's
+  // printed running balance at that date (its opening, where it printed no row
+  // before it), and a holding statement's quantity. Never the review's.
+  type Doc = { transactions?: { isin?: string | null; date?: string; quantity?: number | null; side?: string; description?: string }[] };
+  const docs = new Map<string, Doc>();
+  const doc = (src: string): Doc => {
+    if (!docs.has(src)) {
+      const f = path.join(process.cwd(), "public", "audit", src, "document.json");
+      docs.set(src, existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) as Doc : {});
+    }
+    return docs.get(src)!;
+  };
+  const ownerOf = new Map(BOOK_ACCOUNTS.map((a) => [a.accountId, a.owner]));
+  const first = (s: string | undefined) => (s ?? "").trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  type Balance = { isin: string; owner: string; units: number; how: string };
+  const balancesOn = (date: string, isins: readonly string[]): Balance[] => {
+    const out: Balance[] = [];
+    for (const w of Object.values(BOOK_SHARE_MOVEMENTS)) {
+      const isin = up(w.isin);
+      if (!isins.includes(isin) || w.reason != null || !w.source || !w.periodFrom || !w.periodTo) continue;
+      if (date < w.periodFrom || date > w.periodTo) continue;
+      const before = (doc(w.source).transactions ?? []).filter((t) => up(t.isin) === isin && (t.date ?? "") <= date);
+      const printed = before.length ? /balance ([\d.,]+)/.exec(before[before.length - 1].description ?? "")?.[1] : null;
+      const units = before.length ? Number(String(printed ?? "").replace(/,/g, "")) : w.opening;
+      if (typeof units === "number" && Number.isFinite(units))
+        out.push({ isin, owner: ownerOf.get(w.accountId) ?? "", units, how: "the depository's own balance that day" });
+    }
+    for (const p of BOOK_POSITIONS)
+      if (isins.includes(up(p.isin)) && p.quantity > 0)
+        out.push({ isin: up(p.isin), owner: ownerOf.get(p.accountId) ?? "", units: p.quantity, how: "a holding statement's quantity" });
+    for (const u of BOOK_UNVALUED_HOLDINGS)
+      if (isins.includes(up(u.isin)) && (u.quantity ?? 0) > 0)
+        out.push({ isin: up(u.isin), owner: ownerOf.get(u.accountId) ?? "", units: u.quantity!, how: "a holding statement's quantity, printed with no rate" });
+    return out;
+  };
+  const credits = (isins: readonly string[]) => Object.values(BOOK_SHARE_MOVEMENTS)
+    .filter((w) => isins.includes(up(w.isin)) && w.source)
+    .flatMap((w) => (doc(w.source!).transactions ?? [])
+      .filter((t) => up(t.isin) === up(w.isin) && t.side === "receipt" && typeof t.quantity === "number" && t.quantity > 0 && !!t.date)
+      .map((t) => ({ date: t.date!, units: t.quantity! })));
+  const days = (a: string, b: string) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+  const same = (a: number, b: number) => Math.abs(a - b) < 0.0005;
+
+  for (const [name, isins] of REVIEW_LINE_ISINS) {
     const gap = REVIEW_GAPS.find((g) => g.name === name);
     ok(`${name}: a line the gap list carries — an entry naming none is dead`, !!gap);
-    const row = live.find((p) => p.isin?.trim().toUpperCase() === isin);
-    ok(`${name}: the live book values ${isin} from units no statement prices`, !!row && row.marketValue > 0);
+    const reported = isins.filter((i) => statementIsins.has(i));
+    ok(`${name}: a statement this dashboard reads reports ${isins.join(" / ")}`, reported.length > 0);
     ok(`${name}: a search for its own name is told nothing about it`,
-      !reviewGapsFor(name).some((g) => g.name === name) && (!gap || valuedFromDepository(gap)));
+      !reviewGapsFor(name).some((g) => g.name === name) && (!gap || reportedByStatement(gap)));
     // LOAD-BEARING: without this tier the name tier would have claimed it, or
     // the entry protects nothing and the check above passes over a no-op.
     ok(`${name}: …and the name tier alone would have claimed it absent`, !related(name));
-    const rows = live.filter((p) => p.isin?.trim().toUpperCase() === isin);
-    if (rows.every((p) => p.depositoryUnits?.kind === "no-rate")) {
-      // A holding statement that records the units with no rate: every live row
-      // is witnessed by a review closing of exactly its own balance.
-      const unwitnessed = rows.filter((p) =>
-        !closings.some((c) => c.product === name && Math.abs(c.units - p.quantity) < 0.0005));
-      ok(`${name}: the review closes each holder at the statement's own balance of ${isin}, unit for unit`,
-        rows.length > 0 && unwitnessed.length === 0,
-        unwitnessed.length ? `unwitnessed: ${unwitnessed.map((p) => `${p.accountId} ${p.quantity}`).join("; ")}`
-          : rows.map((p) => `${p.quantity} u`).join(" + "));
-    } else {
-      // A depository's closing balance: witnessed by the review's own purchase
-      // of that line credited unit for unit — or, where the review carries no
-      // purchase the depository's window reaches back to, by the review closing
-      // the holder at EXACTLY the balance the depository closes the demat at
-      // (Stage 10cx: ICICI India Opportunities and ICICI Equity Savings).
-      const tied = buys.filter((b) => b.product === name).find((b) =>
-        credits.some((c) => c.isin === isin && Math.abs(c.quantity - b.units) < 0.0005 && days(c.date, b.date) <= 5));
-      const closed = closings.find((c) => c.product === name && rows.some((p) => Math.abs(c.units - p.quantity) < 0.0005));
-      ok(`${name}: the review's own purchase is a depository credit to ${isin}, or it closes the holder at the depository's balance, unit for unit`,
-        !!tied || !!closed,
-        tied ? `${tied.units} units bought on ${tied.date}` : closed ? `closed at ${closed.units} units on ${closed.date}` : "no purchase or closing of this line ties to the depository");
+
+    // THE WITNESS. A closing is tied only to a balance of the same holder: two
+    // members holding the same units of one scheme is not a coincidence this
+    // check may rely on.
+    const closed = closings.filter((c) => c.product === name).flatMap((c) => balancesOn(reviewOn, isins)
+      .filter((b) => same(b.units, c.units) && first(b.owner) === first(c.holder))
+      .map((b) => `${c.holder}, ${+c.units.toFixed(3)} units on ${reviewOn}: ${b.how}`));
+    const cr = credits(isins);
+    const bought = buys.filter((b) => b.product === name)
+      .filter((b) => cr.some((c) => same(c.units, b.units) && days(c.date, b.date) <= 5))
+      .map((b) => `${b.units} units bought on ${b.date} are a depository credit`);
+    const witness = [...closed, ...bought];
+    ok(`${name}: the review's own units of this line are a statement's own units of ${isins.join(" / ")}`,
+      witness.length > 0, witness[0] ?? "no closing or purchase of this line ties to a statement");
+  }
+
+  /**
+   * A-17: A LINE THE LIVE BOOK VALUES FROM UNITS A HOLDING STATEMENT RECORDS
+   * WITH NO RATE is witnessed on EVERY such row, not on one of them. Those rows
+   * are valued at AMFI's NAV on the statement's units alone, so the review
+   * closing each holder at exactly that balance is what says the units are the
+   * line's.
+   */
+  const live = [...depositoryFundHoldings(), ...unpricedStatementUnits()];
+  for (const [name, isins] of REVIEW_LINE_ISINS) {
+    const rows = live.filter((p) => isins.includes(up(p.isin)) && p.depositoryUnits?.kind === "no-rate");
+    if (!rows.length) continue;
+    const unwitnessed = rows.filter((p) => !closings.some((c) => c.product === name && same(c.units, p.quantity)));
+    ok(`${name}: the review closes each holder at the statement's own balance, unit for unit`,
+      unwitnessed.length === 0, unwitnessed.map((p) => `${p.accountId} ${p.quantity}`).join("; "));
+  }
+
+  // AND THE RULE COVERS WHAT THE VALUATION COVERS. Every ISIN the live book
+  // values from a statement's units is a statement's ISIN, so switching a
+  // valuation off cannot bring the sentence back for it: the units are still
+  // on the statement.
+  const orphan = live.filter((p) => !statementIsins.has(up(p.isin))).map((p) => `${p.security} ${p.isin}`);
+  ok("every holding the live book values from a statement's units is on a statement", orphan.length === 0, orphan.join("; "));
+  ok("…and the live book values some", live.length > 0, `${live.length}`);
+}
+
+// ── 6d. …NOR ONE A STATEMENT REPORTS FOR AN ENTITY THIS BOOK KEEPS OUT ─────
+//
+// The review files four Cash-tab lines under HOPE INDIA TRUST, and that
+// trust's own AMC folio statements are in the drop and report each of them.
+// The book keeps them out by decision — the trust is a separate taxpayer — so
+// no position carries them and no ISIN tier can see them: two of the four
+// print no ISIN at all. `REVIEW_LINES_KEPT_OUT` names each line's folio, and
+// what licenses it is the folio's own statement: held by the trust, kept out of
+// the book, and printing a holding at exactly the NAV the review prices the
+// line at on the same days.
+{
+  const manifest = JSON.parse(readFileSync(path.join(process.cwd(), "public", "audit", "manifest.json"), "utf8")) as
+    { docKey: string; accountNo?: string | null; owner?: string | null; reportType?: string | null }[];
+  const accounts = new Set(BOOK_ACCOUNTS.map((a) => a.accountNo));
+  const REVIEW = path.join(process.cwd(), "source", "august-2026-d",
+    "Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx");
+  const closings: { holder: string; product: string; rate: number }[] = [];
+  if (existsSync(REVIEW)) {
+    const wb = XLSX.readFile(REVIEW);
+    const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
+    const rows = sheet
+      ? (XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, blankrows: false, defval: "" }) as unknown[][])
+      : [];
+    for (const r of rows) {
+      const j = r.findIndex((c) => String(c).trim().toLowerCase() === "closing");
+      if (j >= 1) closings.push({ holder: String(r[0]), product: String(r[j - 1]), rate: Number(r[j + 3]) });
     }
   }
+  ok("the kept-out table has a subject", REVIEW_LINES_KEPT_OUT.size > 0, `${REVIEW_LINES_KEPT_OUT.size}`);
+  const trust = /hope india trust/i;
+  const flat = (k: string) => k.replace(/-/g, "");
+  const bookKeys = [...new Set(BOOK_POSITIONS.map((p) => securityKeyOf(p.security)))].filter(Boolean);
+  const related = (name: string) => {
+    const k = securityKeyOf(name);
+    return !!k && bookKeys.some((bk) =>
+      bk.startsWith(k) || k.startsWith(bk) || flat(bk).startsWith(flat(k)) || flat(k).startsWith(flat(bk)));
+  };
+  for (const [name, folio] of REVIEW_LINES_KEPT_OUT) {
+    const gap = REVIEW_GAPS.find((g) => g.name === name);
+    ok(`${name}: a line the gap list carries`, !!gap);
+    ok(`${name}: a search for its own name is told nothing about it`,
+      !reviewGapsFor(name).some((g) => g.name === name) && (!gap || reportedByStatement(gap)));
+    // LOAD-BEARING: neither the name tier nor an ISIN join would withhold it.
+    ok(`${name}: …and nothing else would have withheld it`, !related(name) && !REVIEW_LINE_ISINS.has(name));
+    const issues = manifest.filter((d) => d.accountNo === folio && d.reportType === "holdings");
+    ok(`${name}: folio ${folio}'s statements are in the archive, held by the trust`,
+      issues.length > 0 && issues.every((d) => trust.test(d.owner ?? "")), `${issues.length} issue(s)`);
+    ok(`${name}: …and kept out of the book by decision`, !accounts.has(folio));
+    const navs = issues.flatMap((d) => {
+      const f = path.join(process.cwd(), "public", "audit", d.docKey, "document.json");
+      const h = existsSync(f) ? (JSON.parse(readFileSync(f, "utf8")).holdings ?? []) as { marketPrice?: number | null }[] : [];
+      return h.map((x) => x.marketPrice).filter((x): x is number => typeof x === "number");
+    });
+    const line = closings.filter((c) => c.product === name);
+    ok(`${name}: the review closes it under the trust at a NAV the folio's own statement prints`,
+      line.length > 0 && line.every((c) => trust.test(c.holder) && navs.some((n) => Math.abs(n - c.rate) < 0.00005)),
+      `review ${line.map((c) => c.rate).join(", ")} · folio ${navs.join(", ")}`);
+  }
+  // THE TIER IS KEYED ON THE FOLIO, NOT THE HOLDER. A line the review files
+  // under the trust with no folio in the drop is still claimed absent, because
+  // for that one the sentence is true.
+  const trustLines = [...new Set(closings.filter((c) => trust.test(c.holder)).map((c) => c.product))]
+    .filter((p) => REVIEW_GAPS.some((g) => g.name === p) && !REVIEW_LINES_KEPT_OUT.has(p));
+  ok("a trust line with no folio in the drop is still claimed", trustLines.length > 0
+    && trustLines.every((p) => reviewGapsFor(p).some((g) => g.name === p)), trustLines.join(", "));
 }
 
 // ── 7. EVERY SEARCH A READER CAN RUN OVER HOLDINGS IS WIRED TO IT ───────────

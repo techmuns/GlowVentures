@@ -2848,11 +2848,118 @@ const REVIEW_GAP_BOOK = (() => {
         if (hit) { recordedValued = hit; break; }
       }
     } catch { depositoryValued = null; recordedValued = null; }
+    /**
+     * …AND EVERY REVIEW LINE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK
+     * VALUES IT (Stage 10cx) — derived BY THE JOIN THAT LICENSES IT, never read
+     * from `REVIEW_LINE_ISINS`, which would agree with the page by construction.
+     * A line is reported where the review closes a holder at exactly the units a
+     * statement of that holder shows on the review's own date — a depository
+     * window's printed running balance that day, a holding statement's
+     * quantity, a holding it records without a value — or where the review's
+     * own purchase of it is a depository credit, unit for unit.
+     *
+     * A ROUND NUMBER IS NOT EVIDENCE ON ITS OWN. Joined on units and holder
+     * alone, 15,000 shares tied the review's Deepak Fertilisers to three
+     * unrelated holdings and 4,000 its Manorama to two. So a whole-number match
+     * also needs a word of the review's name in the statement's.
+     *
+     * `reportInputs` is what makes an empty result a FINDING: while the review
+     * and the statements both read, a join that ties nothing has lost its input.
+     */
+    let reportedAll = [], keptOut = [], reportInputs = { closings: 0, balances: 0, trustDocs: 0 };
+    try {
+      const gsrc = readFileSync(new URL("../src/data/glowData.ts", import.meta.url), "utf8");
+      const accounts = bookArray(gsrc, "BOOK_ACCOUNTS") ?? [];
+      const ownerOf = new Map(accounts.map((a) => [a.accountId, a.owner]));
+      const first = (s) => String(s ?? "").trim().split(/\s+/)[0].toLowerCase();
+      const upper = (x) => String(x ?? "").trim().toUpperCase();
+      const wb = XLSX.read(readFileSync(new URL("../source/august-2026-d/Final Consolidated Jaisinghani Family Review as on 30 June 2026.xlsx", import.meta.url)));
+      const sheet = wb.SheetNames.find((n) => /transactions since inception/i.test(n));
+      const rows = sheet ? XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, blankrows: false, defval: "" }) : [];
+      const excelDate = (n) => new Date(Date.UTC(1899, 11, 30) + n * 86_400_000).toISOString().slice(0, 10);
+      const gapNames = new Set(gaps.map((g) => g.name));
+      const closings = [], buys = [];
+      for (const r of rows) for (const [kind, into] of [["closing", closings], ["purchase", buys]]) {
+        const j = r.findIndex((c) => String(c).trim().toLowerCase() === kind);
+        if (j < 1) continue;
+        const units = Number(r[j + 2]);
+        if (Number.isFinite(units) && units > 0)
+          into.push({ holder: String(r[0]), product: String(r[j - 1]), date: excelDate(Number(r[j + 1])), units, rate: Number(r[j + 3]) });
+      }
+      // A closing is the review's holding on the review's own date, whatever
+      // its row is dated — Zepto's is 31 July 2025, when it last marked it.
+      const reviewOn = closings.reduce((m, c) => (c.date > m ? c.date : m), "");
+      const STOP = new Set(["fund", "funds", "ltd", "limited", "india", "indian", "direct", "growth", "plan", "option", "regular",
+        "the", "and", "company", "equity", "equities", "shares", "share", "scheme", "idcw", "new", "face", "value"]);
+      const words = (s) => new Set(String(s).toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && /[a-z]/.test(w) && !STOP.has(w)));
+      const shareWord = (a, b) => { const wa = words(a); return [...words(b)].some((w) => wa.has(w)); };
+      const docs = new Map();
+      const doc = (src) => {
+        if (!docs.has(src)) {
+          try { docs.set(src, JSON.parse(readFileSync(new URL(`../public/audit/${src}/document.json`, import.meta.url), "utf8"))); }
+          catch { docs.set(src, {}); }
+        }
+        return docs.get(src);
+      };
+      const balances = [];
+      const moves = bookObject(gsrc, "BOOK_SHARE_MOVEMENTS") ?? {};
+      for (const w of Object.values(moves)) {
+        if (w.reason != null || !w.source || !w.periodFrom || !w.periodTo || reviewOn < w.periodFrom || reviewOn > w.periodTo) continue;
+        const before = (doc(w.source).transactions ?? []).filter((t) => upper(t.isin) === upper(w.isin) && (t.date ?? "") <= reviewOn);
+        const printed = before.length ? /balance ([\d.,]+)/.exec(before[before.length - 1].description ?? "")?.[1] : null;
+        const units = before.length ? Number(String(printed ?? "").replace(/,/g, "")) : w.opening;
+        if (Number.isFinite(units) && units > 0) balances.push({ owner: ownerOf.get(w.accountId), units, security: w.security });
+      }
+      for (const p of bookArray(gsrc, "BOOK_POSITIONS") ?? [])
+        if (p.quantity > 0) balances.push({ owner: ownerOf.get(p.accountId), units: p.quantity, security: p.security });
+      for (const u of bookArray(gsrc, "BOOK_UNVALUED_HOLDINGS") ?? [])
+        if ((u.quantity ?? 0) > 0) balances.push({ owner: ownerOf.get(u.accountId), units: u.quantity, security: u.security });
+      const same = (a, b) => Math.abs(a - b) < 0.0005;
+      const reported = new Set();
+      for (const c of closings) {
+        if (!gapNames.has(c.product)) continue;
+        if (balances.some((b) => same(b.units, c.units) && first(b.owner) === first(c.holder)
+          && (!Number.isInteger(c.units) || shareWord(c.product, b.security)))) reported.add(c.product);
+      }
+      const credits = [];
+      for (const w of Object.values(moves)) if (w.source) for (const t of doc(w.source).transactions ?? [])
+        if (upper(t.isin) === upper(w.isin) && t.side === "receipt" && typeof t.quantity === "number" && t.quantity > 0 && t.date)
+          credits.push({ date: t.date, units: t.quantity, security: w.security });
+      const days = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 86_400_000;
+      for (const b of buys) {
+        if (!gapNames.has(b.product) || reported.has(b.product)) continue;
+        if (credits.some((c) => same(c.units, b.units) && days(c.date, b.date) <= 5
+          && (!Number.isInteger(b.units) || shareWord(b.product, c.security)))) reported.add(b.product);
+      }
+      reportedAll = gaps.map((g) => g.name).filter((n) => reported.has(n));
+      /**
+       * …AND A LINE A FOLIO THIS BOOK KEEPS OUT REPORTS. The review files Cash
+       * lines under HOPE INDIA TRUST, whose own folio statements are in the
+       * archive and out of the book by decision. Joined on the NAV: the review
+       * prices the line at exactly the rate one of those statements prints.
+       */
+      const manifest = JSON.parse(readFileSync(new URL("../public/audit/manifest.json", import.meta.url), "utf8"));
+      const inBook = new Set(accounts.map((a) => String(a.accountNo)));
+      const trustDocs = manifest.filter((m) => /hope india trust/i.test(String(m.owner ?? "")) && m.reportType === "holdings"
+        && !inBook.has(String(m.accountNo)));
+      const navs = trustDocs.flatMap((m) => (doc(m.docKey).holdings ?? []).map((h) => h.marketPrice).filter((x) => typeof x === "number"));
+      const kept = new Set(closings.filter((c) => gapNames.has(c.product) && /hope india trust/i.test(c.holder)
+        && navs.some((p) => Math.abs(p - c.rate) < 0.00005)).map((c) => c.product));
+      keptOut = gaps.map((g) => g.name).filter((n) => kept.has(n));
+      reportInputs = { closings: closings.length, balances: balances.length, trustDocs: trustDocs.length };
+    } catch { reportedAll = []; keptOut = []; }
+    const reportedSet = new Set([...reportedAll, ...keptOut]);
     return {
       depositoryValued,
       depositoryRows,
       recordedValued,
       recordedRows,
+      reportedAll,
+      // The ones only a statement join withholds — the name tier would claim
+      // them, so they are what a lost table entry would expose.
+      reportedOnly: reportedAll.filter((n) => !!securityKeyOf(n) && !related(n)),
+      keptOut,
+      reportInputs,
       // Any one of them exercises the claim equally, so the list's own first.
       suppressed: gaps.filter((g) => related(g.name)).map((g) => g.name)[0] ?? null,
       /**
@@ -2864,7 +2971,7 @@ const REVIEW_GAP_BOOK = (() => {
        * whose name keys to nothing is not claimable there either.
        */
       suppressedAll: gaps.filter((g) => related(g.name)).map((g) => g.name),
-      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name)).map((g) => g.name),
+      claimable: gaps.filter((g) => !!securityKeyOf(g.name) && !related(g.name) && !reportedSet.has(g.name)).map((g) => g.name),
       count: gaps.length,
       name: withAlias.name,
       alias: withAlias.aliases?.[0] ?? null,
@@ -15469,6 +15576,47 @@ const INVARIANTS = {
       if (a.options !== 0) return { notChecked: `“${a.q}” matched ${a.options} option(s), so the empty state was never reached` };
       return !a.named.includes(a.q);
     }],
+    /**
+     * …NOR A REVIEW LINE A STATEMENT REPORTS, WHETHER OR NOT THIS BOOK VALUES
+     * IT (Stage 10cx). The note says "no statement reports it", which is a claim
+     * about the STATEMENTS: Zepto's preference shares, IFB and NLC sit on Ajay's
+     * transaction-only demat, and a reader told otherwise asks the family for a
+     * document they already sent. Every such line whose own name empties the
+     * list is typed; not one may be named.
+     */
+    ["…nor a review line a statement reports, whether or not this book values it", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.reportedAll?.length) {
+        // Both inputs read and the join tied nothing: it lost its input.
+        const inp = B?.reportInputs ?? {};
+        return inp.closings > 0 && inp.balances > 0 ? false : { notChecked: "the review or the statements did not read" };
+      }
+      if (!B.reportedOnly?.length) return { notChecked: "every line a statement reports is also one the name tier withholds" };
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const reads = ctx.absentName.reported ?? [];
+      if (reads.length !== Math.min(40, B.reportedOnly.length)) return false;
+      const tested = reads.filter((r) => r.options === 0);
+      if (!tested.length) return { notChecked: "every such name matches an option here, so the empty state was never reached" };
+      return tested.every((r) => !r.named.includes(r.q));
+    }],
+    /**
+     * …NOR ONE A FOLIO THIS BOOK KEEPS OUT REPORTS. HOPE INDIA TRUST's own folio
+     * statements are in the drop, out of the book by decision, and report four
+     * of the review's Cash lines — so "no statement reports it … ask for AMC
+     * folio statements" asks for statements the family already sent.
+     */
+    ["…nor one a folio this book keeps out reports", (t, ctx) => {
+      const B = REVIEW_GAP_BOOK;
+      if (!B?.keptOut?.length) {
+        return (B?.reportInputs?.trustDocs ?? 0) > 0 ? false : { notChecked: "the archive carries no folio this book keeps out" };
+      }
+      if (!ctx.absentName) return { notChecked: "the search probe did not run" };
+      const reads = ctx.absentName.keptOut ?? [];
+      if (reads.length !== Math.min(12, B.keptOut.length)) return false;
+      const tested = reads.filter((r) => r.options === 0);
+      if (!tested.length) return { notChecked: "every such name matches an option here, so the empty state was never reached" };
+      return tested.every((r) => !r.named.includes(r.q));
+    }],
     ["…and neither is a search that names nothing at all", (t, ctx) => {
       const a = ctx.absentName?.typo;
       if (!a) return { notChecked: "the nonsense search was not driven" };
@@ -26320,7 +26468,10 @@ for (const theme of THEMES) {
            * abstains by name if this book offers no such name.
            */
           let gapWithHits = null;
-          for (const nm of (REVIEW_GAP_BOOK?.claimable ?? []).slice(0, 40)) {
+          // Any review line, the ones a statement reports included: the rule is
+          // about what a search that FINDS something shows, whoever withholds it.
+          const anyGap = [...new Set([...(REVIEW_GAP_BOOK?.claimable ?? []), ...(REVIEW_GAP_BOOK?.reportedAll ?? [])])];
+          for (const nm of anyGap.slice(0, 40)) {
             const r = await run(nm);
             if (r.rows.some((x) => x.kind !== "ask")) { gapWithHits = { q: nm, ...r }; break; }
           }
@@ -27122,7 +27273,17 @@ for (const theme of THEMES) {
           recordedValued: REVIEW_GAP_BOOK.recordedValued
             ? { q: REVIEW_GAP_BOOK.recordedValued, ...(await read(REVIEW_GAP_BOOK.recordedValued)) }
             : null,
+          /**
+           * EVERY review line a statement reports that only the statement join
+           * withholds, and every one a folio this book keeps out reports — all
+           * of them, not the first: the table is hand-kept, and a check on one
+           * entry passes while any other goes missing.
+           */
+          reported: [],
+          keptOut: [],
         };
+        for (const q of (REVIEW_GAP_BOOK.reportedOnly ?? []).slice(0, 40)) ABSENT_NAME.reported.push({ q, ...(await read(q)) });
+        for (const q of (REVIEW_GAP_BOOK.keptOut ?? []).slice(0, 12)) ABSENT_NAME.keptOut.push({ q, ...(await read(q)) });
         /**
          * AND THE NOTE IS LEFT ON SCREEN, which is not tidiness.
          *
