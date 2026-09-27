@@ -8,6 +8,7 @@ import { StockLink } from "@/components/StockLink";
 import {
   sum, sumOrNull, consolidatedMarketValue, isCompanyShare, excludedClasses, assetClassLabel, currentHoldings,
   holdingRoute, ROUTE_LABEL, ROUTE_NOTE, DIRECT_EQUITY_BUCKET, costCoversSet,
+  holdingBucket, bucketLabel, MANDATE_BUCKET,
 } from "@/lib/analytics";
 import { accountIndex, ownerOf, engagementOf } from "@/lib/accounts";
 import { useStockExposure } from "@/lib/useStockExposure";
@@ -248,8 +249,42 @@ export function SectorComposition() {
   // Every class this page does NOT cover, largest first, from the book — ON THE
   // SAME SET as the covered half, because "company shares + the classes left
   // out = the book" is only a partition if both sides are drawn from one set.
-  const excluded = excludedClasses(heldConsolidated, isCompanyShare);
-  const excludedMV = sum(excluded.map((c) => c.mv));
+  /**
+   * ── …NAMED ON THE HOLDINGS TABLES' OWN AXIS (FS-7) ──
+   *
+   * `excludedClasses` names what a holding IS; the Portfolio Monitor and
+   * Morning CIO section by `holdingBucket`, which counts a mandate's cash sleeve
+   * inside the mandate. `readerClassOf` already files a liquid or arbitrage fund
+   * under Cash on both, so the one label left carrying two values was Cash: this
+   * card read "Cash ₹89.6 Cr" beside a Monitor whose CASH section reads ₹78 Cr,
+   * the other ₹11.6 Cr being the mandates' own cash, counted in PMS mandates
+   * (measured on the live book, which values the depository's cash-equivalent
+   * units at AMFI's NAV).
+   *
+   * So the card lists the sections the holdings tables draw and names the sleeve
+   * by where it is counted — every label here carries the value that label has
+   * on the Monitor. Still ONE set with the covered half, so the partition holds.
+   */
+  const bucketOfRow = (x: Position) => holdingBucket(x, engagementOf(accIdx, x) || null);
+  const nonShares = heldConsolidated.filter((x) => !isCompanyShare(x));
+  const excluded = (() => {
+    const m = new Map<string, { mv: number; count: number }>();
+    for (const x of nonShares) {
+      const k = bucketOfRow(x);
+      if (k === MANDATE_BUCKET) continue;   // the sleeve, named by where it is counted
+      const e = m.get(k) ?? { mv: 0, count: 0 };
+      e.mv += x.marketValue; e.count += 1;
+      m.set(k, e);
+    }
+    return [...m.entries()].map(([key, v]) => ({ key, ...v })).sort((a, b) => b.mv - a.mv);
+  })();
+  const sleeveRows = nonShares.filter((x) => bucketOfRow(x) === MANDATE_BUCKET);
+  const sleeveMV = sum(sleeveRows.map((x) => x.marketValue));
+  const sleeveClasses = excludedClasses(sleeveRows, () => false);
+  const sleeveWhat = sleeveClasses.length === 1
+    ? assetClassLabel(sleeveClasses[0].key).toLowerCase()
+    : sleeveClasses.map((c) => assetClassLabel(c.key)).join(" and ");
+  const excludedMV = sum(excluded.map((c) => c.mv)) + sleeveMV;
 
   const [view, setView] = useViewParam<SectorView>(SECTOR_VIEWS);
   /** The donut, the source line and the sector table read Consolidated on the Compare tab too. */
@@ -546,12 +581,14 @@ export function SectorComposition() {
       <Figure label="Not a company share" value={fmtFromBase(excludedMV, { compact: true })}>
         <span data-sector-excluded
           title="Excluded rather than folded in — a fund holds many companies, so none has a sector of its own.">
-          {excluded.length === 0 ? "none" : excluded.map((c, i) => (
+          {excluded.length === 0 && sleeveRows.length === 0 ? "none" : excluded.map((c, i) => (
             <Fragment key={c.key}>
-              {i > 0 && (i === excluded.length - 1 ? " and " : ", ")}
-              <span className="text-slate-400">{assetClassLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
+              {i > 0 && (i === excluded.length - 1 && sleeveRows.length === 0 ? " and " : ", ")}
+              <span className="text-slate-400">{bucketLabel(c.key)}</span> {fmtFromBase(c.mv, { compact: true })}
             </Fragment>
           ))}
+          {sleeveRows.length > 0 && <>{excluded.length > 0 && " and "}{fmtFromBase(sleeveMV, { compact: true })} of {sleeveWhat} inside
+            the <span className="text-slate-400">{MANDATE_BUCKET}</span></>}
         </span>
       </Figure>
     </>

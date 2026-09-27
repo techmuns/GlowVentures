@@ -27,7 +27,7 @@
 import type { Portfolio, Position } from "./types";
 import { accountIndex } from "./accounts";
 import { costCoversSet, currentHoldings, droppedHoldings, isPrivateClass, isUnplacedSide, sum } from "./analytics";
-import { fifoTotals, type FifoOptions } from "./fifo";
+import { fifoTotals, type FifoOptions, type FifoTotals } from "./fifo";
 import { MARKET_SIDE_UNPLACED } from "./aifCategory";
 /**
  * THE SECTION AXES, AND THE ONE PLACE THAT DECIDES THEM. Morning CIO's
@@ -38,6 +38,7 @@ import { MARKET_SIDE_UNPLACED } from "./aifCategory";
  */
 import { type GroupAxis, groupKeyFor, groupLabelFor, GROUP_NOUN } from "./groupAxis";
 import { measuredAccountsReturn } from "./returns";
+import { xirrPct, moneyWeightedReturn, type MoneyWeighted } from "./bucketXirr";
 
 /** The route the drill-down lives at. Imported, never typed at a call site. */
 export const DRILLDOWN_PATH = "/holdings";
@@ -273,12 +274,26 @@ export type Drilldown = {
    * empty table renders through `AbsentSection`, never as a frame around nothing.
    */
   absent: { what: string; needs: string } | null;
+  /**
+   * THE MONEY-WEIGHTED TILE'S OWN RATE, on the page that tile opens (B-06).
+   * Set on the `measured` scope only, and struck by `bookMoneyWeighted` — the
+   * function the Morning CIO tile calls — so the page a reader clicks through
+   * to states the figure they clicked rather than a return on cost alone.
+   */
+  moneyWeighted?: BookMoneyWeighted;
 };
 
 type Ctx = {
   portfolio: Portfolio;
   /** The consolidated set Morning CIO's figures are struck on. */
   consolidated: Position[];
+  /**
+   * THE STATEMENT BOOK — what the money-weighted rate closes each account on.
+   * Its flows are complete only to each statement's date, so a live value does
+   * not belong at that date. Absent, the live portfolio stands in (as it does
+   * on Morning CIO before the statement book has loaded).
+   */
+  statement?: Portfolio | null;
 };
 
 /**
@@ -403,18 +418,18 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
       // The rate's own account set — `measuredAccountsReturn`, the function the
       // tile's figure comes from — so this page cannot list an account the rate
       // left out, nor leave out one it covered.
-      const ids = measuredAccountsReturn(portfolio, portfolio.accounts).parts.map((x) => x.accountId);
+      const mwb = bookMoneyWeighted(portfolio, ctx.statement ?? null, new Date());
+      const ids = mwb.accountIds;
       const keep = new Set(ids);
       const rows = livePositions.filter((p) => keep.has(p.accountId));
       const outside = livePositions.filter((p) => !keep.has(p.accountId));
-      /* NO WINDOW IS DERIVED HERE ANY MORE. `Drilldown.windowDays` fed the
-         arithmetic card's "N-day window · not annualised" line and nothing
-         else, and the card is gone. The window itself is NOT lost — it is
-         `m.bookMW.windowDays` on Morning CIO, derived by `moneyWeightedReturn`
-         from the same flows, and it is stated in the hover of the tile that
-         prints the rate. That is Stage 10g(ii)'s guard and it must keep a home:
-         this figure once read +99.0% because a 132-day return was compounded
-         onto a year. */
+      /* THE RATE AND ITS WINDOW RIDE ON THE DRILL-DOWN AGAIN (B-06). The
+         arithmetic card that carried them went at Stage 10ao, which left this
+         page printing only a return on cost under a tile that printed a
+         money-weighted rate — two figures for one click. `moneyWeighted` is
+         the same object the tile reads, and its window is `moneyWeightedReturn`'s
+         own: Stage 10g(ii)'s guard, because this figure once read +99.0% when a
+         132-day return was compounded onto a year. */
       return withFacets({
         ...base, id: scope.id, key: "",
         deduped: false,
@@ -427,6 +442,7 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
         })(),
         title: "Money-weighted return",
         crumb: "Money-weighted return",
+        moneyWeighted: mwb,
         absent: rows.length ? null : {
           what: "No account in this book carries an opening portfolio value",
           needs: "A money-weighted return needs the window's opening valuation as its first flow. No statement in the drop publishes one, so the rate is absent rather than struck on a stake nobody stated.",
@@ -580,8 +596,11 @@ export function resolveDrilldown(scope: { id: DrilldownId; key: string; facet?: 
        * Offered only where both exist — a toggle to an empty half invites a
        * click into a table that can only be empty.
        */
-      const costed = consolidated.filter((p) => p.costBasis != null);
-      const without = consolidated.filter((p) => p.costBasis == null);
+      // `costedBookSet`'s own predicate (B-07), so the facet the Consolidated
+      // return tile opens is the set that tile's figure is struck over.
+      const costed = costedBookSet(consolidated).costed;
+      const costedIn = new Set(costed);
+      const without = consolidated.filter((p) => !costedIn.has(p));
       const costFacets: Facet[] = costed.length && without.length ? [
         {
           key: "costed", label: "Cost reported", group: "cost",
@@ -687,6 +706,114 @@ export function coveredReturn(set: readonly Position[], opts: FifoOptions = {}) 
   // mandate is struck on its capital since inception.
   const fifo = fifoTotals(set, opts);
   return { covers, pct: covers ? fifo.returnPct : null, fifo };
+}
+
+/**
+ * ── THE WHOLE-BOOK RETURN'S SET, NAMED ON ITS FACE (B-07) ───────────────────
+ *
+ * The whole-book return on cost is struck over the holdings that report a
+ * cost — Stage 10ca's decision, and main records the refusal version (a bare
+ * "—" wherever ₹168 Cr of depository holdings report no cost) as a regression.
+ * WHEREVER IT APPEARS IT NAMES THAT SET ON ITS FACE, not only in a hover:
+ * "on the ₹X of ₹Y that reports a cost · N of M holdings". Morning CIO's
+ * Consolidated return tile, its allocation table's Total row and the Portfolio
+ * Monitor's footer all print this ONE figure over this ONE set, so the set and
+ * its words are built here once.
+ */
+export type CostedBookSet = {
+  /** The current holdings whose statement reports what they cost. */
+  costed: Position[];
+  /** What those are worth — the X in the label. */
+  costedValue: number;
+  /** What every current holding is worth — the Y, the book the top bar shows. */
+  bookValue: number;
+  costedCount: number;
+  holdings: number;
+};
+export function costedBookSet(current: readonly Position[]): CostedBookSet {
+  const costed = current.filter((p) => p.costBasis != null && !p.costUnavailable);
+  return {
+    costed,
+    costedValue: sum(costed.map((p) => p.marketValue)),
+    bookValue: sum(current.map((p) => p.marketValue)),
+    costedCount: costed.length,
+    holdings: current.length,
+  };
+}
+/** The words, in the reader's currency: "on the ₹X of ₹Y that reports a cost · N of M holdings". */
+export function costedSetLabel(
+  s: Pick<CostedBookSet, "costedValue" | "bookValue" | "costedCount" | "holdings">,
+  money: (n: number) => string,
+): string {
+  return `on the ${money(s.costedValue)} of ${money(s.bookValue)} that reports a cost · ${s.costedCount} of ${s.holdings} holdings`;
+}
+
+/**
+ * ...AND THE RETURN ITSELF, STRUCK ONCE: FIFO over that set (`fifoTotals`),
+ * which is Stage 10ca's one aggregate. Morning CIO's tile and allocation Total
+ * row and the page they open all call this, so the figure a reader clicked is
+ * the figure they land on, and a change to the set moves all of them together.
+ */
+export type BookReturnOnCost = { set: CostedBookSet; fifo: FifoTotals; pct: number | null };
+export function bookReturnOnCost(current: readonly Position[], opts: FifoOptions): BookReturnOnCost {
+  const set = costedBookSet(current);
+  const fifo = fifoTotals(set.costed, opts);
+  return { set, fifo, pct: fifo.returnPct };
+}
+
+/**
+ * ── THE MONEY-WEIGHTED RATE, STRUCK ONCE FOR THE TILE AND THE PAGE (B-06) ───
+ *
+ * Morning CIO's tile and the `?of=measured` page it opens used to be two
+ * computations — the tile over the statement book, the page's account set over
+ * the live one — and the page printed only a return on cost, so a reader who
+ * clicked +26.5% landed on +14.2% and nothing tying the two. Both read this
+ * now: the accounts whose statements carry an opening portfolio value, each
+ * closed on its own statement's value at its own date (`measuredAccountsReturn`
+ * — the flows are complete only to that date), pooled with the fund-of-funds
+ * model's calls and marks where it carries any, and de-annualised by
+ * `moneyWeightedReturn` over the flows' own window, never compounded onto a
+ * year it has not seen (Stage 10g(ii)).
+ */
+export type BookMoneyWeighted = {
+  result: MoneyWeighted;
+  /** The accounts the rate covers, and what their statements value them at. */
+  accountIds: string[];
+  accountNos: string[];
+  measuredValue: number;
+  /** Where the pool closes — the latest statement date among them. */
+  lastClose: string | null;
+  /** Accounts in the book, for "N of M accounts". */
+  bookAccounts: number;
+};
+export function bookMoneyWeighted(portfolio: Portfolio, statement: Portfolio | null, today: Date): BookMoneyWeighted {
+  const mw = measuredAccountsReturn(statement ?? portfolio, portfolio.accounts);
+  const pm = portfolio.privateMarkets;
+  const privateFlows = [
+    ...pm.startups.filter((s) => s.investDate && s.invested > 0)
+      .flatMap((s) => [{ date: new Date(s.investDate!), amount: -s.invested }, { date: today, amount: s.fairValue }]),
+    ...[...pm.peFunds, ...pm.preIpoFunds, ...pm.unlistedCompanies, ...pm.debtFunds, ...pm.closedFunds]
+      .filter((f) => f.firstInvest && f.drawn > 0)
+      .flatMap((f) => [{ date: new Date(f.firstInvest!), amount: -f.drawn }, { date: today, amount: f.distributed + f.currentValue }]),
+  ];
+  // The private flows join the SAME per-account parts, each still closing on
+  // its own statement date. The window is the rate's own: its first flow to its
+  // last — with no private flows (this book carries none), exactly the pool's.
+  const flows = [
+    ...mw.parts.flatMap((x) => [...x.flows, { date: x.asOf, amount: x.terminalValue }]),
+    ...privateFlows,
+  ];
+  const annual = mw.parts.length ? xirrPct(flows) : null;
+  const times = flows.map((f) => f.date.getTime());
+  const windowDays = mw.parts.length ? Math.round((Math.max(...times) - Math.min(...times)) / 864e5) : null;
+  return {
+    result: moneyWeightedReturn(annual, windowDays),
+    accountIds: mw.parts.map((x) => x.accountId),
+    accountNos: mw.parts.map((x) => x.accountNo),
+    measuredValue: mw.measuredMV,
+    lastClose: mw.lastClose,
+    bookAccounts: portfolio.accounts.length,
+  };
 }
 
 /**

@@ -90,7 +90,7 @@ function axisTicks(dates: string[], spanDays: number): { ticks: number[]; fmt: (
 }
 
 export function NavVsIndex() {
-  const { portfolio, fmtFromBase } = usePortfolio();
+  const { portfolio, statementPortfolio, fmtFromBase, livePriced } = usePortfolio();
   /**
    * WHICH BENCHMARK THE BOOK IS SET AGAINST. In the URL (`?bench=`) like every
    * other view in this app, so "send me the book against the Sensex" is a link
@@ -279,6 +279,22 @@ export function NavVsIndex() {
     const owner = a.ownerId ? ownerDisplayName(a.ownerId) : a.owner;
     return `${a.provider}${owner ? ` · ${owner}` : ""}`;
   };
+  const stmtBook = statementPortfolio ?? portfolio;
+  const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+  const depositoryRows = portfolio.positions.filter((p) => p.depositoryUnits);
+  const depositoryValue = sumOf(depositoryRows.map((p) => p.marketValue));
+  const recon: Recon = {
+    perAccount: sumOf(cov.covered.map((c) => c.bookValue)) + sumOf(cov.single.map((s) => s.bookValue))
+      + sumOf(cov.unvalued.map((u) => u.bookValue)),
+    statementBook: stmtBook.totalValue,
+    doubleCounted: sumOf(stmtBook.positions.map((p) => p.marketValue)) - stmtBook.totalValue,
+    ...reportedTwiceOf(stmtBook.positions),
+    current: portfolio.totalValue,
+    depositoryValue,
+    depositoryCount: depositoryRows.length,
+    priceDelta: portfolio.totalValue - stmtBook.totalValue - depositoryValue,
+    quotesLive: livePriced > 0,
+  };
 
   // A series needs at least two points and a set to hold constant over. Both
   // halves of the family's ask are answered here: the series when it exists, and
@@ -297,7 +313,7 @@ export function NavVsIndex() {
         <AbsentSection
           what="No account in this book publishes more than one dated valuation"
           needs={`A NAV series needs the same account valued at two or more dates. ${stats.singleCount} account(s) publish exactly one and ${stats.unvaluedCount} publish none, so there is no set over which a series could hold its composition constant. The next monthly reissue of any statement already in the archive starts one.`} />
-        <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} />
+        <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} recon={recon} />
       </Card>
     );
   }
@@ -592,9 +608,48 @@ export function NavVsIndex() {
         </p>
       )}
 
-      <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} />
+      <ExcludedAccounts cov={cov} nameOf={nameOf} fmt={fmtFromBase} recon={recon} />
     </Card>
   );
+}
+
+/** The three lists set against the current value, one step at a time (MNT-4). */
+type Recon = {
+  /** Σ of the three lists — each statement's own value, as printed, not deduped. */
+  perAccount: number;
+  /** The consolidated statement book: each holding two accounts both report counted once. */
+  statementBook: number;
+  /** Σ of the statement positions as printed less that book — the double count. */
+  doubleCounted: number;
+  /**
+   * THE SAME GAP FROM ITS CAUSE: every row of a `dedupeGroup` after its first,
+   * and the holdings they are. The subtraction above says how much; this says
+   * which holdings, so the hover can name them rather than infer them — and
+   * where the two disagree by more than a rupee, both are printed.
+   */
+  reportedTwice: number;
+  reportedTwiceKeys: string[];
+  /** The current value of holdings the top bar shows. */
+  current: number;
+  /** Cash-equivalent funds valued from a depository's own units — no statement marks them. */
+  depositoryValue: number;
+  depositoryCount: number;
+  /** What published NAVs and live quotes add to the statement marks. */
+  priceDelta: number;
+  quotesLive: boolean;
+};
+
+/** Every row of a `dedupeGroup` after its first: what a per-account sum counts twice. */
+function reportedTwiceOf(positions: { dedupeGroup?: string | null; securityKey: string; marketValue: number }[]) {
+  const seen = new Set<string>();
+  const keys = new Set<string>();
+  let reportedTwice = 0;
+  for (const p of positions) {
+    if (!p.dedupeGroup) continue;
+    if (seen.has(p.dedupeGroup)) { reportedTwice += p.marketValue; keys.add(p.securityKey); }
+    else seen.add(p.dedupeGroup);
+  }
+  return { reportedTwice, reportedTwiceKeys: [...keys].sort() };
 }
 
 /**
@@ -605,13 +660,56 @@ export function NavVsIndex() {
  * an account publishing NONE needs a fund that values it at all. Folding them
  * into one "not covered" count would hide which is which.
  */
-function ExcludedAccounts({ cov, nameOf, fmt }: {
+function ExcludedAccounts({ cov, nameOf, fmt, recon }: {
   cov: typeof BOOK_NAV_COVERAGE;
   nameOf: (id: string) => string;
-  fmt: (n: number | null | undefined, o?: { compact?: boolean }) => string;
+  fmt: (n: number | null | undefined, o?: { compact?: boolean; sign?: boolean }) => string;
+  recon: Recon;
 }) {
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   if (!cov.single.length && !cov.unvalued.length) return null;
+  const c = (n: number, sign = false) => fmt(n, { compact: true, sign });
+  /**
+   * THE FOOTER RECONCILES, STEP BY STEP, AND THE STEPS ARE COMPUTED (MNT-4).
+   *
+   * It used to say the lists' sum is ABOVE the current value "by the value two
+   * members both report". That was one step of four, and on this drop the sum
+   * is ₹63 Cr BELOW it: the current value is the statement book on the live
+   * layer — AMFI's published NAVs, any live quote, and cash-equivalent funds
+   * valued from a depository's own units, which no statement marks. Naming one
+   * cause for a gap made of several is the wrong-diagnosis failure, so each
+   * step is printed with its own figure and the sign is the arithmetic's.
+   */
+  const dedupeTies = Math.abs(recon.perAccount - (recon.statementBook + recon.doubleCounted)) <= 1;
+  // …AND THE GAP IS NAMED FROM ITS CAUSE, the holdings two accounts both
+  // report, not only inferred by subtraction; where the two disagree by more
+  // than a rupee both are printed rather than one assumed.
+  const nTwice = recon.reportedTwiceKeys.length;
+  const holdingsTwice = `${nTwice} holding${nTwice === 1 ? "" : "s"}, each on two accounts' statements`;
+  const causeTies = Math.abs(recon.doubleCounted - recon.reportedTwice) <= 1;
+  const liveSteps = [
+    Math.abs(recon.priceDelta) > 1
+      ? `${c(recon.priceDelta, true)} from ${recon.quotesLive ? "AMFI's published NAVs and live quotes" : "AMFI's published NAVs"} over the statement marks`
+      : null,
+    recon.depositoryValue > 1
+      ? `${c(recon.depositoryValue)} of ${recon.depositoryCount} cash-equivalent fund${recon.depositoryCount === 1 ? "" : "s"} valued from a depository's own closing units at AMFI's NAV — holdings no statement marks`
+      : null,
+  ].filter(Boolean);
+  const addsShort = [
+    Math.abs(recon.priceDelta) > 1 ? (recon.quotesLive ? "published NAVs and live quotes" : "the published NAVs") : null,
+    recon.depositoryValue > 1 ? "funds no statement marks" : null,
+  ].filter((x): x is string => !!x);
+  const footHover = [
+    `As each statement prints them, the three lists sum to ${fmt(recon.perAccount)} — a per-account sum, which does not dedupe.`,
+    dedupeTies && causeTies
+      ? nTwice === 0
+        ? `No holding is reported by two accounts, so the lists and the consolidated statement book agree, ${fmt(recon.statementBook)}.`
+        : `Counting once the ${fmt(recon.doubleCounted)} that two accounts both report gives the consolidated statement book, ${fmt(recon.statementBook)}; that is ${holdingsTwice}.`
+      : `The consolidated statement book is ${fmt(recon.statementBook)}; the lists differ from it by ${fmt(recon.perAccount - recon.statementBook, { sign: true })}, and ${fmt(recon.reportedTwice)} of that is ${holdingsTwice}.`,
+    liveSteps.length
+      ? `The current value of holdings, ${fmt(recon.current)}, is that book plus ${liveSteps.join(", and ")}.`
+      : `The current value of holdings is that book, ${fmt(recon.current)}.`,
+  ].join(" ");
   return (
     <details className="mt-3 rounded-lg border border-ink-700 bg-ink-900/40 px-3 py-2" data-testid="nav-excluded">
       {/* THE SPLIT IS IN THE SUMMARY, NOT ONLY INSIDE THE FOLD. "36 accounts
@@ -620,7 +718,7 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
           a next monthly statement, or a fund that values the folio at all. A
           reader who never opens the details still gets both. */}
       <summary className="cursor-pointer text-[11.5px] text-slate-400"
-        title={`The ${cov.single.length + cov.unvalued.length} accounts that cannot supply a series: ${cov.single.length} publish exactly one dated valuation, ${cov.unvalued.length} publish no valuation at all. Open to see each one named.`}>
+        title={`The ${cov.single.length + cov.unvalued.length} accounts that cannot supply a series: ${cov.single.length} publish exactly one dated valuation, ${cov.unvalued.length} publish no valuation at all. The figure is their value as their statements print them — a per-account sum. Open to see each one named.`}>
         Not in the series: <strong className="text-slate-300">{cov.single.length + cov.unvalued.length} accounts</strong>
         {" "}· {fmt(sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })}
       </summary>
@@ -661,10 +759,16 @@ function ExcludedAccounts({ cov, nameOf, fmt }: {
           </ul>
         </div>
       </div>
-      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp). */}
-      <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500"
-        title="The three lists account for every account in the book. Their sum is ABOVE the current value of holdings by the value two members both report — a per-account sum does not dedupe and a consolidated one does.">
-        All three lists · {fmt(sum(cov.covered.map((c) => c.bookValue)) + sum(cov.single.map((s) => s.bookValue)) + sum(cov.unvalued.map((u) => u.bookValue)), { compact: true })}
+      {/* THE FIGURE ON ITS FACE, THE RECONCILIATION IN ITS HOVER (Stage 10cp).
+          The hover is MNT-4's reconciliation, and it is not "the lists sum to
+          more than the current value": on the live book the current value is
+          ABOVE the per-account sum, by the published NAV and the depository's
+          cash funds, and BELOW it only by the double count. */}
+      <p className="mt-3 border-t border-ink-700 pt-2 text-[11px] text-slate-500" data-testid="nav-excluded-recon"
+        data-per-account={recon.perAccount} data-statement-book={recon.statementBook} data-current={recon.current}
+        data-reported-twice={recon.reportedTwice} data-reported-twice-keys={recon.reportedTwiceKeys.join(" ")}
+        title={footHover}>
+        All three lists · {c(recon.perAccount)}
       </p>
     </details>
   );

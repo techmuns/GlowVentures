@@ -15,6 +15,7 @@ import {
   type LookthroughState, type FundPortfolio,
 } from "@/lib/lookthrough";
 import { schemeReturns, breakAfter, stepWords } from "@/lib/schemeReturns";
+import { fundNavFor } from "@/lib/fundNavs";
 
 /**
  * ── THE SCHEME: ITS NAV, ITS RETURNS, AND WHAT IT HOLDS ─────────────────────
@@ -163,6 +164,24 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
 
   const { match } = state;
   const p = pf!;
+  /**
+   * ONE NAV PER PAGE (DSM-B5). The page's price is AMFI's own published NAV
+   * (`fundNavs.ts`, refreshed daily), and this card printed the fund store's
+   * NAV instead — two NAVs a fortnight apart, both called "AMFI's", with day
+   * moves of opposite sign (Active Momentum +0.70% in the header, −0.24% here).
+   * Where AMFI's file carries the holding the card shows that record, the same
+   * figure and date as the price above; only where it carries none does the
+   * card fall back to the store's NAV, and it says whose it is.
+   */
+  const pub = fundNavFor({ securityKey });
+  const navShown = pub
+    ? { value: pub.nav, date: pub.date, prev: pub.prev ?? null, prevDate: pub.prevDate ?? null, changePct: pub.changePct, source: "amfi" as const }
+    : { value: p.nav.value, date: p.nav.date, prev: p.nav.prev, prevDate: p.nav.prevDate, changePct: p.nav.changePct, source: "store" as const };
+  const navWhose = pub
+    ? pub.usableForValue
+      ? `AMFI's own published NAV for this scheme and plan, dated ${fmtDate(pub.date)} — the figure this page values the holding at, the same one under the price above.${p.nav.date && p.nav.date !== pub.date ? ` The fund store's older NAV (${fmtDate(p.nav.date)}) is not shown: one NAV per page.` : ""}`
+      : `AMFI's published NAV, dated ${fmtDate(pub.date)}. It does not value this holding: ${pub.notUsableReason ?? "the book's units and this NAV are not on the same unit"}.`
+    : `AMFI's daily file carries no NAV for this holding's ISIN, so this is the fund store's own NAV for the scheme, dated ${p.nav.date ? fmtDate(p.nav.date) : "—"}. It does not value this holding — the statement's mark above does.`;
   const weight = disclosedWeight(p);
   /**
    * THE SOURCE'S RETURNS, EACH MARKED ANNUALISED OR NOT AND REFUSED WHERE ITS
@@ -188,7 +207,7 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       // for the second — are the title's hover. The FENCE, that none of this is
       // the family's own statement, stays on the card's face as a pill beside
       // the match: it is the one thing on this card a reader must not miss.
-      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name} — ${part === "nav" ? "AMFI's daily NAV and the scheme's own returns" : `${p.amc ? `${p.amc}'s` : "the AMC's"} own monthly disclosure`}: published figures about the scheme, not a statement issued to this family.`}
+      subtitle={`${p.amfiSchemeName ?? p.scheme ?? name} — ${part === "nav" ? `${navShown.source === "amfi" ? "AMFI's daily NAV" : "the fund store's own NAV"} and the scheme's own returns` : `${p.amc ? `${p.amc}'s` : "the AMC's"} own monthly disclosure`}: published figures about the scheme, not a statement issued to this family.`}
       right={<div className="flex flex-wrap items-center justify-end gap-1.5">
         <Pill>not a statement issued to this family</Pill>
         <Pill tone="info"><span title="Matched from this holding's own ISIN, so the NAV and returns are the plan the family actually holds.">{match.matchedVia === "isin" ? "matched on ISIN" : `matched on ${match.matchedVia}`}</span></Pill>
@@ -199,11 +218,16 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
           <div className="label-xs">NAV</div>
-          <div className="mono mt-1.5 text-[19px] font-semibold text-slate-100">
-            {p.nav.value == null ? DASH : fmtNum(p.nav.value, 4)}
+          <div className="mono mt-1.5 text-[19px] font-semibold text-slate-100"
+            data-lt-nav={navShown.value ?? ""} data-lt-nav-date={navShown.date ?? ""} data-lt-nav-source={navShown.source}>
+            {navShown.value == null ? DASH : fmtNum(navShown.value, 4)}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
-            {p.nav.date ? fmtDate(p.nav.date) : "no NAV date"}
+            <span title={navWhose}>
+              {navShown.date ? fmtDate(navShown.date) : "no NAV date"} · {navShown.source === "amfi"
+                ? pub?.usableForValue ? "AMFI's, as priced above" : "AMFI's, not used to value it"
+                : "the fund store's"}
+            </span>
           </div>
           {unitStep && (
             <div className="mt-1 text-[11px] text-amber-300/90" data-lt-unit-note
@@ -214,16 +238,19 @@ export function FundLookthrough({ securityKey, name, holdingValue, asOfHolding, 
         </div>
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">
           <div className="label-xs">NAV change</div>
-          <div className={`mono mt-1.5 text-[19px] font-semibold ${p.nav.changePct == null ? "text-slate-500" : changeColor(p.nav.changePct)}`}>
-            {p.nav.changePct == null ? DASH : fmtPct(p.nav.changePct, { sign: true, decimals: 2 })}
+          <div className={`mono mt-1.5 text-[19px] font-semibold ${navShown.changePct == null ? "text-slate-500" : changeColor(navShown.changePct)}`}
+            data-lt-nav-change={navShown.changePct ?? ""}>
+            {navShown.changePct == null ? DASH : fmtPct(navShown.changePct, { sign: true, decimals: 2 })}
           </div>
           <div className="mt-1 text-[11px] text-slate-500">
             {/* THE PREVIOUS PUBLISHED NAV, NAMED WITH ITS DATE. A fund does not
                 publish on a non-business day, so "since yesterday" would be
                 wrong across a weekend — the date says which day it is against. */}
-            {p.nav.prev == null || p.nav.prevDate == null
-              ? <span title="A change needs two published NAVs; this scheme's series carries only one.">no previous NAV in the series</span>
-              : <>since {fmtNum(p.nav.prev, 4)} on {fmtDate(p.nav.prevDate)}</>}
+            {navShown.prev == null || navShown.prevDate == null
+              ? <span title={navShown.source === "amfi"
+                  ? "A change needs two published NAVs; the daily file has held only one date for this scheme so far."
+                  : "A change needs two published NAVs; this scheme's series carries only one."}>no previous NAV {navShown.source === "amfi" ? "held yet" : "in the series"}</span>
+              : <>since {fmtNum(navShown.prev, 4)} on {fmtDate(navShown.prevDate)}</>}
           </div>
         </div>
         <div className="rounded-xl border border-ink-700 bg-ink-900/60 p-3.5">

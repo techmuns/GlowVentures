@@ -251,6 +251,74 @@ export function investedBasisNote(t: FifoTotals, money: (n: number) => string): 
   return parts.join(" · ");
 }
 
+/**
+ * ── WHAT A REALISED TOTAL COUNTS, AND WHAT IT LEAVES OUT (MH-05, DL-5, DL-10) ─
+ *
+ * The Monitor's Realised footer and Capital Gains print different figures for
+ * one book, and both are right on their own terms: the capital gain
+ * statements' own total is the TAX figure — every lot sold inside each
+ * statement's window, companies since sold out included — while this table is
+ * FIFO over what the family holds now. A whole mandate carries everything it
+ * has booked since it opened (its value plus withdrawals, less the capital paid
+ * in and the unrealised gain on what it holds): every sale since inception, and
+ * its income less its fees. A holding carries what its own record reports on
+ * units sold — a capital gain statement's lots over THAT statement's window, or
+ * a fund's dated unit record since its first allotment.
+ *
+ * Neither the cell nor its hover named the basis, so a reader comparing the two
+ * pages found a contradiction and no way to resolve it. This is the one place
+ * the words are chosen: a SHORT line for the face of the cell, and the whole
+ * basis — what it covers, the statements' own figure beside it, and what it
+ * leaves out — for its hover. The facts are the caller's, measured on the book.
+ */
+export type RealisedBasisFacts = {
+  /** The capital gain statements' own total and window, over the accounts in view that issue one. */
+  statements: { total: number; accounts: number; from: string | null; to: string | null } | null;
+  /** Holdings no longer held (redeemed in full) whose own record carries a realised gain. */
+  closed: { names: string[]; realised: number };
+  /** Holdings under the ₹1,000 floor, which no row lists, whose own record carries a realised gain. */
+  floor: { holdings: number; realised: number };
+  /** Sales dated after a holding's own statement: the units are still in that statement's holding. */
+  after: { sales: number; holdings: number };
+  /** The table's rows are companies (the security axis): a company sold out entirely is no row at all. */
+  companiesOnly: boolean;
+  /** Holdings outside the whole mandates that carry a realised record of their own. */
+  recorded: number;
+};
+
+export function realisedBasisNote(
+  t: FifoTotals, f: RealisedBasisFacts, money: (n: number) => string, date: (iso: string) => string,
+): { face: string; note: string } {
+  const n = t.wholeMandates.length;
+  const others = f.recorded > 0;
+  // THE FACE: which of the book's realised figures this is, in a few words —
+  // what it counts, and that what the family has sold out of is not in it.
+  const face = f.companiesOnly ? "names still held · statement windows"
+    : n ? `incl. ${n} mandate${n === 1 ? "" : "s"} since inception · excl. names exited outside ${n === 1 ? "it" : "them"}`
+    : "each record's own window · excl. names exited";
+  const win = f.statements && f.statements.from && f.statements.to
+    ? `${date(f.statements.from)} to ${date(f.statements.to)}` : null;
+  const parts: string[] = [];
+  if (n) {
+    parts.push(`${n === 1 ? "One PMS mandate is" : `${n} PMS mandates are`} whole in this table, so ${n === 1 ? "it carries" : "each carries"} everything it has booked since it opened: its value plus withdrawals, less the capital paid in and less the unrealised gain on what it holds now — every sale its manager made since inception, and its income less its fees`);
+  }
+  if (others) {
+    parts.push(`${n ? "Every other holding" : "Each holding"} carries what its own record reports on units already sold, matched first-in, first-out: a capital gain statement's lots over that statement's own window${win ? ` (the statements here run ${win}, each over its own)` : ""}, or a fund's dated unit record since its first allotment — a sale before a statement's window is not in it`);
+  }
+  if (f.statements) {
+    parts.push(`The capital gain statements themselves report ${money(f.statements.total)} across ${f.statements.accounts} account${f.statements.accounts === 1 ? "" : "s"}${win ? ` for ${win}` : ""}: the tax figure Capital Gains and the Ledger print, which counts every lot in those windows, companies since sold out included${n ? ", and none of a mandate's income or fees" : ""}`);
+  }
+  const out: string[] = [];
+  out.push(f.companiesOnly ? "a company sold out entirely, which is no row here"
+    : n ? "a company sold out entirely outside those mandates, which is no row here"
+    : "a holding sold out entirely, which is no row here");
+  if (f.closed.names.length) out.push(`${f.closed.names.join(", ")} — redeemed in full, so no row here (${money(f.closed.realised)} realised, on its own page and in Transactions)`);
+  if (f.floor.holdings > 0) out.push(`${f.floor.holdings} holding${f.floor.holdings === 1 ? "" : "s"} under the ₹1,000 floor, which no row lists (${money(f.floor.realised)} realised)`);
+  if (f.after.sales > 0) out.push(`${f.after.sales} sale${f.after.sales === 1 ? "" : "s"} of ${f.after.holdings} holding${f.after.holdings === 1 ? "" : "s"} dated after that holding's own statement — the units are still in the statement's holding at its mark, so the gain is on the capital gain statement and not added here`);
+  if (out.length) parts.push(`Not in this total: ${out.join("; ")}`);
+  return { face, note: `${parts.join(". ")}.` };
+}
+
 /** Why a holding's realised cell is empty, in the book's own terms. */
 export function realisedReason(p: Pick<Position, "realizedPnL" | "realizedLotsAfter">): string {
   if (p.realizedLotsAfter) {

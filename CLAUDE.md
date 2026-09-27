@@ -24299,6 +24299,71 @@ which draws members, not funds; they pass on the fund routes · `build-book`
 twice, byte-identical · every `replay:*`, `rekey:archive` and
 `reconcile:review` a no-op with `--check`.
 
+### Stage 10cu — THE FIGURE AUDIT, PART B: ONE FIGURE, WHEREVER IT IS PRINTED
+
+*"Audit every calculation on the dashboard and fix every logical error, so the
+client never finds one."*
+
+The B group of `docs/FIGURE-AUDIT.md`: fifteen figures that read differently on
+two pages, or on two parts of one page. Fourteen are fixed at a shared helper, so
+every surface reads one definition; B-14 is not (below). Stacked on Stage 10ct.
+
+| | Disagreed | Now |
+| --- | --- | --- |
+| B-01 | "the book" was three totals | one book, the current value of holdings: the top bar, Morning CIO, Private Market's value tile and `/holdings`' share line all divide by it; a per-statement set counts each holding once; the NAV card's three lists reconcile to it step by step, naming the double count by its holdings |
+| B-02 | the fund movers priced on the look-through store's 9 Sep NAVs, every other page on AMFI's 22 Sep file | the movers read AMFI's file first; a scheme on another unit basis (the DSP ETFs) applies the percentage only, and says so |
+| B-03 | "what the family holds" counted four ways | `currentHoldings` on Data & Refresh, NAV & Performance, Family & Entities, the Direct Equity movers, the chat and the Excel export, each naming what it leaves out |
+| B-04 | two sectors for one company | the Monitor's Sector column and `?sector=`, Data & Refresh and Return & Drawdown read `companySectorIndex`, the three tiers Sector Composition uses |
+| B-05 | realised in three values | the Monitor footer names its basis, window and the statements' own total; the stock page reads the book's realised, not the ledger's |
+| B-06 | the money-weighted tile opened a page with another return | that page prints the tile's own rate, over the same accounts and window |
+| B-07 | the whole-book return on cost, three rules | FIFO over the costed holdings on the tile, the allocation Total, `/holdings` and the Monitor footer, each naming its set ("on the ₹X of ₹Y that reports a cost") |
+| B-08 | the Excel export differed from the screen | current holdings, the tab's own return with a Measure column, and what it leaves out named under the total |
+| B-09 | Cash ₹11.6 Cr against ₹14.2 Cr on one table | the security axis's cash names its bridge to the Category view's Cash |
+| B-10 | cash paid back ₹49.9 L against ₹58.7 L | Distributions counts each fund once, 360 ONE's letters included, from one build on Private Market and Morning CIO: ₹50 L → ₹57 L |
+| B-11 | "HPR" meant two returns on the Monitor's two tabs | the Transactions return headers name their basis, the capital paid in |
+| B-12 | the search said no statement reports funds the book holds | the note is withheld for a scheme the book holds, joined by ISIN |
+| B-13 | the same class words over two sets | the left-out classes are named by the tables' own sections |
+| B-14 | Helios Flexi Cap under two keys | **not fixed** — see below |
+| B-15 | the assistant answered from another book | the chat reads the screen's book, its counts and Private Market's capital accounts |
+
+**B-14 IS NOT FIXED, AND WHY.** Helios Flexi Cap Fund · Direct is two rows
+because the AMC folio and the depository print the scheme two ways and the key is
+taken from the name. Joining them is an identity change: the depository reader
+would take the name the AMC prints against the same ISIN, and the eight such
+ISINs `docs/BOOK-REPORT.md` lists would re-key the archive. Stage 10cc left fund
+twins apart on purpose. It is a separate change.
+
+**A QUOTE THE CORPORATE-ACTION CHECK HELD BACK SAYS SO (DL-9).** The Monitor's
+price and Day cells, a statement line, a mandate share, the basis pill and the
+top bar said "no live price" for a quote the gate had held back, as if none had
+arrived. They give the gate's own reason now. Found in passing: a mandate share on a
+statement mark carried no not-live flag at all. One branch has no subject on this
+book, a mandate with some shares held back and some live; the harness's control
+says so.
+
+**What moved.** No generated file. On screen: Distributions ₹50 L → ₹57 L on
+Morning CIO; Ajay's Family return +12.49% → +12.88% (current holdings); NAV &
+Performance's FIFO +16.24% → +16.68%, Morning CIO's figure; the Excel footer
+₹840.99 lower (five closed rows and six sub-₹1,000 rows left out, named).
+
+**Guards.** Three new suites (`liveWithheld`, `monitorSectors`, `stockRealised`)
+and cases in eight more; five new `check:pages` routes;
+`scripts/dev/withheld-quote-bug.sh`, thirteen cases, each firing its own check.
+Case 9 fired only after its patch was rewritten: TypeScript refuses `x || true`,
+and a patch that does not build is not a result.
+
+**Verification**, on this branch stacked on Stage 10ct and merged with `main`
+at `f99e738a`: `build` · `test:ingest` (every suite passes; golden 140 passed,
+2 not checked, 0 blocked) · `test:family` (67 suites, 3,186 checks, 0 failed;
+its four not-checked lines are main's) · `check:family` **126/0** ·
+`check:pages` **334 combinations clean**: 167 routes in two themes, Stage
+10ct's 162 and this change's five. Of the 17 invariants not checked, 14 are
+main's four claims with no subject on this book and 2 are Stage 10ct's
+counted-once checks on `private-market-owners`. The last is this change's
+held-back mandate branch: no mandate on this book has some shares held back and
+some live · `build-book` twice, byte-identical · every `replay:*`,
+`rekey:archive` and `reconcile:review` a no-op with `--check`.
+
 ### Stage 10k — News & Announcements: REMOVED
 
 The family asked for the page to go. `/news` and `/recommendations` redirect to

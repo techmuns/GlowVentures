@@ -32,7 +32,7 @@ export function BasisPill({ liveText, hint, statement = false }: {
   /** This page always reads statement figures — never label it LIVE. */
   statement?: boolean;
 }) {
-  const { portfolio, basis, quotesStatus, quotesAsOf, livePriced, notLive, unpriceable } = usePortfolio();
+  const { portfolio, basis, quotesStatus, quotesAsOf, livePriced, notLive, liveWithheld, unpriceable } = usePortfolio();
   if (!portfolio) return null;
 
   const stale = staleAccounts(portfolio);
@@ -47,9 +47,15 @@ export function BasisPill({ liveText, hint, statement = false }: {
 
   // Securities that will never quote — cash, receivables, the liquid-fund sweep.
   // Said separately from `notLive`, which is a feed gap that can close.
+  //
+  // AND A QUOTE THE CORPORATE-ACTION CHECK HELD BACK IS NEITHER (DL-9). It
+  // arrived; pairing it with the statement's share count could be wrong, so the
+  // holding keeps its mark. Counted among "no quote in this round" it told a
+  // reader to wait for a feed that had already answered.
   const coverage = [
     livePriced ? `${livePriced} securities priced live` : null,
     notLive ? `${notLive} have a symbol but no quote in this round — still on their statement mark` : null,
+    liveWithheld ? `${liveWithheld} had a live quote that the corporate-action check held back, because the statement's share count may not match it — still on their statement mark; each holding's page gives the reason` : null,
     unpriceable ? `${unpriceable} have no listing at all (cash and the liquid-fund sweep) and never will` : null,
   ].filter(Boolean).join(" · ");
 
@@ -62,7 +68,7 @@ export function BasisPill({ liveText, hint, statement = false }: {
     return (
       <span className="inline-flex items-center gap-1.5">
         <Pill tone="info">
-          <span title={[why, coverage || null, staleNote].filter(Boolean).join(" ")}>
+          <span data-basis-pill="statement" title={[why, coverage || null, staleNote].filter(Boolean).join(" ")}>
             STATEMENT · as of {portfolio.asOf || "—"}
           </span>
         </Pill>
@@ -75,7 +81,7 @@ export function BasisPill({ liveText, hint, statement = false }: {
   return (
     <span className="inline-flex items-center gap-1.5">
       <Pill tone="info">
-        <span title={[
+        <span data-basis-pill="live" title={[
           hint,
           "LIVE basis: market value, day change and unrealised P&L are marked to market now. Cost basis, realised gains, dividends and cash flows stay exactly as the statements report them.",
           clock ? `Quotes pulled at ${clock}.` : null,

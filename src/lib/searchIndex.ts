@@ -60,6 +60,7 @@ import { AXIS_SCOPE, drilldownHref } from "./drilldown";
 import { fundMarketSideOf } from "./aifCategory";
 import { NAV } from "./nav";
 import { printedSpellings } from "./securityLabel";
+import { schemeNamesOf, schemeStem } from "./reviewGaps";
 
 export type SearchKind =
   | "holding" | "mandate" | "person" | "account"
@@ -85,6 +86,12 @@ export type SearchEntry = {
   weight: number;
   /** A position the family no longer holds — findable, ranked below any held one. */
   closed?: boolean;
+  /**
+   * A SCHEME's published names with the plan and option set aside (SC-B4) —
+   * matched only against a query that carried a plan or option tail of its own.
+   * See `stemmedQuery`.
+   */
+  stems?: string[];
 };
 
 /** A ranked hit, with the tier that matched it — for tests and for the hover. */
@@ -187,6 +194,39 @@ export function scoreText(query: string, text: string): { score: number; tier: s
   return { score: 0, tier: "" };
 }
 
+/**
+ * ── A QUERY THAT NAMES A SCHEME THE WAY A REVIEW DOES (SC-B4) ───────────────
+ *
+ * The family's consolidated review spells a fund with its plan and option
+ * bolted on — `WhiteOak Capital Multi Asset Allocation Fund-Direct(G)`, `Aditya
+ * Birla SL Liquid Fund-(DD)-Direct` — and the dashboard shows the same scheme
+ * as `WhiteOak Capital Multi Asset Allocation Fund · Direct`. Every tier above
+ * needs EVERY typed word in the name, so the review's `(G)`, `(DD)`, `IDCW` and
+ * `SL` put eight held funds in the empty state: measured, WhiteOak, Bandhan
+ * Large & Mid Cap, Kotak Multicap, both Aditya Birla Sun Life liquid lines, its
+ * Balanced Advantage, ICICI Prudential Liquid and Liquid BeES — ₹30 Cr the
+ * family hold, answered "nothing matches".
+ *
+ * So every query is compared a second time, with any such tail set aside,
+ * against each scheme's own published names set aside the same way —
+ * `schemeStem`, the one rule the review-gap note uses to decide it must not
+ * speak about these funds, so the note and the search cannot disagree about
+ * which scheme a spelling names. It runs whether or not the query carried a
+ * tail, because a scheme whose statement label is the depository's clipped one
+ * (`NIP ETNF1D RTLIQBEES`) is found by its full published name no other way.
+ * The names are reached by ISIN, never by resemblance. Discounted, so a scheme
+ * found this way never outranks one the reader named outright, and the hover
+ * says how it was matched.
+ *
+ * Two words must survive the strip: "direct equity" leaves "equity", and a
+ * one-word stem would match half the book's schemes.
+ */
+function stemmedQuery(query: string): string {
+  const stem = schemeStem(query);
+  return stem.split(" ").length < 2 ? "" : stem;
+}
+const STEM_DISCOUNT = 0.8;
+
 /** Kind boosts: small, and only ever a tie-break between two equal tiers. */
 const KIND_BOOST: Record<SearchKind, number> = {
   page: 30, person: 25, view: 20, mandate: 15, holding: 10, figure: 8, category: 6, sector: 4, account: 0,
@@ -197,6 +237,7 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
   const q = normSearch(query);
   if (!q) return [];
   const code = compact(query).toUpperCase();
+  const qStem = stemmedQuery(query);
   const hits: SearchHit[] = [];
   for (const e of entries) {
     let best = 0, matched = "";
@@ -216,6 +257,13 @@ export function searchEntries(entries: SearchEntry[], query: string, limit = 10)
       const s = scoreText(query, k);
       const v = Math.round(s.score * 0.85);
       if (v > best) { best = v; matched = `${s.tier} · a word for it`; }
+    }
+    if (qStem) {
+      for (const n of e.stems ?? []) {
+        const s = scoreText(qStem, n);
+        const v = Math.round(s.score * STEM_DISCOUNT);
+        if (v > best) { best = v; matched = `${s.tier} · the scheme's published name, plan and option set aside`; }
+      }
     }
     if (!best) continue;
     const weight = e.weight > 0 ? Math.log10(1 + e.weight / 1e5) * 4 : 0;
@@ -441,6 +489,7 @@ export function buildSearchIndex(input: {
       // label alone left "sbi" finding nothing.
       names: [head.security, ...printedSpellings(key).filter((n) => n !== head.security), key.replace(/-/g, " ")],
       codes: [head.isin, head.symbol].filter((c): c is string => !!c),
+      stems: [...new Set(schemeNamesOf(key).map(schemeStem).filter(Boolean))],
       keywords: [head.sector, bucketLabel(bucket)].filter((s): s is string => !!s && s !== "Unclassified"),
       weight: Math.abs(mv),
       closed,

@@ -91,13 +91,13 @@
 // the book's own unit count), carrying no holding figure of their own: their
 // units are already counted on the line above.
 import type { Account, Commitment, Position } from "./types";
-import { sum, sumOrNull, dedupedPositions, isPrivateClass } from "./analytics";
-import { type AccountIndex, ownerOf, providerOf } from "./accounts";
+import { sum, sumOrNull, dedupedPositions, isPrivateClass, currentHoldings } from "./analytics";
+import { type AccountIndex, accountIndex, ownerOf, providerOf } from "./accounts";
 import { aifSectionOf, categoriesNamedIn, readsAsPrivateEquity, PRIVATE_EQUITY_SECTION, AIF_UNSTATED_SECTION } from "./aifCategory";
 import {
-  COST_COVERAGE_MIN, unvaluedAccounts, incomeOnlyViewOf, capitalCountedOnce, type UnvaluedKind,
+  COST_COVERAGE_MIN, unvaluedAccounts, incomeOnlyViewOf, capitalCountedOnce, distributionOf, privateCapital, type UnvaluedKind,
 } from "./privateMarket";
-import type { SchemeCall } from "./capitalCalls";
+import { schemeCalls, type SchemeCall } from "./capitalCalls";
 import { fifoTotals } from "./fifo";
 
 export type BookSectionId = "private" | "unvalued";
@@ -152,8 +152,50 @@ export type BookFolio = {
    * no holding figure of its own, because its units are that line's.
    */
   viewOf: string | null;
+  /**
+   * ── WHAT THIS FOLIO'S OWN PAPERS SAY THE FUND PAID BACK (B-10) ─────────
+   *
+   * A capital account's distribution total (`distributionOf` — income and
+   * principal, gross of TDS, never equalisation), or an income-only folio's own
+   * distribution letters, summed exactly as each prints the cash: 360 ONE's
+   * letter prints its ₹7,15,619 NET of expenses and TDS and no gross figure, so
+   * that is the figure, and `distributedBasis` says so. NULL where nothing this
+   * book reads reports one — never 0, which would say the fund returned nothing.
+   */
+  distributed: number | null;
+  distributedBasis: DistributionBasis | null;
+  /**
+   * WHETHER A CONSOLIDATED TOTAL COUNTS IT. The same rule as the capital
+   * account: a capital account's distribution goes with `capitalCounted`, and
+   * an income-only folio's with the holding it is a view of — so 360 ONE's two
+   * folios, reporting one ₹7,15,619 on one 9,90,429.684 units, count it once,
+   * on the line whose holding the consolidated book counts.
+   */
+  distributionCounted: boolean;
+  /** The folio whose distribution stands for this one's, where it is not counted. */
+  distributionCountedAs: string | null;
   /** The book's own words for why nothing values this folio. Never re-worded. */
   reason: string | null;
+};
+
+/**
+ * How a folio's distribution figure is struck: off a capital account (gross of
+ * TDS, as its statement's distribution total prints it), or off the fund's own
+ * distribution letter to an income-only folio (the cash, as the letter prints
+ * it). Said on the page, because the two are different bases added together.
+ */
+export type DistributionBasis = "capital-account" | "letter";
+
+/**
+ * A dated distribution a fund paid to one account, read from its own letter —
+ * `BOOK_CORPORATE_ACTIONS` carries exactly these. Only `kind: "distribution"`
+ * is read, and only against the fund the folio is a line of.
+ */
+export type DistributionRecord = {
+  accountId: string;
+  securityKey: string;
+  kind: string | null;
+  amount: number | null;
 };
 
 /** What a row, a section or a total adds to — each figure with what it covers. */
@@ -178,6 +220,15 @@ export type BookFigures = {
   uncalledOf: number;
   /** Dated calls behind this row, each reconciled against its own statement. */
   calls: number;
+  /**
+   * WHAT THE FUNDS PAID BACK, on the row's basis (B-10) — summed over the
+   * folios that could report it (a capital account, or an income-only folio's
+   * letter), each once on a consolidated row. `distributedOf` of
+   * `distributionAccounts` say how many report a figure; null where none does.
+   */
+  distributed: number | null;
+  distributedOf: number;
+  distributionAccounts: number;
   /** Units add only within ONE fund; across funds they are null by construction. */
   units: number | null;
   cost: number | null;
@@ -311,8 +362,11 @@ export function bookFolios(args: {
   commitments: Commitment[];
   accIdx: AccountIndex;
   schemes: SchemeCall[];
+  /** The funds' own distribution letters (`BOOK_CORPORATE_ACTIONS`); absent reads as none. */
+  distributions?: DistributionRecord[];
 }): BookFolio[] {
   const { positions, allPositions, accounts, commitments, accIdx, schemes } = args;
+  const letters = (args.distributions ?? []).filter((d) => d.kind === "distribution" && d.amount != null);
   const schemeOf = new Map(schemes.map((s) => [s.accountId, s]));
   const commitmentOf = new Map(commitments.map((c) => [c.accountId, c]));
   const inScope = positions.filter((p) => sectionOf(p) != null);
@@ -332,10 +386,19 @@ export function bookFolios(args: {
   const capitalOf = (accountId: string) => {
     const cap = !attached.has(accountId) ? schemeOf.get(accountId) ?? null : null;
     if (cap) attached.add(accountId);
+    const capCounted = !!cap && !alsoCapital.has(accountId);
+    const capCountedAs = cap ? alsoCapital.get(accountId) ?? null : null;
+    // A capital account's distribution total goes wherever its capital does.
+    const c = cap ? commitmentOf.get(accountId) : undefined;
+    const distributed = c ? distributionOf(c) : null;
     return {
       capital: cap,
-      capitalCounted: !!cap && !alsoCapital.has(accountId),
-      capitalCountedAs: cap ? alsoCapital.get(accountId) ?? null : null,
+      capitalCounted: capCounted,
+      capitalCountedAs: capCountedAs,
+      distributed,
+      distributedBasis: distributed != null ? ("capital-account" as const) : null,
+      distributionCounted: capCounted,
+      distributionCountedAs: capCountedAs,
     };
   };
   // Largest first, so an account holding two funds hands its capital account to
@@ -387,6 +450,15 @@ export function bookFolios(args: {
     const view = u.kind === "income-only" ? incomeOnlyViewOf(a, inScope, accIdx) : null;
     if (view) {
       const p = view.position;
+      // ITS OWN LETTERS — the account's, never another account's. The letter
+      // names the fund in its own words (`…series-8-class-a3`, where the valued
+      // holding's statement prints `…class-a3-aif-category-ii`), so it is joined
+      // on the ACCOUNT, which the committed view table already ties to this
+      // holding on the paper's units. An account whose letters name more than
+      // one fund cannot say which is this one, and attributes none.
+      const mine = letters.filter((d) => d.accountId === a.accountId);
+      const oneFund = new Set(mine.map((d) => d.securityKey)).size <= 1;
+      const paid = mine.length && oneFund ? sum(mine.map((d) => d.amount!)) : null;
       out.push({
         key: `${a.accountId}|view`,
         section: sectionOf(p)!,
@@ -410,6 +482,12 @@ export function bookFolios(args: {
         alsoReportedUnder: [],
         ...capitalOf(a.accountId),
         viewOf: p.accountId,
+        distributed: paid,
+        distributedBasis: paid != null ? "letter" : null,
+        // Decided once every folio is built, below: which of a holding's views
+        // stands for the distribution its letters all report.
+        distributionCounted: paid != null,
+        distributionCountedAs: null,
         reason: u.reason,
       });
       continue;
@@ -424,12 +502,91 @@ export function bookFolios(args: {
     out.push(unvaluedFolio(a, s.fund, "other",
       a?.noPositionsReason ?? "this capital account's statement carries no current holding", capitalOf(s.accountId), accIdx, s));
   }
+  /**
+   * ── ONE DISTRIBUTION, HOWEVER MANY VIEWS OF THE HOLDING REPORT IT ────────
+   *
+   * Two income-only folios that are views of ONE holding counted once (a dedupe
+   * group) report one distribution between them — 360 ONE's letters to 1000632
+   * and 1000633 print the same ₹7,15,619 on the same 9,90,429.684 units. The
+   * consolidated total counts it once: with the view of the holding the book
+   * counts, and where that view reports none, with the first that does — the
+   * rule `capitalCountedOnce` applies to a capital account. The others say
+   * which folio stands for theirs, and a printed row still shows each.
+   */
+  const viewPos = new Map<string, Position>();
+  for (const p of inScope) viewPos.set(p.accountId + "|" + p.securityKey, p);
+  const groupOfView = (f: BookFolio) => {
+    const p = f.viewOf ? viewPos.get(f.viewOf + "|" + f.fundKey) : undefined;
+    return p ? p.dedupeGroup ?? `${p.accountId}|${p.securityKey}` : null;
+  };
+  const views = new Map<string, BookFolio[]>();
+  for (const f of out) {
+    const g = f.viewOf && f.distributed != null ? groupOfView(f) : null;
+    if (g) views.set(g, [...(views.get(g) ?? []), f]);
+  }
+  for (const vs of views.values()) {
+    const keptView = vs.find((f) => {
+      const p = viewPos.get(f.viewOf! + "|" + f.fundKey);
+      return !!p && counted.has(p);
+    }) ?? vs[0];
+    for (const f of vs) {
+      f.distributionCounted = f === keptView;
+      f.distributionCountedAs = f === keptView ? null : keptView.accountId;
+    }
+  }
   return out;
+}
+
+/**
+ * ── THE FOLIOS OF A BOOK, BUILT ONE WAY FOR EVERY PAGE THAT PRINTS OFF THEM ─
+ *
+ * Private Market draws its master table from these folios, and Morning CIO's
+ * Distributions tile opens that page. Built twice they drifted: once the page
+ * counted 360 ONE's distribution letters — once across the two CRNs — it read
+ * ₹57 L while the tile, summing the capital accounts alone, went on reading
+ * ₹50 L (B-10). So the inputs are assembled here and nowhere else: the current
+ * holdings, the capital accounts counted once with their holdings
+ * (`privateCapital`), their dated calls, and the funds' own letters.
+ *
+ * `ownerName` labels a scheme row for the call history and moves no figure.
+ */
+export function privateBookFolios(
+  book: { positions: Position[]; accounts: Account[]; commitments?: Commitment[] | null },
+  distributions: readonly DistributionRecord[],
+  ownerName: (ownerId: string) => string | null = () => null,
+) {
+  const accIdx = accountIndex(book.accounts);
+  const current = currentHoldings(book.positions);
+  const cap = privateCapital(book.commitments ?? [], book.accounts, book.positions);
+  const schemes = schemeCalls(cap.onPage, (c) => c.name, (c) => (c.ownerId ? ownerName(c.ownerId) : null));
+  const folios = bookFolios({
+    positions: current, allPositions: book.positions, accounts: book.accounts,
+    commitments: cap.onPage, accIdx, schemes, distributions: [...distributions],
+  });
+  return { accIdx, current, cap, schemes, folios };
+}
+
+/**
+ * THE DISTRIBUTIONS A CONSOLIDATED TOTAL LEAVES OUT, IN ONE SENTENCE — each on
+ * the second statement of a holding counted once, counted with the first and
+ * not again, pending the family's answer on whether the two are one investment
+ * or two (§4c). Written once, so a tile and the page it opens say it alike.
+ */
+export function distributionLeftOutNote(
+  folios: BookFolio[],
+  accountName: (accountId: string) => string,
+  money: (n: number | null | undefined) => string,
+): string {
+  return folios
+    .filter((f) => f.distributed != null && !f.distributionCounted && f.distributedBasis != null)
+    .map((f) => `${f.provider} ${f.accountNo} reports ${money(f.distributed)} too, on the second statement of a holding counted once; it is counted with ${f.distributionCountedAs ? accountName(f.distributionCountedAs) : "the first"}'s and not again — pending the family's answer on whether the two are one investment or two${(f.distributed ?? 0) > 0 ? `; if two, add ${money(f.distributed)}` : ""}.`)
+    .join(" ");
 }
 
 function unvaluedFolio(
   a: Account | undefined, name: string, status: UnvaluedKind, reason: string | null,
-  capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs">, accIdx: AccountIndex, s?: SchemeCall,
+  capital: Pick<BookFolio, "capital" | "capitalCounted" | "capitalCountedAs" | "distributed" | "distributedBasis" | "distributionCounted" | "distributionCountedAs">,
+  accIdx: AccountIndex, s?: SchemeCall,
 ): BookFolio {
   const accountId = a?.accountId ?? s?.accountId ?? "";
   return {
@@ -481,6 +638,9 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     .map((f) => f.capital!);
   const capitalAlso = consolidated ? folios.filter((f) => f.capital && !f.capitalCounted).length : 0;
   const of = (g: (c: SchemeCall) => number | null) => caps.filter((c) => g(c) != null).length;
+  // THE FOLIOS THAT COULD REPORT A DISTRIBUTION — a capital account, or an
+  // income-only folio's letters — each once on a consolidated row (B-10).
+  const dists = folios.filter((f) => (f.capital || f.viewOf) && (!consolidated || f.distributionCounted));
   const cost = sumOrNull(held.map((f) => f.cost));
   const value = held.length ? sum(held.map((f) => f.value ?? 0)) : null;
   const pnl = sumOrNull(held.map((f) => f.pnl));
@@ -500,6 +660,9 @@ export function figuresOf(folios: BookFolio[], consolidated: boolean): BookFigur
     pendingOf: of((c) => c.pending),
     uncalledOf: of((c) => c.uncalled),
     calls: sum(caps.map((c) => c.calls.length)),
+    distributed: sumOrNull(dists.map((f) => f.distributed)),
+    distributedOf: dists.filter((f) => f.distributed != null).length,
+    distributionAccounts: dists.length,
     // Units of two different funds are two different units, so they add only
     // inside one fund — a sum across funds is a number with no unit.
     units: held.length && funds.size === 1 ? sum(held.map((f) => f.units ?? 0)) : null,

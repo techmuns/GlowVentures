@@ -6,222 +6,445 @@
 // THAT GUESSING IS UNNECESSARY, and to name every absence explicitly, because an
 // omission is exactly what invites an invention.
 //
-// ── EVERY FIGURE IS DERIVED, NONE IS TYPED ──────────────────────────────────
+// ── IT IS THE BOOK THE SCREEN SHOWS, NOT A SECOND ONE ───────────────────────
 //
-// Same rule as the screens: nothing here is a literal. The totals come from
-// `BOOK_SUMMARY`, the rows from `BOOK_POSITIONS` and `BOOK_ACCOUNTS`, the
-// buckets from `holdingBucket`, the dedupe from `dedupedPositions`. A drop that
-// moves the book moves this with it, and a figure copied into prose here would
-// go stale the way `docs/EXTRACTION-REPORT.md`'s counts once did.
+// This module used to read `BOOK_SUMMARY`, `BOOK_POSITIONS` and
+// `BOOK_COMMITMENTS` straight out of `glowData.ts` — the statement marks, every
+// raw row, no ₹1,000 floor, no closed-position rule and every capital account —
+// while the dialog it briefs sits in front of a dashboard that shows the
+// published NAVs, live quotes where the feed priced a holding, current holdings
+// only and the private-market capital accounts only. So nearly every figure the
+// model was handed disagreed with the screen behind it (SC-B1…B5): ₹710.39 Cr
+// against a ₹713.3 Cr tile, 371 positions against 358, ₹97.73 Cr committed
+// against ₹42.7 Cr, a "largest holding" that was one statement row.
+//
+// So the caller hands in the book the PAGES read — `usePortfolio()`'s
+// `portfolio` and `consolidated` — and every figure below is struck through the
+// same shared helper the page that shows it uses: `currentHoldings` for what is
+// still held (Morning CIO's counts), `groupKeyFor` for the category (the
+// Portfolio Monitor and the search), `byEntity` for a member (Family &
+// Entities), `capitalScope` / `callTotals` / `distributionOf` for the capital
+// accounts (Private Market and Morning CIO's Capital deployment). Nothing here
+// is a second computation of a figure the screen already makes.
 //
 // ── AND THE CAVEATS TRAVEL WITH THE FIGURES ─────────────────────────────────
 //
-// A consolidated total on this book is a BLEND of report dates; a return is
-// struck over the accounts that publish an opening value; 60 of 371 positions
-// carry no cost at all; Polycab is ring-fenced out of every total; ₹3.17 Cr is
-// reported twice and counted once. A model told the totals and not those five
-// things will answer confidently and wrongly, so `caveats` is not decoration —
-// it is the part that keeps the answers honest, and it is derived too.
+// A total on this book is a BLEND of report dates and of price bases; some
+// positions carry no cost; Polycab is ring-fenced out of every total; ₹3.17 Cr
+// is reported twice and counted once. A model told the totals and not those
+// things will answer confidently and wrongly, so every figure-bearing block
+// says its basis and its date, and `what_this_book_does_not_carry` is derived
+// too.
+import { BOOK_POLYCAB } from "@/data/glowData";
 import {
-  BOOK_SUMMARY, BOOK_POSITIONS, BOOK_ACCOUNTS, BOOK_POLYCAB, BOOK_COMMITMENTS,
-} from "@/data/glowData";
-import { depositoryCashHoldings, unpricedStatementUnits } from "./fundNavs";
-import {
-  dedupedPositions, doubleCountedValue, holdingBucket, bucketLabel, publicPrivateSplit,
-  topByValue, sum,
+  byEntity, currentHoldings, doubleCountedValue, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR, sum, sumOrNull,
 } from "@/lib/analytics";
-import { accountIndex, engagementOf } from "@/lib/accounts";
+import { accountIndex, type AccountIndex } from "@/lib/accounts";
+import { groupKeyFor, groupLabelFor } from "@/lib/groupAxis";
+import { capitalScope, distributionOf } from "@/lib/privateMarket";
+import { callTotals, schemeCalls } from "@/lib/capitalCalls";
+import { MARKET_SIDE_UNPLACED } from "@/lib/aifCategory";
 import { accountEmptiness } from "@/lib/searchIndex";
-import type { Position } from "@/lib/types";
+import type { Account, Commitment, Portfolio, Position } from "@/lib/types";
 
-/** How many rows of each list to send. Enough to answer, small enough to fit. */
+/** How many holdings to itemise. Enough to answer, small enough to fit. */
 const TOP_HOLDINGS = 25;
-const TOP_ACCOUNTS = 50;
 
-const cr = (n: number | null | undefined) =>
-  typeof n === "number" && Number.isFinite(n) ? Math.round((n / 1e7) * 100) / 100 : null;
+/**
+ * Crore, to two decimals — and to three significant figures BELOW one crore
+ * (SC-D3). Two decimals of a crore is a lakh, so ₹98,742 left the builder as
+ * `0.01`: a small figure rounded UP to a lakh and sent as a measurement. The
+ * unit line on `book_summary` says which rounding applies.
+ */
+const cr = (n: number | null | undefined): number | null => {
+  if (typeof n !== "number" || !Number.isFinite(n)) return null;
+  const v = n / 1e7;
+  if (v === 0) return 0;
+  return Math.abs(v) >= 1 ? Math.round(v * 100) / 100 : Number(v.toPrecision(3));
+};
+const pct = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 10000) / 100 : null);
+
+const UNIT = "all *Cr fields are crore rupees (1 Cr = 10,000,000), rounded to 2 decimals — or to 3 significant"
+  + " figures below 1 Cr, so a small figure is never rounded up to a lakh";
 
 /** One `DASHBOARD_INPUTS` entry — a named block of derived facts. */
 export type ContextBlock = { kind: string; [k: string]: unknown };
 
 /**
+ * THE BOOK THE PAGES READ — pass `usePortfolio()`'s own values, never a book
+ * assembled here. `portfolio` is what the top bar and Morning CIO print from
+ * (published NAVs applied, live quotes where the feed answered); `consolidated`
+ * is the same positions with each `dedupeGroup` counted once.
+ */
+export type ChatBook = {
+  portfolio: Pick<Portfolio,
+    "asOf" | "totalValue" | "listedValue" | "privateValue" | "unplacedValue" | "accounts" | "positions" | "commitments">;
+  consolidated: Position[];
+  /** `usePortfolio().basis` — LIVE the moment any holding carries an intraday quote. */
+  basis: "STATEMENT" | "LIVE";
+  /** `usePortfolio().quotesAsOf` — when the quotes were pulled, where any were. */
+  quotesAsOf?: string | null;
+};
+
+/**
+ * WHAT PRICED A SET OF HOLDINGS, in words and in counts. A holding is at its
+ * statement's mark unless AMFI published a NAV for its scheme (`navPriced`,
+ * dated) or the quote feed priced it intraday (`live`). The date that matters
+ * differs by case, so the three are counted apart and each carries its own.
+ */
+function priceBasisOf(rows: readonly Position[], accts: AccountIndex, quotesAsOf: string | null) {
+  const nav = rows.filter((p) => p.navPriced && !p.live);
+  const live = rows.filter((p) => p.live);
+  const marks = rows.filter((p) => !p.live && !p.navPriced);
+  const navDates = [...new Set(nav.map((p) => p.navDate).filter((d): d is string => !!d))].sort();
+  const markDates = [...new Set(marks.map((p) => accts.get(p.accountId)?.asOf).filter((d): d is string => !!d))].sort();
+  const parts: string[] = [];
+  if (marks.length) {
+    parts.push(`${marks.length} at the statement's own mark (${markDates.length === 1 ? `dated ${markDates[0]}`
+      : markDates.length ? `statements dated ${markDates[0]} to ${markDates[markDates.length - 1]}` : "undated"})`);
+  }
+  if (nav.length) {
+    parts.push(`${nav.length} at AMFI's published NAV (${navDates.length === 1 ? `dated ${navDates[0]}`
+      : `dated ${navDates[0]} to ${navDates[navDates.length - 1]}`})`);
+  }
+  if (live.length) parts.push(`${live.length} at a live intraday quote${quotesAsOf ? ` (pulled ${quotesAsOf})` : ""}`);
+  return {
+    statementMarks: marks.length,
+    publishedNav: nav.length ? { holdings: nav.length, dated: navDates } : null,
+    liveQuote: live.length ? { holdings: live.length, pulledAt: quotesAsOf ?? null } : null,
+    summary: parts.join("; "),
+  };
+}
+
+/** The category words a set of rows spans, largest first — never "whichever row sorts first" (SC-C4). */
+function categoriesOf(rows: readonly Position[], accts: AccountIndex): string[] {
+  const by = new Map<string, number>();
+  for (const p of rows) {
+    const k = groupKeyFor("category", accts, p);
+    by.set(k, (by.get(k) ?? 0) + Math.abs(p.marketValue));
+  }
+  const label = groupLabelFor("category");
+  return [...by].sort((a, b) => b[1] - a[1]).map(([k]) => label(k));
+}
+
+/**
  * The book, as blocks.
  *
- * Deliberately NOT the whole of `BOOK_POSITIONS`: 371 rows of JSON crowds out
- * the question. The shape is a summary plus the rows a reader actually asks
- * about, and every list says how many rows it covers out of how many exist, so
- * a truncation can never read as the whole book.
+ * Deliberately NOT every row: 371 rows of JSON crowd out the question. The shape
+ * is a summary plus the rows a reader actually asks about, and every list says
+ * how many rows it covers out of how many exist, so a truncation can never read
+ * as the whole book.
  */
-export function buildDashboardContext(): ContextBlock[] {
-  const accts = accountIndex(BOOK_ACCOUNTS);
-  const deduped = dedupedPositions(BOOK_POSITIONS);
-  const split = publicPrivateSplit(deduped);
-  // `staleAccounts` takes a Portfolio, and the count is the only thing needed
-  // here — derived rather than re-implemented, so "N accounts behind" means the
-  // same thing in the chat context as it does on the BasisPill.
-  const behind = BOOK_ACCOUNTS.filter((a) => a.asOf && a.asOf < BOOK_SUMMARY.asOf).length;
+export function buildDashboardContext(book: ChatBook): ContextBlock[] {
+  const { portfolio, consolidated } = book;
+  const accounts = portfolio.accounts;
+  const accts = accountIndex(accounts);
+  const quotesAsOf = book.quotesAsOf ?? null;
 
-  // ── allocation, on the same axis the Portfolio Monitor sections on ────────
-  const byBucket = new Map<string, { value: number; count: number }>();
-  for (const p of deduped) {
-    const key = holdingBucket(p, engagementOf(accts, p) || null);
-    const e = byBucket.get(key) ?? { value: 0, count: 0 };
+  /**
+   * CURRENT HOLDINGS, SO THE COUNTS ARE MORNING CIO'S (SC-B2). Closed positions
+   * and the specks under the family's ₹1,000 floor are named in `countsExclude`
+   * rather than counted: 371 statement rows is not the book the screen lists.
+   */
+  const current = currentHoldings(consolidated);
+  const dropped = droppedHoldings(consolidated);
+  const bookMV = sum(current.map((p) => p.marketValue));
+  // Every RAW row that is a current holding — the per-account and per-owner
+  // counts below are not deduped, so they are struck on the raw rows through
+  // the same verdict `currentHoldings` reached on the consolidated ones.
+  const currentRaw = currentHoldings(portfolio.positions);
+  // The rows the dashboard values from a depository's units alone (Stage 10ce) —
+  // on the live book only, so read off the book this context is built from.
+  // Two kinds reach it, and only the first is cash: a depository's closing
+  // balance of an arbitrage or liquid fund on an account that sent no holding
+  // statement, and fund units a holding statement RECORDS and prints no rate for
+  // (A-17's ABSL Balanced Advantage), which are a hybrid fund and never cash.
+  const depositoryCash = currentRaw.filter((p) => !!p.depositoryUnits && p.depositoryUnits.kind !== "no-rate");
+  const unpricedUnits = currentRaw.filter((p) => p.depositoryUnits?.kind === "no-rate");
+
+  // ── the report dates, which a consolidated figure blends ───────────────────
+  const valuedAsOf = [...new Set(current.filter((p) => p.marketValue !== 0)
+    .map((p) => accts.get(p.accountId)?.asOf).filter((d): d is string => !!d))].sort();
+  const behind = accounts.filter((a) => a.asOf && a.asOf < portfolio.asOf).length;
+  const basisOfBook = priceBasisOf(current, accts, quotesAsOf);
+
+  // ── allocation, on the same axis — and through the same key — the Portfolio
+  //    Monitor sections on and the search's category rows total.
+  const byCategory = new Map<string, { value: number; count: number }>();
+  for (const p of current) {
+    const key = groupKeyFor("category", accts, p);
+    const e = byCategory.get(key) ?? { value: 0, count: 0 };
     e.value += p.marketValue; e.count += 1;
-    byBucket.set(key, e);
+    byCategory.set(key, e);
   }
+  const categoryLabel = groupLabelFor("category");
 
-  // ── per-owner, which does NOT dedupe: a per-entity figure shows each
-  //    statement's row as printed (§"consolidated counts once, per-account
-  //    does not").
-  const byOwner = new Map<string, { value: number; accounts: Set<string> }>();
-  for (const p of BOOK_POSITIONS) {
-    const owner = accts.get(p.accountId)?.owner ?? "unattributed";
-    const e = byOwner.get(owner) ?? { value: 0, accounts: new Set<string>() };
-    e.value += p.marketValue; e.accounts.add(p.accountId);
-    byOwner.set(owner, e);
-  }
+  // ── per-owner, which does NOT dedupe — `byEntity`, the Family page's own
+  //    roll-up (§"consolidated counts once, per-account does not").
+  const owners = [...new Set(accounts.map((a) => a.owner))];
+  const entityValue = new Map(byEntity(portfolio.positions, accounts).map((b) => [b.key, b.mv]));
 
-  const costless = BOOK_POSITIONS.filter((p) => p.costBasis == null);
-  const costed = BOOK_POSITIONS.filter((p) => p.costBasis != null);
-  const row = (p: Position) => ({
-    security: p.security,
-    securityKey: p.securityKey,
-    symbol: p.symbol,
-    assetClass: p.assetClass,
-    sector: p.sector,
-    quantity: p.quantity,
-    marketValueCr: cr(p.marketValue),
-    costBasisCr: cr(p.costBasis),
-    owner: accts.get(p.accountId)?.owner ?? null,
-    account: accts.get(p.accountId)?.provider ?? null,
+  // ── the capital accounts Private Market and Morning CIO count ─────────────
+  const scope = capitalScope(portfolio.commitments ?? [], accounts);
+  const ownerOfCommitment = (c: Commitment) => accts.get(c.accountId)?.owner ?? null;
+  const pmTotals = callTotals(schemeCalls(scope.onPage, (c) => c.name, ownerOfCommitment));
+  const pmDistributed = sumOrNull(scope.onPage.map(distributionOf));
+  const pmDistributedOf = scope.onPage.filter((c) => distributionOf(c) != null).length;
+  const capitalRow = (c: Commitment) => ({
+    fund: c.name, owner: ownerOfCommitment(c), provider: c.provider, asOf: c.asOf,
+    committedCr: cr(c.committed),
+    calledCr: cr(c.called), paidCr: cr(c.paid), stillToCallCr: cr(c.undrawn),
+    distributedCr: cr(distributionOf(c)),
   });
+
+  // ── cost coverage, over the holdings the screen lists ─────────────────────
+  const costless = current.filter((p) => p.costBasis == null);
+  const selfRun = (p: Position) => {
+    const e = accts.get(p.accountId)?.engagement;
+    return e === "Direct" || e === "Execution";
+  };
+
+  // ── top holdings: ONE ROW PER SECURITY, clubbed across every account that
+  //    reports it (SC-B5) — the unit Morning CIO's "Largest name" and every
+  //    `/stock/` page are struck on, never one statement's row.
+  const bySecurity = new Map<string, Position[]>();
+  for (const p of current) bySecurity.set(p.securityKey, [...(bySecurity.get(p.securityKey) ?? []), p]);
+  const holdingRows = [...bySecurity.entries()]
+    .map(([key, rows]) => ({ key, rows, value: sum(rows.map((p) => p.marketValue)) }))
+    .sort((a, b) => b.value - a.value);
+
+  // ── the ring-fenced holding, by documented decision (Stage 10s) ───────────
+  const fencedAccounts = [...new Set(BOOK_POLYCAB.map((p) => p.accountId))]
+    .map((id) => accts.get(id)).filter((a): a is Account => !!a);
+  const fencedAsOf = [...new Set(fencedAccounts.map((a) => a.asOf).filter(Boolean))].sort();
 
   return [
     {
       kind: "book_summary",
-      asOf: BOOK_SUMMARY.asOf,
+      label: "Current Value of Holdings — the figure the dashboard's top bar and Morning CIO show",
       currency: "INR",
-      unit: "all *Cr fields are crore rupees (1 Cr = 10,000,000)",
-      consolidatedNavCr: cr(BOOK_SUMMARY.totalValue),
-      listedCr: cr(split.listed),
-      privateCr: cr(split.private),
+      unit: UNIT,
+      basis: {
+        kind: book.basis,
+        note: "These are the dashboard's own figures, on the same prices it shows: "
+          + `${basisOfBook.summary}. A price moves market value, unrealised P&L and return only — never a`
+          + " quantity, a cost or a dated cash flow, which are always the statements'.",
+        ...basisOfBook,
+      },
+      reportDates: {
+        newestStatement: portfolio.asOf,
+        valuedStatements: valuedAsOf.length ? { from: valuedAsOf[0], to: valuedAsOf[valuedAsOf.length - 1] } : null,
+        note: "Each account is valued on its own statement's date, so a consolidated figure is a BLEND of dates, not a"
+          + " snapshot on one day. The newest statement date may belong to an account that values nothing.",
+      },
+      currentValueOfHoldingsCr: cr(portfolio.totalValue),
       /**
        * THE THIRD SIDE, and it travels with the other two or the model is
-       * handed a NAV its own two components fall short of — which is exactly
+       * handed a total its own two components fall short of — which is exactly
        * the arithmetic a family office asks a chat about. `listed + private +
-       * unplaced === consolidatedNavCr`, asserted in `chatContext.test.ts`.
+       * unplaced === currentValueOfHoldingsCr`, asserted in `chatContext.test.ts`.
        */
-      notPlacedCr: cr(split.unplaced),
-      notPlacedNote: "Funds whose statements print no SEBI category, so this book places them on"
-        + " neither the listed nor the private side. They ARE inside the consolidated NAV above.",
-      positions: BOOK_POSITIONS.length,
-      distinctSecurities: new Set(BOOK_POSITIONS.map((p) => p.securityKey)).size,
-      accounts: BOOK_ACCOUNTS.length,
-      owners: [...byOwner.keys()],
+      listedCr: cr(portfolio.listedValue),
+      privateCr: cr(portfolio.privateValue),
+      notPlacedCr: cr(portfolio.unplacedValue),
+      notPlacedNote: `${MARKET_SIDE_UNPLACED}. They ARE inside the Current Value of Holdings above.`,
+      sideRule: "A fund's side is where its money is invested: the family's own placing of that fund first, then a"
+        + " fund whose own paperwork names private equity or venture (private), then the SEBI category its statement"
+        + " prints (Category III trades listed securities; Categories I and II are private capital). A drawdown"
+        + " structure says how a fund is funded, not what it invests in.",
+      positions: current.length,
+      distinctSecurities: bySecurity.size,
+      countsExclude: {
+        closedPositions: dropped.closed.length,
+        belowFloor: { positions: dropped.negligible.length, valueRupees: Math.round(sum(dropped.negligible.map((p) => p.marketValue)) * 100) / 100, floorRupees: NEGLIGIBLE_VALUE_FLOOR },
+        note: "The counts are the holdings the dashboard lists: a position redeemed to nil units and a holding worth"
+          + ` under ₹${NEGLIGIBLE_VALUE_FLOOR.toLocaleString("en-IN")} in total are left out, at the family's instruction.`,
+      },
+      accounts: accounts.length,
+      owners,
     },
     {
-      kind: "allocation_by_bucket",
-      note: "Shares chosen by a discretionary manager roll up into that mandate; everything else groups by what it IS.",
-      buckets: [...byBucket.entries()]
-        .map(([key, v]) => ({ bucket: bucketLabel(key), valueCr: cr(v.value), holdings: v.count }))
+      kind: "allocation_by_category",
+      axis: "Category — the Portfolio Monitor's default sections and Morning CIO's allocation table",
+      note: "Shares chosen by a discretionary manager roll up into that mandate (with its cash sleeve); a liquid fund or"
+        + " liquid ETF is Cash; everything else groups by what it IS. The categories sum to the Current Value of"
+        + " Holdings less the holdings under the ₹1,000 floor.",
+      asOf: "each holding on its own statement's date and price basis — see book_summary.basis",
+      categories: [...byCategory.entries()]
+        .map(([key, v]) => ({ category: categoryLabel(key), valueCr: cr(v.value), holdings: v.count, pctOfBook: pct(v.value, bookMV) }))
         .sort((a, b) => (b.valueCr ?? 0) - (a.valueCr ?? 0)),
     },
     {
       kind: "by_family_member",
-      note: "Per-owner figures are NOT deduplicated — each statement's row is shown as printed.",
-      owners: [...byOwner.entries()]
-        .map(([owner, v]) => ({ owner, valueCr: cr(v.value), accounts: v.accounts.size }))
-        .sort((a, b) => (b.valueCr ?? 0) - (a.valueCr ?? 0)),
+      note: "Each member's own accounts, as the Family & Entities page shows them. NOT deduplicated — a holding two"
+        + " members' statements both report is counted under both, so these sum to more than the Current Value of"
+        + " Holdings by the double count named below.",
+      owners: owners.map((owner) => {
+        const ids = new Set(accounts.filter((a) => a.owner === owner).map((a) => a.accountId));
+        const v = entityValue.get(owner);
+        return {
+          owner,
+          valueCr: v == null ? null : cr(v),
+          valueNote: v == null ? "no statement in this book values any of this member's accounts" : null,
+          accounts: ids.size,
+          holdings: currentRaw.filter((p) => ids.has(p.accountId)).length,
+        };
+      }).sort((a, b) => (b.valueCr ?? -1) - (a.valueCr ?? -1)),
     },
     {
       kind: "accounts",
-      shown: Math.min(TOP_ACCOUNTS, BOOK_ACCOUNTS.length),
-      total: BOOK_ACCOUNTS.length,
-      rows: BOOK_ACCOUNTS.map((a) => {
-        const held = BOOK_POSITIONS.filter((p) => p.accountId === a.accountId);
+      shown: accounts.length,
+      total: accounts.length,
+      note: "Every account, each on its own statement's date. `holdings` counts the holdings the dashboard lists (a"
+        + " redeemed position and a sub-₹1,000 speck are left out). Per account, NOT deduplicated.",
+      rows: accounts.map((a) => {
+        const held = portfolio.positions.filter((p) => p.accountId === a.accountId);
+        const live = currentRaw.filter((p) => p.accountId === a.accountId);
         /**
          * ── AN ACCOUNT WITH NO VALUED HOLDING IS ONE OF TWO FACTS ───────────
          *
          * NULL where no statement values it, never 0 (SC-A1): India SME, Sky
          * Capital, the income-only 360 ONE folios and the face-value custody
          * accounts are ABSENCES, and a model handed `0` reports them as worth
-         * nothing — "what is my India SME investment worth?" answered with a
-         * zero. But 0 where every holding is REDEEMED TO NIL: 3P, the HDFC
+         * nothing. But 0 where every holding is REDEEMED TO NIL: 3P, the HDFC
          * folio, Motilal demat 37436848 and the Hedged Equity strategy print a
-         * nil balance, and that is a MEASUREMENT. Both carry `valueNote` —
-         * the reason travels WITH the figure, so null and 0 cannot be read
-         * as one thing, which is the whole of this book's founding rule.
+         * nil balance, and that is a MEASUREMENT. Both carry `valueNote`, so
+         * null and 0 cannot be read as one thing.
          */
         const empty = accountEmptiness(a, held);
+        // Every row under the ₹1,000 floor: none on this book, and a bare 0
+        // there would read as a measured nil. The rows' own value is sent with
+        // the reason the dashboard lists none of them.
+        const allSpecks = !empty && live.length === 0;
         return {
           owner: a.owner, provider: a.provider, accountNo: a.accountNo,
-          strategy: a.strategy, engagement: a.engagement, asOf: a.asOf,
-          holdings: held.length,
-          valueCr: empty?.kind === "unvalued" ? null : empty?.kind === "redeemed" ? 0 : cr(sum(held.map((p) => p.marketValue))),
+          strategy: a.strategy, engagement: a.engagement, statementAsOf: a.asOf,
+          holdings: live.length,
+          valueCr: empty?.kind === "unvalued" ? null : empty?.kind === "redeemed" ? 0
+            : cr(sum((allSpecks ? held : live).map((p) => p.marketValue))),
+          valueBasis: empty ? null : priceBasisOf(allSpecks ? held : live, accts, quotesAsOf).summary,
           valueNote: empty
             ? `${empty.kind === "redeemed" ? "A measured nil" : "Not valued — no figure"}: ${empty.reason}`
-            : null,
+            : allSpecks ? `every holding here is worth under ₹${NEGLIGIBLE_VALUE_FLOOR.toLocaleString("en-IN")}, so the dashboard lists none of them`
+            // A FIGURE FOR SOME OF AN ACCOUNT'S HOLDINGS NAMES THE REST (Stage
+            // 10ce): the live registry's own note, never re-worded here.
+            : a.partialValuation ? `Partly valued — ${a.partialValuation}` : null,
         };
-      }).sort((x, y) => (y.valueCr ?? 0) - (x.valueCr ?? 0)).slice(0, TOP_ACCOUNTS),
+      }).sort((x, y) => (y.valueCr ?? -1) - (x.valueCr ?? -1)),
     },
     {
       kind: "top_holdings",
-      shown: Math.min(TOP_HOLDINGS, deduped.length),
-      total: deduped.length,
-      basis: "consolidated — each dually-reported holding counted once",
-      rows: topByValue(deduped, TOP_HOLDINGS).map(row),
+      shown: Math.min(TOP_HOLDINGS, holdingRows.length),
+      total: holdingRows.length,
+      basis: "ONE ROW PER SECURITY, clubbed across every account that reports it, each dually-reported holding counted"
+        + " once — the unit Morning CIO's largest name and each holding's own page use. `pctOfBook` is of the"
+        + " holdings the dashboard lists.",
+      rows: holdingRows.slice(0, TOP_HOLDINGS).map(({ key, rows, value }) => {
+        const head = rows[0];
+        const costs = rows.map((p) => p.costBasis);
+        const allCosted = costs.every((c) => typeof c === "number");
+        return {
+          security: head.security,
+          securityKey: key,
+          isin: head.isin ?? null,
+          symbol: head.symbol ?? null,
+          assetClass: head.assetClass,
+          category: categoriesOf(rows, accts).join(" + "),
+          sector: head.sector ?? null,
+          quantity: sum(rows.map((p) => p.quantity)),
+          valueCr: cr(value),
+          pctOfBook: pct(value, bookMV),
+          costBasisCr: allCosted ? cr(sum(costs as number[])) : null,
+          costNote: allCosted ? null
+            : `${costs.filter((c) => typeof c === "number").length} of the ${rows.length} statement rows behind this holding report a cost, so no total cost is stated`,
+          priceBasis: priceBasisOf(rows, accts, quotesAsOf).summary,
+          heldIn: rows.map((p) => {
+            const a = accts.get(p.accountId);
+            return { owner: a?.owner ?? null, provider: a?.provider ?? null, accountNo: a?.accountNo ?? null, statementAsOf: a?.asOf ?? null };
+          }),
+        };
+      }),
     },
     {
-      kind: "undrawn_commitments",
-      note: "Capital committed to a drawdown fund and not yet called. NOT a holding and never summed into NAV.",
-      count: BOOK_COMMITMENTS.length,
-      rows: BOOK_COMMITMENTS.map((c) => ({
-        fund: c.name, provider: c.provider, ownerId: c.ownerId, asOf: c.asOf,
-        committedCr: cr(c.committed), drawnCr: cr(c.drawn), undrawnCr: cr(c.undrawn),
-        distributedCr: cr(c.distributed),
-      })),
+      kind: "capital_accounts",
+      note: "Drawdown capital accounts — what the family committed to a fund, what the fund has called, what was paid and"
+        + " what it can still call. NOT a holding, and never summed into the Current Value of Holdings. Called and"
+        + " paid are separate lines on the statements; each total says how many accounts print it.",
+      privateMarket: {
+        note: "The capital accounts of private-market funds — the ones the Private Market page and Morning CIO's"
+          + " Capital deployment card count.",
+        accounts: scope.onPage.length,
+        committedCr: cr(pmTotals.committed),
+        calledCr: cr(pmTotals.called), calledOn: `${pmTotals.calledOf} of ${pmTotals.count} accounts`,
+        paidCr: cr(pmTotals.paid), paidOn: `${pmTotals.paidOf} of ${pmTotals.count} accounts`,
+        stillToCallCr: cr(pmTotals.uncalled), stillToCallOn: `${pmTotals.uncalledOf} of ${pmTotals.count} accounts`,
+        dueNowCr: cr(pmTotals.dueNow), dueNowOn: `${pmTotals.dueNowOf} of ${pmTotals.count} accounts`,
+        distributedCr: cr(pmDistributed), distributedOn: `${pmDistributedOf} of ${pmTotals.count} accounts`,
+        rows: scope.onPage.map(capitalRow),
+      },
+      publicMarketFunds: {
+        // Each clause is CONDITIONED on being true of the rows it describes —
+        // Stage 10bw's rule for the same sentence on the Private Market page.
+        note: [
+          scope.elsewhere.every((e) => e.basis === "family" && e.side === "listed")
+            ? "Capital accounts of funds the family class as investing in listed markets."
+            : "Capital accounts of funds this book does not place on the private side — each row says how it is placed.",
+          "They call capital against a commitment, and are counted on no private-market figure.",
+          scope.elsewhere.every((e) => currentRaw.some((p) => p.accountId === e.commitment.accountId && p.marketValue > 0))
+            ? "Their holdings are in the Portfolio Monitor's AIF section."
+            : null,
+        ].filter(Boolean).join(" "),
+        accounts: scope.elsewhere.length,
+        committedCr: cr(sumOrNull(scope.elsewhere.map((e) => e.commitment.committed))),
+        rows: scope.elsewhere.map((e) => ({ ...capitalRow(e.commitment), invests: e.invests, placedBy: e.basis })),
+      },
     },
     /**
-     * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS.
+     * THE FAMILY'S CASH THAT NO HOLDING STATEMENT REPORTS (Stage 10ce).
      *
-     * Everything above is on the STATEMENT basis, and the arbitrage funds the
-     * family asked to see inside Cash are on no statement's holdings: they sit
-     * on a demat that sent a transaction statement and no holding statement.
-     * The dashboard values them at the depository's closing units × AMFI's NAV
-     * and files them under Cash. Told only the blocks above, a model asked "how
-     * much cash do I hold" would answer without them and contradict the screen.
+     * The arbitrage and liquid funds a depository reports on an account that
+     * sent a transaction statement and no holding statement are valued by the
+     * dashboard at the depository's closing units × AMFI's published NAV and
+     * filed under Cash. This context is built from the SCREEN's book (SC-B1),
+     * so they are INSIDE every total above — what a model must be told is
+     * that no statement values them, so "as the statements print it" is not
+     * true of these rows. Read off the book handed in, never off the helper
+     * that makes them: a statement-basis book carries none, and says so.
      */
     {
       kind: "cash_valued_from_depository_units",
-      note: "Arbitrage and liquid funds count as CASH — the family's own instruction, on every axis, never any "
-        + "other category. These are held on an account that sent a transaction statement and no holding "
-        + "statement, so no statement values them and they are NOT in the statement-basis totals above. The "
-        + "dashboard values them at the depository's closing units × AMFI's published NAV and includes them in "
-        + "its Cash line and in its current value of holdings. Their units date from the statement's close.",
-      totalCr: cr(sum(depositoryCashHoldings().map((p) => p.marketValue))),
-      rows: depositoryCashHoldings().map((p) => ({
+      note: depositoryCash.length
+        ? "Arbitrage and liquid funds count as CASH — the family's own instruction, on every axis, never any other"
+          + " category. These are held on an account that sent a transaction statement and no holding statement, so"
+          + " no statement values them: the dashboard values them at the depository's closing units × AMFI's"
+          + " published NAV, and they are INCLUDED in the Cash line and the Current Value of Holdings above. Their"
+          + " units date from the statement's close, their NAV from its own publication date."
+        : "No holding in this book is valued from a depository's units alone.",
+      totalCr: depositoryCash.length ? cr(sum(depositoryCash.map((p) => p.marketValue))) : null,
+      rows: depositoryCash.map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
         unitsAsOf: p.depositoryUnits?.asOf ?? null, valueCr: cr(p.marketValue),
       })),
     },
     /**
-     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR.
+     * FUND UNITS A HOLDING STATEMENT RECORDS AND PRINTS NO RATE FOR (A-17).
      *
      * NOT CASH — a hybrid fund, kept out of the block above on purpose. The
      * dashboard values these at AMFI's NAV only because a sibling statement at
      * the same depository, on the same date, prices the same scheme on the same
-     * basis (A-17). Told only the statement-basis blocks, a model asked "how
-     * much ABSL Balanced Advantage do I hold" would answer "none" and contradict
-     * the screen.
+     * basis. Read off the book handed in, like the block above: they are INSIDE
+     * the totals of a live book, and a statement-basis book carries none.
      */
     {
       kind: "fund_units_a_statement_records_without_a_rate",
-      note: "These fund units are on a holding statement that records them and prints no rate, so no statement "
-        + "values them and they are NOT in the statement-basis totals above. The dashboard values them at AMFI's "
-        + "published NAV because another account at the same depository, on the same date, prices the same scheme "
-        + "on the same basis (pricedLikeAccountId). They are not cash. No cost is reported for them.",
-      totalCr: cr(sum(unpricedStatementUnits().map((p) => p.marketValue))),
-      rows: unpricedStatementUnits().map((p) => ({
+      note: unpricedUnits.length
+        ? "These fund units are on a holding statement that records them and prints no rate, so no statement values"
+          + " them. The dashboard values them at AMFI's published NAV because another account at the same depository,"
+          + " on the same date, prices the same scheme on the same basis (pricedLikeAccountId), and they are INCLUDED"
+          + " in the Current Value of Holdings above. They are not cash. No cost is reported for them."
+        : "No holding in this book is valued from fund units a statement records without a rate.",
+      totalCr: unpricedUnits.length ? cr(sum(unpricedUnits.map((p) => p.marketValue))) : null,
+      rows: unpricedUnits.map((p) => ({
         fund: p.security, accountId: p.accountId, units: p.quantity, nav: p.currentPrice, navDate: p.navDate ?? null,
         unitsAsOf: p.depositoryUnits?.asOf ?? null, pricedLikeAccountId: p.depositoryUnits?.witnessAccountId ?? null,
         valueCr: cr(p.marketValue),
@@ -240,44 +463,73 @@ export function buildDashboardContext(): ContextBlock[] {
         "These are limits of the source statements. If a question needs one of them, say the book does not carry it "
         + "and name what would supply it. Never estimate, interpolate or infer a figure that is not in this context.",
       blendedAsOf: {
-        newest: BOOK_SUMMARY.asOf,
+        newest: portfolio.asOf,
         accountsBehind: behind,
         note: "A consolidated total is a blend of report dates, not a snapshot on one day.",
       },
       costBasis: {
         positionsWithNoCost: costless.length,
-        of: BOOK_POSITIONS.length,
+        of: current.length,
         valueCr: cr(sum(costless.map((p) => p.marketValue))),
-        note: "Depository accounts report what is held, never what it cost. Return on cost covers only the "
-          + `${costed.length} positions that report one.`,
+        inAccountsTheFamilyRuns: costless.filter(selfRun).length,
+        note: "A depository or broking account reports what is held, never what it cost —"
+          + ` ${costless.filter(selfRun).length} of these ${costless.length} are in such accounts. Return on cost covers`
+          + ` only the ${current.length - costless.length} holdings that report one.`,
       },
       doubleCount: {
-        amountCr: cr(doubleCountedValue(BOOK_POSITIONS)),
+        amountCr: cr(doubleCountedValue(portfolio.positions)),
         note: "Two holdings are reported under two members each. Both rows are carried; the consolidated total "
           + "counts each once. A per-account figure shows both. NOTHING ELSE IN THIS BOOK IS COUNTED TWICE: a "
           + "fund appearing on several screens is one holding seen from several angles, never two holdings.",
       },
       /**
-       * THE SIDE THE STATEMENTS DO NOT NAME. A model told a NAV and a
-       * listed/private split will reconstruct the second half by subtraction,
-       * and on this book that subtraction is ₹16.69 Cr wrong.
+       * THE SIDE NOTHING PLACES. A model told a total and a listed/private split
+       * will reconstruct the second half by subtraction, and that subtraction
+       * misses whatever neither side holds — ₹98,742 on this book (Blue Ashva).
+       * The reason is the dashboard's own sentence (SC-C8): since Stage 10bw the
+       * family's placing decides first, so "no statement prints a category" on
+       * its own would have the model calling Delphi and Neo Infra unplaced.
        */
       marketSideUnplaced: {
-        valueCr: cr(split.unplaced),
-        funds: [...new Set(deduped.filter((p) => (p.marketSide ?? null) === null).map((p) => p.security))].sort(),
-        note: "No statement for these prints a SEBI category, so the book places them on neither side. "
-          + "Listed + private + this === the consolidated NAV; do not derive either side from the other two.",
+        valueCr: cr(portfolio.unplacedValue),
+        funds: [...new Set(current.filter((p) => (p.marketSide ?? null) === null).map((p) => p.security))].sort(),
+        note: `${MARKET_SIDE_UNPLACED}. Listed + private + this === the Current Value of Holdings; do not derive either`
+          + " side from the other two.",
       },
+      /**
+       * THE RING-FENCED HOLDING — named, dated, scoped and fenced (PC-04).
+       *
+       * By a documented decision (Stage 10s) it travels with an instruction
+       * never to add it, so a model can recognise a question about it rather
+       * than answering from nothing. What it lacked was what makes a figure a
+       * figure: the statement's date, the share count, the account it covers
+       * and the basis — the Polycab page shows the same holding at the
+       * exchange's last close too, and a model given one undated number would
+       * pass the statement value off as today's.
+       */
       ringFenced: {
         security: BOOK_POLYCAB[0]?.security ?? null,
-        valueCr: cr(sum(BOOK_POLYCAB.map((p) => p.marketValue))),
-        note: "The family's promoter stock, excluded by request from every consolidated total, allocation, sector "
-          + "and holdings figure above. It is shown only on the Polycab page. Do not add it to the NAV.",
+        isin: BOOK_POLYCAB[0]?.isin ?? null,
+        shares: BOOK_POLYCAB.length ? sum(BOOK_POLYCAB.map((p) => p.quantity)) : null,
+        valueCr: BOOK_POLYCAB.length ? cr(sum(BOOK_POLYCAB.map((p) => p.marketValue))) : null,
+        valueBasis: "the depository statement's own value column (an NSDL statement prints no rate, so its mark is value ÷"
+          + " units) — a statement figure, not a market price",
+        statementAsOf: fencedAsOf.length === 1 ? fencedAsOf[0] : fencedAsOf.length ? fencedAsOf : null,
+        heldIn: fencedAccounts.map((a) => ({ owner: a.owner, provider: a.provider, accountNo: a.accountNo, statementAsOf: a.asOf })),
+        scope: "What the statement(s) above report, for those account(s) only.",
+        note: "Promoter stock, excluded by the family's request from every consolidated total, allocation, sector and"
+          + " holdings figure above. It is shown only on the Polycab page, which also shows it at the exchange's last"
+          + " close — a different figure. Do not add it to any total, and do not present this statement value as"
+          + " today's value.",
       },
       notCarried: [
-        "Per-security XIRR — the transaction statements cover the current period only.",
+        "An XIRR for a single listed share or scheme — the transaction statements cover the current period only. (The"
+          + " Private Market page does show a money-weighted XIRR for each private FUND, struck from its capital"
+          + " account's dated calls and payouts; this context does not carry those rates, so point the reader there.)",
         "Realised gains for accounts whose manager issues no capital gain statement.",
-        "A holding's own YTD or calendar-year return — the archive begins in April, so no 1 January value exists.",
+        "A holding's own YTD or calendar-year return — no statement in this book values a holding on 1 January of any"
+          + ` year; the oldest statement date among the accounts is ${[...accounts.map((a) => a.asOf)].filter(Boolean).sort()[0] ?? "unknown"}.`
+          + " A dated contribution is not a valuation.",
         "Any figure about a private fund's underlying companies, except for the mutual funds and ETFs whose AMC "
           + "publishes a monthly portfolio disclosure.",
       ],
@@ -291,20 +543,74 @@ export function buildDashboardContext(): ContextBlock[] {
  * `TICKER_SYMBOL` is the upstream's own hook for company research, and only a
  * resolved NSE symbol reaches it — a fund unit has none, by nature rather than
  * by omission. Capped, because a list of 139 symbols on every question is noise
- * rather than context.
+ * rather than context. Ranked by the whole holding — a security clubbed across
+ * every account that reports it — on the same book the screen shows.
  *
- * THE SYMBOL IS THE WHOLE FILTER. This also carried `!isPrivateClass`, which
- * was redundant when it was written and became misleading when that predicate
- * started meaning "private capital" rather than "not an exchange-marked class"
- * — a Category III AIF now passes it and still has no symbol. Measured over
- * this book: **290 positions carry a symbol and NOT ONE of them is private or
- * unplaced**, so dropping the term changes no output and makes the code say
- * what the paragraph above already says.
+ * THE SYMBOL IS THE WHOLE FILTER. Measured over this book: **290 positions
+ * carry a symbol and NOT ONE of them is private or unplaced**.
  */
-export function contextTickers(limit = 15): string[] {
-  const deduped = dedupedPositions(BOOK_POSITIONS);
-  return topByValue(deduped.filter((p) => p.symbol), limit)
-    .map((p) => p.symbol as string);
+export function contextTickers(book: ChatBook, limit = 15): string[] {
+  const by = new Map<string, { symbol: string; value: number }>();
+  for (const p of currentHoldings(book.consolidated)) {
+    if (!p.symbol) continue;
+    const e = by.get(p.securityKey) ?? { symbol: p.symbol, value: 0 };
+    e.value += p.marketValue;
+    by.set(p.securityKey, e);
+  }
+  return [...by.values()].sort((a, b) => b.value - a.value).slice(0, limit).map((e) => e.symbol);
+}
+
+/**
+ * ── WHAT THE PANEL SAYS IT WAS GIVEN, READ OFF WHAT IT WAS GIVEN ─────────────
+ *
+ * The panel's own introduction used to be a sentence typed into the JSX, and it
+ * was untrue in three places (SC-C1): it called a statement-book snapshot "this
+ * dashboard" while the top bar showed a different figure; it said "every account"
+ * over a payload capped at 50 of 51; and it promised the assistant could not see a
+ * figure the dashboard does not show, over a payload that carried several. A
+ * description of a payload that is typed rather than derived goes stale the day
+ * the payload moves — so this reads the counts off the blocks themselves, and the
+ * suite holds each one to the block it describes.
+ *
+ * It no longer claims the assistant sees NOTHING the dashboard does not show:
+ * that is a promise about every field of every block, which no check here can
+ * keep. What it does claim — the same code and the same prices as the pages,
+ * each figure with its own date or basis — is what the suite asserts.
+ */
+export function describeContext(blocks: ContextBlock[]): { lead: string; missing: string; limits: string } {
+  const get = (kind: string) => blocks.find((b) => b.kind === kind) as Record<string, unknown> | undefined;
+  const count = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const members = (get("by_family_member")?.owners as unknown[] | undefined)?.length ?? null;
+  // Counted off the ROWS actually sent, never off a `total`: a payload cut by a
+  // cap still knows the total, and "all 51 accounts" over 50 rows is the claim
+  // this function exists to stop.
+  const acct = get("accounts") as { total?: number; rows?: unknown[] } | undefined;
+  const accountRows = acct?.rows?.length ?? null;
+  const accountTotal = count(acct?.total);
+  const top = (get("top_holdings")?.rows as unknown[] | undefined)?.length ?? null;
+  const cap = get("capital_accounts") as { privateMarket?: { accounts?: number }; publicMarketFunds?: { accounts?: number } } | undefined;
+  const pm = count(cap?.privateMarket?.accounts);
+  const pub = count(cap?.publicMarketFunds?.accounts);
+  const parts = [
+    "the current value of holdings the top bar shows and its listed / private / not-placed split",
+    "the allocation by category",
+    members != null ? `what each of the ${members} family members and trusts holds` : null,
+    accountRows != null
+      ? `${accountRows === accountTotal ? `all ${accountRows}` : `${accountRows} of the ${accountTotal ?? "?"}`} accounts`
+        + " with their owner, statement date and value"
+      : null,
+    top != null ? `the ${top} largest holdings` : null,
+    pm != null
+      ? `the ${pm} private-market capital accounts${pub ? ` (the ${pub} public-market funds' capital accounts named apart)` : ""}`
+      : null,
+  ].filter(Boolean);
+  return {
+    lead: `The assistant is given a snapshot of the book this dashboard shows — ${parts.join(", ")} — `,
+    missing: "and the list of things this book does not carry",
+    limits: "Every figure in the snapshot is struck by the same code the dashboard's pages use, on the same prices, "
+      + "and carries its own date or basis. The assistant cannot reach an account or place a trade. Answers are "
+      + "generated text — check any figure against the page it came from.",
+  };
 }
 
 /**
@@ -320,15 +626,17 @@ export function contextTickers(limit = 15): string[] {
 export function contextPreamble(blocks: ContextBlock[]): string {
   return [
     "You are answering questions about a family office portfolio dashboard.",
-    "The JSON below is the ONLY data you have about this book. Every figure in it is derived from the family's own",
-    "statements. Answer only from it.",
+    "The JSON below is the ONLY data you have about this book. Every figure in it is the dashboard's own, derived from",
+    "the family's statements and valued as the dashboard values them (book_summary.basis says how). Answer only from it.",
     "",
     "Rules you must follow:",
     "1. Never state a figure that is not in this context, and never estimate, interpolate or round-trip one.",
     "2. If the answer needs something the context does not carry, say so plainly and name what would supply it.",
     "3. All *Cr fields are crore rupees. Do not convert or rescale them.",
-    "4. Consolidated totals are a BLEND of report dates; say so when a date matters.",
+    "4. Consolidated totals are a BLEND of report dates and price bases; say so when a date matters, and give a",
+    "   figure's own date or basis when you quote it.",
     "5. The ring-fenced promoter holding is NOT part of any total here. Never add it in.",
+    "6. A null figure is ABSENT, never zero: say it is not valued and give its reason.",
     "",
     "DASHBOARD DATA:",
     JSON.stringify(blocks),

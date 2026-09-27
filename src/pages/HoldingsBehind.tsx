@@ -8,13 +8,13 @@ import { PageNav } from "@/components/PageNav";
 import { SortHeader, Tr, TrFoot } from "@/components/SortHeader";
 import { useTableView, sortRows, type TableView } from "@/lib/tableView";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
+import { sum, sumOrNull, holdingBucket, NEGLIGIBLE_VALUE_FLOOR, bucketLabel, holdingRoute, isMandateHeld, mandateLabelWithOwner, dedupedPositions, ROUTE_LABEL, ROUTE_NOTE } from "@/lib/analytics";
 import {
   aifSectionOf, aifCategoryOf, aifCategoryWhy, isAifHolding, aifSectionOrd,
   unvaluedAifFolios, AIF_UNSTATED_SECTION, PRIVATE_EQUITY_SECTION,
 } from "@/lib/aifCategory";
 import { accountIndex, engagementOf, ownerOf, providerOf } from "@/lib/accounts";
-import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, type Drilldown, type DrilldownId } from "@/lib/drilldown";
+import { parseDrilldown, resolveDrilldown, drilldownHref, coveredReturn, bookReturnOnCost, costedSetLabel, type Drilldown, type DrilldownId } from "@/lib/drilldown";
 import { fifoBasisNote, fifoTotals, investedBasisNote, investedWithCapital, type FifoOptions, type FifoTotals } from "@/lib/fifo";
 import { costedFigures, costCoverNote, VACUOUS_COST_REASON } from "@/lib/clubbedFigures";
 import { stockHref } from "@/lib/auditFormulas";
@@ -218,8 +218,10 @@ export function HoldingsBehind() {
      say nothing had been left out while five rows were missing. A page that
      drops rows silently is the defect the count exists to close. */
   const resolved = useMemo<Drilldown | null>(
-    () => (portfolio && scope ? resolveDrilldown(scope, { portfolio, consolidated }) : null),
-    [portfolio, consolidated, scope],
+    // `statement` IS THE BOOK THE MONEY-WEIGHTED RATE IS STRUCK ON (B-06): the
+    // measured scope keys its accounts on it, exactly as the tile does.
+    () => (portfolio && scope ? resolveDrilldown(scope, { portfolio, consolidated, statement: statementPortfolio }) : null),
+    [portfolio, consolidated, statementPortfolio, scope],
   );
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
@@ -349,16 +351,37 @@ export function HoldingsBehind() {
   // information. Derived from the rows rather than keyed on the scope id.
   const showBucket = new Set(rows.map((r) => holdingBucket(r, engagementOf(accIdx, r)))).size > 1;
   /**
-   * THE WHOLE BOOK, ON THIS PAGE'S OWN BASIS — the denominator for Share of
-   * book, and never `portfolio.totalValue` on a per-account scope. Closing a set
-   * of as-printed rows against a consolidated NAV would divide one basis by
-   * another and put a share above 100% the first time a duplicate lands inside
-   * the scope.
+   * THE BOOK IS ONE FIGURE: the current value of holdings the top bar and the
+   * Morning CIO tile print (B-01 — CK-B2, DSM-B7, VD-12). The per-account
+   * scope used to divide by the per-statement sum instead and print THAT as
+   * "the book" — ₹3.17 Cr larger, because two holdings are reported under two
+   * accounts each — so one page named a book no other surface shows.
+   *
+   * A share above 100% was the reason for that choice, and it is answered on
+   * the numerator rather than by moving the denominator: a per-statement set
+   * is counted ONCE for its share (`dedupedPositions`), so a holding two
+   * statements both report is one holding of the one book. The headline above
+   * stays each statement as printed, and the line under it says so.
    */
-  const bookMV = d.deduped
-    ? sum(consolidated.map((x) => x.marketValue))
-    : sum(portfolio.positions.map((x) => x.marketValue));
-  const shareOfBook = bookMV > 0 ? (mv / bookMV) * 100 : null;
+  const bookMV = portfolio.totalValue;
+  const setOnceMV = d.deduped ? mv : sum(dedupedPositions([...rows]).map((r) => r.marketValue));
+  const shareOfBook = bookMV > 0 ? (setOnceMV / bookMV) * 100 : null;
+  /**
+   * THE WHOLE-BOOK RETURN ON COST, ON THE BOOK'S OWN PAGE (B-07). The
+   * Consolidated return tile and the allocation table's Total row open this
+   * scope, and both print one figure over one set — the holdings that report a
+   * cost — named on its face. `bookReturnOnCost` is the same call they make,
+   * over the same current holdings, so the page cannot print another.
+   */
+  // Only on the two facets that ARE that set or contain it whole — on the
+  // listed or private half a whole-book figure beside the half's own gain
+  // would put one set's return in another's sentence.
+  const bookAll = d.id === "book" && (d.activeFacet === "all" || d.activeFacet === "costed")
+    ? (d.facets.find((f) => f.key === "all")?.rows ?? rows) : null;
+  const bookReturn = bookAll ? bookReturnOnCost(bookAll, fifoOpts) : null;
+  const bookReturnLabel = bookReturn ? costedSetLabel(bookReturn.set, (n) => money(n)) : "";
+  /** The money-weighted rate the tile prints, where this is the page it opens (B-06). */
+  const mw = d.moneyWeighted ?? null;
   const weight = (v: number) => (mv > 0 ? `${((v / mv) * 100).toFixed(1)}%` : null);
   /** A row's share of the capital invested in this set — its Invested over the set's. */
   const costShare = (c: number | null) => (c != null && invested != null && invested > 0 ? `${((c / invested) * 100).toFixed(1)}%` : null);
@@ -629,11 +652,35 @@ export function HoldingsBehind() {
           <div className="font-display text-2xl font-bold tabular text-slate-100"
                data-hb-total={mv}
                title={`${full(mv)} across ${fmtNum(rows.length)} ${rows.length === 1 ? "holding" : "holdings"} and ${fmtNum(names.size)} ${names.size === 1 ? "name" : "names"}, held by ${fmtNum(owners.size)} ${owners.size === 1 ? "entity" : "entities"} in ${fmtNum(accounts.size)} ${accounts.size === 1 ? "account" : "accounts"}. Statements in this set are drawn on their own dates, so this total is a blend rather than one report date; Portfolio Monitor carries every account in full.${statementPortfolio && !d.absent ? ` On statement marks alone — before any live quote — these holdings are worth ${full(statementValue(statementPortfolio.positions, rows))}. Live prices may move a market value, a day change and a return on cost, and never a quantity, a cost basis, a realised gain or a dated cash flow.${depositoryNote ? ` ${depositoryNote}` : ""}` : ""}`}>{money(mv)}</div>
-          <div className="mt-0.5 text-[10.5px] text-slate-500">
+          <div className="mt-0.5 text-[10.5px] text-slate-500" data-hb-share={shareOfBook ?? ""} data-hb-book={bookMV}
+               title={d.deduped
+                 ? `Over the ${full(bookMV)} current value of holdings — the figure the top bar and Morning CIO's tile print.`
+                 : `The figure above is each statement's row as printed, which is how this set is struck. Its share counts a holding two statements both report once (${full(setOnceMV)}), over the ${full(bookMV)} current value of holdings — the figure the top bar and Morning CIO's tile print.`}>
             {shareOfBook == null
               ? "no book value to measure a share against"
               : <>{shareOfBook.toFixed(1)}% of the {money(bookMV)} book</>}
           </div>
+          {/* THE RATE THE READER CLICKED, ON THE PAGE IT OPENS (B-06 — CK-B3,
+              DSM-B2). The table below prints a FIFO return on cost; this is the
+              money-weighted rate over the dated flows of the accounts it covers,
+              from the one `bookMoneyWeighted` the tile reads. Two measures of two
+              things, so each says which it is. */}
+          {!d.absent && mw && d.activeFacet !== "not-covered" && (
+            <div className="mt-1 text-[12.5px] text-slate-300" data-hb-mwr={mw.result.pct ?? ""}
+                 data-hb-mwr-days={mw.result.windowDays ?? ""} data-hb-mwr-to={mw.lastClose ?? ""}
+                 data-hb-mwr-accounts={mw.accountIds.length}
+                 title={`Money-weighted: every dated contribution and withdrawal of the ${fmtNum(mw.accountIds.length)} account${mw.accountIds.length === 1 ? "" : "s"} whose statements carry an opening portfolio value, each closed at the value its own statement prints on its own date${mw.lastClose ? ` (the latest ${fmtDate(mw.lastClose)})` : ""}. ${mw.result.annualised ? "The window is at least a year, so this is the annual rate." : `The window is ${fmtNum(mw.result.windowDays ?? 0)} days and the rate is NOT annualised — compounding it onto a year would be a projection.`} The table's Return column is a different measure: FIFO on cost, cumulative since each purchase. They are not expected to agree.`}>
+              Money-weighted{" "}
+              {mw.result.pct == null
+                ? <AbsentCell reason={mw.accountIds.length === 0
+                    ? "No account in this set carries an opening portfolio value, so there are no dated flows to strike a money-weighted rate on."
+                    : "The dated flows of these accounts do not solve to a single rate, so none is shown."} />
+                : <span className={`mono font-semibold ${changeColor(mw.result.pct)}`}>{fmtPct(mw.result.pct, { sign: true, decimals: 1 })}</span>}
+              <span className="text-slate-500">
+                {" "}· {mw.result.annualised ? "annual rate" : `${fmtNum(mw.result.windowDays ?? 0)} days${mw.lastClose ? ` to ${fmtDate(mw.lastClose)}` : ""} · not annualised`}
+              </span>
+            </div>
+          )}
           {!d.absent && (
             <div className="mt-1 text-[10.5px] text-slate-500"
                  data-hb-holdings={rows.length} data-hb-names={names.size}
@@ -683,11 +730,23 @@ export function HoldingsBehind() {
                       unrealised on what is held plus what was realised on units
                       sold. The unrealised half alone is the footer's own column. */}
                   {ret.fifo.gain != null && (
-                    <span title={fifoBasisNote(ret.fifo, (n) => money(n)) || undefined}> · gain <span className={`mono ${changeColor(ret.fifo.gain)}`}>{money(ret.fifo.gain, true)}</span>
-                      {ret.pct != null && <span className={`mono ${changeColor(ret.pct)}`}> ({fmtPct(ret.pct, { sign: true, decimals: 1 })})</span>}
+                    <span title={fifoBasisNote(bookReturn?.pct != null ? bookReturn.fifo : ret.fifo, (n) => money(n)) || undefined}> · gain <span className={`mono ${changeColor(bookReturn?.pct != null ? bookReturn.fifo.gain : ret.fifo.gain)}`}>{money(bookReturn?.pct != null ? bookReturn.fifo.gain : ret.fifo.gain, true)}</span>
+                      {(bookReturn?.pct ?? ret.pct) != null && (
+                        <span className={`mono ${changeColor(bookReturn?.pct ?? ret.pct)}`} data-hb-return={bookReturn?.pct ?? ret.pct ?? ""}>
+                          {" "}({fmtPct(bookReturn?.pct ?? ret.pct, { sign: true, decimals: 1 })})
+                        </span>
+                      )}
                     </span>
                   )}
-                  {noCost.length > 0 && (
+                  {/* THE WHOLE-BOOK RETURN NAMES ITS SET ON ITS FACE (B-07), in the
+                      words the Consolidated return tile and the allocation Total
+                      row print beside the same figure. */}
+                  {bookReturn?.pct != null ? (
+                    <span className="text-slate-500" data-costed-label
+                      title={`The whole-book return on cost is struck over the holdings whose statement reports a cost; the ${money(bookReturn.set.bookValue - bookReturn.set.costedValue)} that reports none is in the value and in no capital figure. A depository reports what is held, never what it was bought for.`}>
+                      {" "}{bookReturnLabel}
+                    </span>
+                  ) : noCost.length > 0 && (
                     <span className="text-slate-500"
                       title={`${fmtNum(noCost.length)} holding${noCost.length === 1 ? "" : "s"} worth ${money(withoutCostMV)} report no cost: they are in the value above and in no capital figure. A depository reports what is held, never what it was bought for.`}>
                       {" "}· {fmtNum(rows.length - noCost.length)} of {fmtNum(rows.length)} report a cost
@@ -1070,6 +1129,10 @@ export function HoldingsBehind() {
                     withoutCostMV={sum(groups.map((g) => g.mv - g.costedMV))}
                     ret={coveredReturn(groups.flatMap((g) => g.rows), fifoOpts)}
                     holdings={rows.length} noCost={noCost.length}
+                    // THE WHOLE-BOOK RETURN, NAMED (B-07) — only where this footer
+                    // totals the whole of that set: under a search it totals the
+                    // rows that matched, and its return is theirs.
+                    bookReturn={hidden === 0 && bookReturn?.pct != null ? { pct: bookReturn.pct, label: bookReturnLabel, fifo: bookReturn.fifo } : null}
                     closedExcluded={d.closedExcluded} negligible={d.negligibleExcluded} />
                 </table>
               </div>
@@ -1260,7 +1323,7 @@ function mandatesIn(rows: Position[], accIdx: ReturnType<typeof accountIndex>) {
  * Market page, where the rows carried a double count the footer correctly did
  * not and no check could see it.
  */
-function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withoutCostMV, money, holdings, noCost, closedExcluded, negligible, ret }: {
+function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withoutCostMV, money, holdings, noCost, bookReturn, closedExcluded, negligible, ret }: {
   /** THE LABEL'S SPAN IS A FUNCTION OF THE ORDER, not the literal `cols={2}`
       this took: with a column dragged, a fixed span would put every total one
       cell out and a reader would find the value under the weight's heading. */
@@ -1270,6 +1333,8 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withou
   vacuous: boolean;
   /** Where whole mandates entered Invested at their capital paid in, what that means; empty otherwise. */
   capitalNote: string;
+  /** The whole-book return on cost with its set's words, where this footer totals that set (B-07). */
+  bookReturn: { pct: number; label: string; fifo: FifoTotals } | null;
   money: (n: number | null | undefined, sign?: boolean) => string;
   /** The SET's own counts, for the coverage the Invested tile used to state. */
   holdings: number; noCost: number;
@@ -1343,14 +1408,34 @@ function Foot({ view, label, hidden, mv, cost, vacuous, capitalNote, pnl, withou
               : coverage ? `On the ${fmtNum(holdings - noCost)} holdings reporting a cost. ${coverage}` : "On cost."}>
           {pnl == null ? DASH : money(pnl, true)}
         </td>,
-        return: <td key="return" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${r.pct == null ? "text-slate-500" : changeColor(r.pct)}`} data-hb-foot-return
-            title={r.pct == null
-              ? cost == null
-                ? "No statement in this set reports a cost, so there is nothing to strike a return against."
-                : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
-              : `Total to date · cumulative, not annualised. ${fifoBasisNote(r.fifo, (n) => money(n))}. ${coverage || "Every holding in this set reports a cost."}`}>
-          {r.pct == null ? DASH : fmtPct(r.pct, { sign: true, decimals: 1 })}
-        </td>,
+        return: (() => {
+          /* THE WHOLE BOOK'S FOOTER PRINTS THE WHOLE-BOOK RETURN, NAMED (B-07):
+             struck over the holdings that report a cost, as the Consolidated
+             return tile and the allocation Total row print it, with the same
+             words under it. Any other set keeps the coverage test — a refused
+             figure stays refused one click deeper. */
+          const pct = r.pct ?? bookReturn?.pct ?? null;
+          const f = r.pct != null ? r.fifo : bookReturn?.fifo ?? r.fifo;
+          return (
+            <td key="return" className={`border-t-2 border-ink-600 px-4 py-2.5 text-right mono font-semibold ${pct == null ? "text-slate-500" : changeColor(pct)}`} data-hb-foot-return
+              title={pct == null
+                ? cost == null
+                  ? "No statement in this set reports a cost, so there is nothing to strike a return against."
+                  : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`
+                : `Total to date · cumulative, not annualised. ${fifoBasisNote(f, (n) => money(n))}. ${r.pct == null && bookReturn ? `Struck over the holdings that report a cost — ${bookReturn.label} — as the whole-book return is everywhere it is printed; Invested and Value above it do not cover one set, so Value ÷ Invested is not this figure.` : coverage || (hidden > 0 ? "Every holding shown reports a cost." : "Every holding in this set reports a cost.")}`}>
+              {pct == null
+                ? <AbsentCell reason={cost == null
+                    ? "No statement in this set reports a cost, so there is nothing to strike a return against."
+                    : `Invested covers fewer holdings than Value does here, so a percentage across the two columns would divide one set of holdings by another. ${coverage}`} />
+                : fmtPct(pct, { sign: true, decimals: 1 })}
+              {pct != null && r.pct == null && bookReturn && (
+                <span data-costed-label className="mt-0.5 block max-w-[13rem] whitespace-normal text-right text-[10.5px] font-normal leading-snug text-slate-500">
+                  {bookReturn.label}
+                </span>
+              )}
+            </td>
+          );
+        })(),
         }} />
     </tfoot>
   );

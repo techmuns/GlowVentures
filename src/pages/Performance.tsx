@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { StatTile } from "@/components/StatTile";
 import { Pill } from "@/components/Pill";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { sum, consolidatedMarketValue, sumOrNull } from "@/lib/analytics";
+import { sum, consolidatedMarketValue, sumOrNull, currentHoldings, droppedHoldings, NEGLIGIBLE_VALUE_FLOOR } from "@/lib/analytics";
 import { fmtPct } from "@/lib/format";
 import { SortHeader, Tr } from "@/components/SortHeader";
 import { useTableView, sortRows } from "@/lib/tableView";
@@ -148,22 +148,31 @@ export function Performance() {
 
   const money = (n: number | null | undefined, sign?: boolean) => fmtFromBase(n, { compact: true, sign });
   const accounts = portfolio.accounts;
-  // Consolidated: counts each dedupeGroup once. `priced` is deduped too, or the
+  // Consolidated: counts each dedupeGroup once. `costed` is deduped too, or the
   // embedded return is computed over a cost and a P&L that include the same
   // holding twice — it read +17.64% against the CIO's +17.3% on the same book.
   // The per-account figures below filter by accountId and are unaffected.
-  const priced = consolidated.filter((x) => !x.costUnavailable);
   const listedMV = consolidatedMarketValue(p);
-  const listedCost = sumOrNull(priced.map((x) => x.costBasis));
-  const listedPnL = sumOrNull(priced.map((x) => x.unrealizedPnL));
   /**
-   * FIFO — the same aggregator and the same costed set as Morning CIO's
-   * Consolidated return, so the two pages cannot print two figures for one
-   * book: unrealised on what is held plus realised on units already sold, over
-   * the capital that bought them, with each whole mandate struck on its
-   * capital since inception. Null, not 0, where no cost is reported.
+   * FIFO — the same aggregator AND THE SAME SET as Morning CIO's Consolidated
+   * return, so the two pages cannot print two figures for one book: unrealised
+   * on what is held plus realised on units already sold, over the capital that
+   * bought them, with each whole mandate struck on its capital since inception.
+   * Null, not 0, where no cost is reported.
+   *
+   * THE SET IS `currentHoldings`, AND THIS COMMENT CLAIMED IT BEFORE IT WAS
+   * TRUE. It read "the same costed set as Morning CIO's" over `consolidated` —
+   * which still carries the funds redeemed to nil — so 3P India Equity Fund 1,
+   * redeemed on 31 July, put its ₹2.56 Cr realised gain and ₹28.50 Cr cost of
+   * units sold into this tile and not into Morning CIO's: +16.24% here against
+   * +16.68% there, for one book. Morning CIO's own predicate, over Morning
+   * CIO's own set, with the same universe for "a mandate held whole".
    */
-  const bookFifo = fifoTotals(priced.filter((x) => x.costBasis != null), { accounts, universe: consolidated });
+  const held = currentHoldings(consolidated);
+  const costed = held.filter((x) => x.costBasis != null && !x.costUnavailable);
+  const listedCost = sumOrNull(costed.map((x) => x.costBasis));
+  const listedPnL = sumOrNull(costed.map((x) => x.unrealizedPnL));
+  const bookFifo = fifoTotals(costed, { accounts, universe: held });
   const embeddedRet = listedCost !== null && listedPnL !== null && listedCost > 0 ? bookFifo.returnPct : null;
 
   // ── Money-weighted return, per account and consolidated ──
@@ -324,6 +333,19 @@ export function Performance() {
 
   const top10Val = sum(consolidatedWeights.slice(0, 10));
   const top10 = listedMV > 0 ? (top10Val / listedMV) * 100 : 0;
+  // ONE COUNT OF WHAT THE FAMILY HOLDS, and it is `currentHoldings`' — the
+  // definition Morning CIO, the holdings drill-down and Data & Refresh all read.
+  const heldSet = held;
+  const heldCount = heldSet.length;
+  const heldNames = new Set(heldSet.map((x) => x.securityKey)).size;
+  const dropped = droppedHoldings(consolidated);
+  const heldWhy = [
+    `${p.length} statement rows in the book.`,
+    p.length > consolidated.length ? `${p.length - consolidated.length} reported under two members and counted once.` : "",
+    dropped.closed.length ? `${dropped.closed.length} redeemed to nil — the fund still publishes a NAV, the family no longer holds the units.` : "",
+    dropped.negligible.length ? `${dropped.negligible.length} worth under ${fmtFromBase(NEGLIGIBLE_VALUE_FLOOR)}, dropped at the family's request.` : "",
+    `The ${heldCount} left are the current holdings Morning CIO counts; the value above is struck over every consolidated row, which the dropped ones move by ${money(listedMV - sum(heldSet.map((x) => x.marketValue)))}.`,
+  ].filter(Boolean).join(" ");
   const bridgeOf = (accountId: string): AccountBridge[] => BOOK_ACCOUNT_BRIDGES[accountId] ?? [];
 
   return (
@@ -336,13 +358,17 @@ export function Performance() {
         </div>} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* THE CURRENT HOLDINGS, the set Morning CIO's Positions counts. This
+            read "369 of 371 rows", a count of statement ROWS less the double
+            report — which still carried the funds redeemed to nil and the
+            holdings under the ₹1,000 floor that every allocation surface drops,
+            so one book had three position counts on three pages. The rows it
+            leaves out are named in the hover. */}
         <StatTile label="Current Value of Holdings"
           value={money(listedMV)}
-          sub={p.length === consolidated.length
-            ? `${p.length} positions across ${accounts.length} accounts`
-            : `${consolidated.length} of ${p.length} rows · ${p.length - consolidated.length} counted once`}
-          title={p.length === consolidated.length ? undefined
-            : `${consolidated.length} of ${p.length} rows across ${accounts.length} accounts — ${p.length - consolidated.length} reported under two members and counted once.`}
+          sub={<span data-xa="perf-positions" data-value={heldCount} data-names={heldNames}>
+            {`${heldCount} holdings · ${heldNames} names across ${accounts.length} accounts`}</span>}
+          title={heldWhy}
           icon={<Layers className="h-4 w-4" />} />
 
         <StatTile label="Return · FIFO"
@@ -351,7 +377,7 @@ export function Performance() {
             excel: "= (Σ unrealised + Σ realised) ÷ Σ capital deployed × 100",
             plain: "Everything the book has produced — the unrealised gain on what is held and the realised gain on units already sold, matched first-in, first-out — over every rupee that bought a unit of it. A whole mandate is struck on its capital since inception.",
             worked: `= (${money(bookFifo.unrealised, true)} + ${money(bookFifo.realised, true)}) ÷ ${money(bookFifo.deployed)} × 100 = ${fmtPct(embeddedRet, { sign: true })}`,
-          }}>{fmtPct(embeddedRet, { sign: true })}</Auditable>}
+          }}><span data-xa="perf-fifo" data-value={embeddedRet ?? ""}>{fmtPct(embeddedRet, { sign: true })}</span></Auditable>}
           sub={<>{money(bookFifo.unrealised, true)} unrealised + {money(bookFifo.realised, true)} realised</>} delta={embeddedRet} icon={<Gauge className="h-4 w-4" />} />
 
         {consolidatedXirr == null ? (
